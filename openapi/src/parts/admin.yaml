@@ -3,7 +3,7 @@ paths:
   /api/admin/v1/workspaces/cloudcontexts/syncIamRoles:
     patch:
       parameters:
-        - $ref: '#/components/parameters/DryRun'
+      - $ref: '#/components/parameters/WetRun'
       summary: Sync iam roles of all workspaces.
       operationId: syncIamRoles
       tags: [Admin]
@@ -30,14 +30,13 @@ components:
           $ref: '#/components/schemas/ErrorReport'
 
   parameters:
-    DryRun:
-      name: DryRun
+    WetRun:
+      name: wetRun
       in: query
-      description: Whether this is a dry run
+      description: Whether this is a wet run.
       required: false
       schema:
         type: boolean
-        default: true
 
   responses:
     SyncIamRolesResultResponse:

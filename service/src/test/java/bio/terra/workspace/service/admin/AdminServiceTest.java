@@ -3,9 +3,11 @@ package bio.terra.workspace.service.admin;
 import static bio.terra.workspace.service.workspace.CloudSyncRoleMapping.CUSTOM_GCP_PROJECT_IAM_ROLES;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.cloudres.google.iam.IamCow;
+import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
@@ -39,7 +41,7 @@ public class AdminServiceTest extends BaseConnectedTest {
   private static final List<String> INCOMPLETE_READER_PERMISSIONS =
       ImmutableList.of(
           "serviceusage.services.get", "serviceusage.services.list", "storage.buckets.list");
-  private static final CustomGcpIamRole PROJECT_READER =
+  private static final CustomGcpIamRole INCOMPLETE_PROJECT_READER =
       CustomGcpIamRole.of("PROJECT_READER", INCOMPLETE_READER_PERMISSIONS);
 
   @Autowired AdminService adminService;
@@ -74,7 +76,7 @@ public class AdminServiceTest extends BaseConnectedTest {
             .toList();
     // The existing project has incomplete permissions on PROJECT_READER
     for (String project : projectIds) {
-      updateCustomRole(PROJECT_READER, project);
+      updateCustomRole(INCOMPLETE_PROJECT_READER, project);
     }
   }
 
@@ -98,7 +100,8 @@ public class AdminServiceTest extends BaseConnectedTest {
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
 
     String jobId =
-        adminService.syncIamRoleForAllGcpProjects(userAccessUtils.defaultUserAuthRequest());
+        adminService.syncIamRoleForAllGcpProjects(
+            userAccessUtils.defaultUserAuthRequest(), /*wetRun=*/ true);
     jobService.waitForJob(jobId);
     for (String projectId : projectIds) {
       assertProjectReaderRoleIsUpdated(
@@ -117,11 +120,47 @@ public class AdminServiceTest extends BaseConnectedTest {
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).lastStepFailure(true).build());
 
     String jobId =
-        adminService.syncIamRoleForAllGcpProjects(userAccessUtils.defaultUserAuthRequest());
+        adminService.syncIamRoleForAllGcpProjects(
+            userAccessUtils.defaultUserAuthRequest(), /*wetRun=*/ true);
     jobService.waitForJob(jobId);
     for (String projectId : projectIds) {
-      assertProjectReaderRoleIsUpdated(projectId, PROJECT_READER.getIncludedPermissions());
+      assertProjectReaderRoleIsUpdated(
+          projectId, INCOMPLETE_PROJECT_READER.getIncludedPermissions());
     }
+  }
+
+  @Test
+  public void syncIamRole_dryRun_permissionsNotUpdated() {
+    // Test idempotency of steps by retrying them once.
+    Map<String, StepStatus> retrySteps = new HashMap<>();
+    retrySteps.put(
+        RetrieveGcpIamCustomRoleStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    jobService.setFlightDebugInfoForTest(
+        FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
+
+    String jobId =
+        adminService.syncIamRoleForAllGcpProjects(
+            userAccessUtils.defaultUserAuthRequest(), /*wetRun=*/ false);
+    jobService.waitForJob(jobId);
+
+    for (String projectId : projectIds) {
+      assertProjectReaderRoleIsUpdated(
+          projectId, INCOMPLETE_PROJECT_READER.getIncludedPermissions());
+    }
+  }
+
+  @Test
+  public void syncIamRoles_noProjectsFound_throwsInternalServerErrorException() {
+    for (UUID workspaceId : workspaceIds) {
+      connectedTestUtils.deleteWorkspaceAndGcpContext(
+          userAccessUtils.defaultUserAuthRequest(), workspaceId);
+    }
+
+    assertThrows(
+        InternalServerErrorException.class,
+        () ->
+            adminService.syncIamRoleForAllGcpProjects(
+                userAccessUtils.defaultUserAuthRequest(), /*wetRun=*/ false));
   }
 
   private void updateCustomRole(CustomGcpIamRole customRole, String projectId)
@@ -151,7 +190,7 @@ public class AdminServiceTest extends BaseConnectedTest {
 
   private void assertProjectReaderRoleIsUpdated(
       String projectId, List<String> expectedPermissions) {
-    Role role = retrieveCustomRoles(PROJECT_READER, projectId);
+    Role role = retrieveCustomRoles(INCOMPLETE_PROJECT_READER, projectId);
     assertNotNull(role);
     List<String> actualPermissions = role.getIncludedPermissions();
     assertTrue(expectedPermissions.containsAll(actualPermissions));

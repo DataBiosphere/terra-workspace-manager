@@ -32,13 +32,14 @@ public class AdminApiController extends ControllerBase implements AdminApi {
   }
 
   @Override
-  public ResponseEntity<ApiSyncIamRolesResult> syncIamRoles() {
+  public ResponseEntity<ApiSyncIamRolesResult> syncIamRoles(Boolean wetRun) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     SamRethrow.onInterrupted(
         () -> getSamService().checkAdminAuthz(userRequest),
         "check whether the user has admin access");
-    String jobId = adminService.syncIamRoleForAllGcpProjects(userRequest);
 
+    String jobId =
+        adminService.syncIamRoleForAllGcpProjects(userRequest, Boolean.TRUE.equals(wetRun));
     ApiSyncIamRolesResult response = fetchSyncIamRolesResult(jobId);
     return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
   }

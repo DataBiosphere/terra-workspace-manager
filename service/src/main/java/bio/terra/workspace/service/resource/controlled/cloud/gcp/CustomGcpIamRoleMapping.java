@@ -17,6 +17,9 @@ import com.google.common.collect.Table;
  * controlled resource types. There is currently no migration infrastructure for these roles in
  * existing projects. Editing these lists will affect newly created workspace contexts, but WSM will
  * not retroactively apply changes to existing projects.
+ *
+ * <p>!!!If you change this file, if you want to backfill the change to existing projects, run
+ * syncIamRoles endpoint.!!!
  */
 public class CustomGcpIamRoleMapping {
   static final ImmutableList<String> GCS_BUCKET_READER_PERMISSIONS =

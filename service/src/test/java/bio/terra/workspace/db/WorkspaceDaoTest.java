@@ -2,6 +2,7 @@ package bio.terra.workspace.db;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.in;
 import static org.hamcrest.core.IsNot.not;
@@ -147,16 +148,14 @@ class WorkspaceDaoTest extends BaseUnitTest {
     WorkspaceUnitTestUtils.createCloudContextInDatabase(
         workspaceDao, workspace4, project4, CloudPlatform.AZURE);
 
-    ImmutableSet<String> gcpCloudContexts = workspaceDao.listCloudContexts(CloudPlatform.GCP);
+    ImmutableList<String> gcpCloudContexts = workspaceDao.listCloudContexts(CloudPlatform.GCP);
 
-    var gcpProjectIds =
-        new HashSet(
+    HashSet<String> gcpProjectIds =
+        new HashSet<>(
             gcpCloudContexts.stream()
                 .map(cloudContext -> GcpCloudContext.deserialize(cloudContext).getGcpProjectId())
                 .toList());
-    assertTrue(gcpProjectIds.contains(project1));
-    assertTrue(gcpProjectIds.contains(project2));
-    assertTrue(gcpProjectIds.contains(project3));
+    assertThat(gcpProjectIds, containsInAnyOrder(project1, project2, project3));
     assertFalse(gcpProjectIds.contains(project4));
   }
 

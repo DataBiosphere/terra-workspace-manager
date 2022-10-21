@@ -17,6 +17,7 @@ public final class WorkspaceFlightMapKeys {
   public static final String POLICIES = "policies";
   public static final String FOLDER_ID = "folderId";
   public static final String MERGE_POLICIES = "mergePolicies";
+  public static final String IS_WET_RUN = "isWetRun";
 
   private WorkspaceFlightMapKeys() {}
 

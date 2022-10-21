@@ -15,6 +15,9 @@ import java.util.List;
  * available, roles should be granted directly on controlled resources instead (see {@code
  * CustomGcpIamRoleMapping}), and should be removed from this list. Some permissions must be granted
  * at the project level, and will continue to live here.
+ *
+ * <p>!!!If you change this file, if you want to backfill the change to existing projects, run
+ * syncIamRoles endpoint.!!!
  */
 public class CloudSyncRoleMapping {
 
@@ -121,5 +124,6 @@ public class CloudSyncRoleMapping {
           WsmIamRole.READER, PROJECT_READER);
 
   public static final ImmutableSet<CustomGcpIamRole> CUSTOM_GCP_IAM_ROLES =
-      ImmutableSet.of(PROJECT_OWNER, PROJECT_WRITER, PROJECT_READER);
+      // convert it to a set to get rid of the duplication.
+      ImmutableSet.copyOf(CUSTOM_GCP_PROJECT_IAM_ROLES.values());
 }

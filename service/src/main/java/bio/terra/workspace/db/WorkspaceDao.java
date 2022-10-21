@@ -14,7 +14,7 @@ import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceExcept
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableList;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.Collections;
 import java.util.HashMap;
@@ -575,23 +575,19 @@ public class WorkspaceDao {
             jdbcTemplate.query(sql, params, (rs, rowNum) -> rs.getString("context"))));
   }
 
-  @ReadTransaction
-  public ImmutableSet<String> listCloudContexts(CloudPlatform cloudPlatform) {
-    return listCloudContextsWorker(cloudPlatform);
-  }
-
   /**
    * Retrieve all the serialized cloud contexts of an unlocked cloud context. That is, a cloud
    * context that is done being created.
    *
    * @param cloudPlatform platform context to retrieve
+   * @return a list of serialized cloud context infos
    */
-  private ImmutableSet<String> listCloudContextsWorker(CloudPlatform cloudPlatform) {
+  public ImmutableList<String> listCloudContexts(CloudPlatform cloudPlatform) {
     String sql = "SELECT context FROM cloud_context" + " WHERE cloud_platform = :cloud_platform";
     MapSqlParameterSource params =
         new MapSqlParameterSource().addValue("cloud_platform", cloudPlatform.toSql());
 
-    return ImmutableSet.copyOf(
+    return ImmutableList.copyOf(
         jdbcTemplate.query(sql, params, (rs, rowNum) -> rs.getString("context")));
   }
 
