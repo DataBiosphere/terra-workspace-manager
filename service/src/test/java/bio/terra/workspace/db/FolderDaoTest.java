@@ -409,7 +409,7 @@ public class FolderDaoTest extends BaseUnitTest {
   }
 
   @Test
-  public void deleteFolders_workspaceNotFound() {
+  public void deleteFolders_workspaceNotFound_returnsFalse() {
     assertFalse(folderDao.deleteFolders(UUID.randomUUID()));
   }
 
