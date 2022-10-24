@@ -17,6 +17,7 @@ import com.google.api.services.iam.v1.model.CreateRoleRequest;
 import com.google.api.services.iam.v1.model.Role;
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.UUID;
 import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
@@ -29,14 +30,17 @@ public class GcpIamCustomRolePatchStep implements Step {
   private final IamCow iamCow;
   private final UUID workspaceId;
   private final String projectId;
+  private final boolean isWetRun;
 
   private final HashSet<CustomGcpIamRole> customGcpIamRoles = new HashSet<>();
   private boolean workspaceUpdated = false;
 
-  public GcpIamCustomRolePatchStep(IamCow iamCow, UUID workspaceId, String projectId) {
+  public GcpIamCustomRolePatchStep(
+      IamCow iamCow, UUID workspaceId, String projectId, boolean isWetRun) {
     this.iamCow = iamCow;
     this.workspaceId = workspaceId;
     this.projectId = projectId;
+    this.isWetRun = isWetRun;
     customGcpIamRoles.addAll(CUSTOM_GCP_IAM_ROLES);
     customGcpIamRoles.addAll(CustomGcpIamRoleMapping.CUSTOM_GCP_RESOURCE_IAM_ROLES.values());
   }
@@ -51,7 +55,7 @@ public class GcpIamCustomRolePatchStep implements Step {
       } else {
         if (!CollectionUtils.isEqualCollection(
             originalRole.getIncludedPermissions(), customGcpIamRole.getIncludedPermissions())) {
-          updateCustomRole(customGcpIamRole);
+          updateCustomRole(customGcpIamRole, originalRole.getIncludedPermissions());
         }
       }
     }
@@ -63,19 +67,22 @@ public class GcpIamCustomRolePatchStep implements Step {
    * Utility for creating custom roles in GCP from WSM's CustomGcpIamRole objects. These roles will
    * be defined at the project level specified by projectId.
    */
-  private void updateCustomRole(CustomGcpIamRole customRole) throws RetryException {
+  private void updateCustomRole(CustomGcpIamRole customRole, List<String> originalPermissions)
+      throws RetryException {
     try {
-      // Only assigned field will be updated.
-      Role role = new Role().setIncludedPermissions(customRole.getIncludedPermissions());
-      iamCow
-          .projects()
-          .roles()
-          .patch(customRole.getFullyQualifiedRoleName(projectId), role)
-          .execute();
+      if (isWetRun) {
+        // Only assigned field will be updated.
+        Role role = new Role().setIncludedPermissions(customRole.getIncludedPermissions());
+        iamCow
+            .projects()
+            .roles()
+            .patch(customRole.getFullyQualifiedRoleName(projectId), role)
+            .execute();
+      }
       logger.debug(
-          "Updated role {} with permissions {} in project {}",
+          "Updated role {} with permissions {} removed or added in project {}",
           customRole.getRoleName(),
-          customRole.getIncludedPermissions(),
+          CollectionUtils.disjunction(customRole.getIncludedPermissions(), originalPermissions),
           projectId);
       workspaceUpdated = true;
     } catch (IOException e) {
@@ -99,13 +106,15 @@ public class GcpIamCustomRolePatchStep implements Step {
    */
   private void createCustomRole(CustomGcpIamRole customRole) throws RetryException {
     try {
-      Role gcpRole =
-          new Role()
-              .setIncludedPermissions(customRole.getIncludedPermissions())
-              .setTitle(customRole.getRoleName());
-      CreateRoleRequest request =
-          new CreateRoleRequest().setRole(gcpRole).setRoleId(customRole.getRoleName());
-      iamCow.projects().roles().create("projects/" + projectId, request).execute();
+      if (isWetRun) {
+        Role gcpRole =
+            new Role()
+                .setIncludedPermissions(customRole.getIncludedPermissions())
+                .setTitle(customRole.getRoleName());
+        CreateRoleRequest request =
+            new CreateRoleRequest().setRole(gcpRole).setRoleId(customRole.getRoleName());
+        iamCow.projects().roles().create("projects/" + projectId, request).execute();
+      }
       logger.debug(
           "Created role {} with permissions {} in project {}",
           customRole.getRoleName(),
@@ -134,15 +143,17 @@ public class GcpIamCustomRolePatchStep implements Step {
         workingMap.get(customGcpIamRoles.getFullyQualifiedRoleName(projectId), Role.class);
     if (originalRole != null) {
       try {
-        iamCow
-            .projects()
-            .roles()
-            .patch(
-                originalRole.getName(),
-                new Role().setIncludedPermissions(originalRole.getIncludedPermissions()))
-            .execute();
+        if (isWetRun) {
+          iamCow
+              .projects()
+              .roles()
+              .patch(
+                  originalRole.getName(),
+                  new Role().setIncludedPermissions(originalRole.getIncludedPermissions()))
+              .execute();
+        }
         logger.debug(
-            "Updated role {} with permissions {} in project {}",
+            "UndoStep: revert role {} with permissions {} in project {}",
             originalRole.getName(),
             originalRole.getIncludedPermissions(),
             projectId);
@@ -153,16 +164,18 @@ public class GcpIamCustomRolePatchStep implements Step {
       }
     } else {
       try {
-        iamCow
-            .projects()
-            .roles()
-            .delete(customGcpIamRoles.getFullyQualifiedRoleName(projectId))
-            .execute();
-        logger.debug(
-            "Deleted role {} with permissions {} in project {}",
-            customGcpIamRoles.getRoleName(),
-            customGcpIamRoles.getIncludedPermissions(),
-            projectId);
+        if (isWetRun) {
+          iamCow
+              .projects()
+              .roles()
+              .delete(customGcpIamRoles.getFullyQualifiedRoleName(projectId))
+              .execute();
+          logger.debug(
+              "Deleted role {} with permissions {} in project {}",
+              customGcpIamRoles.getRoleName(),
+              customGcpIamRoles.getIncludedPermissions(),
+              projectId);
+        }
         workspaceUpdated = false;
       } catch (IOException e) {
         handleIOException(e, customGcpIamRoles.getFullyQualifiedRoleName(projectId));

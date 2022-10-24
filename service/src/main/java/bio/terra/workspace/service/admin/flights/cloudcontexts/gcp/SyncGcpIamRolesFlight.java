@@ -29,17 +29,16 @@ public class SyncGcpIamRolesFlight extends Flight {
 
     RetryRule cloudRetryRule = RetryRules.cloud();
     addStep(new SetupWorkingMapForUpdatedWorkspacesStep());
+    boolean isWetRun = FlightUtils.getRequired(inputParameters, IS_WET_RUN, Boolean.class);
     for (Map.Entry<UUID, String> projectId : projectIds.entrySet()) {
       // Wrap IAM with WSM service account.
       addStep(
           new RetrieveGcpIamCustomRoleStep(crl.getIamCow(), projectId.getValue()), cloudRetryRule);
-      if (FlightUtils.getRequired(inputParameters, IS_WET_RUN, Boolean.class)) {
-        // Update permissions for real only when it's not dry run.
-        addStep(
-            new GcpIamCustomRolePatchStep(
-                crl.getIamCow(), projectId.getKey(), projectId.getValue()),
-            cloudRetryRule);
-      }
+
+      addStep(
+          new GcpIamCustomRolePatchStep(
+              crl.getIamCow(), projectId.getKey(), projectId.getValue(), isWetRun),
+          cloudRetryRule);
     }
   }
 }

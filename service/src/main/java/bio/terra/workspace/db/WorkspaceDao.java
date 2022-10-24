@@ -581,7 +581,7 @@ public class WorkspaceDao {
    * @param cloudPlatform platform context to retrieve
    * @return a map of workspace id to serialized cloud context infos
    */
-  public ImmutableMap<UUID, String> getWorkspaceToCloudContextMap(CloudPlatform cloudPlatform) {
+  public ImmutableMap<UUID, String> getWorkspaceIdToCloudContextMap(CloudPlatform cloudPlatform) {
     String sql =
         "SELECT context, workspace_id FROM cloud_context"
             + " WHERE cloud_platform = :cloud_platform";

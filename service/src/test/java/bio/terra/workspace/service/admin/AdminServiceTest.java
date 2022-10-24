@@ -74,13 +74,9 @@ public class AdminServiceTest extends BaseConnectedTest {
             .createWorkspaceWithGcpContext(userAccessUtils.defaultUserAuthRequest())
             .getWorkspaceId());
     projectIds =
-        workspaceDao.getWorkspaceToCloudContextMap(CloudPlatform.GCP).values().stream()
+        workspaceDao.getWorkspaceIdToCloudContextMap(CloudPlatform.GCP).values().stream()
             .map(cloudContext -> GcpCloudContext.deserialize(cloudContext).getGcpProjectId())
             .toList();
-    // The existing project has incomplete permissions on PROJECT_READER
-    for (String project : projectIds) {
-      updateCustomRole(INCOMPLETE_PROJECT_READER, project);
-    }
   }
 
   @AfterEach
@@ -94,6 +90,10 @@ public class AdminServiceTest extends BaseConnectedTest {
 
   @Test
   public void syncIamRole_newPermissionsAddedToCustomRoleProjectReader() {
+    // The existing project has incomplete permissions on PROJECT_READER
+    for (String project : projectIds) {
+      updateCustomRole(INCOMPLETE_PROJECT_READER, project);
+    }
     OffsetDateTime lastChangeTimestampOfWorkspace1 =
         workspaceActivityLogDao.getLastUpdateDetails(workspaceIds.get(0)).get().getChangeDate();
     OffsetDateTime lastChangeTimestampOfWorkspace2 =
@@ -138,6 +138,10 @@ public class AdminServiceTest extends BaseConnectedTest {
 
   @Test
   public void syncIamRole_undo_permissionsRemainsTheSame() {
+    // The existing project has incomplete permissions on PROJECT_READER
+    for (String project : projectIds) {
+      updateCustomRole(INCOMPLETE_PROJECT_READER, project);
+    }
     OffsetDateTime lastChangeTimestampOfWorkspace1 =
         workspaceActivityLogDao.getLastUpdateDetails(workspaceIds.get(0)).get().getChangeDate();
     // Test idempotency of steps by retrying them once.
@@ -163,6 +167,10 @@ public class AdminServiceTest extends BaseConnectedTest {
 
   @Test
   public void syncIamRole_dryRun_permissionsNotUpdated() {
+    // The existing project has incomplete permissions on PROJECT_READER
+    for (String project : projectIds) {
+      updateCustomRole(INCOMPLETE_PROJECT_READER, project);
+    }
     // Test idempotency of steps by retrying them once.
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(
@@ -179,6 +187,32 @@ public class AdminServiceTest extends BaseConnectedTest {
       assertProjectReaderRoleIsUpdated(
           projectId, INCOMPLETE_PROJECT_READER.getIncludedPermissions());
     }
+  }
+
+  @Test
+  public void syncIamRole_noUpdate_permissionsNotUpdatedAndNoLogAdded() {
+    OffsetDateTime lastChangeTimestampOfWorkspace1 =
+        workspaceActivityLogDao.getLastUpdateDetails(workspaceIds.get(0)).get().getChangeDate();
+
+    // Test idempotency of steps by retrying them once.
+    Map<String, StepStatus> retrySteps = new HashMap<>();
+    retrySteps.put(
+        RetrieveGcpIamCustomRoleStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    jobService.setFlightDebugInfoForTest(
+        FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
+
+    String jobId =
+        adminService.syncIamRoleForAllGcpProjects(
+            userAccessUtils.defaultUserAuthRequest(), /*wetRun=*/ true);
+    jobService.waitForJob(jobId);
+
+    for (String projectId : projectIds) {
+      assertProjectReaderRoleIsUpdated(
+          projectId, CUSTOM_GCP_PROJECT_IAM_ROLES.get(WsmIamRole.READER).getIncludedPermissions());
+    }
+    OffsetDateTime newChangeTimestampOfWorkspace1 =
+        workspaceActivityLogDao.getLastUpdateDetails(workspaceIds.get(0)).get().getChangeDate();
+    assertTrue(newChangeTimestampOfWorkspace1.isEqual(lastChangeTimestampOfWorkspace1));
   }
 
   @Test

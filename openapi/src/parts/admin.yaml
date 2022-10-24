@@ -4,7 +4,7 @@ paths:
     patch:
       parameters:
       - $ref: '#/components/parameters/WetRun'
-      summary: Sync iam roles of all workspaces.
+      summary: Sync custom IAM roles for all GCP workspaces.
       operationId: syncIamRoles
       tags: [Admin]
       responses:
@@ -21,7 +21,7 @@ components:
     SyncIamRolesResult:
       type: object
       description: |
-        The result of a call to sync iam roles of all the existing workspace's
+        The result of a call to sync IAM roles of all the existing workspace's
         GCP projects.
       properties:
         jobReport:

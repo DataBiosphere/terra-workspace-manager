@@ -37,7 +37,7 @@ public class AdminService {
   public String syncIamRoleForAllGcpProjects(AuthenticatedUserRequest userRequest, boolean wetRun) {
     Map<UUID, String> workspaceIdToGcpProjectIdMap = new HashMap<>();
     for (Map.Entry<UUID, String> cloudContext :
-        workspaceDao.getWorkspaceToCloudContextMap(CloudPlatform.GCP).entrySet()) {
+        workspaceDao.getWorkspaceIdToCloudContextMap(CloudPlatform.GCP).entrySet()) {
       workspaceIdToGcpProjectIdMap.put(
           cloudContext.getKey(),
           Objects.requireNonNull(GcpCloudContext.deserialize(cloudContext.getValue()))

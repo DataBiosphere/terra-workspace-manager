@@ -148,7 +148,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
     Map<UUID, String> workspaceIdToGcpContextMap = new HashMap<>();
 
     workspaceIdToGcpContextMap.putAll(
-        workspaceDao.getWorkspaceToCloudContextMap(CloudPlatform.GCP));
+        workspaceDao.getWorkspaceIdToCloudContextMap(CloudPlatform.GCP));
 
     for (Map.Entry<UUID, String> cloudContext : workspaceIdToGcpContextMap.entrySet()) {
       workspaceIdToGcpContextMap.put(
