@@ -225,7 +225,7 @@ public class LandingZoneApiControllerTest extends BaseAzureUnitTest {
         AzureLandingZoneFixtures.createDeleteJobResultWithSucceededState(JOB_ID, LANDING_ZONE_ID);
     when(mockLandingZoneService().startLandingZoneDeletionJob(any(), any(), any(), any()))
         .thenReturn(asyncJobResult);
-    when(mockLandingZoneService().getAsyncDeletionJobResult(any(),any(), any()))
+    when(mockLandingZoneService().getAsyncDeletionJobResult(any(), any(), any()))
         .thenReturn(asyncJobResult);
     when(mockFeatureConfiguration().isAzureEnabled()).thenReturn(true);
 
