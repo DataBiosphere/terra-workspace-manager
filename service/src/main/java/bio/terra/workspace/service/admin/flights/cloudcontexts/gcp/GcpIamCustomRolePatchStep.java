@@ -79,7 +79,7 @@ public class GcpIamCustomRolePatchStep implements Step {
             .patch(customRole.getFullyQualifiedRoleName(projectId), role)
             .execute();
       }
-      logger.debug(
+      logger.info(
           "Updated role {} with permissions {} removed or added in project {}",
           customRole.getRoleName(),
           CollectionUtils.disjunction(customRole.getIncludedPermissions(), originalPermissions),
@@ -115,7 +115,7 @@ public class GcpIamCustomRolePatchStep implements Step {
             new CreateRoleRequest().setRole(gcpRole).setRoleId(customRole.getRoleName());
         iamCow.projects().roles().create("projects/" + projectId, request).execute();
       }
-      logger.debug(
+      logger.info(
           "Created role {} with permissions {} in project {}",
           customRole.getRoleName(),
           customRole.getIncludedPermissions(),
@@ -152,7 +152,7 @@ public class GcpIamCustomRolePatchStep implements Step {
                   new Role().setIncludedPermissions(originalRole.getIncludedPermissions()))
               .execute();
         }
-        logger.debug(
+        logger.info(
             "UndoStep: revert role {} with permissions {} in project {}",
             originalRole.getName(),
             originalRole.getIncludedPermissions(),
@@ -170,7 +170,7 @@ public class GcpIamCustomRolePatchStep implements Step {
               .roles()
               .delete(customGcpIamRoles.getFullyQualifiedRoleName(projectId))
               .execute();
-          logger.debug(
+          logger.info(
               "Deleted role {} with permissions {} in project {}",
               customGcpIamRoles.getRoleName(),
               customGcpIamRoles.getIncludedPermissions(),
