@@ -14,6 +14,7 @@ import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceExcept
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import com.google.common.collect.ImmutableMap;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.Collections;
 import java.util.HashMap;
@@ -569,11 +570,40 @@ public class WorkspaceDao {
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceUuid.toString())
             .addValue("cloud_platform", cloudPlatform.toSql());
-
     return Optional.ofNullable(
         DataAccessUtils.singleResult(
             jdbcTemplate.query(sql, params, (rs, rowNum) -> rs.getString("context"))));
   }
+
+  /**
+   * Retrieve all the serialized cloud contexts.
+   *
+   * @param cloudPlatform platform context to retrieve
+   * @return a map of workspace id to serialized cloud context infos
+   */
+  public ImmutableMap<UUID, String> getWorkspaceIdToCloudContextMap(CloudPlatform cloudPlatform) {
+    String sql =
+        "SELECT context, workspace_id FROM cloud_context"
+            + " WHERE cloud_platform = :cloud_platform";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource().addValue("cloud_platform", cloudPlatform.toSql());
+
+    List<WorkspaceCloudContextPair> pairs =
+        jdbcTemplate.query(
+            sql,
+            params,
+            (rs, rowNum) ->
+                new WorkspaceCloudContextPair(
+                    UUID.fromString(rs.getString("workspace_id")), rs.getString("context")));
+    return ImmutableMap.copyOf(
+        pairs.stream()
+            .collect(
+                Collectors.toMap(
+                    WorkspaceCloudContextPair::workspaceId,
+                    WorkspaceCloudContextPair::serializedCloudContext)));
+  }
+
+  private record WorkspaceCloudContextPair(UUID workspaceId, String serializedCloudContext) {}
 
   public static class WorkspaceUserPair {
     private final UUID workspaceUuid;

@@ -11,6 +11,7 @@ import java.util.UUID;
 
 /** Utilities for working with workspaces in unit tests. */
 public class WorkspaceUnitTestUtils {
+  public static final String PROJECT_ID = "my-project-id";
 
   /**
    * Creates a workspaces with a GCP cloud context and stores it in the database. Returns the
@@ -21,7 +22,7 @@ public class WorkspaceUnitTestUtils {
    */
   public static UUID createWorkspaceWithGcpContext(WorkspaceDao workspaceDao) {
     UUID workspaceId = createWorkspaceWithoutGcpContext(workspaceDao);
-    createGcpCloudContextInDatabase(workspaceDao, workspaceId, "my-project-id");
+    createGcpCloudContextInDatabase(workspaceDao, workspaceId, PROJECT_ID);
     return workspaceId;
   }
 
@@ -42,15 +43,27 @@ public class WorkspaceUnitTestUtils {
   }
 
   /**
+   * Creates the database artifact for a GCP cloud context without actually creating anything beyond
+   * the database row.
+   */
+  public static void createGcpCloudContextInDatabase(
+      WorkspaceDao workspaceDao, UUID workspaceUuid, String projectId) {
+    createCloudContextInDatabase(workspaceDao, workspaceUuid, projectId, CloudPlatform.GCP);
+  }
+
+  /**
    * Creates the database artifact for a cloud context without actually creating anything beyond the
    * database row.
    */
-  private static void createGcpCloudContextInDatabase(
-      WorkspaceDao workspaceDao, UUID workspaceUuid, String projectId) {
+  public static void createCloudContextInDatabase(
+      WorkspaceDao workspaceDao,
+      UUID workspaceUuid,
+      String projectId,
+      CloudPlatform cloudPlatform) {
     String flightId = UUID.randomUUID().toString();
-    workspaceDao.createCloudContextStart(workspaceUuid, CloudPlatform.GCP, flightId);
+    workspaceDao.createCloudContextStart(workspaceUuid, cloudPlatform, flightId);
     workspaceDao.createCloudContextFinish(
-        workspaceUuid, CloudPlatform.GCP, new GcpCloudContext(projectId).serialize(), flightId);
+        workspaceUuid, cloudPlatform, new GcpCloudContext(projectId).serialize(), flightId);
   }
 
   private WorkspaceUnitTestUtils() {}

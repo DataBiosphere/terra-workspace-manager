@@ -15,7 +15,6 @@ import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceCategory;
-import bio.terra.workspace.service.stage.StageService;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -35,6 +34,7 @@ import javax.annotation.Nullable;
 import okhttp3.OkHttpClient;
 import org.broadinstitute.dsde.workbench.client.sam.ApiClient;
 import org.broadinstitute.dsde.workbench.client.sam.ApiException;
+import org.broadinstitute.dsde.workbench.client.sam.api.AdminApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.AzureApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.GoogleApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.ResourcesApi;
@@ -76,7 +76,7 @@ public class SamService {
   private boolean wsmServiceAccountInitialized;
 
   @Autowired
-  public SamService(SamConfiguration samConfig, StageService stageService) {
+  public SamService(SamConfiguration samConfig) {
     this.samConfig = samConfig;
     this.wsmServiceAccountInitialized = false;
     this.commonHttpClient =
@@ -112,6 +112,27 @@ public class SamService {
   @VisibleForTesting
   public AzureApi samAzureApi(String accessToken) {
     return new AzureApi(getApiClient(accessToken));
+  }
+
+  public AdminApi samAdminApi(String accessToken) {
+    return new AdminApi(getApiClient(accessToken));
+  }
+
+  @Traced
+  private boolean isAdmin(AuthenticatedUserRequest userRequest) throws InterruptedException {
+    try {
+      // If the user can successfully call sam admin api, the user has terra level admin access.
+      SamRetry.retry(
+          () ->
+              samAdminApi(userRequest.getRequiredToken())
+                  .adminGetUserByEmail(getUserEmailFromSam(userRequest)));
+      return true;
+    } catch (ApiException apiException) {
+      logger.info(
+          "Error checking admin permission in Sam. This is expected if requester is not SAM admin.",
+          apiException);
+      return false;
+    }
   }
 
   @VisibleForTesting
@@ -443,6 +464,22 @@ public class SamService {
               "User %s is not authorized to perform action %s on %s %s",
               userEmail, action, type, uuid));
     else logger.info("User {} is authorized to {} {} {}", userEmail, action, type, uuid);
+  }
+
+  /**
+   * Wrapper around isAdmin which throws an appropriate exception if a user does not have admin
+   * access.
+   *
+   * @param userRequest Credentials of the user whose permissions are being checked
+   */
+  @Traced
+  public void checkAdminAuthz(AuthenticatedUserRequest userRequest) throws InterruptedException {
+    boolean isAuthorized = isAdmin(userRequest);
+    final String userEmail = getUserEmailFromSam(userRequest);
+    if (!isAuthorized)
+      throw new ForbiddenException(
+          String.format("User %s is not authorized to perform admin action", userEmail));
+    else logger.info("User {} is an authorized admin", userEmail);
   }
 
   /**

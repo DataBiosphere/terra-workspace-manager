@@ -4,6 +4,7 @@ public final class WorkspaceFlightMapKeys {
   public static final String WORKSPACE_ID = "workspaceId";
   public static final String SPEND_PROFILE_ID = "spendProfileId";
   public static final String GCP_PROJECT_ID = "gcpProjectId";
+  public static final String WORKSPACE_ID_TO_GCP_PROJECT_ID_MAP = "workspaceIdToGcpProjectIdMap";
   public static final String WORKSPACE_STAGE = "workspaceStage";
   public static final String IAM_GROUP_EMAIL_MAP = "iamGroupEmailMap";
   public static final String RBS_RESOURCE_ID = "rbsResourceId";
@@ -15,6 +16,8 @@ public final class WorkspaceFlightMapKeys {
   public static final String POLICIES = "policies";
   public static final String FOLDER_ID = "folderId";
   public static final String MERGE_POLICIES = "mergePolicies";
+  public static final String IS_WET_RUN = "isWetRun";
+  public static final String UPDATED_WORKSPACES = "updatedWorkspaces";
   public static final String SPEND_PROFILE = "spendProfile";
 
   private WorkspaceFlightMapKeys() {}
