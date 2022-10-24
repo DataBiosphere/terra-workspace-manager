@@ -264,17 +264,36 @@ public class FolderDao {
     return ImmutableList.copyOf(jdbcTemplate.query(sql, params, FOLDER_ROW_MAPPER));
   }
 
+  /** Delete all folders of a given workspaceId. */
+  @WriteTransaction
+  public boolean deleteAllFolders(UUID workspaceId) {
+    final String sql = "DELETE FROM folder WHERE workspace_id = :workspace_id";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource().addValue("workspace_id", workspaceId.toString());
+    int rowsAffected = jdbcTemplate.update(sql, params);
+    boolean deleted = rowsAffected > 0;
+
+    if (deleted) {
+      logger.info("Folders in workspace {} are all deleted", workspaceId);
+    } else {
+      logger.info("Nothing is deleted. Check if workspace {} exists", workspaceId);
+    }
+    return deleted;
+  }
+
   /**
    * Delete a folder and all of its sub-folders recursively.
    *
    * <p>See more details about recursive SQL query from
    * https://www.postgresqltutorial.com/postgresql-tutorial/postgresql-recursive-query/
    *
+   * <p>To delete all folders in a workspace, use deleteAllFolders instead.
+   *
    * @param folderId the folder where the deletion starts.
    * @return true if folder(s) are deleted.
    */
   @WriteTransaction
-  public boolean deleteFolderRecursive(UUID workspaceUuid, UUID folderId) {
+  public boolean deleteFoldersRecursive(UUID workspaceUuid, UUID folderId) {
 
     final String sql =
         """

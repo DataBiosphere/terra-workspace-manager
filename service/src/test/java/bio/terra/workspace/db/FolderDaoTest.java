@@ -376,7 +376,7 @@ public class FolderDaoTest extends BaseUnitTest {
   }
 
   @Test
-  public void deleteFolder_subFolderDeleted() {
+  public void deleteFoldersRecursive_subFolderDeleted() {
     UUID workspaceUuid = createWorkspaceWithoutGcpContext(workspaceDao);
     var folder = getFolder("foo", workspaceUuid);
     // second and third folders are under folder foo.
@@ -386,7 +386,7 @@ public class FolderDaoTest extends BaseUnitTest {
     var createdSecondFolder = folderDao.createFolder(secondFolder);
     var createdThirdFolder = folderDao.createFolder(thirdFolder);
 
-    boolean deleted = folderDao.deleteFolderRecursive(workspaceUuid, createdFolder.id());
+    boolean deleted = folderDao.deleteFoldersRecursive(workspaceUuid, createdFolder.id());
 
     assertTrue(deleted);
     assertTrue(folderDao.getFolderIfExists(workspaceUuid, createdFolder.id()).isEmpty());
@@ -395,10 +395,39 @@ public class FolderDaoTest extends BaseUnitTest {
   }
 
   @Test
-  public void deleteFolder_invalidFolder_nothingIsDeleted() {
+  public void deleteFoldersRecursive_invalidFolder_nothingIsDeleted() {
     UUID workspaceUuid = createWorkspaceWithoutGcpContext(workspaceDao);
 
-    assertFalse(folderDao.deleteFolderRecursive(workspaceUuid, UUID.randomUUID()));
+    assertFalse(folderDao.deleteFoldersRecursive(workspaceUuid, UUID.randomUUID()));
+  }
+
+  @Test
+  public void deleteAllFolders_noFolder_returnsFalse() {
+    UUID workspaceUuid = createWorkspaceWithoutGcpContext(workspaceDao);
+
+    assertFalse(folderDao.deleteAllFolders(workspaceUuid));
+  }
+
+  @Test
+  public void deleteAllFolders_workspaceNotFound_returnsFalse() {
+    assertFalse(folderDao.deleteAllFolders(UUID.randomUUID()));
+  }
+
+  @Test
+  public void deleteAllFolders_allFoldersAreDeletedInTheWorkspace() {
+    UUID workspaceUuid = createWorkspaceWithoutGcpContext(workspaceDao);
+    var folder = getFolder("foo", workspaceUuid);
+    // second and third folders are under folder foo.
+    var secondFolder = getFolder("bar", workspaceUuid, folder.id());
+    var thirdFolder = getFolder("garrr", workspaceUuid, folder.id());
+    var createdFolder = folderDao.createFolder(folder);
+    var createdSecondFolder = folderDao.createFolder(secondFolder);
+    var createdThirdFolder = folderDao.createFolder(thirdFolder);
+
+    assertTrue(folderDao.deleteAllFolders(workspaceUuid));
+
+    ImmutableList<Folder> folders = folderDao.listFoldersInWorkspace(workspaceUuid);
+    assertTrue(folders.isEmpty());
   }
 
   private static Folder getFolder(String displayName, UUID workspaceUuid) {
