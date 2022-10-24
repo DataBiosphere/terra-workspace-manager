@@ -31,6 +31,7 @@ public class GcpIamCustomRolePatchStep implements Step {
   private final String projectId;
 
   private final HashSet<CustomGcpIamRole> customGcpIamRoles = new HashSet<>();
+  private boolean workspaceUpdated = false;
 
   public GcpIamCustomRolePatchStep(IamCow iamCow, UUID workspaceId, String projectId) {
     this.iamCow = iamCow;
@@ -43,27 +44,18 @@ public class GcpIamCustomRolePatchStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    boolean workspaceUpdated = false;
     for (CustomGcpIamRole customGcpIamRole : customGcpIamRoles) {
       Role originalRole = getCustomRole(customGcpIamRole, projectId);
       if (originalRole == null) {
         createCustomRole(customGcpIamRole);
-        workspaceUpdated = true;
       } else {
         if (!CollectionUtils.isEqualCollection(
             originalRole.getIncludedPermissions(), customGcpIamRole.getIncludedPermissions())) {
           updateCustomRole(customGcpIamRole);
-          workspaceUpdated = true;
         }
       }
     }
-    if (workspaceUpdated) {
-      FlightMap workingMap = flightContext.getWorkingMap();
-      HashSet<String> updatedWorkspaces =
-          workingMap.get(UPDATED_WORKSPACES, new TypeReference<>() {});
-      updatedWorkspaces.add(workspaceId.toString());
-      workingMap.put(UPDATED_WORKSPACES, updatedWorkspaces);
-    }
+    maybeRecordWorkspaceIsUpdated(flightContext);
     return StepResult.getStepResultSuccess();
   }
 
@@ -85,6 +77,7 @@ public class GcpIamCustomRolePatchStep implements Step {
           customRole.getRoleName(),
           customRole.getIncludedPermissions(),
           projectId);
+      workspaceUpdated = true;
     } catch (IOException e) {
       handleIOException(e, customRole.getFullyQualifiedRoleName(projectId));
     }
@@ -118,6 +111,7 @@ public class GcpIamCustomRolePatchStep implements Step {
           customRole.getRoleName(),
           customRole.getIncludedPermissions(),
           projectId);
+      workspaceUpdated = true;
     } catch (IOException e) {
       // Retry on IO exceptions thrown by CRL.
       handleIOException(e, customRole.getFullyQualifiedRoleName(projectId));
@@ -129,6 +123,7 @@ public class GcpIamCustomRolePatchStep implements Step {
     for (CustomGcpIamRole customGcpIamRole : customGcpIamRoles) {
       resetCustomRolesToPreviousSetOfPermissions(flightContext, customGcpIamRole);
     }
+    maybeRecordWorkspaceIsUpdated(flightContext);
     return StepResult.getStepResultSuccess();
   }
 
@@ -151,8 +146,10 @@ public class GcpIamCustomRolePatchStep implements Step {
             originalRole.getName(),
             originalRole.getIncludedPermissions(),
             projectId);
+        workspaceUpdated = false;
       } catch (IOException e) {
         handleIOException(e, customGcpIamRoles.getFullyQualifiedRoleName(projectId));
+        workspaceUpdated = true;
       }
     } else {
       try {
@@ -166,8 +163,10 @@ public class GcpIamCustomRolePatchStep implements Step {
             customGcpIamRoles.getRoleName(),
             customGcpIamRoles.getIncludedPermissions(),
             projectId);
+        workspaceUpdated = false;
       } catch (IOException e) {
         handleIOException(e, customGcpIamRoles.getFullyQualifiedRoleName(projectId));
+        workspaceUpdated = true;
       }
     }
   }
@@ -181,5 +180,19 @@ public class GcpIamCustomRolePatchStep implements Step {
       }
     }
     throw new RetryException(e);
+  }
+
+  private void maybeRecordWorkspaceIsUpdated(FlightContext flightContext) {
+    FlightMap workingMap = flightContext.getWorkingMap();
+    HashSet<String> updatedWorkspaces =
+        workingMap.get(UPDATED_WORKSPACES, new TypeReference<>() {});
+    if (workspaceUpdated) {
+      updatedWorkspaces.add(workspaceId.toString());
+    } else {
+      // When a step is undo, the change is undone so we need to potentially
+      // remove the workspace id from the updated workspaces list.
+      updatedWorkspaces.remove(workspaceId.toString());
+    }
+    workingMap.put(UPDATED_WORKSPACES, updatedWorkspaces);
   }
 }

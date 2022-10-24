@@ -137,7 +137,7 @@ public class AdminServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void syncIamRole_undo() {
+  public void syncIamRole_undo_permissionsRemainsTheSame() {
     OffsetDateTime lastChangeTimestampOfWorkspace1 =
         workspaceActivityLogDao.getLastUpdateDetails(workspaceIds.get(0)).get().getChangeDate();
     // Test idempotency of steps by retrying them once.

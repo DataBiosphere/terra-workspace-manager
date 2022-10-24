@@ -16,6 +16,8 @@ public class SetupWorkingMapForUpdatedWorkspacesStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
+    // Sets up a hashset to store workspace ids. The set stores string instead of UUID because
+    // json deserialization is unable to deserialize JSON to HashSet<UUID>.
     context.getWorkingMap().put(UPDATED_WORKSPACES, new HashSet<String>());
     return StepResult.getStepResultSuccess();
   }

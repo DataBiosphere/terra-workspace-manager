@@ -31,6 +31,7 @@ import bio.terra.workspace.service.workspace.model.OperationType;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -195,12 +196,11 @@ public class WorkspaceActivityLogHook implements StairwayHook {
   private void maybeLogForSyncGcpIamRolesFlight(
       FlightContext context, OperationType operationType, String userEmail, String subjectId) {
     HashSet<String> updatedWorkspaces =
-        context.getWorkingMap().get(UPDATED_WORKSPACES, new TypeReference<>() {});
+        Objects.requireNonNull(
+            context.getWorkingMap().get(UPDATED_WORKSPACES, new TypeReference<>() {}));
     for (var id : updatedWorkspaces) {
-      if (context.getFlightStatus() == FlightStatus.SUCCESS) {
-        activityLogDao.writeActivity(
-            UUID.fromString(id), getDbWorkspaceActivityLog(operationType, userEmail, subjectId));
-      }
+      activityLogDao.writeActivity(
+          UUID.fromString(id), getDbWorkspaceActivityLog(operationType, userEmail, subjectId));
     }
   }
 }
