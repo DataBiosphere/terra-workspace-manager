@@ -6,6 +6,7 @@ import bio.terra.cloudres.google.iam.IamCow;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
+import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.CustomGcpIamRole;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.CustomGcpIamRoleMapping;
@@ -14,6 +15,7 @@ import com.google.api.services.iam.v1.model.Role;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,17 +32,16 @@ public class RetrieveGcpIamCustomRoleStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    HashSet<CustomGcpIamRole> customGcpIamRoles = new HashSet<>();
+    Set<CustomGcpIamRole> customGcpIamRoles = new HashSet<>();
     customGcpIamRoles.addAll(CUSTOM_GCP_IAM_ROLES);
     customGcpIamRoles.addAll(CustomGcpIamRoleMapping.CUSTOM_GCP_RESOURCE_IAM_ROLES.values());
-    retrieveCustomRoles(customGcpIamRoles, context);
-    return StepResult.getStepResultSuccess();
+    return retrieveCustomRoles(customGcpIamRoles, context);
   }
 
-  private void retrieveCustomRoles(
+  private StepResult retrieveCustomRoles(
       Collection<CustomGcpIamRole> customGcpIamRoles, FlightContext context) {
-    for (CustomGcpIamRole customResourceRole : customGcpIamRoles) {
-      String fullyQualifiedRoleName = customResourceRole.getFullyQualifiedRoleName(projectId);
+    for (CustomGcpIamRole customGcpIamRole : customGcpIamRoles) {
+      String fullyQualifiedRoleName = customGcpIamRole.getFullyQualifiedRoleName(projectId);
       Role role;
       try {
         role = iamCow.projects().roles().get(fullyQualifiedRoleName).execute();
@@ -50,18 +51,19 @@ public class RetrieveGcpIamCustomRoleStep implements Step {
           if (googleEx.getStatusCode() >= 400 && googleEx.getStatusCode() < 500) {
             logger.error(
                 "calling GCP iam/roles GET api receives error for custom role {}",
-                customResourceRole,
+                customGcpIamRole,
                 e);
-            return;
+            continue;
           }
         }
-        throw new RetryException(e);
+        return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
       }
       // Do not put the role in the map if it is already deleted.
       if (role.getDeleted() == null || !role.getDeleted()) {
         context.getWorkingMap().put(fullyQualifiedRoleName, role);
       }
     }
+    return StepResult.getStepResultSuccess();
   }
 
   @Override

@@ -14,6 +14,7 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
+import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.admin.flights.cloudcontexts.gcp.GcpIamCustomRolePatchStep;
 import bio.terra.workspace.service.admin.flights.cloudcontexts.gcp.RetrieveGcpIamCustomRoleStep;
@@ -26,6 +27,7 @@ import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import com.google.api.services.iam.v1.model.Role;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -50,6 +52,7 @@ public class AdminServiceTest extends BaseConnectedTest {
   @Autowired WorkspaceConnectedTestUtils connectedTestUtils;
   @Autowired UserAccessUtils userAccessUtils;
   @Autowired CrlService crlService;
+  @Autowired WorkspaceActivityLogDao workspaceActivityLogDao;
 
   private IamCow iamCow;
   List<UUID> workspaceIds = new ArrayList<>();
@@ -71,7 +74,7 @@ public class AdminServiceTest extends BaseConnectedTest {
             .createWorkspaceWithGcpContext(userAccessUtils.defaultUserAuthRequest())
             .getWorkspaceId());
     projectIds =
-        workspaceDao.listCloudContexts(CloudPlatform.GCP).stream()
+        workspaceDao.getWorkspaceToCloudContextMap(CloudPlatform.GCP).values().stream()
             .map(cloudContext -> GcpCloudContext.deserialize(cloudContext).getGcpProjectId())
             .toList();
     // The existing project has incomplete permissions on PROJECT_READER
@@ -91,6 +94,12 @@ public class AdminServiceTest extends BaseConnectedTest {
 
   @Test
   public void syncIamRole_newPermissionsAddedToCustomRoleProjectReader() {
+    OffsetDateTime lastChangeTimestampOfWorkspace1 =
+        workspaceActivityLogDao.getLastUpdateDetails(workspaceIds.get(0)).get().getChangeDate();
+    OffsetDateTime lastChangeTimestampOfWorkspace2 =
+        workspaceActivityLogDao.getLastUpdateDetails(workspaceIds.get(1)).get().getChangeDate();
+    OffsetDateTime lastChangeTimestampOfWorkspace3 =
+        workspaceActivityLogDao.getLastUpdateDetails(workspaceIds.get(2)).get().getChangeDate();
     // Test idempotency of steps by retrying them once.
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(
@@ -107,10 +116,30 @@ public class AdminServiceTest extends BaseConnectedTest {
       assertProjectReaderRoleIsUpdated(
           projectId, CUSTOM_GCP_PROJECT_IAM_ROLES.get(WsmIamRole.READER).getIncludedPermissions());
     }
+    assertTrue(
+        workspaceActivityLogDao
+            .getLastUpdateDetails(workspaceIds.get(0))
+            .get()
+            .getChangeDate()
+            .isAfter(lastChangeTimestampOfWorkspace1));
+    assertTrue(
+        workspaceActivityLogDao
+            .getLastUpdateDetails(workspaceIds.get(1))
+            .get()
+            .getChangeDate()
+            .isAfter(lastChangeTimestampOfWorkspace2));
+    assertTrue(
+        workspaceActivityLogDao
+            .getLastUpdateDetails(workspaceIds.get(2))
+            .get()
+            .getChangeDate()
+            .isAfter(lastChangeTimestampOfWorkspace3));
   }
 
   @Test
   public void syncIamRole_undo() {
+    OffsetDateTime lastChangeTimestampOfWorkspace1 =
+        workspaceActivityLogDao.getLastUpdateDetails(workspaceIds.get(0)).get().getChangeDate();
     // Test idempotency of steps by retrying them once.
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(
@@ -127,6 +156,9 @@ public class AdminServiceTest extends BaseConnectedTest {
       assertProjectReaderRoleIsUpdated(
           projectId, INCOMPLETE_PROJECT_READER.getIncludedPermissions());
     }
+    OffsetDateTime newChangeTimestampOfWorkspace1 =
+        workspaceActivityLogDao.getLastUpdateDetails(workspaceIds.get(0)).get().getChangeDate();
+    assertTrue(newChangeTimestampOfWorkspace1.isEqual(lastChangeTimestampOfWorkspace1));
   }
 
   @Test

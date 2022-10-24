@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.admin;
 
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.GCP_PROJECT_IDS;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.IS_WET_RUN;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.WORKSPACE_ID_TO_GCP_PROJECT_ID_MAP;
 
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -12,7 +12,9 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
-import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
@@ -33,12 +35,16 @@ public class AdminService {
 
   @Nullable
   public String syncIamRoleForAllGcpProjects(AuthenticatedUserRequest userRequest, boolean wetRun) {
-    ArrayList<String> projectIds =
-        new ArrayList<>(
-            workspaceDao.listCloudContexts(CloudPlatform.GCP).stream()
-                .map(cloudContext -> GcpCloudContext.deserialize(cloudContext).getGcpProjectId())
-                .toList());
-    if (projectIds.isEmpty()) {
+    Map<UUID, String> workspaceIdToGcpProjectIdMap = new HashMap<>();
+    for (Map.Entry<UUID, String> cloudContext :
+        workspaceDao.getWorkspaceToCloudContextMap(CloudPlatform.GCP).entrySet()) {
+      workspaceIdToGcpProjectIdMap.put(
+          cloudContext.getKey(),
+          Objects.requireNonNull(GcpCloudContext.deserialize(cloudContext.getValue()))
+              .getGcpProjectId());
+    }
+
+    if (workspaceIdToGcpProjectIdMap.isEmpty()) {
       throw new InternalServerErrorException("No GCP projects found");
     }
     JobBuilder job =
@@ -48,8 +54,8 @@ public class AdminService {
             .jobId(UUID.randomUUID().toString())
             .flightClass(SyncGcpIamRolesFlight.class)
             .userRequest(userRequest)
-            .operationType(OperationType.CREATE)
-            .addParameter(GCP_PROJECT_IDS, projectIds)
+            .operationType(OperationType.ADMIN_UPDATE)
+            .addParameter(WORKSPACE_ID_TO_GCP_PROJECT_ID_MAP, workspaceIdToGcpProjectIdMap)
             .addParameter(IS_WET_RUN, wetRun);
     return job.submit();
   }

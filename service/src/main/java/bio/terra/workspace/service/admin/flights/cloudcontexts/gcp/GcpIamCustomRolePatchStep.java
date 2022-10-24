@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.admin.flights.cloudcontexts.gcp;
 
 import static bio.terra.workspace.service.workspace.CloudSyncRoleMapping.CUSTOM_GCP_IAM_ROLES;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.UPDATED_WORKSPACES;
 
 import bio.terra.cloudres.google.iam.IamCow;
 import bio.terra.stairway.FlightContext;
@@ -10,11 +11,13 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.CustomGcpIamRole;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.CustomGcpIamRoleMapping;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.iam.v1.model.CreateRoleRequest;
 import com.google.api.services.iam.v1.model.Role;
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.UUID;
 import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,12 +27,14 @@ public class GcpIamCustomRolePatchStep implements Step {
   private final Logger logger = LoggerFactory.getLogger(GcpIamCustomRolePatchStep.class);
 
   private final IamCow iamCow;
+  private final UUID workspaceId;
   private final String projectId;
 
   private final HashSet<CustomGcpIamRole> customGcpIamRoles = new HashSet<>();
 
-  public GcpIamCustomRolePatchStep(IamCow iamCow, String projectId) {
+  public GcpIamCustomRolePatchStep(IamCow iamCow, UUID workspaceId, String projectId) {
     this.iamCow = iamCow;
+    this.workspaceId = workspaceId;
     this.projectId = projectId;
     customGcpIamRoles.addAll(CUSTOM_GCP_IAM_ROLES);
     customGcpIamRoles.addAll(CustomGcpIamRoleMapping.CUSTOM_GCP_RESOURCE_IAM_ROLES.values());
@@ -38,16 +43,26 @@ public class GcpIamCustomRolePatchStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
+    boolean workspaceUpdated = false;
     for (CustomGcpIamRole customGcpIamRole : customGcpIamRoles) {
       Role originalRole = getCustomRole(customGcpIamRole, projectId);
       if (originalRole == null) {
-        createCustomRole(customGcpIamRole, projectId);
+        createCustomRole(customGcpIamRole);
+        workspaceUpdated = true;
       } else {
         if (!CollectionUtils.isEqualCollection(
             originalRole.getIncludedPermissions(), customGcpIamRole.getIncludedPermissions())) {
-          updateCustomRole(customGcpIamRole, projectId);
+          updateCustomRole(customGcpIamRole);
+          workspaceUpdated = true;
         }
       }
+    }
+    if (workspaceUpdated) {
+      FlightMap workingMap = flightContext.getWorkingMap();
+      HashSet<String> updatedWorkspaces =
+          workingMap.get(UPDATED_WORKSPACES, new TypeReference<>() {});
+      updatedWorkspaces.add(workspaceId.toString());
+      workingMap.put(UPDATED_WORKSPACES, updatedWorkspaces);
     }
     return StepResult.getStepResultSuccess();
   }
@@ -56,8 +71,7 @@ public class GcpIamCustomRolePatchStep implements Step {
    * Utility for creating custom roles in GCP from WSM's CustomGcpIamRole objects. These roles will
    * be defined at the project level specified by projectId.
    */
-  private void updateCustomRole(CustomGcpIamRole customRole, String projectId)
-      throws RetryException {
+  private void updateCustomRole(CustomGcpIamRole customRole) throws RetryException {
     try {
       // Only assigned field will be updated.
       Role role = new Role().setIncludedPermissions(customRole.getIncludedPermissions());
@@ -90,8 +104,7 @@ public class GcpIamCustomRolePatchStep implements Step {
    * Utility for creating custom roles in GCP from WSM's CustomGcpIamRole objects. These roles will
    * be defined at the project level in the specified by projectId.
    */
-  private void createCustomRole(CustomGcpIamRole customRole, String projectId)
-      throws RetryException {
+  private void createCustomRole(CustomGcpIamRole customRole) throws RetryException {
     try {
       Role gcpRole =
           new Role()

@@ -2,7 +2,6 @@ package bio.terra.workspace.db;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.in;
 import static org.hamcrest.core.IsNot.not;
@@ -26,7 +25,6 @@ import com.google.common.collect.ImmutableSet;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -132,7 +130,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
   }
 
   @Test
-  void listCloudContexts_getAllGcpCloudContexts() {
+  void getWorkspaceToCloudContextMap_getAllGcpCloudContexts() {
     UUID workspace1 = WorkspaceUnitTestUtils.createWorkspaceWithoutGcpContext(workspaceDao);
     UUID workspace2 = WorkspaceUnitTestUtils.createWorkspaceWithoutGcpContext(workspaceDao);
     UUID workspace3 = WorkspaceUnitTestUtils.createWorkspaceWithoutGcpContext(workspaceDao);
@@ -147,16 +145,20 @@ class WorkspaceDaoTest extends BaseUnitTest {
     WorkspaceUnitTestUtils.createGcpCloudContextInDatabase(workspaceDao, workspace3, project3);
     WorkspaceUnitTestUtils.createCloudContextInDatabase(
         workspaceDao, workspace4, project4, CloudPlatform.AZURE);
+    Map<UUID, String> workspaceIdToGcpContextMap = new HashMap<>();
 
-    ImmutableList<String> gcpCloudContexts = workspaceDao.listCloudContexts(CloudPlatform.GCP);
+    workspaceIdToGcpContextMap.putAll(
+        workspaceDao.getWorkspaceToCloudContextMap(CloudPlatform.GCP));
 
-    HashSet<String> gcpProjectIds =
-        new HashSet<>(
-            gcpCloudContexts.stream()
-                .map(cloudContext -> GcpCloudContext.deserialize(cloudContext).getGcpProjectId())
-                .toList());
-    assertThat(gcpProjectIds, containsInAnyOrder(project1, project2, project3));
-    assertFalse(gcpProjectIds.contains(project4));
+    for (Map.Entry<UUID, String> cloudContext : workspaceIdToGcpContextMap.entrySet()) {
+      workspaceIdToGcpContextMap.put(
+          cloudContext.getKey(),
+          GcpCloudContext.deserialize(cloudContext.getValue()).getGcpProjectId());
+    }
+    assertEquals(project1, workspaceIdToGcpContextMap.get(workspace1));
+    assertEquals(project2, workspaceIdToGcpContextMap.get(workspace2));
+    assertEquals(project3, workspaceIdToGcpContextMap.get(workspace3));
+    assertFalse(workspaceIdToGcpContextMap.containsValue(project4));
   }
 
   @Test
