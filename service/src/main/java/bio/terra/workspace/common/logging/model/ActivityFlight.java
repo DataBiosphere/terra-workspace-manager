@@ -70,7 +70,7 @@ public enum ActivityFlight {
   GCP_WORKSPACE_CLONE_FLIGHT(
       CloneGcpWorkspaceFlight.class.getName(), ActivityLogChangedTarget.WORKSPACE),
   FOLDER_DELETE_FLIGHT(DeleteFolderFlight.class.getName(), ActivityLogChangedTarget.FOLDER),
-  SYNC_IAM_ROLES_FLIGHT(
+  SYNC_GCP_IAM_ROLES_FLIGHT(
       SyncGcpIamRolesFlight.class.getName(), ActivityLogChangedTarget.GCP_CLOUD_CONTEXT);
 
   private final String flightClassName;
