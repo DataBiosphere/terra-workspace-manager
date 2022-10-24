@@ -402,19 +402,19 @@ public class FolderDaoTest extends BaseUnitTest {
   }
 
   @Test
-  public void deleteFolders_noFolder_returnsFalse() {
+  public void deleteAllFolders_noFolder_returnsFalse() {
     UUID workspaceUuid = createWorkspaceWithoutGcpContext(workspaceDao);
 
     assertFalse(folderDao.deleteAllFolders(workspaceUuid));
   }
 
   @Test
-  public void deleteFolders_workspaceNotFound_returnsFalse() {
+  public void deleteAllFolders_workspaceNotFound_returnsFalse() {
     assertFalse(folderDao.deleteAllFolders(UUID.randomUUID()));
   }
 
   @Test
-  public void deleteFolders_allFoldersAreDeletedInTheWorkspace() {
+  public void deleteAllFolders_allFoldersAreDeletedInTheWorkspace() {
     UUID workspaceUuid = createWorkspaceWithoutGcpContext(workspaceDao);
     var folder = getFolder("foo", workspaceUuid);
     // second and third folders are under folder foo.
