@@ -5,7 +5,11 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.workspace.flight.CheckSpendProfileStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import java.util.UUID;
 
 /**
@@ -18,26 +22,41 @@ public class CreateAzureContextFlight extends Flight {
     super(inputParameters, applicationContext);
 
     FlightBeanBag appContext = FlightBeanBag.getFromObject(applicationContext);
+    var featureConfiguration = appContext.getFeatureConfiguration();
 
     UUID workspaceUuid =
         UUID.fromString(inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
+    AuthenticatedUserRequest userRequest =
+        inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
     RetryRule dbRetry = RetryRules.shortDatabase();
 
-    // 0. Write the incomplete DB row to prevent concurrent creates
+    // check that we are allowed to link to this spend profile
+    if (appContext.getFeatureConfiguration().isBpmAzureEnabled()) {
+      addStep(
+          new CheckSpendProfileStep(
+              appContext.getWorkspaceDao(),
+              appContext.getSpendProfileService(),
+              workspaceUuid,
+              userRequest,
+              CloudPlatform.AZURE,
+              featureConfiguration.isBpmAzureEnabled()));
+    }
+
+    // write the incomplete DB row to prevent concurrent creates
     addStep(
         new CreateDbAzureCloudContextStartStep(
             workspaceUuid, appContext.getAzureCloudContextService()),
         dbRetry);
 
-    // 1. validate the MRG
+    // validate the MRG
     // TODO: retry?
     addStep(new ValidateMRGStep(appContext.getCrlService(), appContext.getAzureConfig()));
 
-    // 2. Update the DB row filling in the cloud context
+    // update the DB row filling in the cloud context
     addStep(
         new CreateDbAzureCloudContextFinishStep(
-            workspaceUuid, appContext.getAzureCloudContextService()),
+            workspaceUuid, appContext.getAzureCloudContextService(), featureConfiguration),
         dbRetry);
   }
 }

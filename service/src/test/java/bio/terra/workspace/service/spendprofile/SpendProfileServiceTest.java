@@ -21,42 +21,46 @@ class SpendProfileServiceTest extends BaseConnectedTest {
   @Test
   void authorizeLinkingSuccess() {
     SpendProfileId id = spendUtils.defaultSpendId();
-    SpendProfile profile = SpendProfile.builder().id(id).build();
-    SpendProfileService service = new SpendProfileService(samService, ImmutableList.of(profile));
+    SpendProfile profile =
+        SpendProfile.buildGcpSpendProfile(id, spendUtils.defaultBillingAccountId());
+    SpendProfileService service =
+        new SpendProfileService(samService, ImmutableList.of(profile), spendProfileConfiguration);
 
-    assertEquals(profile, service.authorizeLinking(id, userAccessUtils.defaultUserAuthRequest()));
+    assertEquals(
+        profile, service.authorizeLinking(id, false, userAccessUtils.defaultUserAuthRequest()));
   }
 
   @Test
   void authorizeLinkingSamUnauthorizedThrowsUnauthorized() {
     SpendProfileId id = spendUtils.defaultSpendId();
-    SpendProfile profile = SpendProfile.builder().id(id).build();
-    SpendProfileService service = new SpendProfileService(samService, ImmutableList.of(profile));
+    SpendProfile profile =
+        SpendProfile.buildGcpSpendProfile(new SpendProfileId("bad-profile-id"), "fake");
+    SpendProfileService service =
+        new SpendProfileService(samService, ImmutableList.of(profile), spendProfileConfiguration);
 
     assertThrows(
         SpendUnauthorizedException.class,
-        () -> service.authorizeLinking(id, userAccessUtils.secondUserAuthRequest()));
+        () -> service.authorizeLinking(id, false, userAccessUtils.secondUserAuthRequest()));
   }
 
   @Test
   void authorizeLinkingUnknownIdThrowsUnauthorized() {
-    SpendProfileService service = new SpendProfileService(samService, ImmutableList.of());
+    SpendProfileService service =
+        new SpendProfileService(samService, ImmutableList.of(), spendProfileConfiguration);
     assertThrows(
         SpendUnauthorizedException.class,
         () ->
             service.authorizeLinking(
-                new SpendProfileId("bar"), userAccessUtils.defaultUserAuthRequest()));
+                new SpendProfileId("bar"), false, userAccessUtils.defaultUserAuthRequest()));
   }
 
   @Test
   void parseSpendProfileConfiguration() {
     SpendProfileService service = new SpendProfileService(samService, spendProfileConfiguration);
     assertEquals(
-        SpendProfile.builder()
-            .id(spendUtils.defaultSpendId())
-            .billingAccountId(spendUtils.defaultBillingAccountId())
-            .build(),
+        SpendProfile.buildGcpSpendProfile(
+            spendUtils.defaultSpendId(), spendUtils.defaultBillingAccountId()),
         service.authorizeLinking(
-            spendUtils.defaultSpendId(), userAccessUtils.defaultUserAuthRequest()));
+            spendUtils.defaultSpendId(), false, userAccessUtils.defaultUserAuthRequest()));
   }
 }

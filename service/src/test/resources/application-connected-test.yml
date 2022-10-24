@@ -6,7 +6,16 @@ workspace:
     user-delegated-service-account-path: ../config/user-delegated-sa.json
     default-user-email: elijah.thunderlord@test.firecloud.org
     second-user-email: liam.dragonmaw@test.firecloud.org
+    billing-user-email: hermione.owner@test.firecloud.org
 
   crl:
     use-crl: true
     use-janitor: true
+
+  spend:
+    spend-profiles:
+      - id: wm-default-spend-profile
+        billing-account-id: 01A82E-CA8A14-367457
+      # an empty profile to ensure we are resilient to empty spend profile env var values
+      - id:
+        billing-account-id:

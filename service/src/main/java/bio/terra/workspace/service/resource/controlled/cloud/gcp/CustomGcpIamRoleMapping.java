@@ -72,6 +72,7 @@ public class CustomGcpIamRoleMapping {
       ImmutableList.of(
           "notebooks.instances.get",
           "notebooks.instances.list",
+          "notebooks.instances.checkUpgradability",
           "notebooks.locations.get",
           "notebooks.locations.list");
   // The 'iam.serviceAccounts.actAs' permission on the service account running the instance VM is

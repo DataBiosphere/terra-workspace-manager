@@ -16,6 +16,8 @@ public class FeatureConfiguration {
   private boolean azureEnabled;
   private boolean alpha1Enabled;
   private boolean tpsEnabled;
+  private boolean bpmGcpEnabled;
+  private boolean bpmAzureEnabled;
 
   public boolean isAzureEnabled() {
     return azureEnabled;
@@ -39,6 +41,22 @@ public class FeatureConfiguration {
 
   public void setTpsEnabled(boolean tpsEnabled) {
     this.tpsEnabled = tpsEnabled;
+  }
+
+  public boolean isBpmGcpEnabled() {
+    return bpmGcpEnabled;
+  }
+
+  public void setBpmGcpEnabled(boolean bpmGcpEnabled) {
+    this.bpmGcpEnabled = bpmGcpEnabled;
+  }
+
+  public boolean isBpmAzureEnabled() {
+    return bpmAzureEnabled;
+  }
+
+  public void setBpmAzureEnabled(boolean bpmAzureEnabled) {
+    this.bpmAzureEnabled = bpmAzureEnabled;
   }
 
   public void azureEnabledCheck() {

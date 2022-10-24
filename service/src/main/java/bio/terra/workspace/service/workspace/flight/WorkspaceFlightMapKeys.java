@@ -6,7 +6,6 @@ public final class WorkspaceFlightMapKeys {
   public static final String GCP_PROJECT_ID = "gcpProjectId";
   public static final String WORKSPACE_ID_TO_GCP_PROJECT_ID_MAP = "workspaceIdToGcpProjectIdMap";
   public static final String WORKSPACE_STAGE = "workspaceStage";
-  public static final String BILLING_ACCOUNT_ID = "billingAccountId";
   public static final String IAM_GROUP_EMAIL_MAP = "iamGroupEmailMap";
   public static final String RBS_RESOURCE_ID = "rbsResourceId";
   public static final String DESCRIPTION = "descriptionId";

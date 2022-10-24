@@ -34,7 +34,6 @@ import bio.terra.workspace.service.workspace.CloudSyncRoleMapping;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
-import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountException;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
@@ -141,29 +140,6 @@ class CreateGcpContextFlightV2Test extends BaseConnectedTest {
             .getBillingAccountName());
     assertRolesExist(project);
     assertPolicyGroupsSynced(workspaceUuid, project);
-  }
-
-  @Test
-  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  void createsProjectAndContext_noBillingAccount_flightFailsAndGcpProjectNotCreated()
-      throws Exception {
-    UUID workspaceUuid = createWorkspace(spendUtils.noBillingAccount());
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
-    assertTrue(gcpCloudContextService.getGcpCloudContext(workspaceUuid).isEmpty());
-
-    FlightState flightState =
-        StairwayTestUtils.blockUntilFlightCompletes(
-            jobService.getStairway(),
-            CreateGcpContextFlightV2.class,
-            createInputParameters(workspaceUuid, userRequest),
-            STAIRWAY_FLIGHT_TIMEOUT,
-            FlightDebugInfo.newBuilder().build());
-
-    assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
-    assertEquals(NoBillingAccountException.class, flightState.getException().get().getClass());
-    assertTrue(gcpCloudContextService.getGcpCloudContext(workspaceUuid).isEmpty());
-    assertFalse(
-        flightState.getResultMap().get().containsKey(WorkspaceFlightMapKeys.GCP_PROJECT_ID));
   }
 
   @Test

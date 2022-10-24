@@ -6,26 +6,21 @@ import bio.terra.common.stairway.StairwayComponent;
 import bio.terra.common.stairway.TracingHook;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightDebugInfo;
+import bio.terra.stairway.FlightEnumeration;
 import bio.terra.stairway.FlightFilter;
 import bio.terra.stairway.FlightFilterOp;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
-import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.Stairway;
 import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.DuplicateFlightIdException;
 import bio.terra.stairway.exception.FlightNotFoundException;
 import bio.terra.stairway.exception.StairwayException;
-import bio.terra.workspace.app.configuration.external.IngressConfiguration;
 import bio.terra.workspace.app.configuration.external.JobConfiguration;
 import bio.terra.workspace.app.configuration.external.StairwayDatabaseConfiguration;
 import bio.terra.workspace.common.logging.WorkspaceActivityLogHook;
-import bio.terra.workspace.common.utils.ErrorReportUtils;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.MdcHook;
-import bio.terra.workspace.generated.model.ApiErrorReport;
-import bio.terra.workspace.generated.model.ApiJobReport;
-import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.job.exception.DuplicateJobIdException;
@@ -34,35 +29,36 @@ import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.job.exception.JobNotCompleteException;
 import bio.terra.workspace.service.job.exception.JobNotFoundException;
 import bio.terra.workspace.service.job.exception.JobResponseException;
+import bio.terra.workspace.service.job.model.EnumeratedJob;
+import bio.terra.workspace.service.job.model.EnumeratedJobs;
+import bio.terra.workspace.service.resource.model.StewardshipType;
+import bio.terra.workspace.service.resource.model.WsmResource;
+import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.model.JobStateFilter;
+import bio.terra.workspace.service.workspace.model.OperationType;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.opencensus.contrib.spring.aop.Traced;
-import java.nio.file.Path;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 @Component
 public class JobService {
 
   private final JobConfiguration jobConfig;
-  private final IngressConfiguration ingressConfig;
   private final StairwayDatabaseConfiguration stairwayDatabaseConfiguration;
-  private final ScheduledExecutorService executor;
   private final MdcHook mdcHook;
   private final WorkspaceActivityLogHook workspaceActivityLogHook;
   private final StairwayComponent stairwayComponent;
@@ -74,7 +70,6 @@ public class JobService {
   @Autowired
   public JobService(
       JobConfiguration jobConfig,
-      IngressConfiguration ingressConfig,
       StairwayDatabaseConfiguration stairwayDatabaseConfiguration,
       MdcHook mdcHook,
       WorkspaceActivityLogHook workspaceActivityLogHook,
@@ -82,9 +77,7 @@ public class JobService {
       FlightBeanBag flightBeanBag,
       ObjectMapper objectMapper) {
     this.jobConfig = jobConfig;
-    this.ingressConfig = ingressConfig;
     this.stairwayDatabaseConfiguration = stairwayDatabaseConfiguration;
-    this.executor = Executors.newScheduledThreadPool(jobConfig.getMaxThreads());
     this.mdcHook = mdcHook;
     this.workspaceActivityLogHook = workspaceActivityLogHook;
     this.stairwayComponent = stairwayComponent;
@@ -140,24 +133,10 @@ public class JobService {
     try {
       int pollSeconds = jobConfig.getPollingIntervalSeconds();
       int pollCycles = jobConfig.getTimeoutSeconds() / jobConfig.getPollingIntervalSeconds();
-      for (int i = 0; i < pollCycles; i++) {
-        ScheduledFuture<FlightState> futureState =
-            executor.schedule(
-                new PollFlightTask(stairwayComponent.get(), jobId), pollSeconds, TimeUnit.SECONDS);
-        FlightState state = futureState.get();
-        if (state != null) {
-          // Indicates job has completed, though not necessarily successfully.
-          return;
-        } else {
-          // Indicates job has not completed yet, continue polling
-          continue;
-        }
-      }
-    } catch (InterruptedException | ExecutionException stairwayEx) {
+      stairwayComponent.get().waitForFlight(jobId, pollSeconds, pollCycles);
+    } catch (InterruptedException | StairwayException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }
-    // Indicates we timed out waiting for completion, throw exception
-    throw new InternalStairwayException("Flight did not complete in the allowed wait time");
   }
 
   /**
@@ -177,113 +156,123 @@ public class JobService {
             .exceptionSerializer(new StairwayExceptionSerializer(objectMapper)));
   }
 
-  public ApiJobReport mapFlightStateToApiJobReport(FlightState flightState) {
-    FlightMap inputParameters = flightState.getInputParameters();
-    String description = inputParameters.get(JobMapKeys.DESCRIPTION.getKeyName(), String.class);
-    FlightStatus flightStatus = flightState.getFlightStatus();
-    String submittedDate = flightState.getSubmitted().toString();
-    ApiJobReport.StatusEnum jobStatus = getJobStatus(flightStatus);
-
-    String completedDate = null;
-    HttpStatus statusCode = HttpStatus.ACCEPTED;
-
-    if (jobStatus != StatusEnum.RUNNING) {
-      // If the job is completed, the JobReport should include a result code indicating success or
-      // failure. For failed jobs, this code is the error code. For successful jobs, this is the
-      // code specified by the flight if present, or a default of 200 if not.
-      completedDate = flightState.getCompleted().get().toString();
-      switch (jobStatus) {
-        case FAILED:
-          int errorCode =
-              flightState
-                  .getException()
-                  .map(e -> ErrorReportUtils.buildApiErrorReport(e).getStatusCode())
-                  .orElseThrow(
-                      () ->
-                          new InvalidResultStateException(
-                              String.format(
-                                  "Flight %s failed with no exception reported",
-                                  flightState.getFlightId())));
-          statusCode = HttpStatus.valueOf(errorCode);
-          break;
-        case SUCCEEDED:
-          FlightMap resultMap = getResultMap(flightState);
-          statusCode = resultMap.get(JobMapKeys.STATUS_CODE.getKeyName(), HttpStatus.class);
-          if (statusCode == null) {
-            statusCode = HttpStatus.OK;
-          }
-          break;
-        default:
-          throw new IllegalStateException(
-              "Cannot get status code of flight in unknown state " + jobStatus);
-      }
-    }
-
-    ApiJobReport jobReport =
-        new ApiJobReport()
-            .id(flightState.getFlightId())
-            .description(description)
-            .status(jobStatus)
-            .statusCode(statusCode.value())
-            .submitted(submittedDate)
-            .completed(completedDate)
-            .resultURL(resultUrlFromFlightState(flightState));
-
-    return jobReport;
-  }
-
-  private String resultUrlFromFlightState(FlightState flightState) {
-    String resultPath =
-        flightState.getInputParameters().get(JobMapKeys.RESULT_PATH.getKeyName(), String.class);
-    if (resultPath == null) {
-      resultPath = "";
-    }
-    // This is a little hacky, but GCP rejects non-https traffic and a local server does not support
-    // it.
-    String protocol =
-        ingressConfig.getDomainName().startsWith("localhost") ? "http://" : "https://";
-    return protocol + Path.of(ingressConfig.getDomainName(), resultPath).toString();
-  }
-
-  private ApiJobReport.StatusEnum getJobStatus(FlightStatus flightStatus) {
-    switch (flightStatus) {
-      case RUNNING:
-        return ApiJobReport.StatusEnum.RUNNING;
-      case SUCCESS:
-        return ApiJobReport.StatusEnum.SUCCEEDED;
-      case ERROR:
-      case FATAL:
-      default:
-        return ApiJobReport.StatusEnum.FAILED;
-    }
-  }
-
-  public List<ApiJobReport> enumerateJobs(
-      int offset, int limit, AuthenticatedUserRequest userRequest) {
-
-    List<FlightState> flightStateList;
+  /**
+   * List Stairway flights related to a workspace. These inputs are translated into inputs to
+   * Stairway's getFlights calls. The resulting flights are translated into enumerated jobs. The
+   * jobs are ordered by submit time.
+   *
+   * @param workspaceUuid workspace we are listing in
+   * @param limit max number of jobs to return
+   * @param pageToken optional starting place in the result set; start at beginning if missing
+   * @param cloudResourceType optional filter by cloud resource type
+   * @param stewardshipType optional filter by stewardship type
+   * @param resourceName optional filter by resource name
+   * @param jobStateFilter optional filter by job state
+   * @return POJO containing the results
+   */
+  public EnumeratedJobs enumerateJobs(
+      UUID workspaceUuid,
+      int limit,
+      @Nullable String pageToken,
+      @Nullable WsmResourceFamily cloudResourceType,
+      @Nullable StewardshipType stewardshipType,
+      @Nullable String resourceName,
+      @Nullable JobStateFilter jobStateFilter) {
+    FlightEnumeration flightEnumeration;
     try {
-      FlightFilter filter = new FlightFilter();
-      filter.addFilterInputParameter(
-          JobMapKeys.SUBJECT_ID.getKeyName(), FlightFilterOp.EQUAL, userRequest.getSubjectId());
-      flightStateList = stairwayComponent.get().getFlights(offset, limit, filter);
+      FlightFilter filter =
+          buildFlightFilter(
+              workspaceUuid, cloudResourceType, stewardshipType, resourceName, jobStateFilter);
+      flightEnumeration = stairwayComponent.get().getFlights(pageToken, limit, filter);
     } catch (StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }
 
-    List<ApiJobReport> jobReportList = new ArrayList<>();
-    for (FlightState flightState : flightStateList) {
-      ApiJobReport jobReport = mapFlightStateToApiJobReport(flightState);
-      jobReportList.add(jobReport);
+    List<EnumeratedJob> jobList = new ArrayList<>();
+    for (FlightState state : flightEnumeration.getFlightStateList()) {
+      FlightMap inputMap = state.getInputParameters();
+      OperationType operationType =
+          (inputMap.containsKey(WorkspaceFlightMapKeys.OPERATION_TYPE))
+              ? inputMap.get(WorkspaceFlightMapKeys.OPERATION_TYPE, OperationType.class)
+              : OperationType.UNKNOWN;
+
+      WsmResource wsmResource =
+          (inputMap.containsKey(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE))
+              ? inputMap.get(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE, new TypeReference<>() {})
+              : null;
+
+      String jobDescription =
+          (inputMap.containsKey(JobMapKeys.DESCRIPTION.getKeyName()))
+              ? inputMap.get(JobMapKeys.DESCRIPTION.getKeyName(), String.class)
+              : StringUtils.EMPTY;
+
+      EnumeratedJob enumeratedJob =
+          new EnumeratedJob()
+              .flightState(state)
+              .jobDescription(jobDescription)
+              .operationType(operationType)
+              .resource(wsmResource);
+      jobList.add(enumeratedJob);
     }
-    return jobReportList;
+
+    return new EnumeratedJobs()
+        .pageToken(flightEnumeration.getNextPageToken())
+        .totalResults(flightEnumeration.getTotalFlights())
+        .results(jobList);
+  }
+
+  private FlightFilter buildFlightFilter(
+      UUID workspaceUuid,
+      @Nullable WsmResourceFamily cloudResourceType,
+      @Nullable StewardshipType stewardshipType,
+      @Nullable String resourceName,
+      @Nullable JobStateFilter jobStateFilter) {
+
+    FlightFilter filter = new FlightFilter();
+    // Always filter by workspace
+    filter.addFilterInputParameter(
+        WorkspaceFlightMapKeys.WORKSPACE_ID, FlightFilterOp.EQUAL, workspaceUuid.toString());
+    // Add optional filters
+    Optional.ofNullable(cloudResourceType)
+        .map(
+            t ->
+                filter.addFilterInputParameter(
+                    WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_TYPE, FlightFilterOp.EQUAL, t));
+    Optional.ofNullable(stewardshipType)
+        .map(
+            t ->
+                filter.addFilterInputParameter(
+                    WorkspaceFlightMapKeys.ResourceKeys.STEWARDSHIP_TYPE, FlightFilterOp.EQUAL, t));
+    Optional.ofNullable(resourceName)
+        .map(
+            t ->
+                filter.addFilterInputParameter(
+                    WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_NAME, FlightFilterOp.EQUAL, t));
+    Optional.ofNullable(jobStateFilter).map(t -> addStateFilter(filter, t));
+
+    return filter;
+  }
+
+  private FlightFilter addStateFilter(FlightFilter filter, JobStateFilter jobStateFilter) {
+    switch (jobStateFilter) {
+      case ALL:
+        break;
+
+      case ACTIVE:
+        filter.addFilterCompletedTime(FlightFilterOp.EQUAL, null);
+        break;
+
+      case COMPLETED:
+        filter.addFilterCompletedTime(FlightFilterOp.GREATER_THAN, Instant.EPOCH);
+        break;
+    }
+    return filter;
   }
 
   @Traced
-  public ApiJobReport retrieveJob(String jobId) {
+  public FlightState retrieveJob(String jobId) {
     try {
-      FlightState flightState = stairwayComponent.get().getFlightState(jobId);
-      return mapFlightStateToApiJobReport(flightState);
+      return stairwayComponent.get().getFlightState(jobId);
     } catch (FlightNotFoundException flightNotFoundException) {
       throw new JobNotFoundException(
           "The flight " + jobId + " was not found", flightNotFoundException);
@@ -315,79 +304,31 @@ public class JobService {
   @Traced
   public <T> JobResultOrException<T> retrieveJobResult(String jobId, Class<T> resultClass) {
     try {
-      return retrieveJobResultWorker(jobId, resultClass);
+      FlightState flightState = stairwayComponent.get().getFlightState(jobId);
+      FlightMap resultMap =
+          flightState.getResultMap().orElseThrow(InvalidResultStateException::noResultMap);
+
+      switch (flightState.getFlightStatus()) {
+        case FATAL:
+          logAlert("WSM Stairway flight {} encountered dismal failure", flightState.getFlightId());
+          return handleFailedFlight(flightState);
+        case ERROR:
+          return handleFailedFlight(flightState);
+        case SUCCESS:
+          return new JobResultOrException<T>()
+              .result(resultMap.get(JobMapKeys.RESPONSE.getKeyName(), resultClass));
+        case RUNNING:
+          throw new JobNotCompleteException(
+              "Attempt to retrieve job result before job is complete; job id: "
+                  + flightState.getFlightId());
+        default:
+          throw new InvalidResultStateException("Impossible case reached");
+      }
     } catch (FlightNotFoundException flightNotFoundException) {
       throw new JobNotFoundException(
           "The flight " + jobId + " was not found", flightNotFoundException);
     } catch (StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
-    }
-  }
-
-  /**
-   * Retrieves the result of an asynchronous job.
-   *
-   * <p>Stairway has no concept of synchronous vs asynchronous flights. However, MC Terra has a
-   * service-level standard result for asynchronous jobs which includes a ApiJobReport and either a
-   * result or error if the job is complete. This is a convenience for callers who would otherwise
-   * need to construct their own AsyncJobResult object.
-   *
-   * <p>Unlike retrieveJobResult, this will not throw for a flight in progress. Instead, it will
-   * return a ApiJobReport without a result or error.
-   */
-  public <T> AsyncJobResult<T> retrieveAsyncJobResult(String jobId, Class<T> resultClass) {
-    try {
-      ApiJobReport jobReport = retrieveJob(jobId);
-      if (jobReport.getStatus().equals(StatusEnum.RUNNING)) {
-        return new AsyncJobResult<T>().jobReport(jobReport);
-      }
-
-      JobResultOrException<T> resultOrException = retrieveJobResultWorker(jobId, resultClass);
-      final ApiErrorReport errorReport;
-      if (jobReport.getStatus().equals(StatusEnum.FAILED)) {
-        errorReport = ErrorReportUtils.buildApiErrorReport(resultOrException.getException());
-      } else {
-        errorReport = null;
-      }
-      return new AsyncJobResult<T>()
-          .jobReport(jobReport)
-          .result(resultOrException.getResult())
-          .errorReport(errorReport);
-    } catch (StairwayException | InterruptedException stairwayEx) {
-      throw new InternalStairwayException(stairwayEx);
-    }
-  }
-
-  private <T> JobResultOrException<T> retrieveJobResultWorker(String jobId, Class<T> resultClass)
-      throws StairwayException, InterruptedException {
-    FlightState flightState = stairwayComponent.get().getFlightState(jobId);
-    FlightMap resultMap = flightState.getResultMap().orElse(null);
-    if (resultMap == null) {
-      throw new InvalidResultStateException("No result map returned from flight");
-    }
-
-    switch (flightState.getFlightStatus()) {
-      case FATAL:
-        // Dismal failures always require manual intervention, so developers should be notified
-        // if they happen.
-        logger.error(
-            "WSM Stairway flight {} encountered dismal failure",
-            flightState.getFlightId(),
-            LoggingUtils.alertObject());
-        return handleFailedFlight(flightState);
-      case ERROR:
-        return handleFailedFlight(flightState);
-      case SUCCESS:
-        return new JobResultOrException<T>()
-            .result(resultMap.get(JobMapKeys.RESPONSE.getKeyName(), resultClass));
-
-      case RUNNING:
-        throw new JobNotCompleteException(
-            "Attempt to retrieve job result before job is complete; job id: "
-                + flightState.getFlightId());
-
-      default:
-        throw new InvalidResultStateException("Impossible case reached");
     }
   }
 
@@ -401,19 +342,8 @@ public class JobService {
             .exception(new JobResponseException("wrap non-runtime exception", exception));
       }
     }
-    logger.error(
-        "WSM Stairway flight {} failed with no exception given",
-        flightState.getFlightId(),
-        LoggingUtils.alertObject());
+    logAlert("WSM Stairway flight {} failed with no exception given", flightState.getFlightId());
     throw new InvalidResultStateException("Failed operation with no exception reported.");
-  }
-
-  private FlightMap getResultMap(FlightState flightState) {
-    FlightMap resultMap = flightState.getResultMap().orElse(null);
-    if (resultMap == null) {
-      throw new InvalidResultStateException("No result map returned from flight");
-    }
-    return resultMap;
   }
 
   /**
@@ -465,6 +395,23 @@ public class JobService {
     this.flightDebugInfo = flightDebugInfo;
   }
 
+  private void logAlert(String msg, String flightId) {
+    // Dismal and unexpected flight failures always require manual intervention,
+    // so developers should be notified if they happen. The alert object is deliberately
+    // not included in the error message.
+    // <p>With the custom json logging configuration we have from TCL
+    // (https://github.com/DataBiosphere/terra-common-lib/blob/develop/src/main/java/bio/terra/common/logging/GoogleJsonLayout.java),
+    // json-like objects like alertObject in the parameter list will be included in the json
+    // blob that we send to stackdriver, even if they aren't actually included in the message.
+    // In this case, that means the stackdriver log will have a field terraLogBasedAlert set
+    // to true which triggers alerts in the Verily deployment.
+    // <p> Json objects will probably still show up in a structured way even if they're also
+    // used in the log message so we could have a placeholder for it if we wanted to, but the
+    // alertObject is just a map with a single value that we use to flag a message for log-based
+    // alerting, so it's not particularly interesting to include in the message.
+    logger.error(msg, flightId, LoggingUtils.alertObject());
+  }
+
   @SuppressFBWarnings(value = "NM_CLASS_NOT_EXCEPTION", justification = "Non-exception by design.")
   public static class JobResultOrException<T> {
     private T result;
@@ -486,61 +433,6 @@ public class JobService {
     public JobResultOrException<T> exception(RuntimeException exception) {
       this.exception = exception;
       return this;
-    }
-  }
-
-  // The result of an asynchronous job is a ApiJobReport and exactly one of a job result
-  // or an ApiErrorReport. If the job is incomplete, only jobReport will be present.
-  public static class AsyncJobResult<T> {
-    private ApiJobReport jobReport;
-    private T result;
-    private ApiErrorReport errorReport;
-
-    public T getResult() {
-      return result;
-    }
-
-    public AsyncJobResult<T> result(T result) {
-      this.result = result;
-      return this;
-    }
-
-    public ApiErrorReport getApiErrorReport() {
-      return errorReport;
-    }
-
-    public AsyncJobResult<T> errorReport(ApiErrorReport errorReport) {
-      this.errorReport = errorReport;
-      return this;
-    }
-
-    public ApiJobReport getJobReport() {
-      return jobReport;
-    }
-
-    public AsyncJobResult<T> jobReport(ApiJobReport jobReport) {
-      this.jobReport = jobReport;
-      return this;
-    }
-  }
-
-  private static class PollFlightTask implements Callable<FlightState> {
-    private final Stairway stairway;
-    private final String flightId;
-
-    public PollFlightTask(Stairway stairway, String flightId) {
-      this.stairway = stairway;
-      this.flightId = flightId;
-    }
-
-    @Override
-    public FlightState call() throws Exception {
-      FlightState state = stairway.getFlightState(flightId);
-      if (!state.isActive()) {
-        return state;
-      } else {
-        return null;
-      }
     }
   }
 }

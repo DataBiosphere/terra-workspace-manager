@@ -74,7 +74,7 @@ public class CloudSyncRoleMapping {
               "artifactregistry.tags.update",
               "cloudbuild.builds.create",
               "cloudbuild.builds.update",
-              "compute.instances.get",
+              "compute.instances.getGuestAttributes",
               "iam.serviceAccounts.get",
               "iam.serviceAccounts.list",
               "lifesciences.operations.cancel",

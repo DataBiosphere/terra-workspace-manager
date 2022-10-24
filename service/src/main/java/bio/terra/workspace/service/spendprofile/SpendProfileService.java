@@ -1,41 +1,74 @@
 package bio.terra.workspace.service.spendprofile;
 
+import bio.terra.common.exception.ValidationException;
+import bio.terra.profile.api.ProfileApi;
+import bio.terra.profile.client.ApiClient;
+import bio.terra.profile.client.ApiException;
+import bio.terra.profile.model.CreateProfileRequest;
+import bio.terra.profile.model.ProfileModel;
 import bio.terra.workspace.app.configuration.external.SpendProfileConfiguration;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.spendprofile.exceptions.BillingProfileManagerServiceAPIException;
 import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
+import com.google.api.client.util.Strings;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
+import io.opencensus.contrib.http.jaxrs.JaxrsClientExtractor;
+import io.opencensus.contrib.http.jaxrs.JaxrsClientFilter;
+import io.opencensus.contrib.spring.aop.Traced;
+import io.opencensus.trace.Tracing;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
+import javax.ws.rs.client.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 /**
  * A service for retrieving and authorizing the use of {@link SpendProfile}s.
  *
- * <p>TODO: Integrate with the Spend Profile Manager component instead of doing our own in-memory
- * configuration of spend profiles.
+ * <p>If enabled, calls out to Billing Profile Manager to fetch the relevant spend data. Otherwise,
+ * fetches from our in-memory configuration.
  */
 @Component
 public class SpendProfileService {
   private final Logger logger = LoggerFactory.getLogger(SpendProfileService.class);
   private final SamService samService;
   private final Map<SpendProfileId, SpendProfile> spendProfiles;
+  private final SpendProfileConfiguration spendProfileConfiguration;
+  private final Client commonHttpClient;
 
   @Autowired
   public SpendProfileService(
       SamService samService, SpendProfileConfiguration spendProfileConfiguration) {
-    this(samService, parse(spendProfileConfiguration.getSpendProfiles()));
+    this(
+        samService,
+        adaptConfigurationModels(spendProfileConfiguration.getSpendProfiles()),
+        spendProfileConfiguration);
   }
 
-  public SpendProfileService(SamService samService, List<SpendProfile> spendProfiles) {
+  public SpendProfileService(
+      SamService samService,
+      List<SpendProfile> spendProfiles,
+      SpendProfileConfiguration spendProfileConfiguration) {
     this.samService = samService;
     this.spendProfiles = Maps.uniqueIndex(spendProfiles, SpendProfile::id);
+    this.spendProfileConfiguration = spendProfileConfiguration;
+
+    this.commonHttpClient =
+        new ApiClient()
+            .getHttpClient()
+            .register(
+                new JaxrsClientFilter(
+                    new JaxrsClientExtractor(), Tracing.getPropagationComponent().getB3Format()));
   }
 
   /**
@@ -43,19 +76,28 @@ public class SpendProfileService {
    * the id if there is one and the user is authorized to link it. Otherwise, throws a {@link
    * SpendUnauthorizedException}.
    */
+  @Traced
   public SpendProfile authorizeLinking(
-      SpendProfileId spendProfileId, AuthenticatedUserRequest userRequest) {
-    if (!SamRethrow.onInterrupted(
-        () ->
-            samService.isAuthorized(
-                userRequest,
-                SamConstants.SamResource.SPEND_PROFILE,
-                spendProfileId.getId(),
-                SamConstants.SamSpendProfileAction.LINK),
-        "isAuthorized")) {
-      throw SpendUnauthorizedException.linkUnauthorized(spendProfileId);
+      SpendProfileId spendProfileId, boolean bpmEnabled, AuthenticatedUserRequest userRequest) {
+
+    SpendProfile spend;
+    if (bpmEnabled) {
+      // profiles returned from BPM means we are auth'ed
+      spend = getSpendProfileFromBpm(userRequest, spendProfileId);
+    } else {
+      if (!SamRethrow.onInterrupted(
+          () ->
+              samService.isAuthorized(
+                  userRequest,
+                  SamConstants.SamResource.SPEND_PROFILE,
+                  spendProfileId.getId(),
+                  SamConstants.SamSpendProfileAction.LINK),
+          "isAuthorized")) {
+        throw SpendUnauthorizedException.linkUnauthorized(spendProfileId);
+      }
+      spend = spendProfiles.get(spendProfileId);
     }
-    SpendProfile spend = spendProfiles.get(spendProfileId);
+
     if (spend == null) {
       // We throw an unauthorized exception when we do not know about the Spend Profile to match
       // Sam's behavior. Sam authz check does not reveal if the resource does not exist vs the user
@@ -68,15 +110,112 @@ public class SpendProfileService {
     return spend;
   }
 
-  private static List<SpendProfile> parse(
+  private static List<SpendProfile> adaptConfigurationModels(
       List<SpendProfileConfiguration.SpendProfileModel> spendModels) {
     return spendModels.stream()
+        .filter(
+            // filter out empty profiles
+            spendModel ->
+                !Strings.isNullOrEmpty(spendModel.getBillingAccountId())
+                    && !Strings.isNullOrEmpty(spendModel.getId()))
         .map(
             spendModel ->
-                SpendProfile.builder()
-                    .id(new SpendProfileId(spendModel.getId()))
-                    .billingAccountId(spendModel.getBillingAccountId())
-                    .build())
+                new SpendProfile(
+                    new SpendProfileId(spendModel.getId()),
+                    CloudPlatform.GCP,
+                    spendModel.getBillingAccountId(),
+                    null,
+                    null,
+                    null))
         .collect(Collectors.toList());
+  }
+
+  @Traced
+  private SpendProfile getSpendProfileFromBpm(
+      AuthenticatedUserRequest userRequest, SpendProfileId spendProfileId) {
+    SpendProfile spend;
+    var profileApi = getProfileApi(userRequest);
+    try {
+      var profile = profileApi.getProfile(UUID.fromString(spendProfileId.getId()));
+      logger.info(
+          "Retrieved billing profile ID {} from billing profile manager",
+          profile.getId().toString());
+      spend =
+          new SpendProfile(
+              spendProfileId,
+              getProfileCloudPlatform(profile),
+              profile.getBillingAccountId(),
+              profile.getTenantId(),
+              profile.getSubscriptionId(),
+              profile.getManagedResourceGroupId());
+    } catch (ApiException ex) {
+      if (ex.getCode() == HttpStatus.FORBIDDEN.value()) {
+        return null;
+      } else {
+        throw new BillingProfileManagerServiceAPIException(ex);
+      }
+    }
+
+    return spend;
+  }
+
+  private CloudPlatform getProfileCloudPlatform(ProfileModel profile) {
+    if (profile.getCloudPlatform().equals(bio.terra.profile.model.CloudPlatform.GCP)) {
+      return CloudPlatform.GCP;
+    } else if (profile.getCloudPlatform().equals(bio.terra.profile.model.CloudPlatform.AZURE)) {
+      return CloudPlatform.AZURE;
+    } else {
+      throw new ValidationException(
+          String.format(
+              "Invalid cloud platform for billing profile id %s: %s ",
+              profile.getId().toString(), profile.getCloudPlatform().getValue()));
+    }
+  }
+
+  /**
+   * Creates a spend profile via the billing profile manager service, intended for usage in tests
+   * only.
+   */
+  @VisibleForTesting
+  public SpendProfile createGcpSpendProfile(
+      String billingAccountId,
+      String displayName,
+      String biller,
+      AuthenticatedUserRequest userRequest) {
+    CreateProfileRequest req =
+        new CreateProfileRequest()
+            .id(UUID.randomUUID())
+            .billingAccountId(billingAccountId)
+            .displayName(displayName)
+            .biller(biller)
+            .cloudPlatform(bio.terra.profile.model.CloudPlatform.GCP);
+    try {
+      var rawModel = getProfileApi(userRequest).createProfile(req);
+      return SpendProfile.buildGcpSpendProfile(
+          new SpendProfileId(rawModel.getId().toString()), rawModel.getBillingAccountId());
+    } catch (ApiException e) {
+      throw new BillingProfileManagerServiceAPIException(e);
+    }
+  }
+
+  /** Deletes a profile in the billing profile manager service, intended for usage in tests only */
+  @VisibleForTesting
+  public void deleteProfile(UUID profileId, AuthenticatedUserRequest userRequest) {
+    try {
+      getProfileApi(userRequest).deleteProfile(profileId);
+    } catch (ApiException e) {
+      throw new BillingProfileManagerServiceAPIException(e);
+    }
+  }
+
+  private ApiClient getApiClient(String accessToken) {
+    ApiClient apiClient = new ApiClient().setHttpClient(commonHttpClient);
+    apiClient.setAccessToken(accessToken);
+    apiClient.setBasePath(this.spendProfileConfiguration.getBasePath());
+    return apiClient;
+  }
+
+  private ProfileApi getProfileApi(AuthenticatedUserRequest userRequest) {
+    return new ProfileApi(getApiClient(userRequest.getRequiredToken()));
   }
 }

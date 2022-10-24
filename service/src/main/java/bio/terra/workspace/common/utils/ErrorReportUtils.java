@@ -8,8 +8,7 @@ import org.springframework.http.HttpStatus;
 public class ErrorReportUtils {
 
   public static ApiErrorReport buildApiErrorReport(Exception exception) {
-    if (exception instanceof ErrorReportException) {
-      ErrorReportException errorReport = (ErrorReportException) exception;
+    if (exception instanceof ErrorReportException errorReport) {
       return new ApiErrorReport()
           .message(errorReport.getMessage())
           .statusCode(errorReport.getStatusCode().value())

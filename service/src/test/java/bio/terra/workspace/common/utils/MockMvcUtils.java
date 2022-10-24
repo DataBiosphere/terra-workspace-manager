@@ -3,9 +3,14 @@ package bio.terra.workspace.common.utils;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.defaultBigQueryDatasetCreationParameters;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.defaultGcsBucketCreationParameters;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -30,18 +35,24 @@ import bio.terra.workspace.generated.model.ApiCreatedControlledGcpGcsBucket;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotAttributes;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
+import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.generated.model.ApiGrantRoleRequestBody;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
+import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiReferenceResourceCommonFields;
+import bio.terra.workspace.generated.model.ApiTpsPolicyInputs;
+import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -247,6 +258,42 @@ public class MockMvcUtils {
     return objectMapper.readValue(serializedResponse, ApiCreatedWorkspace.class);
   }
 
+  public ApiErrorReport createWorkspaceWithoutCloudContextExpectError(
+      @Nullable AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      @Nullable ApiWorkspaceStageModel stageModel,
+      @Nullable ApiTpsPolicyInputs policyInputs,
+      int expectedCode)
+      throws Exception {
+    ApiCreateWorkspaceRequestBody request =
+        WorkspaceFixtures.createWorkspaceRequestBody().id(workspaceId);
+    if (stageModel != null) {
+      request.stage(stageModel);
+    }
+    if (policyInputs != null) {
+      request.policies(policyInputs);
+    }
+    String serializedResponse =
+        mockMvc
+            .perform(
+                addJsonContentType(
+                    addAuth(
+                        post(WORKSPACES_V1_PATH).content(objectMapper.writeValueAsString(request)),
+                        userRequest)))
+            .andExpect(status().is(expectedCode))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    try {
+      ApiErrorReport errorReport = objectMapper.readValue(serializedResponse, ApiErrorReport.class);
+      assertEquals(expectedCode, errorReport.getStatusCode());
+      return errorReport;
+    } catch (Exception e) {
+      // There is no ApiErrorReport to return
+      return null;
+    }
+  }
+
   private void createGcpCloudContextAndWait(AuthenticatedUserRequest userRequest, UUID workspaceId)
       throws Exception {
     ApiCreateCloudContextResult result = createGcpCloudContext(userRequest, workspaceId);
@@ -319,6 +366,40 @@ public class MockMvcUtils {
     return objectMapper.readValue(serializedResponse, ApiCloneWorkspaceResult.class);
   }
 
+  public ApiWorkspaceDescription updateWorkspace(
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      @Nullable String newUserFacingId,
+      @Nullable String newDisplayName,
+      @Nullable String newDescription)
+      throws Exception {
+    ApiUpdateWorkspaceRequestBody requestBody = new ApiUpdateWorkspaceRequestBody();
+    if (newUserFacingId != null) {
+      requestBody.userFacingId(newUserFacingId);
+    }
+    if (newDisplayName != null) {
+      requestBody.displayName(newDisplayName);
+    }
+    if (newDescription != null) {
+      requestBody.description(newDescription);
+    }
+    String serializedResponse =
+        mockMvc
+            .perform(
+                addAuth(
+                    patch(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, workspaceId))
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .characterEncoding("UTF-8")
+                        .content(objectMapper.writeValueAsString(requestBody)),
+                    USER_REQUEST))
+            .andExpect(status().is(HttpStatus.SC_OK))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    return objectMapper.readValue(serializedResponse, ApiWorkspaceDescription.class);
+  }
+
   public void deleteWorkspace(AuthenticatedUserRequest userRequest, UUID workspaceId)
       throws Exception {
     mockMvc
@@ -331,6 +412,25 @@ public class MockMvcUtils {
             addAuth(
                 get(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, workspaceId)), userRequest))
         .andExpect(status().is(HttpStatus.SC_NOT_FOUND));
+  }
+
+  public void assertWorkspace(
+      ApiWorkspaceDescription actualWorkspace,
+      String expectedUserFacingId,
+      String expectedDisplayName,
+      String expectedDescription,
+      String expectedCreatedByEmail,
+      String expectedLastUpdatedByEmail) {
+    assertEquals(expectedUserFacingId, actualWorkspace.getUserFacingId());
+    assertEquals(expectedDisplayName, actualWorkspace.getDisplayName());
+    assertEquals(expectedDescription, actualWorkspace.getDescription());
+    OffsetDateTime firstLastUpdatedDate = actualWorkspace.getLastUpdatedDate();
+    assertNotNull(firstLastUpdatedDate);
+    OffsetDateTime createdDate = actualWorkspace.getCreatedDate();
+    assertNotNull(createdDate);
+    assertTrue(firstLastUpdatedDate.isAfter(createdDate));
+    assertEquals(expectedCreatedByEmail, actualWorkspace.getCreatedBy());
+    assertEquals(expectedLastUpdatedByEmail, actualWorkspace.getLastUpdatedBy());
   }
 
   public ApiCreatedControlledGcpBigQueryDataset createBigQueryDataset(
@@ -616,5 +716,9 @@ public class MockMvcUtils {
                         .content(objectMapper.writeValueAsString(requestBody)),
                     userRequest)))
         .andExpect(status().is(HttpStatus.SC_NO_CONTENT));
+  }
+
+  public void assertProperties(List<ApiProperty> expected, List<ApiProperty> actual) {
+    assertThat(expected, containsInAnyOrder(actual.toArray()));
   }
 }

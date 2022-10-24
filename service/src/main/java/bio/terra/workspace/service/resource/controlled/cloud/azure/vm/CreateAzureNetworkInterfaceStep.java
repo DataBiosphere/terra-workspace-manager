@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.vm;
 
 import bio.terra.common.iam.BearerToken;
+import bio.terra.landingzone.library.landingzones.deployment.LandingZonePurpose;
 import bio.terra.landingzone.library.landingzones.deployment.SubnetResourcePurpose;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
@@ -24,6 +25,7 @@ import com.azure.resourcemanager.network.NetworkManager;
 import com.azure.resourcemanager.network.models.Network;
 import com.azure.resourcemanager.network.models.NetworkInterface;
 import com.azure.resourcemanager.network.models.PublicIpAddress;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
@@ -148,8 +150,7 @@ public class CreateAzureNetworkInterfaceStep implements Step {
     final UUID lzId = landingZoneApiDispatch.getLandingZoneId(azureCloudContext);
 
     ApiAzureLandingZoneDeployedResource lzResource =
-        landingZoneApiDispatch
-            .listSubnetsWithParentVNetByPurpose(
+        listSubnetsWithParentVNetByPurpose(
                 new BearerToken(userRequest.getRequiredToken()),
                 lzId,
                 SubnetResourcePurpose.WORKSPACE_COMPUTE_SUBNET)
@@ -162,6 +163,17 @@ public class CreateAzureNetworkInterfaceStep implements Step {
 
     return NetworkSubnetPair.createNetworkSubnetPair(
         networkManager, lzResource.getResourceParentId(), lzResource.getResourceName());
+  }
+
+  private List<ApiAzureLandingZoneDeployedResource> listSubnetsWithParentVNetByPurpose(
+      BearerToken bearerToken, UUID landingZoneId, LandingZonePurpose purpose) {
+
+    return landingZoneApiDispatch
+        .listAzureLandingZoneResourcesByPurpose(bearerToken, landingZoneId, purpose)
+        .getResources()
+        .stream()
+        .flatMap(r -> r.getDeployedResources().stream())
+        .toList();
   }
 
   @Override
