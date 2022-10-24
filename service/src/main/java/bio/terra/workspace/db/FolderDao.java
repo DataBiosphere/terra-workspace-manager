@@ -287,6 +287,8 @@ public class FolderDao {
    * <p>See more details about recursive SQL query from
    * https://www.postgresqltutorial.com/postgresql-tutorial/postgresql-recursive-query/
    *
+   * To delete all folders in a workspace, use deleteAllFolders instead.
+   * 
    * @param folderId the folder where the deletion starts.
    * @return true if folder(s) are deleted.
    */
