@@ -250,9 +250,9 @@ public class LandingZoneApiDispatch {
   }
 
   public ApiDeleteAzureLandingZoneResult getDeleteAzureLandingZoneResult(
-      BearerToken token, String jobId) {
+      BearerToken token, UUID landingZoneId, String jobId) {
     features.azureEnabledCheck();
     return toApiDeleteAzureLandingZoneResult(
-        landingZoneService.getAsyncDeletionJobResult(token, jobId));
+        landingZoneService.getAsyncDeletionJobResult(token, landingZoneId, jobId));
   }
 }

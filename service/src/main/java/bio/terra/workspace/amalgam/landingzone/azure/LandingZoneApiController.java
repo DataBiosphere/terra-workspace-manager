@@ -92,7 +92,7 @@ public class LandingZoneApiController implements LandingZonesApi {
       UUID landingZoneId, String jobId) {
     ApiDeleteAzureLandingZoneResult response =
         landingZoneApiDispatch.getDeleteAzureLandingZoneResult(
-            bearerTokenFactory.from(request), jobId);
+            bearerTokenFactory.from(request), landingZoneId, jobId);
     return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
   }
 }
