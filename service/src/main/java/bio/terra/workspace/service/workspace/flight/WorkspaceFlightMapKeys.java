@@ -18,6 +18,7 @@ public final class WorkspaceFlightMapKeys {
   public static final String MERGE_POLICIES = "mergePolicies";
   public static final String IS_WET_RUN = "isWetRun";
   public static final String UPDATED_WORKSPACES = "updatedWorkspaces";
+  public static final String SPEND_PROFILE = "spendProfile";
 
   private WorkspaceFlightMapKeys() {}
 

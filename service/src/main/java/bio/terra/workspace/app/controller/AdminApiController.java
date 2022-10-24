@@ -1,5 +1,7 @@
 package bio.terra.workspace.app.controller;
 
+import bio.terra.workspace.app.controller.shared.JobApiUtils;
+import bio.terra.workspace.app.controller.shared.JobApiUtils.AsyncJobResult;
 import bio.terra.workspace.generated.controller.AdminApi;
 import bio.terra.workspace.generated.model.ApiSyncIamRolesResult;
 import bio.terra.workspace.service.admin.AdminService;
@@ -7,8 +9,6 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.job.JobService.AsyncJobResult;
 import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +17,7 @@ import org.springframework.stereotype.Controller;
 @Controller
 public class AdminApiController extends ControllerBase implements AdminApi {
   private final AdminService adminService;
-  private final JobService jobService;
+  private final JobApiUtils jobApiUtils;
 
   @Autowired
   public AdminApiController(
@@ -25,10 +25,10 @@ public class AdminApiController extends ControllerBase implements AdminApi {
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request,
       SamService samService,
-      JobService jobService) {
+      JobApiUtils jobApiUtils) {
     super(authenticatedUserRequestFactory, request, samService);
     this.adminService = adminService;
-    this.jobService = jobService;
+    this.jobApiUtils = jobApiUtils;
   }
 
   @Override
@@ -45,7 +45,7 @@ public class AdminApiController extends ControllerBase implements AdminApi {
   }
 
   private ApiSyncIamRolesResult fetchSyncIamRolesResult(String jobId) {
-    AsyncJobResult<Void> jobResult = jobService.retrieveAsyncJobResult(jobId, null);
+    AsyncJobResult<Void> jobResult = jobApiUtils.retrieveAsyncJobResult(jobId, null);
     return new ApiSyncIamRolesResult()
         .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getApiErrorReport());
