@@ -16,8 +16,8 @@ import java.util.List;
  * CustomGcpIamRoleMapping}), and should be removed from this list. Some permissions must be granted
  * at the project level, and will continue to live here.
  *
- * <p>!!!If you change this file, if you want to backfill the change to existing projects, run
- * syncIamRoles endpoint.!!!
+ * <p>!!!If you change this file, if you want to backfill the change to existing projects, contact
+ * admin to run syncIamRoles endpoint.!!!
  */
 public class CloudSyncRoleMapping {
 

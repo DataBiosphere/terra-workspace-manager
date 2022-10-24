@@ -362,6 +362,19 @@ If you are also using human readable logging, then you can create the file
 `application-human-readable-logging.yml` and put the logging property in there.
 Spring auto-magically searches for properties files for the active profiles.
 
+## Update custom IAM role permissions for GCP projects.
+For project level permissions, update `CloudSyncRoleMapping`. For resource
+level permissions, update `CustomGcpIamRoleMapping`. 
+
+When the PR with new permissions is merged and released, it will only be applied
+to the workspace created **after** the WSM with the new release version. To
+allow existing workspaces to contains the new permissions, a SAM admin must
+run the `Admin` api `syncIamRoles` endpoint.
+
+For each environment:
+- dry run, check GCP logs to confirm new permissions/GCP projects as expected.
+- wet run.
+
 ## Tips
 - Check out [gdub](https://github.com/gdubw/gdub), it'll save you typing `./gradlew` over
   and over, and also takes care of knowing when you're not in the root directory, so you
