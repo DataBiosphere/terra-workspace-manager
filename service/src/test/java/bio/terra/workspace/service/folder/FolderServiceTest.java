@@ -1,10 +1,10 @@
 package bio.terra.workspace.service.folder;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
+import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties.FOLDER_ID_KEY;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.common.exception.ForbiddenException;
 import bio.terra.stairway.FlightDebugInfo;
@@ -40,7 +40,6 @@ import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResou
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdatatable.ReferencedBigQueryDataTableResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.datareposnapshot.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.ReferencedGcsBucketResource;
-import bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -80,6 +79,7 @@ public class FolderServiceTest extends BaseConnectedTest {
   private ReferencedBigQueryDataTableResource referencedBqTableInFoo;
   private ReferencedDataRepoSnapshotResource referencedDataRepoSnapshotInFooBar;
   private ReferencedGitRepoResource referencedGitRepoInFooBarLoo;
+  private ReferencedDataRepoSnapshotResource orphanResource;
 
   @BeforeEach
   public void setUp() throws InterruptedException {
@@ -139,8 +139,7 @@ public class FolderServiceTest extends BaseConnectedTest {
                     .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
                     .managedBy(ManagedByType.MANAGED_BY_USER)
                     .assignedUser(userAccessUtils.getDefaultUserEmail())
-                    .properties(
-                        Map.of(ResourceProperties.FOLDER_ID_KEY, fooBarLooFolder.id().toString()))
+                    .properties(Map.of(FOLDER_ID_KEY, fooBarLooFolder.id().toString()))
                     .build())
             .projectId("my-gcp-project")
             .instanceId(TestUtils.appendRandomNumber("my-ai-notebook-instance"))
@@ -158,7 +157,8 @@ public class FolderServiceTest extends BaseConnectedTest {
     referencedBucketInFooFoo =
         ReferencedGcsBucketResource.builder()
             .wsmResourceFields(
-                createWsmResourceCommonFieldsWithFolderId(workspaceId, fooFooFolder.id()))
+                createWsmResourceCommonFieldsWithFolderId(
+                    workspaceId, fooFooFolder.id().toString()))
             .bucketName("my-awesome-bucket")
             .build();
     referencedResourceService.createReferenceResource(
@@ -167,7 +167,7 @@ public class FolderServiceTest extends BaseConnectedTest {
     referencedBqTableInFoo =
         ReferencedBigQueryDataTableResource.builder()
             .wsmResourceFields(
-                createWsmResourceCommonFieldsWithFolderId(workspaceId, fooFolder.id()))
+                createWsmResourceCommonFieldsWithFolderId(workspaceId, fooFolder.id().toString()))
             .projectId("my-gcp-project")
             .datasetId("my_special_dataset")
             .dataTableId("my_secret_table")
@@ -178,7 +178,8 @@ public class FolderServiceTest extends BaseConnectedTest {
     referencedDataRepoSnapshotInFooBar =
         ReferencedDataRepoSnapshotResource.builder()
             .wsmResourceFields(
-                createWsmResourceCommonFieldsWithFolderId(workspaceId, fooBarFolder.id()))
+                createWsmResourceCommonFieldsWithFolderId(
+                    workspaceId, fooBarFolder.id().toString()))
             .snapshotId("a_snapshot_id")
             .instanceName("a_instance_name")
             .build();
@@ -188,11 +189,20 @@ public class FolderServiceTest extends BaseConnectedTest {
     referencedGitRepoInFooBarLoo =
         ReferencedGitRepoResource.builder()
             .wsmResourceFields(
-                createWsmResourceCommonFieldsWithFolderId(workspaceId, fooBarLooFolder.id()))
+                createWsmResourceCommonFieldsWithFolderId(
+                    workspaceId, fooBarLooFolder.id().toString()))
             .gitRepoUrl("https://github.com/foorepo")
             .build();
     referencedResourceService.createReferenceResource(
         referencedGitRepoInFooBarLoo, userAccessUtils.defaultUserAuthRequest());
+
+    // Referenced git repo is created with an invalid folder id set in the properties.
+    orphanResource = ReferenceResourceFixtures.makeDataRepoSnapshotResource(workspaceId);
+    resourceDao.createReferencedResource(orphanResource);
+    // This is to simulate an existing resource in the db with an invalid properties.
+    // This can't happen anymore as the invalid properties root will be trimmed.
+    resourceDao.updateResourceProperties(
+        workspaceId, orphanResource.getResourceId(), Map.of(FOLDER_ID_KEY, "root"));
   }
 
   @AfterEach
@@ -219,7 +229,7 @@ public class FolderServiceTest extends BaseConnectedTest {
       assertThrows(
           FolderNotFoundException.class, () -> folderService.getFolder(workspaceId, f.id()));
     }
-    assertTrue(resourceDao.enumerateResources(workspaceId, null, null, 0, 100).isEmpty());
+    assertAllDeletedExceptTheOrphanResource();
   }
 
   @Test
@@ -278,7 +288,7 @@ public class FolderServiceTest extends BaseConnectedTest {
                 workspaceId, referencedDataRepoSnapshotInFooBar.getResourceId()));
 
     // assert foo and foo/foo and the resources in those are not deleted.
-    assertEquals(4, resourceDao.enumerateResources(workspaceId, null, null, 0, 10).size());
+    assertEquals(5, resourceDao.enumerateResources(workspaceId, null, null, 0, 10).size());
     assertEquals(fooFolder, folderService.getFolder(workspaceId, fooFolder.id()));
     assertEquals(fooFooFolder, folderService.getFolder(workspaceId, fooFooFolder.id()));
   }
@@ -306,7 +316,13 @@ public class FolderServiceTest extends BaseConnectedTest {
       assertThrows(
           FolderNotFoundException.class, () -> folderService.getFolder(workspaceId, f.id()));
     }
-    assertTrue(resourceDao.enumerateResources(workspaceId, null, null, 0, 100).isEmpty());
+    assertAllDeletedExceptTheOrphanResource();
+  }
+
+  private void assertAllDeletedExceptTheOrphanResource() {
+    var listWithOneSingleResource = resourceDao.enumerateResources(workspaceId, null, null, 0, 100);
+    assertEquals(1, listWithOneSingleResource.size());
+    assertEquals(orphanResource, listWithOneSingleResource.get(0));
   }
 
   public Folder createFolder(String displayName, @Nullable UUID parentFolderId) {
@@ -318,15 +334,15 @@ public class FolderServiceTest extends BaseConnectedTest {
       UUID workspaceId, UUID folderId) {
     return makeDefaultControlledResourceFieldsBuilder()
         .workspaceUuid(workspaceId)
-        .properties(Map.of(ResourceProperties.FOLDER_ID_KEY, folderId.toString()))
+        .properties(Map.of(FOLDER_ID_KEY, folderId.toString()))
         .build();
   }
 
   private static WsmResourceFields createWsmResourceCommonFieldsWithFolderId(
-      UUID workspaceId, UUID folderId) {
+      UUID workspaceId, String folderId) {
 
     return ReferenceResourceFixtures.makeDefaultWsmResourceFieldBuilder(workspaceId)
-        .properties(Map.of(ResourceProperties.FOLDER_ID_KEY, folderId.toString()))
+        .properties(Map.of(FOLDER_ID_KEY, folderId))
         .build();
   }
 }

@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.resource.model;
 
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
+import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties.FOLDER_ID_KEY;
 
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
@@ -16,6 +17,7 @@ import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResou
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -23,12 +25,16 @@ import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Top-level class for a Resource. Children of this class can be controlled resources, references,
  * or (future) monitored resources.
  */
 public abstract class WsmResource {
+  private final Logger logger = LoggerFactory.getLogger(WsmResource.class);
+
   private final UUID workspaceUuid;
   private final UUID resourceId;
   private final String name;
@@ -63,7 +69,7 @@ public abstract class WsmResource {
     this.description = description;
     this.cloningInstructions = cloningInstructions;
     this.resourceLineage = Optional.ofNullable(resourceLineage).orElse(new ArrayList<>());
-    this.properties = ImmutableMap.copyOf(properties);
+    this.properties = trimInvalidProperties(properties);
   }
 
   /** construct from database data */
@@ -87,6 +93,22 @@ public abstract class WsmResource {
         resourceFields.getCloningInstructions(),
         resourceFields.getResourceLineage(),
         resourceFields.getProperties());
+  }
+
+  private ImmutableMap<String, String> trimInvalidProperties(Map<String, String> properties) {
+    Map<String, String> trimmedProperties = new HashMap<>(properties);
+    if (properties.containsKey(FOLDER_ID_KEY)) {
+      try {
+        var uuid = UUID.fromString(properties.get(FOLDER_ID_KEY));
+      } catch (IllegalArgumentException e) {
+        logger.warn(
+            "resource {} contains an invalid non-UUID format folder id {}.",
+            resourceId,
+            properties.get(FOLDER_ID_KEY));
+        trimmedProperties.remove(FOLDER_ID_KEY);
+      }
+    }
+    return ImmutableMap.copyOf(trimmedProperties);
   }
 
   public UUID getWorkspaceId() {

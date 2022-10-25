@@ -2,6 +2,7 @@ package bio.terra.workspace.app.controller;
 
 import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeBqDataTableReferenceRequestBody;
 import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeDataRepoSnapshotReferenceRequestBody;
+import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeDefaultReferencedResourceFieldsApi;
 import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeGcpBqDatasetReferenceRequestBody;
 import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeGcsBucketReferenceRequestBody;
 import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeGcsObjectReferenceRequestBody;
@@ -14,12 +15,15 @@ import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_GCP_GCS_O
 import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_GIT_REPO_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
+import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties.FOLDER_ID_KEY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import bio.terra.workspace.app.controller.shared.PropertiesUtils;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.generated.model.ApiCreateDataRepoSnapshotReferenceRequestBody;
@@ -39,6 +43,7 @@ import bio.terra.workspace.generated.model.ApiResourceMetadata;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
@@ -87,6 +92,26 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
     assertEquals(
         requestBody.getSnapshot().getInstanceName(),
         createdResource.getAttributes().getInstanceName());
+  }
+
+  @Test
+  public void
+      createReferencedDataRepoResource_resourceContainsInvalidFolderId_invalidFolderIdTrimmed()
+          throws Exception {
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+    ApiCreateDataRepoSnapshotReferenceRequestBody requestBody =
+        makeDataRepoSnapshotReferenceRequestBody()
+            .metadata(
+                makeDefaultReferencedResourceFieldsApi()
+                    .properties(
+                        PropertiesUtils.convertMapToApiProperties(Map.of(FOLDER_ID_KEY, "root"))));
+
+    ApiDataRepoSnapshotResource createdResource =
+        createReferencedDataRepoSnapshotResource(workspaceId, requestBody);
+
+    assertFalse(
+        PropertiesUtils.convertApiPropertyToMap(createdResource.getMetadata().getProperties())
+            .containsKey(FOLDER_ID_KEY));
   }
 
   @Test

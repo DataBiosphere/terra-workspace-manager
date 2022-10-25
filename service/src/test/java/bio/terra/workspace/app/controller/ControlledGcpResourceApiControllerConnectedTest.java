@@ -1,9 +1,18 @@
 package bio.terra.workspace.app.controller;
 
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.defaultBigQueryDatasetCreationParameters;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi;
+import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_BIG_QUERY_DATASETS_V1_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
+import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties.FOLDER_ID_KEY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import bio.terra.workspace.app.controller.shared.PropertiesUtils;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.utils.MockMvcUtils;
@@ -11,6 +20,7 @@ import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketResult;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
+import bio.terra.workspace.generated.model.ApiCreateControlledGcpBigQueryDatasetRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpBigQueryDataset;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpGcsBucket;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
@@ -21,7 +31,9 @@ import bio.terra.workspace.generated.model.ApiResourceMetadata;
 import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Map;
 import java.util.UUID;
+import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -30,6 +42,7 @@ import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 /** Use this instead of ControlledGcpResourceApiTest, if you want to talk to real GCP. */
@@ -86,6 +99,40 @@ public class ControlledGcpResourceApiControllerConnectedTest extends BaseConnect
     assertEquals(
         expectedBqDataset.getAttributes().getProjectId(),
         actualBqDataset.getAttributes().getProjectId());
+  }
+
+  @Test
+  public void createBigQueryDataset_resourceContainsInvalidFolderId_trimInvalidFolder()
+      throws Exception {
+    ApiCreateControlledGcpBigQueryDatasetRequestBody datasetCreationRequest =
+        new ApiCreateControlledGcpBigQueryDatasetRequestBody()
+            .common(
+                makeDefaultControlledResourceFieldsApi()
+                    .properties(
+                        PropertiesUtils.convertMapToApiProperties(Map.of(FOLDER_ID_KEY, "root"))))
+            .dataset(defaultBigQueryDatasetCreationParameters());
+
+    String serializedGetResponse =
+        mockMvc
+            .perform(
+                addAuth(
+                    post(String.format(
+                            CONTROLLED_GCP_BIG_QUERY_DATASETS_V1_PATH_FORMAT,
+                            workspaceId.toString()))
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .characterEncoding("UTF-8")
+                        .content(objectMapper.writeValueAsString(datasetCreationRequest)),
+                    userAccessUtils.defaultUserAuthRequest()))
+            .andExpect(status().is(HttpStatus.SC_OK))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    ApiCreatedControlledGcpBigQueryDataset bqDataset =
+        objectMapper.readValue(serializedGetResponse, ApiCreatedControlledGcpBigQueryDataset.class);
+
+    assertFalse(
+        bqDataset.getBigQueryDataset().getMetadata().getProperties().contains(FOLDER_ID_KEY));
   }
 
   @Test

@@ -6,6 +6,7 @@ import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEF
 import static bio.terra.workspace.common.utils.MockMvcUtils.RESOURCE_PROPERTIES_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
+import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties.FOLDER_ID_KEY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -127,6 +128,30 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
 
       updateResourcePropertiesExpectCode(
           workspaceId, resourceId, Map.of(), HttpStatus.SC_BAD_REQUEST);
+    }
+
+    @Test
+    public void updateResourceProperties_propertiesIsInvalid_throws400() throws Exception {
+      ApiCreatedControlledGcpBigQueryDataset resource =
+          mockMvcUtils.createBigQueryDataset(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+      UUID resourceId = resource.getResourceId();
+
+      updateResourcePropertiesExpectCode(
+          workspaceId, resourceId, Map.of(FOLDER_ID_KEY, "root"), HttpStatus.SC_BAD_REQUEST);
+    }
+
+    @Test
+    public void updateResourceProperties_propertiesHasFolderIdNotExist_throws404()
+        throws Exception {
+      ApiCreatedControlledGcpBigQueryDataset resource =
+          mockMvcUtils.createBigQueryDataset(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+      UUID resourceId = resource.getResourceId();
+
+      updateResourcePropertiesExpectCode(
+          workspaceId,
+          resourceId,
+          Map.of(FOLDER_ID_KEY, UUID.randomUUID().toString()),
+          HttpStatus.SC_NOT_FOUND);
     }
 
     @Test
