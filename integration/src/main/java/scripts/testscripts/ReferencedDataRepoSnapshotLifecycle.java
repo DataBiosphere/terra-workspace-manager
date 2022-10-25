@@ -174,17 +174,16 @@ public class ReferencedDataRepoSnapshotLifecycle extends WorkspaceAllocateTestSc
     // Update snapshot's name and description
     String newSnapshotReferenceName = "newSnapshotReferenceName";
     String newSnapshotReferenceDescription = "a new description of another snapshot reference";
-    updateDataRepoSnapshotReferenceResource(
-        ownerApi,
-        getWorkspaceId(),
-        snapshotResourceId,
-        newSnapshotReferenceName,
-        newSnapshotReferenceDescription,
-        /*instanceId=*/ null,
-        /*snapshot=*/ null,
-        CloningInstructionsEnum.NOTHING);
     DataRepoSnapshotResource snapshotResource =
-        ownerApi.getDataRepoSnapshotReference(getWorkspaceId(), snapshotResourceId);
+        updateDataRepoSnapshotReferenceResource(
+            ownerApi,
+            getWorkspaceId(),
+            snapshotResourceId,
+            newSnapshotReferenceName,
+            newSnapshotReferenceDescription,
+            /*instanceId=*/ null,
+            /*snapshot=*/ null,
+            CloningInstructionsEnum.NOTHING);
     assertEquals(newSnapshotReferenceName, snapshotResource.getMetadata().getName());
     assertEquals(newSnapshotReferenceDescription, snapshotResource.getMetadata().getDescription());
     assertFalse(
@@ -203,17 +202,16 @@ public class ReferencedDataRepoSnapshotLifecycle extends WorkspaceAllocateTestSc
                 /*instanceId=*/ null,
                 snapshotId2,
                 /*cloningInstructions=*/ null));
-    updateDataRepoSnapshotReferenceResource(
-        ownerApi,
-        getWorkspaceId(),
-        snapshotResourceId,
-        newSnapshotReferenceName,
-        newSnapshotReferenceDescription,
-        /*instanceId=*/ null,
-        snapshotId2,
-        /*cloningInstructions=*/ null);
     DataRepoSnapshotResource snapshotResourceSecondUpdate =
-        ownerApi.getDataRepoSnapshotReference(getWorkspaceId(), snapshotResourceId);
+        updateDataRepoSnapshotReferenceResource(
+            ownerApi,
+            getWorkspaceId(),
+            snapshotResourceId,
+            newSnapshotReferenceName,
+            newSnapshotReferenceDescription,
+            /*instanceId=*/ null,
+            snapshotId2,
+            /*cloningInstructions=*/ null);
     assertEquals(newSnapshotReferenceName, snapshotResourceSecondUpdate.getMetadata().getName());
     assertEquals(
         newSnapshotReferenceDescription,

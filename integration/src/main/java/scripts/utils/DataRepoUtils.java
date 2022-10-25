@@ -35,7 +35,7 @@ public class DataRepoUtils {
   }
 
   /** Updates name, description, and/or referencing target of a data repo snapshot reference. */
-  public static void updateDataRepoSnapshotReferenceResource(
+  public static DataRepoSnapshotResource updateDataRepoSnapshotReferenceResource(
       ReferencedGcpResourceApi resourceApi,
       UUID workspaceUuid,
       UUID resourceId,
@@ -62,6 +62,6 @@ public class DataRepoUtils {
     if (cloningInstructions != null) {
       body.setCloningInstructions(cloningInstructions);
     }
-    resourceApi.updateDataRepoSnapshotReferenceResource(body, workspaceUuid, resourceId);
+    return resourceApi.updateDataRepoSnapshotReferenceResource(body, workspaceUuid, resourceId);
   }
 }
