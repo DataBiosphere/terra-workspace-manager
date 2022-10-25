@@ -37,6 +37,7 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
@@ -810,10 +811,16 @@ public class ReferencedGcpResourceController extends ControllerBase
       cloneGcpBigQueryDatasetReference(
           UUID workspaceUuid, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    if (body.getCloningInstructions() != null) {
+      ResourceValidationUtils.validateCloningInstructions(
+          StewardshipType.REFERENCED,
+          CloningInstructions.fromApiModel(body.getCloningInstructions()));
+    }
     // For cloning, we need to check that the caller has both read access to the source workspace
     // and write access to the destination workspace.
     workspaceService.validateCloneReferenceAction(
         userRequest, workspaceUuid, body.getDestinationWorkspaceId());
+
     final ReferencedResource sourceReferencedResource =
         referenceResourceService.getReferenceResource(workspaceUuid, resourceId);
 

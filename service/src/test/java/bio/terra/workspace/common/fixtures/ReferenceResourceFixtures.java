@@ -1,6 +1,7 @@
 package bio.terra.workspace.common.fixtures;
 
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
 import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.common.utils.TestUtils.appendRandomNumber;
 
@@ -134,7 +135,7 @@ public class ReferenceResourceFixtures {
   public static ApiReferenceResourceCommonFields makeDefaultReferencedResourceFieldsApi() {
     return new ApiReferenceResourceCommonFields()
         .name(appendRandomNumber("test_resource"))
-        .description("This is a referenced resource")
+        .description(RESOURCE_DESCRIPTION)
         .cloningInstructions(ApiCloningInstructionsEnum.NOTHING)
         .properties(convertMapToApiProperties(DEFAULT_RESOURCE_PROPERTIES));
   }
