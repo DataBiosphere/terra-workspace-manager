@@ -104,8 +104,8 @@ public class ControlledResourceFixtures {
   public static ApiGcpBigQueryDatasetCreationParameters getGcpBigQueryDatasetCreationParameters() {
     return new ApiGcpBigQueryDatasetCreationParameters()
         .datasetId(uniqueDatasetId())
-        .defaultPartitionLifetime(5901)
-        .defaultTableLifetime(5900)
+        .defaultPartitionLifetime(5901L)
+        .defaultTableLifetime(5900L)
         .location("us-central1");
   }
 
@@ -600,12 +600,12 @@ public class ControlledResourceFixtures {
 
   public static final ApiGcpBigQueryDatasetUpdateParameters BQ_DATASET_UPDATE_PARAMETERS_NEW =
       new ApiGcpBigQueryDatasetUpdateParameters()
-          .defaultTableLifetime(3600)
-          .defaultPartitionLifetime(3601);
+          .defaultTableLifetime(3600L)
+          .defaultPartitionLifetime(3601L);
   public static final ApiGcpBigQueryDatasetUpdateParameters BQ_DATASET_UPDATE_PARAMETERS_PREV =
       new ApiGcpBigQueryDatasetUpdateParameters()
-          .defaultTableLifetime(4800)
-          .defaultPartitionLifetime(4801);
+          .defaultTableLifetime(4800L)
+          .defaultPartitionLifetime(4801L);
   public static final Dataset BQ_DATASET_WITH_EXPIRATION =
       new Dataset().setDefaultTableExpirationMs(5900000L).setDefaultPartitionExpirationMs(5901000L);
   public static final Dataset BQ_DATASET_WITHOUT_EXPIRATION = new Dataset();

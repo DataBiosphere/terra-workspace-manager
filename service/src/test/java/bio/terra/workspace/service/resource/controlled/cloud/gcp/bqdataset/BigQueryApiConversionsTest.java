@@ -35,13 +35,13 @@ public class BigQueryApiConversionsTest extends BaseUnitTest {
   @Test
   public void testToBqExpirationTime() {
     assertNull(toBqExpirationTime(null));
-    assertNull(toBqExpirationTime(0));
-    assertEquals(456000, toBqExpirationTime(456));
+    assertNull(toBqExpirationTime(0L));
+    assertEquals(456000L, toBqExpirationTime(456L));
   }
 
   @Test
   public void testRoundTrip() {
     assertEquals(null, fromBqExpirationTime(toBqExpirationTime(null)));
-    assertEquals(789, fromBqExpirationTime(toBqExpirationTime(789)));
+    assertEquals(789L, fromBqExpirationTime(toBqExpirationTime(789L)));
   }
 }
