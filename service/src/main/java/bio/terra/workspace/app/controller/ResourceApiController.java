@@ -4,6 +4,7 @@ import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertA
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesDeleteRequestBody;
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesUpdateRequestBody;
 
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.db.FolderDao;
 import bio.terra.workspace.generated.controller.ResourceApi;
@@ -24,6 +25,7 @@ import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResourceService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties;
+import com.google.api.gax.rpc.InvalidArgumentException;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.List;
 import java.util.Map;
@@ -143,7 +145,12 @@ public class ResourceApiController implements ResourceApi {
     if (properties.containsKey(ResourceProperties.FOLDER_ID_KEY)) {
       String folderId = properties.get(ResourceProperties.FOLDER_ID_KEY);
       // throws FolderNotFoundException or IllegalArgumentException when the folder id is invalid.
-      var unused = folderDao.getFolder(workspaceId, UUID.fromString(folderId));
+      try {
+        var unused = folderDao.getFolder(workspaceId, UUID.fromString(folderId));
+      } catch (InvalidArgumentException e) {
+        throw new BadRequestException(
+            String.format("%s is not a valid folder id. It must be a UUID", folderId));
+      }
     }
   }
 }
