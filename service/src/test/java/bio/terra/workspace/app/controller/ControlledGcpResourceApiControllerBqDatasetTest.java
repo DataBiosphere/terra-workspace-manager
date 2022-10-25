@@ -16,6 +16,7 @@ import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
+import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.generated.model.ApiResourceLineage;
@@ -548,6 +549,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
       String expectedDatasetName) {
     mockMvcUtils.assertResourceMetadata(
         actualDataset.getMetadata(),
+        ApiCloudPlatform.GCP,
         ApiResourceType.BIG_QUERY_DATASET,
         expectedStewardshipType,
         expectedCloningInstructions,
@@ -569,6 +571,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
       String expectedDatasetName) {
     mockMvcUtils.assertClonedResourceMetadata(
         actualDataset.getMetadata(),
+        ApiCloudPlatform.GCP,
         ApiResourceType.BIG_QUERY_DATASET,
         expectedStewardshipType,
         expectedCloningInstructions,

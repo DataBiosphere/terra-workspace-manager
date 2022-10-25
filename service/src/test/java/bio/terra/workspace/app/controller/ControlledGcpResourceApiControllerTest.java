@@ -192,6 +192,7 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTestMockGcpC
             .dataset(defaultBigQueryDatasetCreationParameters());
 
     mockMvcUtils.postExpect(
+        USER_REQUEST,
         objectMapper.writeValueAsString(datasetCreationRequest),
         String.format(CONTROLLED_GCP_BIG_QUERY_DATASETS_V1_PATH_FORMAT, workspaceId),
         HttpStatus.SC_BAD_REQUEST);
