@@ -37,7 +37,7 @@ public class SpendProfileBpmConnectedTest extends BaseConnectedTest {
   @BeforeAll
   public void setup() {
     // BeforeAll and AfterAll will still run even if there are no enabled tests in this class.
-    if(bpmUnavailable()) {
+    if (bpmUnavailable()) {
       return;
     }
     var profileName = "wsm-test-" + UUID.randomUUID();
@@ -49,7 +49,7 @@ public class SpendProfileBpmConnectedTest extends BaseConnectedTest {
 
   @AfterAll
   public void cleanUp() {
-    if(bpmUnavailable()) {
+    if (bpmUnavailable()) {
       return;
     }
     spendProfileService.deleteProfile(
