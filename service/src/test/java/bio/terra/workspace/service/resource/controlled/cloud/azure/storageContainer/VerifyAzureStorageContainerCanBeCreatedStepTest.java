@@ -24,6 +24,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.Contr
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementError;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.storage.models.BlobContainer;
@@ -117,7 +118,8 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
       throws InterruptedException {
     initValidationStep(Optional.empty());
 
-    when(mockLandingZoneApiDispatch.getLandingZoneId(any())).thenReturn(LANDING_ZONE_ID);
+    when(mockLandingZoneApiDispatch.getLandingZoneId(any(BearerToken.class), any()))
+        .thenReturn(LANDING_ZONE_ID);
     ApiAzureLandingZoneDeployedResource mockSharedStorageAccount =
         mock(ApiAzureLandingZoneDeployedResource.class);
     when(mockLandingZoneApiDispatch.getSharedStorageAccount(
@@ -186,8 +188,10 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
   public void getStorageAccountContainer_landingZoneDoesntExist() throws InterruptedException {
     initValidationStep(Optional.empty());
 
+    when(mockUserRequest.getRequiredToken()).thenReturn("FAKE_TOKEN");
     // there are no landing zone association with azure cloud context
-    when(mockLandingZoneApiDispatch.getLandingZoneId(any()))
+    when(mockLandingZoneApiDispatch.getLandingZoneId(
+            any(BearerToken.class), any(AzureCloudContext.class)))
         .thenThrow(
             new IllegalStateException(
                 "Could not find a landing zone id for the given Azure context. "
@@ -205,7 +209,8 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
       throws InterruptedException {
     initValidationStep(Optional.empty());
 
-    when(mockLandingZoneApiDispatch.getLandingZoneId(any())).thenReturn(LANDING_ZONE_ID);
+    when(mockLandingZoneApiDispatch.getLandingZoneId(any(BearerToken.class), any()))
+        .thenReturn(LANDING_ZONE_ID);
     when(mockLandingZoneApiDispatch.getSharedStorageAccount(
             any(BearerToken.class), eq(LANDING_ZONE_ID)))
         .thenReturn(Optional.empty());
@@ -242,7 +247,8 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
       throws InterruptedException {
     initValidationStep(Optional.empty());
 
-    when(mockLandingZoneApiDispatch.getLandingZoneId(any())).thenReturn(LANDING_ZONE_ID);
+    when(mockLandingZoneApiDispatch.getLandingZoneId(any(BearerToken.class), any()))
+        .thenReturn(LANDING_ZONE_ID);
     ApiAzureLandingZoneDeployedResource mockSharedStorageAccount =
         mock(ApiAzureLandingZoneDeployedResource.class);
     when(mockLandingZoneApiDispatch.getSharedStorageAccount(

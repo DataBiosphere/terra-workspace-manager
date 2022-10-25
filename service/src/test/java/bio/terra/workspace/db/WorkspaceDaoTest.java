@@ -10,11 +10,14 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.db.exception.CloudContextNotFoundException;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceException;
+import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
@@ -101,6 +104,38 @@ class WorkspaceDaoTest extends BaseUnitTest {
     // Assert the object no longer exists after deletion
     assertThrows(
         EmptyResultDataAccessException.class, () -> jdbcTemplate.queryForMap(READ_SQL, params));
+  }
+
+  @Test
+  void getWorkspaceIdByAzureCloudContext() {
+    var azureCloudContext = createRandomAzureCloudContext();
+
+    WorkspaceUnitTestUtils.createWorkspaceWithAzureContext(
+        workspaceUuid, workspaceDao, azureCloudContext);
+
+    var actualWorkspaceUuid = workspaceDao.getWorkspaceIdByAzureCloudContext(azureCloudContext);
+
+    assertEquals(workspaceUuid, actualWorkspaceUuid);
+  }
+
+  @Test
+  void getWorkspaceIdByNonExistingAzureCloudContext() {
+    var azureCloudContext = createRandomAzureCloudContext();
+    var nonExistingCloudContext = createRandomAzureCloudContext();
+
+    WorkspaceUnitTestUtils.createWorkspaceWithAzureContext(
+        workspaceUuid, workspaceDao, azureCloudContext);
+
+    assertThrows(
+        CloudContextNotFoundException.class,
+        () -> workspaceDao.getWorkspaceIdByAzureCloudContext(nonExistingCloudContext));
+  }
+
+  @Test
+  void getWorkspaceIdByAzureCloudContextWithoutRequiredParameter() {
+    assertThrows(
+        MissingRequiredFieldException.class,
+        () -> workspaceDao.getWorkspaceIdByAzureCloudContext(null));
   }
 
   @Test
@@ -371,6 +406,11 @@ class WorkspaceDaoTest extends BaseUnitTest {
         .userFacingId(workspaceUuid.toString())
         .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
         .build();
+  }
+
+  private AzureCloudContext createRandomAzureCloudContext() {
+    return new AzureCloudContext(
+        UUID.randomUUID().toString(), UUID.randomUUID().toString(), UUID.randomUUID().toString());
   }
 
   private GcpCloudContext makeCloudContext() {

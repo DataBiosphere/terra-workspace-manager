@@ -77,7 +77,9 @@ public class DeleteAzureStorageContainerStep implements Step {
                   .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
           // Storage container was created based on landing zone shared storage account
-          UUID landingZoneId = landingZoneApiDispatch.getLandingZoneId(azureCloudContext);
+          UUID landingZoneId =
+              landingZoneApiDispatch.getLandingZoneId(
+                  new BearerToken(userRequest.getRequiredToken()), azureCloudContext);
           Optional<ApiAzureLandingZoneDeployedResource> sharedStorageAccount =
               landingZoneApiDispatch.getSharedStorageAccount(
                   new BearerToken(userRequest.getRequiredToken()), landingZoneId);

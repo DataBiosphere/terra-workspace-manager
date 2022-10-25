@@ -14,6 +14,7 @@ import bio.terra.workspace.common.utils.AzureTestUtils;
 import bio.terra.workspace.common.utils.AzureVmUtils;
 import bio.terra.workspace.connected.LandingZoneTestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -66,6 +67,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
   @Autowired private WsmResourceService wsmResourceService;
   @Autowired private AzureCloudContextService azureCloudContextService;
   @Autowired private LandingZoneDao landingZoneDao;
+  @Autowired private WorkspaceDao workspaceDao;
   @Autowired private CrlService crlService;
   @Autowired private AzureConfiguration azureConfig;
 
@@ -330,7 +332,12 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
 
     TestLandingZoneManager testLandingZoneManager =
         new TestLandingZoneManager(
-            azureCloudContextService, landingZoneDao, crlService, azureConfig, workspaceUuid);
+            azureCloudContextService,
+            landingZoneDao,
+            workspaceDao,
+            crlService,
+            azureConfig,
+            workspaceUuid);
 
     testLandingZoneManager.createLandingZoneWithSharedStorageAccount(
         landingZoneId, storageAccountName, "eastus");
@@ -443,7 +450,12 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
 
     TestLandingZoneManager testLandingZoneManager =
         new TestLandingZoneManager(
-            azureCloudContextService, landingZoneDao, crlService, azureConfig, workspaceUuid);
+            azureCloudContextService,
+            landingZoneDao,
+            workspaceDao,
+            crlService,
+            azureConfig,
+            workspaceUuid);
 
     testLandingZoneManager.createLandingZoneWithoutResources(landingZoneId);
 

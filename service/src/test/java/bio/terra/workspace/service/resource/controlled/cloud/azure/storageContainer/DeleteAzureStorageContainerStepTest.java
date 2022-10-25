@@ -117,7 +117,8 @@ public class DeleteAzureStorageContainerStepTest extends BaseStorageStepTest {
     UUID landingZoneId = UUID.randomUUID();
     initDeleteValidationStep(Optional.empty());
 
-    when(mockLandingZoneApiDispatch.getLandingZoneId(any(AzureCloudContext.class)))
+    when(mockLandingZoneApiDispatch.getLandingZoneId(
+            any(BearerToken.class), any(AzureCloudContext.class)))
         .thenReturn(landingZoneId);
     ApiAzureLandingZoneDeployedResource mockSharedStorageAccount =
         mock(ApiAzureLandingZoneDeployedResource.class);
@@ -154,7 +155,8 @@ public class DeleteAzureStorageContainerStepTest extends BaseStorageStepTest {
       throws InterruptedException {
     initDeleteValidationStep(Optional.empty());
 
-    when(mockLandingZoneApiDispatch.getLandingZoneId(any(AzureCloudContext.class)))
+    when(mockLandingZoneApiDispatch.getLandingZoneId(
+            any(BearerToken.class), any(AzureCloudContext.class)))
         .thenThrow(
             new IllegalStateException(
                 "Could not find a landing zone id for the given Azure context. "
@@ -174,7 +176,8 @@ public class DeleteAzureStorageContainerStepTest extends BaseStorageStepTest {
     UUID landingZoneId = UUID.randomUUID();
     initDeleteValidationStep(Optional.empty());
 
-    when(mockLandingZoneApiDispatch.getLandingZoneId(any(AzureCloudContext.class)))
+    when(mockLandingZoneApiDispatch.getLandingZoneId(
+            any(BearerToken.class), any(AzureCloudContext.class)))
         .thenReturn(landingZoneId);
     when(mockLandingZoneApiDispatch.getSharedStorageAccount(
             any(BearerToken.class), eq(landingZoneId)))

@@ -4,10 +4,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import bio.terra.cloudres.azure.resourcemanager.common.Defaults;
 import bio.terra.landingzone.db.LandingZoneDao;
-import bio.terra.landingzone.db.model.LandingZone;
+import bio.terra.landingzone.db.model.LandingZoneRecord;
 import bio.terra.landingzone.library.landingzones.deployment.LandingZoneTagKeys;
 import bio.terra.landingzone.library.landingzones.deployment.ResourcePurpose;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
+import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.resourcemanager.data.CreateStorageAccountRequestData;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
@@ -15,6 +16,10 @@ import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.Region;
 import com.azure.resourcemanager.storage.StorageManager;
 import com.azure.resourcemanager.storage.models.StorageAccount;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 /**
@@ -41,15 +46,18 @@ public class TestLandingZoneManager {
   private final UUID workspaceUuid;
   private final AzureCloudContext azureCloudContext;
   private final StorageManager storageManager;
+  private final WorkspaceDao workspaceDao;
 
   public TestLandingZoneManager(
       AzureCloudContextService azureCloudContextService,
       LandingZoneDao landingZoneDao,
+      WorkspaceDao workspaceDao,
       CrlService crlService,
       AzureConfiguration azureConfig,
       UUID workspaceUuid) {
     this.azureCloudContextService = azureCloudContextService;
     this.landingZoneDao = landingZoneDao;
+    this.workspaceDao = workspaceDao;
     this.crlService = crlService;
     this.azureConfig = azureConfig;
     this.workspaceUuid = workspaceUuid;
@@ -85,8 +93,10 @@ public class TestLandingZoneManager {
     String definition = "QuasiLandingZoneWithSharedStorageAccount";
     String version = "v1";
     // create record in LZ database
+    var workspaceId = workspaceDao.getWorkspaceIdByAzureCloudContext(azureCloudContext);
+    var workspace = workspaceDao.getWorkspace(workspaceId);
     landingZoneDao.createLandingZone(
-        LandingZone.builder()
+        LandingZoneRecord.builder()
             .landingZoneId(landingZoneId)
             .definition(definition)
             .version(version)
@@ -96,6 +106,8 @@ public class TestLandingZoneManager {
             .resourceGroupId(azureCloudContext.getAzureResourceGroupId())
             .subscriptionId(azureCloudContext.getAzureSubscriptionId())
             .tenantId(azureCloudContext.getAzureTenantId())
+            .billingProfileId(UUID.fromString(workspace.getSpendProfileId().get().getId()))
+            .createdDate(OffsetDateTime.of(LocalDate.now(), LocalTime.now(), ZoneOffset.UTC))
             .build());
   }
 

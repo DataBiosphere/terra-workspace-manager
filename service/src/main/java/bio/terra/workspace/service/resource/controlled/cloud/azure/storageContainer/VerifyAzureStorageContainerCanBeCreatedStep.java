@@ -140,7 +140,9 @@ public class VerifyAzureStorageContainerCanBeCreatedStep implements Step {
   private StepResult validateLandingZoneSharedStorageAccountExist(
       FlightContext context, AzureCloudContext azureCloudContext, StorageManager storageManager) {
     try {
-      UUID landingZoneId = landingZoneApiDispatch.getLandingZoneId(azureCloudContext);
+      UUID landingZoneId =
+          landingZoneApiDispatch.getLandingZoneId(
+              new BearerToken(userRequest.getRequiredToken()), azureCloudContext);
       Optional<ApiAzureLandingZoneDeployedResource> existingSharedStorageAccount =
           landingZoneApiDispatch.getSharedStorageAccount(
               new BearerToken(userRequest.getRequiredToken()), landingZoneId);
