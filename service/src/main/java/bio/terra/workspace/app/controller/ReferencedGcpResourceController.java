@@ -898,6 +898,13 @@ public class ReferencedGcpResourceController extends ControllerBase
     // and write access to the destination workspace.
     workspaceService.validateCloneReferenceAction(
         userRequest, workspaceUuid, body.getDestinationWorkspaceId());
+    // Do this after permission check. If both permission check and this fail, it's better to show
+    // permission check error.
+    if (body.getCloningInstructions() != null) {
+      ResourceValidationUtils.validateCloningInstructions(
+          StewardshipType.REFERENCED,
+          CloningInstructions.fromApiModel(body.getCloningInstructions()));
+    }
 
     final ReferencedResource sourceReferencedResource =
         referenceResourceService.getReferenceResource(workspaceUuid, resourceId);

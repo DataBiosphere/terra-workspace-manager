@@ -32,13 +32,10 @@ import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.generated.model.ApiCloneResourceResult;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceResult;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
-import bio.terra.workspace.generated.model.ApiCreateDataRepoSnapshotReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
-import bio.terra.workspace.generated.model.ApiDataRepoSnapshotAttributes;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiProperty;
-import bio.terra.workspace.generated.model.ApiReferenceResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiResourceCloneDetails;
 import bio.terra.workspace.generated.model.ApiTpsComponent;
 import bio.terra.workspace.generated.model.ApiTpsObjectType;
@@ -67,7 +64,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.junit.jupiter.api.BeforeEach;
@@ -333,23 +329,29 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
 
     // Create some data repo references
     ApiDataRepoSnapshotResource snap1 =
-        mockMvcUtils.createDataRepoSnapshotReference(USER_REQUEST, sourceWorkspaceId);
-    ApiDataRepoSnapshotResource snap2 =
-        mockMvcUtils.createDataRepoSnapshotReference(USER_REQUEST, sourceWorkspaceId);
-    ApiDataRepoSnapshotResource snap3 =
-        mockMvcUtils.createDataRepoSnapshotReference(
+        mockMvcUtils.createReferencedDataRepoSnapshot(
             USER_REQUEST,
             sourceWorkspaceId,
-            new ApiCreateDataRepoSnapshotReferenceRequestBody()
-                .metadata(
-                    new ApiReferenceResourceCommonFields()
-                        .cloningInstructions(ApiCloningInstructionsEnum.NOTHING)
-                        .description("description")
-                        .name(RandomStringUtils.randomAlphabetic(10)))
-                .snapshot(
-                    new ApiDataRepoSnapshotAttributes()
-                        .instanceName("terra")
-                        .snapshot("polaroid")));
+            ApiCloningInstructionsEnum.REFERENCE,
+            "snap1-resource-name",
+            "snap1-instance-name",
+            "snap1-snapshot");
+    ApiDataRepoSnapshotResource snap2 =
+        mockMvcUtils.createReferencedDataRepoSnapshot(
+            USER_REQUEST,
+            sourceWorkspaceId,
+            ApiCloningInstructionsEnum.REFERENCE,
+            "snap2-resource-name",
+            "snap2-instance-name",
+            "snap2-snapshot");
+    ApiDataRepoSnapshotResource snap3 =
+        mockMvcUtils.createReferencedDataRepoSnapshot(
+            USER_REQUEST,
+            sourceWorkspaceId,
+            ApiCloningInstructionsEnum.NOTHING,
+            "snap3-resource-name",
+            "snap3-instance-name",
+            "snap3-snapshot");
 
     // Clone the rawls workspace into a destination rawls workspace
     // This relies on the mocked Sam check
