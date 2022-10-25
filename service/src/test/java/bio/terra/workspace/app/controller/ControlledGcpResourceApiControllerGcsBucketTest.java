@@ -4,41 +4,42 @@ import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertM
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+import bio.terra.stairway.FlightDebugInfo;
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
+import bio.terra.workspace.common.GcpCloudUtils;
+import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketResult;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
-import bio.terra.workspace.generated.model.ApiCreatedControlledGcpBigQueryDataset;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpGcsBucket;
-import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.generated.model.ApiResourceLineage;
 import bio.terra.workspace.generated.model.ApiResourceLineageEntry;
 import bio.terra.workspace.generated.model.ApiResourceMetadata;
 import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
+import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.job.JobService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.MockMvc;
 
-/** Use this instead of ControlledGcpResourceApiTest, if you want to talk to real GCP. */
+/** Connected tests for controlled GCS buckets. */
 // Per-class lifecycle on this test to allow a shared workspace object across tests, which saves
 // time creating and deleting GCP contexts.
 @TestInstance(Lifecycle.PER_CLASS)
-public class ControlledGcpResourceApiControllerConnectedTest extends BaseConnectedTest {
-  private static final Logger logger =
-      LoggerFactory.getLogger(ControlledGcpResourceApiControllerConnectedTest.class);
+public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnectedTest {
 
   // Use instructions that are only valid for controlled resource, to make sure we set instructions
   // appropriately for referenced resource.
@@ -49,8 +50,13 @@ public class ControlledGcpResourceApiControllerConnectedTest extends BaseConnect
   @Autowired MockMvcUtils mockMvcUtils;
   @Autowired ObjectMapper objectMapper;
   @Autowired UserAccessUtils userAccessUtils;
+  @Autowired JobService jobService;
+  @Autowired GcpCloudUtils cloudUtils;
+  @Autowired FeatureConfiguration features;
+  @Autowired CrlService crlService;
 
   private UUID workspaceId;
+  private UUID workspaceId2;
   private ApiCreatedControlledGcpGcsBucket sourceBucket;
 
   @BeforeAll
@@ -59,37 +65,36 @@ public class ControlledGcpResourceApiControllerConnectedTest extends BaseConnect
         mockMvcUtils
             .createWorkspaceWithCloudContext(userAccessUtils.defaultUserAuthRequest())
             .getId();
+    workspaceId2 =
+        mockMvcUtils
+            .createWorkspaceWithCloudContext(userAccessUtils.defaultUserAuthRequest())
+            .getId();
+
     sourceBucket =
         mockMvcUtils.createControlledGcsBucket(
             userAccessUtils.defaultUserAuthRequest(), workspaceId);
   }
 
+  /**
+   * Reset the {@link FlightDebugInfo} on the {@link JobService} to not interfere with other tests.
+   */
+  @AfterEach
+  public void resetFlightDebugInfo() {
+    StairwayTestUtils.enumerateJobsDump(
+        jobService, workspaceId, userAccessUtils.defaultUserAuthRequest());
+    StairwayTestUtils.enumerateJobsDump(
+        jobService, workspaceId2, userAccessUtils.defaultUserAuthRequest());
+    jobService.setFlightDebugInfoForTest(null);
+  }
+
   @AfterAll
   public void cleanup() throws Exception {
     mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+    mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
   }
 
   @Test
-  public void createBigQueryDataset_createdResourceEqualsGotResource() throws Exception {
-    ApiCreatedControlledGcpBigQueryDataset bqDataset =
-        mockMvcUtils.createBigQueryDataset(userAccessUtils.defaultUserAuthRequest(), workspaceId);
-
-    ApiGcpBigQueryDatasetResource actualBqDataset =
-        mockMvcUtils.getBigQueryDataset(
-            userAccessUtils.defaultUserAuthRequest(), workspaceId, bqDataset.getResourceId());
-    ApiGcpBigQueryDatasetResource expectedBqDataset = bqDataset.getBigQueryDataset();
-
-    assertResourceMetadata(expectedBqDataset.getMetadata(), actualBqDataset.getMetadata());
-    assertEquals(
-        expectedBqDataset.getAttributes().getDatasetId(),
-        actualBqDataset.getAttributes().getDatasetId());
-    assertEquals(
-        expectedBqDataset.getAttributes().getProjectId(),
-        actualBqDataset.getAttributes().getProjectId());
-  }
-
-  @Test
-  public void createBucket_createdResourceEqualsGotResource() throws Exception {
+  public void create_createdResourceEqualsGotResource() throws Exception {
     ApiGcpGcsBucketResource retrievedResource =
         mockMvcUtils.getControlledGcsBucket(
             userAccessUtils.defaultUserAuthRequest(), workspaceId, sourceBucket.getResourceId());
@@ -102,7 +107,7 @@ public class ControlledGcpResourceApiControllerConnectedTest extends BaseConnect
   }
 
   @Test
-  public void cloneBucket_copyNothing() throws Exception {
+  public void clone_copyNothing() throws Exception {
     ApiCloneControlledGcpGcsBucketResult cloneResult =
         mockMvcUtils.cloneControlledGcsBucket(
             userAccessUtils.defaultUserAuthRequest(),
@@ -116,7 +121,7 @@ public class ControlledGcpResourceApiControllerConnectedTest extends BaseConnect
   }
 
   @Test
-  public void cloneBucket_copyDefinition() throws Exception {
+  public void clone_copyDefinition() throws Exception {
     ApiCloneControlledGcpGcsBucketResult cloneResult =
         mockMvcUtils.cloneControlledGcsBucket(
             userAccessUtils.defaultUserAuthRequest(),
@@ -145,7 +150,7 @@ public class ControlledGcpResourceApiControllerConnectedTest extends BaseConnect
   }
 
   @Test
-  public void cloneBucket_copyReference() throws Exception {
+  public void clone_copyReference() throws Exception {
     ApiCloneControlledGcpGcsBucketResult cloneResult =
         mockMvcUtils.cloneControlledGcsBucket(
             userAccessUtils.defaultUserAuthRequest(),

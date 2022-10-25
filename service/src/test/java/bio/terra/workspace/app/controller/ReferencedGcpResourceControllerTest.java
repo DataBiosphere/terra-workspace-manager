@@ -8,7 +8,7 @@ import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.make
 import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeGcsObjectReferenceRequestBody;
 import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeGitRepoReferenceRequestBody;
 import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_DATA_REPO_SNAPSHOTS_V1_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_GCP_BIG_QUERY_DATASETS_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_GCP_BIG_QUERY_DATA_TABLE_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_GCP_GCS_BUCKETS_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_GCP_GCS_OBJECTS_V1_PATH_FORMAT;
@@ -231,7 +231,7 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
 
     String serializedResponse =
         createReferencedResourceAndGetSerializedResponse(
-            workspaceId, request, REFERENCED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT);
+            workspaceId, request, REFERENCED_GCP_BIG_QUERY_DATASETS_V1_PATH_FORMAT);
 
     return objectMapper.readValue(serializedResponse, ApiGcpBigQueryDatasetResource.class);
   }

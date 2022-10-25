@@ -92,7 +92,6 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
   private String sharedBucketSourceResourceName;
   private String sourceProjectId;
   private TestUserSpecification cloningUser;
-  private UUID destinationWorkspaceId;
   private WorkspaceApi cloningUserWorkspaceApi;
   private String controlledBucketFolderName;
   private String referenceBucketFolderName;
@@ -642,6 +641,8 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
     assertThat(
         "Correct number of employees inserted (with possible duplicates)",
         numEmployees,
+        // BqDatasetUtils.populateBigQueryDataset() added 3 employees: Batman, Aquaman, Superman.
+        // Batman was not copied because it was inserted via stream. Aquaman/Superman are copied.
         is(greaterThanOrEqualTo(2L)));
 
     // verify private dataset clone failed

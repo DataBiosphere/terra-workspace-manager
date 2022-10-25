@@ -1,5 +1,14 @@
 package bio.terra.workspace.amalgam.tps;
 
+import static bio.terra.workspace.common.fixtures.PolicyFixtures.DDGROUP;
+import static bio.terra.workspace.common.fixtures.PolicyFixtures.GROUP;
+import static bio.terra.workspace.common.fixtures.PolicyFixtures.GROUP_CONSTRAINT;
+import static bio.terra.workspace.common.fixtures.PolicyFixtures.GROUP_POLICY;
+import static bio.terra.workspace.common.fixtures.PolicyFixtures.NAMESPACE;
+import static bio.terra.workspace.common.fixtures.PolicyFixtures.REGION;
+import static bio.terra.workspace.common.fixtures.PolicyFixtures.REGION_CONSTRAINT;
+import static bio.terra.workspace.common.fixtures.PolicyFixtures.REGION_POLICY;
+import static bio.terra.workspace.common.fixtures.PolicyFixtures.US_REGION;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
@@ -24,11 +33,12 @@ import bio.terra.workspace.generated.model.ApiTpsPaoUpdateRequest;
 import bio.terra.workspace.generated.model.ApiTpsPaoUpdateResult;
 import bio.terra.workspace.generated.model.ApiTpsPolicyInput;
 import bio.terra.workspace.generated.model.ApiTpsPolicyInputs;
-import bio.terra.workspace.generated.model.ApiTpsPolicyPair;
 import bio.terra.workspace.generated.model.ApiTpsUpdateMode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -36,13 +46,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 public class TpsBasicPaoTest extends BaseUnitTest {
-  private static final String TERRA = "terra";
-  private static final String GROUP_CONSTRAINT = "group-constraint";
-  private static final String REGION_CONSTRAINT = "region-constraint";
-  private static final String GROUP = "group";
-  private static final String REGION = "region";
-  private static final String DDGROUP = "ddgroup";
-  private static final String US_REGION = "US";
+  private static final Logger logger = LoggerFactory.getLogger(TpsBasicPaoTest.class);
 
   @Autowired private ObjectMapper objectMapper;
   @Autowired private FeatureConfiguration features;
@@ -51,23 +55,12 @@ public class TpsBasicPaoTest extends BaseUnitTest {
   @Test
   public void basicPaoTest() throws Exception {
     // Don't run the test if TPS is disabled
+    logger.info("features.isTpsEnabled(): %s".formatted(features.isTpsEnabled()));
     if (!features.isTpsEnabled()) {
       return;
     }
 
-    var groupPolicy =
-        new ApiTpsPolicyInput()
-            .namespace(TERRA)
-            .name(GROUP_CONSTRAINT)
-            .addAdditionalDataItem(new ApiTpsPolicyPair().key(GROUP).value(DDGROUP));
-
-    var regionPolicy =
-        new ApiTpsPolicyInput()
-            .namespace(TERRA)
-            .name(REGION_CONSTRAINT)
-            .addAdditionalDataItem(new ApiTpsPolicyPair().key(REGION).value(US_REGION));
-
-    var inputs = new ApiTpsPolicyInputs().addInputsItem(groupPolicy).addInputsItem(regionPolicy);
+    var inputs = new ApiTpsPolicyInputs().addInputsItem(GROUP_POLICY).addInputsItem(REGION_POLICY);
 
     // Create a PAO
     UUID paoIdA = createPao(inputs);
@@ -155,7 +148,7 @@ public class TpsBasicPaoTest extends BaseUnitTest {
 
   private void checkAttributeSet(ApiTpsPolicyInputs attributeSet) {
     for (ApiTpsPolicyInput attribute : attributeSet.getInputs()) {
-      assertEquals(TERRA, attribute.getNamespace());
+      assertEquals(NAMESPACE, attribute.getNamespace());
       assertEquals(1, attribute.getAdditionalData().size());
 
       if (attribute.getName().equals(GROUP_CONSTRAINT)) {
