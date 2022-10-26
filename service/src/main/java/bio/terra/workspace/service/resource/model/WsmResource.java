@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.resource.model;
 
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
-import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties.FOLDER_ID_KEY;
 
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
@@ -17,7 +16,6 @@ import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResou
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -69,7 +67,7 @@ public abstract class WsmResource {
     this.description = description;
     this.cloningInstructions = cloningInstructions;
     this.resourceLineage = Optional.ofNullable(resourceLineage).orElse(new ArrayList<>());
-    this.properties = trimInvalidProperties(properties);
+    this.properties = ImmutableMap.copyOf(properties);
   }
 
   /** construct from database data */
@@ -93,22 +91,6 @@ public abstract class WsmResource {
         resourceFields.getCloningInstructions(),
         resourceFields.getResourceLineage(),
         resourceFields.getProperties());
-  }
-
-  private ImmutableMap<String, String> trimInvalidProperties(Map<String, String> properties) {
-    Map<String, String> trimmedProperties = new HashMap<>(properties);
-    if (properties.containsKey(FOLDER_ID_KEY)) {
-      try {
-        var uuid = UUID.fromString(properties.get(FOLDER_ID_KEY));
-      } catch (IllegalArgumentException e) {
-        logger.warn(
-            "resource {} contains an invalid non-UUID format folder id {}.",
-            resourceId,
-            properties.get(FOLDER_ID_KEY));
-        trimmedProperties.remove(FOLDER_ID_KEY);
-      }
-    }
-    return ImmutableMap.copyOf(trimmedProperties);
   }
 
   public UUID getWorkspaceId() {
@@ -260,6 +242,7 @@ public abstract class WsmResource {
       throw new MissingRequiredFieldException("Missing required field for WsmResource.");
     }
     ResourceValidationUtils.validateResourceName(getName());
+    ResourceValidationUtils.validateProperties(getProperties());
     if (getDescription() != null) {
       ResourceValidationUtils.validateResourceDescriptionName(getDescription());
     }

@@ -4,7 +4,6 @@ import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertA
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesDeleteRequestBody;
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesUpdateRequestBody;
 
-import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.db.FolderDao;
 import bio.terra.workspace.generated.controller.ResourceApi;
@@ -18,14 +17,13 @@ import bio.terra.workspace.generated.model.ApiStewardshipType;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResourceService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
-import bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties;
-import com.google.api.gax.rpc.InvalidArgumentException;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.List;
 import java.util.Map;
@@ -115,7 +113,7 @@ public class ResourceApiController implements ResourceApi {
 
     validatePropertiesUpdateRequestBody(properties);
     Map<String, String> propertiesMap = convertApiPropertyToMap(properties);
-    validateReservedProperties(propertiesMap, workspaceUuid);
+    ResourceValidationUtils.validateProperties(propertiesMap);
 
     resourceService.updateResourceProperties(workspaceUuid, resourceUuid, propertiesMap);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -138,22 +136,5 @@ public class ResourceApiController implements ResourceApi {
     ApiResourceMetadata common = wsmResource.toApiMetadata();
     ApiResourceAttributesUnion union = wsmResource.toApiAttributesUnion();
     return new ApiResourceDescription().metadata(common).resourceAttributes(union);
-  }
-
-  /** Validates properties that terra has reserved. */
-  private void validateReservedProperties(Map<String, String> properties, UUID workspaceId) {
-    if (properties.containsKey(ResourceProperties.FOLDER_ID_KEY)) {
-      String folderId = properties.get(ResourceProperties.FOLDER_ID_KEY);
-      // Throws BadRequestException when the folder id is not a UUID.
-      UUID folderUuid = null;
-      try {
-        folderUuid = UUID.fromString(folderId);
-      } catch (InvalidArgumentException e) {
-        throw new BadRequestException(
-            String.format("%s is not a valid folder id. It must be a UUID", folderId));
-      }
-      // Throws FolderNotFoundException when the folder id is not in this workspace.
-      folderDao.getFolderRequired(workspaceId, folderUuid);
-    }
   }
 }

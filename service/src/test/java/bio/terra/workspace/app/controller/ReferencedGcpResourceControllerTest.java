@@ -17,7 +17,6 @@ import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties.FOLDER_ID_KEY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -95,9 +94,8 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
   }
 
   @Test
-  public void
-      createReferencedDataRepoResource_resourceContainsInvalidFolderId_invalidFolderIdTrimmed()
-          throws Exception {
+  public void createReferencedDataRepoResource_resourceContainsInvalidFolderId_throws400()
+      throws Exception {
     UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     ApiCreateDataRepoSnapshotReferenceRequestBody requestBody =
         makeDataRepoSnapshotReferenceRequestBody()
@@ -106,12 +104,19 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
                     .properties(
                         PropertiesUtils.convertMapToApiProperties(Map.of(FOLDER_ID_KEY, "root"))));
 
-    ApiDataRepoSnapshotResource createdResource =
-        createReferencedDataRepoSnapshotResource(workspaceId, requestBody);
+    var request = objectMapper.writeValueAsString(requestBody);
 
-    assertFalse(
-        PropertiesUtils.convertApiPropertyToMap(createdResource.getMetadata().getProperties())
-            .containsKey(FOLDER_ID_KEY));
+    mockMvc
+        .perform(
+            addAuth(
+                post(String.format(
+                        REFERENCED_DATA_REPO_SNAPSHOTS_V1_PATH_FORMAT, workspaceId.toString()))
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .characterEncoding("UTF-8")
+                    .content(request),
+                USER_REQUEST))
+        .andExpect(status().is(HttpStatus.SC_BAD_REQUEST));
   }
 
   @Test

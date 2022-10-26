@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.resource;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.defaultNotebookCreationParameters;
+import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties.FOLDER_ID_KEY;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.common.exception.BadRequestException;
@@ -17,6 +18,8 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -436,5 +439,17 @@ public class ValidationUtilsTest extends BaseUnitTest {
         () ->
             ResourceValidationUtils.validateCloningInstructions(
                 StewardshipType.REFERENCED, CloningInstructions.COPY_DEFINITION));
+  }
+
+  @Test
+  public void validateProperties_folderIdNotUuid_throwsBadRequestException() {
+    assertThrows(
+        BadRequestException.class,
+        () -> ResourceValidationUtils.validateProperties(Map.of(FOLDER_ID_KEY, "root")));
+  }
+
+  @Test
+  public void validateProperties_folderIdIsUuid_validates() {
+    ResourceValidationUtils.validateProperties(Map.of(FOLDER_ID_KEY, UUID.randomUUID().toString()));
   }
 }

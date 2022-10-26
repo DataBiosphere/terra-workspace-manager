@@ -141,19 +141,6 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
     }
 
     @Test
-    public void updateResourceProperties_FolderIdNotExist_throws404() throws Exception {
-      ApiCreatedControlledGcpBigQueryDataset resource =
-          mockMvcUtils.createBigQueryDataset(userAccessUtils.defaultUserAuthRequest(), workspaceId);
-      UUID resourceId = resource.getResourceId();
-
-      updateResourcePropertiesExpectCode(
-          workspaceId,
-          resourceId,
-          Map.of(FOLDER_ID_KEY, UUID.randomUUID().toString()),
-          HttpStatus.SC_NOT_FOUND);
-    }
-
-    @Test
     public void updateResourceProperties_readOnlyPermission_throws403() throws Exception {
       ApiCreatedControlledGcpBigQueryDataset resource =
           mockMvcUtils.createBigQueryDataset(userAccessUtils.defaultUserAuthRequest(), workspaceId);

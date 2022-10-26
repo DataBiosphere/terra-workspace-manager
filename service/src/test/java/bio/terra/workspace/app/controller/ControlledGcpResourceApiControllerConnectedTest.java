@@ -7,7 +7,6 @@ import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_BIG_Q
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties.FOLDER_ID_KEY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -102,8 +101,7 @@ public class ControlledGcpResourceApiControllerConnectedTest extends BaseConnect
   }
 
   @Test
-  public void createBigQueryDataset_resourceContainsInvalidFolderId_trimInvalidFolder()
-      throws Exception {
+  public void createBigQueryDataset_resourceContainsInvalidFolderId_throws400() throws Exception {
     ApiCreateControlledGcpBigQueryDatasetRequestBody datasetCreationRequest =
         new ApiCreateControlledGcpBigQueryDatasetRequestBody()
             .common(
@@ -112,27 +110,17 @@ public class ControlledGcpResourceApiControllerConnectedTest extends BaseConnect
                         PropertiesUtils.convertMapToApiProperties(Map.of(FOLDER_ID_KEY, "root"))))
             .dataset(defaultBigQueryDatasetCreationParameters());
 
-    String serializedGetResponse =
-        mockMvc
-            .perform(
-                addAuth(
-                    post(String.format(
-                            CONTROLLED_GCP_BIG_QUERY_DATASETS_V1_PATH_FORMAT,
-                            workspaceId.toString()))
-                        .contentType(MediaType.APPLICATION_JSON_VALUE)
-                        .accept(MediaType.APPLICATION_JSON)
-                        .characterEncoding("UTF-8")
-                        .content(objectMapper.writeValueAsString(datasetCreationRequest)),
-                    userAccessUtils.defaultUserAuthRequest()))
-            .andExpect(status().is(HttpStatus.SC_OK))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-    ApiCreatedControlledGcpBigQueryDataset bqDataset =
-        objectMapper.readValue(serializedGetResponse, ApiCreatedControlledGcpBigQueryDataset.class);
-
-    assertFalse(
-        bqDataset.getBigQueryDataset().getMetadata().getProperties().contains(FOLDER_ID_KEY));
+    mockMvc
+        .perform(
+            addAuth(
+                post(String.format(
+                        CONTROLLED_GCP_BIG_QUERY_DATASETS_V1_PATH_FORMAT, workspaceId.toString()))
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .characterEncoding("UTF-8")
+                    .content(objectMapper.writeValueAsString(datasetCreationRequest)),
+                userAccessUtils.defaultUserAuthRequest()))
+        .andExpect(status().is(HttpStatus.SC_BAD_REQUEST));
   }
 
   @Test
