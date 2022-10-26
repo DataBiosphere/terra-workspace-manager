@@ -104,8 +104,6 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
                     .properties(
                         PropertiesUtils.convertMapToApiProperties(Map.of(FOLDER_ID_KEY, "root"))));
 
-    var request = objectMapper.writeValueAsString(requestBody);
-
     mockMvc
         .perform(
             addAuth(
@@ -114,7 +112,7 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .accept(MediaType.APPLICATION_JSON)
                     .characterEncoding("UTF-8")
-                    .content(request),
+                    .content(objectMapper.writeValueAsString(requestBody)),
                 USER_REQUEST))
         .andExpect(status().is(HttpStatus.SC_BAD_REQUEST));
   }
