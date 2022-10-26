@@ -174,7 +174,7 @@ public class FolderDaoTest extends BaseUnitTest {
             /*updateParent=*/ true);
 
     assertTrue(updated);
-    Folder updatedFolder = folderDao.getFolder(workspaceUuid, createdFolder.id());
+    Folder updatedFolder = folderDao.getFolderRequired(workspaceUuid, createdFolder.id());
     assertEquals(newName, updatedFolder.displayName());
     assertEquals(newDescription, updatedFolder.description());
     assertEquals(secondCreatedFolder.id(), updatedFolder.parentFolderId());
@@ -184,7 +184,7 @@ public class FolderDaoTest extends BaseUnitTest {
             workspaceUuid, createdFolder.id(), null, null, null, /*updateParent=*/ true);
 
     assertTrue(secondUpdate);
-    Folder secondUpdatedFolder = folderDao.getFolder(workspaceUuid, createdFolder.id());
+    Folder secondUpdatedFolder = folderDao.getFolderRequired(workspaceUuid, createdFolder.id());
     assertNull(secondUpdatedFolder.parentFolderId());
     // name and description not change.
     assertEquals(newName, secondUpdatedFolder.displayName());
@@ -200,7 +200,7 @@ public class FolderDaoTest extends BaseUnitTest {
     folderDao.updateFolderProperties(
         workspaceUuid, createdFolder.id(), Map.of("foo", "bar1", "cake", "lava"));
 
-    Folder updatedFolder = folderDao.getFolder(workspaceUuid, createdFolder.id());
+    Folder updatedFolder = folderDao.getFolderRequired(workspaceUuid, createdFolder.id());
     assertEquals("bar1", updatedFolder.properties().get("foo"));
     assertEquals("lava", updatedFolder.properties().get("cake"));
   }
@@ -234,7 +234,7 @@ public class FolderDaoTest extends BaseUnitTest {
 
     folderDao.deleteFolderProperties(workspaceUuid, createdFolder.id(), List.of("foo", "cake"));
 
-    Folder updatedFolder = folderDao.getFolder(workspaceUuid, createdFolder.id());
+    Folder updatedFolder = folderDao.getFolderRequired(workspaceUuid, createdFolder.id());
     assertFalse(updatedFolder.properties().containsKey("foo"));
   }
 
@@ -336,7 +336,7 @@ public class FolderDaoTest extends BaseUnitTest {
                 /*parentFolderId=*/ null,
                 /*updateParent=*/ false));
 
-    var updatedFolder = folderDao.getFolder(workspaceUuid, createdFolder.id());
+    var updatedFolder = folderDao.getFolderRequired(workspaceUuid, createdFolder.id());
     assertEquals(createdFolder.displayName(), updatedFolder.displayName());
     assertEquals(createdFolder.description(), updatedFolder.description());
   }
@@ -365,14 +365,14 @@ public class FolderDaoTest extends BaseUnitTest {
     assertThrows(
         FolderNotFoundException.class,
         () ->
-            folderDao.getFolder(
+            folderDao.getFolderRequired(
                 /*workspaceId=*/ UUID.randomUUID(), /*folderId=*/ UUID.randomUUID()));
 
     UUID workspaceId = createWorkspaceWithoutGcpContext(workspaceDao);
 
     assertThrows(
         FolderNotFoundException.class,
-        () -> folderDao.getFolder(workspaceId, /*folderId=*/ UUID.randomUUID()));
+        () -> folderDao.getFolderRequired(workspaceId, /*folderId=*/ UUID.randomUUID()));
   }
 
   @Test

@@ -144,13 +144,16 @@ public class ResourceApiController implements ResourceApi {
   private void validateReservedProperties(Map<String, String> properties, UUID workspaceId) {
     if (properties.containsKey(ResourceProperties.FOLDER_ID_KEY)) {
       String folderId = properties.get(ResourceProperties.FOLDER_ID_KEY);
-      // throws FolderNotFoundException or IllegalArgumentException when the folder id is invalid.
+      // Throws BadRequestException when the folder id is not a UUID.
+      UUID folderUuid = null;
       try {
-        var unused = folderDao.getFolder(workspaceId, UUID.fromString(folderId));
+        folderUuid = UUID.fromString(folderId);
       } catch (InvalidArgumentException e) {
         throw new BadRequestException(
             String.format("%s is not a valid folder id. It must be a UUID", folderId));
       }
+      // Throws FolderNotFoundException when the folder id is not in this workspace.
+      folderDao.getFolderRequired(workspaceId, folderUuid);
     }
   }
 }
