@@ -50,8 +50,6 @@ import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleCondition
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiResourceCloneDetails;
 import bio.terra.workspace.generated.model.ApiResourceType;
-import bio.terra.workspace.generated.model.ApiTpsPolicyInput;
-import bio.terra.workspace.generated.model.ApiTpsPolicyPair;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.folder.model.Folder;
@@ -115,12 +113,6 @@ import org.springframework.test.web.servlet.MockMvc;
 class WorkspaceServiceTest extends BaseConnectedTest {
 
   public static final String SPEND_PROFILE_ID = "wm-default-spend-profile";
-  /** A fake group-constraint policy for a workspace. */
-  private static final ApiTpsPolicyInput GROUP_POLICY =
-      new ApiTpsPolicyInput()
-          .namespace("terra")
-          .name("group-constraint")
-          .addAdditionalDataItem(new ApiTpsPolicyPair().key("group").value("my_fake_group"));
   // Name of the test WSM application. This must match the identifier in the
   // application-app-test.yml file.
   private static final String TEST_WSM_APP = "TestWsmApp";
@@ -887,6 +879,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     assertTrue(appService.getWorkspaceApplication(destinationWorkspace, TEST_WSM_APP).isEnabled());
 
     // Destination workspace should have 1 cloned folder with the relations
+    assertEquals(1, folderDao.listFoldersInWorkspace(destinationWorkspace.getWorkspaceId()).size());
     assertNotEquals(
         folderId,
         folderDao.listFoldersInWorkspace(destinationWorkspace.getWorkspaceId()).get(0).id());

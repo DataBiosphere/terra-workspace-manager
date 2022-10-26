@@ -88,7 +88,7 @@ public class CloneAllFoldersStep implements Step {
         flightContext
             .getInputParameters()
             .get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
-    folderDao.deleteFolderRecursive(destinationWorkspaceID, /*folderId=*/ null);
+    folderDao.deleteAllFolders(destinationWorkspaceID);
     return StepResult.getStepResultSuccess();
   }
 }

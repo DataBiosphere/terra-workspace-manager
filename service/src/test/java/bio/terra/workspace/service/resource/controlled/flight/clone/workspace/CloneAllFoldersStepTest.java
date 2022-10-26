@@ -108,20 +108,20 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
             .get();
 
     assertNotEquals(
-        destinationParentFolder.id(),
         SOURCE_PARENT_FOLDER_ID,
+        destinationParentFolder.id(),
         "Destination parent folder id is generated successfully");
     assertNotEquals(
-        destinationSonFolder.id(),
         SOURCE_SON_FOLDER_ID,
+        destinationSonFolder.id(),
         "Destination son folder id is generated successfully");
     assertEquals(
-        destinationParentFolder.description(),
         SOURCE_PARENT_FOLDER_DESCRIPTION,
+        destinationParentFolder.description(),
         "Destination parent folder description is cloned successfully");
     assertEquals(
-        destinationSonFolder.description(),
         SOURCE_SON_FOLDER_DESCRIPTION,
+        destinationSonFolder.description(),
         "Destination son folder description is cloned successfully");
     assertNull(
         destinationParentFolder.parentFolderId(),
@@ -130,10 +130,12 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
         destinationParentFolder.id(),
         destinationSonFolder.parentFolderId(),
         "Destination son folder parent id cloned successfully");
+
+    workspaceDao.deleteWorkspace(SOURCE_WORKSPACE_ID);
   }
 
   @Test
-  public void undoSteo_foldersCloned() throws InterruptedException {
+  public void undoStep_foldersCloned() throws InterruptedException {
     var workingMap = new FlightMap();
     var inputParameters = new FlightMap();
 
@@ -142,6 +144,7 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
     Workspace destinationWorkspace = workspaceDao.getWorkspace(destinationWorkspaceId);
 
     inputParameters.put(ControlledResourceKeys.SOURCE_WORKSPACE_ID, SOURCE_WORKSPACE_ID);
+    inputParameters.put(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId);
     inputParameters.put(JobMapKeys.REQUEST.getKeyName(), destinationWorkspace);
 
     when(mockFlightContext.getInputParameters()).thenReturn(inputParameters);
@@ -156,5 +159,7 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
         0,
         folderDao.listFoldersInWorkspace(destinationWorkspaceId).size(),
         "Destination workspace does not have any folders");
+
+    workspaceDao.deleteWorkspace(SOURCE_WORKSPACE_ID);
   }
 }
