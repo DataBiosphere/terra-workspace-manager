@@ -31,7 +31,6 @@ import org.slf4j.LoggerFactory;
  * or (future) monitored resources.
  */
 public abstract class WsmResource {
-  private final Logger logger = LoggerFactory.getLogger(WsmResource.class);
 
   private final UUID workspaceUuid;
   private final UUID resourceId;
