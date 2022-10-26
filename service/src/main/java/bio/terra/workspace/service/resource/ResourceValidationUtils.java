@@ -506,8 +506,8 @@ public class ResourceValidationUtils {
       } catch (IllegalArgumentException e) {
         throw new BadRequestException(
             String.format(
-                "Properties contains an invalid non-UUID format folder id %s.",
-                properties.get(FOLDER_ID_KEY)));
+                "Property %s contains an invalid non-UUID format folder id %s.",
+                FOLDER_ID_KEY, properties.get(FOLDER_ID_KEY)));
       }
     }
   }

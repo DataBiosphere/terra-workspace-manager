@@ -104,17 +104,10 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
                     .properties(
                         PropertiesUtils.convertMapToApiProperties(Map.of(FOLDER_ID_KEY, "root"))));
 
-    mockMvc
-        .perform(
-            addAuth(
-                post(String.format(
-                        REFERENCED_DATA_REPO_SNAPSHOTS_V1_PATH_FORMAT, workspaceId.toString()))
-                    .contentType(MediaType.APPLICATION_JSON_VALUE)
-                    .accept(MediaType.APPLICATION_JSON)
-                    .characterEncoding("UTF-8")
-                    .content(objectMapper.writeValueAsString(requestBody)),
-                USER_REQUEST))
-        .andExpect(status().is(HttpStatus.SC_BAD_REQUEST));
+    mockMvcUtils.postExpect(
+        objectMapper.writeValueAsString(requestBody),
+        String.format(REFERENCED_DATA_REPO_SNAPSHOTS_V1_PATH_FORMAT, workspaceId),
+        HttpStatus.SC_BAD_REQUEST);
   }
 
   @Test
