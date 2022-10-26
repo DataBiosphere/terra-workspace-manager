@@ -430,6 +430,16 @@ class SamServiceTest extends BaseConnectedTest {
     samService.deleteControlledResource(bucketResource, defaultUserRequest());
   }
 
+  @Test
+  void checkAdminAuthz_throwsForbiddenException() {
+    assertThrows(
+        ForbiddenException.class,
+        () -> samService.checkAdminAuthz(userAccessUtils.defaultUserAuthRequest()));
+    assertThrows(
+        ForbiddenException.class,
+        () -> samService.checkAdminAuthz(userAccessUtils.secondUserAuthRequest()));
+  }
+
   /**
    * Convenience method to build an AuthenticatedUserRequest from utils' default user.
    *

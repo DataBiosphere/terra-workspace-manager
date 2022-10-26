@@ -4,6 +4,7 @@ import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.CustomGcpIamRole;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import java.util.List;
 
 /**
@@ -14,6 +15,9 @@ import java.util.List;
  * available, roles should be granted directly on controlled resources instead (see {@code
  * CustomGcpIamRoleMapping}), and should be removed from this list. Some permissions must be granted
  * at the project level, and will continue to live here.
+ *
+ * <p>!!!If you change this file, if you want to backfill the change to existing projects, contact
+ * admin to run syncIamRoles endpoint.!!!
  */
 public class CloudSyncRoleMapping {
 
@@ -29,7 +33,6 @@ public class CloudSyncRoleMapping {
           "artifactregistry.repositories.downloadArtifacts",
           "artifactregistry.files.list",
           "artifactregistry.files.get",
-          "artifactregistry.packages.list",
           "artifactregistry.repositories.listEffectiveTags",
           "artifactregistry.packages.list",
           "artifactregistry.tags.list",
@@ -71,7 +74,7 @@ public class CloudSyncRoleMapping {
               "artifactregistry.tags.update",
               "cloudbuild.builds.create",
               "cloudbuild.builds.update",
-              "compute.instances.get",
+              "compute.instances.getGuestAttributes",
               "iam.serviceAccounts.get",
               "iam.serviceAccounts.list",
               "lifesciences.operations.cancel",
@@ -119,4 +122,8 @@ public class CloudSyncRoleMapping {
           WsmIamRole.APPLICATION, PROJECT_WRITER,
           WsmIamRole.WRITER, PROJECT_WRITER,
           WsmIamRole.READER, PROJECT_READER);
+
+  public static final ImmutableSet<CustomGcpIamRole> CUSTOM_GCP_IAM_ROLES =
+      // convert it to a set to get rid of the duplication.
+      ImmutableSet.copyOf(CUSTOM_GCP_PROJECT_IAM_ROLES.values());
 }

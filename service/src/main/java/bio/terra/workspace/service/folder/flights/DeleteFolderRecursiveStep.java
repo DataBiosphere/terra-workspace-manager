@@ -23,7 +23,7 @@ public class DeleteFolderRecursiveStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    boolean deleted = folderDao.deleteFolderRecursive(workspaceId, folderId);
+    boolean deleted = folderDao.deleteFoldersRecursive(workspaceId, folderId);
     FlightUtils.setResponse(context, deleted, HttpStatus.OK);
     return StepResult.getStepResultSuccess();
   }

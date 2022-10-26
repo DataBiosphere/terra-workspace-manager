@@ -4,6 +4,7 @@ import static bio.terra.workspace.common.utils.FlightUtils.getRequired;
 import static bio.terra.workspace.db.model.DbWorkspaceActivityLog.getDbWorkspaceActivityLog;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.FOLDER_ID;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.UPDATED_WORKSPACES;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
@@ -18,6 +19,7 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
+import bio.terra.workspace.service.admin.flights.cloudcontexts.gcp.SyncGcpIamRolesFlight;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobMapKeys;
@@ -27,7 +29,9 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import com.fasterxml.jackson.core.type.TypeReference;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -90,6 +94,16 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     var subjectId = userStatusInfo.getUserSubjectId();
 
     ActivityFlight af = ActivityFlight.fromFlightClassName(context.getFlightClassName());
+    if (workspaceId == null) {
+      if (!SyncGcpIamRolesFlight.class.getName().equals(context.getFlightClassName())) {
+        logger.warn(
+            "workspace id is missing from the flight, this should not happen for {}",
+            context.getFlightClassName());
+        return HookAction.CONTINUE;
+      }
+      maybeLogForSyncGcpIamRolesFlight(context, operationType, userEmail, subjectId);
+      return HookAction.CONTINUE;
+    }
     UUID workspaceUuid = UUID.fromString(workspaceId);
     if (context.getFlightStatus() == FlightStatus.SUCCESS) {
       activityLogDao.writeActivity(
@@ -176,6 +190,17 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     } catch (ResourceNotFoundException e) {
       activityLogDao.writeActivity(
           workspaceUuid, getDbWorkspaceActivityLog(OperationType.DELETE, userEmail, subjectId));
+    }
+  }
+
+  private void maybeLogForSyncGcpIamRolesFlight(
+      FlightContext context, OperationType operationType, String userEmail, String subjectId) {
+    HashSet<String> updatedWorkspaces =
+        Objects.requireNonNull(
+            context.getWorkingMap().get(UPDATED_WORKSPACES, new TypeReference<>() {}));
+    for (var id : updatedWorkspaces) {
+      activityLogDao.writeActivity(
+          UUID.fromString(id), getDbWorkspaceActivityLog(operationType, userEmail, subjectId));
     }
   }
 }

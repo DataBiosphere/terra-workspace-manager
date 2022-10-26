@@ -141,10 +141,6 @@ public class JobBuilder {
       throw new MissingRequiredFieldException("Missing flight class: flightClass");
     }
 
-    if (workspaceId == null) {
-      throw new MissingRequiredFieldException("Missing workspace ID");
-    }
-
     if (operationType == null || operationType == OperationType.UNKNOWN) {
       throw new MissingRequiredFieldException("Missing or unspecified operation type");
     }

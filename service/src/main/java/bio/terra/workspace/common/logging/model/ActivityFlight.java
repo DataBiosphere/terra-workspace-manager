@@ -1,6 +1,7 @@
 package bio.terra.workspace.common.logging.model;
 
 import bio.terra.workspace.common.exception.UnknownFlightClassNameException;
+import bio.terra.workspace.service.admin.flights.cloudcontexts.gcp.SyncGcpIamRolesFlight;
 import bio.terra.workspace.service.folder.flights.DeleteFolderFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.UpdateControlledAiNotebookResourceFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.UpdateControlledBigQueryDatasetResourceFlight;
@@ -68,7 +69,9 @@ public enum ActivityFlight {
       CloneAllResourcesFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
   GCP_WORKSPACE_CLONE_FLIGHT(
       CloneGcpWorkspaceFlight.class.getName(), ActivityLogChangedTarget.WORKSPACE),
-  FOLDER_DELETE_FLIGHT(DeleteFolderFlight.class.getName(), ActivityLogChangedTarget.FOLDER);
+  FOLDER_DELETE_FLIGHT(DeleteFolderFlight.class.getName(), ActivityLogChangedTarget.FOLDER),
+  SYNC_GCP_IAM_ROLES_FLIGHT(
+      SyncGcpIamRolesFlight.class.getName(), ActivityLogChangedTarget.GCP_CLOUD_CONTEXT);
 
   private final String flightClassName;
   private final ActivityLogChangedTarget changedTarget;

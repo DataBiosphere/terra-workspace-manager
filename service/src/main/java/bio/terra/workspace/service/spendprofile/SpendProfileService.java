@@ -14,6 +14,7 @@ import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.spendprofile.exceptions.BillingProfileManagerServiceAPIException;
 import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
+import com.google.api.client.util.Strings;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 import io.opencensus.contrib.http.jaxrs.JaxrsClientExtractor;
@@ -112,6 +113,11 @@ public class SpendProfileService {
   private static List<SpendProfile> adaptConfigurationModels(
       List<SpendProfileConfiguration.SpendProfileModel> spendModels) {
     return spendModels.stream()
+        .filter(
+            // filter out empty profiles
+            spendModel ->
+                !Strings.isNullOrEmpty(spendModel.getBillingAccountId())
+                    && !Strings.isNullOrEmpty(spendModel.getId()))
         .map(
             spendModel ->
                 new SpendProfile(
