@@ -23,8 +23,6 @@ import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Top-level class for a Resource. Children of this class can be controlled resources, references,
