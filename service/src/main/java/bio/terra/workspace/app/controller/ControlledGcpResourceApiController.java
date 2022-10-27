@@ -115,6 +115,60 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
         : requestedLocation;
   }
 
+  private String getResourceZone(Workspace workspace, String requestedZone) {
+    if (Strings.isNullOrEmpty(requestedZone)) {
+      String location =
+          workspace
+              .getProperties()
+              .getOrDefault(
+                  WorkspaceConstants.Properties.DEFAULT_RESOURCE_LOCATION,
+                  GcpResourceConstant.DEFAULT_REGION);
+      switch (location) {
+        case "asia-east1":
+        case "asia-east2":
+        case "asia-northeast1":
+        case "asia-northeast2":
+        case "asia-northeast3":
+        case "asia-south1":
+        case "asia-south2":
+        case "asia-southeast1":
+        case "asia-southeast2":
+        case "australia-southeast1":
+        case "australia-southeast2":
+        case "europe-central2":
+        case "europe-north1":
+        case "europe-southwest1":
+        case "europe-west2":
+        case "europe-west3":
+        case "europe-west4":
+        case "europe-west6":
+        case "europe-west8":
+        case "europe-west9":
+        case "me-west1":
+        case "northamerica-northeast1":
+        case "northamerica-northeast2":
+        case "southamerica-east1":
+        case "southamerica-west1":
+        case "us-central1":
+        case "us-east4":
+        case "us-east5":
+        case "us-south1":
+        case "us-west1":
+        case "us-west2":
+        case "us-west3":
+        case "us-west4":
+          return location + "-a";
+        case "europe-west1":
+        case "us-east1":
+          return location + "-b";
+        default:
+          return null;
+      }
+    } else {
+      return requestedZone;
+    }
+  }
+
   @Override
   public ResponseEntity<ApiDeleteControlledGcpGcsBucketResult> deleteBucket(
       UUID workspaceUuid, UUID resourceId, @Valid ApiDeleteControlledGcpGcsBucketRequest body) {
@@ -359,14 +413,15 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     ControlledResourceFields commonFields =
         toCommonFields(workspaceUuid, body.getCommon(), userRequest);
     // Check authz before reading the projectId from workspace DB.
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
+    Workspace workspace =
+        workspaceService.validateWorkspaceAndAction(
+            userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceUuid);
 
     ControlledAiNotebookInstanceResource resource =
         ControlledAiNotebookInstanceResource.builder()
             .common(commonFields)
-            .location(body.getAiNotebookInstance().getLocation())
+            .location(getResourceZone(workspace, body.getAiNotebookInstance().getLocation()))
             .projectId(projectId)
             .instanceId(
                 Optional.ofNullable(body.getAiNotebookInstance().getInstanceId())
