@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.FolderApi;
+import bio.terra.workspace.api.JobsApi;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
 import bio.terra.workspace.api.ResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
@@ -21,10 +22,14 @@ import bio.terra.workspace.model.GcpBigQueryDatasetAttributes;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
+import bio.terra.workspace.model.JobReport;
+import bio.terra.workspace.model.JobReport.StatusEnum;
+import bio.terra.workspace.model.JobResult;
 import bio.terra.workspace.model.Property;
 import bio.terra.workspace.model.UpdateFolderRequestBody;
 import com.google.api.client.http.HttpStatusCodes;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.function.Executable;
 import scripts.utils.BqDatasetUtils;
@@ -39,6 +44,7 @@ public class FolderLifecycle extends WorkspaceAllocateTestScriptBase {
   private static final String TERRA_FOLDER_ID = "terra-folder-id";
   private FolderApi folderOwnerApi;
   private FolderApi folderWriterApi;
+  private JobsApi jobsApi;
   private ReferencedGcpResourceApi referencedGcpResourceApi;
   private ControlledGcpResourceApi controlledGcpResourceApi;
   private ResourceApi resourceApi;
@@ -66,6 +72,7 @@ public class FolderLifecycle extends WorkspaceAllocateTestScriptBase {
     referencedGcpResourceApi = new ReferencedGcpResourceApi(ownerApiClient);
     controlledGcpResourceApi = new ControlledGcpResourceApi(ownerApiClient);
     resourceApi = new ResourceApi(ownerApiClient);
+    jobsApi = new JobsApi(ownerApiClient);
   }
 
   @Override
@@ -204,7 +211,8 @@ public class FolderLifecycle extends WorkspaceAllocateTestScriptBase {
         () -> folderWriterApi.deleteFolder(getWorkspaceId(), folderLoo.getId()),
         HttpStatusCodes.STATUS_CODE_FORBIDDEN);
     // Second user tries to delete foo and success
-    folderWriterApi.deleteFolder(getWorkspaceId(), folderFoo.getId());
+    JobReport deleteFolderFooJobReport = deleteFolderAndWaitForJobToFinish(folderFoo);
+    assertEquals(StatusEnum.SUCCEEDED, deleteFolderFooJobReport.getStatus());
     assertApiCallThrows(
         () -> folderOwnerApi.getFolder(getWorkspaceId(), folderFoo.getId()),
         HttpStatusCodes.STATUS_CODE_NOT_FOUND);
@@ -215,8 +223,8 @@ public class FolderLifecycle extends WorkspaceAllocateTestScriptBase {
         HttpStatusCodes.STATUS_CODE_NOT_FOUND);
 
     // First user delete folder bar and success.
-    folderOwnerApi.deleteFolder(getWorkspaceId(), folderBar.getId());
-
+    JobReport deleteFolderBarJobReport = deleteFolderAndWaitForJobToFinish(folderBar);
+    assertEquals(StatusEnum.SUCCEEDED, deleteFolderBarJobReport.getStatus());
     // All the resources in bar and its sub-folder loo are deleted.
     assertApiCallThrows(
         () -> folderOwnerApi.getFolder(getWorkspaceId(), folderBar.getId()),
@@ -246,6 +254,17 @@ public class FolderLifecycle extends WorkspaceAllocateTestScriptBase {
                 getWorkspaceId(),
                 secondUserPrivateBucket.getAiNotebookInstance().getMetadata().getResourceId()),
         HttpStatusCodes.STATUS_CODE_NOT_FOUND);
+  }
+
+  private JobReport deleteFolderAndWaitForJobToFinish(Folder folderFoo)
+      throws ApiException, InterruptedException {
+    JobResult jobResult = folderWriterApi.deleteFolder(getWorkspaceId(), folderFoo.getId());
+    JobReport jobReport = jobResult.getJobReport();
+    while (ClientTestUtils.jobIsRunning(jobReport)) {
+      TimeUnit.SECONDS.sleep(10);
+      jobReport = jobsApi.retrieveJob(jobReport.getId());
+    }
+    return jobReport;
   }
 
   private static void assertApiCallThrows(Executable executable, int code) {
