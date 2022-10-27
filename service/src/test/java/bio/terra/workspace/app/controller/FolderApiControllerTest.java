@@ -30,6 +30,8 @@ import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.generated.model.ApiCreateFolderRequestBody;
 import bio.terra.workspace.generated.model.ApiFolder;
 import bio.terra.workspace.generated.model.ApiFolderList;
+import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
+import bio.terra.workspace.generated.model.ApiJobResult;
 import bio.terra.workspace.generated.model.ApiProperties;
 import bio.terra.workspace.generated.model.ApiPropertyKeys;
 import bio.terra.workspace.generated.model.ApiUpdateFolderRequestBody;
@@ -39,6 +41,7 @@ import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -280,8 +283,20 @@ public class FolderApiControllerTest extends BaseUnitTest {
     ApiFolder thirdFolder =
         createFolder(workspaceId, /*displayName=*/ "foo", /*parentFolderId=*/ secondFolder.getId());
 
-    deleteFolderExpectCode(workspaceId, firstFolder.getId(), HttpStatus.SC_NO_CONTENT);
+    var serializedResponse =
+        deleteFolderExpectCode(workspaceId, firstFolder.getId(), HttpStatus.SC_ACCEPTED)
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    var jobResult = objectMapper.readValue(serializedResponse, ApiJobResult.class);
+    var jobReport = jobResult.getJobReport();
+    var jobId = jobReport.getId();
+    while (jobReport.getStatus() == StatusEnum.RUNNING) {
+      Thread.sleep(Duration.ofSeconds(1).toMillis());
+      jobReport = mockMvcUtils.getJobReport(jobId, USER_REQUEST);
+    }
 
+    assertEquals(StatusEnum.SUCCEEDED, jobReport.getStatus());
     getFolderExpectCode(workspaceId, firstFolder.getId(), HttpStatus.SC_NOT_FOUND);
     getFolderExpectCode(workspaceId, secondFolder.getId(), HttpStatus.SC_NOT_FOUND);
     getFolderExpectCode(workspaceId, thirdFolder.getId(), HttpStatus.SC_NOT_FOUND);

@@ -73,30 +73,24 @@ public class FolderService {
   }
 
   /** Delete folder and all the resources and subfolder under it. */
-  public void deleteFolder(
+  public String deleteFolder(
       UUID workspaceUuid, UUID folderId, AuthenticatedUserRequest userRequest) {
     List<WsmResource> referencedResources = new ArrayList<>();
     List<WsmResource> controlledResources = new ArrayList<>();
     collectResourcesInFolder(
         workspaceUuid, folderId, controlledResources, referencedResources, userRequest);
-    boolean deleted =
-        jobService
-            .newJob()
-            .description(String.format("Delete folder %s in workspace %s", folderId, workspaceUuid))
-            .jobId(UUID.randomUUID().toString())
-            .flightClass(DeleteFolderFlight.class)
-            .workspaceId(workspaceUuid.toString())
-            .userRequest(userRequest)
-            .operationType(OperationType.DELETE)
-            .addParameter(FOLDER_ID, folderId)
-            .addParameter(
-                ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE, controlledResources)
-            .addParameter(
-                ReferencedResourceKeys.REFERENCED_RESOURCES_TO_DELETE, referencedResources)
-            .submitAndWait(Boolean.class);
-    if (!deleted) {
-      logger.warn("Failed to delete folder {} in workspace {}", folderId, workspaceUuid);
-    }
+    return jobService
+        .newJob()
+        .description(String.format("Delete folder %s in workspace %s", folderId, workspaceUuid))
+        .jobId(UUID.randomUUID().toString())
+        .flightClass(DeleteFolderFlight.class)
+        .workspaceId(workspaceUuid.toString())
+        .userRequest(userRequest)
+        .operationType(OperationType.DELETE)
+        .addParameter(FOLDER_ID, folderId)
+        .addParameter(ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE, controlledResources)
+        .addParameter(ReferencedResourceKeys.REFERENCED_RESOURCES_TO_DELETE, referencedResources)
+        .submit();
   }
 
   public void updateFolderProperties(
@@ -151,8 +145,9 @@ public class FolderService {
     if (!notDeletableResources.isEmpty()) {
       throw new ForbiddenException(
           String.format(
-              "User %s does not have permission to perform delete action on these resources %s",
-              userRequest.getEmail(), notDeletableResources));
+              "User %s does not have permission to perform delete action on resources",
+              userRequest.getEmail()),
+          notDeletableResources);
     }
   }
 

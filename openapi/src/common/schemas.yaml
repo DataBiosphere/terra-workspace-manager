@@ -291,3 +291,14 @@ components:
       type: array
       items:
         type: string
+
+    JobResult:
+      type: object
+      description: |
+        The result of an async call that triggers a stairway job in WSM.
+      required: [jobReport]
+      properties:
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'

@@ -88,8 +88,10 @@ paths:
       operationId: deleteFolder
       tags: [Folder]
       responses:
-        '204':
-          description: Success
+        '200':
+          $ref: '#/components/responses/JobResultResponse'
+        '202':
+          $ref: '#/components/responses/JobResultResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '403':
@@ -208,3 +210,4 @@ components:
             Whether to update parent folder id.
           type: boolean
           default: false
+

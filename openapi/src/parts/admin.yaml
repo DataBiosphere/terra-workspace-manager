@@ -9,26 +9,14 @@ paths:
       tags: [Admin]
       responses:
         '200':
-          $ref: '#/components/responses/SyncIamRolesResultResponse'
+          $ref: '#/components/responses/JobResultResponse'
         '202':
-          $ref: '#/components/responses/SyncIamRolesResultResponse'
+          $ref: '#/components/responses/JobResultResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '500':
           $ref: '#/components/responses/ServerError'
 components:
-  schemas:
-    SyncIamRolesResult:
-      type: object
-      description: |
-        The result of a call to sync IAM roles of all the existing workspace's
-        GCP projects.
-      properties:
-        jobReport:
-          $ref: '#/components/schemas/JobReport'
-        errorReport:
-          $ref: '#/components/schemas/ErrorReport'
-
   parameters:
     WetRun:
       name: wetRun
@@ -37,11 +25,3 @@ components:
       required: false
       schema:
         type: boolean
-
-  responses:
-    SyncIamRolesResultResponse:
-      description: Job is completed (succeeded or failed)
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/SyncIamRolesResult'

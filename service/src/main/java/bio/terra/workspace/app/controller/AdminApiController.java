@@ -1,9 +1,8 @@
 package bio.terra.workspace.app.controller;
 
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
-import bio.terra.workspace.app.controller.shared.JobApiUtils.AsyncJobResult;
 import bio.terra.workspace.generated.controller.AdminApi;
-import bio.terra.workspace.generated.model.ApiSyncIamRolesResult;
+import bio.terra.workspace.generated.model.ApiJobResult;
 import bio.terra.workspace.service.admin.AdminService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
@@ -32,7 +31,7 @@ public class AdminApiController extends ControllerBase implements AdminApi {
   }
 
   @Override
-  public ResponseEntity<ApiSyncIamRolesResult> syncIamRoles(Boolean wetRun) {
+  public ResponseEntity<ApiJobResult> syncIamRoles(Boolean wetRun) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     SamRethrow.onInterrupted(
         () -> getSamService().checkAdminAuthz(userRequest),
@@ -40,14 +39,7 @@ public class AdminApiController extends ControllerBase implements AdminApi {
 
     String jobId =
         adminService.syncIamRoleForAllGcpProjects(userRequest, Boolean.TRUE.equals(wetRun));
-    ApiSyncIamRolesResult response = fetchSyncIamRolesResult(jobId);
+    var response = jobApiUtils.fetchJobResult(jobId);
     return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
-  }
-
-  private ApiSyncIamRolesResult fetchSyncIamRolesResult(String jobId) {
-    AsyncJobResult<Void> jobResult = jobApiUtils.retrieveAsyncJobResult(jobId, null);
-    return new ApiSyncIamRolesResult()
-        .jobReport(jobResult.getJobReport())
-        .errorReport(jobResult.getApiErrorReport());
   }
 }
