@@ -30,6 +30,7 @@ import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.generated.model.ApiCreateFolderRequestBody;
 import bio.terra.workspace.generated.model.ApiFolder;
 import bio.terra.workspace.generated.model.ApiFolderList;
+import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
 import bio.terra.workspace.generated.model.ApiJobResult;
 import bio.terra.workspace.generated.model.ApiProperties;
@@ -283,6 +284,16 @@ public class FolderApiControllerTest extends BaseUnitTest {
     ApiFolder thirdFolder =
         createFolder(workspaceId, /*displayName=*/ "foo", /*parentFolderId=*/ secondFolder.getId());
 
+    ApiJobReport jobReport = deleteFolderAndWaitForJob(workspaceId, firstFolder);
+
+    assertEquals(StatusEnum.SUCCEEDED, jobReport.getStatus());
+    getFolderExpectCode(workspaceId, firstFolder.getId(), HttpStatus.SC_NOT_FOUND);
+    getFolderExpectCode(workspaceId, secondFolder.getId(), HttpStatus.SC_NOT_FOUND);
+    getFolderExpectCode(workspaceId, thirdFolder.getId(), HttpStatus.SC_NOT_FOUND);
+  }
+
+  private ApiJobReport deleteFolderAndWaitForJob(UUID workspaceId, ApiFolder firstFolder)
+      throws Exception {
     var serializedResponse =
         deleteFolderExpectCode(workspaceId, firstFolder.getId(), HttpStatus.SC_ACCEPTED)
             .andReturn()
@@ -295,11 +306,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
       Thread.sleep(Duration.ofSeconds(1).toMillis());
       jobReport = mockMvcUtils.getJobReport(jobId, USER_REQUEST);
     }
-
-    assertEquals(StatusEnum.SUCCEEDED, jobReport.getStatus());
-    getFolderExpectCode(workspaceId, firstFolder.getId(), HttpStatus.SC_NOT_FOUND);
-    getFolderExpectCode(workspaceId, secondFolder.getId(), HttpStatus.SC_NOT_FOUND);
-    getFolderExpectCode(workspaceId, thirdFolder.getId(), HttpStatus.SC_NOT_FOUND);
+    return jobReport;
   }
 
   @Test
