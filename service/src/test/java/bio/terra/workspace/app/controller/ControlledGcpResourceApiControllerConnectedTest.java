@@ -13,14 +13,18 @@ import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpBigQueryDataset;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpGcsBucket;
+import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
+import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiResourceLineage;
 import bio.terra.workspace.generated.model.ApiResourceLineageEntry;
 import bio.terra.workspace.generated.model.ApiResourceMetadata;
 import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
+import bio.terra.workspace.service.workspace.model.WorkspaceConstants;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -86,6 +90,47 @@ public class ControlledGcpResourceApiControllerConnectedTest extends BaseConnect
     assertEquals(
         expectedBqDataset.getAttributes().getProjectId(),
         actualBqDataset.getAttributes().getProjectId());
+  }
+
+  @Test
+  public void createAiNotebookInstance_correctZone() throws Exception {
+    mockMvcUtils.updateWorkspaceProperties(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId,
+        List.of(
+            new ApiProperty()
+                .key(WorkspaceConstants.Properties.DEFAULT_RESOURCE_LOCATION)
+                .value("asia-east1")));
+
+    ApiGcpAiNotebookInstanceResource notebook =
+        mockMvcUtils
+            .createAiNotebookInstance(userAccessUtils.defaultUserAuthRequest(), workspaceId, null)
+            .getAiNotebookInstance();
+
+    assertEquals("asia-east1-a", notebook.getAttributes().getLocation());
+
+    mockMvcUtils.updateWorkspaceProperties(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId,
+        List.of(
+            new ApiProperty()
+                .key(WorkspaceConstants.Properties.DEFAULT_RESOURCE_LOCATION)
+                .value("fake-region")));
+
+    notebook =
+        mockMvcUtils
+            .createAiNotebookInstance(userAccessUtils.defaultUserAuthRequest(), workspaceId, null)
+            .getAiNotebookInstance();
+
+    assertEquals("us-central1-a", notebook.getAttributes().getLocation());
+
+    notebook =
+        mockMvcUtils
+            .createAiNotebookInstance(
+                userAccessUtils.defaultUserAuthRequest(), workspaceId, "europe-west1-b")
+            .getAiNotebookInstance();
+
+    assertEquals("europe-west1-b", notebook.getAttributes().getLocation());
   }
 
   @Test

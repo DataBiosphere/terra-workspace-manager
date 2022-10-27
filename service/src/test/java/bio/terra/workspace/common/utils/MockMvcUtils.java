@@ -2,6 +2,7 @@ package bio.terra.workspace.common.utils;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.defaultBigQueryDatasetCreationParameters;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.defaultGcsBucketCreationParameters;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.defaultNotebookCreationParameters;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -26,10 +27,12 @@ import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiCreateCloudContextRequest;
 import bio.terra.workspace.generated.model.ApiCreateCloudContextResult;
+import bio.terra.workspace.generated.model.ApiCreateControlledGcpAiNotebookInstanceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpBigQueryDatasetRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateDataRepoSnapshotReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
+import bio.terra.workspace.generated.model.ApiCreatedControlledGcpAiNotebookInstanceResult;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpBigQueryDataset;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpGcsBucket;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
@@ -50,6 +53,7 @@ import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
+import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -124,6 +128,10 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/folders/%s/properties";
   public static final String RESOURCE_PROPERTIES_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/%s/properties";
+  public static final String CONTROLLED_GCP_AI_NOTEBOOKS_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/gcp/ai-notebook-instances";
+  public static final String CONTROLLED_GCP_AI_NOTEBOOKS_V1_RESULT_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/gcp/ai-notebook-instances/create-result/%s";
   public static final String CONTROLLED_GCP_BIG_QUERY_DATASETS_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/gcp/bqdatasets";
   public static final String CONTROLLED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT =
@@ -400,6 +408,21 @@ public class MockMvcUtils {
     return objectMapper.readValue(serializedResponse, ApiWorkspaceDescription.class);
   }
 
+  public void updateWorkspaceProperties(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, List<ApiProperty> properties)
+      throws Exception {
+    mockMvc
+        .perform(
+            addAuth(
+                post(String.format(UPDATE_WORKSPACES_V1_PROPERTIES_PATH_FORMAT, workspaceId))
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .characterEncoding("UTF-8")
+                    .content(objectMapper.writeValueAsString(properties)),
+                userRequest))
+        .andExpect(status().is(HttpStatus.SC_NO_CONTENT));
+  }
+
   public void deleteWorkspace(AuthenticatedUserRequest userRequest, UUID workspaceId)
       throws Exception {
     mockMvc
@@ -431,6 +454,69 @@ public class MockMvcUtils {
     assertTrue(firstLastUpdatedDate.isAfter(createdDate));
     assertEquals(expectedCreatedByEmail, actualWorkspace.getCreatedBy());
     assertEquals(expectedLastUpdatedByEmail, actualWorkspace.getLastUpdatedBy());
+  }
+
+  public ApiCreatedControlledGcpAiNotebookInstanceResult createAiNotebookInstance(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, @Nullable String location)
+      throws Exception {
+    ApiCreateControlledGcpAiNotebookInstanceRequestBody notebookCreationRequest =
+        new ApiCreateControlledGcpAiNotebookInstanceRequestBody()
+            .common(
+                makeDefaultControlledResourceFieldsApi()
+                    .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE.toApiModel())
+                    .name(TestUtils.appendRandomNumber("ai-notebook")))
+            .jobControl(new ApiJobControl().id(UUID.randomUUID().toString()))
+            .aiNotebookInstance(
+                defaultNotebookCreationParameters()
+                    .location(location)
+                    .instanceId(TestUtils.appendRandomNumber("instance-id")));
+
+    String serializedGetResponse =
+        mockMvc
+            .perform(
+                addAuth(
+                    post(String.format(
+                            CONTROLLED_GCP_AI_NOTEBOOKS_V1_PATH_FORMAT, workspaceId.toString()))
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .characterEncoding("UTF-8")
+                        .content(objectMapper.writeValueAsString(notebookCreationRequest)),
+                    userRequest))
+            .andExpect(status().is(HttpStatus.SC_ACCEPTED))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    ApiCreatedControlledGcpAiNotebookInstanceResult result =
+        objectMapper.readValue(
+            serializedGetResponse, ApiCreatedControlledGcpAiNotebookInstanceResult.class);
+    UUID jobId = UUID.fromString(result.getJobReport().getId());
+    while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
+      Thread.sleep(/*millis=*/ 5000);
+      result = getAiNotebookInstanceResult(userRequest, workspaceId, jobId);
+    }
+    assertEquals(StatusEnum.SUCCEEDED, result.getJobReport().getStatus());
+
+    return result;
+  }
+
+  public ApiCreatedControlledGcpAiNotebookInstanceResult getAiNotebookInstanceResult(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID jobId) throws Exception {
+    String serializedResponse =
+        mockMvc
+            .perform(
+                addJsonContentType(
+                    addAuth(
+                        get(
+                            CONTROLLED_GCP_AI_NOTEBOOKS_V1_RESULT_PATH_FORMAT.formatted(
+                                workspaceId.toString(), jobId.toString())),
+                        userRequest)))
+            .andExpect(status().is2xxSuccessful())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    return objectMapper.readValue(
+        serializedResponse, ApiCreatedControlledGcpAiNotebookInstanceResult.class);
   }
 
   public ApiCreatedControlledGcpBigQueryDataset createBigQueryDataset(
