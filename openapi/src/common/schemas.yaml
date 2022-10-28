@@ -11,7 +11,7 @@ components:
     CloudPlatform:
       type: string
       description: Enum representing a cloud platform type.
-      enum: ['AZURE', 'GCP']
+      enum: ['AWS', 'AZURE', 'GCP']
 
     CloneReferencedResourceRequestBody:
       description: >-
