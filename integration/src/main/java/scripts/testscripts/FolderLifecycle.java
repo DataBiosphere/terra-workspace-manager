@@ -262,7 +262,10 @@ public class FolderLifecycle extends WorkspaceAllocateTestScriptBase {
     JobReport jobReport = jobResult.getJobReport();
     while (ClientTestUtils.jobIsRunning(jobReport)) {
       TimeUnit.SECONDS.sleep(10);
-      jobReport = jobsApi.retrieveJob(jobReport.getId());
+      jobReport =
+          folderWriterApi
+              .getDeleteFolderResult(getWorkspaceId(), folderFoo.getId(), jobReport.getId())
+              .getJobReport();
     }
     return jobReport;
   }

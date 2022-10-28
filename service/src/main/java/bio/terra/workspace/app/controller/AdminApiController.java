@@ -8,6 +8,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.job.JobService;
 import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Controller;
 public class AdminApiController extends ControllerBase implements AdminApi {
   private final AdminService adminService;
   private final JobApiUtils jobApiUtils;
+  private final JobService jobService;
 
   @Autowired
   public AdminApiController(
@@ -24,10 +26,12 @@ public class AdminApiController extends ControllerBase implements AdminApi {
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request,
       SamService samService,
-      JobApiUtils jobApiUtils) {
+      JobApiUtils jobApiUtils,
+      JobService jobService) {
     super(authenticatedUserRequestFactory, request, samService);
     this.adminService = adminService;
     this.jobApiUtils = jobApiUtils;
+    this.jobService = jobService;
   }
 
   @Override
@@ -39,7 +43,15 @@ public class AdminApiController extends ControllerBase implements AdminApi {
 
     String jobId =
         adminService.syncIamRoleForAllGcpProjects(userRequest, Boolean.TRUE.equals(wetRun));
-    var response = jobApiUtils.fetchJobResult(jobId);
+    ApiJobResult response = jobApiUtils.fetchJobResult(jobId);
+    return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
+  }
+
+  @Override
+  public ResponseEntity<ApiJobResult> getSyncIamRolesResult(String jobId) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    jobService.verifyUserAccess(jobId, userRequest, /*expectedWorkspaceId=*/ null);
+    ApiJobResult response = jobApiUtils.fetchJobResult(jobId);
     return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
   }
 }

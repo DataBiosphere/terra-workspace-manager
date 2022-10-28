@@ -20,6 +20,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
+import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import java.util.List;
 import java.util.UUID;
@@ -35,6 +36,7 @@ public class FolderApiController extends ControllerBase implements FolderApi {
   private final FolderService folderService;
   private final WorkspaceService workspaceService;
   private final JobApiUtils jobApiUtils;
+  private final JobService jobService;
 
   @Autowired
   public FolderApiController(
@@ -43,11 +45,13 @@ public class FolderApiController extends ControllerBase implements FolderApi {
       SamService samService,
       FolderService folderService,
       WorkspaceService workspaceService,
-      JobApiUtils jobApiUtils) {
+      JobApiUtils jobApiUtils,
+      JobService jobService) {
     super(authenticatedUserRequestFactory, request, samService);
     this.folderService = folderService;
     this.workspaceService = workspaceService;
     this.jobApiUtils = jobApiUtils;
+    this.jobService = jobService;
   }
 
   @Override
@@ -119,7 +123,16 @@ public class FolderApiController extends ControllerBase implements FolderApi {
     workspaceService.validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.WRITE);
 
     String jobId = folderService.deleteFolder(workspaceId, folderId, userRequest);
-    var response = jobApiUtils.fetchJobResult(jobId);
+    ApiJobResult response = jobApiUtils.fetchJobResult(jobId);
+    return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
+  }
+
+  @Override
+  public ResponseEntity<ApiJobResult> getDeleteFolderResult(
+      UUID workspaceId, UUID folderId, String jobId) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    jobService.verifyUserAccess(jobId, userRequest, workspaceId);
+    ApiJobResult response = jobApiUtils.fetchJobResult(jobId);
     return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
   }
 

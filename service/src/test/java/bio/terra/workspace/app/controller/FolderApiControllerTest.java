@@ -2,6 +2,7 @@ package bio.terra.workspace.app.controller;
 
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertApiPropertyToMap;
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
+import static bio.terra.workspace.common.utils.MockMvcUtils.DELETE_FOLDER_JOB_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.FOLDERS_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.FOLDER_PROPERTIES_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.FOLDER_V1_PATH_FORMAT;
@@ -292,10 +293,10 @@ public class FolderApiControllerTest extends BaseUnitTest {
     getFolderExpectCode(workspaceId, thirdFolder.getId(), HttpStatus.SC_NOT_FOUND);
   }
 
-  private ApiJobReport deleteFolderAndWaitForJob(UUID workspaceId, ApiFolder firstFolder)
+  private ApiJobReport deleteFolderAndWaitForJob(UUID workspaceId, ApiFolder folder)
       throws Exception {
     var serializedResponse =
-        deleteFolderExpectCode(workspaceId, firstFolder.getId(), HttpStatus.SC_ACCEPTED)
+        deleteFolderExpectCode(workspaceId, folder.getId(), HttpStatus.SC_ACCEPTED)
             .andReturn()
             .getResponse()
             .getContentAsString();
@@ -304,7 +305,11 @@ public class FolderApiControllerTest extends BaseUnitTest {
     var jobId = jobReport.getId();
     while (jobReport.getStatus() == StatusEnum.RUNNING) {
       Thread.sleep(Duration.ofSeconds(1).toMillis());
-      jobReport = mockMvcUtils.getJobReport(jobId, USER_REQUEST);
+      jobReport =
+          mockMvcUtils.getJobReport(
+              DELETE_FOLDER_JOB_V1_PATH_FORMAT.formatted(
+                  workspaceId, folder.getId().toString(), jobId),
+              USER_REQUEST);
     }
     return jobReport;
   }
