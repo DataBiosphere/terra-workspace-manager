@@ -24,14 +24,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import javax.annotation.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
 public class FolderService {
 
-  private static final Logger logger = LoggerFactory.getLogger(FolderService.class);
   private final FolderDao folderDao;
   private final ResourceDao resourceDao;
   private final JobService jobService;

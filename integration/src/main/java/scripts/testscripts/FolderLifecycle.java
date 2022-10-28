@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.FolderApi;
-import bio.terra.workspace.api.JobsApi;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
 import bio.terra.workspace.api.ResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
@@ -44,7 +43,6 @@ public class FolderLifecycle extends WorkspaceAllocateTestScriptBase {
   private static final String TERRA_FOLDER_ID = "terra-folder-id";
   private FolderApi folderOwnerApi;
   private FolderApi folderWriterApi;
-  private JobsApi jobsApi;
   private ReferencedGcpResourceApi referencedGcpResourceApi;
   private ControlledGcpResourceApi controlledGcpResourceApi;
   private ResourceApi resourceApi;
@@ -72,7 +70,6 @@ public class FolderLifecycle extends WorkspaceAllocateTestScriptBase {
     referencedGcpResourceApi = new ReferencedGcpResourceApi(ownerApiClient);
     controlledGcpResourceApi = new ControlledGcpResourceApi(ownerApiClient);
     resourceApi = new ResourceApi(ownerApiClient);
-    jobsApi = new JobsApi(ownerApiClient);
   }
 
   @Override
