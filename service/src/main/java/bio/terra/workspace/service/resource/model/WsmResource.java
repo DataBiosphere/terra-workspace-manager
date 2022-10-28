@@ -29,6 +29,7 @@ import org.apache.commons.lang3.StringUtils;
  * or (future) monitored resources.
  */
 public abstract class WsmResource {
+
   private final UUID workspaceUuid;
   private final UUID resourceId;
   private final String name;
@@ -238,6 +239,7 @@ public abstract class WsmResource {
       throw new MissingRequiredFieldException("Missing required field for WsmResource.");
     }
     ResourceValidationUtils.validateResourceName(getName());
+    ResourceValidationUtils.validateProperties(getProperties());
     if (getDescription() != null) {
       ResourceValidationUtils.validateResourceDescriptionName(getDescription());
     }
