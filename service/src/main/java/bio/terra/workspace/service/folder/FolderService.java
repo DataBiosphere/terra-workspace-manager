@@ -61,11 +61,11 @@ public class FolderService {
       @Nullable boolean updateParent) {
     folderDao.updateFolder(
         workspaceUuid, folderId, displayName, description, parentFolderId, updateParent);
-    return folderDao.getFolder(workspaceUuid, folderId);
+    return folderDao.getFolderRequired(workspaceUuid, folderId);
   }
 
   public Folder getFolder(UUID workspaceUuid, UUID folderId) {
-    return folderDao.getFolder(workspaceUuid, folderId);
+    return folderDao.getFolderRequired(workspaceUuid, folderId);
   }
 
   public ImmutableList<Folder> listFolders(UUID workspaceId) {

@@ -98,6 +98,7 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
     this.projectId = builder.projectId;
     this.datasetId = builder.datasetId;
     this.dataTableId = builder.dataTableId;
+    validate();
   }
 
   public static ReferencedBigQueryDataTableResource.Builder builder() {

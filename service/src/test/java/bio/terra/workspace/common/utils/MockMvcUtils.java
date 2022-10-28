@@ -736,4 +736,18 @@ public class MockMvcUtils {
             .getContentAsString();
     return objectMapper.readValue(serializedResponse, ApiJobResult.class).getJobReport();
   }
+
+  /** Posts http request and expect error thrown. */
+  public void postExpect(String request, String api, int httpStatus) throws Exception {
+    mockMvc
+        .perform(
+            addAuth(
+                post(api)
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .characterEncoding("UTF-8")
+                    .content(request),
+                USER_REQUEST))
+        .andExpect(status().is(httpStatus));
+  }
 }

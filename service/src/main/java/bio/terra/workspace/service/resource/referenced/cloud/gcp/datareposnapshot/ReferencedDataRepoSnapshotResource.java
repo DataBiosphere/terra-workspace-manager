@@ -69,6 +69,7 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
     super(builder.wsmResourceFields);
     this.instanceName = builder.instanceName;
     this.snapshotId = builder.snapshotId;
+    validate();
   }
 
   /**
