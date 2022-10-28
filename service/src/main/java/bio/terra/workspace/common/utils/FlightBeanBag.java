@@ -21,6 +21,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.Stora
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.BucketCloneRolesService;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.spendprofile.SpendProfileService;
+import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -39,6 +40,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class FlightBeanBag {
   private final ApplicationDao applicationDao;
+  private final AwsCloudContextService awsCloudContextService;
   private final AzureCloudContextService azureCloudContextService;
   private final AzureConfiguration azureConfig;
   private final BucketCloneRolesService bucketCloneRolesService;
@@ -68,6 +70,7 @@ public class FlightBeanBag {
   @Autowired
   public FlightBeanBag(
       ApplicationDao applicationDao,
+      AwsCloudContextService awsCloudContextService,
       AzureCloudContextService azureCloudContextService,
       AzureConfiguration azureConfig,
       BucketCloneRolesService bucketCloneRolesService,
@@ -93,6 +96,7 @@ public class FlightBeanBag {
       StorageAccountKeyProvider storageAccountKeyProvider,
       LandingZoneApiDispatch landingZoneApiDispatch) {
     this.applicationDao = applicationDao;
+    this.awsCloudContextService = awsCloudContextService;
     this.azureCloudContextService = azureCloudContextService;
     this.azureConfig = azureConfig;
     this.bucketCloneRolesService = bucketCloneRolesService;
@@ -125,6 +129,10 @@ public class FlightBeanBag {
 
   public ApplicationDao getApplicationDao() {
     return applicationDao;
+  }
+
+  public AwsCloudContextService getAwsCloudContextService() {
+    return awsCloudContextService;
   }
 
   public AzureCloudContextService getAzureCloudContextService() {

@@ -514,6 +514,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
                           "AzureContext is required when creating an azure cloud context for a workspace"));
       workspaceService.createAzureCloudContext(
           workspace, jobId, userRequest, resultPath, AzureCloudContext.fromApi(azureContext));
+    } else if (body.getCloudPlatform() == ApiCloudPlatform.AWS) {
+      workspaceService.createAwsCloudContext(workspace, jobId, userRequest, resultPath);
     } else {
       workspaceService.createGcpCloudContext(workspace, jobId, userRequest, resultPath);
     }

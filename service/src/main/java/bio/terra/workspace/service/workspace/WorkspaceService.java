@@ -28,6 +28,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import bio.terra.workspace.service.workspace.flight.create.aws.CreateAwsContextFlight;
 import bio.terra.workspace.service.workspace.flight.create.azure.CreateAzureContextFlight;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
@@ -413,6 +414,39 @@ public class WorkspaceService {
   public void createGcpCloudContext(
       Workspace workspace, String jobId, AuthenticatedUserRequest userRequest) {
     createGcpCloudContext(workspace, jobId, userRequest, null);
+  }
+
+  /**
+   * Process the request to create a AWS cloud context
+   *
+   * @param workspace workspace in which to create the context
+   * @param jobId caller-supplied job id of the async job
+   * @param userRequest user authentication info
+   * @param resultPath optional endpoint where the result of the completed job can be retrieved
+   */
+  @Traced
+  public void createAwsCloudContext(
+      Workspace workspace,
+      String jobId,
+      AuthenticatedUserRequest userRequest,
+      @Nullable String resultPath) {
+    features.awsEnabledCheck();
+
+    String jobDescription =
+        String.format(
+            "Create AWS cloud context for workspace: name: '%s' id: '%s'  ",
+            workspace.getDisplayName().orElse(""), workspace.getWorkspaceId());
+
+    jobService
+        .newJob()
+        .description(jobDescription)
+        .jobId(jobId)
+        .flightClass(CreateAwsContextFlight.class)
+        .userRequest(userRequest)
+        .operationType(OperationType.CREATE)
+        .workspaceId(workspace.getWorkspaceId().toString())
+        .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
+        .submit();
   }
 
   public String cloneWorkspace(
