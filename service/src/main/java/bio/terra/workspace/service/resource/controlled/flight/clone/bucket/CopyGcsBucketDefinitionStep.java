@@ -66,8 +66,7 @@ public class CopyGcsBucketDefinitionStep implements Step {
     FlightUtils.validateRequiredEntries(
         inputParameters,
         ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
-        ControlledResourceKeys.DESTINATION_RESOURCE_ID,
-        ControlledResourceKeys.DESTINATION_FOLDER_ID);
+        ControlledResourceKeys.DESTINATION_RESOURCE_ID);
     String resourceName =
         FlightUtils.getInputParameterOrWorkingValue(
             flightContext,
@@ -81,9 +80,9 @@ public class CopyGcsBucketDefinitionStep implements Step {
             ResourceKeys.PREVIOUS_RESOURCE_DESCRIPTION,
             String.class);
 
-    var destinationWorkspaceId =
+    UUID destinationWorkspaceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
-    var bucketName =
+    String bucketName =
         Optional.ofNullable(
                 inputParameters.get(ControlledResourceKeys.DESTINATION_BUCKET_NAME, String.class))
             .orElse(
@@ -97,7 +96,7 @@ public class CopyGcsBucketDefinitionStep implements Step {
         inputParameters.get(ControlledResourceKeys.DESTINATION_FOLDER_ID, UUID.class);
     // Store effective bucket name for destination
     workingMap.put(ControlledResourceKeys.DESTINATION_BUCKET_NAME, bucketName);
-    var destinationResourceId =
+    UUID destinationResourceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.class);
     // bucket resource for create flight
     ControlledGcsBucketResource destinationBucketResource =

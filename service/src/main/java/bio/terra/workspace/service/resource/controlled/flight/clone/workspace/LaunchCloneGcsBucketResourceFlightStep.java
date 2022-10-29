@@ -18,7 +18,6 @@ import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.Clone
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
-import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
@@ -73,9 +72,7 @@ public class LaunchCloneGcsBucketResourceFlightStep implements Step {
         String.format("Clone GCS Bucket resource %s", resource.getResourceId().toString()));
     subflightInputParameters.put(
         ControlledResourceKeys.DESTINATION_RESOURCE_ID, destinationResourceId);
-    subflightInputParameters.put(
-        ControlledResourceKeys.DESTINATION_FOLDER_ID,
-        Optional.ofNullable(destinationFolderId).map(UUID::toString).orElse(null));
+    subflightInputParameters.put(ControlledResourceKeys.DESTINATION_FOLDER_ID, destinationFolderId);
     // Do not do the policy merge on the sub-object clone
     subflightInputParameters.put(WorkspaceFlightMapKeys.MERGE_POLICIES, false);
 

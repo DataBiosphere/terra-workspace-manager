@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
+import static com.google.common.collect.MoreCollectors.onlyElement;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -88,14 +89,12 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
     Folder destinationParentFolder =
         folderDao.listFoldersInWorkspace(destinationWorkspaceId).stream()
             .filter(folder -> folder.displayName().equals(SOURCE_PARENT_FOLDER_NAME))
-            .findFirst()
-            .get();
+            .collect(onlyElement());
 
     Folder destinationSonFolder =
         folderDao.listFoldersInWorkspace(destinationWorkspaceId).stream()
             .filter(folder -> folder.displayName().equals(SOURCE_SON_FOLDER_NAME))
-            .findFirst()
-            .get();
+            .collect(onlyElement());
 
     assertThat(
         destinationFolders, containsInAnyOrder(destinationParentFolder, destinationSonFolder));

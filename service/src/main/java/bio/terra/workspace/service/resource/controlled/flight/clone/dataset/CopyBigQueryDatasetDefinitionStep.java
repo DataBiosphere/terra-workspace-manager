@@ -59,9 +59,7 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
       throws InterruptedException, RetryException {
     FlightMap inputParameters = flightContext.getInputParameters();
     FlightUtils.validateRequiredEntries(
-        inputParameters,
-        ControlledResourceKeys.DESTINATION_RESOURCE_ID,
-        ControlledResourceKeys.DESTINATION_FOLDER_ID);
+        inputParameters, ControlledResourceKeys.DESTINATION_RESOURCE_ID);
     FlightMap workingMap = flightContext.getWorkingMap();
     String resourceName =
         FlightUtils.getInputParameterOrWorkingValue(
@@ -75,12 +73,12 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
             ResourceKeys.RESOURCE_DESCRIPTION,
             ResourceKeys.PREVIOUS_RESOURCE_DESCRIPTION,
             String.class);
-    var datasetName =
+    String datasetName =
         Optional.ofNullable(
                 inputParameters.get(ControlledResourceKeys.DESTINATION_DATASET_NAME, String.class))
             .orElse(sourceDataset.getDatasetName());
     workingMap.put(ControlledResourceKeys.DESTINATION_DATASET_NAME, datasetName);
-    var destinationWorkspaceId =
+    UUID destinationWorkspaceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
     String location =
         FlightUtils.getInputParameterOrWorkingValue(
@@ -90,13 +88,10 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
             String.class);
     String destinationProjectId =
         gcpCloudContextService.getRequiredGcpProject(destinationWorkspaceId);
-    var destinationResourceId =
+    UUID destinationResourceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.class);
     UUID destinationFolderId =
-        Optional.ofNullable(
-                inputParameters.get(ControlledResourceKeys.DESTINATION_FOLDER_ID, String.class))
-            .map(UUID::fromString)
-            .orElse(null);
+        inputParameters.get(ControlledResourceKeys.DESTINATION_FOLDER_ID, UUID.class);
     ControlledBigQueryDatasetResource destinationResource =
         buildDestinationControlledBigQueryDataset(
             sourceDataset,

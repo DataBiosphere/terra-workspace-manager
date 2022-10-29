@@ -10,7 +10,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hibernate.validator.internal.util.Contracts.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -116,8 +116,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   // Name of the test WSM application. This must match the identifier in the
   // application-app-test.yml file.
   private static final String TEST_WSM_APP = "TestWsmApp";
-
   private static final String FOLDER_NAME = "FolderName";
+  private static final UUID FOLDER_ID = UUID.randomUUID();
 
   @MockBean private DataRepoService mockDataRepoService;
   /** Mock SamService does nothing for all calls that would throw if unauthorized. */
@@ -414,7 +414,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     String otherDescription = "The deprecated workspace";
 
     Workspace secondUpdatedWorkspace =
-        workspaceService.updateWorkspace(workspaceUuid, null, null, otherDescription, USER_REQUEST);
+        workspaceService.updateWorkspace(
+            workspaceUuid, /*userFacingId=*/ null, /*name=*/ null, otherDescription, USER_REQUEST);
 
     var secondUpdateChangeDetails = workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
     assertTrue(
@@ -449,7 +450,13 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     // Fail if request doesn't contain any updated fields.
     assertThrows(
         MissingRequiredFieldException.class,
-        () -> workspaceService.updateWorkspace(workspaceUuid, null, null, null, USER_REQUEST));
+        () ->
+            workspaceService.updateWorkspace(
+                workspaceUuid,
+                /*userFacingId=*/ null,
+                /*name=*/ null,
+                /*description=*/ null,
+                USER_REQUEST));
     var failedUpdateDate = workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
     assertEquals(
         thirdUpdatedDateAfterWorkspaceUpdate.get().getChangeDate(),
@@ -823,15 +830,15 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     appService.enableWorkspaceApplication(USER_REQUEST, sourceWorkspace, TEST_WSM_APP);
 
     // Create a folder
-    UUID folderId = UUID.randomUUID();
-    folderDao.createFolder(
+    Folder sourceFolder =
         new Folder(
-            folderId,
+            FOLDER_ID,
             sourceWorkspaceId,
             FOLDER_NAME,
             /*description=*/ null,
             /*parentFolderId=*/ null,
-            /*properties=*/ Map.of()));
+            /*properties=*/ Map.of());
+    folderDao.createFolder(sourceFolder);
 
     final ControlledGcsBucketResource createdBucketResource =
         createdResource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
@@ -879,10 +886,11 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     assertTrue(appService.getWorkspaceApplication(destinationWorkspace, TEST_WSM_APP).isEnabled());
 
     // Destination workspace should have 1 cloned folder with the relations
-    assertEquals(1, folderDao.listFoldersInWorkspace(destinationWorkspace.getWorkspaceId()).size());
-    assertNotEquals(
-        folderId,
-        folderDao.listFoldersInWorkspace(destinationWorkspace.getWorkspaceId()).get(0).id());
+    assertThat(folderDao.listFoldersInWorkspace(destinationWorkspace.getWorkspaceId()), hasSize(1));
+    assertFalse(
+        folderDao
+            .listFoldersInWorkspace(destinationWorkspace.getWorkspaceId())
+            .contains(sourceFolder));
 
     // Clean up
     workspaceService.deleteWorkspace(sourceWorkspace, USER_REQUEST);
@@ -912,9 +920,14 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     appService.enableWorkspaceApplication(USER_REQUEST, sourceWorkspace, TEST_WSM_APP);
 
     // Create a folder
-    UUID folderId = UUID.randomUUID();
     folderDao.createFolder(
-        new Folder(folderId, sourceWorkspace.getWorkspaceId(), FOLDER_NAME, null, null, null));
+        new Folder(
+            FOLDER_ID,
+            sourceWorkspace.getWorkspaceId(),
+            FOLDER_NAME,
+            /*description=*/ null,
+            /*parentFolderId=*/ null,
+            /*properties=*/ Map.of()));
 
     final Workspace destinationWorkspace =
         defaultRequestBuilder(UUID.randomUUID())
@@ -941,7 +954,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         gcpCloudContextService.getGcpCloudContext(destinationWorkspace.getWorkspaceId()).isEmpty());
 
     // Destination workspace should not have folder
-    assertEquals(0, folderDao.listFoldersInWorkspace(destinationWorkspace.getWorkspaceId()).size());
+    assertTrue(folderDao.listFoldersInWorkspace(destinationWorkspace.getWorkspaceId()).isEmpty());
 
     // Remove the effect of lastStepFailure, and clean up the created workspace
     jobService.setFlightDebugInfoForTest(null);
