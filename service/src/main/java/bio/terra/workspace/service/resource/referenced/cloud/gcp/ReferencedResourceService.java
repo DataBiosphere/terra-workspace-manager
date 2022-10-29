@@ -207,6 +207,7 @@ public class ReferencedResourceService {
       ReferencedResource sourceReferencedResource,
       UUID destinationWorkspaceId,
       UUID destinationResourceId,
+      @Nullable UUID destinationFolderId,
       @Nullable String name,
       @Nullable String description,
       AuthenticatedUserRequest userRequest) {
@@ -215,6 +216,7 @@ public class ReferencedResourceService {
             sourceReferencedResource,
             destinationWorkspaceId,
             destinationResourceId,
+            destinationFolderId,
             name,
             description);
     // launch the creation flight

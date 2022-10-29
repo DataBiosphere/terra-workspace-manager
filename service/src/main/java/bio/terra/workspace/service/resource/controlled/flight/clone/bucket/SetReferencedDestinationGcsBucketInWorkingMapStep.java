@@ -67,10 +67,17 @@ public class SetReferencedDestinationGcsBucketInWorkingMapStep implements Step {
         inputParameters.get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
     final var destinationResourceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.class);
+    final var destinationFolderId =
+        inputParameters.get(ControlledResourceKeys.DESTINATION_FOLDER_ID, UUID.class);
 
     ReferencedGcsBucketResource destinationBucketResource =
         WorkspaceCloneUtils.buildDestinationReferencedGcsBucketFromControlled(
-            sourceBucket, destinationWorkspaceId, destinationResourceId, resourceName, description);
+            sourceBucket,
+            destinationWorkspaceId,
+            destinationResourceId,
+            destinationFolderId,
+            resourceName,
+            description);
 
     workingMap.put(
         ControlledResourceKeys.DESTINATION_REFERENCED_RESOURCE, destinationBucketResource);

@@ -65,6 +65,7 @@ public class WorkspaceCloneUtils {
       ReferencedResource sourceReferencedResource,
       UUID destinationWorkspaceId,
       UUID destinationResourceId,
+      @Nullable UUID destinationFolderId,
       String name,
       String description) {
     // ReferenceResource doesn't have Builder, only leaf resources like ReferencedGcsBucketResource
@@ -74,36 +75,42 @@ public class WorkspaceCloneUtils {
           sourceReferencedResource.castByEnum(WsmResourceType.REFERENCED_GCP_GCS_BUCKET),
           destinationWorkspaceId,
           destinationResourceId,
+          destinationFolderId,
           name,
           description);
       case REFERENCED_GCP_GCS_OBJECT -> buildDestinationReferencedGcsObject(
           sourceReferencedResource.castByEnum(WsmResourceType.REFERENCED_GCP_GCS_OBJECT),
           destinationWorkspaceId,
           destinationResourceId,
+          destinationFolderId,
           name,
           description);
       case REFERENCED_ANY_DATA_REPO_SNAPSHOT -> buildDestinationReferencedDataRepoSnapshot(
           sourceReferencedResource.castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT),
           destinationWorkspaceId,
           destinationResourceId,
+          destinationFolderId,
           name,
           description);
       case REFERENCED_GCP_BIG_QUERY_DATASET -> buildDestinationReferencedBigQueryDataset(
           sourceReferencedResource.castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET),
           destinationWorkspaceId,
           destinationResourceId,
+          destinationFolderId,
           name,
           description);
       case REFERENCED_GCP_BIG_QUERY_DATA_TABLE -> buildDestinationReferencedBigQueryDataTable(
           sourceReferencedResource.castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE),
           destinationWorkspaceId,
           destinationResourceId,
+          destinationFolderId,
           name,
           description);
       case REFERENCED_ANY_GIT_REPO -> buildDestinationReferencedGitHubRepo(
           sourceReferencedResource.castByEnum(WsmResourceType.REFERENCED_ANY_GIT_REPO),
           destinationWorkspaceId,
           destinationResourceId,
+          destinationFolderId,
           name,
           description);
       default -> throw new BadRequestException(
@@ -181,7 +188,7 @@ public class WorkspaceCloneUtils {
         .resourceId(destinationResourceId)
         .resourceLineage(destinationResourceLineage)
         .properties(
-            maybeClearSomeResourcePropertiesBeforeCloning(
+            maybeAdjustResourceProperties(
                 sourceResource, destinationWorkspaceId, destinationFolderId))
         .build();
   }
@@ -207,6 +214,7 @@ public class WorkspaceCloneUtils {
       ReferencedGcsBucketResource sourceBucketResource,
       UUID destinationWorkspaceId,
       UUID destinationResourceId,
+      @Nullable UUID destinationFolderId,
       @Nullable String name,
       @Nullable String description) {
 
@@ -216,7 +224,7 @@ public class WorkspaceCloneUtils {
                 buildDestinationResourceCommonFields(
                     destinationWorkspaceId,
                     destinationResourceId,
-                    /*destinationFolderId=*/ null,
+                    destinationFolderId,
                     name,
                     description,
                     sourceBucketResource));
@@ -228,6 +236,7 @@ public class WorkspaceCloneUtils {
       ControlledGcsBucketResource sourceBucketResource,
       UUID destinationWorkspaceId,
       UUID destinationResourceId,
+      @Nullable UUID destinationFolderId,
       @Nullable String name,
       @Nullable String description) {
     CloningInstructions destCloningInstructions =
@@ -242,7 +251,7 @@ public class WorkspaceCloneUtils {
         buildDestinationResourceCommonFields(
                 destinationWorkspaceId,
                 destinationResourceId,
-                /*destinationFolderId=*/ null,
+                destinationFolderId,
                 name,
                 description,
                 sourceBucketResource)
@@ -260,6 +269,7 @@ public class WorkspaceCloneUtils {
       ReferencedGcsObjectResource sourceBucketFileResource,
       UUID destinationWorkspaceId,
       UUID destinationResourceId,
+      @Nullable UUID destinationFolderId,
       @Nullable String name,
       @Nullable String description) {
     final ReferencedGcsObjectResource.Builder resultBuilder =
@@ -268,7 +278,7 @@ public class WorkspaceCloneUtils {
                 buildDestinationResourceCommonFields(
                     destinationWorkspaceId,
                     destinationResourceId,
-                    /*destinationFolderId=*/ null,
+                    destinationFolderId,
                     name,
                     description,
                     sourceBucketFileResource));
@@ -279,6 +289,7 @@ public class WorkspaceCloneUtils {
       ReferencedBigQueryDatasetResource sourceDatasetResource,
       UUID destinationWorkspaceId,
       UUID destinationResourceId,
+      @Nullable UUID destinationFolderId,
       @Nullable String name,
       @Nullable String description) {
     // keep projectId and dataset name the same since they are for the referent
@@ -288,7 +299,7 @@ public class WorkspaceCloneUtils {
                 buildDestinationResourceCommonFields(
                     destinationWorkspaceId,
                     destinationResourceId,
-                    /*destinationFolderId=*/ null,
+                    destinationFolderId,
                     name,
                     description,
                     sourceDatasetResource));
@@ -300,6 +311,7 @@ public class WorkspaceCloneUtils {
           ControlledBigQueryDatasetResource sourceDatasetResource,
           UUID destinationWorkspaceId,
           UUID destinationResourceId,
+          @Nullable UUID destinationFolderId,
           @Nullable String name,
           @Nullable String description) {
     CloningInstructions destCloningInstructions =
@@ -315,7 +327,7 @@ public class WorkspaceCloneUtils {
         buildDestinationResourceCommonFields(
                 destinationWorkspaceId,
                 destinationResourceId,
-                /*destinationFolderId=*/ null,
+                destinationFolderId,
                 name,
                 description,
                 sourceDatasetResource)
@@ -334,6 +346,7 @@ public class WorkspaceCloneUtils {
       ReferencedBigQueryDataTableResource sourceBigQueryResource,
       UUID destinationWorkspaceId,
       UUID destinationResourceId,
+      @Nullable UUID destinationFolderId,
       @Nullable String name,
       @Nullable String description) {
     // keep projectId, dataset name and data table name the same since they are for the referent
@@ -343,7 +356,7 @@ public class WorkspaceCloneUtils {
                 buildDestinationResourceCommonFields(
                     destinationWorkspaceId,
                     destinationResourceId,
-                    /*destinationFolderId=*/ null,
+                    destinationFolderId,
                     name,
                     description,
                     sourceBigQueryResource));
@@ -354,6 +367,7 @@ public class WorkspaceCloneUtils {
       ReferencedDataRepoSnapshotResource sourceReferencedDataRepoSnapshotResource,
       UUID destinationWorkspaceId,
       UUID destinationResourceId,
+      @Nullable UUID destinationFolderId,
       @Nullable String name,
       @Nullable String description) {
     final ReferencedDataRepoSnapshotResource.Builder resultBuilder =
@@ -362,7 +376,7 @@ public class WorkspaceCloneUtils {
                 buildDestinationResourceCommonFields(
                     destinationWorkspaceId,
                     destinationResourceId,
-                    /*destinationFolderId=*/ null,
+                    destinationFolderId,
                     name,
                     description,
                     sourceReferencedDataRepoSnapshotResource));
@@ -373,6 +387,7 @@ public class WorkspaceCloneUtils {
       ReferencedGitRepoResource gitHubRepoResource,
       UUID destinationWorkspaceId,
       UUID destinationResourceId,
+      @Nullable UUID destinationFolderId,
       @Nullable String name,
       @Nullable String description) {
     ReferencedGitRepoResource.Builder resultBuilder =
@@ -381,7 +396,7 @@ public class WorkspaceCloneUtils {
                 buildDestinationResourceCommonFields(
                     destinationWorkspaceId,
                     destinationResourceId,
-                    /*destinationFolderId=*/ null,
+                    destinationFolderId,
                     name,
                     description,
                     gitHubRepoResource));
@@ -406,7 +421,7 @@ public class WorkspaceCloneUtils {
         .workspaceUuid(destinationWorkspaceId)
         .resourceId(destinationResourceId)
         .properties(
-            maybeClearSomeResourcePropertiesBeforeCloning(
+            maybeAdjustResourceProperties(
                 sourceResource, destinationWorkspaceId, destinationFolderId))
         .resourceLineage(destinationResourceLineage);
     // apply optional override variables
@@ -427,17 +442,22 @@ public class WorkspaceCloneUtils {
     return destinationResourceLineage;
   }
 
-  private static Map<String, String> maybeClearSomeResourcePropertiesBeforeCloning(
+  private static Map<String, String> maybeAdjustResourceProperties(
       WsmResource sourceResource, UUID destinationWorkspaceId, @Nullable UUID destinationFolderId) {
-    Map<String, String> destinationResourceProperties = sourceResource.getProperties();
+    Map<String, String> destinationResourceProperties =
+        new HashMap<>(sourceResource.getProperties());
     if (!destinationWorkspaceId.equals(sourceResource.getWorkspaceId())) {
-      destinationResourceProperties =
-          clearSomePropertiesForResourceCloningToDifferentWorkspace(destinationResourceProperties);
+      if (destinationFolderId != null) {
+        // Cloning a work with folder ID to corresponding folder in destination workspace.
+        destinationResourceProperties.put(FOLDER_ID_KEY, destinationFolderId.toString());
+      } else {
+        // We're cloning an individual resource. If folder ID property exists, clear it, since
+        // folder doesn't exist in destination workspace.
+        destinationResourceProperties =
+            clearSomePropertiesForResourceCloningToDifferentWorkspace(
+                destinationResourceProperties);
+      }
     }
-    HashMap<String, String> result = new HashMap<>(destinationResourceProperties);
-    if (destinationFolderId != null) {
-      result.put(FOLDER_ID_KEY, destinationFolderId.toString());
-    }
-    return ImmutableMap.copyOf(result);
+    return ImmutableMap.copyOf(destinationResourceProperties);
   }
 }

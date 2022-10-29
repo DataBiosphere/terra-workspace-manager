@@ -44,7 +44,8 @@ public class CloneAllResourcesFlight extends Flight {
                 flightBeanBag.getReferencedResourceService(),
                 resourceCloneInputs.getResource().castToReferencedResource(),
                 resourceCloneInputs.getFlightId(),
-                resourceCloneInputs.getDestinationResourceId()));
+                resourceCloneInputs.getDestinationResourceId(),
+                resourceCloneInputs.getDestinationFolderId()));
         addStep(
             new AwaitCreateReferenceResourceFlightStep(
                 resourceCloneInputs.getResource().castToReferencedResource(),

@@ -661,6 +661,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
                 sourceReferencedResource,
                 body.getDestinationWorkspaceId(),
                 UUID.randomUUID(), // resourceId is not pre-allocated for individual clone endpoints
+                /*destinationFolderId=*/ null,
                 body.getName(),
                 body.getDescription(),
                 userRequest)
@@ -709,6 +710,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
                 sourceReferencedResource,
                 body.getDestinationWorkspaceId(),
                 UUID.randomUUID(), // resourceId is not pre-allocated for individual clone endpoints
+                /*destinationFolderId=*/ null,
                 body.getName(),
                 body.getDescription(),
                 userRequest)
@@ -758,6 +760,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
                 sourceReferencedResource,
                 body.getDestinationWorkspaceId(),
                 UUID.randomUUID(), // resourceId is not pre-allocated for individual clone endpoints
+                /*destinationFolderId=*/ null,
                 body.getName(),
                 body.getDescription(),
                 userRequest)
@@ -807,6 +810,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
                 sourceReferencedResource,
                 body.getDestinationWorkspaceId(),
                 UUID.randomUUID(), // resourceId is not pre-allocated for individual clone endpoints
+                /*destinationFolderId=*/ null,
                 body.getName(),
                 body.getDescription(),
                 userRequest)
@@ -857,6 +861,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
                 sourceReferencedResource,
                 body.getDestinationWorkspaceId(),
                 UUID.randomUUID(), // resourceId is not pre-allocated for individual clone endpoints
+                /*destinationFolderId=*/ null,
                 body.getName(),
                 body.getDescription(),
                 userRequest)
@@ -1005,6 +1010,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
                 sourceReferencedResource,
                 body.getDestinationWorkspaceId(),
                 UUID.randomUUID(), // resourceId is not pre-allocated for individual clone endpoints
+                /*destinationFolderId=*/ null,
                 body.getName(),
                 body.getDescription(),
                 userRequest)

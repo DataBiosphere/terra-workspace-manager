@@ -1,9 +1,8 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.when;
 
 import bio.terra.stairway.FlightContext;
@@ -17,6 +16,7 @@ import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -83,53 +83,22 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
 
     assertEquals(StepResult.getStepResultSuccess(), stepResult);
 
-    assertEquals(
-        2,
-        folderDao.listFoldersInWorkspace(destinationWorkspaceId).size(),
-        "Destination workspace clones the folders successfully");
-    assertNotNull(
-        folderDao.listFoldersInWorkspace(destinationWorkspaceId).stream()
-            .filter(folder -> folder.displayName().equals(SOURCE_PARENT_FOLDER_NAME)),
-        "Destination parent folder is cloned successfully");
+    List<Folder> destinationFolders = folderDao.listFoldersInWorkspace(destinationWorkspaceId);
+
     Folder destinationParentFolder =
         folderDao.listFoldersInWorkspace(destinationWorkspaceId).stream()
             .filter(folder -> folder.displayName().equals(SOURCE_PARENT_FOLDER_NAME))
             .findFirst()
             .get();
-    assertNotNull(
-        folderDao.listFoldersInWorkspace(destinationWorkspaceId).stream()
-            .filter(folder -> folder.displayName().equals(SOURCE_SON_FOLDER_NAME))
-            .findFirst(),
-        "Destination son folder is cloned successfully");
+
     Folder destinationSonFolder =
         folderDao.listFoldersInWorkspace(destinationWorkspaceId).stream()
             .filter(folder -> folder.displayName().equals(SOURCE_SON_FOLDER_NAME))
             .findFirst()
             .get();
 
-    assertNotEquals(
-        SOURCE_PARENT_FOLDER_ID,
-        destinationParentFolder.id(),
-        "Destination parent folder id is generated successfully");
-    assertNotEquals(
-        SOURCE_SON_FOLDER_ID,
-        destinationSonFolder.id(),
-        "Destination son folder id is generated successfully");
-    assertEquals(
-        SOURCE_PARENT_FOLDER_DESCRIPTION,
-        destinationParentFolder.description(),
-        "Destination parent folder description is cloned successfully");
-    assertEquals(
-        SOURCE_SON_FOLDER_DESCRIPTION,
-        destinationSonFolder.description(),
-        "Destination son folder description is cloned successfully");
-    assertNull(
-        destinationParentFolder.parentFolderId(),
-        "Destination parent folder parent id cloned successfully");
-    assertEquals(
-        destinationParentFolder.id(),
-        destinationSonFolder.parentFolderId(),
-        "Destination son folder parent id cloned successfully");
+    assertThat(
+        destinationFolders, containsInAnyOrder(destinationParentFolder, destinationSonFolder));
 
     workspaceDao.deleteWorkspace(SOURCE_WORKSPACE_ID);
   }

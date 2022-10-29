@@ -232,6 +232,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
                 referencedResource,
                 DESTINATION_WORKSPACE_ID,
                 DESTINATION_RESOURCE_ID,
+                /*destinationFolderId=*/ null,
                 cloneResourceName,
                 cloneDescription);
 
@@ -259,6 +260,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
                 referencedResource,
                 DESTINATION_WORKSPACE_ID,
                 DESTINATION_RESOURCE_ID,
+                /*destinationFolderId=*/ null,
                 /*name=*/ RandomStringUtils.randomAlphabetic(5),
                 /*description=*/ "This is a cloned data repo snapshot referenced resource");
 
@@ -285,6 +287,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
                 referencedResource,
                 referencedResource.getWorkspaceId(),
                 DESTINATION_RESOURCE_ID,
+                /*destinationFolderId=*/ null,
                 /*name=*/ RandomStringUtils.randomAlphabetic(5),
                 /*description=*/ "This is a cloned data repo snapshot referenced resource");
 

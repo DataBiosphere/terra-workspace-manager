@@ -1,5 +1,6 @@
 package scripts.testscripts;
 
+import static com.google.common.collect.MoreCollectors.onlyElement;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -92,7 +93,7 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
 
   private static final int EXPECTED_NUM_CLONED_RESOURCES = 11;
   private static final String TERRA_FOLDER_ID = "terra-folder-id";
-  private static final String FOLDER_DISPLAY_NAME = "folderDisplayName";
+  private static final String FOLDER_DISPLAY_NAME = "folderName";
 
   @Override
   protected void doSetup(
@@ -124,14 +125,6 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
         cloningUser.userEmail,
         getWorkspaceId());
 
-    // Create folder in the source workspace
-    ApiClient ownerApiClient = ClientTestUtils.getClientForTestUser(sourceOwnerUser, server);
-    ResourceApi resourceApi = new ResourceApi(ownerApiClient);
-    FolderApi folderApi = new FolderApi(ownerApiClient);
-    folderApi.createFolder(
-        new CreateFolderRequestBody().displayName(FOLDER_DISPLAY_NAME), getWorkspaceId());
-    Folder folder = folderApi.listFolders(getWorkspaceId()).getFolders().stream().findFirst().get();
-
     // Give users resource APIs
     final ControlledGcpResourceApi sourceOwnerResourceApi =
         ClientTestUtils.getControlledGcpResourceClient(sourceOwnerUser, server);
@@ -151,11 +144,8 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
 
     GcsBucketUtils.addFileToBucket(sharedSourceBucket, sourceOwnerUser, sourceProjectId);
 
-    // Update resource properties with new folder id
-    resourceApi.updateResourceProperties(
-        List.of(new Property().key(TERRA_FOLDER_ID).value(folder.getId().toString())),
-        sharedSourceBucket.getGcpBucket().getMetadata().getWorkspaceId(),
-        sharedSourceBucket.getResourceId());
+    // Create a folder in the workspace, and add resource to it
+    addResourceToFolder(sourceOwnerUser, getWorkspaceId(), sharedSourceBucket.getResourceId());
 
     // Create a private GCS bucket, which the non-creating user can't clone
     privateSourceBucket =
@@ -240,6 +230,9 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
             getWorkspaceId(),
             "a_reference_to_wsmtestblob",
             CloningInstructionsEnum.REFERENCE);
+    // Create a folder in the workspace, and add resource to it
+    addResourceToFolder(
+        sourceOwnerUser, getWorkspaceId(), sourceBucketFileReference.getMetadata().getResourceId());
 
     // Create reference to the shared BQ dataset with COPY_DEFINITION
     sourceDatasetReference =
@@ -333,17 +326,6 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
             .getProperties(),
         "Properties cloned successfully");
 
-    ApiClient ownerApiClient = ClientTestUtils.getClientForTestUser(cloningUser, server);
-    FolderApi folderApi = new FolderApi(ownerApiClient);
-
-    assertEquals(
-        1,
-        folderApi
-            .listFolders(cloneResult.getWorkspace().getDestinationWorkspaceId())
-            .getFolders()
-            .size(),
-        "Folder clone successfully");
-
     // Verify shared GCS bucket succeeds and is populated
     final ResourceCloneDetails sharedBucketCloneDetails =
         assertPresent(
@@ -394,21 +376,15 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
     GcsBucketObjectUtils.retrieveBucketFile(
         clonedSharedBucket.getAttributes().getBucketName(), destinationProjectId, cloningUser);
 
-    assertEquals(
-        folderApi
-            .listFolders(cloneResult.getWorkspace().getDestinationWorkspaceId())
-            .getFolders()
-            .stream()
-            .findFirst()
-            .get()
-            .getId()
-            .toString(),
-        clonedSharedBucket.getMetadata().getProperties().stream()
-            .filter(x -> x.getKey().equals(TERRA_FOLDER_ID))
-            .findFirst()
-            .get()
-            .getValue(),
-        "Folder id in cloned bucket is updated after cloning.");
+    // Assert the folder is cloned in the destination workspace, and the resource is also there
+    assertResourceInFolder(
+        cloneResult.getWorkspace().getDestinationWorkspaceId(),
+        UUID.fromString(
+            clonedSharedBucket.getMetadata().getProperties().stream()
+                .filter(x -> x.getKey().equals(TERRA_FOLDER_ID))
+                .findFirst()
+                .get()
+                .getValue()));
 
     // Verify clone of private bucket fails
     final ResourceCloneDetails privateBucketCloneDetails =
@@ -720,6 +696,25 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
                 .findFirst(),
             "Bucket file reference clone details present");
     logger.info("Reference to GCS Bucket File (expected success): {}", bucketFileReferenceDetails);
+
+    ReferencedGcpResourceApi cloningUserReferencedGcpResourceApi =
+        ClientTestUtils.getReferencedGcpResourceClient(cloningUser, server);
+
+    GcpGcsObjectResource clonedBucketFileReference =
+        cloningUserReferencedGcpResourceApi.getGcsObjectReference(
+            cloneResult.getWorkspace().getDestinationWorkspaceId(),
+            bucketFileReferenceDetails.getDestinationResourceId());
+
+    // Assert the folder is cloned in the destination workspace, and the resource is also there
+    assertResourceInFolder(
+        cloneResult.getWorkspace().getDestinationWorkspaceId(),
+        UUID.fromString(
+            clonedBucketFileReference.getMetadata().getProperties().stream()
+                .filter(x -> x.getKey().equals(TERRA_FOLDER_ID))
+                .findFirst()
+                .get()
+                .getValue()));
+
     assertEquals(
         CloneResourceResult.SUCCEEDED,
         bucketFileReferenceDetails.getResult(),
@@ -816,6 +811,38 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
     if (null != destinationWorkspaceId) {
       cloningUserWorkspaceApi.deleteWorkspace(destinationWorkspaceId);
     }
+  }
+
+  private void addResourceToFolder(
+      TestUserSpecification sourceOwnerUser, UUID workspaceId, UUID resourceId) throws Exception {
+    // Create folder in the source workspace
+    ApiClient ownerApiClient = ClientTestUtils.getClientForTestUser(sourceOwnerUser, server);
+    ResourceApi resourceApi = new ResourceApi(ownerApiClient);
+    FolderApi folderApi = new FolderApi(ownerApiClient);
+    folderApi.createFolder(
+        new CreateFolderRequestBody().displayName(FOLDER_DISPLAY_NAME + "_" + UUID.randomUUID()),
+        getWorkspaceId());
+    Folder folder = folderApi.listFolders(getWorkspaceId()).getFolders().stream().findFirst().get();
+
+    // Update resource properties with new folder id
+    resourceApi.updateResourceProperties(
+        List.of(new Property().key(TERRA_FOLDER_ID).value(folder.getId().toString())),
+        workspaceId,
+        resourceId);
+  }
+
+  private void assertResourceInFolder(UUID workspaceId, UUID folderId) throws Exception {
+    ApiClient ownerApiClient = ClientTestUtils.getClientForTestUser(cloningUser, server);
+    FolderApi folderApi = new FolderApi(ownerApiClient);
+
+    // Check if there is one folder with the expected folder id.
+    // Note: onlyElement() throws an IllegalArgumentException if the stream consists
+    // of two or more elements, and a NoSuchElementException if the stream is empty.
+    Folder actualFolder =
+        folderApi.listFolders(workspaceId).getFolders().stream()
+            .filter(x -> x.getId().equals(folderId))
+            .collect(onlyElement());
+    assertNotNull(actualFolder);
   }
 
   private static void assertDatasetHasNoTables(

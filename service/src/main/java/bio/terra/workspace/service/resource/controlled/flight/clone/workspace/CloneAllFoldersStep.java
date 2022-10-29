@@ -18,9 +18,10 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** Clones all folders from source workspace to destination workspace. */
 public class CloneAllFoldersStep implements Step {
 
-  private static final Logger logger = LoggerFactory.getLogger(FindEnabledApplicationsStep.class);
+  private static final Logger logger = LoggerFactory.getLogger(CloneAllFoldersStep.class);
   private final FolderDao folderDao;
 
   public CloneAllFoldersStep(FolderDao folderDao) {
@@ -29,6 +30,8 @@ public class CloneAllFoldersStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
+    FlightUtils.validateRequiredEntries(
+        context.getInputParameters(), JobMapKeys.REQUEST.getKeyName());
     FlightUtils.validateRequiredEntries(
         context.getInputParameters(), ControlledResourceKeys.SOURCE_WORKSPACE_ID);
     var sourceWorkspaceId =
@@ -40,39 +43,45 @@ public class CloneAllFoldersStep implements Step {
             .getWorkspaceId();
 
     // Create and clone all folders
-    ImmutableList<Folder> foldersResult = folderDao.listFoldersInWorkspace(sourceWorkspaceId);
+    ImmutableList<Folder> sourceFolders = folderDao.listFoldersInWorkspace(sourceWorkspaceId);
     // Use Map<String, String> rather than Map<UUID, UUID> to avoid JSON deserialization error
     Map<String, String> folderIdMap = new HashMap<>();
-    if (foldersResult != null) {
-      for (Folder folder : foldersResult) {
-        UUID destinationFolderId = UUID.randomUUID();
-        folderDao.createFolder(
-            new Folder(
-                destinationFolderId,
-                destinationWorkspaceId,
-                folder.displayName(),
-                folder.description(),
-                /*parentFolderId=*/ null,
-                folder.properties()));
-        folderIdMap.put(folder.id().toString(), destinationFolderId.toString());
-      }
-      // Update the cloned folders' parent folder id
-      for (Folder folder : foldersResult) {
-        if (folder.parentFolderId() != null) {
-          folderDao.updateFolder(
+
+    if (sourceFolders == null) {
+      logger.info("Source workspace {} doesn't have any folders to copy", sourceWorkspaceId);
+      return StepResult.getStepResultSuccess();
+    }
+    for (Folder sourceFolder : sourceFolders) {
+      // folderId is primary key, so can't reuse source folder ID
+      UUID destinationFolderId = UUID.randomUUID();
+      folderDao.createFolder(
+          new Folder(
+              destinationFolderId,
               destinationWorkspaceId,
-              UUID.fromString(folderIdMap.get(folder.id().toString())),
-              /*displayName=*/ null,
-              /*description=*/ null,
-              UUID.fromString(folderIdMap.get(folder.parentFolderId().toString())),
-              /*updateParent=*/ true);
-        }
+              sourceFolder.displayName(),
+              sourceFolder.description(),
+              // Don't set parentFolderId because parent folder might not have been created yet.
+              // parentFolderId will be set below.
+              /*parentFolderId=*/ null,
+              sourceFolder.properties()));
+      folderIdMap.put(sourceFolder.id().toString(), destinationFolderId.toString());
+    }
+    // Update the cloned folders' parent folder id
+    for (Folder sourceFolder : sourceFolders) {
+      if (sourceFolder.parentFolderId() != null) {
+        folderDao.updateFolder(
+            destinationWorkspaceId,
+            UUID.fromString(folderIdMap.get(sourceFolder.id().toString())),
+            /*displayName=*/ null,
+            /*description=*/ null,
+            UUID.fromString(folderIdMap.get(sourceFolder.parentFolderId().toString())),
+            /*updateParent=*/ true);
       }
     }
 
     logger.info(
         "Cloned all folders relations {} in workspace {} to new workspace {}",
-        foldersResult,
+        sourceFolders,
         sourceWorkspaceId,
         destinationWorkspaceId);
 
@@ -84,11 +93,11 @@ public class CloneAllFoldersStep implements Step {
   // Delete the folders and rows in the folder table
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    var destinationWorkspaceID =
+    var destinationWorkspaceId =
         flightContext
             .getInputParameters()
             .get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
-    folderDao.deleteAllFolders(destinationWorkspaceID);
+    folderDao.deleteAllFolders(destinationWorkspaceId);
     return StepResult.getStepResultSuccess();
   }
 }

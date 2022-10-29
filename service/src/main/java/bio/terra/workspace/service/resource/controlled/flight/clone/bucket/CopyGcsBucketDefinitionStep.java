@@ -94,10 +94,7 @@ public class CopyGcsBucketDefinitionStep implements Step {
                 ControlledGcsBucketHandler.getHandler()
                     .generateCloudName(destinationWorkspaceId, "cloned-" + resourceName));
     UUID destinationFolderId =
-        Optional.ofNullable(
-                inputParameters.get(ControlledResourceKeys.DESTINATION_FOLDER_ID, String.class))
-            .map(UUID::fromString)
-            .orElse(null);
+        inputParameters.get(ControlledResourceKeys.DESTINATION_FOLDER_ID, UUID.class);
     // Store effective bucket name for destination
     workingMap.put(ControlledResourceKeys.DESTINATION_BUCKET_NAME, bucketName);
     var destinationResourceId =

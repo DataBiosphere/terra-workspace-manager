@@ -67,12 +67,15 @@ public class SetReferencedDestinationBigQueryDatasetInWorkingMapStep implements 
         inputParameters.get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
     final var destinationResourceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.class);
+    final UUID destinationFolderId =
+        inputParameters.get(ControlledResourceKeys.DESTINATION_FOLDER_ID, UUID.class);
 
     ReferencedBigQueryDatasetResource destinationDatasetResource =
         WorkspaceCloneUtils.buildDestinationReferencedBigQueryDatasetFromControlled(
             sourceDataset,
             destinationWorkspaceId,
             destinationResourceId,
+            destinationFolderId,
             resourceName,
             description);
 
