@@ -4,6 +4,7 @@ import static com.google.common.collect.MoreCollectors.onlyElement;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import bio.terra.stairway.FlightContext;
@@ -19,6 +20,7 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import java.util.List;
 import java.util.UUID;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -73,7 +75,6 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
     UUID destinationWorkspaceId =
         WorkspaceUnitTestUtils.createWorkspaceWithGcpContext(workspaceDao);
     Workspace destinationWorkspace = workspaceDao.getWorkspace(destinationWorkspaceId);
-
     inputParameters.put(ControlledResourceKeys.SOURCE_WORKSPACE_ID, SOURCE_WORKSPACE_ID);
     inputParameters.put(JobMapKeys.REQUEST.getKeyName(), destinationWorkspace);
 
@@ -81,16 +82,13 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
     when(mockFlightContext.getWorkingMap()).thenReturn(workingMap);
 
     StepResult stepResult = cloneAllFoldersStep.doStep(mockFlightContext);
-
     assertEquals(StepResult.getStepResultSuccess(), stepResult);
 
     List<Folder> destinationFolders = folderDao.listFoldersInWorkspace(destinationWorkspaceId);
-
     Folder destinationParentFolder =
         folderDao.listFoldersInWorkspace(destinationWorkspaceId).stream()
             .filter(folder -> folder.displayName().equals(SOURCE_PARENT_FOLDER_NAME))
             .collect(onlyElement());
-
     Folder destinationSonFolder =
         folderDao.listFoldersInWorkspace(destinationWorkspaceId).stream()
             .filter(folder -> folder.displayName().equals(SOURCE_SON_FOLDER_NAME))
@@ -98,8 +96,6 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
 
     assertThat(
         destinationFolders, containsInAnyOrder(destinationParentFolder, destinationSonFolder));
-
-    workspaceDao.deleteWorkspace(SOURCE_WORKSPACE_ID);
   }
 
   @Test
@@ -110,7 +106,6 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
     UUID destinationWorkspaceId =
         WorkspaceUnitTestUtils.createWorkspaceWithGcpContext(workspaceDao);
     Workspace destinationWorkspace = workspaceDao.getWorkspace(destinationWorkspaceId);
-
     inputParameters.put(ControlledResourceKeys.SOURCE_WORKSPACE_ID, SOURCE_WORKSPACE_ID);
     inputParameters.put(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId);
     inputParameters.put(JobMapKeys.REQUEST.getKeyName(), destinationWorkspace);
@@ -122,12 +117,14 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
     assertEquals(StepResult.getStepResultSuccess(), stepResult);
 
     StepResult undoStepResult = cloneAllFoldersStep.undoStep(mockFlightContext);
-    assertEquals(undoStepResult.getStepResultSuccess(), stepResult);
-    assertEquals(
-        0,
-        folderDao.listFoldersInWorkspace(destinationWorkspaceId).size(),
+    assertEquals(StepResult.getStepResultSuccess(), undoStepResult);
+    assertTrue(
+        folderDao.listFoldersInWorkspace(destinationWorkspaceId).isEmpty(),
         "Destination workspace does not have any folders");
+  }
 
+  @AfterEach
+  public void clean_up() {
     workspaceDao.deleteWorkspace(SOURCE_WORKSPACE_ID);
   }
 }

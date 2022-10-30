@@ -93,7 +93,7 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
 
   private static final int EXPECTED_NUM_CLONED_RESOURCES = 11;
   private static final String TERRA_FOLDER_ID = "terra-folder-id";
-  private static final String FOLDER_DISPLAY_NAME = "folderName";
+  private static final String FOLDER_DISPLAY_NAME = "folderDisplayName";
 
   @Override
   protected void doSetup(
@@ -379,7 +379,7 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
 
     // Assert the destination workspace preserves the cloned folder with the cloned controlled GCS
     // bucket resource
-    assertResourceInFolder(
+    assertFolderInWorkspace(
         cloneResult.getWorkspace().getDestinationWorkspaceId(),
         UUID.fromString(
             clonedSharedBucket.getMetadata().getProperties().stream()
@@ -708,7 +708,7 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
 
     // Assert the destination workspace preserves the cloned folder with the cloned reference GCS
     // bucket resource
-    assertResourceInFolder(
+    assertFolderInWorkspace(
         cloneResult.getWorkspace().getDestinationWorkspaceId(),
         UUID.fromString(
             clonedBucketFileReference.getMetadata().getProperties().stream()
@@ -820,11 +820,13 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
 
     // Create folder in the source workspace
     FolderApi folderApi = new FolderApi(ownerApiClient);
+    String displayName = FOLDER_DISPLAY_NAME + "_" + UUID.randomUUID();
     folderApi.createFolder(
-        new CreateFolderRequestBody().displayName(FOLDER_DISPLAY_NAME + "_" + UUID.randomUUID()),
-        getWorkspaceId());
+        new CreateFolderRequestBody().displayName(displayName), getWorkspaceId());
     Folder folder =
-        folderApi.listFolders(getWorkspaceId()).getFolders().stream().collect(onlyElement());
+        folderApi.listFolders(getWorkspaceId()).getFolders().stream()
+            .filter(f -> f.getDisplayName().equals(displayName))
+            .collect(onlyElement());
 
     // Update resource properties with new folder id
     ResourceApi resourceApi = new ResourceApi(ownerApiClient);
@@ -834,7 +836,7 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
         resourceId);
   }
 
-  private void assertResourceInFolder(UUID workspaceId, UUID folderId) throws Exception {
+  private void assertFolderInWorkspace(UUID workspaceId, UUID folderId) throws Exception {
     ApiClient ownerApiClient = ClientTestUtils.getClientForTestUser(cloningUser, server);
     FolderApi folderApi = new FolderApi(ownerApiClient);
 

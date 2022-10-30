@@ -76,7 +76,7 @@ public final class WorkspaceFlightMapKeys {
     private FolderKeys() {}
 
     // Mapping the source workspace folder id to the new created destination workspace folder id
-    public static final String FOLDER_IDS_TO_CLONE_MAP = "folderIdMap";
+    public static final String FOLDER_IDS_TO_CLONE_MAP = "folderIdsToCloneMap";
   }
 
   public static class ReferencedResourceKeys {
