@@ -15,7 +15,7 @@ workspace:
   stairway-database:
     migrate-upgrade: true
     password: stairwaypwd
-    uri: jdbc:postgresql://127.0.0.1:5432/wsm_stairway
+    uri: jdbc:tc:postgresql:13://127.0.0.1:5432/wsm_stairway
     username: stairwayuser
     poolMaxIdle: 1
   status-check:
@@ -26,7 +26,7 @@ workspace:
   workspace-database:
     initialize-on-start: true
     password: dbpwd
-    uri: jdbc:postgresql://127.0.0.1:5432/wsm_db
+    uri: jdbc:tc:postgresql:13://127.0.0.1:5432/wsm_db
     username: dbuser
     poolMaxIdle: 1
 
@@ -49,10 +49,13 @@ feature:
 policy:
   policy-database:
     poolMaxIdle: 1
+    uri: jdbc:tc:postgresql:13://127.0.0.1:5432/policy_db
 
 #Terra Landing Zone Service configuration
 landingzone:
   landingzone-database:
     poolMaxIdle: 1
+    uri: jdbc:tc:postgresql:13://127.0.0.1:5432/landingzone_db
   landingzone-stairway-database:
     poolMaxIdle: 1
+    uri: jdbc:tc:postgresql:13://127.0.0.1:5432/landingzone_stairway_db

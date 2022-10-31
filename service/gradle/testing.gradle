@@ -43,6 +43,9 @@ test {
     }
     failOnPassedAfterRetry = true
   }
+  // We don't want to use up all the cores on a developer's machine because it locks them out of doing other
+  // work, but that's not a concern for dedicated CI machines.
+  maxParallelForks = System.getenv().containsKey("CI") ? Runtime.runtime.availableProcessors() : Runtime.runtime.availableProcessors().intdiv(2)
 }
 
 task unitTest(type: Test) {
@@ -50,6 +53,9 @@ task unitTest(type: Test) {
     includeTags "unit"
   }
   outputs.upToDateWhen { false }
+  // We don't want to use up all the cores on a developer's machine because it locks them out of doing other
+  // work, but that's not a concern for dedicated CI machines.
+  maxParallelForks = System.getenv().containsKey("CI") ? Runtime.runtime.availableProcessors() : Runtime.runtime.availableProcessors().intdiv(2)
   finalizedBy tasks.combinedJaCoCoReport
 }
 
@@ -78,6 +84,9 @@ task connectedTest(type: Test) {
     }
     failOnPassedAfterRetry = true
   }
+  // We don't want to use up all the cores on a developer's machine because it locks them out of doing other
+  // work, but that's not a concern for dedicated CI machines.
+  maxParallelForks = System.getenv().containsKey("CI") ? Runtime.runtime.availableProcessors() : Runtime.runtime.availableProcessors().intdiv(2)
 }
 
 task azureConnectedTest(type: Test) {
@@ -104,6 +113,9 @@ task azureConnectedTest(type: Test) {
     }
     failOnPassedAfterRetry = true
   }
+  // We don't want to use up all the cores on a developer's machine because it locks them out of doing other
+  // work, but that's not a concern for dedicated CI machines.
+  maxParallelForks = System.getenv().containsKey("CI") ? Runtime.runtime.availableProcessors() : Runtime.runtime.availableProcessors().intdiv(2)
 }
 
 task azureUnitTest(type: Test) {
@@ -112,4 +124,7 @@ task azureUnitTest(type: Test) {
   }
   outputs.upToDateWhen { false }
   finalizedBy tasks.combinedJaCoCoReport
+  // We don't want to use up all the cores on a developer's machine because it locks them out of doing other
+  // work, but that's not a concern for dedicated CI machines.
+  maxParallelForks = System.getenv().containsKey("CI") ? Runtime.runtime.availableProcessors() : Runtime.runtime.availableProcessors().intdiv(2)
 }
