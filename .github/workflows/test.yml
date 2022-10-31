@@ -64,12 +64,6 @@ jobs:
         fi
         echo ::set-output name=test-env::$ENV
 
-    - name: Initialize Postgres DB
-      if: steps.skiptest.outputs.is-bump == 'no'
-      env:
-        PGPASSWORD: postgres
-      run: psql -h 127.0.0.1 -U postgres -f ./service/local-dev/local-postgres-init.sql
-
     - name: Set up JDK
       if: steps.skiptest.outputs.is-bump == 'no'
       uses: actions/setup-java@v3
