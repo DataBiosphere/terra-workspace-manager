@@ -35,6 +35,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.Contr
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.UpdateControlledBigQueryDatasetResourceFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.UpdateControlledGcsBucketResourceFlight;
+import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.CloneControlledAzureStorageContainerResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CloneControlledGcsBucketResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.CloneControlledGcpBigQueryDatasetResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
@@ -232,6 +233,55 @@ public class ControlledResourceService {
                 Optional.ofNullable(cloningInstructionsOverride)
                     .map(CloningInstructions::fromApiModel)
                     .orElse(sourceBucketResource.getCloningInstructions()));
+    return jobBuilder.submit();
+  }
+
+  public String cloneAzureContainer(
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId,
+      UUID destinationWorkspaceId,
+      UUID destinationResourceId,
+      ApiJobControl jobControl,
+      AuthenticatedUserRequest userRequest,
+      @Nullable String destinationResourceName,
+      @Nullable String destinationDescription,
+      @Nullable String destinationContainerName,
+      @Nullable ApiCloningInstructionsEnum cloningInstructionsOverride) {
+    final ControlledResource sourceContainer =
+        getControlledResource(sourceWorkspaceId, sourceResourceId);
+
+    // Write access to the target workspace will be established in the create flight
+    final String jobDescription =
+        String.format(
+            "Clone controlled resource %s; id %s; name %s",
+            sourceContainer.getResourceType(),
+            sourceContainer.getResourceId(),
+            sourceContainer.getName());
+
+    // If TPS is enabled, then we want to merge policies when cloning a bucket
+    boolean mergePolicies = features.isTpsEnabled();
+
+    final JobBuilder jobBuilder =
+        jobService
+            .newJob()
+            .description(jobDescription)
+            .jobId(jobControl.getId())
+            .flightClass(CloneControlledAzureStorageContainerResourceFlight.class)
+            .resource(sourceContainer)
+            .userRequest(userRequest)
+            .workspaceId(sourceWorkspaceId.toString())
+            .operationType(OperationType.CLONE)
+            .addParameter(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId)
+            .addParameter(ControlledResourceKeys.DESTINATION_RESOURCE_ID, destinationResourceId)
+            .addParameter(ResourceKeys.RESOURCE_NAME, destinationResourceName)
+            .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, destinationDescription)
+            .addParameter(ControlledResourceKeys.DESTINATION_BUCKET_NAME, destinationContainerName)
+            .addParameter(WorkspaceFlightMapKeys.MERGE_POLICIES, mergePolicies)
+            .addParameter(
+                ControlledResourceKeys.CLONING_INSTRUCTIONS,
+                Optional.ofNullable(cloningInstructionsOverride)
+                    .map(CloningInstructions::fromApiModel)
+                    .orElse(sourceContainer.getCloningInstructions()));
     return jobBuilder.submit();
   }
 

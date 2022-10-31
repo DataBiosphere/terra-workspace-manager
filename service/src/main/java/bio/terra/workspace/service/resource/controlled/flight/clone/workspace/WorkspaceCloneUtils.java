@@ -4,6 +4,7 @@ import static bio.terra.workspace.app.controller.shared.PropertiesUtils.clearSom
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.stairway.FlightStatus;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
@@ -139,6 +140,23 @@ public class WorkspaceCloneUtils {
         .common(
             getControlledResourceCommonFields(
                 sourceBucket, destinationWorkspaceId, destinationResourceId, name, description))
+        .build();
+  }
+
+  public static ControlledAzureStorageContainerResource buildDestinationControlledAzureContainer(
+      ControlledAzureStorageContainerResource sourceContainer,
+      UUID storageAccountId,
+      UUID destinationWorkspaceId,
+      UUID destinationResourceId,
+      String name,
+      @Nullable String description,
+      String cloudInstanceName) {
+    return ControlledAzureStorageContainerResource.builder()
+        .storageContainerName(cloudInstanceName)
+        .storageAccountId(storageAccountId)
+        .common(
+            getControlledResourceCommonFields(
+                sourceContainer, destinationWorkspaceId, destinationResourceId, name, description))
         .build();
   }
 

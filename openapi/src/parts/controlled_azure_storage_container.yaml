@@ -24,6 +24,32 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/storageContainer/{resourceId}/clone:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    post:
+      summary: Clone an Azure Storage Container
+      operationId: cloneAzureStorageContainer
+      tags: [ControlledAzureResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloneControlledAzureStorageContainerRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/ClonedControlledAzureStorageContainerResponse'
+        '202':
+          $ref: '#/components/responses/ClonedControlledAzureStorageContainerResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   /api/workspaces/v1/{workspaceId}/resources/controlled/azure/storageContainer/{resourceId}:
     post:
       parameters:
@@ -75,7 +101,68 @@ paths:
           $ref: '#/components/responses/ServerError'
 
 components:
+  responses:
+    ClonedControlledAzureStorageContainerResponse:
+      description: Response to container response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CloneControlledAzureStorageContainerResult'
+
+    CreatedControlledAzureStorageContainerResponse:
+      description: Response to Create controlled Gcs bucket
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreatedControlledAzureStorageContainer'
   schemas:
+    CloneControlledAzureStorageContainerResult:
+      description: >-
+        API result class for cloning an Azure Storage Container.
+      type: object
+      properties:
+        bucket:
+          $ref: '#/components/schemas/ClonedControlledAzureStorageContainer'
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+
+    CloneControlledAzureStorageContainerRequest:
+      description: TODO
+      type: object
+      required: [ destinationWorkspaceId, jobControl ]
+      properties:
+        destinationWorkspaceId:
+          description: ID of workspace to be cloned into
+          type: string
+          format: uuid
+        cloningInstructions:
+          $ref: "#/components/schemas/CloningInstructionsEnum"
+        name:
+          $ref: "#/components/schemas/Name"
+        description:
+          type: string
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+
+    ClonedControlledAzureStorageContainer:
+      description: TODO
+      type: object
+      properties:
+        effectiveCloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
+        sourceWorkspaceId:
+          description: ID of the workspace of the source resource for this clone
+          type: string
+          format: uuid
+        sourceResourceId:
+          description: ID of the source resource
+          type: string
+          format: uuid
+        storageContainer:
+          $ref: "#/components/schemas/CreatedControlledAzureStorageContainer"
+
     AzureStorageContainerCreationParameters:
       description: >-
         Storage container-specific properties to be set on creation. These are a subset of the values
