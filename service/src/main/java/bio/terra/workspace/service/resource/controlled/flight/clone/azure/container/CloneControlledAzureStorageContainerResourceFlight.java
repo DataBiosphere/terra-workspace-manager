@@ -73,9 +73,9 @@ public class CloneControlledAzureStorageContainerResourceFlight extends Flight {
     // Flight plan
     // 1. Check user has read access to source container
     // 2. Gather controlled resource metadata for source object
-    // 3. Gather cloud attributes for source object
-    // 4. If referenced, do the clone and finish
-    // 5. Launch sub flight to create destination contaienr if copy_resource
+    // 3. Copy container definition to new container resource
+    // 3. If referenced, bail out as unsupported.
+    // 4. Copy files from source container to destination container (TODO)
     addStep(
         new CheckControlledResourceAuthStep(
             sourceResource, flightBeanBag.getControlledResourceMetadataManager(), userRequest),
@@ -99,13 +99,16 @@ public class CloneControlledAzureStorageContainerResourceFlight extends Flight {
     // TODO add step copy source container metadata + attributes
 
     if (CloningInstructions.COPY_REFERENCE == cloningInstructions) {
-      throw new RuntimeException("Referenced azure containers not supported");
+      throw new IllegalArgumentException("Cloning referenced azure containers not supported");
     } else if (CloningInstructions.COPY_RESOURCE == cloningInstructions
         || CloningInstructions.COPY_DEFINITION == cloningInstructions) {
 
       // create the container in the cloud context
       var resourceDao = flightBeanBag.getResourceDao();
       var lzApiDispatch = flightBeanBag.getLandingZoneApiDispatch();
+      addStep(
+          new RetrieveDestinationStorageAccountResourceIdStep(
+              resourceDao, lzApiDispatch, userRequest));
       addStep(
           new CopyAzureStorageContainerDefinitionStep(
               userRequest,
