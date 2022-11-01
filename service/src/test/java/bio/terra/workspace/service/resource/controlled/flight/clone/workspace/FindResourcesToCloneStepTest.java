@@ -20,9 +20,11 @@ import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResource;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -67,6 +69,8 @@ public class FindResourcesToCloneStepTest extends BaseUnitTest {
     doReturn(inputParameters).when(mockFlightContext).getInputParameters();
 
     workingMap = new FlightMap();
+    workingMap.put(
+        WorkspaceFlightMapKeys.FolderKeys.FOLDER_IDS_TO_CLONE_MAP, new HashMap<String, String>());
     doReturn(workingMap).when(mockFlightContext).getWorkingMap();
   }
 

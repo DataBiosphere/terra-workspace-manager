@@ -50,6 +50,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             sourceDataset,
             DESTINATION_WORKSPACE_ID,
             DESTINATION_RESOURCE_ID,
+            /*destinationFolderId=*/ null,
             cloneResourceName,
             cloneDescription,
             cloneDatasetName,
@@ -80,6 +81,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             sourceDataset,
             DESTINATION_WORKSPACE_ID,
             DESTINATION_RESOURCE_ID,
+            /*destinationFolderId=*/ null,
             RandomStringUtils.randomAlphabetic(5),
             /*description=*/ null,
             RandomStringUtils.randomAlphabetic(5),
@@ -103,6 +105,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             sourceDataset,
             DESTINATION_WORKSPACE_ID,
             DESTINATION_RESOURCE_ID,
+            /*destinationFolderId=*/ null,
             /*name=*/ RandomStringUtils.randomAlphabetic(5),
             /*description=*/ "This is a cloned dataset",
             /*cloudInstanceName=*/ RandomStringUtils.randomAlphabetic(5),
@@ -127,6 +130,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             sourceDataset,
             sourceDataset.getWorkspaceId(),
             DESTINATION_RESOURCE_ID,
+            /*destinationFolderId=*/ null,
             /*name=*/ RandomStringUtils.randomAlphabetic(5),
             /*description=*/ "This is a cloned dataset",
             /*cloudInstanceName=*/ RandomStringUtils.randomAlphabetic(5),
@@ -149,6 +153,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             sourceBucket,
             DESTINATION_WORKSPACE_ID,
             DESTINATION_RESOURCE_ID,
+            /*destinationFolderId=*/ null,
             cloneResourceName,
             cloneDescription,
             cloneBucketName);
@@ -176,6 +181,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             sourceBucket,
             DESTINATION_WORKSPACE_ID,
             DESTINATION_RESOURCE_ID,
+            /*destinationFolderId=*/ null,
             RandomStringUtils.randomAlphabetic(5),
             "This is a cloned private bucket",
             // Gcs bucket cloud instance id must be lower-case.
@@ -196,6 +202,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             sourceBucket,
             DESTINATION_WORKSPACE_ID,
             DESTINATION_RESOURCE_ID,
+            /*destinationFolderId=*/ null,
             /*name=*/ RandomStringUtils.randomAlphabetic(5),
             /*description=*/ "This is a cloned bucket",
             // Gcs bucket cloud instance id must be lower-case.
@@ -225,6 +232,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
                 referencedResource,
                 DESTINATION_WORKSPACE_ID,
                 DESTINATION_RESOURCE_ID,
+                /*destinationFolderId=*/ null,
                 cloneResourceName,
                 cloneDescription);
 
@@ -252,6 +260,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
                 referencedResource,
                 DESTINATION_WORKSPACE_ID,
                 DESTINATION_RESOURCE_ID,
+                /*destinationFolderId=*/ null,
                 /*name=*/ RandomStringUtils.randomAlphabetic(5),
                 /*description=*/ "This is a cloned data repo snapshot referenced resource");
 
@@ -278,6 +287,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
                 referencedResource,
                 referencedResource.getWorkspaceId(),
                 DESTINATION_RESOURCE_ID,
+                /*destinationFolderId=*/ null,
                 /*name=*/ RandomStringUtils.randomAlphabetic(5),
                 /*description=*/ "This is a cloned data repo snapshot referenced resource");
 

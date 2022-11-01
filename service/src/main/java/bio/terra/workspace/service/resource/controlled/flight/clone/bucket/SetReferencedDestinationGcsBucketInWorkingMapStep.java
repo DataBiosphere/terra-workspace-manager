@@ -42,8 +42,8 @@ public class SetReferencedDestinationGcsBucketInWorkingMapStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    final FlightMap inputParameters = flightContext.getInputParameters();
-    final FlightMap workingMap = flightContext.getWorkingMap();
+    FlightMap inputParameters = flightContext.getInputParameters();
+    FlightMap workingMap = flightContext.getWorkingMap();
     FlightUtils.validateRequiredEntries(
         inputParameters,
         ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
@@ -51,26 +51,33 @@ public class SetReferencedDestinationGcsBucketInWorkingMapStep implements Step {
     Preconditions.checkState(
         resolvedCloningInstructions == CloningInstructions.COPY_REFERENCE,
         "CloningInstructions must be COPY_REFERENCE");
-    final String resourceName =
+    String resourceName =
         FlightUtils.getInputParameterOrWorkingValue(
             flightContext,
             ResourceKeys.RESOURCE_NAME,
             ResourceKeys.PREVIOUS_RESOURCE_NAME,
             String.class);
-    final String description =
+    String description =
         FlightUtils.getInputParameterOrWorkingValue(
             flightContext,
             ResourceKeys.RESOURCE_DESCRIPTION,
             ResourceKeys.PREVIOUS_RESOURCE_DESCRIPTION,
             String.class);
-    final UUID destinationWorkspaceId =
+    UUID destinationWorkspaceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
-    final var destinationResourceId =
+    UUID destinationResourceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.class);
+    UUID destinationFolderId =
+        inputParameters.get(ControlledResourceKeys.DESTINATION_FOLDER_ID, UUID.class);
 
     ReferencedGcsBucketResource destinationBucketResource =
         WorkspaceCloneUtils.buildDestinationReferencedGcsBucketFromControlled(
-            sourceBucket, destinationWorkspaceId, destinationResourceId, resourceName, description);
+            sourceBucket,
+            destinationWorkspaceId,
+            destinationResourceId,
+            destinationFolderId,
+            resourceName,
+            description);
 
     workingMap.put(
         ControlledResourceKeys.DESTINATION_REFERENCED_RESOURCE, destinationBucketResource);

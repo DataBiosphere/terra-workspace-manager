@@ -10,6 +10,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hibernate.validator.internal.util.Contracts.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -31,6 +32,7 @@ import bio.terra.common.sam.exception.SamInternalServerErrorException;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
+import bio.terra.workspace.db.FolderDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
@@ -48,10 +50,9 @@ import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleCondition
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiResourceCloneDetails;
 import bio.terra.workspace.generated.model.ApiResourceType;
-import bio.terra.workspace.generated.model.ApiTpsPolicyInput;
-import bio.terra.workspace.generated.model.ApiTpsPolicyPair;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.datarepo.DataRepoService;
+import bio.terra.workspace.service.folder.model.Folder;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
@@ -112,15 +113,11 @@ import org.springframework.test.web.servlet.MockMvc;
 class WorkspaceServiceTest extends BaseConnectedTest {
 
   public static final String SPEND_PROFILE_ID = "wm-default-spend-profile";
-  /** A fake group-constraint policy for a workspace. */
-  private static final ApiTpsPolicyInput GROUP_POLICY =
-      new ApiTpsPolicyInput()
-          .namespace("terra")
-          .name("group-constraint")
-          .addAdditionalDataItem(new ApiTpsPolicyPair().key("group").value("my_fake_group"));
   // Name of the test WSM application. This must match the identifier in the
   // application-app-test.yml file.
   private static final String TEST_WSM_APP = "TestWsmApp";
+  private static final String FOLDER_NAME = "FolderName";
+  private static final UUID FOLDER_ID = UUID.randomUUID();
 
   @MockBean private DataRepoService mockDataRepoService;
   /** Mock SamService does nothing for all calls that would throw if unauthorized. */
@@ -138,6 +135,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   @Autowired private ObjectMapper objectMapper;
   @Autowired private WorkspaceActivityLogDao workspaceActivityLogDao;
   @Autowired private WsmApplicationService appService;
+  @Autowired private FolderDao folderDao;
 
   @BeforeEach
   void setup() throws Exception {
@@ -260,7 +258,6 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     String userFacingId = "user-facing-id-getworkspacebyuserfacingid_forbiddenexisting";
     Workspace request = defaultRequestBuilder(UUID.randomUUID()).userFacingId(userFacingId).build();
     workspaceService.createWorkspace(request, null, USER_REQUEST);
-    Workspace createdWorkspace = workspaceService.getWorkspace(request.getWorkspaceId());
 
     doThrow(new ForbiddenException("forbid!"))
         .when(mockSamService)
@@ -417,7 +414,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     String otherDescription = "The deprecated workspace";
 
     Workspace secondUpdatedWorkspace =
-        workspaceService.updateWorkspace(workspaceUuid, null, null, otherDescription, USER_REQUEST);
+        workspaceService.updateWorkspace(
+            workspaceUuid, /*userFacingId=*/ null, /*name=*/ null, otherDescription, USER_REQUEST);
 
     var secondUpdateChangeDetails = workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
     assertTrue(
@@ -452,7 +450,13 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     // Fail if request doesn't contain any updated fields.
     assertThrows(
         MissingRequiredFieldException.class,
-        () -> workspaceService.updateWorkspace(workspaceUuid, null, null, null, USER_REQUEST));
+        () ->
+            workspaceService.updateWorkspace(
+                workspaceUuid,
+                /*userFacingId=*/ null,
+                /*name=*/ null,
+                /*description=*/ null,
+                USER_REQUEST));
     var failedUpdateDate = workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
     assertEquals(
         thirdUpdatedDateAfterWorkspaceUpdate.get().getChangeDate(),
@@ -822,8 +826,19 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         controlledResourceService.createControlledResourceSync(
             bucketResource, ControlledResourceIamRole.OWNER, USER_REQUEST, creationParameters);
 
-    // Enable an application.
+    // Enable an application
     appService.enableWorkspaceApplication(USER_REQUEST, sourceWorkspace, TEST_WSM_APP);
+
+    // Create a folder
+    Folder sourceFolder =
+        new Folder(
+            FOLDER_ID,
+            sourceWorkspaceId,
+            FOLDER_NAME,
+            /*description=*/ null,
+            /*parentFolderId=*/ null,
+            /*properties=*/ Map.of());
+    folderDao.createFolder(sourceFolder);
 
     final ControlledGcsBucketResource createdBucketResource =
         createdResource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
@@ -870,6 +885,13 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     // Destination workspace should have an enabled application
     assertTrue(appService.getWorkspaceApplication(destinationWorkspace, TEST_WSM_APP).isEnabled());
 
+    // Destination workspace should have 1 cloned folder with the relations
+    assertThat(folderDao.listFoldersInWorkspace(destinationWorkspace.getWorkspaceId()), hasSize(1));
+    assertFalse(
+        folderDao
+            .listFoldersInWorkspace(destinationWorkspace.getWorkspaceId())
+            .contains(sourceFolder));
+
     // Clean up
     workspaceService.deleteWorkspace(sourceWorkspace, USER_REQUEST);
     workspaceService.deleteWorkspace(destinationWorkspace, USER_REQUEST);
@@ -894,8 +916,18 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     jobService.waitForJob(createCloudContextJobId);
     assertNull(jobService.retrieveJobResult(createCloudContextJobId, Object.class).getException());
 
-    // Enable an application.
+    // Enable an application
     appService.enableWorkspaceApplication(USER_REQUEST, sourceWorkspace, TEST_WSM_APP);
+
+    // Create a folder
+    folderDao.createFolder(
+        new Folder(
+            FOLDER_ID,
+            sourceWorkspace.getWorkspaceId(),
+            FOLDER_NAME,
+            /*description=*/ null,
+            /*parentFolderId=*/ null,
+            /*properties=*/ Map.of()));
 
     final Workspace destinationWorkspace =
         defaultRequestBuilder(UUID.randomUUID())
@@ -920,6 +952,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     // Destination Workspace should not have a GCP context
     assertTrue(
         gcpCloudContextService.getGcpCloudContext(destinationWorkspace.getWorkspaceId()).isEmpty());
+
+    // Destination workspace should not have folder
+    assertTrue(folderDao.listFoldersInWorkspace(destinationWorkspace.getWorkspaceId()).isEmpty());
 
     // Remove the effect of lastStepFailure, and clean up the created workspace
     jobService.setFlightDebugInfoForTest(null);

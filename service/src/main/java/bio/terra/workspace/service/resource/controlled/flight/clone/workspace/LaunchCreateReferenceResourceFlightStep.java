@@ -20,6 +20,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import java.util.UUID;
+import javax.annotation.Nullable;
 
 public class LaunchCreateReferenceResourceFlightStep implements Step {
 
@@ -27,16 +28,19 @@ public class LaunchCreateReferenceResourceFlightStep implements Step {
   private final ReferencedResource resource;
   private final String subflightId;
   private final UUID destinationResourceId;
+  private final UUID destinationFolderId;
 
   public LaunchCreateReferenceResourceFlightStep(
       ReferencedResourceService referencedResourceService,
       ReferencedResource resource,
       String subflightId,
-      UUID destinationResourceId) {
+      UUID destinationResourceId,
+      @Nullable UUID destinationFolderId) {
     this.referencedResourceService = referencedResourceService;
     this.resource = resource;
     this.subflightId = subflightId;
     this.destinationResourceId = destinationResourceId;
+    this.destinationFolderId = destinationFolderId;
   }
 
   @Override
@@ -63,6 +67,7 @@ public class LaunchCreateReferenceResourceFlightStep implements Step {
             resource,
             destinationWorkspaceId,
             destinationResourceId,
+            destinationFolderId,
             resource.getName(),
             resource.getDescription());
 
@@ -84,6 +89,7 @@ public class LaunchCreateReferenceResourceFlightStep implements Step {
         String.format("Clone referenced resource %s", resource.getResourceId().toString()));
     subflightInputParameters.put(
         ControlledResourceKeys.DESTINATION_RESOURCE_ID, destinationResourceId);
+    subflightInputParameters.put(ControlledResourceKeys.DESTINATION_FOLDER_ID, destinationFolderId);
     try {
       context
           .getStairway()
