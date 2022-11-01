@@ -13,7 +13,10 @@ import bio.terra.landingzone.service.landingzone.azure.LandingZoneService;
 import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneResource;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseAzureUnitTest;
+import bio.terra.workspace.generated.model.ApiAzureLandingZoneIdList;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesList;
+
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -136,5 +139,26 @@ public class LandingZoneApiDispatchTest extends BaseAzureUnitTest {
     assertEquals(1, response.getResources().size());
     assertEquals(
         3, response.getResources().stream().findFirst().get().getDeployedResources().size());
+  }
+
+  @Test
+  public void listAzureLandingZoneIds_Success() throws Exception {
+    // random test UUID
+    UUID billingProfileId = UUID.fromString("01894362-c0f4-4d71-a459-19c8be47eb50");
+
+    when(landingZoneService.listLandingZoneIds(BEARER_TOKEN, billingProfileId))
+        .thenReturn(Arrays.asList(LANDING_ZONE_ID));
+
+    ApiAzureLandingZoneIdList response =
+        landingZoneApiDispatch.listAzureLandingZoneIds(BEARER_TOKEN, billingProfileId);
+
+    verify(landingZoneService, times(1))
+        .listLandingZoneIds(
+            ArgumentMatchers.eq(BEARER_TOKEN),
+            ArgumentMatchers.eq(billingProfileId));
+    assertNotNull(response);
+    assertNotNull(response.getLandingZoneIds());
+    assertEquals(1, response.getLandingZoneIds().size());
+    assertEquals(LANDING_ZONE_ID, response.getLandingZoneIds().get(0));
   }
 }
