@@ -4,6 +4,7 @@ import static com.google.common.collect.MoreCollectors.onlyElement;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
@@ -19,7 +20,9 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,7 +57,7 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
             SOURCE_PARENT_FOLDER_NAME,
             SOURCE_PARENT_FOLDER_DESCRIPTION,
             /*parentFolderId=*/ null,
-            /*properties=*/ null));
+            /*properties=*/ Map.of("foo", "bar")));
     folderDao.createFolder(
         new Folder(
             SOURCE_SON_FOLDER_ID,
@@ -62,7 +65,7 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
             SOURCE_SON_FOLDER_NAME,
             SOURCE_SON_FOLDER_DESCRIPTION,
             SOURCE_PARENT_FOLDER_ID,
-            /*properties=*/ null));
+            /*properties=*/ Map.of("fooSon", "barSon")));
 
     cloneAllFoldersStep = new CloneAllFoldersStep(folderDao);
   }
@@ -84,18 +87,29 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
     StepResult stepResult = cloneAllFoldersStep.doStep(mockFlightContext);
     assertEquals(StepResult.getStepResultSuccess(), stepResult);
 
+    List<Folder> sourceFolders = folderDao.listFoldersInWorkspace(SOURCE_WORKSPACE_ID);
     List<Folder> destinationFolders = folderDao.listFoldersInWorkspace(destinationWorkspaceId);
     Folder destinationParentFolder =
-        folderDao.listFoldersInWorkspace(destinationWorkspaceId).stream()
+        destinationFolders.stream()
             .filter(folder -> folder.displayName().equals(SOURCE_PARENT_FOLDER_NAME))
             .collect(onlyElement());
     Folder destinationSonFolder =
-        folderDao.listFoldersInWorkspace(destinationWorkspaceId).stream()
+        destinationFolders.stream()
             .filter(folder -> folder.displayName().equals(SOURCE_SON_FOLDER_NAME))
             .collect(onlyElement());
 
     assertThat(
         destinationFolders, containsInAnyOrder(destinationParentFolder, destinationSonFolder));
+    assertThat(
+        sourceFolders.stream().map(Folder::description).collect(Collectors.toList()),
+        containsInAnyOrder(
+            destinationParentFolder.description(), destinationSonFolder.description()));
+    assertThat(
+        sourceFolders.stream().map(Folder::properties).collect(Collectors.toList()),
+        containsInAnyOrder(
+            destinationParentFolder.properties(), destinationSonFolder.properties()));
+    assertNull(destinationParentFolder.parentFolderId());
+    assertEquals(destinationParentFolder.id(), destinationSonFolder.parentFolderId());
   }
 
   @Test

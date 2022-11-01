@@ -31,9 +31,9 @@ public class CloneAllFoldersStep implements Step {
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     FlightUtils.validateRequiredEntries(
-        context.getInputParameters(), JobMapKeys.REQUEST.getKeyName());
-    FlightUtils.validateRequiredEntries(
-        context.getInputParameters(), ControlledResourceKeys.SOURCE_WORKSPACE_ID);
+        context.getInputParameters(),
+        JobMapKeys.REQUEST.getKeyName(),
+        ControlledResourceKeys.SOURCE_WORKSPACE_ID);
     var sourceWorkspaceId =
         context.getInputParameters().get(ControlledResourceKeys.SOURCE_WORKSPACE_ID, UUID.class);
     var destinationWorkspaceId =
@@ -52,7 +52,7 @@ public class CloneAllFoldersStep implements Step {
       return StepResult.getStepResultSuccess();
     }
     for (Folder sourceFolder : sourceFolders) {
-      // folderId is primary key, so can't reuse source folder ID
+      // folderId is primary key in DB, so can't reuse source folder ID
       UUID destinationFolderId = UUID.randomUUID();
       folderDao.createFolder(
           new Folder(
@@ -60,8 +60,8 @@ public class CloneAllFoldersStep implements Step {
               destinationWorkspaceId,
               sourceFolder.displayName(),
               sourceFolder.description(),
-              // Don't set parentFolderId because parent folder might not have been created yet.
-              // parentFolderId will be set below.
+              // Parent folder ID is different in dest and source, and parent folder might not have
+              // been created yet. Skip setting now; will set below.
               /*parentFolderId=*/ null,
               sourceFolder.properties()));
       folderIdMap.put(sourceFolder.id().toString(), destinationFolderId.toString());
