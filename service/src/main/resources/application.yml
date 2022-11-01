@@ -206,9 +206,9 @@ feature:
   # tps-enabled - Controls whether Terra Policy Service is called. It is always built into WSM
   tps-enabled: false
   # bpm-enabled-gcp - Controls whether spend profile checks are made for GCP workspaces
-  bpm-enabled-gcp: false
+  bpm-gcp-enabled: false
   # bpm-enabled-azure - Controls whether spend profile checks are made for Azure workspaces
-  bpm-enabled-azure: false
+  bpm-azure-enabled: false
 
 reference:
   gitrepos:

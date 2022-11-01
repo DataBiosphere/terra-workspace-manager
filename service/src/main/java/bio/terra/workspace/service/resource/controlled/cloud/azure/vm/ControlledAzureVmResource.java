@@ -272,10 +272,6 @@ public class ControlledAzureVmResource extends ControlledResource {
       throw new MissingRequiredFieldException(
           "Missing required vmName field for ControlledAzureVm.");
     }
-    if (getRegion() == null) {
-      throw new MissingRequiredFieldException(
-          "Missing required region field for ControlledAzureVm.");
-    }
     if (getVmSize() == null) {
       throw new MissingRequiredFieldException(
           "Missing required valid vmSize field for ControlledAzureVm.");
