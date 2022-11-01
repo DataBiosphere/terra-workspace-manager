@@ -1,19 +1,25 @@
 package bio.terra.workspace.service.workspace;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.common.exception.SerializationException;
+import bio.terra.workspace.app.configuration.external.AwsConfiguration;
+import bio.terra.workspace.common.BaseAwsUnitTest;
 import bio.terra.workspace.service.workspace.exceptions.InvalidSerializedVersionException;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import com.amazonaws.arn.Arn;
 import com.amazonaws.regions.Regions;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
-@Tag("unit")
-public class AwsCloudContextUnitTest {
+public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
 
+  @Autowired private AwsConfiguration awsConfiguration;
+
+  // This configuration must match the default configuration as defined in
+  // services/src/test/resources/application-aws-unit-tests.yml
   static final String ACCOUNT_ID = "123456789012";
   static final Arn ROLE_ARN_SERVICE = getRoleArn(ACCOUNT_ID, "ServiceRole");
   static final Arn ROLE_ARN_USER = getRoleArn(ACCOUNT_ID, "UserRole");
@@ -30,6 +36,16 @@ public class AwsCloudContextUnitTest {
         .build();
   }
 
+  private AwsCloudContext buildTestContext() {
+    return AwsCloudContext.builder()
+        .accountNumber(ACCOUNT_ID)
+        .serviceRoleArn(ROLE_ARN_SERVICE)
+        .userRoleArn(ROLE_ARN_USER)
+        .addBucket(Regions.US_EAST_1, BUCKET_NAME_US_EAST)
+        .addBucket(Regions.US_WEST_1, BUCKET_NAME_US_WEST)
+        .build();
+  }
+
   private void validateContext(AwsCloudContext compareContext) {
     assertEquals(ACCOUNT_ID, compareContext.getAccountNumber());
     assertEquals(ROLE_ARN_SERVICE, compareContext.getServiceRoleArn());
@@ -40,17 +56,33 @@ public class AwsCloudContextUnitTest {
   }
 
   @Test
+  void basic() {
+    AwsCloudContext testContext = buildTestContext();
+    validateContext(testContext);
+  }
+
+  @Test
+  void fromConfig() {
+    // As noted above, the test configuration must match default landing zone as configured in
+    // application-aws-unit-test.yml
+
+    AwsConfiguration.AwsLandingZoneConfiguration landingZoneConfiguration = null;
+    for(AwsConfiguration.AwsLandingZoneConfiguration landingZoneConfigurationIter : awsConfiguration.getLandingZones()) {
+      if(landingZoneConfigurationIter.getName().equals(awsConfiguration.getDefaultLandingZone())) {
+        landingZoneConfiguration = landingZoneConfigurationIter;
+        break;
+      }
+    }
+
+    assertNotNull(landingZoneConfiguration);
+
+    AwsCloudContext context = AwsCloudContext.fromConfiguration(landingZoneConfiguration);
+    validateContext(context);
+  }
+
+  @Test
   void basicSerDes() {
-
-    AwsCloudContext testContext =
-        AwsCloudContext.builder()
-            .accountNumber(ACCOUNT_ID)
-            .serviceRoleArn(ROLE_ARN_SERVICE)
-            .userRoleArn(ROLE_ARN_USER)
-            .addBucket(Regions.US_EAST_1, BUCKET_NAME_US_EAST)
-            .addBucket(Regions.US_WEST_1, BUCKET_NAME_US_WEST)
-            .build();
-
+    AwsCloudContext testContext = buildTestContext();
     String outJson = testContext.serialize();
     System.out.println(outJson);
 

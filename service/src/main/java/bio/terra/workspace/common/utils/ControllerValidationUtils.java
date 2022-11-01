@@ -91,10 +91,11 @@ public final class ControllerValidationUtils {
     switch (platform) {
       case GCP:
       case AZURE:
+      case AWS:
         break;
       default:
         throw new CloudPlatformNotImplementedException(
-            "Invalid cloud platform. Currently, only AZURE and GCP are supported.");
+            "Invalid cloud platform. Currently, only AWS, AZURE and GCP are supported.");
     }
   }
 

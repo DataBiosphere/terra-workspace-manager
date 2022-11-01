@@ -1,13 +1,13 @@
 package bio.terra.workspace.service.workspace.model;
 
 public class CloudContextHolder {
-  private AwsCloudContext awsCloudContext;
+  private String awsCloudContext;
   private AzureCloudContext azureCloudContext;
   private GcpCloudContext gcpCloudContext;
 
   public CloudContextHolder() {}
 
-  public AwsCloudContext getAwsCloudContext() {
+  public String getAwsCloudContext() {
     return awsCloudContext;
   }
 
@@ -19,7 +19,7 @@ public class CloudContextHolder {
     return gcpCloudContext;
   }
 
-  public void setAwsCloudContext(AwsCloudContext awsCloudContext) {
+  public void setAwsCloudContext(String awsCloudContext) {
     this.awsCloudContext = awsCloudContext;
   }
 

@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.workspace.model;
 
+import bio.terra.workspace.app.configuration.external.AwsConfiguration;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.service.workspace.exceptions.InvalidSerializedVersionException;
 import com.amazonaws.arn.Arn;
@@ -32,6 +33,22 @@ public class AwsCloudContext {
 
   public @Nullable String getBucketNameForRegion(Regions region) {
     return regionToBucketNameMap.get(region);
+  }
+
+  public static @Nullable AwsCloudContext fromConfiguration(
+          AwsConfiguration.AwsLandingZoneConfiguration landingZoneConfiguration) {
+
+    AwsCloudContext.Builder builder =
+            AwsCloudContext.builder()
+                    .accountNumber(landingZoneConfiguration.getAccountNumber())
+                    .serviceRoleArn(Arn.fromString(landingZoneConfiguration.getServiceRoleArn()))
+                    .userRoleArn(Arn.fromString(landingZoneConfiguration.getUserRoleArn()));
+
+    for (AwsConfiguration.AwsLandingZoneBucket bucket : landingZoneConfiguration.getBuckets()) {
+      builder.addBucket(Regions.fromName(bucket.getRegion()), bucket.getName());
+    }
+
+    return builder.build();
   }
 
   public String serialize() {

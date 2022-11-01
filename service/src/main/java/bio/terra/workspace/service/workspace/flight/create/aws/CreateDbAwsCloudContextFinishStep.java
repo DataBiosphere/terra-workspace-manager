@@ -1,10 +1,11 @@
 package bio.terra.workspace.service.workspace.flight.create.aws;
 
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.AWS_CLOUD_CONTEXT;
+
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.workspace.common.utils.FlightUtils;
-import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudContextHolder;
@@ -23,17 +24,17 @@ public class CreateDbAwsCloudContextFinishStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext flightContext) throws InterruptedException {
-    AwsCloudContext awsCloudContext =
-        flightContext
-            .getInputParameters()
-            .get(JobMapKeys.REQUEST.getKeyName(), AwsCloudContext.class);
+    String serializedAwsCloudContext =
+        flightContext.getWorkingMap().get(AWS_CLOUD_CONTEXT, String.class);
+
+    AwsCloudContext awsCloudContext = AwsCloudContext.deserialize(serializedAwsCloudContext);
 
     // Create the cloud context; throws if the context already exists.
     awsCloudContextService.createAwsCloudContextFinish(
         workspaceUuid, awsCloudContext, flightContext.getFlightId());
 
     CloudContextHolder cch = new CloudContextHolder();
-    cch.setAwsCloudContext(awsCloudContext);
+    cch.setAwsCloudContext(awsCloudContext.serialize());
 
     FlightUtils.setResponse(flightContext, cch, HttpStatus.OK);
     return StepResult.getStepResultSuccess();
