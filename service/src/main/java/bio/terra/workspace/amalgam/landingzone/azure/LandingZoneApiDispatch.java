@@ -18,6 +18,7 @@ import bio.terra.workspace.generated.model.ApiAzureLandingZone;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDefinition;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDefinitionList;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
+import bio.terra.workspace.generated.model.ApiAzureLandingZoneIdList;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesList;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesPurposeGroup;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResult;
@@ -105,6 +106,14 @@ public class LandingZoneApiDispatch {
                             .description(t.description())
                             .version(t.version()))
                 .collect(Collectors.toList()));
+  }
+
+  public ApiAzureLandingZoneIdList listAzureLandingZoneIds(
+      BearerToken bearerToken, UUID billingProfileId) {
+    List<UUID> landingZoneIds =
+        landingZoneService.listLandingZoneIds(bearerToken, billingProfileId);
+
+    return new ApiAzureLandingZoneIdList().landingZoneIds(landingZoneIds);
   }
 
   public ApiDeleteAzureLandingZoneResult deleteLandingZone(

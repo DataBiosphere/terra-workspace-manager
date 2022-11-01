@@ -5,6 +5,7 @@ import static bio.terra.workspace.app.controller.ControllerBase.getAsyncResponse
 import bio.terra.common.iam.BearerTokenFactory;
 import bio.terra.workspace.generated.controller.LandingZonesApi;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDefinitionList;
+import bio.terra.workspace.generated.model.ApiAzureLandingZoneIdList;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesList;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResult;
 import bio.terra.workspace.generated.model.ApiCreateAzureLandingZoneRequestBody;
@@ -62,6 +63,15 @@ public class LandingZoneApiController implements LandingZonesApi {
   public ResponseEntity<ApiAzureLandingZoneDefinitionList> listAzureLandingZonesDefinitions() {
     ApiAzureLandingZoneDefinitionList result =
         landingZoneApiDispatch.listAzureLandingZonesDefinitions(bearerTokenFactory.from(request));
+    return new ResponseEntity<>(result, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiAzureLandingZoneIdList> listAzureLandingZoneIds(
+      @PathVariable("billingProfileId") UUID billingProfileId) {
+    ApiAzureLandingZoneIdList result =
+        landingZoneApiDispatch.listAzureLandingZoneIds(
+            bearerTokenFactory.from(request), billingProfileId);
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
 

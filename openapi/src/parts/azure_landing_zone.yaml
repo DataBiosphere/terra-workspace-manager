@@ -77,6 +77,23 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/landingzones/v1/azure/billingprofile/{billingProfileId}:
+    parameters:
+      - $ref: '#/components/parameters/BillingProfileId'
+    get:
+      summary: List all Azure landing zone ids for a billing profile
+      operationId: listAzureLandingZoneIds
+      tags: [ LandingZones ]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AzureLandingZoneIdList'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   /api/landingzones/v1/azure/{landingZoneId}:
     parameters:
       - $ref: '#/components/parameters/LandingZoneId'
@@ -249,6 +266,17 @@ components:
         version:
           description: The version of the definition
           type: string
+
+    AzureLandingZoneIdList:
+      type: object
+      required: [landingZoneIds]
+      properties:
+        landingZoneIds:
+          description: A list of Azure landing zone ids
+          type: array
+          items:
+            type: string
+            format: uuid
 
     AzureLandingZoneParameter:
       description: Parameters to set user defined properties for resources in a landing zone

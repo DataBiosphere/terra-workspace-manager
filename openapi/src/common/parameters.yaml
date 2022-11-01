@@ -3,6 +3,15 @@
 #  $ref: '#/components/parameters/<item-you-want>
 components:
   parameters:
+    BillingProfileId:
+      name: billingProfileId
+      in: path
+      description: Identifier for the billing profile to be used for this landing zone.
+      required: true
+      schema:
+        type: string
+        format: uuid
+
     CloudContext:
       name: cloudContext
       in: path
