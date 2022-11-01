@@ -275,7 +275,8 @@ public class ControlledResourceService {
             .addParameter(ControlledResourceKeys.DESTINATION_RESOURCE_ID, destinationResourceId)
             .addParameter(ResourceKeys.RESOURCE_NAME, destinationResourceName)
             .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, destinationDescription)
-            .addParameter(ControlledResourceKeys.DESTINATION_CONTAINER_NAME, destinationContainerName)
+            .addParameter(
+                ControlledResourceKeys.DESTINATION_CONTAINER_NAME, destinationContainerName)
             .addParameter(WorkspaceFlightMapKeys.MERGE_POLICIES, mergePolicies)
             .addParameter(
                 ControlledResourceKeys.CLONING_INSTRUCTIONS,

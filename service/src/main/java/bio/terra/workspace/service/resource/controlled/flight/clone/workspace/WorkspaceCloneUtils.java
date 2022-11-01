@@ -178,7 +178,12 @@ public class WorkspaceCloneUtils {
         .storageAccountId(storageAccountId)
         .common(
             getControlledResourceCommonFields(
-                sourceContainer, destinationWorkspaceId, destinationResourceId, null, name, description))
+                sourceContainer,
+                destinationWorkspaceId,
+                destinationResourceId,
+                null,
+                name,
+                description))
         .build();
   }
 
