@@ -18,8 +18,9 @@ public class CloneGcpWorkspaceFlight extends Flight {
   public CloneGcpWorkspaceFlight(FlightMap inputParameters, Object applicationContext) {
     super(inputParameters, applicationContext);
     // Flight Map
-    // 0. Build a list of resources to clone
-    // 1. Create job IDs for future sub-flights and a couple other things
+    // 0. Clone all folders in the workspace
+    // 1. Build a list of resources to clone and attach the updated cloned folder id
+    // 2. Create job IDs for future sub-flights and a couple other things
     // 3. Launch a flight to create the GCP cloud context
     // 3a. Await the context flight
     // TODO: [PF-1972] 4. Merge Policy Attributes
@@ -35,6 +36,8 @@ public class CloneGcpWorkspaceFlight extends Flight {
         inputParameters.get(
             WorkspaceFlightMapKeys.ControlledResourceKeys.SOURCE_WORKSPACE_ID, UUID.class);
     Workspace sourceWorkspace = flightBeanBag.getWorkspaceDao().getWorkspace(sourceWorkspaceId);
+
+    addStep(new CloneAllFoldersStep(flightBeanBag.getFolderDao()));
 
     addStep(new FindResourcesToCloneStep(flightBeanBag.getResourceDao()), cloudRetryRule);
 

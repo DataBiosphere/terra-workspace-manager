@@ -80,9 +80,9 @@ public class CopyGcsBucketDefinitionStep implements Step {
             ResourceKeys.PREVIOUS_RESOURCE_DESCRIPTION,
             String.class);
 
-    var destinationWorkspaceId =
+    UUID destinationWorkspaceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
-    var bucketName =
+    String bucketName =
         Optional.ofNullable(
                 inputParameters.get(ControlledResourceKeys.DESTINATION_BUCKET_NAME, String.class))
             .orElse(
@@ -92,9 +92,11 @@ public class CopyGcsBucketDefinitionStep implements Step {
                 // crashing.
                 ControlledGcsBucketHandler.getHandler()
                     .generateCloudName(destinationWorkspaceId, "cloned-" + resourceName));
+    UUID destinationFolderId =
+        inputParameters.get(ControlledResourceKeys.DESTINATION_FOLDER_ID, UUID.class);
     // Store effective bucket name for destination
     workingMap.put(ControlledResourceKeys.DESTINATION_BUCKET_NAME, bucketName);
-    var destinationResourceId =
+    UUID destinationResourceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.class);
     // bucket resource for create flight
     ControlledGcsBucketResource destinationBucketResource =
@@ -102,6 +104,7 @@ public class CopyGcsBucketDefinitionStep implements Step {
             sourceBucket,
             destinationWorkspaceId,
             destinationResourceId,
+            destinationFolderId,
             resourceName,
             description,
             bucketName);

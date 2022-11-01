@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
+import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties.FOLDER_ID_KEY;
+
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
@@ -9,9 +11,12 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -35,8 +40,16 @@ public class FindResourcesToCloneStep implements Step {
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     FlightUtils.validateRequiredEntries(
         context.getInputParameters(), ControlledResourceKeys.SOURCE_WORKSPACE_ID);
+    FlightUtils.validateRequiredEntries(
+        context.getWorkingMap(), WorkspaceFlightMapKeys.FolderKeys.FOLDER_IDS_TO_CLONE_MAP);
     var sourceWorkspaceId =
         context.getInputParameters().get(ControlledResourceKeys.SOURCE_WORKSPACE_ID, UUID.class);
+    HashMap<String, String> folderIdMap =
+        context
+            .getWorkingMap()
+            .get(
+                WorkspaceFlightMapKeys.FolderKeys.FOLDER_IDS_TO_CLONE_MAP,
+                new TypeReference<>() {});
     int offset = 0;
     int limit = 100;
     List<WsmResource> batch;
@@ -46,11 +59,17 @@ public class FindResourcesToCloneStep implements Step {
       offset += limit;
       List<WsmResource> cloneableResources =
           batch.stream().filter(FindResourcesToCloneStep::isCloneable).toList();
-      cloneableResources.forEach(
-          r ->
-              result.add(
-                  new ResourceCloneInputs(
-                      r, context.getStairway().createFlightId(), UUID.randomUUID())));
+
+      for (WsmResource resource : cloneableResources) {
+        String folderId = resource.getProperties().get(FOLDER_ID_KEY);
+        result.add(
+            new ResourceCloneInputs(
+                resource,
+                context.getStairway().createFlightId(),
+                /*destinationResourceId=*/ UUID.randomUUID(),
+                folderId != null ? UUID.fromString(folderIdMap.get(folderId)) : null));
+      }
+
     } while (batch.size() == limit);
 
     // sort the resources by stewardship type reversed, so reference types go first
