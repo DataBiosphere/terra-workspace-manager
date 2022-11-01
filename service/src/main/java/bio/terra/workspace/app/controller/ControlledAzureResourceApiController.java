@@ -666,10 +666,10 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             UUID.randomUUID(),
             body.getJobControl(),
             userRequest,
-            null,
-            null,
             body.getName(),
-            null);
+            body.getDescription(),
+            body.getName(),
+            body.getCloningInstructions());
 
     final ApiCloneControlledAzureStorageContainerResult result =
         fetchCloneAzureContainerResult(jobId);
@@ -683,6 +683,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     return new ApiCloneControlledAzureStorageContainerResult()
         .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getApiErrorReport())
-        .bucket(jobResult.getResult());
+        .container(jobResult.getResult());
   }
 }

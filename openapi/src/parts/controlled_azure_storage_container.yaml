@@ -103,25 +103,19 @@ paths:
 components:
   responses:
     ClonedControlledAzureStorageContainerResponse:
-      description: Response to container response
+      description: Response object for clone of an Azure storage container
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/CloneControlledAzureStorageContainerResult'
 
-    CreatedControlledAzureStorageContainerResponse:
-      description: Response to Create controlled Gcs bucket
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/CreatedControlledAzureStorageContainer'
   schemas:
     CloneControlledAzureStorageContainerResult:
       description: >-
         API result class for cloning an Azure Storage Container.
       type: object
       properties:
-        bucket:
+        container:
           $ref: '#/components/schemas/ClonedControlledAzureStorageContainer'
         jobReport:
           $ref: '#/components/schemas/JobReport'
@@ -129,7 +123,9 @@ components:
           $ref: '#/components/schemas/ErrorReport'
 
     CloneControlledAzureStorageContainerRequest:
-      description: TODO
+      description: >-
+        Values to assign to the cloned storage container for a given source container. Leave name
+        and description null to take the source object's values.
       type: object
       required: [ destinationWorkspaceId, jobControl ]
       properties:
@@ -147,7 +143,8 @@ components:
           $ref: '#/components/schemas/JobControl'
 
     ClonedControlledAzureStorageContainer:
-      description: TODO
+      description: >-
+        Response object for clone of an Azure storage container.
       type: object
       properties:
         effectiveCloningInstructions:

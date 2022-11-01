@@ -96,7 +96,7 @@ public class CloneControlledAzureStorageContainerResourceFlight extends Flight {
             sourceResource.getWorkspaceId(),
             sourceResource.getResourceId()));
 
-    // TODO add step copy source container metadata + attributes
+    // TODO WOR-590 add step to copy source container metadata + attributes
 
     if (CloningInstructions.COPY_REFERENCE == cloningInstructions) {
       throw new IllegalArgumentException("Cloning referenced azure containers not supported");
@@ -118,7 +118,7 @@ public class CloneControlledAzureStorageContainerResourceFlight extends Flight {
               flightBeanBag.getControlledResourceService(),
               cloningInstructions));
       if (CloningInstructions.COPY_RESOURCE == cloningInstructions) {
-        addStep(new CopyContainerFiles());
+        addStep(new CopyAzureStorageContainerBlobsStep());
       }
     }
   }

@@ -22,10 +22,13 @@ import java.util.UUID;
 
 /**
  * Attempts to fetch the storage account ID for a new container in the destination workspace
- * following process: 1. Checks the destination workspace for a single storage account; if more than
- * one is present we are in an unsupported state and fail out. 2. If no storage accounts are
- * present, attempts to check the owning Landing Zone. If present, returns the storage account from
- * the LZ, otherwise we fail out.
+ * following process:
+ *
+ * <p>1. Checks the destination workspace for a single storage account; if more than one is present
+ * we are in an unsupported state and fail out.
+ *
+ * <p>2. If no storage accounts are present, attempts to check the owning Landing Zone. If present,
+ * returns the storage account from the LZ, otherwise we fail out.
  */
 public class RetrieveDestinationStorageAccountResourceIdStep implements Step {
 
@@ -81,6 +84,7 @@ public class RetrieveDestinationStorageAccountResourceIdStep implements Step {
                   + destinationWorkspaceId));
     }
 
+    // fall back to the landing zone's storage account, if present
     try {
       UUID lzId = landingZoneApiDispatch.getLandingZoneId(azureCloudContext);
       Optional<ApiAzureLandingZoneDeployedResource> lzStorageAcct =

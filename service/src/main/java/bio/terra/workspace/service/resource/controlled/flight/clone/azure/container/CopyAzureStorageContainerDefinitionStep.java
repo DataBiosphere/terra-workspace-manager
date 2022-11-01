@@ -18,7 +18,6 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
@@ -31,8 +30,6 @@ public class CopyAzureStorageContainerDefinitionStep implements Step {
   private final ControlledAzureStorageContainerResource sourceContainer;
   private final ControlledResourceService controlledResourceService;
   private final CloningInstructions resolvedCloningInstructions;
-  private final ResourceDao resourceDao;
-  private final LandingZoneApiDispatch landingZoneApiDispatch;
 
   public CopyAzureStorageContainerDefinitionStep(
       AuthenticatedUserRequest userRequest,
@@ -41,34 +38,27 @@ public class CopyAzureStorageContainerDefinitionStep implements Step {
       ControlledAzureStorageContainerResource sourceContainer,
       ControlledResourceService controlledResourceService,
       CloningInstructions resolvedCloningInstructions) {
-    this.resourceDao = resourceDao;
     this.userRequest = userRequest;
     this.sourceContainer = sourceContainer;
     this.controlledResourceService = controlledResourceService;
     this.resolvedCloningInstructions = resolvedCloningInstructions;
-    this.landingZoneApiDispatch = landingZoneApiDispatch;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    FlightMap inputParameters = flightContext.getInputParameters();
-    FlightMap workingMap = flightContext.getWorkingMap();
-    FlightUtils.validateRequiredEntries(
-        inputParameters,
-        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
-        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_ID);
-    FlightUtils.validateRequiredEntries(
-        workingMap,
-        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_STORAGE_ACCOUNT_RESOURCE_ID);
+    var inputParameters = flightContext.getInputParameters();
+    var workingMap = flightContext.getWorkingMap();
+    validateInputs(inputParameters, workingMap);
 
-    String resourceName =
+    // get the inputs from the flight context
+    var destinationResourceName =
         FlightUtils.getInputParameterOrWorkingValue(
             flightContext,
             WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_NAME,
             WorkspaceFlightMapKeys.ResourceKeys.PREVIOUS_RESOURCE_NAME,
             String.class);
-    String description =
+    var description =
         FlightUtils.getInputParameterOrWorkingValue(
             flightContext,
             WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_DESCRIPTION,
@@ -83,34 +73,38 @@ public class CopyAzureStorageContainerDefinitionStep implements Step {
     var destinationResourceId =
         inputParameters.get(
             WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.class);
-
-    UUID destStorageAccountId =
+    var destStorageAccountId =
         flightContext
             .getWorkingMap()
             .get(
                 WorkspaceFlightMapKeys.ControlledResourceKeys
                     .DESTINATION_STORAGE_ACCOUNT_RESOURCE_ID,
                 UUID.class);
+
     ControlledAzureStorageContainerResource destinationContainerResource =
         buildDestinationControlledAzureContainer(
             sourceContainer,
             destStorageAccountId,
             destinationWorkspaceId,
             destinationResourceId,
-            resourceName,
+            destinationResourceName,
             description,
             destinationContainerName);
-
     ApiAzureStorageContainerCreationParameters destinationCreationParameters =
-        getDestinationCreationParameters(workingMap);
-
+        new ApiAzureStorageContainerCreationParameters()
+            .storageContainerName(destinationContainerName)
+            .storageAccountId(destStorageAccountId);
     ControlledResourceIamRole iamRole =
         IamRoleUtils.getIamRoleForAccessScope(sourceContainer.getAccessScope());
+
+    // create the container
     ControlledAzureStorageContainerResource clonedContainer =
         controlledResourceService
             .createControlledResourceSync(
                 destinationContainerResource, iamRole, userRequest, destinationCreationParameters)
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
+
+    // save the container definition for downstream steps
     workingMap.put(
         WorkspaceFlightMapKeys.ControlledResourceKeys.CLONED_RESOURCE_DEFINITION, clonedContainer);
 
@@ -133,11 +127,15 @@ public class CopyAzureStorageContainerDefinitionStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
-  private ApiAzureStorageContainerCreationParameters getDestinationCreationParameters(
-      FlightMap workingMap) {
-    return workingMap.get(
-        WorkspaceFlightMapKeys.ControlledResourceKeys.CREATION_PARAMETERS,
-        ApiAzureStorageContainerCreationParameters.class);
+  private void validateInputs(FlightMap inputParameters, FlightMap workingMap) {
+    FlightUtils.validateRequiredEntries(
+        inputParameters,
+        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
+        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_ID,
+        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_CONTAINER_NAME);
+    FlightUtils.validateRequiredEntries(
+        workingMap,
+        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_STORAGE_ACCOUNT_RESOURCE_ID);
   }
 
   @Override
@@ -147,7 +145,7 @@ public class CopyAzureStorageContainerDefinitionStep implements Step {
             .getWorkingMap()
             .get(
                 WorkspaceFlightMapKeys.ControlledResourceKeys.CLONED_RESOURCE_DEFINITION,
-                ControlledGcsBucketResource.class);
+                ControlledAzureStorageContainerResource.class);
     if (clonedContainer != null) {
       controlledResourceService.deleteControlledResourceSync(
           clonedContainer.getWorkspaceId(), clonedContainer.getResourceId(), userRequest);

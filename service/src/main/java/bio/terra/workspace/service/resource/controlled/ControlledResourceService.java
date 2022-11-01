@@ -258,7 +258,7 @@ public class ControlledResourceService {
             sourceContainer.getResourceId(),
             sourceContainer.getName());
 
-    // If TPS is enabled, then we want to merge policies when cloning a bucket
+    // If TPS is enabled, then we want to merge policies when cloning a container
     boolean mergePolicies = features.isTpsEnabled();
 
     final JobBuilder jobBuilder =
