@@ -86,10 +86,11 @@ In order to run tests using a local Postgres instance, you'll need to set the `T
 to point to a local postgres URI, e.g:
 ```
 export TEST_LOCAL_DB='postgresql://127.0.0.1:5432'
+export TEST_SINGLE_THREAD='true'
 ```
 You **must** use `export` here for the value to be visible to Gradle. `TEST_LOCAL_DB=...` will not work!
 Note that parallel tests using a shared database may interfere with each other - 
-[you can temporarily set `runnerThreads`](service/gradle/testing.gradle) in Gradle to 1 to run tests on a single thread.
+[set the `TEST_SINGLE_THREAD` env var](service/gradle/testing.gradle) to restrict tests to a single thread.
 
 #### JDK
 We use the Adoptium JDK version 17. (At this writing, the Mac x86 version is 17.0.2+8).
@@ -411,4 +412,4 @@ For each environment:
   to preserve workspace/cloud context between runs.
 - To run unit and connected tests with a local DB (which can be helpful for examining DB contents after testing), set the `TEST_LOCAL_DB` environment variable
   to point to a local postgres URI, e.g `export TEST_LOCAL_DB='postgresql://127.0.0.1:5432'`. See [above](/#Database Configuration) for setting up a local DB. 
-  - Note that parallel tests using a shared database may interfere with each other - [you can temporarily set `runnerThreads`](service/gradle/testing.gradle) in Gradle to 1 to run tests on a single thread.
+  - Note that parallel tests using a shared database may interfere with each other - [you can set the `TEST_SINGLE_THREAD` env var](service/gradle/testing.gradle) to restrict tests to a single thread.
