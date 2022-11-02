@@ -82,7 +82,15 @@ is the easiest. Just make sure to download the right version. It'll manage thing
 useful menulet where the server can be turned on and off. Don't forget to create a server if you
 go this route.
 
-In order to run tests using a local Postgres instance, you'll need to locally modify the values in [`application-test.yml`](https://github.com/DataBiosphere/terra-workspace-manager/blob/main/service/src/test/resources/application-test.yml)
+In order to run tests using a local Postgres instance, you'll need to set the `TEST_LOCAL_DB` environment variable
+to point to a local postgres URI, e.g:
+```
+export TEST_LOCAL_DB='postgresql://127.0.0.1:5432'
+```
+You **must** use `export` here for the value to be visible to Gradle. `TEST_LOCAL_DB=...` will not work!
+Note that parallel tests using a shared database may interfere with each other - 
+[you can temporarily set `runnerThreads`](service/gradle/testing.gradle) in Gradle to 1 to run tests on a single thread.
+
 #### JDK
 We use the Adoptium JDK version 17. (At this writing, the Mac x86 version is 17.0.2+8).
 You learn about it at [Adoptium](https://adoptium.net/).
@@ -401,3 +409,6 @@ For each environment:
 ![Main Run Configuration Dialog](docs/images/main_run_config.png)
 - For local development of connected tests, [comment out these lines](https://cs.github.com/DataBiosphere/terra-workspace-manager/blob/05dba30e7f597690c46c95a974d31bde532bcbbd/service/src/main/java/bio/terra/workspace/app/StartupInitializer.java?q=startupinitializer#L33-L37)
   to preserve workspace/cloud context between runs.
+- To run unit and connected tests with a local DB (which can be helpful for examining DB contents after testing), set the `TEST_LOCAL_DB` environment variable
+  to point to a local postgres URI, e.g `export TEST_LOCAL_DB='postgresql://127.0.0.1:5432'`. See [above](/#Database Configuration) for setting up a local DB. 
+  - Note that parallel tests using a shared database may interfere with each other - [you can temporarily set `runnerThreads`](service/gradle/testing.gradle) in Gradle to 1 to run tests on a single thread.

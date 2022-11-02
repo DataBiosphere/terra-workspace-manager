@@ -19,6 +19,10 @@ tasks.withType(Test).configureEach {
   }
 }
 
+// We don't want to use up all the cores on a developer's machine because it locks them out of doing other
+// work, but that's not a concern for dedicated CI machines.
+def runnerThreads = System.getenv().containsKey("CI") ? Runtime.runtime.availableProcessors() : Runtime.runtime.availableProcessors().intdiv(2)
+
 test {
   useJUnitPlatform {
     includeTags "unit"
@@ -43,9 +47,7 @@ test {
     }
     failOnPassedAfterRetry = true
   }
-  // We don't want to use up all the cores on a developer's machine because it locks them out of doing other
-  // work, but that's not a concern for dedicated CI machines.
-  maxParallelForks = System.getenv().containsKey("CI") ? Runtime.runtime.availableProcessors() : Runtime.runtime.availableProcessors().intdiv(2)
+  maxParallelForks = runnerThreads
 }
 
 task unitTest(type: Test) {
@@ -53,9 +55,7 @@ task unitTest(type: Test) {
     includeTags "unit"
   }
   outputs.upToDateWhen { false }
-  // We don't want to use up all the cores on a developer's machine because it locks them out of doing other
-  // work, but that's not a concern for dedicated CI machines.
-  maxParallelForks = System.getenv().containsKey("CI") ? Runtime.runtime.availableProcessors() : Runtime.runtime.availableProcessors().intdiv(2)
+  maxParallelForks = runnerThreads
   finalizedBy tasks.combinedJaCoCoReport
 }
 
@@ -84,9 +84,7 @@ task connectedTest(type: Test) {
     }
     failOnPassedAfterRetry = true
   }
-  // We don't want to use up all the cores on a developer's machine because it locks them out of doing other
-  // work, but that's not a concern for dedicated CI machines.
-  maxParallelForks = System.getenv().containsKey("CI") ? Runtime.runtime.availableProcessors() : Runtime.runtime.availableProcessors().intdiv(2)
+  maxParallelForks = runnerThreads
 }
 
 task azureConnectedTest(type: Test) {
@@ -113,9 +111,7 @@ task azureConnectedTest(type: Test) {
     }
     failOnPassedAfterRetry = true
   }
-  // We don't want to use up all the cores on a developer's machine because it locks them out of doing other
-  // work, but that's not a concern for dedicated CI machines.
-  maxParallelForks = System.getenv().containsKey("CI") ? Runtime.runtime.availableProcessors() : Runtime.runtime.availableProcessors().intdiv(2)
+  maxParallelForks = runnerThreads
 }
 
 task azureUnitTest(type: Test) {
@@ -126,5 +122,5 @@ task azureUnitTest(type: Test) {
   finalizedBy tasks.combinedJaCoCoReport
   // We don't want to use up all the cores on a developer's machine because it locks them out of doing other
   // work, but that's not a concern for dedicated CI machines.
-  maxParallelForks = System.getenv().containsKey("CI") ? Runtime.runtime.availableProcessors() : Runtime.runtime.availableProcessors().intdiv(2)
+  maxParallelForks = runnerThreads
 }
