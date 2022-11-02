@@ -124,7 +124,5 @@ task azureUnitTest(type: Test) {
   }
   outputs.upToDateWhen { false }
   finalizedBy tasks.combinedJaCoCoReport
-  // We don't want to use up all the cores on a developer's machine because it locks them out of doing other
-  // work, but that's not a concern for dedicated CI machines.
   maxParallelForks = runnerThreads
 }
