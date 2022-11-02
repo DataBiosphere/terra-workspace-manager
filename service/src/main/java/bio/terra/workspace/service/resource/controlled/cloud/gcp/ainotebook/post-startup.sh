@@ -125,6 +125,10 @@ if [[ -n "${TERRA_WORKSPACE}" ]]; then
   sudo -u "${JUPYTER_USER}" sh -c "terra workspace set --id=${TERRA_WORKSPACE}"
 fi
 
+# transfer ownership of .bash_profile to user jupyter.
+chown ${JUPYTER_USER}: /home/${JUPYTER_USER}/.bash_profile
+chmod u+w /home/${JUPYTER_USER}/.bash_profile
+
 # Set variables into the .bash_profile such that they are available
 # to terminals, notebooks, and other tools
 #
