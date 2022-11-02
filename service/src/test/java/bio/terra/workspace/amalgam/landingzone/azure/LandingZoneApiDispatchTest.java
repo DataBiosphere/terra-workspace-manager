@@ -15,7 +15,6 @@ import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseAzureUnitTest;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneIdList;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesList;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -154,8 +153,7 @@ public class LandingZoneApiDispatchTest extends BaseAzureUnitTest {
 
     verify(landingZoneService, times(1))
         .listLandingZoneIds(
-            ArgumentMatchers.eq(BEARER_TOKEN),
-            ArgumentMatchers.eq(billingProfileId));
+            ArgumentMatchers.eq(BEARER_TOKEN), ArgumentMatchers.eq(billingProfileId));
     assertNotNull(response);
     assertNotNull(response.getLandingZoneIds());
     assertEquals(1, response.getLandingZoneIds().size());
