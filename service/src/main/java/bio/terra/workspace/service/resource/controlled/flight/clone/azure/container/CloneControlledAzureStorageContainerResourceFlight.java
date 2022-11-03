@@ -118,7 +118,8 @@ public class CloneControlledAzureStorageContainerResourceFlight extends Flight {
               flightBeanBag.getControlledResourceService(),
               cloningInstructions));
       if (CloningInstructions.COPY_RESOURCE == cloningInstructions) {
-        addStep(new CopyAzureStorageContainerBlobsStep());
+        var storageAccountKeyProvider = flightBeanBag.getStorageAccountKeyProvider();
+        addStep(new CopyAzureStorageContainerBlobsStep(sourceContainer, storageAccountKeyProvider, resourceDao));
       }
     }
   }
