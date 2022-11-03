@@ -8,6 +8,7 @@ import bio.terra.workspace.app.configuration.external.IngressConfiguration;
 import bio.terra.workspace.common.utils.ErrorReportUtils;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiJobReport;
+import bio.terra.workspace.generated.model.ApiJobResult;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.exception.InternalStairwayException;
@@ -128,6 +129,13 @@ public class JobApiUtils {
             .resultURL(resultUrlFromFlightState(flightState));
 
     return jobReport;
+  }
+
+  public ApiJobResult fetchJobResult(String jobId) {
+    AsyncJobResult<Void> jobResult = retrieveAsyncJobResult(jobId, null);
+    return new ApiJobResult()
+        .jobReport(jobResult.getJobReport())
+        .errorReport(jobResult.getApiErrorReport());
   }
 
   private ApiJobReport.StatusEnum mapFlightStatusToApi(FlightStatus flightStatus) {

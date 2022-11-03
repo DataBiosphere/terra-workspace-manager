@@ -5,10 +5,12 @@ import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertM
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesDeleteRequestBody;
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesUpdateRequestBody;
 
+import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.generated.controller.FolderApi;
 import bio.terra.workspace.generated.model.ApiCreateFolderRequestBody;
 import bio.terra.workspace.generated.model.ApiFolder;
 import bio.terra.workspace.generated.model.ApiFolderList;
+import bio.terra.workspace.generated.model.ApiJobResult;
 import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiUpdateFolderRequestBody;
 import bio.terra.workspace.service.folder.FolderService;
@@ -18,6 +20,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
+import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import java.util.List;
 import java.util.UUID;
@@ -32,6 +35,8 @@ public class FolderApiController extends ControllerBase implements FolderApi {
 
   private final FolderService folderService;
   private final WorkspaceService workspaceService;
+  private final JobApiUtils jobApiUtils;
+  private final JobService jobService;
 
   @Autowired
   public FolderApiController(
@@ -39,10 +44,14 @@ public class FolderApiController extends ControllerBase implements FolderApi {
       HttpServletRequest request,
       SamService samService,
       FolderService folderService,
-      WorkspaceService workspaceService) {
+      WorkspaceService workspaceService,
+      JobApiUtils jobApiUtils,
+      JobService jobService) {
     super(authenticatedUserRequestFactory, request, samService);
     this.folderService = folderService;
     this.workspaceService = workspaceService;
+    this.jobApiUtils = jobApiUtils;
+    this.jobService = jobService;
   }
 
   @Override
@@ -105,7 +114,7 @@ public class FolderApiController extends ControllerBase implements FolderApi {
   }
 
   @Override
-  public ResponseEntity<Void> deleteFolder(UUID workspaceId, UUID folderId) {
+  public ResponseEntity<ApiJobResult> deleteFolder(UUID workspaceId, UUID folderId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
 
     // If requester is writer and folder has private resources (not owned by requester), requester
@@ -113,8 +122,18 @@ public class FolderApiController extends ControllerBase implements FolderApi {
     // folderService#deleteFolder.
     workspaceService.validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.WRITE);
 
-    folderService.deleteFolder(workspaceId, folderId, userRequest);
-    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    String jobId = folderService.deleteFolder(workspaceId, folderId, userRequest);
+    ApiJobResult response = jobApiUtils.fetchJobResult(jobId);
+    return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
+  }
+
+  @Override
+  public ResponseEntity<ApiJobResult> getDeleteFolderResult(
+      UUID workspaceId, UUID folderId, String jobId) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    jobService.verifyUserAccess(jobId, userRequest, workspaceId);
+    ApiJobResult response = jobApiUtils.fetchJobResult(jobId);
+    return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
   }
 
   @Override

@@ -44,4 +44,11 @@ components:
         application/json:
             schema:
               $ref: '#/components/schemas/DeleteControlledAzureResourceResult'
+
+    JobResultResponse:
+      description: Result of a job (failed or succeded)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/JobResult'
   

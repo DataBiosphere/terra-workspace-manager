@@ -42,6 +42,7 @@ import bio.terra.workspace.generated.model.ApiGrantRoleRequestBody;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
+import bio.terra.workspace.generated.model.ApiJobResult;
 import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiReferenceResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiTpsPolicyInputs;
@@ -146,6 +147,8 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/referenced/gcp/bigquerydatatables";
   public static final String REFERENCED_GIT_REPO_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/referenced/gitrepos";
+  public static final String DELETE_FOLDER_JOB_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/folders/%s/result/%s";
   // Only use this if you are mocking SAM. If you're using real SAM,
   // use userAccessUtils.defaultUserAuthRequest() instead.
   public static final AuthenticatedUserRequest USER_REQUEST =
@@ -720,6 +723,18 @@ public class MockMvcUtils {
 
   public void assertProperties(List<ApiProperty> expected, List<ApiProperty> actual) {
     assertThat(expected, containsInAnyOrder(actual.toArray()));
+  }
+
+  public ApiJobReport getJobReport(String path, AuthenticatedUserRequest userRequest)
+      throws Exception {
+    String serializedResponse =
+        mockMvc
+            .perform(addJsonContentType(addAuth(get(path), userRequest)))
+            .andExpect(status().is2xxSuccessful())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    return objectMapper.readValue(serializedResponse, ApiJobResult.class).getJobReport();
   }
 
   /** Posts http request and expect error thrown. */
