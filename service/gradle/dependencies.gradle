@@ -32,7 +32,7 @@ dependencies {
   implementation group: "com.squareup.okhttp3", name: "logging-interceptor", version: "4.9.1"
 
   // Cloud Resource Library
-  implementation group: 'bio.terra', name: 'terra-cloud-resource-lib', version: "1.2.2-SNAPSHOT"
+  implementation group: 'bio.terra', name: 'terra-cloud-resource-lib', version: "1.2.5-SNAPSHOT"
 
   // Terra Policy Service
   implementation('bio.terra:terra-policy-service:0.2.11-SNAPSHOT') {
