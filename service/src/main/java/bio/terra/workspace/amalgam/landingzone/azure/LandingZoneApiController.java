@@ -8,6 +8,8 @@ import bio.terra.workspace.generated.model.ApiAzureLandingZoneDefinitionList;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesList;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResult;
 import bio.terra.workspace.generated.model.ApiCreateAzureLandingZoneRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateLandingZoneResult;
+import bio.terra.workspace.generated.model.ApiDeleteAzureLandingZoneJobResult;
 import bio.terra.workspace.generated.model.ApiDeleteAzureLandingZoneRequestBody;
 import bio.terra.workspace.generated.model.ApiDeleteAzureLandingZoneResult;
 import java.util.UUID;
@@ -39,12 +41,12 @@ public class LandingZoneApiController implements LandingZonesApi {
   }
 
   @Override
-  public ResponseEntity<ApiAzureLandingZoneResult> createAzureLandingZone(
+  public ResponseEntity<ApiCreateLandingZoneResult> createAzureLandingZone(
       @RequestBody ApiCreateAzureLandingZoneRequestBody body) {
     String resultEndpoint =
         String.format(
             "%s/%s/%s", request.getServletPath(), "create-result", body.getJobControl().getId());
-    ApiAzureLandingZoneResult result =
+    ApiCreateLandingZoneResult result =
         landingZoneApiDispatch.createAzureLandingZone(
             bearerTokenFactory.from(request), body, resultEndpoint);
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
@@ -88,9 +90,9 @@ public class LandingZoneApiController implements LandingZonesApi {
   }
 
   @Override
-  public ResponseEntity<ApiDeleteAzureLandingZoneResult> getDeleteAzureLandingZoneResult(
+  public ResponseEntity<ApiDeleteAzureLandingZoneJobResult> getDeleteAzureLandingZoneResult(
       UUID landingZoneId, String jobId) {
-    ApiDeleteAzureLandingZoneResult response =
+    ApiDeleteAzureLandingZoneJobResult response =
         landingZoneApiDispatch.getDeleteAzureLandingZoneResult(
             bearerTokenFactory.from(request), landingZoneId, jobId);
     return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
