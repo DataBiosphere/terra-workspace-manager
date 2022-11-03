@@ -94,6 +94,12 @@ public class ControlledGcpResourceApiControllerConnectedTest extends BaseConnect
 
   @Test
   public void createAiNotebookInstance_correctZone() throws Exception {
+    // So we don't interfere with other tests by setting properties.
+    final UUID workspaceId =
+        mockMvcUtils
+            .createWorkspaceWithCloudContext(userAccessUtils.defaultUserAuthRequest())
+            .getId();
+
     mockMvcUtils.updateWorkspaceProperties(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
@@ -131,6 +137,8 @@ public class ControlledGcpResourceApiControllerConnectedTest extends BaseConnect
             .getAiNotebookInstance();
 
     assertEquals("europe-west1-b", notebook.getAttributes().getLocation());
+
+    mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
   }
 
   @Test
