@@ -3,8 +3,10 @@ package bio.terra.workspace.app.controller;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
+import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.generated.controller.ControlledGcpResourceApi;
 import bio.terra.workspace.generated.model.*;
+import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
@@ -26,9 +28,12 @@ import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants;
+import com.google.api.services.compute.model.ZoneList;
 import com.google.common.base.Strings;
+import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import org.apache.commons.lang3.StringUtils;
@@ -50,6 +55,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   private final JobApiUtils jobApiUtils;
   private final GcpCloudContextService gcpCloudContextService;
   private final ControlledResourceMetadataManager controlledResourceMetadataManager;
+  private final CrlService crlService;
 
   @Autowired
   public ControlledGcpResourceApiController(
@@ -61,7 +67,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
       JobService jobService,
       JobApiUtils jobApiUtils,
       GcpCloudContextService gcpCloudContextService,
-      ControlledResourceMetadataManager controlledResourceMetadataManager) {
+      ControlledResourceMetadataManager controlledResourceMetadataManager,
+      CrlService crlService) {
     super(authenticatedUserRequestFactory, request, controlledResourceService, samService);
     this.controlledResourceService = controlledResourceService;
     this.workspaceService = workspaceService;
@@ -69,6 +76,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     this.jobApiUtils = jobApiUtils;
     this.gcpCloudContextService = gcpCloudContextService;
     this.controlledResourceMetadataManager = controlledResourceMetadataManager;
+    this.crlService = crlService;
   }
 
   @Override
@@ -115,7 +123,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
         : requestedLocation;
   }
 
-  private String getResourceZone(Workspace workspace, String requestedZone) {
+  private @Nullable String getResourceZone(Workspace workspace, String requestedZone) {
     if (Strings.isNullOrEmpty(requestedZone)) {
       String location =
           workspace
@@ -123,47 +131,23 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
               .getOrDefault(
                   WorkspaceConstants.Properties.DEFAULT_RESOURCE_LOCATION,
                   GcpResourceConstant.DEFAULT_REGION);
-      switch (location) {
-        case "asia-east1":
-        case "asia-east2":
-        case "asia-northeast1":
-        case "asia-northeast2":
-        case "asia-northeast3":
-        case "asia-south1":
-        case "asia-south2":
-        case "asia-southeast1":
-        case "asia-southeast2":
-        case "australia-southeast1":
-        case "australia-southeast2":
-        case "europe-central2":
-        case "europe-north1":
-        case "europe-southwest1":
-        case "europe-west2":
-        case "europe-west3":
-        case "europe-west4":
-        case "europe-west6":
-        case "europe-west8":
-        case "europe-west9":
-        case "me-west1":
-        case "northamerica-northeast1":
-        case "northamerica-northeast2":
-        case "southamerica-east1":
-        case "southamerica-west1":
-        case "us-central1":
-        case "us-east4":
-        case "us-east5":
-        case "us-south1":
-        case "us-west1":
-        case "us-west2":
-        case "us-west3":
-        case "us-west4":
-          return location + "-a";
-        case "europe-west1":
-        case "us-east1":
-          return location + "-b";
-        default:
-          return null;
+
+      String projectId = gcpCloudContextService.getRequiredGcpProject(workspace.getWorkspaceId());
+      ZoneList zoneList;
+      try {
+        zoneList = crlService.getCloudComputeCow().zones().list(projectId).execute();
+      } catch (IOException e) {
+        return null;
       }
+
+      return zoneList.getItems().stream()
+          .filter(
+              zone ->
+                  GcpUtils.extractNetworkNameFromUrl(zone.getRegion()).equalsIgnoreCase(location))
+          .map(zone -> zone.getName())
+          .sorted()
+          .findAny()
+          .orElse(null);
     } else {
       return requestedZone;
     }
