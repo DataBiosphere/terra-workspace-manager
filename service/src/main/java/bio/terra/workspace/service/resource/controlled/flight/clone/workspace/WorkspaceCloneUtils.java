@@ -165,6 +165,18 @@ public class WorkspaceCloneUtils {
         .build();
   }
 
+  /**
+   * Builds an Azure storage container resource object from a source container
+   *
+   * @param sourceContainer Source container from which to derive common resource fields
+   * @param storageAccountId Destination Azure storage account resource ID
+   * @param destinationWorkspaceId Destination workspace ID
+   * @param destinationResourceId Destination resource ID for the new container object
+   * @param name WSM-internal resource name
+   * @param description Human-friendly description for the container resource
+   * @param cloudInstanceName Name that the resource will receive when created in Azure
+   * @return An Azure storage container object
+   */
   public static ControlledAzureStorageContainerResource buildDestinationControlledAzureContainer(
       ControlledAzureStorageContainerResource sourceContainer,
       UUID storageAccountId,
