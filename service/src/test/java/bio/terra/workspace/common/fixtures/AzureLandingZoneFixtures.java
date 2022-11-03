@@ -5,6 +5,8 @@ import bio.terra.landingzone.job.model.JobReport;
 import bio.terra.landingzone.service.landingzone.azure.model.DeletedLandingZone;
 import bio.terra.landingzone.service.landingzone.azure.model.DeployedLandingZone;
 import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneResource;
+import bio.terra.landingzone.service.landingzone.azure.model.StartLandingZoneCreation;
+import bio.terra.landingzone.service.landingzone.azure.model.StartLandingZoneDeletion;
 import bio.terra.workspace.generated.model.ApiCreateAzureLandingZoneRequestBody;
 import bio.terra.workspace.generated.model.ApiDeleteAzureLandingZoneRequestBody;
 import bio.terra.workspace.generated.model.ApiJobControl;
@@ -58,20 +60,37 @@ public class AzureLandingZoneFixtures {
     return asyncJobResult;
   }
 
-  public static LandingZoneJobService.AsyncJobResult<DeletedLandingZone>
-      createDeleteJobResultWithSucceededState(String jobId, UUID landingZoneId) {
+  public static LandingZoneJobService.AsyncJobResult<DeletedLandingZone> createDeleteJobResult(
+      String jobId, UUID landingZoneId, JobReport.StatusEnum jobStatus) {
     LandingZoneJobService.AsyncJobResult<DeletedLandingZone> asyncJobResult =
         new LandingZoneJobService.AsyncJobResult<>();
     asyncJobResult.jobReport(
         new JobReport()
             .id(jobId)
             .description("description")
-            .status(JobReport.StatusEnum.SUCCEEDED)
+            .status(jobStatus)
             .statusCode(HttpStatus.SC_OK)
             .submitted(Instant.now().toString())
             .resultURL("delete-result/"));
 
     asyncJobResult.result(new DeletedLandingZone(landingZoneId, List.of("resource/id")));
+    return asyncJobResult;
+  }
+
+  public static LandingZoneJobService.AsyncJobResult<StartLandingZoneDeletion>
+      createStartDeleteJobResultWithRunningState(String jobId, UUID landingZoneId) {
+    LandingZoneJobService.AsyncJobResult<StartLandingZoneDeletion> asyncJobResult =
+        new LandingZoneJobService.AsyncJobResult<>();
+    asyncJobResult.jobReport(
+        new JobReport()
+            .id(jobId)
+            .description("description")
+            .status(JobReport.StatusEnum.RUNNING)
+            .statusCode(HttpStatus.SC_OK)
+            .submitted(Instant.now().toString())
+            .resultURL("delete-result/"));
+
+    asyncJobResult.result(new StartLandingZoneDeletion(landingZoneId));
     return asyncJobResult;
   }
 
@@ -103,5 +122,21 @@ public class AzureLandingZoneFixtures {
         .jobControl(new ApiJobControl().id(jobId))
         .definition("azureLandingZoneDefinition")
         .version("v1");
+  }
+
+  public static LandingZoneJobService.AsyncJobResult<StartLandingZoneCreation>
+      createStartCreateJobResult(String jobId, JobReport.StatusEnum jobStatus, UUID landingZoneId) {
+    LandingZoneJobService.AsyncJobResult<StartLandingZoneCreation> asyncJobResult =
+        new LandingZoneJobService.AsyncJobResult<>();
+    asyncJobResult.jobReport(
+        new JobReport()
+            .id(jobId)
+            .description("description")
+            .status(jobStatus)
+            .statusCode(HttpStatus.SC_ACCEPTED)
+            .submitted(Instant.now().toString())
+            .resultURL("create-result/"));
+    asyncJobResult.result(new StartLandingZoneCreation(landingZoneId, "mydefinition", "v1"));
+    return asyncJobResult;
   }
 }

@@ -2,7 +2,7 @@
 paths:
   /api/landingzones/v1/azure:
     post:
-      summary: Create Azure landing zone
+      summary: Starts an async job to create an Azure landing zone
       operationId: createAzureLandingZone
       tags: [ LandingZones ]
       requestBody:
@@ -13,9 +13,9 @@ paths:
               $ref: '#/components/schemas/CreateAzureLandingZoneRequestBody'
       responses:
         '200':
-          $ref: '#/components/responses/AzureLandingZoneResponse'
+          $ref: '#/components/responses/CreateLandingZoneResponse'
         '202':
-          $ref: '#/components/responses/AzureLandingZoneResponse'
+          $ref: '#/components/responses/CreateLandingZoneResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '403':
@@ -27,14 +27,14 @@ paths:
     parameters:
       - $ref: '#/components/parameters/JobId'
     get:
-      summary: Get the result of a async job to create an Azure Landing Zone
+      summary: Get the status of a async job to create an Azure Landing Zone
       operationId: getCreateAzureLandingZoneResult
       tags: [ LandingZones ]
       responses:
         '200':
-          $ref: '#/components/responses/AzureLandingZoneResponse'
+          $ref: '#/components/responses/CreateLandingZoneJobResponse'
         '202':
-          $ref: '#/components/responses/AzureLandingZoneResponse'
+          $ref: '#/components/responses/CreateLandingZoneJobResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '403':
@@ -52,9 +52,9 @@ paths:
       tags: [ LandingZones ]
       responses:
         '200':
-          $ref: '#/components/responses/DeleteAzureLandingZoneResponse'
+          $ref: '#/components/responses/DeleteAzureLandingZoneJobResponse'
         '202':
-          $ref: '#/components/responses/DeleteAzureLandingZoneResponse'
+          $ref: '#/components/responses/DeleteAzureLandingZoneJobResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '403':
@@ -81,7 +81,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/LandingZoneId'
     post:
-      summary: Delete an existing Azure landing zone
+      summary: Starts an async job to delete an existing Azure landing zone
       operationId: deleteAzureLandingZone
       tags: [ LandingZones ]
       requestBody:
@@ -119,6 +119,8 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+openapi:
+info:
 components:
   schemas:
     DeleteAzureLandingZoneRequestBody:
@@ -170,8 +172,27 @@ components:
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
 
-    DeleteAzureLandingZoneResult:
-      description: Result of starting a delete operation for an Azure landing zone
+    CreateLandingZoneResult:
+      description: Result of starting an async job to create an Azure landing zone
+      type: object
+      properties:
+        landingZoneId:
+          description: An identifier of the Azure landing zone.
+          type: string
+          format: uuid
+        definition:
+          description: Requested landing zone definition.
+          type: string
+        version:
+          description: Requested version of the landing zone definition.
+          type: string
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+
+    DeleteAzureLandingZoneJobResult:
+      description: Result of delete job for an Azure landing zone
       type: object
       properties:
         landingZoneId:
@@ -182,6 +203,18 @@ components:
           type: array
           items:
             type: string
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+
+    DeleteAzureLandingZoneResult:
+      description: Result of starting a job to delete an Azure landing zone
+      type: object
+      properties:
+        landingZoneId:
+          type: string
+          format: uuid
         jobReport:
           $ref: '#/components/schemas/JobReport'
         errorReport:
@@ -293,18 +326,33 @@ components:
             $ref: '#/components/schemas/AzureLandingZoneDeployedResource'
 
   responses:
-    AzureLandingZoneResponse:
-      description: Response to create Azure landing zone.
+    CreateLandingZoneJobResponse:
+      description: Response to get the status of an async job to create an Azure landing zone.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/AzureLandingZoneResult'
+
+    CreateLandingZoneResponse:
+      description: Response to starting an async job to create an Azure landing zone.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreateLandingZoneResult'
+
     DeleteAzureLandingZoneResponse:
-      description: Response to deleting an Azure landing zone.
+      description: Response to starting an async job to delete an Azure landing zone.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/DeleteAzureLandingZoneResult'
+
+    DeleteAzureLandingZoneJobResponse:
+      description: Response to get the status of an async job to delete an Azure landing zone.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DeleteAzureLandingZoneJobResult'
 
   parameters:
     LandingZoneId:
