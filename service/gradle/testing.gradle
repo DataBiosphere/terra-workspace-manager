@@ -19,6 +19,14 @@ tasks.withType(Test).configureEach {
   }
 }
 
+// We don't want to use up all the cores on a developer's machine because it locks them out of doing other
+// work, but that's not a concern for dedicated CI machines.
+def runnerThreads = System.getenv().containsKey("CI") ? Runtime.runtime.availableProcessors() : Runtime.runtime.availableProcessors().intdiv(2)
+// Alternatively, if a user specifies the TEST_SINGLE_THREAD env var, we will always restrict tests to a
+// single thread. This can be helpful when using a local database.
+def singleThread = System.getenv().containsKey("TEST_SINGLE_THREAD")
+runnerThreads = singleThread ? 1 : runnerThreads
+
 test {
   useJUnitPlatform {
     includeTags "unit"
@@ -43,6 +51,7 @@ test {
     }
     failOnPassedAfterRetry = true
   }
+  maxParallelForks = runnerThreads
 }
 
 task unitTest(type: Test) {
@@ -50,6 +59,7 @@ task unitTest(type: Test) {
     includeTags "unit"
   }
   outputs.upToDateWhen { false }
+  maxParallelForks = runnerThreads
   finalizedBy tasks.combinedJaCoCoReport
 }
 
@@ -78,6 +88,7 @@ task connectedTest(type: Test) {
     }
     failOnPassedAfterRetry = true
   }
+  maxParallelForks = runnerThreads
 }
 
 task azureConnectedTest(type: Test) {
@@ -104,6 +115,7 @@ task azureConnectedTest(type: Test) {
     }
     failOnPassedAfterRetry = true
   }
+  maxParallelForks = runnerThreads
 }
 
 task azureUnitTest(type: Test) {
@@ -112,4 +124,5 @@ task azureUnitTest(type: Test) {
   }
   outputs.upToDateWhen { false }
   finalizedBy tasks.combinedJaCoCoReport
+  maxParallelForks = runnerThreads
 }
