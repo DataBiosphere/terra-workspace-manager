@@ -4,7 +4,9 @@ import static bio.terra.workspace.app.controller.ControllerBase.getAsyncResponse
 
 import bio.terra.common.iam.BearerTokenFactory;
 import bio.terra.workspace.generated.controller.LandingZonesApi;
+import bio.terra.workspace.generated.model.ApiAzureLandingZone;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDefinitionList;
+import bio.terra.workspace.generated.model.ApiAzureLandingZoneList;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesList;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResult;
 import bio.terra.workspace.generated.model.ApiCreateAzureLandingZoneRequestBody;
@@ -22,6 +24,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 public class LandingZoneApiController implements LandingZonesApi {
@@ -96,5 +99,22 @@ public class LandingZoneApiController implements LandingZonesApi {
         landingZoneApiDispatch.getDeleteAzureLandingZoneResult(
             bearerTokenFactory.from(request), landingZoneId, jobId);
     return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
+  }
+
+  @Override
+  public ResponseEntity<ApiAzureLandingZone> getAzureLandingZone(
+      @PathVariable("landingZoneId") UUID landingZoneId) {
+    ApiAzureLandingZone result =
+        landingZoneApiDispatch.getAzureLandingZone(bearerTokenFactory.from(request), landingZoneId);
+    return new ResponseEntity<>(result, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiAzureLandingZoneList> listAzureLandingZones(
+      @RequestParam("billingProfileId") UUID billingProfileId) {
+    ApiAzureLandingZoneList result =
+        landingZoneApiDispatch.listAzureLandingZones(
+            bearerTokenFactory.from(request), billingProfileId);
+    return new ResponseEntity<>(result, HttpStatus.OK);
   }
 }

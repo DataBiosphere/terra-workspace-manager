@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import bio.terra.cloudres.azure.resourcemanager.common.Defaults;
 import bio.terra.landingzone.db.LandingZoneDao;
-import bio.terra.landingzone.db.model.LandingZone;
+import bio.terra.landingzone.db.model.LandingZoneRecord;
 import bio.terra.landingzone.library.landingzones.deployment.LandingZoneTagKeys;
 import bio.terra.landingzone.library.landingzones.deployment.ResourcePurpose;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
@@ -86,7 +86,7 @@ public class TestLandingZoneManager {
     String version = "v1";
     // create record in LZ database
     landingZoneDao.createLandingZone(
-        LandingZone.builder()
+        LandingZoneRecord.builder()
             .landingZoneId(landingZoneId)
             .definition(definition)
             .version(version)

@@ -22,6 +22,21 @@ paths:
           $ref: '#/components/responses/PermissionDenied'
         '500':
           $ref: '#/components/responses/ServerError'
+    get:
+      parameters:
+        - $ref: '#/components/parameters/BillingProfileId'
+      summary: List Azure landing zones available to user
+      operationId: listAzureLandingZones
+      tags: [ LandingZones ]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AzureLandingZoneList'
+        '500':
+          $ref: '#/components/responses/ServerError'
 
   /api/landingzones/v1/azure/create-result/{jobId}:
     parameters:
@@ -101,6 +116,25 @@ paths:
           $ref: '#/components/responses/PermissionDenied'
         '500':
           $ref: '#/components/responses/ServerError'
+    get:
+      parameters:
+        - $ref: '#/components/parameters/LandingZoneId'
+      summary: Get Azure landing zone
+      operationId: getAzureLandingZone
+      tags: [ LandingZones ]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AzureLandingZone'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
 
   /api/landingzones/v1/azure/{landingZoneId}/resources:
     parameters:
@@ -166,7 +200,7 @@ components:
       type: object
       properties:
         landingZone:
-          $ref: '#/components/schemas/AzureLandingZone'
+          $ref: '#/components/schemas/AzureLandingZoneDetails'
         jobReport:
           $ref: '#/components/schemas/JobReport'
         errorReport:
@@ -220,7 +254,7 @@ components:
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
 
-    AzureLandingZone:
+    AzureLandingZoneDetails:
       description: Created Azure Landing Zone details.
       type: object
       properties:
@@ -325,6 +359,45 @@ components:
           items:
             $ref: '#/components/schemas/AzureLandingZoneDeployedResource'
 
+    AzureLandingZone:
+      description: |
+        The landing zone identification information.
+      type: object
+      required: [landingZoneId,billingProfileId]
+      properties:
+        landingZoneId:
+          description: An identifier of a Azure landing zone.
+          type: string
+          format: uuid
+        billingProfileId:
+          description: Identifier for the billing profile used for the landing zone.
+          type: string
+          format: uuid
+        definition:
+          description: A definition to create an Azure landing zone from
+          type: string
+        version:
+          description: |
+            A version of the landing zone. If not set the most recent will be used.
+            If two versions available - 'v1' and 'v2' then 'v2' will be selected.
+          type: string
+        createdDate:
+          description: |
+            A string containing date and time of Landing Zone creation.
+            It is set by the Landing Zone service and cannot be updated.
+          type: string
+          format: date-time
+
+    AzureLandingZoneList:
+      type: object
+      required: [ landingzones ]
+      properties:
+        landingzones:
+          description: A list of landing zones.
+          type: array
+          items:
+            $ref: '#/components/schemas/AzureLandingZone'
+
   responses:
     CreateLandingZoneJobResponse:
       description: Response to get the status of an async job to create an Azure landing zone.
@@ -360,6 +433,15 @@ components:
       in: path
       description: A string to identify an Azure landing zone.
       required: true
+      schema:
+        type: string
+        format: uuid
+
+    BillingProfileId:
+      name: billingProfileId
+      in: query
+      description: A string to identify an Azure billing profile.
+      required: false
       schema:
         type: string
         format: uuid
