@@ -201,6 +201,38 @@ public abstract class ControlledResource extends WsmResource {
     }
   }
 
+  public ControlledResourceFields buildControlledResourceCommonFields(
+      UUID destinationWorkspaceUuid,
+      UUID destinationResourceId,
+      @Nullable UUID destinationFolderId,
+      @Nullable String name,
+      @Nullable String description) {
+
+    var cloneResourceCommonFields =
+        ControlledResourceFields.builder()
+            .accessScope(getAccessScope())
+            .assignedUser(getAssignedUser().orElse(null))
+            .cloningInstructions(getCloningInstructions())
+            .managedBy(getManagedBy())
+            .workspaceUuid(destinationWorkspaceUuid)
+            .resourceId(destinationResourceId)
+            .resourceLineage(buildCloneResourceLineage())
+            .properties(buildCloneProperties(destinationWorkspaceUuid, destinationFolderId))
+            .privateResourceState(
+                getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE
+                    ? PrivateResourceState.INITIALIZING
+                    : PrivateResourceState.NOT_APPLICABLE);
+
+    // override name and description if provided
+    if (name != null) {
+      cloneResourceCommonFields.name(name);
+    }
+    if (description != null) {
+      cloneResourceCommonFields.description(description);
+    }
+    return cloneResourceCommonFields.build();
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
