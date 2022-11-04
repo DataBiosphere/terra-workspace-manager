@@ -5,14 +5,12 @@ import bio.terra.common.db.WriteTransaction;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
-import bio.terra.workspace.db.exception.CloudContextNotFoundException;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateCloudContextException;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateUserFacingIdException;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceException;
-import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
@@ -572,49 +570,9 @@ public class WorkspaceDao {
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceUuid.toString())
             .addValue("cloud_platform", cloudPlatform.toSql());
-
     return Optional.ofNullable(
         DataAccessUtils.singleResult(
             jdbcTemplate.query(sql, params, (rs, rowNum) -> rs.getString("context"))));
-  }
-
-  /**
-   * Retrieves an identifier of workspace associated with current Azure cloud context
-   *
-   * @param context Azure cloud context
-   * @return workspace identifier
-   */
-  public UUID getWorkspaceIdByAzureCloudContext(AzureCloudContext context) {
-    if (context == null) {
-      throw new MissingRequiredFieldException("context is required");
-    }
-    String sql =
-        "SELECT workspace_id FROM cloud_context"
-            + " WHERE cloud_platform = :cloud_platform"
-            + " AND TRIM(((context->'azureTenantId')::TEXT), '\"') = :azureTenantId"
-            + " AND TRIM(((context->'azureSubscriptionId')::TEXT), '\"') = :azureSubscriptionId"
-            + " AND TRIM(((context->'azureResourceGroupId')::TEXT), '\"') = :azureResourceGroupId";
-    MapSqlParameterSource params =
-        new MapSqlParameterSource()
-            .addValue("cloud_platform", CloudPlatform.AZURE.toSql())
-            .addValue("azureTenantId", context.getAzureTenantId())
-            .addValue("azureSubscriptionId", context.getAzureSubscriptionId())
-            .addValue("azureResourceGroupId", context.getAzureResourceGroupId());
-    UUID result =
-        DataAccessUtils.singleResult(
-            jdbcTemplate.query(
-                sql, params, (rs, rowNum) -> UUID.fromString(rs.getString("workspace_id"))));
-    if (result == null) {
-      throw new CloudContextNotFoundException(
-          String.format(
-              "Azure cloud context with following parameters tenantId=%s, subscriptionId=%s, "
-                  + "resource group=%s not found.",
-              context.getAzureTenantId(),
-              context.getAzureSubscriptionId(),
-              context.getAzureResourceGroupId()));
-    }
-    logger.info("Retrieved cloud context record with workspaceId={}", result);
-    return result;
   }
 
   /**

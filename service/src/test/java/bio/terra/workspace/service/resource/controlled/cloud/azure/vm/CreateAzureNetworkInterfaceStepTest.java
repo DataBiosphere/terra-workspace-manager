@@ -126,6 +126,7 @@ public class CreateAzureNetworkInterfaceStepTest extends BaseAzureUnitTest {
   private void setUpNetworkInLZInteractionChain(UUID networkId, UUID workspaceId) {
     var lzId = UUID.randomUUID();
     var response = new ApiAzureLandingZoneResourcesList();
+    var bearerToken = new BearerToken(USER_REQUEST.getRequiredToken());
     response.addResourcesItem(
         new ApiAzureLandingZoneResourcesPurposeGroup()
             .purpose(SubnetResourcePurpose.WORKSPACE_COMPUTE_SUBNET.toString())
@@ -136,8 +137,8 @@ public class CreateAzureNetworkInterfaceStepTest extends BaseAzureUnitTest {
                         .resourceParentId(networkId.toString()))));
 
     when(resource.getNetworkId()).thenReturn(null);
-    when(landingZoneApiDispatch.getLandingZoneId(
-            new BearerToken(USER_REQUEST.getRequiredToken()), azureCloudContext))
+    when(resource.getWorkspaceId()).thenReturn(workspaceId);
+    when(landingZoneApiDispatch.getLandingZoneId(eq(bearerToken), eq(workspaceId)))
         .thenReturn(lzId);
     when(landingZoneApiDispatch.listAzureLandingZoneResourcesByPurpose(
             any(), eq(lzId), eq(SubnetResourcePurpose.WORKSPACE_COMPUTE_SUBNET)))

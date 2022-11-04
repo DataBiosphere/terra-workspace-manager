@@ -69,8 +69,8 @@ public class TestLandingZoneManager {
   }
 
   public void createLandingZoneWithSharedStorageAccount(
-      UUID landingZoneId, String storageAccountName, String region) {
-    createLandingZoneDbRecord(landingZoneId);
+      UUID landingZoneId, UUID workspaceId, String storageAccountName, String region) {
+    createLandingZoneDbRecord(landingZoneId, workspaceId);
     createStorageAccount(storageAccountName, region, landingZoneId);
   }
 
@@ -81,19 +81,18 @@ public class TestLandingZoneManager {
     storageManager.storageAccounts().deleteByResourceGroup(azureResourceGroup, storageAccountName);
   }
 
-  public void createLandingZoneWithoutResources(UUID landingZoneId) {
-    createLandingZoneDbRecord(landingZoneId);
+  public void createLandingZoneWithoutResources(UUID landingZoneId, UUID workspaceId) {
+    createLandingZoneDbRecord(landingZoneId, workspaceId);
   }
 
   public void deleteLandingZoneWithoutResources(UUID landingZoneId) {
     landingZoneDao.deleteLandingZone(landingZoneId);
   }
 
-  private void createLandingZoneDbRecord(UUID landingZoneId) {
+  private void createLandingZoneDbRecord(UUID landingZoneId, UUID workspaceId) {
     String definition = "QuasiLandingZoneWithSharedStorageAccount";
     String version = "v1";
     // create record in LZ database
-    var workspaceId = workspaceDao.getWorkspaceIdByAzureCloudContext(azureCloudContext);
     var workspace = workspaceDao.getWorkspace(workspaceId);
     landingZoneDao.createLandingZone(
         LandingZoneRecord.builder()

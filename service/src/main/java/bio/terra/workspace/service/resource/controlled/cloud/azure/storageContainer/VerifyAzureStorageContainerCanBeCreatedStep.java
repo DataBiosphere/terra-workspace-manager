@@ -142,7 +142,7 @@ public class VerifyAzureStorageContainerCanBeCreatedStep implements Step {
     try {
       UUID landingZoneId =
           landingZoneApiDispatch.getLandingZoneId(
-              new BearerToken(userRequest.getRequiredToken()), azureCloudContext);
+              new BearerToken(userRequest.getRequiredToken()), resource.getWorkspaceId());
       Optional<ApiAzureLandingZoneDeployedResource> existingSharedStorageAccount =
           landingZoneApiDispatch.getSharedStorageAccount(
               new BearerToken(userRequest.getRequiredToken()), landingZoneId);

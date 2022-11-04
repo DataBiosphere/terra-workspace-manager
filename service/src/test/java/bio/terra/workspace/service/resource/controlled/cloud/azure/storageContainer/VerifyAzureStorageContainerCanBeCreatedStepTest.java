@@ -24,7 +24,6 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.Contr
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
-import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementError;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.storage.models.BlobContainer;
@@ -190,8 +189,7 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
 
     when(mockUserRequest.getRequiredToken()).thenReturn("FAKE_TOKEN");
     // there are no landing zone association with azure cloud context
-    when(mockLandingZoneApiDispatch.getLandingZoneId(
-            any(BearerToken.class), any(AzureCloudContext.class)))
+    when(mockLandingZoneApiDispatch.getLandingZoneId(any(BearerToken.class), any(UUID.class)))
         .thenThrow(
             new IllegalStateException(
                 "Could not find a landing zone id for the given Azure context. "

@@ -149,7 +149,7 @@ public class CreateAzureNetworkInterfaceStep implements Step {
 
     final UUID lzId =
         landingZoneApiDispatch.getLandingZoneId(
-            new BearerToken(userRequest.getRequiredToken()), azureCloudContext);
+            new BearerToken(userRequest.getRequiredToken()), resource.getWorkspaceId());
 
     ApiAzureLandingZoneDeployedResource lzResource =
         listSubnetsWithParentVNetByPurpose(

@@ -29,8 +29,7 @@ import bio.terra.workspace.generated.model.ApiCreateLandingZoneResult;
 import bio.terra.workspace.generated.model.ApiDeleteAzureLandingZoneJobResult;
 import bio.terra.workspace.generated.model.ApiDeleteAzureLandingZoneRequestBody;
 import bio.terra.workspace.generated.model.ApiDeleteAzureLandingZoneResult;
-import bio.terra.workspace.service.workspace.AzureCloudContextService;
-import bio.terra.workspace.service.workspace.model.AzureCloudContext;
+import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import java.util.List;
 import java.util.Optional;
@@ -49,15 +48,15 @@ public class LandingZoneApiDispatch {
       "Microsoft.Storage/storageAccounts";
 
   private final LandingZoneService landingZoneService;
-  private final AzureCloudContextService azureCloudContextService;
+  private final WorkspaceService workspaceService;
   private final FeatureConfiguration features;
 
   public LandingZoneApiDispatch(
       LandingZoneService landingZoneService,
-      AzureCloudContextService azureCloudContextService,
+      WorkspaceService workspaceService,
       FeatureConfiguration features) {
     this.landingZoneService = landingZoneService;
-    this.azureCloudContextService = azureCloudContextService;
+    this.workspaceService = workspaceService;
     this.features = features;
   }
 
@@ -250,8 +249,8 @@ public class LandingZoneApiDispatch {
         .landingZone(azureLandingZone);
   }
 
-  public UUID getLandingZoneId(BearerToken token, AzureCloudContext azureCloudContext) {
-    Workspace workspace = azureCloudContextService.getWorkspace(azureCloudContext);
+  public UUID getLandingZoneId(BearerToken token, UUID workspaceId) {
+    Workspace workspace = workspaceService.getWorkspace(workspaceId);
     Optional<UUID> profileId = workspace.getSpendProfileId().map(sp -> UUID.fromString(sp.getId()));
 
     if (profileId.isEmpty()) {

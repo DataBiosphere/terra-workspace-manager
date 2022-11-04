@@ -4,7 +4,6 @@ import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
-import bio.terra.workspace.service.workspace.model.Workspace;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.Optional;
 import java.util.UUID;
@@ -92,10 +91,5 @@ public class AzureCloudContextService {
     return getAzureCloudContext(workspaceUuid)
         .orElseThrow(
             () -> new CloudContextRequiredException("Operation requires Azure cloud context"));
-  }
-
-  public Workspace getWorkspace(AzureCloudContext context) {
-    UUID workspaceId = workspaceDao.getWorkspaceIdByAzureCloudContext(context);
-    return workspaceDao.getWorkspace(workspaceId);
   }
 }
