@@ -50,6 +50,24 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/storageContainer/clone-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about an Azure storage container clone job.
+      operationId: getCloneAzureStorageContainerResult
+      tags: [ ControlledAzureResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/ClonedControlledAzureStorageContainerResponse'
+        '202':
+          $ref: '#/components/responses/ClonedControlledAzureStorageContainerResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   /api/workspaces/v1/{workspaceId}/resources/controlled/azure/storageContainer/{resourceId}:
     post:
       parameters:
@@ -125,7 +143,8 @@ components:
     CloneControlledAzureStorageContainerRequest:
       description: >-
         Values to assign to the cloned storage container for a given source container. Leave name
-        and description null to take the source object's values.
+        and description null to take the source object's values. Any provided cloning instructions will override
+        those previously set on the source container.
       type: object
       required: [ destinationWorkspaceId, jobControl ]
       properties:

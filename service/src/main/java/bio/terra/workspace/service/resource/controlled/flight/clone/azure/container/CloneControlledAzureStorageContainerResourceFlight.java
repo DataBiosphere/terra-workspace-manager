@@ -73,9 +73,10 @@ public class CloneControlledAzureStorageContainerResourceFlight extends Flight {
     // Flight plan
     // 1. Check user has read access to source container
     // 2. Gather controlled resource metadata for source object
-    // 3. Copy container definition to new container resource
-    // 3. If referenced, bail out as unsupported.
-    // 4. Copy files from source container to destination container (TODO)
+    // 3. Check if the container is already present
+    // 4. Copy container definition to new container resource
+    // 5. If referenced, bail out as unsupported.
+    // 6. Copy files from source container to destination container (TODO WOR-591)
     addStep(
         new CheckControlledResourceAuthStep(
             sourceResource, flightBeanBag.getControlledResourceMetadataManager(), userRequest),
@@ -95,6 +96,10 @@ public class CloneControlledAzureStorageContainerResourceFlight extends Flight {
             flightBeanBag.getResourceDao(),
             sourceResource.getWorkspaceId(),
             sourceResource.getResourceId()));
+
+    // check that the container does not already exist in the workspace
+    // so we can reliably retry the copy definition step later on
+    addStep(new VerifyContainerResourceDoesNotExist(flightBeanBag.getResourceDao()));
 
     // TODO WOR-590 add step to copy source container metadata + attributes
 
@@ -116,7 +121,8 @@ public class CloneControlledAzureStorageContainerResourceFlight extends Flight {
               lzApiDispatch,
               sourceContainer,
               flightBeanBag.getControlledResourceService(),
-              cloningInstructions));
+              cloningInstructions),
+          RetryRules.cloud());
       if (CloningInstructions.COPY_RESOURCE == cloningInstructions) {
         var storageAccountKeyProvider = flightBeanBag.getStorageAccountKeyProvider();
         addStep(new CopyAzureStorageContainerBlobsStep(sourceContainer, storageAccountKeyProvider, resourceDao));

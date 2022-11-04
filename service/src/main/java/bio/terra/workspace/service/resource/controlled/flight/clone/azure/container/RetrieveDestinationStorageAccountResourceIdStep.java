@@ -22,13 +22,14 @@ import java.util.UUID;
 
 /**
  * Attempts to fetch the storage account ID for a new container in the destination workspace
- * following process:
+ * following this process:
  *
- * <p>1. Checks the destination workspace for a single storage account; if more than one is present
- * we are in an unsupported state and fail out.
- *
- * <p>2. If no storage accounts are present, attempts to check the owning Landing Zone. If present,
- * returns the storage account from the LZ, otherwise we fail out.
+ * <ol>
+ *   <li>Checks the destination workspace for a single storage account; if more than one is present
+ *       we are in an unsupported state and fail out.
+ *   <li>If no storage accounts are present, attempts to check the owning Landing Zone. If present,
+ *       returns the storage account from the LZ, otherwise we fail out.
+ * </ol>
  */
 public class RetrieveDestinationStorageAccountResourceIdStep implements Step {
 
@@ -64,27 +65,7 @@ public class RetrieveDestinationStorageAccountResourceIdStep implements Step {
                 WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_CLOUD_CONTEXT,
                 AzureCloudContext.class);
 
-    var sourceStorageAccounts =
-        resourceDao.enumerateResources(
-            destinationWorkspaceId, WsmResourceFamily.AZURE_STORAGE_ACCOUNT, null, 0, 100);
-
-    if (sourceStorageAccounts.size() == 1) {
-      context
-          .getWorkingMap()
-          .put(
-              WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_STORAGE_ACCOUNT_RESOURCE_ID,
-              sourceStorageAccounts.get(0).getResourceId());
-      return StepResult.getStepResultSuccess();
-    }
-    if (sourceStorageAccounts.size() > 1) {
-      return new StepResult(
-          StepStatus.STEP_RESULT_FAILURE_FATAL,
-          new InvalidStorageAccountException(
-              "Multiple storage accounts configured for destination workspace "
-                  + destinationWorkspaceId));
-    }
-
-    // fall back to the landing zone's storage account, if present
+    // check for the parent landing zone's storage account, if present
     try {
       UUID lzId = landingZoneApiDispatch.getLandingZoneId(azureCloudContext);
       Optional<ApiAzureLandingZoneDeployedResource> lzStorageAcct =
@@ -108,6 +89,27 @@ public class RetrieveDestinationStorageAccountResourceIdStep implements Step {
                   azureCloudContext.getAzureTenantId(),
                   azureCloudContext.getAzureSubscriptionId(),
                   azureCloudContext.getAzureResourceGroupId())));
+    }
+
+    // fall back to the destination workspace's storage account (if present)
+    var sourceStorageAccounts =
+        resourceDao.enumerateResources(
+            destinationWorkspaceId, WsmResourceFamily.AZURE_STORAGE_ACCOUNT, null, 0, 100);
+
+    if (sourceStorageAccounts.size() == 1) {
+      context
+          .getWorkingMap()
+          .put(
+              WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_STORAGE_ACCOUNT_RESOURCE_ID,
+              sourceStorageAccounts.get(0).getResourceId());
+      return StepResult.getStepResultSuccess();
+    }
+    if (sourceStorageAccounts.size() > 1) {
+      return new StepResult(
+          StepStatus.STEP_RESULT_FAILURE_FATAL,
+          new InvalidStorageAccountException(
+              "Multiple storage accounts configured for destination workspace "
+                  + destinationWorkspaceId));
     }
 
     return new StepResult(
