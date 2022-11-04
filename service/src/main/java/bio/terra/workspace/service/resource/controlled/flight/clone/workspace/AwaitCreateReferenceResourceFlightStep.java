@@ -15,7 +15,7 @@ import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
+import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.WsmCloneResourceResult;
 import bio.terra.workspace.service.workspace.model.WsmResourceCloneDetails;

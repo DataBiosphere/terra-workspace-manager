@@ -24,7 +24,7 @@ import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
-import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
+import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;

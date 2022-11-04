@@ -22,7 +22,7 @@ import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
-import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResourceService;
+import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.List;

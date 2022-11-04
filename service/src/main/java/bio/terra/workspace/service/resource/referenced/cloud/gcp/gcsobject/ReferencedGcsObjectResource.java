@@ -16,10 +16,11 @@ import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
+import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
-import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
+import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
@@ -167,6 +168,25 @@ public class ReferencedGcsObjectResource extends ReferencedResource {
     Optional<AuthenticatedUserRequest> maybePetCreds =
         petSaService.getWorkspacePetCredentials(getWorkspaceId(), userRequest);
     return crlService.canReadGcsObject(bucketName, objectName, maybePetCreds.orElse(userRequest));
+  }
+
+  @Override
+  public WsmResource buildReferencedClone(
+      UUID destinationWorkspaceUuid,
+      @org.jetbrains.annotations.Nullable UUID destinationResourceId,
+      @org.jetbrains.annotations.Nullable UUID destinationFolderId,
+      @org.jetbrains.annotations.Nullable String name,
+      @org.jetbrains.annotations.Nullable String description) {
+    ReferencedGcsObjectResource.Builder resultBuilder =
+        toBuilder()
+            .wsmResourceFields(
+                buildCloneResourceCommonFields(
+                    destinationWorkspaceUuid,
+                    destinationResourceId,
+                    destinationFolderId,
+                    name,
+                    description));
+    return resultBuilder.build();
   }
 
   /**

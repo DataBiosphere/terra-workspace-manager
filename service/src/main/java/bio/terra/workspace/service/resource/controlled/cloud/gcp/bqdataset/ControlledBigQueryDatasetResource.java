@@ -25,8 +25,11 @@ import bio.terra.workspace.service.resource.controlled.model.PrivateResourceStat
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
+import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
+import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
@@ -35,6 +38,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.jetbrains.annotations.Nullable;
 
 public class ControlledBigQueryDatasetResource extends ControlledResource {
   private final String datasetName;
@@ -151,6 +155,30 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
     return new ApiGcpBigQueryDatasetResource()
         .metadata(super.toApiMetadata())
         .attributes(toApiAttributes());
+  }
+
+  @Override
+  public WsmResource buildReferencedClone(
+      UUID destinationWorkspaceUuid,
+      @Nullable UUID destinationResourceId,
+      @Nullable UUID destinationFolderId,
+      @Nullable String name,
+      @Nullable String description) {
+    WsmResourceFields wsmResourceFields =
+        buildCloneResourceCommonFields(
+            destinationWorkspaceUuid,
+            destinationResourceId,
+            destinationFolderId,
+            name,
+            description);
+
+    final ReferencedBigQueryDatasetResource.Builder resultBuilder =
+        ReferencedBigQueryDatasetResource.builder()
+            .wsmResourceFields(wsmResourceFields)
+            .projectId(getProjectId())
+            .datasetName(getDatasetName());
+
+    return resultBuilder.build();
   }
 
   @Override
