@@ -651,6 +651,21 @@ public class ResourceDao {
     return (count != null && count > 0);
   }
 
+  @ReadTransaction
+  public boolean resourceExists(UUID workspaceUuid, String name) {
+    final String sql =
+        """
+                SELECT COUNT(1) FROM resource
+                WHERE workspace_id = :workspace_id AND name = :name
+                """;
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceUuid.toString())
+            .addValue("name", name);
+    Integer count = jdbcTemplate.queryForObject(sql, params, Integer.class);
+    return (count != null && count > 0);
+  }
+
   private void storeResource(WsmResource resource) {
 
     // TODO: add resource locking to fix this

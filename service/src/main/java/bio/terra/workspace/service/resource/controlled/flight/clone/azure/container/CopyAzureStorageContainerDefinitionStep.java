@@ -14,15 +14,13 @@ import bio.terra.workspace.common.utils.IamRoleUtils;
 import bio.terra.workspace.common.utils.ManagementExceptionUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureStorageContainerCreationParameters;
-import bio.terra.workspace.generated.model.ApiClonedControlledAzureStorageContainer;
-import bio.terra.workspace.generated.model.ApiCreatedControlledAzureStorageContainer;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
+import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.azure.core.management.exception.ManagementException;
 import java.util.UUID;
@@ -111,25 +109,27 @@ public class CopyAzureStorageContainerDefinitionStep implements Step {
         destinationContainerResource);
 
     // create the container
-    controlledResourceService
-        .createControlledResourceSync(
-            destinationContainerResource, iamRole, userRequest, destinationCreationParameters)
-        .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
-
-    var apiCreatedContainer =
-        new ApiCreatedControlledAzureStorageContainer()
-            .azureStorageContainer(destinationContainerResource.toApiResource())
-            .resourceId(destinationContainerResource.getResourceId());
-
-    var apiContainerResult =
-        new ApiClonedControlledAzureStorageContainer()
-            .effectiveCloningInstructions(resolvedCloningInstructions.toApiModel())
-            .storageContainer(apiCreatedContainer)
-            .sourceWorkspaceId(sourceContainer.getWorkspaceId())
-            .sourceResourceId(sourceContainer.getResourceId());
+    try {
+      controlledResourceService.createControlledResourceSync(
+          destinationContainerResource, iamRole, userRequest, destinationCreationParameters);
+    } catch (DuplicateResourceException e) {
+      // We are catching DuplicateResourceException here since we check for the container's presence
+      // earlier in the parent flight and bail out if it already exists.
+      // A duplicate resource being present in this context means we are in a retry and can move on
+      logger.info(
+          "Destination azure storage container already exists, resource_id = {}, name = {}",
+          destinationResourceId,
+          destinationResourceName);
+    }
 
     if (resolvedCloningInstructions.equals(CloningInstructions.COPY_DEFINITION)) {
-      FlightUtils.setResponse(flightContext, apiContainerResult, HttpStatus.OK);
+      var containerResult =
+          new ClonedAzureStorageContainer(
+              resolvedCloningInstructions,
+              sourceContainer.getWorkspaceId(),
+              sourceContainer.getResourceId(),
+              destinationContainerResource);
+      FlightUtils.setResponse(flightContext, containerResult, HttpStatus.OK);
     }
 
     return StepResult.getStepResultSuccess();
