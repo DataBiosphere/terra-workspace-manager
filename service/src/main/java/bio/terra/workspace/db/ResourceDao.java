@@ -258,6 +258,25 @@ public class ResourceDao {
   }
 
   /**
+   * This method is used in a containing transaction to gather all resources that
+   * can be cloned.
+   *
+   * @param workspaceUuid workspace to enumerate
+   * @return list of cloneable resources
+   */
+  public List<WsmResource> enumerateResourcesForClone(UUID workspaceUuid) {
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceUuid.toString());
+
+    List<DbResource> dbResourceList =
+        jdbcTemplate.query(RESOURCE_SELECT_SQL, params, DB_RESOURCE_ROW_MAPPER);
+
+    return dbResourceList.stream().map(this::constructResource).collect(toList());
+  }
+
+
+  /**
    * Returns a list of all controlled resources in a workspace, optionally filtering by cloud
    * platform.
    *

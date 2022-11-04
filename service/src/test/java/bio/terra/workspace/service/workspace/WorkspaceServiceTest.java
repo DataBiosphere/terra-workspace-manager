@@ -850,9 +850,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             .spendProfileId(new SpendProfileId(SPEND_PROFILE_ID))
             .build();
     final String destinationLocation = "us-east1";
-    final String cloneJobId =
-        workspaceService.cloneWorkspace(
-            sourceWorkspace, USER_REQUEST, destinationLocation, destinationWorkspace);
+    final String cloneJobId = UUID.randomUUID().toString();
+    workspaceService.cloneWorkspace(
+        cloneJobId, sourceWorkspace, USER_REQUEST, destinationLocation, destinationWorkspace);
     jobService.waitForJob(cloneJobId);
     final JobResultOrException<ApiClonedWorkspace> cloneResultOrException =
         jobService.retrieveJobResult(cloneJobId, ApiClonedWorkspace.class);
@@ -944,7 +944,11 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         InvalidResultStateException.class,
         () ->
             workspaceService.cloneWorkspace(
-                sourceWorkspace, USER_REQUEST, destinationLocation, destinationWorkspace));
+                UUID.randomUUID().toString(),
+                sourceWorkspace,
+                USER_REQUEST,
+                destinationLocation,
+                destinationWorkspace));
     assertThrows(
         WorkspaceNotFoundException.class,
         () -> workspaceService.getWorkspace(destinationWorkspace.getWorkspaceId()));

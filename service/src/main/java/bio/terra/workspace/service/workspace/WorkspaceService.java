@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.workspace;
 
-import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.db.ApplicationDao;
@@ -35,17 +34,18 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
 import com.google.common.base.Preconditions;
 import io.opencensus.contrib.spring.aop.Traced;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.Nullable;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Service for workspace lifecycle operations.
@@ -66,7 +66,7 @@ public class WorkspaceService {
   private final BufferServiceConfiguration bufferServiceConfiguration;
   private final StageService stageService;
   private final FeatureConfiguration features;
-  private final TpsApiDispatch tpsApiDispatch;
+  private final WorkspaceCloneService workspaceCloneService;
   private final WorkspaceActivityLogService workspaceActivityLogService;
 
   @Autowired
@@ -78,7 +78,7 @@ public class WorkspaceService {
       BufferServiceConfiguration bufferServiceConfiguration,
       StageService stageService,
       FeatureConfiguration features,
-      TpsApiDispatch tpsApiDispatch,
+      WorkspaceCloneService workspaceCloneService,
       WorkspaceActivityLogService workspaceActivityLogService) {
     this.jobService = jobService;
     this.applicationDao = applicationDao;
@@ -87,7 +87,7 @@ public class WorkspaceService {
     this.bufferServiceConfiguration = bufferServiceConfiguration;
     this.stageService = stageService;
     this.features = features;
-    this.tpsApiDispatch = tpsApiDispatch;
+    this.workspaceCloneService = workspaceCloneService;
     this.workspaceActivityLogService = workspaceActivityLogService;
   }
 
@@ -105,6 +105,22 @@ public class WorkspaceService {
       Workspace workspace,
       @Nullable ApiTpsPolicyInputs policies,
       @Nullable List<String> applications,
+      AuthenticatedUserRequest userRequest) {
+    JobBuilder createJob = buildCreateWorkspaceJob(workspace, policies, userRequest);
+    return createJob.submitAndWait(UUID.class);
+  }
+
+  /**
+   * Common create workspace job builder. Used by createWorkspace and by clone
+   *
+   * @param workspace workspace object to create
+   * @param policies policies to set on the workspace
+   * @param userRequest credentials for the create
+   * @return JobBuilder for submitting the flight
+   */
+  public JobBuilder buildCreateWorkspaceJob(
+      Workspace workspace,
+      @Nullable ApiTpsPolicyInputs policies,
       AuthenticatedUserRequest userRequest) {
     String workspaceUuid = workspace.getWorkspaceId().toString();
     String jobDescription =
@@ -137,7 +153,7 @@ public class WorkspaceService {
       createJob.addParameter(
           WorkspaceFlightMapKeys.SPEND_PROFILE_ID, workspace.getSpendProfileId().get().getId());
     }
-    return createJob.submitAndWait(UUID.class);
+    return createJob;
   }
 
   /**
@@ -424,15 +440,23 @@ public class WorkspaceService {
   }
 
   public String cloneWorkspace(
+      String jobId,
       Workspace sourceWorkspace,
       AuthenticatedUserRequest userRequest,
       @Nullable String location,
       Workspace destinationWorkspace) {
+
+    // Feature split for refactored clone implementation
+    if (features.isNewCloneEnabled()) {
+      return workspaceCloneService.cloneWorkspace(
+          jobId, sourceWorkspace, userRequest, location, destinationWorkspace);
+    }
+
     String workspaceUuid = sourceWorkspace.getWorkspaceId().toString();
     String jobDescription =
         String.format(
-            "Clone workspace: name: '%s' id: '%s'  ",
-            sourceWorkspace.getDisplayName().orElse(""), workspaceUuid);
+            "Clone workspace: name: '%s' id: '%s' jobId: '%s'",
+            sourceWorkspace.getDisplayName().orElse(""), workspaceUuid, jobId);
 
     // Get the enabled applications from the source workspace
     List<String> applicationIds =
@@ -444,6 +468,7 @@ public class WorkspaceService {
     // Remaining steps are an async flight.
     return jobService
         .newJob()
+        .jobId(jobId)
         .description(jobDescription)
         .flightClass(CloneGcpWorkspaceFlight.class)
         .userRequest(userRequest)

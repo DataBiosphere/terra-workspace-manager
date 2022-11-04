@@ -27,6 +27,7 @@ import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
 import bio.terra.workspace.generated.model.ApiGcpContext;
 import bio.terra.workspace.generated.model.ApiGrantRoleRequestBody;
 import bio.terra.workspace.generated.model.ApiIamRole;
+import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
 import bio.terra.workspace.generated.model.ApiProperties;
 import bio.terra.workspace.generated.model.ApiProperty;
@@ -616,7 +617,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     // Construct the target workspace object from the inputs
     // Policies are cloned in the flight instead of here so that they get cleaned appropriately if
     // the flight fails.
-    final Workspace destinationWorkspace =
+    Workspace destinationWorkspace =
         Workspace.builder()
             .workspaceId(destinationWorkspaceId)
             .userFacingId(destinationUserFacingId)
@@ -627,9 +628,12 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .properties(sourceWorkspace.getProperties())
             .build();
 
-    final String jobId =
-        workspaceService.cloneWorkspace(
-            sourceWorkspace, petRequest, body.getLocation(), destinationWorkspace);
+    String jobId =
+        Optional.ofNullable(body.getJobControl())
+            .map(ApiJobControl::getId)
+            .orElse(UUID.randomUUID().toString());
+    workspaceService.cloneWorkspace(
+        jobId, sourceWorkspace, petRequest, body.getLocation(), destinationWorkspace);
 
     final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId);
     final ApiClonedWorkspace clonedWorkspaceStub =

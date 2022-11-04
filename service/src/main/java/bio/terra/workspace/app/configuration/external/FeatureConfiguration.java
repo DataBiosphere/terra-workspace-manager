@@ -15,6 +15,7 @@ public class FeatureConfiguration {
 
   private boolean azureEnabled;
   private boolean alpha1Enabled;
+  private boolean newCloneEnabled;
   private boolean tpsEnabled;
   private boolean bpmGcpEnabled;
   private boolean bpmAzureEnabled;
@@ -33,6 +34,14 @@ public class FeatureConfiguration {
 
   public void setAlpha1Enabled(boolean alpha1Enabled) {
     this.alpha1Enabled = alpha1Enabled;
+  }
+
+  public boolean isNewCloneEnabled() {
+    return newCloneEnabled;
+  }
+
+  public void setNewCloneEnabled(boolean newCloneEnabled) {
+    this.newCloneEnabled = newCloneEnabled;
   }
 
   public boolean isTpsEnabled() {

@@ -562,13 +562,14 @@ public class WorkspaceDao {
 
   /**
    * Retrieve the serialized cloud context of an unlocked cloud context. That is, a cloud context
-   * that is done being created.
+   * that is done being created. This is public because it is used as part of an outer transaction
+   * by workspace clone.
    *
    * @param workspaceUuid workspace of the context
    * @param cloudPlatform platform context to retrieve
    * @return empty or the serialized cloud context info
    */
-  private Optional<String> getCloudContextWorker(UUID workspaceUuid, CloudPlatform cloudPlatform) {
+  public Optional<String> getCloudContextWorker(UUID workspaceUuid, CloudPlatform cloudPlatform) {
     String sql =
         "SELECT context FROM cloud_context"
             + " WHERE workspace_id = :workspace_id"

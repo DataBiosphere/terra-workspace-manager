@@ -217,6 +217,7 @@ public class FolderDao {
   }
 
   /** Gets a list of folders in the given workspace */
+  @ReadTransaction
   public ImmutableList<Folder> listFoldersInWorkspace(UUID workspaceId) {
     String sql =
         """
@@ -236,6 +237,7 @@ public class FolderDao {
    * <p>See more details about recursive SQL query from
    * https://www.postgresqltutorial.com/postgresql-tutorial/postgresql-recursive-query/
    */
+  @ReadTransaction
   public ImmutableList<Folder> listFoldersRecursively(UUID rootFolderId) {
     String sql =
         """
