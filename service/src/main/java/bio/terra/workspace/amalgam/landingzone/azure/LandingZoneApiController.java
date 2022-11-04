@@ -16,6 +16,7 @@ import bio.terra.workspace.generated.model.ApiDeleteAzureLandingZoneRequestBody;
 import bio.terra.workspace.generated.model.ApiDeleteAzureLandingZoneResult;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -111,7 +112,7 @@ public class LandingZoneApiController implements LandingZonesApi {
 
   @Override
   public ResponseEntity<ApiAzureLandingZoneList> listAzureLandingZones(
-      @RequestParam("billingProfileId") UUID billingProfileId) {
+      @Valid @RequestParam(value = "billingProfileId", required = false) UUID billingProfileId) {
     ApiAzureLandingZoneList result =
         landingZoneApiDispatch.listAzureLandingZones(
             bearerTokenFactory.from(request), billingProfileId);

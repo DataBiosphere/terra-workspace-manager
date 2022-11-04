@@ -414,6 +414,7 @@ public class LandingZoneApiControllerTest extends BaseAzureUnitTest {
         .andExpect(status().isOk())
         .andExpect(MockMvcResultMatchers.jsonPath("$.landingzones").exists())
         .andExpect(MockMvcResultMatchers.jsonPath("$.landingzones").isArray())
+        .andExpect(MockMvcResultMatchers.jsonPath("$.landingzones[0].landingZoneId").exists())
         .andExpect(MockMvcResultMatchers.jsonPath("$.landingzones[0].billingProfileId").exists())
         .andExpect(MockMvcResultMatchers.jsonPath("$.landingzones[0].definition").exists())
         .andExpect(MockMvcResultMatchers.jsonPath("$.landingzones[0].version").exists())
