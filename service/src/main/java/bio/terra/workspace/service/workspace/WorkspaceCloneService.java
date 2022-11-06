@@ -71,12 +71,12 @@ public class WorkspaceCloneService {
   }
 
   /**
-   * Clone all accessible resources from a source workspace into a target workspace
+   * Clone all accessible resources from a source workspace into a destination workspace
    * @param jobId job id to use for the async clone flight
    * @param sourceWorkspace workspace to clone
    * @param userRequest creds of the cloner
-   * @param location target location to clone to
-   * @param targetWorkspace destination workspace - we will create this
+   * @param location destination location to clone to
+   * @param destinationWorkspace destination workspace - we will create this
    * @return job id of the the async clone flight,
    * brought to you by the department of redundancy department
    */
@@ -85,21 +85,21 @@ public class WorkspaceCloneService {
       Workspace sourceWorkspace,
       AuthenticatedUserRequest userRequest,
       @Nullable String location,
-      Workspace targetWorkspace) {
+      Workspace destinationWorkspace) {
 
     // Gather the source metadata in one transaction
     CloneSourceMetadata cloneSource = gatherSourceMetadata(sourceWorkspace);
 
     // Start the workspace create flight. For clone we kick off the create flight
     // and do other things while it is running.
-    JobBuilder workspaceCreateJob = workspaceService.buildCreateWorkspaceJob(targetWorkspace, null, userRequest);
+    JobBuilder workspaceCreateJob = workspaceService.buildCreateWorkspaceJob(destinationWorkspace, null, userRequest);
     String workspaceCreateJobId  = workspaceCreateJob.submit();
 
     // NOTE: The next part of the process is preparing all of the clone operations we need to do
     // in the flight. This includes Sam requests. If we decide this all takes too long, then
     // we will need to immediately wait on the create job right here and launch a flight that
     // does the code below.
-    prepareCloneOperation(cloneSource, userRequest, location, targetWorkspace);
+    prepareCloneOperation(cloneSource, userRequest, location, destinationWorkspace);
 
     // Wait for the create job to complete
     try {
@@ -172,13 +172,13 @@ public class WorkspaceCloneService {
   private void prepareCloneOperation(CloneSourceMetadata cloneSource,
                                      AuthenticatedUserRequest userRequest,
                                      @Nullable String location,
-                                     Workspace targetWorkspace) {
+                                     Workspace destinationWorkspace) {
     // Folders:
-    // Build two structures: a map of source to target folder id
-    // A map of target folder id to target folder
-    Map<UUID, UUID> mapFolderSourceTarget = new HashMap<>();
-    Map<UUID, Folder> targetFolders = generateTargetFolders(
-            cloneSource.getFolders(), mapFolderSourceTarget, targetWorkspace.getWorkspaceId()));
+    // Build two structures: a map of source to destination folder id
+    // A map of destination folder id to destination folder
+    Map<UUID, UUID> mapFolderSourcedestination = new HashMap<>();
+    Map<UUID, Folder> destinationFolders = generatedestinationFolders(
+            cloneSource.getFolders(), mapFolderSourcedestination, destinationWorkspace.getWorkspaceId());
 
     // Resources:
     // Filter out controlled resources that the caller does not have access to
@@ -202,34 +202,34 @@ public class WorkspaceCloneService {
         .toList();
   }
 
-  private Map<UUID, Folder> generateTargetFolders(
+  private Map<UUID, Folder> generatedestinationFolders(
       Map<UUID, Folder> sourceFolders,
-      Map<UUID, UUID> mapFolderSourceTarget,
-      UUID targetWorkspaceId) {
+      Map<UUID, UUID> mapFolderSourcedestination,
+      UUID destinationWorkspaceId) {
 
-    Map<UUID, Folder> targetFolders = new HashMap<>();
+    Map<UUID, Folder> destinationFolders = new HashMap<>();
 
-    // Generate the map from source folder id to target folder id
+    // Generate the map from source folder id to destination folder id
     for (UUID key : sourceFolders.keySet()) {
-      mapFolderSourceTarget.put(key, UUID.randomUUID());
+      mapFolderSourcedestination.put(key, UUID.randomUUID());
     }
 
-    // Generate the map from target folder id to target folder object
+    // Generate the map from destination folder id to destination folder object
     for (Folder sourceFolder : sourceFolders.values()) {
-      var targetFolder =
+      var destinationFolder =
           new Folder(
-              mapFolderSourceTarget.get(sourceFolder.id()),
-              targetWorkspaceId,
+              mapFolderSourcedestination.get(sourceFolder.id()),
+              destinationWorkspaceId,
               sourceFolder.displayName(),
               sourceFolder.description(),
               (sourceFolder.parentFolderId() != null
-                  ? mapFolderSourceTarget.get(sourceFolder.parentFolderId())
+                  ? mapFolderSourcedestination.get(sourceFolder.parentFolderId())
                   : null),
               sourceFolder.properties());
-      targetFolders.put(targetFolder.id(), targetFolder);
+      destinationFolders.put(destinationFolder.id(), destinationFolder);
     }
 
-    return targetFolders;
+    return destinationFolders;
   }
 
   public static class NewCloneNotImplemented extends NotImplementedException {

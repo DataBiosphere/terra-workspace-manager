@@ -6,6 +6,7 @@ import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
+import bio.terra.workspace.common.utils.WsmFlight;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
@@ -30,62 +31,19 @@ import java.util.UUID;
  * In order to add items to the cloud context, a version 2 of the serialized cloud context form is
  * used.
  */
-public class CreateGcpContextFlightV2 extends Flight {
+public class CreateGcpContextFlightV2 extends WsmFlight {
 
   public CreateGcpContextFlightV2(FlightMap inputParameters, Object applicationContext) {
     super(inputParameters, applicationContext);
 
-    FlightBeanBag appContext = FlightBeanBag.getFromObject(applicationContext);
-    CrlService crl = appContext.getCrlService();
-    FeatureConfiguration featureConfiguration = appContext.getFeatureConfiguration();
-
+    // Extract the input parameters we need
     UUID workspaceUuid =
-        UUID.fromString(inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
+        UUID.fromString(getInputRequired(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
     AuthenticatedUserRequest userRequest =
-        inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
+        getInputRequired(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
-    RetryRule shortRetry = RetryRules.shortExponential();
-    RetryRule cloudRetry = RetryRules.cloud();
-    RetryRule bufferRetry = RetryRules.buffer();
-
-    // Check that we are allowed to spend money. No point doing anything else unless that
-    // is true.
-    addStep(
-        new CheckSpendProfileStep(
-            appContext.getWorkspaceDao(),
-            appContext.getSpendProfileService(),
-            workspaceUuid,
-            userRequest,
-            CloudPlatform.GCP,
-            featureConfiguration.isBpmGcpEnabled()));
-
-    // Write the cloud context row in a "locked" state
-    addStep(
-        new CreateDbGcpCloudContextStep(workspaceUuid, appContext.getGcpCloudContextService()),
-        shortRetry);
-
-    // Allocate the GCP project from RBS by generating the id and then getting the project.
-    addStep(new GenerateRbsRequestIdStep());
-    addStep(
-        new PullProjectFromPoolStep(
-            appContext.getBufferService(), crl.getCloudResourceManagerCow()),
-        RetryRules.buffer());
-
-    // Configure the project for WSM
-    addStep(new SetProjectBillingStep(crl.getCloudBillingClientCow()), cloudRetry);
-    addStep(new GrantWsmRoleAdminStep(crl), shortRetry);
-    addStep(new CreateCustomGcpRolesStep(crl.getIamCow()), shortRetry);
-    addStep(
-        new SyncSamGroupsStep(appContext.getSamService(), workspaceUuid, userRequest), shortRetry);
-    // TODO(PF-1227): When IAM performance issue is fixed, change back to cloudRetry.
-    addStep(new GcpCloudSyncStep(crl.getCloudResourceManagerCow()), bufferRetry);
-    addStep(new CreatePetSaStep(appContext.getSamService(), userRequest), shortRetry);
-
-    // Store the cloud context data and unlock the database row
-    // This must be the last step, since it clears the lock. So this step also
-    // sets the flight response.
-    addStep(
-        new UpdateDbGcpCloudContextStep(workspaceUuid, appContext.getGcpCloudContextService()),
-        shortRetry);
+    // Common step generation, shared with clone
+    beanBag().getGcpCloudContextService().makeCreateGcpContextSteps(
+        this, workspaceUuid, userRequest);
   }
 }

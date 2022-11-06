@@ -1,10 +1,24 @@
 package bio.terra.workspace.service.workspace;
 
+import bio.terra.stairway.RetryRule;
+import bio.terra.workspace.common.utils.RetryRules;
+import bio.terra.workspace.common.utils.WsmFlight;
 import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
+import bio.terra.workspace.service.workspace.flight.CheckSpendProfileStep;
+import bio.terra.workspace.service.workspace.flight.CreateCustomGcpRolesStep;
+import bio.terra.workspace.service.workspace.flight.CreateDbGcpCloudContextStep;
+import bio.terra.workspace.service.workspace.flight.CreatePetSaStep;
+import bio.terra.workspace.service.workspace.flight.GcpCloudSyncStep;
+import bio.terra.workspace.service.workspace.flight.GrantWsmRoleAdminStep;
+import bio.terra.workspace.service.workspace.flight.PullProjectFromPoolStep;
+import bio.terra.workspace.service.workspace.flight.SetProjectBillingStep;
+import bio.terra.workspace.service.workspace.flight.SyncSamGroupsStep;
+import bio.terra.workspace.service.workspace.flight.UpdateDbGcpCloudContextStep;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import io.opencensus.contrib.spring.aop.Traced;
@@ -150,5 +164,67 @@ public class GcpCloudContextService {
     return getGcpProject(workspaceUuid)
         .orElseThrow(
             () -> new CloudContextRequiredException("Operation requires GCP cloud context"));
+  }
+
+  /**
+   * Generate the steps to create a GCP cloud context. This set of steps is used in the
+   * standalone create GCP cloud context flight and in clone workspace.
+   *
+   * @param flight flight to add steps to
+   * @param workspaceUuid workspace in which we are creating the cloud context
+   * @param userRequest user credentials
+   */
+  public void makeCreateGcpContextSteps(
+      WsmFlight flight,
+      UUID workspaceUuid,
+      AuthenticatedUserRequest userRequest) {
+
+    CrlService crl = flight.beanBag().getCrlService();
+
+    RetryRule shortRetry = RetryRules.shortExponential();
+    RetryRule cloudRetry = RetryRules.cloud();
+
+    // Check that we are allowed to spend money. No point doing anything else unless that
+    // is true.
+    flight.addStep(
+        new CheckSpendProfileStep(
+            flight.beanBag().getWorkspaceDao(),
+            flight.beanBag().getSpendProfileService(),
+            workspaceUuid,
+            userRequest,
+            CloudPlatform.GCP,
+            flight.beanBag().getFeatureConfiguration().isBpmGcpEnabled()));
+
+    // Write the cloud context row in a "locked" state
+    flight.addStep(
+        new CreateDbGcpCloudContextStep(workspaceUuid, flight.beanBag().getGcpCloudContextService()),
+        shortRetry);
+
+    // Allocate the GCP project from RBS. We derive the rbsRequestId from the workspaceUuid.
+    // That makes it repeatable and unique without having to generate another id.
+    String rbsRequestId = "wm-" + workspaceUuid.toString().replaceAll("-", "");
+
+    flight.addStep(
+        new PullProjectFromPoolStep(
+            flight.beanBag().getBufferService(),
+            crl.getCloudResourceManagerCow(),
+            rbsRequestId),
+        RetryRules.buffer());
+
+    // Configure the project for WSM
+    flight.addStep(new SetProjectBillingStep(crl.getCloudBillingClientCow()), cloudRetry);
+    flight.addStep(new GrantWsmRoleAdminStep(crl), shortRetry);
+    flight.addStep(new CreateCustomGcpRolesStep(crl.getIamCow()), shortRetry);
+    flight.addStep(
+        new SyncSamGroupsStep(flight.beanBag().getSamService(), workspaceUuid, userRequest), shortRetry);
+    flight.addStep(new GcpCloudSyncStep(crl.getCloudResourceManagerCow()), cloudRetry);
+    flight.addStep(new CreatePetSaStep(flight.beanBag().getSamService(), userRequest), shortRetry);
+
+    // Store the cloud context data and unlock the database row
+    // This must be the last step, since it clears the lock. So this step also
+    // sets the flight response.
+    flight.addStep(
+        new UpdateDbGcpCloudContextStep(workspaceUuid, flight.beanBag().getGcpCloudContextService()),
+        shortRetry);
   }
 }

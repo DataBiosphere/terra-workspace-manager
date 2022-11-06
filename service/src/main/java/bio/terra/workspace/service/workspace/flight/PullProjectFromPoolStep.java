@@ -22,23 +22,27 @@ import org.springframework.http.HttpStatus;
 
 /** A {@link Step} for pulling a project from a Buffer Service pool. */
 public class PullProjectFromPoolStep implements Step {
+  private static final Logger logger = LoggerFactory.getLogger(PullProjectFromPoolStep.class);
+
   private final BufferService bufferService;
   private final CloudResourceManagerCow resourceManager;
-  private final Logger logger = LoggerFactory.getLogger(PullProjectFromPoolStep.class);
+  private final String rbsRequestId;
 
   public PullProjectFromPoolStep(
-      BufferService bufferService, CloudResourceManagerCow resourceManager) {
+      BufferService bufferService,
+      CloudResourceManagerCow resourceManager,
+      String rbsRequestId) {
     this.bufferService = bufferService;
     this.resourceManager = resourceManager;
+    this.rbsRequestId = rbsRequestId;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext) {
     try {
-      String resourceId = flightContext.getWorkingMap().get(RBS_RESOURCE_ID, String.class);
-      logger.info("Preparing to query Buffer Service for resource with ID: " + resourceId);
+      logger.info("Preparing to query Buffer Service for resource with ID: {}", rbsRequestId);
       HandoutRequestBody body = new HandoutRequestBody();
-      body.setHandoutRequestId(resourceId);
+      body.setHandoutRequestId(rbsRequestId);
 
       ResourceInfo info = bufferService.handoutResource(body);
       String projectId = info.getCloudResourceUid().getGoogleProjectUid().getProjectId();
