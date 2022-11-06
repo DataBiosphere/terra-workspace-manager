@@ -39,7 +39,7 @@ public class WorkspaceUnitTestUtils {
             .userFacingId(workspaceUuid.toString())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
-    workspaceDao.createWorkspace(workspace);
+    workspaceDao.createWorkspace(workspace, /* applicationIds */ null);
     return workspace.getWorkspaceId();
   }
 

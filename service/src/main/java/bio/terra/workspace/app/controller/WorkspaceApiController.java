@@ -184,7 +184,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .workspaceStage(internalStage)
             .properties(convertApiPropertyToMap(body.getProperties()))
             .build();
-    UUID createdId = workspaceService.createWorkspace(workspace, policies, userRequest);
+    UUID createdId =
+        workspaceService.createWorkspace(workspace, policies, body.getApplications(), userRequest);
 
     ApiCreatedWorkspace responseWorkspace = new ApiCreatedWorkspace().id(createdId);
     logger.info("Created workspace {} for {}", responseWorkspace, userRequest.getEmail());

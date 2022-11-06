@@ -136,7 +136,7 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
             new SpendProfileId("spend-profile"),
             Collections.emptyMap(),
             WorkspaceStage.MC_WORKSPACE);
-    workspaceDao.createWorkspace(workspace);
+    workspaceDao.createWorkspace(workspace, /* applicationIds */ null);
 
     // Create a cloud context in the database with a V1 format
     final String flightId = UUID.randomUUID().toString();
@@ -164,7 +164,7 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
             new SpendProfileId("spend-profile"),
             Collections.emptyMap(),
             WorkspaceStage.MC_WORKSPACE);
-    workspaceDao.createWorkspace(workspace);
+    workspaceDao.createWorkspace(workspace, /* applicationIds */ null);
     // Create a cloud context record in the DB
     String projectId = "fake-project-id";
     GcpCloudContext fakeContext =
