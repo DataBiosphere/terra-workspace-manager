@@ -3,6 +3,7 @@ package bio.terra.workspace.service.workspace;
 import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
+import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.ApiTpsPolicyInputs;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -59,6 +60,7 @@ public class WorkspaceService {
   private static final Logger logger = LoggerFactory.getLogger(WorkspaceService.class);
 
   private final JobService jobService;
+  private final ApplicationDao applicationDao;
   private final WorkspaceDao workspaceDao;
   private final SamService samService;
   private final BufferServiceConfiguration bufferServiceConfiguration;
@@ -70,6 +72,7 @@ public class WorkspaceService {
   @Autowired
   public WorkspaceService(
       JobService jobService,
+      ApplicationDao applicationDao,
       WorkspaceDao workspaceDao,
       SamService samService,
       BufferServiceConfiguration bufferServiceConfiguration,
@@ -78,6 +81,7 @@ public class WorkspaceService {
       TpsApiDispatch tpsApiDispatch,
       WorkspaceActivityLogService workspaceActivityLogService) {
     this.jobService = jobService;
+    this.applicationDao = applicationDao;
     this.workspaceDao = workspaceDao;
     this.samService = samService;
     this.bufferServiceConfiguration = bufferServiceConfiguration;
@@ -87,11 +91,20 @@ public class WorkspaceService {
     this.workspaceActivityLogService = workspaceActivityLogService;
   }
 
+  /** For backward compatibility with test usage */
+  public UUID createWorkspace(
+      Workspace workspace,
+      @Nullable ApiTpsPolicyInputs policies,
+      AuthenticatedUserRequest userRequest) {
+    return createWorkspace(workspace, policies, null, userRequest);
+  }
+
   /** Create a workspace with the specified parameters. Returns workspaceID of the new workspace. */
   @Traced
   public UUID createWorkspace(
       Workspace workspace,
       @Nullable ApiTpsPolicyInputs policies,
+      @Nullable List<String> applications,
       AuthenticatedUserRequest userRequest) {
     String workspaceUuid = workspace.getWorkspaceId().toString();
     String jobDescription =
@@ -117,7 +130,8 @@ public class WorkspaceService {
             .operationType(OperationType.CREATE)
             .addParameter(
                 WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name())
-            .addParameter(WorkspaceFlightMapKeys.POLICIES, policies);
+            .addParameter(WorkspaceFlightMapKeys.POLICIES, policies)
+            .addParameter(WorkspaceFlightMapKeys.APPLICATION_IDS, applications);
 
     if (workspace.getSpendProfileId().isPresent()) {
       createJob.addParameter(
@@ -420,8 +434,12 @@ public class WorkspaceService {
             "Clone workspace: name: '%s' id: '%s'  ",
             sourceWorkspace.getDisplayName().orElse(""), workspaceUuid);
 
+    // Get the enabled applications from the source workspace
+    List<String> applicationIds =
+        applicationDao.listWorkspaceApplicationsForClone(sourceWorkspace.getWorkspaceId());
+
     // Create the destination workspace synchronously first.
-    createWorkspace(destinationWorkspace, null, userRequest);
+    createWorkspace(destinationWorkspace, null, applicationIds, userRequest);
 
     // Remaining steps are an async flight.
     return jobService

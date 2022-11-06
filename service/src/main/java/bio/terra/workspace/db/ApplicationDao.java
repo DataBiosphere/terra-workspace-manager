@@ -67,6 +67,19 @@ public class ApplicationDao {
           + "  WHERE W.application_id = A.application_id AND workspace_id = :workspace_id) AS ecount"
           + " FROM application A";
 
+  // Query for finding applications that should be enabled on the target workspace
+  private static final String WORKSPACE_CLONE_QUERY =
+      """
+      SELECT A.application_id FROM enabled_application W, application A
+      WHERE
+        W.workspace_id = :workspace_id AND
+        W.application_id = A.application_id AND
+        A.state = :operating;
+      """;
+
+  private static final RowMapper<String> WORKSPACE_CLONE_ROW_MAPPER =
+      (rs, rowNum) -> rs.getString("application_id");
+
   @Autowired
   public ApplicationDao(NamedParameterJdbcTemplate jdbcTemplate) {
     this.jdbcTemplate = jdbcTemplate;
@@ -180,6 +193,19 @@ public class ApplicationDao {
   }
 
   /**
+   * Enable a list of applications. Used as part of create workspace
+   *
+   * @param workspaceUuid workspace to enable applications in
+   * @param applicationIds list of application ids
+   */
+  @WriteTransaction
+  public void enableWorkspaceApplications(UUID workspaceUuid, List<String> applicationIds) {
+    for (String applicationId : applicationIds) {
+      enableWorkspaceApplication(workspaceUuid, applicationId);
+    }
+  }
+
+  /**
    * Enable an application in a workspace - do not perform the application state check. This is only
    * used in testing.
    *
@@ -254,6 +280,16 @@ public class ApplicationDao {
       result.workspaceUuid(workspaceUuid);
     }
     return resultList;
+  }
+
+  @ReadTransaction
+  public List<String> listWorkspaceApplicationsForClone(UUID workspaceUuid) {
+    var params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceUuid.toString())
+            .addValue("operating", WsmApplicationState.OPERATING.toDb());
+
+    return jdbcTemplate.query(WORKSPACE_CLONE_QUERY, params, WORKSPACE_CLONE_ROW_MAPPER);
   }
 
   // internal workspace application lookup
