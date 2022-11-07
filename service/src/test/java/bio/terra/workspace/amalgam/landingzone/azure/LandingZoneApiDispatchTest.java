@@ -62,6 +62,26 @@ public class LandingZoneApiDispatchTest extends BaseAzureUnitTest {
   }
 
   @Test
+  void listAzureLandingZoneResourcesByPurpose_ResourcePurpose_Success() {
+    setupLandingZoneResources();
+    ApiAzureLandingZoneResourcesList response =
+        landingZoneApiDispatch.listAzureLandingZoneResourcesByPurpose(
+            BEARER_TOKEN, LANDING_ZONE_ID, ResourcePurpose.SHARED_RESOURCE);
+
+    verify(landingZoneService, times(1))
+        .listResourcesByPurpose(
+            ArgumentMatchers.eq(BEARER_TOKEN),
+            ArgumentMatchers.eq(LANDING_ZONE_ID),
+            ArgumentMatchers.eq(ResourcePurpose.SHARED_RESOURCE));
+
+    assertNotNull(response);
+    assertNotNull(response.getResources());
+    assertEquals(1, response.getResources().size());
+    assertEquals(
+        3, response.getResources().stream().findFirst().get().getDeployedResources().size());
+  }
+
+  @Test
   void listAzureLandingZoneResourcesByPurpose_Success_NoResults() {
     when(landingZoneService.listResourcesByPurpose(
             BEARER_TOKEN, LANDING_ZONE_ID, SubnetResourcePurpose.WORKSPACE_BATCH_SUBNET))
