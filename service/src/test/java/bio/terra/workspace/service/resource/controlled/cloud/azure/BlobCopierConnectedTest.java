@@ -114,18 +114,11 @@ public class BlobCopierConnectedTest extends BaseAzureConnectedTest {
     var sourceContainerClient =
         azureStorageAccessService.buildBlobContainerClient(sourceContainer, storageAcct);
 
-    BlobCopier bc =
-        new BlobCopier(
-            azureStorageAccessService,
-            storageAcct,
-            storageAcct,
-            sourceContainer,
-            destContainer,
-            userRequest);
+    BlobCopier bc = new BlobCopier(azureStorageAccessService, userRequest);
 
     // do the copy
     var sourceBlobs = uploadTestData(sourceContainerClient, 10);
-    var result = bc.copyBlobs();
+    var result = bc.copyBlobs(storageAcct, storageAcct, sourceContainer, destContainer);
 
     assertTrue(
         result.keySet().stream()

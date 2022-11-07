@@ -23,16 +23,19 @@ public class CopyAzureStorageContainerBlobsStep implements Step {
   private final ControlledAzureStorageContainerResource sourceContainer;
   private final AzureStorageAccessService azureStorageAccessService;
   private final AuthenticatedUserRequest userRequest;
+  private final BlobCopier blobCopier;
 
   public CopyAzureStorageContainerBlobsStep(
       AzureStorageAccessService azureStorageAccessService,
       ControlledAzureStorageContainerResource sourceContainer,
       ResourceDao resourceDao,
-      AuthenticatedUserRequest userRequest) {
+      AuthenticatedUserRequest userRequest,
+      BlobCopier blobCopier) {
     this.azureStorageAccessService = azureStorageAccessService;
     this.resourceDao = resourceDao;
     this.sourceContainer = sourceContainer;
     this.userRequest = userRequest;
+    this.blobCopier = blobCopier;
   }
 
   @Override
@@ -41,8 +44,9 @@ public class CopyAzureStorageContainerBlobsStep implements Step {
     var inputParameters = flightContext.getInputParameters();
 
     FlightUtils.validateRequiredEntries(
-        inputParameters,
-        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
+        inputParameters, WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID);
+    FlightUtils.validateRequiredEntries(
+        flightContext.getWorkingMap(),
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_STORAGE_ACCOUNT_RESOURCE_ID,
         WorkspaceFlightMapKeys.ControlledResourceKeys.CLONED_RESOURCE_DEFINITION);
 
@@ -75,15 +79,9 @@ public class CopyAzureStorageContainerBlobsStep implements Step {
                 WorkspaceFlightMapKeys.ControlledResourceKeys.CLONED_RESOURCE_DEFINITION,
                 ControlledAzureStorageContainerResource.class);
 
-    BlobCopier copier =
-        new BlobCopier(
-            azureStorageAccessService,
-            sourceStorageAccount,
-            destinationStorageAccount,
-            sourceContainer,
-            destinationContainer,
-            userRequest);
-    var results = copier.copyBlobs();
+    var results =
+        blobCopier.copyBlobs(
+            sourceStorageAccount, destinationStorageAccount, sourceContainer, destinationContainer);
     if (results.containsKey(BlobCopyStatus.ERROR)) {
       FlightUtils.setErrorResponse(
           flightContext, "Blobs failed to copy", HttpStatus.INTERNAL_SERVER_ERROR);

@@ -8,6 +8,7 @@ import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureStorageAccessService;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.BlobCopier;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.flight.clone.CheckControlledResourceAuthStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.ClonePolicyAttributesStep;
@@ -133,7 +134,11 @@ public class CloneControlledAzureStorageContainerResourceFlight extends Flight {
                 flightBeanBag.getFeatureConfiguration());
         addStep(
             new CopyAzureStorageContainerBlobsStep(
-                azureStorageService, sourceContainer, resourceDao, userRequest));
+                azureStorageService,
+                sourceContainer,
+                resourceDao,
+                userRequest,
+                new BlobCopier(azureStorageService, userRequest)));
       }
     }
   }

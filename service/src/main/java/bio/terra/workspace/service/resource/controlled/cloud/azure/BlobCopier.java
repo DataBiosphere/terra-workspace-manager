@@ -22,12 +22,7 @@ import org.slf4j.LoggerFactory;
 
 public class BlobCopier {
   private final Logger logger = LoggerFactory.getLogger(BlobCopier.class);
-
   private final AzureStorageAccessService storageAccessService;
-  private final ControlledAzureStorageResource sourceStorageAccount;
-  private final ControlledAzureStorageResource destinationStorageAccount;
-  private final ControlledAzureStorageContainerResource sourceContainer;
-  private final ControlledAzureStorageContainerResource destinationContainer;
   private final AuthenticatedUserRequest userRequest;
 
   private static final Duration MAX_POLL_TIMEOUT = Duration.ofMinutes(10);
@@ -39,27 +34,22 @@ public class BlobCopier {
           LongRunningOperationStatus.NOT_STARTED);
 
   public BlobCopier(
-      AzureStorageAccessService storageAccessService,
-      ControlledAzureStorageResource sourceStorageAccount,
-      ControlledAzureStorageResource destinationStorageAccount,
-      ControlledAzureStorageContainerResource sourceContainer,
-      ControlledAzureStorageContainerResource destinationContainer,
-      AuthenticatedUserRequest userRequest) {
+      AzureStorageAccessService storageAccessService, AuthenticatedUserRequest userRequest) {
     this.storageAccessService = storageAccessService;
-    this.sourceContainer = sourceContainer;
-    this.destinationContainer = destinationContainer;
-    this.sourceStorageAccount = sourceStorageAccount;
-    this.destinationStorageAccount = destinationStorageAccount;
     this.userRequest = userRequest;
   }
 
   /**
-   * Attempts to copy blobs from the source container to the destination container.
+   * Attempts to copy all blobs from the source container to the destination container.
    *
    * @return Map of BlobCopyStatus to poll responses; Any blob that results in a polling result
    *     other than LongRunningOperationStatus.SUCCESSFULLY_COMPLETED is considered failed.
    */
-  public Map<BlobCopyStatus, List<PollResponse<BlobCopyInfo>>> copyBlobs() {
+  public Map<BlobCopyStatus, List<PollResponse<BlobCopyInfo>>> copyBlobs(
+      ControlledAzureStorageResource sourceStorageAccount,
+      ControlledAzureStorageResource destinationStorageAccount,
+      ControlledAzureStorageContainerResource sourceContainer,
+      ControlledAzureStorageContainerResource destinationContainer) {
     var sourceBlobContainerClient =
         storageAccessService.buildBlobContainerClient(sourceContainer, sourceStorageAccount);
     var destinationAsyncBlobContainerClient =
@@ -74,6 +64,10 @@ public class BlobCopier {
         blobItems.map(
             sourceBlobItem ->
                 beginCopyBlob(
+                    storageAccessService,
+                    sourceContainer,
+                    sourceStorageAccount,
+                    userRequest,
                     sourceBlobItem,
                     sourceBlobContainerClient,
                     destinationAsyncBlobContainerClient));
@@ -104,14 +98,18 @@ public class BlobCopier {
   }
 
   private PollerFlux<BlobCopyInfo, Void> beginCopyBlob(
+      AzureStorageAccessService storageAccessService,
+      ControlledAzureStorageContainerResource sourceContainer,
+      ControlledAzureStorageResource sourceStorageAccount,
+      AuthenticatedUserRequest userRequest,
       BlobItem sourceBlobItem,
       BlobContainerClient sourceBlobContainerClient,
       BlobContainerAsyncClient destBlobContainerClient) {
     var sasBundle =
-        this.storageAccessService.createAzureStorageContainerSasToken(
-            this.sourceContainer.getWorkspaceId(),
-            this.sourceContainer,
-            this.sourceStorageAccount,
+        storageAccessService.createAzureStorageContainerSasToken(
+            sourceContainer.getWorkspaceId(),
+            sourceContainer,
+            sourceStorageAccount,
             OffsetDateTime.now().minusMinutes(15),
             OffsetDateTime.now().plusMinutes(15),
             userRequest,
