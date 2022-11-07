@@ -1,5 +1,6 @@
 package bio.terra.workspace.amalgam.landingzone.azure;
 
+import bio.terra.common.exception.ConflictException;
 import bio.terra.common.iam.BearerToken;
 import bio.terra.landingzone.job.LandingZoneJobService;
 import bio.terra.landingzone.job.model.JobReport;
@@ -323,7 +324,15 @@ public class LandingZoneApiDispatch {
       // The enforced logic is 1:1 relation between Billing Profile and a Landing Zone.
       // The landing zone service returns one record in the list if landing zone exists
       // for a given billing profile.
-      result.addLandingzonesItem(toApiAzureLandingZone(landingZones.get(0)));
+      if (landingZones.size() == 1) {
+        result.addLandingzonesItem(toApiAzureLandingZone(landingZones.get(0)));
+      } else {
+        throw new ConflictException(
+            String.format(
+                "There are more than one landing zone found for the given billing profile: '%s'. Please"
+                    + " check the landing zone deployment is correct.",
+                billingProfileId));
+      }
     }
     return result;
   }

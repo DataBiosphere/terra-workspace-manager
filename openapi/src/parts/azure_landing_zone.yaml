@@ -35,6 +35,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AzureLandingZoneList'
+        '409':
+          $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/ServerError'
 
@@ -117,8 +119,6 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
     get:
-      parameters:
-        - $ref: '#/components/parameters/LandingZoneId'
       summary: Get Azure landing zone
       operationId: getAzureLandingZone
       tags: [ LandingZones ]
