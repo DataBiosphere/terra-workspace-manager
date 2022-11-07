@@ -8,6 +8,7 @@ import bio.terra.landingzone.db.model.LandingZoneRecord;
 import bio.terra.landingzone.library.landingzones.deployment.LandingZoneTagKeys;
 import bio.terra.landingzone.library.landingzones.deployment.ResourcePurpose;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
+import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.resourcemanager.data.CreateStorageAccountRequestData;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
@@ -15,6 +16,10 @@ import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.Region;
 import com.azure.resourcemanager.storage.StorageManager;
 import com.azure.resourcemanager.storage.models.StorageAccount;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 /**
@@ -41,15 +46,18 @@ public class TestLandingZoneManager {
   private final UUID workspaceUuid;
   private final AzureCloudContext azureCloudContext;
   private final StorageManager storageManager;
+  private final WorkspaceDao workspaceDao;
 
   public TestLandingZoneManager(
       AzureCloudContextService azureCloudContextService,
       LandingZoneDao landingZoneDao,
+      WorkspaceDao workspaceDao,
       CrlService crlService,
       AzureConfiguration azureConfig,
       UUID workspaceUuid) {
     this.azureCloudContextService = azureCloudContextService;
     this.landingZoneDao = landingZoneDao;
+    this.workspaceDao = workspaceDao;
     this.crlService = crlService;
     this.azureConfig = azureConfig;
     this.workspaceUuid = workspaceUuid;
@@ -61,8 +69,8 @@ public class TestLandingZoneManager {
   }
 
   public void createLandingZoneWithSharedStorageAccount(
-      UUID landingZoneId, String storageAccountName, String region) {
-    createLandingZoneDbRecord(landingZoneId);
+      UUID landingZoneId, UUID workspaceId, String storageAccountName, String region) {
+    createLandingZoneDbRecord(landingZoneId, workspaceId);
     createStorageAccount(storageAccountName, region, landingZoneId);
   }
 
@@ -73,18 +81,19 @@ public class TestLandingZoneManager {
     storageManager.storageAccounts().deleteByResourceGroup(azureResourceGroup, storageAccountName);
   }
 
-  public void createLandingZoneWithoutResources(UUID landingZoneId) {
-    createLandingZoneDbRecord(landingZoneId);
+  public void createLandingZoneWithoutResources(UUID landingZoneId, UUID workspaceId) {
+    createLandingZoneDbRecord(landingZoneId, workspaceId);
   }
 
   public void deleteLandingZoneWithoutResources(UUID landingZoneId) {
     landingZoneDao.deleteLandingZone(landingZoneId);
   }
 
-  private void createLandingZoneDbRecord(UUID landingZoneId) {
+  private void createLandingZoneDbRecord(UUID landingZoneId, UUID workspaceId) {
     String definition = "QuasiLandingZoneWithSharedStorageAccount";
     String version = "v1";
     // create record in LZ database
+    var workspace = workspaceDao.getWorkspace(workspaceId);
     landingZoneDao.createLandingZone(
         LandingZoneRecord.builder()
             .landingZoneId(landingZoneId)
@@ -96,6 +105,8 @@ public class TestLandingZoneManager {
             .resourceGroupId(azureCloudContext.getAzureResourceGroupId())
             .subscriptionId(azureCloudContext.getAzureSubscriptionId())
             .tenantId(azureCloudContext.getAzureTenantId())
+            .billingProfileId(UUID.fromString(workspace.getSpendProfileId().get().getId()))
+            .createdDate(OffsetDateTime.of(LocalDate.now(), LocalTime.now(), ZoneOffset.UTC))
             .build());
   }
 
