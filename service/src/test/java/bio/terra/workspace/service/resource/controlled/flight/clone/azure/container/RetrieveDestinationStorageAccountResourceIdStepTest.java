@@ -5,7 +5,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import bio.terra.landingzone.db.exception.LandingZoneNotFoundException;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepStatus;
@@ -59,31 +58,6 @@ public class RetrieveDestinationStorageAccountResourceIdStepTest extends BaseUni
   }
 
   @Test
-  void doStep_failsIfNoLzNoSourceStorageAccount() throws InterruptedException {
-    when(lzApiDispatch.getLandingZoneId(ArgumentMatchers.any()))
-        .thenThrow(new IllegalStateException("not present"));
-
-    RetrieveDestinationStorageAccountResourceIdStep step =
-        new RetrieveDestinationStorageAccountResourceIdStep(resourceDao, lzApiDispatch, testUser);
-
-    var result = step.doStep(flightContext);
-    assertEquals(result.getStepStatus(), StepStatus.STEP_RESULT_FAILURE_FATAL);
-    assertEquals(result.getException().get().getClass(), LandingZoneNotFoundException.class);
-  }
-
-  @Test
-  void doStep_failsIfHasLzNoStorageAccount() throws InterruptedException {
-    when(lzApiDispatch.getLandingZoneId(ArgumentMatchers.any())).thenReturn(UUID.randomUUID());
-
-    RetrieveDestinationStorageAccountResourceIdStep step =
-        new RetrieveDestinationStorageAccountResourceIdStep(resourceDao, lzApiDispatch, testUser);
-
-    var result = step.doStep(flightContext);
-    assertEquals(result.getStepStatus(), StepStatus.STEP_RESULT_FAILURE_FATAL);
-    assertEquals(result.getException().get().getClass(), InvalidStorageAccountException.class);
-  }
-
-  @Test
   void doStep_retrieveStorageAccountFromLandingZone() throws InterruptedException {
     var storageAccountResourceId = UUID.randomUUID();
     var lzId = UUID.randomUUID();
@@ -116,6 +90,8 @@ public class RetrieveDestinationStorageAccountResourceIdStepTest extends BaseUni
             ArgumentMatchers.anyInt(),
             ArgumentMatchers.anyInt()))
         .thenReturn(accts);
+    when(lzApiDispatch.getLandingZoneId(ArgumentMatchers.any()))
+        .thenThrow(new IllegalStateException("not present"));
     RetrieveDestinationStorageAccountResourceIdStep step =
         new RetrieveDestinationStorageAccountResourceIdStep(resourceDao, lzApiDispatch, testUser);
 

@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.azure.container;
 
 import bio.terra.common.iam.BearerToken;
-import bio.terra.landingzone.db.exception.LandingZoneNotFoundException;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
@@ -19,6 +18,8 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import java.util.Optional;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Attempts to fetch the storage account ID for a new container in the destination workspace
@@ -32,6 +33,8 @@ import java.util.UUID;
  * </ol>
  */
 public class RetrieveDestinationStorageAccountResourceIdStep implements Step {
+  private static final Logger logger =
+      LoggerFactory.getLogger(RetrieveDestinationStorageAccountResourceIdStep.class);
 
   private final ResourceDao resourceDao;
   private final LandingZoneApiDispatch landingZoneApiDispatch;
@@ -81,14 +84,12 @@ public class RetrieveDestinationStorageAccountResourceIdStep implements Step {
         return StepResult.getStepResultSuccess();
       }
     } catch (IllegalStateException e) {
-      return new StepResult(
-          StepStatus.STEP_RESULT_FAILURE_FATAL,
-          new LandingZoneNotFoundException(
-              String.format(
-                  "Landing zone associated with the Azure cloud context not found. TenantId='%s', SubscriptionId='%s', ResourceGroupId='%s'",
-                  azureCloudContext.getAzureTenantId(),
-                  azureCloudContext.getAzureSubscriptionId(),
-                  azureCloudContext.getAzureResourceGroupId())));
+      logger.info(
+          String.format(
+              "Landing zone associated with the Azure cloud context not found. TenantId='%s', SubscriptionId='%s', ResourceGroupId='%s'",
+              azureCloudContext.getAzureTenantId(),
+              azureCloudContext.getAzureSubscriptionId(),
+              azureCloudContext.getAzureResourceGroupId()));
     }
 
     // fall back to the destination workspace's storage account (if present)
