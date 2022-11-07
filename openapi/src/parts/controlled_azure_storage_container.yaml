@@ -24,6 +24,50 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/storageContainer/{resourceId}/clone:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    post:
+      summary: Clone an Azure Storage Container
+      operationId: cloneAzureStorageContainer
+      tags: [ControlledAzureResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloneControlledAzureStorageContainerRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/ClonedControlledAzureStorageContainerResponse'
+        '202':
+          $ref: '#/components/responses/ClonedControlledAzureStorageContainerResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/storageContainer/clone-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about an Azure storage container clone job.
+      operationId: getCloneAzureStorageContainerResult
+      tags: [ ControlledAzureResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/ClonedControlledAzureStorageContainerResponse'
+        '202':
+          $ref: '#/components/responses/ClonedControlledAzureStorageContainerResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   /api/workspaces/v1/{workspaceId}/resources/controlled/azure/storageContainer/{resourceId}:
     post:
       parameters:
@@ -75,7 +119,66 @@ paths:
           $ref: '#/components/responses/ServerError'
 
 components:
+  responses:
+    ClonedControlledAzureStorageContainerResponse:
+      description: Response object for clone of an Azure storage container
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CloneControlledAzureStorageContainerResult'
+
   schemas:
+    CloneControlledAzureStorageContainerResult:
+      description: >-
+        API result class for cloning an Azure Storage Container.
+      type: object
+      properties:
+        container:
+          $ref: '#/components/schemas/ClonedControlledAzureStorageContainer'
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+
+    CloneControlledAzureStorageContainerRequest:
+      description: >-
+        Values to assign to the cloned storage container for a given source container. Leave name
+        and description null to take the source object's values. Any provided cloning instructions will override
+        those previously set on the source container.
+      type: object
+      required: [ destinationWorkspaceId, jobControl ]
+      properties:
+        destinationWorkspaceId:
+          description: ID of workspace to be cloned into
+          type: string
+          format: uuid
+        cloningInstructions:
+          $ref: "#/components/schemas/CloningInstructionsEnum"
+        name:
+          $ref: "#/components/schemas/Name"
+        description:
+          type: string
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+
+    ClonedControlledAzureStorageContainer:
+      description: >-
+        Response object for clone of an Azure storage container.
+      type: object
+      properties:
+        effectiveCloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
+        sourceWorkspaceId:
+          description: ID of the workspace of the source resource for this clone
+          type: string
+          format: uuid
+        sourceResourceId:
+          description: ID of the source resource
+          type: string
+          format: uuid
+        storageContainer:
+          $ref: "#/components/schemas/CreatedControlledAzureStorageContainer"
+
     AzureStorageContainerCreationParameters:
       description: >-
         Storage container-specific properties to be set on creation. These are a subset of the values
