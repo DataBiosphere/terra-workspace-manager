@@ -9,6 +9,7 @@ import bio.terra.landingzone.library.landingzones.deployment.SubnetResourcePurpo
 import bio.terra.landingzone.service.landingzone.azure.LandingZoneService;
 import bio.terra.landingzone.service.landingzone.azure.model.DeletedLandingZone;
 import bio.terra.landingzone.service.landingzone.azure.model.DeployedLandingZone;
+import bio.terra.landingzone.service.landingzone.azure.model.LandingZone;
 import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneDefinition;
 import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneRequest;
 import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneResource;
@@ -28,7 +29,8 @@ import bio.terra.workspace.generated.model.ApiCreateLandingZoneResult;
 import bio.terra.workspace.generated.model.ApiDeleteAzureLandingZoneJobResult;
 import bio.terra.workspace.generated.model.ApiDeleteAzureLandingZoneRequestBody;
 import bio.terra.workspace.generated.model.ApiDeleteAzureLandingZoneResult;
-import bio.terra.workspace.service.workspace.model.AzureCloudContext;
+import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.model.Workspace;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -46,11 +48,15 @@ public class LandingZoneApiDispatch {
       "Microsoft.Storage/storageAccounts";
 
   private final LandingZoneService landingZoneService;
+  private final WorkspaceService workspaceService;
   private final FeatureConfiguration features;
 
   public LandingZoneApiDispatch(
-      LandingZoneService landingZoneService, FeatureConfiguration features) {
+      LandingZoneService landingZoneService,
+      WorkspaceService workspaceService,
+      FeatureConfiguration features) {
     this.landingZoneService = landingZoneService;
+    this.workspaceService = workspaceService;
     this.features = features;
   }
 
@@ -243,21 +249,28 @@ public class LandingZoneApiDispatch {
         .landingZone(azureLandingZone);
   }
 
-  /**
-   * TODO (https://broadworkbench.atlassian.net/browse/TOAZ-221) This method is an initial
-   * implementation that must be revised, and likely be refactored once WSM stores the LZ id in the
-   * azure context. The initial assumption is that the cardinality of 1:1 between the cloud context
-   * and the LZ is enforced in the create operation, therefore more than one LZ per azure context is
-   * not allowed.
-   */
-  public UUID getLandingZoneId(AzureCloudContext azureCloudContext) {
-    var landingZoneTarget = MapperUtils.LandingZoneTargetMapper.from(azureCloudContext);
-    return landingZoneService.listLandingZoneIdsByTarget(landingZoneTarget).stream()
+  public UUID getLandingZoneId(BearerToken token, UUID workspaceId) {
+    Workspace workspace = workspaceService.getWorkspace(workspaceId);
+    Optional<UUID> profileId = workspace.getSpendProfileId().map(sp -> UUID.fromString(sp.getId()));
+
+    if (profileId.isEmpty()) {
+      throw new LandingZoneNotFoundException(
+          String.format(
+              "Landing zone could not be found. Workspace Id=%s doesn't have billing profile.",
+              workspace.getWorkspaceId()));
+    }
+
+    // getLandingZonesByBillingProfile returns a list. But it always contains only one item
+    return landingZoneService.getLandingZonesByBillingProfile(token, profileId.get()).stream()
         .findFirst()
+        .map(LandingZone::landingZoneId)
         .orElseThrow(
             () ->
                 new IllegalStateException(
-                    "Could not find a landing zone id for the given Azure context. Please check that the landing zone deployment is complete."));
+                    String.format(
+                        "Could not find a landing zone for the given billing profile: '%s'. Please"
+                            + " check that the landing zone deployment is complete.",
+                        profileId.get())));
   }
 
   public ApiDeleteAzureLandingZoneJobResult getDeleteAzureLandingZoneResult(

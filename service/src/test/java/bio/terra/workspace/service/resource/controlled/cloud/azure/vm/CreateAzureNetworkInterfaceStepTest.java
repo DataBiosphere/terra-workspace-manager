@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
+import bio.terra.common.iam.BearerToken;
 import bio.terra.landingzone.library.landingzones.deployment.SubnetResourcePurpose;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
@@ -125,6 +126,7 @@ public class CreateAzureNetworkInterfaceStepTest extends BaseAzureUnitTest {
   private void setUpNetworkInLZInteractionChain(UUID networkId, UUID workspaceId) {
     var lzId = UUID.randomUUID();
     var response = new ApiAzureLandingZoneResourcesList();
+    var bearerToken = new BearerToken(USER_REQUEST.getRequiredToken());
     response.addResourcesItem(
         new ApiAzureLandingZoneResourcesPurposeGroup()
             .purpose(SubnetResourcePurpose.WORKSPACE_COMPUTE_SUBNET.toString())
@@ -135,7 +137,9 @@ public class CreateAzureNetworkInterfaceStepTest extends BaseAzureUnitTest {
                         .resourceParentId(networkId.toString()))));
 
     when(resource.getNetworkId()).thenReturn(null);
-    when(landingZoneApiDispatch.getLandingZoneId(azureCloudContext)).thenReturn(lzId);
+    when(resource.getWorkspaceId()).thenReturn(workspaceId);
+    when(landingZoneApiDispatch.getLandingZoneId(eq(bearerToken), eq(workspaceId)))
+        .thenReturn(lzId);
     when(landingZoneApiDispatch.listAzureLandingZoneResourcesByPurpose(
             any(), eq(lzId), eq(SubnetResourcePurpose.WORKSPACE_COMPUTE_SUBNET)))
         .thenReturn(response);
