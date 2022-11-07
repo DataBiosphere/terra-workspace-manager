@@ -133,11 +133,7 @@ public class CloneControlledAzureStorageContainerResourceFlight extends Flight {
                 flightBeanBag.getFeatureConfiguration());
         addStep(
             new CopyAzureStorageContainerBlobsStep(
-                azureStorageService,
-                sourceContainer,
-                storageAccountKeyProvider,
-                resourceDao,
-                userRequest));
+                azureStorageService, sourceContainer, resourceDao, userRequest));
       }
     }
   }
