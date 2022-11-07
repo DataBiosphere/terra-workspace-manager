@@ -267,8 +267,10 @@ public class LandingZoneApiDispatch {
         .orElseThrow(
             () ->
                 new IllegalStateException(
-                    "Could not find a landing zone id for the given billing profile. Please"
-                        + "check that the landing zone deployment is complete."));
+                    String.format(
+                        "Could not find a landing zone for the given billing profile: '%s'. Please"
+                            + " check that the landing zone deployment is complete.",
+                        profileId.get())));
   }
 
   public ApiDeleteAzureLandingZoneJobResult getDeleteAzureLandingZoneResult(
