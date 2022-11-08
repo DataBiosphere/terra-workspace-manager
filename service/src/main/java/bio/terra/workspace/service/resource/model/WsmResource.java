@@ -217,7 +217,7 @@ public abstract class WsmResource {
    */
   public WsmResource buildReferencedClone(
       UUID destinationWorkspaceUuid,
-       UUID destinationResourceId,
+      UUID destinationResourceId,
       @Nullable UUID destinationFolderId,
       @Nullable String name,
       @Nullable String description) {

@@ -22,11 +22,10 @@ import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
-
-import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import javax.annotation.Nullable;
 
 public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
   private final String instanceName;
