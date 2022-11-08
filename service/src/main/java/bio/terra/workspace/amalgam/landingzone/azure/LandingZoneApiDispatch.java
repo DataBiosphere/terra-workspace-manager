@@ -1,5 +1,6 @@
 package bio.terra.workspace.amalgam.landingzone.azure;
 
+import bio.terra.common.exception.ConflictException;
 import bio.terra.common.iam.BearerToken;
 import bio.terra.landingzone.job.LandingZoneJobService;
 import bio.terra.landingzone.job.model.JobReport;
@@ -21,6 +22,8 @@ import bio.terra.workspace.generated.model.ApiAzureLandingZone;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDefinition;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDefinitionList;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
+import bio.terra.workspace.generated.model.ApiAzureLandingZoneDetails;
+import bio.terra.workspace.generated.model.ApiAzureLandingZoneList;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesList;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesPurposeGroup;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResult;
@@ -223,13 +226,13 @@ public class LandingZoneApiDispatch {
 
   private ApiAzureLandingZoneResult toApiAzureLandingZoneResult(
       LandingZoneJobService.AsyncJobResult<DeployedLandingZone> jobResult) {
-    ApiAzureLandingZone azureLandingZone = null;
+    ApiAzureLandingZoneDetails azureLandingZone = null;
     if (jobResult.getJobReport().getStatus().equals(JobReport.StatusEnum.SUCCEEDED)) {
       azureLandingZone =
           Optional.ofNullable(jobResult.getResult())
               .map(
                   lz ->
-                      new ApiAzureLandingZone()
+                      new ApiAzureLandingZoneDetails()
                           .id(lz.id())
                           .resources(
                               lz.deployedResources().stream()
@@ -292,5 +295,54 @@ public class LandingZoneApiDispatch {
       apiJobResult.resources(jobResult.getResult().deleteResources());
     }
     return apiJobResult;
+  }
+
+  public ApiAzureLandingZone getAzureLandingZone(BearerToken bearerToken, UUID landingZoneId) {
+    features.azureEnabledCheck();
+    LandingZone landingZoneRecord = landingZoneService.getLandingZone(bearerToken, landingZoneId);
+    return toApiAzureLandingZone(landingZoneRecord);
+  }
+
+  public ApiAzureLandingZoneList listAzureLandingZones(
+      BearerToken bearerToken, UUID billingProfileId) {
+    features.azureEnabledCheck();
+    if (billingProfileId != null) {
+      return getAzureLandingZonesByBillingProfile(bearerToken, billingProfileId);
+    }
+    List<LandingZone> landingZones = landingZoneService.listLandingZones(bearerToken);
+    return new ApiAzureLandingZoneList()
+        .landingzones(
+            landingZones.stream().map(this::toApiAzureLandingZone).collect(Collectors.toList()));
+  }
+
+  private ApiAzureLandingZoneList getAzureLandingZonesByBillingProfile(
+      BearerToken bearerToken, UUID billingProfileId) {
+    ApiAzureLandingZoneList result = new ApiAzureLandingZoneList();
+    List<LandingZone> landingZones =
+        landingZoneService.getLandingZonesByBillingProfile(bearerToken, billingProfileId);
+    if (landingZones.size() > 0) {
+      // The enforced logic is 1:1 relation between Billing Profile and a Landing Zone.
+      // The landing zone service returns one record in the list if landing zone exists
+      // for a given billing profile.
+      if (landingZones.size() == 1) {
+        result.addLandingzonesItem(toApiAzureLandingZone(landingZones.get(0)));
+      } else {
+        throw new ConflictException(
+            String.format(
+                "There are more than one landing zone found for the given billing profile: '%s'. Please"
+                    + " check the landing zone deployment is correct.",
+                billingProfileId));
+      }
+    }
+    return result;
+  }
+
+  private ApiAzureLandingZone toApiAzureLandingZone(LandingZone landingZone) {
+    return new ApiAzureLandingZone()
+        .billingProfileId(landingZone.billingProfileId())
+        .landingZoneId(landingZone.landingZoneId())
+        .definition(landingZone.definition())
+        .version(landingZone.version())
+        .createdDate(landingZone.createdDate());
   }
 }

@@ -63,7 +63,8 @@ public class RetrieveDestinationStorageAccountResourceIdStepTest extends BaseUni
     var lzId = UUID.randomUUID();
     var lzStorageAcct = mock(ApiAzureLandingZoneDeployedResource.class);
     when(lzStorageAcct.getResourceId()).thenReturn(storageAccountResourceId.toString());
-    when(lzApiDispatch.getLandingZoneId(ArgumentMatchers.any())).thenReturn(lzId);
+    when(lzApiDispatch.getLandingZoneId(ArgumentMatchers.any(), ArgumentMatchers.any()))
+        .thenReturn(lzId);
     when(lzApiDispatch.getSharedStorageAccount(ArgumentMatchers.any(), ArgumentMatchers.eq(lzId)))
         .thenReturn(Optional.of(lzStorageAcct));
 
@@ -90,7 +91,7 @@ public class RetrieveDestinationStorageAccountResourceIdStepTest extends BaseUni
             ArgumentMatchers.anyInt(),
             ArgumentMatchers.anyInt()))
         .thenReturn(accts);
-    when(lzApiDispatch.getLandingZoneId(ArgumentMatchers.any()))
+    when(lzApiDispatch.getLandingZoneId(ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenThrow(new IllegalStateException("not present"));
     RetrieveDestinationStorageAccountResourceIdStep step =
         new RetrieveDestinationStorageAccountResourceIdStep(resourceDao, lzApiDispatch, testUser);

@@ -70,10 +70,10 @@ public class RetrieveDestinationStorageAccountResourceIdStep implements Step {
 
     // check for the parent landing zone's storage account, if present
     try {
-      UUID lzId = landingZoneApiDispatch.getLandingZoneId(azureCloudContext);
+      BearerToken userRequestToken = new BearerToken(userRequest.getRequiredToken());
+      UUID lzId = landingZoneApiDispatch.getLandingZoneId(userRequestToken, destinationWorkspaceId);
       Optional<ApiAzureLandingZoneDeployedResource> lzStorageAcct =
-          landingZoneApiDispatch.getSharedStorageAccount(
-              new BearerToken(userRequest.getRequiredToken()), lzId);
+          landingZoneApiDispatch.getSharedStorageAccount(userRequestToken, lzId);
       if (lzStorageAcct.isPresent()) {
         context
             .getWorkingMap()

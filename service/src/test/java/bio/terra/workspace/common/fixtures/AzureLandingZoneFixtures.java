@@ -2,9 +2,13 @@ package bio.terra.workspace.common.fixtures;
 
 import bio.terra.landingzone.job.LandingZoneJobService;
 import bio.terra.landingzone.job.model.JobReport;
+import bio.terra.landingzone.library.landingzones.deployment.LandingZonePurpose;
+import bio.terra.landingzone.library.landingzones.deployment.ResourcePurpose;
+import bio.terra.landingzone.library.landingzones.deployment.SubnetResourcePurpose;
 import bio.terra.landingzone.service.landingzone.azure.model.DeletedLandingZone;
 import bio.terra.landingzone.service.landingzone.azure.model.DeployedLandingZone;
 import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneResource;
+import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneResourcesByPurpose;
 import bio.terra.landingzone.service.landingzone.azure.model.StartLandingZoneCreation;
 import bio.terra.landingzone.service.landingzone.azure.model.StartLandingZoneDeletion;
 import bio.terra.workspace.generated.model.ApiCreateAzureLandingZoneRequestBody;
@@ -13,6 +17,7 @@ import bio.terra.workspace.generated.model.ApiJobControl;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
@@ -138,5 +143,74 @@ public class AzureLandingZoneFixtures {
             .resultURL("create-result/"));
     asyncJobResult.result(new StartLandingZoneCreation(landingZoneId, "mydefinition", "v1"));
     return asyncJobResult;
+  }
+
+  public static LandingZoneResourcesByPurpose createListLandingZoneResourcesByPurposeResult() {
+    var listSubnets1 =
+        List.of(
+            LandingZoneResource.builder()
+                .resourceName("fooSubnet11")
+                .resourceParentId("fooNetworkVNetId1")
+                .region("fooRegion1")
+                .build(),
+            LandingZoneResource.builder()
+                .resourceName("fooSubnet12")
+                .resourceParentId("fooNetworkVNetId2")
+                .region("fooRegion2")
+                .build(),
+            LandingZoneResource.builder()
+                .resourceName("fooSubnet13")
+                .resourceParentId("fooNetworkVNetId1")
+                .region("fooRegion1")
+                .build());
+    LandingZonePurpose purposeSubnets1 = SubnetResourcePurpose.AKS_NODE_POOL_SUBNET;
+
+    var listSubnets2 =
+        List.of(
+            LandingZoneResource.builder()
+                .resourceName("fooSubnet21")
+                .resourceParentId("fooNetworkVNetId1")
+                .region("fooRegion1")
+                .build());
+    LandingZonePurpose purposeSubnets2 = SubnetResourcePurpose.POSTGRESQL_SUBNET;
+
+    var listResources3 =
+        List.of(
+            LandingZoneResource.builder()
+                .resourceId("Id31")
+                .resourceType("fooType31")
+                .region("fooRegion1")
+                .build(),
+            LandingZoneResource.builder()
+                .resourceId("Id32")
+                .resourceType("fooType32")
+                .region("fooRegion2")
+                .build(),
+            LandingZoneResource.builder()
+                .resourceId("Id33")
+                .resourceType("fooType33")
+                .region("fooRegion1")
+                .build());
+    LandingZonePurpose purposeSubnets3 = ResourcePurpose.SHARED_RESOURCE;
+
+    var listResources4 =
+        List.of(
+            LandingZoneResource.builder()
+                .resourceId("Id41")
+                .resourceType("fooType41")
+                .region("fooRegion1")
+                .build());
+    LandingZonePurpose purposeSubnets4 = ResourcePurpose.WLZ_RESOURCE;
+
+    return new LandingZoneResourcesByPurpose(
+        Map.of(
+            purposeSubnets4,
+            listResources4,
+            purposeSubnets3,
+            listResources3,
+            purposeSubnets1,
+            listSubnets1,
+            purposeSubnets2,
+            listSubnets2));
   }
 }
