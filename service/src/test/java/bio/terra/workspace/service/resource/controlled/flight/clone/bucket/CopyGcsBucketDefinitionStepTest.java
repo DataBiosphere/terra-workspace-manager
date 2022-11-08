@@ -30,10 +30,10 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
-import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpResponseException;
@@ -78,30 +78,6 @@ public class CopyGcsBucketDefinitionStepTest extends BaseUnitTestMockGcpCloudCon
   private static final String PROJECT_ID = "my-project-id";
   private static final String POLICY_GROUP = "fake-policy-group";
 
-  /**
-   * Creates the database artifact for a GCP cloud context without actually creating anything beyond
-   * the database row.
-   */
-  public static void createGcpCloudContextInDatabase(
-      WorkspaceDao workspaceDao, UUID workspaceUuid, String projectId) {
-    createCloudContextInDatabase(workspaceDao, workspaceUuid, projectId, CloudPlatform.GCP);
-  }
-
-  /**
-   * Creates the database artifact for a cloud context without actually creating anything beyond the
-   * database row.
-   */
-  public static void createCloudContextInDatabase(
-      WorkspaceDao workspaceDao,
-      UUID workspaceUuid,
-      String projectId,
-      CloudPlatform cloudPlatform) {
-    String flightId = UUID.randomUUID().toString();
-    workspaceDao.createCloudContextStart(workspaceUuid, cloudPlatform, flightId);
-    workspaceDao.createCloudContextFinish(
-        workspaceUuid, cloudPlatform, new GcpCloudContext(projectId).serialize(), flightId);
-  }
-
   @BeforeEach
   public void setup() throws InterruptedException, IOException {
     Workspace workspace =
@@ -111,7 +87,8 @@ public class CopyGcsBucketDefinitionStepTest extends BaseUnitTestMockGcpCloudCon
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
     workspaceDao.createWorkspace(workspace);
-    createGcpCloudContextInDatabase(workspaceDao, DESTINATION_WORKSPACE_ID, PROJECT_ID);
+    WorkspaceUnitTestUtils.createGcpCloudContextInDatabase(
+        workspaceDao, DESTINATION_WORKSPACE_ID, PROJECT_ID);
 
     when(mockCrlService().createStorageCow(any(String.class))).thenReturn(mockStorageCow);
     when(mockCrlService().createWsmSaNakedStorageClient()).thenReturn(mockStorageClient);
