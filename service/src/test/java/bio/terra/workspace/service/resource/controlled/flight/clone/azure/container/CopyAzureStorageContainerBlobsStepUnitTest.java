@@ -26,7 +26,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
-public class CopyAzureStorageContainerBlobsStepTest extends BaseAzureUnitTest {
+public class CopyAzureStorageContainerBlobsStepUnitTest extends BaseAzureUnitTest {
 
   @Mock private AzureStorageAccessService azureStorageAccessService;
   @Mock private ResourceDao resourceDao;
