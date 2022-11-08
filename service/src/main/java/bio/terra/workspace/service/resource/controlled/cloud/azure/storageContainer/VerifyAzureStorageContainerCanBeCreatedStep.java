@@ -88,7 +88,7 @@ public class VerifyAzureStorageContainerCanBeCreatedStep implements Step {
       FlightContext context, AzureCloudContext azureCloudContext, StorageManager storageManager) {
     return resource.getStorageAccountId() != null
         ? validateWorkspaceStorageAccountExists(context, azureCloudContext, storageManager)
-        : validateLandingZoneSharedStorageAccountExist(context, azureCloudContext, storageManager);
+        : validateLandingZoneSharedStorageAccountExist(context, storageManager);
   }
 
   private StepResult validateWorkspaceStorageAccountExists(
@@ -138,9 +138,11 @@ public class VerifyAzureStorageContainerCanBeCreatedStep implements Step {
   }
 
   private StepResult validateLandingZoneSharedStorageAccountExist(
-      FlightContext context, AzureCloudContext azureCloudContext, StorageManager storageManager) {
+      FlightContext context, StorageManager storageManager) {
     try {
-      UUID landingZoneId = landingZoneApiDispatch.getLandingZoneId(azureCloudContext);
+      UUID landingZoneId =
+          landingZoneApiDispatch.getLandingZoneId(
+              new BearerToken(userRequest.getRequiredToken()), resource.getWorkspaceId());
       Optional<ApiAzureLandingZoneDeployedResource> existingSharedStorageAccount =
           landingZoneApiDispatch.getSharedStorageAccount(
               new BearerToken(userRequest.getRequiredToken()), landingZoneId);
@@ -166,11 +168,7 @@ public class VerifyAzureStorageContainerCanBeCreatedStep implements Step {
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL,
           new LandingZoneNotFoundException(
-              String.format(
-                  "Landing zone associated with the Azure cloud context not found. TenantId='%s', SubscriptionId='%s', ResourceGroupId='%s'",
-                  azureCloudContext.getAzureTenantId(),
-                  azureCloudContext.getAzureSubscriptionId(),
-                  azureCloudContext.getAzureResourceGroupId())));
+              "Landing zone associated with the billing profile not found."));
     }
   }
 

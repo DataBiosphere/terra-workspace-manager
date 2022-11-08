@@ -502,7 +502,7 @@ public class ResourceValidationUtils {
   public static void validateProperties(Map<String, String> properties) {
     if (properties.containsKey(FOLDER_ID_KEY)) {
       try {
-        var uuid = UUID.fromString(properties.get(FOLDER_ID_KEY));
+        var unused = UUID.fromString(properties.get(FOLDER_ID_KEY));
       } catch (IllegalArgumentException e) {
         throw new BadRequestException(
             String.format(

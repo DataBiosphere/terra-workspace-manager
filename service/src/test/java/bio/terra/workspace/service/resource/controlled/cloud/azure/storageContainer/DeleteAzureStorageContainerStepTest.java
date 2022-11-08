@@ -25,7 +25,6 @@ import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.BaseStorageStepTest;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
-import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.resourcemanager.storage.models.BlobContainers;
 import java.util.Optional;
 import java.util.UUID;
@@ -117,7 +116,7 @@ public class DeleteAzureStorageContainerStepTest extends BaseStorageStepTest {
     UUID landingZoneId = UUID.randomUUID();
     initDeleteValidationStep(Optional.empty());
 
-    when(mockLandingZoneApiDispatch.getLandingZoneId(any(AzureCloudContext.class)))
+    when(mockLandingZoneApiDispatch.getLandingZoneId(any(BearerToken.class), any(UUID.class)))
         .thenReturn(landingZoneId);
     ApiAzureLandingZoneDeployedResource mockSharedStorageAccount =
         mock(ApiAzureLandingZoneDeployedResource.class);
@@ -154,7 +153,7 @@ public class DeleteAzureStorageContainerStepTest extends BaseStorageStepTest {
       throws InterruptedException {
     initDeleteValidationStep(Optional.empty());
 
-    when(mockLandingZoneApiDispatch.getLandingZoneId(any(AzureCloudContext.class)))
+    when(mockLandingZoneApiDispatch.getLandingZoneId(any(BearerToken.class), any(UUID.class)))
         .thenThrow(
             new IllegalStateException(
                 "Could not find a landing zone id for the given Azure context. "
@@ -174,7 +173,7 @@ public class DeleteAzureStorageContainerStepTest extends BaseStorageStepTest {
     UUID landingZoneId = UUID.randomUUID();
     initDeleteValidationStep(Optional.empty());
 
-    when(mockLandingZoneApiDispatch.getLandingZoneId(any(AzureCloudContext.class)))
+    when(mockLandingZoneApiDispatch.getLandingZoneId(any(BearerToken.class), any(UUID.class)))
         .thenReturn(landingZoneId);
     when(mockLandingZoneApiDispatch.getSharedStorageAccount(
             any(BearerToken.class), eq(landingZoneId)))

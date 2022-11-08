@@ -3,6 +3,7 @@ package bio.terra.workspace.service.folder;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -25,6 +26,7 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.job.JobService.JobResultOrException;
 import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
@@ -211,8 +213,10 @@ public class FolderServiceTest extends BaseConnectedTest {
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
 
-    folderService.deleteFolder(
-        workspaceId, fooFolder.id(), userAccessUtils.defaultUserAuthRequest());
+    String jobId =
+        folderService.deleteFolder(
+            workspaceId, fooFolder.id(), userAccessUtils.defaultUserAuthRequest());
+    jobService.waitForJob(jobId);
 
     List<Folder> folders = List.of(fooFolder, fooBarFolder, fooFooFolder, fooBarLooFolder);
     for (Folder f : folders) {
@@ -233,9 +237,13 @@ public class FolderServiceTest extends BaseConnectedTest {
 
   @Test
   void deleteFolder_writerAndFolderDoesNotPrivateResource_success() {
-    folderService.deleteFolder(
-        workspaceId, fooFooFolder.id(), userAccessUtils.secondUserAuthRequest());
+    var jobId =
+        folderService.deleteFolder(
+            workspaceId, fooFooFolder.id(), userAccessUtils.secondUserAuthRequest());
 
+    jobService.waitForJob(jobId);
+    JobResultOrException<Boolean> succeededJob = jobService.retrieveJobResult(jobId, Boolean.class);
+    assertNull(succeededJob.getException());
     assertThrows(
         FolderNotFoundException.class,
         () -> folderService.getFolder(workspaceId, fooFooFolder.id()));
@@ -250,8 +258,10 @@ public class FolderServiceTest extends BaseConnectedTest {
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
 
-    folderService.deleteFolder(
-        workspaceId, fooBarFolder.id(), userAccessUtils.defaultUserAuthRequest());
+    var jobId =
+        folderService.deleteFolder(
+            workspaceId, fooBarFolder.id(), userAccessUtils.defaultUserAuthRequest());
+    jobService.waitForJob(jobId);
 
     // assert foo/bar and foo/bar/loo are deleted.
     List<Folder> folders = List.of(fooBarFolder, fooBarLooFolder);
@@ -292,15 +302,17 @@ public class FolderServiceTest extends BaseConnectedTest {
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().lastStepFailure(true).doStepFailures(retrySteps).build());
 
+    var jobId =
+        folderService.deleteFolder(
+            workspaceId, fooFolder.id(), userAccessUtils.defaultUserAuthRequest());
+
+    jobService.waitForJob(jobId);
     // Service methods which wait for a flight to complete will throw an
     // InvalidResultStateException when that flight fails without a cause, which occurs when a
     // flight fails via debugInfo.
     assertThrows(
         InvalidResultStateException.class,
-        () ->
-            folderService.deleteFolder(
-                workspaceId, fooFolder.id(), userAccessUtils.defaultUserAuthRequest()));
-
+        () -> jobService.retrieveJobResult(jobId, Boolean.class));
     List<Folder> folders = List.of(fooFolder, fooBarFolder, fooFooFolder, fooBarLooFolder);
     for (Folder f : folders) {
       assertThrows(
