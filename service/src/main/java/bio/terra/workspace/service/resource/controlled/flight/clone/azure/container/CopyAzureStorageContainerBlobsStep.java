@@ -10,11 +10,12 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureStorageAccessService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.BlobCopier;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.BlobCopyStatus;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import com.azure.core.util.polling.LongRunningOperationStatus;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 
@@ -24,6 +25,13 @@ public class CopyAzureStorageContainerBlobsStep implements Step {
   private final AzureStorageAccessService azureStorageAccessService;
   private final AuthenticatedUserRequest userRequest;
   private final BlobCopier blobCopier;
+
+  private static final Set<LongRunningOperationStatus> ERROR_POLL_STATES =
+      Set.of(
+          LongRunningOperationStatus.FAILED,
+          LongRunningOperationStatus.IN_PROGRESS,
+          LongRunningOperationStatus.USER_CANCELLED,
+          LongRunningOperationStatus.NOT_STARTED);
 
   public CopyAzureStorageContainerBlobsStep(
       AzureStorageAccessService azureStorageAccessService,
@@ -82,7 +90,7 @@ public class CopyAzureStorageContainerBlobsStep implements Step {
     var results =
         blobCopier.copyBlobs(
             sourceStorageAccount, destinationStorageAccount, sourceContainer, destinationContainer);
-    if (results.containsKey(BlobCopyStatus.ERROR)) {
+    if (results.anyFailures()) {
       FlightUtils.setErrorResponse(
           flightContext, "Blobs failed to copy", HttpStatus.INTERNAL_SERVER_ERROR);
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL);

@@ -4,6 +4,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.in;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.stairway.FlightState;
@@ -29,7 +30,6 @@ import com.azure.storage.blob.models.BlobItem;
 import io.vavr.collection.Stream;
 import java.time.Duration;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.AfterAll;
@@ -120,9 +120,7 @@ public class BlobCopierConnectedTest extends BaseAzureConnectedTest {
     var sourceBlobs = uploadTestData(sourceContainerClient, 10);
     var result = bc.copyBlobs(storageAcct, storageAcct, sourceContainer, destContainer);
 
-    assertTrue(
-        result.keySet().stream()
-            .allMatch(status -> Objects.equals(BlobCopyStatus.SUCCESS, status)));
+    assertFalse(result.anyFailures());
     var destClient = azureStorageAccessService.buildBlobContainerClient(destContainer, storageAcct);
     var copiedBlobs =
         destClient.listBlobs().stream().map(BlobItem::getName).collect(Collectors.toList());

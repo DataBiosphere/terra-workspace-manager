@@ -14,9 +14,10 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureStorageAccessService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.BlobCopier;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.BlobCopyStatus;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.BlobCopierResult;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import com.azure.core.util.polling.LongRunningOperationStatus;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -71,7 +72,9 @@ public class CopyAzureStorageContainerBlobsStepTest extends BaseAzureUnitTest {
     var copyBlobsStep =
         new CopyAzureStorageContainerBlobsStep(
             azureStorageAccessService, sourceContainer, resourceDao, userRequest, copier);
-    when(copier.copyBlobs(any(), any(), any(), any())).thenReturn(Map.of());
+    var copyResult =
+        new BlobCopierResult(Map.of(LongRunningOperationStatus.SUCCESSFULLY_COMPLETED, List.of()));
+    when(copier.copyBlobs(any(), any(), any(), any())).thenReturn(copyResult);
 
     var result = copyBlobsStep.doStep(flightContext);
 
@@ -79,13 +82,19 @@ public class CopyAzureStorageContainerBlobsStepTest extends BaseAzureUnitTest {
   }
 
   @Test
-  void copyBlobs_errorState() throws InterruptedException {
+  void copyBlobs_failsWhenBlobCopyFails() throws InterruptedException {
     var copier = mock(BlobCopier.class);
     var copyBlobsStep =
         new CopyAzureStorageContainerBlobsStep(
             azureStorageAccessService, sourceContainer, resourceDao, userRequest, copier);
-    when(copier.copyBlobs(any(), any(), any(), any()))
-        .thenReturn(Map.of(BlobCopyStatus.ERROR, List.of()));
+    var errorCopyResult =
+        new BlobCopierResult(
+            Map.of(
+                LongRunningOperationStatus.SUCCESSFULLY_COMPLETED,
+                List.of(),
+                LongRunningOperationStatus.FAILED,
+                List.of()));
+    when(copier.copyBlobs(any(), any(), any(), any())).thenReturn(errorCopyResult);
 
     var result = copyBlobsStep.doStep(flightContext);
 
