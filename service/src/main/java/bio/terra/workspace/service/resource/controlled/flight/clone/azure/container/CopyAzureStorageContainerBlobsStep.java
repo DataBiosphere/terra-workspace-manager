@@ -14,8 +14,6 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.Contr
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
-import com.azure.core.util.polling.LongRunningOperationStatus;
-import java.util.Set;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 
@@ -25,13 +23,6 @@ public class CopyAzureStorageContainerBlobsStep implements Step {
   private final AzureStorageAccessService azureStorageAccessService;
   private final AuthenticatedUserRequest userRequest;
   private final BlobCopier blobCopier;
-
-  private static final Set<LongRunningOperationStatus> ERROR_POLL_STATES =
-      Set.of(
-          LongRunningOperationStatus.FAILED,
-          LongRunningOperationStatus.IN_PROGRESS,
-          LongRunningOperationStatus.USER_CANCELLED,
-          LongRunningOperationStatus.NOT_STARTED);
 
   public CopyAzureStorageContainerBlobsStep(
       AzureStorageAccessService azureStorageAccessService,

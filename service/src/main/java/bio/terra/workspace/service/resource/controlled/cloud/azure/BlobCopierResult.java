@@ -17,12 +17,12 @@ public record BlobCopierResult(
           LongRunningOperationStatus.USER_CANCELLED,
           LongRunningOperationStatus.NOT_STARTED);
 
-    /**
-     * Returns true if any blob copy operation is not successful.
-     *
-     * Note that we consider LongRunningOperationStatus.IN_PROGRESS as not successful, since the operation is still
-     * in progress and may eventually fail out.
-     */
+  /**
+   * Returns true if any blob copy operation is not successful.
+   *
+   * <p>Note that we consider LongRunningOperationStatus.IN_PROGRESS as not successful, since the
+   * operation is still in progress and may eventually fail out.
+   */
   public boolean anyFailures() {
     return pollingResults.keySet().stream().anyMatch(ERROR_POLL_STATES::contains);
   }

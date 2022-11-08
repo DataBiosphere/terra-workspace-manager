@@ -9,9 +9,7 @@ dependencies {
   implementation group: "com.google.guava", name:"guava"
 
   // Azure dependencies
-  implementation ('com.azure:azure-storage-blob:12.20.0') {
-    force = true
-  }
+  implementation 'com.azure:azure-storage-blob:12.17.1'
 
   // Terra deps
   implementation group: "bio.terra", name: "datarepo-client", version: "1.41.0-SNAPSHOT"

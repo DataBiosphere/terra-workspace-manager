@@ -29,8 +29,13 @@ public class BlobCopier {
   }
 
   /**
-   * Attempts to copy all blobs from the source container to the destination container.
+   * Attempts to copy all blobs from the source container to the destination container. The calling
+   * principal must have READ-level access on the storage container resource.
    *
+   * @param sourceStorageAccount Azure storage account for the source container
+   * @param destinationStorageAccount Azure storage account for the destination container
+   * @param sourceContainer Azure storage container containing the blobs to be copied
+   * @param destinationContainer Azure storage container that will receive the copied blobs
    * @return BlobCopyResult containing the status of each copy operation
    */
   public BlobCopierResult copyBlobs(

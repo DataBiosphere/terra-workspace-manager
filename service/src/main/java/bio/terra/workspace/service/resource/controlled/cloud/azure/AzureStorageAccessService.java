@@ -10,7 +10,6 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.Contr
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.StorageAccountKeyProvider;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import com.azure.core.http.HttpClient;
-import com.azure.storage.blob.BlobContainerAsyncClient;
 import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.BlobContainerClientBuilder;
 import com.azure.storage.blob.sas.BlobContainerSasPermission;
@@ -170,6 +169,14 @@ public class AzureStorageAccessService {
             token));
   }
 
+  /**
+   * Returns an Azure container client suitable for interacting with a storage container and it's
+   * constiuent blobs.
+   *
+   * @param containerResource The WSM container resource the client will operate on
+   * @param storageAccountResource The parent storage account for the WSM container resource
+   * @return An Azure blob container client
+   */
   public BlobContainerClient buildBlobContainerClient(
       ControlledAzureStorageContainerResource containerResource,
       ControlledAzureStorageResource storageAccountResource) {
@@ -183,20 +190,5 @@ public class AzureStorageAccessService {
         .httpClient(HttpClient.createDefault())
         .containerName(containerResource.getStorageContainerName())
         .buildClient();
-  }
-
-  public BlobContainerAsyncClient buildBlobContainerAsyncClient(
-      ControlledAzureStorageContainerResource containerResource,
-      ControlledAzureStorageResource storageAccountResource) {
-    StorageSharedKeyCredential storageAccountKey =
-        storageAccountKeyProvider.getStorageAccountKey(
-            containerResource.getWorkspaceId(), storageAccountResource.getStorageAccountName());
-
-    return new BlobContainerClientBuilder()
-        .credential(storageAccountKey)
-        .endpoint(storageAccountResource.getStorageAccountEndpoint())
-        .httpClient(HttpClient.createDefault())
-        .containerName(containerResource.getStorageContainerName())
-        .buildAsyncClient();
   }
 }
