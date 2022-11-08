@@ -10,20 +10,10 @@ import org.springframework.boot.test.mock.mockito.MockBean;
  * Mock beans used by (or not conflicting with) all unit tests
  */
 public class BaseUnitTestMocks extends BaseTest {
-  //  @MockBean private ControlledResourceMetadataManager mockControlledResourceMetadataManager;
-  //  @MockBean private ControlledResourceService mockControlledResourceService;
   @MockBean private CrlService mockCrlService;
   @MockBean private FeatureConfiguration mockFeatureConfiguration;
   @MockBean private SamService mockSamService;
   @MockBean private TpsApiDispatch mockTpsApiDispatch;
-
-  //  public ControlledResourceMetadataManager mockControlledResourceMetadataManager() {
-  //    return mockControlledResourceMetadataManager;
-  //  }
-  //
-  //  public ControlledResourceService mockControlledResourceService() {
-  //    return mockControlledResourceService;
-  //  }
 
   public CrlService mockCrlService() {
     return mockCrlService;
