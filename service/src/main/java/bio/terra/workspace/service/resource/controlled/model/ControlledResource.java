@@ -201,7 +201,7 @@ public abstract class ControlledResource extends WsmResource {
     }
   }
 
-  public ControlledResourceFields buildControlledResourceCommonFields(
+  public ControlledResourceFields buildControlledCloneResourceCommonFields(
       UUID destinationWorkspaceUuid,
       UUID destinationResourceId,
       @Nullable UUID destinationFolderId,

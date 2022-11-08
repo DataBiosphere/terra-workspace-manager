@@ -180,14 +180,14 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
   @Override
   public WsmResource buildReferencedClone(
       UUID destinationWorkspaceUuid,
-      @org.jetbrains.annotations.Nullable UUID destinationResourceId,
-      @org.jetbrains.annotations.Nullable UUID destinationFolderId,
-      @org.jetbrains.annotations.Nullable String name,
-      @org.jetbrains.annotations.Nullable String description) {
+      UUID destinationResourceId,
+      @Nullable UUID destinationFolderId,
+      @Nullable String name,
+      @Nullable String description) {
     ReferencedBigQueryDatasetResource.Builder resultBuilder =
         toBuilder()
             .wsmResourceFields(
-                buildCloneResourceCommonFields(
+                buildReferencedCloneResourceCommonFields(
                     destinationWorkspaceUuid,
                     destinationResourceId,
                     destinationFolderId,

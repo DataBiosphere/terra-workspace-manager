@@ -217,7 +217,7 @@ public abstract class WsmResource {
    */
   public WsmResource buildReferencedClone(
       UUID destinationWorkspaceUuid,
-      @Nullable UUID destinationResourceId,
+       UUID destinationResourceId,
       @Nullable UUID destinationFolderId,
       @Nullable String name,
       @Nullable String description) {
@@ -226,7 +226,7 @@ public abstract class WsmResource {
             "You cannot make a reference clone of a %s resource", getResourceType().name()));
   }
 
-  protected WsmResourceFields buildCloneResourceCommonFields(
+  protected WsmResourceFields buildReferencedCloneResourceCommonFields(
       UUID destinationWorkspaceUuid,
       UUID destinationResourceId,
       @Nullable UUID destinationFolderId,

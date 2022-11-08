@@ -22,6 +22,8 @@ import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
+
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -168,14 +170,14 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
   @Override
   public WsmResource buildReferencedClone(
       UUID destinationWorkspaceUuid,
-      @org.jetbrains.annotations.Nullable UUID destinationResourceId,
-      @org.jetbrains.annotations.Nullable UUID destinationFolderId,
-      @org.jetbrains.annotations.Nullable String name,
-      @org.jetbrains.annotations.Nullable String description) {
+      UUID destinationResourceId,
+      @Nullable UUID destinationFolderId,
+      @Nullable String name,
+      @Nullable String description) {
     ReferencedDataRepoSnapshotResource.Builder resultBuilder =
         toBuilder()
             .wsmResourceFields(
-                buildCloneResourceCommonFields(
+                buildReferencedCloneResourceCommonFields(
                     destinationWorkspaceUuid,
                     destinationResourceId,
                     destinationFolderId,

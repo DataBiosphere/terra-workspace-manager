@@ -51,7 +51,7 @@ public class WorkspaceCloneUtils {
         .projectId(destinationProjectId)
         .datasetName(cloudInstanceName)
         .common(
-            sourceDataset.buildControlledResourceCommonFields(
+            sourceDataset.buildControlledCloneResourceCommonFields(
                 destinationWorkspaceId,
                 destinationResourceId,
                 destinationFolderId,
@@ -71,7 +71,7 @@ public class WorkspaceCloneUtils {
     return ControlledGcsBucketResource.builder()
         .bucketName(cloudInstanceName)
         .common(
-            sourceBucket.buildControlledResourceCommonFields(
+            sourceBucket.buildControlledCloneResourceCommonFields(
                 destinationWorkspaceId,
                 destinationResourceId,
                 destinationFolderId,

@@ -160,12 +160,12 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
   @Override
   public WsmResource buildReferencedClone(
       UUID destinationWorkspaceUuid,
-      @Nullable UUID destinationResourceId,
+      UUID destinationResourceId,
       @Nullable UUID destinationFolderId,
       @Nullable String name,
       @Nullable String description) {
     WsmResourceFields wsmResourceFields =
-        buildCloneResourceCommonFields(
+        buildReferencedCloneResourceCommonFields(
             destinationWorkspaceUuid,
             destinationResourceId,
             destinationFolderId,
