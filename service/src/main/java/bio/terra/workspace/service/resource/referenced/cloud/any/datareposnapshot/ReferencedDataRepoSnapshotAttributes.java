@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.referenced.cloud.gcp.datareposnapshot;
+package bio.terra.workspace.service.resource.referenced.cloud.any.datareposnapshot;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;

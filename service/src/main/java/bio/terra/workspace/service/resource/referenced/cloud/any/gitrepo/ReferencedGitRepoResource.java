@@ -13,10 +13,11 @@ import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
+import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
-import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
+import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
@@ -111,6 +112,25 @@ public class ReferencedGitRepoResource extends ReferencedResource {
     // Given it is useful to clone a git repo reference when cloning a workspace even though the
     // credential shouldn't be cloned, we simply skip the access check for now.
     return true;
+  }
+
+  @Override
+  public WsmResource buildReferencedClone(
+      UUID destinationWorkspaceUuid,
+      UUID destinationResourceId,
+      @Nullable UUID destinationFolderId,
+      @Nullable String name,
+      @Nullable String description) {
+    ReferencedGitRepoResource.Builder resultBuilder =
+        toBuilder()
+            .wsmResourceFields(
+                buildReferencedCloneResourceCommonFields(
+                    destinationWorkspaceUuid,
+                    destinationResourceId,
+                    destinationFolderId,
+                    name,
+                    description));
+    return resultBuilder.build();
   }
 
   public ApiGitRepoAttributes toApiAttributes() {
