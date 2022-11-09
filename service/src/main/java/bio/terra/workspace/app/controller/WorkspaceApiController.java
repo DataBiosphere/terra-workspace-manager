@@ -66,6 +66,7 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import io.opencensus.contrib.spring.aop.Traced;
+import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -276,12 +277,19 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         .gcpContext(gcpContext)
         .azureContext(azureContext)
         .createdDate(
-            createDetailsOptional.map(ActivityLogChangeDetails::getChangeDate).orElse(null))
-        .createdBy(createDetailsOptional.map(ActivityLogChangeDetails::getActorEmail).orElse(null))
+            createDetailsOptional
+                .map(ActivityLogChangeDetails::getChangeDate)
+                .orElse(OffsetDateTime.MIN))
+        .createdBy(
+            createDetailsOptional.map(ActivityLogChangeDetails::getActorEmail).orElse("unknown"))
         .lastUpdatedDate(
-            lastChangeDetailsOptional.map(ActivityLogChangeDetails::getChangeDate).orElse(null))
+            lastChangeDetailsOptional
+                .map(ActivityLogChangeDetails::getChangeDate)
+                .orElse(OffsetDateTime.MIN))
         .lastUpdatedBy(
-            lastChangeDetailsOptional.map(ActivityLogChangeDetails::getActorEmail).orElse(null))
+            lastChangeDetailsOptional
+                .map(ActivityLogChangeDetails::getActorEmail)
+                .orElse("unknown"))
         .policies(workspacePolicies);
   }
 
