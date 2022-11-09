@@ -3,6 +3,7 @@ package bio.terra.workspace.app.controller;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.SHORT_DESCRIPTION_PROPERTY;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.TYPE_PROPERTY;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.VERSION_PROPERTY;
+import static bio.terra.workspace.common.utils.MockMvcUtils.UPDATE_WORKSPACES_V1_POLICIES_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.UPDATE_WORKSPACES_V1_PROPERTIES_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_PATH;
@@ -11,6 +12,7 @@ import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -23,6 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import bio.terra.workspace.common.BaseUnitTestMockDataRepoService;
 import bio.terra.workspace.common.utils.MockMvcUtils;
+import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceResult;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
@@ -34,9 +37,12 @@ import bio.terra.workspace.generated.model.ApiResourceCloneDetails;
 import bio.terra.workspace.generated.model.ApiTpsComponent;
 import bio.terra.workspace.generated.model.ApiTpsObjectType;
 import bio.terra.workspace.generated.model.ApiTpsPaoGetResult;
+import bio.terra.workspace.generated.model.ApiTpsPaoUpdateRequest;
+import bio.terra.workspace.generated.model.ApiTpsPaoUpdateResult;
 import bio.terra.workspace.generated.model.ApiTpsPolicyInput;
 import bio.terra.workspace.generated.model.ApiTpsPolicyInputs;
 import bio.terra.workspace.generated.model.ApiTpsPolicyPair;
+import bio.terra.workspace.generated.model.ApiTpsUpdateMode;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
@@ -47,6 +53,7 @@ import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants.Properties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
+import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -58,6 +65,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 
 /**
  * An example of a mockMvc-based unit test for a controller.
@@ -80,6 +88,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
   @Autowired ObjectMapper objectMapper;
+  @Autowired WorkspaceActivityLogDao workspaceActivityLogDao;
 
   private static ApiTpsPaoGetResult emptyWorkspacePao() {
     return new ApiTpsPaoGetResult()
@@ -363,6 +372,44 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
     assertNull(gotWorkspace.getPolicies());
   }
 
+  @Test
+  public void updatePolicies_tpsDisabled_throws501() throws Exception {
+    when(mockFeatureConfiguration().isTpsEnabled()).thenReturn(false);
+    ApiCreatedWorkspace workspace = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
+
+    updatePoliciesExpect(workspace.getId(), HttpStatus.SC_NOT_IMPLEMENTED);
+  }
+
+  @Test
+  public void updatePolicies_tpsEnabledAndPolicyUpdated_log() throws Exception {
+    ApiCreatedWorkspace workspace = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
+    when(mockTpsApiDispatch().updatePao(any(), eq(workspace.getId()), any()))
+        .thenReturn(new ApiTpsPaoUpdateResult().updateApplied(true));
+    OffsetDateTime lastChangedDate =
+        workspaceActivityLogDao.getLastUpdateDetails(workspace.getId()).get().getChangeDate();
+
+    ApiTpsPaoUpdateResult result = updatePolicies(workspace.getId());
+    assertTrue(result.isUpdateApplied());
+    assertTrue(
+        lastChangedDate.isBefore(
+            workspaceActivityLogDao.getLastUpdateDetails(workspace.getId()).get().getChangeDate()));
+  }
+
+  @Test
+  public void updatePolicies_tpsEnabledAndPolicyNotUpdated_notLog() throws Exception {
+    ApiCreatedWorkspace workspace = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
+    when(mockTpsApiDispatch().updatePao(any(), eq(workspace.getId()), any()))
+        .thenReturn(new ApiTpsPaoUpdateResult().updateApplied(false));
+    OffsetDateTime lastChangedDate =
+        workspaceActivityLogDao.getLastUpdateDetails(workspace.getId()).get().getChangeDate();
+
+    ApiTpsPaoUpdateResult result = updatePolicies(workspace.getId());
+    assertFalse(result.isUpdateApplied());
+    assertTrue(
+        lastChangedDate.isEqual(
+            workspaceActivityLogDao.getLastUpdateDetails(workspace.getId()).get().getChangeDate()));
+  }
+
   private ApiErrorReport createRawlsWorkspaceWithPolicyExpectError(int expectedCode)
       throws Exception {
     ApiTpsPolicyInputs policyInputs =
@@ -426,5 +473,38 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
         .filter(w -> w.getId().equals(id))
         .findFirst()
         .orElseThrow(() -> new RuntimeException("workspace " + id + "not found in list!"));
+  }
+
+  private ApiTpsPaoUpdateResult updatePolicies(UUID workspaceId) throws Exception {
+    var serializedResponse =
+        updatePoliciesExpect(workspaceId, HttpStatus.SC_OK)
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    return objectMapper.readValue(serializedResponse, ApiTpsPaoUpdateResult.class);
+  }
+
+  private ResultActions updatePoliciesExpect(UUID workspaceId, int code) throws Exception {
+    ApiTpsPaoUpdateRequest updateRequest =
+        new ApiTpsPaoUpdateRequest()
+            .updateMode(ApiTpsUpdateMode.ENFORCE_CONFLICT)
+            .addAttributes(
+                new ApiTpsPolicyInputs()
+                    .addInputsItem(
+                        new ApiTpsPolicyInput()
+                            .namespace("terra")
+                            .name("region-constraint")
+                            .addAdditionalDataItem(
+                                new ApiTpsPolicyPair().key("foo").value("bar"))));
+    return mockMvc
+        .perform(
+            addAuth(
+                patch(String.format(UPDATE_WORKSPACES_V1_POLICIES_PATH_FORMAT, workspaceId))
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .characterEncoding("UTF-8")
+                    .content(objectMapper.writeValueAsString(updateRequest)),
+                USER_REQUEST))
+        .andExpect(status().is(code));
   }
 }

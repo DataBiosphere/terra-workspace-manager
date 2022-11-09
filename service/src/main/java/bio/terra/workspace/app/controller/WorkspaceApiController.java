@@ -372,10 +372,19 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     ApiTpsPaoUpdateResult result =
         tpsApiDispatch.updatePao(
             new BearerToken(userRequest.getRequiredToken()), workspaceId, body);
-    workspaceActivityLogDao.writeActivity(workspaceId, new DbWorkspaceActivityLog(
-        userRequest.getEmail(),userRequest.getSubjectId(), OperationType.UPDATE));
-    logger.info(
-        "Finished updating workspace policies {} for {}", workspaceId, userRequest.getEmail());
+    if (Boolean.TRUE.equals(result.isUpdateApplied())) {
+      workspaceActivityLogDao.writeActivity(
+          workspaceId,
+          new DbWorkspaceActivityLog(
+              userRequest.getEmail(), userRequest.getSubjectId(), OperationType.UPDATE));
+      logger.info(
+          "Finished updating workspace policies {} for {}", workspaceId, userRequest.getEmail());
+    } else {
+      logger.warn(
+          "Workspace policies update failed to apply to {} for {}",
+          workspaceId,
+          userRequest.getEmail());
+    }
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
 

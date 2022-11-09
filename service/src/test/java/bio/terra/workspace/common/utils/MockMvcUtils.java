@@ -49,6 +49,7 @@ import bio.terra.workspace.generated.model.ApiTpsPolicyInputs;
 import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
+import bio.terra.workspace.service.iam.AuthHeaderKeys;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -90,6 +91,8 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/clone-result/%s";
   public static final String UPDATE_WORKSPACES_V1_PROPERTIES_PATH_FORMAT =
       "/api/workspaces/v1/%s/properties";
+  public static final String UPDATE_WORKSPACES_V1_POLICIES_PATH_FORMAT =
+      "/api/workspaces/v1/%S/policies";
   public static final String GRANT_ROLE_PATH_FORMAT = "/api/workspaces/v1/%s/roles/%s/members";
   public static final String CREATE_SNAPSHOT_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/referenced/datarepo/snapshots";
@@ -164,7 +167,10 @@ public class MockMvcUtils {
 
   public static MockHttpServletRequestBuilder addAuth(
       MockHttpServletRequestBuilder request, AuthenticatedUserRequest userRequest) {
-    return request.header(AUTH_HEADER, "Bearer " + userRequest.getRequiredToken());
+    return request
+        .header(AUTH_HEADER, "Bearer " + userRequest.getRequiredToken())
+        .header(AuthHeaderKeys.OIDC_CLAIM_EMAIL.getKeyName(), userRequest.getEmail())
+        .header(AuthHeaderKeys.OIDC_CLAIM_USER_ID.getKeyName(), userRequest.getSubjectId());
   }
 
   public static MockHttpServletRequestBuilder addJsonContentType(
