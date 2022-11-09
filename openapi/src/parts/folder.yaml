@@ -83,8 +83,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
-    delete:
-      summary: Delete a folder.
+    post:
+      summary: Delete a folder asynchronously.
       operationId: deleteFolder
       tags: [Folder]
       responses:

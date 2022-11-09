@@ -237,13 +237,12 @@ public class MockMvcUtils {
   }
 
   public ApiCreatedWorkspace createWorkspaceWithoutCloudContext(
-      @Nullable AuthenticatedUserRequest userRequest) throws Exception {
+      AuthenticatedUserRequest userRequest) throws Exception {
     return createWorkspaceWithoutCloudContext(userRequest, ApiWorkspaceStageModel.MC_WORKSPACE);
   }
 
   public ApiCreatedWorkspace createWorkspaceWithoutCloudContext(
-      @Nullable AuthenticatedUserRequest userRequest, ApiWorkspaceStageModel stageModel)
-      throws Exception {
+      AuthenticatedUserRequest userRequest, ApiWorkspaceStageModel stageModel) throws Exception {
 
     ApiCreateWorkspaceRequestBody request =
         WorkspaceFixtures.createWorkspaceRequestBody(stageModel);
@@ -262,7 +261,7 @@ public class MockMvcUtils {
   }
 
   public ApiErrorReport createWorkspaceWithoutCloudContextExpectError(
-      @Nullable AuthenticatedUserRequest userRequest,
+      AuthenticatedUserRequest userRequest,
       UUID workspaceId,
       @Nullable ApiWorkspaceStageModel stageModel,
       @Nullable ApiTpsPolicyInputs policyInputs,
