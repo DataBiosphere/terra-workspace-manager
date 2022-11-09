@@ -130,7 +130,8 @@ public class CloneControlledAzureStorageContainerResourceFlight extends Flight {
             new AzureStorageAccessService(
                 flightBeanBag.getSamService(),
                 flightBeanBag.getStorageAccountKeyProvider(),
-                flightBeanBag.getFeatureConfiguration());
+                flightBeanBag.getFeatureConfiguration(),
+                flightBeanBag.getAzureConfig());
         addStep(
             new CopyAzureStorageContainerBlobsStep(
                 azureStorageService,

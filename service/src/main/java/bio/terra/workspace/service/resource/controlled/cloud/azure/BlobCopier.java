@@ -11,7 +11,6 @@ import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.models.BlobCopyInfo;
 import com.azure.storage.blob.models.BlobItem;
 import java.time.Duration;
-import java.time.OffsetDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,6 +48,7 @@ public class BlobCopier {
         storageAccessService.buildBlobContainerClient(
             destinationContainer, destinationStorageAccount);
 
+    // filter out any zero-length blobs, these are not copyable
     var blobItems =
         sourceBlobContainerClient.listBlobs().stream()
             .filter(blobItem -> blobItem.getProperties().getContentLength() > 0);
@@ -96,8 +96,6 @@ public class BlobCopier {
             sourceContainer.getWorkspaceId(),
             sourceContainer,
             sourceStorageAccount,
-            OffsetDateTime.now().minusMinutes(15),
-            OffsetDateTime.now().plusMinutes(15),
             userRequest,
             null,
             sourceBlobItem.getName(),

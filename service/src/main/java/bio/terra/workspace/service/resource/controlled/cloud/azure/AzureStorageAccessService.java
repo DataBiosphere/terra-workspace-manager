@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
 import bio.terra.common.exception.ForbiddenException;
+import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
@@ -21,6 +22,8 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -32,21 +35,25 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class AzureStorageAccessService {
+  private static final Logger logger = LoggerFactory.getLogger(AzureStorageAccessService.class);
 
   public record AzureSasBundle(String sasToken, String sasUrl) {}
 
   private final SamService samService;
   private final FeatureConfiguration features;
   private final StorageAccountKeyProvider storageAccountKeyProvider;
+  private final AzureConfiguration azureConfiguration;
 
   @Autowired
   public AzureStorageAccessService(
       SamService samService,
       StorageAccountKeyProvider storageAccountKeyProvider,
-      FeatureConfiguration features) {
+      FeatureConfiguration features,
+      AzureConfiguration azureConfiguration) {
     this.samService = samService;
     this.features = features;
     this.storageAccountKeyProvider = storageAccountKeyProvider;
+    this.azureConfiguration = azureConfiguration;
   }
 
   private BlobContainerSasPermission getSasTokenPermissions(
@@ -97,6 +104,44 @@ public class AzureStorageAccessService {
   }
 
   /**
+   * Creates a SAS token with a default start and expiry (drawn from app-level config)
+   *
+   * @param workspaceUuid id of the workspace that owns the container resource
+   * @param storageContainerResource storage container object we want to mint a SAS for
+   * @param storageAccountResource storage account which owns the storage container object
+   * @param userRequest The authenticated user's request
+   * @param sasIpRange (optional) IP address or range of IPs from which the Azure APIs will accept
+   *     requests for the token being minted.
+   * @return A bundle of 1) a full Azure SAS URL, including the storage account hostname and 2) the
+   *     token query param fragment
+   */
+  public AzureSasBundle createAzureStorageContainerSasToken(
+      UUID workspaceUuid,
+      ControlledAzureStorageContainerResource storageContainerResource,
+      ControlledAzureStorageResource storageAccountResource,
+      AuthenticatedUserRequest userRequest,
+      String sasIpRange,
+      String sasBlobName,
+      String sasPermissions) {
+
+    OffsetDateTime startTime =
+        OffsetDateTime.now().minusMinutes(azureConfiguration.getSasTokenStartTimeMinutesOffset());
+    long secondDuration = azureConfiguration.getSasTokenExpiryTimeMinutesOffset() * 60;
+    OffsetDateTime expiryTime = OffsetDateTime.now().plusSeconds(secondDuration);
+
+    return createAzureStorageContainerSasToken(
+        workspaceUuid,
+        storageContainerResource,
+        storageAccountResource,
+        startTime,
+        expiryTime,
+        userRequest,
+        sasIpRange,
+        sasBlobName,
+        sasPermissions);
+  }
+
+  /**
    * Mints a new SAS for an Azure storage container. Access control is mediated by SAM and mapped to
    * Azure permissions.
    *
@@ -122,6 +167,12 @@ public class AzureStorageAccessService {
       String sasBlobName,
       String sasPermissions) {
     features.azureEnabledCheck();
+
+    logger.info(
+        "user {} requesting SAS token for Azure storage container {} in workspace {}",
+        userRequest.getEmail(),
+        storageContainerResource.toString(),
+        workspaceUuid.toString());
 
     BlobContainerSasPermission blobContainerSasPermission =
         getSasTokenPermissions(
@@ -158,6 +209,13 @@ public class AzureStorageAccessService {
     } else {
       token = blobContainerClient.generateSas(sasValues);
     }
+
+    logger.info(
+        "SAS token with expiry time of {} generated for user {} on container {} in workspace {}",
+        expiryTime,
+        userRequest.getEmail(),
+        storageContainerResource.getResourceId(),
+        workspaceUuid);
 
     return new AzureSasBundle(
         token,

@@ -257,12 +257,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         SamRethrow.onInterrupted(
             () -> getSamService().getUserEmailFromSam(userRequest), "getUserEmailFromSam");
 
-    logger.info(
-        "user {} requesting SAS token for Azure storage container {} in workspace {}",
-        userEmail,
-        storageContainerUuid.toString(),
-        workspaceUuid.toString());
-
     OffsetDateTime startTime =
         OffsetDateTime.now().minusMinutes(azureConfiguration.getSasTokenStartTimeMinutesOffset());
     long secondDuration =
@@ -282,13 +276,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             sasIpRange,
             sasBlobName,
             sasPermissions);
-
-    logger.info(
-        "SAS token with expiry time of {} generated for user {} on container {} in workspace {}",
-        expiryTime,
-        userEmail,
-        storageContainerUuid,
-        workspaceUuid);
 
     return new ResponseEntity<>(
         new ApiCreatedAzureStorageContainerSasToken()
