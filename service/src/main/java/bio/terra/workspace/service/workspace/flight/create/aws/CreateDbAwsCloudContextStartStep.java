@@ -27,7 +27,9 @@ public class CreateDbAwsCloudContextStartStep implements Step {
     AwsCloudContext awsCloudContext = awsCloudContextService.fromConfiguration();
 
     if (awsCloudContext == null) {
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, new AwsLandingZoneException("No default AWS Landing Zone configured"));
+      return new StepResult(
+          StepStatus.STEP_RESULT_FAILURE_FATAL,
+          new AwsLandingZoneException("No default AWS Landing Zone configured"));
     }
 
     String serializedAwsCloudContext = awsCloudContext.serialize();

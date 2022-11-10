@@ -7,5 +7,4 @@ import org.springframework.test.context.ActiveProfiles;
 /** Base class for azure tests. Treat these as connected tests: connected to AWS */
 @Tag("aws")
 @ActiveProfiles({"aws-test", "connected-test"})
-public class BaseAwsConnectedTest extends BaseTest {
-}
+public class BaseAwsConnectedTest extends BaseTest {}

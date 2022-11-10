@@ -21,6 +21,7 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
   // This configuration must match the default configuration as defined in
   // services/src/test/resources/application-aws-unit-tests.yml
   static final String ACCOUNT_ID = "123456789012";
+  static final String GOOGLE_JWT_AUDIENCE = "test_jwt_audience";
   static final Arn ROLE_ARN_SERVICE = getRoleArn(ACCOUNT_ID, "ServiceRole");
   static final Arn ROLE_ARN_USER = getRoleArn(ACCOUNT_ID, "UserRole");
   static final String BUCKET_NAME_US_EAST = "east-region-bucket";
@@ -40,6 +41,7 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
     return AwsCloudContext.builder()
         .accountNumber(ACCOUNT_ID)
         .serviceRoleArn(ROLE_ARN_SERVICE)
+        .serviceRoleAudience(GOOGLE_JWT_AUDIENCE)
         .userRoleArn(ROLE_ARN_USER)
         .addBucket(Regions.US_EAST_1, BUCKET_NAME_US_EAST)
         .addBucket(Regions.US_WEST_1, BUCKET_NAME_US_WEST)
@@ -49,6 +51,7 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
   private void validateContext(AwsCloudContext compareContext) {
     assertEquals(ACCOUNT_ID, compareContext.getAccountNumber());
     assertEquals(ROLE_ARN_SERVICE, compareContext.getServiceRoleArn());
+    assertEquals(GOOGLE_JWT_AUDIENCE, compareContext.getServiceRoleAudience());
     assertEquals(ROLE_ARN_USER, compareContext.getUserRoleArn());
     assertEquals(BUCKET_NAME_US_EAST, compareContext.getBucketNameForRegion(Regions.US_EAST_1));
     assertEquals(BUCKET_NAME_US_WEST, compareContext.getBucketNameForRegion(Regions.US_WEST_1));
@@ -67,8 +70,9 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
     // application-aws-unit-test.yml
 
     AwsConfiguration.AwsLandingZoneConfiguration landingZoneConfiguration = null;
-    for(AwsConfiguration.AwsLandingZoneConfiguration landingZoneConfigurationIter : awsConfiguration.getLandingZones()) {
-      if(landingZoneConfigurationIter.getName().equals(awsConfiguration.getDefaultLandingZone())) {
+    for (AwsConfiguration.AwsLandingZoneConfiguration landingZoneConfigurationIter :
+        awsConfiguration.getLandingZones()) {
+      if (landingZoneConfigurationIter.getName().equals(awsConfiguration.getDefaultLandingZone())) {
         landingZoneConfiguration = landingZoneConfigurationIter;
         break;
       }
@@ -76,7 +80,9 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
 
     assertNotNull(landingZoneConfiguration);
 
-    AwsCloudContext context = AwsCloudContext.fromConfiguration(landingZoneConfiguration);
+    AwsCloudContext context =
+        AwsCloudContext.fromConfiguration(
+            landingZoneConfiguration, awsConfiguration.getGoogleJwtAudience());
     validateContext(context);
   }
 
@@ -93,7 +99,7 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
   @Test
   void formatV1() {
     String goodJson =
-        "{\"version\":257,\"accountNumber\":\"123456789012\",\"serviceRoleArn\":\"arn:aws:iam::123456789012:ServiceRole\",\"userRoleArn\":\"arn:aws:iam::123456789012:UserRole\",\"bucketList\":[{\"version\":257,\"regionName\":\"us-west-1\",\"bucketName\":\"west-region-bucket\"},{\"version\":257,\"regionName\":\"us-east-1\",\"bucketName\":\"east-region-bucket\"}]}\n";
+        "{\"version\":257,\"accountNumber\":\"123456789012\",\"serviceRoleArn\":\"arn:aws:iam::123456789012:ServiceRole\",\"serviceRoleAudience\":\"test_jwt_audience\",\"userRoleArn\":\"arn:aws:iam::123456789012:UserRole\",\"bucketList\":[{\"version\":257,\"regionName\":\"us-east-1\",\"bucketName\":\"east-region-bucket\"},{\"version\":257,\"regionName\":\"us-west-1\",\"bucketName\":\"west-region-bucket\"}]}\n";
     AwsCloudContext compareContext = AwsCloudContext.deserialize(goodJson);
     validateContext(compareContext);
   }
@@ -101,7 +107,7 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
   @Test
   void badVersion() {
     String badJson =
-        "{\"version\":0,\"accountNumber\":\"123456789012\",\"serviceRoleArn\":\"arn:aws:iam::123456789012:ServiceRole\",\"userRoleArn\":\"arn:aws:iam::123456789012:UserRole\",\"bucketList\":[{\"version\":257,\"regionName\":\"us-west-1\",\"bucketName\":\"west-region-bucket\"},{\"version\":257,\"regionName\":\"us-east-1\",\"bucketName\":\"east-region-bucket\"}]}\n";
+        "{\"version\":0,\"accountNumber\":\"123456789012\",\"serviceRoleArn\":\"arn:aws:iam::123456789012:ServiceRole\",\"serviceRoleAudience\":\"test_jwt_audience\",\"userRoleArn\":\"arn:aws:iam::123456789012:UserRole\",\"bucketList\":[{\"version\":257,\"regionName\":\"us-east-1\",\"bucketName\":\"east-region-bucket\"},{\"version\":257,\"regionName\":\"us-west-1\",\"bucketName\":\"west-region-bucket\"}]}\n";
     assertThrows(
         InvalidSerializedVersionException.class, () -> AwsCloudContext.deserialize(badJson));
   }
@@ -109,7 +115,7 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
   @Test
   void badBucketVersion() {
     String badJson =
-        "{\"version\":257,\"accountNumber\":\"123456789012\",\"serviceRoleArn\":\"arn:aws:iam::123456789012:ServiceRole\",\"userRoleArn\":\"arn:aws:iam::123456789012:UserRole\",\"bucketList\":[{\"version\":0,\"regionName\":\"us-west-1\",\"bucketName\":\"west-region-bucket\"},{\"version\":0,\"regionName\":\"us-east-1\",\"bucketName\":\"east-region-bucket\"}]}\n";
+        "{\"version\":257,\"accountNumber\":\"123456789012\",\"serviceRoleArn\":\"arn:aws:iam::123456789012:ServiceRole\",\"serviceRoleAudience\":\"test_jwt_audience\",\"userRoleArn\":\"arn:aws:iam::123456789012:UserRole\",\"bucketList\":[{\"version\":0,\"regionName\":\"us-east-1\",\"bucketName\":\"east-region-bucket\"},{\"version\":257,\"regionName\":\"us-west-1\",\"bucketName\":\"west-region-bucket\"}]}\n";
     assertThrows(
         InvalidSerializedVersionException.class, () -> AwsCloudContext.deserialize(badJson));
   }

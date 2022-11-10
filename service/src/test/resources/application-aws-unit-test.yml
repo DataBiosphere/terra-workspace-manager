@@ -1,6 +1,7 @@
 workspace:
   aws:
     default-landing-zone: "test-lz"
+    google-jwt-audience: "test_jwt_audience"
     landing-zones:
       - name: "test-lz"
         account-number: "123456789012"

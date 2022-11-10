@@ -1,7 +1,6 @@
 package bio.terra.workspace.app.configuration.external;
 
 import java.util.List;
-import java.util.Map;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
@@ -12,15 +11,9 @@ import org.springframework.context.annotation.Configuration;
 public class AwsConfiguration {
 
   private String defaultLandingZone;
+  private String googleJwtAudience;
+
   private List<AwsLandingZoneConfiguration> landingZones;
-
-  public List<AwsLandingZoneConfiguration> getLandingZones() {
-    return landingZones;
-  }
-
-  public void setLandingZones(List<AwsLandingZoneConfiguration> landingZones) {
-    this.landingZones = landingZones;
-  }
 
   public String getDefaultLandingZone() {
     return defaultLandingZone;
@@ -28,6 +21,22 @@ public class AwsConfiguration {
 
   public void setDefaultLandingZone(String defaultLandingZone) {
     this.defaultLandingZone = defaultLandingZone;
+  }
+
+  public String getGoogleJwtAudience() {
+    return googleJwtAudience;
+  }
+
+  public void setGoogleJwtAudience(String googleJwtAudience) {
+    this.googleJwtAudience = googleJwtAudience;
+  }
+
+  public List<AwsLandingZoneConfiguration> getLandingZones() {
+    return landingZones;
+  }
+
+  public void setLandingZones(List<AwsLandingZoneConfiguration> landingZones) {
+    this.landingZones = landingZones;
   }
 
   public static class AwsLandingZoneBucket {

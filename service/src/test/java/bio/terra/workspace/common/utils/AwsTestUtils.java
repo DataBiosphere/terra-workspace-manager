@@ -5,11 +5,10 @@ import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
-
-import java.util.UUID;
 
 @Profile("aws-test")
 @Component
@@ -29,11 +28,11 @@ public class AwsTestUtils {
   public Workspace createWorkspace(WorkspaceService workspaceService) {
     UUID uuid = UUID.randomUUID();
     Workspace workspace =
-            Workspace.builder()
-                    .workspaceId(uuid)
-                    .userFacingId(uuid.toString())
-                    .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-                    .build();
+        Workspace.builder()
+            .workspaceId(uuid)
+            .userFacingId(uuid.toString())
+            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+            .build();
     workspaceService.createWorkspace(workspace, null, userAccessUtils.defaultUserAuthRequest());
     return workspace;
   }

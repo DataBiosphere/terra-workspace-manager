@@ -6,7 +6,6 @@ import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredExce
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import io.opencensus.contrib.spring.aop.Traced;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,19 +20,25 @@ public class AwsCloudContextService {
 
   private final WorkspaceDao workspaceDao;
   private final String defaultLandingZone;
-  private final Map<String, AwsConfiguration.AwsLandingZoneConfiguration> landingZoneConfigurationMap;
+  private final AwsConfiguration awsConfiguration;
+  private final Map<String, AwsConfiguration.AwsLandingZoneConfiguration>
+      landingZoneConfigurationMap;
 
   @Autowired
   public AwsCloudContextService(WorkspaceDao workspaceDao, AwsConfiguration awsConfiguration) {
     this.workspaceDao = workspaceDao;
+    this.awsConfiguration = awsConfiguration;
 
     landingZoneConfigurationMap = new HashMap<>();
     this.defaultLandingZone = awsConfiguration.getDefaultLandingZone();
-    List<AwsConfiguration.AwsLandingZoneConfiguration> landingZoneConfigurationList = awsConfiguration.getLandingZones();
+    List<AwsConfiguration.AwsLandingZoneConfiguration> landingZoneConfigurationList =
+        awsConfiguration.getLandingZones();
 
-    if(landingZoneConfigurationList != null) {
-      for (AwsConfiguration.AwsLandingZoneConfiguration awsLandingZoneConfiguration : awsConfiguration.getLandingZones()) {
-        landingZoneConfigurationMap.put(awsLandingZoneConfiguration.getName(), awsLandingZoneConfiguration);
+    if (landingZoneConfigurationList != null) {
+      for (AwsConfiguration.AwsLandingZoneConfiguration awsLandingZoneConfiguration :
+          awsConfiguration.getLandingZones()) {
+        landingZoneConfigurationMap.put(
+            awsLandingZoneConfiguration.getName(), awsLandingZoneConfiguration);
       }
     }
   }
@@ -112,12 +117,14 @@ public class AwsCloudContextService {
   }
 
   public @Nullable AwsCloudContext fromConfiguration(String landingZoneName) {
-    AwsConfiguration.AwsLandingZoneConfiguration landingZoneConfiguration = this.landingZoneConfigurationMap.get(landingZoneName);
+    AwsConfiguration.AwsLandingZoneConfiguration landingZoneConfiguration =
+        this.landingZoneConfigurationMap.get(landingZoneName);
 
-    if(landingZoneConfiguration == null) {
+    if (landingZoneConfiguration == null) {
       return null;
     }
 
-    return AwsCloudContext.fromConfiguration(landingZoneConfiguration);
+    return AwsCloudContext.fromConfiguration(
+        landingZoneConfiguration, this.awsConfiguration.getGoogleJwtAudience());
   }
 }

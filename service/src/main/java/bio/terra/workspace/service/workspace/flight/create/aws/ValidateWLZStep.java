@@ -5,17 +5,35 @@ import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKey
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
+import bio.terra.stairway.StepStatus;
+import bio.terra.workspace.common.utils.MultiCloudUtils;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
+import java.util.Collections;
 
 public class ValidateWLZStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext flightContext) throws InterruptedException {
 
-    String serializedAwsCloudContext =
-        flightContext.getWorkingMap().get(AWS_CLOUD_CONTEXT, String.class);
+    try {
+      String serializedAwsCloudContext =
+          flightContext.getWorkingMap().get(AWS_CLOUD_CONTEXT, String.class);
 
-    AwsCloudContext awsCloudContext = AwsCloudContext.deserialize(serializedAwsCloudContext);
+      AuthenticatedUserRequest userRequest =
+          flightContext
+              .getInputParameters()
+              .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
+
+      AwsCloudContext awsCloudContext = AwsCloudContext.deserialize(serializedAwsCloudContext);
+
+      MultiCloudUtils.assumeAwsUserRoleFromGcp(
+          awsCloudContext, userRequest.getEmail(), Collections.emptyList());
+
+    } catch (Exception e) {
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
+    }
 
     return StepResult.getStepResultSuccess();
   }

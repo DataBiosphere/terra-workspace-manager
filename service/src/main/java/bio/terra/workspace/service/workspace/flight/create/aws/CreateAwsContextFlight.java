@@ -33,8 +33,7 @@ public class CreateAwsContextFlight extends Flight {
         dbRetry);
 
     // Basic WLZ sanity checks
-    // TODO: retry?
-    // addStep(new ValidateMRGStep(appContext.getCrlService(), appContext.getAzureConfig()));
+    addStep(new ValidateWLZStep());
 
     // update the DB row filling in the cloud context
     addStep(

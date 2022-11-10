@@ -1,5 +1,8 @@
 package bio.terra.workspace.service.workspace.flight.create.aws;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.workspace.common.StairwayTestUtils;
@@ -12,14 +15,10 @@ import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.time.Duration;
 import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 public class CreateAwsContextFlightTest extends BaseAwsConnectedTest {
   /** How long to wait for a Stairway flight to complete before timing out the test. */
@@ -40,22 +39,17 @@ public class CreateAwsContextFlightTest extends BaseAwsConnectedTest {
     assertTrue(awsCloudContextService.getAwsCloudContext(workspace.getWorkspaceId()).isEmpty());
 
     String jobId = UUID.randomUUID().toString();
-    workspaceService.createAwsCloudContext(
-            workspace,
-            jobId,
-            userRequest,
-            /* resultPath */ null);
+    workspaceService.createAwsCloudContext(workspace, jobId, userRequest, /* resultPath */ null);
 
     // Wait for the job to complete
     FlightState flightState =
-            StairwayTestUtils.pollUntilComplete(
-                    jobId, jobService.getStairway(), Duration.ofSeconds(30), STAIRWAY_FLIGHT_TIMEOUT);
+        StairwayTestUtils.pollUntilComplete(
+            jobId, jobService.getStairway(), Duration.ofSeconds(30), STAIRWAY_FLIGHT_TIMEOUT);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
 
     // Flight should have created a cloud context.
-    assertTrue(
-            awsCloudContextService.getAwsCloudContext(workspace.getWorkspaceId()).isPresent());
+    assertTrue(awsCloudContextService.getAwsCloudContext(workspace.getWorkspaceId()).isPresent());
     AwsCloudContext awsCloudContext =
-            awsCloudContextService.getAwsCloudContext(workspace.getWorkspaceId()).get();
+        awsCloudContextService.getAwsCloudContext(workspace.getWorkspaceId()).get();
   }
 }

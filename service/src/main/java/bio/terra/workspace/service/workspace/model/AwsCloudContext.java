@@ -14,10 +14,11 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 public class AwsCloudContext {
-  private String accountNumber;
-  private Arn serviceRoleArn;
-  private Arn userRoleArn;
-  private Map<Regions, String> regionToBucketNameMap;
+  private final String accountNumber;
+  private final Arn serviceRoleArn;
+  private final String serviceRoleAudience;
+  private final Arn userRoleArn;
+  private final Map<Regions, String> regionToBucketNameMap;
 
   public String getAccountNumber() {
     return accountNumber;
@@ -25,6 +26,10 @@ public class AwsCloudContext {
 
   public Arn getServiceRoleArn() {
     return serviceRoleArn;
+  }
+
+  public String getServiceRoleAudience() {
+    return serviceRoleAudience;
   }
 
   public Arn getUserRoleArn() {
@@ -36,13 +41,15 @@ public class AwsCloudContext {
   }
 
   public static @Nullable AwsCloudContext fromConfiguration(
-          AwsConfiguration.AwsLandingZoneConfiguration landingZoneConfiguration) {
+      AwsConfiguration.AwsLandingZoneConfiguration landingZoneConfiguration,
+      String serviceRoleAudience) {
 
     AwsCloudContext.Builder builder =
-            AwsCloudContext.builder()
-                    .accountNumber(landingZoneConfiguration.getAccountNumber())
-                    .serviceRoleArn(Arn.fromString(landingZoneConfiguration.getServiceRoleArn()))
-                    .userRoleArn(Arn.fromString(landingZoneConfiguration.getUserRoleArn()));
+        AwsCloudContext.builder()
+            .accountNumber(landingZoneConfiguration.getAccountNumber())
+            .serviceRoleArn(Arn.fromString(landingZoneConfiguration.getServiceRoleArn()))
+            .serviceRoleAudience(serviceRoleAudience)
+            .userRoleArn(Arn.fromString(landingZoneConfiguration.getUserRoleArn()));
 
     for (AwsConfiguration.AwsLandingZoneBucket bucket : landingZoneConfiguration.getBuckets()) {
       builder.addBucket(Regions.fromName(bucket.getRegion()), bucket.getName());
@@ -64,6 +71,7 @@ public class AwsCloudContext {
         builder()
             .accountNumber(dbContext.accountNumber)
             .serviceRoleArn(Arn.fromString(dbContext.serviceRoleArn))
+            .serviceRoleAudience(dbContext.serviceRoleAudience)
             .userRoleArn(Arn.fromString(dbContext.userRoleArn));
 
     for (AwsCloudContextBucketV1 bucket : dbContext.bucketList) {
@@ -77,6 +85,7 @@ public class AwsCloudContext {
   public static class Builder {
     private String accountNumber;
     private Arn serviceRoleArn;
+    private String serviceRoleAudience;
     private Arn userRoleArn;
     private Map<Regions, String> bucketMap;
 
@@ -98,6 +107,11 @@ public class AwsCloudContext {
       return this;
     }
 
+    public Builder serviceRoleAudience(String serviceRoleAudience) {
+      this.serviceRoleAudience = serviceRoleAudience;
+      return this;
+    }
+
     public Builder userRoleArn(Arn userRoleArn) {
       this.userRoleArn = userRoleArn;
       return this;
@@ -116,6 +130,7 @@ public class AwsCloudContext {
   private AwsCloudContext(Builder builder) {
     this.accountNumber = builder.accountNumber;
     this.serviceRoleArn = builder.serviceRoleArn;
+    this.serviceRoleAudience = builder.serviceRoleAudience;
     this.userRoleArn = builder.userRoleArn;
     this.regionToBucketNameMap = builder.bucketMap;
   }
@@ -164,6 +179,7 @@ public class AwsCloudContext {
 
     public String accountNumber;
     public String serviceRoleArn;
+    public String serviceRoleAudience;
     public String userRoleArn;
     public List<AwsCloudContextBucketV1> bucketList;
 
@@ -171,11 +187,13 @@ public class AwsCloudContext {
         @JsonProperty("version") long version,
         @JsonProperty("accountNumber") String accountNumber,
         @JsonProperty("serviceRoleArn") String serviceRoleArn,
+        @JsonProperty("serviceRoleAudience") String serviceRoleAudience,
         @JsonProperty("userRoleArn") String userRoleArn,
         @JsonProperty("bucketList") List<AwsCloudContextBucketV1> bucketList) {
       this.version = version;
       this.accountNumber = accountNumber;
       this.serviceRoleArn = serviceRoleArn;
+      this.serviceRoleAudience = serviceRoleAudience;
       this.userRoleArn = userRoleArn;
       this.bucketList = bucketList;
     }
@@ -184,6 +202,7 @@ public class AwsCloudContext {
       this.version = AWS_CLOUD_CONTEXT_DB_VERSION | AWS_CLOUD_CONTEXT_DB_VERSION_MASK;
       this.accountNumber = context.accountNumber;
       this.serviceRoleArn = context.serviceRoleArn.toString();
+      this.serviceRoleAudience = context.serviceRoleAudience;
       this.userRoleArn = context.userRoleArn.toString();
 
       this.bucketList = new ArrayList<>();
