@@ -71,7 +71,7 @@ public class UserAccessUtils {
 
   /** Creates a {@link TestUser} for the default test user. */
   public TestUser defaultUser() {
-    return new TestUser(defaultUserEmail);
+    return new TestUser(defaultUserEmail, defaultUserSubjectId);
   }
 
   /** Generates an OAuth access token for the default test user. */
@@ -134,9 +134,11 @@ public class UserAccessUtils {
    */
   public class TestUser {
     private final String email;
+    private final String subjectId;
 
-    public TestUser(String email) {
+    public TestUser(String email, String subjectId) {
       this.email = email;
+      this.subjectId = subjectId;
     }
 
     public String getEmail() {
@@ -153,6 +155,7 @@ public class UserAccessUtils {
 
     public AuthenticatedUserRequest getAuthenticatedRequest() {
       return new AuthenticatedUserRequest()
+          .subjectId(subjectId)
           .email(email)
           .token(Optional.of(getAccessToken().getTokenValue()));
     }
