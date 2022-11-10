@@ -114,7 +114,22 @@ public class FolderApiController extends ControllerBase implements FolderApi {
   }
 
   @Override
+  // TODO (PF-2159): Delete this endpoint once UI has switched over to use deleteFolderAsync.
   public ResponseEntity<ApiJobResult> deleteFolder(UUID workspaceId, UUID folderId) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+
+    // If requester is writer and folder has private resources (not owned by requester), requester
+    // won't have permission to delete private resources. That access control check is done in
+    // folderService#deleteFolder.
+    workspaceService.validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.WRITE);
+
+    String jobId = folderService.deleteFolder(workspaceId, folderId, userRequest);
+    ApiJobResult response = jobApiUtils.fetchJobResult(jobId);
+    return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
+  }
+
+  @Override
+  public ResponseEntity<ApiJobResult> deleteFolderAsync(UUID workspaceId, UUID folderId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
 
     // If requester is writer and folder has private resources (not owned by requester), requester
