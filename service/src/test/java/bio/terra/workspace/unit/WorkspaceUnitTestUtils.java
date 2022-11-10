@@ -52,7 +52,7 @@ public class WorkspaceUnitTestUtils {
             .userFacingId(workspaceUuid.toString())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
-    workspaceDao.createWorkspace(workspace);
+    workspaceDao.createWorkspace(workspace, null);
     createAzureCloudContextInDatabase(workspaceDao, workspaceUuid, azureCloudContext);
     return workspace.getWorkspaceId();
   }
