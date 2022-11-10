@@ -37,10 +37,10 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResourceF
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
+import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
+import bio.terra.workspace.service.resource.referenced.cloud.any.datareposnapshot.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.resource.referenced.cloud.any.gitrepo.ReferencedGitRepoResource;
-import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResourceService;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdatatable.ReferencedBigQueryDataTableResource;
-import bio.terra.workspace.service.resource.referenced.cloud.gcp.datareposnapshot.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.ReferencedGcsBucketResource;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties;
 import java.util.HashMap;

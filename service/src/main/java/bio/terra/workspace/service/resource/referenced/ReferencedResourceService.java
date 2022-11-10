@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.referenced.cloud.gcp;
+package bio.terra.workspace.service.resource.referenced;
 
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.ResourceDao;
@@ -9,12 +9,12 @@ import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
-import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.WorkspaceCloneUtils;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.flight.create.CreateReferenceResourceFlight;
 import bio.terra.workspace.service.resource.referenced.flight.update.UpdateReferenceResourceFlight;
+import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import bio.terra.workspace.service.workspace.model.OperationType;
@@ -211,14 +211,16 @@ public class ReferencedResourceService {
       @Nullable String name,
       @Nullable String description,
       AuthenticatedUserRequest userRequest) {
-    final ReferencedResource destinationResource =
-        WorkspaceCloneUtils.buildDestinationReferencedResource(
-            sourceReferencedResource,
-            destinationWorkspaceId,
-            destinationResourceId,
-            destinationFolderId,
-            name,
-            description);
+    ReferencedResource destinationResource =
+        sourceReferencedResource
+            .buildReferencedClone(
+                destinationWorkspaceId,
+                destinationResourceId,
+                destinationFolderId,
+                name,
+                description)
+            .castToReferencedResource();
+
     // launch the creation flight
     return createReferenceResource(destinationResource, userRequest);
   }

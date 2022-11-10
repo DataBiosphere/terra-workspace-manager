@@ -205,7 +205,7 @@ public class FolderLifecycle extends WorkspaceAllocateTestScriptBase {
     // Second user unable to delete folder Loo. Loo has a private notebook owned by first user.
     // Second user is only workspace writer.
     assertApiCallThrows(
-        () -> folderWriterApi.deleteFolder(getWorkspaceId(), folderLoo.getId()),
+        () -> folderWriterApi.deleteFolderAsync(getWorkspaceId(), folderLoo.getId()),
         HttpStatusCodes.STATUS_CODE_FORBIDDEN);
     // Second user tries to delete foo and success
     JobReport deleteFolderFooJobReport = deleteFolderAndWaitForJobToFinish(folderFoo);
@@ -255,7 +255,7 @@ public class FolderLifecycle extends WorkspaceAllocateTestScriptBase {
 
   private JobReport deleteFolderAndWaitForJobToFinish(Folder folderFoo)
       throws ApiException, InterruptedException {
-    JobResult jobResult = folderWriterApi.deleteFolder(getWorkspaceId(), folderFoo.getId());
+    JobResult jobResult = folderWriterApi.deleteFolderAsync(getWorkspaceId(), folderFoo.getId());
     JobReport jobReport = jobResult.getJobReport();
     while (ClientTestUtils.jobIsRunning(jobReport)) {
       TimeUnit.SECONDS.sleep(10);

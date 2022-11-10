@@ -8,9 +8,9 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
-import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.WorkspaceCloneUtils;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResourceService;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.ReferencedGcsBucketResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
@@ -71,13 +71,14 @@ public class SetReferencedDestinationGcsBucketInWorkingMapStep implements Step {
         inputParameters.get(ControlledResourceKeys.DESTINATION_FOLDER_ID, UUID.class);
 
     ReferencedGcsBucketResource destinationBucketResource =
-        WorkspaceCloneUtils.buildDestinationReferencedGcsBucketFromControlled(
-            sourceBucket,
-            destinationWorkspaceId,
-            destinationResourceId,
-            destinationFolderId,
-            resourceName,
-            description);
+        sourceBucket
+            .buildReferencedClone(
+                destinationWorkspaceId,
+                destinationResourceId,
+                destinationFolderId,
+                resourceName,
+                description)
+            .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_BUCKET);
 
     workingMap.put(
         ControlledResourceKeys.DESTINATION_REFERENCED_RESOURCE, destinationBucketResource);

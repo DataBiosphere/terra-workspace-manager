@@ -13,9 +13,9 @@ import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
-import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResourceService;
+import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.resource.referenced.flight.create.CreateReferenceResourceFlight;
+import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
@@ -63,13 +63,14 @@ public class LaunchCreateReferenceResourceFlightStep implements Step {
             .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
     ReferencedResource destinationResource =
-        WorkspaceCloneUtils.buildDestinationReferencedResource(
-            resource,
-            destinationWorkspaceId,
-            destinationResourceId,
-            destinationFolderId,
-            resource.getName(),
-            resource.getDescription());
+        resource
+            .buildReferencedClone(
+                destinationWorkspaceId,
+                destinationResourceId,
+                destinationFolderId,
+                resource.getName(),
+                resource.getDescription())
+            .castToReferencedResource();
 
     // put the destination resource in the map, because it's not communicated
     // from the flight as the response (and we need the workspace ID)

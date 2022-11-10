@@ -40,7 +40,7 @@ dependencies {
   }
 
   // Terra Landing Zone Service
-  implementation ('bio.terra:terra-landing-zone-service:0.0.15-SNAPSHOT') {
+  implementation ('bio.terra:terra-landing-zone-service:0.0.18-SNAPSHOT') {
     exclude group: "org.broadinstitute.dsde.workbench", module: "sam-client_2.12"
   }
 
@@ -86,6 +86,10 @@ dependencies {
   testImplementation group: "org.hamcrest", name: "hamcrest", version: "2.2"
   // Allows us to mock final classes
   testImplementation 'org.mockito:mockito-inline:2.13.0'
+
+  testImplementation "org.testcontainers:testcontainers:1.17.5"
+  testImplementation "org.testcontainers:junit-jupiter:1.17.5"
+  testImplementation "org.testcontainers:postgresql:1.17.5"
 
   annotationProcessor group: "com.google.auto.value", name: "auto-value", version: "1.7.4"
   annotationProcessor group: "org.springframework.boot", name: "spring-boot-configuration-processor", version: "2.6.6"

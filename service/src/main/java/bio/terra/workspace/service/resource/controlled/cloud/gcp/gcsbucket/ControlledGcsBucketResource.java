@@ -25,14 +25,18 @@ import bio.terra.workspace.service.resource.controlled.model.PrivateResourceStat
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
+import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
+import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.ReferencedGcsBucketResource;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import org.jetbrains.annotations.Nullable;
 
 public class ControlledGcsBucketResource extends ControlledResource {
 
@@ -129,10 +133,6 @@ public class ControlledGcsBucketResource extends ControlledResource {
         new DeleteGcsBucketStep(this, flightBeanBag.getCrlService()), RetryRules.cloud());
   }
 
-  private static String generateBucketName() {
-    return String.format("terra-%s-bucket", UUID.randomUUID());
-  }
-
   public String getBucketName() {
     return bucketName;
   }
@@ -145,6 +145,28 @@ public class ControlledGcsBucketResource extends ControlledResource {
     return new ApiGcpGcsBucketResource()
         .metadata(super.toApiMetadata())
         .attributes(toApiAttributes());
+  }
+
+  @Override
+  public WsmResource buildReferencedClone(
+      UUID destinationWorkspaceUuid,
+      UUID destinationResourceId,
+      @Nullable UUID destinationFolderId,
+      @Nullable String name,
+      @Nullable String description) {
+    WsmResourceFields wsmResourceFields =
+        buildReferencedCloneResourceCommonFields(
+            destinationWorkspaceUuid,
+            destinationResourceId,
+            destinationFolderId,
+            name,
+            description);
+
+    ReferencedGcsBucketResource.Builder resultBuilder =
+        ReferencedGcsBucketResource.builder()
+            .wsmResourceFields(wsmResourceFields)
+            .bucketName(getBucketName());
+    return resultBuilder.build();
   }
 
   @Override

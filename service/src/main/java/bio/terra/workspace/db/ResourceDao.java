@@ -24,7 +24,7 @@ import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
-import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
+import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
@@ -647,6 +647,21 @@ public class ResourceDao {
             .addValue("workspace_id", workspaceUuid.toString())
             .addValue("resource_id", resourceId.toString());
 
+    Integer count = jdbcTemplate.queryForObject(sql, params, Integer.class);
+    return (count != null && count > 0);
+  }
+
+  @ReadTransaction
+  public boolean resourceExists(UUID workspaceUuid, String name) {
+    final String sql =
+        """
+                SELECT COUNT(1) FROM resource
+                WHERE workspace_id = :workspace_id AND name = :name
+                """;
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceUuid.toString())
+            .addValue("name", name);
     Integer count = jdbcTemplate.queryForObject(sql, params, Integer.class);
     return (count != null && count > 0);
   }

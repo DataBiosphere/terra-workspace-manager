@@ -19,7 +19,7 @@ import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadat
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.StorageAccountKeyProvider;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.BucketCloneRolesService;
-import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResourceService;
+import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.spendprofile.SpendProfileService;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;

@@ -40,19 +40,6 @@ jobs:
       matrix:
         gradleTask: [unitTest, connectedTest, azureUnitTest, azureConnectedTest]
 
-    services:
-      postgres:
-        image: postgres:13.1
-        env:
-          POSTGRES_PASSWORD: postgres
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
     steps:
     - name: Checkout current code
       uses: actions/checkout@v2
@@ -76,12 +63,6 @@ jobs:
           exit 1
         fi
         echo ::set-output name=test-env::$ENV
-
-    - name: Initialize Postgres DB
-      if: steps.skiptest.outputs.is-bump == 'no'
-      env:
-        PGPASSWORD: postgres
-      run: psql -h 127.0.0.1 -U postgres -f ./service/local-dev/local-postgres-init.sql
 
     - name: Set up JDK
       if: steps.skiptest.outputs.is-bump == 'no'
