@@ -11,6 +11,8 @@ import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.models.BlobCopyInfo;
 import com.azure.storage.blob.models.BlobItem;
 import java.time.Duration;
+
+import com.azure.storage.blob.options.BlobBeginCopyOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -105,6 +107,6 @@ public class BlobCopier {
     var destinationBlobClient = destBlobContainerClient.getBlobClient(sourceBlobItem.getName());
     var sourceBlobUrl = sourceBlobClient.getBlobUrl() + "?" + sasBundle.sasToken();
 
-    return destinationBlobClient.beginCopy(sourceBlobUrl, Duration.ofSeconds(1));
+    return destinationBlobClient.beginCopy(new BlobBeginCopyOptions(sourceBlobUrl));
   }
 }

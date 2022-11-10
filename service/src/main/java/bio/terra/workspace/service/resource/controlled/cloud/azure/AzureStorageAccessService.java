@@ -226,7 +226,7 @@ public class AzureStorageAccessService {
   }
 
   /**
-   * Returns an Azure container client suitable for interacting with a storage container and it's
+   * Returns an Azure container client suitable for interacting with a storage container and its
    * constiuent blobs.
    *
    * @param containerResource The WSM container resource the client will operate on
