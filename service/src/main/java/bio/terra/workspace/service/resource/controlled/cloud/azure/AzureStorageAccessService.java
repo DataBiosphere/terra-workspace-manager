@@ -37,8 +37,6 @@ import org.springframework.stereotype.Component;
 public class AzureStorageAccessService {
   private static final Logger logger = LoggerFactory.getLogger(AzureStorageAccessService.class);
 
-  public record AzureSasBundle(String sasToken, String sasUrl) {}
-
   private final SamService samService;
   private final FeatureConfiguration features;
   private final StorageAccountKeyProvider storageAccountKeyProvider;

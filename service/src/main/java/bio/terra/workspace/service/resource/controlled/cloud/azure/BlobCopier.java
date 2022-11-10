@@ -19,7 +19,7 @@ public class BlobCopier {
   private final AzureStorageAccessService storageAccessService;
   private final AuthenticatedUserRequest userRequest;
 
-  private static final Duration MAX_POLL_TIMEOUT = Duration.ofMinutes(10);
+  private static final Duration MAX_POLL_TIMEOUT = Duration.ofMinutes(60);
 
   public BlobCopier(
       AzureStorageAccessService storageAccessService, AuthenticatedUserRequest userRequest) {
@@ -48,7 +48,8 @@ public class BlobCopier {
         storageAccessService.buildBlobContainerClient(
             destinationContainer, destinationStorageAccount);
 
-    // filter out any zero-length blobs, these are not copyable
+    // directories are presented as zero-length blobs, filter these out as they are
+    // not copy-able
     var blobItems =
         sourceBlobContainerClient.listBlobs().stream()
             .filter(blobItem -> blobItem.getProperties().getContentLength() > 0);
@@ -91,7 +92,7 @@ public class BlobCopier {
       BlobItem sourceBlobItem,
       BlobContainerClient sourceBlobContainerClient,
       BlobContainerClient destBlobContainerClient) {
-    var sasBundle =
+    AzureSasBundle sasBundle =
         storageAccessService.createAzureStorageContainerSasToken(
             sourceContainer.getWorkspaceId(),
             sourceContainer,
