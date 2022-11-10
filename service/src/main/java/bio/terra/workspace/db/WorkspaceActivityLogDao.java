@@ -56,10 +56,10 @@ public class WorkspaceActivityLogDao {
         String.format(
             "Writing activity log: workspaceId=%s, operationType=%s, actorEmail=%s, actorSubjectId=%s",
             workspaceId,
-            dbWorkspaceActivityLog.operationType(),
-            dbWorkspaceActivityLog.actorEmail(),
-            dbWorkspaceActivityLog.actorSubjectId()));
-    if (dbWorkspaceActivityLog.operationType() == OperationType.UNKNOWN) {
+            dbWorkspaceActivityLog.getOperationType(),
+            dbWorkspaceActivityLog.getActorEmail(),
+            dbWorkspaceActivityLog.getActorSubjectId()));
+    if (dbWorkspaceActivityLog.getOperationType() == OperationType.UNKNOWN) {
       throw new UnknownFlightOperationTypeException(
           String.format("Flight operation type is unknown in workspace %s", workspaceId));
     }
@@ -70,9 +70,9 @@ public class WorkspaceActivityLogDao {
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
             .addValue("change_date", Instant.now().atOffset(ZoneOffset.UTC))
-            .addValue("change_type", dbWorkspaceActivityLog.operationType().name())
-            .addValue("actor_email", dbWorkspaceActivityLog.actorEmail())
-            .addValue("actor_subject_id", dbWorkspaceActivityLog.actorSubjectId());
+            .addValue("change_type", dbWorkspaceActivityLog.getOperationType().name())
+            .addValue("actor_email", dbWorkspaceActivityLog.getActorEmail())
+            .addValue("actor_subject_id", dbWorkspaceActivityLog.getActorSubjectId());
     jdbcTemplate.update(sql, params);
   }
 
