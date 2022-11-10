@@ -12,6 +12,9 @@ import com.azure.storage.blob.models.BlobCopyInfo;
 import com.azure.storage.blob.models.BlobItem;
 import com.azure.storage.blob.options.BlobBeginCopyOptions;
 import java.time.Duration;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,16 +76,34 @@ public class BlobCopier {
         sourceContainer.getWorkspaceId(),
         destinationContainer.getResourceId(),
         destinationContainer.getWorkspaceId());
-    var pollResults = blobPollers.map(blobPoller -> blobPoller.waitForCompletion(MAX_POLL_TIMEOUT));
-    logger.info(
-        "Finished copying blobs [source_container_id = {}, source_workspace_id = {}, destination_container_id = {}, destination_workspace_id={}]",
-        sourceContainer.getResourceId(),
-        sourceContainer.getWorkspaceId(),
-        destinationContainer.getResourceId(),
-        destinationContainer.getWorkspaceId());
 
-    var resultsByStatus = pollResults.collect(groupingBy(PollResponse::getStatus));
-    return new BlobCopierResult(resultsByStatus);
+    ForkJoinPool forkJoinPool = new ForkJoinPool(10);
+    try {
+      var pollResults =
+          forkJoinPool
+              .submit(
+                  () ->
+                      blobPollers.toList().parallelStream()
+                          .map(blobPoller -> blobPoller.waitForCompletion(MAX_POLL_TIMEOUT)))
+              .get();
+
+      logger.info(
+          "Finished copying blobs [source_container_id = {}, source_workspace_id = {}, destination_container_id = {}, destination_workspace_id={}]",
+          sourceContainer.getResourceId(),
+          sourceContainer.getWorkspaceId(),
+          destinationContainer.getResourceId(),
+          destinationContainer.getWorkspaceId());
+
+      var resultsByStatus = pollResults.collect(groupingBy(PollResponse::getStatus));
+      return new BlobCopierResult(resultsByStatus);
+    } catch (ExecutionException | InterruptedException e) {
+      // TODO something useful here
+      logger.error("Failed");
+      throw new RuntimeException("Failed");
+    } finally {
+      forkJoinPool.shutdown();
+    }
+
   }
 
   private SyncPoller<BlobCopyInfo, Void> beginCopyBlob(
