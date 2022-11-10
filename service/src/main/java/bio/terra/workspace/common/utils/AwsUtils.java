@@ -1,5 +1,6 @@
 package bio.terra.workspace.common.utils;
 
+import bio.terra.workspace.service.workspace.exceptions.SaCredentialsMissingException;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.AnonymousAWSCredentials;
@@ -10,10 +11,16 @@ import com.amazonaws.services.securitytoken.model.AssumeRoleRequest;
 import com.amazonaws.services.securitytoken.model.AssumeRoleWithWebIdentityRequest;
 import com.amazonaws.services.securitytoken.model.Credentials;
 import com.amazonaws.services.securitytoken.model.Tag;
+import com.nimbusds.jwt.JWT;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.JWTParser;
+import java.text.ParseException;
 import java.util.Collection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AwsUtils {
-
+  private static final Logger logger = LoggerFactory.getLogger(AwsUtils.class);
   public static final Integer MIN_TOKEN_DURATION_SECONDS = 900;
   public static final Integer MAX_TOKEN_DURATION_SECONDS = 3600;
 
@@ -25,6 +32,18 @@ public class AwsUtils {
     request.setRoleSessionName(serviceEmail);
     request.setWebIdentityToken(idToken);
 
+    if (logger.isInfoEnabled()) {
+      try {
+        JWT jwt = JWTParser.parse(idToken);
+        JWTClaimsSet jwtClaimsSet = jwt.getJWTClaimsSet();
+        logger.info(String.format("JWT 'aud' claim: '%s'", jwtClaimsSet.getAudience()));
+        logger.info(String.format("JWT 'azp' claim: '%s'", jwtClaimsSet.getStringClaim("azp")));
+        logger.info(String.format("JWT 'sub' claim: '%s'", jwtClaimsSet.getStringClaim("sub")));
+      } catch (ParseException e) {
+        throw new SaCredentialsMissingException(
+            String.format("Passed SA credential is not a valid JWT: '%s'", e.getMessage()));
+      }
+    }
     AWSSecurityTokenService securityTokenService =
         AWSSecurityTokenServiceClientBuilder.standard()
             .withCredentials(new AWSStaticCredentialsProvider(new AnonymousAWSCredentials()))
