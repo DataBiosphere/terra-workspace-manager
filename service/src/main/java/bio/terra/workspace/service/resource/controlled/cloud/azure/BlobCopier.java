@@ -44,7 +44,7 @@ public class BlobCopier {
       ControlledAzureStorageContainerResource destinationContainer) {
     var sourceBlobContainerClient =
         storageAccessService.buildBlobContainerClient(sourceContainer, sourceStorageAccount);
-    var destinationBlobCOntainerClient =
+    var destinationBlobContainerClient =
         storageAccessService.buildBlobContainerClient(
             destinationContainer, destinationStorageAccount);
 
@@ -64,7 +64,7 @@ public class BlobCopier {
                     userRequest,
                     sourceBlobItem,
                     sourceBlobContainerClient,
-                    destinationBlobCOntainerClient));
+                    destinationBlobContainerClient));
 
     logger.info(
         "Copying blobs [source_container_id = {}, source_workspace_id = {}, destination_container_id = {}, destination_workspace_id={}]",
