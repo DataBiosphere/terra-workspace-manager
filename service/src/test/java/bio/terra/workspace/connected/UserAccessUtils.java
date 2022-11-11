@@ -1,12 +1,15 @@
 package bio.terra.workspace.connected;
 
+import bio.terra.common.iam.SamUser;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamService;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.collect.ImmutableList;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Optional;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -15,6 +18,8 @@ import org.springframework.stereotype.Component;
 @Component
 @Profile("connected-test")
 public class UserAccessUtils {
+  @Autowired private final SamService samService;
+
   /** The OAuth scopes important for logging in a user and acting on their behalf in GCP. */
   public static final ImmutableList<String> GCP_SCOPES =
       ImmutableList.of(
@@ -41,6 +46,10 @@ public class UserAccessUtils {
   @Value("${workspace.connected-test.billing-user-email}")
   private String billingUserEmail;
 
+  public UserAccessUtils(SamService samService) {
+    this.samService = samService;
+  }
+  
   /** Creates Google credentials for the user. Relies on domain delegation. */
   public GoogleCredentials generateCredentials(String userEmail) {
     try {
@@ -68,6 +77,10 @@ public class UserAccessUtils {
   /** Generates an OAuth access token for the default test user. */
   public AccessToken defaultUserAccessToken() {
     return generateAccessToken(defaultUserEmail);
+  }
+
+  public SamUser defaultSamUser() {
+    return samService.getSamUser(defaultUserAccessToken().getTokenValue());
   }
 
   /** Generates an OAuth access token for the second test user. */

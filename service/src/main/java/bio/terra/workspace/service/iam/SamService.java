@@ -3,6 +3,9 @@ package bio.terra.workspace.service.iam;
 import bio.terra.cloudres.google.iam.ServiceAccountName;
 import bio.terra.common.exception.ForbiddenException;
 import bio.terra.common.exception.InternalServerErrorException;
+import bio.terra.common.iam.BearerToken;
+import bio.terra.common.iam.SamUser;
+import bio.terra.common.iam.SamUserFactory;
 import bio.terra.common.sam.SamRetry;
 import bio.terra.common.sam.exception.SamExceptionFactory;
 import bio.terra.common.tracing.OkHttpClientTracingInterceptor;
@@ -31,6 +34,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import javax.servlet.http.HttpServletRequest;
 import okhttp3.OkHttpClient;
 import org.broadinstitute.dsde.workbench.client.sam.ApiClient;
 import org.broadinstitute.dsde.workbench.client.sam.ApiException;
@@ -67,6 +71,7 @@ import org.springframework.stereotype.Component;
 public class SamService {
   private final SamConfiguration samConfig;
   private final OkHttpClient commonHttpClient;
+  private final SamUserFactory samUserFactory;
 
   private final Set<String> SAM_OAUTH_SCOPES = ImmutableSet.of("openid", "email", "profile");
   private final List<String> PET_SA_OAUTH_SCOPES =
@@ -76,8 +81,9 @@ public class SamService {
   private boolean wsmServiceAccountInitialized;
 
   @Autowired
-  public SamService(SamConfiguration samConfig) {
+  public SamService(SamConfiguration samConfig, SamUserFactory samUserFactory) {
     this.samConfig = samConfig;
+    this.samUserFactory = samUserFactory;
     this.wsmServiceAccountInitialized = false;
     this.commonHttpClient =
         new ApiClient()
@@ -156,6 +162,15 @@ public class SamService {
   public String getUserEmailFromSam(AuthenticatedUserRequest userRequest)
       throws InterruptedException {
     return getUserStatusInfo(userRequest).getUserEmail();
+  }
+
+  public SamUser getSamUser(HttpServletRequest request) {
+    return samUserFactory.from(request, samConfig.getBasePath());
+  }
+
+  public SamUser getSamUser(String token) {
+    BearerToken bearerToken = new BearerToken(token);
+    return samUserFactory.from(bearerToken, samConfig.getBasePath());
   }
 
   /** Fetch the user status info associated with the user credentials directly from Sam. */

@@ -3,6 +3,7 @@ package bio.terra.workspace.service.workspace.flight.create.aws;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import bio.terra.common.iam.SamUser;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.workspace.common.StairwayTestUtils;
@@ -34,12 +35,13 @@ public class CreateAwsContextFlightTest extends BaseAwsConnectedTest {
   void successCreatesContext() throws Exception {
     Workspace workspace = awsTestUtils.createWorkspace(workspaceService);
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    SamUser samUser = userAccessUtils.defaultSamUser();
 
     // There should be no cloud context initially.
     assertTrue(awsCloudContextService.getAwsCloudContext(workspace.getWorkspaceId()).isEmpty());
 
     String jobId = UUID.randomUUID().toString();
-    workspaceService.createAwsCloudContext(workspace, jobId, userRequest, /* resultPath */ null);
+    workspaceService.createAwsCloudContext(workspace, jobId, userRequest, samUser, /* resultPath */ null);
 
     // Wait for the job to complete
     FlightState flightState =

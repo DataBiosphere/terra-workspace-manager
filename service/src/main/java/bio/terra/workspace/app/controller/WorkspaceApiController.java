@@ -6,6 +6,7 @@ import static bio.terra.workspace.common.utils.ControllerValidationUtils.validat
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesUpdateRequestBody;
 
 import bio.terra.common.iam.BearerToken;
+import bio.terra.common.iam.SamUserFactory;
 import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
@@ -515,7 +516,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       workspaceService.createAzureCloudContext(
           workspace, jobId, userRequest, resultPath, AzureCloudContext.fromApi(azureContext));
     } else if (body.getCloudPlatform() == ApiCloudPlatform.AWS) {
-      workspaceService.createAwsCloudContext(workspace, jobId, userRequest, resultPath);
+      workspaceService.createAwsCloudContext(
+          workspace, jobId, userRequest, getSamUser(), resultPath);
     } else {
       workspaceService.createGcpCloudContext(workspace, jobId, userRequest, resultPath);
     }

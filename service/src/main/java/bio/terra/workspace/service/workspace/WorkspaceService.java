@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.workspace;
 
+import bio.terra.common.iam.SamUser;
 import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
@@ -417,7 +418,7 @@ public class WorkspaceService {
   }
 
   /**
-   * Process the request to create a AWS cloud context
+   * Process the request to create an AWS cloud context
    *
    * @param workspace workspace in which to create the context
    * @param jobId caller-supplied job id of the async job
@@ -429,6 +430,7 @@ public class WorkspaceService {
       Workspace workspace,
       String jobId,
       AuthenticatedUserRequest userRequest,
+      SamUser samUser,
       @Nullable String resultPath) {
     features.awsEnabledCheck();
 
@@ -446,6 +448,7 @@ public class WorkspaceService {
         .operationType(OperationType.CREATE)
         .workspaceId(workspace.getWorkspaceId().toString())
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
+        .addParameter(WorkspaceFlightMapKeys.SAM_USER, samUser)
         .submit();
   }
 
