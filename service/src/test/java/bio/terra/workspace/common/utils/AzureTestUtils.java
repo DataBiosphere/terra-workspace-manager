@@ -54,7 +54,8 @@ public class AzureTestUtils {
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .spendProfileId(new SpendProfileId(UUID.randomUUID().toString()))
             .build();
-    workspaceService.createWorkspace(workspace, null, null, userAccessUtils.defaultUserAuthRequest());
+    workspaceService.createWorkspace(
+        workspace, null, null, userAccessUtils.defaultUserAuthRequest());
     return workspace;
   }
 

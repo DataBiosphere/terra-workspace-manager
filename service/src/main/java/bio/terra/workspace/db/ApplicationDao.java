@@ -289,7 +289,8 @@ public class ApplicationDao {
             .addValue("workspace_id", workspaceUuid.toString())
             .addValue("operating", WsmApplicationState.OPERATING.toDb());
 
-    return jdbcTemplate.query(WORKSPACE_APPLICATION_ID_QUERY, params, WORKSPACE_APPLICATION_ID_ROW_MAPPER);
+    return jdbcTemplate.query(
+        WORKSPACE_APPLICATION_ID_QUERY, params, WORKSPACE_APPLICATION_ID_ROW_MAPPER);
   }
 
   // internal workspace application lookup
