@@ -18,6 +18,7 @@ components:
         - AZURE_RELAY_NAMESPACE
         - AZURE_STORAGE_ACCOUNT
         - AZURE_STORAGE_CONTAINER
+        - AWS_BUCKET
         - GIT_REPO
         - TERRA_WORKSPACE
 
@@ -54,6 +55,8 @@ components:
           $ref: '#/components/schemas/AzureStorageContainerAttributes'
         azureVm:
           $ref: '#/components/schemas/AzureVmAttributes'
+        awsBucket:
+          $ref: '#/components/schemas/AwsBucketAttributes'
         gitRepo:
           $ref: '#/components/schemas/GitRepoAttributes'
         terraWorkspace:
@@ -92,6 +95,8 @@ components:
           $ref: '#/components/schemas/AzureStorageResource'
         azureStorageContainer:
           $ref: '#/components/schemas/AzureStorageContainerResource'
+        awsBucket:
+          $ref: '#/components/schemas/AwsBucketResource'
         gitRepo:
           $ref: '#/components/schemas/GitRepoResource'
         terraWorkspace:

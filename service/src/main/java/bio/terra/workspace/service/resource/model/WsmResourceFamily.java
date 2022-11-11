@@ -61,6 +61,7 @@ public enum WsmResourceFamily {
       ApiResourceType.AZURE_STORAGE_CONTAINER,
       null,
       WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER),
+  AWS_BUCKET("AWS_BUCKET", ApiResourceType.AWS_BUCKET, null, WsmResourceType.CONTROLLED_AWS_BUCKET),
   GIT_REPO("GIT_REPO", ApiResourceType.GIT_REPO, WsmResourceType.REFERENCED_ANY_GIT_REPO, null),
   TERRA_WORKSPACE(
       "TERRA_WORKSPACE",

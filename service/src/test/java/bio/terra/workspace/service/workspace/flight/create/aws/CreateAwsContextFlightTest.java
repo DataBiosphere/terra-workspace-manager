@@ -41,7 +41,8 @@ public class CreateAwsContextFlightTest extends BaseAwsConnectedTest {
     assertTrue(awsCloudContextService.getAwsCloudContext(workspace.getWorkspaceId()).isEmpty());
 
     String jobId = UUID.randomUUID().toString();
-    workspaceService.createAwsCloudContext(workspace, jobId, userRequest, samUser, /* resultPath */ null);
+    workspaceService.createAwsCloudContext(
+        workspace, jobId, userRequest, samUser, /* resultPath */ null);
 
     // Wait for the job to complete
     FlightState flightState =
