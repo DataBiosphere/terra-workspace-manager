@@ -67,7 +67,7 @@ public class LandingZoneApiDispatchTest extends BaseAzureUnitTest {
 
   @Test
   void createAzureLandingZone_ReturnJobRunning_Success() {
-    List<LandingZone> landingZoneList = List.of();
+    List<LandingZone> landingZoneList = Collections.emptyList();
     String resultEndpoint = String.format("%s/%s/%s", "someServletPath", "create-result", JOB_ID);
     ApiCreateAzureLandingZoneRequestBody request =
         AzureLandingZoneFixtures.buildCreateAzureLandingZoneRequest(JOB_ID, BILLING_PROFILE_ID);
