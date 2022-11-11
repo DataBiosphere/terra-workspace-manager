@@ -46,7 +46,7 @@ public class AzureWorkspaceTest extends BaseAzureConnectedTest {
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
 
-    workspaceService.createWorkspace(workspace, null, userRequest);
+    workspaceService.createWorkspace(workspace, null, null, userRequest);
 
     String jobId = UUID.randomUUID().toString();
     AzureCloudContext azureCloudContext =

@@ -173,7 +173,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   @Test
   void getWorkspace_existing() {
     Workspace request = defaultRequestBuilder(UUID.randomUUID()).build();
-    workspaceService.createWorkspace(request, null, USER_REQUEST);
+    workspaceService.createWorkspace(request, null, null, USER_REQUEST);
 
     assertEquals(
         request.getWorkspaceId(),
@@ -202,7 +202,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   @Test
   void getWorkspace_forbiddenExisting() throws Exception {
     Workspace request = defaultRequestBuilder(UUID.randomUUID()).build();
-    workspaceService.createWorkspace(request, null, USER_REQUEST);
+    workspaceService.createWorkspace(request, null, null, USER_REQUEST);
 
     doThrow(new ForbiddenException("forbid!"))
         .when(mockSamService)
@@ -219,7 +219,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   void getWorkspaceByUserFacingId_existing() {
     String userFacingId = "user-facing-id-getworkspacebyuserfacingid_existing";
     Workspace request = defaultRequestBuilder(UUID.randomUUID()).userFacingId(userFacingId).build();
-    workspaceService.createWorkspace(request, null, USER_REQUEST);
+    workspaceService.createWorkspace(request, null, null, USER_REQUEST);
 
     assertEquals(
         request.getWorkspaceId(),
@@ -257,7 +257,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   void getWorkspaceByUserFacingId_forbiddenExisting() throws Exception {
     String userFacingId = "user-facing-id-getworkspacebyuserfacingid_forbiddenexisting";
     Workspace request = defaultRequestBuilder(UUID.randomUUID()).userFacingId(userFacingId).build();
-    workspaceService.createWorkspace(request, null, USER_REQUEST);
+    workspaceService.createWorkspace(request, null, null, USER_REQUEST);
 
     doThrow(new ForbiddenException("forbid!"))
         .when(mockSamService)
@@ -280,7 +280,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         .thenReturn(ImmutableList.of(WsmIamRole.OWNER, WsmIamRole.WRITER));
 
     Workspace request = defaultRequestBuilder(UUID.randomUUID()).build();
-    workspaceService.createWorkspace(request, null, USER_REQUEST);
+    workspaceService.createWorkspace(request, null, null, USER_REQUEST);
 
     assertEquals(
         WsmIamRole.OWNER, workspaceService.getHighestRole(request.getWorkspaceId(), USER_REQUEST));
@@ -292,7 +292,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         defaultRequestBuilder(UUID.randomUUID())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
-    workspaceService.createWorkspace(mcWorkspaceRequest, null, USER_REQUEST);
+    workspaceService.createWorkspace(mcWorkspaceRequest, null, null, USER_REQUEST);
     Workspace createdWorkspace = workspaceService.getWorkspace(mcWorkspaceRequest.getWorkspaceId());
     assertEquals(mcWorkspaceRequest.getWorkspaceId(), createdWorkspace.getWorkspaceId());
     assertEquals(WorkspaceStage.MC_WORKSPACE, createdWorkspace.getWorkspaceStage());
@@ -301,28 +301,29 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   @Test
   void duplicateWorkspaceIdRequestsRejected() {
     Workspace request = defaultRequestBuilder(UUID.randomUUID()).build();
-    workspaceService.createWorkspace(request, null, USER_REQUEST);
+    workspaceService.createWorkspace(request, null, null, USER_REQUEST);
     Workspace duplicateWorkspace =
         defaultRequestBuilder(request.getWorkspaceId())
             .description("slightly different workspace")
             .build();
     assertThrows(
         DuplicateWorkspaceException.class,
-        () -> workspaceService.createWorkspace(duplicateWorkspace, null, USER_REQUEST));
+        () -> workspaceService.createWorkspace(duplicateWorkspace, null, null, USER_REQUEST));
   }
 
   @Test
   void duplicateWorkspaceUserFacingIdRequestsRejected() {
     String userFacingId = "create-workspace-user-facing-id";
     Workspace request = defaultRequestBuilder(UUID.randomUUID()).userFacingId(userFacingId).build();
-    workspaceService.createWorkspace(request, null, USER_REQUEST);
+    workspaceService.createWorkspace(request, null, null, USER_REQUEST);
     Workspace duplicateUserFacingId =
         defaultRequestBuilder(UUID.randomUUID()).userFacingId(userFacingId).build();
 
     DuplicateUserFacingIdException ex =
         assertThrows(
             DuplicateUserFacingIdException.class,
-            () -> workspaceService.createWorkspace(duplicateUserFacingId, null, USER_REQUEST));
+            () ->
+                workspaceService.createWorkspace(duplicateUserFacingId, null, null, USER_REQUEST));
     assertEquals(
         String.format("Workspace with ID %s already exists", userFacingId), ex.getMessage());
   }
@@ -338,14 +339,14 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         ErrorReportException.class,
         () ->
             workspaceService.createWorkspace(
-                defaultRequestBuilder(UUID.randomUUID()).build(), null, USER_REQUEST));
+                defaultRequestBuilder(UUID.randomUUID()).build(), null, null, USER_REQUEST));
     // This second call shares the above operation ID, and so should return the same exception
     // instead of a more generic internal Stairway exception.
     assertThrows(
         ErrorReportException.class,
         () ->
             workspaceService.createWorkspace(
-                defaultRequestBuilder(UUID.randomUUID()).build(), null, USER_REQUEST));
+                defaultRequestBuilder(UUID.randomUUID()).build(), null, null, USER_REQUEST));
   }
 
   @Test
@@ -353,7 +354,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     SpendProfileId spendProfileId = new SpendProfileId("foo");
     Workspace request =
         defaultRequestBuilder(UUID.randomUUID()).spendProfileId(spendProfileId).build();
-    workspaceService.createWorkspace(request, null, USER_REQUEST);
+    workspaceService.createWorkspace(request, null, null, USER_REQUEST);
 
     Workspace createdWorkspace = workspaceService.getWorkspace(request.getWorkspaceId());
     assertEquals(request.getWorkspaceId(), createdWorkspace.getWorkspaceId());
@@ -366,7 +367,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     String description = "The greatest workspace";
     Workspace request =
         defaultRequestBuilder(UUID.randomUUID()).displayName(name).description(description).build();
-    workspaceService.createWorkspace(request, null, USER_REQUEST);
+    workspaceService.createWorkspace(request, null, null, USER_REQUEST);
 
     Workspace createdWorkspace = workspaceService.getWorkspace(request.getWorkspaceId());
     assertEquals(
@@ -378,7 +379,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   @Test
   void testUpdateWorkspace() {
     Workspace request = defaultRequestBuilder(UUID.randomUUID()).build();
-    workspaceService.createWorkspace(request, null, USER_REQUEST);
+    workspaceService.createWorkspace(request, null, null, USER_REQUEST);
     UUID workspaceUuid = request.getWorkspaceId();
     var lastUpdateDetails = workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
     assertTrue(lastUpdateDetails.isPresent());
@@ -468,10 +469,10 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     // Create one workspace with userFacingId, one without.
     String userFacingId = "update-workspace-user-facing-id";
     Workspace request = defaultRequestBuilder(UUID.randomUUID()).userFacingId(userFacingId).build();
-    workspaceService.createWorkspace(request, null, USER_REQUEST);
+    workspaceService.createWorkspace(request, null, null, USER_REQUEST);
     UUID secondWorkspaceUuid = UUID.randomUUID();
     request = defaultRequestBuilder(secondWorkspaceUuid).build();
-    workspaceService.createWorkspace(request, null, USER_REQUEST);
+    workspaceService.createWorkspace(request, null, null, USER_REQUEST);
 
     // Try to set second workspace's userFacing to first.
     DuplicateUserFacingIdException ex =
@@ -495,7 +496,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
           }
         };
     Workspace request = defaultRequestBuilder(UUID.randomUUID()).build();
-    workspaceService.createWorkspace(request, null, USER_REQUEST);
+    workspaceService.createWorkspace(request, null, null, USER_REQUEST);
     UUID workspaceUuid = request.getWorkspaceId();
     var lastUpdateDetails = workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
     OffsetDateTime lastUpdatedDate = lastUpdateDetails.get().getChangeDate();
@@ -525,14 +526,14 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             SamInternalServerErrorException.class,
             () ->
                 workspaceService.createWorkspace(
-                    defaultRequestBuilder(UUID.randomUUID()).build(), null, USER_REQUEST));
+                    defaultRequestBuilder(UUID.randomUUID()).build(), null, null, USER_REQUEST));
     assertEquals(apiErrorMsg, exception.getMessage());
   }
 
   @Test
   void createAndDeleteWorkspace() {
     Workspace request = defaultRequestBuilder(UUID.randomUUID()).build();
-    workspaceService.createWorkspace(request, null, USER_REQUEST);
+    workspaceService.createWorkspace(request, null, null, USER_REQUEST);
 
     workspaceService.deleteWorkspace(request, USER_REQUEST);
     assertThrows(
@@ -551,7 +552,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build();
     jobService.setFlightDebugInfoForTest(debugInfo);
 
-    UUID createdId = workspaceService.createWorkspace(request, null, USER_REQUEST);
+    UUID createdId = workspaceService.createWorkspace(request, null, null, USER_REQUEST);
     assertEquals(createdId, request.getWorkspaceId());
   }
 
@@ -570,7 +571,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build();
     jobService.setFlightDebugInfoForTest(debugInfo);
 
-    UUID createdId = workspaceService.createWorkspace(request, null, USER_REQUEST);
+    UUID createdId = workspaceService.createWorkspace(request, null, null, USER_REQUEST);
     assertEquals(createdId, request.getWorkspaceId());
   }
 
@@ -592,7 +593,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     // flight fails via debugInfo.
     assertThrows(
         InvalidResultStateException.class,
-        () -> workspaceService.createWorkspace(request, null, USER_REQUEST));
+        () -> workspaceService.createWorkspace(request, null, null, USER_REQUEST));
     assertThrows(
         WorkspaceNotFoundException.class,
         () -> workspaceService.getWorkspace(request.getWorkspaceId()));
@@ -606,7 +607,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     propertyMap.put("xyzzy", "plohg");
 
     Workspace request = defaultRequestBuilder(UUID.randomUUID()).properties(propertyMap).build();
-    workspaceService.createWorkspace(request, null, USER_REQUEST);
+    workspaceService.createWorkspace(request, null, null, USER_REQUEST);
     UUID workspaceUuid = request.getWorkspaceId();
     var lastUpdateDetails = workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
     assertTrue(lastUpdateDetails.isPresent());
@@ -646,7 +647,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   @Test
   void deleteForbiddenExistingWorkspace() throws Exception {
     Workspace request = defaultRequestBuilder(UUID.randomUUID()).build();
-    workspaceService.createWorkspace(request, null, USER_REQUEST);
+    workspaceService.createWorkspace(request, null, null, USER_REQUEST);
 
     doThrow(new ForbiddenException("forbid!"))
         .when(mockSamService)
@@ -665,7 +666,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     // First, create a workspace.
     UUID workspaceUuid = UUID.randomUUID();
     Workspace request = defaultRequestBuilder(workspaceUuid).build();
-    workspaceService.createWorkspace(request, null, USER_REQUEST);
+    workspaceService.createWorkspace(request, null, null, USER_REQUEST);
 
     // Next, add a data reference to that workspace.
     UUID resourceId = UUID.randomUUID();
@@ -705,7 +706,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             .spendProfileId(spendUtils.defaultSpendId())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
-    workspaceService.createWorkspace(request, null, USER_REQUEST);
+    workspaceService.createWorkspace(request, null, null, USER_REQUEST);
     String jobId = UUID.randomUUID().toString();
     workspaceService.createGcpCloudContext(request, jobId, USER_REQUEST, "/fake/value");
     jobService.waitForJob(jobId);
@@ -731,7 +732,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             .spendProfileId(spendUtils.defaultSpendId())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
-    workspaceService.createWorkspace(request, null, USER_REQUEST);
+    workspaceService.createWorkspace(request, null, null, USER_REQUEST);
 
     String jobId = UUID.randomUUID().toString();
     workspaceService.createGcpCloudContext(request, jobId, USER_REQUEST, "/fake/value");
@@ -752,7 +753,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     UUID workspaceId = UUID.randomUUID();
     Workspace request =
         defaultRequestBuilder(workspaceId).workspaceStage(WorkspaceStage.RAWLS_WORKSPACE).build();
-    workspaceService.createWorkspace(request, null, USER_REQUEST);
+    workspaceService.createWorkspace(request, null, null, USER_REQUEST);
     String jobId = UUID.randomUUID().toString();
     ApiCreateCloudContextRequest contextRequest =
         new ApiCreateCloudContextRequest()
@@ -781,7 +782,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             .spendProfileId(new SpendProfileId(SPEND_PROFILE_ID))
             .build();
     final UUID sourceWorkspaceId =
-        workspaceService.createWorkspace(sourceWorkspace, null, USER_REQUEST);
+        workspaceService.createWorkspace(sourceWorkspace, null, null, USER_REQUEST);
 
     // Create a cloud context
     final String createCloudContextJobId = UUID.randomUUID().toString();
@@ -908,7 +909,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             .spendProfileId(new SpendProfileId(SPEND_PROFILE_ID))
             .build();
 
-    workspaceService.createWorkspace(sourceWorkspace, null, USER_REQUEST);
+    workspaceService.createWorkspace(sourceWorkspace, null, null, USER_REQUEST);
 
     // Create a cloud context
     final String createCloudContextJobId = UUID.randomUUID().toString();

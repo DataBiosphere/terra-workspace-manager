@@ -34,7 +34,7 @@ public class WorkspaceConnectedTestUtils {
             .spendProfileId(spendUtils.defaultSpendId())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
-    workspaceService.createWorkspace(workspace, null, userRequest);
+    workspaceService.createWorkspace(workspace, null, null, userRequest);
     String gcpContextJobId = UUID.randomUUID().toString();
     workspaceService.createGcpCloudContext(
         workspace, gcpContextJobId, userRequest, "fakeResultPath");

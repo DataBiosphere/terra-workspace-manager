@@ -40,7 +40,7 @@ public abstract class WsmResource {
   private final String name;
   private final @Nullable String description;
   private final CloningInstructions cloningInstructions;
-  private final @Nullable List<ResourceLineageEntry> resourceLineage;
+  private final List<ResourceLineageEntry> resourceLineage;
   // Properties map will be empty if there's no properties set on the resource.
   private final ImmutableMap<String, String> properties;
 
@@ -127,7 +127,7 @@ public abstract class WsmResource {
     return cloningInstructions;
   }
 
-  public @Nullable List<ResourceLineageEntry> getResourceLineage() {
+  public List<ResourceLineageEntry> getResourceLineage() {
     return resourceLineage;
   }
 
