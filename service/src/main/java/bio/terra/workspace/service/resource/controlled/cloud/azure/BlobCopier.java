@@ -61,7 +61,6 @@ public class BlobCopier {
                 beginCopyBlob(
                     storageAccessService,
                     sourceContainer,
-                    sourceStorageAccount,
                     userRequest,
                     sourceBlobItem,
                     sourceBlobContainerClient,
@@ -88,7 +87,6 @@ public class BlobCopier {
   private SyncPoller<BlobCopyInfo, Void> beginCopyBlob(
       AzureStorageAccessService storageAccessService,
       ControlledAzureStorageContainerResource sourceContainer,
-      ControlledAzureStorageResource sourceStorageAccount,
       AuthenticatedUserRequest userRequest,
       BlobItem sourceBlobItem,
       BlobContainerClient sourceBlobContainerClient,
@@ -97,7 +95,6 @@ public class BlobCopier {
         storageAccessService.createAzureStorageContainerSasToken(
             sourceContainer.getWorkspaceId(),
             sourceContainer,
-            sourceStorageAccount,
             userRequest,
             null,
             sourceBlobItem.getName(),

@@ -13,18 +13,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseAzureUnitTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
-import bio.terra.workspace.db.ResourceDao;
-import bio.terra.workspace.db.WorkspaceDao;
-import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureSasBundle;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
-import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
-import bio.terra.workspace.service.workspace.WorkspaceService;
-import bio.terra.workspace.service.workspace.model.AzureCloudContext;
-import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
-import java.time.OffsetDateTime;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.SasTokenOptions;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,64 +32,17 @@ public class CreateAzureStorageContainerSasTokenTest extends BaseAzureUnitTest {
   private UUID workspaceId;
   private UUID storageContainerId;
 
-  private ControlledAzureStorageResource accountResource;
-  private ControlledAzureStorageContainerResource containerResource;
-  @Autowired ControlledResourceMetadataManager controlledResourceMetadataManager;
-  @Autowired WorkspaceDao workspaceDao;
-  @Autowired WorkspaceService workspaceService;
-  @Autowired ResourceDao resourceDao;
-  @Autowired SpendConnectedTestUtils spendUtils;
+  ArgumentCaptor<SasTokenOptions> sasTokenOptionsCaptor =
+      ArgumentCaptor.forClass(SasTokenOptions.class);
 
   @BeforeEach
   public void setup() throws Exception {
     workspaceId = UUID.randomUUID();
-    var azureCloudContext = new AzureCloudContext("fake", "fake", "fake");
-    WorkspaceUnitTestUtils.createWorkspaceWithAzureContext(
-        workspaceId, workspaceDao, azureCloudContext);
-
     storageContainerId = UUID.randomUUID();
-    UUID storageAccountId = UUID.randomUUID();
-
-    containerResource =
-        ControlledAzureStorageContainerResource.builder()
-            .common(
-                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
-                    .workspaceUuid(workspaceId)
-                    .resourceId(storageContainerId)
-                    .build())
-            .storageAccountId(storageAccountId)
-            .storageContainerName("testcontainer")
-            .build();
-
-    resourceDao.createControlledResource(containerResource);
-
-    accountResource =
-        ControlledAzureStorageResource.builder()
-            .common(
-                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
-                    .workspaceUuid(workspaceId)
-                    .resourceId(storageAccountId)
-                    .build())
-            .storageAccountName("testaccount")
-            .region("eastus")
-            .build();
-
-    resourceDao.createControlledResource(accountResource);
-
-    when(mockSamService().getUserEmailFromSam(eq(USER_REQUEST)))
-        .thenReturn(USER_REQUEST.getEmail());
 
     when(mockAzureStorageAccessService()
             .createAzureStorageContainerSasToken(
-                eq(workspaceId),
-                eq(containerResource),
-                eq(accountResource),
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any()))
+                eq(workspaceId), eq(storageContainerId), any(), any()))
         .thenReturn(new AzureSasBundle("sasToken", "sasUrl"));
   }
 
@@ -167,32 +110,21 @@ public class CreateAzureStorageContainerSasTokenTest extends BaseAzureUnitTest {
                 USER_REQUEST))
         .andExpect(status().is(HttpStatus.SC_OK));
 
-    ArgumentCaptor<OffsetDateTime> startTimeCaptor = ArgumentCaptor.forClass(OffsetDateTime.class);
-    ArgumentCaptor<OffsetDateTime> endTimeCaptor = ArgumentCaptor.forClass(OffsetDateTime.class);
-
     Mockito.verify(mockAzureStorageAccessService(), times(2))
         .createAzureStorageContainerSasToken(
-            eq(workspaceId),
-            eq(containerResource),
-            eq(accountResource),
-            startTimeCaptor.capture(),
-            endTimeCaptor.capture(),
-            any(),
-            any(),
-            any(),
-            any());
+            eq(workspaceId), eq(storageContainerId), any(), sasTokenOptionsCaptor.capture());
 
     // First call uses custom time of 2 hours (plus 5 minutes before) = 7500 seconds.
     assertEquals(
         7500,
-        endTimeCaptor.getAllValues().get(0).toEpochSecond()
-            - startTimeCaptor.getAllValues().get(0).toEpochSecond());
+        sasTokenOptionsCaptor.getAllValues().get(0).expiryTime().toEpochSecond()
+            - sasTokenOptionsCaptor.getAllValues().get(0).startTime().toEpochSecond());
 
     // Second call based on configuration, difference should be 15 minutes = 900 seconds.
     assertEquals(
         900,
-        endTimeCaptor.getAllValues().get(1).toEpochSecond()
-            - startTimeCaptor.getAllValues().get(1).toEpochSecond());
+        sasTokenOptionsCaptor.getAllValues().get(1).expiryTime().toEpochSecond()
+            - sasTokenOptionsCaptor.getAllValues().get(1).startTime().toEpochSecond());
   }
 
   @Test
@@ -227,15 +159,8 @@ public class CreateAzureStorageContainerSasTokenTest extends BaseAzureUnitTest {
 
     Mockito.verify(mockAzureStorageAccessService())
         .createAzureStorageContainerSasToken(
-            eq(workspaceId),
-            eq(containerResource),
-            eq(accountResource),
-            any(),
-            any(),
-            any(),
-            eq(ipRange),
-            any(),
-            any());
+            eq(workspaceId), eq(storageContainerId), any(), sasTokenOptionsCaptor.capture());
+    assertEquals(ipRange, sasTokenOptionsCaptor.getValue().ipRange());
   }
 
   @Test
@@ -256,15 +181,8 @@ public class CreateAzureStorageContainerSasTokenTest extends BaseAzureUnitTest {
 
     Mockito.verify(mockAzureStorageAccessService())
         .createAzureStorageContainerSasToken(
-            eq(workspaceId),
-            eq(containerResource),
-            eq(accountResource),
-            any(),
-            any(),
-            any(),
-            any(),
-            eq(blobName),
-            any());
+            eq(workspaceId), eq(storageContainerId), any(), sasTokenOptionsCaptor.capture());
+    assertEquals(blobName, sasTokenOptionsCaptor.getValue().blobName());
   }
 
   @Test
@@ -299,15 +217,8 @@ public class CreateAzureStorageContainerSasTokenTest extends BaseAzureUnitTest {
 
     Mockito.verify(mockAzureStorageAccessService())
         .createAzureStorageContainerSasToken(
-            eq(workspaceId),
-            eq(containerResource),
-            eq(accountResource),
-            any(),
-            any(),
-            any(),
-            any(),
-            any(),
-            eq(permissions));
+            eq(workspaceId), eq(storageContainerId), any(), sasTokenOptionsCaptor.capture());
+    assertEquals(permissions, sasTokenOptionsCaptor.getValue().permissions());
   }
 
   @Test
