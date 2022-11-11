@@ -5,6 +5,7 @@ import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.AnonymousAWSCredentials;
 import com.amazonaws.auth.BasicSessionCredentials;
+import com.amazonaws.regions.Regions;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenService;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder;
 import com.amazonaws.services.securitytoken.model.AssumeRoleRequest;
@@ -46,6 +47,7 @@ public class AwsUtils {
     }
     AWSSecurityTokenService securityTokenService =
         AWSSecurityTokenServiceClientBuilder.standard()
+            .withRegion(Regions.US_EAST_1)
             .withCredentials(new AWSStaticCredentialsProvider(new AnonymousAWSCredentials()))
             .build();
 
@@ -72,6 +74,7 @@ public class AwsUtils {
 
     AWSSecurityTokenService securityTokenService =
         AWSSecurityTokenServiceClientBuilder.standard()
+            .withRegion(Regions.US_EAST_1)
             .withCredentials(new AWSStaticCredentialsProvider(sessionCredentials))
             .build();
 
