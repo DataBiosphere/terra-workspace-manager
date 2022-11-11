@@ -14,6 +14,7 @@ import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
+import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
 import bio.terra.workspace.generated.model.ApiAzureContext;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceRequest;
@@ -371,8 +372,19 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     ApiTpsPaoUpdateResult result =
         tpsApiDispatch.updatePao(
             new BearerToken(userRequest.getRequiredToken()), workspaceId, body);
-    logger.info(
-        "Finished updating workspace policies {} for {}", workspaceId, userRequest.getEmail());
+    if (Boolean.TRUE.equals(result.isUpdateApplied())) {
+      workspaceActivityLogDao.writeActivity(
+          workspaceId,
+          new DbWorkspaceActivityLog(
+              userRequest.getEmail(), userRequest.getSubjectId(), OperationType.UPDATE));
+      logger.info(
+          "Finished updating workspace policies {} for {}", workspaceId, userRequest.getEmail());
+    } else {
+      logger.warn(
+          "Workspace policies update failed to apply to {} for {}",
+          workspaceId,
+          userRequest.getEmail());
+    }
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
 
