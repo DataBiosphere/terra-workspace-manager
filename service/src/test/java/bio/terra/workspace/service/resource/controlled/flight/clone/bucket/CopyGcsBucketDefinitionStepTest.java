@@ -39,7 +39,6 @@ import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.services.storage.Storage;
 import com.google.cloud.Policy;
-import com.google.cloud.storage.BucketInfo;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -48,8 +47,6 @@ import java.util.UUID;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
@@ -74,7 +71,6 @@ public class CopyGcsBucketDefinitionStepTest extends BaseUnitTestMockGcpCloudCon
   @Mock private GcpCloudContext mockGcpCloudContext;
   @Mock private Policy mockPolicy;
 
-  @Captor private ArgumentCaptor<BucketInfo> bucketInfoCaptor;
   private static final String PROJECT_ID = "my-project-id";
   private static final String POLICY_GROUP = "fake-policy-group";
 
@@ -92,7 +88,6 @@ public class CopyGcsBucketDefinitionStepTest extends BaseUnitTestMockGcpCloudCon
 
     when(mockCrlService().createStorageCow(any(String.class))).thenReturn(mockStorageCow);
     when(mockCrlService().createWsmSaNakedStorageClient()).thenReturn(mockStorageClient);
-    when(mockStorageCow.create(bucketInfoCaptor.capture())).thenReturn(mockBucketCow);
     when(mockStorageCow.getIamPolicy(any(String.class))).thenReturn(mockPolicy);
     when(mockPolicy.getBindingsList()).thenReturn(ImmutableList.copyOf(new ArrayList<>()));
     when(mockSamService()
@@ -172,6 +167,8 @@ public class CopyGcsBucketDefinitionStepTest extends BaseUnitTestMockGcpCloudCon
     assertEquals(SOURCE_BUCKET_RESOURCE.getManagedBy(), destinationBucketResource.getManagedBy());
     assertEquals(
         SOURCE_BUCKET_RESOURCE.getApplicationId(), destinationBucketResource.getApplicationId());
+    assertEquals(
+        "Optional[ACTIVE]", destinationBucketResource.getPrivateResourceState().toString());
     var lineage = destinationBucketResource.getResourceLineage();
     List<ResourceLineageEntry> expectedLineage = new ArrayList<>();
     expectedLineage.add(
