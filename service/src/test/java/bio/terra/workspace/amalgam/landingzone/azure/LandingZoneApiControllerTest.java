@@ -66,7 +66,8 @@ public class LandingZoneApiControllerTest extends BaseAzureUnitTest {
         .thenReturn(asyncJobResult);
     when(mockFeatureConfiguration().isAzureEnabled()).thenReturn(true);
 
-    var requestBody = AzureLandingZoneFixtures.buildCreateAzureLandingZoneRequest(JOB_ID);
+    var requestBody =
+        AzureLandingZoneFixtures.buildCreateAzureLandingZoneRequest(JOB_ID, BILLING_PROFILE_ID);
 
     mockMvc
         .perform(
@@ -93,7 +94,8 @@ public class LandingZoneApiControllerTest extends BaseAzureUnitTest {
     when(mockFeatureConfiguration().isAzureEnabled()).thenReturn(true);
 
     // TODO SG: check if we need name and description??
-    var requestBody = AzureLandingZoneFixtures.buildCreateAzureLandingZoneRequest(JOB_ID);
+    var requestBody =
+        AzureLandingZoneFixtures.buildCreateAzureLandingZoneRequest(JOB_ID, BILLING_PROFILE_ID);
 
     mockMvc
         .perform(
