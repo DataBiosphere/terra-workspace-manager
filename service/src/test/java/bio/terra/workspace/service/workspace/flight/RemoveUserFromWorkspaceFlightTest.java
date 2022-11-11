@@ -84,7 +84,7 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
             .spendProfileId(spendUtils.defaultSpendId())
             .build();
     UUID workspaceUuid =
-        workspaceService.createWorkspace(workspace, null, userAccessUtils.defaultUserAuthRequest());
+        workspaceService.createWorkspace(workspace, null, null, userAccessUtils.defaultUserAuthRequest());
     // Add the secondary test user as a writer
     samService.grantWorkspaceRole(
         workspaceUuid,

@@ -26,8 +26,6 @@ public class CloneGcpWorkspaceFlight extends Flight {
     // TODO: [PF-1972] 4. Merge Policy Attributes
     // 5. Launch a flight to clone all resources on the list
     // 5a. Await the clone all resources flight and build a response
-    // 6. Build a list of enabled applications
-    // 6a. Launch a flight to enable those applications in destination workspace
     var flightBeanBag = FlightBeanBag.getFromObject(applicationContext);
     var cloudRetryRule = RetryRules.cloud();
     var longCloudRetryRule = RetryRules.cloudLongRunning();

@@ -91,14 +91,6 @@ public class WorkspaceService {
     this.workspaceActivityLogService = workspaceActivityLogService;
   }
 
-  /** For backward compatibility with test usage */
-  public UUID createWorkspace(
-      Workspace workspace,
-      @Nullable ApiTpsPolicyInputs policies,
-      AuthenticatedUserRequest userRequest) {
-    return createWorkspace(workspace, policies, null, userRequest);
-  }
-
   /** Create a workspace with the specified parameters. Returns workspaceID of the new workspace. */
   @Traced
   public UUID createWorkspace(

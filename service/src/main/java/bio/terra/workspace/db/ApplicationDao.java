@@ -68,7 +68,7 @@ public class ApplicationDao {
           + " FROM application A";
 
   // Query for finding applications that should be enabled on the target workspace
-  private static final String WORKSPACE_CLONE_QUERY =
+  private static final String WORKSPACE_APPLICATION_ID_QUERY =
       """
       SELECT A.application_id FROM enabled_application W, application A
       WHERE
@@ -77,7 +77,7 @@ public class ApplicationDao {
         A.state = :operating;
       """;
 
-  private static final RowMapper<String> WORKSPACE_CLONE_ROW_MAPPER =
+  private static final RowMapper<String> WORKSPACE_APPLICATION_ID_ROW_MAPPER =
       (rs, rowNum) -> rs.getString("application_id");
 
   @Autowired
@@ -289,7 +289,7 @@ public class ApplicationDao {
             .addValue("workspace_id", workspaceUuid.toString())
             .addValue("operating", WsmApplicationState.OPERATING.toDb());
 
-    return jdbcTemplate.query(WORKSPACE_CLONE_QUERY, params, WORKSPACE_CLONE_ROW_MAPPER);
+    return jdbcTemplate.query(WORKSPACE_APPLICATION_ID_QUERY, params, WORKSPACE_APPLICATION_ID_ROW_MAPPER);
   }
 
   // internal workspace application lookup

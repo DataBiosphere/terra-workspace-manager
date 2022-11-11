@@ -39,7 +39,7 @@ public class ResourceLineageUtilsTest extends BaseUnitTest {
             /*resourceLineage=*/ null,
             propertyMap);
 
-    assertEquals(resource.getResourceLineage(), new ArrayList<>());
+    assertEquals(new ArrayList<>(), resource.getResourceLineage());
   }
 
   @Test
@@ -67,7 +67,7 @@ public class ResourceLineageUtilsTest extends BaseUnitTest {
             .properties(propertyMap);
 
     var resource = new ReferencedDataRepoSnapshotResource(dbResource);
-    assertEquals(resource.getResourceLineage(), new ArrayList<>());
+    assertEquals(new ArrayList<>(), resource.getResourceLineage());
   }
 
   @Test
@@ -91,7 +91,7 @@ public class ResourceLineageUtilsTest extends BaseUnitTest {
             lineage,
             propertyMap);
 
-    assertEquals(resource.getResourceLineage(), lineage);
+    assertEquals(lineage, resource.getResourceLineage());
   }
 
   @Test
@@ -122,6 +122,6 @@ public class ResourceLineageUtilsTest extends BaseUnitTest {
             .properties(propertyMap);
 
     var resource = new ReferencedDataRepoSnapshotResource(dbResource);
-    assertEquals(resource.getResourceLineage(), lineage);
+    assertEquals(lineage, resource.getResourceLineage());
   }
 }

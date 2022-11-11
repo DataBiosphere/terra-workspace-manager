@@ -457,8 +457,8 @@ components:
           $ref: '#/components/schemas/WorkspaceStageModel'
         properties:
           $ref: '#/components/schemas/Properties'
-        applications:
-          description: List of applications to enable for this workspace
+        applicationIds:
+          description: List of application ids to enable for this workspace
           type: array
           items:
             type: string
