@@ -13,7 +13,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.annotation.DirtiesContext.ClassMode.BEFORE_CLASS;
 
-import bio.terra.cloudres.google.storage.BucketCow;
 import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
@@ -64,7 +63,6 @@ public class CopyGcsBucketDefinitionStepTest extends BaseUnitTestMockGcpCloudCon
 
   @Mock FlightContext mockFlightContext;
   @Mock private StorageCow mockStorageCow;
-  @Mock private BucketCow mockBucketCow;
   @Mock private Storage mockStorageClient;
   @Mock private Storage.Buckets mockBuckets;
   @Mock private Storage.Buckets.Get mockStorageBucketsGet;
