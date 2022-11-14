@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.bucket;
 
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
-import static bio.terra.workspace.service.resource.controlled.flight.clone.bucket.GcsBucketCloneTestFixtures.CREATED_BUCKET_RESOURCE;
 import static bio.terra.workspace.service.resource.controlled.flight.clone.bucket.GcsBucketCloneTestFixtures.DESTINATION_BUCKET_NAME;
 import static bio.terra.workspace.service.resource.controlled.flight.clone.bucket.GcsBucketCloneTestFixtures.DESTINATION_WORKSPACE_ID;
 import static bio.terra.workspace.service.resource.controlled.flight.clone.bucket.GcsBucketCloneTestFixtures.SOURCE_BUCKET_CREATION_PARAMETERS;
@@ -11,18 +10,18 @@ import static bio.terra.workspace.service.resource.controlled.flight.clone.bucke
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.annotation.DirtiesContext.ClassMode.BEFORE_CLASS;
 
+import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.workspace.common.BaseUnitTestMockGcpCloudContextService;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
+import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
+import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
@@ -30,13 +29,25 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
+import bio.terra.workspace.service.workspace.model.GcpCloudContext;
+import bio.terra.workspace.service.workspace.model.Workspace;
+import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
+import com.google.api.client.http.HttpHeaders;
+import com.google.api.client.http.HttpResponseException;
+import com.google.api.services.storage.Storage;
+import com.google.cloud.Policy;
+import com.google.common.collect.ImmutableList;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
 
 // TODO: PF-2090 - Spring does not seem to notice that it needs to build a different
@@ -47,18 +58,64 @@ import org.springframework.test.annotation.DirtiesContext;
 public class CopyGcsBucketDefinitionStepTest extends BaseUnitTestMockGcpCloudContextService {
   private CopyGcsBucketDefinitionStep copyGcsBucketDefinitionStep;
 
+  @Autowired private WorkspaceDao workspaceDao;
+  @Autowired private ControlledResourceService controlledResourceService;
+
   @Mock FlightContext mockFlightContext;
+  @Mock private StorageCow mockStorageCow;
+  @Mock private Storage mockStorageClient;
+  @Mock private Storage.Buckets mockBuckets;
+  @Mock private Storage.Buckets.Get mockStorageBucketsGet;
+  @Mock private GcpCloudContext mockGcpCloudContext;
+  @Mock private Policy mockPolicy;
+
+  private static final String PROJECT_ID = "my-project-id";
+  private static final String POLICY_GROUP = "fake-policy-group";
 
   @BeforeEach
-  public void setup() throws InterruptedException {
+  public void setup() throws InterruptedException, IOException {
+    Workspace workspace =
+        Workspace.builder()
+            .workspaceId(DESTINATION_WORKSPACE_ID)
+            .userFacingId(DESTINATION_WORKSPACE_ID.toString())
+            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+            .build();
+    workspaceDao.createWorkspace(workspace, /*applicationIds=*/ null);
+    WorkspaceUnitTestUtils.createGcpCloudContextInDatabase(
+        workspaceDao, DESTINATION_WORKSPACE_ID, PROJECT_ID);
+
+    when(mockCrlService().createStorageCow(any(String.class))).thenReturn(mockStorageCow);
+    when(mockCrlService().createWsmSaNakedStorageClient()).thenReturn(mockStorageClient);
+    when(mockStorageCow.getIamPolicy(any(String.class))).thenReturn(mockPolicy);
+    when(mockPolicy.getBindingsList()).thenReturn(ImmutableList.copyOf(new ArrayList<>()));
+    when(mockSamService()
+            .syncResourcePolicy(
+                any(ControlledResource.class),
+                any(ControlledResourceIamRole.class),
+                any(AuthenticatedUserRequest.class)))
+        .thenReturn(POLICY_GROUP);
+
+    when(mockStorageClient.buckets()).thenReturn(mockBuckets);
+    when(mockBuckets.get(any(String.class))).thenReturn(mockStorageBucketsGet);
+    GoogleJsonResponseException fakeNotFoundError =
+        new GoogleJsonResponseException(
+            new HttpResponseException.Builder(403, "fake not found error", new HttpHeaders()),
+            /*details=*/ null);
+    when(mockStorageBucketsGet.execute()).thenThrow(fakeNotFoundError);
+
     copyGcsBucketDefinitionStep =
         new CopyGcsBucketDefinitionStep(
             USER_REQUEST,
             SOURCE_BUCKET_RESOURCE,
-            mockControlledResourceService(),
+            controlledResourceService,
             CloningInstructions.COPY_DEFINITION);
+
     when(mockGcpCloudContextService().getRequiredGcpProject(any(UUID.class)))
-        .thenReturn("my-fake-project");
+        .thenReturn(PROJECT_ID);
+    when(mockGcpCloudContextService()
+            .getRequiredGcpCloudContext(any(UUID.class), any(AuthenticatedUserRequest.class)))
+        .thenReturn(mockGcpCloudContext);
+    when(mockGcpCloudContext.getGcpProjectId()).thenReturn(PROJECT_ID);
   }
 
   @Test
@@ -72,39 +129,26 @@ public class CopyGcsBucketDefinitionStepTest extends BaseUnitTestMockGcpCloudCon
     inputParameters.put(
         ControlledResourceKeys.CREATION_PARAMETERS, SOURCE_BUCKET_CREATION_PARAMETERS);
     inputParameters.put(ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.randomUUID());
-    doReturn(inputParameters).when(mockFlightContext).getInputParameters();
+    when(mockFlightContext.getInputParameters()).thenReturn(inputParameters);
+
+    when(mockSamService().getUserStatusInfo(any()))
+        .thenReturn(
+            new UserStatusInfo()
+                .userEmail(USER_REQUEST.getEmail())
+                .userSubjectId(USER_REQUEST.getSubjectId()));
 
     final var workingMap = new FlightMap();
     workingMap.put(
         ResourceKeys.PREVIOUS_RESOURCE_DESCRIPTION,
         GcsBucketCloneTestFixtures.SOURCE_BUCKET_DESCRIPTION);
     workingMap.put(ControlledResourceKeys.CREATION_PARAMETERS, SOURCE_BUCKET_CREATION_PARAMETERS);
-    doReturn(workingMap).when(mockFlightContext).getWorkingMap();
-
-    doReturn(CREATED_BUCKET_RESOURCE)
-        .when(mockControlledResourceService())
-        .createControlledResourceSync(
-            any(ControlledResource.class),
-            any(ControlledResourceIamRole.class),
-            any(AuthenticatedUserRequest.class),
-            any());
+    when(mockFlightContext.getWorkingMap()).thenReturn(workingMap);
 
     final StepResult stepResult = copyGcsBucketDefinitionStep.doStep(mockFlightContext);
-    final ArgumentCaptor<ControlledGcsBucketResource> destinationBucketCaptor =
-        ArgumentCaptor.forClass(ControlledGcsBucketResource.class);
-    final ArgumentCaptor<ControlledResourceIamRole> iamRoleCaptor =
-        ArgumentCaptor.forClass(ControlledResourceIamRole.class);
-    final ArgumentCaptor<ApiGcpGcsBucketCreationParameters> creationParametersCaptor =
-        ArgumentCaptor.forClass(ApiGcpGcsBucketCreationParameters.class);
-    verify(mockControlledResourceService())
-        .createControlledResourceSync(
-            destinationBucketCaptor.capture(),
-            iamRoleCaptor.capture(),
-            any(AuthenticatedUserRequest.class),
-            creationParametersCaptor.capture());
 
-    final ControlledGcsBucketResource destinationBucketResource =
-        destinationBucketCaptor.getValue();
+    ControlledGcsBucketResource destinationBucketResource =
+        workingMap.get(
+            ControlledResourceKeys.CLONED_RESOURCE_DEFINITION, ControlledGcsBucketResource.class);
     assertEquals(DESTINATION_BUCKET_NAME, destinationBucketResource.getBucketName());
     assertEquals(DESTINATION_WORKSPACE_ID, destinationBucketResource.getWorkspaceId());
     assertNotNull(destinationBucketResource.getResourceId());
@@ -122,21 +166,12 @@ public class CopyGcsBucketDefinitionStepTest extends BaseUnitTestMockGcpCloudCon
     assertEquals(
         SOURCE_BUCKET_RESOURCE.getApplicationId(), destinationBucketResource.getApplicationId());
     assertEquals(
-        SOURCE_BUCKET_RESOURCE.getPrivateResourceState(),
-        destinationBucketResource.getPrivateResourceState());
+        "Optional[ACTIVE]", destinationBucketResource.getPrivateResourceState().toString());
     var lineage = destinationBucketResource.getResourceLineage();
     List<ResourceLineageEntry> expectedLineage = new ArrayList<>();
     expectedLineage.add(
         new ResourceLineageEntry(SOURCE_WORKSPACE_ID, SOURCE_BUCKET_RESOURCE.getResourceId()));
     assertEquals(expectedLineage, lineage);
-
-    final ControlledResourceIamRole controlledResourceIamRole = iamRoleCaptor.getValue();
-    assertEquals(ControlledResourceIamRole.EDITOR, controlledResourceIamRole);
-
-    final ApiGcpGcsBucketCreationParameters bucketCreationParameters =
-        creationParametersCaptor.getValue();
-    assertEquals(SOURCE_BUCKET_CREATION_PARAMETERS, bucketCreationParameters);
-
     assertEquals(StepResult.getStepResultSuccess(), stepResult);
   }
 }

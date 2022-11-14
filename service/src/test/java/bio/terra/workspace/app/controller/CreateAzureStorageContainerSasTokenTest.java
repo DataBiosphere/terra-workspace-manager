@@ -14,9 +14,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseAzureUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.db.ResourceDao;
+import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureSasBundle;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
+import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
+import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.model.AzureCloudContext;
+import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
@@ -37,10 +44,19 @@ public class CreateAzureStorageContainerSasTokenTest extends BaseAzureUnitTest {
 
   private ControlledAzureStorageResource accountResource;
   private ControlledAzureStorageContainerResource containerResource;
+  @Autowired ControlledResourceMetadataManager controlledResourceMetadataManager;
+  @Autowired WorkspaceDao workspaceDao;
+  @Autowired WorkspaceService workspaceService;
+  @Autowired ResourceDao resourceDao;
+  @Autowired SpendConnectedTestUtils spendUtils;
 
   @BeforeEach
   public void setup() throws Exception {
     workspaceId = UUID.randomUUID();
+    var azureCloudContext = new AzureCloudContext("fake", "fake", "fake");
+    WorkspaceUnitTestUtils.createWorkspaceWithAzureContext(
+        workspaceId, workspaceDao, azureCloudContext);
+
     storageContainerId = UUID.randomUUID();
     UUID storageAccountId = UUID.randomUUID();
 
@@ -55,10 +71,7 @@ public class CreateAzureStorageContainerSasTokenTest extends BaseAzureUnitTest {
             .storageContainerName("testcontainer")
             .build();
 
-    when(mockControlledResourceMetadataManager()
-            .validateControlledResourceAndAction(
-                any(), eq(workspaceId), eq(storageContainerId), any()))
-        .thenReturn(containerResource);
+    resourceDao.createControlledResource(containerResource);
 
     accountResource =
         ControlledAzureStorageResource.builder()
@@ -71,10 +84,7 @@ public class CreateAzureStorageContainerSasTokenTest extends BaseAzureUnitTest {
             .region("eastus")
             .build();
 
-    when(mockControlledResourceMetadataManager()
-            .validateControlledResourceAndAction(
-                any(), eq(workspaceId), eq(storageAccountId), any()))
-        .thenReturn(accountResource);
+    resourceDao.createControlledResource(accountResource);
 
     when(mockSamService().getUserEmailFromSam(eq(USER_REQUEST)))
         .thenReturn(USER_REQUEST.getEmail());
