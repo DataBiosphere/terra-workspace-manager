@@ -82,7 +82,7 @@ public class CopyGcsBucketDefinitionStepTest extends BaseUnitTestMockGcpCloudCon
             .userFacingId(DESTINATION_WORKSPACE_ID.toString())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
-    workspaceDao.createWorkspace(workspace);
+    workspaceDao.createWorkspace(workspace, /*applicationIds=*/ null);
     WorkspaceUnitTestUtils.createGcpCloudContextInDatabase(
         workspaceDao, DESTINATION_WORKSPACE_ID, PROJECT_ID);
 
