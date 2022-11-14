@@ -95,10 +95,9 @@ sudo mv "cromwell-${CROMWELL_LATEST_VERSION}.jar" "/usr/share/java/"
 echo "export CROMWELL_JAR='/usr/share/java/cromwell-${CROMWELL_LATEST_VERSION}.jar'" >> "/home/${JUPYTER_USER}/.bash_profile"
 
 #Install cromshell
-sudo apt-get -y install mailutils
-sudo -u "${JUPYTER_USER}" sh -c "curl -s https://raw.githubusercontent.com/broadinstitute/cromshell/master/cromshell > cromshell"
-sudo -u "${JUPYTER_USER}" sh -c "chmod +x cromshell"
-sudo mv cromshell /usr/bin/cromshell
+# sudo -u "${JUPYTER_USER}" sh -c "curl -s https://raw.githubusercontent.com/broadinstitute/cromshell/master/cromshell > cromshell"
+# sudo -u "${JUPYTER_USER}" sh -c "chmod +x cromshell"
+# sudo mv cromshell /usr/bin/cromshell
 
 # Install & configure the Terra CLI
 sudo -u "${JUPYTER_USER}" sh -c "curl -L https://github.com/DataBiosphere/terra-cli/releases/latest/download/download-install.sh | bash"
@@ -225,6 +224,15 @@ cat <<EOF | sudo -E -u jupyter tee "${GIT_IGNORE}"
 EOF
 
 sudo -u "$JUPYTER_USER" sh -c "git config --global core.excludesfile ${GIT_IGNORE}"
+
+# Install cromshell alpha-2.0 branch from GitHub repo.
+sudo apt-get -y install mailutils
+git clone git@github.com:broadinstitute/cromshell.git
+cd cromshell
+git checkout cromshell_2.0
+pip install .
+sudo -u "${JUPYTER_USER}" sh -c "chmod +x cromshell"
+sudo mv /opt/conda/lib/python3.7/site-packages/cromshell-alpha /usr/bin/cromshell
 
 # This block is for test only. If the notebook execute successfully down to
 # here, we knows that the script executed successfully.
