@@ -39,7 +39,6 @@ import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
-import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
 import bio.terra.workspace.service.job.JobService;
@@ -253,15 +252,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
                 storageContainerResource.getStorageAccountId(),
                 SamControlledResourceActions.READ_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT);
-    final String userEmail =
-        SamRethrow.onInterrupted(
-            () -> getSamService().getUserEmailFromSam(userRequest), "getUserEmailFromSam");
-
-    logger.info(
-        "user {} requesting SAS token for Azure storage container {} in workspace {}",
-        userEmail,
-        storageContainerUuid.toString(),
-        workspaceUuid.toString());
 
     OffsetDateTime startTime =
         OffsetDateTime.now().minusMinutes(azureConfiguration.getSasTokenStartTimeMinutesOffset());
@@ -282,13 +272,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             sasIpRange,
             sasBlobName,
             sasPermissions);
-
-    logger.info(
-        "SAS token with expiry time of {} generated for user {} on container {} in workspace {}",
-        expiryTime,
-        userEmail,
-        storageContainerUuid,
-        workspaceUuid);
 
     return new ResponseEntity<>(
         new ApiCreatedAzureStorageContainerSasToken()

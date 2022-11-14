@@ -3,13 +3,90 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.azure.conta
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
+import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.utils.FlightUtils;
+import bio.terra.workspace.db.ResourceDao;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureStorageAccessService;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.BlobCopier;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import java.util.UUID;
+import org.springframework.http.HttpStatus;
 
-// TODO WOR-591 This step will be responsible for copying files from the
-// source container to the destination
 public class CopyAzureStorageContainerBlobsStep implements Step {
+  private final ResourceDao resourceDao;
+  private final ControlledAzureStorageContainerResource sourceContainer;
+  private final AzureStorageAccessService azureStorageAccessService;
+  private final AuthenticatedUserRequest userRequest;
+  private final BlobCopier blobCopier;
+
+  public CopyAzureStorageContainerBlobsStep(
+      AzureStorageAccessService azureStorageAccessService,
+      ControlledAzureStorageContainerResource sourceContainer,
+      ResourceDao resourceDao,
+      AuthenticatedUserRequest userRequest,
+      BlobCopier blobCopier) {
+    this.azureStorageAccessService = azureStorageAccessService;
+    this.resourceDao = resourceDao;
+    this.sourceContainer = sourceContainer;
+    this.userRequest = userRequest;
+    this.blobCopier = blobCopier;
+  }
+
   @Override
-  public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
+  public StepResult doStep(FlightContext flightContext)
+      throws InterruptedException, RetryException {
+    var inputParameters = flightContext.getInputParameters();
+
+    FlightUtils.validateRequiredEntries(
+        inputParameters, WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID);
+    FlightUtils.validateRequiredEntries(
+        flightContext.getWorkingMap(),
+        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_STORAGE_ACCOUNT_RESOURCE_ID,
+        WorkspaceFlightMapKeys.ControlledResourceKeys.CLONED_RESOURCE_DEFINITION);
+
+    var destinationWorkspaceId =
+        inputParameters.get(
+            WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
+
+    var destStorageAccountResourceId =
+        flightContext
+            .getWorkingMap()
+            .get(
+                WorkspaceFlightMapKeys.ControlledResourceKeys
+                    .DESTINATION_STORAGE_ACCOUNT_RESOURCE_ID,
+                UUID.class);
+
+    ControlledAzureStorageResource destinationStorageAccount =
+        resourceDao
+            .getResource(destinationWorkspaceId, destStorageAccountResourceId)
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT);
+
+    ControlledAzureStorageResource sourceStorageAccount =
+        resourceDao
+            .getResource(sourceContainer.getWorkspaceId(), sourceContainer.getStorageAccountId())
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT);
+
+    ControlledAzureStorageContainerResource destinationContainer =
+        flightContext
+            .getWorkingMap()
+            .get(
+                WorkspaceFlightMapKeys.ControlledResourceKeys.CLONED_RESOURCE_DEFINITION,
+                ControlledAzureStorageContainerResource.class);
+
+    var results =
+        blobCopier.copyBlobs(
+            sourceStorageAccount, destinationStorageAccount, sourceContainer, destinationContainer);
+    if (results.anyFailures()) {
+      FlightUtils.setErrorResponse(
+          flightContext, "Blobs failed to copy", HttpStatus.INTERNAL_SERVER_ERROR);
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL);
+    }
+
     return StepResult.getStepResultSuccess();
   }
 

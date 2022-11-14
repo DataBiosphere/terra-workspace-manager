@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import bio.terra.common.exception.ForbiddenException;
+import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseAzureUnitTest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.SamConstants;
@@ -48,7 +49,8 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
     var cred = new StorageSharedKeyCredential("fake", "fake");
     when(keyProvider.getStorageAccountKey(any(), any())).thenReturn(cred);
     azureStorageAccessService =
-        new AzureStorageAccessService(mockSamService(), keyProvider, mockFeatureConfiguration());
+        new AzureStorageAccessService(
+            mockSamService(), keyProvider, mockFeatureConfiguration(), new AzureConfiguration());
   }
 
   private ControlledAzureStorageResource buildStorageAccount() {

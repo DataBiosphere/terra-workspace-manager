@@ -100,9 +100,9 @@ public class AzureLandingZoneFixtures {
   }
 
   public static ApiCreateAzureLandingZoneRequestBody buildCreateAzureLandingZoneRequest(
-      String jobId) {
+      String jobId, UUID billingProfileId) {
     return new ApiCreateAzureLandingZoneRequestBody()
-        .billingProfileId(UUID.randomUUID())
+        .billingProfileId(billingProfileId)
         .jobControl(new ApiJobControl().id(jobId))
         .definition("azureLandingZoneDefinition")
         .version("v1");
@@ -131,6 +131,15 @@ public class AzureLandingZoneFixtures {
 
   public static LandingZoneJobService.AsyncJobResult<StartLandingZoneCreation>
       createStartCreateJobResult(String jobId, JobReport.StatusEnum jobStatus, UUID landingZoneId) {
+    return createStartCreateJobResultWithStartLandingZoneCreation(
+        jobId, jobStatus, new StartLandingZoneCreation(landingZoneId, "mydefinition", "v1"));
+  }
+
+  public static LandingZoneJobService.AsyncJobResult<StartLandingZoneCreation>
+      createStartCreateJobResultWithStartLandingZoneCreation(
+          String jobId,
+          JobReport.StatusEnum jobStatus,
+          StartLandingZoneCreation startLandingZoneCreation) {
     LandingZoneJobService.AsyncJobResult<StartLandingZoneCreation> asyncJobResult =
         new LandingZoneJobService.AsyncJobResult<>();
     asyncJobResult.jobReport(
@@ -141,7 +150,7 @@ public class AzureLandingZoneFixtures {
             .statusCode(HttpStatus.SC_ACCEPTED)
             .submitted(Instant.now().toString())
             .resultURL("create-result/"));
-    asyncJobResult.result(new StartLandingZoneCreation(landingZoneId, "mydefinition", "v1"));
+    asyncJobResult.result(startLandingZoneCreation);
     return asyncJobResult;
   }
 

@@ -3,6 +3,7 @@ package bio.terra.workspace.amalgam.landingzone.azure;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -11,15 +12,23 @@ import static org.mockito.Mockito.when;
 
 import bio.terra.common.exception.ConflictException;
 import bio.terra.common.iam.BearerToken;
+import bio.terra.landingzone.job.LandingZoneJobService;
+import bio.terra.landingzone.job.model.JobReport;
 import bio.terra.landingzone.library.landingzones.deployment.ResourcePurpose;
 import bio.terra.landingzone.library.landingzones.deployment.SubnetResourcePurpose;
 import bio.terra.landingzone.service.landingzone.azure.LandingZoneService;
 import bio.terra.landingzone.service.landingzone.azure.model.LandingZone;
+import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneRequest;
 import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneResource;
+import bio.terra.landingzone.service.landingzone.azure.model.StartLandingZoneCreation;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseAzureUnitTest;
+import bio.terra.workspace.common.fixtures.AzureLandingZoneFixtures;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneList;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesList;
+import bio.terra.workspace.generated.model.ApiCreateAzureLandingZoneRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateLandingZoneResult;
+import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
@@ -38,6 +47,7 @@ public class LandingZoneApiDispatchTest extends BaseAzureUnitTest {
   private static final UUID LANDING_ZONE_ID = UUID.randomUUID();
   private static final UUID BILLING_PROFILE_ID = UUID.randomUUID();
   private final UUID WORKSPACE_ID = UUID.randomUUID();
+  private static final String JOB_ID = "CREATE_JOB_ID";
   private static final BearerToken BEARER_TOKEN = new BearerToken("fake-token");
   private static final OffsetDateTime CREATED_DATE = Instant.now().atOffset(ZoneOffset.UTC);
 
@@ -53,6 +63,60 @@ public class LandingZoneApiDispatchTest extends BaseAzureUnitTest {
     when(featureConfiguration.isAzureEnabled()).thenReturn(true);
     landingZoneApiDispatch =
         new LandingZoneApiDispatch(landingZoneService, workspaceService, featureConfiguration);
+  }
+
+  @Test
+  void createAzureLandingZone_ReturnJobRunning_Success() {
+    List<LandingZone> landingZoneList = Collections.emptyList();
+    String resultEndpoint = String.format("%s/%s/%s", "someServletPath", "create-result", JOB_ID);
+    ApiCreateAzureLandingZoneRequestBody request =
+        AzureLandingZoneFixtures.buildCreateAzureLandingZoneRequest(JOB_ID, BILLING_PROFILE_ID);
+    when(landingZoneService.getLandingZonesByBillingProfile(BEARER_TOKEN, BILLING_PROFILE_ID))
+        .thenReturn(landingZoneList);
+
+    LandingZoneJobService.AsyncJobResult<StartLandingZoneCreation> createJobResult =
+        AzureLandingZoneFixtures.createStartCreateJobResultWithStartLandingZoneCreation(
+            JOB_ID,
+            JobReport.StatusEnum.RUNNING,
+            new StartLandingZoneCreation(
+                LANDING_ZONE_ID, request.getDefinition(), request.getVersion()));
+    when(landingZoneService.startLandingZoneCreationJob(
+            eq(BEARER_TOKEN), eq(JOB_ID), any(LandingZoneRequest.class), any()))
+        .thenReturn(createJobResult);
+    landingZoneApiDispatch =
+        new LandingZoneApiDispatch(landingZoneService, workspaceService, featureConfiguration);
+
+    ApiCreateLandingZoneResult response =
+        landingZoneApiDispatch.createAzureLandingZone(BEARER_TOKEN, request, resultEndpoint);
+
+    assertNotNull(response);
+    assertNotNull(response.getJobReport());
+    assertEquals(JOB_ID, response.getJobReport().getId());
+    assertEquals(ApiJobReport.StatusEnum.RUNNING, response.getJobReport().getStatus());
+    assertEquals(LANDING_ZONE_ID, response.getLandingZoneId());
+    assertEquals(request.getVersion(), response.getVersion());
+    assertEquals(request.getDefinition(), response.getDefinition());
+  }
+
+  @Test
+  void createAzureLandingZone_LandingZoneExistsForBillingProfileThrows()
+      throws LandingZoneInvalidInputException {
+    List<LandingZone> landingZoneList =
+        List.of(
+            new LandingZone(
+                LANDING_ZONE_ID, BILLING_PROFILE_ID, "definition", "version", CREATED_DATE));
+    String resultEndpoint = String.format("%s/%s/%s", "someServletPath", "create-result", JOB_ID);
+    ApiCreateAzureLandingZoneRequestBody request =
+        AzureLandingZoneFixtures.buildCreateAzureLandingZoneRequest(JOB_ID, BILLING_PROFILE_ID);
+    when(landingZoneService.getLandingZonesByBillingProfile(eq(BEARER_TOKEN), any()))
+        .thenReturn(landingZoneList);
+
+    landingZoneApiDispatch =
+        new LandingZoneApiDispatch(landingZoneService, workspaceService, featureConfiguration);
+
+    assertThrows(
+        LandingZoneInvalidInputException.class,
+        () -> landingZoneApiDispatch.createAzureLandingZone(BEARER_TOKEN, request, resultEndpoint));
   }
 
   @Test

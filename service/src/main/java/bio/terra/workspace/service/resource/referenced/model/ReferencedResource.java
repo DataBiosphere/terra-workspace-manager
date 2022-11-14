@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.referenced.cloud.gcp;
+package bio.terra.workspace.service.resource.referenced.model;
 
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.exception.InvalidMetadataException;

@@ -14,10 +14,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseAzureUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureSasBundle;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureStorageAccessService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
@@ -59,6 +59,7 @@ public class CreateAzureStorageContainerSasTokenTest extends BaseAzureUnitTest {
 
     storageContainerId = UUID.randomUUID();
     UUID storageAccountId = UUID.randomUUID();
+
     containerResource =
         ControlledAzureStorageContainerResource.builder()
             .common(
@@ -99,7 +100,7 @@ public class CreateAzureStorageContainerSasTokenTest extends BaseAzureUnitTest {
                 any(),
                 any(),
                 any()))
-        .thenReturn(new AzureStorageAccessService.AzureSasBundle("sasToken", "sasUrl"));
+        .thenReturn(new AzureSasBundle("sasToken", "sasUrl"));
   }
 
   @Test

@@ -74,7 +74,9 @@ public class LandingZoneApiDispatch {
         body.getVersion());
 
     // Prevent deploying more than 1 landing zone per billing profile
-    landingZoneService.listLandingZoneIds(bearerToken, body.getBillingProfileId()).stream()
+    landingZoneService
+        .getLandingZonesByBillingProfile(bearerToken, body.getBillingProfileId())
+        .stream()
         .findFirst()
         .ifPresent(
             t -> {
