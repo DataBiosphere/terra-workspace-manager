@@ -91,7 +91,6 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     ControlledAwsBucketResource resource =
         ControlledAwsBucketResource.builder()
             .common(commonFields)
-            .terraBucketName(body.getAwsBucket().getName())
             .s3BucketName(s3BucketName)
             .prefix(UUID.randomUUID().toString())
             .build();

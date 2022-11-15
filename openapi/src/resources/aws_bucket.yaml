@@ -5,9 +5,6 @@ components:
         Storage bucket properties included in post-creation get.
       type: object
       properties:
-        terraBucketName:
-          description: Name of the Terra bucket.
-          type: string
         s3BucketName:
           description: The name of the S3 bucket in which the Terra bucket was allocated.
           type: string

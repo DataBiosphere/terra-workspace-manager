@@ -68,11 +68,8 @@ components:
         values accepted by the AWS Storage API.
       type: object
       properties:
-        name:
-          description: A valid bucket name per https://cloud.google.com/storage/docs/naming-buckets.
-          type: string
         location:
-          description: A valid bucket location per https://cloud.google.com/storage/docs/locations.
+          description: A valid bucket location per https://docs.aws.amazon.com/general/latest/gr/s3.html.
           type: string
 
   responses:

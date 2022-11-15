@@ -26,7 +26,6 @@ public class ControlledAwsBucketHandler implements WsmResourceHandler {
         DbSerDes.fromJson(dbResource.getAttributes(), ControlledAwsBucketAttributes.class);
 
     return ControlledAwsBucketResource.builder()
-        .terraBucketName(attributes.getTerraBucketName())
         .s3BucketName(attributes.getS3BucketName())
         .prefix(attributes.getPrefix())
         .common(new ControlledResourceFields(dbResource))

@@ -30,7 +30,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 public class ControlledAwsBucketResource extends ControlledResource {
-  private final String terraBucketName;
   private final String s3BucketName;
   private final String prefix;
 
@@ -47,7 +46,6 @@ public class ControlledAwsBucketResource extends ControlledResource {
       @JsonProperty("managedBy") ManagedByType managedBy,
       @JsonProperty("applicationId") String applicationId,
       @JsonProperty("s3BucketName") String s3BucketName,
-      @JsonProperty("terraBucketName") String terraBucketName,
       @JsonProperty("prefix") String prefix,
       @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
       @JsonProperty("properties") Map<String, String> properties) {
@@ -64,16 +62,14 @@ public class ControlledAwsBucketResource extends ControlledResource {
         privateResourceState,
         resourceLineage,
         properties);
-    this.terraBucketName = terraBucketName;
     this.s3BucketName = s3BucketName;
     this.prefix = prefix;
     validate();
   }
 
   private ControlledAwsBucketResource(
-      ControlledResourceFields common, String terraBucketName, String s3BucketName, String prefix) {
+      ControlledResourceFields common, String s3BucketName, String prefix) {
     super(common);
-    this.terraBucketName = terraBucketName;
     this.s3BucketName = s3BucketName;
     this.prefix = prefix;
     validate();
@@ -120,10 +116,6 @@ public class ControlledAwsBucketResource extends ControlledResource {
     // TODO: Implement and add delete flight steps.
   }
 
-  public String getTerraBucketName() {
-    return terraBucketName;
-  }
-
   public String getS3BucketName() {
     return s3BucketName;
   }
@@ -134,7 +126,6 @@ public class ControlledAwsBucketResource extends ControlledResource {
 
   public ApiAwsBucketAttributes toApiAttributes() {
     return new ApiAwsBucketAttributes()
-        .terraBucketName(getTerraBucketName())
         .s3BucketName(getS3BucketName())
         .prefix(getPrefix());
   }
@@ -156,7 +147,7 @@ public class ControlledAwsBucketResource extends ControlledResource {
   @Override
   public String attributesToJson() {
     return DbSerDes.toJson(
-        new ControlledAwsBucketAttributes(getTerraBucketName(), getS3BucketName(), getPrefix()));
+        new ControlledAwsBucketAttributes(getS3BucketName(), getPrefix()));
   }
 
   @Override
@@ -181,28 +172,15 @@ public class ControlledAwsBucketResource extends ControlledResource {
         || getStewardshipType() != StewardshipType.CONTROLLED) {
       throw new InconsistentFieldsException("Expected CONTROLLED_AWS_BUCKET");
     }
-
-    if (getTerraBucketName() == null) {
-      throw new MissingRequiredFieldException(
-          "Missing required Terra bucket name field for ControlledAwsBucket.");
-    }
-
-    // TODO: ResourceValidationUtils.validateStorageContainerName(getTerraBucketName());
   }
 
   public static class Builder {
     private ControlledResourceFields common;
-    private String terraBucketName;
     private String s3BucketName;
     private String prefix;
 
     public Builder common(ControlledResourceFields common) {
       this.common = common;
-      return this;
-    }
-
-    public ControlledAwsBucketResource.Builder terraBucketName(String terraBucketName) {
-      this.terraBucketName = terraBucketName;
       return this;
     }
 
@@ -217,7 +195,7 @@ public class ControlledAwsBucketResource extends ControlledResource {
     }
 
     public ControlledAwsBucketResource build() {
-      return new ControlledAwsBucketResource(common, terraBucketName, s3BucketName, prefix);
+      return new ControlledAwsBucketResource(common, s3BucketName, prefix);
     }
   }
 }
