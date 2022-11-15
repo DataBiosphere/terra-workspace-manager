@@ -59,7 +59,7 @@ jobs:
           java-version: 17
 
       - name: Cache Gradle packages
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ~/.gradle/caches
@@ -206,7 +206,7 @@ jobs:
       - name: Archive WSM and TestRunner logs
         id: archive_logs
         if: always()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           # We're not running WSM locally, so there's no wsm.log
           name: testrunner-logs

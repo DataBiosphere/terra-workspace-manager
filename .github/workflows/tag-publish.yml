@@ -64,7 +64,7 @@ jobs:
         echo ::set-output name=semver-part::$SEMVER_PART
         echo ::set-output name=checkout-branch::$CHECKOUT_BRANCH
     - name: Checkout current code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         ref: ${{ steps.controls.outputs.checkout-branch }}
         token: ${{ secrets.BROADBOT_TOKEN }}
@@ -94,7 +94,7 @@ jobs:
         java-version: 17
     - name: Cache Gradle packages
       if: steps.skiptest.outputs.is-bump == 'no'
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: |
           ~/.gradle/caches

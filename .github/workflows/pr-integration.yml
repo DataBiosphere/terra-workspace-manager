@@ -40,7 +40,7 @@ jobs:
         - 5432:5432
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     # Sparse check out terra-helmfile repo version directories
     - uses: ./.github/actions/checkout-helm-versions
@@ -62,7 +62,7 @@ jobs:
         java-version: 17
 
     - name: Cache Gradle packages
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: |
           ~/.gradle/caches
@@ -129,7 +129,7 @@ jobs:
     - name: Archive WSM and TestRunner logs
       id: archive_logs
       if: always()
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: wsm-and-testrunner-logs
         path: |
