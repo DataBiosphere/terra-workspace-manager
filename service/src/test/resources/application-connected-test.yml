@@ -8,7 +8,6 @@ workspace:
     second-user-email: liam.dragonmaw@test.firecloud.org
     billing-user-email: hermione.owner@test.firecloud.org
 
-
   crl:
     use-crl: true
     use-janitor: true
