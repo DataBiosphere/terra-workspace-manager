@@ -49,7 +49,6 @@ import bio.terra.workspace.generated.model.ApiTpsPolicyInputs;
 import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
-import bio.terra.workspace.service.iam.AuthHeaderKeys;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -167,10 +166,7 @@ public class MockMvcUtils {
 
   public static MockHttpServletRequestBuilder addAuth(
       MockHttpServletRequestBuilder request, AuthenticatedUserRequest userRequest) {
-    return request
-        .header(AUTH_HEADER, "Bearer " + userRequest.getRequiredToken())
-        .header(AuthHeaderKeys.OIDC_CLAIM_EMAIL.getKeyName(), userRequest.getEmail())
-        .header(AuthHeaderKeys.OIDC_CLAIM_USER_ID.getKeyName(), userRequest.getSubjectId());
+    return request.header(AUTH_HEADER, "Bearer " + userRequest.getRequiredToken());
   }
 
   public static MockHttpServletRequestBuilder addJsonContentType(

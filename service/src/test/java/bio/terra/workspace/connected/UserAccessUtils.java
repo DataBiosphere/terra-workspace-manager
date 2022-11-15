@@ -31,9 +31,6 @@ public class UserAccessUtils {
   @Value("${workspace.connected-test.default-user-email}")
   private String defaultUserEmail;
 
-  @Value("${workspace.connected-test.default-user-subject-id}")
-  private String defaultUserSubjectId;
-
   /**
    * The email address of a second, not-the-default user to use for testing. Useful for tests that
    * require two valid users.
@@ -41,14 +38,8 @@ public class UserAccessUtils {
   @Value("${workspace.connected-test.second-user-email}")
   private String secondUserEmail;
 
-  @Value("${workspace.connected-test.second-user-subject-id}")
-  private String secondUserSubjectId;
-
   @Value("${workspace.connected-test.billing-user-email}")
   private String billingUserEmail;
-
-  @Value("${workspace.connected-test.billing-user-subject-id}")
-  private String billingUserSubjectId;
 
   /** Creates Google credentials for the user. Relies on domain delegation. */
   public GoogleCredentials generateCredentials(String userEmail) {
@@ -71,7 +62,7 @@ public class UserAccessUtils {
 
   /** Creates a {@link TestUser} for the default test user. */
   public TestUser defaultUser() {
-    return new TestUser(defaultUserEmail, defaultUserSubjectId);
+    return new TestUser(defaultUserEmail);
   }
 
   /** Generates an OAuth access token for the default test user. */
@@ -108,7 +99,6 @@ public class UserAccessUtils {
   public AuthenticatedUserRequest defaultUserAuthRequest() {
     return new AuthenticatedUserRequest()
         .email(getDefaultUserEmail())
-        .subjectId(defaultUserSubjectId)
         .token(Optional.of(defaultUserAccessToken().getTokenValue()));
   }
 
@@ -116,14 +106,12 @@ public class UserAccessUtils {
   public AuthenticatedUserRequest secondUserAuthRequest() {
     return new AuthenticatedUserRequest()
         .email(getSecondUserEmail())
-        .subjectId(secondUserSubjectId)
         .token(Optional.of(secondUserAccessToken().getTokenValue()));
   }
 
   public AuthenticatedUserRequest thirdUserAuthRequest() {
     return new AuthenticatedUserRequest()
         .email(getBillingUserEmail())
-        .subjectId(billingUserSubjectId)
         .token(Optional.of(billingUserAccessToken().getTokenValue()));
   }
 
@@ -134,11 +122,9 @@ public class UserAccessUtils {
    */
   public class TestUser {
     private final String email;
-    private final String subjectId;
 
-    public TestUser(String email, String subjectId) {
+    public TestUser(String email) {
       this.email = email;
-      this.subjectId = subjectId;
     }
 
     public String getEmail() {
@@ -155,7 +141,6 @@ public class UserAccessUtils {
 
     public AuthenticatedUserRequest getAuthenticatedRequest() {
       return new AuthenticatedUserRequest()
-          .subjectId(subjectId)
           .email(email)
           .token(Optional.of(getAccessToken().getTokenValue()));
     }

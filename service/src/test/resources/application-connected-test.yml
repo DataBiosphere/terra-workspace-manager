@@ -5,11 +5,8 @@ workspace:
   connected-test:
     user-delegated-service-account-path: ../config/user-delegated-sa.json
     default-user-email: elijah.thunderlord@test.firecloud.org
-    default-user-subject-id: 106856642778103672195
     second-user-email: liam.dragonmaw@test.firecloud.org
-    second-user-subject-id: 101362377780312584307
     billing-user-email: hermione.owner@test.firecloud.org
-    billing-user-subject-id: 110530393451290928813
 
 
   crl:
