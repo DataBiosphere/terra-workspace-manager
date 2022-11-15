@@ -98,8 +98,8 @@ public class ControlledAwsBucketResource extends ControlledResource {
   public Optional<UniquenessCheckAttributes> getUniquenessCheckAttributes() {
     return Optional.of(
         new UniquenessCheckAttributes()
-            .uniquenessScope(UniquenessScope.WORKSPACE)
-            .addParameter("terraBucketName", getTerraBucketName()));
+            .uniquenessScope(UniquenessScope.GLOBAL)
+            .addParameter("prefix", getPrefix()));
   }
 
   /** {@inheritDoc} */
@@ -110,32 +110,14 @@ public class ControlledAwsBucketResource extends ControlledResource {
       AuthenticatedUserRequest userRequest,
       FlightBeanBag flightBeanBag) {
     RetryRule cloudRetry = RetryRules.cloud();
-    //    flight.addStep(
-    //        new VerifyAwsBucketCanBeCreatedStep(
-    //            flightBeanBag.getAzureConfig(),
-    //            flightBeanBag.getCrlService(),
-    //            flightBeanBag.getResourceDao(),
-    //            flightBeanBag.getLandingZoneApiDispatch(),
-    //            userRequest,
-    //            this),
-    //        cloudRetry);
-    //    flight.addStep(
-    //        new CreateAwsBucketStep(
-    //            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
-    //        cloudRetry);
+
+    flight.addStep(new ValidateAwsBucketCreationStep(this), cloudRetry);
   }
 
   /** {@inheritDoc} */
   @Override
   public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
-    //    flight.addStep(
-    //        new DeleteAwsBucketStep(
-    //            flightBeanBag.getAzureConfig(),
-    //            flightBeanBag.getCrlService(),
-    //            flightBeanBag.getResourceDao(),
-    //            flightBeanBag.getLandingZoneApiDispatch(),
-    //            this),
-    //        RetryRules.cloud());
+    // TODO: Implement and add delete flight steps.
   }
 
   public String getTerraBucketName() {

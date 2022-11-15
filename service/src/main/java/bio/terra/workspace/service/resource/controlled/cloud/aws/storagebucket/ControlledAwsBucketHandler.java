@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.aws.storagebucket;
 import bio.terra.workspace.common.exception.FeatureNotSupportedException;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
 import java.util.UUID;
@@ -28,6 +29,7 @@ public class ControlledAwsBucketHandler implements WsmResourceHandler {
         .terraBucketName(attributes.getTerraBucketName())
         .s3BucketName(attributes.getS3BucketName())
         .prefix(attributes.getPrefix())
+        .common(new ControlledResourceFields(dbResource))
         .build();
   }
 
