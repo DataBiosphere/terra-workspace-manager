@@ -237,20 +237,13 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
 
     final UUID accountResourceId = UUID.randomUUID();
     ControlledAzureStorageResource accountResource =
-        ControlledAzureStorageResource.builder()
-            .common(
-                ControlledResourceFields.builder()
-                    .workspaceUuid(workspaceUuid)
-                    .resourceId(accountResourceId)
-                    .name(getAzureName("rs"))
-                    .description(getAzureName("rs-desc"))
-                    .cloningInstructions(CloningInstructions.COPY_NOTHING)
-                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
-                    .build())
-            .storageAccountName(accountCreationParameters.getStorageAccountName())
-            .region(accountCreationParameters.getRegion())
-            .build();
+        ControlledResourceFixtures.getAzureStorage(
+            workspaceUuid,
+            accountResourceId,
+            accountCreationParameters.getStorageAccountName(),
+            accountCreationParameters.getRegion(),
+            getAzureName("rs"),
+            getAzureName("rs-desc"));
 
     // Submit a storage account creation flight and then verify the resource exists in the
     // workspace.
@@ -265,20 +258,13 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
     final UUID containerResourceId = UUID.randomUUID();
     final String containerName = ControlledResourceFixtures.uniqueBucketName();
     ControlledAzureStorageContainerResource containerResource =
-        ControlledAzureStorageContainerResource.builder()
-            .common(
-                ControlledResourceFields.builder()
-                    .workspaceUuid(workspaceUuid)
-                    .resourceId(containerResourceId)
-                    .name(getAzureName("rc"))
-                    .description(getAzureName("rc-desc"))
-                    .cloningInstructions(CloningInstructions.COPY_NOTHING)
-                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
-                    .build())
-            .storageAccountId(accountResourceId)
-            .storageContainerName(containerName)
-            .build();
+        ControlledResourceFixtures.getAzureStorageContainer(
+            workspaceUuid,
+            accountResourceId,
+            containerResourceId,
+            containerName,
+            getAzureName("rc"),
+            getAzureName("rc-desc"));
     createResource(
         workspaceUuid,
         userRequest,
@@ -341,21 +327,13 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
     final UUID containerResourceId = UUID.randomUUID();
     final String storageContainerName = ControlledResourceFixtures.uniqueBucketName();
     ControlledAzureStorageContainerResource containerResource =
-        ControlledAzureStorageContainerResource.builder()
-            .common(
-                ControlledResourceFields.builder()
-                    .workspaceUuid(workspaceUuid)
-                    .resourceId(containerResourceId)
-                    .name(getAzureName("rc"))
-                    .description(getAzureName("rc-desc"))
-                    .cloningInstructions(CloningInstructions.COPY_NOTHING)
-                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
-                    .build())
-            /*set it explicitly to show that landing zone shared storage account will be used*/
-            .storageAccountId(null)
-            .storageContainerName(storageContainerName)
-            .build();
+        ControlledResourceFixtures.getAzureStorageContainer(
+            workspaceUuid,
+            null,
+            containerResourceId,
+            storageContainerName,
+            getAzureName("rc"),
+            getAzureName("rc-desc"));
 
     createResource(
         workspaceUuid,
@@ -396,21 +374,13 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
     final UUID containerResourceId = UUID.randomUUID();
     final String storageContainerName = ControlledResourceFixtures.uniqueBucketName();
     ControlledAzureStorageContainerResource containerResource =
-        ControlledAzureStorageContainerResource.builder()
-            .common(
-                ControlledResourceFields.builder()
-                    .workspaceUuid(workspaceUuid)
-                    .resourceId(containerResourceId)
-                    .name(getAzureName("rc"))
-                    .description(getAzureName("rc-desc"))
-                    .cloningInstructions(CloningInstructions.COPY_NOTHING)
-                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
-                    .build())
-            /*set it explicitly to show that landing zone shared storage account will be used*/
-            .storageAccountId(null)
-            .storageContainerName(storageContainerName)
-            .build();
+        ControlledResourceFixtures.getAzureStorageContainer(
+            workspaceUuid,
+            null,
+            containerResourceId,
+            storageContainerName,
+            getAzureName("rc"),
+            getAzureName("rc-desc"));
 
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
@@ -456,21 +426,13 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
     final UUID containerResourceId = UUID.randomUUID();
     final String storageContainerName = ControlledResourceFixtures.uniqueBucketName();
     ControlledAzureStorageContainerResource containerResource =
-        ControlledAzureStorageContainerResource.builder()
-            .common(
-                ControlledResourceFields.builder()
-                    .workspaceUuid(workspaceUuid)
-                    .resourceId(containerResourceId)
-                    .name(getAzureName("rc"))
-                    .description(getAzureName("rc-desc"))
-                    .cloningInstructions(CloningInstructions.COPY_NOTHING)
-                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
-                    .build())
-            /*set it explicitly to show that landing zone shared storage account will be used*/
-            .storageAccountId(null)
-            .storageContainerName(storageContainerName)
-            .build();
+        ControlledResourceFixtures.getAzureStorageContainer(
+            workspaceUuid,
+            null,
+            containerResourceId,
+            storageContainerName,
+            getAzureName("rc"),
+            getAzureName("rc-desc"));
 
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
@@ -501,20 +463,13 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
 
     final UUID accountResourceId = UUID.randomUUID();
     ControlledAzureStorageResource accountResource =
-        ControlledAzureStorageResource.builder()
-            .common(
-                ControlledResourceFields.builder()
-                    .workspaceUuid(workspaceUuid)
-                    .resourceId(accountResourceId)
-                    .name(getAzureName("rs"))
-                    .description(getAzureName("rs-desc"))
-                    .cloningInstructions(CloningInstructions.COPY_NOTHING)
-                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
-                    .build())
-            .storageAccountName(accountCreationParameters.getStorageAccountName())
-            .region(accountCreationParameters.getRegion())
-            .build();
+        ControlledResourceFixtures.getAzureStorage(
+            workspaceUuid,
+            accountResourceId,
+            accountCreationParameters.getStorageAccountName(),
+            accountCreationParameters.getRegion(),
+            getAzureName("rs"),
+            getAzureName("rs-desc"));
 
     // Submit a storage account creation flight and then verify the resource exists in the
     // workspace.
@@ -529,20 +484,14 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
     final UUID containerResourceId = UUID.randomUUID();
     final String containerName = ControlledResourceFixtures.uniqueBucketName();
     ControlledAzureStorageContainerResource containerResource =
-        ControlledAzureStorageContainerResource.builder()
-            .common(
-                ControlledResourceFields.builder()
-                    .workspaceUuid(workspaceUuid)
-                    .resourceId(containerResourceId)
-                    .name(getAzureName("rc"))
-                    .description(getAzureName("rc-desc"))
-                    .cloningInstructions(CloningInstructions.COPY_NOTHING)
-                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
-                    .build())
-            .storageAccountId(accountResourceId)
-            .storageContainerName(containerName)
-            .build();
+        ControlledResourceFixtures.getAzureStorageContainer(
+            workspaceUuid,
+            accountResourceId,
+            containerResourceId,
+            containerName,
+            getAzureName("rc"),
+            getAzureName("rc-desc"));
+
     createResource(
         workspaceUuid,
         userRequest,
@@ -618,21 +567,13 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
     final UUID containerResourceId = UUID.randomUUID();
     final String storageContainerName = ControlledResourceFixtures.uniqueBucketName();
     ControlledAzureStorageContainerResource containerResource =
-        ControlledAzureStorageContainerResource.builder()
-            .common(
-                ControlledResourceFields.builder()
-                    .workspaceUuid(workspaceUuid)
-                    .resourceId(containerResourceId)
-                    .name(getAzureName("rc"))
-                    .description(getAzureName("rc-desc"))
-                    .cloningInstructions(CloningInstructions.COPY_NOTHING)
-                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
-                    .build())
-            /*set it explicitly to show that landing zone shared storage account will be used*/
-            .storageAccountId(null)
-            .storageContainerName(storageContainerName)
-            .build();
+        ControlledResourceFixtures.getAzureStorageContainer(
+            workspaceUuid,
+            null,
+            containerResourceId,
+            storageContainerName,
+            getAzureName("rc"),
+            getAzureName("rc-desc"));
 
     // create azure storage container
     createResource(
