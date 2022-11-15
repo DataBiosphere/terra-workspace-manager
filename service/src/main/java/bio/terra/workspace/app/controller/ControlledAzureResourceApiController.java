@@ -47,6 +47,7 @@ import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadat
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureStorageAccessService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.SasPermissionsHelper;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.SasTokenOptions;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
@@ -73,7 +74,7 @@ import org.springframework.stereotype.Controller;
 @Controller
 public class ControlledAzureResourceApiController extends ControlledResourceControllerBase
     implements ControlledAzureResourceApi {
-  private final Logger logger = LoggerFactory.getLogger(ControlledGcpResourceApiController.class);
+  private final Logger logger = LoggerFactory.getLogger(ControlledAzureResourceApiController.class);
 
   private final ControlledResourceService controlledResourceService;
   private final AzureStorageAccessService azureControlledStorageResourceService;
@@ -233,26 +234,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     ControllerValidationUtils.validateSasBlobName(sasBlobName);
     SasPermissionsHelper.validateSasPermissionString(sasPermissions);
 
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    // Creating an AzureStorageContainerSasToken requires checking the user's access to both the
-    // storage container and storage account resources.
-    final ControlledAzureStorageContainerResource storageContainerResource =
-        controlledResourceMetadataManager
-            .validateControlledResourceAndAction(
-                userRequest,
-                workspaceUuid,
-                storageContainerUuid,
-                SamControlledResourceActions.READ_ACTION)
-            .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
-    final ControlledAzureStorageResource storageAccountResource =
-        controlledResourceMetadataManager
-            .validateControlledResourceAndAction(
-                userRequest,
-                workspaceUuid,
-                storageContainerResource.getStorageAccountId(),
-                SamControlledResourceActions.READ_ACTION)
-            .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT);
-
     OffsetDateTime startTime =
         OffsetDateTime.now().minusMinutes(azureConfiguration.getSasTokenStartTimeMinutesOffset());
     long secondDuration =
@@ -264,14 +245,9 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     var sasBundle =
         azureControlledStorageResourceService.createAzureStorageContainerSasToken(
             workspaceUuid,
-            storageContainerResource,
-            storageAccountResource,
-            startTime,
-            expiryTime,
-            userRequest,
-            sasIpRange,
-            sasBlobName,
-            sasPermissions);
+            storageContainerUuid,
+            getAuthenticatedInfo(),
+            new SasTokenOptions(sasIpRange, startTime, expiryTime, sasBlobName, sasPermissions));
 
     return new ResponseEntity<>(
         new ApiCreatedAzureStorageContainerSasToken()
