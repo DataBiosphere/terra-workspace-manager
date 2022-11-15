@@ -230,7 +230,10 @@ class SamServiceTest extends BaseConnectedTest {
             .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
             .build();
     workspaceService.createWorkspace(
-        rawlsWorkspace, /*policies=*/null, /*applications=*/null, userAccessUtils.defaultUserAuthRequest());
+        rawlsWorkspace,
+        /*policies=*/ null,
+        /*applications=*/ null,
+        userAccessUtils.defaultUserAuthRequest());
     ApiGrantRoleRequestBody request =
         new ApiGrantRoleRequestBody().memberEmail(userAccessUtils.getSecondUserEmail());
     mockMvc
