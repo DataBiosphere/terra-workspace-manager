@@ -1,9 +1,11 @@
 package bio.terra.workspace.service.resource.controlled.flight.newclone.workspace;
 
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.CLONE_IDS;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.CLONE_SOURCE_METADATA;
+
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.common.utils.WsmFlight;
-import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.flight.clone.ClonePolicyAttributesStep;
@@ -16,11 +18,7 @@ import bio.terra.workspace.service.workspace.model.CloneIds;
 import bio.terra.workspace.service.workspace.model.CloneSourceMetadata;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-
 import java.util.UUID;
-
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.CLONE_IDS;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.CLONE_SOURCE_METADATA;
 
 public class CloneWorkspaceFlight extends WsmFlight {
   // Inputs:
@@ -96,9 +94,9 @@ public class CloneWorkspaceFlight extends WsmFlight {
 
     // -- controlled resources --
     for (WsmResource resource : cloneSourceMetadata.getControlledResources()) {
-      makeCloneControlledResourceStep(resource, destinationWorkspace.getWorkspaceId(), cloneIds, userRequest);
+      makeCloneControlledResourceStep(
+          resource, destinationWorkspace.getWorkspaceId(), cloneIds, userRequest);
     }
-
   }
 
   private void makeCloneControlledResourceStep(
@@ -108,27 +106,22 @@ public class CloneWorkspaceFlight extends WsmFlight {
       AuthenticatedUserRequest userRequest) {
 
     UUID destinationFolderId =
-      resource.getFolderId().map(id -> cloneIds.folderIdMap().get(id)).orElse(null);
+        resource.getFolderId().map(id -> cloneIds.folderIdMap().get(id)).orElse(null);
 
     ControlledResource controlledResource = resource.castToControlledResource();
 
     // We run the controlled resource clones as separate flights.
     ControlledResourceFields commonFields =
-      controlledResource.buildControlledResourceCommonFields(
-        destinationWorkspaceId,
-        cloneIds.referencedResourceIdMap().get(resource.getResourceId()),
-        destinationFolderId,
-        resource.getName(),
-        resource.getDescription());
-
-
-
-
-
+        controlledResource.buildControlledResourceCommonFields(
+            destinationWorkspaceId,
+            cloneIds.referencedResourceIdMap().get(resource.getResourceId()),
+            destinationFolderId,
+            resource.getName(),
+            resource.getDescription());
   }
 
   private void makeCloneReferenceResourceStep(
-    WsmResource resource, UUID destinationWorkspaceId, CloneIds cloneIds) {
+      WsmResource resource, UUID destinationWorkspaceId, CloneIds cloneIds) {
     // Build the destination resource
     UUID destinationFolderId =
         resource.getFolderId().map(id -> cloneIds.folderIdMap().get(id)).orElse(null);

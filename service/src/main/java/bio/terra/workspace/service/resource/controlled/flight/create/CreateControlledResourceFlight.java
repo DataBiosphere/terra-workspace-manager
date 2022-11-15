@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.flight.create;
 
-import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRule;
 import bio.terra.stairway.Step;

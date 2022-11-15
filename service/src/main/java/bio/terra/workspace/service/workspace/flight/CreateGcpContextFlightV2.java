@@ -2,15 +2,9 @@ package bio.terra.workspace.service.workspace.flight;
 
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
-import bio.terra.stairway.RetryRule;
-import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
-import bio.terra.workspace.common.utils.FlightBeanBag;
-import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.common.utils.WsmFlight;
-import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import java.util.UUID;
 
 /**
@@ -43,7 +37,8 @@ public class CreateGcpContextFlightV2 extends WsmFlight {
         getInputRequired(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
     // Common step generation, shared with clone
-    beanBag().getGcpCloudContextService().makeCreateGcpContextSteps(
-        this, workspaceUuid, userRequest);
+    beanBag()
+        .getGcpCloudContextService()
+        .makeCreateGcpContextSteps(this, workspaceUuid, userRequest);
   }
 }

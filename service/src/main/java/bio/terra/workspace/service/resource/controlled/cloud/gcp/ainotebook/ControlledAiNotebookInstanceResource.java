@@ -9,6 +9,7 @@ import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
+import bio.terra.workspace.common.utils.WsmFlight;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
@@ -19,7 +20,6 @@ import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
-import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
@@ -135,7 +135,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
   /** {@inheritDoc} */
   @Override
   public void addCreateSteps(
-      CreateControlledResourceFlight flight,
+      WsmFlight flight,
       String petSaEmail,
       AuthenticatedUserRequest userRequest,
       FlightBeanBag flightBeanBag) {

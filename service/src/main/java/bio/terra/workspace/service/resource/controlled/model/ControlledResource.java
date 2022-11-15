@@ -5,7 +5,6 @@ import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.exception.CloneInstructionNotSupportedException;
 import bio.terra.workspace.common.utils.FlightBeanBag;
-import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.common.utils.WsmFlight;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
@@ -14,13 +13,6 @@ import bio.terra.workspace.generated.model.ApiControlledResourceMetadata;
 import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
 import bio.terra.workspace.generated.model.ApiResourceMetadata;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
-import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
-import bio.terra.workspace.service.resource.controlled.flight.create.CreateSamResourceStep;
-import bio.terra.workspace.service.resource.controlled.flight.create.GetCloudContextStep;
-import bio.terra.workspace.service.resource.controlled.flight.create.MarkPrivateResourceReadyStep;
-import bio.terra.workspace.service.resource.controlled.flight.create.SetCreateResponseStep;
-import bio.terra.workspace.service.resource.controlled.flight.create.StoreMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
@@ -135,13 +127,15 @@ public abstract class ControlledResource extends WsmResource {
       DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag);
 
   /**
-   * The workspace clone flight and the resource clone flights call this method on the
-   * source resource. The code must generate the following outputs into the working map:
+   * The workspace clone flight and the resource clone flights call this method on the source
+   * resource. The code must generate the following outputs into the working map:
+   *
    * <ul>
-   *   <le>RESOURCE - the destination resource object</le>
-   *   <le>CREATE_PARAMETERS - some per-resource type object containing any resource
-   *   creation parameters that are not held in the resource object.</le>
+   *   <le>RESOURCE - the destination resource object</le> <le>CREATE_PARAMETERS - some per-resource
+   *   type object containing any resource creation parameters that are not held in the resource
+   *   object.</le>
    * </ul>
+   *
    * Those outputs are consumed by the steps in the
    *
    * @param flight the clone flight to add steps to
@@ -149,20 +143,18 @@ public abstract class ControlledResource extends WsmResource {
    * @param sourceResource resource to clone
    */
   public void addCloneSteps(
-    WsmFlight flight,
-    AuthenticatedUserRequest userRequest,
-    WsmResource sourceResource) {
+      WsmFlight flight, AuthenticatedUserRequest userRequest, WsmResource sourceResource) {
     throw new CloneInstructionNotSupportedException(
-      String.format(
-        "You cannot make a controlled clone of a %s resource", getResourceType().name()));
+        String.format(
+            "You cannot make a controlled clone of a %s resource", getResourceType().name()));
   }
 
   /**
-   * This method builds the steps to construct the destination resource object
-   * for a clone. For example, GCS buckets need to read the location, bucket storage class,
-   * and lifecycle rules from GCP in order to fill them into the destination resource.
+   * This method builds the steps to construct the destination resource object for a clone. For
+   * example, GCS buckets need to read the location, bucket storage class, and lifecycle rules from
+   * GCP in order to fill them into the destination resource.
    *
-   * Steps after these create the object and optionally copy data into it.
+   * <p>Steps after these create the object and optionally copy data into it.
    *
    * @param flight flight to add the steps to
    * @param inputParameters flight input parameters
@@ -171,14 +163,14 @@ public abstract class ControlledResource extends WsmResource {
    * @param resourceParameters resource-specific parameters
    */
   public void addBuildCloneDestinationControlledResourceSteps(
-    WsmFlight flight,
-    FlightMap inputParameters,
-    AuthenticatedUserRequest userRequest,
-    ControlledResourceFields destinationFields,
-    Object resourceParameters) {
+      WsmFlight flight,
+      FlightMap inputParameters,
+      AuthenticatedUserRequest userRequest,
+      ControlledResourceFields destinationFields,
+      Object resourceParameters) {
     throw new CloneInstructionNotSupportedException(
-      String.format(
-        "You cannot make a controlled clone of a %s resource", getResourceType().name()));
+        String.format(
+            "You cannot make a controlled clone of a %s resource", getResourceType().name()));
   }
 
   /**

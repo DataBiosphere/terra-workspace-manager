@@ -6,16 +6,13 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.db.FolderDao;
 import bio.terra.workspace.service.folder.model.Folder;
-import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneAllFoldersStep;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.CloneSourceMetadata;
 import bio.terra.workspace.service.workspace.model.Workspace;
+import java.util.Map;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DuplicateKeyException;
-
-import java.util.Map;
-import java.util.UUID;
 
 public class CloneFoldersStep implements Step {
   private static final Logger logger = LoggerFactory.getLogger(CloneFoldersStep.class);
@@ -26,10 +23,10 @@ public class CloneFoldersStep implements Step {
   private final Map<UUID, UUID> folderIdMap;
 
   public CloneFoldersStep(
-    FolderDao folderDao,
-    CloneSourceMetadata cloneSourceMetadata,
-    Workspace destinationWorkspace,
-    Map<UUID, UUID> folderIdMap) {
+      FolderDao folderDao,
+      CloneSourceMetadata cloneSourceMetadata,
+      Workspace destinationWorkspace,
+      Map<UUID, UUID> folderIdMap) {
     this.folderDao = folderDao;
     this.cloneSourceMetadata = cloneSourceMetadata;
     this.destinationWorkspace = destinationWorkspace;
@@ -43,15 +40,15 @@ public class CloneFoldersStep implements Step {
 
     for (Folder sourceFolder : sourceFolders.values()) {
       var destinationFolder =
-        new Folder(
-          folderIdMap.get(sourceFolder.id()),
-          destinationWorkspace.getWorkspaceId(),
-          sourceFolder.displayName(),
-          sourceFolder.description(),
-          (sourceFolder.parentFolderId() != null
-            ? folderIdMap.get(sourceFolder.parentFolderId())
-            : null),
-          sourceFolder.properties());
+          new Folder(
+              folderIdMap.get(sourceFolder.id()),
+              destinationWorkspace.getWorkspaceId(),
+              sourceFolder.displayName(),
+              sourceFolder.description(),
+              (sourceFolder.parentFolderId() != null
+                  ? folderIdMap.get(sourceFolder.parentFolderId())
+                  : null),
+              sourceFolder.properties());
 
       try {
         folderDao.createFolder(destinationFolder);
@@ -69,5 +66,4 @@ public class CloneFoldersStep implements Step {
     folderDao.deleteAllFolders(destinationWorkspace.getWorkspaceId());
     return StepResult.getStepResultSuccess();
   }
-
 }

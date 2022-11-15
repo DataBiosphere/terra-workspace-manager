@@ -18,12 +18,10 @@ import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneGcpWorkspaceFlight;
 import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.exceptions.BufferServiceDisabledException;
-import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceException;
 import bio.terra.workspace.service.workspace.flight.CreateGcpContextFlightV2;
 import bio.terra.workspace.service.workspace.flight.DeleteAzureContextFlight;
 import bio.terra.workspace.service.workspace.flight.DeleteGcpContextFlight;
 import bio.terra.workspace.service.workspace.flight.RemoveUserFromWorkspaceFlight;
-import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -34,18 +32,17 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
 import com.google.common.base.Preconditions;
 import io.opencensus.contrib.spring.aop.Traced;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Component;
-
-import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Component;
 
 /**
  * Service for workspace lifecycle operations.
@@ -106,55 +103,10 @@ public class WorkspaceService {
       @Nullable ApiTpsPolicyInputs policies,
       @Nullable List<String> applications,
       AuthenticatedUserRequest userRequest) {
-    JobBuilder createJob = buildCreateWorkspaceJob(workspace, policies, applications, userRequest);
-    return createJob.submitAndWait(UUID.class);
-  }
-
-  /**
-   * Common create workspace job builder. Used by createWorkspace and by clone
-   *
-   * @param workspace workspace object to create
-   * @param policies policies to set on the workspace
-   * @param userRequest credentials for the create
-   * @return JobBuilder for submitting the flight
-   */
-  public JobBuilder buildCreateWorkspaceJob(
-      Workspace workspace,
-      @Nullable ApiTpsPolicyInputs policies,
-      @Nullable List<String> applications,
-      AuthenticatedUserRequest userRequest) {
-    String workspaceUuid = workspace.getWorkspaceId().toString();
-    String jobDescription =
-        String.format(
-            "Create workspace: name: '%s' id: '%s'  ",
-            workspace.getDisplayName().orElse(""), workspaceUuid);
-
-    // Before launching the flight, confirm the workspace does not already exist. This isn't perfect
-    // if two requests come in at nearly the same time, but it prevents launching a flight when a
-    // workspace already exists.
-    if (workspaceDao.getWorkspaceIfExists(workspace.getWorkspaceId()).isPresent()) {
-      throw new DuplicateWorkspaceException("Provided workspace ID is already in use");
-    }
-
     JobBuilder createJob =
-        jobService
-            .newJob()
-            .description(jobDescription)
-            .flightClass(WorkspaceCreateFlight.class)
-            .request(workspace)
-            .userRequest(userRequest)
-            .workspaceId(workspaceUuid)
-            .operationType(OperationType.CREATE)
-            .addParameter(
-                WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name())
-            .addParameter(WorkspaceFlightMapKeys.POLICIES, policies)
-            .addParameter(WorkspaceFlightMapKeys.APPLICATION_IDS, applications);
-
-    if (workspace.getSpendProfileId().isPresent()) {
-      createJob.addParameter(
-          WorkspaceFlightMapKeys.SPEND_PROFILE_ID, workspace.getSpendProfileId().get().getId());
-    }
-    return createJob;
+        WorkspaceServiceUtils.buildCreateWorkspaceJob(
+            jobService, workspaceDao, workspace, policies, applications, userRequest);
+    return createJob.submitAndWait(UUID.class);
   }
 
   /**

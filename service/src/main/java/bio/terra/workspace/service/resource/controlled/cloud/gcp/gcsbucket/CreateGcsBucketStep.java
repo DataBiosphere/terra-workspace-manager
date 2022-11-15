@@ -60,8 +60,8 @@ public class CreateGcsBucketStep implements Step {
 
     if (features.isNewCloneEnabled()) {
       bucketParameters =
-        inputMap.get(
-          ControlledResourceKeys.CREATION_PARAMETERS, ControlledGcsBucketParameters.class);
+          inputMap.get(
+              ControlledResourceKeys.CREATION_PARAMETERS, ControlledGcsBucketParameters.class);
     } else {
       ApiGcpGcsBucketCreationParameters creationParameters =
           inputMap.get(
@@ -70,21 +70,24 @@ public class CreateGcsBucketStep implements Step {
       bucketParameters = new ControlledGcsBucketParameters();
       bucketParameters.setBucketName(resource.getBucketName());
       bucketParameters.setLocation(creationParameters.getLocation());
-      bucketParameters.setStorageClass(Optional.ofNullable(creationParameters.getDefaultStorageClass())
-        .map(GcsApiConversions::toGcsApi).orElse(StorageClass.STANDARD));
-      bucketParameters.setLifecycleRules(Optional.ofNullable(creationParameters.getLifecycle())
-        .map(GcsApiConversions::toGcsApiRulesList)
-        .orElse(Collections.emptyList()));
+      bucketParameters.setStorageClass(
+          Optional.ofNullable(creationParameters.getDefaultStorageClass())
+              .map(GcsApiConversions::toGcsApi)
+              .orElse(StorageClass.STANDARD));
+      bucketParameters.setLifecycleRules(
+          Optional.ofNullable(creationParameters.getLifecycle())
+              .map(GcsApiConversions::toGcsApiRulesList)
+              .orElse(Collections.emptyList()));
     }
 
     BucketInfo.Builder bucketInfoBuilder =
-      BucketInfo.newBuilder(resource.getBucketName())
-        .setLocation(bucketParameters.getLocation())
-        .setStorageClass(bucketParameters.getStorageClass())
-        .setLifecycleRules(bucketParameters.getLifecycleRules());
+        BucketInfo.newBuilder(resource.getBucketName())
+            .setLocation(bucketParameters.getLocation())
+            .setStorageClass(bucketParameters.getStorageClass())
+            .setLifecycleRules(bucketParameters.getLifecycleRules());
 
     BucketInfo.IamConfiguration iamConfiguration =
-      BucketInfo.IamConfiguration.newBuilder().setIsUniformBucketLevelAccessEnabled(true).build();
+        BucketInfo.IamConfiguration.newBuilder().setIsUniformBucketLevelAccessEnabled(true).build();
     bucketInfoBuilder.setIamConfiguration(iamConfiguration);
 
     // Check whether the bucket exists before attempting to create it. If it does, verify that it

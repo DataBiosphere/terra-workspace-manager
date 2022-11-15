@@ -31,7 +31,6 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants;
 import com.google.cloud.storage.StorageClass;
 import com.google.common.base.Strings;
-
 import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
@@ -87,17 +86,15 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
 
     // Construct the bucket resource object
     ControlledResourceFields commonFields =
-      toCommonFields(workspaceUuid, body.getCommon(), userRequest);
+        toCommonFields(workspaceUuid, body.getCommon(), userRequest);
     String bucketName = body.getGcsBucket().getName();
     if (StringUtils.isEmpty(bucketName)) {
       bucketName =
-        ControlledGcsBucketHandler.getHandler().generateCloudName(commonFields.getWorkspaceId(), commonFields.getName());
+          ControlledGcsBucketHandler.getHandler()
+              .generateCloudName(commonFields.getWorkspaceId(), commonFields.getName());
     }
     ControlledGcsBucketResource resource =
-        ControlledGcsBucketResource.builder()
-            .bucketName(bucketName)
-            .common(commonFields)
-            .build();
+        ControlledGcsBucketResource.builder().bucketName(bucketName).common(commonFields).build();
 
     // Permission check for workspace and resource
     Workspace workspace =
@@ -117,23 +114,26 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
       bucketParameters.setLocation(location);
       bucketParameters.setStorageClass(
           Optional.ofNullable(apiParameters.getDefaultStorageClass())
-            .map(GcsApiConversions::toGcsApi).orElse(StorageClass.STANDARD));
+              .map(GcsApiConversions::toGcsApi)
+              .orElse(StorageClass.STANDARD));
       bucketParameters.setLifecycleRules(
-        Optional.ofNullable(apiParameters.getLifecycle())
-          .map(GcsApiConversions::toGcsApiRulesList)
-          .orElse(Collections.emptyList()));
-      createdBucket = controlledResourceService
-        .createControlledResourceSync(
-          resource, commonFields.getIamRole(), userRequest, bucketParameters)
-        .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
+          Optional.ofNullable(apiParameters.getLifecycle())
+              .map(GcsApiConversions::toGcsApiRulesList)
+              .orElse(Collections.emptyList()));
+      createdBucket =
+          controlledResourceService
+              .createControlledResourceSync(
+                  resource, commonFields.getIamRole(), userRequest, bucketParameters)
+              .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
     } else {
       // Overwrite the location in the incoming parameters (!)
       // The other data are computed in the steps.
       apiParameters.location(location);
-      createdBucket = controlledResourceService
-        .createControlledResourceSync(
-          resource, commonFields.getIamRole(), userRequest, body.getGcsBucket())
-        .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
+      createdBucket =
+          controlledResourceService
+              .createControlledResourceSync(
+                  resource, commonFields.getIamRole(), userRequest, body.getGcsBucket())
+              .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
     }
 
     var response =

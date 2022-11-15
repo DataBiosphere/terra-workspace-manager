@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.workspace.flight;
 
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.GCP_PROJECT_ID;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.RBS_RESOURCE_ID;
 
 import bio.terra.buffer.model.HandoutRequestBody;
 import bio.terra.buffer.model.ResourceInfo;
@@ -29,9 +28,7 @@ public class PullProjectFromPoolStep implements Step {
   private final String rbsRequestId;
 
   public PullProjectFromPoolStep(
-      BufferService bufferService,
-      CloudResourceManagerCow resourceManager,
-      String rbsRequestId) {
+      BufferService bufferService, CloudResourceManagerCow resourceManager, String rbsRequestId) {
     this.bufferService = bufferService;
     this.resourceManager = resourceManager;
     this.rbsRequestId = rbsRequestId;

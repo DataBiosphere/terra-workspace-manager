@@ -37,7 +37,7 @@ import org.springframework.stereotype.Component;
  * the underlying methods once at startup avoiding the bean lookup. The objects will be properly
  * types without casting.
  *
- * PLEASE KEEP THESE IN ALPHABETICAL ORDER
+ * <p>PLEASE KEEP THESE IN ALPHABETICAL ORDER
  */
 @Component
 public class FlightBeanBag {

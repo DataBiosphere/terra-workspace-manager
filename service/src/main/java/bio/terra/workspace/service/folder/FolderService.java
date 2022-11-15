@@ -2,7 +2,6 @@ package bio.terra.workspace.service.folder;
 
 import static bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions.DELETE_ACTION;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.FOLDER_ID;
-import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties.FOLDER_ID_KEY;
 
 import bio.terra.common.exception.ForbiddenException;
 import bio.terra.workspace.db.FolderDao;
@@ -21,7 +20,6 @@ import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.springframework.stereotype.Component;

@@ -138,8 +138,7 @@ public abstract class WsmResource {
   public Optional<UUID> getFolderId() {
     if (properties.containsKey(FOLDER_ID_KEY)) {
       return Optional.of(
-        UUID.fromString(
-          Objects.requireNonNull(getProperties().get(FOLDER_ID_KEY))));
+          UUID.fromString(Objects.requireNonNull(getProperties().get(FOLDER_ID_KEY))));
     }
     return Optional.empty();
   }

@@ -8,7 +8,6 @@ import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -53,8 +52,7 @@ import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 
 public class CreateGcsBucketStepTest extends BaseUnitTest {
-  @Autowired
-  private FeatureConfiguration featureConfiguration;
+  @Autowired private FeatureConfiguration featureConfiguration;
 
   @Mock private FlightContext mockFlightContext;
   @Mock private CrlService mockCrlService;
@@ -151,7 +149,7 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
             mockCrlService,
             ControlledResourceFixtures.getBucketResource(bucketName),
             mockGcpCloudContextService,
-          featureConfiguration);
+            featureConfiguration);
 
     final FlightMap inputFlightMap = new FlightMap();
     inputFlightMap.put(
@@ -166,7 +164,7 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
     final BucketInfo info = bucketInfoCaptor.getValue();
     assertThat(info.getName(), equalTo(bucketName));
     assertThat(info.getLocation(), equalTo(DEFAULT_REGION));
-    assertThat(info.getStorageClass(), is(nullValue()));
+    assertThat(info.getStorageClass(), is(StorageClass.STANDARD));
     assertThat(info.getLifecycleRules(), empty());
   }
 
@@ -184,7 +182,7 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
             mockCrlService,
             ControlledResourceFixtures.getBucketResource(bucketName),
             mockGcpCloudContextService,
-          featureConfiguration);
+            featureConfiguration);
 
     final FlightMap inputFlightMap = new FlightMap();
     inputFlightMap.put(

@@ -71,7 +71,7 @@ public class ApplicationDao {
   private static final String WORKSPACE_CLONE_QUERY =
       """
       SELECT A.application_id FROM enabled_application W, application A
-      WHERE 
+      WHERE
         W.workspace_id = :workspace_id AND
         W.application_id = A.application_id AND
         A.state = :operating;

@@ -5,13 +5,11 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.db.ResourceDao;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 
 /**
- * All we do for cloning a referenced resource is write the metadata.
- * This does not require a flight.
+ * All we do for cloning a referenced resource is write the metadata. This does not require a
+ * flight.
  */
 public class CloneReferencedResourceStep implements Step {
   private final ReferencedResource resource;

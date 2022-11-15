@@ -55,9 +55,6 @@ public class CloneControlledResourceFlight extends WsmFlight {
 
     // Run the create controlled resource flight
 
-
-
-
     if (cloningInstructions == CloningInstructions.COPY_RESOURCE) {
       // Add data copying steps
     }

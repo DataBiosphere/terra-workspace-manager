@@ -9,8 +9,6 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.exception.InternalLogicException;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.flight.newclone.workspace.ControlledGcsBucketParameters;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
@@ -19,11 +17,9 @@ import com.google.cloud.storage.BucketInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.BadRequestException;
-
 /**
- * Retrieve information about the GCS cloud resource for use in update and clone
- * Store the result in working map RESOURCE_PARAMETERS key
+ * Retrieve information about the GCS cloud resource for use in update and clone Store the result in
+ * working map RESOURCE_PARAMETERS key
  */
 public class RetrieveGcsBucketParametersStep implements Step {
   private static final Logger logger =
@@ -52,7 +48,8 @@ public class RetrieveGcsBucketParametersStep implements Step {
     if (existingBucketCow == null) {
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL,
-          new InternalLogicException("Can't construct COW for pre-existing bucket " + bucketResource.getBucketName()));
+          new InternalLogicException(
+              "Can't construct COW for pre-existing bucket " + bucketResource.getBucketName()));
     }
 
     BucketInfo existingBucketInfo = existingBucketCow.getBucketInfo();

@@ -34,12 +34,11 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.ReferencedGcsBucketResource;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.jetbrains.annotations.Nullable;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import org.jetbrains.annotations.Nullable;
 
 public class ControlledGcsBucketResource extends ControlledResource {
 
@@ -118,7 +117,10 @@ public class ControlledGcsBucketResource extends ControlledResource {
     RetryRule cloudRetry = RetryRules.cloud();
     flight.addStep(
         new CreateGcsBucketStep(
-            flightBeanBag.getCrlService(), this, flightBeanBag.getGcpCloudContextService(), flightBeanBag.getFeatureConfiguration()),
+            flightBeanBag.getCrlService(),
+            this,
+            flightBeanBag.getGcpCloudContextService(),
+            flightBeanBag.getFeatureConfiguration()),
         cloudRetry);
     flight.addStep(
         new GcsBucketCloudSyncStep(

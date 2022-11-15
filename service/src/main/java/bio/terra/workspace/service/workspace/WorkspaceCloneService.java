@@ -1,15 +1,16 @@
 package bio.terra.workspace.service.workspace;
 
+import static bio.terra.workspace.service.resource.model.CloningInstructions.COPY_DEFINITION;
+import static bio.terra.workspace.service.resource.model.CloningInstructions.COPY_RESOURCE;
+
 import bio.terra.common.db.ReadTransaction;
 import bio.terra.common.exception.NotImplementedException;
 import bio.terra.common.stairway.StairwayComponent;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
-import bio.terra.workspace.common.exception.CloneInstructionNotSupportedException;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.FolderDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
-import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.folder.model.Folder;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -19,10 +20,8 @@ import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.exception.InternalStairwayException;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
-import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CloneControlledGcsBucketResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.newclone.workspace.CloneControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.newclone.workspace.ControlledGcsBucketParameters;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
@@ -42,14 +41,6 @@ import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceConstants;
-import com.google.common.base.Strings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,9 +48,11 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import static bio.terra.workspace.service.resource.model.CloningInstructions.COPY_DEFINITION;
-import static bio.terra.workspace.service.resource.model.CloningInstructions.COPY_RESOURCE;
+import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 @Component
 public class WorkspaceCloneService {
@@ -69,7 +62,6 @@ public class WorkspaceCloneService {
   private final FolderDao folderDao;
   private final ApplicationDao applicationDao;
   private final WorkspaceDao workspaceDao;
-  private final WorkspaceService workspaceService;
   private final StairwayComponent stairwayComponent;
   private final SamService samService;
   private final FeatureConfiguration features;
@@ -81,7 +73,6 @@ public class WorkspaceCloneService {
       FolderDao folderDao,
       ApplicationDao applicationDao,
       WorkspaceDao workspaceDao,
-      WorkspaceService workspaceService,
       StairwayComponent stairwayComponent,
       SamService samService,
       FeatureConfiguration features) {
@@ -90,7 +81,6 @@ public class WorkspaceCloneService {
     this.folderDao = folderDao;
     this.applicationDao = applicationDao;
     this.workspaceDao = workspaceDao;
-    this.workspaceService = workspaceService;
     this.stairwayComponent = stairwayComponent;
     this.samService = samService;
     this.features = features;
@@ -98,13 +88,14 @@ public class WorkspaceCloneService {
 
   /**
    * Clone all accessible resources from a source workspace into a destination workspace
+   *
    * @param jobId job id to use for the async clone flight
    * @param sourceWorkspace workspace to clone
    * @param userRequest creds of the cloner
    * @param location destination location to clone to
    * @param destinationWorkspace destination workspace - we will create this
-   * @return job id of the the async clone flight,
-   * brought to you by the department of redundancy department
+   * @return job id of the the async clone flight, brought to you by the department of redundancy
+   *     department
    */
   public String cloneWorkspace(
       String jobId,
@@ -118,14 +109,17 @@ public class WorkspaceCloneService {
 
     // Start the workspace create flight. For clone we kick off the create flight
     // and do other things while it is running.
-    JobBuilder workspaceCreateJob = workspaceService.buildCreateWorkspaceJob(destinationWorkspace, null, null, userRequest);
-    String workspaceCreateJobId  = workspaceCreateJob.submit();
+    JobBuilder workspaceCreateJob =
+        WorkspaceServiceUtils.buildCreateWorkspaceJob(
+            jobService, workspaceDao, destinationWorkspace, null, null, userRequest);
+    String workspaceCreateJobId = workspaceCreateJob.submit();
 
     // NOTE: The next part of the process is preparing all of the clone operations we need to do
     // in the flight. This includes Sam requests. If we decide this all takes too long, then
     // we will need to immediately wait on the create job right here and launch a flight that
     // does the code below.
-    CloneIds cloneIds = prepareCloneOperation(cloneSource, userRequest, location, destinationWorkspace);
+    CloneIds cloneIds =
+        prepareCloneOperation(cloneSource, userRequest, location, destinationWorkspace);
 
     // Wait for the create job to complete
     try {
@@ -173,7 +167,8 @@ public class WorkspaceCloneService {
     // We stash them in the sourceStructure map with the key COPY_NOTHING.
     // This is a bit of a hack, but easier than passing the list separately.
     // The map is overwritten in the prepare call below.
-    List<WsmResource> resources = resourceDao.enumerateResourcesForClone(sourceWorkspace.getWorkspaceId());
+    List<WsmResource> resources =
+        resourceDao.enumerateResourcesForClone(sourceWorkspace.getWorkspaceId());
     sourceStructure.setResourcesByInstruction(Map.of(CloningInstructions.COPY_NOTHING, resources));
 
     // Retrieve the folders and mutate them into a map
@@ -196,13 +191,13 @@ public class WorkspaceCloneService {
 
     ControlledResource controlledResource = resource.castToControlledResource();
     return SamRethrow.onInterrupted(
-            () ->
-                samService.isAuthorized(
-                    userRequest,
-                    controlledResource.getCategory().getSamResourceName(),
-                    controlledResource.getResourceId().toString(),
-                    SamConstants.SamControlledResourceActions.READ_ACTION),
-            "isAuthorized");
+        () ->
+            samService.isAuthorized(
+                userRequest,
+                controlledResource.getCategory().getSamResourceName(),
+                controlledResource.getResourceId().toString(),
+                SamConstants.SamControlledResourceActions.READ_ACTION),
+        "isAuthorized");
   }
 
   private CloneIds prepareCloneOperation(
@@ -212,16 +207,17 @@ public class WorkspaceCloneService {
       Workspace destinationWorkspace) {
 
     // Pull out all of the resources from where we stashed them
-    List<WsmResource> resources = cloneSource.getResourcesByInstruction().get(CloningInstructions.COPY_NOTHING);
+    List<WsmResource> resources =
+        cloneSource.getResourcesByInstruction().get(CloningInstructions.COPY_NOTHING);
 
     // If a resource is controlled, we need to check permissions
     // Then we want to split the list by cloning instruction. That may
     // put source controlled resources on the referenced list, if the
     // instruction is to make a reference.
     cloneSource.setResourcesByInstruction(
-      resources.stream()
-        .filter(r -> canRead(r, userRequest))
-        .collect(Collectors.groupingBy(WsmResource::getCloningInstructions)));
+        resources.stream()
+            .filter(r -> canRead(r, userRequest))
+            .collect(Collectors.groupingBy(WsmResource::getCloningInstructions)));
 
     // Generate maps from source to target ids for folders and resources
     return generateIdMaps(cloneSource);
@@ -277,45 +273,53 @@ public class WorkspaceCloneService {
    * @return - Job ID of submitted flight
    */
   public String cloneGcsBucket(
-    UUID sourceWorkspaceUuid,
-    UUID sourceResourceId,
-    UUID destinationWorkspaceUuid,
-    UUID destinationResourceId,
-    UUID destinationFolderId,
-    ApiJobControl jobControl,
-    AuthenticatedUserRequest userRequest,
-    @Nullable String destinationResourceName,
-    @Nullable String destinationDescription,
-    @Nullable String destinationBucketName,
-    @Nullable String destinationLocation,
-    @Nullable CloningInstructions cloningInstructionsOverride) {
+      UUID sourceWorkspaceUuid,
+      UUID sourceResourceId,
+      UUID destinationWorkspaceUuid,
+      UUID destinationResourceId,
+      UUID destinationFolderId,
+      ApiJobControl jobControl,
+      AuthenticatedUserRequest userRequest,
+      @Nullable String destinationResourceName,
+      @Nullable String destinationDescription,
+      @Nullable String destinationBucketName,
+      @Nullable String destinationLocation,
+      @Nullable CloningInstructions cloningInstructionsOverride) {
 
     ControlledGcsBucketResource sourceResource =
-      resourceDao.getResource(sourceWorkspaceUuid, sourceResourceId).castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
+        resourceDao
+            .getResource(sourceWorkspaceUuid, sourceResourceId)
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
 
     CloningInstructions cloningInstructions =
-      (cloningInstructionsOverride != null ? cloningInstructionsOverride : sourceResource.getCloningInstructions());
+        (cloningInstructionsOverride != null
+            ? cloningInstructionsOverride
+            : sourceResource.getCloningInstructions());
     // Do we need to generate a unique destination name if the workspace src = dest?
-    String name = (destinationResourceName != null ? destinationResourceName : sourceResource.getName());
-    String description = (destinationDescription != null ? destinationDescription : sourceResource.getDescription());
+    String name =
+        (destinationResourceName != null ? destinationResourceName : sourceResource.getName());
+    String description =
+        (destinationDescription != null ? destinationDescription : sourceResource.getDescription());
 
     switch (cloningInstructions) {
       case COPY_NOTHING:
-        throw new InvalidCloningInstructionException("Requested clone with instruction COPY_NOTHING");
+        throw new InvalidCloningInstructionException(
+            "Requested clone with instruction COPY_NOTHING");
 
-      case COPY_REFERENCE: {
-        // Build the referenced resource and create it
-        ReferencedResource destinationResource =
-          sourceResource
-            .buildReferencedClone(
-              destinationWorkspaceUuid,
-              destinationResourceId,
-              destinationFolderId,
-              name,
-              description)
-            .castToReferencedResource();
-        return launchCreateReferencedResource(destinationResource, userRequest);
-      }
+      case COPY_REFERENCE:
+        {
+          // Build the referenced resource and create it
+          ReferencedResource destinationResource =
+              sourceResource
+                  .buildReferencedClone(
+                      destinationWorkspaceUuid,
+                      destinationResourceId,
+                      destinationFolderId,
+                      name,
+                      description)
+                  .castToReferencedResource();
+          return launchCreateReferencedResource(destinationResource, userRequest);
+        }
 
       case COPY_RESOURCE:
       case COPY_DEFINITION:
@@ -324,12 +328,13 @@ public class WorkspaceCloneService {
 
     // TODO: [need PR] No folder handling on the single resource clone
 
-    ControlledResourceFields destinationFields = sourceResource.buildControlledResourceCommonFields(
-      destinationWorkspaceUuid,
-      destinationResourceId,
-      destinationFolderId,
-      destinationResourceName,
-      destinationDescription);
+    ControlledResourceFields destinationFields =
+        sourceResource.buildControlledResourceCommonFields(
+            destinationWorkspaceUuid,
+            destinationResourceId,
+            destinationFolderId,
+            destinationResourceName,
+            destinationDescription);
 
     // Make a record for GCS resource-specific stuff to pass in
     // Must cover clone and create
@@ -339,11 +344,11 @@ public class WorkspaceCloneService {
 
     // Prep shared inputs
     String jobDescription =
-      String.format(
-        "Clone controlled resource %s; id %s; name %s",
-        sourceResource.getResourceType(),
-        sourceResource.getResourceId(),
-        sourceResource.getName());
+        String.format(
+            "Clone controlled resource %s; id %s; name %s",
+            sourceResource.getResourceType(),
+            sourceResource.getResourceId(),
+            sourceResource.getName());
     // If TPS is enabled, then we want to merge policies when cloning a bucket
     boolean mergePolicies = features.isTpsEnabled();
 
@@ -356,50 +361,60 @@ public class WorkspaceCloneService {
     // globally unique. Thus, we add cloned- as prefix to the bucket name to prevent
     // crashing.
     bucketParameters.setBucketName(
-      destinationBucketName != null ? destinationBucketName :
-          ControlledGcsBucketHandler.getHandler()
-            .generateCloudName(destinationWorkspaceUuid, "cloned-" + sourceResource.getName()));
+        destinationBucketName != null
+            ? destinationBucketName
+            : ControlledGcsBucketHandler.getHandler()
+                .generateCloudName(destinationWorkspaceUuid, "cloned-" + sourceResource.getName()));
 
     bucketParameters.setLocation(destinationLocation);
 
     JobBuilder jobBuilder =
-      jobService.newJob()
-        .description(jobDescription)
-        .jobId(jobControl.getId())
-        .flightClass(CloneControlledResourceFlight.class)
-        .resource(sourceResource)
-        .userRequest(userRequest)
-        .workspaceId(sourceWorkspaceUuid.toString())
-        .operationType(OperationType.CLONE)
-        .addParameter(WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_FIELDS, destinationFields)
-        .addParameter(WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_PARAMETERS, bucketParameters)
-        .addParameter(WorkspaceFlightMapKeys.MERGE_POLICIES, mergePolicies)
-        .addParameter(WorkspaceFlightMapKeys.ControlledResourceKeys.CLONING_INSTRUCTIONS, cloningInstructions);
+        jobService
+            .newJob()
+            .description(jobDescription)
+            .jobId(jobControl.getId())
+            .flightClass(CloneControlledResourceFlight.class)
+            .resource(sourceResource)
+            .userRequest(userRequest)
+            .workspaceId(sourceWorkspaceUuid.toString())
+            .operationType(OperationType.CLONE)
+            .addParameter(
+                WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_FIELDS, destinationFields)
+            .addParameter(
+                WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_PARAMETERS,
+                bucketParameters)
+            .addParameter(WorkspaceFlightMapKeys.MERGE_POLICIES, mergePolicies)
+            .addParameter(
+                WorkspaceFlightMapKeys.ControlledResourceKeys.CLONING_INSTRUCTIONS,
+                cloningInstructions);
 
     return jobBuilder.submit();
   }
 
-  private String launchCreateReferencedResource(ReferencedResource destinationResource, AuthenticatedUserRequest userRequest) {
+  private String launchCreateReferencedResource(
+      ReferencedResource destinationResource, AuthenticatedUserRequest userRequest) {
     String jobDescription =
-      String.format(
-        "Create reference %s; id %s; name %s",
-        destinationResource.getResourceType(), destinationResource.getResourceId(), destinationResource.getName());
+        String.format(
+            "Create reference %s; id %s; name %s",
+            destinationResource.getResourceType(),
+            destinationResource.getResourceId(),
+            destinationResource.getName());
 
     // TODO: This is not quite right, since this flight is always sync and doesn't have the
     //  matching behavior for GCS async. We'll need an async wrapper for create reference
     //  flights, I think.
     JobBuilder jobBuilder =
-      jobService.newJob()
-        .description(jobDescription)
-        .flightClass(CreateReferenceResourceFlight.class)
-        .userRequest(userRequest)
-        .resource(destinationResource)
-        .operationType(OperationType.CLONE)
-        .workspaceId(destinationResource.getWorkspaceId().toString())
-        .resourceType(destinationResource.getResourceType())
-        .stewardshipType(StewardshipType.REFERENCED);
+        jobService
+            .newJob()
+            .description(jobDescription)
+            .flightClass(CreateReferenceResourceFlight.class)
+            .userRequest(userRequest)
+            .resource(destinationResource)
+            .operationType(OperationType.CLONE)
+            .workspaceId(destinationResource.getWorkspaceId().toString())
+            .resourceType(destinationResource.getResourceType())
+            .stewardshipType(StewardshipType.REFERENCED);
 
     return jobBuilder.submit();
-
   }
 }

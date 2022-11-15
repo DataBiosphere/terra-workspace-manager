@@ -167,17 +167,15 @@ public class GcpCloudContextService {
   }
 
   /**
-   * Generate the steps to create a GCP cloud context. This set of steps is used in the
-   * standalone create GCP cloud context flight and in clone workspace.
+   * Generate the steps to create a GCP cloud context. This set of steps is used in the standalone
+   * create GCP cloud context flight and in clone workspace.
    *
    * @param flight flight to add steps to
    * @param workspaceUuid workspace in which we are creating the cloud context
    * @param userRequest user credentials
    */
   public void makeCreateGcpContextSteps(
-      WsmFlight flight,
-      UUID workspaceUuid,
-      AuthenticatedUserRequest userRequest) {
+      WsmFlight flight, UUID workspaceUuid, AuthenticatedUserRequest userRequest) {
 
     CrlService crl = flight.beanBag().getCrlService();
 
@@ -197,7 +195,8 @@ public class GcpCloudContextService {
 
     // Write the cloud context row in a "locked" state
     flight.addStep(
-        new CreateDbGcpCloudContextStep(workspaceUuid, flight.beanBag().getGcpCloudContextService()),
+        new CreateDbGcpCloudContextStep(
+            workspaceUuid, flight.beanBag().getGcpCloudContextService()),
         shortRetry);
 
     // Allocate the GCP project from RBS. We derive the rbsRequestId from the workspaceUuid.
@@ -206,9 +205,7 @@ public class GcpCloudContextService {
 
     flight.addStep(
         new PullProjectFromPoolStep(
-            flight.beanBag().getBufferService(),
-            crl.getCloudResourceManagerCow(),
-            rbsRequestId),
+            flight.beanBag().getBufferService(), crl.getCloudResourceManagerCow(), rbsRequestId),
         RetryRules.buffer());
 
     // Configure the project for WSM
@@ -216,7 +213,8 @@ public class GcpCloudContextService {
     flight.addStep(new GrantWsmRoleAdminStep(crl), shortRetry);
     flight.addStep(new CreateCustomGcpRolesStep(crl.getIamCow()), shortRetry);
     flight.addStep(
-        new SyncSamGroupsStep(flight.beanBag().getSamService(), workspaceUuid, userRequest), shortRetry);
+        new SyncSamGroupsStep(flight.beanBag().getSamService(), workspaceUuid, userRequest),
+        shortRetry);
     flight.addStep(new GcpCloudSyncStep(crl.getCloudResourceManagerCow()), cloudRetry);
     flight.addStep(new CreatePetSaStep(flight.beanBag().getSamService(), userRequest), shortRetry);
 
@@ -224,7 +222,8 @@ public class GcpCloudContextService {
     // This must be the last step, since it clears the lock. So this step also
     // sets the flight response.
     flight.addStep(
-        new UpdateDbGcpCloudContextStep(workspaceUuid, flight.beanBag().getGcpCloudContextService()),
+        new UpdateDbGcpCloudContextStep(
+            workspaceUuid, flight.beanBag().getGcpCloudContextService()),
         shortRetry);
   }
 }

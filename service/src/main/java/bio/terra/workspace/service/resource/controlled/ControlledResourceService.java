@@ -206,18 +206,18 @@ public class ControlledResourceService {
     //   We'll move it to a sensible place post this prototyping work.
     if (features.isNewCloneEnabled()) {
       return workspaceCloneService.cloneGcsBucket(
-        sourceWorkspaceId,
-        sourceResourceId,
-        destinationWorkspaceId,
-        destinationResourceId,
-        /* destination folder id */ null,
-        jobControl,
-        userRequest,
-        destinationResourceName,
-        destinationDescription,
-        destinationBucketName,
-        destinationLocation,
-        CloningInstructions.fromApiModel(cloningInstructionsOverride));
+          sourceWorkspaceId,
+          sourceResourceId,
+          destinationWorkspaceId,
+          destinationResourceId,
+          /* destination folder id */ null,
+          jobControl,
+          userRequest,
+          destinationResourceName,
+          destinationDescription,
+          destinationBucketName,
+          destinationLocation,
+          CloningInstructions.fromApiModel(cloningInstructionsOverride));
     }
 
     final ControlledResource sourceBucketResource =
