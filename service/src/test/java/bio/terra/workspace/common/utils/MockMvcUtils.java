@@ -90,6 +90,8 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/clone-result/%s";
   public static final String UPDATE_WORKSPACES_V1_PROPERTIES_PATH_FORMAT =
       "/api/workspaces/v1/%s/properties";
+  public static final String UPDATE_WORKSPACES_V1_POLICIES_PATH_FORMAT =
+      "/api/workspaces/v1/%S/policies";
   public static final String GRANT_ROLE_PATH_FORMAT = "/api/workspaces/v1/%s/roles/%s/members";
   public static final String CREATE_SNAPSHOT_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/referenced/datarepo/snapshots";
