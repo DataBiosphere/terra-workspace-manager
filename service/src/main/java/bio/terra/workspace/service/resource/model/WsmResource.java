@@ -135,6 +135,15 @@ public abstract class WsmResource {
     return properties;
   }
 
+  public Optional<UUID> getFolderId() {
+    if (properties.containsKey(FOLDER_ID_KEY)) {
+      return Optional.of(
+        UUID.fromString(
+          Objects.requireNonNull(getProperties().get(FOLDER_ID_KEY))));
+    }
+    return Optional.empty();
+  }
+
   /**
    * Sub-classes must identify their stewardship type
    *
@@ -211,6 +220,8 @@ public abstract class WsmResource {
    * <p>This default implementation throws CloneInstructionNotSupportedException.
    *
    * @param destinationWorkspaceUuid id of the destination workspace
+   * @param destinationResourceId id of the destination resource, if any
+   * @param destinationFolderId id of the destination folder, if any
    * @param name optional resource name override
    * @param description optional resource description override
    * @return WsmResource that is the referenced resource object

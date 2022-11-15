@@ -1,9 +1,12 @@
 package bio.terra.workspace.service.workspace.model;
 
 import bio.terra.workspace.service.folder.model.Folder;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResource;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -18,8 +21,7 @@ public class CloneSourceMetadata {
     @Nullable private AzureCloudContext azureCloudContext;
     private List<String> applications; // list of application ids
     private Map<UUID, Folder> folders;
-    private List<WsmResource> referencedResources;
-    private List<WsmResource> controlledResources;
+    private Map<CloningInstructions, List<WsmResource>> resourcesByInstruction;
 
     @Nullable
     public GcpCloudContext getGcpCloudContext() {
@@ -55,20 +57,24 @@ public class CloneSourceMetadata {
         this.folders = folders;
     }
 
+    @JsonIgnore
     public List<WsmResource> getReferencedResources() {
-        return referencedResources;
+        return resourcesByInstruction.get(CloningInstructions.COPY_REFERENCE);
     }
-
-    public void setReferencedResources(List<WsmResource> referencedResources) {
-        this.referencedResources = referencedResources;
-    }
-
+    @JsonIgnore
     public List<WsmResource> getControlledResources() {
+        List<WsmResource> controlledResources = new ArrayList<>();
+        controlledResources.addAll(resourcesByInstruction.get(CloningInstructions.COPY_DEFINITION));
+        controlledResources.addAll(resourcesByInstruction.get(CloningInstructions.COPY_RESOURCE));
         return controlledResources;
     }
 
-    public void setControlledResources(List<WsmResource> controlledResources) {
-        this.controlledResources = controlledResources;
+    public Map<CloningInstructions, List<WsmResource>> getResourcesByInstruction() {
+        return resourcesByInstruction;
+    }
+
+    public void setResourcesByInstruction(Map<CloningInstructions, List<WsmResource>> resourcesByInstruction) {
+        this.resourcesByInstruction = resourcesByInstruction;
     }
 
     public Workspace getWorkspace() {

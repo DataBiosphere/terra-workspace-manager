@@ -1,6 +1,7 @@
 package bio.terra.workspace.app.controller;
 
 import bio.terra.common.exception.BadRequestException;
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.ControlledGcpResourceApi;
@@ -20,13 +21,18 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.Contr
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.GcsApiConversions;
+import bio.terra.workspace.service.resource.controlled.flight.newclone.workspace.ControlledGcsBucketParameters;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants;
+import com.google.cloud.storage.StorageClass;
 import com.google.common.base.Strings;
+
+import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
@@ -50,6 +56,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   private final JobApiUtils jobApiUtils;
   private final GcpCloudContextService gcpCloudContextService;
   private final ControlledResourceMetadataManager controlledResourceMetadataManager;
+  private final FeatureConfiguration features;
 
   @Autowired
   public ControlledGcpResourceApiController(
@@ -61,7 +68,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
       JobService jobService,
       JobApiUtils jobApiUtils,
       GcpCloudContextService gcpCloudContextService,
-      ControlledResourceMetadataManager controlledResourceMetadataManager) {
+      ControlledResourceMetadataManager controlledResourceMetadataManager,
+      FeatureConfiguration features) {
     super(authenticatedUserRequestFactory, request, controlledResourceService, samService);
     this.controlledResourceService = controlledResourceService;
     this.workspaceService = workspaceService;
@@ -69,34 +77,64 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     this.jobApiUtils = jobApiUtils;
     this.gcpCloudContextService = gcpCloudContextService;
     this.controlledResourceMetadataManager = controlledResourceMetadataManager;
+    this.features = features;
   }
 
   @Override
   public ResponseEntity<ApiCreatedControlledGcpGcsBucket> createBucket(
       UUID workspaceUuid, @Valid ApiCreateControlledGcpGcsBucketRequestBody body) {
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+
+    // Construct the bucket resource object
     ControlledResourceFields commonFields =
-        toCommonFields(workspaceUuid, body.getCommon(), userRequest);
+      toCommonFields(workspaceUuid, body.getCommon(), userRequest);
+    String bucketName = body.getGcsBucket().getName();
+    if (StringUtils.isEmpty(bucketName)) {
+      bucketName =
+        ControlledGcsBucketHandler.getHandler().generateCloudName(commonFields.getWorkspaceId(), commonFields.getName());
+    }
     ControlledGcsBucketResource resource =
         ControlledGcsBucketResource.builder()
-            .bucketName(
-                StringUtils.isEmpty(body.getGcsBucket().getName())
-                    ? ControlledGcsBucketHandler.getHandler()
-                        .generateCloudName(commonFields.getWorkspaceId(), commonFields.getName())
-                    : body.getGcsBucket().getName())
+            .bucketName(bucketName)
             .common(commonFields)
             .build();
+
+    // Permission check for workspace and resource
     Workspace workspace =
         workspaceService.validateMcWorkspaceAndAction(
             userRequest, workspaceUuid, resource.getCategory().getSamCreateResourceAction());
 
-    body.getGcsBucket().location(getResourceLocation(workspace, body.getGcsBucket().getLocation()));
+    // Prepare the creation parameters and run the flight
+    // Old clone uses the ApiGcpGcsBucketCreationParameters
+    // New clone uses an internal object shared with update and clone
+    ApiGcpGcsBucketCreationParameters apiParameters = body.getGcsBucket();
+    String location = getResourceLocation(workspace, apiParameters.getLocation());
+    ControlledGcsBucketResource createdBucket;
 
-    final ControlledGcsBucketResource createdBucket =
-        controlledResourceService
-            .createControlledResourceSync(
-                resource, commonFields.getIamRole(), userRequest, body.getGcsBucket())
-            .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
+    if (features.isNewCloneEnabled()) {
+      var bucketParameters = new ControlledGcsBucketParameters();
+      bucketParameters.setBucketName(bucketName);
+      bucketParameters.setLocation(location);
+      bucketParameters.setStorageClass(
+          Optional.ofNullable(apiParameters.getDefaultStorageClass())
+            .map(GcsApiConversions::toGcsApi).orElse(StorageClass.STANDARD));
+      bucketParameters.setLifecycleRules(
+        Optional.ofNullable(apiParameters.getLifecycle())
+          .map(GcsApiConversions::toGcsApiRulesList)
+          .orElse(Collections.emptyList()));
+      createdBucket = controlledResourceService
+        .createControlledResourceSync(
+          resource, commonFields.getIamRole(), userRequest, bucketParameters)
+        .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
+    } else {
+      // Overwrite the location in the incoming parameters (!)
+      // The other data are computed in the steps.
+      apiParameters.location(location);
+      createdBucket = controlledResourceService
+        .createControlledResourceSync(
+          resource, commonFields.getIamRole(), userRequest, body.getGcsBucket())
+        .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
+    }
 
     var response =
         new ApiCreatedControlledGcpGcsBucket()

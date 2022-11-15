@@ -265,9 +265,12 @@ public class ResourceDao {
    * @return list of cloneable resources
    */
   public List<WsmResource> enumerateResourcesForClone(UUID workspaceUuid) {
+    String sql = RESOURCE_SELECT_SQL + " AND cloning_instructions != :copy_nothing";
+
     MapSqlParameterSource params =
         new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceUuid.toString());
+          .addValue("workspace_id", workspaceUuid.toString())
+          .addValue("clone_nothing", CloningInstructions.COPY_NOTHING.toSql());
 
     List<DbResource> dbResourceList =
         jdbcTemplate.query(RESOURCE_SELECT_SQL, params, DB_RESOURCE_ROW_MAPPER);

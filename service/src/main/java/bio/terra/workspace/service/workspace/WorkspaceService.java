@@ -106,7 +106,7 @@ public class WorkspaceService {
       @Nullable ApiTpsPolicyInputs policies,
       @Nullable List<String> applications,
       AuthenticatedUserRequest userRequest) {
-    JobBuilder createJob = buildCreateWorkspaceJob(workspace, policies, userRequest);
+    JobBuilder createJob = buildCreateWorkspaceJob(workspace, policies, applications, userRequest);
     return createJob.submitAndWait(UUID.class);
   }
 
@@ -121,6 +121,7 @@ public class WorkspaceService {
   public JobBuilder buildCreateWorkspaceJob(
       Workspace workspace,
       @Nullable ApiTpsPolicyInputs policies,
+      @Nullable List<String> applications,
       AuthenticatedUserRequest userRequest) {
     String workspaceUuid = workspace.getWorkspaceId().toString();
     String jobDescription =

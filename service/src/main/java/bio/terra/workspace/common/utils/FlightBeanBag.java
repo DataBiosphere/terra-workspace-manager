@@ -14,6 +14,7 @@ import bio.terra.workspace.service.buffer.BufferService;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
@@ -35,6 +36,8 @@ import org.springframework.stereotype.Component;
  * the lookup result. Instead, flights make calls to accessors in this class. Spring will wire up
  * the underlying methods once at startup avoiding the bean lookup. The objects will be properly
  * types without casting.
+ *
+ * PLEASE KEEP THESE IN ALPHABETICAL ORDER
  */
 @Component
 public class FlightBeanBag {
@@ -51,18 +54,19 @@ public class FlightBeanBag {
   private final FeatureConfiguration featureConfiguration;
   private final FolderDao folderDao;
   private final GcpCloudContextService gcpCloudContextService;
+  private final JobService jobService;
+  private final LandingZoneApiDispatch landingZoneApiDispatch;
   private final PetSaService petSaService;
   private final ReferencedResourceService referencedResourceService;
   private final ResourceDao resourceDao;
   private final SamService samService;
   private final SpendProfileService spendProfileService;
+  private final StorageAccountKeyProvider storageAccountKeyProvider;
   private final Storagetransfer storagetransfer;
   private final TpsApiDispatch tpsApiDispatch;
   private final WorkspaceDao workspaceDao;
   private final WorkspaceService workspaceService;
   private final VersionConfiguration versionConfiguration;
-  private final StorageAccountKeyProvider storageAccountKeyProvider;
-  private final LandingZoneApiDispatch landingZoneApiDispatch;
 
   @Lazy
   @Autowired
@@ -80,18 +84,19 @@ public class FlightBeanBag {
       FeatureConfiguration featureConfiguration,
       FolderDao folderDao,
       GcpCloudContextService gcpCloudContextService,
+      JobService jobService,
+      LandingZoneApiDispatch landingZoneApiDispatch,
       PetSaService petSaService,
       TpsApiDispatch tpsApiDispatch,
       ReferencedResourceService referencedResourceService,
       ResourceDao resourceDao,
       SamService samService,
       SpendProfileService spendProfileService,
+      StorageAccountKeyProvider storageAccountKeyProvider,
       Storagetransfer storagetransfer,
       WorkspaceDao workspaceDao,
       WorkspaceService workspaceService,
-      VersionConfiguration versionConfiguration,
-      StorageAccountKeyProvider storageAccountKeyProvider,
-      LandingZoneApiDispatch landingZoneApiDispatch) {
+      VersionConfiguration versionConfiguration) {
     this.applicationDao = applicationDao;
     this.azureCloudContextService = azureCloudContextService;
     this.azureConfig = azureConfig;
@@ -105,18 +110,19 @@ public class FlightBeanBag {
     this.featureConfiguration = featureConfiguration;
     this.folderDao = folderDao;
     this.gcpCloudContextService = gcpCloudContextService;
+    this.jobService = jobService;
+    this.landingZoneApiDispatch = landingZoneApiDispatch;
     this.petSaService = petSaService;
     this.referencedResourceService = referencedResourceService;
     this.resourceDao = resourceDao;
     this.samService = samService;
     this.spendProfileService = spendProfileService;
+    this.storageAccountKeyProvider = storageAccountKeyProvider;
     this.storagetransfer = storagetransfer;
     this.tpsApiDispatch = tpsApiDispatch;
     this.workspaceDao = workspaceDao;
     this.workspaceService = workspaceService;
     this.versionConfiguration = versionConfiguration;
-    this.storageAccountKeyProvider = storageAccountKeyProvider;
-    this.landingZoneApiDispatch = landingZoneApiDispatch;
   }
 
   public static FlightBeanBag getFromObject(Object object) {
@@ -131,12 +137,20 @@ public class FlightBeanBag {
     return azureCloudContextService;
   }
 
+  public AzureConfiguration getAzureConfig() {
+    return azureConfig;
+  }
+
   public BucketCloneRolesService getBucketCloneRolesService() {
     return bucketCloneRolesService;
   }
 
   public BufferService getBufferService() {
     return bufferService;
+  }
+
+  public CliConfiguration getCliConfiguration() {
+    return cliConfiguration;
   }
 
   public ControlledResourceMetadataManager getControlledResourceMetadataManager() {
@@ -159,8 +173,20 @@ public class FlightBeanBag {
     return featureConfiguration;
   }
 
+  public FolderDao getFolderDao() {
+    return folderDao;
+  }
+
   public GcpCloudContextService getGcpCloudContextService() {
     return gcpCloudContextService;
+  }
+
+  public JobService getJobService() {
+    return jobService;
+  }
+
+  public LandingZoneApiDispatch getLandingZoneApiDispatch() {
+    return landingZoneApiDispatch;
   }
 
   public PetSaService getPetSaService() {
@@ -177,6 +203,10 @@ public class FlightBeanBag {
 
   public SamService getSamService() {
     return samService;
+  }
+
+  public StorageAccountKeyProvider getStorageAccountKeyProvider() {
+    return storageAccountKeyProvider;
   }
 
   public Storagetransfer getStoragetransfer() {
@@ -199,27 +229,9 @@ public class FlightBeanBag {
     return spendProfileService;
   }
 
-  public AzureConfiguration getAzureConfig() {
-    return azureConfig;
-  }
-
-  public CliConfiguration getCliConfiguration() {
-    return cliConfiguration;
-  }
-
   public VersionConfiguration getVersionConfiguration() {
     return versionConfiguration;
   }
 
-  public LandingZoneApiDispatch getLandingZoneApiDispatch() {
-    return landingZoneApiDispatch;
-  }
-
-  public StorageAccountKeyProvider getStorageAccountKeyProvider() {
-    return storageAccountKeyProvider;
-  }
-
-  public FolderDao getFolderDao() {
-    return folderDao;
-  }
+  // PLEASE KEEP THESE IN ALPHABETICAL ORDER
 }

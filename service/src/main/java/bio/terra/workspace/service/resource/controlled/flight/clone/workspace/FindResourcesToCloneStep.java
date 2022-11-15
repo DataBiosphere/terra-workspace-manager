@@ -61,7 +61,7 @@ public class FindResourcesToCloneStep implements Step {
           batch.stream().filter(FindResourcesToCloneStep::isCloneable).toList();
 
       for (WsmResource resource : cloneableResources) {
-        String folderId = resource.getProperties().get(FOLDER_ID_KEY);
+        String folderId = resource.getFolderId().map(UUID::toString).orElse(null);
         result.add(
             new ResourceCloneInputs(
                 resource,

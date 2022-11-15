@@ -23,6 +23,7 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.utils.TestUtils;
@@ -49,8 +50,11 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
+import org.springframework.beans.factory.annotation.Autowired;
 
 public class CreateGcsBucketStepTest extends BaseUnitTest {
+  @Autowired
+  private FeatureConfiguration featureConfiguration;
 
   @Mock private FlightContext mockFlightContext;
   @Mock private CrlService mockCrlService;
@@ -92,7 +96,8 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
         new CreateGcsBucketStep(
             mockCrlService,
             ControlledResourceFixtures.getBucketResource(creationParameters.getName()),
-            mockGcpCloudContextService);
+            mockGcpCloudContextService,
+            featureConfiguration);
 
     final FlightMap inputFlightMap = new FlightMap();
     inputFlightMap.put(
@@ -145,7 +150,8 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
         new CreateGcsBucketStep(
             mockCrlService,
             ControlledResourceFixtures.getBucketResource(bucketName),
-            mockGcpCloudContextService);
+            mockGcpCloudContextService,
+          featureConfiguration);
 
     final FlightMap inputFlightMap = new FlightMap();
     inputFlightMap.put(
@@ -177,7 +183,8 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
         new CreateGcsBucketStep(
             mockCrlService,
             ControlledResourceFixtures.getBucketResource(bucketName),
-            mockGcpCloudContextService);
+            mockGcpCloudContextService,
+          featureConfiguration);
 
     final FlightMap inputFlightMap = new FlightMap();
     inputFlightMap.put(

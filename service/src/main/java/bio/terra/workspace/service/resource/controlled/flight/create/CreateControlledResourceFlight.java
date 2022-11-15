@@ -7,6 +7,7 @@ import bio.terra.stairway.Step;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
+import bio.terra.workspace.common.utils.WsmFlight;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
@@ -18,7 +19,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Resou
  * Flight for creation of a controlled resource. Some steps are resource-type-agnostic, and others
  * depend on the resource type. The latter must be passed in via the input parameters map with keys
  */
-public class CreateControlledResourceFlight extends Flight {
+public class CreateControlledResourceFlight extends WsmFlight {
 
   private final RetryRule dbRetryRule = RetryRules.shortDatabase();
 

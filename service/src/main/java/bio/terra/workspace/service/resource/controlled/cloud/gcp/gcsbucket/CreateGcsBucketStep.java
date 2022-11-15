@@ -7,9 +7,11 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.resource.controlled.flight.newclone.workspace.ControlledGcsBucketParameters;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -17,6 +19,7 @@ import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.storage.Storage;
 import com.google.api.services.storage.model.Bucket;
 import com.google.cloud.storage.BucketInfo;
+import com.google.cloud.storage.StorageClass;
 import com.google.cloud.storage.StorageException;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -32,14 +35,17 @@ public class CreateGcsBucketStep implements Step {
   private final CrlService crlService;
   private final ControlledGcsBucketResource resource;
   private final GcpCloudContextService gcpCloudContextService;
+  private final FeatureConfiguration features;
 
   public CreateGcsBucketStep(
       CrlService crlService,
       ControlledGcsBucketResource resource,
-      GcpCloudContextService gcpCloudContextService) {
+      GcpCloudContextService gcpCloudContextService,
+      FeatureConfiguration features) {
     this.crlService = crlService;
     this.resource = resource;
     this.gcpCloudContextService = gcpCloudContextService;
+    this.features = features;
   }
 
   @Override
@@ -47,27 +53,38 @@ public class CreateGcsBucketStep implements Step {
       throws InterruptedException, RetryException {
     FlightMap inputMap = flightContext.getInputParameters();
     FlightUtils.validateRequiredEntries(inputMap, ControlledResourceKeys.CREATION_PARAMETERS);
-    ApiGcpGcsBucketCreationParameters creationParameters =
-        inputMap.get(
-            ControlledResourceKeys.CREATION_PARAMETERS, ApiGcpGcsBucketCreationParameters.class);
+
     String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
 
+    ControlledGcsBucketParameters bucketParameters;
+
+    if (features.isNewCloneEnabled()) {
+      bucketParameters =
+        inputMap.get(
+          ControlledResourceKeys.CREATION_PARAMETERS, ControlledGcsBucketParameters.class);
+    } else {
+      ApiGcpGcsBucketCreationParameters creationParameters =
+          inputMap.get(
+              ControlledResourceKeys.CREATION_PARAMETERS, ApiGcpGcsBucketCreationParameters.class);
+
+      bucketParameters = new ControlledGcsBucketParameters();
+      bucketParameters.setBucketName(resource.getBucketName());
+      bucketParameters.setLocation(creationParameters.getLocation());
+      bucketParameters.setStorageClass(Optional.ofNullable(creationParameters.getDefaultStorageClass())
+        .map(GcsApiConversions::toGcsApi).orElse(StorageClass.STANDARD));
+      bucketParameters.setLifecycleRules(Optional.ofNullable(creationParameters.getLifecycle())
+        .map(GcsApiConversions::toGcsApiRulesList)
+        .orElse(Collections.emptyList()));
+    }
+
     BucketInfo.Builder bucketInfoBuilder =
-        BucketInfo.newBuilder(resource.getBucketName())
-            .setLocation(creationParameters.getLocation());
-
-    // Remaining creation parameters are optional
-    Optional.ofNullable(creationParameters.getDefaultStorageClass())
-        .map(GcsApiConversions::toGcsApi)
-        .ifPresent(bucketInfoBuilder::setStorageClass);
-
-    bucketInfoBuilder.setLifecycleRules(
-        Optional.ofNullable(creationParameters.getLifecycle())
-            .map(GcsApiConversions::toGcsApiRulesList)
-            .orElse(Collections.emptyList()));
+      BucketInfo.newBuilder(resource.getBucketName())
+        .setLocation(bucketParameters.getLocation())
+        .setStorageClass(bucketParameters.getStorageClass())
+        .setLifecycleRules(bucketParameters.getLifecycleRules());
 
     BucketInfo.IamConfiguration iamConfiguration =
-        BucketInfo.IamConfiguration.newBuilder().setIsUniformBucketLevelAccessEnabled(true).build();
+      BucketInfo.IamConfiguration.newBuilder().setIsUniformBucketLevelAccessEnabled(true).build();
     bucketInfoBuilder.setIamConfiguration(iamConfiguration);
 
     // Check whether the bucket exists before attempting to create it. If it does, verify that it

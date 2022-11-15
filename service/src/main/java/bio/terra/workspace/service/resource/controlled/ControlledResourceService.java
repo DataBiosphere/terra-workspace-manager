@@ -45,6 +45,7 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import bio.terra.workspace.service.workspace.WorkspaceCloneService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
@@ -79,6 +80,7 @@ public class ControlledResourceService {
   private final SamService samService;
   private final GcpCloudContextService gcpCloudContextService;
   private final FeatureConfiguration features;
+  private final WorkspaceCloneService workspaceCloneService;
 
   @Autowired
   public ControlledResourceService(
@@ -87,13 +89,15 @@ public class ControlledResourceService {
       ApplicationDao applicationDao,
       SamService samService,
       GcpCloudContextService gcpCloudContextService,
-      FeatureConfiguration features) {
+      FeatureConfiguration features,
+      WorkspaceCloneService workspaceCloneService) {
     this.jobService = jobService;
     this.resourceDao = resourceDao;
     this.applicationDao = applicationDao;
     this.samService = samService;
     this.gcpCloudContextService = gcpCloudContextService;
     this.features = features;
+    this.workspaceCloneService = workspaceCloneService;
   }
 
   public String createAzureRelayNamespace(
@@ -196,6 +200,26 @@ public class ControlledResourceService {
       @Nullable String destinationBucketName,
       @Nullable String destinationLocation,
       @Nullable ApiCloningInstructionsEnum cloningInstructionsOverride) {
+
+    // Feature split for refactored clone implementation
+    // TODO: PF-2107 the endpoint is only in the workspaceCloneService for now.
+    //   We'll move it to a sensible place post this prototyping work.
+    if (features.isNewCloneEnabled()) {
+      return workspaceCloneService.cloneGcsBucket(
+        sourceWorkspaceId,
+        sourceResourceId,
+        destinationWorkspaceId,
+        destinationResourceId,
+        /* destination folder id */ null,
+        jobControl,
+        userRequest,
+        destinationResourceName,
+        destinationDescription,
+        destinationBucketName,
+        destinationLocation,
+        CloningInstructions.fromApiModel(cloningInstructionsOverride));
+    }
+
     final ControlledResource sourceBucketResource =
         getControlledResource(sourceWorkspaceId, sourceResourceId);
 

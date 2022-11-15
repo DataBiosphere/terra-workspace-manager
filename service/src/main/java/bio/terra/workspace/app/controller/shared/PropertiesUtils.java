@@ -30,18 +30,4 @@ public class PropertiesUtils {
     properties.forEach((key, value) -> apiProperties.add(new ApiProperty().key(key).value(value)));
     return apiProperties;
   }
-
-  /**
-   * Clear certain properties in the hashmap before making a clone of a resource to a different
-   * workspace.
-   *
-   * <p>For example, TERRA_WORKSPACE_FOLDER_ID is a workspace specific properties. It needs to be
-   * cleared because it is meaningless in a new workspace.
-   */
-  public static ImmutableMap<String, String>
-      clearSomePropertiesForResourceCloningToDifferentWorkspace(Map<String, String> properties) {
-    HashMap<String, String> result = new HashMap<>(properties);
-    result.remove(FOLDER_ID_KEY);
-    return ImmutableMap.copyOf(result);
-  }
 }

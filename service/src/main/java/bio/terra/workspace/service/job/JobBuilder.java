@@ -113,6 +113,16 @@ public class JobBuilder {
     return this;
   }
 
+  // Add a parameter without serializing
+  public JobBuilder addParameterRaw(String keyName, String val) {
+    if (StringUtils.isBlank(keyName)) {
+      throw new InvalidJobParameterException("Parameter name cannot be null or blanks.");
+    }
+    // note that this call overwrites a parameter if it already exists
+    jobParameterMap.putRaw(keyName, val);
+    return this;
+  }
+
   /**
    * Submit a job to stairway and return the jobID immediately.
    *

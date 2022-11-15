@@ -20,6 +20,8 @@ public final class WorkspaceFlightMapKeys {
   public static final String UPDATED_WORKSPACES = "updatedWorkspaces";
   public static final String SPEND_PROFILE = "spendProfile";
   public static final String CLONE_SOURCE_METADATA = "cloneSourceMetadata";
+  public static final String DESTINATION_WORKSPACE = "destinationWorkspace";
+  public static final String CLONE_IDS = "cloneIds";
 
   private WorkspaceFlightMapKeys() {}
 
@@ -34,6 +36,7 @@ public final class WorkspaceFlightMapKeys {
     public static final String AZURE_CLOUD_CONTEXT = "azureCloudContext";
     public static final String UPDATE_PARAMETERS = "updateParameters";
     public static final String PREVIOUS_UPDATE_PARAMETERS = "previousUpdateParameters";
+    public static final String RESOURCE_PARAMETERS = "resourceParameters";
 
     public static final String RESOURCE_ROLES_TO_REMOVE = "resourceRolesToRemove";
     public static final String REMOVED_USER_IS_WORKSPACE_MEMBER = "removedUserIsWorkspaceMember";
@@ -70,6 +73,9 @@ public final class WorkspaceFlightMapKeys {
     public static final String STORAGE_ACCOUNT_NAME = "storageAccountName";
     public static final String DESTINATION_RESOURCE_ID = "destinationResourceId";
     public static final String DESTINATION_FOLDER_ID = "destinationFolderId";
+    public static final String DESTINATION_FIELDS = "destinationFields";
+    public static final String DESTINATION_PARAMETERS = "destinationParameters";
+    public static final String DESTINATION_RESOURCE = "destinationResource";
   }
 
   public static class FolderKeys {

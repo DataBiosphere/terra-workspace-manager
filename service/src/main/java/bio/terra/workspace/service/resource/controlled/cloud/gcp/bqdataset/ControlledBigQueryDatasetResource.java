@@ -6,6 +6,7 @@ import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
+import bio.terra.workspace.common.utils.WsmFlight;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
@@ -113,7 +114,7 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
   /** {@inheritDoc} */
   @Override
   public void addCreateSteps(
-      CreateControlledResourceFlight flight,
+      WsmFlight flight,
       String petSaEmail,
       AuthenticatedUserRequest userRequest,
       FlightBeanBag flightBeanBag) {

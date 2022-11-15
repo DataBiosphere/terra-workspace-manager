@@ -150,8 +150,6 @@ public class FolderService {
 
   private static boolean isInFolder(WsmResource resource, ImmutableList<Folder> folders) {
     var folderIds = folders.stream().map(Folder::id).toList();
-    return resource.getProperties().containsKey(FOLDER_ID_KEY)
-        && folderIds.contains(
-            UUID.fromString(Objects.requireNonNull(resource.getProperties().get(FOLDER_ID_KEY))));
+    return resource.getFolderId().map(folderIds::contains).orElse(false);
   }
 }
