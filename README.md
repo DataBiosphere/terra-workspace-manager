@@ -37,7 +37,7 @@ Private resources are available to a single member of the workspace. At the pres
 a private resource is available only to its creator.
 
 WSM has latent support for _applications_. No applications exist at this time. The concept
-is that an application is a distinguished service accounts. Owners of the workspace can
+is that an application is a distinguished service account. Owners of the workspace can
 control which applications are allowed access to the workspace. If an application is given
 access, then it can create application-owned resources. The goal is to allow applications
 to create constellations of resources that support the application, and not let them be
@@ -118,7 +118,7 @@ these commands:
 ```
 
 ## Workspace Manager Service
-The bulk of the code is in the `service` project. This section describes that projet.
+The bulk of the code is in the `service` project. This section describes that project.
 
 ### Spring Boot
 The service project uses Spring Boot as the framework for REST servers. The objective is to use a minimal set

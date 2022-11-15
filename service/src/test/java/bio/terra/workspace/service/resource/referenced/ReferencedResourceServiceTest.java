@@ -271,7 +271,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
             .spendProfileId(null)
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
-    return workspaceService.createWorkspace(request, null, USER_REQUEST);
+    return workspaceService.createWorkspace(request, null, null, USER_REQUEST);
   }
 
   @Nested
