@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.azure.container;
 
 import bio.terra.common.iam.BearerToken;
+import bio.terra.landingzone.db.exception.LandingZoneNotFoundException;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
@@ -83,7 +84,7 @@ public class RetrieveDestinationStorageAccountResourceIdStep implements Step {
                 lzStorageAcct.get().getResourceId());
         return StepResult.getStepResultSuccess();
       }
-    } catch (IllegalStateException e) {
+    } catch (IllegalStateException | LandingZoneNotFoundException e) {
       logger.info(
           String.format(
               "Landing zone associated with the Azure cloud context not found. TenantId='%s', SubscriptionId='%s', ResourceGroupId='%s'",
