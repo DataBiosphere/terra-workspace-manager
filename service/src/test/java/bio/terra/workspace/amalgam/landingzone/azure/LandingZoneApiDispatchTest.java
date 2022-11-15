@@ -120,6 +120,33 @@ public class LandingZoneApiDispatchTest extends BaseAzureUnitTest {
   }
 
   @Test
+  void createAzureLandingZone_LandingZoneDoesNotExistsExceptionIsHandledAndStartsJob() {
+    when(landingZoneService.getLandingZonesByBillingProfile(eq(BEARER_TOKEN), any()))
+        .thenThrow(bio.terra.landingzone.db.exception.LandingZoneNotFoundException.class);
+    String resultEndpoint = String.format("%s/%s/%s", "someServletPath", "create-result", JOB_ID);
+    ApiCreateAzureLandingZoneRequestBody request =
+        AzureLandingZoneFixtures.buildCreateAzureLandingZoneRequest(JOB_ID, BILLING_PROFILE_ID);
+
+    LandingZoneJobService.AsyncJobResult<StartLandingZoneCreation> createJobResult =
+        AzureLandingZoneFixtures.createStartCreateJobResultWithStartLandingZoneCreation(
+            JOB_ID,
+            JobReport.StatusEnum.RUNNING,
+            new StartLandingZoneCreation(
+                LANDING_ZONE_ID, request.getDefinition(), request.getVersion()));
+    when(landingZoneService.startLandingZoneCreationJob(
+            eq(BEARER_TOKEN), any(), any(LandingZoneRequest.class), any()))
+        .thenReturn(createJobResult);
+
+    landingZoneApiDispatch =
+        new LandingZoneApiDispatch(landingZoneService, workspaceService, featureConfiguration);
+
+    var result =
+        landingZoneApiDispatch.createAzureLandingZone(BEARER_TOKEN, request, resultEndpoint);
+
+    assertEquals(result.getLandingZoneId(), LANDING_ZONE_ID);
+  }
+
+  @Test
   void listAzureLandingZoneResourcesByPurpose_SubnetResourcePurpose_Success() {
     setupLandingZoneResources();
     ApiAzureLandingZoneResourcesList response =
