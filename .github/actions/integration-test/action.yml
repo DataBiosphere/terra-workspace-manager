@@ -35,6 +35,6 @@ runs:
         ../gradlew :integration:uploadResults --args="SummariesToTerraKernelK8SBigQuery.json $resultsDir" --scan
         echo "TestRunner results written to $resultsDir"
         ls $resultsDir
-        echo "::set-output name=results-dir::$resultsDir"
+        echo "results-dir=$resultsDir" >> $GITHUB_OUTPUT
         exit $testResult
       shell: bash
