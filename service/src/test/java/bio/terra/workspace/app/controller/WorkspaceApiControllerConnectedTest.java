@@ -8,10 +8,10 @@ import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UFI
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UUID_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_PATH;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
+import static com.google.common.collect.MoreCollectors.toOptional;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.emptyString;
-import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -29,7 +29,6 @@ import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
@@ -206,15 +205,10 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
   @Test
   public void listWorkspaces_requesterIsOwner_returnsFullWorkspace() throws Exception {
-    List<ApiWorkspaceDescription> listedWorkspaces =
-        listWorkspaces(userAccessUtils.defaultUserAuthRequest());
-
-    assertThat(
-        String.format(
-            "Expected 1 workspace. Got %s: %s", listedWorkspaces.size(), listedWorkspaces),
-        listedWorkspaces.stream().map(ApiWorkspaceDescription::getId).toList(),
-        hasSize(1));
-    assertFullWorkspace(listedWorkspaces.get(0));
+    ApiWorkspaceDescription listedWorkspace =
+        getWorkspaceUsingListWorkspaces(userAccessUtils.defaultUserAuthRequest(), workspace.getId())
+            .get();
+    assertFullWorkspace(listedWorkspace);
   }
 
   @Test
@@ -226,9 +220,9 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
         WsmIamRole.DISCOVERER,
         userAccessUtils.getSecondUserEmail());
 
-    List<ApiWorkspaceDescription> listedWorkspaces =
-        listWorkspaces(userAccessUtils.secondUserAuthRequest());
-    assertTrue(listedWorkspaces.isEmpty());
+    Optional<ApiWorkspaceDescription> listedWorkspaceOptional =
+        getWorkspaceUsingListWorkspaces(userAccessUtils.secondUserAuthRequest(), workspace.getId());
+    assertTrue(listedWorkspaceOptional.isEmpty());
   }
 
   @Test
@@ -241,10 +235,13 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
         WsmIamRole.DISCOVERER,
         userAccessUtils.getSecondUserEmail());
 
-    List<ApiWorkspaceDescription> listedWorkspaces =
-        listWorkspaces(userAccessUtils.secondUserAuthRequest(), Optional.of(ApiIamRole.READER));
+    Optional<ApiWorkspaceDescription> listedWorkspaceOptional =
+        getWorkspaceUsingListWorkspaces(
+            userAccessUtils.secondUserAuthRequest(),
+            workspace.getId(),
+            Optional.of(ApiIamRole.READER));
 
-    assertTrue(listedWorkspaces.isEmpty());
+    assertTrue(listedWorkspaceOptional.isEmpty());
   }
 
   @Test
@@ -257,11 +254,13 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
         WsmIamRole.DISCOVERER,
         userAccessUtils.getSecondUserEmail());
 
-    List<ApiWorkspaceDescription> listedWorkspaces =
-        listWorkspaces(userAccessUtils.secondUserAuthRequest(), Optional.of(ApiIamRole.DISCOVERER));
-
-    assertThat(listedWorkspaces, hasSize(1));
-    assertStrippedWorkspace(listedWorkspaces.get(0));
+    ApiWorkspaceDescription listedWorkspace =
+        getWorkspaceUsingListWorkspaces(
+                userAccessUtils.secondUserAuthRequest(),
+                workspace.getId(),
+                Optional.of(ApiIamRole.DISCOVERER))
+            .get();
+    assertStrippedWorkspace(listedWorkspace);
   }
 
   private ApiWorkspaceDescription getWorkspace(AuthenticatedUserRequest request, UUID id)
@@ -341,13 +340,21 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     mockMvc.perform(addAuth(requestBuilder, userRequest)).andExpect(status().is(statusCode));
   }
 
-  private List<ApiWorkspaceDescription> listWorkspaces(AuthenticatedUserRequest request)
-      throws Exception {
-    return listWorkspaces(request, /*minimumHighestRole=*/ Optional.empty());
+  private Optional<ApiWorkspaceDescription> getWorkspaceUsingListWorkspaces(
+      AuthenticatedUserRequest request, UUID workspaceId) throws Exception {
+    return getWorkspaceUsingListWorkspaces(
+        request, workspaceId, /*minimumHighestRole=*/ Optional.empty());
   }
 
-  private List<ApiWorkspaceDescription> listWorkspaces(
-      AuthenticatedUserRequest request, Optional<ApiIamRole> minimumHighestRole) throws Exception {
+  /**
+   * Call listWorkspaces and return workspace with specified workspaceId.
+   *
+   * <p>This should be used instead of just calling listWorkspaces. Tests run in parallel.
+   * listWorkspaces will return workspaces created by a different thread.
+   */
+  private Optional<ApiWorkspaceDescription> getWorkspaceUsingListWorkspaces(
+      AuthenticatedUserRequest request, UUID workspaceId, Optional<ApiIamRole> minimumHighestRole)
+      throws Exception {
     MockHttpServletRequestBuilder requestBuilder = get(WORKSPACES_V1_PATH);
     if (minimumHighestRole.isPresent()) {
       requestBuilder.param("minimumHighestRole", minimumHighestRole.get().name());
@@ -361,7 +368,10 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
             .getContentAsString();
     return objectMapper
         .readValue(serializedResponse, ApiWorkspaceDescriptionList.class)
-        .getWorkspaces();
+        .getWorkspaces()
+        .stream()
+        .filter(workspaceDescription -> workspaceDescription.getId().equals(workspaceId))
+        .collect(toOptional());
   }
 
   /** Assert all workspace fields are set, when requester has at least READER role. */
