@@ -42,7 +42,7 @@ jobs:
 
     steps:
     - name: Checkout current code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Skip version bump merges
       id: skiptest
@@ -73,7 +73,7 @@ jobs:
 
     - name: Cache Gradle packages
       if: steps.skiptest.outputs.is-bump == 'no'
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: |
           ~/.gradle/caches
@@ -133,7 +133,7 @@ jobs:
 
     - name: Upload Test Reports
       if: always() && steps.skiptest.outputs.is-bump == 'no'
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v3
       with:
         name: Test Reports
         path: service/build/reports/tests
