@@ -2,7 +2,6 @@ package bio.terra.workspace.service.resource.controlled.cloud.aws.storagebucket;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
-import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
@@ -125,9 +124,7 @@ public class ControlledAwsBucketResource extends ControlledResource {
   }
 
   public ApiAwsBucketAttributes toApiAttributes() {
-    return new ApiAwsBucketAttributes()
-        .s3BucketName(getS3BucketName())
-        .prefix(getPrefix());
+    return new ApiAwsBucketAttributes().s3BucketName(getS3BucketName()).prefix(getPrefix());
   }
 
   public ApiAwsBucketResource toApiResource() {
@@ -146,8 +143,7 @@ public class ControlledAwsBucketResource extends ControlledResource {
 
   @Override
   public String attributesToJson() {
-    return DbSerDes.toJson(
-        new ControlledAwsBucketAttributes(getS3BucketName(), getPrefix()));
+    return DbSerDes.toJson(new ControlledAwsBucketAttributes(getS3BucketName(), getPrefix()));
   }
 
   @Override

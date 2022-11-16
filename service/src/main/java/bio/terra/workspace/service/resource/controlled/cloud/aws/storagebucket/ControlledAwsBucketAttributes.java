@@ -7,8 +7,7 @@ public class ControlledAwsBucketAttributes {
 
   @JsonCreator
   public ControlledAwsBucketAttributes(
-      @JsonProperty("s3BucketName") String s3BucketName,
-      @JsonProperty("prefix") String prefix) {
+      @JsonProperty("s3BucketName") String s3BucketName, @JsonProperty("prefix") String prefix) {
     this.s3BucketName = s3BucketName;
     this.prefix = prefix;
   }

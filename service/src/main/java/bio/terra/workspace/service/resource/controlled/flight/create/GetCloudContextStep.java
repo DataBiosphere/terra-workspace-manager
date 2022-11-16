@@ -75,9 +75,9 @@ public class GetCloudContextStep implements Step {
       }
       case AWS -> {
         if (workingMap.get(AWS_CLOUD_CONTEXT, AwsCloudContext.class) == null) {
-          AwsCloudContext awsCloudContext = awsCloudContextService.getRequiredAwsCloudContext(workspaceUuid);
-          workingMap.put(
-              AWS_CLOUD_CONTEXT, awsCloudContext.serialize());
+          AwsCloudContext awsCloudContext =
+              awsCloudContextService.getRequiredAwsCloudContext(workspaceUuid);
+          workingMap.put(AWS_CLOUD_CONTEXT, awsCloudContext.serialize());
         }
       }
       case ANY ->

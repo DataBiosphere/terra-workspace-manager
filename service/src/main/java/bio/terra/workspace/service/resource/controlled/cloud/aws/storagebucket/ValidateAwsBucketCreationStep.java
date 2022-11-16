@@ -13,8 +13,6 @@ import bio.terra.workspace.generated.model.ApiAwsBucketCreationParameters;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import com.amazonaws.regions.Regions;
-import java.util.UUID;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,9 +31,7 @@ class ValidateAwsBucketCreationStep implements Step {
     final String awsCloudContextString =
         flightContext
             .getWorkingMap()
-            .get(
-                WorkspaceFlightMapKeys.ControlledResourceKeys.AWS_CLOUD_CONTEXT,
-                String.class);
+            .get(WorkspaceFlightMapKeys.ControlledResourceKeys.AWS_CLOUD_CONTEXT, String.class);
 
     final AwsCloudContext awsCloudContext = AwsCloudContext.deserialize(awsCloudContextString);
 
@@ -69,10 +65,10 @@ class ValidateAwsBucketCreationStep implements Step {
                   requestedRegion)));
     }
 
-//    resource.setS3BucketName(bucketName);
-//
-//    UUID resourceId = resource.getResourceId();
-//    resource.setPrefix(resourceId.toString());
+    //    resource.setS3BucketName(bucketName);
+    //
+    //    UUID resourceId = resource.getResourceId();
+    //    resource.setPrefix(resourceId.toString());
 
     return StepResult.getStepResultSuccess();
   }
