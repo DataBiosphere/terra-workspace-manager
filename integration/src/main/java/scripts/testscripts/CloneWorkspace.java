@@ -92,6 +92,7 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
   private String sharedBucketSourceResourceName;
   private String sourceProjectId;
   private TestUserSpecification cloningUser;
+  private UUID destinationWorkspaceId;
   private WorkspaceApi cloningUserWorkspaceApi;
   private String controlledBucketFolderName;
   private String referenceBucketFolderName;
@@ -298,7 +299,7 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
 
     final String jobId = cloneResult.getJobReport().getId();
     logger.info("Clone Job ID {}", jobId);
-    final UUID destinationWorkspaceId = cloneResult.getWorkspace().getDestinationWorkspaceId();
+    destinationWorkspaceId = cloneResult.getWorkspace().getDestinationWorkspaceId();
     assertNotNull(destinationWorkspaceId, "Destination workspace ID available immediately.");
     assertEquals(destinationUserFacingId, cloneResult.getWorkspace().getDestinationUserFacingId());
     final WorkspaceDescription destinationWorkspaceDescription =
