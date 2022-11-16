@@ -350,7 +350,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
    * Call listWorkspaces and return workspace with specified workspaceId.
    *
    * <p>This should be used instead of just calling listWorkspaces. Tests run in parallel.
-   * listWorkspaces will return workspaces created by a different thread.
+   * listWorkspaces will return workspaces created by a different test on a different thread.
    */
   private Optional<ApiWorkspaceDescription> getWorkspaceUsingListWorkspaces(
       AuthenticatedUserRequest request, UUID workspaceId, Optional<ApiIamRole> minimumHighestRole)
