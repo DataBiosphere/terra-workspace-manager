@@ -61,8 +61,8 @@ jobs:
           SEMVER_PART=${{ github.event.inputs.bump }}
           CHECKOUT_BRANCH=${{ github.event.inputs.branch }}
         fi
-        echo ::set-output name=semver-part::$SEMVER_PART
-        echo ::set-output name=checkout-branch::$CHECKOUT_BRANCH
+        echo semver-part=$SEMVER_PART >> $GITHUB_OUTPUT
+        echo checkout-branch=$CHECKOUT_BRANCH >> $GITHUB_OUTPUT
     - name: Checkout current code
       uses: actions/checkout@v3
       with:
@@ -126,7 +126,7 @@ jobs:
       id: image-name
       run: |
         DOCKER_TAG=${{ steps.tag.outputs.tag }}
-        echo ::set-output name=name::gcr.io/${GOOGLE_PROJECT}/${SERVICE_NAME}:${DOCKER_TAG}
+        echo name=gcr.io/${GOOGLE_PROJECT}/${SERVICE_NAME}:${DOCKER_TAG} >> $GITHUB_OUTPUT
     - name: Build image locally with jib
       if: steps.skiptest.outputs.is-bump == 'no'
       run: "./gradlew :service:jibDockerBuild --image=${{ steps.image-name.outputs.name }} -Djib.console=plain"
