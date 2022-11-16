@@ -7,13 +7,17 @@ import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.ControlledAwsResourceApi;
 import bio.terra.workspace.generated.model.ApiAwsBucketCreationParameters;
+import bio.terra.workspace.generated.model.ApiAwsBucketResource;
 import bio.terra.workspace.generated.model.ApiCreateControlledAwsBucketRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedControlledAwsBucket;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.storagebucket.ControlledAwsBucketResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
@@ -39,22 +43,24 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
   private final WorkspaceService workspaceService;
   private final ControlledResourceService controlledResourceService;
   private final AwsCloudContextService awsCloudContextService;
+  private final ControlledResourceMetadataManager controlledResourceMetadataManager;
 
   @Autowired
   public ControlledAwsResourceApiController(
-      AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
-      HttpServletRequest request,
-      ControlledResourceService controlledResourceService,
-      SamService samService,
-      FeatureConfiguration features,
-      WorkspaceService workspaceService,
-      ControlledResourceService controlledResourceService1,
-      AwsCloudContextService awsCloudContextService) {
+          AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
+          HttpServletRequest request,
+          ControlledResourceService controlledResourceService,
+          SamService samService,
+          FeatureConfiguration features,
+          WorkspaceService workspaceService,
+          ControlledResourceService controlledResourceService1,
+          AwsCloudContextService awsCloudContextService, ControlledResourceMetadataManager controlledResourceMetadataManager) {
     super(authenticatedUserRequestFactory, request, controlledResourceService, samService);
     this.features = features;
     this.workspaceService = workspaceService;
     this.controlledResourceService = controlledResourceService1;
     this.awsCloudContextService = awsCloudContextService;
+    this.controlledResourceMetadataManager = controlledResourceMetadataManager;
   }
 
   @Override
@@ -108,5 +114,16 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
             .resourceId(createdAwsBucket.getResourceId())
             .awsBucket(createdAwsBucket.toApiResource());
     return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiAwsBucketResource> getAwsBucket(UUID workspaceUuid, UUID resourceId) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ControlledAwsBucketResource resource =
+            controlledResourceMetadataManager
+                    .validateControlledResourceAndAction(
+                            userRequest, workspaceUuid, resourceId, SamConstants.SamControlledResourceActions.READ_ACTION)
+                    .castByEnum(WsmResourceType.CONTROLLED_AWS_BUCKET);
+    return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 }
