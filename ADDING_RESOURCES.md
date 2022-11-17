@@ -44,12 +44,17 @@ to compile your code as you go.
 7. Edit the appropriate controller to implement your API. Depending on the implementation
    details, you may need to add methods to the `ControlledResourceService` or the
    `ReferencedResourceService`.
-8. Create a matching package in the `test/java/bio.terra.workspace/service/resource` package
-   for your resource tests. Add tests following the pattern of other resources.
-9. Add integration tests for your resource in the `integration` sub-project. Every
-   resource type should have a "lifecycle test". See
-   `testscripts/ControlledBigQueryDatasetLifecycle` for an example. If you implement
-   cloning, then add your resource to the `CloneWorkspace` test as well.
+8. Tests
+   - Unit tests: When you don't need to talk to real cloud. Example: Search for `ControlledBqDataset` in   
+     ([`ControlledGcpResourceApiControllerTest.java`](https://github.com/DataBiosphere/terra-workspace-manager/blob/main/service/src/test/java/bio/terra/workspace/app/controller/ControlledGcpResourceApiControllerTest.java))
+   - Connected tests: If you need to talk to real cloud, for example to create your
+     resource. The majority of tests should be connected tests. Each resource is in a
+     different test file. Example:
+     ([`ControlledGcpResourceApiControllerBqDatasetTest.java`](https://github.com/DataBiosphere/terra-workspace-manager/blob/main/service/src/test/java/bio/terra/workspace/app/controller/ControlledGcpResourceApiControllerBqDatasetTest.java))
+       - Controller tests are preferred over service tests, since former also tests controller layer.
+   - Integration test: Tests using TestRunner framework. If your resource supports cloning, add your resource to
+     `CloneWorkspace` integration test.
+
 
 ## More Information
 

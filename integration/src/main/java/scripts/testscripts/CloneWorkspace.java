@@ -299,7 +299,7 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
 
     final String jobId = cloneResult.getJobReport().getId();
     logger.info("Clone Job ID {}", jobId);
-    final UUID destinationWorkspaceId = cloneResult.getWorkspace().getDestinationWorkspaceId();
+    destinationWorkspaceId = cloneResult.getWorkspace().getDestinationWorkspaceId();
     assertNotNull(destinationWorkspaceId, "Destination workspace ID available immediately.");
     assertEquals(destinationUserFacingId, cloneResult.getWorkspace().getDestinationUserFacingId());
     final WorkspaceDescription destinationWorkspaceDescription =
@@ -642,6 +642,8 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
     assertThat(
         "Correct number of employees inserted (with possible duplicates)",
         numEmployees,
+        // BqDatasetUtils.populateBigQueryDataset() added 3 employees: Batman, Aquaman, Superman.
+        // Batman was not copied because it was inserted via stream. Aquaman/Superman are copied.
         is(greaterThanOrEqualTo(2L)));
 
     // verify private dataset clone failed

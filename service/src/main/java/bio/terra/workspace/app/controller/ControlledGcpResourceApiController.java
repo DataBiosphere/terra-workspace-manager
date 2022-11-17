@@ -353,6 +353,62 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   }
 
   @Override
+  public ResponseEntity<ApiCloneControlledGcpBigQueryDatasetResult> cloneBigQueryDataset(
+      UUID workspaceUuid,
+      UUID resourceId,
+      @Valid ApiCloneControlledGcpBigQueryDatasetRequest body) {
+    if (body.getCloningInstructions() == ApiCloningInstructionsEnum.REFERENCE
+        && (!StringUtils.isEmpty(body.getDestinationDatasetName())
+            || !StringUtils.isEmpty(body.getLocation()))) {
+      throw new BadRequestException(
+          String.format(
+              "Cannot set destination dataset name or location when cloning controlled dataset with COPY_REFERENCE"));
+    }
+
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    // This technically duplicates the first step of the flight as the clone flight is re-used for
+    // cloneWorkspace, but this also saves us from launching and failing a flight if the user does
+    // not have access to the resource.
+    controlledResourceMetadataManager.validateCloneAction(
+        userRequest, workspaceUuid, body.getDestinationWorkspaceId(), resourceId);
+
+    final String jobId =
+        controlledResourceService.cloneBigQueryDataset(
+            workspaceUuid,
+            resourceId,
+            body.getDestinationWorkspaceId(),
+            UUID.randomUUID(), // resourceId is not pre-allocated for individual clone endpoints
+            body.getJobControl(),
+            userRequest,
+            body.getName(),
+            body.getDescription(),
+            body.getDestinationDatasetName(),
+            body.getLocation(),
+            body.getCloningInstructions());
+    final ApiCloneControlledGcpBigQueryDatasetResult result =
+        fetchCloneBigQueryDatasetResult(jobId);
+    return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
+  }
+
+  private ApiCloneControlledGcpBigQueryDatasetResult fetchCloneBigQueryDatasetResult(String jobId) {
+    JobApiUtils.AsyncJobResult<ApiClonedControlledGcpBigQueryDataset> jobResult =
+        jobApiUtils.retrieveAsyncJobResult(jobId, ApiClonedControlledGcpBigQueryDataset.class);
+    return new ApiCloneControlledGcpBigQueryDatasetResult()
+        .jobReport(jobResult.getJobReport())
+        .errorReport(jobResult.getApiErrorReport())
+        .dataset(jobResult.getResult());
+  }
+
+  @Override
+  public ResponseEntity<ApiCloneControlledGcpBigQueryDatasetResult> getCloneBigQueryDatasetResult(
+      UUID workspaceUuid, String jobId) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
+    ApiCloneControlledGcpBigQueryDatasetResult result = fetchCloneBigQueryDatasetResult(jobId);
+    return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
+  }
+
+  @Override
   public ResponseEntity<ApiCreatedControlledGcpAiNotebookInstanceResult> createAiNotebookInstance(
       UUID workspaceUuid, @Valid ApiCreateControlledGcpAiNotebookInstanceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -510,61 +566,5 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
                 userRequest, workspaceUuid, resourceId, SamControlledResourceActions.READ_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
-  }
-
-  @Override
-  public ResponseEntity<ApiCloneControlledGcpBigQueryDatasetResult> cloneBigQueryDataset(
-      UUID workspaceUuid,
-      UUID resourceId,
-      @Valid ApiCloneControlledGcpBigQueryDatasetRequest body) {
-    if (body.getCloningInstructions() == ApiCloningInstructionsEnum.REFERENCE
-        && (!StringUtils.isEmpty(body.getDestinationDatasetName())
-            || !StringUtils.isEmpty(body.getLocation()))) {
-      throw new BadRequestException(
-          String.format(
-              "Cannot set destination dataset name or location when cloning controlled dataset with COPY_REFERENCE"));
-    }
-
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    // This technically duplicates the first step of the flight as the clone flight is re-used for
-    // cloneWorkspace, but this also saves us from launching and failing a flight if the user does
-    // not have access to the resource.
-    controlledResourceMetadataManager.validateCloneAction(
-        userRequest, workspaceUuid, body.getDestinationWorkspaceId(), resourceId);
-
-    final String jobId =
-        controlledResourceService.cloneBigQueryDataset(
-            workspaceUuid,
-            resourceId,
-            body.getDestinationWorkspaceId(),
-            UUID.randomUUID(), // resourceId is not pre-allocated for individual clone endpoints
-            body.getJobControl(),
-            userRequest,
-            body.getName(),
-            body.getDescription(),
-            body.getDestinationDatasetName(),
-            body.getLocation(),
-            body.getCloningInstructions());
-    final ApiCloneControlledGcpBigQueryDatasetResult result =
-        fetchCloneBigQueryDatasetResult(jobId);
-    return new ResponseEntity<>(result, HttpStatus.OK);
-  }
-
-  private ApiCloneControlledGcpBigQueryDatasetResult fetchCloneBigQueryDatasetResult(String jobId) {
-    JobApiUtils.AsyncJobResult<ApiClonedControlledGcpBigQueryDataset> jobResult =
-        jobApiUtils.retrieveAsyncJobResult(jobId, ApiClonedControlledGcpBigQueryDataset.class);
-    return new ApiCloneControlledGcpBigQueryDatasetResult()
-        .jobReport(jobResult.getJobReport())
-        .errorReport(jobResult.getApiErrorReport())
-        .dataset(jobResult.getResult());
-  }
-
-  @Override
-  public ResponseEntity<ApiCloneControlledGcpBigQueryDatasetResult> getCloneBigQueryDatasetResult(
-      UUID workspaceUuid, String jobId) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
-    ApiCloneControlledGcpBigQueryDatasetResult result = fetchCloneBigQueryDatasetResult(jobId);
-    return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
   }
 }
