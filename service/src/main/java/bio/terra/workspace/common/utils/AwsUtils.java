@@ -6,6 +6,11 @@ import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.AnonymousAWSCredentials;
 import com.amazonaws.auth.BasicSessionCredentials;
 import com.amazonaws.regions.Regions;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.model.DeleteObjectRequest;
+import com.amazonaws.services.s3.model.ListObjectsV2Request;
+import com.amazonaws.services.s3.model.ListObjectsV2Result;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenService;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder;
 import com.amazonaws.services.securitytoken.model.AssumeRoleRequest;
@@ -37,6 +42,13 @@ public class AwsUtils {
     request.setRoleSessionName(serviceEmail);
     request.setWebIdentityToken(idToken);
 
+    logger.info(
+            String.format(
+                    "Assuming Service role ('%s') with session name `%s`, duration %d seconds.",
+                    request.getRoleArn().toString(),
+                    request.getRoleSessionName(),
+                    request.getDurationSeconds()));
+
     if (logger.isInfoEnabled()) {
       try {
         JWT jwt = JWTParser.parse(idToken);
@@ -64,11 +76,20 @@ public class AwsUtils {
       String userEmail,
       Collection<Tag> tags,
       Integer duration) {
+
     AssumeRoleRequest request = new AssumeRoleRequest();
     request.setDurationSeconds(duration);
     request.setRoleArn(awsCloudContext.getUserRoleArn().toString());
     request.setRoleSessionName(userEmail);
     request.setTags(tags);
+
+    logger.info(
+        String.format(
+            "Assuming User role ('%s') with session name `%s`, duration %d seconds, and tags: '%s'.",
+            request.getRoleArn().toString(),
+            request.getRoleSessionName(),
+            request.getDurationSeconds(),
+            request.getTags()));
 
     BasicSessionCredentials sessionCredentials =
         new BasicSessionCredentials(
@@ -95,6 +116,49 @@ public class AwsUtils {
     Credentials serviceCredentials =
         assumeServiceRole(awsCloudContext, idToken, serviceEmail, MIN_TOKEN_DURATION_SECONDS);
     return assumeUserRole(awsCloudContext, serviceCredentials, userEmail, tags, duration);
+  }
+
+  private static AmazonS3 getS3Session(Credentials credentials) {
+    BasicSessionCredentials sessionCredentials =
+        new BasicSessionCredentials(
+            credentials.getAccessKeyId(),
+            credentials.getSecretAccessKey(),
+            credentials.getSessionToken());
+
+    return AmazonS3Client.builder()
+        .withRegion(Regions.US_EAST_1)
+        .withCredentials(new AWSStaticCredentialsProvider(sessionCredentials))
+        .build();
+  }
+
+  public static boolean checkFolderExistence(
+      Credentials credentials, String bucketName, String folder) {
+    AmazonS3 s3 = getS3Session(credentials);
+    String prefix = String.format("%s/", folder);
+
+    ListObjectsV2Request request =
+        new ListObjectsV2Request()
+            .withBucketName(bucketName)
+            .withPrefix(prefix)
+            .withDelimiter("/")
+            .withMaxKeys(1);
+
+    ListObjectsV2Result result = s3.listObjectsV2(request);
+    return result.getKeyCount() > 0;
+  }
+
+  public static void createFolder(Credentials credentials, String bucketName, String folder) {
+    // Creating a "folder" requires writing an empty object ending with the delimiter ('/').
+    AmazonS3 s3 = getS3Session(credentials);
+    String folderKey = String.format("%s/", folder);
+    s3.putObject(bucketName, folderKey, "");
+  }
+
+  public static void undoCreateFolder(Credentials credentials, String bucketName, String folder) {
+    AmazonS3 s3 = getS3Session(credentials);
+    String folderKey = String.format("%s/", folder);
+    DeleteObjectRequest deleteObjectRequest = new DeleteObjectRequest(bucketName, folderKey);
+    s3.deleteObject(deleteObjectRequest);
   }
 
   private static String toPaddedHexString(Long value) {

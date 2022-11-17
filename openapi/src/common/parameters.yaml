@@ -157,6 +157,14 @@ components:
       schema:
         $ref: '#/components/schemas/StewardshipType'
 
+    AwsCredentialAccessScope:
+      name: accessScope
+      in: query
+      description: Access to request for an AWS credential or Console URL
+      required: true
+      schema:
+        $ref: '#/components/schemas/AwsCredentialAccessScope'
+
     WorkspaceId:
       name: workspaceId
       in: path

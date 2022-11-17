@@ -5,9 +5,13 @@ import bio.terra.common.exception.NotFoundException;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
+import bio.terra.workspace.common.utils.MultiCloudUtils;
 import bio.terra.workspace.generated.controller.ControlledAwsResourceApi;
 import bio.terra.workspace.generated.model.ApiAwsBucketCreationParameters;
 import bio.terra.workspace.generated.model.ApiAwsBucketResource;
+import bio.terra.workspace.generated.model.ApiAwsCredentialAccessScope;
+import bio.terra.workspace.generated.model.ApiControlledAwsBucketConsoleLink;
+import bio.terra.workspace.generated.model.ApiControlledAwsBucketCredential;
 import bio.terra.workspace.generated.model.ApiCreateControlledAwsBucketRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedControlledAwsBucket;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -17,13 +21,18 @@ import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.storagebucket.ControlledAwsBucketResource;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import com.amazonaws.regions.Regions;
+import com.amazonaws.services.securitytoken.model.Credentials;
+import com.amazonaws.services.securitytoken.model.Tag;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -47,14 +56,15 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
 
   @Autowired
   public ControlledAwsResourceApiController(
-          AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
-          HttpServletRequest request,
-          ControlledResourceService controlledResourceService,
-          SamService samService,
-          FeatureConfiguration features,
-          WorkspaceService workspaceService,
-          ControlledResourceService controlledResourceService1,
-          AwsCloudContextService awsCloudContextService, ControlledResourceMetadataManager controlledResourceMetadataManager) {
+      AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
+      HttpServletRequest request,
+      ControlledResourceService controlledResourceService,
+      SamService samService,
+      FeatureConfiguration features,
+      WorkspaceService workspaceService,
+      ControlledResourceService controlledResourceService1,
+      AwsCloudContextService awsCloudContextService,
+      ControlledResourceMetadataManager controlledResourceMetadataManager) {
     super(authenticatedUserRequestFactory, request, controlledResourceService, samService);
     this.features = features;
     this.workspaceService = workspaceService;
@@ -120,10 +130,73 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
   public ResponseEntity<ApiAwsBucketResource> getAwsBucket(UUID workspaceUuid, UUID resourceId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledAwsBucketResource resource =
-            controlledResourceMetadataManager
-                    .validateControlledResourceAndAction(
-                            userRequest, workspaceUuid, resourceId, SamConstants.SamControlledResourceActions.READ_ACTION)
-                    .castByEnum(WsmResourceType.CONTROLLED_AWS_BUCKET);
+        controlledResourceMetadataManager
+            .validateControlledResourceAndAction(
+                userRequest,
+                workspaceUuid,
+                resourceId,
+                SamConstants.SamControlledResourceActions.READ_ACTION)
+            .castByEnum(WsmResourceType.CONTROLLED_AWS_BUCKET);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
+  }
+
+  private String getSamAction(ApiAwsCredentialAccessScope accessScope) {
+    return (accessScope == ApiAwsCredentialAccessScope.WRITE_READ)
+        ? SamConstants.SamControlledResourceActions.WRITE_ACTION
+        : SamConstants.SamControlledResourceActions.READ_ACTION;
+  }
+
+  private Collection<Tag> getBucketTags(
+      ApiAwsCredentialAccessScope accessScope, ControlledAwsBucketResource resource) {
+    List<Tag> tags = new ArrayList();
+
+    tags.add(
+        new Tag()
+            .withKey("ws_role")
+            .withValue((accessScope == ApiAwsCredentialAccessScope.WRITE_READ) ? "writer" : "reader"));
+
+    tags.add(new Tag().withKey("s3_bucket").withValue(resource.getS3BucketName()));
+    tags.add(new Tag().withKey("terra_bucket").withValue(resource.getPrefix()));
+    return tags;
+  }
+
+  @Override
+  public ResponseEntity<ApiControlledAwsBucketConsoleLink> getAwsBucketConsoleLink(
+      UUID workspaceUuid, UUID resourceId, ApiAwsCredentialAccessScope accessScope) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ControlledAwsBucketResource resource =
+        controlledResourceMetadataManager
+            .validateControlledResourceAndAction(
+                userRequest, workspaceUuid, resourceId, getSamAction(accessScope))
+            .castByEnum(WsmResourceType.CONTROLLED_AWS_BUCKET);
+
+    return new ResponseEntity<>(null, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiControlledAwsBucketCredential> getAwsBucketCredential(
+      UUID workspaceUuid, UUID resourceId, ApiAwsCredentialAccessScope accessScope) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ControlledAwsBucketResource resource =
+        controlledResourceMetadataManager
+            .validateControlledResourceAndAction(
+                userRequest, workspaceUuid, resourceId, getSamAction(accessScope))
+            .castByEnum(WsmResourceType.CONTROLLED_AWS_BUCKET);
+
+    AwsCloudContext awsCloudContext =
+        awsCloudContextService.getRequiredAwsCloudContext(workspaceUuid);
+
+    Credentials awsCredentials =
+        MultiCloudUtils.assumeAwsUserRoleFromGcp(
+            awsCloudContext, getSamUser().getEmail(), getBucketTags(accessScope, resource));
+
+    return new ResponseEntity<>(
+        new ApiControlledAwsBucketCredential()
+            .version(1)
+            .accessKeyId(awsCredentials.getAccessKeyId())
+            .secretAccessKey(awsCredentials.getSecretAccessKey())
+            .sessionToken(awsCredentials.getSessionToken())
+            .expiration(awsCredentials.getExpiration().toInstant().atOffset(ZoneOffset.UTC)),
+        HttpStatus.OK);
   }
 }

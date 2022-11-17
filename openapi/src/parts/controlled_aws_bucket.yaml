@@ -38,7 +38,56 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/workspaces/v1/{workspaceId}/resources/controlled/aws/buckets/{resourceId}/getConsoleLink:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+      - $ref: '#/components/parameters/AwsCredentialAccessScope'
+    get:
+      summary: Get a link to manage this bucket in the AWS S3 Console
+      operationId: getAwsBucketConsoleLink
+      tags: [ControlledAwsResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/GetControlledAwsBucketConsoleLinkResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/aws/buckets/{resourceId}/getCredential:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+      - $ref: '#/components/parameters/AwsCredentialAccessScope'
+    get:
+      summary: Get a credential to access this bucket in the AWS CLI or SDK
+      operationId: getAwsBucketCredential
+      tags: [ControlledAwsResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/GetControlledAwsBucketCredentialResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
 components:
+  parameters:
+    AccessType:
+      name: accessType
+      in: query
+      description: Access to request for a credential or console link scope.
+      required: true
+      schema:
+        type: string
+        enum: [READ_ONLY, READ_WRITE]
+        default: "READ_ONLY"
+
   schemas:
     CreatedControlledAwsBucket:
       description: Response Payload for requesting a new controlled AWS bucket.
@@ -72,6 +121,29 @@ components:
           description: A valid bucket location per https://docs.aws.amazon.com/general/latest/gr/s3.html.
           type: string
 
+    ControlledAwsBucketConsoleLink:
+      description: Link to access bucket in AWS Console.
+      type: object
+      properties:
+        url:
+          type: string
+
+    ControlledAwsBucketCredential:
+      description: AWS CLI/SDK-compatible credential to use to access a bucket
+      type: object
+      properties:
+        Version:
+          type: integer
+        AccessKeyId:
+          type: string
+        SecretAccessKey:
+          type: string
+        SessionToken:
+          type: string
+        Expiration:
+          type: string
+          format: date-time
+
   responses:
     CreatedControlledAwsBucketResponse:
       description: Response to Create controlled AWS bucket
@@ -86,3 +158,17 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/AwsBucketResource'
+
+    GetControlledAwsBucketConsoleLinkResponse:
+      description: Response to get bucket
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ControlledAwsBucketConsoleLink'
+
+    GetControlledAwsBucketCredentialResponse:
+      description: Response to get bucket
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ControlledAwsBucketCredential'

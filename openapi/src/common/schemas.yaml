@@ -302,3 +302,7 @@ components:
           $ref: '#/components/schemas/JobReport'
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
+
+    AwsCredentialAccessScope:
+      type: string
+      enum: ['READ_ONLY', 'WRITE_READ']
