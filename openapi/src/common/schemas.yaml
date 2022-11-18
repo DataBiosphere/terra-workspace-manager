@@ -319,3 +319,26 @@ components:
       maximum: 43200
       default: 900
 
+    AwsConsoleLink:
+      description: Link to access bucket in AWS Console.
+      type: object
+      properties:
+        url:
+          type: string
+
+    AwsCredential:
+      description: AWS CLI/SDK-compatible credential to use to access a bucket
+      type: object
+      properties:
+        Version:
+          type: integer
+        AccessKeyId:
+          type: string
+        SecretAccessKey:
+          type: string
+        SessionToken:
+          type: string
+        Expiration:
+          type: string
+          format: date-time
+

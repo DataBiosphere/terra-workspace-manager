@@ -4,23 +4,30 @@ import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
+import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.common.utils.MultiCloudUtils;
 import bio.terra.workspace.generated.controller.ControlledAwsResourceApi;
 import bio.terra.workspace.generated.model.ApiAwsBucketCreationParameters;
 import bio.terra.workspace.generated.model.ApiAwsBucketResource;
+import bio.terra.workspace.generated.model.ApiAwsConsoleLink;
+import bio.terra.workspace.generated.model.ApiAwsCredential;
 import bio.terra.workspace.generated.model.ApiAwsCredentialAccessScope;
-import bio.terra.workspace.generated.model.ApiControlledAwsBucketConsoleLink;
-import bio.terra.workspace.generated.model.ApiControlledAwsBucketCredential;
+import bio.terra.workspace.generated.model.ApiAwsSageMakerNotebookResource;
 import bio.terra.workspace.generated.model.ApiCreateControlledAwsBucketRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateControlledAwsSageMakerNotebookRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedControlledAwsBucket;
+import bio.terra.workspace.generated.model.ApiCreatedControlledAwsSageMakerNotebookResult;
+import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakernotebook.ControlledAwsSageMakerNotebookResource;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.storagebucket.ControlledAwsBucketResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
@@ -33,6 +40,7 @@ import com.amazonaws.services.securitytoken.model.Tag;
 import java.net.URI;
 import java.net.URL;
 import java.time.ZoneOffset;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -56,24 +64,29 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
   private final ControlledResourceService controlledResourceService;
   private final AwsCloudContextService awsCloudContextService;
   private final ControlledResourceMetadataManager controlledResourceMetadataManager;
+  private final JobApiUtils jobApiUtils;
+  private final JobService jobService;
 
   @Autowired
   public ControlledAwsResourceApiController(
-      AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
-      HttpServletRequest request,
-      ControlledResourceService controlledResourceService,
-      SamService samService,
-      FeatureConfiguration features,
-      WorkspaceService workspaceService,
-      ControlledResourceService controlledResourceService1,
-      AwsCloudContextService awsCloudContextService,
-      ControlledResourceMetadataManager controlledResourceMetadataManager) {
+          AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
+          HttpServletRequest request,
+          ControlledResourceService controlledResourceService,
+          SamService samService,
+          FeatureConfiguration features,
+          WorkspaceService workspaceService,
+          ControlledResourceService controlledResourceService1,
+          AwsCloudContextService awsCloudContextService,
+          ControlledResourceMetadataManager controlledResourceMetadataManager,
+          JobApiUtils jobApiUtils, JobService jobService) {
     super(authenticatedUserRequestFactory, request, controlledResourceService, samService);
     this.features = features;
     this.workspaceService = workspaceService;
     this.controlledResourceService = controlledResourceService1;
     this.awsCloudContextService = awsCloudContextService;
     this.controlledResourceMetadataManager = controlledResourceMetadataManager;
+    this.jobApiUtils = jobApiUtils;
+    this.jobService = jobService;
   }
 
   @Override
@@ -149,32 +162,24 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
         : SamConstants.SamControlledResourceActions.READ_ACTION;
   }
 
-  private Set<Tag> getWorkspaceTagSet(UUID workspaceId) {
-    // Add workspace tag(s).
-    Set<Tag> tags = new HashSet<>();
-    tags.add(new Tag().withKey("ws_id").withValue(workspaceId.toString()));
-    return tags;
-  }
-
-  private Set<Tag> getBucketTags(
+  private Collection<Tag> getBucketTags(
       UUID workspaceId,
       ApiAwsCredentialAccessScope accessScope,
       ControlledAwsBucketResource resource) {
-    Set<Tag> tags = getWorkspaceTagSet(workspaceId);
+    Set<Tag> tags = new HashSet<>();
 
-    tags.add(
-        new Tag()
-            .withKey("ws_role")
-            .withValue(
-                (accessScope == ApiAwsCredentialAccessScope.WRITE_READ) ? "writer" : "reader"));
+    AwsUtils.addWorkspaceTags(tags, workspaceId);
+    AwsUtils.addBucketTags(
+        tags,
+        (accessScope == ApiAwsCredentialAccessScope.WRITE_READ) ? "writer" : "reader",
+        resource.getS3BucketName(),
+        resource.getPrefix());
 
-    tags.add(new Tag().withKey("s3_bucket").withValue(resource.getS3BucketName()));
-    tags.add(new Tag().withKey("terra_bucket").withValue(resource.getPrefix()));
     return tags;
   }
 
   @Override
-  public ResponseEntity<ApiControlledAwsBucketConsoleLink> getAwsBucketConsoleLink(
+  public ResponseEntity<ApiAwsConsoleLink> getAwsBucketConsoleLink(
       UUID workspaceUuid,
       UUID resourceId,
       ApiAwsCredentialAccessScope accessScope,
@@ -211,12 +216,11 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     }
 
     URL url = AwsUtils.createConsoleUrl(awsCredentials, duration, destinationUrl);
-    return new ResponseEntity<>(
-        new ApiControlledAwsBucketConsoleLink().url(url.toString()), HttpStatus.OK);
+    return new ResponseEntity<>(new ApiAwsConsoleLink().url(url.toString()), HttpStatus.OK);
   }
 
   @Override
-  public ResponseEntity<ApiControlledAwsBucketCredential> getAwsBucketCredential(
+  public ResponseEntity<ApiAwsCredential> getAwsBucketCredential(
       UUID workspaceUuid,
       UUID resourceId,
       ApiAwsCredentialAccessScope accessScope,
@@ -239,12 +243,119 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
             duration);
 
     return new ResponseEntity<>(
-        new ApiControlledAwsBucketCredential()
+        new ApiAwsCredential()
             .version(1)
             .accessKeyId(awsCredentials.getAccessKeyId())
             .secretAccessKey(awsCredentials.getSecretAccessKey())
             .sessionToken(awsCredentials.getSessionToken())
             .expiration(awsCredentials.getExpiration().toInstant().atOffset(ZoneOffset.UTC)),
         HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiCreatedControlledAwsSageMakerNotebookResult> createAwsSageMakerNotebook(
+      UUID workspaceUuid, ApiCreateControlledAwsSageMakerNotebookRequestBody body) {
+    features.awsEnabledCheck();
+
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ControlledResourceFields commonFields =
+        toCommonFields(workspaceUuid, body.getCommon(), userRequest);
+
+    // Check authz before reading the cloud context.
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
+
+    AwsCloudContext awsCloudContext =
+        awsCloudContextService.getRequiredAwsCloudContext(workspaceUuid);
+
+    ControlledAwsSageMakerNotebookResource resource =
+        ControlledAwsSageMakerNotebookResource.builder()
+            .common(commonFields)
+            .instanceId(body.getAwsSageMakerNotebook().getInstanceId())
+            .build();
+
+    String jobId =
+        controlledResourceService.createAwsSageMakerNotebook(
+            resource,
+            body.getAwsSageMakerNotebook(),
+            commonFields.getIamRole(),
+            body.getJobControl(),
+            getAsyncResultEndpoint(body.getJobControl().getId(), "create-result"),
+            userRequest,
+            getSamUser());
+
+    ApiCreatedControlledAwsSageMakerNotebookResult result =
+        fetchNotebookInstanceCreateResult(jobId);
+    return new ResponseEntity<>(result, getAsyncResponseCode((result.getJobReport())));
+  }
+
+  @Override
+  public ResponseEntity<ApiCreatedControlledAwsSageMakerNotebookResult>
+  getCreateAwsSageMakerNotebookResult(UUID workspaceUuid, String jobId) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
+    ApiCreatedControlledAwsSageMakerNotebookResult result =
+            fetchNotebookInstanceCreateResult(jobId);
+    return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
+  }
+
+  private ApiCreatedControlledAwsSageMakerNotebookResult fetchNotebookInstanceCreateResult(
+      String jobId) {
+    JobApiUtils.AsyncJobResult<ControlledAwsSageMakerNotebookResource> jobResult =
+        jobApiUtils.retrieveAsyncJobResult(jobId, ControlledAwsSageMakerNotebookResource.class);
+
+    ApiAwsSageMakerNotebookResource apiResource = null;
+    if (jobResult.getJobReport().getStatus().equals(ApiJobReport.StatusEnum.SUCCEEDED)) {
+      ControlledAwsSageMakerNotebookResource resource = jobResult.getResult();
+      apiResource = resource.toApiResource();
+    }
+    return new ApiCreatedControlledAwsSageMakerNotebookResult()
+        .jobReport(jobResult.getJobReport())
+        .errorReport(jobResult.getApiErrorReport())
+        .aiNotebookInstance(apiResource);
+  }
+
+  @Override
+  public ResponseEntity<ApiAwsConsoleLink> getAwsSageMakerNotebookConsoleLink(
+          UUID workspaceUuid,
+          UUID resourceId,
+          ApiAwsCredentialAccessScope accessScope,
+          Integer duration) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ControlledAwsSageMakerNotebookResource resource =
+            controlledResourceMetadataManager
+                    .validateControlledResourceAndAction(
+                            userRequest, workspaceUuid, resourceId, getSamAction(accessScope))
+                    .castByEnum(WsmResourceType.CONTROLLED_AWS_SAGEMAKER_NOTEBOOK);
+
+    AwsCloudContext awsCloudContext =
+            awsCloudContextService.getRequiredAwsCloudContext(workspaceUuid);
+
+    Collection<Tag> tags = new HashSet<>();
+    AwsUtils.addUserTags(tags, getSamUser());
+    AwsUtils.addWorkspaceTags(tags, workspaceUuid);
+
+    Credentials awsCredentials = MultiCloudUtils.assumeAwsUserRoleFromGcp(awsCloudContext, getSamUser(), tags);
+
+    final String region = "us-east-1";
+    URL destinationUrl;
+
+    try {
+      URI uri =
+              new URIBuilder()
+                      .setScheme("https")
+                      .setHost(String.format("%s.console.aws.amazon.com", region))
+                      .setPath("sagemaker/home")
+                      .setParameter("region", region)
+                      .setFragment(String.format("/notebook-instances/%s", resource.getInstanceId()))
+                      .build();
+
+      destinationUrl = uri.toURL();
+    } catch (Exception e) {
+      throw new ApiException("Failed to create destination URL.", e);
+    }
+
+    URL url = AwsUtils.createConsoleUrl(awsCredentials, duration, destinationUrl);
+    return new ResponseEntity<>(new ApiAwsConsoleLink().url(url.toString()), HttpStatus.OK);
   }
 }

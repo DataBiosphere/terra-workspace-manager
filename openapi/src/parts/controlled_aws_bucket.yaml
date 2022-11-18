@@ -112,29 +112,6 @@ components:
           description: A valid bucket location per https://docs.aws.amazon.com/general/latest/gr/s3.html.
           type: string
 
-    ControlledAwsBucketConsoleLink:
-      description: Link to access bucket in AWS Console.
-      type: object
-      properties:
-        url:
-          type: string
-
-    ControlledAwsBucketCredential:
-      description: AWS CLI/SDK-compatible credential to use to access a bucket
-      type: object
-      properties:
-        Version:
-          type: integer
-        AccessKeyId:
-          type: string
-        SecretAccessKey:
-          type: string
-        SessionToken:
-          type: string
-        Expiration:
-          type: string
-          format: date-time
-
   responses:
     CreatedControlledAwsBucketResponse:
       description: Response to Create controlled AWS bucket
@@ -155,11 +132,11 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ControlledAwsBucketConsoleLink'
+            $ref: '#/components/schemas/AwsConsoleLink'
 
     GetControlledAwsBucketCredentialResponse:
       description: Response to get bucket
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ControlledAwsBucketCredential'
+            $ref: '#/components/schemas/AwsCredential'

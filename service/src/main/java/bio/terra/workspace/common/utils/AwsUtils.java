@@ -14,6 +14,10 @@ import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.DeleteObjectRequest;
 import com.amazonaws.services.s3.model.ListObjectsV2Request;
 import com.amazonaws.services.s3.model.ListObjectsV2Result;
+import com.amazonaws.services.sagemaker.AmazonSageMaker;
+import com.amazonaws.services.sagemaker.AmazonSageMakerClientBuilder;
+import com.amazonaws.services.sagemaker.model.CreateNotebookInstanceRequest;
+import com.amazonaws.services.sagemaker.model.InstanceType;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenService;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder;
 import com.amazonaws.services.securitytoken.model.AssumeRoleRequest;
@@ -34,6 +38,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.UUID;
 import org.apache.http.client.utils.URIBuilder;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -80,6 +85,22 @@ public class AwsUtils {
     return securityTokenService.assumeRoleWithWebIdentity(request).getCredentials();
   }
 
+  public static void addUserTags(Collection<Tag> tags, SamUser user) {
+    tags.add(new Tag().withKey("user_email").withValue(user.getEmail()));
+    tags.add(new Tag().withKey("user_id").withValue(user.getSubjectId()));
+  }
+
+  public static void addWorkspaceTags(Collection<Tag> tags, UUID workspaceUuid) {
+    tags.add(new Tag().withKey("ws_id").withValue(workspaceUuid.toString()));
+  }
+
+  public static void addBucketTags(
+      Collection<Tag> tags, String role, String s3BucketName, String prefix) {
+    tags.add(new Tag().withKey("ws_role").withValue(role));
+    tags.add(new Tag().withKey("s3_bucket").withValue(s3BucketName));
+    tags.add(new Tag().withKey("terra_bucket").withValue(prefix));
+  }
+
   public static Credentials assumeUserRole(
       AwsCloudContext awsCloudContext,
       Credentials serviceCredentials,
@@ -88,8 +109,7 @@ public class AwsUtils {
       Integer duration) {
 
     HashSet<Tag> userTags = new HashSet<>();
-    userTags.add(new Tag().withKey("user_email").withValue(user.getEmail()));
-    userTags.add(new Tag().withKey("user_id").withValue(user.getSubjectId()));
+    addUserTags(tags, user);
     userTags.addAll(tags);
 
     AssumeRoleRequest request = new AssumeRoleRequest();
@@ -224,6 +244,56 @@ public class AwsUtils {
     String folderKey = String.format("%s/", folder);
     DeleteObjectRequest deleteObjectRequest = new DeleteObjectRequest(bucketName, folderKey);
     s3.deleteObject(deleteObjectRequest);
+  }
+
+  private static AmazonSageMaker getSagemakerSession(Credentials credentials, Regions region) {
+    BasicSessionCredentials sessionCredentials =
+        new BasicSessionCredentials(
+            credentials.getAccessKeyId(),
+            credentials.getSecretAccessKey(),
+            credentials.getSessionToken());
+
+    return AmazonSageMakerClientBuilder.standard()
+        .withRegion(region)
+        .withCredentials(new AWSStaticCredentialsProvider(sessionCredentials))
+        .build();
+  }
+
+  // TODO: Can we avoid this with generics??
+  private static Collection<com.amazonaws.services.sagemaker.model.Tag> toSagemakerTags(
+      Collection<Tag> stsTags) {
+    Collection<com.amazonaws.services.sagemaker.model.Tag> tags = new HashSet<>();
+    for (Tag stsTag : stsTags) {
+      tags.add(
+          new com.amazonaws.services.sagemaker.model.Tag()
+              .withKey(stsTag.getKey())
+              .withValue(stsTag.getValue()));
+    }
+    return tags;
+  }
+
+  public static void createSageMakerNotebook(
+      AwsCloudContext awsCloudContext,
+      Credentials credentials,
+      UUID workspaceUuid,
+      SamUser user,
+      Regions region,
+      InstanceType instanceType,
+      String notebookName) {
+    AmazonSageMaker sageMaker = getSagemakerSession(credentials, region);
+
+    Collection<Tag> tags = new HashSet<>();
+    addUserTags(tags, user);
+    addWorkspaceTags(tags, workspaceUuid);
+
+    CreateNotebookInstanceRequest request =
+        new CreateNotebookInstanceRequest()
+            .withNotebookInstanceName(notebookName)
+            .withInstanceType(instanceType)
+            .withRoleArn(awsCloudContext.getUserRoleArn().toString())
+            .withTags(toSagemakerTags(tags));
+
+    sageMaker.createNotebookInstance(request);
   }
 
   public static String generateUniquePrefix() {

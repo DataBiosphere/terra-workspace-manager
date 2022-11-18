@@ -14,8 +14,9 @@ dependencies {
   // AWS dependencies
   implementation platform('com.amazonaws:aws-java-sdk-bom:1.12.330')
   implementation group: "com.amazonaws", name: 'aws-java-sdk-core'
-  implementation group: "com.amazonaws", name: 'aws-java-sdk-sts'
   implementation group: "com.amazonaws", name: 'aws-java-sdk-s3'
+  implementation group: "com.amazonaws", name: 'aws-java-sdk-sagemaker'
+  implementation group: "com.amazonaws", name: 'aws-java-sdk-sts'
 
   // Terra deps
   implementation group: "bio.terra", name: "datarepo-client", version: "1.41.0-SNAPSHOT"

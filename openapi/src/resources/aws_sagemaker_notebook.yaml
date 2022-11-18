@@ -1,0 +1,21 @@
+components:
+  schemas:
+    AwsSageMakerNotebookAttributes:
+      description: >-
+        SageMaker Notebook properties included in post-creation get.
+      type: object
+      properties:
+        instanceId:
+          description: ID of the created SageMaker notebook instance.
+          type: string
+
+    AwsSageMakerNotebookResource:
+      type: object
+      description: Description of an AWS storage bucket.
+      required: [ metadata, attributes ]
+      properties:
+        metadata:
+          description: the resource metadata common to all resources
+          $ref: '#/components/schemas/ResourceMetadata'
+        attributes:
+          $ref: '#/components/schemas/AwsSageMakerNotebookAttributes'

@@ -1,6 +1,8 @@
 package bio.terra.workspace.service.resource.model;
 
 import bio.terra.workspace.generated.model.ApiResourceType;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakernotebook.ControlledAwsSageMakerNotebookHandler;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakernotebook.ControlledAwsSageMakerNotebookResource;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.storagebucket.ControlledAwsBucketHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.storagebucket.ControlledAwsBucketResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskHandler;
@@ -179,7 +181,14 @@ public enum WsmResourceType {
       "CONTROLLED_AWS_BUCKET",
       ApiResourceType.AWS_BUCKET,
       ControlledAwsBucketResource.class,
-      ControlledAwsBucketHandler::getHandler);
+      ControlledAwsBucketHandler::getHandler),
+  CONTROLLED_AWS_SAGEMAKER_NOTEBOOK(
+      CloudPlatform.AWS,
+      StewardshipType.CONTROLLED,
+      "CONTROLLED_AWS_SAGEMAKER_NOTEBOOK",
+      ApiResourceType.AWS_SAGEMAKER_NOTEBOOK,
+      ControlledAwsSageMakerNotebookResource.class,
+      ControlledAwsSageMakerNotebookHandler::getHandler);
 
   private final CloudPlatform cloudPlatform;
   private final StewardshipType stewardshipType;
