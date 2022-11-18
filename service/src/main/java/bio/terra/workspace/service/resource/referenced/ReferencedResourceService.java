@@ -18,6 +18,7 @@ import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import bio.terra.workspace.service.workspace.model.OperationType;
+import bio.terra.workspace.service.workspace.model.WsmObjectType;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
 import java.util.UUID;
@@ -155,7 +156,8 @@ public class ReferencedResourceService {
           resourceDao.updateResource(
               workspaceUuid, resourceId, name, description, cloningInstructions);
       if (updated) {
-        workspaceActivityLogService.writeActivity(userRequest, workspaceUuid, OperationType.UPDATE);
+        workspaceActivityLogService.writeActivity(userRequest, workspaceUuid, OperationType.UPDATE,
+            resourceId.toString(), WsmObjectType.RESOURCE);
       }
     }
     if (!updated) {
@@ -177,7 +179,8 @@ public class ReferencedResourceService {
       WsmResourceType resourceType,
       AuthenticatedUserRequest userRequest) {
     if (resourceDao.deleteResourceForResourceType(workspaceUuid, resourceId, resourceType)) {
-      workspaceActivityLogService.writeActivity(userRequest, workspaceUuid, OperationType.DELETE);
+      workspaceActivityLogService.writeActivity(userRequest, workspaceUuid, OperationType.DELETE,
+          resourceId.toString(), WsmObjectType.RESOURCE);
     }
   }
 

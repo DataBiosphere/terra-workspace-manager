@@ -6,6 +6,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.workspace.model.OperationType;
+import bio.terra.workspace.service.workspace.model.WsmObjectType;
 import java.util.UUID;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.springframework.stereotype.Component;
@@ -25,17 +26,21 @@ public class WorkspaceActivityLogService {
 
   /** Writes the change activity. */
   public void writeActivity(
-      AuthenticatedUserRequest userRequest, UUID workspaceUuid, OperationType operationType) {
+      AuthenticatedUserRequest userRequest, UUID workspaceUuid, OperationType operationType,
+      String changeSubjectId,
+      WsmObjectType objectType) {
     UserStatusInfo userStatusInfo =
         SamRethrow.onInterrupted(
             () -> samService.getUserStatusInfo(userRequest), "Get user status info from SAM");
     workspaceActivityLogDao.writeActivity(
         workspaceUuid,
-        DbWorkspaceActivityLog.getDbWorkspaceActivityLog(
-            operationType,
+        new DbWorkspaceActivityLog(
             // Use the userEmail from UserStatusInfo instead of userRequest because the email
             // in userRequest could be the pet SA email.
             userStatusInfo.getUserEmail(),
-            userStatusInfo.getUserSubjectId()));
+            userStatusInfo.getUserSubjectId(),
+            operationType,
+            changeSubjectId,
+            objectType));
   }
 }

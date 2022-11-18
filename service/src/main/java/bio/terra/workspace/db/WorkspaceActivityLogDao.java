@@ -64,16 +64,24 @@ public class WorkspaceActivityLogDao {
           String.format("Flight operation type is unknown in workspace %s", workspaceId));
     }
     final String sql =
-        "INSERT INTO workspace_activity_log (workspace_id, change_date, change_type, actor_email, actor_subject_id)"
-            + " VALUES (:workspace_id, :change_date, :change_type, :actor_email, :actor_subject_id)";
+        """
+            INSERT INTO workspace_activity_log (
+              workspace_id, change_date, change_type, actor_email, actor_subject_id, 
+              change_subject_id, change_subject_type)
+            VALUES (:workspace_id, :change_date, :change_type, :actor_email, :actor_subject_id, 
+              :change_subject_id, :change_subject_type)
+        """;
     final var params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
             .addValue("change_date", Instant.now().atOffset(ZoneOffset.UTC))
             .addValue("change_type", dbWorkspaceActivityLog.operationType().name())
             .addValue("actor_email", dbWorkspaceActivityLog.actorEmail())
-            .addValue("actor_subject_id", dbWorkspaceActivityLog.actorSubjectId());
-    jdbcTemplate.update(sql, params);
+            .addValue("actor_subject_id", dbWorkspaceActivityLog.actorSubjectId())
+            .addValue("change_subject_id", dbWorkspaceActivityLog.changeSubjectId())
+            .addValue("change_subject_type", dbWorkspaceActivityLog.changeSubjectType().name());
+        jdbcTemplate.update(sql, params);
+
   }
 
   /**

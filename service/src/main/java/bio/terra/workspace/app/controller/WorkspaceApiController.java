@@ -65,6 +65,7 @@ import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import bio.terra.workspace.service.workspace.model.WsmObjectType;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.time.OffsetDateTime;
 import java.util.Collections;
@@ -382,7 +383,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         tpsApiDispatch.updatePao(
             new BearerToken(userRequest.getRequiredToken()), workspaceId, body);
     if (Boolean.TRUE.equals(result.isUpdateApplied())) {
-      workspaceActivityLogService.writeActivity(userRequest, workspaceId, OperationType.UPDATE);
+      workspaceActivityLogService.writeActivity(userRequest, workspaceId, OperationType.UPDATE, workspaceId.toString(), WsmObjectType.WORKSPACE);
       logger.info(
           "Finished updating workspace policies {} for {}", workspaceId, userRequest.getEmail());
     } else {
@@ -458,7 +459,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
                 uuid, getAuthenticatedInfo(), WsmIamRole.fromApiModel(role), body.getMemberEmail()),
         "grantWorkspaceRole");
     workspaceActivityLogService.writeActivity(
-        getAuthenticatedInfo(), uuid, OperationType.GRANT_WORKSPACE_ROLE);
+        getAuthenticatedInfo(), uuid, OperationType.GRANT_WORKSPACE_ROLE, body.getMemberEmail(), WsmObjectType.USER);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
