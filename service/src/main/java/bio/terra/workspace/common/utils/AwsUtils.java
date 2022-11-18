@@ -1,6 +1,7 @@
 package bio.terra.workspace.common.utils;
 
 import bio.terra.common.exception.ApiException;
+import bio.terra.common.iam.SamUser;
 import bio.terra.stairway.ShortUUID;
 import bio.terra.workspace.service.workspace.exceptions.SaCredentialsMissingException;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
@@ -31,6 +32,7 @@ import java.net.URLEncoder;
 import java.text.ParseException;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import org.apache.http.client.utils.URIBuilder;
 import org.json.JSONObject;
@@ -81,15 +83,20 @@ public class AwsUtils {
   public static Credentials assumeUserRole(
       AwsCloudContext awsCloudContext,
       Credentials serviceCredentials,
-      String userEmail,
+      SamUser user,
       Collection<Tag> tags,
       Integer duration) {
+
+    HashSet<Tag> userTags = new HashSet<>();
+    userTags.add(new Tag().withKey("user_email").withValue(user.getEmail()));
+    userTags.add(new Tag().withKey("user_id").withValue(user.getSubjectId()));
+    userTags.addAll(tags);
 
     AssumeRoleRequest request = new AssumeRoleRequest();
     request.setDurationSeconds(duration);
     request.setRoleArn(awsCloudContext.getUserRoleArn().toString());
-    request.setRoleSessionName(userEmail);
-    request.setTags(tags);
+    request.setRoleSessionName(user.getEmail());
+    request.setTags(userTags);
 
     logger.info(
         String.format(
@@ -118,12 +125,12 @@ public class AwsUtils {
       AwsCloudContext awsCloudContext,
       String idToken,
       String serviceEmail,
-      String userEmail,
+      SamUser user,
       Collection<Tag> tags,
       Integer duration) {
     Credentials serviceCredentials =
         assumeServiceRole(awsCloudContext, idToken, serviceEmail, MIN_TOKEN_DURATION_SECONDS);
-    return assumeUserRole(awsCloudContext, serviceCredentials, userEmail, tags, duration);
+    return assumeUserRole(awsCloudContext, serviceCredentials, user, tags, duration);
   }
 
   public static URL createConsoleUrl(

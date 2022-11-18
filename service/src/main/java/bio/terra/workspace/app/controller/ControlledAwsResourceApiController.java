@@ -33,9 +33,8 @@ import com.amazonaws.services.securitytoken.model.Tag;
 import java.net.URI;
 import java.net.URL;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -150,9 +149,18 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
         : SamConstants.SamControlledResourceActions.READ_ACTION;
   }
 
-  private Collection<Tag> getBucketTags(
-      ApiAwsCredentialAccessScope accessScope, ControlledAwsBucketResource resource) {
-    List<Tag> tags = new ArrayList<>();
+  private Set<Tag> getWorkspaceTagSet(UUID workspaceId) {
+    // Add workspace tag(s).
+    Set<Tag> tags = new HashSet<>();
+    tags.add(new Tag().withKey("ws_id").withValue(workspaceId.toString()));
+    return tags;
+  }
+
+  private Set<Tag> getBucketTags(
+      UUID workspaceId,
+      ApiAwsCredentialAccessScope accessScope,
+      ControlledAwsBucketResource resource) {
+    Set<Tag> tags = getWorkspaceTagSet(workspaceId);
 
     tags.add(
         new Tag()
@@ -183,7 +191,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
 
     Credentials awsCredentials =
         MultiCloudUtils.assumeAwsUserRoleFromGcp(
-            awsCloudContext, getSamUser().getEmail(), getBucketTags(accessScope, resource));
+            awsCloudContext, getSamUser(), getBucketTags(workspaceUuid, accessScope, resource));
 
     URL destinationUrl;
 
@@ -226,8 +234,8 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     Credentials awsCredentials =
         MultiCloudUtils.assumeAwsUserRoleFromGcp(
             awsCloudContext,
-            getSamUser().getEmail(),
-            getBucketTags(accessScope, resource),
+            getSamUser(),
+            getBucketTags(workspaceUuid, accessScope, resource),
             duration);
 
     return new ResponseEntity<>(

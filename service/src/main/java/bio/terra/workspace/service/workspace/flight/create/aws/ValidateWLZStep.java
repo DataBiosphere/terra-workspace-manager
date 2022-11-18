@@ -26,8 +26,7 @@ public class ValidateWLZStep implements Step {
 
       AwsCloudContext awsCloudContext = AwsCloudContext.deserialize(serializedAwsCloudContext);
 
-      MultiCloudUtils.assumeAwsUserRoleFromGcp(
-          awsCloudContext, samUser.getEmail(), Collections.emptyList());
+      MultiCloudUtils.assumeAwsUserRoleFromGcp(awsCloudContext, samUser, Collections.emptyList());
 
     } catch (Exception e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
