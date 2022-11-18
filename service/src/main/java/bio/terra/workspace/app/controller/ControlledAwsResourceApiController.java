@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.controller;
 
+import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
@@ -29,6 +30,8 @@ import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.securitytoken.model.Credentials;
 import com.amazonaws.services.securitytoken.model.Tag;
+import java.net.URI;
+import java.net.URL;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -36,6 +39,7 @@ import java.util.List;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import org.apache.http.client.utils.URIBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -153,7 +157,8 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     tags.add(
         new Tag()
             .withKey("ws_role")
-            .withValue((accessScope == ApiAwsCredentialAccessScope.WRITE_READ) ? "writer" : "reader"));
+            .withValue(
+                (accessScope == ApiAwsCredentialAccessScope.WRITE_READ) ? "writer" : "reader"));
 
     tags.add(new Tag().withKey("s3_bucket").withValue(resource.getS3BucketName()));
     tags.add(new Tag().withKey("terra_bucket").withValue(resource.getPrefix()));
@@ -170,7 +175,33 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
                 userRequest, workspaceUuid, resourceId, getSamAction(accessScope))
             .castByEnum(WsmResourceType.CONTROLLED_AWS_BUCKET);
 
-    return new ResponseEntity<>(null, HttpStatus.OK);
+    AwsCloudContext awsCloudContext =
+        awsCloudContextService.getRequiredAwsCloudContext(workspaceUuid);
+
+    Credentials awsCredentials =
+        MultiCloudUtils.assumeAwsUserRoleFromGcp(
+            awsCloudContext, getSamUser().getEmail(), getBucketTags(accessScope, resource));
+
+    URL destinationUrl;
+
+    try {
+      URI uri =
+          new URIBuilder()
+              .setScheme("https")
+              .setHost("s3.console.aws.amazon.com")
+              .setPath(String.format("s3/buckets/%s", resource.getS3BucketName()))
+              .setParameter("region", "us-east-1")
+              .setParameter("prefix", String.format("%s/", resource.getPrefix()))
+              .build();
+
+      destinationUrl = uri.toURL();
+    } catch (Exception e) {
+      throw new ApiException("Failed to create destination URL.", e);
+    }
+
+    URL url = AwsUtils.createConsoleUrl(awsCredentials, 3600, destinationUrl);
+    return new ResponseEntity<>(
+        new ApiControlledAwsBucketConsoleLink().url(url.toString()), HttpStatus.OK);
   }
 
   @Override
