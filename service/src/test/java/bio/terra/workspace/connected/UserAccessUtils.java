@@ -49,7 +49,7 @@ public class UserAccessUtils {
   public UserAccessUtils(SamService samService) {
     this.samService = samService;
   }
-  
+
   /** Creates Google credentials for the user. Relies on domain delegation. */
   public GoogleCredentials generateCredentials(String userEmail) {
     try {
