@@ -76,6 +76,20 @@ public class CloneAllResourcesFlight extends Flight {
                     resourceCloneInputs.getFlightId()),
                 RetryRules.cloudLongRunning());
             break;
+          case CONTROLLED_AZURE_STORAGE_CONTAINER:
+            addStep(
+                    new LaunchCloneControlledAzureStorageContainerResourceFlightStep(
+                            resource.castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER),
+                            resourceCloneInputs.getFlightId(),
+                            resourceCloneInputs.getDestinationResourceId(),
+                            resourceCloneInputs.getDestinationFolderId()));
+            addStep(
+                    new AwaitCloneControlledAzureStorageContainerResourceFlightStep(
+                            resource.castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER),
+                            resourceCloneInputs.getFlightId()),
+                    RetryRules.cloudLongRunning()
+            );
+            break;
           case CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE:
           default:
             // Can't throw in a flight constructor

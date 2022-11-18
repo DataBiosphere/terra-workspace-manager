@@ -605,6 +605,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   @Override
   public ResponseEntity<ApiCloneWorkspaceResult> cloneWorkspace(
       UUID workspaceUuid, @Valid ApiCloneWorkspaceRequest body) {
+    // todo: will this work with azure or do we need to use the new Sam endpoint
     final AuthenticatedUserRequest petRequest = getCloningCredentials(workspaceUuid);
 
     // Clone is creating the destination workspace so unlike other clone operations there's no
@@ -634,6 +635,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     String generatedDisplayName =
         sourceWorkspace.getDisplayName().orElse(sourceWorkspace.getUserFacingId()) + " (Copy)";
 
+    Optional<AzureCloudContext> azureCloudContext = Optional.ofNullable(body.getAzureContext()).map(AzureCloudContext::fromApi);
     // Construct the target workspace object from the inputs
     // Policies are cloned in the flight instead of here so that they get cleaned appropriately if
     // the flight fails.
@@ -651,7 +653,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
     final String jobId =
         workspaceService.cloneWorkspace(
-            sourceWorkspace, petRequest, body.getLocation(), destinationWorkspace);
+            sourceWorkspace, petRequest, body.getLocation(), destinationWorkspace, azureCloudContext.orElse(null));
 
     final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId);
     final ApiClonedWorkspace clonedWorkspaceStub =

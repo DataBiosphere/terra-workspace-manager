@@ -15,9 +15,9 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 
-public class AwaitCreateGcpContextFlightStep implements Step {
+public class AwaitCreateCloudContextFlightStep implements Step {
 
-  public AwaitCreateGcpContextFlightStep() {}
+  public AwaitCreateCloudContextFlightStep() {}
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {

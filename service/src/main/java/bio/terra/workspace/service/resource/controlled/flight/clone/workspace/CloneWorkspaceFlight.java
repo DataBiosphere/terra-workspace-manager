@@ -13,9 +13,9 @@ import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.UUID;
 
 /** Top-most flight for cloning a GCP workspace. Launches sub-flights for most of the work. */
-public class CloneGcpWorkspaceFlight extends Flight {
+public class CloneWorkspaceFlight extends Flight {
 
-  public CloneGcpWorkspaceFlight(FlightMap inputParameters, Object applicationContext) {
+  public CloneWorkspaceFlight(FlightMap inputParameters, Object applicationContext) {
     super(inputParameters, applicationContext);
     // Flight Map
     // 0. Clone all folders in the workspace
@@ -51,7 +51,16 @@ public class CloneGcpWorkspaceFlight extends Flight {
       addStep(
           new LaunchCreateGcpContextFlightStep(flightBeanBag.getWorkspaceService()),
           RetryRules.cloud());
-      addStep(new AwaitCreateGcpContextFlightStep(), longCloudRetryRule);
+      addStep(new AwaitCreateCloudContextFlightStep(), longCloudRetryRule);
+    } else if (flightBeanBag
+            .getAzureCloudContextService()
+            .getAzureCloudContext(sourceWorkspaceId)
+            .isPresent()) {
+      // todo: do we need to make sure that the destination spend profile is the right cloud platform before cloning? Or should Rawls enforce that? probably needs to be wsm since it will fail hard if it tries to clone az->gcp or vice versa
+      addStep(
+              new LaunchCreateAzureContextFlightStep(flightBeanBag.getWorkspaceService()),
+              RetryRules.cloud());
+      addStep(new AwaitCreateCloudContextFlightStep(), cloudRetryRule);
     }
 
     // If TPS is enabled, clone the policy attributes
