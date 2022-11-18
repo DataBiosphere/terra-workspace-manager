@@ -7,12 +7,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import bio.terra.common.exception.SerializationException;
 import bio.terra.workspace.app.configuration.external.AwsConfiguration;
 import bio.terra.workspace.common.BaseAwsUnitTest;
-import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.service.workspace.exceptions.InvalidSerializedVersionException;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import com.amazonaws.arn.Arn;
 import com.amazonaws.regions.Regions;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -126,22 +124,5 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
   void badFormat() {
     String badJson = "Junk";
     assertThrows(SerializationException.class, () -> AwsCloudContext.deserialize(badJson));
-  }
-
-  void toFromBase36(UUID uuid) {
-    String base36 = AwsUtils.toBase36(uuid);
-    UUID compare = AwsUtils.fromBase36(base36);
-    assertEquals(uuid, compare);
-  }
-
-  @Test
-  void bucketPrefixGeneration() {
-    UUID minUuid = UUID.fromString("00000000-0000-0000-0000-000000000000");
-    UUID maxUuid = UUID.fromString("ffffffff-ffff-ffff-ffff-ffffffffffff");
-    UUID rndUuid = UUID.randomUUID();
-
-    toFromBase36(minUuid);
-    toFromBase36(maxUuid);
-    toFromBase36(rndUuid);
   }
 }

@@ -152,7 +152,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
 
   private Collection<Tag> getBucketTags(
       ApiAwsCredentialAccessScope accessScope, ControlledAwsBucketResource resource) {
-    List<Tag> tags = new ArrayList();
+    List<Tag> tags = new ArrayList<>();
 
     tags.add(
         new Tag()

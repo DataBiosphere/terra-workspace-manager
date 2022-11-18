@@ -1,6 +1,7 @@
 package bio.terra.workspace.common.utils;
 
 import bio.terra.common.exception.ApiException;
+import bio.terra.stairway.ShortUUID;
 import bio.terra.workspace.service.workspace.exceptions.SaCredentialsMissingException;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
@@ -18,13 +19,11 @@ import com.amazonaws.services.securitytoken.model.AssumeRoleRequest;
 import com.amazonaws.services.securitytoken.model.AssumeRoleWithWebIdentityRequest;
 import com.amazonaws.services.securitytoken.model.Credentials;
 import com.amazonaws.services.securitytoken.model.Tag;
-import com.google.common.annotations.VisibleForTesting;
 import com.nimbusds.jwt.JWT;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.JWTParser;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.math.BigInteger;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
@@ -33,8 +32,6 @@ import java.text.ParseException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.utils.URIBuilder;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -132,7 +129,7 @@ public class AwsUtils {
   public static URL createConsoleUrl(
       Credentials userCredentials, Integer duration, URL destination) {
 
-    Map<String, String> credentialMap = new HashMap();
+    Map<String, String> credentialMap = new HashMap<>();
     credentialMap.put("sessionId", userCredentials.getAccessKeyId());
     credentialMap.put("sessionKey", userCredentials.getSecretAccessKey());
     credentialMap.put("sessionToken", userCredentials.getSessionToken());
@@ -222,27 +219,7 @@ public class AwsUtils {
     s3.deleteObject(deleteObjectRequest);
   }
 
-  private static String toPaddedHexString(Long value) {
-    return StringUtils.leftPad(Long.toUnsignedString(value, 16), 16, "0");
-  }
-
-  @VisibleForTesting
-  public static String toBase36(UUID uuid) {
-    String paddedMsb = toPaddedHexString(uuid.getMostSignificantBits());
-    String paddedLsb = toPaddedHexString(uuid.getLeastSignificantBits());
-    BigInteger bigInteger = new BigInteger(String.format("%s%s", paddedMsb, paddedLsb), 16);
-    return StringUtils.leftPad(bigInteger.toString(36), 25, "0").toUpperCase();
-  }
-
-  @VisibleForTesting
-  public static UUID fromBase36(String value) {
-    BigInteger bigInteger = new BigInteger(value, 36);
-    long mostSignificantBits = bigInteger.shiftRight(64).longValue();
-    long leastSgnificantBits = bigInteger.longValue();
-    return new UUID(mostSignificantBits, leastSgnificantBits);
-  }
-
   public static String generateUniquePrefix() {
-    return toBase36(UUID.randomUUID());
+    return ShortUUID.get();
   }
 }
