@@ -132,8 +132,6 @@ public class AwsUtils {
   public static URL createConsoleUrl(
       Credentials userCredentials, Integer duration, URL destination) {
 
-    final String signInUrl = "https://signin.aws.amazon.com/federation";
-
     Map<String, String> credentialMap = new HashMap();
     credentialMap.put("sessionId", userCredentials.getAccessKeyId());
     credentialMap.put("sessionKey", userCredentials.getSecretAccessKey());

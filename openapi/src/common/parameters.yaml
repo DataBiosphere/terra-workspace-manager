@@ -165,6 +165,22 @@ components:
       schema:
         $ref: '#/components/schemas/AwsCredentialAccessScope'
 
+    AwsCredentialDuration:
+      name: credentialDuration
+      in: query
+      description: Duration for credential to access controlled AWS resource
+      required: true
+      schema:
+        $ref: '#/components/schemas/AwsCredentialDuration'
+
+    AwsConsoleSessionDuration:
+      name: sessionDuration
+      in: query
+      description: Duration for console session access to controlled AWS resource
+      required: true
+      schema:
+        $ref: '#/components/schemas/AwsConsoleSessionDuration'
+
     WorkspaceId:
       name: workspaceId
       in: path

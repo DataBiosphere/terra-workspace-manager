@@ -43,6 +43,7 @@ paths:
       - $ref: '#/components/parameters/WorkspaceId'
       - $ref: '#/components/parameters/ResourceId'
       - $ref: '#/components/parameters/AwsCredentialAccessScope'
+      - $ref: '#/components/parameters/AwsConsoleSessionDuration'
     get:
       summary: Get a link to manage this bucket in the AWS S3 Console
       operationId: getAwsBucketConsoleLink
@@ -62,6 +63,7 @@ paths:
       - $ref: '#/components/parameters/WorkspaceId'
       - $ref: '#/components/parameters/ResourceId'
       - $ref: '#/components/parameters/AwsCredentialAccessScope'
+      - $ref: '#/components/parameters/AwsCredentialDuration'
     get:
       summary: Get a credential to access this bucket in the AWS CLI or SDK
       operationId: getAwsBucketCredential
@@ -77,17 +79,6 @@ paths:
           $ref: '#/components/responses/ServerError'
 
 components:
-  parameters:
-    AccessType:
-      name: accessType
-      in: query
-      description: Access to request for a credential or console link scope.
-      required: true
-      schema:
-        type: string
-        enum: [READ_ONLY, READ_WRITE]
-        default: "READ_ONLY"
-
   schemas:
     CreatedControlledAwsBucket:
       description: Response Payload for requesting a new controlled AWS bucket.

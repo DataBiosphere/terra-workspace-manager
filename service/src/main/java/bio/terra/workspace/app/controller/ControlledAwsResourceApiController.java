@@ -167,7 +167,10 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
 
   @Override
   public ResponseEntity<ApiControlledAwsBucketConsoleLink> getAwsBucketConsoleLink(
-      UUID workspaceUuid, UUID resourceId, ApiAwsCredentialAccessScope accessScope) {
+      UUID workspaceUuid,
+      UUID resourceId,
+      ApiAwsCredentialAccessScope accessScope,
+      Integer duration) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledAwsBucketResource resource =
         controlledResourceMetadataManager
@@ -199,14 +202,17 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
       throw new ApiException("Failed to create destination URL.", e);
     }
 
-    URL url = AwsUtils.createConsoleUrl(awsCredentials, 3600, destinationUrl);
+    URL url = AwsUtils.createConsoleUrl(awsCredentials, duration, destinationUrl);
     return new ResponseEntity<>(
         new ApiControlledAwsBucketConsoleLink().url(url.toString()), HttpStatus.OK);
   }
 
   @Override
   public ResponseEntity<ApiControlledAwsBucketCredential> getAwsBucketCredential(
-      UUID workspaceUuid, UUID resourceId, ApiAwsCredentialAccessScope accessScope) {
+      UUID workspaceUuid,
+      UUID resourceId,
+      ApiAwsCredentialAccessScope accessScope,
+      Integer duration) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledAwsBucketResource resource =
         controlledResourceMetadataManager
@@ -219,7 +225,10 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
 
     Credentials awsCredentials =
         MultiCloudUtils.assumeAwsUserRoleFromGcp(
-            awsCloudContext, getSamUser().getEmail(), getBucketTags(accessScope, resource));
+            awsCloudContext,
+            getSamUser().getEmail(),
+            getBucketTags(accessScope, resource),
+            duration);
 
     return new ResponseEntity<>(
         new ApiControlledAwsBucketCredential()
