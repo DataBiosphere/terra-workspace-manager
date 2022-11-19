@@ -17,6 +17,8 @@ import com.amazonaws.services.s3.model.ListObjectsV2Result;
 import com.amazonaws.services.sagemaker.AmazonSageMaker;
 import com.amazonaws.services.sagemaker.AmazonSageMakerClientBuilder;
 import com.amazonaws.services.sagemaker.model.CreateNotebookInstanceRequest;
+import com.amazonaws.services.sagemaker.model.DescribeNotebookInstanceRequest;
+import com.amazonaws.services.sagemaker.model.DescribeNotebookInstanceResult;
 import com.amazonaws.services.sagemaker.model.InstanceType;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenService;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder;
@@ -39,6 +41,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import org.apache.http.client.utils.URIBuilder;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -216,6 +219,10 @@ public class AwsUtils {
         .build();
   }
 
+  public static String generateUniquePrefix() {
+    return ShortUUID.get();
+  }
+
   public static boolean checkFolderExistence(
       Credentials credentials, String bucketName, String folder) {
     AmazonS3 s3 = getS3Session(credentials);
@@ -296,7 +303,36 @@ public class AwsUtils {
     sageMaker.createNotebookInstance(request);
   }
 
-  public static String generateUniquePrefix() {
-    return ShortUUID.get();
+  public static void waitForSageMakerNotebookInService(
+      AwsCloudContext awsCloudContext,
+      Credentials credentials,
+      Regions region,
+      String notebookName) {
+    AmazonSageMaker sageMaker = getSagemakerSession(credentials, region);
+    DescribeNotebookInstanceRequest describeNotebookInstanceRequest =
+        new DescribeNotebookInstanceRequest().withNotebookInstanceName(notebookName);
+
+    while (true) {
+      DescribeNotebookInstanceResult result =
+          sageMaker.describeNotebookInstance(describeNotebookInstanceRequest);
+      result.getNotebookInstanceStatus();
+      String status = result.getNotebookInstanceStatus();
+
+      if (status.equals("InService")) return;
+
+      if (status.equals("Failed")) {
+        throw new ApiException("Notebook creation failed.");
+      }
+
+      try {
+        logger.info(
+            String.format(
+                "Creating notebook '%s' waiting for 'InService' status, current status is '%s'.",
+                notebookName, status));
+        TimeUnit.SECONDS.sleep(30);
+      } catch (InterruptedException e) {
+        // Don't care...
+      }
+    }
   }
 }

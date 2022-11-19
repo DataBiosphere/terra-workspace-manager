@@ -107,6 +107,7 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
     RetryRule cloudRetry = RetryRules.cloud();
 
     flight.addStep(new CreateAwsSageMakerNotebookStep(this), cloudRetry);
+    flight.addStep(new WaitForAwsSageMakerNotebookInService(), cloudRetry);
   }
 
   /** {@inheritDoc} */
@@ -120,7 +121,7 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
   }
 
   public ApiAwsSageMakerNotebookAttributes toApiAttributes() {
-    return new ApiAwsSageMakerNotebookAttributes();
+    return new ApiAwsSageMakerNotebookAttributes().instanceId(getInstanceId());
   }
 
   public ApiAwsSageMakerNotebookResource toApiResource() {

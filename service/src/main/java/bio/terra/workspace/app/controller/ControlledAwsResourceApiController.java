@@ -69,16 +69,17 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
 
   @Autowired
   public ControlledAwsResourceApiController(
-          AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
-          HttpServletRequest request,
-          ControlledResourceService controlledResourceService,
-          SamService samService,
-          FeatureConfiguration features,
-          WorkspaceService workspaceService,
-          ControlledResourceService controlledResourceService1,
-          AwsCloudContextService awsCloudContextService,
-          ControlledResourceMetadataManager controlledResourceMetadataManager,
-          JobApiUtils jobApiUtils, JobService jobService) {
+      AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
+      HttpServletRequest request,
+      ControlledResourceService controlledResourceService,
+      SamService samService,
+      FeatureConfiguration features,
+      WorkspaceService workspaceService,
+      ControlledResourceService controlledResourceService1,
+      AwsCloudContextService awsCloudContextService,
+      ControlledResourceMetadataManager controlledResourceMetadataManager,
+      JobApiUtils jobApiUtils,
+      JobService jobService) {
     super(authenticatedUserRequestFactory, request, controlledResourceService, samService);
     this.features = features;
     this.workspaceService = workspaceService;
@@ -291,11 +292,11 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
 
   @Override
   public ResponseEntity<ApiCreatedControlledAwsSageMakerNotebookResult>
-  getCreateAwsSageMakerNotebookResult(UUID workspaceUuid, String jobId) {
+      getCreateAwsSageMakerNotebookResult(UUID workspaceUuid, String jobId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
     ApiCreatedControlledAwsSageMakerNotebookResult result =
-            fetchNotebookInstanceCreateResult(jobId);
+        fetchNotebookInstanceCreateResult(jobId);
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
   }
 
@@ -316,39 +317,55 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
   }
 
   @Override
-  public ResponseEntity<ApiAwsConsoleLink> getAwsSageMakerNotebookConsoleLink(
-          UUID workspaceUuid,
-          UUID resourceId,
-          ApiAwsCredentialAccessScope accessScope,
-          Integer duration) {
+  public ResponseEntity<ApiAwsSageMakerNotebookResource> getAwsSageMakerNotebook(
+      UUID workspaceUuid, UUID resourceId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledAwsSageMakerNotebookResource resource =
-            controlledResourceMetadataManager
-                    .validateControlledResourceAndAction(
-                            userRequest, workspaceUuid, resourceId, getSamAction(accessScope))
-                    .castByEnum(WsmResourceType.CONTROLLED_AWS_SAGEMAKER_NOTEBOOK);
+        controlledResourceMetadataManager
+            .validateControlledResourceAndAction(
+                userRequest,
+                workspaceUuid,
+                resourceId,
+                SamConstants.SamControlledResourceActions.READ_ACTION)
+            .castByEnum(WsmResourceType.CONTROLLED_AWS_SAGEMAKER_NOTEBOOK);
+    return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiAwsConsoleLink> getAwsSageMakerNotebookConsoleLink(
+      UUID workspaceUuid,
+      UUID resourceId,
+      ApiAwsCredentialAccessScope accessScope,
+      Integer duration) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ControlledAwsSageMakerNotebookResource resource =
+        controlledResourceMetadataManager
+            .validateControlledResourceAndAction(
+                userRequest, workspaceUuid, resourceId, getSamAction(accessScope))
+            .castByEnum(WsmResourceType.CONTROLLED_AWS_SAGEMAKER_NOTEBOOK);
 
     AwsCloudContext awsCloudContext =
-            awsCloudContextService.getRequiredAwsCloudContext(workspaceUuid);
+        awsCloudContextService.getRequiredAwsCloudContext(workspaceUuid);
 
     Collection<Tag> tags = new HashSet<>();
     AwsUtils.addUserTags(tags, getSamUser());
     AwsUtils.addWorkspaceTags(tags, workspaceUuid);
 
-    Credentials awsCredentials = MultiCloudUtils.assumeAwsUserRoleFromGcp(awsCloudContext, getSamUser(), tags);
+    Credentials awsCredentials =
+        MultiCloudUtils.assumeAwsUserRoleFromGcp(awsCloudContext, getSamUser(), tags);
 
     final String region = "us-east-1";
     URL destinationUrl;
 
     try {
       URI uri =
-              new URIBuilder()
-                      .setScheme("https")
-                      .setHost(String.format("%s.console.aws.amazon.com", region))
-                      .setPath("sagemaker/home")
-                      .setParameter("region", region)
-                      .setFragment(String.format("/notebook-instances/%s", resource.getInstanceId()))
-                      .build();
+          new URIBuilder()
+              .setScheme("https")
+              .setHost(String.format("%s.console.aws.amazon.com", region))
+              .setPath("sagemaker/home")
+              .setParameter("region", region)
+              .setFragment(String.format("/notebook-instances/%s", resource.getInstanceId()))
+              .build();
 
       destinationUrl = uri.toURL();
     } catch (Exception e) {
@@ -357,5 +374,38 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
 
     URL url = AwsUtils.createConsoleUrl(awsCredentials, duration, destinationUrl);
     return new ResponseEntity<>(new ApiAwsConsoleLink().url(url.toString()), HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiAwsCredential> getAwsSageMakerNotebookCredential(
+      UUID workspaceUuid,
+      UUID resourceId,
+      ApiAwsCredentialAccessScope accessScope,
+      Integer duration) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ControlledAwsSageMakerNotebookResource resource =
+        controlledResourceMetadataManager
+            .validateControlledResourceAndAction(
+                userRequest, workspaceUuid, resourceId, getSamAction(accessScope))
+            .castByEnum(WsmResourceType.CONTROLLED_AWS_SAGEMAKER_NOTEBOOK);
+
+    AwsCloudContext awsCloudContext =
+        awsCloudContextService.getRequiredAwsCloudContext(workspaceUuid);
+
+    Collection<Tag> tags = new HashSet<>();
+    AwsUtils.addUserTags(tags, getSamUser());
+    AwsUtils.addWorkspaceTags(tags, workspaceUuid);
+
+    Credentials awsCredentials =
+        MultiCloudUtils.assumeAwsUserRoleFromGcp(awsCloudContext, getSamUser(), tags);
+
+    return new ResponseEntity<>(
+        new ApiAwsCredential()
+            .version(1)
+            .accessKeyId(awsCredentials.getAccessKeyId())
+            .secretAccessKey(awsCredentials.getSecretAccessKey())
+            .sessionToken(awsCredentials.getSessionToken())
+            .expiration(awsCredentials.getExpiration().toInstant().atOffset(ZoneOffset.UTC)),
+        HttpStatus.OK);
   }
 }
