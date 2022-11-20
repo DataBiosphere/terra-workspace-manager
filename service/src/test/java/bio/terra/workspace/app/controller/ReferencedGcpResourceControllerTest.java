@@ -17,6 +17,7 @@ import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties.FOLDER_ID_KEY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -282,5 +283,7 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
     assertEquals(expectedFields.getDescription(), resourceFields.getDescription());
     assertEquals(expectedFields.getCloningInstructions(), resourceFields.getCloningInstructions());
     assertEquals(expectedFields.getProperties(), resourceFields.getProperties());
+    assertEquals(USER_REQUEST.getEmail(), resourceFields.getCreatedBy());
+    assertNotNull(resourceFields.getCreatedDate());
   }
 }

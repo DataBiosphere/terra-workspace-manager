@@ -7,25 +7,36 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.ResourceDao;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamRethrow;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
+import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.springframework.http.HttpStatus;
 
 /** Stairway step to persist a data reference in WSM's database. */
 public class CreateReferenceMetadataStep implements Step {
 
   private final ResourceDao resourceDao;
+  private final SamService samService;
+  private final AuthenticatedUserRequest userRequest;
 
-  public CreateReferenceMetadataStep(ResourceDao resourceDao) {
+  public CreateReferenceMetadataStep(ResourceDao resourceDao, SamService samService, AuthenticatedUserRequest userRequest) {
     this.resourceDao = resourceDao;
+    this.samService = samService;
+    this.userRequest = userRequest;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws RetryException, InterruptedException {
     WsmResource referencedResource = getReferencedResource(flightContext);
+    UserStatusInfo userStatusInfo =
+        SamRethrow.onInterrupted(
+            () -> samService.getUserStatusInfo(userRequest), "Get user status info from SAM");
     resourceDao.createReferencedResource(referencedResource);
     FlightUtils.setResponse(flightContext, referencedResource.getResourceId(), HttpStatus.OK);
     return StepResult.getStepResultSuccess();

@@ -72,7 +72,9 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
             projectId,
             datasetName,
             /*resourceLineage=*/ null,
-            Map.of());
+            Map.of(),
+            "foo@gmail.com",
+            /*createdDate*/null);
 
     ApiResourceDescription resourceDescription =
         resourceController.makeApiResourceDescription(resource);
@@ -101,7 +103,9 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
             datasetName,
             datatableName,
             /*resourceLineage=*/ null,
-            /*properties=*/ Map.of());
+            /*properties=*/ Map.of(),
+            "foo@gmail.com",
+            /*createdDate*/null);
 
     ApiResourceDescription resourceDescription =
         resourceController.makeApiResourceDescription(resource);
@@ -129,7 +133,9 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
             instanceName,
             snapshotId,
             /*resourceLineage=*/ null,
-            /*properties=*/ Map.of());
+            /*properties=*/ Map.of(),
+            "foo@gmail.com",
+            /*createdDate*/null);
 
     ApiResourceDescription resourceDescription =
         resourceController.makeApiResourceDescription(resource);
@@ -154,7 +160,9 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
             cloning,
             bucketName,
             /*resourceLineage=*/ null,
-            /*properties=*/ Map.of());
+            /*properties=*/ Map.of(),
+            "foo@gmail.com",
+            /*createdDate*/null);
 
     ApiResourceDescription resourceDescription =
         resourceController.makeApiResourceDescription(resource);
@@ -206,7 +214,9 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
               null,
               bucketName,
               /*resourceLineage=*/ null,
-              /*properties=*/ Map.of());
+              /*properties=*/ Map.of(),
+              "foo@gmail.com",
+              /*createdDate*/null);
 
       ApiResourceDescription resourceDescription =
           resourceController.makeApiResourceDescription(resource);
@@ -237,7 +247,9 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
               datasetName,
               projectId,
               /*resourceLineage=*/ null,
-              /*properties=*/ Map.of());
+              /*properties=*/ Map.of(),
+              "foo@gmail.com",
+              /*createdDate*/null);
 
       ApiResourceDescription resourceDescription =
           resourceController.makeApiResourceDescription(resource);

@@ -316,7 +316,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               DATA_REPO_INSTANCE_NAME,
               "polaroid",
               /*resourceLineage=*/ null,
-              /*properties=*/ Map.of());
+              /*properties=*/ Map.of(),
+              "foo@gmail.com",
+              /*createdDate*/null);
       // Service methods which wait for a flight to complete will throw an
       // InvalidResultStateException when that flight fails without a cause, which occurs when a
       // flight fails via debugInfo.
@@ -348,7 +350,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
                   DATA_REPO_INSTANCE_NAME,
                   "polaroid",
                   /*resourceLineage=*/ null,
-                  /*properties=*/ Map.of()));
+                  /*properties=*/ Map.of(),
+                  "foo@gmail.com",
+                  /*createdDate*/null));
     }
 
     @Test
@@ -365,7 +369,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
                   DATA_REPO_INSTANCE_NAME,
                   "polaroid",
                   /*resourceLineage=*/ null,
-                  /*properties=*/ Map.of()));
+                  /*properties=*/ Map.of(),
+                  "foo@gmail.com",
+                  /*createdDate*/null));
     }
 
     @Test
@@ -382,7 +388,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
                   DATA_REPO_INSTANCE_NAME,
                   "polaroid",
                   /*resourceLineage=*/ null,
-                  /*properties=*/ Map.of()));
+                  /*properties=*/ Map.of(),
+                  "foo@gmail.com",
+                  /*createdDate*/null));
     }
 
     @Test
@@ -399,7 +407,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
                   DATA_REPO_INSTANCE_NAME,
                   "polaroid",
                   /*resourceLineage=*/ null,
-                  /*properties=*/ Map.of()));
+                  /*properties=*/ Map.of(),
+                  "foo@gmail.com",
+                  /*createdDate*/null));
     }
   }
 
@@ -481,7 +491,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
                   null,
                   "polaroid",
                   /*resourceLineage=*/ null,
-                  /*properties=*/ Map.of()));
+                  /*properties=*/ Map.of(),
+                  "foo@gmail.com",
+                  /*createdDate*/null));
     }
 
     @Test
@@ -501,7 +513,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
                   DATA_REPO_INSTANCE_NAME,
                   null,
                   /*resourceLineage=*/ null,
-                  /*properties=*/ Map.of()));
+                  /*properties=*/ Map.of(),
+                  "foo@gmail.com",
+                  /*createdDate*/null));
     }
 
     @Test
@@ -565,7 +579,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
           /*bucketName=*/ "theres-a-hole-in-the-bottom-of-the",
           /*objectName=*/ "balloon",
           /*resourceLineage=*/ null,
-          /*properties=*/ Map.of());
+          /*properties=*/ Map.of(),
+          "foo@gmail.com",
+          /*createdDate*/null);
     }
 
     @Test
@@ -635,7 +651,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
           CloningInstructions.COPY_REFERENCE,
           "theres-a-hole-in-the-bottom-of-the",
           /*resourceLineage=*/ null,
-          /*properties=*/ Map.of());
+          /*properties=*/ Map.of(),
+          "foo@gmail.com",
+          /*createdDate*/null);
     }
 
     @Test
@@ -691,7 +709,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
                   /*bucketName=*/ "spongebob",
                   /*fileName=*/ "",
                   /*resourceLineage=*/ null,
-                  /*properties=*/ Map.of()));
+                  /*properties=*/ Map.of(),
+                  "foo@gmail.com",
+                  /*createdDate*/null));
     }
 
     @Test
@@ -709,7 +729,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
                   CloningInstructions.COPY_REFERENCE,
                   null,
                   /*resourceLineage=*/ null,
-                  /*properties=*/ Map.of()));
+                  /*properties=*/ Map.of(),
+                  "foo@gmail.com",
+                  /*createdDate*/null));
     }
 
     @Test
@@ -728,7 +750,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
                   CloningInstructions.COPY_REFERENCE,
                   "Buckets don't accept * in the names, either",
                   /*resourceLineage=*/ null,
-                  /*properties=*/ Map.of()));
+                  /*properties=*/ Map.of(),
+                  "foo@gmail.com",
+                  /*createdDate*/null));
     }
 
     @Test
@@ -769,7 +793,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
           FAKE_PROJECT_ID,
           DATASET_NAME,
           /*resourceLineage=*/ null,
-          /*properties=*/ Map.of());
+          /*properties=*/ Map.of(),
+          "foo@gmail.com",
+          /*createdDate*/null);
     }
 
     private ReferencedBigQueryDataTableResource makeBigQueryDataTableResource() {
@@ -785,7 +811,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
           DATASET_NAME,
           DATA_TABLE_NAME,
           /*resourceLineage=*/ null,
-          /*properties=*/ Map.of());
+          /*properties=*/ Map.of(),
+          "foo@gmail.com",
+          /*createdDate*/null);
     }
 
     @Test
@@ -970,7 +998,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
                   null,
                   "testbq_datasetname",
                   /*resourceLineage=*/ null,
-                  /*properties=*/ Map.of()));
+                  /*properties=*/ Map.of(),
+                  "foo@gmail.com",
+                  /*createdDate*/null));
     }
 
     @Test
@@ -991,7 +1021,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
                   "testbq-datasetname",
                   "",
                   /*resourceLineage=*/ null,
-                  /*properties=*/ Map.of()));
+                  /*properties=*/ Map.of(),
+                  "foo@gmail.com",
+                  /*createdDate*/null));
     }
 
     @Test
@@ -1011,7 +1043,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
                   "testbq-projectid",
                   "",
                   /*resourceLineage=*/ null,
-                  /*properties=*/ Map.of()));
+                  /*properties=*/ Map.of(),
+                  "foo@gmail.com",
+                  /*createdDate*/null));
     }
 
     @Test
@@ -1032,7 +1066,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
                   DATASET_NAME,
                   "*&%@#",
                   /*resourceLineage=*/ null,
-                  /*Properties=*/ Map.of()));
+                  /*Properties=*/ Map.of(),
+                  "foo@gmail.com",
+                  /*createdDate*/null));
     }
 
     @Test
@@ -1052,7 +1088,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
                   "testbq-projectid",
                   "Nor do datasets; neither ' nor *",
                   /*resourceLineage=*/ null,
-                  /*properties=*/ Map.of()));
+                  /*properties=*/ Map.of(),
+                  "foo@gmail.com",
+                  /*createdDate*/null));
     }
 
     @Test
@@ -1087,7 +1125,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
           CloningInstructions.COPY_NOTHING,
           /*referencedWorkspaceId=*/ referencedWorkspaceId,
           /*resourceLineage=*/ null,
-          /*properties=*/ Map.of());
+          /*properties=*/ Map.of(),
+          "foo@gmail.com",
+          /*createdDate*/null);
     }
 
     @Test
@@ -1193,7 +1233,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               DATA_REPO_INSTANCE_NAME,
               "polaroid",
               /*resourceLineage=*/ null,
-              /*properties=*/ Map.of());
+              /*properties=*/ Map.of(),
+              "foo@gmail.com",
+              /*createdDate*/null);
 
       assertThrows(
           DuplicateResourceException.class,

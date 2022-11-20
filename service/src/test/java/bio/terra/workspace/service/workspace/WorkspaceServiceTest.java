@@ -91,6 +91,7 @@ import com.google.common.collect.ImmutableList;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -680,7 +681,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             "fakeinstance",
             "fakesnapshot",
             /*resourceLineage=*/ null,
-            /*properties=*/ Map.of());
+            /*properties=*/ Map.of(),
+            "foo@gmail.com",
+            /*createdDate*/null);
     referenceResourceService.createReferenceResource(snapshot, USER_REQUEST);
 
     // Validate that the reference exists.
@@ -977,6 +980,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         .workspaceId(workspaceUuid)
         .userFacingId("a" + workspaceUuid.toString())
         .spendProfileId(null)
-        .workspaceStage(WorkspaceStage.MC_WORKSPACE);
+        .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+        .createdByEmail("foo@gmail.com");
   }
 }

@@ -24,6 +24,7 @@ import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -56,7 +57,9 @@ public class ReferencedGcsObjectResource extends ReferencedResource {
       @JsonProperty("bucketName") String bucketName,
       @JsonProperty("objectName") String objectName,
       @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
-      @JsonProperty("properties") Map<String, String> properties) {
+      @JsonProperty("properties") Map<String, String> properties,
+      @JsonProperty("createdByEmail") String createdByEmail,
+      @JsonProperty("createdDate") OffsetDateTime createdDate) {
     super(
         workspaceId,
         resourceId,
@@ -64,7 +67,9 @@ public class ReferencedGcsObjectResource extends ReferencedResource {
         description,
         cloningInstructions,
         resourceLineage,
-        properties);
+        properties,
+        createdByEmail,
+        createdDate);
     this.bucketName = bucketName;
     this.objectName = objectName;
     validate();
@@ -176,7 +181,8 @@ public class ReferencedGcsObjectResource extends ReferencedResource {
       UUID destinationResourceId,
       @Nullable UUID destinationFolderId,
       @Nullable String name,
-      @Nullable String description) {
+      @Nullable String description,
+      String createdByEmail) {
     ReferencedGcsObjectResource.Builder resultBuilder =
         toBuilder()
             .wsmResourceFields(
@@ -185,7 +191,8 @@ public class ReferencedGcsObjectResource extends ReferencedResource {
                     destinationResourceId,
                     destinationFolderId,
                     name,
-                    description));
+                    description,
+                    createdByEmail));
     return resultBuilder.build();
   }
 

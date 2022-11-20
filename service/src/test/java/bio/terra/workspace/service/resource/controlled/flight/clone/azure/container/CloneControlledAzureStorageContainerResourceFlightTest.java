@@ -52,7 +52,9 @@ public class CloneControlledAzureStorageContainerResourceFlightTest extends Base
             UUID.randomUUID(),
             UUID.randomUUID().toString(),
             null,
-            Map.of());
+            Map.of(),
+            "foo@gmail.com",
+            /*createdDate*/null);
     FlightMap inputs = new FlightMap();
     inputs.put(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE, resource);
     inputs.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);

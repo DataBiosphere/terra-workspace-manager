@@ -44,7 +44,7 @@ public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
             .workspaceId(workspaceUuid)
             .userFacingId("a" + workspaceUuid)
             .build();
-    workspaceDao.createWorkspace(workspace, /* applicationIds */ null);
+    workspaceDao.createWorkspace(workspace, /* applicationIds= */ null);
 
     gcpCloudContextService.createGcpCloudContextStart(workspaceUuid, "flight-testentersinfo");
     gcpCloudContextService.createGcpCloudContextFinish(

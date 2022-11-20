@@ -5,6 +5,7 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 
 public class CreateReferenceResourceFlight extends Flight {
@@ -19,6 +20,6 @@ public class CreateReferenceResourceFlight extends Flight {
 
     // Store the reference metadata
     addStep(
-        new CreateReferenceMetadataStep(appContext.getResourceDao()), RetryRules.shortDatabase());
+        new CreateReferenceMetadataStep(appContext.getResourceDao(), appContext.getSamService(), new AuthenticatedUserRequest()), RetryRules.shortDatabase());
   }
 }

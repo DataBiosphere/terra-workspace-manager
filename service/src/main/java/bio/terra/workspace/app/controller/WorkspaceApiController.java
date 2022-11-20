@@ -74,6 +74,7 @@ import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -174,6 +175,9 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       }
       policies = body.getPolicies();
     }
+    UserStatusInfo userStatusInfo =
+        SamRethrow.onInterrupted(
+            () -> samService.getUserStatusInfo(userRequest), "Get user status info from SAM");
 
     Workspace workspace =
         Workspace.builder()
@@ -184,6 +188,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .spendProfileId(spendProfileId.orElse(null))
             .workspaceStage(internalStage)
             .properties(convertApiPropertyToMap(body.getProperties()))
+            .createdByEmail(userStatusInfo.getUserEmail())
             .build();
     UUID createdWorkspaceUuid =
         workspaceService.createWorkspace(
@@ -257,7 +262,6 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     }
 
     // When we have another cloud context, we will need to do a similar retrieval for it.
-    var createDetailsOptional = workspaceActivityLogDao.getCreateDetails(workspaceUuid);
     var lastChangeDetailsOptional = workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
 
     if (highestRole == WsmIamRole.DISCOVERER) {
@@ -279,11 +283,9 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         .gcpContext(gcpContext)
         .azureContext(azureContext)
         .createdDate(
-            createDetailsOptional
-                .map(ActivityLogChangeDetails::getChangeDate)
-                .orElse(OffsetDateTime.MIN))
+            workspace.createdDate())
         .createdBy(
-            createDetailsOptional.map(ActivityLogChangeDetails::getActorEmail).orElse("unknown"))
+            workspace.createdByEmail())
         .lastUpdatedDate(
             lastChangeDetailsOptional
                 .map(ActivityLogChangeDetails::getChangeDate)
@@ -415,7 +417,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     validatePropertiesDeleteRequestBody(propertyKeys);
     logger.info(
         "Deleting the properties with the key {} in workspace {}",
-        propertyKeys.toString(),
+        propertyKeys,
         workspaceUuid);
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamWorkspaceAction.DELETE);
@@ -630,6 +632,9 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     String generatedDisplayName =
         sourceWorkspace.getDisplayName().orElse(sourceWorkspace.getUserFacingId()) + " (Copy)";
 
+    UserStatusInfo userStatusInfo =
+        SamRethrow.onInterrupted(
+            () -> samService.getUserStatusInfo(petRequest), "Get user status info from SAM");
     // Construct the target workspace object from the inputs
     // Policies are cloned in the flight instead of here so that they get cleaned appropriately if
     // the flight fails.
@@ -642,6 +647,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .displayName(Optional.ofNullable(body.getDisplayName()).orElse(generatedDisplayName))
             .description(body.getDescription())
             .properties(sourceWorkspace.getProperties())
+            .createdByEmail(userStatusInfo.getUserEmail())
             .build();
 
     final String jobId =

@@ -92,7 +92,9 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
         "fake",
         "us-east1",
         /*resourceLineage=*/ null,
-        /*properties*/ Map.of());
+        /*properties*/ Map.of(),
+        "foo@gmail.com",
+        /*createdDate*/null);
   }
 
   private ControlledAzureStorageContainerResource buildStorageContainerResource(
@@ -114,7 +116,9 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
         storageAccountId,
         "fake",
         /*resourceLineage=*/ null,
-        /*properties*/ Map.of());
+        /*properties*/ Map.of(),
+        "foo@gmail.com",
+        /*createdDate*/null);
   }
 
   private void assertValidToken(

@@ -19,6 +19,7 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -43,6 +44,8 @@ public abstract class WsmResource {
   private final List<ResourceLineageEntry> resourceLineage;
   // Properties map will be empty if there's no properties set on the resource.
   private final ImmutableMap<String, String> properties;
+  private final String createdByEmail;
+  private final OffsetDateTime createdDate;
 
   /**
    * construct from individual fields
@@ -62,7 +65,9 @@ public abstract class WsmResource {
       @Nullable String description,
       CloningInstructions cloningInstructions,
       @Nullable List<ResourceLineageEntry> resourceLineage,
-      Map<String, String> properties) {
+      Map<String, String> properties,
+      String createdByEmail,
+      @Nullable OffsetDateTime createdDate) {
     this.workspaceUuid = workspaceUuid;
     this.resourceId = resourceId;
     this.name = name;
@@ -70,6 +75,8 @@ public abstract class WsmResource {
     this.cloningInstructions = cloningInstructions;
     this.resourceLineage = Optional.ofNullable(resourceLineage).orElse(new ArrayList<>());
     this.properties = ImmutableMap.copyOf(properties);
+    this.createdByEmail = createdByEmail;
+    this.createdDate = createdDate;
   }
 
   /** construct from database data */
@@ -81,7 +88,9 @@ public abstract class WsmResource {
         dbResource.getDescription(),
         dbResource.getCloningInstructions(),
         dbResource.getResourceLineage().orElse(new ArrayList<>()),
-        dbResource.getProperties());
+        dbResource.getProperties(),
+        dbResource.getCreatedByEmail(),
+        dbResource.getCreatedDate());
   }
 
   public WsmResource(WsmResourceFields resourceFields) {
@@ -92,7 +101,9 @@ public abstract class WsmResource {
         resourceFields.getDescription(),
         resourceFields.getCloningInstructions(),
         resourceFields.getResourceLineage(),
-        resourceFields.getProperties());
+        resourceFields.getProperties(),
+        resourceFields.getCreatedByEmail(),
+        resourceFields.getCreatedDate());
   }
 
   public UUID getWorkspaceId() {
@@ -120,6 +131,7 @@ public abstract class WsmResource {
         .cloningInstructions(cloningInstructions)
         .resourceLineage(resourceLineage)
         .properties(properties)
+        .createdByEmail(createdByEmail)
         .build();
   }
 
@@ -135,6 +147,13 @@ public abstract class WsmResource {
     return properties;
   }
 
+  public String getCreatedByEmail() {
+    return createdByEmail;
+  }
+
+  public OffsetDateTime getCreatedDate() {
+    return createdDate;
+  }
   /**
    * Sub-classes must identify their stewardship type
    *
@@ -220,7 +239,8 @@ public abstract class WsmResource {
       UUID destinationResourceId,
       @Nullable UUID destinationFolderId,
       @Nullable String name,
-      @Nullable String description) {
+      @Nullable String description,
+      String createdByEmail) {
     throw new CloneInstructionNotSupportedException(
         String.format(
             "You cannot make a reference clone of a %s resource", getResourceType().name()));
@@ -231,7 +251,8 @@ public abstract class WsmResource {
       UUID destinationResourceId,
       @Nullable UUID destinationFolderId,
       @Nullable String name,
-      @Nullable String description) {
+      @Nullable String description,
+      String createdByEmail) {
 
     WsmResourceFields.Builder<?> cloneResourceCommonFields = getWsmResourceFields().toBuilder();
 
@@ -302,7 +323,9 @@ public abstract class WsmResource {
             .stewardshipType(getStewardshipType().toApiModel())
             .cloudPlatform(getResourceType().getCloudPlatform().toApiModel())
             .cloningInstructions(cloningInstructions.toApiModel())
-            .properties(apiProperties);
+            .properties(apiProperties)
+            .createdBy(createdByEmail)
+            .createdDate(createdDate);
     ApiResourceLineage apiResourceLineage = new ApiResourceLineage();
     apiResourceLineage.addAll(
         resourceLineage.stream().map(ResourceLineageEntry::toApiModel).toList());

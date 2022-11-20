@@ -84,6 +84,7 @@ public class ControlledResourceFixtures {
   public static final String AZURE_SUBNET_NAME_PREFIX = "subnet";
   public static final String AZURE_VM_NAME_PREFIX = "vm";
   public static final Map<String, String> DEFAULT_RESOURCE_PROPERTIES = Map.of("foo", "bar");
+  public static final String DEFAULT_USER_EMAIL = "foo@gmail.com";
 
   public static final ApiGcpGcsBucketCreationParameters GOOGLE_BUCKET_CREATION_PARAMETERS_MINIMAL =
       new ApiGcpGcsBucketCreationParameters()
@@ -311,7 +312,9 @@ public class ControlledResourceFixtures {
         null,
         bucketName,
         /*resourceLineage=*/ null,
-        Map.of());
+        Map.of(),
+        "foo@gmail.com",
+        /*createdDate=*/null);
   }
 
   public static ControlledAzureIpResource getAzureIp(String ipName, String region) {
@@ -330,7 +333,9 @@ public class ControlledResourceFixtures {
         ipName,
         region,
         /*resourceLineage=*/ null,
-        /*properties=*/ Map.of());
+        /*properties=*/ Map.of(),
+        "foo@gmail.com",
+        /*createdDate*/null);
   }
 
   public static ControlledAzureRelayNamespaceResource getAzureRelayNamespace(
@@ -349,7 +354,9 @@ public class ControlledResourceFixtures {
         namespaceName,
         region,
         /*resourceLineage=*/ null,
-        /*properties=*/ Map.of());
+        /*properties=*/ Map.of(),
+        "foo@gmail.com",
+        /*createdDate*/null);
   }
 
   public static ControlledAzureDiskResource getAzureDisk(String diskName, String region, int size) {
@@ -369,7 +376,9 @@ public class ControlledResourceFixtures {
         region,
         size,
         /*resourceLineage=*/ null,
-        /*properties=*/ Map.of());
+        /*properties=*/ Map.of(),
+        "foo@gmail.com",
+        /*createdDate*/null);
   }
 
   public static ControlledAzureNetworkResource getAzureNetwork(
@@ -392,7 +401,9 @@ public class ControlledResourceFixtures {
         creationParameters.getSubnetAddressCidr(),
         creationParameters.getRegion(),
         /*resourceLineage=*/ null,
-        /*properties=*/ Map.of());
+        /*properties=*/ Map.of(),
+        "foo@gmail.com",
+        /*createdDate*/null);
   }
 
   public static ControlledAzureStorageResource getAzureStorage(
@@ -412,7 +423,9 @@ public class ControlledResourceFixtures {
         storageAccountName,
         region,
         /*resourceLineage=*/ null,
-        /*properties=*/ Map.of());
+        /*properties=*/ Map.of(),
+        "foo@gmail.com",
+        /*createdDate*/null);
   }
 
   public static ControlledAzureStorageResource getAzureStorage(
@@ -455,7 +468,9 @@ public class ControlledResourceFixtures {
         storageAccountId,
         storageContainerName,
         /*resourceLineage=*/ null,
-        /*properties=*/ Map.of());
+        /*properties=*/ Map.of(),
+        "foo@gmail.com",
+        /*createdDate*/ null);
   }
 
   public static ControlledAzureStorageContainerResource getAzureStorageContainer(
@@ -503,7 +518,9 @@ public class ControlledResourceFixtures {
         creationParameters.getNetworkId(),
         creationParameters.getDiskId(),
         /*resourceLineage=*/ null,
-        /*properties=*/ Map.of());
+        /*properties=*/ Map.of(),
+        "foo@gmail.com",
+        /*createdDate*/null);
   }
 
   private ControlledResourceFixtures() {}
@@ -520,7 +537,8 @@ public class ControlledResourceFixtures {
         .assignedUser(null)
         .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
         .managedBy(ManagedByType.MANAGED_BY_USER)
-        .properties(DEFAULT_RESOURCE_PROPERTIES);
+        .properties(DEFAULT_RESOURCE_PROPERTIES)
+        .createdByEmail(DEFAULT_USER_EMAIL);
   }
 
   /**
@@ -613,7 +631,8 @@ public class ControlledResourceFixtures {
         .cloningInstructions(CloningInstructions.COPY_NOTHING)
         .assignedUser("myusername@mydomain.mine")
         .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
-        .managedBy(ManagedByType.MANAGED_BY_USER);
+        .managedBy(ManagedByType.MANAGED_BY_USER)
+        .createdByEmail(DEFAULT_USER_EMAIL);
   }
 
   public static ControlledAiNotebookInstanceResource.Builder makeDefaultAiNotebookInstance() {

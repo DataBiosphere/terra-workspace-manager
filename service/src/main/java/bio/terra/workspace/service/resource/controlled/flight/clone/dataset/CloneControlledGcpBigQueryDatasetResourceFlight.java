@@ -103,7 +103,7 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
               resolvedCloningInstructions),
           RetryRules.shortExponential());
       addStep(
-          new CreateReferenceMetadataStep(flightBeanBag.getResourceDao()),
+          new CreateReferenceMetadataStep(flightBeanBag.getResourceDao(), flightBeanBag.getSamService(), userRequest),
           RetryRules.shortDatabase());
       addStep(
           new SetReferencedDestinationBigQueryDatasetResponseStep(), RetryRules.shortExponential());

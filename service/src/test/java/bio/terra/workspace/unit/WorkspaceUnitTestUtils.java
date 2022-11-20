@@ -3,7 +3,6 @@ package bio.terra.workspace.unit;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
-import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
@@ -38,22 +37,9 @@ public class WorkspaceUnitTestUtils {
             .workspaceId(workspaceUuid)
             .userFacingId(workspaceUuid.toString())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+            .createdByEmail("foo@gmail.com")
             .build();
-    workspaceDao.createWorkspace(workspace, /* applicationIds */ null);
-    return workspace.getWorkspaceId();
-  }
-
-  /** Create workspace with Azure cloud context */
-  public static UUID createWorkspaceWithAzureContext(
-      UUID workspaceUuid, WorkspaceDao workspaceDao, AzureCloudContext azureCloudContext) {
-    Workspace workspace =
-        Workspace.builder()
-            .workspaceId(workspaceUuid)
-            .userFacingId(workspaceUuid.toString())
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .build();
-    workspaceDao.createWorkspace(workspace, null);
-    createAzureCloudContextInDatabase(workspaceDao, workspaceUuid, azureCloudContext);
+    workspaceDao.createWorkspace(workspace, /* applicationIds= */ null);
     return workspace.getWorkspaceId();
   }
 
@@ -79,18 +65,6 @@ public class WorkspaceUnitTestUtils {
     workspaceDao.createCloudContextStart(workspaceUuid, cloudPlatform, flightId);
     workspaceDao.createCloudContextFinish(
         workspaceUuid, cloudPlatform, new GcpCloudContext(projectId).serialize(), flightId);
-  }
-
-  /**
-   * Creates the database artifact for an Azure cloud context without actually creating anything
-   * beyond the database row.
-   */
-  private static void createAzureCloudContextInDatabase(
-      WorkspaceDao workspaceDao, UUID workspaceUuid, AzureCloudContext azureCloudContext) {
-    String flightId = UUID.randomUUID().toString();
-    workspaceDao.createCloudContextStart(workspaceUuid, CloudPlatform.AZURE, flightId);
-    workspaceDao.createCloudContextFinish(
-        workspaceUuid, CloudPlatform.AZURE, azureCloudContext.serialize(), flightId);
   }
 
   private WorkspaceUnitTestUtils() {}

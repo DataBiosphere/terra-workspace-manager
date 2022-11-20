@@ -21,6 +21,7 @@ import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -39,7 +40,9 @@ public class ReferencedGitRepoResource extends ReferencedResource {
       @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
       @JsonProperty("gitRepoUrl") String gitRepoUrl,
       @JsonProperty("resourceLineage") @Nullable List<ResourceLineageEntry> resourceLineage,
-      @JsonProperty("properties") Map<String, String> properties) {
+      @JsonProperty("properties") Map<String, String> properties,
+      @JsonProperty("createdByEmail") String createdByEmail,
+      @JsonProperty("createdDate") OffsetDateTime createdDate) {
     super(
         workspaceId,
         resourceId,
@@ -47,7 +50,9 @@ public class ReferencedGitRepoResource extends ReferencedResource {
         description,
         cloningInstructions,
         resourceLineage,
-        properties);
+        properties,
+        createdByEmail,
+        createdDate);
     this.gitRepoUrl = gitRepoUrl;
     validate();
   }
@@ -120,7 +125,8 @@ public class ReferencedGitRepoResource extends ReferencedResource {
       UUID destinationResourceId,
       @Nullable UUID destinationFolderId,
       @Nullable String name,
-      @Nullable String description) {
+      @Nullable String description,
+      String createdByEmail) {
     ReferencedGitRepoResource.Builder resultBuilder =
         toBuilder()
             .wsmResourceFields(
@@ -129,7 +135,8 @@ public class ReferencedGitRepoResource extends ReferencedResource {
                     destinationResourceId,
                     destinationFolderId,
                     name,
-                    description));
+                    description,
+                    createdByEmail));
     return resultBuilder.build();
   }
 

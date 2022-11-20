@@ -4,6 +4,7 @@ import bio.terra.workspace.app.controller.shared.PropertiesUtils;
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
+import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
@@ -14,6 +15,7 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
+import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 
 /**
  * Super class for controllers containing common code. The code in here requires the @Autowired
@@ -41,6 +43,10 @@ public class ControlledResourceControllerBase extends ControllerBase {
     PrivateUserRole privateUserRole =
         computePrivateUserRole(workspaceUuid, apiCommonFields, userRequest);
 
+    UserStatusInfo userStatusInfo =
+        SamRethrow.onInterrupted(
+            () -> getSamService().getUserStatusInfo(userRequest), "Get user status info from SAM");
+
     return ControlledResourceFields.builder()
         .workspaceUuid(workspaceUuid)
         .resourceId(
@@ -57,6 +63,7 @@ public class ControlledResourceControllerBase extends ControllerBase {
         .managedBy(managedBy)
         .applicationId(controlledResourceService.getAssociatedApp(managedBy, userRequest))
         .properties(PropertiesUtils.convertApiPropertyToMap(apiCommonFields.getProperties()))
+        .createdByEmail(userStatusInfo.getUserEmail())
         .build();
   }
 }

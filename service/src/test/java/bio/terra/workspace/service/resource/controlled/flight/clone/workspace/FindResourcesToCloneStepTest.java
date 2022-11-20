@@ -58,7 +58,9 @@ public class FindResourcesToCloneStepTest extends BaseUnitTest {
             null,
             "bucket-with-hole-in-it-dear-liza",
             /*resourceLineage=*/ null,
-            /*properties*/ Map.of());
+            /*properties*/ Map.of(),
+            "foo@gmail.com",
+            /*createdDate*/null);
 
     findResourcesToCloneStep = new FindResourcesToCloneStep(mockResourceDao);
     doReturn(mockStairway).when(mockFlightContext).getStairway();

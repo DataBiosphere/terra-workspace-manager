@@ -52,7 +52,9 @@ public class ReferenceResourceFixtures {
         "terra",
         "polaroid",
         /*resourceLineage=*/ null,
-        /*properties*/ DEFAULT_RESOURCE_PROPERTIES);
+        /*properties*/ DEFAULT_RESOURCE_PROPERTIES,
+        "foo@gmail.com",
+        /*createdDate*/null);
   }
 
   public static ReferencedBigQueryDatasetResource makeReferencedBqDatasetResource(
@@ -68,7 +70,9 @@ public class ReferenceResourceFixtures {
         projectId,
         bqDataset,
         /*resourceLineage=*/ null,
-        /*properties*/ DEFAULT_RESOURCE_PROPERTIES);
+        /*properties*/ DEFAULT_RESOURCE_PROPERTIES,
+        "foo@gmail.com",
+        /*createdDate*/null);
   }
 
   public static ApiCreateDataRepoSnapshotReferenceRequestBody

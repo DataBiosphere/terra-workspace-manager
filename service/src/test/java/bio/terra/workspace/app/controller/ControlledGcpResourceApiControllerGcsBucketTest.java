@@ -2,6 +2,7 @@ package bio.terra.workspace.app.controller;
 
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import bio.terra.stairway.FlightDebugInfo;
@@ -220,5 +221,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
     assertEquals(expectedMetadata.getStewardshipType(), actualMetadata.getStewardshipType());
     assertEquals(expectedMetadata.getResourceType(), actualMetadata.getResourceType());
     assertEquals(expectedMetadata.getProperties(), actualMetadata.getProperties());
+    assertEquals(expectedMetadata.getCreatedBy(), actualMetadata.getCreatedBy());
+    assertEquals(expectedMetadata.getCreatedDate(), actualMetadata.getCreatedDate());
   }
 }

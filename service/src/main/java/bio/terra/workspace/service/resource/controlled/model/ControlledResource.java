@@ -16,6 +16,7 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -46,7 +47,9 @@ public abstract class ControlledResource extends WsmResource {
       String applicationId,
       PrivateResourceState privateResourceState,
       List<ResourceLineageEntry> resourceLineage,
-      Map<String, String> properties) {
+      Map<String, String> properties,
+      String createdByEmail,
+      OffsetDateTime createdDate) {
     super(
         workspaceUuid,
         resourceId,
@@ -54,7 +57,9 @@ public abstract class ControlledResource extends WsmResource {
         description,
         cloningInstructions,
         resourceLineage,
-        properties);
+        properties,
+        createdByEmail,
+        createdDate);
     this.assignedUser = assignedUser;
     this.accessScope = accessScope;
     this.managedBy = managedBy;
@@ -82,7 +87,9 @@ public abstract class ControlledResource extends WsmResource {
         builder.getDescription(),
         builder.getCloningInstructions(),
         builder.getResourceLineage(),
-        builder.getProperties());
+        builder.getProperties(),
+        builder.getCreatedByEmail(),
+        builder.getCreatedDate());
     this.assignedUser = builder.getAssignedUser();
     this.accessScope = builder.getAccessScope();
     this.managedBy = builder.getManagedBy();
