@@ -10,6 +10,7 @@ import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.common.utils.MultiCloudUtils;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
+import com.amazonaws.regions.Regions;
 import com.amazonaws.services.securitytoken.model.Credentials;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +36,10 @@ class ValidateAwsBucketCreationStep implements Step {
     final Credentials awsCredentials = MultiCloudUtils.assumeAwsServiceRoleFromGcp(awsCloudContext);
 
     if (AwsUtils.checkFolderExistence(
-        awsCredentials, resource.getS3BucketName(), resource.getPrefix())) {
+        awsCredentials,
+        Regions.fromName(resource.getRegion()),
+        resource.getS3BucketName(),
+        resource.getPrefix())) {
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL,
           new ConflictException(

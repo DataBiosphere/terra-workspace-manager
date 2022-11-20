@@ -34,6 +34,7 @@ import java.util.UUID;
 
 public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
   private final String instanceId;
+  private final String region;
 
   @JsonCreator
   public ControlledAwsSageMakerNotebookResource(
@@ -48,6 +49,7 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
       @JsonProperty("managedBy") ManagedByType managedBy,
       @JsonProperty("applicationId") String applicationId,
       @JsonProperty("instanceId") String instanceId,
+      @JsonProperty("region") String region,
       @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
       @JsonProperty("properties") Map<String, String> properties) {
     super(
@@ -64,13 +66,15 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
         resourceLineage,
         properties);
     this.instanceId = instanceId;
+    this.region = region;
     validate();
   }
 
   private ControlledAwsSageMakerNotebookResource(
-      ControlledResourceFields common, String instanceId) {
+      ControlledResourceFields common, String instanceId, String region) {
     super(common);
     this.instanceId = instanceId;
+    this.region = region;
     validate();
   }
 
@@ -120,8 +124,12 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
     return instanceId;
   }
 
+  public String getRegion() {
+    return region;
+  }
+
   public ApiAwsSageMakerNotebookAttributes toApiAttributes() {
-    return new ApiAwsSageMakerNotebookAttributes().instanceId(getInstanceId());
+    return new ApiAwsSageMakerNotebookAttributes().instanceId(getInstanceId()).region(getRegion());
   }
 
   public ApiAwsSageMakerNotebookResource toApiResource() {
@@ -142,7 +150,8 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
 
   @Override
   public String attributesToJson() {
-    return DbSerDes.toJson(new ControlledAwsSageMakerNotebookAttributes(getInstanceId()));
+    return DbSerDes.toJson(
+        new ControlledAwsSageMakerNotebookAttributes(getInstanceId(), getRegion()));
   }
 
   @Override
@@ -172,6 +181,7 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
   public static class Builder {
     private ControlledResourceFields common;
     private String instanceId;
+    private String region;
 
     public Builder common(ControlledResourceFields common) {
       this.common = common;
@@ -183,8 +193,13 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
       return this;
     }
 
+    public Builder region(String region) {
+      this.region = region;
+      return this;
+    }
+
     public ControlledAwsSageMakerNotebookResource build() {
-      return new ControlledAwsSageMakerNotebookResource(common, instanceId);
+      return new ControlledAwsSageMakerNotebookResource(common, instanceId, region);
     }
   }
 }

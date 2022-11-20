@@ -11,6 +11,9 @@ components:
         prefix:
           description: The prefix within the S3 bucket.
           type: string
+        region:
+          description: Region in which the bucket was created
+          type: string
 
     AwsBucketResource:
       type: object

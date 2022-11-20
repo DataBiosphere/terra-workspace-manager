@@ -28,6 +28,7 @@ public class ControlledAwsBucketHandler implements WsmResourceHandler {
     return ControlledAwsBucketResource.builder()
         .s3BucketName(attributes.getS3BucketName())
         .prefix(attributes.getPrefix())
+        .region(attributes.getRegion())
         .common(new ControlledResourceFields(dbResource))
         .build();
   }

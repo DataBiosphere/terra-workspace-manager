@@ -31,6 +31,7 @@ import java.util.UUID;
 public class ControlledAwsBucketResource extends ControlledResource {
   private final String s3BucketName;
   private final String prefix;
+  private final String region;
 
   @JsonCreator
   public ControlledAwsBucketResource(
@@ -46,6 +47,7 @@ public class ControlledAwsBucketResource extends ControlledResource {
       @JsonProperty("applicationId") String applicationId,
       @JsonProperty("s3BucketName") String s3BucketName,
       @JsonProperty("prefix") String prefix,
+      @JsonProperty("region") String region,
       @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
       @JsonProperty("properties") Map<String, String> properties) {
     super(
@@ -63,14 +65,16 @@ public class ControlledAwsBucketResource extends ControlledResource {
         properties);
     this.s3BucketName = s3BucketName;
     this.prefix = prefix;
+    this.region = region;
     validate();
   }
 
   private ControlledAwsBucketResource(
-      ControlledResourceFields common, String s3BucketName, String prefix) {
+      ControlledResourceFields common, String s3BucketName, String prefix, String region) {
     super(common);
     this.s3BucketName = s3BucketName;
     this.prefix = prefix;
+    this.region = region;
     validate();
   }
 
@@ -124,8 +128,15 @@ public class ControlledAwsBucketResource extends ControlledResource {
     return prefix;
   }
 
+  public String getRegion() {
+    return region;
+  }
+
   public ApiAwsBucketAttributes toApiAttributes() {
-    return new ApiAwsBucketAttributes().s3BucketName(getS3BucketName()).prefix(getPrefix());
+    return new ApiAwsBucketAttributes()
+        .s3BucketName(getS3BucketName())
+        .prefix(getPrefix())
+        .region(getRegion());
   }
 
   public ApiAwsBucketResource toApiResource() {
@@ -144,7 +155,8 @@ public class ControlledAwsBucketResource extends ControlledResource {
 
   @Override
   public String attributesToJson() {
-    return DbSerDes.toJson(new ControlledAwsBucketAttributes(getS3BucketName(), getPrefix()));
+    return DbSerDes.toJson(
+        new ControlledAwsBucketAttributes(getS3BucketName(), getPrefix(), getRegion()));
   }
 
   @Override
@@ -175,6 +187,7 @@ public class ControlledAwsBucketResource extends ControlledResource {
     private ControlledResourceFields common;
     private String s3BucketName;
     private String prefix;
+    private String region;
 
     public Builder common(ControlledResourceFields common) {
       this.common = common;
@@ -191,8 +204,13 @@ public class ControlledAwsBucketResource extends ControlledResource {
       return this;
     }
 
+    public ControlledAwsBucketResource.Builder region(String region) {
+      this.region = region;
+      return this;
+    }
+
     public ControlledAwsBucketResource build() {
-      return new ControlledAwsBucketResource(common, s3BucketName, prefix);
+      return new ControlledAwsBucketResource(common, s3BucketName, prefix, region);
     }
   }
 }

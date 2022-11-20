@@ -48,13 +48,10 @@ import org.apache.http.client.utils.URIBuilder;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.util.UriBuilder;
-import org.springframework.web.util.UriComponentsBuilder;
 
 public class AwsUtils {
   private static final Logger logger = LoggerFactory.getLogger(AwsUtils.class);
   public static final Integer MIN_TOKEN_DURATION_SECONDS = 900;
-  public static final Integer MAX_TOKEN_DURATION_SECONDS = 3600;
 
   public static Credentials assumeServiceRole(
       AwsCloudContext awsCloudContext, String idToken, String serviceEmail, Integer duration) {
@@ -85,7 +82,7 @@ public class AwsUtils {
     }
     AWSSecurityTokenService securityTokenService =
         AWSSecurityTokenServiceClientBuilder.standard()
-            .withRegion(Regions.US_EAST_1)
+            .withRegion(Regions.DEFAULT_REGION) // STS not regional but API requires
             .withCredentials(new AWSStaticCredentialsProvider(new AnonymousAWSCredentials()))
             .build();
 
@@ -141,7 +138,7 @@ public class AwsUtils {
 
     AWSSecurityTokenService securityTokenService =
         AWSSecurityTokenServiceClientBuilder.standard()
-            .withRegion(Regions.US_EAST_1)
+            .withRegion(Regions.DEFAULT_REGION) // STS not regional but API requires
             .withCredentials(new AWSStaticCredentialsProvider(sessionCredentials))
             .build();
 
@@ -210,7 +207,7 @@ public class AwsUtils {
     }
   }
 
-  private static AmazonS3 getS3Session(Credentials credentials) {
+  private static AmazonS3 getS3Session(Credentials credentials, Regions region) {
     BasicSessionCredentials sessionCredentials =
         new BasicSessionCredentials(
             credentials.getAccessKeyId(),
@@ -218,7 +215,7 @@ public class AwsUtils {
             credentials.getSessionToken());
 
     return AmazonS3Client.builder()
-        .withRegion(Regions.US_EAST_1)
+        .withRegion(region)
         .withCredentials(new AWSStaticCredentialsProvider(sessionCredentials))
         .build();
   }
@@ -228,8 +225,8 @@ public class AwsUtils {
   }
 
   public static boolean checkFolderExistence(
-      Credentials credentials, String bucketName, String folder) {
-    AmazonS3 s3 = getS3Session(credentials);
+      Credentials credentials, Regions region, String bucketName, String folder) {
+    AmazonS3 s3 = getS3Session(credentials, region);
     String prefix = String.format("%s/", folder);
 
     ListObjectsV2Request request =
@@ -243,15 +240,17 @@ public class AwsUtils {
     return result.getKeyCount() > 0;
   }
 
-  public static void createFolder(Credentials credentials, String bucketName, String folder) {
+  public static void createFolder(
+      Credentials credentials, Regions region, String bucketName, String folder) {
     // Creating a "folder" requires writing an empty object ending with the delimiter ('/').
-    AmazonS3 s3 = getS3Session(credentials);
+    AmazonS3 s3 = getS3Session(credentials, region);
     String folderKey = String.format("%s/", folder);
     s3.putObject(bucketName, folderKey, "");
   }
 
-  public static void undoCreateFolder(Credentials credentials, String bucketName, String folder) {
-    AmazonS3 s3 = getS3Session(credentials);
+  public static void undoCreateFolder(
+      Credentials credentials, Regions region, String bucketName, String folder) {
+    AmazonS3 s3 = getS3Session(credentials, region);
     String folderKey = String.format("%s/", folder);
     DeleteObjectRequest deleteObjectRequest = new DeleteObjectRequest(bucketName, folderKey);
     s3.deleteObject(deleteObjectRequest);
@@ -350,9 +349,7 @@ public class AwsUtils {
         sageMaker.createPresignedNotebookInstanceUrl(request);
 
     try {
-      return new URIBuilder(result.getAuthorizedUrl())
-              .addParameter("view", view)
-              .build().toURL();
+      return new URIBuilder(result.getAuthorizedUrl()).addParameter("view", view).build().toURL();
 
     } catch (Exception e) {
       throw new ApiException("Failed to get URL.", e);

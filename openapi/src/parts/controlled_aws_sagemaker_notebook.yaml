@@ -100,8 +100,8 @@ paths:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
       - $ref: '#/components/parameters/ResourceId'
-      - $ref: '#/components/parameters/AwsSageMakerProxyUrlDuration'
-      - $ref: '#/components/parameters/AwsSageMakerProxyUrlView'
+      - $ref: '#/components/parameters/AwsSageMakerProxyUrlDurationParameter'
+      - $ref: '#/components/parameters/AwsSageMakerProxyUrlViewParameter'
     get:
       summary: Get a proxy URL for direct access to the AWS SageMaker Notebook
       operationId: getAwsSageMakerNotebookProxyUrl
@@ -117,7 +117,7 @@ paths:
           $ref: '#/components/responses/ServerError'
 components:
   parameters:
-    AwsSageMakerProxyUrlDuration:
+    AwsSageMakerProxyUrlDurationParameter:
       name: duration
       in: query
       description: Duration for console link
@@ -127,17 +127,16 @@ components:
         maximum: 43200
         default: 43200
 
-    AwsSageMakerProxyUrlView:
+    AwsSageMakerProxyUrlViewParameter:
       name: view
       in: query
       description: Parameters for getting a Notebook Proxy URL
       required: true
       schema:
-        type: string
-        enum: ['JUPYTER', 'JUPYTERLAB']
-        default: 'JUPYTERLAB'
+        $ref: '#/components/schemas/AwsSageMakerProxyUrlView'
 
   schemas:
+
     CreatedControlledAwsSageMakerNotebookResult:
       type: object
       properties:
@@ -175,6 +174,11 @@ components:
           description: A valid instance type per https://docs.aws.amazon.com/general/latest/gr/sagemaker.html
           type: string
           default: "ml.t2.medium"
+
+    AwsSageMakerProxyUrlView:
+      type: string
+      enum: [ 'JUPYTER', 'JUPYTERLAB' ]
+      default: 'JUPYTERLAB'
 
   responses:
     CreatedControlledAwsSageMakerNotebookResponse:

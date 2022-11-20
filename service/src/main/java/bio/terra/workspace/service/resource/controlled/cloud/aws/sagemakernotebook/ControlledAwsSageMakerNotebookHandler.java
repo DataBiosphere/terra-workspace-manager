@@ -28,6 +28,7 @@ public class ControlledAwsSageMakerNotebookHandler implements WsmResourceHandler
 
     return ControlledAwsSageMakerNotebookResource.builder()
         .instanceId(attributes.getInstanceId())
+        .region(attributes.getRegion())
         .common(new ControlledResourceFields(dbResource))
         .build();
   }

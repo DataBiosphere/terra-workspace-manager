@@ -8,6 +8,7 @@ import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.common.utils.MultiCloudUtils;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
+import com.amazonaws.regions.Regions;
 import com.amazonaws.services.securitytoken.model.Credentials;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +33,11 @@ public class CreateAwsBucketStep implements Step {
     final AwsCloudContext awsCloudContext = AwsCloudContext.deserialize(awsCloudContextString);
     final Credentials awsCredentials = MultiCloudUtils.assumeAwsServiceRoleFromGcp(awsCloudContext);
 
-    AwsUtils.createFolder(awsCredentials, resource.getS3BucketName(), resource.getPrefix());
+    AwsUtils.createFolder(
+        awsCredentials,
+        Regions.fromName(resource.getRegion()),
+        resource.getS3BucketName(),
+        resource.getPrefix());
     return StepResult.getStepResultSuccess();
   }
 
@@ -46,7 +51,11 @@ public class CreateAwsBucketStep implements Step {
     final AwsCloudContext awsCloudContext = AwsCloudContext.deserialize(awsCloudContextString);
     final Credentials awsCredentials = MultiCloudUtils.assumeAwsServiceRoleFromGcp(awsCloudContext);
 
-    AwsUtils.undoCreateFolder(awsCredentials, resource.getS3BucketName(), resource.getPrefix());
+    AwsUtils.undoCreateFolder(
+        awsCredentials,
+        Regions.fromName(resource.getRegion()),
+        resource.getS3BucketName(),
+        resource.getPrefix());
     return StepResult.getStepResultSuccess();
   }
 }

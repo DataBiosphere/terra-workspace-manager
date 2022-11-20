@@ -8,6 +8,9 @@ components:
         instanceId:
           description: ID of the created SageMaker notebook instance.
           type: string
+        region:
+          description: Region in which the notebook was created
+          type: string
 
     AwsSageMakerNotebookResource:
       type: object

@@ -15,6 +15,7 @@ import bio.terra.workspace.generated.model.ApiAwsConsoleLink;
 import bio.terra.workspace.generated.model.ApiAwsCredential;
 import bio.terra.workspace.generated.model.ApiAwsCredentialAccessScope;
 import bio.terra.workspace.generated.model.ApiAwsSageMakerNotebookResource;
+import bio.terra.workspace.generated.model.ApiAwsSageMakerProxyUrlView;
 import bio.terra.workspace.generated.model.ApiCreateControlledAwsBucketRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAwsSageMakerNotebookRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedControlledAwsBucket;
@@ -129,6 +130,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
             .common(commonFields)
             .s3BucketName(s3BucketName)
             .prefix(AwsUtils.generateUniquePrefix())
+            .region(creationParameters.getLocation())
             .build();
 
     final ControlledAwsBucketResource createdAwsBucket =
@@ -207,7 +209,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
               .setScheme("https")
               .setHost("s3.console.aws.amazon.com")
               .setPath(String.format("s3/buckets/%s", resource.getS3BucketName()))
-              .setParameter("region", "us-east-1")
+              .setParameter("region", resource.getRegion())
               .setParameter("prefix", String.format("%s/", resource.getPrefix()))
               .build();
 
@@ -273,6 +275,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
         ControlledAwsSageMakerNotebookResource.builder()
             .common(commonFields)
             .instanceId(body.getAwsSageMakerNotebook().getInstanceId())
+            .region(body.getAwsSageMakerNotebook().getLocation())
             .build();
 
     String jobId =
@@ -355,16 +358,15 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     Credentials awsCredentials =
         MultiCloudUtils.assumeAwsUserRoleFromGcp(awsCloudContext, getSamUser(), tags);
 
-    final String region = "us-east-1";
     URL destinationUrl;
 
     try {
       URI uri =
           new URIBuilder()
               .setScheme("https")
-              .setHost(String.format("%s.console.aws.amazon.com", region))
+              .setHost(String.format("%s.console.aws.amazon.com", resource.getRegion()))
               .setPath("sagemaker/home")
-              .setParameter("region", region)
+              .setParameter("region", resource.getRegion())
               .setFragment(String.format("/notebook-instances/%s", resource.getInstanceId()))
               .build();
 
@@ -412,7 +414,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
 
   @Override
   public ResponseEntity<ApiAwsConsoleLink> getAwsSageMakerNotebookProxyUrl(
-      UUID workspaceUuid, UUID resourceId, String view, Integer duration) {
+      UUID workspaceUuid, UUID resourceId, ApiAwsSageMakerProxyUrlView view, Integer duration) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledAwsSageMakerNotebookResource resource =
         controlledResourceMetadataManager
@@ -435,8 +437,11 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
 
     URL url =
         AwsUtils.getSageMakerNotebookProxyUrl(
-            awsCredentials, Regions.US_EAST_1, resource.getInstanceId(), duration,
-                view.equals("JUPYTERLAB") ? "lab" : "classic");
+            awsCredentials,
+            Regions.fromName(resource.getRegion()),
+            resource.getInstanceId(),
+            duration,
+            view.equals(ApiAwsSageMakerProxyUrlView.JUPYTERLAB) ? "lab" : "classic");
     return new ResponseEntity<>(new ApiAwsConsoleLink().url(url.toString()), HttpStatus.OK);
   }
 }
