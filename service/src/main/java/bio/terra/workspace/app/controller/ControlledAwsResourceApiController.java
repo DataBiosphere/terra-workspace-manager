@@ -328,6 +328,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
                 resourceId,
                 SamConstants.SamControlledResourceActions.READ_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_AWS_SAGEMAKER_NOTEBOOK);
+
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
@@ -407,5 +408,35 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
             .sessionToken(awsCredentials.getSessionToken())
             .expiration(awsCredentials.getExpiration().toInstant().atOffset(ZoneOffset.UTC)),
         HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiAwsConsoleLink> getAwsSageMakerNotebookProxyUrl(
+      UUID workspaceUuid, UUID resourceId, String view, Integer duration) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ControlledAwsSageMakerNotebookResource resource =
+        controlledResourceMetadataManager
+            .validateControlledResourceAndAction(
+                userRequest,
+                workspaceUuid,
+                resourceId,
+                SamConstants.SamControlledResourceActions.READ_ACTION)
+            .castByEnum(WsmResourceType.CONTROLLED_AWS_SAGEMAKER_NOTEBOOK);
+
+    AwsCloudContext awsCloudContext =
+        awsCloudContextService.getRequiredAwsCloudContext(workspaceUuid);
+
+    Collection<Tag> tags = new HashSet<>();
+    AwsUtils.addUserTags(tags, getSamUser());
+    AwsUtils.addWorkspaceTags(tags, workspaceUuid);
+
+    Credentials awsCredentials =
+        MultiCloudUtils.assumeAwsUserRoleFromGcp(awsCloudContext, getSamUser(), tags);
+
+    URL url =
+        AwsUtils.getSageMakerNotebookProxyUrl(
+            awsCredentials, Regions.US_EAST_1, resource.getInstanceId(), duration,
+                view.equals("JUPYTERLAB") ? "lab" : "classic");
+    return new ResponseEntity<>(new ApiAwsConsoleLink().url(url.toString()), HttpStatus.OK);
   }
 }

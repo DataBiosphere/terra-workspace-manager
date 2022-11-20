@@ -35,7 +35,7 @@ public class WaitForAwsSageMakerNotebookInService implements Step {
     Regions region = Regions.fromName(creationParameters.getLocation());
 
     AwsUtils.waitForSageMakerNotebookInService(
-        awsCloudContext, awsCredentials, region, creationParameters.getInstanceId());
+        awsCredentials, region, creationParameters.getInstanceId());
 
     return StepResult.getStepResultSuccess();
   }

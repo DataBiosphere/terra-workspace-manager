@@ -96,20 +96,48 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/workspaces/v1/{workspaceId}/resources/controlled/aws/sagemaker-notebooks/{resourceId}/getProxyUrl:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+      - $ref: '#/components/parameters/AwsSageMakerProxyUrlDuration'
+      - $ref: '#/components/parameters/AwsSageMakerProxyUrlView'
+    get:
+      summary: Get a proxy URL for direct access to the AWS SageMaker Notebook
+      operationId: getAwsSageMakerNotebookProxyUrl
+      tags: [ ControlledAwsResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/GetControlledAwsSageMakerNotebookProxyUrlResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
 components:
-  schemas:
-#    CreatedControlledAwsSageMakerNotebook:
-#      description: Response Payload for requesting a new controlled SageMaker Notebook.
-#      type: object
-#      required: [resourceId, awsSageMakerNotebook]
-#      properties:
-#        resourceId:
-#          description: UUID of a newly-created resource.
-#          type: string
-#          format: uuid
-#        awsSageMakerNotebook:
-#          $ref: '#/components/schemas/AwsSageMakerNotebookResource'
+  parameters:
+    AwsSageMakerProxyUrlDuration:
+      name: duration
+      in: query
+      description: Duration for console link
+      schema:
+        type: integer
+        minimum: 1800
+        maximum: 43200
+        default: 43200
 
+    AwsSageMakerProxyUrlView:
+      name: view
+      in: query
+      description: Parameters for getting a Notebook Proxy URL
+      required: true
+      schema:
+        type: string
+        enum: ['JUPYTER', 'JUPYTERLAB']
+        default: 'JUPYTERLAB'
+
+  schemas:
     CreatedControlledAwsSageMakerNotebookResult:
       type: object
       properties:
@@ -176,3 +204,10 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/AwsCredential'
+
+    GetControlledAwsSageMakerNotebookProxyUrlResponse:
+      description: Response to get AWS SageMaker Notebook Proxy URL
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AwsConsoleLink'

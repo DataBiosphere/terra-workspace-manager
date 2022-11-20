@@ -17,6 +17,8 @@ import com.amazonaws.services.s3.model.ListObjectsV2Result;
 import com.amazonaws.services.sagemaker.AmazonSageMaker;
 import com.amazonaws.services.sagemaker.AmazonSageMakerClientBuilder;
 import com.amazonaws.services.sagemaker.model.CreateNotebookInstanceRequest;
+import com.amazonaws.services.sagemaker.model.CreatePresignedNotebookInstanceUrlRequest;
+import com.amazonaws.services.sagemaker.model.CreatePresignedNotebookInstanceUrlResult;
 import com.amazonaws.services.sagemaker.model.DescribeNotebookInstanceRequest;
 import com.amazonaws.services.sagemaker.model.DescribeNotebookInstanceResult;
 import com.amazonaws.services.sagemaker.model.InstanceType;
@@ -46,6 +48,8 @@ import org.apache.http.client.utils.URIBuilder;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.util.UriBuilder;
+import org.springframework.web.util.UriComponentsBuilder;
 
 public class AwsUtils {
   private static final Logger logger = LoggerFactory.getLogger(AwsUtils.class);
@@ -304,10 +308,7 @@ public class AwsUtils {
   }
 
   public static void waitForSageMakerNotebookInService(
-      AwsCloudContext awsCloudContext,
-      Credentials credentials,
-      Regions region,
-      String notebookName) {
+      Credentials credentials, Regions region, String notebookName) {
     AmazonSageMaker sageMaker = getSagemakerSession(credentials, region);
     DescribeNotebookInstanceRequest describeNotebookInstanceRequest =
         new DescribeNotebookInstanceRequest().withNotebookInstanceName(notebookName);
@@ -333,6 +334,28 @@ public class AwsUtils {
       } catch (InterruptedException e) {
         // Don't care...
       }
+    }
+  }
+
+  public static URL getSageMakerNotebookProxyUrl(
+      Credentials credentials, Regions region, String notebookName, Integer duration, String view) {
+    AmazonSageMaker sageMaker = getSagemakerSession(credentials, region);
+
+    CreatePresignedNotebookInstanceUrlRequest request =
+        new CreatePresignedNotebookInstanceUrlRequest()
+            .withNotebookInstanceName(notebookName)
+            .withSessionExpirationDurationInSeconds(duration);
+
+    CreatePresignedNotebookInstanceUrlResult result =
+        sageMaker.createPresignedNotebookInstanceUrl(request);
+
+    try {
+      return new URIBuilder(result.getAuthorizedUrl())
+              .addParameter("view", view)
+              .build().toURL();
+
+    } catch (Exception e) {
+      throw new ApiException("Failed to get URL.", e);
     }
   }
 }
