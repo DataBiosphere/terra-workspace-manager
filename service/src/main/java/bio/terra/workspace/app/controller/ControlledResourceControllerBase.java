@@ -15,7 +15,6 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
-import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 
 /**
  * Super class for controllers containing common code. The code in here requires the @Autowired
@@ -43,9 +42,10 @@ public class ControlledResourceControllerBase extends ControllerBase {
     PrivateUserRole privateUserRole =
         computePrivateUserRole(workspaceUuid, apiCommonFields, userRequest);
 
-    UserStatusInfo userStatusInfo =
+    var userEmail =
         SamRethrow.onInterrupted(
-            () -> getSamService().getUserStatusInfo(userRequest), "Get user status info from SAM");
+            () -> getSamService().getUserEmailFromSam(userRequest),
+            "Get user status info from SAM");
 
     return ControlledResourceFields.builder()
         .workspaceUuid(workspaceUuid)
@@ -63,7 +63,7 @@ public class ControlledResourceControllerBase extends ControllerBase {
         .managedBy(managedBy)
         .applicationId(controlledResourceService.getAssociatedApp(managedBy, userRequest))
         .properties(PropertiesUtils.convertApiPropertyToMap(apiCommonFields.getProperties()))
-        .createdByEmail(userStatusInfo.getUserEmail())
+        .createdByEmail(userEmail)
         .build();
   }
 }

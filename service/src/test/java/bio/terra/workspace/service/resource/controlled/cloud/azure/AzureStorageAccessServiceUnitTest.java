@@ -94,7 +94,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
         /*resourceLineage=*/ null,
         /*properties*/ Map.of(),
         "foo@gmail.com",
-        /*createdDate*/null);
+        /*createdDate*/ null);
   }
 
   private ControlledAzureStorageContainerResource buildStorageContainerResource(
@@ -118,7 +118,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
         /*resourceLineage=*/ null,
         /*properties*/ Map.of(),
         "foo@gmail.com",
-        /*createdDate*/null);
+        /*createdDate*/ null);
   }
 
   private void assertValidToken(

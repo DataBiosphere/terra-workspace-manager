@@ -71,7 +71,9 @@ class WorkspaceDaoTest extends BaseUnitTest {
 
   @Test
   void verifyCreatedWorkspaceExists() {
-    workspaceDao.createWorkspace(defaultWorkspace().toBuilder().spendProfileId(spendProfileId).build(), /* applicationIds */ null);
+    workspaceDao.createWorkspace(
+        defaultWorkspace().toBuilder().spendProfileId(spendProfileId).build(), /* applicationIds */
+        null);
 
     MapSqlParameterSource params =
         new MapSqlParameterSource().addValue("id", workspaceUuid.toString());
@@ -170,11 +172,10 @@ class WorkspaceDaoTest extends BaseUnitTest {
   @Test
   void offsetSkipsWorkspaceInList() {
     Workspace firstWorkspace = defaultWorkspace();
-    workspaceDao.createWorkspace(firstWorkspace,  /* applicationIds= */ null);
+    workspaceDao.createWorkspace(firstWorkspace, /* applicationIds= */ null);
     UUID uuid = UUID.randomUUID();
-    Workspace secondWorkspace =
-        defaultWorkspace(uuid);
-    workspaceDao.createWorkspace(secondWorkspace,  /* applicationIds= */ null);
+    Workspace secondWorkspace = defaultWorkspace(uuid);
+    workspaceDao.createWorkspace(secondWorkspace, /* applicationIds= */ null);
     List<Workspace> workspaceList =
         workspaceDao.getWorkspacesMatchingList(
             ImmutableSet.of(firstWorkspace.getWorkspaceId(), secondWorkspace.getWorkspaceId()),
@@ -190,10 +191,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
     workspaceDao.createWorkspace(firstWorkspace, /* applicationIds= */ null);
     UUID uuid = UUID.randomUUID();
     Workspace secondWorkspace =
-        defaultWorkspace().toBuilder()
-            .workspaceId(uuid)
-            .userFacingId(uuid.toString())
-            .build();
+        defaultWorkspace().toBuilder().workspaceId(uuid).userFacingId(uuid.toString()).build();
     workspaceDao.createWorkspace(secondWorkspace, /* applicationIds= */ null);
     List<Workspace> workspaceList =
         workspaceDao.getWorkspacesMatchingList(
@@ -214,11 +212,8 @@ class WorkspaceDaoTest extends BaseUnitTest {
           }
         };
 
-    Workspace initalWorkspace =
-        defaultWorkspace().toBuilder()
-            .properties(propertyGenerate)
-            .build();
-    workspaceDao.createWorkspace(initalWorkspace,  /* applicationIds= */ null);
+    Workspace initalWorkspace = defaultWorkspace().toBuilder().properties(propertyGenerate).build();
+    workspaceDao.createWorkspace(initalWorkspace, /* applicationIds= */ null);
 
     Map<String, String> propertyUpdate = Map.of("foo", "updateBar", "tal", "lass");
     workspaceDao.updateWorkspaceProperties(workspaceUuid, propertyUpdate);
@@ -238,7 +233,8 @@ class WorkspaceDaoTest extends BaseUnitTest {
       mcWorkspaceId = UUID.randomUUID();
       mcWorkspace =
           defaultWorkspace(mcWorkspaceId).toBuilder()
-              .workspaceStage(WorkspaceStage.MC_WORKSPACE).build();
+              .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+              .build();
       workspaceDao.createWorkspace(mcWorkspace, /* applicationIds= */ null);
     }
 
@@ -280,11 +276,8 @@ class WorkspaceDaoTest extends BaseUnitTest {
   void deleteWorkspaceProperties() {
     Map<String, String> propertyGenerate = Map.of("foo", "bar", "xyz", "pqn");
 
-    Workspace initalWorkspace =
-        defaultWorkspace().toBuilder()
-            .properties(propertyGenerate)
-            .build();
-    workspaceDao.createWorkspace(initalWorkspace,/* applicationIds= */ null);
+    Workspace initalWorkspace = defaultWorkspace().toBuilder().properties(propertyGenerate).build();
+    workspaceDao.createWorkspace(initalWorkspace, /* applicationIds= */ null);
 
     List<String> propertyUpdate = new ArrayList<>(Arrays.asList("foo", "foo1"));
     workspaceDao.deleteWorkspaceProperties(workspaceUuid, propertyUpdate);
@@ -299,7 +292,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
 
     @BeforeEach
     void setUp() {
-      workspaceDao.createWorkspace(defaultWorkspace(),/* applicationIds= */ null);
+      workspaceDao.createWorkspace(defaultWorkspace(), /* applicationIds= */ null);
     }
 
     @Test

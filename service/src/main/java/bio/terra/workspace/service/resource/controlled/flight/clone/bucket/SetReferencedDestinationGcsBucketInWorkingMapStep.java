@@ -7,6 +7,8 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamRethrow;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
@@ -23,16 +25,19 @@ import java.util.UUID;
  */
 public class SetReferencedDestinationGcsBucketInWorkingMapStep implements Step {
 
+  private final SamService samService;
   private final AuthenticatedUserRequest userRequest;
   private final ControlledGcsBucketResource sourceBucket;
   private final ReferencedResourceService referencedResourceService;
   private final CloningInstructions resolvedCloningInstructions;
 
   public SetReferencedDestinationGcsBucketInWorkingMapStep(
+      SamService samService,
       AuthenticatedUserRequest userRequest,
       ControlledGcsBucketResource sourceBucket,
       ReferencedResourceService referencedResourceService,
       CloningInstructions resolvedCloningInstructions) {
+    this.samService = samService;
     this.userRequest = userRequest;
     this.sourceBucket = sourceBucket;
     this.referencedResourceService = referencedResourceService;
@@ -70,6 +75,9 @@ public class SetReferencedDestinationGcsBucketInWorkingMapStep implements Step {
     UUID destinationFolderId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_FOLDER_ID, UUID.class);
 
+    var userEmail =
+        SamRethrow.onInterrupted(
+            () -> samService.getUserEmailFromSam(userRequest), "Get user status info from SAM");
     ReferencedGcsBucketResource destinationBucketResource =
         sourceBucket
             .buildReferencedClone(
@@ -77,7 +85,8 @@ public class SetReferencedDestinationGcsBucketInWorkingMapStep implements Step {
                 destinationResourceId,
                 destinationFolderId,
                 resourceName,
-                description)
+                description,
+                userEmail)
             .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_BUCKET);
 
     workingMap.put(

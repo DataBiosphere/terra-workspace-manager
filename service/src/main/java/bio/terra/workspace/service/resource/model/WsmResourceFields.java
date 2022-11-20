@@ -110,7 +110,6 @@ public class WsmResourceFields {
     return createdDate;
   }
 
-
   public static class Builder<T extends Builder<T>> {
     private UUID workspaceUuid;
     private UUID resourceId;

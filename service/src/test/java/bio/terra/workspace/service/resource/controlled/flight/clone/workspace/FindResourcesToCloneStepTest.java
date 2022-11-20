@@ -60,7 +60,7 @@ public class FindResourcesToCloneStepTest extends BaseUnitTest {
             /*resourceLineage=*/ null,
             /*properties*/ Map.of(),
             "foo@gmail.com",
-            /*createdDate*/null);
+            /*createdDate*/ null);
 
     findResourcesToCloneStep = new FindResourcesToCloneStep(mockResourceDao);
     doReturn(mockStairway).when(mockFlightContext).getStairway();

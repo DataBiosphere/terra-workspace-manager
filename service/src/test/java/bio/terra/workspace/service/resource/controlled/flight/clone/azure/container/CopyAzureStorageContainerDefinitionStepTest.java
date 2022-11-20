@@ -108,9 +108,8 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseUnitTest {
 
     var step =
         new CopyAzureStorageContainerDefinitionStep(
+            mockSamService(),
             testUser,
-            resourceDao,
-            lzApiDispatch,
             sourceContainer,
             controlledResourceService,
             CloningInstructions.COPY_DEFINITION);
@@ -139,9 +138,8 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseUnitTest {
 
     var step =
         new CopyAzureStorageContainerDefinitionStep(
+            mockSamService(),
             testUser,
-            resourceDao,
-            lzApiDispatch,
             null,
             controlledResourceService,
             CloningInstructions.COPY_DEFINITION);

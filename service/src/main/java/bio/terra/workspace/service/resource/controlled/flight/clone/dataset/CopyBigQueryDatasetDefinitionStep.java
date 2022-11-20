@@ -12,6 +12,8 @@ import bio.terra.workspace.common.utils.IamRoleUtils;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpBigQueryDataset;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamRethrow;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
@@ -35,6 +37,7 @@ import org.springframework.http.HttpStatus;
  */
 public class CopyBigQueryDatasetDefinitionStep implements Step {
 
+  private final SamService samService;
   private final ControlledBigQueryDatasetResource sourceDataset;
   private final ControlledResourceService controlledResourceService;
   private final AuthenticatedUserRequest userRequest;
@@ -42,11 +45,13 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
   private final CloningInstructions resolvedCloningInstructions;
 
   public CopyBigQueryDatasetDefinitionStep(
+      SamService samService,
       ControlledBigQueryDatasetResource sourceDataset,
       ControlledResourceService controlledResourceService,
       AuthenticatedUserRequest userRequest,
       GcpCloudContextService gcpCloudContextService,
       CloningInstructions resolvedCloningInstructions) {
+    this.samService = samService;
     this.sourceDataset = sourceDataset;
     this.controlledResourceService = controlledResourceService;
     this.userRequest = userRequest;
@@ -92,6 +97,9 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
         inputParameters.get(ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.class);
     UUID destinationFolderId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_FOLDER_ID, UUID.class);
+    var userEmail =
+        SamRethrow.onInterrupted(
+            () -> samService.getUserEmailFromSam(userRequest), "Get user status info from SAM");
     ControlledBigQueryDatasetResource destinationResource =
         buildDestinationControlledBigQueryDataset(
             sourceDataset,
@@ -101,7 +109,8 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
             resourceName,
             description,
             datasetName,
-            destinationProjectId);
+            destinationProjectId,
+            userEmail);
 
     var creationParameters =
         new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetName).location(location);

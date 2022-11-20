@@ -163,7 +163,8 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
   public void createWorkspace_validatesFields() throws Exception {
     ApiCreatedWorkspace workspace = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
 
-    ApiWorkspaceDescription getWorkspace = mockMvcUtils.getWorkspace(USER_REQUEST, workspace.getId());
+    ApiWorkspaceDescription getWorkspace =
+        mockMvcUtils.getWorkspace(USER_REQUEST, workspace.getId());
     assertEquals(WORKSPACE_NAME, getWorkspace.getDisplayName());
     assertEquals(getUserFacingId(workspace.getId()), getWorkspace.getUserFacingId());
     assertEquals(ApiWorkspaceStageModel.MC_WORKSPACE, getWorkspace.getStage());

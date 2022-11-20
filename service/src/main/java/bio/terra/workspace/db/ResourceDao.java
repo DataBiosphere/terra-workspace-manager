@@ -104,10 +104,10 @@ public class ResourceDao {
                                   new TypeReference<List<ResourceLineageEntry>>() {}))
                       .orElse(null))
               .properties(DbSerDes.jsonToProperties(rs.getString("properties")))
-              .createdDate(OffsetDateTime.ofInstant(
-                  rs.getTimestamp("created_date").toInstant(), ZoneId.of("UTC")))
-              .createdByEmail(
-                  rs.getString("created_by_email"));
+              .createdDate(
+                  OffsetDateTime.ofInstant(
+                      rs.getTimestamp("created_date").toInstant(), ZoneId.of("UTC")))
+              .createdByEmail(rs.getString("created_by_email"));
 
   private final NamedParameterJdbcTemplate jdbcTemplate;
 

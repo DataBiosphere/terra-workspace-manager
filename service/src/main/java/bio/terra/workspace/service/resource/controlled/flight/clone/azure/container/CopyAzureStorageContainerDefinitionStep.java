@@ -8,13 +8,13 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.IamRoleUtils;
 import bio.terra.workspace.common.utils.ManagementExceptionUtils;
-import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureStorageContainerCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamRethrow;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
@@ -32,18 +32,19 @@ public class CopyAzureStorageContainerDefinitionStep implements Step {
   private static final Logger logger =
       LoggerFactory.getLogger(CopyAzureStorageContainerDefinitionStep.class);
 
+  private final SamService samService;
   private final AuthenticatedUserRequest userRequest;
   private final ControlledAzureStorageContainerResource sourceContainer;
   private final ControlledResourceService controlledResourceService;
   private final CloningInstructions resolvedCloningInstructions;
 
   public CopyAzureStorageContainerDefinitionStep(
+      SamService samService,
       AuthenticatedUserRequest userRequest,
-      ResourceDao resourceDao,
-      LandingZoneApiDispatch landingZoneApiDispatch,
       ControlledAzureStorageContainerResource sourceContainer,
       ControlledResourceService controlledResourceService,
       CloningInstructions resolvedCloningInstructions) {
+    this.samService = samService;
     this.userRequest = userRequest;
     this.sourceContainer = sourceContainer;
     this.controlledResourceService = controlledResourceService;
@@ -86,7 +87,9 @@ public class CopyAzureStorageContainerDefinitionStep implements Step {
                 WorkspaceFlightMapKeys.ControlledResourceKeys
                     .DESTINATION_STORAGE_ACCOUNT_RESOURCE_ID,
                 UUID.class);
-
+    var userEmail =
+        SamRethrow.onInterrupted(
+            () -> samService.getUserEmailFromSam(userRequest), "Get user status info from SAM");
     ControlledAzureStorageContainerResource destinationContainerResource =
         buildDestinationControlledAzureContainer(
             sourceContainer,
@@ -95,7 +98,8 @@ public class CopyAzureStorageContainerDefinitionStep implements Step {
             destinationResourceId,
             destinationResourceName,
             description,
-            destinationContainerName);
+            destinationContainerName,
+            userEmail);
     ApiAzureStorageContainerCreationParameters destinationCreationParameters =
         new ApiAzureStorageContainerCreationParameters()
             .storageContainerName(destinationContainerName)

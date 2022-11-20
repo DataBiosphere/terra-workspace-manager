@@ -158,14 +158,16 @@ public class ControlledGcsBucketResource extends ControlledResource {
       UUID destinationResourceId,
       @Nullable UUID destinationFolderId,
       @Nullable String name,
-      @Nullable String description) {
+      @Nullable String description,
+      String createdByEmail) {
     WsmResourceFields wsmResourceFields =
         buildReferencedCloneResourceCommonFields(
             destinationWorkspaceUuid,
             destinationResourceId,
             destinationFolderId,
             name,
-            description);
+            description,
+            createdByEmail);
 
     ReferencedGcsBucketResource.Builder resultBuilder =
         ReferencedGcsBucketResource.builder()

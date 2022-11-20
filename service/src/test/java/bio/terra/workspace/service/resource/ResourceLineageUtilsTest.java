@@ -39,7 +39,7 @@ public class ResourceLineageUtilsTest extends BaseUnitTest {
             /*resourceLineage=*/ null,
             propertyMap,
             "foo@gmail.com",
-            /*createdDate*/null);
+            /*createdDate*/ null);
 
     assertEquals(new ArrayList<>(), resource.getResourceLineage());
   }
@@ -93,7 +93,7 @@ public class ResourceLineageUtilsTest extends BaseUnitTest {
             lineage,
             propertyMap,
             "foo@gmail.com",
-            /*createdDate*/null);
+            /*createdDate*/ null);
 
     assertEquals(lineage, resource.getResourceLineage());
   }

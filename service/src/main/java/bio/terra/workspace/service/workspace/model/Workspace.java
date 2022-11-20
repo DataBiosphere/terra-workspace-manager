@@ -190,7 +190,8 @@ public record Workspace(
         throw new MissingRequiredFieldsException("Workspace requires id and stage");
       }
       if (createdByEmail == null) {
-        throw new InternalServerErrorException("Something went wrong, createdByEmail and createdBySubjectId shouldn't be null");
+        throw new InternalServerErrorException(
+            "Something went wrong, createdByEmail and createdBySubjectId shouldn't be null");
       }
       return new Workspace(
           workspaceId,

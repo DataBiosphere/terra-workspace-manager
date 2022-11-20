@@ -54,7 +54,7 @@ public class CloneControlledAzureStorageContainerResourceFlightTest extends Base
             null,
             Map.of(),
             "foo@gmail.com",
-            /*createdDate*/null);
+            /*createdDate*/ null);
     FlightMap inputs = new FlightMap();
     inputs.put(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE, resource);
     inputs.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);

@@ -7,6 +7,8 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamRethrow;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
@@ -23,16 +25,19 @@ import java.util.UUID;
  */
 public class SetReferencedDestinationBigQueryDatasetInWorkingMapStep implements Step {
 
+  private final SamService samService;
   private final AuthenticatedUserRequest userRequest;
   private final ControlledBigQueryDatasetResource sourceDataset;
   private final ReferencedResourceService referencedResourceService;
   private final CloningInstructions resolvedCloningInstructions;
 
   public SetReferencedDestinationBigQueryDatasetInWorkingMapStep(
+      SamService samService,
       AuthenticatedUserRequest userRequest,
       ControlledBigQueryDatasetResource sourceDataset,
       ReferencedResourceService referencedResourceService,
       CloningInstructions resolvedCloningInstructions) {
+    this.samService = samService;
     this.userRequest = userRequest;
     this.sourceDataset = sourceDataset;
     this.referencedResourceService = referencedResourceService;
@@ -70,6 +75,9 @@ public class SetReferencedDestinationBigQueryDatasetInWorkingMapStep implements 
     UUID destinationFolderId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_FOLDER_ID, UUID.class);
 
+    var userEmail =
+        SamRethrow.onInterrupted(
+            () -> samService.getUserEmailFromSam(userRequest), "Get user status info from sam");
     ReferencedBigQueryDatasetResource destinationDatasetResource =
         sourceDataset
             .buildReferencedClone(
@@ -77,7 +85,8 @@ public class SetReferencedDestinationBigQueryDatasetInWorkingMapStep implements 
                 destinationResourceId,
                 destinationFolderId,
                 resourceName,
-                description)
+                description,
+                userEmail)
             .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
 
     workingMap.put(

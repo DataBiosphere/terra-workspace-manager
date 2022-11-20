@@ -11,9 +11,10 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.stairway.exception.StairwayExecutionException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamRethrow;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.resource.referenced.flight.create.CreateReferenceResourceFlight;
 import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
@@ -24,19 +25,19 @@ import javax.annotation.Nullable;
 
 public class LaunchCreateReferenceResourceFlightStep implements Step {
 
-  private final ReferencedResourceService referencedResourceService;
+  private final SamService samService;
   private final ReferencedResource resource;
   private final String subflightId;
   private final UUID destinationResourceId;
   private final UUID destinationFolderId;
 
   public LaunchCreateReferenceResourceFlightStep(
-      ReferencedResourceService referencedResourceService,
+      SamService samService,
       ReferencedResource resource,
       String subflightId,
       UUID destinationResourceId,
       @Nullable UUID destinationFolderId) {
-    this.referencedResourceService = referencedResourceService;
+    this.samService = samService;
     this.resource = resource;
     this.subflightId = subflightId;
     this.destinationResourceId = destinationResourceId;
@@ -62,6 +63,9 @@ public class LaunchCreateReferenceResourceFlightStep implements Step {
             .getInputParameters()
             .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
+    var userEmail =
+        SamRethrow.onInterrupted(
+            () -> samService.getUserEmailFromSam(userRequest), "Get user status info from sam");
     ReferencedResource destinationResource =
         resource
             .buildReferencedClone(
@@ -69,7 +73,8 @@ public class LaunchCreateReferenceResourceFlightStep implements Step {
                 destinationResourceId,
                 destinationFolderId,
                 resource.getName(),
-                resource.getDescription())
+                resource.getDescription(),
+                userEmail)
             .castToReferencedResource();
 
     // put the destination resource in the map, because it's not communicated

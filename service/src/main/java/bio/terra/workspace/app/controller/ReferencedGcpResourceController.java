@@ -55,14 +55,14 @@ import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 
 @Controller
-public class ReferencedGcpResourceController extends ControllerBase implements ReferencedGcpResourceApi {
+public class ReferencedGcpResourceController extends ControllerBase
+    implements ReferencedGcpResourceApi {
 
   private final ReferencedResourceService referenceResourceService;
   private final WorkspaceDao workspaceDao;
@@ -100,7 +100,8 @@ public class ReferencedGcpResourceController extends ControllerBase implements R
     // Construct a ReferenceGcsBucketResource object from the API input
     var resource =
         ReferencedGcsObjectResource.builder()
-            .wsmResourceFields(getWsmResourceFields(workspaceUuid, body.getMetadata(), getUserEmail(userRequest)))
+            .wsmResourceFields(
+                getWsmResourceFields(workspaceUuid, body.getMetadata(), getUserEmail(userRequest)))
             .bucketName(body.getFile().getBucketName())
             .objectName(body.getFile().getFileName())
             .build();
@@ -113,10 +114,8 @@ public class ReferencedGcpResourceController extends ControllerBase implements R
   }
 
   private String getUserEmail(AuthenticatedUserRequest userRequest) {
-    UserStatusInfo userStatusInfo =
-        SamRethrow.onInterrupted(
-            () -> getSamService().getUserStatusInfo(userRequest), "Get user status info from SAM");
-    return userStatusInfo.getUserEmail();
+    return SamRethrow.onInterrupted(
+        () -> getSamService().getUserEmailFromSam(userRequest), "Get user status info from SAM");
   }
 
   @Override
@@ -218,7 +217,8 @@ public class ReferencedGcpResourceController extends ControllerBase implements R
     // Construct a ReferenceGcsBucketResource object from the API input
     var resource =
         ReferencedGcsBucketResource.builder()
-            .wsmResourceFields(getWsmResourceFields(workspaceUuid, body.getMetadata(), getUserEmail(userRequest)))
+            .wsmResourceFields(
+                getWsmResourceFields(workspaceUuid, body.getMetadata(), getUserEmail(userRequest)))
             .bucketName(body.getBucket().getBucketName())
             .build();
 
@@ -319,7 +319,8 @@ public class ReferencedGcpResourceController extends ControllerBase implements R
         userRequest, workspaceUuid, SamWorkspaceAction.CREATE_REFERENCE);
     var resource =
         ReferencedBigQueryDataTableResource.builder()
-            .wsmResourceFields(getWsmResourceFields(workspaceUuid, body.getMetadata(), getUserEmail(userRequest)))
+            .wsmResourceFields(
+                getWsmResourceFields(workspaceUuid, body.getMetadata(), getUserEmail(userRequest)))
             .projectId(body.getDataTable().getProjectId())
             .datasetId(body.getDataTable().getDatasetId())
             .dataTableId(body.getDataTable().getDataTableId())
@@ -436,7 +437,8 @@ public class ReferencedGcpResourceController extends ControllerBase implements R
     // Construct a ReferenceBigQueryResource object from the API input
     var resource =
         ReferencedBigQueryDatasetResource.builder()
-            .wsmResourceFields(getWsmResourceFields(uuid, body.getMetadata(), getUserEmail(userRequest)))
+            .wsmResourceFields(
+                getWsmResourceFields(uuid, body.getMetadata(), getUserEmail(userRequest)))
             .projectId(body.getDataset().getProjectId())
             .datasetName(body.getDataset().getDatasetId())
             .build();
@@ -544,7 +546,8 @@ public class ReferencedGcpResourceController extends ControllerBase implements R
 
     var resource =
         ReferencedDataRepoSnapshotResource.builder()
-            .wsmResourceFields(getWsmResourceFields(uuid, body.getMetadata(), getUserEmail(userRequest)))
+            .wsmResourceFields(
+                getWsmResourceFields(uuid, body.getMetadata(), getUserEmail(userRequest)))
             .instanceName(body.getSnapshot().getInstanceName())
             .snapshotId(body.getSnapshot().getSnapshot())
             .build();
@@ -911,7 +914,8 @@ public class ReferencedGcpResourceController extends ControllerBase implements R
         userRequest, workspaceUuid, SamWorkspaceAction.CREATE_REFERENCE);
     ReferencedGitRepoResource resource =
         ReferencedGitRepoResource.builder()
-            .wsmResourceFields(getWsmResourceFields(workspaceUuid, body.getMetadata(), getUserEmail(userRequest)))
+            .wsmResourceFields(
+                getWsmResourceFields(workspaceUuid, body.getMetadata(), getUserEmail(userRequest)))
             .gitRepoUrl(body.getGitrepo().getGitRepoUrl())
             .build();
 
@@ -1068,7 +1072,8 @@ public class ReferencedGcpResourceController extends ControllerBase implements R
     // Construct a ReferencedTerraWorkspaceResource object from the API input
     ReferencedTerraWorkspaceResource resource =
         ReferencedTerraWorkspaceResource.builder()
-            .resourceCommonFields(getWsmResourceFields(workspaceUuid, body.getMetadata(), getUserEmail(userRequest)))
+            .resourceCommonFields(
+                getWsmResourceFields(workspaceUuid, body.getMetadata(), getUserEmail(userRequest)))
             .referencedWorkspaceId(referencedWorkspaceId)
             .build();
 

@@ -105,6 +105,7 @@ public class CopyGcsBucketDefinitionStepTest extends BaseUnitTestMockGcpCloudCon
 
     copyGcsBucketDefinitionStep =
         new CopyGcsBucketDefinitionStep(
+            mockSamService(),
             USER_REQUEST,
             SOURCE_BUCKET_RESOURCE,
             controlledResourceService,

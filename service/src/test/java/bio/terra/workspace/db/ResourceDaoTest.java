@@ -90,7 +90,7 @@ public class ResourceDaoTest extends BaseUnitTest {
         ControlledResourceFixtures.makeDefaultAiNotebookInstance().common(commonFields).build();
     resourceDao.createControlledResource(resource);
 
-    var getResource =resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId());
+    var getResource = resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId());
     assertEquals(resource, getResource);
     assertEquals(DEFAULT_USER_EMAIL, getResource.getCreatedByEmail());
     assertNotNull(getResource.getCreatedDate());

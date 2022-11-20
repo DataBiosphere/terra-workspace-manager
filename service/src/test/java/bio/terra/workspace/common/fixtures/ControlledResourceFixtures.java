@@ -314,7 +314,7 @@ public class ControlledResourceFixtures {
         /*resourceLineage=*/ null,
         Map.of(),
         "foo@gmail.com",
-        /*createdDate=*/null);
+        /*createdDate=*/ null);
   }
 
   public static ControlledAzureIpResource getAzureIp(String ipName, String region) {
@@ -335,7 +335,7 @@ public class ControlledResourceFixtures {
         /*resourceLineage=*/ null,
         /*properties=*/ Map.of(),
         "foo@gmail.com",
-        /*createdDate*/null);
+        /*createdDate*/ null);
   }
 
   public static ControlledAzureRelayNamespaceResource getAzureRelayNamespace(
@@ -356,7 +356,7 @@ public class ControlledResourceFixtures {
         /*resourceLineage=*/ null,
         /*properties=*/ Map.of(),
         "foo@gmail.com",
-        /*createdDate*/null);
+        /*createdDate*/ null);
   }
 
   public static ControlledAzureDiskResource getAzureDisk(String diskName, String region, int size) {
@@ -378,7 +378,7 @@ public class ControlledResourceFixtures {
         /*resourceLineage=*/ null,
         /*properties=*/ Map.of(),
         "foo@gmail.com",
-        /*createdDate*/null);
+        /*createdDate*/ null);
   }
 
   public static ControlledAzureNetworkResource getAzureNetwork(
@@ -403,7 +403,7 @@ public class ControlledResourceFixtures {
         /*resourceLineage=*/ null,
         /*properties=*/ Map.of(),
         "foo@gmail.com",
-        /*createdDate*/null);
+        /*createdDate*/ null);
   }
 
   public static ControlledAzureStorageResource getAzureStorage(
@@ -425,7 +425,7 @@ public class ControlledResourceFixtures {
         /*resourceLineage=*/ null,
         /*properties=*/ Map.of(),
         "foo@gmail.com",
-        /*createdDate*/null);
+        /*createdDate*/ null);
   }
 
   public static ControlledAzureStorageResource getAzureStorage(
@@ -520,7 +520,7 @@ public class ControlledResourceFixtures {
         /*resourceLineage=*/ null,
         /*properties=*/ Map.of(),
         "foo@gmail.com",
-        /*createdDate*/null);
+        /*createdDate*/ null);
   }
 
   private ControlledResourceFixtures() {}

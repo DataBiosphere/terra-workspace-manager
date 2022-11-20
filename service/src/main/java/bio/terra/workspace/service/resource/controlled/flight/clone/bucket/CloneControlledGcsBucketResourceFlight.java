@@ -104,45 +104,43 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
         // Destination bucket is referenced resource
         addStep(
             new SetReferencedDestinationGcsBucketInWorkingMapStep(
+                flightBeanBag.getSamService(),
                 userRequest,
                 sourceBucket,
                 flightBeanBag.getReferencedResourceService(),
                 resolvedCloningInstructions),
             RetryRules.shortExponential());
         addStep(
-            new CreateReferenceMetadataStep(flightBeanBag.getResourceDao(),
-                flightBeanBag.getSamService(), userRequest),
+            new CreateReferenceMetadataStep(flightBeanBag.getResourceDao()),
             RetryRules.shortDatabase());
         addStep(new SetReferencedDestinationGcsBucketResponseStep(), RetryRules.shortExponential());
         return;
-      } else {
-        // Destination bucket is controlled resource
-        addStep(
-            new CopyGcsBucketDefinitionStep(
-                userRequest,
-                sourceBucket,
-                flightBeanBag.getControlledResourceService(),
-                resolvedCloningInstructions));
+      }
+      // Destination bucket is controlled resource
+      addStep(
+          new CopyGcsBucketDefinitionStep(
+              flightBeanBag.getSamService(),
+              userRequest,
+              sourceBucket,
+              flightBeanBag.getControlledResourceService(),
+              resolvedCloningInstructions));
 
-        if (CloningInstructions.COPY_RESOURCE == resolvedCloningInstructions) {
-          addStep(
-              new SetBucketRolesStep(
-                  sourceBucket,
-                  flightBeanBag.getGcpCloudContextService(),
-                  flightBeanBag.getBucketCloneRolesService(),
-                  flightBeanBag.getStoragetransfer()),
-              cloudRetry);
-          addStep(
-              new CreateStorageTransferServiceJobStep(flightBeanBag.getStoragetransfer()),
-              cloudRetry);
-          addStep(
-              new CompleteTransferOperationStep(flightBeanBag.getStoragetransfer()), cloudRetry);
-          addStep(
-              new DeleteStorageTransferServiceJobStep(flightBeanBag.getStoragetransfer()),
-              cloudRetry);
-          addStep(
-              new RemoveBucketRolesStep(flightBeanBag.getBucketCloneRolesService()), cloudRetry);
-        }
+      if (CloningInstructions.COPY_RESOURCE == resolvedCloningInstructions) {
+        addStep(
+            new SetBucketRolesStep(
+                sourceBucket,
+                flightBeanBag.getGcpCloudContextService(),
+                flightBeanBag.getBucketCloneRolesService(),
+                flightBeanBag.getStoragetransfer()),
+            cloudRetry);
+        addStep(
+            new CreateStorageTransferServiceJobStep(flightBeanBag.getStoragetransfer()),
+            cloudRetry);
+        addStep(new CompleteTransferOperationStep(flightBeanBag.getStoragetransfer()), cloudRetry);
+        addStep(
+            new DeleteStorageTransferServiceJobStep(flightBeanBag.getStoragetransfer()),
+            cloudRetry);
+        addStep(new RemoveBucketRolesStep(flightBeanBag.getBucketCloneRolesService()), cloudRetry);
       }
     }
   }

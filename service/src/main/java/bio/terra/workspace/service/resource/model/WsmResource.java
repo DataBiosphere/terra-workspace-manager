@@ -268,7 +268,8 @@ public abstract class WsmResource {
         .resourceId(destinationResourceId)
         .resourceLineage(buildCloneResourceLineage())
         .cloningInstructions(cloningInstructions)
-        .properties(buildCloneProperties(destinationWorkspaceUuid, destinationFolderId));
+        .properties(buildCloneProperties(destinationWorkspaceUuid, destinationFolderId))
+        .createdByEmail(createdByEmail);
 
     // override name and description if provided
     if (name != null) {
@@ -345,7 +346,8 @@ public abstract class WsmResource {
         || getCloningInstructions() == null
         || getStewardshipType() == null
         || getResourceId() == null
-        || getProperties() == null) {
+        || getProperties() == null
+        || getCreatedByEmail() == null) {
       throw new MissingRequiredFieldException("Missing required field for WsmResource.");
     }
     ResourceValidationUtils.validateResourceName(getName());

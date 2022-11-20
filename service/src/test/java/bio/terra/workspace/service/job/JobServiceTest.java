@@ -216,7 +216,7 @@ class JobServiceTest extends BaseUnitTest {
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .description("Fake workspace")
             .build();
-    workspaceDao.createWorkspace(workspace,/* applicationIds= */ null);
+    workspaceDao.createWorkspace(workspace, /* applicationIds= */ null);
     return workspaceUuid;
   }
 

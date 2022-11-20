@@ -50,7 +50,7 @@ public class WorkspaceDao {
   /** SQL query for reading a workspace */
   private static final String WORKSPACE_SELECT_SQL =
       """
-          SELECT workspace_id, user_facing_id, display_name, description, spend_profile, properties, 
+          SELECT workspace_id, user_facing_id, display_name, description, spend_profile, properties,
           workspace_stage, created_by_email, created_date
           FROM workspace
       """;
@@ -71,8 +71,7 @@ public class WorkspaceDao {
               WorkspaceStage.valueOf(rs.getString("workspace_stage")),
               rs.getString("created_by_email"),
               OffsetDateTime.ofInstant(
-                  rs.getTimestamp("created_date").toInstant(), ZoneId.of("UTC"))
-          );
+                  rs.getTimestamp("created_date").toInstant(), ZoneId.of("UTC")));
   private final Logger logger = LoggerFactory.getLogger(WorkspaceDao.class);
   private final NamedParameterJdbcTemplate jdbcTemplate;
   private final ApplicationDao applicationDao;
@@ -93,8 +92,8 @@ public class WorkspaceDao {
   public UUID createWorkspace(Workspace workspace, @Nullable List<String> applicationIds) {
     final String sql =
         """
-            INSERT INTO workspace (workspace_id, user_facing_id, display_name, description, 
-            spend_profile, properties, workspace_stage, created_by_email) 
+            INSERT INTO workspace (workspace_id, user_facing_id, display_name, description,
+            spend_profile, properties, workspace_stage, created_by_email)
             values (:workspace_id, :user_facing_id, :display_name, :description, :spend_profile,
             cast(:properties AS jsonb), :workspace_stage, :created_by_email)
         """;
