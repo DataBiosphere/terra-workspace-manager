@@ -53,7 +53,8 @@ public class ReferencedResourceService {
   public ReferencedResource createReferenceResource(
       ReferencedResource resource, AuthenticatedUserRequest userRequest) {
     resourceDao.createReferencedResource(resource);
-    workspaceActivityLogService.writeActivity(userRequest, resource.getWorkspaceId(), OperationType.CREATE);
+    workspaceActivityLogService.writeActivity(
+        userRequest, resource.getWorkspaceId(), OperationType.CREATE);
     return getReferenceResource(resource.getWorkspaceId(), resource.getResourceId());
   }
 
@@ -61,7 +62,8 @@ public class ReferencedResourceService {
   public ReferencedResource createReferenceResourceForClone(
       ReferencedResource resource, AuthenticatedUserRequest userRequest) {
     resourceDao.createReferencedResource(resource);
-    workspaceActivityLogService.writeActivity(userRequest, resource.getWorkspaceId(), OperationType.CLONE);
+    workspaceActivityLogService.writeActivity(
+        userRequest, resource.getWorkspaceId(), OperationType.CLONE);
     return getReferenceResource(resource.getWorkspaceId(), resource.getResourceId());
   }
 
