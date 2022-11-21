@@ -998,6 +998,15 @@ public class MockMvcUtils {
             .snapshot(
                 new ApiDataRepoSnapshotAttributes().instanceName("terra").snapshot("polaroid"));
 
+    return createDataRepoSnapshotReference(userRequest, workspaceId, datarepoSnapshotRequest);
+  }
+
+  public ApiDataRepoSnapshotResource createDataRepoSnapshotReference(
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      ApiCreateDataRepoSnapshotReferenceRequestBody datarepoSnapshotRequest)
+      throws Exception {
+
     String serializedGetResponse =
         mockMvc
             .perform(
