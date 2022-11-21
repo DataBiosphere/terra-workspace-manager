@@ -2,6 +2,7 @@ package bio.terra.workspace.service.workspace.model;
 
 import bio.terra.workspace.app.configuration.external.AwsConfiguration;
 import bio.terra.workspace.db.DbSerDes;
+import bio.terra.workspace.generated.model.ApiAwsContext;
 import bio.terra.workspace.service.workspace.exceptions.InvalidSerializedVersionException;
 import com.amazonaws.arn.Arn;
 import com.amazonaws.regions.Regions;
@@ -14,11 +15,16 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 public class AwsCloudContext {
+  private final String landingZoneName;
   private final String accountNumber;
   private final Arn serviceRoleArn;
   private final String serviceRoleAudience;
   private final Arn userRoleArn;
   private final Map<Regions, String> regionToBucketNameMap;
+
+  public String getLandingZoneName() {
+    return landingZoneName;
+  }
 
   public String getAccountNumber() {
     return accountNumber;
@@ -46,6 +52,7 @@ public class AwsCloudContext {
 
     AwsCloudContext.Builder builder =
         AwsCloudContext.builder()
+            .landingZoneName(landingZoneConfiguration.getName())
             .accountNumber(landingZoneConfiguration.getAccountNumber())
             .serviceRoleArn(Arn.fromString(landingZoneConfiguration.getServiceRoleArn()))
             .serviceRoleAudience(serviceRoleAudience)
@@ -56,6 +63,12 @@ public class AwsCloudContext {
     }
 
     return builder.build();
+  }
+
+  public ApiAwsContext toApi() {
+    return new ApiAwsContext()
+            .landingZoneId(landingZoneName)
+            .accountNumber(accountNumber);
   }
 
   public String serialize() {
@@ -69,6 +82,7 @@ public class AwsCloudContext {
 
     Builder builder =
         builder()
+            .landingZoneName(dbContext.landingZoneName)
             .accountNumber(dbContext.accountNumber)
             .serviceRoleArn(Arn.fromString(dbContext.serviceRoleArn))
             .serviceRoleAudience(dbContext.serviceRoleAudience)
@@ -83,6 +97,7 @@ public class AwsCloudContext {
   }
 
   public static class Builder {
+    private String landingZoneName;
     private String accountNumber;
     private Arn serviceRoleArn;
     private String serviceRoleAudience;
@@ -95,6 +110,11 @@ public class AwsCloudContext {
 
     public AwsCloudContext build() {
       return new AwsCloudContext(this);
+    }
+
+    public Builder landingZoneName(String landingZoneName) {
+      this.landingZoneName = landingZoneName;
+      return this;
     }
 
     public Builder accountNumber(String accountNumber) {
@@ -128,6 +148,7 @@ public class AwsCloudContext {
   }
 
   private AwsCloudContext(Builder builder) {
+    this.landingZoneName = builder.landingZoneName;
     this.accountNumber = builder.accountNumber;
     this.serviceRoleArn = builder.serviceRoleArn;
     this.serviceRoleAudience = builder.serviceRoleAudience;
@@ -177,6 +198,7 @@ public class AwsCloudContext {
     /** Version marker to store in the db so that we can update the format later if we need to. */
     public long version;
 
+    public String landingZoneName;
     public String accountNumber;
     public String serviceRoleArn;
     public String serviceRoleAudience;
@@ -185,12 +207,14 @@ public class AwsCloudContext {
 
     public AwsCloudContextV1(
         @JsonProperty("version") long version,
+        @JsonProperty("landingZoneName") String landingZoneName,
         @JsonProperty("accountNumber") String accountNumber,
         @JsonProperty("serviceRoleArn") String serviceRoleArn,
         @JsonProperty("serviceRoleAudience") String serviceRoleAudience,
         @JsonProperty("userRoleArn") String userRoleArn,
         @JsonProperty("bucketList") List<AwsCloudContextBucketV1> bucketList) {
       this.version = version;
+      this.landingZoneName = landingZoneName;
       this.accountNumber = accountNumber;
       this.serviceRoleArn = serviceRoleArn;
       this.serviceRoleAudience = serviceRoleAudience;
@@ -200,6 +224,7 @@ public class AwsCloudContext {
 
     public AwsCloudContextV1(AwsCloudContext context) {
       this.version = AWS_CLOUD_CONTEXT_DB_VERSION | AWS_CLOUD_CONTEXT_DB_VERSION_MASK;
+      this.landingZoneName = context.landingZoneName.toString();
       this.accountNumber = context.accountNumber;
       this.serviceRoleArn = context.serviceRoleArn.toString();
       this.serviceRoleAudience = context.serviceRoleAudience;

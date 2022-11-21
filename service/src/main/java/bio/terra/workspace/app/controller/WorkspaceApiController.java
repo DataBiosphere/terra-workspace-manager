@@ -15,6 +15,7 @@ import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
+import bio.terra.workspace.generated.model.ApiAwsContext;
 import bio.terra.workspace.generated.model.ApiAzureContext;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceRequest;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceResult;
@@ -53,11 +54,13 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
+import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
+import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudContextHolder;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
@@ -65,6 +68,8 @@ import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import com.google.api.services.iam.v1.model.Aws;
+import com.google.protobuf.Api;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.time.OffsetDateTime;
 import java.util.Collections;
@@ -90,6 +95,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   private final JobService jobService;
   private final JobApiUtils jobApiUtils;
   private final SamService samService;
+  private final AwsCloudContextService awsCloudContextService;
   private final AzureCloudContextService azureCloudContextService;
   private final GcpCloudContextService gcpCloudContextService;
   private final PetSaService petSaService;
@@ -100,24 +106,25 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
   @Autowired
   public WorkspaceApiController(
-      WorkspaceService workspaceService,
-      JobService jobService,
-      JobApiUtils jobApiUtils,
-      SamService samService,
-      AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
-      HttpServletRequest request,
-      GcpCloudContextService gcpCloudContextService,
-      PetSaService petSaService,
-      AzureCloudContextService azureCloudContextService,
-      TpsApiDispatch tpsApiDispatch,
-      WorkspaceActivityLogDao workspaceActivityLogDao,
-      FeatureConfiguration featureConfiguration,
-      WorkspaceActivityLogService workspaceActivityLogService) {
+          WorkspaceService workspaceService,
+          JobService jobService,
+          JobApiUtils jobApiUtils,
+          SamService samService,
+          AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
+          HttpServletRequest request,
+          AwsCloudContextService awsCloudContextService, GcpCloudContextService gcpCloudContextService,
+          PetSaService petSaService,
+          AzureCloudContextService azureCloudContextService,
+          TpsApiDispatch tpsApiDispatch,
+          WorkspaceActivityLogDao workspaceActivityLogDao,
+          FeatureConfiguration featureConfiguration,
+          WorkspaceActivityLogService workspaceActivityLogService) {
     super(authenticatedUserRequestFactory, request, samService);
     this.workspaceService = workspaceService;
     this.jobService = jobService;
     this.jobApiUtils = jobApiUtils;
     this.samService = samService;
+    this.awsCloudContextService = awsCloudContextService;
     this.azureCloudContextService = azureCloudContextService;
     this.gcpCloudContextService = gcpCloudContextService;
     this.petSaService = petSaService;
@@ -242,6 +249,11 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .map(AzureCloudContext::toApi)
             .orElse(null);
 
+    ApiAwsContext awsContext = awsCloudContextService
+            .getAwsCloudContext(workspaceUuid)
+            .map(AwsCloudContext::toApi)
+            .orElse(null);
+
     List<ApiTpsPolicyInput> workspacePolicies = null;
     if (featureConfiguration.isTpsEnabled()) {
       // New workspaces will always be created with empty policies, but some workspaces predate
@@ -278,6 +290,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         .stage(workspace.getWorkspaceStage().toApiModel())
         .gcpContext(gcpContext)
         .azureContext(azureContext)
+        .awsContext(awsContext)
         .createdDate(
             createDetailsOptional
                 .map(ActivityLogChangeDetails::getChangeDate)
@@ -540,6 +553,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
     ApiGcpContext gcpContext = null;
     ApiAzureContext azureContext = null;
+    ApiAwsContext awsContext = null;
 
     if (jobResult.getJobReport().getStatus().equals(StatusEnum.SUCCEEDED)) {
       gcpContext =
@@ -556,13 +570,19 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
                           .subscriptionId(c.getAzureSubscriptionId())
                           .resourceGroupId(c.getAzureResourceGroupId()))
               .orElse(null);
+
+      awsContext =
+          Optional.ofNullable(jobResult.getResult().getAwsCloudContext())
+                  .map(c -> AwsCloudContext.deserialize(c).toApi())
+                  .orElse(null);
     }
 
     return new ApiCreateCloudContextResult()
         .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getApiErrorReport())
         .gcpContext(gcpContext)
-        .azureContext(azureContext);
+        .azureContext(azureContext)
+        .awsContext(awsContext);
   }
 
   @Override

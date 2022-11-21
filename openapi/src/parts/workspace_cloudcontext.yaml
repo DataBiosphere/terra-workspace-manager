@@ -137,6 +137,8 @@ components:
           $ref: '#/components/schemas/GcpContext'
         azureContext:
           $ref: '#/components/schemas/AzureContext'
+        awsContext:
+          $ref: '#/components/schemas/AwsContext'
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
 
