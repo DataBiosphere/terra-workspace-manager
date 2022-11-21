@@ -72,7 +72,6 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
                 .userEmail(USER_REQUEST.getEmail())
                 .userSubjectId(USER_REQUEST.getSubjectId()));
     workspaceUuid = createMcTestWorkspace();
-    referencedResource = null;
   }
 
   @AfterEach

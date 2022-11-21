@@ -44,7 +44,8 @@ public class CloneAllResourcesFlight extends Flight {
                 flightBeanBag.getResourceDao(),
                 resourceCloneInputs.getResource().castToReferencedResource(),
                 resourceCloneInputs.getDestinationResourceId(),
-                resourceCloneInputs.getDestinationFolderId()));
+                resourceCloneInputs.getDestinationFolderId()),
+            RetryRules.shortDatabase());
         break;
       case CONTROLLED:
         switch (resourceCloneInputs.getResource().getResourceType()) {

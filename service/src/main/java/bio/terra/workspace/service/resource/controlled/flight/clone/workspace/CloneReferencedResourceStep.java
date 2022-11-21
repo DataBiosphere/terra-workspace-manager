@@ -113,8 +113,6 @@ public class CloneReferencedResourceStep implements Step {
         .put(ControlledResourceKeys.RESOURCE_ID_TO_CLONE_RESULT, resourceIdToResult);
   }
 
-  // No need to undo here as entire workspace will be destroyed by earlier undo
-  // method.
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
     if (context
