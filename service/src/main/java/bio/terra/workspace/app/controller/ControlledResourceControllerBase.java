@@ -44,8 +44,7 @@ public class ControlledResourceControllerBase extends ControllerBase {
 
     var userEmail =
         SamRethrow.onInterrupted(
-            () -> getSamService().getUserEmailFromSam(userRequest),
-            "Get user status info from SAM");
+            () -> getSamService().getUserEmailFromSam(userRequest), "Get user email info from SAM");
 
     return ControlledResourceFields.builder()
         .workspaceUuid(workspaceUuid)

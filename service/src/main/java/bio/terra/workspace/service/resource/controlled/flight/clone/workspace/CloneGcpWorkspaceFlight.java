@@ -35,11 +35,9 @@ public class CloneGcpWorkspaceFlight extends Flight {
             WorkspaceFlightMapKeys.ControlledResourceKeys.SOURCE_WORKSPACE_ID, UUID.class);
     Workspace sourceWorkspace = flightBeanBag.getWorkspaceDao().getWorkspace(sourceWorkspaceId);
 
-<<<<<<< HEAD
-    addStep(new CloneAllFoldersStep(flightBeanBag.getSamService(), flightBeanBag.getFolderDao()));
-=======
-    addStep(new CloneAllFoldersStep(flightBeanBag.getFolderDao()), RetryRules.shortDatabase());
->>>>>>> main
+    addStep(
+        new CloneAllFoldersStep(flightBeanBag.getSamService(), flightBeanBag.getFolderDao()),
+        RetryRules.shortDatabase());
 
     addStep(new FindResourcesToCloneStep(flightBeanBag.getResourceDao()), cloudRetryRule);
 

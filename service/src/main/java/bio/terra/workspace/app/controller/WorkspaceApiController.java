@@ -629,7 +629,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
     var userEmail =
         SamRethrow.onInterrupted(
-            () -> samService.getUserEmailFromSam(petRequest), "Get user status info from SAM");
+            () -> samService.getUserEmailFromSam(petRequest), "Get user email info from SAM");
     // Construct the target workspace object from the inputs
     // Policies are cloned in the flight instead of here so that they get cleaned appropriately if
     // the flight fails.
