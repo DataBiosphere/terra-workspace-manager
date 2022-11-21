@@ -40,18 +40,17 @@ public class CloneAllResourcesFlight extends Flight {
     switch (resource.getStewardshipType()) {
       case REFERENCED:
         addStep(
+<<<<<<< HEAD
             new LaunchCreateReferenceResourceFlightStep(
                 flightBeanBag.getSamService(),
+=======
+            new CloneReferencedResourceStep(
+                flightBeanBag.getResourceDao(),
+>>>>>>> main
                 resourceCloneInputs.getResource().castToReferencedResource(),
-                resourceCloneInputs.getFlightId(),
                 resourceCloneInputs.getDestinationResourceId(),
-                resourceCloneInputs.getDestinationFolderId()));
-        addStep(
-            new AwaitCreateReferenceResourceFlightStep(
-                resourceCloneInputs.getResource().castToReferencedResource(),
-                resourceCloneInputs.getFlightId(),
-                flightBeanBag.getResourceDao()),
-            RetryRules.cloudLongRunning());
+                resourceCloneInputs.getDestinationFolderId()),
+            RetryRules.shortDatabase());
         break;
       case CONTROLLED:
         switch (resourceCloneInputs.getResource().getResourceType()) {

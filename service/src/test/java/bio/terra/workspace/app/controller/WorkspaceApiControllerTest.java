@@ -12,7 +12,7 @@ import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_PATH;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -29,13 +29,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import bio.terra.workspace.common.BaseUnitTestMockDataRepoService;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
+import bio.terra.workspace.generated.model.ApiCloneResourceResult;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceResult;
+import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
+import bio.terra.workspace.generated.model.ApiCreateDataRepoSnapshotReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
+import bio.terra.workspace.generated.model.ApiDataRepoSnapshotAttributes;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiProperties;
 import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiPropertyKeys;
+import bio.terra.workspace.generated.model.ApiReferenceResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiResourceCloneDetails;
 import bio.terra.workspace.generated.model.ApiTpsComponent;
 import bio.terra.workspace.generated.model.ApiTpsObjectType;
@@ -61,6 +66,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.junit.jupiter.api.BeforeEach;
@@ -296,6 +302,20 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
         mockMvcUtils.createDataRepoSnapshotReference(USER_REQUEST, sourceWorkspaceId);
     ApiDataRepoSnapshotResource snap2 =
         mockMvcUtils.createDataRepoSnapshotReference(USER_REQUEST, sourceWorkspaceId);
+    ApiDataRepoSnapshotResource snap3 =
+        mockMvcUtils.createDataRepoSnapshotReference(
+            USER_REQUEST,
+            sourceWorkspaceId,
+            new ApiCreateDataRepoSnapshotReferenceRequestBody()
+                .metadata(
+                    new ApiReferenceResourceCommonFields()
+                        .cloningInstructions(ApiCloningInstructionsEnum.NOTHING)
+                        .description("description")
+                        .name(RandomStringUtils.randomAlphabetic(10)))
+                .snapshot(
+                    new ApiDataRepoSnapshotAttributes()
+                        .instanceName("terra")
+                        .snapshot("polaroid")));
 
     // Clone the rawls workspace into a destination rawls workspace
     // This relies on the mocked Sam check
@@ -306,11 +326,24 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
             USER_REQUEST, sourceWorkspaceId, FAKE_SPEND_PROFILE, destinationWorkspaceId);
 
     List<ApiResourceCloneDetails> cloneDetails = cloneWorkspace.getWorkspace().getResources();
-    assertEquals(2, cloneDetails.size());
+    assertEquals(3, cloneDetails.size());
     List<UUID> cloneIdList =
         cloneDetails.stream().map(ApiResourceCloneDetails::getSourceResourceId).toList();
-    assertThat(cloneIdList, hasItem(snap1.getMetadata().getResourceId()));
-    assertThat(cloneIdList, hasItem(snap2.getMetadata().getResourceId()));
+    assertThat(
+        cloneIdList,
+        containsInAnyOrder(
+            snap1.getMetadata().getResourceId(),
+            snap2.getMetadata().getResourceId(),
+            snap3.getMetadata().getResourceId()));
+    for (var cloneDetail : cloneDetails) {
+      if (cloneDetail.getSourceResourceId().equals(snap3.getMetadata().getResourceId())) {
+        assertEquals(ApiCloneResourceResult.SKIPPED, cloneDetail.getResult());
+        assertNull(cloneDetail.getDestinationResourceId());
+      } else {
+        assertEquals(ApiCloneResourceResult.SUCCEEDED, cloneDetail.getResult());
+        assertNotNull(cloneDetail.getDestinationResourceId());
+      }
+    }
   }
 
   @Test
