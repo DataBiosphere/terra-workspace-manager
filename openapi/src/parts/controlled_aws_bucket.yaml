@@ -112,6 +112,27 @@ components:
           description: A valid bucket location per https://docs.aws.amazon.com/general/latest/gr/s3.html.
           type: string
 
+    AwsBucketDefaultStorageClass:
+      description: >-
+        Type and availability of objects in a bucket, described at https://aws.amazon.com/s3/storage-classes.
+      type: string
+      enum:
+        - STANDARD
+        - INTELLIGENT_TIERING
+        - STANDARD_INFREQUENT_ACCESS
+        - ONE_ZONE_INFREQUENT_ACCESS
+        - GLACIER_INSTANT_RETRIEVAL
+        - GLACIER_FLEXIBLE_RETRIEVAL
+        - GLACIER_DEEP_ARCHIVE
+
+    AwsBucketLifecycleRuleActionType:
+      description: >-
+        Type of action to perform. Formatted like our Java enums.
+      type: string
+      enum:
+        - DELETE
+        - SET_STORAGE_CLASS
+
   responses:
     CreatedControlledAwsBucketResponse:
       description: Response to Create controlled AWS bucket
