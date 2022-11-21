@@ -11,6 +11,7 @@ import bio.terra.workspace.common.utils.MultiCloudUtils;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import java.util.Collections;
+import java.util.HashSet;
 
 public class ValidateWLZStep implements Step {
 
@@ -26,7 +27,7 @@ public class ValidateWLZStep implements Step {
 
       AwsCloudContext awsCloudContext = AwsCloudContext.deserialize(serializedAwsCloudContext);
 
-      MultiCloudUtils.assumeAwsUserRoleFromGcp(awsCloudContext, samUser, Collections.emptyList());
+      MultiCloudUtils.assumeAwsUserRoleFromGcp(awsCloudContext, samUser, new HashSet<>());
 
     } catch (Exception e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
