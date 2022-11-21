@@ -8,9 +8,9 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
-import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.WorkspaceCloneUtils;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResourceService;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
@@ -42,8 +42,8 @@ public class SetReferencedDestinationBigQueryDatasetInWorkingMapStep implements 
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    final FlightMap inputParameters = flightContext.getInputParameters();
-    final FlightMap workingMap = flightContext.getWorkingMap();
+    FlightMap inputParameters = flightContext.getInputParameters();
+    FlightMap workingMap = flightContext.getWorkingMap();
     FlightUtils.validateRequiredEntries(
         inputParameters,
         ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
@@ -51,30 +51,34 @@ public class SetReferencedDestinationBigQueryDatasetInWorkingMapStep implements 
     Preconditions.checkState(
         resolvedCloningInstructions == CloningInstructions.COPY_REFERENCE,
         "CloningInstructions must be COPY_REFERENCE");
-    final String resourceName =
+    String resourceName =
         FlightUtils.getInputParameterOrWorkingValue(
             flightContext,
             ResourceKeys.RESOURCE_NAME,
             ResourceKeys.PREVIOUS_RESOURCE_NAME,
             String.class);
-    final String description =
+    String description =
         FlightUtils.getInputParameterOrWorkingValue(
             flightContext,
             ResourceKeys.RESOURCE_DESCRIPTION,
             ResourceKeys.PREVIOUS_RESOURCE_DESCRIPTION,
             String.class);
-    final UUID destinationWorkspaceId =
+    UUID destinationWorkspaceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
-    final var destinationResourceId =
+    UUID destinationResourceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.class);
+    UUID destinationFolderId =
+        inputParameters.get(ControlledResourceKeys.DESTINATION_FOLDER_ID, UUID.class);
 
     ReferencedBigQueryDatasetResource destinationDatasetResource =
-        WorkspaceCloneUtils.buildDestinationReferencedBigQueryDatasetFromControlled(
-            sourceDataset,
-            destinationWorkspaceId,
-            destinationResourceId,
-            resourceName,
-            description);
+        sourceDataset
+            .buildReferencedClone(
+                destinationWorkspaceId,
+                destinationResourceId,
+                destinationFolderId,
+                resourceName,
+                description)
+            .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
 
     workingMap.put(
         ControlledResourceKeys.DESTINATION_REFERENCED_RESOURCE, destinationDatasetResource);

@@ -368,7 +368,8 @@ public class JobService {
       FlightMap inputParameters = flightState.getInputParameters();
       UUID workspaceUuid = inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
       if (expectedWorkspaceId != null && !(expectedWorkspaceId.equals(workspaceUuid))) {
-        throw new JobNotFoundException("The job ID does not exist in the provided workspace.");
+        throw new JobNotFoundException(
+            String.format("Job %s does not exist in workspace %s.", jobId, workspaceUuid));
       }
       flightBeanBag
           .getWorkspaceService()

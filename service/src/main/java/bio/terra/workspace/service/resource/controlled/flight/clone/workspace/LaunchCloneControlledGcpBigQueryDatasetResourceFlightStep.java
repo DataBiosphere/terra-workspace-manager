@@ -19,18 +19,24 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import java.util.UUID;
+import javax.annotation.Nullable;
 
 public class LaunchCloneControlledGcpBigQueryDatasetResourceFlightStep implements Step {
 
   private final ControlledBigQueryDatasetResource resource;
   private final String subflightId;
   private final UUID destinationResourceId;
+  private final UUID destinationFolderId;
 
   public LaunchCloneControlledGcpBigQueryDatasetResourceFlightStep(
-      ControlledBigQueryDatasetResource resource, String subflightId, UUID destinationResourceId) {
+      ControlledBigQueryDatasetResource resource,
+      String subflightId,
+      UUID destinationResourceId,
+      @Nullable UUID destinationFolderId) {
     this.resource = resource;
     this.subflightId = subflightId;
     this.destinationResourceId = destinationResourceId;
+    this.destinationFolderId = destinationFolderId;
   }
 
   @Override
@@ -67,6 +73,7 @@ public class LaunchCloneControlledGcpBigQueryDatasetResourceFlightStep implement
         String.format("Clone BigQuery Dataset %s", resource.getResourceId().toString()));
     subflightInputParameters.put(
         ControlledResourceKeys.DESTINATION_RESOURCE_ID, destinationResourceId);
+    subflightInputParameters.put(ControlledResourceKeys.DESTINATION_FOLDER_ID, destinationFolderId);
     // Do not do the policy merge on the sub-object clone
     subflightInputParameters.put(WorkspaceFlightMapKeys.MERGE_POLICIES, false);
 

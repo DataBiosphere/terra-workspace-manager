@@ -1,6 +1,7 @@
 package bio.terra.workspace.app.controller;
 
 import bio.terra.common.exception.ApiException;
+import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
@@ -13,6 +14,10 @@ import bio.terra.workspace.generated.model.ApiAzureNetworkResource;
 import bio.terra.workspace.generated.model.ApiAzureRelayNamespaceResource;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmResource;
+import bio.terra.workspace.generated.model.ApiCloneControlledAzureStorageContainerRequest;
+import bio.terra.workspace.generated.model.ApiCloneControlledAzureStorageContainerResult;
+import bio.terra.workspace.generated.model.ApiClonedControlledAzureStorageContainer;
+import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureDiskRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureIpRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureNetworkRequestBody;
@@ -34,7 +39,6 @@ import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
-import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
 import bio.terra.workspace.service.job.JobService;
@@ -43,6 +47,7 @@ import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadat
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureStorageAccessService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.SasPermissionsHelper;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.SasTokenOptions;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
@@ -50,6 +55,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespac
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
+import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.ClonedAzureStorageContainer;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -68,7 +74,7 @@ import org.springframework.stereotype.Controller;
 @Controller
 public class ControlledAzureResourceApiController extends ControlledResourceControllerBase
     implements ControlledAzureResourceApi {
-  private final Logger logger = LoggerFactory.getLogger(ControlledGcpResourceApiController.class);
+  private final Logger logger = LoggerFactory.getLogger(ControlledAzureResourceApiController.class);
 
   private final ControlledResourceService controlledResourceService;
   private final AzureStorageAccessService azureControlledStorageResourceService;
@@ -228,35 +234,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     ControllerValidationUtils.validateSasBlobName(sasBlobName);
     SasPermissionsHelper.validateSasPermissionString(sasPermissions);
 
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    // Creating an AzureStorageContainerSasToken requires checking the user's access to both the
-    // storage container and storage account resources.
-    final ControlledAzureStorageContainerResource storageContainerResource =
-        controlledResourceMetadataManager
-            .validateControlledResourceAndAction(
-                userRequest,
-                workspaceUuid,
-                storageContainerUuid,
-                SamControlledResourceActions.READ_ACTION)
-            .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
-    final ControlledAzureStorageResource storageAccountResource =
-        controlledResourceMetadataManager
-            .validateControlledResourceAndAction(
-                userRequest,
-                workspaceUuid,
-                storageContainerResource.getStorageAccountId(),
-                SamControlledResourceActions.READ_ACTION)
-            .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT);
-    final String userEmail =
-        SamRethrow.onInterrupted(
-            () -> getSamService().getUserEmailFromSam(userRequest), "getUserEmailFromSam");
-
-    logger.info(
-        "user {} requesting SAS token for Azure storage container {} in workspace {}",
-        userEmail,
-        storageContainerUuid.toString(),
-        workspaceUuid.toString());
-
     OffsetDateTime startTime =
         OffsetDateTime.now().minusMinutes(azureConfiguration.getSasTokenStartTimeMinutesOffset());
     long secondDuration =
@@ -268,21 +245,9 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     var sasBundle =
         azureControlledStorageResourceService.createAzureStorageContainerSasToken(
             workspaceUuid,
-            storageContainerResource,
-            storageAccountResource,
-            startTime,
-            expiryTime,
-            userRequest,
-            sasIpRange,
-            sasBlobName,
-            sasPermissions);
-
-    logger.info(
-        "SAS token with expiry time of {} generated for user {} on container {} in workspace {}",
-        expiryTime,
-        userEmail,
-        storageContainerUuid,
-        workspaceUuid);
+            storageContainerUuid,
+            getAuthenticatedInfo(),
+            new SasTokenOptions(sasIpRange, startTime, expiryTime, sasBlobName, sasPermissions));
 
     return new ResponseEntity<>(
         new ApiCreatedAzureStorageContainerSasToken()
@@ -647,5 +612,69 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getApiErrorReport())
         .azureRelayNameSpace(apiResource);
+  }
+
+  public ResponseEntity<ApiCloneControlledAzureStorageContainerResult> cloneAzureStorageContainer(
+      UUID workspaceId, UUID resourceId, ApiCloneControlledAzureStorageContainerRequest body) {
+    features.azureEnabledCheck();
+
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    controlledResourceMetadataManager.validateCloneAction(
+        userRequest, workspaceId, body.getDestinationWorkspaceId(), resourceId);
+    if (body.getCloningInstructions() == ApiCloningInstructionsEnum.REFERENCE) {
+      throw new ValidationException(
+          "Copying azure storage containers by reference is not supported");
+    }
+
+    var jobId =
+        controlledResourceService.cloneAzureContainer(
+            workspaceId,
+            resourceId,
+            body.getDestinationWorkspaceId(),
+            UUID.randomUUID(),
+            body.getJobControl(),
+            userRequest,
+            body.getName(),
+            body.getDescription(),
+            body.getName(),
+            body.getCloningInstructions());
+
+    final ApiCloneControlledAzureStorageContainerResult result =
+        fetchCloneAzureContainerResult(jobId);
+    return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
+  }
+
+  public ResponseEntity<ApiCloneControlledAzureStorageContainerResult>
+      getCloneAzureStorageContainerResult(UUID workspaceId, String jobId) {
+    features.azureEnabledCheck();
+
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    jobService.verifyUserAccess(jobId, userRequest, workspaceId);
+    ApiCloneControlledAzureStorageContainerResult result = fetchCloneAzureContainerResult(jobId);
+    return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
+  }
+
+  private ApiCloneControlledAzureStorageContainerResult fetchCloneAzureContainerResult(
+      String jobId) {
+    JobApiUtils.AsyncJobResult<ClonedAzureStorageContainer> jobResult =
+        jobApiUtils.retrieveAsyncJobResult(jobId, ClonedAzureStorageContainer.class);
+
+    ApiClonedControlledAzureStorageContainer containerResult = null;
+    if (jobResult.getResult() != null) {
+      var container =
+          new ApiCreatedControlledAzureStorageContainer()
+              .azureStorageContainer(jobResult.getResult().storageContainer().toApiResource());
+      containerResult =
+          new ApiClonedControlledAzureStorageContainer()
+              .effectiveCloningInstructions(
+                  jobResult.getResult().effectiveCloningInstructions().toApiModel())
+              .storageContainer(container)
+              .sourceWorkspaceId(jobResult.getResult().sourceWorkspaceId())
+              .sourceResourceId(jobResult.getResult().sourceResourceId());
+    }
+    return new ApiCloneControlledAzureStorageContainerResult()
+        .jobReport(jobResult.getJobReport())
+        .errorReport(jobResult.getApiErrorReport())
+        .container(containerResult);
   }
 }

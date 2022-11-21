@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Get Vault token
       id: vault-token-step
@@ -32,7 +32,7 @@ jobs:
             auth/approle/login role_id=${{ secrets.VAULT_APPROLE_ROLE_ID }} \
             secret_id=${{ secrets.VAULT_APPROLE_SECRET_ID }})
         echo ::add-mask::$VAULT_TOKEN    
-        echo ::set-output name=vault-token::$VAULT_TOKEN
+        echo vault-token=$VAULT_TOKEN >> $GITHUB_OUTPUT
         
     - name: Write config
       id: config

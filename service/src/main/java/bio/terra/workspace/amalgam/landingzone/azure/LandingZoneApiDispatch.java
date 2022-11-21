@@ -1,5 +1,6 @@
 package bio.terra.workspace.amalgam.landingzone.azure;
 
+import bio.terra.common.exception.ConflictException;
 import bio.terra.common.iam.BearerToken;
 import bio.terra.landingzone.job.LandingZoneJobService;
 import bio.terra.landingzone.job.model.JobReport;
@@ -9,22 +10,30 @@ import bio.terra.landingzone.library.landingzones.deployment.SubnetResourcePurpo
 import bio.terra.landingzone.service.landingzone.azure.LandingZoneService;
 import bio.terra.landingzone.service.landingzone.azure.model.DeletedLandingZone;
 import bio.terra.landingzone.service.landingzone.azure.model.DeployedLandingZone;
+import bio.terra.landingzone.service.landingzone.azure.model.LandingZone;
 import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneDefinition;
 import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneRequest;
 import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneResource;
+import bio.terra.landingzone.service.landingzone.azure.model.StartLandingZoneCreation;
+import bio.terra.landingzone.service.landingzone.azure.model.StartLandingZoneDeletion;
 import bio.terra.workspace.amalgam.landingzone.azure.utils.MapperUtils;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.generated.model.ApiAzureLandingZone;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDefinition;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDefinitionList;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
+import bio.terra.workspace.generated.model.ApiAzureLandingZoneDetails;
+import bio.terra.workspace.generated.model.ApiAzureLandingZoneList;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesList;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesPurposeGroup;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResult;
 import bio.terra.workspace.generated.model.ApiCreateAzureLandingZoneRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateLandingZoneResult;
+import bio.terra.workspace.generated.model.ApiDeleteAzureLandingZoneJobResult;
 import bio.terra.workspace.generated.model.ApiDeleteAzureLandingZoneRequestBody;
 import bio.terra.workspace.generated.model.ApiDeleteAzureLandingZoneResult;
-import bio.terra.workspace.service.workspace.model.AzureCloudContext;
+import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.model.Workspace;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -42,15 +51,19 @@ public class LandingZoneApiDispatch {
       "Microsoft.Storage/storageAccounts";
 
   private final LandingZoneService landingZoneService;
+  private final WorkspaceService workspaceService;
   private final FeatureConfiguration features;
 
   public LandingZoneApiDispatch(
-      LandingZoneService landingZoneService, FeatureConfiguration features) {
+      LandingZoneService landingZoneService,
+      WorkspaceService workspaceService,
+      FeatureConfiguration features) {
     this.landingZoneService = landingZoneService;
+    this.workspaceService = workspaceService;
     this.features = features;
   }
 
-  public ApiAzureLandingZoneResult createAzureLandingZone(
+  public ApiCreateLandingZoneResult createAzureLandingZone(
       BearerToken bearerToken,
       ApiCreateAzureLandingZoneRequestBody body,
       String asyncResultEndpoint) {
@@ -61,13 +74,7 @@ public class LandingZoneApiDispatch {
         body.getVersion());
 
     // Prevent deploying more than 1 landing zone per billing profile
-    landingZoneService.listLandingZoneIds(bearerToken, body.getBillingProfileId()).stream()
-        .findFirst()
-        .ifPresent(
-            t -> {
-              throw new LandingZoneInvalidInputException(
-                  "A Landing Zone already exists in the requested billing profile");
-            });
+    verifyLandingZoneDoesNotExistForBillingProfile(bearerToken, body);
 
     LandingZoneRequest landingZoneRequest =
         LandingZoneRequest.builder()
@@ -77,9 +84,39 @@ public class LandingZoneApiDispatch {
                 MapperUtils.LandingZoneMapper.landingZoneParametersFrom(body.getParameters()))
             .billingProfileId(body.getBillingProfileId())
             .build();
-    return toApiAzureLandingZoneResult(
+    return toApiCreateLandingZoneResult(
         landingZoneService.startLandingZoneCreationJob(
             bearerToken, body.getJobControl().getId(), landingZoneRequest, asyncResultEndpoint));
+  }
+
+  private void verifyLandingZoneDoesNotExistForBillingProfile(
+      BearerToken bearerToken, ApiCreateAzureLandingZoneRequestBody body) {
+    // TODO: Catching the exception is a temp solution.
+    // A better approach would be to return an empty list instead of throwing an exception
+    try {
+      landingZoneService
+          .getLandingZonesByBillingProfile(bearerToken, body.getBillingProfileId())
+          .stream()
+          .findFirst()
+          .ifPresent(
+              t -> {
+                throw new LandingZoneInvalidInputException(
+                    "A Landing Zone already exists in the requested billing profile");
+              });
+    } catch (bio.terra.landingzone.db.exception.LandingZoneNotFoundException ex) {
+      logger.info("The billing profile does not have a landing zone. ", ex);
+    }
+  }
+
+  private ApiCreateLandingZoneResult toApiCreateLandingZoneResult(
+      LandingZoneJobService.AsyncJobResult<StartLandingZoneCreation> jobResult) {
+
+    return new ApiCreateLandingZoneResult()
+        .jobReport(MapperUtils.JobReportMapper.from(jobResult.getJobReport()))
+        .errorReport(MapperUtils.ErrorReportMapper.from(jobResult.getApiErrorReport()))
+        .landingZoneId(jobResult.getResult().landingZoneId())
+        .definition(jobResult.getResult().definition())
+        .version(jobResult.getResult().version());
   }
 
   public ApiAzureLandingZoneResult getCreateAzureLandingZoneResult(
@@ -119,17 +156,13 @@ public class LandingZoneApiDispatch {
   }
 
   private ApiDeleteAzureLandingZoneResult toApiDeleteAzureLandingZoneResult(
-      LandingZoneJobService.AsyncJobResult<DeletedLandingZone> jobResult) {
+      LandingZoneJobService.AsyncJobResult<StartLandingZoneDeletion> jobResult) {
 
     ApiDeleteAzureLandingZoneResult result =
         new ApiDeleteAzureLandingZoneResult()
             .jobReport(MapperUtils.JobReportMapper.from(jobResult.getJobReport()))
-            .errorReport(MapperUtils.ErrorReportMapper.from(jobResult.getApiErrorReport()));
-
-    if (jobResult.getJobReport().getStatus().equals(JobReport.StatusEnum.SUCCEEDED)) {
-      result.landingZoneId(jobResult.getResult().landingZoneId());
-      result.resources(jobResult.getResult().deleteResources());
-    }
+            .errorReport(MapperUtils.ErrorReportMapper.from(jobResult.getApiErrorReport()))
+            .landingZoneId(jobResult.getResult().landingZoneId());
 
     return result;
   }
@@ -206,13 +239,13 @@ public class LandingZoneApiDispatch {
 
   private ApiAzureLandingZoneResult toApiAzureLandingZoneResult(
       LandingZoneJobService.AsyncJobResult<DeployedLandingZone> jobResult) {
-    ApiAzureLandingZone azureLandingZone = null;
+    ApiAzureLandingZoneDetails azureLandingZone = null;
     if (jobResult.getJobReport().getStatus().equals(JobReport.StatusEnum.SUCCEEDED)) {
       azureLandingZone =
           Optional.ofNullable(jobResult.getResult())
               .map(
                   lz ->
-                      new ApiAzureLandingZone()
+                      new ApiAzureLandingZoneDetails()
                           .id(lz.id())
                           .resources(
                               lz.deployedResources().stream()
@@ -232,27 +265,97 @@ public class LandingZoneApiDispatch {
         .landingZone(azureLandingZone);
   }
 
-  /**
-   * TODO (https://broadworkbench.atlassian.net/browse/TOAZ-221) This method is an initial
-   * implementation that must be revised, and likely be refactored once WSM stores the LZ id in the
-   * azure context. The initial assumption is that the cardinality of 1:1 between the cloud context
-   * and the LZ is enforced in the create operation, therefore more than one LZ per azure context is
-   * not allowed.
-   */
-  public UUID getLandingZoneId(AzureCloudContext azureCloudContext) {
-    var landingZoneTarget = MapperUtils.LandingZoneTargetMapper.from(azureCloudContext);
-    return landingZoneService.listLandingZoneIdsByTarget(landingZoneTarget).stream()
+  public UUID getLandingZoneId(BearerToken token, UUID workspaceId) {
+    Workspace workspace = workspaceService.getWorkspace(workspaceId);
+    Optional<UUID> profileId = workspace.getSpendProfileId().map(sp -> UUID.fromString(sp.getId()));
+
+    if (profileId.isEmpty()) {
+      throw new LandingZoneNotFoundException(
+          String.format(
+              "Landing zone could not be found. Workspace Id=%s doesn't have billing profile.",
+              workspace.getWorkspaceId()));
+    }
+
+    // getLandingZonesByBillingProfile returns a list. But it always contains only one item
+    return landingZoneService.getLandingZonesByBillingProfile(token, profileId.get()).stream()
         .findFirst()
+        .map(LandingZone::landingZoneId)
         .orElseThrow(
             () ->
                 new IllegalStateException(
-                    "Could not find a landing zone id for the given Azure context. Please check that the landing zone deployment is complete."));
+                    String.format(
+                        "Could not find a landing zone for the given billing profile: '%s'. Please"
+                            + " check that the landing zone deployment is complete.",
+                        profileId.get())));
   }
 
-  public ApiDeleteAzureLandingZoneResult getDeleteAzureLandingZoneResult(
+  public ApiDeleteAzureLandingZoneJobResult getDeleteAzureLandingZoneResult(
       BearerToken token, UUID landingZoneId, String jobId) {
     features.azureEnabledCheck();
-    return toApiDeleteAzureLandingZoneResult(
+    return toApiDeleteAzureLandingZoneJobResult(
         landingZoneService.getAsyncDeletionJobResult(token, landingZoneId, jobId));
+  }
+
+  private ApiDeleteAzureLandingZoneJobResult toApiDeleteAzureLandingZoneJobResult(
+      LandingZoneJobService.AsyncJobResult<DeletedLandingZone> jobResult) {
+    var apiJobResult =
+        new ApiDeleteAzureLandingZoneJobResult()
+            .jobReport(MapperUtils.JobReportMapper.from(jobResult.getJobReport()))
+            .errorReport(MapperUtils.ErrorReportMapper.from(jobResult.getApiErrorReport()));
+
+    if (jobResult.getJobReport().getStatus().equals(JobReport.StatusEnum.SUCCEEDED)) {
+      apiJobResult.landingZoneId(jobResult.getResult().landingZoneId());
+      apiJobResult.resources(jobResult.getResult().deleteResources());
+    }
+    return apiJobResult;
+  }
+
+  public ApiAzureLandingZone getAzureLandingZone(BearerToken bearerToken, UUID landingZoneId) {
+    features.azureEnabledCheck();
+    LandingZone landingZoneRecord = landingZoneService.getLandingZone(bearerToken, landingZoneId);
+    return toApiAzureLandingZone(landingZoneRecord);
+  }
+
+  public ApiAzureLandingZoneList listAzureLandingZones(
+      BearerToken bearerToken, UUID billingProfileId) {
+    features.azureEnabledCheck();
+    if (billingProfileId != null) {
+      return getAzureLandingZonesByBillingProfile(bearerToken, billingProfileId);
+    }
+    List<LandingZone> landingZones = landingZoneService.listLandingZones(bearerToken);
+    return new ApiAzureLandingZoneList()
+        .landingzones(
+            landingZones.stream().map(this::toApiAzureLandingZone).collect(Collectors.toList()));
+  }
+
+  private ApiAzureLandingZoneList getAzureLandingZonesByBillingProfile(
+      BearerToken bearerToken, UUID billingProfileId) {
+    ApiAzureLandingZoneList result = new ApiAzureLandingZoneList();
+    List<LandingZone> landingZones =
+        landingZoneService.getLandingZonesByBillingProfile(bearerToken, billingProfileId);
+    if (landingZones.size() > 0) {
+      // The enforced logic is 1:1 relation between Billing Profile and a Landing Zone.
+      // The landing zone service returns one record in the list if landing zone exists
+      // for a given billing profile.
+      if (landingZones.size() == 1) {
+        result.addLandingzonesItem(toApiAzureLandingZone(landingZones.get(0)));
+      } else {
+        throw new ConflictException(
+            String.format(
+                "There are more than one landing zone found for the given billing profile: '%s'. Please"
+                    + " check the landing zone deployment is correct.",
+                billingProfileId));
+      }
+    }
+    return result;
+  }
+
+  private ApiAzureLandingZone toApiAzureLandingZone(LandingZone landingZone) {
+    return new ApiAzureLandingZone()
+        .billingProfileId(landingZone.billingProfileId())
+        .landingZoneId(landingZone.landingZoneId())
+        .definition(landingZone.definition())
+        .version(landingZone.version())
+        .createdDate(landingZone.createdDate());
   }
 }

@@ -40,22 +40,9 @@ jobs:
       matrix:
         gradleTask: [unitTest, connectedTest, azureUnitTest, azureConnectedTest]
 
-    services:
-      postgres:
-        image: postgres:13.1
-        env:
-          POSTGRES_PASSWORD: postgres
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
     steps:
     - name: Checkout current code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Skip version bump merges
       id: skiptest
@@ -75,13 +62,7 @@ jobs:
           echo ::error ::${{ github.event_name }} not supported for this workflow
           exit 1
         fi
-        echo ::set-output name=test-env::$ENV
-
-    - name: Initialize Postgres DB
-      if: steps.skiptest.outputs.is-bump == 'no'
-      env:
-        PGPASSWORD: postgres
-      run: psql -h 127.0.0.1 -U postgres -f ./service/local-dev/local-postgres-init.sql
+        echo test-env=$ENV >> $GITHUB_OUTPUT
 
     - name: Set up JDK
       if: steps.skiptest.outputs.is-bump == 'no'
@@ -92,7 +73,7 @@ jobs:
 
     - name: Cache Gradle packages
       if: steps.skiptest.outputs.is-bump == 'no'
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: |
           ~/.gradle/caches
@@ -118,7 +99,7 @@ jobs:
             auth/approle/login role_id=${{ secrets.VAULT_APPROLE_ROLE_ID }} \
             secret_id=${{ secrets.VAULT_APPROLE_SECRET_ID }})
         echo ::add-mask::$VAULT_TOKEN    
-        echo ::set-output name=vault-token::$VAULT_TOKEN
+        echo vault-token=$VAULT_TOKEN >> $GITHUB_OUTPUT
 
     - name: Write config
       if: matrix.gradleTask != 'unitTest' && steps.skiptest.outputs.is-bump == 'no'
@@ -152,7 +133,7 @@ jobs:
 
     - name: Upload Test Reports
       if: always() && steps.skiptest.outputs.is-bump == 'no'
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v3
       with:
         name: Test Reports
         path: service/build/reports/tests

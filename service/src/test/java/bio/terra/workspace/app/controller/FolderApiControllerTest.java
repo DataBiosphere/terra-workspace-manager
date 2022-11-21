@@ -2,6 +2,7 @@ package bio.terra.workspace.app.controller;
 
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertApiPropertyToMap;
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
+import static bio.terra.workspace.common.utils.MockMvcUtils.DELETE_FOLDER_JOB_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.FOLDERS_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.FOLDER_PROPERTIES_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.FOLDER_V1_PATH_FORMAT;
@@ -18,7 +19,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -30,6 +30,9 @@ import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.generated.model.ApiCreateFolderRequestBody;
 import bio.terra.workspace.generated.model.ApiFolder;
 import bio.terra.workspace.generated.model.ApiFolderList;
+import bio.terra.workspace.generated.model.ApiJobReport;
+import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
+import bio.terra.workspace.generated.model.ApiJobResult;
 import bio.terra.workspace.generated.model.ApiProperties;
 import bio.terra.workspace.generated.model.ApiPropertyKeys;
 import bio.terra.workspace.generated.model.ApiUpdateFolderRequestBody;
@@ -39,6 +42,7 @@ import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -280,11 +284,33 @@ public class FolderApiControllerTest extends BaseUnitTest {
     ApiFolder thirdFolder =
         createFolder(workspaceId, /*displayName=*/ "foo", /*parentFolderId=*/ secondFolder.getId());
 
-    deleteFolderExpectCode(workspaceId, firstFolder.getId(), HttpStatus.SC_NO_CONTENT);
+    ApiJobReport jobReport = deleteFolderAndWaitForJob(workspaceId, firstFolder);
 
+    assertEquals(StatusEnum.SUCCEEDED, jobReport.getStatus());
     getFolderExpectCode(workspaceId, firstFolder.getId(), HttpStatus.SC_NOT_FOUND);
     getFolderExpectCode(workspaceId, secondFolder.getId(), HttpStatus.SC_NOT_FOUND);
     getFolderExpectCode(workspaceId, thirdFolder.getId(), HttpStatus.SC_NOT_FOUND);
+  }
+
+  private ApiJobReport deleteFolderAndWaitForJob(UUID workspaceId, ApiFolder folder)
+      throws Exception {
+    var serializedResponse =
+        deleteFolderExpectCode(workspaceId, folder.getId(), HttpStatus.SC_ACCEPTED)
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    var jobResult = objectMapper.readValue(serializedResponse, ApiJobResult.class);
+    var jobReport = jobResult.getJobReport();
+    var jobId = jobReport.getId();
+    while (jobReport.getStatus() == StatusEnum.RUNNING) {
+      Thread.sleep(Duration.ofSeconds(1).toMillis());
+      jobReport =
+          mockMvcUtils.getJobReport(
+              DELETE_FOLDER_JOB_V1_PATH_FORMAT.formatted(
+                  workspaceId, folder.getId().toString(), jobId),
+              USER_REQUEST);
+    }
+    return jobReport;
   }
 
   @Test
@@ -655,7 +681,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
     return mockMvc
         .perform(
             addAuth(
-                delete(String.format(FOLDER_V1_PATH_FORMAT, workspaceId, folderId)), USER_REQUEST))
+                post(String.format(FOLDER_V1_PATH_FORMAT, workspaceId, folderId)), USER_REQUEST))
         .andExpect(status().is(code));
   }
 

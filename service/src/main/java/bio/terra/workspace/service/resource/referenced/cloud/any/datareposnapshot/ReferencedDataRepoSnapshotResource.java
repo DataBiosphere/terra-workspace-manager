@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.referenced.cloud.gcp.datareposnapshot;
+package bio.terra.workspace.service.resource.referenced.cloud.any.datareposnapshot;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.MissingRequiredFieldException;
@@ -14,16 +14,18 @@ import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
+import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
-import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
+import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import javax.annotation.Nullable;
 
 public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
   private final String instanceName;
@@ -69,6 +71,7 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
     super(builder.wsmResourceFields);
     this.instanceName = builder.instanceName;
     this.snapshotId = builder.snapshotId;
+    validate();
   }
 
   /**
@@ -161,6 +164,25 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
   public boolean checkAccess(FlightBeanBag context, AuthenticatedUserRequest userRequest) {
     DataRepoService dataRepoService = context.getDataRepoService();
     return dataRepoService.snapshotReadable(instanceName, snapshotId, userRequest);
+  }
+
+  @Override
+  public WsmResource buildReferencedClone(
+      UUID destinationWorkspaceUuid,
+      UUID destinationResourceId,
+      @Nullable UUID destinationFolderId,
+      @Nullable String name,
+      @Nullable String description) {
+    ReferencedDataRepoSnapshotResource.Builder resultBuilder =
+        toBuilder()
+            .wsmResourceFields(
+                buildReferencedCloneResourceCommonFields(
+                    destinationWorkspaceUuid,
+                    destinationResourceId,
+                    destinationFolderId,
+                    name,
+                    description));
+    return resultBuilder.build();
   }
 
   public Builder toBuilder() {

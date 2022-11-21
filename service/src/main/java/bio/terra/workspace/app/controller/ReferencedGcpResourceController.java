@@ -38,14 +38,14 @@ import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
+import bio.terra.workspace.service.resource.referenced.cloud.any.datareposnapshot.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.resource.referenced.cloud.any.gitrepo.ReferencedGitRepoResource;
-import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
-import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResourceService;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdatatable.ReferencedBigQueryDataTableResource;
-import bio.terra.workspace.service.resource.referenced.cloud.gcp.datareposnapshot.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.ReferencedGcsBucketResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsobject.ReferencedGcsObjectResource;
+import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import bio.terra.workspace.service.resource.referenced.terra.workspace.ReferencedTerraWorkspaceResource;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import java.util.Optional;
@@ -661,6 +661,9 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
                 sourceReferencedResource,
                 body.getDestinationWorkspaceId(),
                 UUID.randomUUID(), // resourceId is not pre-allocated for individual clone endpoints
+                // Pass in null for now, since we don't know destination folder id yet. Folder id
+                // will be set in a step.
+                /*destinationFolderId=*/ null,
                 body.getName(),
                 body.getDescription(),
                 userRequest)
@@ -709,6 +712,9 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
                 sourceReferencedResource,
                 body.getDestinationWorkspaceId(),
                 UUID.randomUUID(), // resourceId is not pre-allocated for individual clone endpoints
+                // Pass in null for now, since we don't know destination folder id yet. Folder id
+                // will be set in a step.
+                /*destinationFolderId=*/ null,
                 body.getName(),
                 body.getDescription(),
                 userRequest)
@@ -758,6 +764,9 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
                 sourceReferencedResource,
                 body.getDestinationWorkspaceId(),
                 UUID.randomUUID(), // resourceId is not pre-allocated for individual clone endpoints
+                // Pass in null for now, since we don't know destination folder id yet. Folder id
+                // will be set in a step.
+                /*destinationFolderId=*/ null,
                 body.getName(),
                 body.getDescription(),
                 userRequest)
@@ -807,6 +816,9 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
                 sourceReferencedResource,
                 body.getDestinationWorkspaceId(),
                 UUID.randomUUID(), // resourceId is not pre-allocated for individual clone endpoints
+                // Pass in null for now, since we don't know destination folder id yet. Folder id
+                // will be set in a step.
+                /*destinationFolderId=*/ null,
                 body.getName(),
                 body.getDescription(),
                 userRequest)
@@ -857,6 +869,9 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
                 sourceReferencedResource,
                 body.getDestinationWorkspaceId(),
                 UUID.randomUUID(), // resourceId is not pre-allocated for individual clone endpoints
+                // Pass in null for now, since we don't know destination folder id yet. Folder id
+                // will be set in a step.
+                /*destinationFolderId=*/ null,
                 body.getName(),
                 body.getDescription(),
                 userRequest)
@@ -1005,6 +1020,9 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
                 sourceReferencedResource,
                 body.getDestinationWorkspaceId(),
                 UUID.randomUUID(), // resourceId is not pre-allocated for individual clone endpoints
+                // Pass in null for now, since we don't know destination folder id yet. Folder id
+                // will be set in a step.
+                /*destinationFolderId=*/ null,
                 body.getName(),
                 body.getDescription(),
                 userRequest)

@@ -69,10 +69,11 @@ public class WorkspaceDao {
               .build();
   private final Logger logger = LoggerFactory.getLogger(WorkspaceDao.class);
   private final NamedParameterJdbcTemplate jdbcTemplate;
+  private final ApplicationDao applicationDao;
 
   @Autowired
-  public WorkspaceDao(
-      WorkspaceActivityLogDao workspaceActivityLogDao, NamedParameterJdbcTemplate jdbcTemplate) {
+  public WorkspaceDao(ApplicationDao applicationDao, NamedParameterJdbcTemplate jdbcTemplate) {
+    this.applicationDao = applicationDao;
     this.jdbcTemplate = jdbcTemplate;
   }
 
@@ -83,20 +84,20 @@ public class WorkspaceDao {
    * @return workspace id
    */
   @WriteTransaction
-  public UUID createWorkspace(Workspace workspace) {
+  public UUID createWorkspace(Workspace workspace, @Nullable List<String> applicationIds) {
     final String sql =
         "INSERT INTO workspace (workspace_id, user_facing_id, display_name, description, spend_profile, properties, workspace_stage) "
             + "values (:workspace_id, :user_facing_id, :display_name, :description, :spend_profile,"
             + " cast(:properties AS jsonb), :workspace_stage)";
 
-    final String workspaceUuid = workspace.getWorkspaceId().toString();
+    final UUID workspaceUuid = workspace.getWorkspaceId();
     // validateUserFacingId() is called in controller. Also call here to be safe (eg see bug
     // PF-1616).
     ControllerValidationUtils.validateUserFacingId(workspace.getUserFacingId());
 
     MapSqlParameterSource params =
         new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceUuid)
+            .addValue("workspace_id", workspaceUuid.toString())
             .addValue("user_facing_id", workspace.getUserFacingId())
             .addValue("display_name", workspace.getDisplayName().orElse(null))
             .addValue("description", workspace.getDescription().orElse(null))
@@ -132,7 +133,13 @@ public class WorkspaceDao {
         throw e;
       }
     }
-    return workspace.getWorkspaceId();
+
+    // If we have applicationIds to create, do that now.
+    if (applicationIds != null) {
+      applicationDao.enableWorkspaceApplications(workspaceUuid, applicationIds);
+    }
+
+    return workspaceUuid;
   }
 
   /**

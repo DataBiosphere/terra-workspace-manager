@@ -117,7 +117,8 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
       throws InterruptedException {
     initValidationStep(Optional.empty());
 
-    when(mockLandingZoneApiDispatch.getLandingZoneId(any())).thenReturn(LANDING_ZONE_ID);
+    when(mockLandingZoneApiDispatch.getLandingZoneId(any(BearerToken.class), any()))
+        .thenReturn(LANDING_ZONE_ID);
     ApiAzureLandingZoneDeployedResource mockSharedStorageAccount =
         mock(ApiAzureLandingZoneDeployedResource.class);
     when(mockLandingZoneApiDispatch.getSharedStorageAccount(
@@ -186,8 +187,9 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
   public void getStorageAccountContainer_landingZoneDoesntExist() throws InterruptedException {
     initValidationStep(Optional.empty());
 
+    when(mockUserRequest.getRequiredToken()).thenReturn("FAKE_TOKEN");
     // there are no landing zone association with azure cloud context
-    when(mockLandingZoneApiDispatch.getLandingZoneId(any()))
+    when(mockLandingZoneApiDispatch.getLandingZoneId(any(BearerToken.class), any(UUID.class)))
         .thenThrow(
             new IllegalStateException(
                 "Could not find a landing zone id for the given Azure context. "
@@ -205,7 +207,8 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
       throws InterruptedException {
     initValidationStep(Optional.empty());
 
-    when(mockLandingZoneApiDispatch.getLandingZoneId(any())).thenReturn(LANDING_ZONE_ID);
+    when(mockLandingZoneApiDispatch.getLandingZoneId(any(BearerToken.class), any()))
+        .thenReturn(LANDING_ZONE_ID);
     when(mockLandingZoneApiDispatch.getSharedStorageAccount(
             any(BearerToken.class), eq(LANDING_ZONE_ID)))
         .thenReturn(Optional.empty());
@@ -242,7 +245,8 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
       throws InterruptedException {
     initValidationStep(Optional.empty());
 
-    when(mockLandingZoneApiDispatch.getLandingZoneId(any())).thenReturn(LANDING_ZONE_ID);
+    when(mockLandingZoneApiDispatch.getLandingZoneId(any(BearerToken.class), any()))
+        .thenReturn(LANDING_ZONE_ID);
     ApiAzureLandingZoneDeployedResource mockSharedStorageAccount =
         mock(ApiAzureLandingZoneDeployedResource.class);
     when(mockLandingZoneApiDispatch.getSharedStorageAccount(

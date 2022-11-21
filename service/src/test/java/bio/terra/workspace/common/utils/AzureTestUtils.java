@@ -12,6 +12,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.StewardshipType;
+import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
@@ -51,8 +52,10 @@ public class AzureTestUtils {
             .workspaceId(uuid)
             .userFacingId(uuid.toString())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+            .spendProfileId(new SpendProfileId(UUID.randomUUID().toString()))
             .build();
-    workspaceService.createWorkspace(workspace, null, userAccessUtils.defaultUserAuthRequest());
+    workspaceService.createWorkspace(
+        workspace, null, null, userAccessUtils.defaultUserAuthRequest());
     return workspace;
   }
 

@@ -18,7 +18,7 @@ runs:
         bootrunpid=$!
         disown $bootrunpid
         echo "Launched WSM service pid $bootrunpid"
-        echo "::set-output name=bootrunpid::$bootrunpid"
+        echo "bootrunpid=$bootrunpid" >> $GITHUB_OUTPUT
       shell: bash
 
     - name: Wait for boot run to be ready

@@ -84,18 +84,62 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
     delete:
-      summary: Delete a folder.
+      summary: (Deprecated) Delete a folder. Use the post endpoint instead.
       operationId: deleteFolder
-      tags: [Folder]
+      tags: [ Folder ]
       responses:
-        '204':
-          description: Success
+        '200':
+          $ref: '#/components/responses/JobResultResponse'
+        '202':
+          $ref: '#/components/responses/JobResultResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '404':
           $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: Delete a folder asynchronously.
+      operationId: deleteFolderAsync
+      tags: [Folder]
+      responses:
+        '200':
+          $ref: '#/components/responses/JobResultResponse'
+        '202':
+          $ref: '#/components/responses/JobResultResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/folders/{folderId}/result/{jobId}:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/FolderId'
+    - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Get the result of a async job to delete a folder.
+      operationId: getDeleteFolderResult
+      tags: [ Folder ]
+      responses:
+        '200':
+          $ref: '#/components/responses/JobResultResponse'
+        '202':
+          $ref: '#/components/responses/JobResultResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/ServerError'
 
@@ -208,3 +252,4 @@ components:
             Whether to update parent folder id.
           type: boolean
           default: false
+

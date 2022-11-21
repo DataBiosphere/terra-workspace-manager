@@ -40,17 +40,12 @@ public class CloneAllResourcesFlight extends Flight {
     switch (resource.getStewardshipType()) {
       case REFERENCED:
         addStep(
-            new LaunchCreateReferenceResourceFlightStep(
-                flightBeanBag.getReferencedResourceService(),
+            new CloneReferencedResourceStep(
+                flightBeanBag.getResourceDao(),
                 resourceCloneInputs.getResource().castToReferencedResource(),
-                resourceCloneInputs.getFlightId(),
-                resourceCloneInputs.getDestinationResourceId()));
-        addStep(
-            new AwaitCreateReferenceResourceFlightStep(
-                resourceCloneInputs.getResource().castToReferencedResource(),
-                resourceCloneInputs.getFlightId(),
-                flightBeanBag.getResourceDao()),
-            RetryRules.cloudLongRunning());
+                resourceCloneInputs.getDestinationResourceId(),
+                resourceCloneInputs.getDestinationFolderId()),
+            RetryRules.shortDatabase());
         break;
       case CONTROLLED:
         switch (resourceCloneInputs.getResource().getResourceType()) {
@@ -59,7 +54,8 @@ public class CloneAllResourcesFlight extends Flight {
                 new LaunchCloneGcsBucketResourceFlightStep(
                     resource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET),
                     resourceCloneInputs.getFlightId(),
-                    resourceCloneInputs.getDestinationResourceId()));
+                    resourceCloneInputs.getDestinationResourceId(),
+                    resourceCloneInputs.getDestinationFolderId()));
             addStep(
                 new AwaitCloneGcsBucketResourceFlightStep(
                     resource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET),
@@ -71,7 +67,8 @@ public class CloneAllResourcesFlight extends Flight {
                 new LaunchCloneControlledGcpBigQueryDatasetResourceFlightStep(
                     resource.castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET),
                     resourceCloneInputs.getFlightId(),
-                    resourceCloneInputs.getDestinationResourceId()));
+                    resourceCloneInputs.getDestinationResourceId(),
+                    resourceCloneInputs.getDestinationFolderId()));
             addStep(
                 new AwaitCloneControlledGcpBigQueryDatasetResourceFlightStep(
                     resource.castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET),

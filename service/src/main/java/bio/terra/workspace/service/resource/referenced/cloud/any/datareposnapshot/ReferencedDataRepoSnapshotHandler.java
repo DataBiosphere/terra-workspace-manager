@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.referenced.cloud.gcp.datareposnapshot;
+package bio.terra.workspace.service.resource.referenced.cloud.any.datareposnapshot;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.db.model.DbResource;

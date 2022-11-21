@@ -1,20 +1,17 @@
-package bio.terra.workspace.service.resource.referenced.cloud.gcp;
+package bio.terra.workspace.service.resource.referenced;
 
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.ResourceDao;
-import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
-import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.WorkspaceCloneUtils;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
-import bio.terra.workspace.service.resource.referenced.flight.create.CreateReferenceResourceFlight;
 import bio.terra.workspace.service.resource.referenced.flight.update.UpdateReferenceResourceFlight;
+import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import bio.terra.workspace.service.workspace.model.OperationType;
@@ -55,32 +52,19 @@ public class ReferencedResourceService {
   @Traced
   public ReferencedResource createReferenceResource(
       ReferencedResource resource, AuthenticatedUserRequest userRequest) {
-    String jobDescription =
-        String.format(
-            "Create reference %s; id %s; name %s",
-            resource.getResourceType(), resource.getResourceId(), resource.getName());
+    resourceDao.createReferencedResource(resource);
+    workspaceActivityLogService.writeActivity(
+        userRequest, resource.getWorkspaceId(), OperationType.CREATE);
+    return getReferenceResource(resource.getWorkspaceId(), resource.getResourceId());
+  }
 
-    // The reason for separately passing in the ResourceType is to retrieve the class for this
-    // particular request. In the flight, when we get the request object from the input parameters,
-    // we can supply the right target class.
-    JobBuilder createJob =
-        jobService
-            .newJob()
-            .description(jobDescription)
-            .flightClass(CreateReferenceResourceFlight.class)
-            .userRequest(userRequest)
-            .resource(resource)
-            .operationType(OperationType.CREATE)
-            .workspaceId(resource.getWorkspaceId().toString())
-            .resourceType(resource.getResourceType())
-            .stewardshipType(StewardshipType.REFERENCED);
-
-    UUID resourceIdResult = createJob.submitAndWait(UUID.class);
-    if (!resourceIdResult.equals(resource.getResourceId())) {
-      throw new InvalidMetadataException("Input and output resource ids do not match");
-    }
-
-    return getReferenceResource(resource.getWorkspaceId(), resourceIdResult);
+  @Traced
+  public ReferencedResource createReferenceResourceForClone(
+      ReferencedResource resource, AuthenticatedUserRequest userRequest) {
+    resourceDao.createReferencedResource(resource);
+    workspaceActivityLogService.writeActivity(
+        userRequest, resource.getWorkspaceId(), OperationType.CLONE);
+    return getReferenceResource(resource.getWorkspaceId(), resource.getResourceId());
   }
 
   /**
@@ -91,6 +75,7 @@ public class ReferencedResourceService {
    * @param name name to change - may be null
    * @param description description to change - may be null
    */
+  @Traced
   public void updateReferenceResource(
       UUID workspaceUuid,
       UUID resourceId,
@@ -120,6 +105,7 @@ public class ReferencedResourceService {
    *     non-null, the cloning instructions will be taken from its metadata and this parameter will
    *     be ignored.
    */
+  @Traced
   public void updateReferenceResource(
       UUID workspaceUuid,
       UUID resourceId,
@@ -171,6 +157,7 @@ public class ReferencedResourceService {
    * @param resourceId resource to delete
    * @param resourceType wsm resource type that the to-be-deleted resource should have
    */
+  @Traced
   public void deleteReferenceResourceForResourceType(
       UUID workspaceUuid,
       UUID resourceId,
@@ -181,14 +168,17 @@ public class ReferencedResourceService {
     }
   }
 
+  @Traced
   public ReferencedResource getReferenceResource(UUID workspaceId, UUID resourceId) {
     return resourceDao.getResource(workspaceId, resourceId).castToReferencedResource();
   }
 
+  @Traced
   public ReferencedResource getReferenceResourceByName(UUID workspaceUuid, String name) {
     return resourceDao.getResourceByName(workspaceUuid, name).castToReferencedResource();
   }
 
+  @Traced
   public List<ReferencedResource> enumerateReferences(
       UUID workspaceUuid, int offset, int limit, AuthenticatedUserRequest userRequest) {
     workspaceService.validateWorkspaceAndAction(
@@ -196,6 +186,7 @@ public class ReferencedResourceService {
     return resourceDao.enumerateReferences(workspaceUuid, offset, limit);
   }
 
+  @Traced
   public boolean checkAccess(
       UUID workspaceUuid, UUID resourceId, AuthenticatedUserRequest userRequest) {
     ReferencedResource referencedResource =
@@ -203,21 +194,26 @@ public class ReferencedResourceService {
     return referencedResource.checkAccess(beanBag, userRequest);
   }
 
+  @Traced
   public ReferencedResource cloneReferencedResource(
       ReferencedResource sourceReferencedResource,
       UUID destinationWorkspaceId,
       UUID destinationResourceId,
+      @Nullable UUID destinationFolderId,
       @Nullable String name,
       @Nullable String description,
       AuthenticatedUserRequest userRequest) {
-    final ReferencedResource destinationResource =
-        WorkspaceCloneUtils.buildDestinationReferencedResource(
-            sourceReferencedResource,
-            destinationWorkspaceId,
-            destinationResourceId,
-            name,
-            description);
+    ReferencedResource destinationResource =
+        sourceReferencedResource
+            .buildReferencedClone(
+                destinationWorkspaceId,
+                destinationResourceId,
+                destinationFolderId,
+                name,
+                description)
+            .castToReferencedResource();
+
     // launch the creation flight
-    return createReferenceResource(destinationResource, userRequest);
+    return createReferenceResourceForClone(destinationResource, userRequest);
   }
 }

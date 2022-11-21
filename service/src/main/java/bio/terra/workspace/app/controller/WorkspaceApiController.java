@@ -66,6 +66,7 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import io.opencensus.contrib.spring.aop.Traced;
+import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -184,9 +185,11 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .workspaceStage(internalStage)
             .properties(convertApiPropertyToMap(body.getProperties()))
             .build();
-    UUID createdId = workspaceService.createWorkspace(workspace, policies, userRequest);
+    UUID createdWorkspaceUuid =
+        workspaceService.createWorkspace(
+            workspace, policies, body.getApplicationIds(), userRequest);
 
-    ApiCreatedWorkspace responseWorkspace = new ApiCreatedWorkspace().id(createdId);
+    ApiCreatedWorkspace responseWorkspace = new ApiCreatedWorkspace().id(createdWorkspaceUuid);
     logger.info("Created workspace {} for {}", responseWorkspace, userRequest.getEmail());
 
     return new ResponseEntity<>(responseWorkspace, HttpStatus.OK);
@@ -276,12 +279,19 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         .gcpContext(gcpContext)
         .azureContext(azureContext)
         .createdDate(
-            createDetailsOptional.map(ActivityLogChangeDetails::getChangeDate).orElse(null))
-        .createdBy(createDetailsOptional.map(ActivityLogChangeDetails::getActorEmail).orElse(null))
+            createDetailsOptional
+                .map(ActivityLogChangeDetails::getChangeDate)
+                .orElse(OffsetDateTime.MIN))
+        .createdBy(
+            createDetailsOptional.map(ActivityLogChangeDetails::getActorEmail).orElse("unknown"))
         .lastUpdatedDate(
-            lastChangeDetailsOptional.map(ActivityLogChangeDetails::getChangeDate).orElse(null))
+            lastChangeDetailsOptional
+                .map(ActivityLogChangeDetails::getChangeDate)
+                .orElse(OffsetDateTime.MIN))
         .lastUpdatedBy(
-            lastChangeDetailsOptional.map(ActivityLogChangeDetails::getActorEmail).orElse(null))
+            lastChangeDetailsOptional
+                .map(ActivityLogChangeDetails::getActorEmail)
+                .orElse("unknown"))
         .policies(workspacePolicies);
   }
 
@@ -371,8 +381,16 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     ApiTpsPaoUpdateResult result =
         tpsApiDispatch.updatePao(
             new BearerToken(userRequest.getRequiredToken()), workspaceId, body);
-    logger.info(
-        "Finished updating workspace policies {} for {}", workspaceId, userRequest.getEmail());
+    if (Boolean.TRUE.equals(result.isUpdateApplied())) {
+      workspaceActivityLogService.writeActivity(userRequest, workspaceId, OperationType.UPDATE);
+      logger.info(
+          "Finished updating workspace policies {} for {}", workspaceId, userRequest.getEmail());
+    } else {
+      logger.warn(
+          "Workspace policies update failed to apply to {} for {}",
+          workspaceId,
+          userRequest.getEmail());
+    }
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
 

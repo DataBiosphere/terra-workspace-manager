@@ -4,7 +4,6 @@ import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.mak
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.uniqueDatasetId;
 import static bio.terra.workspace.service.resource.controlled.flight.clone.workspace.WorkspaceCloneUtils.buildDestinationControlledBigQueryDataset;
 import static bio.terra.workspace.service.resource.controlled.flight.clone.workspace.WorkspaceCloneUtils.buildDestinationControlledGcsBucket;
-import static bio.terra.workspace.service.resource.controlled.flight.clone.workspace.WorkspaceCloneUtils.buildDestinationReferencedResource;
 import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties.FOLDER_ID_KEY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -21,9 +20,8 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResourceF
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.WsmResource;
-import bio.terra.workspace.service.resource.referenced.cloud.gcp.datareposnapshot.ReferencedDataRepoSnapshotResource;
+import bio.terra.workspace.service.resource.referenced.cloud.any.datareposnapshot.ReferencedDataRepoSnapshotResource;
 import com.google.common.collect.ImmutableMap;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -50,6 +48,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             sourceDataset,
             DESTINATION_WORKSPACE_ID,
             DESTINATION_RESOURCE_ID,
+            /*destinationFolderId=*/ null,
             cloneResourceName,
             cloneDescription,
             cloneDatasetName,
@@ -80,6 +79,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             sourceDataset,
             DESTINATION_WORKSPACE_ID,
             DESTINATION_RESOURCE_ID,
+            /*destinationFolderId=*/ null,
             RandomStringUtils.randomAlphabetic(5),
             /*description=*/ null,
             RandomStringUtils.randomAlphabetic(5),
@@ -103,6 +103,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             sourceDataset,
             DESTINATION_WORKSPACE_ID,
             DESTINATION_RESOURCE_ID,
+            /*destinationFolderId=*/ null,
             /*name=*/ RandomStringUtils.randomAlphabetic(5),
             /*description=*/ "This is a cloned dataset",
             /*cloudInstanceName=*/ RandomStringUtils.randomAlphabetic(5),
@@ -127,6 +128,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             sourceDataset,
             sourceDataset.getWorkspaceId(),
             DESTINATION_RESOURCE_ID,
+            /*destinationFolderId=*/ null,
             /*name=*/ RandomStringUtils.randomAlphabetic(5),
             /*description=*/ "This is a cloned dataset",
             /*cloudInstanceName=*/ RandomStringUtils.randomAlphabetic(5),
@@ -149,6 +151,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             sourceBucket,
             DESTINATION_WORKSPACE_ID,
             DESTINATION_RESOURCE_ID,
+            /*destinationFolderId=*/ null,
             cloneResourceName,
             cloneDescription,
             cloneBucketName);
@@ -176,6 +179,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             sourceBucket,
             DESTINATION_WORKSPACE_ID,
             DESTINATION_RESOURCE_ID,
+            /*destinationFolderId=*/ null,
             RandomStringUtils.randomAlphabetic(5),
             "This is a cloned private bucket",
             // Gcs bucket cloud instance id must be lower-case.
@@ -196,6 +200,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             sourceBucket,
             DESTINATION_WORKSPACE_ID,
             DESTINATION_RESOURCE_ID,
+            /*destinationFolderId=*/ null,
             /*name=*/ RandomStringUtils.randomAlphabetic(5),
             /*description=*/ "This is a cloned bucket",
             // Gcs bucket cloud instance id must be lower-case.
@@ -221,10 +226,10 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
 
     var snapshotToClone =
         (ReferencedDataRepoSnapshotResource)
-            buildDestinationReferencedResource(
-                referencedResource,
+            referencedResource.buildReferencedClone(
                 DESTINATION_WORKSPACE_ID,
                 DESTINATION_RESOURCE_ID,
+                /*destinationFolderId=*/ null,
                 cloneResourceName,
                 cloneDescription);
 
@@ -248,10 +253,10 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
 
     var snapshotToClone =
         (ReferencedDataRepoSnapshotResource)
-            buildDestinationReferencedResource(
-                referencedResource,
+            referencedResource.buildReferencedClone(
                 DESTINATION_WORKSPACE_ID,
                 DESTINATION_RESOURCE_ID,
+                /*destinationFolderId=*/ null,
                 /*name=*/ RandomStringUtils.randomAlphabetic(5),
                 /*description=*/ "This is a cloned data repo snapshot referenced resource");
 
@@ -274,10 +279,10 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
 
     var snapshotToClone =
         (ReferencedDataRepoSnapshotResource)
-            buildDestinationReferencedResource(
-                referencedResource,
+            referencedResource.buildReferencedClone(
                 referencedResource.getWorkspaceId(),
                 DESTINATION_RESOURCE_ID,
+                /*destinationFolderId=*/ null,
                 /*name=*/ RandomStringUtils.randomAlphabetic(5),
                 /*description=*/ "This is a cloned data repo snapshot referenced resource");
 
@@ -305,34 +310,5 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
       ControlledResource sourceResource, ControlledResource resourceToClone) {
     assertEquals(sourceResource.getAccessScope(), resourceToClone.getAccessScope());
     assertEquals(sourceResource.getAssignedUser(), resourceToClone.getAssignedUser());
-  }
-
-  @Test
-  public void createDestinationResourceLineage_sourceLineageIsNull() {
-    var sourceWorkspaceUuid = UUID.randomUUID();
-    var sourceResourceUuid = UUID.randomUUID();
-
-    var destinationResourceLineage =
-        WorkspaceCloneUtils.buildDestinationResourceLineage(
-            null, sourceWorkspaceUuid, sourceResourceUuid);
-
-    List<ResourceLineageEntry> expectedLineage = new ArrayList<>();
-    expectedLineage.add(new ResourceLineageEntry(sourceWorkspaceUuid, sourceResourceUuid));
-    assertEquals(expectedLineage, destinationResourceLineage);
-  }
-
-  @Test
-  public void createDestinationResourceLineage_sourceLineageIsNotEmpty() {
-    var sourceWorkspaceUuid = UUID.randomUUID();
-    var sourceResourceUuid = UUID.randomUUID();
-    var sourceResourceLineageEntry = new ResourceLineageEntry(UUID.randomUUID(), UUID.randomUUID());
-    var resourceLineage = new ArrayList<>(List.of(sourceResourceLineageEntry));
-
-    var destinationResourceLineage =
-        WorkspaceCloneUtils.buildDestinationResourceLineage(
-            resourceLineage, sourceWorkspaceUuid, sourceResourceUuid);
-
-    resourceLineage.add(new ResourceLineageEntry(sourceWorkspaceUuid, sourceResourceUuid));
-    assertEquals(resourceLineage, destinationResourceLineage);
   }
 }

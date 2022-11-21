@@ -415,6 +415,29 @@ public class ControlledResourceFixtures {
         /*properties=*/ Map.of());
   }
 
+  public static ControlledAzureStorageResource getAzureStorage(
+      UUID workspaceUuid,
+      UUID accountResourceId,
+      String storageAccountName,
+      String region,
+      String resourceName,
+      String resourceDescription) {
+    return ControlledAzureStorageResource.builder()
+        .common(
+            ControlledResourceFields.builder()
+                .workspaceUuid(workspaceUuid)
+                .resourceId(accountResourceId)
+                .name(resourceName)
+                .description(resourceDescription)
+                .cloningInstructions(CloningInstructions.COPY_NOTHING)
+                .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                .build())
+        .storageAccountName(storageAccountName)
+        .region(region)
+        .build();
+  }
+
   public static ControlledAzureStorageContainerResource getAzureStorageContainer(
       UUID storageAccountId, String storageContainerName) {
     return new ControlledAzureStorageContainerResource(
@@ -433,6 +456,29 @@ public class ControlledResourceFixtures {
         storageContainerName,
         /*resourceLineage=*/ null,
         /*properties=*/ Map.of());
+  }
+
+  public static ControlledAzureStorageContainerResource getAzureStorageContainer(
+      UUID workspaceUuid,
+      UUID accountResourceId,
+      UUID containerResourceId,
+      String containerName,
+      String resourceName,
+      String resourceDescription) {
+    return ControlledAzureStorageContainerResource.builder()
+        .common(
+            ControlledResourceFields.builder()
+                .workspaceUuid(workspaceUuid)
+                .resourceId(containerResourceId)
+                .name(resourceName)
+                .description(resourceDescription)
+                .cloningInstructions(CloningInstructions.COPY_NOTHING)
+                .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                .build())
+        .storageAccountId(accountResourceId)
+        .storageContainerName(containerName)
+        .build();
   }
 
   public static ControlledAzureVmResource getAzureVm(

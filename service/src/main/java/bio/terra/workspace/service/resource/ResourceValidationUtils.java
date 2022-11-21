@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource;
 
+import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties.FOLDER_ID_KEY;
+
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
@@ -18,6 +20,8 @@ import com.google.common.collect.ImmutableList;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -487,6 +491,24 @@ public class ResourceValidationUtils {
           String.format(
               "Cloning Instruction %s is not valid with Stewardship Type %s",
               cloningInstructions.toString(), stewardshipType.toString()));
+    }
+  }
+
+  /**
+   * Validate the terra reserved properties has valid values.
+   *
+   * @param properties of a resource.
+   */
+  public static void validateProperties(Map<String, String> properties) {
+    if (properties.containsKey(FOLDER_ID_KEY)) {
+      try {
+        var unused = UUID.fromString(properties.get(FOLDER_ID_KEY));
+      } catch (IllegalArgumentException e) {
+        throw new BadRequestException(
+            String.format(
+                "Property %s contains an invalid non-UUID format folder id %s.",
+                FOLDER_ID_KEY, properties.get(FOLDER_ID_KEY)));
+      }
     }
   }
 }

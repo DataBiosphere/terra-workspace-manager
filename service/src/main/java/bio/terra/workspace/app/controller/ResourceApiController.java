@@ -5,6 +5,7 @@ import static bio.terra.workspace.common.utils.ControllerValidationUtils.validat
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesUpdateRequestBody;
 
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
+import bio.terra.workspace.db.FolderDao;
 import bio.terra.workspace.generated.controller.ResourceApi;
 import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
@@ -16,14 +17,16 @@ import bio.terra.workspace.generated.model.ApiStewardshipType;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
-import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResourceService;
+import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
@@ -43,6 +46,7 @@ public class ResourceApiController implements ResourceApi {
 
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final HttpServletRequest request;
+  private final FolderDao folderDao;
 
   @Autowired
   public ResourceApiController(
@@ -50,12 +54,14 @@ public class ResourceApiController implements ResourceApi {
       WorkspaceService workspaceService,
       ReferencedResourceService referencedResourceService,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
-      HttpServletRequest request) {
+      HttpServletRequest request,
+      FolderDao folderDao) {
     this.resourceService = resourceService;
     this.workspaceService = workspaceService;
     this.referencedResourceService = referencedResourceService;
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.request = request;
+    this.folderDao = folderDao;
   }
 
   private AuthenticatedUserRequest getAuthenticatedInfo() {
@@ -106,9 +112,10 @@ public class ResourceApiController implements ResourceApi {
         userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
 
     validatePropertiesUpdateRequestBody(properties);
+    Map<String, String> propertiesMap = convertApiPropertyToMap(properties);
+    ResourceValidationUtils.validateProperties(propertiesMap);
 
-    resourceService.updateResourceProperties(
-        workspaceUuid, resourceUuid, convertApiPropertyToMap(properties));
+    resourceService.updateResourceProperties(workspaceUuid, resourceUuid, propertiesMap);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 

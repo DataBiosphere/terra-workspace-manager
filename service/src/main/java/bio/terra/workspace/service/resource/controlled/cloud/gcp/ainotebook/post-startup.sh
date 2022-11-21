@@ -92,7 +92,7 @@ sudo mv nextflow /usr/bin/nextflow
 readonly CROMWELL_LATEST_VERSION="81"
 sudo -u "${JUPYTER_USER}" sh -c "curl -LO https://github.com/broadinstitute/cromwell/releases/download/${CROMWELL_LATEST_VERSION}/cromwell-${CROMWELL_LATEST_VERSION}.jar"
 sudo mv "cromwell-${CROMWELL_LATEST_VERSION}.jar" "/usr/share/java/"
-echo "export CROMWELL_JAR='/usr/share/java/cromwell-${CROMWELL_LATEST_VERSION}.jar'" >> "/home/${JUPYTER_USER}/.bash_profile"
+sudo -u "${JUPYTER_USER}" sh -c "echo \"export CROMWELL_JAR='/usr/share/java/cromwell-${CROMWELL_LATEST_VERSION}.jar'\" >> /home/${JUPYTER_USER}/.bash_profile"
 
 #Install cromshell
 sudo apt-get -y install mailutils
@@ -145,14 +145,14 @@ fi
 readonly OWNER_EMAIL="$(
   sudo -u "${JUPYTER_USER}" sh -c "terra workspace describe --format=json" | \
   jq --raw-output ".userEmail")"
-echo "export OWNER_EMAIL='${OWNER_EMAIL}'" >> "/home/${JUPYTER_USER}/.bash_profile"
+sudo -u "${JUPYTER_USER}" sh -c "echo \"export OWNER_EMAIL='${OWNER_EMAIL}'\" >> /home/${JUPYTER_USER}/.bash_profile"
 
 # GOOGLE_PROJECT is the project id for the GCP project backing the workspace
 
 readonly GOOGLE_PROJECT="$(
   sudo -u "${JUPYTER_USER}" sh -c "terra workspace describe --format=json" | \
   jq --raw-output ".googleProjectId")"
-echo "export GOOGLE_PROJECT='${GOOGLE_PROJECT}'" >> "/home/${JUPYTER_USER}/.bash_profile"
+sudo -u "${JUPYTER_USER}" sh -c "echo \"export GOOGLE_PROJECT='${GOOGLE_PROJECT}'\" >> /home/${JUPYTER_USER}/.bash_profile"
 
 # PET_SA_EMAIL is the pet service account for the Terra user and
 # is specific to the GCP project backing the workspace
@@ -160,24 +160,21 @@ echo "export GOOGLE_PROJECT='${GOOGLE_PROJECT}'" >> "/home/${JUPYTER_USER}/.bash
 readonly PET_SA_EMAIL="$(
   sudo -u "${JUPYTER_USER}" sh -c "terra auth status --format=json" | \
   jq --raw-output ".serviceAccountEmail")"
-echo "export PET_SA_EMAIL='${PET_SA_EMAIL}'" >> "/home/${JUPYTER_USER}/.bash_profile"
+sudo -u "${JUPYTER_USER}" sh -c "echo \"export PET_SA_EMAIL='${PET_SA_EMAIL}'\" >> /home/${JUPYTER_USER}/.bash_profile"
 
 # These are equivalent environment variables which are set for a
 # command when calling "terra app execute <command>".
 
 # TERRA_USER_EMAIL is the Terra user account email address.
-
-echo "export TERRA_USER_EMAIL='${OWNER_EMAIL}'" >> "/home/${JUPYTER_USER}/.bash_profile"
+sudo -u "${JUPYTER_USER}" sh -c "echo \"export TERRA_USER_EMAIL='${OWNER_EMAIL}'\" >> /home/${JUPYTER_USER}/.bash_profile"
 
 # GOOGLE_CLOUD_PROJECT is the project id for the GCP project backing the
 # workspace.
-
-echo "export GOOGLE_CLOUD_PROJECT='${GOOGLE_PROJECT}'" >> "/home/${JUPYTER_USER}/.bash_profile"
+sudo -u "${JUPYTER_USER}" sh -c "echo \"export GOOGLE_CLOUD_PROJECT='${GOOGLE_PROJECT}'\" >> /home/${JUPYTER_USER}/.bash_profile"
 
 # GOOGLE_SERVICE_ACCOUNT_EMAIL is the pet service account for the Terra user
 # and is specific to the GCP project backing the workspace.
-
-echo "export GOOGLE_SERVICE_ACCOUNT_EMAIL='${PET_SA_EMAIL}'" >> "/home/${JUPYTER_USER}/.bash_profile"
+sudo -u "${JUPYTER_USER}" sh -c "echo \"export GOOGLE_SERVICE_ACCOUNT_EMAIL='${PET_SA_EMAIL}'\" >> /home/${JUPYTER_USER}/.bash_profile"
 
 ###############
 # git setup
@@ -188,7 +185,7 @@ cd "/home/${JUPYTER_USER}"
 readonly TERRA_SSH_KEY="$(sudo -u "${JUPYTER_USER}" sh -c "terra user ssh-key get --format=JSON")"
 
 # Start the ssh-agent. Set this command in bash_profile so everytime user starts a shell, we start the ssh-agent.
-echo eval '"$(ssh-agent -s)"' >> .bash_profile
+sudo -u "${JUPYTER_USER}" sh -c "echo eval '\"\$(ssh-agent -s)\"' >> /home/${JUPYTER_USER}/.bash_profile"
 if [[ -n "$TERRA_SSH_KEY" ]]; then
   printf '%s' "$TERRA_SSH_KEY" | sudo -u "${JUPYTER_USER}" sh -c "jq -r '.privateSshKey' > .ssh/id_rsa"
   sudo -u "${JUPYTER_USER}" sh -c 'chmod go-rwx .ssh/id_rsa'

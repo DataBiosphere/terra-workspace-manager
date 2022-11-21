@@ -4,10 +4,8 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.FolderDao;
 import java.util.UUID;
-import org.springframework.http.HttpStatus;
 
 public class DeleteFolderRecursiveStep implements Step {
 
@@ -23,8 +21,7 @@ public class DeleteFolderRecursiveStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    boolean deleted = folderDao.deleteFoldersRecursive(workspaceId, folderId);
-    FlightUtils.setResponse(context, deleted, HttpStatus.OK);
+    folderDao.deleteFoldersRecursive(workspaceId, folderId);
     return StepResult.getStepResultSuccess();
   }
 
