@@ -74,13 +74,7 @@ public class LandingZoneApiDispatch {
         body.getVersion());
 
     // Prevent deploying more than 1 landing zone per billing profile
-    landingZoneService.listLandingZoneIds(bearerToken, body.getBillingProfileId()).stream()
-        .findFirst()
-        .ifPresent(
-            t -> {
-              throw new LandingZoneInvalidInputException(
-                  "A Landing Zone already exists in the requested billing profile");
-            });
+    verifyLandingZoneDoesNotExistForBillingProfile(bearerToken, body);
 
     LandingZoneRequest landingZoneRequest =
         LandingZoneRequest.builder()
@@ -93,6 +87,25 @@ public class LandingZoneApiDispatch {
     return toApiCreateLandingZoneResult(
         landingZoneService.startLandingZoneCreationJob(
             bearerToken, body.getJobControl().getId(), landingZoneRequest, asyncResultEndpoint));
+  }
+
+  private void verifyLandingZoneDoesNotExistForBillingProfile(
+      BearerToken bearerToken, ApiCreateAzureLandingZoneRequestBody body) {
+    // TODO: Catching the exception is a temp solution.
+    // A better approach would be to return an empty list instead of throwing an exception
+    try {
+      landingZoneService
+          .getLandingZonesByBillingProfile(bearerToken, body.getBillingProfileId())
+          .stream()
+          .findFirst()
+          .ifPresent(
+              t -> {
+                throw new LandingZoneInvalidInputException(
+                    "A Landing Zone already exists in the requested billing profile");
+              });
+    } catch (bio.terra.landingzone.db.exception.LandingZoneNotFoundException ex) {
+      logger.info("The billing profile does not have a landing zone. ", ex);
+    }
   }
 
   private ApiCreateLandingZoneResult toApiCreateLandingZoneResult(

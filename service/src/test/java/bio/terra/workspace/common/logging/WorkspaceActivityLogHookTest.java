@@ -160,7 +160,8 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
             .workspaceId(workspaceUuid)
             .userFacingId(workspaceUuid.toString())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .build());
+            .build(),
+        /* applicationIds */ null);
     FlightMap inputParams = buildInputParams(workspaceUuid, OperationType.DELETE);
     hook.endFlight(
         new FakeFlightContext(
@@ -200,7 +201,8 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
             .workspaceId(workspaceUuid)
             .userFacingId(workspaceUuid.toString())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .build());
+            .build(),
+        /* applicationIds */ null);
     var flightId = UUID.randomUUID().toString();
     workspaceDao.createCloudContextStart(workspaceUuid, CloudPlatform.GCP, flightId);
     workspaceDao.createCloudContextFinish(

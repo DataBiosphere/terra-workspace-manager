@@ -59,7 +59,7 @@ jobs:
           java-version: 17
 
       - name: Cache Gradle packages
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ~/.gradle/caches
@@ -82,7 +82,7 @@ jobs:
               auth/approle/login role_id=${{ secrets.VAULT_APPROLE_ROLE_ID }} \
               secret_id=${{ secrets.VAULT_APPROLE_SECRET_ID }})
           echo ::add-mask::$VAULT_TOKEN    
-          echo ::set-output name=vault-token::$VAULT_TOKEN
+          echo vault-token=$VAULT_TOKEN >> $GITHUB_OUTPUT
 
       - name: Write config
         id: config
@@ -185,9 +185,9 @@ jobs:
             emoji=":no_entry:"
             text="@channel $text"
           fi
-          echo ::set-output name=status-text::$text
-          echo ::set-output name=status-bold::$bold
-          echo ::set-output name=status-emoji::$emoji
+          echo status-text=$text >> $GITHUB_OUTPUT
+          echo status-bold=$bold >> $GITHUB_OUTPUT
+          echo status-emoji=$emoji >> $GITHUB_OUTPUT
 
       - name: Notify WSM Slack
         if: always()
@@ -206,7 +206,7 @@ jobs:
       - name: Archive WSM and TestRunner logs
         id: archive_logs
         if: always()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           # We're not running WSM locally, so there's no wsm.log
           name: testrunner-logs

@@ -5,6 +5,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import bio.terra.landingzone.db.exception.LandingZoneNotFoundException;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepStatus;
@@ -78,6 +79,27 @@ public class RetrieveDestinationStorageAccountResourceIdStepTest extends BaseUni
             WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_STORAGE_ACCOUNT_RESOURCE_ID,
             UUID.class),
         storageAccountResourceId);
+  }
+
+  @Test
+  void doStep_doesNotFailIfLZNotFound() throws InterruptedException {
+    var storageAccount = ControlledResourceFixtures.getAzureStorage("acct1", "eastus");
+    List<WsmResource> accts = List.of(storageAccount);
+    when(resourceDao.enumerateResources(
+            ArgumentMatchers.eq(ControlledResourceFixtures.WORKSPACE_ID),
+            ArgumentMatchers.eq(WsmResourceFamily.AZURE_STORAGE_ACCOUNT),
+            ArgumentMatchers.any(),
+            ArgumentMatchers.anyInt(),
+            ArgumentMatchers.anyInt()))
+        .thenReturn(accts);
+    when(lzApiDispatch.getLandingZoneId(ArgumentMatchers.any(), ArgumentMatchers.any()))
+        .thenThrow(new LandingZoneNotFoundException("testing"));
+    RetrieveDestinationStorageAccountResourceIdStep step =
+        new RetrieveDestinationStorageAccountResourceIdStep(resourceDao, lzApiDispatch, testUser);
+
+    var result = step.doStep(flightContext);
+
+    assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
   }
 
   @Test

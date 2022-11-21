@@ -352,8 +352,10 @@ by setting yet another Spring property. For example, you can set all things terr
 at debug level by adding this to a property YAML file (such as application.yaml):
 ```
 logging.level.bio.terra: debug
-# Use this to print SQL queries
+# Print SQL queries
 logging.level.org.springframework.jdbc.core: trace
+# Print SQL transactions
+logging.level.org.springframework.transaction.interceptor
 ```
 You can be more precise by putting more of the path in. You can use YAML syntax to include
 multiple entries, something like (but I did not test this):

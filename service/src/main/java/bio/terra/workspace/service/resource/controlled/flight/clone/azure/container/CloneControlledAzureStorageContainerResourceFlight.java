@@ -7,6 +7,8 @@ import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureStorageAccessService;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.BlobCopier;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.flight.clone.CheckControlledResourceAuthStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.ClonePolicyAttributesStep;
@@ -76,7 +78,7 @@ public class CloneControlledAzureStorageContainerResourceFlight extends Flight {
     // 3. Check if the container is already present
     // 4. Copy container definition to new container resource
     // 5. If referenced, bail out as unsupported.
-    // 6. Copy files from source container to destination container (TODO WOR-591)
+    // 6. Copy files from source container to destination container
     addStep(
         new CheckControlledResourceAuthStep(
             sourceResource, flightBeanBag.getControlledResourceMetadataManager(), userRequest),
@@ -124,7 +126,23 @@ public class CloneControlledAzureStorageContainerResourceFlight extends Flight {
               cloningInstructions),
           RetryRules.cloud());
       if (CloningInstructions.COPY_RESOURCE == cloningInstructions) {
-        addStep(new CopyAzureStorageContainerBlobsStep());
+        var azureStorageService =
+            new AzureStorageAccessService(
+                flightBeanBag.getSamService(),
+                flightBeanBag.getCrlService(),
+                flightBeanBag.getStorageAccountKeyProvider(),
+                flightBeanBag.getControlledResourceMetadataManager(),
+                flightBeanBag.getLandingZoneApiDispatch(),
+                flightBeanBag.getAzureCloudContextService(),
+                flightBeanBag.getFeatureConfiguration(),
+                flightBeanBag.getAzureConfig());
+        addStep(
+            new CopyAzureStorageContainerBlobsStep(
+                azureStorageService,
+                sourceContainer,
+                resourceDao,
+                userRequest,
+                new BlobCopier(azureStorageService, userRequest)));
       }
     }
   }

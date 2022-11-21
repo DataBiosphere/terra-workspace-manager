@@ -14,6 +14,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import bio.terra.common.stairway.StairwayComponent;
+import bio.terra.stairway.FlightDebugInfo;
+import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpBigQueryDatasetRequest;
@@ -45,21 +48,39 @@ import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
 import bio.terra.workspace.generated.model.ApiJobResult;
 import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiReferenceResourceCommonFields;
+import bio.terra.workspace.generated.model.ApiResourceDescription;
+import bio.terra.workspace.generated.model.ApiResourceList;
+import bio.terra.workspace.generated.model.ApiTpsPaoUpdateRequest;
+import bio.terra.workspace.generated.model.ApiTpsPaoUpdateResult;
+import bio.terra.workspace.generated.model.ApiTpsPolicyInput;
 import bio.terra.workspace.generated.model.ApiTpsPolicyInputs;
+import bio.terra.workspace.generated.model.ApiTpsUpdateMode;
 import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
-import bio.terra.workspace.service.iam.AuthHeaderKeys;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
+import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.resource.controlled.flight.clone.CheckControlledResourceAuthStep;
+import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.CompleteTableCopyJobsStep;
+import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.CreateTableCopyJobsStep;
+import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.RetrieveBigQueryDatasetCloudAttributesStep;
+import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.SetReferencedDestinationBigQueryDatasetInWorkingMapStep;
+import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.SetReferencedDestinationBigQueryDatasetResponseStep;
+import bio.terra.workspace.service.resource.referenced.flight.create.CreateReferenceMetadataStep;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
+import com.google.common.collect.ImmutableList;
 import java.time.OffsetDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,6 +115,8 @@ public class MockMvcUtils {
   public static final String UPDATE_WORKSPACES_V1_POLICIES_PATH_FORMAT =
       "/api/workspaces/v1/%S/policies";
   public static final String GRANT_ROLE_PATH_FORMAT = "/api/workspaces/v1/%s/roles/%s/members";
+  public static final String REMOVE_ROLE_PATH_FORMAT = "/api/workspaces/v1/%s/roles/%s/members/%s";
+  public static final String RESOURCES_PATH_FORMAT = "/api/workspaces/v1/%s/resources";
   public static final String CREATE_SNAPSHOT_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/referenced/datarepo/snapshots";
   public static final String CREATE_CLOUD_CONTEXT_PATH_FORMAT =
@@ -134,6 +157,8 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/controlled/gcp/bqdatasets/%s";
   public static final String CLONE_CONTROLLED_GCP_BIG_QUERY_DATASET_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/gcp/bqdatasets/%s/clone";
+  public static final String CLONE_RESULT_CONTROLLED_GCP_BIG_QUERY_DATASET_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/gcp/bqdatasets/clone-result/%s";
   public static final String CONTROLLED_GCP_GCS_BUCKETS_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/gcp/buckets";
   public static final String CONTROLLED_GCP_GCS_BUCKET_V1_PATH_FORMAT =
@@ -144,14 +169,18 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/referenced/gcp/buckets";
   public static final String REFERENCED_GCP_GCS_OBJECTS_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/referenced/gcp/bucket/objects";
-  public static final String REFERENCED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT =
+  public static final String REFERENCED_GCP_BIG_QUERY_DATASETS_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/referenced/gcp/bigquerydatasets";
+  public static final String REFERENCED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/referenced/gcp/bigquerydatasets/%s";
   public static final String REFERENCED_GCP_BIG_QUERY_DATA_TABLE_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/referenced/gcp/bigquerydatatables";
   public static final String REFERENCED_GIT_REPO_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/referenced/gitrepos";
   public static final String DELETE_FOLDER_JOB_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/folders/%s/result/%s";
+  public static final String UPDATE_POLICIES_PATH_FORMAT = "/api/workspaces/v1/%s/policies";
+
   // Only use this if you are mocking SAM. If you're using real SAM,
   // use userAccessUtils.defaultUserAuthRequest() instead.
   public static final AuthenticatedUserRequest USER_REQUEST =
@@ -160,17 +189,17 @@ public class MockMvcUtils {
   private static final Logger logger = LoggerFactory.getLogger(MockMvcUtils.class);
   private static final String DEST_BUCKET_RESOURCE_NAME =
       TestUtils.appendRandomNumber("i-am-the-cloned-bucket");
+
   // Do not Autowire UserAccessUtils. UserAccessUtils are for connected tests and not unit tests
   // (since unit tests don't use real SAM). Instead, each method must take in userRequest.
   @Autowired private MockMvc mockMvc;
   @Autowired private ObjectMapper objectMapper;
+  @Autowired JobService jobService;
+  @Autowired StairwayComponent stairwayComponent;
 
   public static MockHttpServletRequestBuilder addAuth(
       MockHttpServletRequestBuilder request, AuthenticatedUserRequest userRequest) {
-    return request
-        .header(AUTH_HEADER, "Bearer " + userRequest.getRequiredToken())
-        .header(AuthHeaderKeys.OIDC_CLAIM_EMAIL.getKeyName(), userRequest.getEmail())
-        .header(AuthHeaderKeys.OIDC_CLAIM_USER_ID.getKeyName(), userRequest.getSubjectId());
+    return request.header(AUTH_HEADER, "Bearer " + userRequest.getRequiredToken());
   }
 
   public static MockHttpServletRequestBuilder addJsonContentType(
@@ -423,6 +452,47 @@ public class MockMvcUtils {
         .andExpect(status().is(HttpStatus.SC_NOT_FOUND));
   }
 
+  public ApiTpsPaoUpdateResult updatePolicies(
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      @Nullable List<ApiTpsPolicyInput> policiesToAdd,
+      @Nullable List<ApiTpsPolicyInput> policiesToRemove)
+      throws Exception {
+    ApiTpsPaoUpdateRequest requestBody =
+        new ApiTpsPaoUpdateRequest().updateMode(ApiTpsUpdateMode.FAIL_ON_CONFLICT);
+    if (policiesToAdd != null) {
+      requestBody.addAttributes(new ApiTpsPolicyInputs().inputs(policiesToAdd));
+    }
+    if (policiesToRemove != null) {
+      requestBody.removeAttributes(new ApiTpsPolicyInputs().inputs(policiesToRemove));
+    }
+    String serializedResponse =
+        mockMvc
+            .perform(
+                addAuth(
+                    patch(String.format(UPDATE_POLICIES_PATH_FORMAT, workspaceId))
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .characterEncoding("UTF-8")
+                        .content(objectMapper.writeValueAsString(requestBody)),
+                    userRequest))
+            .andExpect(status().is(HttpStatus.SC_OK))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    return objectMapper.readValue(serializedResponse, ApiTpsPaoUpdateResult.class);
+  }
+
+  public void deletePolicies(AuthenticatedUserRequest userRequest, UUID workspaceId)
+      throws Exception {
+    ApiWorkspaceDescription workspace = getWorkspace(userRequest, workspaceId);
+    updatePolicies(
+        userRequest,
+        workspaceId,
+        /*policiesToAdd=*/ null,
+        /*policiesToRemove=*/ workspace.getPolicies());
+  }
+
   public void assertWorkspace(
       ApiWorkspaceDescription actualWorkspace,
       String expectedUserFacingId,
@@ -442,7 +512,7 @@ public class MockMvcUtils {
     assertEquals(expectedLastUpdatedByEmail, actualWorkspace.getLastUpdatedBy());
   }
 
-  public ApiCreatedControlledGcpBigQueryDataset createBigQueryDataset(
+  public ApiCreatedControlledGcpBigQueryDataset createControlledBqDataset(
       AuthenticatedUserRequest userRequest, UUID workspaceId) throws Exception {
     ApiCreateControlledGcpBigQueryDatasetRequestBody datasetCreationRequest =
         new ApiCreateControlledGcpBigQueryDatasetRequestBody()
@@ -470,17 +540,26 @@ public class MockMvcUtils {
         serializedGetResponse, ApiCreatedControlledGcpBigQueryDataset.class);
   }
 
-  public ApiGcpBigQueryDatasetResource getBigQueryDataset(
+  public ApiGcpBigQueryDatasetResource getControlledBqDataset(
       AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
+    return getBqDataset(
+        userRequest, workspaceId, resourceId, CONTROLLED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT);
+  }
+
+  public ApiGcpBigQueryDatasetResource getReferencedBqDataset(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
+    return getBqDataset(
+        userRequest, workspaceId, resourceId, REFERENCED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT);
+  }
+
+  private ApiGcpBigQueryDatasetResource getBqDataset(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId, String path)
+      throws Exception {
     String serializedGetResponse =
         mockMvc
             .perform(
                 addAuth(
-                    get(
-                        String.format(
-                            CONTROLLED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT,
-                            workspaceId.toString(),
-                            resourceId.toString())),
+                    get(String.format(path, workspaceId.toString(), resourceId.toString())),
                     userRequest))
             .andExpect(status().is(HttpStatus.SC_OK))
             .andReturn()
@@ -490,23 +569,181 @@ public class MockMvcUtils {
     return objectMapper.readValue(serializedGetResponse, ApiGcpBigQueryDatasetResource.class);
   }
 
-  /** Call cloneBqDataset() and return immediately; don't wait for flight to finish. */
+  public ApiGcpBigQueryDatasetResource cloneControlledBqDataset(
+      AuthenticatedUserRequest userRequest,
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId,
+      UUID destWorkspaceId,
+      ApiCloningInstructionsEnum cloningInstructions,
+      @Nullable String destResourceName,
+      @Nullable String destDatasetName)
+      throws Exception {
+    return cloneControlledBqDataset(
+        userRequest,
+        sourceWorkspaceId,
+        sourceResourceId,
+        destWorkspaceId,
+        cloningInstructions,
+        destResourceName,
+        destDatasetName,
+        /*location=*/ null);
+  }
+
+  /** Call cloneBigQueryDataset() and wait for flight to finish. */
+  public ApiGcpBigQueryDatasetResource cloneControlledBqDataset(
+      AuthenticatedUserRequest userRequest,
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId,
+      UUID destWorkspaceId,
+      ApiCloningInstructionsEnum cloningInstructions,
+      @Nullable String destResourceName,
+      @Nullable String destDatasetName,
+      @Nullable String destLocation)
+      throws Exception {
+    ApiCloneControlledGcpBigQueryDatasetResult result =
+        cloneControlledBqDatasetAsync(
+            userRequest,
+            sourceWorkspaceId,
+            sourceResourceId,
+            destWorkspaceId,
+            cloningInstructions,
+            destResourceName,
+            destDatasetName,
+            destLocation,
+            HttpStatus.SC_ACCEPTED,
+            /*shouldUndo=*/ false);
+    UUID jobId = UUID.fromString(result.getJobReport().getId());
+    while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
+      Thread.sleep(/*millis=*/ 5000);
+      result = getCloneControlledBqDatasetResult(userRequest, sourceWorkspaceId, jobId);
+    }
+    assertEquals(StatusEnum.SUCCEEDED, result.getJobReport().getStatus());
+    logger.info(
+        "Controlled BQ dataset clone of resource %s completed. ".formatted(sourceResourceId));
+    return result.getDataset().getDataset();
+  }
+
+  /** Call cloneBigQueryDataset(), wait for flight to finish, return JobError. */
+  public ApiErrorReport cloneControlledBqDataset_jobError(
+      AuthenticatedUserRequest userRequest,
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId,
+      UUID destWorkspaceId,
+      ApiCloningInstructionsEnum cloningInstructions,
+      @Nullable String destResourceName,
+      @Nullable String destDatasetName,
+      int expectedCode)
+      throws Exception {
+    ApiCloneControlledGcpBigQueryDatasetResult result =
+        cloneControlledBqDatasetAsync(
+            userRequest,
+            sourceWorkspaceId,
+            sourceResourceId,
+            destWorkspaceId,
+            cloningInstructions,
+            destResourceName,
+            destDatasetName,
+            HttpStatus.SC_ACCEPTED,
+            /*shouldUndo=*/ false);
+    return cloneControlledBqDataset_waitForJobError(
+        userRequest,
+        sourceWorkspaceId,
+        UUID.fromString(result.getJobReport().getId()),
+        expectedCode);
+  }
+
+  public void cloneControlledBqDataset_undo(
+      AuthenticatedUserRequest userRequest,
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId,
+      UUID destWorkspaceId,
+      String destResourceName,
+      ApiCloningInstructionsEnum cloningInstructions)
+      throws Exception {
+    ApiCloneControlledGcpBigQueryDatasetResult result =
+        cloneControlledBqDatasetAsync(
+            userRequest,
+            sourceWorkspaceId,
+            sourceResourceId,
+            destWorkspaceId,
+            cloningInstructions,
+            destResourceName,
+            /*destDatasetName=*/ null,
+            HttpStatus.SC_ACCEPTED,
+            /*shouldUndo=*/ true);
+    cloneControlledBqDataset_waitForJobError(
+        userRequest,
+        sourceWorkspaceId,
+        UUID.fromString(result.getJobReport().getId()),
+        HttpStatus.SC_INTERNAL_SERVER_ERROR);
+  }
+
+  /** Call cloneBigQueryDataset() and return immediately; don't wait for flight to finish. */
   public ApiCloneControlledGcpBigQueryDatasetResult cloneControlledBqDatasetAsync(
       AuthenticatedUserRequest userRequest,
       UUID sourceWorkspaceId,
       UUID sourceResourceId,
       UUID destWorkspaceId,
       ApiCloningInstructionsEnum cloningInstructions,
-      String destDatasetName,
-      int expectedCode)
+      @Nullable String destResourceName,
+      @Nullable String destDatasetName,
+      int expectedCode,
+      boolean shouldUndo)
       throws Exception {
+    return cloneControlledBqDatasetAsync(
+        userRequest,
+        sourceWorkspaceId,
+        sourceResourceId,
+        destWorkspaceId,
+        cloningInstructions,
+        destResourceName,
+        destDatasetName,
+        /*location=*/ null,
+        expectedCode,
+        shouldUndo);
+  }
+
+  /** Call cloneBigQueryDataset() and return immediately; don't wait for flight to finish. */
+  public ApiCloneControlledGcpBigQueryDatasetResult cloneControlledBqDatasetAsync(
+      AuthenticatedUserRequest userRequest,
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId,
+      UUID destWorkspaceId,
+      ApiCloningInstructionsEnum cloningInstructions,
+      @Nullable String destResourceName,
+      @Nullable String destDatasetName,
+      @Nullable String destLocation,
+      int expectedCode,
+      boolean shouldUndo)
+      throws Exception {
+    // Retry to ensure steps are idempotent
+    Map<String, StepStatus> retrySteps = new HashMap<>();
+    List<Class> steps =
+        ImmutableList.of(
+            CheckControlledResourceAuthStep.class,
+            RetrieveBigQueryDatasetCloudAttributesStep.class,
+            SetReferencedDestinationBigQueryDatasetInWorkingMapStep.class,
+            CreateReferenceMetadataStep.class,
+            SetReferencedDestinationBigQueryDatasetResponseStep.class,
+            CreateTableCopyJobsStep.class,
+            CompleteTableCopyJobsStep.class);
+    steps.forEach(step -> retrySteps.put(step.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY));
+    jobService.setFlightDebugInfoForTest(
+        FlightDebugInfo.newBuilder()
+            .doStepFailures(retrySteps)
+            .lastStepFailure(shouldUndo)
+            .build());
+
     ApiCloneControlledGcpBigQueryDatasetRequest request =
         new ApiCloneControlledGcpBigQueryDatasetRequest()
             .destinationWorkspaceId(destWorkspaceId)
             .cloningInstructions(cloningInstructions)
-            .name(TestUtils.appendRandomNumber("dest-dataset-resource-name"))
+            .location(destLocation)
             .jobControl(new ApiJobControl().id(UUID.randomUUID().toString()));
-    if (destDatasetName != "") {
+    if (!StringUtils.isEmpty(destResourceName)) {
+      request.name(destResourceName);
+    }
+    if (!StringUtils.isEmpty(destDatasetName)) {
       request.destinationDatasetName(destDatasetName);
     }
 
@@ -528,6 +765,74 @@ public class MockMvcUtils {
         ? objectMapper.readValue(
             serializedResponse, ApiCloneControlledGcpBigQueryDatasetResult.class)
         : null;
+  }
+
+  private ApiErrorReport cloneControlledBqDataset_waitForJobError(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID jobId, int expectedCode)
+      throws Exception {
+    // While job is running, cloneBigQueryDataset returns ApiCloneControlledGcpBigQueryDatasetResult
+    // After job fails, cloneBigQueryData returns ApiCloneControlledGcpBigQueryDatasetResult OR
+    // ApiErrorReport.
+    ApiCloneControlledGcpBigQueryDatasetResult result =
+        getCloneControlledBqDatasetResult(userRequest, workspaceId, jobId);
+    ApiErrorReport errorReport = null;
+    while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
+      Thread.sleep(/*millis=*/ 3000);
+      String serializedResponse =
+          getCloneControlledBqDatasetResult_serializedResponse(userRequest, workspaceId, jobId);
+      try {
+        result =
+            objectMapper.readValue(
+                serializedResponse, ApiCloneControlledGcpBigQueryDatasetResult.class);
+      } catch (UnrecognizedPropertyException e) {
+        errorReport = objectMapper.readValue(serializedResponse, ApiErrorReport.class);
+        assertEquals(expectedCode, errorReport.getStatusCode());
+        return errorReport;
+      }
+    }
+    // Job failed and cloneBigQueryData returned ApiCloneControlledGcpBigQueryDatasetResult
+    assertEquals(StatusEnum.FAILED, result.getJobReport().getStatus());
+    return result.getErrorReport();
+  }
+
+  private ApiCloneControlledGcpBigQueryDatasetResult getCloneControlledBqDatasetResult(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID jobId) throws Exception {
+    String serializedResponse =
+        getCloneControlledBqDatasetResult_serializedResponse(userRequest, workspaceId, jobId);
+    return objectMapper.readValue(
+        serializedResponse, ApiCloneControlledGcpBigQueryDatasetResult.class);
+  }
+
+  private String getCloneControlledBqDatasetResult_serializedResponse(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID jobId) throws Exception {
+    return mockMvc
+        .perform(
+            addJsonContentType(
+                addAuth(
+                    get(
+                        CLONE_RESULT_CONTROLLED_GCP_BIG_QUERY_DATASET_FORMAT.formatted(
+                            workspaceId.toString(), jobId.toString())),
+                    userRequest)))
+        .andReturn()
+        .getResponse()
+        .getContentAsString();
+  }
+
+  private ApiErrorReport getCloneControlledBqDatasetResult_jobError(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID jobId) throws Exception {
+    String serializedResponse =
+        mockMvc
+            .perform(
+                addJsonContentType(
+                    addAuth(
+                        get(
+                            CLONE_RESULT_CONTROLLED_GCP_BIG_QUERY_DATASET_FORMAT.formatted(
+                                workspaceId.toString(), jobId.toString())),
+                        userRequest)))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    return objectMapper.readValue(serializedResponse, ApiErrorReport.class);
   }
 
   public ApiCreatedControlledGcpGcsBucket createControlledGcsBucket(
@@ -677,7 +982,6 @@ public class MockMvcUtils {
             .andReturn()
             .getResponse()
             .getContentAsString();
-
     return objectMapper.readValue(serializedResponse, ApiGcpGcsBucketResource.class);
   }
 
@@ -693,6 +997,15 @@ public class MockMvcUtils {
                     .name(RandomStringUtils.randomAlphabetic(10)))
             .snapshot(
                 new ApiDataRepoSnapshotAttributes().instanceName("terra").snapshot("polaroid"));
+
+    return createDataRepoSnapshotReference(userRequest, workspaceId, datarepoSnapshotRequest);
+  }
+
+  public ApiDataRepoSnapshotResource createDataRepoSnapshotReference(
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      ApiCreateDataRepoSnapshotReferenceRequestBody datarepoSnapshotRequest)
+      throws Exception {
 
     String serializedGetResponse =
         mockMvc
@@ -713,6 +1026,21 @@ public class MockMvcUtils {
     return objectMapper.readValue(serializedGetResponse, ApiDataRepoSnapshotResource.class);
   }
 
+  public List<ApiResourceDescription> enumerateResources(
+      AuthenticatedUserRequest userRequest, UUID workspaceId) throws Exception {
+    String serializedResponse =
+        mockMvc
+            .perform(
+                addJsonContentType(
+                    addAuth(
+                        get(RESOURCES_PATH_FORMAT.formatted(workspaceId.toString())), userRequest)))
+            .andExpect(status().is(HttpStatus.SC_OK))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    return objectMapper.readValue(serializedResponse, ApiResourceList.class).getResources();
+  }
+
   public void grantRole(
       AuthenticatedUserRequest userRequest, UUID workspaceId, WsmIamRole role, String memberEmail)
       throws Exception {
@@ -724,6 +1052,18 @@ public class MockMvcUtils {
                     post(String.format(GRANT_ROLE_PATH_FORMAT, workspaceId, role.name()))
                         .content(objectMapper.writeValueAsString(requestBody)),
                     userRequest)))
+        .andExpect(status().is(HttpStatus.SC_NO_CONTENT));
+  }
+
+  public void removeRole(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, WsmIamRole role, String memberEmail)
+      throws Exception {
+    mockMvc
+        .perform(
+            addAuth(
+                delete(
+                    String.format(REMOVE_ROLE_PATH_FORMAT, workspaceId, role.name(), memberEmail)),
+                userRequest))
         .andExpect(status().is(HttpStatus.SC_NO_CONTENT));
   }
 

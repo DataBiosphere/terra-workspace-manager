@@ -39,10 +39,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-/**
- * Use this instead of ControlledGcpResourceApiControllerConnectedTest if you don't want to talk to
- * real GCP.
- */
+/** ControlledGcpResourceApiController unit tests. */
 public class ControlledGcpResourceApiControllerTest extends BaseUnitTestMockGcpCloudContextService {
 
   @Autowired MockMvc mockMvc;
@@ -65,7 +62,7 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTestMockGcpC
   }
 
   @Test
-  public void cloneBqDataset_badRequest_throws400() throws Exception {
+  public void cloneControlledBqDataset_requestContainsInvalidField_throws400() throws Exception {
     // Cannot set destinationDatasetName for COPY_REFERENCE clone
     mockMvcUtils.cloneControlledBqDatasetAsync(
         USER_REQUEST,
@@ -73,8 +70,10 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTestMockGcpC
         /*sourceResourceId=*/ UUID.randomUUID(),
         /*destWorkspaceId=*/ UUID.randomUUID(),
         ApiCloningInstructionsEnum.REFERENCE,
+        /*destResourceName=*/ null,
         "datasetName",
-        HttpStatus.SC_BAD_REQUEST);
+        HttpStatus.SC_BAD_REQUEST,
+        /*shouldUndo=*/ false);
   }
 
   @Test

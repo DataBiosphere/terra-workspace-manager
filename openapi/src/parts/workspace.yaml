@@ -457,7 +457,12 @@ components:
           $ref: '#/components/schemas/WorkspaceStageModel'
         properties:
           $ref: '#/components/schemas/Properties'
-          
+        applicationIds:
+          description: List of application ids to enable for this workspace
+          type: array
+          items:
+            type: string
+
     GrantRoleRequestBody:
       description: The body for a request to grant a role to a single user.
       type: object
@@ -510,7 +515,7 @@ components:
 
     WorkspaceDescription:
       type: object
-      required: [id, userFacingId, highestRole]
+      required: [id, userFacingId, highestRole, createdBy, lastUpdatedBy, createdDate, lastUpdatedDate]
       properties:
         id:
           description: The ID of the workspace. Immutable.

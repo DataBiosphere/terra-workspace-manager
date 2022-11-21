@@ -1,15 +1,24 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
 import bio.terra.common.exception.ForbiddenException;
+import bio.terra.common.iam.BearerToken;
+import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
+import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
+import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
+import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.StorageAccountKeyProvider;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import com.azure.core.http.HttpClient;
+import com.azure.resourcemanager.storage.models.StorageAccount;
 import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.BlobContainerClientBuilder;
 import com.azure.storage.blob.sas.BlobContainerSasPermission;
@@ -20,7 +29,10 @@ import com.azure.storage.common.sas.SasProtocol;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -32,21 +44,40 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class AzureStorageAccessService {
+  private static final Logger logger = LoggerFactory.getLogger(AzureStorageAccessService.class);
 
-  public record AzureSasBundle(String sasToken, String sasUrl) {}
+  record StorageData(
+      String storageAccountName,
+      String endpoint,
+      ControlledAzureStorageContainerResource storageContainerResource) {}
 
   private final SamService samService;
+  private final CrlService crlService;
   private final FeatureConfiguration features;
   private final StorageAccountKeyProvider storageAccountKeyProvider;
+  private final ControlledResourceMetadataManager controlledResourceMetadataManager;
+  private final LandingZoneApiDispatch landingZoneApiDispatch;
+  private final AzureCloudContextService azureCloudContextService;
+  private final AzureConfiguration azureConfiguration;
 
   @Autowired
   public AzureStorageAccessService(
       SamService samService,
+      CrlService crlService,
       StorageAccountKeyProvider storageAccountKeyProvider,
-      FeatureConfiguration features) {
+      ControlledResourceMetadataManager controlledResourceMetadataManager,
+      LandingZoneApiDispatch landingZoneApiDispatch,
+      AzureCloudContextService azureCloudContextService,
+      FeatureConfiguration features,
+      AzureConfiguration azureConfiguration) {
     this.samService = samService;
+    this.crlService = crlService;
+    this.controlledResourceMetadataManager = controlledResourceMetadataManager;
+    this.landingZoneApiDispatch = landingZoneApiDispatch;
+    this.azureCloudContextService = azureCloudContextService;
     this.features = features;
     this.storageAccountKeyProvider = storageAccountKeyProvider;
+    this.azureConfiguration = azureConfiguration;
   }
 
   private BlobContainerSasPermission getSasTokenPermissions(
@@ -97,14 +128,10 @@ public class AzureStorageAccessService {
   }
 
   /**
-   * Mints a new SAS for an Azure storage container. Access control is mediated by SAM and mapped to
-   * Azure permissions.
+   * Creates a SAS token with a default start and expiry (drawn from app-level config)
    *
    * @param workspaceUuid id of the workspace that owns the container resource
    * @param storageContainerResource storage container object we want to mint a SAS for
-   * @param storageAccountResource storage account which owns the storage container object
-   * @param startTime Time at which the SAS will become functional
-   * @param expiryTime Time at which the SAS will expire
    * @param userRequest The authenticated user's request
    * @param sasIpRange (optional) IP address or range of IPs from which the Azure APIs will accept
    *     requests for the token being minted.
@@ -114,58 +141,181 @@ public class AzureStorageAccessService {
   public AzureSasBundle createAzureStorageContainerSasToken(
       UUID workspaceUuid,
       ControlledAzureStorageContainerResource storageContainerResource,
-      ControlledAzureStorageResource storageAccountResource,
-      OffsetDateTime startTime,
-      OffsetDateTime expiryTime,
       AuthenticatedUserRequest userRequest,
       String sasIpRange,
       String sasBlobName,
       String sasPermissions) {
+
+    OffsetDateTime startTime =
+        OffsetDateTime.now().minusMinutes(azureConfiguration.getSasTokenStartTimeMinutesOffset());
+    long secondDuration = azureConfiguration.getSasTokenExpiryTimeMinutesOffset() * 60;
+    OffsetDateTime expiryTime = OffsetDateTime.now().plusSeconds(secondDuration);
+
+    return createAzureStorageContainerSasToken(
+        workspaceUuid,
+        storageContainerResource.getResourceId(),
+        userRequest,
+        new SasTokenOptions(sasIpRange, startTime, expiryTime, sasBlobName, sasPermissions));
+  }
+
+  /**
+   * Mints a new SAS for an Azure storage container. Access control is mediated by SAM and mapped to
+   * Azure permissions.
+   *
+   * @param workspaceUuid id of the workspace that owns the container resource
+   * @param storageContainerUuid id of the storage container resource
+   * @param userRequest The authenticated user's request
+   * @param sasTokenOptions Token options which include 1) ipRange - (optional) IP address or range
+   *     of IPs from which the Azure APIs will accept requests for the token being minted. 2)
+   *     startTime - Time at which the SAS will become functional 3) expiryTime - Time at which the
+   *     SAS will expire 4) blobName - Requests access to a single blob in a container 5)
+   *     permissions - Permissions associated with the SAS indicating what operations a client may
+   *     perform on the resource
+   * @return A bundle of 1) a full Azure SAS URL, including the storage account hostname and 2) the
+   *     token query param fragment
+   */
+  public AzureSasBundle createAzureStorageContainerSasToken(
+      UUID workspaceUuid,
+      UUID storageContainerUuid,
+      AuthenticatedUserRequest userRequest,
+      SasTokenOptions sasTokenOptions) {
     features.azureEnabledCheck();
+
+    logger.info(
+        "user {} requesting SAS token for Azure storage container {} in workspace {}",
+        userRequest.getEmail(),
+        storageContainerUuid.toString(),
+        workspaceUuid.toString());
+
+    var storageData = getStorageAccountData(workspaceUuid, storageContainerUuid, userRequest);
 
     BlobContainerSasPermission blobContainerSasPermission =
         getSasTokenPermissions(
             userRequest,
-            storageContainerResource.getResourceId(),
-            storageContainerResource.getCategory().getSamResourceName(),
-            sasPermissions);
+            storageData.storageContainerResource().getResourceId(),
+            storageData.storageContainerResource.getCategory().getSamResourceName(),
+            sasTokenOptions.permissions());
 
-    String storageAccountName = storageAccountResource.getStorageAccountName();
-    String endpoint = storageAccountResource.getStorageAccountEndpoint();
     StorageSharedKeyCredential storageKey =
-        storageAccountKeyProvider.getStorageAccountKey(workspaceUuid, storageAccountName);
+        storageAccountKeyProvider.getStorageAccountKey(
+            workspaceUuid, storageData.storageAccountName());
 
     BlobContainerClient blobContainerClient =
         new BlobContainerClientBuilder()
             .credential(storageKey)
-            .endpoint(endpoint)
+            .endpoint(storageData.endpoint())
             .httpClient(HttpClient.createDefault())
-            .containerName(storageContainerResource.getStorageContainerName())
+            .containerName(storageData.storageContainerResource.getStorageContainerName())
             .buildClient();
     BlobServiceSasSignatureValues sasValues =
-        new BlobServiceSasSignatureValues(expiryTime, blobContainerSasPermission)
-            .setStartTime(startTime)
+        new BlobServiceSasSignatureValues(sasTokenOptions.expiryTime(), blobContainerSasPermission)
+            .setStartTime(sasTokenOptions.startTime())
             .setProtocol(SasProtocol.HTTPS_ONLY);
 
-    if (sasIpRange != null) {
-      sasValues.setSasIpRange(SasIpRange.parse(sasIpRange));
+    if (sasTokenOptions.ipRange() != null) {
+      sasValues.setSasIpRange(SasIpRange.parse(sasTokenOptions.ipRange()));
     }
 
     String token;
-    if (sasBlobName != null) {
-      var blobClient = blobContainerClient.getBlobClient(sasBlobName);
+    if (sasTokenOptions.blobName() != null) {
+      var blobClient = blobContainerClient.getBlobClient(sasTokenOptions.blobName());
       token = blobClient.generateSas(sasValues);
     } else {
       token = blobContainerClient.generateSas(sasValues);
     }
+
+    logger.info(
+        "SAS token with expiry time of {} generated for user {} on container {} in workspace {}",
+        sasTokenOptions.expiryTime(),
+        userRequest.getEmail(),
+        storageContainerUuid,
+        workspaceUuid);
 
     return new AzureSasBundle(
         token,
         String.format(
             Locale.ROOT,
             "https://%s.blob.core.windows.net/%s?%s",
-            storageAccountName,
-            storageContainerResource.getStorageContainerName(),
+            storageData.storageAccountName(),
+            storageData.storageContainerResource().getStorageContainerName(),
             token));
+  }
+
+  /**
+   * Returns an Azure container client suitable for interacting with a storage container and its
+   * constiuent blobs.
+   *
+   * @param containerResource The WSM container resource the client will operate on
+   * @param storageAccountResource The parent storage account for the WSM container resource
+   * @return An Azure blob container client
+   */
+  public BlobContainerClient buildBlobContainerClient(
+      ControlledAzureStorageContainerResource containerResource,
+      ControlledAzureStorageResource storageAccountResource) {
+    StorageSharedKeyCredential storageAccountKey =
+        storageAccountKeyProvider.getStorageAccountKey(
+            containerResource.getWorkspaceId(), storageAccountResource.getStorageAccountName());
+
+    return new BlobContainerClientBuilder()
+        .credential(storageAccountKey)
+        .endpoint(storageAccountResource.getStorageAccountEndpoint())
+        .httpClient(HttpClient.createDefault())
+        .containerName(containerResource.getStorageContainerName())
+        .buildClient();
+  }
+
+  private StorageData getStorageAccountData(
+      UUID workspaceUuid, UUID storageContainerUuid, AuthenticatedUserRequest userRequest) {
+    // Creating an AzureStorageContainerSasToken requires checking the user's access to both the
+    // storage container and storage account resource
+    final ControlledAzureStorageContainerResource storageContainerResource =
+        controlledResourceMetadataManager
+            .validateControlledResourceAndAction(
+                userRequest,
+                workspaceUuid,
+                storageContainerUuid,
+                SamConstants.SamControlledResourceActions.READ_ACTION)
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
+    String storageAccountName;
+    String endpoint;
+    if (storageContainerResource.getStorageAccountId() != null) {
+      final ControlledAzureStorageResource storageAccountResource =
+          controlledResourceMetadataManager
+              .validateControlledResourceAndAction(
+                  userRequest,
+                  workspaceUuid,
+                  storageContainerResource.getStorageAccountId(),
+                  SamConstants.SamControlledResourceActions.READ_ACTION)
+              .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT);
+      storageAccountName = storageAccountResource.getStorageAccountName();
+      endpoint = storageAccountResource.getStorageAccountEndpoint();
+    } else {
+      // get details from LZ shared storage account
+      UUID landingZoneId =
+          landingZoneApiDispatch.getLandingZoneId(
+              new BearerToken(userRequest.getRequiredToken()), workspaceUuid);
+      Optional<ApiAzureLandingZoneDeployedResource> existingSharedStorageAccount =
+          landingZoneApiDispatch.getSharedStorageAccount(
+              new BearerToken(userRequest.getRequiredToken()), landingZoneId);
+      if (existingSharedStorageAccount.isEmpty()) {
+        // redefine exception
+        throw new IllegalStateException(
+            String.format(
+                "Shared storage account not found. LandingZoneId='%s'."
+                    + " Please validate that landing zone deployment complete.",
+                landingZoneId));
+      }
+      var storageManager =
+          crlService.getStorageManager(
+              azureCloudContextService.getRequiredAzureCloudContext(workspaceUuid),
+              azureConfiguration);
+      StorageAccount storageAccount =
+          storageManager
+              .storageAccounts()
+              .getById(existingSharedStorageAccount.get().getResourceId());
+      storageAccountName = storageAccount.name();
+      endpoint = storageAccount.endPoints().primary().blob().toLowerCase(Locale.ROOT);
+    }
+    return new StorageData(storageAccountName, endpoint, storageContainerResource);
   }
 }

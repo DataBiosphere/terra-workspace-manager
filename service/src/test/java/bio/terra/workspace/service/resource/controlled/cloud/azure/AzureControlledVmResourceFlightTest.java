@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
 import static bio.terra.workspace.connected.AzureConnectedTestUtils.STAIRWAY_FLIGHT_TIMEOUT;
+import static bio.terra.workspace.connected.AzureConnectedTestUtils.getAzureName;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -39,7 +40,6 @@ import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
-import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
@@ -64,7 +64,6 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
   @Autowired private UserAccessUtils userAccessUtils;
   @Autowired private ControlledResourceService controlledResourceService;
   @Autowired private WsmResourceService wsmResourceService;
-  @Autowired private AzureCloudContextService azureCloudContextService;
   @Autowired private AzureConnectedTestUtils azureUtils;
 
   private Workspace sharedWorkspace;
@@ -636,10 +635,5 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
 
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
     return resource;
-  }
-
-  private static String getAzureName(String tag) {
-    final String id = UUID.randomUUID().toString().substring(0, 6);
-    return String.format("wsm-integ-%s-%s", tag, id);
   }
 }

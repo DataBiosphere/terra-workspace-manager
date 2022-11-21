@@ -10,6 +10,8 @@ import bio.terra.workspace.generated.model.ApiTpsPolicyInputs;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.model.Workspace;
+import com.fasterxml.jackson.core.type.TypeReference;
+import java.util.List;
 
 public class WorkspaceCreateFlight extends Flight {
 
@@ -24,6 +26,9 @@ public class WorkspaceCreateFlight extends Flight {
     Workspace workspace = inputParameters.get(JobMapKeys.REQUEST.getKeyName(), Workspace.class);
     ApiTpsPolicyInputs policyInputs =
         inputParameters.get(WorkspaceFlightMapKeys.POLICIES, ApiTpsPolicyInputs.class);
+    List<String> applicationIds =
+        inputParameters.get(
+            WorkspaceFlightMapKeys.APPLICATION_IDS, new TypeReference<List<String>>() {});
     RetryRule serviceRetryRule = RetryRules.shortExponential();
 
     // Workspace authz is handled differently depending on whether WSM owns the underlying Sam
@@ -47,7 +52,7 @@ public class WorkspaceCreateFlight extends Flight {
           "Unknown workspace stage during creation: " + workspace.getWorkspaceStage().name());
     }
     addStep(
-        new CreateWorkspaceStep(workspace, appContext.getWorkspaceDao()),
+        new CreateWorkspaceStep(workspace, applicationIds, appContext.getWorkspaceDao()),
         RetryRules.shortDatabase());
   }
 }

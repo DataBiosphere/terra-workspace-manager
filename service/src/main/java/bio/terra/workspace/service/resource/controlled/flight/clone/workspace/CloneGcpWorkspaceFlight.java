@@ -26,8 +26,6 @@ public class CloneGcpWorkspaceFlight extends Flight {
     // TODO: [PF-1972] 4. Merge Policy Attributes
     // 5. Launch a flight to clone all resources on the list
     // 5a. Await the clone all resources flight and build a response
-    // 6. Build a list of enabled applications
-    // 6a. Launch a flight to enable those applications in destination workspace
     var flightBeanBag = FlightBeanBag.getFromObject(applicationContext);
     var cloudRetryRule = RetryRules.cloud();
     var longCloudRetryRule = RetryRules.cloudLongRunning();
@@ -37,7 +35,7 @@ public class CloneGcpWorkspaceFlight extends Flight {
             WorkspaceFlightMapKeys.ControlledResourceKeys.SOURCE_WORKSPACE_ID, UUID.class);
     Workspace sourceWorkspace = flightBeanBag.getWorkspaceDao().getWorkspace(sourceWorkspaceId);
 
-    addStep(new CloneAllFoldersStep(flightBeanBag.getFolderDao()));
+    addStep(new CloneAllFoldersStep(flightBeanBag.getFolderDao()), RetryRules.shortDatabase());
 
     addStep(new FindResourcesToCloneStep(flightBeanBag.getResourceDao()), cloudRetryRule);
 
@@ -74,8 +72,5 @@ public class CloneGcpWorkspaceFlight extends Flight {
 
     addStep(new LaunchCloneAllResourcesFlightStep(), cloudRetryRule);
     addStep(new AwaitCloneAllResourcesFlightStep(), longCloudRetryRule);
-
-    addStep(new FindEnabledApplicationsStep(flightBeanBag.getApplicationDao()), cloudRetryRule);
-    addStep(new LaunchEnableApplicationsFlightStep(), cloudRetryRule);
   }
 }

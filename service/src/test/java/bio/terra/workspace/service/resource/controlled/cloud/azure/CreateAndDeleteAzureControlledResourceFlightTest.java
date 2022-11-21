@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static bio.terra.workspace.connected.AzureConnectedTestUtils.getAzureName;
 
 import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
@@ -9,8 +9,6 @@ import bio.terra.workspace.connected.AzureConnectedTestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
@@ -20,7 +18,6 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResourceF
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
-import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import java.util.UUID;
@@ -35,11 +32,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureConnectedTest {
 
   @Autowired private WorkspaceService workspaceService;
-  @Autowired private JobService jobService;
   @Autowired private AzureTestUtils azureTestUtils;
   @Autowired private UserAccessUtils userAccessUtils;
-  @Autowired private ControlledResourceService controlledResourceService;
-  @Autowired private AzureCloudContextService azureCloudContextService;
   @Autowired private AzureConnectedTestUtils azureUtils;
 
   private Workspace sharedWorkspace;
@@ -215,10 +209,5 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
         azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
         resource.getNetworkName(),
         azureTestUtils.getComputeManager().networkManager().networks()::getByResourceGroup);
-  }
-
-  private static String getAzureName(String tag) {
-    final String id = UUID.randomUUID().toString().substring(0, 6);
-    return String.format("wsm-integ-%s-%s", tag, id);
   }
 }

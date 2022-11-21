@@ -12,7 +12,7 @@ import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.BaseConnectedTest;
-import bio.terra.workspace.common.CloudUtils;
+import bio.terra.workspace.common.GcpCloudUtils;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
@@ -84,7 +84,8 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
             .spendProfileId(spendUtils.defaultSpendId())
             .build();
     UUID workspaceUuid =
-        workspaceService.createWorkspace(workspace, null, userAccessUtils.defaultUserAuthRequest());
+        workspaceService.createWorkspace(
+            workspace, null, null, userAccessUtils.defaultUserAuthRequest());
     // Add the secondary test user as a writer
     samService.grantWorkspaceRole(
         workspaceUuid,
@@ -223,7 +224,7 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
     // Permissions can take some time to propagate, retry until the user can no longer impersonate
     // their pet SA.
     assertTrue(
-        CloudUtils.getWithRetryOnException(
+        GcpCloudUtils.getWithRetryOnException(
             () ->
                 assertCannotImpersonateSa(
                     secondaryUserIamClient,
