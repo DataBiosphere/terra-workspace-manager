@@ -3,7 +3,6 @@ package bio.terra.workspace.app.controller;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
-import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.generated.controller.ControlledGcpResourceApi;
 import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.crl.CrlService;
@@ -28,12 +27,9 @@ import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants;
-import com.google.api.services.compute.model.ZoneList;
 import com.google.common.base.Strings;
-import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
-import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import org.apache.commons.lang3.StringUtils;
@@ -121,36 +117,6 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
                 WorkspaceConstants.Properties.DEFAULT_RESOURCE_LOCATION,
                 GcpResourceConstant.DEFAULT_REGION)
         : requestedLocation;
-  }
-
-  private @Nullable String getResourceZone(Workspace workspace, String requestedZone) {
-    if (Strings.isNullOrEmpty(requestedZone)) {
-      String location =
-          workspace
-              .getProperties()
-              .getOrDefault(
-                  WorkspaceConstants.Properties.DEFAULT_RESOURCE_LOCATION,
-                  GcpResourceConstant.DEFAULT_REGION);
-
-      String projectId = gcpCloudContextService.getRequiredGcpProject(workspace.getWorkspaceId());
-      ZoneList zoneList;
-      try {
-        zoneList = crlService.getCloudComputeCow().zones().list(projectId).execute();
-      } catch (IOException e) {
-        return null;
-      }
-
-      return zoneList.getItems().stream()
-          .filter(
-              zone ->
-                  GcpUtils.extractNetworkNameFromUrl(zone.getRegion()).equalsIgnoreCase(location))
-          .map(zone -> zone.getName())
-          .sorted()
-          .findAny()
-          .orElse(null);
-    } else {
-      return requestedZone;
-    }
   }
 
   @Override
@@ -405,7 +371,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     ControlledAiNotebookInstanceResource resource =
         ControlledAiNotebookInstanceResource.builder()
             .common(commonFields)
-            .location(getResourceZone(workspace, body.getAiNotebookInstance().getLocation()))
+            .location(getResourceLocation(workspace, body.getAiNotebookInstance().getLocation()))
             .projectId(projectId)
             .instanceId(
                 Optional.ofNullable(body.getAiNotebookInstance().getInstanceId())

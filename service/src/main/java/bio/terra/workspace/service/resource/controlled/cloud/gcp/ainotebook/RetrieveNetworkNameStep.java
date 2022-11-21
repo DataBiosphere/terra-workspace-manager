@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_LOCATION;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_NETWORK_NAME;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_REGION;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_SUBNETWORK_NAME;
@@ -19,6 +20,7 @@ import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.compute.model.Subnetwork;
 import com.google.api.services.compute.model.SubnetworkList;
 import com.google.api.services.compute.model.Zone;
+import com.google.api.services.compute.model.ZoneList;
 import java.io.IOException;
 import org.springframework.http.HttpStatus;
 
@@ -48,6 +50,8 @@ public class RetrieveNetworkNameStep implements Step {
     CloudComputeCow compute = crlService.getCloudComputeCow();
     SubnetworkList subnetworks;
     try {
+      String location = getValidLocation(projectId);
+      flightContext.getWorkingMap().put(CREATE_NOTEBOOK_LOCATION, location);
       String region = getRegionForNotebook(projectId);
       flightContext.getWorkingMap().put(CREATE_NOTEBOOK_REGION, region);
       subnetworks = compute.subnetworks().list(projectId, region).execute();
@@ -56,6 +60,19 @@ public class RetrieveNetworkNameStep implements Step {
     }
     pickAndStoreNetwork(subnetworks, flightContext.getWorkingMap());
     return StepResult.getStepResultSuccess();
+  }
+
+  private String getValidLocation(String projectId) throws IOException {
+    String location = resource.getLocation();
+    ZoneList zoneList = crlService.getCloudComputeCow().zones().list(projectId).execute();
+
+    return zoneList.getItems().stream()
+        .filter(
+            zone -> GcpUtils.extractNetworkNameFromUrl(zone.getRegion()).equalsIgnoreCase(location))
+        .map(zone -> zone.getName())
+        .sorted()
+        .findAny()
+        .orElse(location);
   }
 
   private String getRegionForNotebook(String projectId) throws IOException {
