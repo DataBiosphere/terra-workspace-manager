@@ -24,72 +24,81 @@ public class WsmResourceCloneDetails {
     return cloningInstructions;
   }
 
-  public void setCloningInstructions(CloningInstructions cloningInstructions) {
+  public WsmResourceCloneDetails setCloningInstructions(CloningInstructions cloningInstructions) {
     this.cloningInstructions = cloningInstructions;
+    return this;
   }
 
   public WsmResourceType getResourceType() {
     return resourceType;
   }
 
-  public void setResourceType(WsmResourceType resourceType) {
+  public WsmResourceCloneDetails setResourceType(WsmResourceType resourceType) {
     this.resourceType = resourceType;
+    return this;
   }
 
   public StewardshipType getStewardshipType() {
     return stewardshipType;
   }
 
-  public void setStewardshipType(StewardshipType stewardshipType) {
+  public WsmResourceCloneDetails setStewardshipType(StewardshipType stewardshipType) {
     this.stewardshipType = stewardshipType;
+    return this;
   }
 
   public UUID getSourceResourceId() {
     return sourceResourceId;
   }
 
-  public void setSourceResourceId(UUID sourceResourceId) {
+  public WsmResourceCloneDetails setSourceResourceId(UUID sourceResourceId) {
     this.sourceResourceId = sourceResourceId;
+    return this;
   }
 
   public UUID getDestinationResourceId() {
     return destinationResourceId;
   }
 
-  public void setDestinationResourceId(UUID destinationResourceId) {
+  public WsmResourceCloneDetails setDestinationResourceId(UUID destinationResourceId) {
     this.destinationResourceId = destinationResourceId;
+    return this;
   }
 
   public WsmCloneResourceResult getResult() {
     return result;
   }
 
-  public void setResult(WsmCloneResourceResult result) {
+  public WsmResourceCloneDetails setResult(WsmCloneResourceResult result) {
     this.result = result;
+    return this;
   }
 
   public String getErrorMessage() {
     return errorMessage;
   }
 
-  public void setErrorMessage(String errorMessage) {
+  public WsmResourceCloneDetails setErrorMessage(String errorMessage) {
     this.errorMessage = errorMessage;
+    return this;
   }
 
   public String getName() {
     return name;
   }
 
-  public void setName(String name) {
+  public WsmResourceCloneDetails setName(String name) {
     this.name = name;
+    return this;
   }
 
   public String getDescription() {
     return description;
   }
 
-  public void setDescription(String description) {
+  public WsmResourceCloneDetails setDescription(String description) {
     this.description = description;
+    return this;
   }
 
   public ApiResourceCloneDetails toApiModel() {

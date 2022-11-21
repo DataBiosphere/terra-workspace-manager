@@ -40,7 +40,7 @@ public class CloneAllResourcesFlight extends Flight {
     switch (resource.getStewardshipType()) {
       case REFERENCED:
         addStep(
-            new LaunchCreateReferenceResourceFlightStep(
+            new CloneReferencedResourceStep(
                 flightBeanBag.getResourceDao(),
                 resourceCloneInputs.getResource().castToReferencedResource(),
                 resourceCloneInputs.getDestinationResourceId(),
