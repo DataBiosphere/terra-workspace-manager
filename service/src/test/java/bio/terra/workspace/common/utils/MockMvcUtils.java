@@ -63,7 +63,6 @@ import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
-import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.flight.clone.CheckControlledResourceAuthStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.CompleteTableCopyJobsStep;
@@ -71,6 +70,7 @@ import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.Crea
 import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.RetrieveBigQueryDatasetCloudAttributesStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.SetReferencedDestinationBigQueryDatasetInWorkingMapStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.SetReferencedDestinationBigQueryDatasetResponseStep;
+import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.referenced.flight.create.CreateReferenceMetadataStep;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
