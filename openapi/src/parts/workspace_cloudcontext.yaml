@@ -101,9 +101,9 @@ components:
         accountNumber:
           description: The id of the AWS account associated with the workspace.
           type: string
-      landingZoneId:
-        description: The id of the AWS landing zone associated with the workspace.
-        type: string
+        landingZoneId:
+          description: The id of the AWS landing zone associated with the workspace.
+          type: string
 
     CreateCloudContextRequest:
       type: object
