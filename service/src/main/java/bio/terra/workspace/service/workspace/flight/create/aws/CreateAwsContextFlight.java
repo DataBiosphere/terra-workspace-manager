@@ -29,7 +29,7 @@ public class CreateAwsContextFlight extends Flight {
         dbRetry);
 
     // Basic WLZ sanity checks
-    // TODO addStep(new ValidateWLZStep());
+    addStep(new ValidateWLZStep());
 
     // update the DB row filling in the cloud context
     addStep(
