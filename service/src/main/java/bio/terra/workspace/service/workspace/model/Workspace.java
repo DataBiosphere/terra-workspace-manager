@@ -191,7 +191,7 @@ public record Workspace(
       }
       if (createdByEmail == null) {
         throw new InternalServerErrorException(
-            "Something went wrong, createdByEmail and createdBySubjectId shouldn't be null");
+            "Something went wrong, createdByEmail shouldn't be null");
       }
       return new Workspace(
           workspaceId,

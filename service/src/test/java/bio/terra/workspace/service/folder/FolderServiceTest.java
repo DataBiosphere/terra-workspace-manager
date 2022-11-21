@@ -323,7 +323,15 @@ public class FolderServiceTest extends BaseConnectedTest {
 
   public Folder createFolder(String displayName, @Nullable UUID parentFolderId) {
     return folderService.createFolder(
-        new Folder(UUID.randomUUID(), workspaceId, displayName, null, parentFolderId, Map.of()));
+        new Folder(
+            UUID.randomUUID(),
+            workspaceId,
+            displayName,
+            null,
+            parentFolderId,
+            Map.of(),
+            "foo@gmail.com",
+            null));
   }
 
   private static ControlledResourceFields createControlledResourceCommonFieldWithFolderId(

@@ -11,6 +11,8 @@ import bio.terra.workspace.service.folder.model.Folder;
 import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,8 +50,16 @@ public class FolderDao {
             Objects.requireNonNull(rs.getString("display_name")),
             rs.getString("description"),
             parentFolderId,
-            DbSerDes.jsonToProperties(Objects.requireNonNull(rs.getString("properties"))));
+            DbSerDes.jsonToProperties(Objects.requireNonNull(rs.getString("properties"))),
+            rs.getString("created_by_email"),
+            OffsetDateTime.ofInstant(
+                rs.getTimestamp("created_date").toInstant(), ZoneId.of("UTC")));
       };
+  private final String FOLDER_SELECT_SQL =
+      """
+      SELECT workspace_id, id, display_name, description, parent_folder_id, properties,
+      created_by_email, created_date
+      """;
 
   private final NamedParameterJdbcTemplate jdbcTemplate;
   private final Logger logger = LoggerFactory.getLogger(FolderDao.class);
@@ -62,8 +72,8 @@ public class FolderDao {
   public Folder createFolder(Folder folder) {
     final String sql =
         """
-          INSERT INTO folder (workspace_id, id, display_name, description, parent_folder_id, properties)
-          values (:workspace_id, :id, :display_name, :description, :parent_folder_id, :properties::jsonb)
+          INSERT INTO folder (workspace_id, id, display_name, description, parent_folder_id, properties, created_by_email)
+          values (:workspace_id, :id, :display_name, :description, :parent_folder_id, :properties::jsonb, :created_by_email)
         """;
     if (folder.parentFolderId() != null) {
       getFolderRequired(folder.workspaceId(), folder.parentFolderId());
@@ -79,7 +89,8 @@ public class FolderDao {
                 Optional.ofNullable(folder.parentFolderId())
                     .map(UUID::toString)
                     .orElse(DEFAULT_ROOT_FOLDER_ID))
-            .addValue("properties", DbSerDes.propertiesToJson(folder.properties()));
+            .addValue("properties", DbSerDes.propertiesToJson(folder.properties()))
+            .addValue("created_by_email", folder.createdByEmail());
 
     try {
       jdbcTemplate.update(sql, params);
@@ -189,12 +200,7 @@ public class FolderDao {
 
   @ReadTransaction
   public Optional<Folder> getFolderIfExists(UUID workspaceId, UUID folderId) {
-    String sql =
-        """
-           SELECT workspace_id, id, display_name, description, parent_folder_id, properties
-           FROM folder
-           WHERE id = :id AND workspace_id = :workspace_id
-         """;
+    String sql = FOLDER_SELECT_SQL + "FROM folder WHERE id = :id AND workspace_id = :workspace_id";
     var params = new MapSqlParameterSource();
     params.addValue("id", folderId.toString());
     params.addValue("workspace_id", workspaceId.toString());
@@ -218,12 +224,7 @@ public class FolderDao {
 
   /** Gets a list of folders in the given workspace */
   public ImmutableList<Folder> listFoldersInWorkspace(UUID workspaceId) {
-    String sql =
-        """
-         SELECT workspace_id, id, display_name, description, parent_folder_id, properties
-         FROM folder
-         WHERE workspace_id = :workspace_id
-       """;
+    String sql = FOLDER_SELECT_SQL + "FROM folder WHERE workspace_id = :workspace_id";
     var params = new MapSqlParameterSource();
     params.addValue("workspace_id", workspaceId.toString());
     return ImmutableList.copyOf(jdbcTemplate.query(sql, params, FOLDER_ROW_MAPPER));
@@ -241,11 +242,11 @@ public class FolderDao {
         """
          WITH RECURSIVE subfolders AS (
                  SELECT
-                         workspace_id, id, display_name, description, parent_folder_id, properties
+                         workspace_id, id, display_name, description, parent_folder_id, properties, created_by_email, created_date
                  FROM folder
                  WHERE id = :root_folder_id
                  UNION
-                   SELECT e.workspace_id, e.id, e.display_name, e.description, e.parent_folder_id, e.properties
+                   SELECT e.workspace_id, e.id, e.display_name, e.description, e.parent_folder_id, e.properties, e.created_by_email, e.created_date
                    FROM folder e
                    INNER JOIN subfolders s ON s.id = e.parent_folder_id
          ) SELECT * FROM subfolders

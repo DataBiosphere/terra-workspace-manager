@@ -3,6 +3,7 @@ package bio.terra.workspace.db;
 import static bio.terra.workspace.unit.WorkspaceUnitTestUtils.createWorkspaceWithoutGcpContext;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -40,11 +41,24 @@ public class FolderDaoTest extends BaseUnitTest {
 
     var createdFolder = folderDao.createFolder(folder);
 
-    assertEquals("foo", createdFolder.displayName());
-    assertNull(createdFolder.parentFolderId());
-    Map<String, String> properties = createdFolder.properties();
-    assertEquals("bar", properties.get("foo"));
-    assertEquals("chocolate", properties.get("cake"));
+    assertEquals(folder, createdFolder);
+  }
+
+  @Test
+  public void getFolder_createdDateNotNull() {
+    UUID workspaceUuid = createWorkspaceWithoutGcpContext(workspaceDao);
+    var folder =
+        getFolder(
+            "foo",
+            workspaceUuid,
+            /*parentFolderId=*/ null,
+            Map.of("foo", "bar", "cake", "chocolate"));
+    var createdFolder = folderDao.createFolder(folder);
+
+    var getFolder = folderDao.getFolderRequired(workspaceUuid, folder.id());
+
+    assertEquals(getFolder, createdFolder);
+    assertNotNull(getFolder.createdDate());
   }
 
   @Test
@@ -449,6 +463,8 @@ public class FolderDaoTest extends BaseUnitTest {
         displayName,
         String.format("This is %s folder", displayName),
         parentFolderId,
-        properties);
+        properties,
+        "foo@gmail.com",
+        null);
   }
 }

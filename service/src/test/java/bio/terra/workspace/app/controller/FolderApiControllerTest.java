@@ -92,6 +92,8 @@ public class FolderApiControllerTest extends BaseUnitTest {
     assertEquals(1, folder.getProperties().size());
     assertNotNull(folder.getId());
     assertNull(folder.getParentFolderId());
+    assertEquals(USER_REQUEST.getEmail(), folder.getCreatedBy());
+    assertNotNull(folder.getCreatedDate());
   }
 
   @Test

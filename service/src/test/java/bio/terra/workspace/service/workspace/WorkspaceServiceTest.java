@@ -840,7 +840,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             FOLDER_NAME,
             /*description=*/ null,
             /*parentFolderId=*/ null,
-            /*properties=*/ Map.of());
+            /*properties=*/ Map.of(),
+            "foo@gmail.com",
+            null);
     folderDao.createFolder(sourceFolder);
 
     final ControlledGcsBucketResource createdBucketResource =
@@ -930,7 +932,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             FOLDER_NAME,
             /*description=*/ null,
             /*parentFolderId=*/ null,
-            /*properties=*/ Map.of()));
+            /*properties=*/ Map.of(),
+            "foo@gmail.com",
+            null));
 
     final Workspace destinationWorkspace =
         defaultRequestBuilder(UUID.randomUUID())

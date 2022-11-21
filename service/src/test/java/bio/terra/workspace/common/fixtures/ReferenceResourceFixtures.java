@@ -1,6 +1,7 @@
 package bio.terra.workspace.common.fixtures;
 
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.common.utils.TestUtils.appendRandomNumber;
 
 import bio.terra.workspace.common.utils.TestUtils;
@@ -35,7 +36,8 @@ public class ReferenceResourceFixtures {
         .resourceId(UUID.randomUUID())
         .name(TestUtils.appendRandomNumber("a-referenced-resource"))
         .cloningInstructions(CloningInstructions.COPY_NOTHING)
-        .properties(DEFAULT_RESOURCE_PROPERTIES);
+        .properties(DEFAULT_RESOURCE_PROPERTIES)
+        .createdByEmail(DEFAULT_USER_EMAIL);
   }
 
   public static ReferencedDataRepoSnapshotResource makeDataRepoSnapshotResource(

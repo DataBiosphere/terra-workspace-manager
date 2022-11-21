@@ -300,7 +300,15 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     assertTrue(emptyChangeDetails.isEmpty());
 
     Folder fooFolder =
-        new Folder(/*folderId=*/ UUID.randomUUID(), workspaceId, "foo", null, null, Map.of());
+        new Folder(
+            /*folderId=*/ UUID.randomUUID(),
+            workspaceId,
+            "foo",
+            null,
+            null,
+            Map.of(),
+            "foo@gmail.com",
+            null);
     FlightMap inputParams = buildInputParams(workspaceId, OperationType.DELETE);
     inputParams.put(FOLDER_ID, fooFolder.id());
     hook.endFlight(
@@ -320,7 +328,15 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
 
     Folder fooFolder =
         folderDao.createFolder(
-            new Folder(/*folderId=*/ UUID.randomUUID(), workspaceId, "foo", null, null, Map.of()));
+            new Folder(
+                /*folderId=*/ UUID.randomUUID(),
+                workspaceId,
+                "foo",
+                null,
+                null,
+                Map.of(),
+                "foo@gmail.com",
+                null));
     FlightMap inputParams = buildInputParams(workspaceId, OperationType.DELETE);
     inputParams.put(FOLDER_ID, fooFolder.id());
     hook.endFlight(

@@ -33,6 +33,7 @@ public class WorkspaceConnectedTestUtils {
             .userFacingId(UUID.randomUUID().toString())
             .spendProfileId(spendUtils.defaultSpendId())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+            .createdByEmail(userRequest.getEmail())
             .build();
     workspaceService.createWorkspace(workspace, null, null, userRequest);
     String gcpContextJobId = UUID.randomUUID().toString();
@@ -44,11 +45,6 @@ public class WorkspaceConnectedTestUtils {
   }
 
   public void deleteWorkspaceAndGcpContext(AuthenticatedUserRequest userRequest, UUID workspaceId) {
-    workspaceService.deleteWorkspace(
-        Workspace.builder()
-            .workspaceId(workspaceId)
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .build(),
-        userRequest);
+    workspaceService.deleteWorkspace(workspaceService.getWorkspace(workspaceId), userRequest);
   }
 }
