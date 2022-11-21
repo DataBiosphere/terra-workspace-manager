@@ -206,37 +206,14 @@ public class FolderServiceTest extends BaseConnectedTest {
 
   @Test
   void deleteFolder_successWithStepRetry() {
-    Map<String, StepStatus> retrySteps = new HashMap<>();
-    retrySteps.put(
-        DeleteReferencedResourcesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(DeleteFolderRecursiveStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    jobService.setFlightDebugInfoForTest(
-        FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
-
-    String jobId =
-        folderService.deleteFolder(
-            workspaceId, fooFolder.id(), userAccessUtils.defaultUserAuthRequest());
-    jobService.waitForJob(jobId);
-
-    List<Folder> folders = List.of(fooFolder, fooBarFolder, fooFooFolder, fooBarLooFolder);
-    for (Folder f : folders) {
-      assertThrows(
-          FolderNotFoundException.class, () -> folderService.getFolder(workspaceId, f.id()));
-    }
-    assertTrue(resourceDao.enumerateResources(workspaceId, null, null, 0, 100).isEmpty());
-  }
-
-  @Test
-  void deleteFolder_writerHasNoAccessToOthersPrivateResource_throwsPermissionException() {
+    // foo/bar/loo contains a private notebook, thus the folder cannot be deleted by non-owner.
     assertThrows(
         ForbiddenException.class,
         () ->
             folderService.deleteFolder(
                 workspaceId, fooBarLooFolder.id(), userAccessUtils.secondUserAuthRequest()));
-  }
 
-  @Test
-  void deleteFolder_writerAndFolderDoesNotPrivateResource_success() {
+    // foo/foo can be deleted by non-owner
     var jobId =
         folderService.deleteFolder(
             workspaceId, fooFooFolder.id(), userAccessUtils.secondUserAuthRequest());
@@ -247,10 +224,7 @@ public class FolderServiceTest extends BaseConnectedTest {
     assertThrows(
         FolderNotFoundException.class,
         () -> folderService.getFolder(workspaceId, fooFooFolder.id()));
-  }
 
-  @Test
-  void deleteFolder_deleteSubFolder_success() {
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(
         DeleteReferencedResourcesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
@@ -258,39 +232,17 @@ public class FolderServiceTest extends BaseConnectedTest {
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
 
-    var jobId =
+    jobId =
         folderService.deleteFolder(
-            workspaceId, fooBarFolder.id(), userAccessUtils.defaultUserAuthRequest());
+            workspaceId, fooFolder.id(), userAccessUtils.defaultUserAuthRequest());
     jobService.waitForJob(jobId);
 
-    // assert foo/bar and foo/bar/loo are deleted.
-    List<Folder> folders = List.of(fooBarFolder, fooBarLooFolder);
+    List<Folder> folders = List.of(fooFolder, fooBarFolder, fooFooFolder, fooBarLooFolder);
     for (Folder f : folders) {
       assertThrows(
           FolderNotFoundException.class, () -> folderService.getFolder(workspaceId, f.id()));
     }
-    assertThrows(
-        ResourceNotFoundException.class,
-        () ->
-            resourceDao.getResource(
-                workspaceId, referencedDataRepoSnapshotInFooBar.getResourceId()));
-    assertThrows(
-        ResourceNotFoundException.class,
-        () ->
-            resourceDao.getResource(workspaceId, controlledAiNotebookInFooBarLoo.getResourceId()));
-    assertThrows(
-        ResourceNotFoundException.class,
-        () -> resourceDao.getResource(workspaceId, referencedGitRepoInFooBarLoo.getResourceId()));
-    assertThrows(
-        ResourceNotFoundException.class,
-        () ->
-            resourceDao.getResource(
-                workspaceId, referencedDataRepoSnapshotInFooBar.getResourceId()));
-
-    // assert foo and foo/foo and the resources in those are not deleted.
-    assertEquals(4, resourceDao.enumerateResources(workspaceId, null, null, 0, 10).size());
-    assertEquals(fooFolder, folderService.getFolder(workspaceId, fooFolder.id()));
-    assertEquals(fooFooFolder, folderService.getFolder(workspaceId, fooFooFolder.id()));
+    assertTrue(resourceDao.enumerateResources(workspaceId, null, null, 0, 100).isEmpty());
   }
 
   @Test
