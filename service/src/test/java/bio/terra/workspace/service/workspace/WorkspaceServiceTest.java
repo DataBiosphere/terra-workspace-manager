@@ -347,12 +347,16 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
     assertThrows(
         ErrorReportException.class,
-        () -> workspaceService.createWorkspace(WorkspaceFixtures.createMcWorkspace(), null, null, USER_REQUEST));
+        () ->
+            workspaceService.createWorkspace(
+                WorkspaceFixtures.createMcWorkspace(), null, null, USER_REQUEST));
     // This second call shares the above operation ID, and so should return the same exception
     // instead of a more generic internal Stairway exception.
     assertThrows(
         ErrorReportException.class,
-        () -> workspaceService.createWorkspace(WorkspaceFixtures.createMcWorkspace(), null, null, USER_REQUEST));
+        () ->
+            workspaceService.createWorkspace(
+                WorkspaceFixtures.createMcWorkspace(), null, null, USER_REQUEST));
   }
 
   @Test
@@ -529,7 +533,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     ErrorReportException exception =
         assertThrows(
             SamInternalServerErrorException.class,
-            () -> workspaceService.createWorkspace(WorkspaceFixtures.createMcWorkspace(), null, null, USER_REQUEST));
+            () ->
+                workspaceService.createWorkspace(
+                    WorkspaceFixtures.createMcWorkspace(), null, null, USER_REQUEST));
     assertEquals(apiErrorMsg, exception.getMessage());
   }
 
