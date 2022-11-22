@@ -247,9 +247,8 @@ public class AzureControlledStorageContainerFlightTest extends BaseAzureConnecte
     // context
     Workspace workspace = azureTestUtils.createWorkspace(workspaceService);
     UUID workspaceId = workspace.getWorkspaceId();
-    azureUtils.createCloudContext(workspaceId, userAccessUtils.defaultUserAuthRequest());
-
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    azureUtils.createCloudContext(workspaceId, userRequest);
 
     // create quasi landing zone without resources
     UUID landingZoneId = UUID.fromString(landingZoneTestUtils.getDefaultLandingZoneId());
@@ -271,7 +270,7 @@ public class AzureControlledStorageContainerFlightTest extends BaseAzureConnecte
     final String storageContainerName = ControlledResourceFixtures.uniqueBucketName();
     ControlledAzureStorageContainerResource containerResource =
         ControlledResourceFixtures.getAzureStorageContainer(
-            workspaceUuid,
+            workspaceId,
             null,
             containerResourceId,
             storageContainerName,
