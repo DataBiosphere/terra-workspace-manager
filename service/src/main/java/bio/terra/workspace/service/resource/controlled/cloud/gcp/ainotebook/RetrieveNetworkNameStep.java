@@ -52,7 +52,7 @@ public class RetrieveNetworkNameStep implements Step {
     try {
       String location = getValidLocation(projectId);
       flightContext.getWorkingMap().put(CREATE_NOTEBOOK_LOCATION, location);
-      String region = getRegionForNotebook(projectId);
+      String region = getRegionForNotebook(projectId, location);
       flightContext.getWorkingMap().put(CREATE_NOTEBOOK_REGION, region);
       subnetworks = compute.subnetworks().list(projectId, region).execute();
     } catch (IOException e) {
@@ -75,18 +75,16 @@ public class RetrieveNetworkNameStep implements Step {
         .orElse(location);
   }
 
-  private String getRegionForNotebook(String projectId) throws IOException {
+  private String getRegionForNotebook(String projectId, String location) throws IOException {
     try {
       // GCP is a little loose with its zone/location naming. An AI notebook location has the
       // same id as a GCE zone. Use the location to look up the zone.
-      Zone zone =
-          crlService.getCloudComputeCow().zones().get(projectId, resource.getLocation()).execute();
+      Zone zone = crlService.getCloudComputeCow().zones().get(projectId, location).execute();
       return GcpUtils.extractNetworkNameFromUrl(zone.getRegion());
     } catch (GoogleJsonResponseException e) {
       if (e.getStatusCode() == HttpStatus.NOT_FOUND.value()) {
         // Throw a better error message if the location isn't known.
-        throw new BadRequestException(
-            String.format("Unsupported location '%s'", resource.getLocation()));
+        throw new BadRequestException(String.format("Unsupported location '%s'", location));
       }
       throw e;
     }

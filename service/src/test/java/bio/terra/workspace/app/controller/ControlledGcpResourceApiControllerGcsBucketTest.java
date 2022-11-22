@@ -120,21 +120,6 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
 
     assertEquals("asia-east1-a", notebook.getAttributes().getLocation());
 
-    mockMvcUtils.updateWorkspaceProperties(
-        userAccessUtils.defaultUserAuthRequest(),
-        workspaceId,
-        List.of(
-            new ApiProperty()
-                .key(WorkspaceConstants.Properties.DEFAULT_RESOURCE_LOCATION)
-                .value("fake-region")));
-
-    notebook =
-        mockMvcUtils
-            .createAiNotebookInstance(userAccessUtils.defaultUserAuthRequest(), workspaceId, null)
-            .getAiNotebookInstance();
-
-    assertEquals("us-central1-a", notebook.getAttributes().getLocation());
-
     notebook =
         mockMvcUtils
             .createAiNotebookInstance(
