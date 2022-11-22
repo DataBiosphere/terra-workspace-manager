@@ -7,7 +7,6 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -37,15 +36,13 @@ public class WorkspaceConnectedTestUtils {
 
   public Workspace createWorkspace(AuthenticatedUserRequest userRequest) {
     UUID workspaceUuid = UUID.randomUUID();
-    Workspace workspace =
-        WorkspaceFixtures.createWorkspace(workspaceUuid, WorkspaceStage.MC_WORKSPACE);
+    Workspace workspace = WorkspaceFixtures.buildMcWorkspace(workspaceUuid);
     workspaceService.createWorkspace(workspace, null, null, userRequest);
 
     return workspaceService.getWorkspace(workspaceUuid);
   }
 
   public void deleteWorkspaceAndGcpContext(AuthenticatedUserRequest userRequest, UUID workspaceId) {
-    workspaceService.deleteWorkspace(
-        WorkspaceFixtures.createWorkspace(workspaceId, WorkspaceStage.MC_WORKSPACE), userRequest);
+    workspaceService.deleteWorkspace(WorkspaceFixtures.buildMcWorkspace(workspaceId), userRequest);
   }
 }

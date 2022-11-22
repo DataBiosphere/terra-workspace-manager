@@ -89,7 +89,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
 
   @Test
   void createAndDeleteWorkspace() {
-    workspaceDao.createWorkspace(defaultWorkspace(), /* applicationIds */ null);
+    workspaceDao.createWorkspace(defaultWorkspace(workspaceUuid), /* applicationIds */ null);
 
     MapSqlParameterSource params =
         new MapSqlParameterSource().addValue("id", workspaceUuid.toString());
@@ -106,7 +106,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
 
   @Test
   void createAndGetWorkspace() {
-    Workspace createdWorkspace = defaultWorkspace();
+    Workspace createdWorkspace = defaultWorkspace(workspaceUuid);
     workspaceDao.createWorkspace(createdWorkspace, /* applicationIds */ null);
 
     Workspace workspace = workspaceDao.getWorkspace(workspaceUuid);
@@ -116,7 +116,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
 
   @Test
   void getWorkspacesFromList() {
-    Workspace realWorkspace = defaultWorkspace();
+    Workspace realWorkspace = defaultWorkspace(workspaceUuid);
     workspaceDao.createWorkspace(realWorkspace, /* applicationIds */ null);
     UUID fakeWorkspaceId = UUID.randomUUID();
     List<Workspace> workspaceList =
@@ -164,10 +164,10 @@ class WorkspaceDaoTest extends BaseUnitTest {
 
   @Test
   void offsetSkipsWorkspaceInList() {
-    Workspace firstWorkspace = defaultWorkspace();
+    Workspace firstWorkspace = defaultWorkspace(workspaceUuid);
     workspaceDao.createWorkspace(firstWorkspace, /* applicationIds */ null);
     Workspace secondWorkspace =
-        WorkspaceFixtures.createWorkspace(null, WorkspaceStage.RAWLS_WORKSPACE);
+        WorkspaceFixtures.buildWorkspace(null, WorkspaceStage.RAWLS_WORKSPACE);
     workspaceDao.createWorkspace(secondWorkspace, /* applicationIds */ null);
     List<Workspace> workspaceList =
         workspaceDao.getWorkspacesMatchingList(
@@ -180,10 +180,10 @@ class WorkspaceDaoTest extends BaseUnitTest {
 
   @Test
   void listWorkspaceLimitEnforced() {
-    Workspace firstWorkspace = defaultWorkspace();
+    Workspace firstWorkspace = defaultWorkspace(workspaceUuid);
     workspaceDao.createWorkspace(firstWorkspace, /* applicationIds */ null);
     Workspace secondWorkspace =
-        WorkspaceFixtures.createWorkspace(null, WorkspaceStage.RAWLS_WORKSPACE);
+        WorkspaceFixtures.buildWorkspace(null, WorkspaceStage.RAWLS_WORKSPACE);
     ;
     workspaceDao.createWorkspace(secondWorkspace, /* applicationIds */ null);
     List<Workspace> workspaceList =
@@ -265,7 +265,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
 
   @Test
   void duplicateWorkspaceFails() {
-    Workspace workspace = defaultWorkspace();
+    Workspace workspace = defaultWorkspace(workspaceUuid);
     workspaceDao.createWorkspace(workspace, /* applicationIds */ null);
 
     assertThrows(
@@ -299,7 +299,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
 
     @BeforeEach
     void setUp() {
-      workspaceDao.createWorkspace(defaultWorkspace(), /* applicationIds */ null);
+      workspaceDao.createWorkspace(defaultWorkspace(workspaceUuid), /* applicationIds */ null);
     }
 
     @Test
@@ -359,8 +359,8 @@ class WorkspaceDaoTest extends BaseUnitTest {
     assertEquals("GCP", CloudPlatform.GCP.toString());
   }
 
-  private Workspace defaultWorkspace() {
-    return WorkspaceFixtures.createWorkspace(null, WorkspaceStage.RAWLS_WORKSPACE);
+  private Workspace defaultWorkspace(UUID workspaceUuid) {
+    return WorkspaceFixtures.buildWorkspace(workspaceUuid, WorkspaceStage.RAWLS_WORKSPACE);
   }
 
   private GcpCloudContext makeCloudContext() {

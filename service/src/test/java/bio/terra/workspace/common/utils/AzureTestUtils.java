@@ -45,7 +45,7 @@ public class AzureTestUtils {
   }
 
   public Workspace createWorkspace(WorkspaceService workspaceService) {
-    Workspace workspace = WorkspaceFixtures.createMcWorkspace();
+    Workspace workspace = WorkspaceFixtures.buildMcWorkspace();
     workspaceService.createWorkspace(
         workspace, null, null, userAccessUtils.defaultUserAuthRequest());
     return workspace;

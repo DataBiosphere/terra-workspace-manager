@@ -33,13 +33,17 @@ public class WorkspaceFixtures {
     return createWorkspaceRequestBody(ApiWorkspaceStageModel.MC_WORKSPACE);
   }
 
-  public static Workspace createWorkspace(
+  public static Workspace buildWorkspace(
       @Nullable UUID workspaceUuid, WorkspaceStage workspaceStage) {
     return defaultWorkspaceBuilder(workspaceUuid).workspaceStage(workspaceStage).build();
   }
 
-  public static Workspace createMcWorkspace() {
-    return createWorkspace(null, WorkspaceStage.MC_WORKSPACE);
+  public static Workspace buildMcWorkspace() {
+    return buildMcWorkspace(null);
+  }
+
+  public static Workspace buildMcWorkspace(@Nullable UUID workspaceUuid) {
+    return buildWorkspace(workspaceUuid, WorkspaceStage.MC_WORKSPACE);
   }
 
   /**

@@ -75,7 +75,7 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void removeUserFromWorkspaceFlightDoUndo() throws Exception {
     // Create a workspace as the default test user
-    Workspace workspace = WorkspaceFixtures.createMcWorkspace();
+    Workspace workspace = WorkspaceFixtures.buildMcWorkspace();
     UUID workspaceUuid =
         workspaceService.createWorkspace(
             workspace, null, null, userAccessUtils.defaultUserAuthRequest());

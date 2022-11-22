@@ -226,7 +226,7 @@ class SamServiceTest extends BaseConnectedTest {
     samService.createWorkspaceWithDefaults(defaultUserRequest(), workspaceUuid);
 
     Workspace rawlsWorkspace =
-        WorkspaceFixtures.createWorkspace(workspaceUuid, WorkspaceStage.RAWLS_WORKSPACE);
+        WorkspaceFixtures.buildWorkspace(workspaceUuid, WorkspaceStage.RAWLS_WORKSPACE);
     workspaceService.createWorkspace(rawlsWorkspace, null, null, defaultUserRequest());
     ApiGrantRoleRequestBody request =
         new ApiGrantRoleRequestBody().memberEmail(userAccessUtils.getSecondUserEmail());
@@ -463,7 +463,7 @@ class SamServiceTest extends BaseConnectedTest {
   }
 
   private Workspace createWorkspaceForUser(AuthenticatedUserRequest userRequest) {
-    Workspace workspace = WorkspaceFixtures.createMcWorkspace();
+    Workspace workspace = WorkspaceFixtures.buildMcWorkspace();
     workspaceService.createWorkspace(workspace, null, null, userRequest);
     return workspace;
   }

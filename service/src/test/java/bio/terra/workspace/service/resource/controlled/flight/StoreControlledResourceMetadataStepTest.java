@@ -40,7 +40,7 @@ public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
     // database insert will pass FK constraints.
     UUID workspaceUuid = UUID.randomUUID();
     Workspace workspace =
-        WorkspaceFixtures.createWorkspace(workspaceUuid, WorkspaceStage.RAWLS_WORKSPACE);
+        WorkspaceFixtures.buildWorkspace(workspaceUuid, WorkspaceStage.RAWLS_WORKSPACE);
     workspaceDao.createWorkspace(workspace, /* applicationIds */ null);
 
     gcpCloudContextService.createGcpCloudContextStart(workspaceUuid, "flight-testentersinfo");
