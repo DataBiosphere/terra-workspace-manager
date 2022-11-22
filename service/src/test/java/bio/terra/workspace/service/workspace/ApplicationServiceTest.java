@@ -119,9 +119,9 @@ public class ApplicationServiceTest extends BaseUnitTest {
     appService.processApp(NORM_APP, dbAppMap);
 
     // Create two workspaces
-    workspace = WorkspaceFixtures.createWorkspace();
+    workspace = WorkspaceFixtures.createMcWorkspace();
     workspaceService.createWorkspace(workspace, null, null, USER_REQUEST);
-    workspace2 = WorkspaceFixtures.createWorkspace();
+    workspace2 = WorkspaceFixtures.createMcWorkspace();
     workspaceService.createWorkspace(workspace2, null, null, USER_REQUEST);
   }
 
@@ -154,7 +154,7 @@ public class ApplicationServiceTest extends BaseUnitTest {
     assertThrows(
         ApplicationNotFoundException.class,
         () -> appService.enableWorkspaceApplication(USER_REQUEST, workspace, UNKNOWN_ID));
-    Workspace fakeWorkspace = WorkspaceFixtures.createWorkspace();
+    Workspace fakeWorkspace = WorkspaceFixtures.createMcWorkspace();
     // This calls a service method, rather than a controller method, so it does not hit the authz
     // check. Instead, we validate that inserting this into the DB violates constraints.
     assertThrows(

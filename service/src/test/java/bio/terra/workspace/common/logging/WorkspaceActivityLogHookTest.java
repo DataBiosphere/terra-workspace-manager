@@ -154,7 +154,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     var emptyChangeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
     assertTrue(emptyChangeDetails.isEmpty());
 
-    workspaceDao.createWorkspace(WorkspaceFixtures.createWorkspace(), /* applicationIds */ null);
+    workspaceDao.createWorkspace(WorkspaceFixtures.createMcWorkspace(), /* applicationIds */ null);
     FlightMap inputParams = buildInputParams(workspaceUuid, OperationType.DELETE);
     hook.endFlight(
         new FakeFlightContext(
@@ -189,7 +189,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     var emptyChangeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
     assertTrue(emptyChangeDetails.isEmpty());
 
-    workspaceDao.createWorkspace(WorkspaceFixtures.createWorkspace(), /* applicationIds */ null);
+    workspaceDao.createWorkspace(WorkspaceFixtures.createMcWorkspace(), /* applicationIds */ null);
     var flightId = UUID.randomUUID().toString();
     workspaceDao.createCloudContextStart(workspaceUuid, CloudPlatform.GCP, flightId);
     workspaceDao.createCloudContextFinish(

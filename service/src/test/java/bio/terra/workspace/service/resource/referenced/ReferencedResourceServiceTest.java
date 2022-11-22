@@ -256,7 +256,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
    * MC_WORKSPACE. Returns the generated workspace ID.
    */
   private UUID createMcTestWorkspace() {
-    Workspace request = WorkspaceFixtures.createWorkspace();
+    Workspace request = WorkspaceFixtures.createMcWorkspace();
     return workspaceService.createWorkspace(request, null, null, USER_REQUEST);
   }
 

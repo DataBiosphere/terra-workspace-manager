@@ -38,7 +38,7 @@ public class WorkspaceFixtures {
     return defaultWorkspaceBuilder(workspaceUuid).workspaceStage(workspaceStage).build();
   }
 
-  public static Workspace createWorkspace() {
+  public static Workspace createMcWorkspace() {
     return createWorkspace(null, WorkspaceStage.MC_WORKSPACE);
   }
 

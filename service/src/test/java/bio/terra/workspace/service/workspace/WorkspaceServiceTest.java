@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.workspace;
 
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.createWorkspace;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.defaultWorkspaceBuilder;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_CLOUD_CONTEXT_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
@@ -36,6 +35,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
+import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.FolderDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
@@ -185,7 +185,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
   @Test
   void getWorkspace_existing() {
-    Workspace request = createWorkspace();
+    Workspace request = WorkspaceFixtures.createMcWorkspace();
     workspaceService.createWorkspace(request, null, null, USER_REQUEST);
 
     assertEquals(
@@ -214,7 +214,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
   @Test
   void getWorkspace_forbiddenExisting() throws Exception {
-    Workspace request = createWorkspace();
+    Workspace request = WorkspaceFixtures.createMcWorkspace();
     workspaceService.createWorkspace(request, null, null, USER_REQUEST);
 
     doThrow(new ForbiddenException("forbid!"))
@@ -292,7 +292,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     when(mockSamService.listRequesterRoles(any(), any(), any()))
         .thenReturn(ImmutableList.of(WsmIamRole.OWNER, WsmIamRole.WRITER));
 
-    Workspace request = createWorkspace();
+    Workspace request = WorkspaceFixtures.createMcWorkspace();
     workspaceService.createWorkspace(request, null, null, USER_REQUEST);
 
     assertEquals(
@@ -301,7 +301,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
   @Test
   void testWorkspaceStagePersists() {
-    Workspace mcWorkspaceRequest = createWorkspace();
+    Workspace mcWorkspaceRequest = WorkspaceFixtures.createMcWorkspace();
     workspaceService.createWorkspace(mcWorkspaceRequest, null, null, USER_REQUEST);
     Workspace createdWorkspace = workspaceService.getWorkspace(mcWorkspaceRequest.getWorkspaceId());
     assertEquals(mcWorkspaceRequest.getWorkspaceId(), createdWorkspace.getWorkspaceId());
@@ -310,7 +310,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
   @Test
   void duplicateWorkspaceIdRequestsRejected() {
-    Workspace request = createWorkspace();
+    Workspace request = WorkspaceFixtures.createMcWorkspace();
     workspaceService.createWorkspace(request, null, null, USER_REQUEST);
     Workspace duplicateWorkspace =
         defaultWorkspaceBuilder(request.getWorkspaceId())
@@ -347,12 +347,12 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
     assertThrows(
         ErrorReportException.class,
-        () -> workspaceService.createWorkspace(createWorkspace(), null, null, USER_REQUEST));
+        () -> workspaceService.createWorkspace(WorkspaceFixtures.createMcWorkspace(), null, null, USER_REQUEST));
     // This second call shares the above operation ID, and so should return the same exception
     // instead of a more generic internal Stairway exception.
     assertThrows(
         ErrorReportException.class,
-        () -> workspaceService.createWorkspace(createWorkspace(), null, null, USER_REQUEST));
+        () -> workspaceService.createWorkspace(WorkspaceFixtures.createMcWorkspace(), null, null, USER_REQUEST));
   }
 
   @Test
@@ -383,7 +383,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
   @Test
   void testUpdateWorkspace() {
-    Workspace request = createWorkspace();
+    Workspace request = WorkspaceFixtures.createMcWorkspace();
     workspaceService.createWorkspace(request, null, null, USER_REQUEST);
     UUID workspaceUuid = request.getWorkspaceId();
     var lastUpdateDetails = workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
@@ -529,13 +529,13 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     ErrorReportException exception =
         assertThrows(
             SamInternalServerErrorException.class,
-            () -> workspaceService.createWorkspace(createWorkspace(), null, null, USER_REQUEST));
+            () -> workspaceService.createWorkspace(WorkspaceFixtures.createMcWorkspace(), null, null, USER_REQUEST));
     assertEquals(apiErrorMsg, exception.getMessage());
   }
 
   @Test
   void createAndDeleteWorkspace() {
-    Workspace request = createWorkspace();
+    Workspace request = WorkspaceFixtures.createMcWorkspace();
     workspaceService.createWorkspace(request, null, null, USER_REQUEST);
 
     workspaceService.deleteWorkspace(request, USER_REQUEST);
@@ -546,7 +546,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
   @Test
   void createMcWorkspaceDoSteps() {
-    Workspace request = createWorkspace();
+    Workspace request = WorkspaceFixtures.createMcWorkspace();
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(CreateWorkspaceAuthzStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
@@ -578,7 +578,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
   @Test
   void createMcWorkspaceUndoSteps() {
-    Workspace request = createWorkspace();
+    Workspace request = WorkspaceFixtures.createMcWorkspace();
     // Retry undo steps once and fail at the end of the flight.
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(CreateWorkspaceAuthzStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
@@ -647,7 +647,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
   @Test
   void deleteForbiddenExistingWorkspace() throws Exception {
-    Workspace request = createWorkspace();
+    Workspace request = WorkspaceFixtures.createMcWorkspace();
     workspaceService.createWorkspace(request, null, null, USER_REQUEST);
 
     doThrow(new ForbiddenException("forbid!"))

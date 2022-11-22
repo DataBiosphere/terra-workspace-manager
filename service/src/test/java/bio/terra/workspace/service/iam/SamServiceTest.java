@@ -463,7 +463,7 @@ class SamServiceTest extends BaseConnectedTest {
   }
 
   private Workspace createWorkspaceForUser(AuthenticatedUserRequest userRequest) {
-    Workspace workspace = WorkspaceFixtures.createWorkspace();
+    Workspace workspace = WorkspaceFixtures.createMcWorkspace();
     workspaceService.createWorkspace(workspace, null, null, userRequest);
     return workspace;
   }
