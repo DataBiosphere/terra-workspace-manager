@@ -5,6 +5,7 @@ import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKey
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.AzureTestConfiguration;
+import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.service.crl.CrlService;
@@ -12,7 +13,6 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.StewardshipType;
-import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
@@ -20,7 +20,6 @@ import bio.terra.workspace.service.workspace.flight.create.azure.CreateAzureCont
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.relay.RelayManager;
 import com.azure.resourcemanager.storage.StorageManager;
@@ -46,14 +45,7 @@ public class AzureTestUtils {
   }
 
   public Workspace createWorkspace(WorkspaceService workspaceService) {
-    UUID uuid = UUID.randomUUID();
-    Workspace workspace =
-        Workspace.builder()
-            .workspaceId(uuid)
-            .userFacingId(uuid.toString())
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .spendProfileId(new SpendProfileId(UUID.randomUUID().toString()))
-            .build();
+    Workspace workspace = WorkspaceFixtures.createWorkspace();
     workspaceService.createWorkspace(
         workspace, null, null, userAccessUtils.defaultUserAuthRequest());
     return workspace;

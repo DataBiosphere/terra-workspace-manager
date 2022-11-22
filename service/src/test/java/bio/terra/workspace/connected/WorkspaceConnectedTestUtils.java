@@ -2,9 +2,9 @@ package bio.terra.workspace.connected;
 
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
@@ -17,7 +17,6 @@ import org.springframework.stereotype.Component;
 public class WorkspaceConnectedTestUtils {
   private @Autowired WorkspaceService workspaceService;
   private @Autowired JobService jobService;
-  private @Autowired SpendConnectedTestUtils spendUtils;
 
   /**
    * Creates a workspace with a GCP cloud context.
@@ -26,15 +25,8 @@ public class WorkspaceConnectedTestUtils {
    * automatically deletes cloud context.
    */
   public Workspace createWorkspaceWithGcpContext(AuthenticatedUserRequest userRequest) {
-    UUID workspaceUuid = UUID.randomUUID();
-    Workspace workspace =
-        Workspace.builder()
-            .workspaceId(workspaceUuid)
-            .userFacingId(UUID.randomUUID().toString())
-            .spendProfileId(spendUtils.defaultSpendId())
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .build();
-    workspaceService.createWorkspace(workspace, null, null, userRequest);
+    Workspace workspace = createWorkspace(userRequest);
+    UUID workspaceUuid = workspace.getWorkspaceId();
     String gcpContextJobId = UUID.randomUUID().toString();
     workspaceService.createGcpCloudContext(
         workspace, gcpContextJobId, userRequest, "fakeResultPath");
@@ -43,12 +35,17 @@ public class WorkspaceConnectedTestUtils {
     return workspaceService.getWorkspace(workspaceUuid);
   }
 
+  public Workspace createWorkspace(AuthenticatedUserRequest userRequest) {
+    UUID workspaceUuid = UUID.randomUUID();
+    Workspace workspace =
+        WorkspaceFixtures.createWorkspace(workspaceUuid, WorkspaceStage.MC_WORKSPACE);
+    workspaceService.createWorkspace(workspace, null, null, userRequest);
+
+    return workspaceService.getWorkspace(workspaceUuid);
+  }
+
   public void deleteWorkspaceAndGcpContext(AuthenticatedUserRequest userRequest, UUID workspaceId) {
     workspaceService.deleteWorkspace(
-        Workspace.builder()
-            .workspaceId(workspaceId)
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .build(),
-        userRequest);
+        WorkspaceFixtures.createWorkspace(workspaceId, WorkspaceStage.MC_WORKSPACE), userRequest);
   }
 }

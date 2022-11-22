@@ -6,6 +6,7 @@ import bio.terra.stairway.*;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.utils.AzureTestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
@@ -66,10 +67,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
     // Create a new workspace at the start of each test.
     workspaceUuid = UUID.randomUUID();
     workspace =
-        Workspace.builder()
-            .workspaceId(workspaceUuid)
-            .userFacingId("a" + workspaceUuid.toString())
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+        WorkspaceFixtures.defaultWorkspaceBuilder(workspaceUuid)
             .spendProfileId(spendUtils.defaultSpendId())
             .build();
     workspaceService.createWorkspace(
@@ -247,10 +245,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
     // create new workspace so delete at end of test won't interfere with @AfterEach teardown
     UUID uuid = UUID.randomUUID();
     Workspace request =
-        Workspace.builder()
-            .workspaceId(uuid)
-            .userFacingId("a" + uuid.toString())
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+        WorkspaceFixtures.defaultWorkspaceBuilder(uuid)
             .spendProfileId(spendUtils.defaultSpendId())
             .build();
     UUID mcWorkspaceUuid = workspaceService.createWorkspace(request, null, null, userRequest);

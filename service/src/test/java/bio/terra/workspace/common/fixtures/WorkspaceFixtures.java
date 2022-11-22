@@ -4,9 +4,13 @@ import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiProperties;
 import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
+import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants.Properties;
+import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.google.common.collect.ImmutableList;
+import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.Nullable;
 
 public class WorkspaceFixtures {
 
@@ -27,6 +31,33 @@ public class WorkspaceFixtures {
    */
   public static ApiCreateWorkspaceRequestBody createWorkspaceRequestBody() {
     return createWorkspaceRequestBody(ApiWorkspaceStageModel.MC_WORKSPACE);
+  }
+
+  public static Workspace createWorkspace(
+      @Nullable UUID workspaceUuid, WorkspaceStage workspaceStage) {
+    return defaultWorkspaceBuilder(workspaceUuid).workspaceStage(workspaceStage).build();
+  }
+
+  public static Workspace createWorkspace() {
+    return createWorkspace(null, WorkspaceStage.MC_WORKSPACE);
+  }
+
+  /**
+   * Convenience method for getting a WorkspaceRequest builder with some pre-filled default values.
+   * Default to an MC workspace.
+   *
+   * <p>This provides default values for jobId (random UUID), spend profile (Optional.empty()), and
+   * workspace stage (MC_WORKSPACE).
+   *
+   * @param workspaceUuid if null, a uuid will be generated as the workspace id.
+   */
+  public static Workspace.Builder defaultWorkspaceBuilder(@Nullable UUID workspaceUuid) {
+    var id = Optional.ofNullable(workspaceUuid).orElse(UUID.randomUUID());
+    return Workspace.builder()
+        .workspaceId(id)
+        .userFacingId("a" + id)
+        .spendProfileId(null)
+        .workspaceStage(WorkspaceStage.MC_WORKSPACE);
   }
 
   public static ApiCreateWorkspaceRequestBody createWorkspaceRequestBody(
