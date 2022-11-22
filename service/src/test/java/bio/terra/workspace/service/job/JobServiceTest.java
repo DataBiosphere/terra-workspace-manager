@@ -13,6 +13,7 @@ import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.FlightState;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -24,6 +25,7 @@ import bio.terra.workspace.service.job.model.EnumeratedJobs;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -111,14 +113,14 @@ class JobServiceTest extends BaseUnitTest {
     // The fids list should be in exactly the same order as the database ordered by submit time.
 
     List<String> jobIds1 = new ArrayList<>();
-    UUID workspace1 = makeFakeWorkspace();
+    UUID workspace1 = WorkspaceUnitTestUtils.createWorkspaceWithoutGcpContext(workspaceDao);
     for (int i = 0; i < 3; i++) {
       String jobId = runFlight(workspace1, makeDescription(i));
       jobIds1.add(jobId);
     }
 
     List<String> jobIds2 = new ArrayList<>();
-    UUID workspace2 = makeFakeWorkspace();
+    UUID workspace2 = WorkspaceUnitTestUtils.createWorkspaceWithoutGcpContext(workspaceDao);
     for (int i = 0; i < 4; i++) {
       String jobId = runFlight(workspace2, makeDescription(i));
       jobIds2.add(jobId);
@@ -205,19 +207,6 @@ class JobServiceTest extends BaseUnitTest {
     assertThat(jr.getId(), equalTo(fids.get(index)));
     assertThat(jr.getStatus(), equalTo(ApiJobReport.StatusEnum.SUCCEEDED));
     assertThat(jr.getStatusCode(), equalTo(HttpStatus.I_AM_A_TEAPOT.value()));
-  }
-
-  private UUID makeFakeWorkspace() {
-    UUID workspaceUuid = UUID.randomUUID();
-    Workspace workspace =
-        Workspace.builder()
-            .workspaceId(workspaceUuid)
-            .userFacingId(workspaceUuid.toString())
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .description("Fake workspace")
-            .build();
-    workspaceDao.createWorkspace(workspace, /* applicationIds= */ null);
-    return workspaceUuid;
   }
 
   // Submit a flight; wait for it to finish; return the flight id

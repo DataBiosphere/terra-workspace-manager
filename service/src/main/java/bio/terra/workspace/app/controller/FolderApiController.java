@@ -187,6 +187,8 @@ public class FolderApiController extends ControllerBase implements FolderApi {
         .displayName(folder.displayName())
         .description(folder.description())
         .parentFolderId(folder.parentFolderId())
-        .properties(convertMapToApiProperties(folder.properties()));
+        .properties(convertMapToApiProperties(folder.properties()))
+        .createdBy(folder.createdByEmail())
+        .createdDate(folder.createdDate());
   }
 }

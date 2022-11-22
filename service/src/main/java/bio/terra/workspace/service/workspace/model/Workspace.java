@@ -223,7 +223,8 @@ public record Workspace(
             .workspaceId(fullWorkspace.getWorkspaceId())
             .userFacingId(fullWorkspace.getUserFacingId())
             .workspaceStage(fullWorkspace.getWorkspaceStage())
-            .displayName(fullWorkspace.getDisplayName().orElse(null));
+            .displayName(fullWorkspace.getDisplayName().orElse(null))
+            .createdByEmail(fullWorkspace.createdByEmail);
 
     Map<String, String> strippedProperties = new HashMap<>();
     if (fullWorkspace.getProperties().containsKey(Properties.TYPE)) {

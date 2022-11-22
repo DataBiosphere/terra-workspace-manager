@@ -643,6 +643,14 @@ public class ControlledResourceFixtures {
         .projectId("my-project-id");
   }
 
+  public static ControlledAiNotebookInstanceResource.Builder makeDefaultAiNotebookInstance(UUID workspaceId) {
+    return ControlledAiNotebookInstanceResource.builder()
+        .common(makeNotebookCommonFieldsBuilder().workspaceUuid(workspaceId).build())
+        .instanceId(TestUtils.appendRandomNumber("my-cloud-id"))
+        .location("us-east1-b")
+        .projectId("my-project-id");
+  }
+
   public static final ApiGcpAiNotebookUpdateParameters AI_NOTEBOOK_PREV_PARAMETERS =
       new ApiGcpAiNotebookUpdateParameters()
           .metadata(ImmutableMap.of("sky", "blue", "rose", "red", "foo", "bar2", "count", "0"));

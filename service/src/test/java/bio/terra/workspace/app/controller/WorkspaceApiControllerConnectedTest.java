@@ -395,7 +395,6 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     assertThat(
         workspace.getProperties(),
         containsInAnyOrder(TYPE_PROPERTY, SHORT_DESCRIPTION_PROPERTY, VERSION_PROPERTY));
-    assertNotNull(workspace.getCreatedDate());
     assertThat(workspace.getCreatedBy(), not(emptyString()));
     assertNotNull(workspace.getLastUpdatedDate());
     assertThat(workspace.getLastUpdatedBy(), not(emptyString()));

@@ -7,12 +7,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
 
 import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.RawDaoTestFixture;
 import bio.terra.workspace.db.ResourceDao;
+import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.exception.ApplicationNotFoundException;
 import bio.terra.workspace.db.exception.InvalidApplicationStateException;
 import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
@@ -29,13 +32,14 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WsmApplicationService.WsmDbApplication;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import bio.terra.workspace.service.workspace.model.WsmApplication;
 import bio.terra.workspace.service.workspace.model.WsmApplicationState;
 import bio.terra.workspace.service.workspace.model.WsmWorkspaceApplication;
+import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -89,14 +93,17 @@ public class ApplicationServiceTest extends BaseUnitTest {
   @Autowired JobService jobService;
   @Autowired RawDaoTestFixture rawDaoTestFixture;
   @Autowired ResourceDao resourceDao;
+  @Autowired WorkspaceDao workspaceDao;
 
+  private UUID workspaceId1;
   private Workspace workspace;
+  private UUID workspaceId2;
   private Workspace workspace2;
 
   @BeforeEach
   void setup() throws Exception {
     // Set up so all spend profile and workspace checks are successful
-    Mockito.when(
+    when(
             mockSamService()
                 .isAuthorized(
                     Mockito.any(),
@@ -104,11 +111,15 @@ public class ApplicationServiceTest extends BaseUnitTest {
                     Mockito.any(),
                     Mockito.eq(SamSpendProfileAction.LINK)))
         .thenReturn(true);
-    Mockito.when(
+    when(
             mockSamService()
                 .isAuthorized(
                     Mockito.any(), Mockito.eq(SamResource.WORKSPACE), Mockito.any(), Mockito.any()))
         .thenReturn(true);
+    when(mockSamService().getUserStatusInfo(USER_REQUEST))
+        .thenReturn(
+            new UserStatusInfo()
+                 .userEmail(USER_REQUEST.getEmail()).userSubjectId(USER_REQUEST.getSubjectId()));
 
     appService.enableTestMode();
     // Populate the applications - this should be idempotent since we are
@@ -119,26 +130,10 @@ public class ApplicationServiceTest extends BaseUnitTest {
     appService.processApp(NORM_APP, dbAppMap);
 
     // Create two workspaces
-    UUID workspaceUuid = UUID.randomUUID();
-    workspace =
-        Workspace.builder()
-            .workspaceId(workspaceUuid)
-            .userFacingId("a" + workspaceUuid)
-            .spendProfileId(null)
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .build();
-
-    workspaceService.createWorkspace(workspace, null, null, USER_REQUEST);
-
-    UUID workspaceId2 = UUID.randomUUID();
-    workspace2 =
-        Workspace.builder()
-            .workspaceId(workspaceId2)
-            .userFacingId("a" + workspaceId2)
-            .spendProfileId(null)
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .build();
-    workspaceService.createWorkspace(workspace2, null, null, USER_REQUEST);
+    workspaceId1 = WorkspaceUnitTestUtils.createWorkspaceWithoutGcpContext(workspaceDao);
+    workspace = workspaceService.getWorkspace(workspaceId1);
+    workspaceId2 = WorkspaceUnitTestUtils.createWorkspaceWithoutGcpContext(workspaceDao);
+    workspace2 = workspaceService.getWorkspace(workspaceId2);
   }
 
   @DirtiesContext(methodMode = MethodMode.BEFORE_METHOD)
@@ -170,11 +165,7 @@ public class ApplicationServiceTest extends BaseUnitTest {
     assertThrows(
         ApplicationNotFoundException.class,
         () -> appService.enableWorkspaceApplication(USER_REQUEST, workspace, UNKNOWN_ID));
-    Workspace fakeWorkspace =
-        Workspace.builder()
-            .workspaceId(UUID.randomUUID())
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .build();
+    Workspace fakeWorkspace = WorkspaceFixtures.createDefaultMCWorkspace();
     // This calls a service method, rather than a controller method, so it does not hit the authz
     // check. Instead, we validate that inserting this into the DB violates constraints.
     assertThrows(

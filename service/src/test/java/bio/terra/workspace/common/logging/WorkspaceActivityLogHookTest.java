@@ -19,6 +19,8 @@ import bio.terra.stairway.Stairway;
 import bio.terra.stairway.StepResult;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.exception.UnknownFlightClassNameException;
+import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.db.FolderDao;
 import bio.terra.workspace.db.ResourceDao;
@@ -151,16 +153,13 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   @Test
   void deleteWorkspaceFlightFails_workspaceStillExist_NotLogChangeDetails()
       throws InterruptedException {
-    var workspaceUuid = UUID.randomUUID();
+    var workspace = WorkspaceFixtures.createDefaultMCWorkspace();
+    var workspaceUuid = workspace.getWorkspaceId();
     var emptyChangeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
     assertTrue(emptyChangeDetails.isEmpty());
 
     workspaceDao.createWorkspace(
-        Workspace.builder()
-            .workspaceId(workspaceUuid)
-            .userFacingId(workspaceUuid.toString())
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .build(),
+        workspace,
         /* applicationIds */ null);
     FlightMap inputParams = buildInputParams(workspaceUuid, OperationType.DELETE);
     hook.endFlight(
@@ -192,16 +191,13 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   @Test
   void deleteGcpCloudContextFlightFails_cloudContextStillExist_notLogChangeDetails()
       throws InterruptedException {
-    var workspaceUuid = UUID.randomUUID();
+    var workspace = WorkspaceFixtures.createDefaultMCWorkspace();
+    var workspaceUuid = workspace.getWorkspaceId();
     var emptyChangeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
     assertTrue(emptyChangeDetails.isEmpty());
 
     workspaceDao.createWorkspace(
-        Workspace.builder()
-            .workspaceId(workspaceUuid)
-            .userFacingId(workspaceUuid.toString())
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .build(),
+        workspace,
         /* applicationIds */ null);
     var flightId = UUID.randomUUID().toString();
     workspaceDao.createCloudContextStart(workspaceUuid, CloudPlatform.GCP, flightId);
@@ -224,28 +220,13 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   @Test
   void deleteResourceFlightFails_resourceNotExist_logChangeDetails() throws InterruptedException {
     var workspaceUuid = UUID.randomUUID();
-    var resourceUuid = UUID.randomUUID();
     var emptyChangeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
     assertTrue(emptyChangeDetails.isEmpty());
 
     FlightMap inputParams = buildInputParams(workspaceUuid, OperationType.DELETE);
     List<WsmResource> resourceToDelete = new ArrayList<>();
     resourceToDelete.add(
-        ControlledAiNotebookInstanceResource.builder()
-            .common(
-                ControlledResourceFields.builder()
-                    .workspaceUuid(workspaceUuid)
-                    .resourceId(resourceUuid)
-                    .name("my-notebook")
-                    .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
-                    .assignedUser("yuhuyoyo@google.com")
-                    .cloningInstructions(CloningInstructions.COPY_NOTHING)
-                    .managedBy(ManagedByType.MANAGED_BY_USER)
-                    .build())
-            .instanceId("my-notebook-instance")
-            .projectId("my-project")
-            .location("us-central1-a")
-            .build());
+        ControlledResourceFixtures.makeDefaultAiNotebookInstance().build());
     inputParams.put(CONTROLLED_RESOURCES_TO_DELETE, resourceToDelete);
     hook.endFlight(
         new FakeFlightContext(
@@ -259,27 +240,12 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   void deleteResourceFlightFails_resourceStillExist_notLogChangeDetails()
       throws InterruptedException {
     UUID workspaceId = WorkspaceUnitTestUtils.createWorkspaceWithGcpContext(workspaceDao);
-    var resourceUuid = UUID.randomUUID();
     Optional<ActivityLogChangeDetails> emptyChangeDetails =
         activityLogDao.getLastUpdateDetails(workspaceId);
     assertTrue(emptyChangeDetails.isEmpty());
 
     var resource =
-        ControlledAiNotebookInstanceResource.builder()
-            .common(
-                ControlledResourceFields.builder()
-                    .workspaceUuid(workspaceId)
-                    .resourceId(resourceUuid)
-                    .name("my-notebook")
-                    .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
-                    .assignedUser("yuhuyoyo@google.com")
-                    .cloningInstructions(CloningInstructions.COPY_NOTHING)
-                    .managedBy(ManagedByType.MANAGED_BY_USER)
-                    .build())
-            .instanceId("my-notebook-instance-123")
-            .projectId("my-gcp-project")
-            .location("us-central-1a")
-            .build();
+        ControlledResourceFixtures.makeDefaultAiNotebookInstance(workspaceId).build();
     resourceDao.createControlledResource(resource);
 
     FlightMap inputParams = buildInputParams(workspaceId, OperationType.DELETE);
@@ -288,7 +254,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
         new FakeFlightContext(
             DeleteGcpContextFlight.class.getName(), inputParams, FlightStatus.ERROR));
 
-    assertNotNull(resourceDao.getResource(workspaceId, resourceUuid));
+    assertNotNull(resourceDao.getResource(workspaceId, resource.getResourceId()));
     var changeDetailsAfterFailedFlight = activityLogDao.getLastUpdateDetails(workspaceId);
     assertTrue(changeDetailsAfterFailedFlight.isEmpty());
   }

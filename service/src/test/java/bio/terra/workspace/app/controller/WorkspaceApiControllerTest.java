@@ -122,6 +122,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
             new UserStatusInfo()
                 .userEmail(USER_REQUEST.getEmail())
                 .userSubjectId(USER_REQUEST.getSubjectId()));
+    when(mockSamService().getUserEmailFromSam(any())).thenReturn(USER_REQUEST.getEmail());
     when(mockSamService().isAuthorized(any(), eq(SamConstants.SamResource.WORKSPACE), any(), any()))
         .thenReturn(true);
 

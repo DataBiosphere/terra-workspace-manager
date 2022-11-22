@@ -1,5 +1,6 @@
 package bio.terra.workspace.unit;
 
+import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
@@ -31,14 +32,8 @@ public class WorkspaceUnitTestUtils {
    * workspace id.
    */
   public static UUID createWorkspaceWithoutGcpContext(WorkspaceDao workspaceDao) {
-    UUID workspaceUuid = UUID.randomUUID();
     Workspace workspace =
-        Workspace.builder()
-            .workspaceId(workspaceUuid)
-            .userFacingId(workspaceUuid.toString())
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .createdByEmail("foo@gmail.com")
-            .build();
+        WorkspaceFixtures.createDefaultMCWorkspace();
     workspaceDao.createWorkspace(workspace, /* applicationIds= */ null);
     return workspace.getWorkspaceId();
   }
