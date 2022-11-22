@@ -56,7 +56,6 @@ public class WorkspaceFixtures {
     return Workspace.builder()
         .workspaceId(id)
         .userFacingId("a" + id)
-        .spendProfileId(null)
         .workspaceStage(WorkspaceStage.MC_WORKSPACE);
   }
 
