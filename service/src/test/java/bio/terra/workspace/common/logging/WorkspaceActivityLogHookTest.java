@@ -42,6 +42,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
+import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import java.util.ArrayList;
 import java.util.List;
@@ -154,7 +155,10 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     var emptyChangeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
     assertTrue(emptyChangeDetails.isEmpty());
 
-    workspaceDao.createWorkspace(WorkspaceFixtures.createMcWorkspace(), /* applicationIds */ null);
+    workspaceDao.createWorkspace(
+        WorkspaceFixtures.createWorkspace(
+            workspaceUuid, WorkspaceStage.MC_WORKSPACE), /* applicationIds */
+        null);
     FlightMap inputParams = buildInputParams(workspaceUuid, OperationType.DELETE);
     hook.endFlight(
         new FakeFlightContext(
@@ -189,7 +193,10 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     var emptyChangeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
     assertTrue(emptyChangeDetails.isEmpty());
 
-    workspaceDao.createWorkspace(WorkspaceFixtures.createMcWorkspace(), /* applicationIds */ null);
+    workspaceDao.createWorkspace(
+        WorkspaceFixtures.createWorkspace(
+            workspaceUuid, WorkspaceStage.MC_WORKSPACE), /* applicationIds */
+        null);
     var flightId = UUID.randomUUID().toString();
     workspaceDao.createCloudContextStart(workspaceUuid, CloudPlatform.GCP, flightId);
     workspaceDao.createCloudContextFinish(
