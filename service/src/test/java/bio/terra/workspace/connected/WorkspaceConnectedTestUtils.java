@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import java.util.UUID;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Component;
 public class WorkspaceConnectedTestUtils {
   private @Autowired WorkspaceService workspaceService;
   private @Autowired JobService jobService;
+  private @Autowired SpendConnectedTestUtils spendUtils;
 
   /**
    * Creates a workspace with a GCP cloud context.
@@ -36,7 +38,10 @@ public class WorkspaceConnectedTestUtils {
 
   public Workspace createWorkspace(AuthenticatedUserRequest userRequest) {
     UUID workspaceUuid = UUID.randomUUID();
-    Workspace workspace = WorkspaceFixtures.buildMcWorkspace(workspaceUuid);
+    Workspace workspace =
+        WorkspaceFixtures.defaultWorkspaceBuilder(workspaceUuid)
+            .spendProfileId(spendUtils.defaultSpendId())
+            .build();
     workspaceService.createWorkspace(workspace, null, null, userRequest);
 
     return workspaceService.getWorkspace(workspaceUuid);
