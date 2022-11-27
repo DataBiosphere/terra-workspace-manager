@@ -12,6 +12,7 @@ import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
+import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -22,7 +23,6 @@ import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
 import java.time.Duration;
 import java.util.HashMap;
@@ -60,10 +60,7 @@ class DeleteGcpContextFlightTest extends BaseConnectedTest {
     // Create a new workspace at the start of each test.
     UUID uuid = UUID.randomUUID();
     workspace =
-        Workspace.builder()
-            .workspaceId(uuid)
-            .userFacingId("a" + uuid.toString())
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+        WorkspaceFixtures.defaultWorkspaceBuilder(uuid)
             .spendProfileId(spendUtils.defaultSpendId())
             .build();
     workspaceUuid =

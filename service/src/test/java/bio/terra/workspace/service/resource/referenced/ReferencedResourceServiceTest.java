@@ -13,6 +13,7 @@ import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.BaseUnitTestMockDataRepoService;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
+import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
@@ -34,7 +35,6 @@ import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import bio.terra.workspace.service.resource.referenced.terra.workspace.ReferencedTerraWorkspaceResource;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -256,14 +256,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
    * MC_WORKSPACE. Returns the generated workspace ID.
    */
   private UUID createMcTestWorkspace() {
-    UUID uuid = UUID.randomUUID();
-    Workspace request =
-        Workspace.builder()
-            .workspaceId(uuid)
-            .userFacingId("a" + uuid.toString())
-            .spendProfileId(null)
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .build();
+    Workspace request = WorkspaceFixtures.buildMcWorkspace();
     return workspaceService.createWorkspace(request, null, null, USER_REQUEST);
   }
 

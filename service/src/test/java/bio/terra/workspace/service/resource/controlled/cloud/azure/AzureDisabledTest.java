@@ -16,6 +16,7 @@ import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.generated.model.ApiAzureContext;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
@@ -26,11 +27,8 @@ import bio.terra.workspace.generated.model.ApiCreateControlledAzureNetworkReques
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureVmRequestBody;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -46,10 +44,10 @@ import org.springframework.test.web.servlet.MockMvc;
 public class AzureDisabledTest extends BaseConnectedTest {
   @Autowired private MockMvc mockMvc;
 
-  @Autowired private WorkspaceService workspaceService;
   @Autowired private UserAccessUtils userAccessUtils;
   @Autowired private ObjectMapper objectMapper;
   @Autowired private FeatureConfiguration featureConfiguration;
+  @Autowired private WorkspaceConnectedTestUtils connectedTestUtils;
 
   @BeforeEach
   public void setUp() {
@@ -60,14 +58,8 @@ public class AzureDisabledTest extends BaseConnectedTest {
   @Test
   public void azureDisabledTest() throws Exception {
     Workspace workspace =
-        Workspace.builder()
-            .workspaceId(UUID.randomUUID())
-            .userFacingId("a" + UUID.randomUUID())
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .build();
-    UUID workspaceUuid =
-        workspaceService.createWorkspace(
-            workspace, null, null, userAccessUtils.defaultUserAuthRequest());
+        connectedTestUtils.createWorkspace(userAccessUtils.defaultUserAuthRequest());
+    var workspaceUuid = workspace.getWorkspaceId();
 
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     String fakeJobId = "a pretend job ID";

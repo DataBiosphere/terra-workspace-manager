@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.app.configuration.external.AzureTestConfiguration;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
+import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -12,7 +13,6 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -37,13 +37,9 @@ public class AzureWorkspaceTest extends BaseAzureConnectedTest {
             .email("fake@email.com")
             .subjectId("fakeID123");
 
-    UUID uuid = UUID.randomUUID();
     Workspace workspace =
-        Workspace.builder()
-            .workspaceId(uuid)
-            .userFacingId("a" + uuid.toString())
+        WorkspaceFixtures.defaultWorkspaceBuilder(null)
             .spendProfileId(spendUtils.defaultSpendId())
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
 
     workspaceService.createWorkspace(workspace, null, null, userRequest);

@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.RawDaoTestFixture;
@@ -29,7 +30,6 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WsmApplicationService.WsmDbApplication;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import bio.terra.workspace.service.workspace.model.WsmApplication;
 import bio.terra.workspace.service.workspace.model.WsmApplicationState;
 import bio.terra.workspace.service.workspace.model.WsmWorkspaceApplication;
@@ -119,25 +119,9 @@ public class ApplicationServiceTest extends BaseUnitTest {
     appService.processApp(NORM_APP, dbAppMap);
 
     // Create two workspaces
-    UUID workspaceUuid = UUID.randomUUID();
-    workspace =
-        Workspace.builder()
-            .workspaceId(workspaceUuid)
-            .userFacingId("a" + workspaceUuid)
-            .spendProfileId(null)
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .build();
-
+    workspace = WorkspaceFixtures.buildMcWorkspace();
     workspaceService.createWorkspace(workspace, null, null, USER_REQUEST);
-
-    UUID workspaceId2 = UUID.randomUUID();
-    workspace2 =
-        Workspace.builder()
-            .workspaceId(workspaceId2)
-            .userFacingId("a" + workspaceId2)
-            .spendProfileId(null)
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .build();
+    workspace2 = WorkspaceFixtures.buildMcWorkspace();
     workspaceService.createWorkspace(workspace2, null, null, USER_REQUEST);
   }
 
@@ -170,11 +154,7 @@ public class ApplicationServiceTest extends BaseUnitTest {
     assertThrows(
         ApplicationNotFoundException.class,
         () -> appService.enableWorkspaceApplication(USER_REQUEST, workspace, UNKNOWN_ID));
-    Workspace fakeWorkspace =
-        Workspace.builder()
-            .workspaceId(UUID.randomUUID())
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .build();
+    Workspace fakeWorkspace = WorkspaceFixtures.buildMcWorkspace();
     // This calls a service method, rather than a controller method, so it does not hit the authz
     // check. Instead, we validate that inserting this into the DB violates constraints.
     assertThrows(
