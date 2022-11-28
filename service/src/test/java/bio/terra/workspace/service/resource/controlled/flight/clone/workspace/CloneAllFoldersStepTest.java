@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.WORKSPACE_ID;
 import static com.google.common.collect.MoreCollectors.onlyElement;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -121,7 +122,7 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
         WorkspaceUnitTestUtils.createWorkspaceWithGcpContext(workspaceDao);
     Workspace destinationWorkspace = workspaceDao.getWorkspace(destinationWorkspaceId);
     inputParameters.put(ControlledResourceKeys.SOURCE_WORKSPACE_ID, SOURCE_WORKSPACE_ID);
-    inputParameters.put(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId);
+    inputParameters.put(WORKSPACE_ID, destinationWorkspaceId);
     inputParameters.put(JobMapKeys.REQUEST.getKeyName(), destinationWorkspace);
 
     when(mockFlightContext.getInputParameters()).thenReturn(inputParameters);

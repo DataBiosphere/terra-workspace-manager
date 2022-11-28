@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.WORKSPACE_ID;
+
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
@@ -94,9 +96,7 @@ public class CloneAllFoldersStep implements Step {
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     var destinationWorkspaceId =
-        flightContext
-            .getInputParameters()
-            .get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
+        FlightUtils.getRequired(flightContext.getInputParameters(), WORKSPACE_ID, UUID.class);
     folderDao.deleteAllFolders(destinationWorkspaceId);
     return StepResult.getStepResultSuccess();
   }
