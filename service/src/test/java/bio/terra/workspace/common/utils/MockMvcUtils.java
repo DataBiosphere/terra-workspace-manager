@@ -909,14 +909,14 @@ public class MockMvcUtils {
   }
 
   /** Call cloneGcsBucket() and return immediately; don't wait for flight to finish. */
-  public ApiCloneControlledGcpGcsBucketResult cloneControlledGcsBucketAsync(
+  public ApiCloneControlledGcpGcsBucketResult cloneControlledGcsBucketWithError(
       AuthenticatedUserRequest userRequest,
       UUID sourceWorkspaceId,
       UUID sourceResourceId,
       UUID destWorkspaceId,
       ApiCloningInstructionsEnum cloningInstructions,
       String destBucketName,
-      int expectedCode)
+      int statusCode)
       throws Exception {
     ApiCloneControlledGcpGcsBucketRequest request =
         new ApiCloneControlledGcpGcsBucketRequest()
@@ -927,24 +927,17 @@ public class MockMvcUtils {
     if (destBucketName != "") {
       request.bucketName(destBucketName);
     }
-
-    String serializedResponse =
-        mockMvc
-            .perform(
-                addJsonContentType(
-                    addAuth(
-                        post(CLONE_CONTROLLED_GCP_GCS_BUCKET_FORMAT.formatted(
-                                sourceWorkspaceId, sourceResourceId))
-                            .content(objectMapper.writeValueAsString(request)),
-                        userRequest)))
-            .andExpect(status().is(expectedCode))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
+    mockMvc
+        .perform(
+            addJsonContentType(
+                addAuth(
+                    post(CLONE_CONTROLLED_GCP_GCS_BUCKET_FORMAT.formatted(
+                            sourceWorkspaceId, sourceResourceId))
+                        .content(objectMapper.writeValueAsString(request)),
+                    userRequest)))
+        .andExpect(status().is(statusCode));
     // If an exception was thrown, deserialization won't work, so don't attempt it.
-    return expectedCode == HttpStatus.SC_ACCEPTED
-        ? objectMapper.readValue(serializedResponse, ApiCloneControlledGcpGcsBucketResult.class)
-        : null;
+    return null;
   }
 
   public ApiCloneControlledGcpGcsBucketResult cloneControlledGcsBucketAsyncSuccessfully(
