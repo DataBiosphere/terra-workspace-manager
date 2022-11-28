@@ -172,6 +172,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             new UserStatusInfo()
                 .userEmail(USER_REQUEST.getEmail())
                 .userSubjectId(USER_REQUEST.getSubjectId()));
+    when(mockSamService.getUserEmailFromSam(any(AuthenticatedUserRequest.class)))
+        .thenReturn(USER_REQUEST.getEmail());
   }
 
   /**
@@ -808,7 +810,6 @@ class WorkspaceServiceTest extends BaseConnectedTest {
                     .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
                     .applicationId(null)
                     .iamRole(ControlledResourceIamRole.OWNER)
-                    .assignedUser(USER_REQUEST.getEmail())
                     .build())
             .build();
     final ApiGcpGcsBucketCreationParameters creationParameters =
