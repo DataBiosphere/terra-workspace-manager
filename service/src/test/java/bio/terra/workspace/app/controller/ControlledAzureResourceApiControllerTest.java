@@ -17,10 +17,12 @@ import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureVmRequestBody;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiJobReport;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -30,6 +32,12 @@ public class ControlledAzureResourceApiControllerTest extends BaseAzureUnitTest 
   @Autowired MockMvc mockMvc;
   @Autowired ObjectMapper objectMapper;
   @Autowired ControlledAzureResourceApiController controller;
+
+  @BeforeEach
+  void setUp() throws InterruptedException {
+    when(mockSamService().getUserEmailFromSam(any(AuthenticatedUserRequest.class)))
+        .thenReturn("foo@gmail.com");
+  }
 
   @Test
   public void createAzureVm400WithNoParameters() throws Exception {

@@ -480,7 +480,7 @@ public class ControlledResourceFixtures {
       String resourceDescription) {
     return ControlledAzureStorageContainerResource.builder()
         .common(
-            ControlledResourceFields.builder()
+            makeDefaultControlledResourceFieldsBuilder()
                 .workspaceUuid(workspaceUuid)
                 .resourceId(containerResourceId)
                 .name(resourceName)

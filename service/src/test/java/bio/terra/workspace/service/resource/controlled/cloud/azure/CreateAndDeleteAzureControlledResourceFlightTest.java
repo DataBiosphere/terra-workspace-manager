@@ -1250,7 +1250,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
     ControlledAzureDiskResource resource =
         ControlledAzureDiskResource.builder()
             .common(
-                ControlledResourceFields.builder()
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                     .workspaceUuid(workspaceUuid)
                     .resourceId(resourceId)
                     .name(getAzureName("disk"))
@@ -1288,7 +1288,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
     ControlledAzureIpResource resource =
         ControlledAzureIpResource.builder()
             .common(
-                ControlledResourceFields.builder()
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                     .workspaceUuid(workspaceUuid)
                     .resourceId(resourceId)
                     .name(getAzureName("ip"))
@@ -1326,7 +1326,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
     ControlledAzureNetworkResource resource =
         ControlledAzureNetworkResource.builder()
             .common(
-                ControlledResourceFields.builder()
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                     .workspaceUuid(workspaceUuid)
                     .resourceId(resourceId)
                     .name(getAzureName("network"))
@@ -1376,7 +1376,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
     ControlledAzureNetworkResource resource =
         ControlledAzureNetworkResource.builder()
             .common(
-                ControlledResourceFields.builder()
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                     .workspaceUuid(workspaceUuid)
                     .resourceId(resourceId)
                     .name("testNetwork")
