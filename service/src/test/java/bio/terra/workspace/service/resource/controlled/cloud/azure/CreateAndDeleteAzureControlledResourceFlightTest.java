@@ -12,6 +12,7 @@ import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.utils.AzureTestUtils;
 import bio.terra.workspace.common.utils.AzureVmUtils;
+import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.LandingZoneTestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -298,7 +299,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
   @Test
   public void createAndDeleteAzureStorageContainerBasedOnLandingZoneSharedStorageAccount()
       throws InterruptedException {
-    String storageAccountName = "lzsharedstorageaccount";
+    String storageAccountName = String.format("lzsharedstacc%s", TestUtils.getRandomString(6));
 
     Workspace workspace = azureTestUtils.createWorkspace(workspaceService);
     UUID workspaceUuid = workspace.getWorkspaceId();
