@@ -6,8 +6,8 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.when;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;

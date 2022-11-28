@@ -34,7 +34,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -58,6 +57,11 @@ public class AdminServiceTest extends BaseConnectedTest {
   List<UUID> workspaceIds = new ArrayList<>();
   List<String> projectIds;
 
+  @AfterEach
+  void cleanUp() {
+    jobService.setFlightDebugInfoForTest(null);
+  }
+
   void setup() {
     iamCow = crlService.getIamCow();
     workspaceIds.add(
@@ -78,30 +82,18 @@ public class AdminServiceTest extends BaseConnectedTest {
             .toList();
   }
 
-  @AfterEach
-  void cleanUp() {
+  void cleanUpWorkspace() {
     jobService.setFlightDebugInfoForTest(null);
-  }
-
-  void cleanUpWorkspaces() {
     for (UUID workspaceId : workspaceIds) {
       connectedTestUtils.deleteWorkspaceAndGcpContext(
           userAccessUtils.defaultUserAuthRequest(), workspaceId);
     }
   }
+
   @Test
-  public void syncIamRole_newPermissionsAddedToCustomRoleProjectReader() {
+  public void syncIamRole_updateAppliedAndLogged() {
     setup();
-    // The existing project has incomplete permissions on PROJECT_READER
-    for (String project : projectIds) {
-      updateCustomRole(INCOMPLETE_PROJECT_READER, project);
-    }
-    OffsetDateTime lastChangeTimestampOfWorkspace1 =
-        workspaceActivityLogDao.getLastUpdateDetails(workspaceIds.get(0)).get().getChangeDate();
-    OffsetDateTime lastChangeTimestampOfWorkspace2 =
-        workspaceActivityLogDao.getLastUpdateDetails(workspaceIds.get(1)).get().getChangeDate();
-    OffsetDateTime lastChangeTimestampOfWorkspace3 =
-        workspaceActivityLogDao.getLastUpdateDetails(workspaceIds.get(2)).get().getChangeDate();
+
     // Test idempotency of steps by retrying them once.
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(
@@ -110,12 +102,48 @@ public class AdminServiceTest extends BaseConnectedTest {
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
 
+    OffsetDateTime lastChangeTimestampOfWorkspace1 =
+        workspaceActivityLogDao.getLastUpdateDetails(workspaceIds.get(0)).get().getChangeDate();
+    // First update. No change will be applied.
     String jobId =
         adminService.syncIamRoleForAllGcpProjects(
             userAccessUtils.defaultUserAuthRequest(), /*wetRun=*/ true);
     jobService.waitForJob(jobId);
     for (String projectId : projectIds) {
-      assertProjectReaderRoleIsUpdated(
+      assertProjectReaderRoleMatchesExpected(
+          projectId, CUSTOM_GCP_PROJECT_IAM_ROLES.get(WsmIamRole.READER).getIncludedPermissions());
+    }
+    OffsetDateTime newChangeTimestampOfWorkspace1 =
+        workspaceActivityLogDao.getLastUpdateDetails(workspaceIds.get(0)).get().getChangeDate();
+    assertTrue(newChangeTimestampOfWorkspace1.isEqual(lastChangeTimestampOfWorkspace1));
+
+    // Change the existing project to have incomplete permissions on PROJECT_READER
+    for (String project : projectIds) {
+      updateCustomRole(INCOMPLETE_PROJECT_READER, project);
+    }
+    OffsetDateTime lastChangeTimestampOfWorkspace2 =
+        workspaceActivityLogDao.getLastUpdateDetails(workspaceIds.get(1)).get().getChangeDate();
+    OffsetDateTime lastChangeTimestampOfWorkspace3 =
+        workspaceActivityLogDao.getLastUpdateDetails(workspaceIds.get(2)).get().getChangeDate();
+
+    // Second update, dry run
+    jobId =
+        adminService.syncIamRoleForAllGcpProjects(
+            userAccessUtils.defaultUserAuthRequest(), /*wetRun=*/ false);
+    jobService.waitForJob(jobId);
+
+    for (String projectId : projectIds) {
+      assertProjectReaderRoleMatchesExpected(
+          projectId, INCOMPLETE_PROJECT_READER.getIncludedPermissions());
+    }
+
+    // Third update, wet run
+    jobId =
+        adminService.syncIamRoleForAllGcpProjects(
+            userAccessUtils.defaultUserAuthRequest(), /*wetRun=*/ true);
+    jobService.waitForJob(jobId);
+    for (String projectId : projectIds) {
+      assertProjectReaderRoleMatchesExpected(
           projectId, CUSTOM_GCP_PROJECT_IAM_ROLES.get(WsmIamRole.READER).getIncludedPermissions());
     }
     assertTrue(
@@ -137,12 +165,13 @@ public class AdminServiceTest extends BaseConnectedTest {
             .getChangeDate()
             .isAfter(lastChangeTimestampOfWorkspace3));
 
-    cleanUpWorkspaces();
+    cleanUpWorkspace();
   }
 
   @Test
   public void syncIamRole_undo_permissionsRemainsTheSame() {
     setup();
+
     // The existing project has incomplete permissions on PROJECT_READER
     for (String project : projectIds) {
       updateCustomRole(INCOMPLETE_PROJECT_READER, project);
@@ -162,71 +191,14 @@ public class AdminServiceTest extends BaseConnectedTest {
             userAccessUtils.defaultUserAuthRequest(), /*wetRun=*/ true);
     jobService.waitForJob(jobId);
     for (String projectId : projectIds) {
-      assertProjectReaderRoleIsUpdated(
+      assertProjectReaderRoleMatchesExpected(
           projectId, INCOMPLETE_PROJECT_READER.getIncludedPermissions());
     }
     OffsetDateTime newChangeTimestampOfWorkspace1 =
         workspaceActivityLogDao.getLastUpdateDetails(workspaceIds.get(0)).get().getChangeDate();
     assertTrue(newChangeTimestampOfWorkspace1.isEqual(lastChangeTimestampOfWorkspace1));
 
-    cleanUpWorkspaces();
-  }
-
-  @Test
-  public void syncIamRole_dryRun_permissionsNotUpdated() {
-    setup();
-    // The existing project has incomplete permissions on PROJECT_READER
-    for (String project : projectIds) {
-      updateCustomRole(INCOMPLETE_PROJECT_READER, project);
-    }
-    // Test idempotency of steps by retrying them once.
-    Map<String, StepStatus> retrySteps = new HashMap<>();
-    retrySteps.put(
-        RetrieveGcpIamCustomRoleStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    jobService.setFlightDebugInfoForTest(
-        FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
-
-    String jobId =
-        adminService.syncIamRoleForAllGcpProjects(
-            userAccessUtils.defaultUserAuthRequest(), /*wetRun=*/ false);
-    jobService.waitForJob(jobId);
-
-    for (String projectId : projectIds) {
-      assertProjectReaderRoleIsUpdated(
-          projectId, INCOMPLETE_PROJECT_READER.getIncludedPermissions());
-    }
-
-    cleanUpWorkspaces();
-  }
-
-  @Test
-  public void syncIamRole_noUpdate_permissionsNotUpdatedAndNoLogAdded() {
-    setup();
-
-    OffsetDateTime lastChangeTimestampOfWorkspace1 =
-        workspaceActivityLogDao.getLastUpdateDetails(workspaceIds.get(0)).get().getChangeDate();
-
-    // Test idempotency of steps by retrying them once.
-    Map<String, StepStatus> retrySteps = new HashMap<>();
-    retrySteps.put(
-        RetrieveGcpIamCustomRoleStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    jobService.setFlightDebugInfoForTest(
-        FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
-
-    String jobId =
-        adminService.syncIamRoleForAllGcpProjects(
-            userAccessUtils.defaultUserAuthRequest(), /*wetRun=*/ true);
-    jobService.waitForJob(jobId);
-
-    for (String projectId : projectIds) {
-      assertProjectReaderRoleIsUpdated(
-          projectId, CUSTOM_GCP_PROJECT_IAM_ROLES.get(WsmIamRole.READER).getIncludedPermissions());
-    }
-    OffsetDateTime newChangeTimestampOfWorkspace1 =
-        workspaceActivityLogDao.getLastUpdateDetails(workspaceIds.get(0)).get().getChangeDate();
-    assertTrue(newChangeTimestampOfWorkspace1.isEqual(lastChangeTimestampOfWorkspace1));
-
-    cleanUpWorkspaces();
+    cleanUpWorkspace();
   }
 
   @Test
@@ -263,7 +235,7 @@ public class AdminServiceTest extends BaseConnectedTest {
     }
   }
 
-  private void assertProjectReaderRoleIsUpdated(
+  private void assertProjectReaderRoleMatchesExpected(
       String projectId, List<String> expectedPermissions) {
     Role role = retrieveCustomRoles(INCOMPLETE_PROJECT_READER, projectId);
     assertNotNull(role);

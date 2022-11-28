@@ -229,11 +229,12 @@ public class FolderApiControllerTest extends BaseUnitTest {
 
     ApiFolderList retrievedFolders = listFolders(workspaceId);
 
-    assertTrue(retrievedFolders.getFolders().stream().anyMatch(
-        folder -> folder.getId().equals(firstFolder.getId())
-    ));
-    assertTrue(retrievedFolders.getFolders().stream().anyMatch(
-        folder -> folder.getId().equals(secondFolder.getId())));
+    assertTrue(
+        retrievedFolders.getFolders().stream()
+            .anyMatch(folder -> folder.getId().equals(firstFolder.getId())));
+    assertTrue(
+        retrievedFolders.getFolders().stream()
+            .anyMatch(folder -> folder.getId().equals(secondFolder.getId())));
   }
 
   @Test
@@ -745,7 +746,8 @@ public class FolderApiControllerTest extends BaseUnitTest {
   }
 
   private boolean isEqual(ApiFolder folder1, ApiFolder folder2) {
-    return new EqualsBuilder().append(folder1.getDisplayName(), folder2.getDisplayName())
+    return new EqualsBuilder()
+        .append(folder1.getDisplayName(), folder2.getDisplayName())
         .append(folder1.getDescription(), folder2.getDescription())
         .append(folder1.getProperties(), folder2.getProperties())
         .append(folder1.getParentFolderId(), folder2.getParentFolderId())

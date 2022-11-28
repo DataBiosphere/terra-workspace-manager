@@ -20,6 +20,7 @@ import bio.terra.common.sam.exception.SamNotFoundException;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
+import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiCreateDataRepoSnapshotReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
@@ -225,11 +226,7 @@ class SamServiceTest extends BaseConnectedTest {
     samService.createWorkspaceWithDefaults(defaultUserRequest(), workspaceUuid);
 
     Workspace rawlsWorkspace =
-        Workspace.builder()
-            .workspaceId(workspaceUuid)
-            .userFacingId(workspaceUuid.toString())
-            .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
-            .build();
+        WorkspaceFixtures.buildWorkspace(workspaceUuid, WorkspaceStage.RAWLS_WORKSPACE);
     workspaceService.createWorkspace(rawlsWorkspace, null, null, defaultUserRequest());
     ApiGrantRoleRequestBody request =
         new ApiGrantRoleRequestBody().memberEmail(userAccessUtils.getSecondUserEmail());
@@ -466,13 +463,7 @@ class SamServiceTest extends BaseConnectedTest {
   }
 
   private Workspace createWorkspaceForUser(AuthenticatedUserRequest userRequest) {
-    UUID uuid = UUID.randomUUID();
-    Workspace workspace =
-        Workspace.builder()
-            .workspaceId(uuid)
-            .userFacingId(uuid.toString())
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .build();
+    Workspace workspace = WorkspaceFixtures.buildMcWorkspace();
     workspaceService.createWorkspace(workspace, null, null, userRequest);
     return workspace;
   }

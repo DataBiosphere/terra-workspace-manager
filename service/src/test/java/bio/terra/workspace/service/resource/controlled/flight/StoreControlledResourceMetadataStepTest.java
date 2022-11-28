@@ -10,6 +10,7 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
@@ -39,12 +40,8 @@ public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
     // database insert will pass FK constraints.
     UUID workspaceUuid = UUID.randomUUID();
     Workspace workspace =
-        Workspace.builder()
-            .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
-            .workspaceId(workspaceUuid)
-            .userFacingId("a" + workspaceUuid)
-            .build();
-    workspaceDao.createWorkspace(workspace, /* applicationIds= */ null);
+        WorkspaceFixtures.buildWorkspace(workspaceUuid, WorkspaceStage.RAWLS_WORKSPACE);
+    workspaceDao.createWorkspace(workspace, /* applicationIds */ null);
 
     gcpCloudContextService.createGcpCloudContextStart(workspaceUuid, "flight-testentersinfo");
     gcpCloudContextService.createGcpCloudContextFinish(

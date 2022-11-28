@@ -35,7 +35,6 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WsmApplication;
 import bio.terra.workspace.service.workspace.model.WsmApplicationState;
 import bio.terra.workspace.service.workspace.model.WsmWorkspaceApplication;
-import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -103,23 +102,22 @@ public class ApplicationServiceTest extends BaseUnitTest {
   @BeforeEach
   void setup() throws Exception {
     // Set up so all spend profile and workspace checks are successful
-    when(
-            mockSamService()
-                .isAuthorized(
-                    Mockito.any(),
-                    Mockito.eq(SamResource.SPEND_PROFILE),
-                    Mockito.any(),
-                    Mockito.eq(SamSpendProfileAction.LINK)))
+    when(mockSamService()
+            .isAuthorized(
+                Mockito.any(),
+                Mockito.eq(SamResource.SPEND_PROFILE),
+                Mockito.any(),
+                Mockito.eq(SamSpendProfileAction.LINK)))
         .thenReturn(true);
-    when(
-            mockSamService()
-                .isAuthorized(
-                    Mockito.any(), Mockito.eq(SamResource.WORKSPACE), Mockito.any(), Mockito.any()))
+    when(mockSamService()
+            .isAuthorized(
+                Mockito.any(), Mockito.eq(SamResource.WORKSPACE), Mockito.any(), Mockito.any()))
         .thenReturn(true);
     when(mockSamService().getUserStatusInfo(USER_REQUEST))
         .thenReturn(
             new UserStatusInfo()
-                 .userEmail(USER_REQUEST.getEmail()).userSubjectId(USER_REQUEST.getSubjectId()));
+                .userEmail(USER_REQUEST.getEmail())
+                .userSubjectId(USER_REQUEST.getSubjectId()));
 
     appService.enableTestMode();
     // Populate the applications - this should be idempotent since we are
@@ -130,10 +128,10 @@ public class ApplicationServiceTest extends BaseUnitTest {
     appService.processApp(NORM_APP, dbAppMap);
 
     // Create two workspaces
-    workspaceId1 = WorkspaceUnitTestUtils.createWorkspaceWithoutGcpContext(workspaceDao);
-    workspace = workspaceService.getWorkspace(workspaceId1);
-    workspaceId2 = WorkspaceUnitTestUtils.createWorkspaceWithoutGcpContext(workspaceDao);
-    workspace2 = workspaceService.getWorkspace(workspaceId2);
+    workspace = WorkspaceFixtures.buildMcWorkspace();
+    workspaceService.createWorkspace(workspace, null, null, USER_REQUEST);
+    workspace2 = WorkspaceFixtures.buildMcWorkspace();
+    workspaceService.createWorkspace(workspace2, null, null, USER_REQUEST);
   }
 
   @DirtiesContext(methodMode = MethodMode.BEFORE_METHOD)
@@ -165,7 +163,8 @@ public class ApplicationServiceTest extends BaseUnitTest {
     assertThrows(
         ApplicationNotFoundException.class,
         () -> appService.enableWorkspaceApplication(USER_REQUEST, workspace, UNKNOWN_ID));
-    Workspace fakeWorkspace = WorkspaceFixtures.createDefaultMCWorkspace();
+
+    Workspace fakeWorkspace = WorkspaceFixtures.buildMcWorkspace();
     // This calls a service method, rather than a controller method, so it does not hit the authz
     // check. Instead, we validate that inserting this into the DB violates constraints.
     assertThrows(

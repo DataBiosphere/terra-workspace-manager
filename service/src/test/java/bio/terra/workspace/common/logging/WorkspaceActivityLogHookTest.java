@@ -1,5 +1,6 @@
 package bio.terra.workspace.common.logging;
 
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.buildMcWorkspace;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.FOLDER_ID;
@@ -29,12 +30,7 @@ import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.folder.flights.DeleteFolderFlight;
 import bio.terra.workspace.service.folder.model.Folder;
 import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
-import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
-import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
-import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.workspace.flight.DeleteGcpContextFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
@@ -43,8 +39,6 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
-import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import java.util.ArrayList;
 import java.util.List;
@@ -158,9 +152,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     var emptyChangeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
     assertTrue(emptyChangeDetails.isEmpty());
 
-    workspaceDao.createWorkspace(
-        workspace,
-        /* applicationIds */ null);
+    workspaceDao.createWorkspace(buildMcWorkspace(workspaceUuid), /* applicationIds */ null);
     FlightMap inputParams = buildInputParams(workspaceUuid, OperationType.DELETE);
     hook.endFlight(
         new FakeFlightContext(
@@ -196,9 +188,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     var emptyChangeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
     assertTrue(emptyChangeDetails.isEmpty());
 
-    workspaceDao.createWorkspace(
-        workspace,
-        /* applicationIds */ null);
+    workspaceDao.createWorkspace(buildMcWorkspace(workspaceUuid), /* applicationIds */ null);
     var flightId = UUID.randomUUID().toString();
     workspaceDao.createCloudContextStart(workspaceUuid, CloudPlatform.GCP, flightId);
     workspaceDao.createCloudContextFinish(
@@ -225,8 +215,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
 
     FlightMap inputParams = buildInputParams(workspaceUuid, OperationType.DELETE);
     List<WsmResource> resourceToDelete = new ArrayList<>();
-    resourceToDelete.add(
-        ControlledResourceFixtures.makeDefaultAiNotebookInstance().build());
+    resourceToDelete.add(ControlledResourceFixtures.makeDefaultAiNotebookInstance().build());
     inputParams.put(CONTROLLED_RESOURCES_TO_DELETE, resourceToDelete);
     hook.endFlight(
         new FakeFlightContext(
@@ -244,8 +233,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
         activityLogDao.getLastUpdateDetails(workspaceId);
     assertTrue(emptyChangeDetails.isEmpty());
 
-    var resource =
-        ControlledResourceFixtures.makeDefaultAiNotebookInstance(workspaceId).build();
+    var resource = ControlledResourceFixtures.makeDefaultAiNotebookInstance(workspaceId).build();
     resourceDao.createControlledResource(resource);
 
     FlightMap inputParams = buildInputParams(workspaceId, OperationType.DELETE);

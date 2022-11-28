@@ -7,7 +7,6 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.UUID;
 
 /** Utilities for working with workspaces in unit tests. */
@@ -32,8 +31,7 @@ public class WorkspaceUnitTestUtils {
    * workspace id.
    */
   public static UUID createWorkspaceWithoutGcpContext(WorkspaceDao workspaceDao) {
-    Workspace workspace =
-        WorkspaceFixtures.createDefaultMCWorkspace();
+    Workspace workspace = WorkspaceFixtures.createDefaultMCWorkspace();
     workspaceDao.createWorkspace(workspace, /* applicationIds= */ null);
     return workspace.getWorkspaceId();
   }

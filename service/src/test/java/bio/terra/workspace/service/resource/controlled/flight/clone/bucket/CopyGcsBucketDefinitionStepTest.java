@@ -18,6 +18,7 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.workspace.common.BaseUnitTestMockGcpCloudContextService;
+import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
@@ -31,7 +32,6 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.http.HttpHeaders;
@@ -75,11 +75,7 @@ public class CopyGcsBucketDefinitionStepTest extends BaseUnitTestMockGcpCloudCon
   @BeforeEach
   public void setup() throws InterruptedException, IOException {
     Workspace workspace =
-        Workspace.builder()
-            .workspaceId(DESTINATION_WORKSPACE_ID)
-            .userFacingId(DESTINATION_WORKSPACE_ID.toString())
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .build();
+        WorkspaceFixtures.defaultWorkspaceBuilder(DESTINATION_WORKSPACE_ID).build();
     workspaceDao.createWorkspace(workspace, /*applicationIds=*/ null);
     WorkspaceUnitTestUtils.createGcpCloudContextInDatabase(
         workspaceDao, DESTINATION_WORKSPACE_ID, PROJECT_ID);

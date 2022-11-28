@@ -13,7 +13,6 @@ import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.FlightState;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -23,8 +22,6 @@ import bio.terra.workspace.service.job.exception.JobNotFoundException;
 import bio.terra.workspace.service.job.model.EnumeratedJob;
 import bio.terra.workspace.service.job.model.EnumeratedJobs;
 import bio.terra.workspace.service.workspace.model.OperationType;
-import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import java.util.ArrayList;
 import java.util.List;
@@ -108,7 +105,7 @@ class JobServiceTest extends BaseUnitTest {
   // have some failed jobs left over from other tests.
   @DirtiesContext(methodMode = MethodMode.BEFORE_METHOD)
   @Test
-  void retrieveTest() throws Exception {
+  void retrieveTest() {
     // We perform 7 flights and then retrieve and enumerate them.
     // The fids list should be in exactly the same order as the database ordered by submit time.
 
@@ -121,6 +118,7 @@ class JobServiceTest extends BaseUnitTest {
 
     List<String> jobIds2 = new ArrayList<>();
     UUID workspace2 = WorkspaceUnitTestUtils.createWorkspaceWithoutGcpContext(workspaceDao);
+
     for (int i = 0; i < 4; i++) {
       String jobId = runFlight(workspace2, makeDescription(i));
       jobIds2.add(jobId);

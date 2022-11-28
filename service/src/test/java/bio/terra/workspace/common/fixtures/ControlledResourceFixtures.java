@@ -437,14 +437,12 @@ public class ControlledResourceFixtures {
       String resourceDescription) {
     return ControlledAzureStorageResource.builder()
         .common(
-            ControlledResourceFields.builder()
+            makeDefaultControlledResourceFieldsBuilder()
                 .workspaceUuid(workspaceUuid)
                 .resourceId(accountResourceId)
                 .name(resourceName)
                 .description(resourceDescription)
                 .cloningInstructions(CloningInstructions.COPY_NOTHING)
-                .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-                .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
                 .build())
         .storageAccountName(storageAccountName)
         .region(region)
@@ -643,7 +641,8 @@ public class ControlledResourceFixtures {
         .projectId("my-project-id");
   }
 
-  public static ControlledAiNotebookInstanceResource.Builder makeDefaultAiNotebookInstance(UUID workspaceId) {
+  public static ControlledAiNotebookInstanceResource.Builder makeDefaultAiNotebookInstance(
+      UUID workspaceId) {
     return ControlledAiNotebookInstanceResource.builder()
         .common(makeNotebookCommonFieldsBuilder().workspaceUuid(workspaceId).build())
         .instanceId(TestUtils.appendRandomNumber("my-cloud-id"))
