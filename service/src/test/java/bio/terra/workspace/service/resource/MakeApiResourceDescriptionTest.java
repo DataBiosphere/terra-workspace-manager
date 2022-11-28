@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import bio.terra.workspace.app.controller.ResourceApiController;
 import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiControlledResourceMetadata;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotAttributes;
@@ -268,7 +269,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
       var resource =
           ControlledAiNotebookInstanceResource.builder()
               .common(
-                  ControlledResourceFields.builder()
+                  ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                       .workspaceUuid(workspaceUuid)
                       .resourceId(resourceId)
                       .name(resourceName)

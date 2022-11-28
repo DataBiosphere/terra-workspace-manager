@@ -12,7 +12,9 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
+import bio.terra.workspace.common.BaseAzureUnitTest;
 import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
@@ -29,7 +31,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
-public class CopyAzureStorageContainerDefinitionStepTest extends BaseUnitTest {
+public class CopyAzureStorageContainerDefinitionStepTest extends BaseAzureUnitTest{
 
   private UUID workspaceId;
   private FlightContext flightContext;
@@ -46,7 +48,7 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseUnitTest {
           .token(Optional.of("fake-token"));
 
   @BeforeEach
-  void setup() {
+  void setup() throws InterruptedException {
     workspaceId = UUID.randomUUID();
     flightContext = mock(FlightContext.class);
 
@@ -59,9 +61,10 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseUnitTest {
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_STORAGE_ACCOUNT_RESOURCE_ID,
         UUID.randomUUID());
 
-    doReturn(workingMap).when(flightContext).getWorkingMap();
-    doReturn(inputParams).when(flightContext).getInputParameters();
-    doReturn("fake-flight-id").when(flightContext).getFlightId();
+    when(flightContext.getWorkingMap()).thenReturn(workingMap);
+    when(flightContext.getInputParameters()).thenReturn(inputParams);
+    when(flightContext.getFlightId()).thenReturn("fake-flight-id");
+    when(mockSamService().getUserEmailFromSam(any(AuthenticatedUserRequest.class))).thenReturn("foo@gmail.com");
   }
 
   private static ControlledAzureStorageContainerResource buildContainerResource(
@@ -70,7 +73,7 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseUnitTest {
         .storageContainerName(storageContainerName)
         .storageAccountId(UUID.randomUUID())
         .common(
-            ControlledResourceFields.builder()
+            ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                 .resourceId(resourceId)
                 .workspaceUuid(workspaceId)
                 .cloningInstructions(CloningInstructions.COPY_DEFINITION)

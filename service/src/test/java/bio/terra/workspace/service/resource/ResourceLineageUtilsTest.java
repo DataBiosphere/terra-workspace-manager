@@ -67,7 +67,9 @@ public class ResourceLineageUtilsTest extends BaseUnitTest {
             .cloningInstructions(CloningInstructions.COPY_REFERENCE)
             .attributes(attributesJson)
             .resourceLineage(null)
-            .properties(propertyMap);
+            .properties(propertyMap)
+            .createdByEmail("foo@gmail.com")
+            .createdDate(OffsetDateTime.now());
 
     var resource = new ReferencedDataRepoSnapshotResource(dbResource);
     assertEquals(new ArrayList<>(), resource.getResourceLineage());
