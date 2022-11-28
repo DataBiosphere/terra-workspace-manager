@@ -3,7 +3,6 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.azure.conta
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -13,14 +12,12 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.common.BaseAzureUnitTest;
-import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
-import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
@@ -31,7 +28,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
-public class CopyAzureStorageContainerDefinitionStepTest extends BaseAzureUnitTest{
+public class CopyAzureStorageContainerDefinitionStepTest extends BaseAzureUnitTest {
 
   private UUID workspaceId;
   private FlightContext flightContext;
@@ -64,7 +61,8 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseAzureUnitTe
     when(flightContext.getWorkingMap()).thenReturn(workingMap);
     when(flightContext.getInputParameters()).thenReturn(inputParams);
     when(flightContext.getFlightId()).thenReturn("fake-flight-id");
-    when(mockSamService().getUserEmailFromSam(any(AuthenticatedUserRequest.class))).thenReturn("foo@gmail.com");
+    when(mockSamService().getUserEmailFromSam(any(AuthenticatedUserRequest.class)))
+        .thenReturn("foo@gmail.com");
   }
 
   private static ControlledAzureStorageContainerResource buildContainerResource(
