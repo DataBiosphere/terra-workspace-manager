@@ -11,15 +11,13 @@ import static org.mockito.Mockito.when;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.MissingRequiredFieldException;
-import bio.terra.stairway.FlightDebugInfo;
-import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseUnitTestMockDataRepoService;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
+import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.InvalidNameException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
@@ -33,15 +31,11 @@ import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdatatable.Ref
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.ReferencedGcsBucketResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsobject.ReferencedGcsObjectResource;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
-import bio.terra.workspace.service.resource.referenced.flight.create.CreateReferenceMetadataStep;
 import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import bio.terra.workspace.service.resource.referenced.terra.workspace.ReferencedTerraWorkspaceResource;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -78,7 +72,6 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
                 .userEmail(USER_REQUEST.getEmail())
                 .userSubjectId(USER_REQUEST.getSubjectId()));
     workspaceUuid = createMcTestWorkspace();
-    referencedResource = null;
   }
 
   @AfterEach
@@ -263,71 +256,8 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
    * MC_WORKSPACE. Returns the generated workspace ID.
    */
   private UUID createMcTestWorkspace() {
-    UUID uuid = UUID.randomUUID();
-    Workspace request =
-        Workspace.builder()
-            .workspaceId(uuid)
-            .userFacingId("a" + uuid.toString())
-            .spendProfileId(null)
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .build();
+    Workspace request = WorkspaceFixtures.buildMcWorkspace();
     return workspaceService.createWorkspace(request, null, null, USER_REQUEST);
-  }
-
-  @Nested
-  class FlightChecks {
-
-    // Test idempotency of stairway steps
-    @Test
-    void createReferencedResourceDo() {
-      Map<String, StepStatus> retrySteps = new HashMap<>();
-      retrySteps.put(
-          CreateReferenceMetadataStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-      FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build();
-      jobService.setFlightDebugInfoForTest(debugInfo);
-      referencedResource = ReferenceResourceFixtures.makeDataRepoSnapshotResource(workspaceUuid);
-      ReferencedResource createdResource =
-          referenceResourceService.createReferenceResource(referencedResource, USER_REQUEST);
-      assertEquals(referencedResource, createdResource);
-    }
-
-    @Test
-    @SuppressFBWarnings(
-        value = "DLS_DEAD_LOCAL_STORE",
-        justification =
-            "referencedDataRepoSnapshotResource field is unused because the test is to"
-                + "test undo step.")
-    void createReferencedResourceUndo() {
-      Map<String, StepStatus> retrySteps = new HashMap<>();
-      retrySteps.put(
-          CreateReferenceMetadataStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-      FlightDebugInfo debugInfo =
-          FlightDebugInfo.newBuilder().undoStepFailures(retrySteps).lastStepFailure(true).build();
-      jobService.setFlightDebugInfoForTest(debugInfo);
-      UUID resourceId = UUID.randomUUID();
-      referencedResource = ReferenceResourceFixtures.makeDataRepoSnapshotResource(workspaceUuid);
-      ReferencedDataRepoSnapshotResource unused =
-          new ReferencedDataRepoSnapshotResource(
-              workspaceUuid,
-              resourceId,
-              "aname",
-              "some description",
-              CloningInstructions.COPY_NOTHING,
-              DATA_REPO_INSTANCE_NAME,
-              "polaroid",
-              /*resourceLineage=*/ null,
-              /*properties=*/ Map.of());
-      // Service methods which wait for a flight to complete will throw an
-      // InvalidResultStateException when that flight fails without a cause, which occurs when a
-      // flight fails via debugInfo.
-      assertThrows(
-          InvalidResultStateException.class,
-          () -> referenceResourceService.createReferenceResource(referencedResource, USER_REQUEST));
-      // The flight should be undone, so the resource should not exist.
-      assertThrows(
-          ResourceNotFoundException.class,
-          () -> referenceResourceService.getReferenceResource(workspaceUuid, resourceId));
-    }
   }
 
   @Nested
