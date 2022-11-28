@@ -890,7 +890,7 @@ public class MockMvcUtils {
       ApiCloningInstructionsEnum cloningInstructions)
       throws Exception {
     ApiCloneControlledGcpGcsBucketResult result =
-        cloneControlledGcsBucketAsyncSuccessfully(
+        cloneControlledGcsBucketAsyncSuccess(
             userRequest,
             sourceWorkspaceId,
             sourceResourceId,
@@ -908,15 +908,17 @@ public class MockMvcUtils {
     return result;
   }
 
-  /** Call cloneGcsBucket() and return immediately; don't wait for flight to finish. */
-  public ApiCloneControlledGcpGcsBucketResult cloneControlledGcsBucketWithError(
+  /**
+   * Call cloneGcsBucket() and return immediately; don't wait for flight to finish. Expect error.
+   */
+  public void cloneControlledGcsBucketAsyncError(
       AuthenticatedUserRequest userRequest,
       UUID sourceWorkspaceId,
       UUID sourceResourceId,
       UUID destWorkspaceId,
       ApiCloningInstructionsEnum cloningInstructions,
       String destBucketName,
-      int statusCode)
+      int expectedCode)
       throws Exception {
     ApiCloneControlledGcpGcsBucketRequest request =
         new ApiCloneControlledGcpGcsBucketRequest()
@@ -935,12 +937,16 @@ public class MockMvcUtils {
                             sourceWorkspaceId, sourceResourceId))
                         .content(objectMapper.writeValueAsString(request)),
                     userRequest)))
-        .andExpect(status().is(statusCode));
-    // If an exception was thrown, deserialization won't work, so don't attempt it.
-    return null;
+        .andExpect(status().is(expectedCode));
   }
 
-  public ApiCloneControlledGcpGcsBucketResult cloneControlledGcsBucketAsyncSuccessfully(
+  /**
+   * Call cloneGcsBucket() and return immediately; don't wait for flight to finish. Expect success.
+   *
+   * <p>For some tests, sometimes the test will return 200 and other times 202 if the async job is
+   * still running.
+   */
+  public ApiCloneControlledGcpGcsBucketResult cloneControlledGcsBucketAsyncSuccess(
       AuthenticatedUserRequest userRequest,
       UUID sourceWorkspaceId,
       UUID sourceResourceId,
@@ -971,7 +977,6 @@ public class MockMvcUtils {
             .andReturn()
             .getResponse()
             .getContentAsString();
-    // If an exception was thrown, deserialization won't work, so don't attempt it.
     return objectMapper.readValue(serializedResponse, ApiCloneControlledGcpGcsBucketResult.class);
   }
 

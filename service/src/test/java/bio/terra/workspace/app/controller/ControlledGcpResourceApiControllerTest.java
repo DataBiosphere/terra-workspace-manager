@@ -79,7 +79,7 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTestMockGcpC
   @Test
   public void cloneGcsBucket_badRequest_throws400() throws Exception {
     // Cannot set bucketName for COPY_REFERENCE clone
-    mockMvcUtils.cloneControlledGcsBucketWithError(
+    mockMvcUtils.cloneControlledGcsBucketAsyncError(
         USER_REQUEST,
         /*sourceWorkspaceId=*/ UUID.randomUUID(),
         /*sourceResourceId=*/ UUID.randomUUID(),
