@@ -890,14 +890,13 @@ public class MockMvcUtils {
       ApiCloningInstructionsEnum cloningInstructions)
       throws Exception {
     ApiCloneControlledGcpGcsBucketResult result =
-        cloneControlledGcsBucketAsync(
+        cloneControlledGcsBucketAsyncSuccessfully(
             userRequest,
             sourceWorkspaceId,
             sourceResourceId,
             destWorkspaceId,
             cloningInstructions,
-            /*bucketName=*/ "",
-            HttpStatus.SC_ACCEPTED);
+            /*bucketName=*/ "");
     UUID jobId = UUID.fromString(result.getJobReport().getId());
     while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
       Thread.sleep(/*millis=*/ 5000);
@@ -946,6 +945,41 @@ public class MockMvcUtils {
     return expectedCode == HttpStatus.SC_ACCEPTED
         ? objectMapper.readValue(serializedResponse, ApiCloneControlledGcpGcsBucketResult.class)
         : null;
+  }
+
+  public ApiCloneControlledGcpGcsBucketResult cloneControlledGcsBucketAsyncSuccessfully(
+      AuthenticatedUserRequest userRequest,
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId,
+      UUID destWorkspaceId,
+      ApiCloningInstructionsEnum cloningInstructions,
+      String destBucketName)
+      throws Exception {
+    ApiCloneControlledGcpGcsBucketRequest request =
+        new ApiCloneControlledGcpGcsBucketRequest()
+            .destinationWorkspaceId(destWorkspaceId)
+            .cloningInstructions(cloningInstructions)
+            .name(TestUtils.appendRandomNumber(DEST_BUCKET_RESOURCE_NAME))
+            .jobControl(new ApiJobControl().id(UUID.randomUUID().toString()));
+    if (destBucketName != "") {
+      request.bucketName(destBucketName);
+    }
+
+    String serializedResponse =
+        mockMvc
+            .perform(
+                addJsonContentType(
+                    addAuth(
+                        post(CLONE_CONTROLLED_GCP_GCS_BUCKET_FORMAT.formatted(
+                                sourceWorkspaceId, sourceResourceId))
+                            .content(objectMapper.writeValueAsString(request)),
+                        userRequest)))
+            .andExpect(status().is2xxSuccessful())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    // If an exception was thrown, deserialization won't work, so don't attempt it.
+    return objectMapper.readValue(serializedResponse, ApiCloneControlledGcpGcsBucketResult.class);
   }
 
   private ApiCloneControlledGcpGcsBucketResult getCloneControlledGcsBucketResult(
