@@ -74,6 +74,7 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
   private static final Logger logger = LoggerFactory.getLogger(CloneWorkspace.class);
   private ControlledGcpResourceApi cloningUserResourceApi;
   private FolderApi cloningUserFolderApi;
+  private FolderApi ownerFolderApi;
   private CreatedControlledGcpGcsBucket copyDefinitionSourceBucket;
   private CreatedControlledGcpGcsBucket privateSourceBucket;
   private CreatedControlledGcpGcsBucket sharedCopyNothingSourceBucket;
@@ -135,8 +136,8 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
     final ControlledGcpResourceApi sourceOwnerResourceApi =
         ClientTestUtils.getControlledGcpResourceClient(sourceOwnerUser, server);
     cloningUserResourceApi = ClientTestUtils.getControlledGcpResourceClient(cloningUser, server);
-    ApiClient cloningUserApiClient = ClientTestUtils.getClientForTestUser(cloningUser, server);
-    cloningUserFolderApi = new FolderApi(cloningUserApiClient);
+    cloningUserFolderApi = new FolderApi(ClientTestUtils.getClientForTestUser(cloningUser, server));
+    ownerFolderApi = new FolderApi(ClientTestUtils.getClientForTestUser(sourceOwnerUser, server));
     logger.info("Built API clients for users.");
 
     // Create a GCS bucket with data
@@ -874,11 +875,11 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
     if (folderId.isEmpty()) {
       String displayName = FOLDER_DISPLAY_NAME + "_" + UUID.randomUUID();
       folder =
-          cloningUserFolderApi.createFolder(
+          ownerFolderApi.createFolder(
               new CreateFolderRequestBody().displayName(displayName), workspaceId);
     } else {
       folder =
-          cloningUserFolderApi.listFolders(workspaceId).getFolders().stream()
+          ownerFolderApi.listFolders(workspaceId).getFolders().stream()
               .filter(f -> f.getId().equals(folderId.get()))
               .collect(onlyElement());
     }

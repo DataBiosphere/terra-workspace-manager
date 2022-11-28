@@ -79,7 +79,6 @@ import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.La
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.LaunchCreateGcpContextFlightStep;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
-import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
@@ -798,7 +797,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         ControlledGcsBucketResource.builder()
             .bucketName("terra-test-" + UUID.randomUUID().toString().toLowerCase())
             .common(
-                ControlledResourceFields.builder()
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                     .name("bucket_1")
                     .description("Just a plain bucket.")
                     .cloningInstructions(CloningInstructions.COPY_RESOURCE)

@@ -13,6 +13,7 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.any.datareposnapshot.ReferencedDataRepoSnapshotAttributes;
 import bio.terra.workspace.service.resource.referenced.cloud.any.datareposnapshot.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -123,7 +124,9 @@ public class ResourceLineageUtilsTest extends BaseUnitTest {
             .cloningInstructions(CloningInstructions.COPY_REFERENCE)
             .attributes(attributesJson)
             .resourceLineage(lineage)
-            .properties(propertyMap);
+            .properties(propertyMap)
+            .createdByEmail("foo@gmail.com")
+            .createdDate(OffsetDateTime.now());
 
     var resource = new ReferencedDataRepoSnapshotResource(dbResource);
     assertEquals(lineage, resource.getResourceLineage());

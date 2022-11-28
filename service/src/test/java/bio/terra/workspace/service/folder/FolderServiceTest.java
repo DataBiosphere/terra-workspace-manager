@@ -270,7 +270,7 @@ public class FolderServiceTest extends BaseConnectedTest {
   public Folder createFolder(String displayName, UUID folderId, @Nullable UUID parentFolderId) {
     return folderService.createFolder(
         new Folder(
-            UUID.randomUUID(),
+            folderId,
             workspaceId,
             displayName,
             null,
