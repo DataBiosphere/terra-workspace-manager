@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.bucket;
 
+import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketDefaultStorageClass;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycle;
@@ -10,8 +11,6 @@ import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleCondition
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
-import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
-import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import com.google.cloud.Identity;
 import com.google.cloud.Policy;
@@ -47,36 +46,12 @@ public class GcsBucketCloneTestFixtures {
       ControlledGcsBucketResource.builder()
           .bucketName(SOURCE_BUCKET_NAME)
           .common(
-              ControlledResourceFields.builder()
+              ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                   .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
-                  .applicationId(null)
-                  .assignedUser(null)
                   .cloningInstructions(CloningInstructions.COPY_RESOURCE)
-                  .description(null)
                   .iamRole(ControlledResourceIamRole.OWNER)
-                  .managedBy(ManagedByType.MANAGED_BY_USER)
                   .name(SOURCE_RESOURCE_NAME)
-                  .privateResourceState(null)
-                  .resourceId(UUID.randomUUID())
                   .workspaceUuid(SOURCE_WORKSPACE_ID)
-                  .build())
-          .build();
-  public static final ControlledGcsBucketResource CREATED_BUCKET_RESOURCE =
-      ControlledGcsBucketResource.builder()
-          .bucketName(DESTINATION_BUCKET_NAME)
-          .common(
-              ControlledResourceFields.builder()
-                  .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
-                  .applicationId(null)
-                  .assignedUser(null)
-                  .cloningInstructions(CloningInstructions.COPY_RESOURCE)
-                  .description(null)
-                  .iamRole(ControlledResourceIamRole.OWNER)
-                  .managedBy(ManagedByType.MANAGED_BY_USER)
-                  .name("clone_of_source_bucket")
-                  .privateResourceState(null)
-                  .resourceId(UUID.randomUUID())
-                  .workspaceUuid(DESTINATION_WORKSPACE_ID)
                   .build())
           .build();
   // Stairway ser/des doesn't handle unmodifiable lists
