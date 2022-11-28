@@ -41,7 +41,6 @@ import org.springframework.test.web.servlet.MockMvc;
 
 /** ControlledGcpResourceApiController unit tests. */
 public class ControlledGcpResourceApiControllerTest extends BaseUnitTestMockGcpCloudContextService {
-
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
   @Autowired ObjectMapper objectMapper;
@@ -59,6 +58,7 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTestMockGcpC
             new UserStatusInfo()
                 .userEmail(USER_REQUEST.getEmail())
                 .userSubjectId(USER_REQUEST.getSubjectId()));
+    when(mockSamService().getUserEmailFromSam(any())).thenReturn(USER_REQUEST.getEmail());
   }
 
   @Test

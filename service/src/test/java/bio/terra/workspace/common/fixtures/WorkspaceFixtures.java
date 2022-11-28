@@ -77,7 +77,8 @@ public class WorkspaceFixtures {
     return Workspace.builder()
         .workspaceId(id)
         .userFacingId("a" + id)
-        .workspaceStage(WorkspaceStage.MC_WORKSPACE);
+        .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+        .createdByEmail("foo@gmail.com");
   }
 
   public static ApiCreateWorkspaceRequestBody createWorkspaceRequestBody(
