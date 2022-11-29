@@ -51,7 +51,6 @@ public class WorkspaceCloneUtils {
    */
   public static ControlledAzureStorageContainerResource buildDestinationControlledAzureContainer(
       ControlledAzureStorageContainerResource sourceContainer,
-      UUID storageAccountId,
       UUID destinationWorkspaceId,
       UUID destinationResourceId,
       String name,
@@ -59,7 +58,6 @@ public class WorkspaceCloneUtils {
       String cloudInstanceName) {
     return ControlledAzureStorageContainerResource.builder()
         .storageContainerName(cloudInstanceName)
-        .storageAccountId(storageAccountId)
         .common(
             sourceContainer.buildControlledCloneResourceCommonFields(
                 destinationWorkspaceId, destinationResourceId, null, name, description))

@@ -3,7 +3,6 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure;
 import static java.util.stream.Collectors.groupingBy;
 
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import com.azure.core.util.polling.PollResponse;
 import com.azure.core.util.polling.SyncPoller;
@@ -38,16 +37,11 @@ public class BlobCopier {
    * @param destinationContainer Azure storage container that will receive the copied blobs
    * @return BlobCopyResult containing the status of each copy operation
    */
-  public BlobCopierResult copyBlobs(
-      ControlledAzureStorageResource sourceStorageAccount,
-      ControlledAzureStorageResource destinationStorageAccount,
-      ControlledAzureStorageContainerResource sourceContainer,
-      ControlledAzureStorageContainerResource destinationContainer) {
+  public BlobCopierResult copyBlobs(StorageData sourceStorageData, StorageData destStorageData) {
     var sourceBlobContainerClient =
-        storageAccessService.buildBlobContainerClient(sourceContainer, sourceStorageAccount);
+        storageAccessService.buildBlobContainerClient(sourceStorageData);
     var destinationBlobContainerClient =
-        storageAccessService.buildBlobContainerClient(
-            destinationContainer, destinationStorageAccount);
+        storageAccessService.buildBlobContainerClient(destStorageData);
 
     // directories are presented as zero-length blobs, filter these out as they are
     // not copy-able
@@ -60,7 +54,7 @@ public class BlobCopier {
             sourceBlobItem ->
                 beginCopyBlob(
                     storageAccessService,
-                    sourceContainer,
+                    sourceStorageData.storageContainerResource(),
                     userRequest,
                     sourceBlobItem,
                     sourceBlobContainerClient,
@@ -68,17 +62,17 @@ public class BlobCopier {
 
     logger.info(
         "Copying blobs [source_container_id = {}, source_workspace_id = {}, destination_container_id = {}, destination_workspace_id={}]",
-        sourceContainer.getResourceId(),
-        sourceContainer.getWorkspaceId(),
-        destinationContainer.getResourceId(),
-        destinationContainer.getWorkspaceId());
+        sourceStorageData.storageContainerResource().getResourceId(),
+        sourceStorageData.storageContainerResource().getWorkspaceId(),
+        destStorageData.storageContainerResource().getResourceId(),
+        destStorageData.storageContainerResource().getWorkspaceId());
     var pollResults = blobPollers.map(blobPoller -> blobPoller.waitForCompletion(MAX_POLL_TIMEOUT));
     logger.info(
         "Finished copying blobs [source_container_id = {}, source_workspace_id = {}, destination_container_id = {}, destination_workspace_id={}]",
-        sourceContainer.getResourceId(),
-        sourceContainer.getWorkspaceId(),
-        destinationContainer.getResourceId(),
-        destinationContainer.getWorkspaceId());
+        sourceStorageData.storageContainerResource().getResourceId(),
+        sourceStorageData.storageContainerResource().getWorkspaceId(),
+        destStorageData.storageContainerResource().getResourceId(),
+        destStorageData.storageContainerResource().getWorkspaceId());
 
     var resultsByStatus = pollResults.collect(groupingBy(PollResponse::getStatus));
     return new BlobCopierResult(resultsByStatus);

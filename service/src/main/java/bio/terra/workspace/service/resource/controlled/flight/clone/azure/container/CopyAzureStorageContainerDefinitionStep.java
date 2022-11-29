@@ -79,18 +79,10 @@ public class CopyAzureStorageContainerDefinitionStep implements Step {
     var destinationResourceId =
         inputParameters.get(
             WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.class);
-    var destStorageAccountId =
-        flightContext
-            .getWorkingMap()
-            .get(
-                WorkspaceFlightMapKeys.ControlledResourceKeys
-                    .DESTINATION_STORAGE_ACCOUNT_RESOURCE_ID,
-                UUID.class);
 
     ControlledAzureStorageContainerResource destinationContainerResource =
         buildDestinationControlledAzureContainer(
             sourceContainer,
-            destStorageAccountId,
             destinationWorkspaceId,
             destinationResourceId,
             destinationResourceName,
@@ -98,8 +90,7 @@ public class CopyAzureStorageContainerDefinitionStep implements Step {
             destinationContainerName);
     ApiAzureStorageContainerCreationParameters destinationCreationParameters =
         new ApiAzureStorageContainerCreationParameters()
-            .storageContainerName(destinationContainerName)
-            .storageAccountId(destStorageAccountId);
+            .storageContainerName(destinationContainerName);
     ControlledResourceIamRole iamRole =
         IamRoleUtils.getIamRoleForAccessScope(sourceContainer.getAccessScope());
 
