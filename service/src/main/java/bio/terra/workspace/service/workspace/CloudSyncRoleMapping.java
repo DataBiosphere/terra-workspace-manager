@@ -56,6 +56,8 @@ public class CloudSyncRoleMapping {
           "lifesciences.operations.list",
           "monitoring.timeSeries.list",
           "notebooks.instances.list",
+          "notebooks.instances.get",
+          "notebooks.instances.checkUpgradability",
           "resourcemanager.projects.get",
           "serviceusage.operations.get",
           "serviceusage.operations.list",

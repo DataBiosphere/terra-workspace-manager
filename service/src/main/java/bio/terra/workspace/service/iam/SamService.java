@@ -253,7 +253,7 @@ public class SamService {
 
   private void registerWsmServiceAccount(UsersApi usersApi) throws InterruptedException {
     try {
-      SamRetry.retry(usersApi::createUserV2);
+      SamRetry.retry(() -> usersApi.createUserV2(""));
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create(
           "Error registering WSM service account with Sam", apiException);
