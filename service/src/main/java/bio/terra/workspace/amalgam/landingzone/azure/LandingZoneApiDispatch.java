@@ -37,7 +37,6 @@ import bio.terra.workspace.generated.model.ApiResourceQuota;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -364,14 +363,16 @@ public class LandingZoneApiDispatch {
 
   public ApiResourceQuota getResourceQuota(
       BearerToken bearerToken, UUID landingZoneId, String azureResourceId) {
-    return toApiResourceQuota(landingZoneId, landingZoneService.getResourceQuota(bearerToken, landingZoneId, azureResourceId));
+    return toApiResourceQuota(
+        landingZoneId,
+        landingZoneService.getResourceQuota(bearerToken, landingZoneId, azureResourceId));
   }
 
   private ApiResourceQuota toApiResourceQuota(UUID landingZoneId, ResourceQuota resourceQuota) {
     return new ApiResourceQuota()
-            .landingZoneId(landingZoneId)
-            .azureResourceId(resourceQuota.resourceId())
-            .resourceType(resourceQuota.resourceType())
-            .quotaValues(resourceQuota.quota());
+        .landingZoneId(landingZoneId)
+        .azureResourceId(resourceQuota.resourceId())
+        .resourceType(resourceQuota.resourceType())
+        .quotaValues(resourceQuota.quota());
   }
 }

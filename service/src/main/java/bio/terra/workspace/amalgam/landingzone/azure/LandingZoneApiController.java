@@ -123,7 +123,7 @@ public class LandingZoneApiController implements LandingZonesApi {
   @Override
   public ResponseEntity<ApiResourceQuota> getResourceQuotaResult(
       @PathVariable("landingZoneId") UUID landingZoneId,
-      @Valid @RequestParam(value = "azureResourceId", required = true)  String azureResourceId) {
+      @Valid @RequestParam(value = "azureResourceId", required = true) String azureResourceId) {
 
     ApiResourceQuota result =
         landingZoneApiDispatch.getResourceQuota(

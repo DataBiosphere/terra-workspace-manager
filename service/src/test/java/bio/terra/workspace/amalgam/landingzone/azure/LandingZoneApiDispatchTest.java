@@ -395,19 +395,21 @@ public class LandingZoneApiDispatchTest extends BaseAzureUnitTest {
   }
 
   @Test
-  public void getResourceQuota_returnsValidQuotaInformation(){
+  public void getResourceQuota_returnsValidQuotaInformation() {
 
-    String azureResourceId = "/subscription/00000000-0000-0000-0000-000000000000/resourceGroups/mrg/providers/Microsoft.Batch/batchAccounts/myaccount";
-    Map<String,Object> quotaValues = new HashMap<>();
-    quotaValues.put("key1",1);
-    quotaValues.put("key2",false);
-    quotaValues.put("key3","value");
+    String azureResourceId =
+        "/subscription/00000000-0000-0000-0000-000000000000/resourceGroups/mrg/providers/Microsoft.Batch/batchAccounts/myaccount";
+    Map<String, Object> quotaValues = new HashMap<>();
+    quotaValues.put("key1", 1);
+    quotaValues.put("key2", false);
+    quotaValues.put("key3", "value");
 
     String resourceType = "Microsoft.Batch/batchAccounts";
-    when(landingZoneService.getResourceQuota(BEARER_TOKEN,LANDING_ZONE_ID,azureResourceId))
-            .thenReturn(new ResourceQuota(azureResourceId, resourceType,quotaValues));
+    when(landingZoneService.getResourceQuota(BEARER_TOKEN, LANDING_ZONE_ID, azureResourceId))
+        .thenReturn(new ResourceQuota(azureResourceId, resourceType, quotaValues));
 
-    ApiResourceQuota apiResourceQuota = landingZoneApiDispatch.getResourceQuota(BEARER_TOKEN, LANDING_ZONE_ID,azureResourceId);
+    ApiResourceQuota apiResourceQuota =
+        landingZoneApiDispatch.getResourceQuota(BEARER_TOKEN, LANDING_ZONE_ID, azureResourceId);
 
     assertThat(apiResourceQuota.getResourceType(), equalTo(resourceType));
     assertThat(apiResourceQuota.getAzureResourceId(), equalTo(azureResourceId));
