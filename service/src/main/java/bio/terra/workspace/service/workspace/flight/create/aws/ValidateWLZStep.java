@@ -10,7 +10,6 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.utils.MultiCloudUtils;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
-import java.util.Collections;
 import java.util.HashSet;
 
 public class ValidateWLZStep implements Step {

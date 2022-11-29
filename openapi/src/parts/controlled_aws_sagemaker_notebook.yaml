@@ -3,7 +3,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
     post:
-      summary: Create a new controlled AWS bucket
+      summary: Create a new controlled AWS notebook
       operationId: createAwsSageMakerNotebook
       tags: [ControlledAwsResource]
       requestBody:
@@ -63,7 +63,7 @@ paths:
       - $ref: '#/components/parameters/AwsCredentialAccessScope'
       - $ref: '#/components/parameters/AwsConsoleSessionDuration'
     get:
-      summary: Get a link to manage this bucket in the AWS SageMaker Console
+      summary: Get a link to manage this notebook in the AWS SageMaker Console
       operationId: getAwsSageMakerNotebookConsoleLink
       tags: [ ControlledAwsResource ]
       responses:
@@ -159,6 +159,17 @@ components:
         jobControl:
           $ref: '#/components/schemas/JobControl'
 
+    AwsSagemakerNotebookDefaultBucket:
+      description: Default bucket to use with notebook
+      type: object
+      required: [bucketId, accessScope]
+      properties:
+        bucketId:
+          type: string
+          format: uuid
+        accessScope:
+          $ref: '#/components/schemas/AwsCredentialAccessScope'
+
     AwsSageMakerNotebookCreationParameters:
       description: Notebook creation parameters
       type: object
@@ -174,6 +185,8 @@ components:
           description: A valid instance type per https://docs.aws.amazon.com/general/latest/gr/sagemaker.html
           type: string
           default: "ml.t2.medium"
+        defaultBucket:
+          $ref: '#/components/schemas/AwsSagemakerNotebookDefaultBucket'
 
     AwsSageMakerProxyUrlView:
       type: string

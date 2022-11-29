@@ -29,6 +29,7 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceSyncMapping.SyncMapping;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakernotebook.ControlledAwsSageMakerNotebookResource;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.storagebucket.ControlledAwsBucketResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespace.ControlledAzureRelayNamespaceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpPolicyBuilder;
@@ -446,7 +447,8 @@ public class ControlledResourceService {
       @Nullable ApiJobControl jobControl,
       String resultPath,
       AuthenticatedUserRequest userRequest,
-      SamUser samUser) {
+      SamUser samUser,
+      @Nullable ControlledAwsBucketResource defaultBucket) {
 
     // Special check for notebooks: READER is not a useful role
     if (privateResourceIamRole == ControlledResourceIamRole.READER) {
@@ -460,6 +462,10 @@ public class ControlledResourceService {
 
     jobBuilder.addParameter(ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS, creationParameters);
     jobBuilder.addParameter(WorkspaceFlightMapKeys.SAM_USER, samUser);
+
+    if (defaultBucket != null) {
+      jobBuilder.addParameter(ControlledResourceKeys.NOTEBOOK_DEFAULT_BUCKET, defaultBucket);
+    }
 
     String jobId = jobBuilder.submit();
     waitForResourceOrJob(resource.getWorkspaceId(), resource.getResourceId(), jobId);

@@ -16,6 +16,7 @@ import bio.terra.workspace.generated.model.ApiAwsCredential;
 import bio.terra.workspace.generated.model.ApiAwsCredentialAccessScope;
 import bio.terra.workspace.generated.model.ApiAwsSageMakerNotebookResource;
 import bio.terra.workspace.generated.model.ApiAwsSageMakerProxyUrlView;
+import bio.terra.workspace.generated.model.ApiAwsSagemakerNotebookDefaultBucket;
 import bio.terra.workspace.generated.model.ApiCreateControlledAwsBucketRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAwsSageMakerNotebookRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedControlledAwsBucket;
@@ -174,7 +175,9 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     AwsUtils.addWorkspaceTags(tags, workspaceId);
     AwsUtils.addBucketTags(
         tags,
-        (accessScope == ApiAwsCredentialAccessScope.WRITE_READ) ? "writer" : "reader",
+        (accessScope == ApiAwsCredentialAccessScope.WRITE_READ)
+            ? AwsUtils.RoleTag.WRITER
+            : AwsUtils.RoleTag.READER,
         resource.getS3BucketName(),
         resource.getPrefix());
 
@@ -268,8 +271,22 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
 
-    AwsCloudContext awsCloudContext =
-        awsCloudContextService.getRequiredAwsCloudContext(workspaceUuid);
+    ControlledAwsBucketResource defaultBucketResource = null;
+
+    ApiAwsSagemakerNotebookDefaultBucket defaultBucket =
+        body.getAwsSageMakerNotebook().getDefaultBucket();
+
+    if (defaultBucket != null) {
+
+      defaultBucketResource =
+          controlledResourceMetadataManager
+              .validateControlledResourceAndAction(
+                  userRequest,
+                  workspaceUuid,
+                  defaultBucket.getBucketId(),
+                  getSamAction(defaultBucket.getAccessScope()))
+              .castByEnum(WsmResourceType.CONTROLLED_AWS_BUCKET);
+    }
 
     ControlledAwsSageMakerNotebookResource resource =
         ControlledAwsSageMakerNotebookResource.builder()
@@ -286,7 +303,8 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
             body.getJobControl(),
             getAsyncResultEndpoint(body.getJobControl().getId(), "create-result"),
             userRequest,
-            getSamUser());
+            getSamUser(),
+            defaultBucketResource);
 
     ApiCreatedControlledAwsSageMakerNotebookResult result =
         fetchNotebookInstanceCreateResult(jobId);

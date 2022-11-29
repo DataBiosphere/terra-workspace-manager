@@ -42,6 +42,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.apache.http.client.utils.URIBuilder;
@@ -89,6 +90,21 @@ public class AwsUtils {
     return securityTokenService.assumeRoleWithWebIdentity(request).getCredentials();
   }
 
+  public static enum RoleTag {
+    READER("reader"),
+    WRITER("writer");
+
+    private final String value;
+
+    RoleTag(String value) {
+      this.value = value;
+    }
+
+    public String getValue() {
+      return this.value;
+    }
+  }
+
   public static void addUserTags(Collection<Tag> tags, SamUser user) {
     tags.add(new Tag().withKey("user_email").withValue(user.getEmail()));
     tags.add(new Tag().withKey("user_id").withValue(user.getSubjectId()));
@@ -99,10 +115,27 @@ public class AwsUtils {
   }
 
   public static void addBucketTags(
-      Collection<Tag> tags, String role, String s3BucketName, String prefix) {
-    tags.add(new Tag().withKey("ws_role").withValue(role));
+      Collection<Tag> tags, RoleTag role, String s3BucketName, String prefix) {
+    tags.add(new Tag().withKey("ws_role").withValue(role.getValue()));
     tags.add(new Tag().withKey("s3_bucket").withValue(s3BucketName));
     tags.add(new Tag().withKey("terra_bucket").withValue(prefix));
+  }
+
+  public static class BucketTagsHelper {
+
+    private final RoleTag role;
+    private final String s3Bucket;
+    private final String prefix;
+
+    public BucketTagsHelper(RoleTag role, String s3Bucket, String prefix) {
+      this.role = role;
+      this.s3Bucket = s3Bucket;
+      this.prefix = prefix;
+    }
+
+    public void addBucketTags(Collection<Tag> tags) {
+      AwsUtils.addBucketTags(tags, role, s3Bucket, prefix);
+    }
   }
 
   public static Credentials assumeUserRole(
@@ -289,12 +322,14 @@ public class AwsUtils {
       SamUser user,
       Regions region,
       InstanceType instanceType,
-      String notebookName) {
+      String notebookName,
+      Optional<BucketTagsHelper> defaultBucket) {
     AmazonSageMaker sageMaker = getSagemakerSession(credentials, region);
 
     Collection<Tag> tags = new HashSet<>();
     addUserTags(tags, user);
     addWorkspaceTags(tags, workspaceUuid);
+    defaultBucket.ifPresent(db -> db.addBucketTags(tags));
 
     CreateNotebookInstanceRequest request =
         new CreateNotebookInstanceRequest()

@@ -66,9 +66,7 @@ public class AwsCloudContext {
   }
 
   public ApiAwsContext toApi() {
-    return new ApiAwsContext()
-            .landingZoneId(landingZoneName)
-            .accountNumber(accountNumber);
+    return new ApiAwsContext().landingZoneId(landingZoneName).accountNumber(accountNumber);
   }
 
   public String serialize() {

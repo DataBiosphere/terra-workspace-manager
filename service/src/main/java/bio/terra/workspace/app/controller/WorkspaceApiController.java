@@ -68,8 +68,6 @@ import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import com.google.api.services.iam.v1.model.Aws;
-import com.google.protobuf.Api;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.time.OffsetDateTime;
 import java.util.Collections;
@@ -106,19 +104,20 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
   @Autowired
   public WorkspaceApiController(
-          WorkspaceService workspaceService,
-          JobService jobService,
-          JobApiUtils jobApiUtils,
-          SamService samService,
-          AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
-          HttpServletRequest request,
-          AwsCloudContextService awsCloudContextService, GcpCloudContextService gcpCloudContextService,
-          PetSaService petSaService,
-          AzureCloudContextService azureCloudContextService,
-          TpsApiDispatch tpsApiDispatch,
-          WorkspaceActivityLogDao workspaceActivityLogDao,
-          FeatureConfiguration featureConfiguration,
-          WorkspaceActivityLogService workspaceActivityLogService) {
+      WorkspaceService workspaceService,
+      JobService jobService,
+      JobApiUtils jobApiUtils,
+      SamService samService,
+      AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
+      HttpServletRequest request,
+      AwsCloudContextService awsCloudContextService,
+      GcpCloudContextService gcpCloudContextService,
+      PetSaService petSaService,
+      AzureCloudContextService azureCloudContextService,
+      TpsApiDispatch tpsApiDispatch,
+      WorkspaceActivityLogDao workspaceActivityLogDao,
+      FeatureConfiguration featureConfiguration,
+      WorkspaceActivityLogService workspaceActivityLogService) {
     super(authenticatedUserRequestFactory, request, samService);
     this.workspaceService = workspaceService;
     this.jobService = jobService;
@@ -249,7 +248,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .map(AzureCloudContext::toApi)
             .orElse(null);
 
-    ApiAwsContext awsContext = awsCloudContextService
+    ApiAwsContext awsContext =
+        awsCloudContextService
             .getAwsCloudContext(workspaceUuid)
             .map(AwsCloudContext::toApi)
             .orElse(null);
@@ -573,8 +573,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
       awsContext =
           Optional.ofNullable(jobResult.getResult().getAwsCloudContext())
-                  .map(c -> AwsCloudContext.deserialize(c).toApi())
-                  .orElse(null);
+              .map(c -> AwsCloudContext.deserialize(c).toApi())
+              .orElse(null);
     }
 
     return new ApiCreateCloudContextResult()

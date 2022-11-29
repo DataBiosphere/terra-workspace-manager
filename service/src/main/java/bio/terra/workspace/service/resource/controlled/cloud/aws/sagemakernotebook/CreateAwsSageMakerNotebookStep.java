@@ -8,12 +8,15 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.common.utils.MultiCloudUtils;
+import bio.terra.workspace.generated.model.ApiAwsCredentialAccessScope;
 import bio.terra.workspace.generated.model.ApiAwsSageMakerNotebookCreationParameters;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.storagebucket.ControlledAwsBucketResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.sagemaker.model.InstanceType;
 import com.amazonaws.services.securitytoken.model.Credentials;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +43,28 @@ public class CreateAwsSageMakerNotebookStep implements Step {
 
     final SamUser samUser = inputParameters.get(WorkspaceFlightMapKeys.SAM_USER, SamUser.class);
 
+    Optional<AwsUtils.BucketTagsHelper> defaultBucket = Optional.empty();
+
+    if (inputParameters.containsKey(
+        WorkspaceFlightMapKeys.ControlledResourceKeys.NOTEBOOK_DEFAULT_BUCKET)) {
+      ControlledAwsBucketResource defaultBucketResource =
+          inputParameters.get(
+              WorkspaceFlightMapKeys.ControlledResourceKeys.NOTEBOOK_DEFAULT_BUCKET,
+              ControlledAwsBucketResource.class);
+
+      defaultBucket =
+          Optional.of(
+              new AwsUtils.BucketTagsHelper(
+                  creationParameters
+                          .getDefaultBucket()
+                          .getAccessScope()
+                          .equals(ApiAwsCredentialAccessScope.WRITE_READ)
+                      ? AwsUtils.RoleTag.WRITER
+                      : AwsUtils.RoleTag.READER,
+                  defaultBucketResource.getS3BucketName(),
+                  defaultBucketResource.getPrefix()));
+    }
+
     final String awsCloudContextString =
         workingMap.get(
             WorkspaceFlightMapKeys.ControlledResourceKeys.AWS_CLOUD_CONTEXT, String.class);
@@ -57,7 +82,8 @@ public class CreateAwsSageMakerNotebookStep implements Step {
         samUser,
         region,
         instanceType,
-        creationParameters.getInstanceId());
+        creationParameters.getInstanceId(),
+        defaultBucket);
 
     return StepResult.getStepResultSuccess();
   }
