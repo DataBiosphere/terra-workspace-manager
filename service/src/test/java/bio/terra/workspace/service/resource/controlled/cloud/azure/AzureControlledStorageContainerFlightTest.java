@@ -93,7 +93,6 @@ public class AzureControlledStorageContainerFlightTest extends BaseAzureConnecte
 
     testLandingZoneManager.createLandingZoneWithSharedStorageAccount(
         landingZoneId, workspaceUuid, storageAccountName, "eastus");
-
   }
 
   private void cleanupLandingZone() {
