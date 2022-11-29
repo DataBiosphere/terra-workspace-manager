@@ -76,9 +76,10 @@ public class RetrieveDestinationStorageAccountResourceIdStepTest extends BaseUni
     assertEquals(result.getStepStatus(), StepStatus.STEP_RESULT_SUCCESS);
     assertEquals(
         workingMap.get(
-            WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_STORAGE_ACCOUNT_RESOURCE_ID,
-            UUID.class),
-        storageAccountResourceId);
+            WorkspaceFlightMapKeys.ControlledResourceKeys
+                .DESTINATION_WORKSPACE_STORAGE_ACCOUNT_RESOURCE_ID,
+            DestinationStorageAccount.class),
+        new DestinationStorageAccount(true, null));
   }
 
   @Test
@@ -123,9 +124,10 @@ public class RetrieveDestinationStorageAccountResourceIdStepTest extends BaseUni
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
     assertEquals(
         workingMap.get(
-            WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_STORAGE_ACCOUNT_RESOURCE_ID,
-            UUID.class),
-        storageAccount.getResourceId());
+            WorkspaceFlightMapKeys.ControlledResourceKeys
+                .DESTINATION_WORKSPACE_STORAGE_ACCOUNT_RESOURCE_ID,
+            DestinationStorageAccount.class),
+        new DestinationStorageAccount(false, storageAccount.getResourceId()));
   }
 
   @Test

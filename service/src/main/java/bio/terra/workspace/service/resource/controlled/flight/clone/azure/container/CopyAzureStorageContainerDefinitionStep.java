@@ -80,9 +80,16 @@ public class CopyAzureStorageContainerDefinitionStep implements Step {
         inputParameters.get(
             WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.class);
 
+    var destStorageAccountInfo =
+        workingMap.get(
+            WorkspaceFlightMapKeys.ControlledResourceKeys
+                .DESTINATION_WORKSPACE_STORAGE_ACCOUNT_RESOURCE_ID,
+            DestinationStorageAccount.class);
+
     ControlledAzureStorageContainerResource destinationContainerResource =
         buildDestinationControlledAzureContainer(
             sourceContainer,
+            destStorageAccountInfo,
             destinationWorkspaceId,
             destinationResourceId,
             destinationResourceName,
@@ -132,9 +139,6 @@ public class CopyAzureStorageContainerDefinitionStep implements Step {
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_ID,
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_CONTAINER_NAME);
-    FlightUtils.validateRequiredEntries(
-        workingMap,
-        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_STORAGE_ACCOUNT_RESOURCE_ID);
   }
 
   @Override

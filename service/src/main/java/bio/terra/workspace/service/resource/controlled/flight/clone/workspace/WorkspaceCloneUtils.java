@@ -4,6 +4,7 @@ import bio.terra.stairway.FlightStatus;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
+import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.DestinationStorageAccount;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.workspace.model.WsmCloneResourceResult;
@@ -41,7 +42,9 @@ public class WorkspaceCloneUtils {
    * Builds an Azure storage container resource object from a source container
    *
    * @param sourceContainer Source container from which to derive common resource fields
-   * @param storageAccountId Destination Azure storage account resource ID
+   * @param storageAccountInfo Destination Azure storage account resource ID. This is an optional
+   *     parameter; omitting it will result in the container being placed in the parent landing
+   *     zone.
    * @param destinationWorkspaceId Destination workspace ID
    * @param destinationResourceId Destination resource ID for the new container object
    * @param name WSM-internal resource name
@@ -51,17 +54,22 @@ public class WorkspaceCloneUtils {
    */
   public static ControlledAzureStorageContainerResource buildDestinationControlledAzureContainer(
       ControlledAzureStorageContainerResource sourceContainer,
+      DestinationStorageAccount storageAccountInfo,
       UUID destinationWorkspaceId,
       UUID destinationResourceId,
       String name,
       @Nullable String description,
       String cloudInstanceName) {
-    return ControlledAzureStorageContainerResource.builder()
-        .storageContainerName(cloudInstanceName)
-        .common(
-            sourceContainer.buildControlledCloneResourceCommonFields(
-                destinationWorkspaceId, destinationResourceId, null, name, description))
-        .build();
+    var builder =
+        ControlledAzureStorageContainerResource.builder()
+            .storageContainerName(cloudInstanceName)
+            .common(
+                sourceContainer.buildControlledCloneResourceCommonFields(
+                    destinationWorkspaceId, destinationResourceId, null, name, description));
+    if (!storageAccountInfo.isLandingZone()) {
+      builder = builder.storageAccountId(storageAccountInfo.resourceId());
+    }
+    return builder.build();
   }
 
   // TODO: PF-2107 as part of the refactor, these will move into the object hierarchy

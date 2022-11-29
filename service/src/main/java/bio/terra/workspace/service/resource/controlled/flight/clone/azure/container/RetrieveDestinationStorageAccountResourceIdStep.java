@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
  * </ol>
  */
 public class RetrieveDestinationStorageAccountResourceIdStep implements Step {
+
   private static final Logger logger =
       LoggerFactory.getLogger(RetrieveDestinationStorageAccountResourceIdStep.class);
 
@@ -80,8 +81,8 @@ public class RetrieveDestinationStorageAccountResourceIdStep implements Step {
             .getWorkingMap()
             .put(
                 WorkspaceFlightMapKeys.ControlledResourceKeys
-                    .DESTINATION_STORAGE_ACCOUNT_RESOURCE_ID,
-                lzStorageAcct.get().getResourceId());
+                    .DESTINATION_WORKSPACE_STORAGE_ACCOUNT_RESOURCE_ID,
+                new DestinationStorageAccount(true, null));
         return StepResult.getStepResultSuccess();
       }
     } catch (IllegalStateException | LandingZoneNotFoundException e) {
@@ -102,8 +103,9 @@ public class RetrieveDestinationStorageAccountResourceIdStep implements Step {
       context
           .getWorkingMap()
           .put(
-              WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_STORAGE_ACCOUNT_RESOURCE_ID,
-              sourceStorageAccounts.get(0).getResourceId());
+              WorkspaceFlightMapKeys.ControlledResourceKeys
+                  .DESTINATION_WORKSPACE_STORAGE_ACCOUNT_RESOURCE_ID,
+              new DestinationStorageAccount(false, sourceStorageAccounts.get(0).getResourceId()));
       return StepResult.getStepResultSuccess();
     }
     if (sourceStorageAccounts.size() > 1) {
