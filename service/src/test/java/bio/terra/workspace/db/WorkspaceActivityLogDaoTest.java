@@ -24,7 +24,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
 
   private static final String USER_EMAIL = "foo@gmail.com";
-  private static final String SUBJECT_ID = "foo";
+  private static final String ACTOR_SUBJECT_ID = "foo";
 
   @Autowired private WorkspaceActivityLogDao activityLogDao;
   @Autowired private NamedParameterJdbcTemplate jdbcTemplate;
@@ -36,18 +36,18 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
     assertTrue(activityLogDao.getLastUpdateDetails(workspaceId).isEmpty());
 
     activityLogDao.writeActivity(
-        workspaceId, new DbWorkspaceActivityLog(USER_EMAIL, SUBJECT_ID, OperationType.CREATE, workspaceId.toString(), WsmObjectType.WORKSPACE));
+        workspaceId, new DbWorkspaceActivityLog(USER_EMAIL, ACTOR_SUBJECT_ID, OperationType.CREATE, workspaceId.toString(), WsmObjectType.WORKSPACE));
 
     var lastUpdateDetails = activityLogDao.getLastUpdateDetails(workspaceId);
     var createDetails = activityLogDao.getCreateDetails(workspaceId);
 
     assertTrue(lastUpdateDetails.isPresent());
     assertTrue(createDetails.isPresent());
-    assertEquals(lastUpdateDetails.get().getChangeDate(), createDetails.get().getChangeDate());
-    assertEquals(USER_EMAIL, createDetails.get().getActorEmail());
-    assertEquals(SUBJECT_ID, createDetails.get().getActorSubjectId());
-    assertEquals(USER_EMAIL, lastUpdateDetails.get().getActorEmail());
-    assertEquals(SUBJECT_ID, lastUpdateDetails.get().getActorSubjectId());
+    assertEquals(lastUpdateDetails.get().changeDate(), createDetails.get().changeDate());
+    assertEquals(USER_EMAIL, createDetails.get().actorEmail());
+    assertEquals(ACTOR_SUBJECT_ID, createDetails.get().actorSubjectId());
+    assertEquals(USER_EMAIL, lastUpdateDetails.get().actorEmail());
+    assertEquals(ACTOR_SUBJECT_ID, lastUpdateDetails.get().actorSubjectId());
   }
 
   @Test
@@ -56,7 +56,7 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
     assertTrue(activityLogDao.getLastUpdateDetails(workspaceId).isEmpty());
 
     activityLogDao.writeActivity(
-        workspaceId, new DbWorkspaceActivityLog(USER_EMAIL, SUBJECT_ID, OperationType.CREATE, workspaceId.toString(), WsmObjectType.WORKSPACE));
+        workspaceId, new DbWorkspaceActivityLog(USER_EMAIL, ACTOR_SUBJECT_ID, OperationType.CREATE, workspaceId.toString(), WsmObjectType.WORKSPACE));
 
     var lastUpdateDetails = activityLogDao.getLastUpdateDetails(workspaceId);
 
@@ -67,10 +67,10 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
         new DbWorkspaceActivityLog(newUserEmail, newUserSubjectId, OperationType.UPDATE, workspaceId.toString(), WsmObjectType.WORKSPACE));
 
     var secondLastUpdateDetails = activityLogDao.getLastUpdateDetails(workspaceId);
-    assertEquals(newUserEmail, secondLastUpdateDetails.get().getActorEmail());
-    assertEquals(newUserSubjectId, secondLastUpdateDetails.get().getActorSubjectId());
-    var secondLastUpdatedDate = secondLastUpdateDetails.get().getChangeDate();
-    assertTrue(secondLastUpdatedDate.isAfter(lastUpdateDetails.get().getChangeDate()));
+    assertEquals(newUserEmail, secondLastUpdateDetails.get().actorEmail());
+    assertEquals(newUserSubjectId, secondLastUpdateDetails.get().actorSubjectId());
+    var secondLastUpdatedDate = secondLastUpdateDetails.get().changeDate();
+    assertTrue(secondLastUpdatedDate.isAfter(lastUpdateDetails.get().changeDate()));
   }
 
   @Test
@@ -86,11 +86,11 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
     Optional<ActivityLogChangeDetails> updateDetails =
         activityLogDao.getLastUpdateDetails(workspaceId);
 
-    assertEquals("anne@gmail.com", updateDetails.get().getActorEmail());
+    assertEquals("anne@gmail.com", updateDetails.get().actorEmail());
     // The two offset date time can have different granularity, resulting flakiness.
     assertTrue(
         now.truncatedTo(ChronoUnit.MILLIS)
-            .isEqual(updateDetails.get().getChangeDate().truncatedTo(ChronoUnit.MILLIS)));
+            .isEqual(updateDetails.get().changeDate().truncatedTo(ChronoUnit.MILLIS)));
   }
 
   @Test
@@ -105,11 +105,11 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
 
     Optional<ActivityLogChangeDetails> updateDetails = activityLogDao.getCreateDetails(workspaceId);
 
-    assertEquals("anne@gmail.com", updateDetails.get().getActorEmail());
+    assertEquals("anne@gmail.com", updateDetails.get().actorEmail());
     // The two offset date time can have different granularity, resulting flakiness.
     assertTrue(
         now.truncatedTo(ChronoUnit.MILLIS)
-            .isEqual(updateDetails.get().getChangeDate().truncatedTo(ChronoUnit.MILLIS)));
+            .isEqual(updateDetails.get().changeDate().truncatedTo(ChronoUnit.MILLIS)));
   }
 
   @Test
@@ -118,11 +118,11 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
     assertTrue(activityLogDao.getCreateDetails(workspaceId).isEmpty());
 
     activityLogDao.writeActivity(
-        workspaceId, new DbWorkspaceActivityLog(USER_EMAIL, SUBJECT_ID, OperationType.CREATE, workspaceId.toString(), WsmObjectType.WORKSPACE));
+        workspaceId, new DbWorkspaceActivityLog(USER_EMAIL, ACTOR_SUBJECT_ID, OperationType.CREATE, workspaceId.toString(), WsmObjectType.WORKSPACE));
 
     var createDetails = activityLogDao.getCreateDetails(workspaceId);
-    assertEquals(USER_EMAIL, createDetails.get().getActorEmail());
-    assertEquals(SUBJECT_ID, createDetails.get().getActorSubjectId());
+    assertEquals(USER_EMAIL, createDetails.get().actorEmail());
+    assertEquals(ACTOR_SUBJECT_ID, createDetails.get().actorSubjectId());
 
     var newUserEmail = "foo@gmail.com";
     var subjectId = "foo";
@@ -130,30 +130,30 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
         workspaceId, new DbWorkspaceActivityLog(newUserEmail, subjectId, OperationType.UPDATE, workspaceId.toString(), WsmObjectType.WORKSPACE));
 
     var createDetailsAfterUpdate = activityLogDao.getCreateDetails(workspaceId);
-    assertEquals(USER_EMAIL, createDetailsAfterUpdate.get().getActorEmail());
-    assertEquals(SUBJECT_ID, createDetailsAfterUpdate.get().getActorSubjectId());
+    assertEquals(USER_EMAIL, createDetailsAfterUpdate.get().actorEmail());
+    assertEquals(ACTOR_SUBJECT_ID, createDetailsAfterUpdate.get().actorSubjectId());
   }
 
   @Test
   public void getLastUpdatedDate_notUpdateOnUnknownOperationType() {
     var workspaceId = UUID.randomUUID();
     activityLogDao.writeActivity(
-        workspaceId, new DbWorkspaceActivityLog(USER_EMAIL, SUBJECT_ID, OperationType.CREATE, workspaceId.toString(), WsmObjectType.WORKSPACE));
+        workspaceId, new DbWorkspaceActivityLog(USER_EMAIL, ACTOR_SUBJECT_ID, OperationType.CREATE, workspaceId.toString(), WsmObjectType.WORKSPACE));
     var firstUpdateDetails = activityLogDao.getLastUpdateDetails(workspaceId);
     assertEquals(OperationType.CREATE.name(), getChangeType(workspaceId));
 
     activityLogDao.writeActivity(
-        workspaceId, new DbWorkspaceActivityLog(USER_EMAIL, SUBJECT_ID, OperationType.UPDATE, workspaceId.toString(), WsmObjectType.WORKSPACE));
+        workspaceId, new DbWorkspaceActivityLog(USER_EMAIL, ACTOR_SUBJECT_ID, OperationType.UPDATE, workspaceId.toString(), WsmObjectType.WORKSPACE));
     var secondUpdateDetails = activityLogDao.getLastUpdateDetails(workspaceId);
     assertEquals(OperationType.UPDATE.name(), getChangeType(workspaceId));
 
     activityLogDao.writeActivity(
-        workspaceId, new DbWorkspaceActivityLog(USER_EMAIL, SUBJECT_ID, OperationType.DELETE, workspaceId.toString(), WsmObjectType.WORKSPACE));
+        workspaceId, new DbWorkspaceActivityLog(USER_EMAIL, ACTOR_SUBJECT_ID, OperationType.DELETE, workspaceId.toString(), WsmObjectType.WORKSPACE));
     var thirdUpdateDetails = activityLogDao.getLastUpdateDetails(workspaceId);
     assertEquals(OperationType.DELETE.name(), getChangeType(workspaceId));
 
     activityLogDao.writeActivity(
-        workspaceId, new DbWorkspaceActivityLog(USER_EMAIL, SUBJECT_ID, OperationType.CLONE, workspaceId.toString(), WsmObjectType.WORKSPACE));
+        workspaceId, new DbWorkspaceActivityLog(USER_EMAIL, ACTOR_SUBJECT_ID, OperationType.CLONE, workspaceId.toString(), WsmObjectType.WORKSPACE));
     var fourthUpdateDetails = activityLogDao.getLastUpdateDetails(workspaceId);
 
     assertThrows(
@@ -161,28 +161,28 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
         () ->
             activityLogDao.writeActivity(
                 workspaceId,
-                new DbWorkspaceActivityLog(USER_EMAIL, SUBJECT_ID, OperationType.UNKNOWN, workspaceId.toString(), WsmObjectType.WORKSPACE)));
+                new DbWorkspaceActivityLog(USER_EMAIL, ACTOR_SUBJECT_ID, OperationType.UNKNOWN, workspaceId.toString(), WsmObjectType.WORKSPACE)));
     var fifthUpdateDate = activityLogDao.getLastUpdateDetails(workspaceId);
-    assertEquals(fourthUpdateDetails.get().getChangeDate(), fifthUpdateDate.get().getChangeDate());
+    assertEquals(fourthUpdateDetails.get().changeDate(), fifthUpdateDate.get().changeDate());
 
     assertTrue(
         firstUpdateDetails
             .get()
-            .getChangeDate()
-            .isBefore(secondUpdateDetails.get().getChangeDate()));
+            .changeDate()
+            .isBefore(secondUpdateDetails.get().changeDate()));
     assertTrue(
         secondUpdateDetails
             .get()
-            .getChangeDate()
-            .isBefore(thirdUpdateDetails.get().getChangeDate()));
+            .changeDate()
+            .isBefore(thirdUpdateDetails.get().changeDate()));
     assertTrue(
         thirdUpdateDetails
             .get()
-            .getChangeDate()
-            .isBefore(fourthUpdateDetails.get().getChangeDate()));
+            .changeDate()
+            .isBefore(fourthUpdateDetails.get().changeDate()));
 
     var createDetails = activityLogDao.getCreateDetails(workspaceId);
-    assertEquals(firstUpdateDetails.get().getChangeDate(), createDetails.get().getChangeDate());
+    assertEquals(firstUpdateDetails.get().changeDate(), createDetails.get().changeDate());
   }
 
   @Test
@@ -201,7 +201,7 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
     var workspaceId = UUID.randomUUID();
     activityLogDao.writeActivity(
         workspaceId,
-        new DbWorkspaceActivityLog(USER_EMAIL, SUBJECT_ID, OperationType.REMOVE_WORKSPACE_ROLE, "foo@monkeydomonkeysee.com", WsmObjectType.USER));
+        new DbWorkspaceActivityLog(USER_EMAIL, ACTOR_SUBJECT_ID, OperationType.REMOVE_WORKSPACE_ROLE, "foo@monkeydomonkeysee.com", WsmObjectType.USER));
 
     assertEquals(OperationType.REMOVE_WORKSPACE_ROLE.name(), getChangeType(workspaceId));
     assertTrue(activityLogDao.getLastUpdateDetails(workspaceId).isEmpty());
@@ -212,7 +212,7 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
     var workspaceId = UUID.randomUUID();
     activityLogDao.writeActivity(
         workspaceId,
-        new DbWorkspaceActivityLog(USER_EMAIL, SUBJECT_ID, OperationType.GRANT_WORKSPACE_ROLE, "foo@monkeydomonkeysee.com", WsmObjectType.USER));
+        new DbWorkspaceActivityLog(USER_EMAIL, ACTOR_SUBJECT_ID, OperationType.GRANT_WORKSPACE_ROLE, "foo@monkeydomonkeysee.com", WsmObjectType.USER));
 
     assertEquals(OperationType.GRANT_WORKSPACE_ROLE.name(), getChangeType(workspaceId));
     assertTrue(activityLogDao.getLastUpdateDetails(workspaceId).isEmpty());

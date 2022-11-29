@@ -42,6 +42,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
+import bio.terra.workspace.service.workspace.model.WsmObjectType;
 import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import java.util.ArrayList;
 import java.util.List;
@@ -80,7 +81,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
         new FakeFlightContext(
             WorkspaceCreateFlight.class.getName(), inputParams, FlightStatus.SUCCESS));
     var changeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
-    assertChangeDetails(changeDetails);
+    assertChangeDetails(changeDetails, new ActivityLogChangeDetails(null, USER_REQUEST.getEmail(), USER_REQUEST.getSubjectId(), workspaceUuid.toString(), WsmObjectType.WORKSPACE));
   }
 
   @Test
@@ -95,7 +96,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
             WorkspaceDeleteFlight.class.getName(), inputParams, FlightStatus.SUCCESS));
 
     var changeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
-    assertChangeDetails(changeDetails);
+    assertChangeDetails(changeDetails, new ActivityLogChangeDetails(null, USER_REQUEST.getEmail(), USER_REQUEST.getSubjectId(), workspaceUuid.toString(), WsmObjectType.WORKSPACE));
   }
 
   @Test
@@ -144,7 +145,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
 
     assertTrue(workspaceDao.getWorkspaceIfExists(workspaceUuid).isEmpty());
     var changeDetailsAfterFailedFlight = activityLogDao.getLastUpdateDetails(workspaceUuid);
-    assertChangeDetails(changeDetailsAfterFailedFlight);
+    assertChangeDetails(changeDetailsAfterFailedFlight, new ActivityLogChangeDetails(null, USER_REQUEST.getEmail(), USER_REQUEST.getSubjectId(), workspaceUuid.toString(), WsmObjectType.WORKSPACE));
   }
 
   @Test
@@ -180,7 +181,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
 
     assertTrue(workspaceDao.getCloudContext(workspaceUuid, CloudPlatform.GCP).isEmpty());
     var changeDetailsAfterFailedFlight = activityLogDao.getLastUpdateDetails(workspaceUuid);
-    assertChangeDetails(changeDetailsAfterFailedFlight);
+    assertChangeDetails(changeDetailsAfterFailedFlight, new ActivityLogChangeDetails(null, USER_REQUEST.getEmail(), USER_REQUEST.getSubjectId(), workspaceUuid.toString(), WsmObjectType.WORKSPACE));
   }
 
   @Test
@@ -241,7 +242,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
             DeleteControlledResourcesFlight.class.getName(), inputParams, FlightStatus.ERROR));
 
     var changeDetailsAfterFailedFlight = activityLogDao.getLastUpdateDetails(workspaceUuid);
-    assertChangeDetails(changeDetailsAfterFailedFlight);
+    assertChangeDetails(changeDetailsAfterFailedFlight, new ActivityLogChangeDetails(null, USER_REQUEST.getEmail(), USER_REQUEST.getSubjectId(), resourceUuid.toString(), WsmObjectType.RESOURCE));
   }
 
   @Test
@@ -297,7 +298,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
 
     Optional<ActivityLogChangeDetails> changeDetails =
         activityLogDao.getLastUpdateDetails(workspaceId);
-    assertChangeDetails(changeDetails);
+    assertChangeDetails(changeDetails, new ActivityLogChangeDetails(null, USER_REQUEST.getEmail(), USER_REQUEST.getSubjectId(), fooFolder.id().toString(), WsmObjectType.FOLDER));
   }
 
   @Test
@@ -346,11 +347,14 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     return inputParams;
   }
 
-  private void assertChangeDetails(Optional<ActivityLogChangeDetails> changeDetails) {
+  private void assertChangeDetails(Optional<ActivityLogChangeDetails> changeDetails,
+      ActivityLogChangeDetails expectedChangeDetail) {
     assertTrue(changeDetails.isPresent());
-    assertEquals(USER_REQUEST.getEmail(), changeDetails.get().getActorEmail());
-    assertEquals(USER_REQUEST.getSubjectId(), changeDetails.get().getActorSubjectId());
-    assertNotNull(changeDetails.get().getChangeDate());
+    assertEquals(expectedChangeDetail.actorEmail(), changeDetails.get().actorEmail());
+    assertEquals(expectedChangeDetail.actorSubjectId(), changeDetails.get().actorSubjectId());
+    assertEquals(expectedChangeDetail.changeSubjectId(), changeDetails.get().changeSubjectId());
+    assertEquals(expectedChangeDetail.changeSubjectType(), changeDetails.get().changeSubjectType());
+    assertNotNull(changeDetails.get().changeDate());
   }
 
   /**

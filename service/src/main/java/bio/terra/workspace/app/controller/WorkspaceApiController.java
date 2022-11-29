@@ -281,17 +281,17 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         .azureContext(azureContext)
         .createdDate(
             createDetailsOptional
-                .map(ActivityLogChangeDetails::getChangeDate)
+                .map(ActivityLogChangeDetails::changeDate)
                 .orElse(OffsetDateTime.MIN))
         .createdBy(
-            createDetailsOptional.map(ActivityLogChangeDetails::getActorEmail).orElse("unknown"))
+            createDetailsOptional.map(ActivityLogChangeDetails::actorEmail).orElse("unknown"))
         .lastUpdatedDate(
             lastChangeDetailsOptional
-                .map(ActivityLogChangeDetails::getChangeDate)
+                .map(ActivityLogChangeDetails::changeDate)
                 .orElse(OffsetDateTime.MIN))
         .lastUpdatedBy(
             lastChangeDetailsOptional
-                .map(ActivityLogChangeDetails::getActorEmail)
+                .map(ActivityLogChangeDetails::actorEmail)
                 .orElse("unknown"))
         .policies(workspacePolicies);
   }

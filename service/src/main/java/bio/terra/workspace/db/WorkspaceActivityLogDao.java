@@ -6,6 +6,7 @@ import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.db.exception.UnknownFlightOperationTypeException;
 import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
 import bio.terra.workspace.service.workspace.model.OperationType;
+import bio.terra.workspace.service.workspace.model.WsmObjectType;
 import com.google.common.collect.ImmutableSet;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.time.Instant;
@@ -29,12 +30,12 @@ public class WorkspaceActivityLogDao {
   private static final Logger logger = LoggerFactory.getLogger(WorkspaceActivityLogDao.class);
   private static final RowMapper<ActivityLogChangeDetails> ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER =
       (rs, rowNum) ->
-          new ActivityLogChangeDetails()
-              .changeDate(
-                  OffsetDateTime.ofInstant(
-                      rs.getTimestamp("change_date").toInstant(), ZoneId.of("UTC")))
-              .actorEmail(rs.getString("actor_email"))
-              .actorSubjectId(rs.getString("actor_subject_id"));
+          new ActivityLogChangeDetails(OffsetDateTime.ofInstant(
+              rs.getTimestamp("change_date").toInstant(), ZoneId.of("UTC")),
+              rs.getString("actor_email"),
+              rs.getString("actor_subject_id"),
+              rs.getString("change_subject_id"),
+              WsmObjectType.valueOf(rs.getString("change_subject_type")));
   private final NamedParameterJdbcTemplate jdbcTemplate;
 
   // These fields don't update workspace "Last updated" time in UI. For example,

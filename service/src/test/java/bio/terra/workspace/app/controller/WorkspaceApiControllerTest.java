@@ -420,13 +420,13 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
     when(mockTpsApiDispatch().updatePao(any(), eq(workspace.getId()), any()))
         .thenReturn(new ApiTpsPaoUpdateResult().updateApplied(true));
     OffsetDateTime lastChangedDate =
-        workspaceActivityLogDao.getLastUpdateDetails(workspace.getId()).get().getChangeDate();
+        workspaceActivityLogDao.getLastUpdateDetails(workspace.getId()).get().changeDate();
 
     ApiTpsPaoUpdateResult result = updatePolicies(workspace.getId());
     assertTrue(result.isUpdateApplied());
     assertTrue(
         lastChangedDate.isBefore(
-            workspaceActivityLogDao.getLastUpdateDetails(workspace.getId()).get().getChangeDate()));
+            workspaceActivityLogDao.getLastUpdateDetails(workspace.getId()).get().changeDate()));
   }
 
   @Test
@@ -435,13 +435,13 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
     when(mockTpsApiDispatch().updatePao(any(), eq(workspace.getId()), any()))
         .thenReturn(new ApiTpsPaoUpdateResult().updateApplied(false));
     OffsetDateTime lastChangedDate =
-        workspaceActivityLogDao.getLastUpdateDetails(workspace.getId()).get().getChangeDate();
+        workspaceActivityLogDao.getLastUpdateDetails(workspace.getId()).get().changeDate();
 
     ApiTpsPaoUpdateResult result = updatePolicies(workspace.getId());
     assertFalse(result.isUpdateApplied());
     assertTrue(
         lastChangedDate.isEqual(
-            workspaceActivityLogDao.getLastUpdateDetails(workspace.getId()).get().getChangeDate()));
+            workspaceActivityLogDao.getLastUpdateDetails(workspace.getId()).get().changeDate()));
   }
 
   private ApiErrorReport createRawlsWorkspaceWithPolicyExpectError(int expectedCode)
