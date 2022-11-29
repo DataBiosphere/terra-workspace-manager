@@ -12,6 +12,7 @@ import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.utils.AzureTestUtils;
 import bio.terra.workspace.common.utils.AzureVmUtils;
+import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.LandingZoneTestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -53,6 +54,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -297,7 +299,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
   @Test
   public void createAndDeleteAzureStorageContainerBasedOnLandingZoneSharedStorageAccount()
       throws InterruptedException {
-    String storageAccountName = "lzsharedstorageaccount";
+    String storageAccountName = String.format("lzsharedstacc%s", TestUtils.getRandomString(6));
 
     Workspace workspace = azureTestUtils.createWorkspace(workspaceService);
     UUID workspaceUuid = workspace.getWorkspaceId();
@@ -397,6 +399,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
     // no need to clean up resources
   }
 
+  @Disabled("TODO(TOAZ-286): Re-enable this test when the ticket is fixed")
   @Test
   public void
       createAzureStorageContainerFlightFailedBecauseLandingZoneDoesntHaveSharedStorageAccount()
