@@ -716,6 +716,8 @@ public class ResourceDao {
             .addValue("attributes", resource.attributesToJson())
             .addValue("resource_lineage", DbSerDes.toJson(resource.getResourceLineage()))
             .addValue("properties", DbSerDes.propertiesToJson(resource.getProperties()))
+            // Only set created_by_email and don't need to set created_by_date; that is set by
+            // defaultValueComputed
             .addValue("created_by_email", resource.getCreatedByEmail());
     if (resource.getStewardshipType().equals(CONTROLLED)) {
       ControlledResource controlledResource = resource.castToControlledResource();

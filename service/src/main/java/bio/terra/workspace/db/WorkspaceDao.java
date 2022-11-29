@@ -114,6 +114,8 @@ public class WorkspaceDao {
                 workspace.getSpendProfileId().map(SpendProfileId::getId).orElse(null))
             .addValue("properties", DbSerDes.propertiesToJson(workspace.getProperties()))
             .addValue("workspace_stage", workspace.getWorkspaceStage().toString())
+            // Only set created_by_email and don't need to set created_by_date; that is set by
+            // defaultValueComputed
             .addValue("created_by_email", workspace.createdByEmail());
     try {
       jdbcTemplate.update(sql, params);

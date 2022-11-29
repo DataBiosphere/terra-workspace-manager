@@ -16,7 +16,7 @@ databaseChangeLog:
             defaultValueComputed: now()
         - column:
             name: created_by_email
-            type: varchar(255)
+            type: text
             constraints:
                 nullable: false
             defaultValue: "unknown"
@@ -33,7 +33,7 @@ databaseChangeLog:
                 defaultValueComputed: now()
           - column:
                 name: created_by_email
-                type: varchar(255)
+                type: text
                 constraints:
                     nullable: false
                 defaultValue: "unknown"
@@ -50,7 +50,7 @@ databaseChangeLog:
                 defaultValueComputed: now()
           - column:
                 name: created_by_email
-                type: varchar(255)
+                type: text
                 constraints:
                     nullable: false
                 defaultValue: "unknown"

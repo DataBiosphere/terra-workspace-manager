@@ -77,7 +77,7 @@ public class CloneAllFoldersStep implements Step {
               /*parentFolderId=*/ null,
               sourceFolder.properties(),
               userEmail,
-              null));
+              /*createdDate=*/ null));
       folderIdMap.put(sourceFolder.id().toString(), destinationFolderId.toString());
     }
     // Update the cloned folders' parent folder id

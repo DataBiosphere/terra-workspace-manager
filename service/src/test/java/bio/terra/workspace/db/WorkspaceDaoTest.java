@@ -73,7 +73,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
   @Test
   void verifyCreatedWorkspaceExists() {
     workspaceDao.createWorkspace(
-        defaultWorkspace(workspaceUuid).toBuilder()
+        WorkspaceFixtures.defaultWorkspaceBuilder(workspaceUuid)
             .spendProfileId(spendProfileId)
             .build(), /* applicationIds */
         null);
@@ -215,7 +215,9 @@ class WorkspaceDaoTest extends BaseUnitTest {
         };
 
     Workspace initalWorkspace =
-        defaultWorkspace(workspaceUuid).toBuilder().properties(propertyGenerate).build();
+        WorkspaceFixtures.defaultWorkspaceBuilder(workspaceUuid)
+            .properties(propertyGenerate)
+            .build();
     workspaceDao.createWorkspace(initalWorkspace, /* applicationIds= */ null);
 
     Map<String, String> propertyUpdate = Map.of("foo", "updateBar", "tal", "lass");
@@ -235,7 +237,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
     void setup() {
       mcWorkspaceId = UUID.randomUUID();
       mcWorkspace =
-          defaultWorkspace(mcWorkspaceId).toBuilder()
+          WorkspaceFixtures.defaultWorkspaceBuilder(mcWorkspaceId)
               .workspaceStage(WorkspaceStage.MC_WORKSPACE)
               .build();
       workspaceDao.createWorkspace(mcWorkspace, /* applicationIds= */ null);
@@ -280,7 +282,9 @@ class WorkspaceDaoTest extends BaseUnitTest {
     Map<String, String> propertyGenerate = Map.of("foo", "bar", "xyz", "pqn");
 
     Workspace initalWorkspace =
-        defaultWorkspace(workspaceUuid).toBuilder().properties(propertyGenerate).build();
+        WorkspaceFixtures.defaultWorkspaceBuilder(workspaceUuid)
+            .properties(propertyGenerate)
+            .build();
     workspaceDao.createWorkspace(initalWorkspace, /* applicationIds= */ null);
 
     List<String> propertyUpdate = new ArrayList<>(Arrays.asList("foo", "foo1"));

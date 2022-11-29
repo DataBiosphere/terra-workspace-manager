@@ -90,6 +90,8 @@ public class FolderDao {
                     .map(UUID::toString)
                     .orElse(DEFAULT_ROOT_FOLDER_ID))
             .addValue("properties", DbSerDes.propertiesToJson(folder.properties()))
+            // Only set created_by_email and don't need to set created_by_date; that is set by
+            // defaultValueComputed
             .addValue("created_by_email", folder.createdByEmail());
 
     try {

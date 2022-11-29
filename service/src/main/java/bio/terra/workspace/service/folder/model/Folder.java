@@ -14,6 +14,7 @@ public record Folder(
     @Nullable UUID parentFolderId,
     Map<String, String> properties,
     String createdByEmail,
+    // null when building a folder to create; Postgres will set createdDate.
     @Nullable OffsetDateTime createdDate) {
 
   @Override

@@ -112,18 +112,6 @@ public record Workspace(
     return new Builder();
   }
 
-  public Builder toBuilder() {
-    return new Builder()
-        .workspaceId(workspaceId)
-        .userFacingId(userFacingId)
-        .displayName(displayName)
-        .description(description)
-        .spendProfileId(spendProfileId)
-        .properties(properties)
-        .workspaceStage(workspaceStage)
-        .createdByEmail(createdByEmail);
-  }
-
   @JsonPOJOBuilder(withPrefix = "")
   public static class Builder {
     private UUID workspaceId;
@@ -224,7 +212,8 @@ public record Workspace(
             .userFacingId(fullWorkspace.getUserFacingId())
             .workspaceStage(fullWorkspace.getWorkspaceStage())
             .displayName(fullWorkspace.getDisplayName().orElse(null))
-            .createdByEmail(fullWorkspace.createdByEmail);
+            .createdByEmail(fullWorkspace.createdByEmail)
+            .createdDate(fullWorkspace.createdDate);
 
     Map<String, String> strippedProperties = new HashMap<>();
     if (fullWorkspace.getProperties().containsKey(Properties.TYPE)) {
