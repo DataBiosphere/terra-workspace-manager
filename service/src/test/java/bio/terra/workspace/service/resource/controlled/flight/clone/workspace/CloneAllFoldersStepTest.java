@@ -16,9 +16,7 @@ import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.db.FolderDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.folder.model.Folder;
-import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import java.util.List;
 import java.util.Map;
@@ -78,9 +76,8 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
 
     UUID destinationWorkspaceId =
         WorkspaceUnitTestUtils.createWorkspaceWithGcpContext(workspaceDao);
-    Workspace destinationWorkspace = workspaceDao.getWorkspace(destinationWorkspaceId);
     inputParameters.put(ControlledResourceKeys.SOURCE_WORKSPACE_ID, SOURCE_WORKSPACE_ID);
-    inputParameters.put(JobMapKeys.REQUEST.getKeyName(), destinationWorkspace);
+    inputParameters.put(WORKSPACE_ID, destinationWorkspaceId);
 
     when(mockFlightContext.getInputParameters()).thenReturn(inputParameters);
     when(mockFlightContext.getWorkingMap()).thenReturn(workingMap);
@@ -120,10 +117,7 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
 
     UUID destinationWorkspaceId =
         WorkspaceUnitTestUtils.createWorkspaceWithGcpContext(workspaceDao);
-    Workspace destinationWorkspace = workspaceDao.getWorkspace(destinationWorkspaceId);
-    inputParameters.put(ControlledResourceKeys.SOURCE_WORKSPACE_ID, SOURCE_WORKSPACE_ID);
     inputParameters.put(WORKSPACE_ID, destinationWorkspaceId);
-    inputParameters.put(JobMapKeys.REQUEST.getKeyName(), destinationWorkspace);
 
     when(mockFlightContext.getInputParameters()).thenReturn(inputParameters);
     when(mockFlightContext.getWorkingMap()).thenReturn(workingMap);
