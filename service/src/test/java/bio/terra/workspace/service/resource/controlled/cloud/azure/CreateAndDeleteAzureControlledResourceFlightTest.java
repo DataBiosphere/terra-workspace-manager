@@ -55,6 +55,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -399,6 +400,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
     // no need to clean up resources
   }
 
+  @Disabled("TODO(TOAZ-286): Re-enable this test when the ticket is fixed")
   @Test
   public void
       createAzureStorageContainerFlightFailedBecauseLandingZoneDoesntHaveSharedStorageAccount()
