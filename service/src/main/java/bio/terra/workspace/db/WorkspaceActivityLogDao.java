@@ -98,7 +98,7 @@ public class WorkspaceActivityLogDao {
     // sort the actor_email by alphabetical order and returns the first one.
     final String sql =
         """
-            SELECT w.change_date, w.actor_email, w.actor_subject_id FROM workspace_activity_log w
+            SELECT w.change_date, w.actor_email, w.actor_subject_id, w.change_subject_id, w.change_subject_type FROM workspace_activity_log w
             JOIN (SELECT MIN(change_date) AS min_date FROM workspace_activity_log
             WHERE workspace_id = :workspace_id) m
             ON w.change_date = m.min_date
@@ -119,11 +119,10 @@ public class WorkspaceActivityLogDao {
     // sort the actor_email by alphabetical order and returns the first one.
     final String sql =
         """
-            SELECT w.change_date, w.actor_email, w.actor_subject_id FROM workspace_activity_log w
-            INNER JOIN (SELECT MAX(change_date) AS max_date FROM workspace_activity_log
-            WHERE workspace_id = :workspace_id AND change_type NOT IN (:change_type)) m
-            ON w.change_date = m.max_date
-            ORDER BY w.actor_email ASC
+            SELECT change_date, actor_email, actor_subject_id, change_subject_id, change_subject_type 
+            FROM workspace_activity_log
+            WHERE workspace_id = :workspace_id AND change_type NOT IN (:change_type)
+            ORDER BY change_date DESC
             LIMIT 1
         """;
 
