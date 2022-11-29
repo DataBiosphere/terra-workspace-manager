@@ -977,6 +977,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         AwaitCloneAllResourcesFlightStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     FlightDebugInfo debugInfo =
         FlightDebugInfo.newBuilder().undoStepFailures(retrySteps).lastStepFailure(true).build();
+    // TODO(PF-2259): This test is not actually testing the undo of CloneGcpWorkspaceFlight. It is
+    // testing the undo of WorkspaceCreateFlight.
     jobService.setFlightDebugInfoForTest(debugInfo);
 
     assertThrows(
