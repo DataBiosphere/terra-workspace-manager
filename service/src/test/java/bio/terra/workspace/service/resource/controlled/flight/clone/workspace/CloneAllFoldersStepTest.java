@@ -117,6 +117,7 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
 
     UUID destinationWorkspaceId =
         WorkspaceUnitTestUtils.createWorkspaceWithGcpContext(workspaceDao);
+    inputParameters.put(ControlledResourceKeys.SOURCE_WORKSPACE_ID, SOURCE_WORKSPACE_ID);
     inputParameters.put(WORKSPACE_ID, destinationWorkspaceId);
 
     when(mockFlightContext.getInputParameters()).thenReturn(inputParameters);
