@@ -13,10 +13,10 @@ databaseChangeLog:
                nullable: false
             remarks: |
                Timestamp when this workspace is created. This will be slightly
-              ahead of the change_date in the workspace_activity_log table
-              because this is computed when the workspace is written to the
-              database and the latter is logged at the end of the
-              WorkspaceCreateFlight.
+               ahead of the change_date in the workspace_activity_log table
+               because this is computed when the workspace is written to the
+               database and the latter is logged at the end of the
+               WorkspaceCreateFlight.
             defaultValueComputed: now()
         - column:
             name: created_by_email
@@ -34,10 +34,10 @@ databaseChangeLog:
                     nullable: false
                 remarks: |
                     Timestamp when this resource is created. This will be slightly
-              ahead of the change_date in the workspace_activity_log table
-              because this is computed when the workspace is written to the
-              database and the latter is logged at the end of the
-              the resource creation flight.
+                    ahead of the change_date in the workspace_activity_log table
+                    because this is computed when the workspace is written to the
+                    database and the latter is logged at the end of the
+                    the resource creation flight.
                 defaultValueComputed: now()
           - column:
                 name: created_by_email
@@ -55,8 +55,8 @@ databaseChangeLog:
                     nullable: false
                 remarks: |
                     Timestamp when this folder is created. This will be slightly
-              ahead of the change_date in the workspace_activity_log table
-              because they are two separate database writes.
+                    ahead of the change_date in the workspace_activity_log table
+                    because they are two separate database writes.
                 defaultValueComputed: now()
           - column:
                 name: created_by_email
