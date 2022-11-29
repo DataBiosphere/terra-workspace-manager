@@ -39,6 +39,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
@@ -62,18 +63,38 @@ public class AzureControlledStorageContainerFlightTest extends BaseAzureConnecte
   @Autowired private AzureStorageAccessService azureStorageAccessService;
 
   private Workspace sharedWorkspace;
+  private TestLandingZoneManager testLandingZoneManager;
   private UUID workspaceUuid;
+  private String storageAccountName;
 
   @BeforeAll
   public void setup() throws InterruptedException {
     sharedWorkspace = azureTestUtils.createWorkspace(workspaceService);
     workspaceUuid = sharedWorkspace.getWorkspaceId();
     azureUtils.createCloudContext(workspaceUuid, userAccessUtils.defaultUserAuthRequest());
+    // create quasi landing zone with a single resource - shared storage account
+    storageAccountName = "lzsharedstorageaccount";
+    UUID landingZoneId = UUID.fromString(landingZoneTestUtils.getDefaultLandingZoneId());
+    testLandingZoneManager =
+        new TestLandingZoneManager(
+            azureCloudContextService,
+            landingZoneDao,
+            workspaceDao,
+            crlService,
+            azureConfig,
+            workspaceUuid);
+
+    testLandingZoneManager.createLandingZoneWithSharedStorageAccount(
+        landingZoneId, workspaceUuid, storageAccountName, "eastus");
   }
 
   @AfterAll
   public void cleanup() {
     workspaceService.deleteWorkspace(sharedWorkspace, userAccessUtils.defaultUserAuthRequest());
+    testLandingZoneManager.deleteLandingZoneWithSharedStorageAccount(
+        UUID.fromString(landingZoneTestUtils.getDefaultLandingZoneId()),
+        azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
+        storageAccountName);
   }
 
   @Test
@@ -147,25 +168,7 @@ public class AzureControlledStorageContainerFlightTest extends BaseAzureConnecte
   public void createAndDeleteAzureStorageContainerBasedOnLandingZoneSharedStorageAccount()
       throws InterruptedException {
     String storageAccountName = String.format("lzsharedstacc%s", TestUtils.getRandomString(6));
-
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
-
-    // create quasi landing zone with a single resource - shared storage account
-    UUID landingZoneId = UUID.fromString(landingZoneTestUtils.getDefaultLandingZoneId());
-
-    TestLandingZoneManager testLandingZoneManager =
-        new TestLandingZoneManager(
-            azureCloudContextService,
-            landingZoneDao,
-            workspaceDao,
-            crlService,
-            azureConfig,
-            workspaceUuid);
-
-    testLandingZoneManager.createLandingZoneWithSharedStorageAccount(
-        landingZoneId, workspaceUuid, storageAccountName, "eastus");
-
-    TimeUnit.MINUTES.sleep(1);
 
     // Submit a storage container creation flight and then verify the resource exists in the
     // workspace.
@@ -196,12 +199,6 @@ public class AzureControlledStorageContainerFlightTest extends BaseAzureConnecte
         azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
         containerResource.getStorageContainerName(),
         null); // Don't sleep/verify deletion yet.
-
-    // clean up resources - delete lz database record and storage account
-    testLandingZoneManager.deleteLandingZoneWithSharedStorageAccount(
-        landingZoneId,
-        azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
-        storageAccountName);
   }
 
   @Test
@@ -240,6 +237,7 @@ public class AzureControlledStorageContainerFlightTest extends BaseAzureConnecte
     // no need to clean up resources
   }
 
+  @Disabled("TODO(TOAZ-286): Re-enable this test when the ticket is fixed")
   @Test
   public void
       createAzureStorageContainerFlightFailedBecauseLandingZoneDoesntHaveSharedStorageAccount()
@@ -252,7 +250,7 @@ public class AzureControlledStorageContainerFlightTest extends BaseAzureConnecte
     azureUtils.createCloudContext(workspaceId, userRequest);
 
     // create quasi landing zone without resources
-    UUID landingZoneId = UUID.fromString(landingZoneTestUtils.getDefaultLandingZoneId());
+    UUID alternateLandingZoneId = UUID.randomUUID();
 
     TestLandingZoneManager testLandingZoneManager =
         new TestLandingZoneManager(
@@ -263,10 +261,9 @@ public class AzureControlledStorageContainerFlightTest extends BaseAzureConnecte
             azureConfig,
             workspaceId);
 
-    testLandingZoneManager.createLandingZoneWithoutResources(landingZoneId, workspaceId);
+    testLandingZoneManager.createLandingZoneWithoutResources(alternateLandingZoneId, workspaceId);
 
-    // Submit a storage container creation flight and then verify the resource exists in the
-    // workspace.
+    // Submit a storage container creation flight which should error out
     final UUID containerResourceId = UUID.randomUUID();
     final String storageContainerName = ControlledResourceFixtures.uniqueBucketName();
     ControlledAzureStorageContainerResource containerResource =
@@ -289,10 +286,10 @@ public class AzureControlledStorageContainerFlightTest extends BaseAzureConnecte
 
     assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
     assertTrue(flightState.getException().isPresent());
-    assertEquals(flightState.getException().get().getClass(), ResourceNotFoundException.class);
+    assertEquals(ResourceNotFoundException.class, flightState.getException().get().getClass());
 
-    // clean up resources - delete lz database record only
-    testLandingZoneManager.deleteLandingZoneWithoutResources(landingZoneId);
+    // clean up resources - delete alternate lz database record only
+    testLandingZoneManager.deleteLandingZoneWithoutResources(alternateLandingZoneId);
   }
 
   @Test
@@ -378,28 +375,7 @@ public class AzureControlledStorageContainerFlightTest extends BaseAzureConnecte
   @Test
   public void generateAzureStorageContainerSasTokenBasedOnLandingZoneSharedStorageAccount()
       throws InterruptedException {
-    // name of the shared storage account in landing zone
-    String storageAccountName = String.format("lzsharedsa%s", Instant.now().getEpochSecond());
-
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
-
-    // create quasi landing zone with a single resource - shared storage account
-    UUID landingZoneId = UUID.fromString(landingZoneTestUtils.getDefaultLandingZoneId());
-
-    TestLandingZoneManager testLandingZoneManager =
-        new TestLandingZoneManager(
-            azureCloudContextService,
-            landingZoneDao,
-            workspaceDao,
-            crlService,
-            azureConfig,
-            workspaceUuid);
-
-    testLandingZoneManager.createLandingZoneWithSharedStorageAccount(
-        landingZoneId, workspaceUuid, storageAccountName, "eastus");
-
-    TimeUnit.MINUTES.sleep(1);
-
     // Submit a storage container creation flight and then verify the resource exists in the
     // workspace.
     final UUID containerResourceId = UUID.randomUUID();
@@ -434,12 +410,6 @@ public class AzureControlledStorageContainerFlightTest extends BaseAzureConnecte
     assertNotNull(azureSasBundle);
     assertNotNull(azureSasBundle.sasToken());
     assertNotNull(azureSasBundle.sasUrl());
-
-    // clean up resources - delete lz database record and storage account
-    testLandingZoneManager.deleteLandingZoneWithSharedStorageAccount(
-        landingZoneId,
-        azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
-        storageAccountName);
   }
 
   private void verifyStorageAccountContainerIsDeleted(
