@@ -167,7 +167,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
   }
 
   @Test
-  public void createWorkspace_validatesFields() throws Exception {
+  public void createWorkspace() throws Exception {
     ApiCreatedWorkspace workspace = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
 
     ApiWorkspaceDescription getWorkspace =

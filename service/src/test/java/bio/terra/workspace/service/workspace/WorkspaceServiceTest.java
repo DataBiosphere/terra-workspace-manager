@@ -677,20 +677,10 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     workspaceService.createWorkspace(request, null, null, USER_REQUEST);
 
     // Next, add a data reference to that workspace.
-    UUID resourceId = UUID.randomUUID();
     ReferencedDataRepoSnapshotResource snapshot =
-        new ReferencedDataRepoSnapshotResource(
-            workspaceUuid,
-            resourceId,
-            "fake_data_reference",
-            null,
-            CloningInstructions.COPY_NOTHING,
-            "fakeinstance",
-            "fakesnapshot",
-            /*resourceLineage=*/ null,
-            /*properties=*/ Map.of(),
-            "foo@gmail.com",
-            /*createdDate*/ null);
+        ReferenceResourceFixtures.makeDataRepoSnapshotResource(workspaceUuid);
+    UUID resourceId = snapshot.getResourceId();
+
     referenceResourceService.createReferenceResource(snapshot, USER_REQUEST);
 
     // Validate that the reference exists.

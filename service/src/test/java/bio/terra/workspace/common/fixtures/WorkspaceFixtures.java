@@ -1,5 +1,7 @@
 package bio.terra.workspace.common.fixtures;
 
+import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
+
 import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiProperties;
 import bio.terra.workspace.generated.model.ApiProperty;
@@ -37,7 +39,7 @@ public class WorkspaceFixtures {
     return createWorkspaceRequestBody(ApiWorkspaceStageModel.MC_WORKSPACE);
   }
 
-  public static Workspace createDefaultMCWorkspace() {
+  public static Workspace createDefaultMcWorkspace() {
     return new Workspace(
         UUID.randomUUID(),
         RandomStringUtils.randomAlphabetic(10).toLowerCase(Locale.ROOT),
@@ -46,7 +48,7 @@ public class WorkspaceFixtures {
         new SpendProfileId("default-spend"),
         Collections.emptyMap(),
         WorkspaceStage.MC_WORKSPACE,
-        "foo@gmail.com",
+        DEFAULT_USER_EMAIL,
         null);
   }
 
@@ -78,7 +80,7 @@ public class WorkspaceFixtures {
         .workspaceId(id)
         .userFacingId("a" + id)
         .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-        .createdByEmail("foo@gmail.com");
+        .createdByEmail(DEFAULT_USER_EMAIL);
   }
 
   public static ApiCreateWorkspaceRequestBody createWorkspaceRequestBody(

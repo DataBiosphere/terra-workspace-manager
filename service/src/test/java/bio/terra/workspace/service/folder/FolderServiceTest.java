@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.folder;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
+import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -276,7 +277,7 @@ public class FolderServiceTest extends BaseConnectedTest {
             null,
             parentFolderId,
             Map.of(),
-            "foo@gmail.com",
+            DEFAULT_USER_EMAIL,
             null));
   }
 

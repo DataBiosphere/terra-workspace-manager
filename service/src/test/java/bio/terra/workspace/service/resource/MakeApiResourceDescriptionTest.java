@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource;
 
+import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -73,7 +74,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
             datasetName,
             /*resourceLineage=*/ null,
             Map.of(),
-            "foo@gmail.com",
+            DEFAULT_USER_EMAIL,
             /*createdDate*/ null);
 
     ApiResourceDescription resourceDescription =
@@ -104,7 +105,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
             datatableName,
             /*resourceLineage=*/ null,
             /*properties=*/ Map.of(),
-            "foo@gmail.com",
+            DEFAULT_USER_EMAIL,
             /*createdDate*/ null);
 
     ApiResourceDescription resourceDescription =
@@ -134,7 +135,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
             snapshotId,
             /*resourceLineage=*/ null,
             /*properties=*/ Map.of(),
-            "foo@gmail.com",
+            DEFAULT_USER_EMAIL,
             /*createdDate*/ null);
 
     ApiResourceDescription resourceDescription =
@@ -161,7 +162,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
             bucketName,
             /*resourceLineage=*/ null,
             /*properties=*/ Map.of(),
-            "foo@gmail.com",
+            DEFAULT_USER_EMAIL,
             /*createdDate*/ null);
 
     ApiResourceDescription resourceDescription =
@@ -215,7 +216,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
               bucketName,
               /*resourceLineage=*/ null,
               /*properties=*/ Map.of(),
-              "foo@gmail.com",
+              DEFAULT_USER_EMAIL,
               /*createdDate*/ null);
 
       ApiResourceDescription resourceDescription =
@@ -248,7 +249,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
               projectId,
               /*resourceLineage=*/ null,
               /*properties=*/ Map.of(),
-              "foo@gmail.com",
+              DEFAULT_USER_EMAIL,
               /*createdDate*/ null);
 
       ApiResourceDescription resourceDescription =

@@ -4,6 +4,7 @@ import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertM
 
 import bio.terra.stairway.ShortUUID;
 import bio.terra.workspace.common.utils.AzureVmUtils;
+import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
@@ -84,7 +85,6 @@ public class ControlledResourceFixtures {
   public static final String AZURE_SUBNET_NAME_PREFIX = "subnet";
   public static final String AZURE_VM_NAME_PREFIX = "vm";
   public static final Map<String, String> DEFAULT_RESOURCE_PROPERTIES = Map.of("foo", "bar");
-  public static final String DEFAULT_USER_EMAIL = "foo@gmail.com";
 
   public static final ApiGcpGcsBucketCreationParameters GOOGLE_BUCKET_CREATION_PARAMETERS_MINIMAL =
       new ApiGcpGcsBucketCreationParameters()
@@ -313,7 +313,7 @@ public class ControlledResourceFixtures {
         bucketName,
         /*resourceLineage=*/ null,
         Map.of(),
-        "foo@gmail.com",
+        MockMvcUtils.DEFAULT_USER_EMAIL,
         /*createdDate=*/ null);
   }
 
@@ -334,7 +334,7 @@ public class ControlledResourceFixtures {
         region,
         /*resourceLineage=*/ null,
         /*properties=*/ Map.of(),
-        "foo@gmail.com",
+        MockMvcUtils.DEFAULT_USER_EMAIL,
         /*createdDate*/ null);
   }
 
@@ -355,7 +355,7 @@ public class ControlledResourceFixtures {
         region,
         /*resourceLineage=*/ null,
         /*properties=*/ Map.of(),
-        "foo@gmail.com",
+        MockMvcUtils.DEFAULT_USER_EMAIL,
         /*createdDate*/ null);
   }
 
@@ -377,7 +377,7 @@ public class ControlledResourceFixtures {
         size,
         /*resourceLineage=*/ null,
         /*properties=*/ Map.of(),
-        "foo@gmail.com",
+        MockMvcUtils.DEFAULT_USER_EMAIL,
         /*createdDate*/ null);
   }
 
@@ -402,7 +402,7 @@ public class ControlledResourceFixtures {
         creationParameters.getRegion(),
         /*resourceLineage=*/ null,
         /*properties=*/ Map.of(),
-        "foo@gmail.com",
+        MockMvcUtils.DEFAULT_USER_EMAIL,
         /*createdDate*/ null);
   }
 
@@ -424,7 +424,7 @@ public class ControlledResourceFixtures {
         region,
         /*resourceLineage=*/ null,
         /*properties=*/ Map.of(),
-        "foo@gmail.com",
+        MockMvcUtils.DEFAULT_USER_EMAIL,
         /*createdDate*/ null);
   }
 
@@ -467,7 +467,7 @@ public class ControlledResourceFixtures {
         storageContainerName,
         /*resourceLineage=*/ null,
         /*properties=*/ Map.of(),
-        "foo@gmail.com",
+        MockMvcUtils.DEFAULT_USER_EMAIL,
         /*createdDate*/ null);
   }
 
@@ -517,7 +517,7 @@ public class ControlledResourceFixtures {
         creationParameters.getDiskId(),
         /*resourceLineage=*/ null,
         /*properties=*/ Map.of(),
-        "foo@gmail.com",
+        MockMvcUtils.DEFAULT_USER_EMAIL,
         /*createdDate*/ null);
   }
 
@@ -536,7 +536,7 @@ public class ControlledResourceFixtures {
         .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
         .managedBy(ManagedByType.MANAGED_BY_USER)
         .properties(DEFAULT_RESOURCE_PROPERTIES)
-        .createdByEmail(DEFAULT_USER_EMAIL);
+        .createdByEmail(MockMvcUtils.DEFAULT_USER_EMAIL);
   }
 
   /**
@@ -630,7 +630,7 @@ public class ControlledResourceFixtures {
         .assignedUser("myusername@mydomain.mine")
         .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
         .managedBy(ManagedByType.MANAGED_BY_USER)
-        .createdByEmail(DEFAULT_USER_EMAIL);
+        .createdByEmail(MockMvcUtils.DEFAULT_USER_EMAIL);
   }
 
   public static ControlledAiNotebookInstanceResource.Builder makeDefaultAiNotebookInstance() {

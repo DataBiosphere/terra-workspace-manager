@@ -9,6 +9,8 @@ import static bio.terra.workspace.common.utils.MockMvcUtils.FOLDER_V1_PATH_FORMA
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -184,7 +186,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
 
     ApiFolder retrievedFolder = getFolder(workspaceId, firstFolder.getId());
 
-    assertTrue(isEqual(firstFolder, retrievedFolder));
+    assertEquals(firstFolder, retrievedFolder);
     assertNotNull(retrievedFolder.getCreatedDate());
   }
 
@@ -222,19 +224,13 @@ public class FolderApiControllerTest extends BaseUnitTest {
   public void listFolders_listAllFoldersInAWorkspace() throws Exception {
     UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     var displayName = "foo";
-
     ApiFolder firstFolder = createFolder(workspaceId, displayName, /*parentFolderId=*/ null);
     ApiFolder secondFolder =
         createFolder(workspaceId, displayName, /*parentFolderId=*/ firstFolder.getId());
 
-    ApiFolderList retrievedFolders = listFolders(workspaceId);
+    List<ApiFolder> retrievedFolders = listFolders(workspaceId).getFolders();
 
-    assertTrue(
-        retrievedFolders.getFolders().stream()
-            .anyMatch(folder -> folder.getId().equals(firstFolder.getId())));
-    assertTrue(
-        retrievedFolders.getFolders().stream()
-            .anyMatch(folder -> folder.getId().equals(secondFolder.getId())));
+    assertThat(retrievedFolders, containsInAnyOrder(firstFolder, secondFolder));
   }
 
   @Test

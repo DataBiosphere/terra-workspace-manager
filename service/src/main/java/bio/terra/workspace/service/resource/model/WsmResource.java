@@ -45,7 +45,7 @@ public abstract class WsmResource {
   // Properties map will be empty if there's no properties set on the resource.
   private final ImmutableMap<String, String> properties;
   private final String createdByEmail;
-  private final OffsetDateTime createdDate;
+  private final @Nullable OffsetDateTime createdDate;
 
   /**
    * construct from individual fields
@@ -57,6 +57,11 @@ public abstract class WsmResource {
    * @param description free-form text description of the resource
    * @param cloningInstructions how to treat the resource when cloning the workspace
    * @param resourceLineage resource lineage
+   * @param properties key-value pairs of the resource
+   * @param createdByEmail email of whom created the resource
+   * @param createdDate date-time when the resource is created. Null only when building the
+   *     WsmResource to create. Postgres will compute the createdDate when the resource is written
+   *     to the database.
    */
   public WsmResource(
       UUID workspaceUuid,

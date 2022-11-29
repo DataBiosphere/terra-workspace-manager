@@ -1,5 +1,6 @@
 package bio.terra.workspace.db;
 
+import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.unit.WorkspaceUnitTestUtils.createWorkspaceWithoutGcpContext;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -464,7 +465,7 @@ public class FolderDaoTest extends BaseUnitTest {
         String.format("This is %s folder", displayName),
         parentFolderId,
         properties,
-        "foo@gmail.com",
+        DEFAULT_USER_EMAIL,
         null);
   }
 }

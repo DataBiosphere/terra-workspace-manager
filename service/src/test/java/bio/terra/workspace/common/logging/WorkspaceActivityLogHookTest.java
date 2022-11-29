@@ -1,6 +1,7 @@
 package bio.terra.workspace.common.logging;
 
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.buildMcWorkspace;
+import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.FOLDER_ID;
@@ -147,7 +148,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   @Test
   void deleteWorkspaceFlightFails_workspaceStillExist_NotLogChangeDetails()
       throws InterruptedException {
-    var workspace = WorkspaceFixtures.createDefaultMCWorkspace();
+    var workspace = WorkspaceFixtures.createDefaultMcWorkspace();
     var workspaceUuid = workspace.getWorkspaceId();
     var emptyChangeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
     assertTrue(emptyChangeDetails.isEmpty());
@@ -183,7 +184,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   @Test
   void deleteGcpCloudContextFlightFails_cloudContextStillExist_notLogChangeDetails()
       throws InterruptedException {
-    var workspace = WorkspaceFixtures.createDefaultMCWorkspace();
+    var workspace = WorkspaceFixtures.createDefaultMcWorkspace();
     var workspaceUuid = workspace.getWorkspaceId();
     var emptyChangeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
     assertTrue(emptyChangeDetails.isEmpty());
@@ -261,7 +262,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
             null,
             null,
             Map.of(),
-            "foo@gmail.com",
+            DEFAULT_USER_EMAIL,
             null);
     FlightMap inputParams = buildInputParams(workspaceId, OperationType.DELETE);
     inputParams.put(FOLDER_ID, fooFolder.id());
@@ -289,7 +290,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
                 null,
                 null,
                 Map.of(),
-                "foo@gmail.com",
+                DEFAULT_USER_EMAIL,
                 null));
     FlightMap inputParams = buildInputParams(workspaceId, OperationType.DELETE);
     inputParams.put(FOLDER_ID, fooFolder.id());

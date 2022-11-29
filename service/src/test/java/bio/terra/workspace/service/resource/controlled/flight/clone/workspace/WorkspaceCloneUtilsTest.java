@@ -1,8 +1,8 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeControlledResourceFieldsBuilder;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.uniqueDatasetId;
+import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.service.resource.controlled.flight.clone.workspace.WorkspaceCloneUtils.buildDestinationControlledBigQueryDataset;
 import static bio.terra.workspace.service.resource.controlled.flight.clone.workspace.WorkspaceCloneUtils.buildDestinationControlledGcsBucket;
 import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties.FOLDER_ID_KEY;
@@ -13,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
+import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
@@ -189,7 +190,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             RandomStringUtils.randomAlphabetic(5),
             "This is a cloned private bucket",
             // Gcs bucket cloud instance id must be lower-case.
-            RandomStringUtils.randomAlphabetic(5).toLowerCase(Locale.ROOT),
+            TestUtils.appendRandomNumber("gcsbucket"),
             DEFAULT_USER_EMAIL);
 
     assertEquals(PrivateResourceState.INITIALIZING, bucketToClone.getPrivateResourceState().get());
@@ -211,7 +212,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             /*name=*/ RandomStringUtils.randomAlphabetic(5),
             /*description=*/ "This is a cloned bucket",
             // Gcs bucket cloud instance id must be lower-case.
-            /*cloudInstanceName=*/ RandomStringUtils.randomAlphabetic(5).toLowerCase(Locale.ROOT),
+            /*cloudInstanceName=*/ TestUtils.appendRandomNumber("gcsbucket"),
             DEFAULT_USER_EMAIL);
 
     ImmutableMap<String, String> properties = bucketToClone.getProperties();

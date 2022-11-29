@@ -1,7 +1,7 @@
 package bio.terra.workspace.common.fixtures;
 
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_USER_EMAIL;
+import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.common.utils.TestUtils.appendRandomNumber;
 
 import bio.terra.workspace.common.utils.TestUtils;
@@ -55,7 +55,7 @@ public class ReferenceResourceFixtures {
         "polaroid",
         /*resourceLineage=*/ null,
         /*properties*/ DEFAULT_RESOURCE_PROPERTIES,
-        "foo@gmail.com",
+        DEFAULT_USER_EMAIL,
         /*createdDate*/ null);
   }
 
@@ -73,7 +73,7 @@ public class ReferenceResourceFixtures {
         bqDataset,
         /*resourceLineage=*/ null,
         /*properties*/ DEFAULT_RESOURCE_PROPERTIES,
-        "foo@gmail.com",
+        DEFAULT_USER_EMAIL,
         /*createdDate*/ null);
   }
 

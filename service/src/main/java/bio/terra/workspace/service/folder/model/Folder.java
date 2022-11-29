@@ -24,7 +24,9 @@ public record Folder(
     Folder f = (Folder) o;
     return new EqualsBuilder()
         .append(id, f.id)
+        .append(workspaceId, f.workspaceId)
         .append(displayName, f.displayName)
+        .append(description, f.description)
         .append(parentFolderId, f.parentFolderId)
         .append(properties, f.properties)
         .append(createdByEmail, f.createdByEmail)

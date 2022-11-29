@@ -1,6 +1,6 @@
 databaseChangeLog:
 - changeSet:
-    id: Add created_date and created_by columns
+    id: Add created_date and created_by_email columns
     author: yuhuyoyo
     changes:
     - addColumn:

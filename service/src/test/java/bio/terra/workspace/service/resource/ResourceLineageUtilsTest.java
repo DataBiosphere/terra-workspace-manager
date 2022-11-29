@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource;
 
+import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import bio.terra.workspace.common.BaseUnitTest;
@@ -39,7 +40,7 @@ public class ResourceLineageUtilsTest extends BaseUnitTest {
             "polaroid",
             /*resourceLineage=*/ null,
             propertyMap,
-            "foo@gmail.com",
+            DEFAULT_USER_EMAIL,
             /*createdDate*/ null);
 
     assertEquals(new ArrayList<>(), resource.getResourceLineage());
@@ -68,7 +69,7 @@ public class ResourceLineageUtilsTest extends BaseUnitTest {
             .attributes(attributesJson)
             .resourceLineage(null)
             .properties(propertyMap)
-            .createdByEmail("foo@gmail.com")
+            .createdByEmail(DEFAULT_USER_EMAIL)
             .createdDate(OffsetDateTime.now());
 
     var resource = new ReferencedDataRepoSnapshotResource(dbResource);
@@ -95,7 +96,7 @@ public class ResourceLineageUtilsTest extends BaseUnitTest {
             "polaroid",
             lineage,
             propertyMap,
-            "foo@gmail.com",
+            DEFAULT_USER_EMAIL,
             /*createdDate*/ null);
 
     assertEquals(lineage, resource.getResourceLineage());
@@ -127,7 +128,7 @@ public class ResourceLineageUtilsTest extends BaseUnitTest {
             .attributes(attributesJson)
             .resourceLineage(lineage)
             .properties(propertyMap)
-            .createdByEmail("foo@gmail.com")
+            .createdByEmail(DEFAULT_USER_EMAIL)
             .createdDate(OffsetDateTime.now());
 
     var resource = new ReferencedDataRepoSnapshotResource(dbResource);

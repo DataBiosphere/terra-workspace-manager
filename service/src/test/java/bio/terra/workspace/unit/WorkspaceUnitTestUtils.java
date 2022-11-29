@@ -31,7 +31,7 @@ public class WorkspaceUnitTestUtils {
    * workspace id.
    */
   public static UUID createWorkspaceWithoutGcpContext(WorkspaceDao workspaceDao) {
-    Workspace workspace = WorkspaceFixtures.createDefaultMCWorkspace();
+    Workspace workspace = WorkspaceFixtures.createDefaultMcWorkspace();
     workspaceDao.createWorkspace(workspace, /* applicationIds= */ null);
     return workspace.getWorkspaceId();
   }
