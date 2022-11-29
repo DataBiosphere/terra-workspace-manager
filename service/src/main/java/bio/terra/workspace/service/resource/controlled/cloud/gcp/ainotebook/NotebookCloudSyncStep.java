@@ -56,8 +56,9 @@ public class NotebookCloudSyncStep implements Step {
     List<Binding> newBindings = createBindings(cloudContext, flightContext.getWorkingMap());
 
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
-    final String requestedLocation =
-        flightContext.getWorkingMap().get(CREATE_NOTEBOOK_LOCATION, String.class);
+    String requestedLocation =
+        FlightUtils.getRequired(
+            flightContext.getWorkingMap(), CREATE_NOTEBOOK_LOCATION, String.class);
     InstanceName instanceName =
         resource.toInstanceName(cloudContext.getGcpProjectId(), requestedLocation);
     try {

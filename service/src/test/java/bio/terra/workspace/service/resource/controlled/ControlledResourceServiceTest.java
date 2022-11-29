@@ -66,6 +66,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.Note
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.RetrieveAiNotebookResourceAttributesStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.RetrieveNetworkNameStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.UpdateAiNotebookAttributesStep;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.UpdateNotebookResourceRegionMetadataStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.CreateBigQueryDatasetStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.DeleteBigQueryDatasetStep;
@@ -244,6 +245,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     retrySteps.put(
         CreateAiNotebookInstanceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(NotebookCloudSyncStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        UpdateNotebookResourceRegionMetadataStep.class.getName(),
+        StepStatus.STEP_RESULT_FAILURE_RETRY);
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
 
@@ -353,6 +357,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         GrantPetUsagePermissionStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
         CreateAiNotebookInstanceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        UpdateControlledResourceMetadataStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder()
             // Fail after the last step to test that everything is deleted on undo.

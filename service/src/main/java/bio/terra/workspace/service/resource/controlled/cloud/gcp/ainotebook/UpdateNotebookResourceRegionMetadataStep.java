@@ -6,16 +6,17 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 
-public class UpdateMetadataRegionStep implements Step {
+public class UpdateNotebookResourceRegionMetadataStep implements Step {
 
   private final ControlledAiNotebookInstanceResource resource;
   private final ResourceDao resourceDao;
 
-  public UpdateMetadataRegionStep(
+  public UpdateNotebookResourceRegionMetadataStep(
       ControlledAiNotebookInstanceResource resource, ResourceDao resourceDao) {
     this.resource = resource;
     this.resourceDao = resourceDao;
@@ -27,8 +28,9 @@ public class UpdateMetadataRegionStep implements Step {
     String previousAttributes = resource.attributesToJson();
     flightContext.getWorkingMap().put(ResourceKeys.PREVIOUS_ATTRIBUTES, previousAttributes);
 
-    final String requestedLocation =
-        flightContext.getWorkingMap().get(CREATE_NOTEBOOK_LOCATION, String.class);
+    String requestedLocation =
+        FlightUtils.getRequired(
+            flightContext.getWorkingMap(), CREATE_NOTEBOOK_LOCATION, String.class);
     String newAttributes =
         DbSerDes.toJson(
             new ControlledAiNotebookInstanceAttributes(
@@ -41,7 +43,7 @@ public class UpdateMetadataRegionStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    final String previousAttributes =
+    String previousAttributes =
         flightContext.getWorkingMap().get(ResourceKeys.PREVIOUS_ATTRIBUTES, String.class);
     resourceDao.updateResource(
         resource.getWorkspaceId(), resource.getResourceId(), null, null, previousAttributes, null);

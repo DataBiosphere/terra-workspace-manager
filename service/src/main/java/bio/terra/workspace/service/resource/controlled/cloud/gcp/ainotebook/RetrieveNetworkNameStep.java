@@ -7,13 +7,13 @@ import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKey
 
 import bio.terra.cloudres.google.compute.CloudComputeCow;
 import bio.terra.common.exception.BadRequestException;
+import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
@@ -67,8 +67,7 @@ public class RetrieveNetworkNameStep implements Step {
     ZoneList zoneList = crlService.getCloudComputeCow().zones().list(projectId).execute();
 
     return zoneList.getItems().stream()
-        .filter(
-            zone -> GcpUtils.extractNetworkNameFromUrl(zone.getRegion()).equalsIgnoreCase(location))
+        .filter(zone -> extractNameFromUrl(zone.getRegion()).equalsIgnoreCase(location))
         .map(zone -> zone.getName())
         .sorted()
         .findAny()
@@ -80,7 +79,7 @@ public class RetrieveNetworkNameStep implements Step {
       // GCP is a little loose with its zone/location naming. An AI notebook location has the
       // same id as a GCE zone. Use the location to look up the zone.
       Zone zone = crlService.getCloudComputeCow().zones().get(projectId, location).execute();
-      return GcpUtils.extractNetworkNameFromUrl(zone.getRegion());
+      return extractNameFromUrl(zone.getRegion());
     } catch (GoogleJsonResponseException e) {
       if (e.getStatusCode() == HttpStatus.NOT_FOUND.value()) {
         // Throw a better error message if the location isn't known.
@@ -98,9 +97,22 @@ public class RetrieveNetworkNameStep implements Step {
     // Arbitrarily grab the first subnetwork. We don't have a use case for multiple subnetworks or
     // them mattering yet, so use any available subnetwork.
     Subnetwork subnetwork = subnetworks.getItems().get(0);
-    workingMap.put(
-        CREATE_NOTEBOOK_NETWORK_NAME, GcpUtils.extractNetworkNameFromUrl(subnetwork.getNetwork()));
+    workingMap.put(CREATE_NOTEBOOK_NETWORK_NAME, extractNameFromUrl(subnetwork.getNetwork()));
     workingMap.put(CREATE_NOTEBOOK_SUBNETWORK_NAME, subnetwork.getName());
+  }
+
+  /**
+   * Extract the name from a network URL like
+   * "https://www.googleapis.com/compute/v1/projects/{PROJECT_ID}/global/networks/{NAME}" or route
+   * URL like "https://www.googleapis.com/compute/v1/projects/{PROJECT_ID}/regions/{REGION_NAME}"
+   */
+  public static String extractNameFromUrl(String url) {
+    int lastSlashIndex = url.lastIndexOf('/');
+    if (lastSlashIndex == -1) {
+      throw new InternalServerErrorException(
+          String.format("Unable to extract resource name from '%s'", url));
+    }
+    return url.substring(lastSlashIndex + 1);
   }
 
   @Override

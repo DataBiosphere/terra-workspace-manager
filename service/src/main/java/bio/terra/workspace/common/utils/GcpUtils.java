@@ -3,7 +3,6 @@ package bio.terra.workspace.common.utils;
 import bio.terra.cloudres.google.api.services.common.OperationCow;
 import bio.terra.cloudres.google.api.services.common.OperationUtils;
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
-import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.workspace.exceptions.SaCredentialsMissingException;
@@ -112,19 +111,5 @@ public class GcpUtils {
       throw new SaCredentialsMissingException(
           "Unable to find WSM service account credentials. Ensure WSM is actually running as a service account");
     }
-  }
-
-  /**
-   * Extract the name from a network URL like
-   * "https://www.googleapis.com/compute/v1/projects/{PROJECT_ID}/global/networks/{NAME}" or route
-   * URL like "https://www.googleapis.com/compute/v1/projects/{PROJECT_ID}/regions/{REGION_NAME}"
-   */
-  public static String extractNetworkNameFromUrl(String url) {
-    int lastSlashIndex = url.lastIndexOf('/');
-    if (lastSlashIndex == -1) {
-      throw new InternalServerErrorException(
-          String.format("Unable to extract resource name from '%s'", url));
-    }
-    return url.substring(lastSlashIndex + 1);
   }
 }

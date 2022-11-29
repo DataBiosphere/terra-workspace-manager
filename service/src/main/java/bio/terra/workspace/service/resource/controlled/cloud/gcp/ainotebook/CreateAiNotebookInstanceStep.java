@@ -20,6 +20,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.CliConfiguration;
 import bio.terra.workspace.app.configuration.external.VersionConfiguration;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAcceleratorConfig;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceContainerImage;
@@ -104,8 +105,9 @@ public class CreateAiNotebookInstanceStep implements Step {
             .getWorkingMap()
             .get(ControlledResourceKeys.GCP_CLOUD_CONTEXT, GcpCloudContext.class);
     String projectId = gcpCloudContext.getGcpProjectId();
-    final String requestedLocation =
-        flightContext.getWorkingMap().get(CREATE_NOTEBOOK_LOCATION, String.class);
+    String requestedLocation =
+        FlightUtils.getRequired(
+            flightContext.getWorkingMap(), CREATE_NOTEBOOK_LOCATION, String.class);
     InstanceName instanceName = resource.toInstanceName(projectId, requestedLocation);
 
     Instance instance =
@@ -263,8 +265,9 @@ public class CreateAiNotebookInstanceStep implements Step {
         flightContext
             .getWorkingMap()
             .get(ControlledResourceKeys.GCP_CLOUD_CONTEXT, GcpCloudContext.class);
-    final String requestedLocation =
-        flightContext.getWorkingMap().get(CREATE_NOTEBOOK_LOCATION, String.class);
+    String requestedLocation =
+        FlightUtils.getRequired(
+            flightContext.getWorkingMap(), CREATE_NOTEBOOK_LOCATION, String.class);
     InstanceName instanceName =
         resource.toInstanceName(gcpCloudContext.getGcpProjectId(), requestedLocation);
 
