@@ -106,7 +106,7 @@ public class RetrieveNetworkNameStep implements Step {
    * "https://www.googleapis.com/compute/v1/projects/{PROJECT_ID}/global/networks/{NAME}" or route
    * URL like "https://www.googleapis.com/compute/v1/projects/{PROJECT_ID}/regions/{REGION_NAME}"
    */
-  public static String extractNameFromUrl(String url) {
+  private static String extractNameFromUrl(String url) {
     int lastSlashIndex = url.lastIndexOf('/');
     if (lastSlashIndex == -1) {
       throw new InternalServerErrorException(
