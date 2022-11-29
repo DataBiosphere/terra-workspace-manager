@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.WORKSPACE_ID;
+
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
@@ -7,10 +9,8 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.FolderDao;
 import bio.terra.workspace.service.folder.model.Folder;
-import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.FolderKeys;
-import bio.terra.workspace.service.workspace.model.Workspace;
 import com.google.common.collect.ImmutableList;
 import java.util.HashMap;
 import java.util.Map;
@@ -30,17 +30,11 @@ public class CloneAllFoldersStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    FlightUtils.validateRequiredEntries(
-        context.getInputParameters(),
-        JobMapKeys.REQUEST.getKeyName(),
-        ControlledResourceKeys.SOURCE_WORKSPACE_ID);
-    var sourceWorkspaceId =
-        context.getInputParameters().get(ControlledResourceKeys.SOURCE_WORKSPACE_ID, UUID.class);
-    var destinationWorkspaceId =
-        context
-            .getInputParameters()
-            .get(JobMapKeys.REQUEST.getKeyName(), Workspace.class)
-            .getWorkspaceId();
+    UUID sourceWorkspaceId =
+        FlightUtils.getRequired(
+            context.getInputParameters(), ControlledResourceKeys.SOURCE_WORKSPACE_ID, UUID.class);
+    UUID destinationWorkspaceId =
+        FlightUtils.getRequired(context.getInputParameters(), WORKSPACE_ID, UUID.class);
 
     // Create and clone all folders
     ImmutableList<Folder> sourceFolders = folderDao.listFoldersInWorkspace(sourceWorkspaceId);
@@ -94,9 +88,7 @@ public class CloneAllFoldersStep implements Step {
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     var destinationWorkspaceId =
-        flightContext
-            .getInputParameters()
-            .get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
+        FlightUtils.getRequired(flightContext.getInputParameters(), WORKSPACE_ID, UUID.class);
     folderDao.deleteAllFolders(destinationWorkspaceId);
     return StepResult.getStepResultSuccess();
   }
