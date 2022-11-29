@@ -14,10 +14,13 @@ gpgkey=https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
 EOM
 
 # Install gcloud CLI
-yum install -q -y google-cloud-cli
+yum install -y google-cloud-cli
+
+sudo -u ec2-user -i <<'EOF'
+unset SUDO_UID
 
 # Install google auth python package
-pip install --upgrade google-auth
+pip3 install --upgrade google-auth
 
 # Copy in the Terra auth helper CLI (eventually this will install Terra CLI instead)
 WORKING_DIR=/home/ec2-user/terra
