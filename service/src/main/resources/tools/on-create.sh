@@ -14,7 +14,7 @@ gpgkey=https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
 EOM
 
 # Install gcloud CLI
-sudo yum install google-cloud-cli
+sudo yum install -q -y google-cloud-cli
 
 # Install google auth python package
 pip install --upgrade google-auth
