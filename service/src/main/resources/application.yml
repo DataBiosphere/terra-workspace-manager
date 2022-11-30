@@ -185,7 +185,6 @@ landingzone:
       - leonardo-prod@broad-dsde-prod.iam.gserviceaccount.com
   bpm.base-path: ${env.urls.bpm}
 
-
 # Feature flags
 # The general rule is that feature flags should be set here in their production setting
 # and overridden in non-production environments.
