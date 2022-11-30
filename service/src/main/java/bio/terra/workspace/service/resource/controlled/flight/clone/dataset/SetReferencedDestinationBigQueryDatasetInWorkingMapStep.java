@@ -7,7 +7,6 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -75,10 +74,6 @@ public class SetReferencedDestinationBigQueryDatasetInWorkingMapStep implements 
     UUID destinationFolderId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_FOLDER_ID, UUID.class);
 
-    var userEmail =
-        SamRethrow.onInterrupted(
-            () -> samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
-            "Get user status info from sam");
     ReferencedBigQueryDatasetResource destinationDatasetResource =
         sourceDataset
             .buildReferencedClone(
@@ -87,7 +82,7 @@ public class SetReferencedDestinationBigQueryDatasetInWorkingMapStep implements 
                 destinationFolderId,
                 resourceName,
                 description,
-                userEmail)
+                samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest))
             .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
 
     workingMap.put(
