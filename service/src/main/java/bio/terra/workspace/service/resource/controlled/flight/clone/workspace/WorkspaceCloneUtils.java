@@ -5,6 +5,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContai
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.DestinationStorageAccount;
+import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.StorageAccountType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.workspace.model.WsmCloneResourceResult;
@@ -66,8 +67,8 @@ public class WorkspaceCloneUtils {
             .common(
                 sourceContainer.buildControlledCloneResourceCommonFields(
                     destinationWorkspaceId, destinationResourceId, null, name, description));
-    if (!storageAccountInfo.isLandingZone()) {
-      builder = builder.storageAccountId(storageAccountInfo.resourceId());
+    if (StorageAccountType.WORKSPACE == storageAccountInfo.storageAccountType()) {
+      builder = builder.storageAccountId(storageAccountInfo.wsmResourceId());
     }
     return builder.build();
   }

@@ -27,10 +27,10 @@ import org.slf4j.LoggerFactory;
  * following this process:
  *
  * <ol>
- *   <li>Checks the destination workspace for a single storage account; if more than one is present
- *       we are in an unsupported state and fail out.
- *   <li>If no storage accounts are present, attempts to check the owning Landing Zone. If present,
- *       returns the storage account from the LZ, otherwise we fail out.
+ *   <li>Attempts to check the owning Landing Zone. If present, we return a
+ *       DestinationStorageAccount of type Landing zone with the Azure resource ID
+ *   <li>If no LZ storage acct is present, checks the destination workspace for a single storage
+ *       account; if more than one is present we are in an unsupported state and fail out.
  * </ol>
  */
 public class RetrieveDestinationStorageAccountResourceIdStep implements Step {
@@ -81,8 +81,9 @@ public class RetrieveDestinationStorageAccountResourceIdStep implements Step {
             .getWorkingMap()
             .put(
                 WorkspaceFlightMapKeys.ControlledResourceKeys
-                    .DESTINATION_WORKSPACE_STORAGE_ACCOUNT_RESOURCE_ID,
-                new DestinationStorageAccount(true, null));
+                    .DESTINATION_STORAGE_ACCOUNT_RESOURCE_ID,
+                new DestinationStorageAccount(
+                    StorageAccountType.LANDING_ZONE, lzStorageAcct.get().getResourceId(), null));
         return StepResult.getStepResultSuccess();
       }
     } catch (IllegalStateException | LandingZoneNotFoundException e) {
@@ -103,9 +104,11 @@ public class RetrieveDestinationStorageAccountResourceIdStep implements Step {
       context
           .getWorkingMap()
           .put(
-              WorkspaceFlightMapKeys.ControlledResourceKeys
-                  .DESTINATION_WORKSPACE_STORAGE_ACCOUNT_RESOURCE_ID,
-              new DestinationStorageAccount(false, sourceStorageAccounts.get(0).getResourceId()));
+              WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_STORAGE_ACCOUNT_RESOURCE_ID,
+              new DestinationStorageAccount(
+                  StorageAccountType.WORKSPACE,
+                  null,
+                  sourceStorageAccounts.get(0).getResourceId()));
       return StepResult.getStepResultSuccess();
     }
     if (sourceStorageAccounts.size() > 1) {
