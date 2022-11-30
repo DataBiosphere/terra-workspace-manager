@@ -43,7 +43,7 @@ public class CloneWorkspaceFlight extends Flight {
 
     addStep(new CreateIdsForFutureStepsStep());
 
-    // Only create a GCP cloud context if the source workspace has a GCP cloud context
+    // Only create a cloud context if the source workspace has a cloud context
     if (flightBeanBag
         .getGcpCloudContextService()
         .getGcpCloudContext(sourceWorkspaceId)
@@ -53,13 +53,12 @@ public class CloneWorkspaceFlight extends Flight {
           RetryRules.cloud());
       addStep(new AwaitCreateCloudContextFlightStep(), longCloudRetryRule);
     } else if (flightBeanBag
-            .getAzureCloudContextService()
-            .getAzureCloudContext(sourceWorkspaceId)
-            .isPresent()) {
-      // todo: do we need to make sure that the destination spend profile is the right cloud platform before cloning? Or should Rawls enforce that? probably needs to be wsm since it will fail hard if it tries to clone az->gcp or vice versa
+        .getAzureCloudContextService()
+        .getAzureCloudContext(sourceWorkspaceId)
+        .isPresent()) {
       addStep(
-              new LaunchCreateAzureContextFlightStep(flightBeanBag.getWorkspaceService()),
-              RetryRules.cloud());
+          new LaunchCreateAzureContextFlightStep(flightBeanBag.getWorkspaceService()),
+          RetryRules.cloud());
       addStep(new AwaitCreateCloudContextFlightStep(), cloudRetryRule);
     }
 

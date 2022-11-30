@@ -372,7 +372,7 @@ public class WorkspaceService {
       String jobId,
       AuthenticatedUserRequest userRequest,
       @Nullable String resultPath,
-      AzureCloudContext azureContext) {
+      @Nullable AzureCloudContext azureContext) {
     features.azureEnabledCheck();
 
     jobService
@@ -435,8 +435,7 @@ public class WorkspaceService {
       Workspace sourceWorkspace,
       AuthenticatedUserRequest userRequest,
       @Nullable String location,
-      Workspace destinationWorkspace,
-      @Nullable AzureCloudContext azureCloudContext) {
+      Workspace destinationWorkspace) {
     String workspaceUuid = sourceWorkspace.getWorkspaceId().toString();
     String jobDescription =
         String.format(
@@ -450,7 +449,9 @@ public class WorkspaceService {
     // Create the destination workspace synchronously first.
     createWorkspace(destinationWorkspace, null, applicationIds, userRequest);
 
-    // todo: how to determine if this should be a gcp or azure workspace? what do we do if there's no cloud context in source ws? It's still a GCP workspace? why does it even need to be different?
+    // todo: how to determine if this should be a gcp or azure workspace? what do we do if there's
+    // no cloud context in source ws? It's still a GCP workspace? why does it even need to be
+    // different?
     // Remaining steps are an async flight.
     return jobService
         .newJob()
@@ -465,7 +466,6 @@ public class WorkspaceService {
             ControlledResourceKeys.SOURCE_WORKSPACE_ID,
             sourceWorkspace.getWorkspaceId()) // TODO: remove this duplication
         .addParameter(ControlledResourceKeys.LOCATION, location)
-        .addParameter(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, azureCloudContext)
         .submit();
   }
 

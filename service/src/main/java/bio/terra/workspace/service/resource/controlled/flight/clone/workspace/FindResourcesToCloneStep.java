@@ -98,6 +98,7 @@ public class FindResourcesToCloneStep implements Step {
         || (StewardshipType.CONTROLLED == resource.getStewardshipType()
             && (WsmResourceType.CONTROLLED_GCP_GCS_BUCKET == resource.getResourceType()
                 || WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET == resource.getResourceType()
-            || WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER == resource.getResourceType()));
+                || WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER
+                    == resource.getResourceType()));
   }
 }

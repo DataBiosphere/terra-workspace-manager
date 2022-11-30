@@ -22,6 +22,7 @@ import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.azure.core.management.exception.ManagementException;
+import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,8 +75,11 @@ public class CopyAzureStorageContainerDefinitionStep implements Step {
         inputParameters.get(
             WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
     var destinationContainerName =
-        inputParameters.get(
-            WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_CONTAINER_NAME, String.class);
+        Optional.ofNullable(
+                inputParameters.get(
+                    WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_CONTAINER_NAME,
+                    String.class))
+            .orElse(sourceContainer.getStorageContainerName() + "-clone");
     var destinationResourceId =
         inputParameters.get(
             WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.class);
