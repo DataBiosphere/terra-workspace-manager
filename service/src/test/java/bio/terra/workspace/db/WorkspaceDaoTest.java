@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
@@ -88,7 +89,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
 
   @Test
   void createAndDeleteWorkspace() {
-    workspaceDao.createWorkspace(defaultWorkspace(), /* applicationIds */ null);
+    workspaceDao.createWorkspace(defaultWorkspace(workspaceUuid), /* applicationIds */ null);
 
     MapSqlParameterSource params =
         new MapSqlParameterSource().addValue("id", workspaceUuid.toString());
@@ -105,7 +106,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
 
   @Test
   void createAndGetWorkspace() {
-    Workspace createdWorkspace = defaultWorkspace();
+    Workspace createdWorkspace = defaultWorkspace(workspaceUuid);
     workspaceDao.createWorkspace(createdWorkspace, /* applicationIds */ null);
 
     Workspace workspace = workspaceDao.getWorkspace(workspaceUuid);
@@ -115,7 +116,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
 
   @Test
   void getWorkspacesFromList() {
-    Workspace realWorkspace = defaultWorkspace();
+    Workspace realWorkspace = defaultWorkspace(workspaceUuid);
     workspaceDao.createWorkspace(realWorkspace, /* applicationIds */ null);
     UUID fakeWorkspaceId = UUID.randomUUID();
     List<Workspace> workspaceList =
@@ -163,15 +164,10 @@ class WorkspaceDaoTest extends BaseUnitTest {
 
   @Test
   void offsetSkipsWorkspaceInList() {
-    Workspace firstWorkspace = defaultWorkspace();
+    Workspace firstWorkspace = defaultWorkspace(workspaceUuid);
     workspaceDao.createWorkspace(firstWorkspace, /* applicationIds */ null);
-    UUID uuid = UUID.randomUUID();
     Workspace secondWorkspace =
-        Workspace.builder()
-            .workspaceId(uuid)
-            .userFacingId(uuid.toString())
-            .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
-            .build();
+        WorkspaceFixtures.buildWorkspace(null, WorkspaceStage.RAWLS_WORKSPACE);
     workspaceDao.createWorkspace(secondWorkspace, /* applicationIds */ null);
     List<Workspace> workspaceList =
         workspaceDao.getWorkspacesMatchingList(
@@ -184,15 +180,11 @@ class WorkspaceDaoTest extends BaseUnitTest {
 
   @Test
   void listWorkspaceLimitEnforced() {
-    Workspace firstWorkspace = defaultWorkspace();
+    Workspace firstWorkspace = defaultWorkspace(workspaceUuid);
     workspaceDao.createWorkspace(firstWorkspace, /* applicationIds */ null);
-    UUID uuid = UUID.randomUUID();
     Workspace secondWorkspace =
-        Workspace.builder()
-            .workspaceId(uuid)
-            .userFacingId(uuid.toString())
-            .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
-            .build();
+        WorkspaceFixtures.buildWorkspace(null, WorkspaceStage.RAWLS_WORKSPACE);
+    ;
     workspaceDao.createWorkspace(secondWorkspace, /* applicationIds */ null);
     List<Workspace> workspaceList =
         workspaceDao.getWorkspacesMatchingList(
@@ -273,7 +265,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
 
   @Test
   void duplicateWorkspaceFails() {
-    Workspace workspace = defaultWorkspace();
+    Workspace workspace = defaultWorkspace(workspaceUuid);
     workspaceDao.createWorkspace(workspace, /* applicationIds */ null);
 
     assertThrows(
@@ -307,7 +299,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
 
     @BeforeEach
     void setUp() {
-      workspaceDao.createWorkspace(defaultWorkspace(), /* applicationIds */ null);
+      workspaceDao.createWorkspace(defaultWorkspace(workspaceUuid), /* applicationIds */ null);
     }
 
     @Test
@@ -367,12 +359,8 @@ class WorkspaceDaoTest extends BaseUnitTest {
     assertEquals("GCP", CloudPlatform.GCP.toString());
   }
 
-  private Workspace defaultWorkspace() {
-    return Workspace.builder()
-        .workspaceId(workspaceUuid)
-        .userFacingId(workspaceUuid.toString())
-        .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
-        .build();
+  private Workspace defaultWorkspace(UUID workspaceUuid) {
+    return WorkspaceFixtures.buildWorkspace(workspaceUuid, WorkspaceStage.RAWLS_WORKSPACE);
   }
 
   private GcpCloudContext makeCloudContext() {

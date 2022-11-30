@@ -976,14 +976,13 @@ public class MockMvcUtils {
       ApiCloningInstructionsEnum cloningInstructions)
       throws Exception {
     ApiCloneControlledGcpGcsBucketResult result =
-        cloneControlledGcsBucketAsync(
+        cloneControlledGcsBucketAsyncSuccess(
             userRequest,
             sourceWorkspaceId,
             sourceResourceId,
             destWorkspaceId,
             cloningInstructions,
-            /*bucketName=*/ "",
-            HttpStatus.SC_ACCEPTED);
+            /*bucketName=*/ "");
     UUID jobId = UUID.fromString(result.getJobReport().getId());
     while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
       Thread.sleep(/*millis=*/ 5000);
@@ -995,8 +994,10 @@ public class MockMvcUtils {
     return result;
   }
 
-  /** Call cloneGcsBucket() and return immediately; don't wait for flight to finish. */
-  public ApiCloneControlledGcpGcsBucketResult cloneControlledGcsBucketAsync(
+  /**
+   * Call cloneGcsBucket() and return immediately; don't wait for flight to finish. Expect error.
+   */
+  public void cloneControlledGcsBucketAsyncError(
       AuthenticatedUserRequest userRequest,
       UUID sourceWorkspaceId,
       UUID sourceResourceId,
@@ -1004,6 +1005,40 @@ public class MockMvcUtils {
       ApiCloningInstructionsEnum cloningInstructions,
       String destBucketName,
       int expectedCode)
+      throws Exception {
+    ApiCloneControlledGcpGcsBucketRequest request =
+        new ApiCloneControlledGcpGcsBucketRequest()
+            .destinationWorkspaceId(destWorkspaceId)
+            .cloningInstructions(cloningInstructions)
+            .name(TestUtils.appendRandomNumber(DEST_BUCKET_RESOURCE_NAME))
+            .jobControl(new ApiJobControl().id(UUID.randomUUID().toString()));
+    if (destBucketName != "") {
+      request.bucketName(destBucketName);
+    }
+    mockMvc
+        .perform(
+            addJsonContentType(
+                addAuth(
+                    post(CLONE_CONTROLLED_GCP_GCS_BUCKET_FORMAT.formatted(
+                            sourceWorkspaceId, sourceResourceId))
+                        .content(objectMapper.writeValueAsString(request)),
+                    userRequest)))
+        .andExpect(status().is(expectedCode));
+  }
+
+  /**
+   * Call cloneGcsBucket() and return immediately; don't wait for flight to finish. Expect success.
+   *
+   * <p>For some tests, sometimes the test will return 200 and other times 202 if the async job is
+   * still running.
+   */
+  public ApiCloneControlledGcpGcsBucketResult cloneControlledGcsBucketAsyncSuccess(
+      AuthenticatedUserRequest userRequest,
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId,
+      UUID destWorkspaceId,
+      ApiCloningInstructionsEnum cloningInstructions,
+      String destBucketName)
       throws Exception {
     ApiCloneControlledGcpGcsBucketRequest request =
         new ApiCloneControlledGcpGcsBucketRequest()
@@ -1024,14 +1059,11 @@ public class MockMvcUtils {
                                 sourceWorkspaceId, sourceResourceId))
                             .content(objectMapper.writeValueAsString(request)),
                         userRequest)))
-            .andExpect(status().is(expectedCode))
+            .andExpect(status().is2xxSuccessful())
             .andReturn()
             .getResponse()
             .getContentAsString();
-    // If an exception was thrown, deserialization won't work, so don't attempt it.
-    return expectedCode == HttpStatus.SC_ACCEPTED
-        ? objectMapper.readValue(serializedResponse, ApiCloneControlledGcpGcsBucketResult.class)
-        : null;
+    return objectMapper.readValue(serializedResponse, ApiCloneControlledGcpGcsBucketResult.class);
   }
 
   private ApiCloneControlledGcpGcsBucketResult getCloneControlledGcsBucketResult(
