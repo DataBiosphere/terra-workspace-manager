@@ -80,8 +80,7 @@ public class RetrieveDestinationStorageAccountResourceIdStep implements Step {
         context
             .getWorkingMap()
             .put(
-                WorkspaceFlightMapKeys.ControlledResourceKeys
-                    .DESTINATION_STORAGE_ACCOUNT_RESOURCE_ID,
+                WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_STORAGE_ACCOUNT_ID,
                 new DestinationStorageAccount(
                     StorageAccountType.LANDING_ZONE, lzStorageAcct.get().getResourceId(), null));
         return StepResult.getStepResultSuccess();
@@ -104,7 +103,7 @@ public class RetrieveDestinationStorageAccountResourceIdStep implements Step {
       context
           .getWorkingMap()
           .put(
-              WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_STORAGE_ACCOUNT_RESOURCE_ID,
+              WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_STORAGE_ACCOUNT_ID,
               new DestinationStorageAccount(
                   StorageAccountType.WORKSPACE,
                   null,

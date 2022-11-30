@@ -21,6 +21,11 @@ public record DestinationStorageAccount(
           "Destination storage account may not have both a landing zone resource ID and WSM resource ID");
     }
 
+    if (lzResourceId == null && wsmResourceId == null) {
+      throw new IllegalArgumentException(
+          "Destination storage account requires landing zore resource ID or WSM resource ID");
+    }
+
     this.storageAccountType = storageAccountType;
     this.lzResourceId = lzResourceId;
     this.wsmResourceId = wsmResourceId;

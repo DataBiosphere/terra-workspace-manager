@@ -11,9 +11,7 @@ import static org.mockito.Mockito.when;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepStatus;
-import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
@@ -35,8 +33,6 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseUnitTest {
   private FlightContext flightContext;
   private FlightMap workingMap;
   private FlightMap inputParams;
-  @Mock private ResourceDao resourceDao;
-  @Mock private LandingZoneApiDispatch lzApiDispatch;
   @Mock private ControlledResourceService controlledResourceService;
 
   private final AuthenticatedUserRequest testUser =
@@ -56,8 +52,9 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseUnitTest {
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID, workspaceId);
 
     workingMap.put(
-        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_STORAGE_ACCOUNT_RESOURCE_ID,
-        UUID.randomUUID());
+        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_STORAGE_ACCOUNT_ID,
+        new DestinationStorageAccount(
+            StorageAccountType.LANDING_ZONE, UUID.randomUUID().toString(), null));
 
     doReturn(workingMap).when(flightContext).getWorkingMap();
     doReturn(inputParams).when(flightContext).getInputParameters();
