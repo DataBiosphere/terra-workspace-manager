@@ -3,7 +3,7 @@ package bio.terra.workspace.app.controller;
 import bio.terra.common.exception.ErrorReportException;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import java.util.List;
-import javax.validation.constraints.NotNull;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -17,10 +17,11 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
-// This module provides a top-level exception handler for controllers.
-// All exceptions that rise through the controllers are caught in this handler.
-// It converts the exceptions into standard ApiErrorReport responses.
-
+/**
+ * This module provides a top-level exception handler for controllers. All exceptions that rise
+ * through the controllers are caught in this handler. It converts the exceptions into standard
+ * ApiErrorReport responses.
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
   private final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
@@ -61,7 +62,7 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ApiErrorReport> retryBackoffExceptionHandler(
       BackOffInterruptedException ex) {
     String errorMessage =
-        "Unexpected interrupt while retrying database logic. This may succeed on a retry. "
+        "Unexpected interrupt while retrying internal logic. This may succeed on a retry. "
             + ex.getMessage();
     ApiErrorReport errorReport =
         new ApiErrorReport()
@@ -78,15 +79,17 @@ public class GlobalExceptionHandler {
   }
 
   private ResponseEntity<ApiErrorReport> buildApiErrorReport(
-      @NotNull Throwable ex, HttpStatus statusCode, List<String> causes) {
+      Throwable ex, HttpStatus statusCode, List<String> causes) {
     StringBuilder combinedCauseString = new StringBuilder();
     for (Throwable cause = ex; cause != null; cause = cause.getCause()) {
       combinedCauseString.append("cause: ").append(cause.toString()).append(", ");
     }
     logger.error("Global exception handler: " + combinedCauseString.toString(), ex);
+    String message =
+        Optional.ofNullable(ex).map(Throwable::getMessage).orElse("no message present");
 
     ApiErrorReport errorReport =
-        new ApiErrorReport().message(ex.getMessage()).statusCode(statusCode.value()).causes(causes);
+        new ApiErrorReport().message(message).statusCode(statusCode.value()).causes(causes);
     return new ResponseEntity<>(errorReport, statusCode);
   }
 }
