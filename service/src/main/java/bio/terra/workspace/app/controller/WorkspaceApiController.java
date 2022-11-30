@@ -174,9 +174,6 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       }
       policies = body.getPolicies();
     }
-    var userEmail =
-        SamRethrow.onInterrupted(
-            () -> samService.getUserEmailFromSam(userRequest), "Get user status info from SAM");
 
     Workspace workspace =
         Workspace.builder()
@@ -187,7 +184,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .spendProfileId(spendProfileId.orElse(null))
             .workspaceStage(internalStage)
             .properties(convertApiPropertyToMap(body.getProperties()))
-            .createdByEmail(userEmail)
+            .createdByEmail(getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest))
             .build();
     UUID createdWorkspaceUuid =
         workspaceService.createWorkspace(
@@ -581,9 +578,10 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     // not authenticate.
     workspaceService.validateMcWorkspaceAndAction(
         userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
-    String userEmail =
-        SamRethrow.onInterrupted(() -> samService.getUserEmailFromSam(userRequest), "enablePet");
-    petSaService.enablePetServiceAccountImpersonation(workspaceUuid, userEmail, userRequest);
+    petSaService.enablePetServiceAccountImpersonation(
+        workspaceUuid,
+        getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
+        userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -627,9 +625,6 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     String generatedDisplayName =
         sourceWorkspace.getDisplayName().orElse(sourceWorkspace.getUserFacingId()) + " (Copy)";
 
-    var userEmail =
-        SamRethrow.onInterrupted(
-            () -> samService.getUserEmailFromSam(petRequest), "Get user email info from SAM");
     // Construct the target workspace object from the inputs
     // Policies are cloned in the flight instead of here so that they get cleaned appropriately if
     // the flight fails.
@@ -642,7 +637,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .displayName(Optional.ofNullable(body.getDisplayName()).orElse(generatedDisplayName))
             .description(body.getDescription())
             .properties(sourceWorkspace.getProperties())
-            .createdByEmail(userEmail)
+            .createdByEmail(getSamService().getUserEmailFromSamAndRethrowOnInterrupt(petRequest))
             .build();
 
     final String jobId =

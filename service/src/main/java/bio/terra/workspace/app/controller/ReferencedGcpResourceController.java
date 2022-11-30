@@ -33,7 +33,6 @@ import bio.terra.workspace.generated.model.ApiUpdateGcsBucketReferenceRequestBod
 import bio.terra.workspace.generated.model.ApiUpdateGitRepoReferenceRequestBody;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
-import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
@@ -101,7 +100,10 @@ public class ReferencedGcpResourceController extends ControllerBase
     var resource =
         ReferencedGcsObjectResource.builder()
             .wsmResourceFields(
-                getWsmResourceFields(workspaceUuid, body.getMetadata(), getUserEmail(userRequest)))
+                getWsmResourceFields(
+                    workspaceUuid,
+                    body.getMetadata(),
+                    getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest)))
             .bucketName(body.getFile().getBucketName())
             .objectName(body.getFile().getFileName())
             .build();
@@ -111,11 +113,6 @@ public class ReferencedGcpResourceController extends ControllerBase
             .createReferenceResource(resource, userRequest)
             .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_OBJECT);
     return new ResponseEntity<>(referencedResource.toApiResource(), HttpStatus.OK);
-  }
-
-  private String getUserEmail(AuthenticatedUserRequest userRequest) {
-    return SamRethrow.onInterrupted(
-        () -> getSamService().getUserEmailFromSam(userRequest), "Get user status info from SAM");
   }
 
   @Override
@@ -218,7 +215,10 @@ public class ReferencedGcpResourceController extends ControllerBase
     var resource =
         ReferencedGcsBucketResource.builder()
             .wsmResourceFields(
-                getWsmResourceFields(workspaceUuid, body.getMetadata(), getUserEmail(userRequest)))
+                getWsmResourceFields(
+                    workspaceUuid,
+                    body.getMetadata(),
+                    getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest)))
             .bucketName(body.getBucket().getBucketName())
             .build();
 
@@ -320,7 +320,10 @@ public class ReferencedGcpResourceController extends ControllerBase
     var resource =
         ReferencedBigQueryDataTableResource.builder()
             .wsmResourceFields(
-                getWsmResourceFields(workspaceUuid, body.getMetadata(), getUserEmail(userRequest)))
+                getWsmResourceFields(
+                    workspaceUuid,
+                    body.getMetadata(),
+                    getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest)))
             .projectId(body.getDataTable().getProjectId())
             .datasetId(body.getDataTable().getDatasetId())
             .dataTableId(body.getDataTable().getDataTableId())
@@ -438,7 +441,10 @@ public class ReferencedGcpResourceController extends ControllerBase
     var resource =
         ReferencedBigQueryDatasetResource.builder()
             .wsmResourceFields(
-                getWsmResourceFields(uuid, body.getMetadata(), getUserEmail(userRequest)))
+                getWsmResourceFields(
+                    uuid,
+                    body.getMetadata(),
+                    getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest)))
             .projectId(body.getDataset().getProjectId())
             .datasetName(body.getDataset().getDatasetId())
             .build();
@@ -547,7 +553,10 @@ public class ReferencedGcpResourceController extends ControllerBase
     var resource =
         ReferencedDataRepoSnapshotResource.builder()
             .wsmResourceFields(
-                getWsmResourceFields(uuid, body.getMetadata(), getUserEmail(userRequest)))
+                getWsmResourceFields(
+                    uuid,
+                    body.getMetadata(),
+                    getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest)))
             .instanceName(body.getSnapshot().getInstanceName())
             .snapshotId(body.getSnapshot().getSnapshot())
             .build();
@@ -677,7 +686,7 @@ public class ReferencedGcpResourceController extends ControllerBase
                 /*destinationFolderId=*/ null,
                 body.getName(),
                 body.getDescription(),
-                getUserEmail(userRequest),
+                getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
                 userRequest)
             .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_OBJECT);
 
@@ -729,7 +738,7 @@ public class ReferencedGcpResourceController extends ControllerBase
                 /*destinationFolderId=*/ null,
                 body.getName(),
                 body.getDescription(),
-                getUserEmail(userRequest),
+                getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
                 userRequest)
             .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_BUCKET);
 
@@ -782,7 +791,7 @@ public class ReferencedGcpResourceController extends ControllerBase
                 /*destinationFolderId=*/ null,
                 body.getName(),
                 body.getDescription(),
-                getUserEmail(userRequest),
+                getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
                 userRequest)
             .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
 
@@ -835,7 +844,7 @@ public class ReferencedGcpResourceController extends ControllerBase
                 /*destinationFolderId=*/ null,
                 body.getName(),
                 body.getDescription(),
-                getUserEmail(userRequest),
+                getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
                 userRequest)
             .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
 
@@ -889,7 +898,7 @@ public class ReferencedGcpResourceController extends ControllerBase
                 /*destinationFolderId=*/ null,
                 body.getName(),
                 body.getDescription(),
-                getUserEmail(userRequest),
+                getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
                 userRequest)
             .castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
 
@@ -915,7 +924,10 @@ public class ReferencedGcpResourceController extends ControllerBase
     ReferencedGitRepoResource resource =
         ReferencedGitRepoResource.builder()
             .wsmResourceFields(
-                getWsmResourceFields(workspaceUuid, body.getMetadata(), getUserEmail(userRequest)))
+                getWsmResourceFields(
+                    workspaceUuid,
+                    body.getMetadata(),
+                    getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest)))
             .gitRepoUrl(body.getGitrepo().getGitRepoUrl())
             .build();
 
@@ -1042,7 +1054,7 @@ public class ReferencedGcpResourceController extends ControllerBase
                 /*destinationFolderId=*/ null,
                 body.getName(),
                 body.getDescription(),
-                getUserEmail(userRequest),
+                getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
                 userRequest)
             .castByEnum(WsmResourceType.REFERENCED_ANY_GIT_REPO);
 
@@ -1073,7 +1085,10 @@ public class ReferencedGcpResourceController extends ControllerBase
     ReferencedTerraWorkspaceResource resource =
         ReferencedTerraWorkspaceResource.builder()
             .resourceCommonFields(
-                getWsmResourceFields(workspaceUuid, body.getMetadata(), getUserEmail(userRequest)))
+                getWsmResourceFields(
+                    workspaceUuid,
+                    body.getMetadata(),
+                    getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest)))
             .referencedWorkspaceId(referencedWorkspaceId)
             .build();
 

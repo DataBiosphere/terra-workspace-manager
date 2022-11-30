@@ -61,7 +61,8 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseAzureUnitTe
     when(flightContext.getWorkingMap()).thenReturn(workingMap);
     when(flightContext.getInputParameters()).thenReturn(inputParams);
     when(flightContext.getFlightId()).thenReturn("fake-flight-id");
-    when(mockSamService().getUserEmailFromSam(any(AuthenticatedUserRequest.class)))
+    when(mockSamService()
+            .getUserEmailFromSamAndRethrowOnInterrupt(any(AuthenticatedUserRequest.class)))
         .thenReturn("foo@gmail.com");
   }
 

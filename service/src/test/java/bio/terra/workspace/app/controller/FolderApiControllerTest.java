@@ -74,7 +74,8 @@ public class FolderApiControllerTest extends BaseUnitTest {
             new UserStatusInfo()
                 .userEmail(USER_REQUEST.getEmail())
                 .userSubjectId(USER_REQUEST.getSubjectId()));
-    when(mockSamService().getUserEmailFromSam(any())).thenReturn(USER_REQUEST.getEmail());
+    when(mockSamService().getUserEmailFromSamAndRethrowOnInterrupt(any()))
+        .thenReturn(USER_REQUEST.getEmail());
 
     // Needed for assertion that requester has role on workspace.
     when(mockSamService().listRequesterRoles(any(), any(), any()))
@@ -186,7 +187,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
 
     ApiFolder retrievedFolder = getFolder(workspaceId, firstFolder.getId());
 
-    assertEquals(firstFolder, retrievedFolder);
+    assertEquals(firstFolder.createdDate(retrievedFolder.getCreatedDate()), retrievedFolder);
     assertNotNull(retrievedFolder.getCreatedDate());
   }
 
@@ -228,7 +229,14 @@ public class FolderApiControllerTest extends BaseUnitTest {
     ApiFolder secondFolder =
         createFolder(workspaceId, displayName, /*parentFolderId=*/ firstFolder.getId());
 
-    List<ApiFolder> retrievedFolders = listFolders(workspaceId).getFolders();
+    List<ApiFolder> retrievedFolders =
+        listFolders(workspaceId).getFolders().stream()
+            .filter(folder -> folder.getCreatedDate() != null)
+            .map(
+                // Only the retrivedFolders will have created date set. To assert equals, remove the
+                // created date.
+                folder -> folder.createdDate(null))
+            .toList();
 
     assertThat(retrievedFolders, containsInAnyOrder(firstFolder, secondFolder));
   }

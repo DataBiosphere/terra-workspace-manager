@@ -58,7 +58,8 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTestMockGcpC
             new UserStatusInfo()
                 .userEmail(USER_REQUEST.getEmail())
                 .userSubjectId(USER_REQUEST.getSubjectId()));
-    when(mockSamService().getUserEmailFromSam(any())).thenReturn(USER_REQUEST.getEmail());
+    when(mockSamService().getUserEmailFromSamAndRethrowOnInterrupt(any()))
+        .thenReturn(USER_REQUEST.getEmail());
   }
 
   @Test

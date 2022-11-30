@@ -17,7 +17,6 @@ import bio.terra.workspace.service.folder.FolderService;
 import bio.terra.workspace.service.folder.model.Folder;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
-import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
@@ -60,9 +59,6 @@ public class FolderApiController extends ControllerBase implements FolderApi {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceId, SamConstants.SamWorkspaceAction.WRITE);
-    var userEmail =
-        SamRethrow.onInterrupted(
-            () -> getSamService().getUserEmailFromSam(userRequest), "Get user email from SAM");
     Folder folder =
         folderService.createFolder(
             new Folder(
@@ -72,7 +68,7 @@ public class FolderApiController extends ControllerBase implements FolderApi {
                 body.getDescription(),
                 body.getParentFolderId(),
                 convertApiPropertyToMap(body.getProperties()),
-                userEmail,
+                getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
                 /*createdDate=*/ null));
     return new ResponseEntity<>(buildFolder(folder), HttpStatus.OK);
   }

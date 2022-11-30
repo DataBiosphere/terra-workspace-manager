@@ -7,7 +7,6 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -68,9 +67,6 @@ public class CloneReferencedResourceStep implements Step {
               context.getInputParameters(),
               JobMapKeys.AUTH_USER_INFO.getKeyName(),
               AuthenticatedUserRequest.class);
-      var userEmail =
-          SamRethrow.onInterrupted(
-              () -> samService.getUserEmailFromSam(userRequest), "Get user email from SAM");
       ReferencedResource destinationResource =
           resource
               .buildReferencedClone(
@@ -79,7 +75,7 @@ public class CloneReferencedResourceStep implements Step {
                   destinationFolderId,
                   resource.getName(),
                   resource.getDescription(),
-                  userEmail)
+                  samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest))
               .castToReferencedResource();
 
       cloneDetails

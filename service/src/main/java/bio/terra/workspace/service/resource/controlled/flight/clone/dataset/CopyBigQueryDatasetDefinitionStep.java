@@ -12,7 +12,6 @@ import bio.terra.workspace.common.utils.IamRoleUtils;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpBigQueryDataset;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
@@ -97,9 +96,6 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
         inputParameters.get(ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.class);
     UUID destinationFolderId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_FOLDER_ID, UUID.class);
-    var userEmail =
-        SamRethrow.onInterrupted(
-            () -> samService.getUserEmailFromSam(userRequest), "Get user status info from SAM");
     ControlledBigQueryDatasetResource destinationResource =
         buildDestinationControlledBigQueryDataset(
             sourceDataset,
@@ -110,7 +106,7 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
             description,
             datasetName,
             destinationProjectId,
-            userEmail);
+            samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest));
 
     var creationParameters =
         new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetName).location(location);

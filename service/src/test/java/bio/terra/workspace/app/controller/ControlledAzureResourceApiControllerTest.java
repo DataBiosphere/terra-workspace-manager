@@ -36,7 +36,8 @@ public class ControlledAzureResourceApiControllerTest extends BaseAzureUnitTest 
 
   @BeforeEach
   void setUp() throws InterruptedException {
-    when(mockSamService().getUserEmailFromSam(any(AuthenticatedUserRequest.class)))
+    when(mockSamService()
+            .getUserEmailFromSamAndRethrowOnInterrupt(any(AuthenticatedUserRequest.class)))
         .thenReturn(DEFAULT_USER_EMAIL);
   }
 

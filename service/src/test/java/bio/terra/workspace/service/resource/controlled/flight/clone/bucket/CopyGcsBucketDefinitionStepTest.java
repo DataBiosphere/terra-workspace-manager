@@ -90,7 +90,8 @@ public class CopyGcsBucketDefinitionStepTest extends BaseUnitTestMockGcpCloudCon
                 any(ControlledResourceIamRole.class),
                 any(AuthenticatedUserRequest.class)))
         .thenReturn(POLICY_GROUP);
-    when(mockSamService().getUserEmailFromSam(any())).thenReturn(USER_REQUEST.getEmail());
+    when(mockSamService().getUserEmailFromSamAndRethrowOnInterrupt(any()))
+        .thenReturn(USER_REQUEST.getEmail());
     when(mockSamService().getUserStatusInfo(any()))
         .thenReturn(
             new UserStatusInfo()

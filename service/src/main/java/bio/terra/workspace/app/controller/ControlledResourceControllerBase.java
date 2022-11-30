@@ -4,7 +4,6 @@ import bio.terra.workspace.app.controller.shared.PropertiesUtils;
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
-import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
@@ -42,9 +41,7 @@ public class ControlledResourceControllerBase extends ControllerBase {
     PrivateUserRole privateUserRole =
         computePrivateUserRole(workspaceUuid, apiCommonFields, userRequest);
 
-    var userEmail =
-        SamRethrow.onInterrupted(
-            () -> getSamService().getUserEmailFromSam(userRequest), "Get user email info from SAM");
+    String userEmail = getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest);
 
     return ControlledResourceFields.builder()
         .workspaceUuid(workspaceUuid)

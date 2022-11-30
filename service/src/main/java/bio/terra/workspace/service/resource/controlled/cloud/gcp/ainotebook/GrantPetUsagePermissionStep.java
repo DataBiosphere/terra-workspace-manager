@@ -8,7 +8,6 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.PetSaKeys;
@@ -50,12 +49,13 @@ public class GrantPetUsagePermissionStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    String userEmail =
-        SamRethrow.onInterrupted(() -> samService.getUserEmailFromSam(userRequest), "enablePet");
     Policy modifiedPolicy;
     try {
       modifiedPolicy =
-          petSaService.enablePetServiceAccountImpersonation(workspaceUuid, userEmail, userRequest);
+          petSaService.enablePetServiceAccountImpersonation(
+              workspaceUuid,
+              samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
+              userRequest);
     } catch (ConflictException e) {
       // There was a conflict enabling the service account. Request retry.
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
@@ -84,11 +84,11 @@ public class GrantPetUsagePermissionStep implements Step {
       // notebook), so we need to call Sam and determine the end-user's email directly.
       // TODO(PF-1001): Having a SamUser object here (and in doStep) instead of an
       //  AuthenticatedUserRequest would save an extra call to Sam.
-      String userEmail =
-          SamRethrow.onInterrupted(
-              () -> samService.getUserEmailFromSam(userRequest), "enablePetUndo");
       petSaService.disablePetServiceAccountImpersonationWithEtag(
-          workspaceUuid, userEmail, userRequest, expectedEtag);
+          workspaceUuid,
+          samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
+          userRequest,
+          expectedEtag);
     } catch (ConflictException e) {
       // There was a conflict disabling the service account. Request retry.
       // There is a possible concurrency error here: if two threads are trying to enable and

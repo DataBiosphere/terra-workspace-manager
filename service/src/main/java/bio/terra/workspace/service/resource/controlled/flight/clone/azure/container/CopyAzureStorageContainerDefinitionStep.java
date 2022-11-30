@@ -13,7 +13,6 @@ import bio.terra.workspace.common.utils.IamRoleUtils;
 import bio.terra.workspace.common.utils.ManagementExceptionUtils;
 import bio.terra.workspace.generated.model.ApiAzureStorageContainerCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
@@ -87,9 +86,6 @@ public class CopyAzureStorageContainerDefinitionStep implements Step {
                 WorkspaceFlightMapKeys.ControlledResourceKeys
                     .DESTINATION_STORAGE_ACCOUNT_RESOURCE_ID,
                 UUID.class);
-    var userEmail =
-        SamRethrow.onInterrupted(
-            () -> samService.getUserEmailFromSam(userRequest), "Get user status info from SAM");
     ControlledAzureStorageContainerResource destinationContainerResource =
         buildDestinationControlledAzureContainer(
             sourceContainer,
@@ -99,7 +95,7 @@ public class CopyAzureStorageContainerDefinitionStep implements Step {
             destinationResourceName,
             description,
             destinationContainerName,
-            userEmail);
+            samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest));
     ApiAzureStorageContainerCreationParameters destinationCreationParameters =
         new ApiAzureStorageContainerCreationParameters()
             .storageContainerName(destinationContainerName)

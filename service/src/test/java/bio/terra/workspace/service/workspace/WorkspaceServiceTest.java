@@ -172,7 +172,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             new UserStatusInfo()
                 .userEmail(USER_REQUEST.getEmail())
                 .userSubjectId(USER_REQUEST.getSubjectId()));
-    when(mockSamService.getUserEmailFromSam(any(AuthenticatedUserRequest.class)))
+    when(mockSamService.getUserEmailFromSamAndRethrowOnInterrupt(
+            any(AuthenticatedUserRequest.class)))
         .thenReturn(USER_REQUEST.getEmail());
   }
 

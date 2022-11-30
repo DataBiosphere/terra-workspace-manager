@@ -1,5 +1,6 @@
 package bio.terra.workspace.db;
 
+import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
@@ -48,7 +49,6 @@ class WorkspaceDaoTest extends BaseUnitTest {
   private static final String POLICY_WRITER = "policy-writer";
   private static final String POLICY_READER = "policy-reader";
   private static final String POLICY_APPLICATION = "policy-application";
-  private static final String CREATOR_EMAIL = "foo@gmail.com";
 
   @Autowired private NamedParameterJdbcTemplate jdbcTemplate;
   @Autowired private WorkspaceDao workspaceDao;
@@ -121,7 +121,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
     Workspace workspace = workspaceDao.getWorkspace(workspaceUuid);
 
     assertNotNull(workspace.createdDate());
-    assertEquals(CREATOR_EMAIL, workspace.createdByEmail());
+    assertEquals(DEFAULT_USER_EMAIL, workspace.createdByEmail());
   }
 
   @Test

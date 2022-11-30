@@ -10,7 +10,6 @@ import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.FolderDao;
 import bio.terra.workspace.service.folder.model.Folder;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -55,9 +54,6 @@ public class CloneAllFoldersStep implements Step {
         context
             .getInputParameters()
             .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
-    var userEmail =
-        SamRethrow.onInterrupted(
-            () -> samService.getUserEmailFromSam(userRequest), "Get user email from SAM");
     for (Folder sourceFolder : sourceFolders) {
       // folderId is primary key in DB, so can't reuse source folder ID
       UUID destinationFolderId = UUID.randomUUID();
@@ -71,7 +67,7 @@ public class CloneAllFoldersStep implements Step {
               // been created yet. Skip setting now; will set below.
               /*parentFolderId=*/ null,
               sourceFolder.properties(),
-              userEmail,
+              samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
               /*createdDate=*/ null));
       folderIdMap.put(sourceFolder.id().toString(), destinationFolderId.toString());
     }

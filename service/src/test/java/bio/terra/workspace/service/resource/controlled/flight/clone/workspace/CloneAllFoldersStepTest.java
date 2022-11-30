@@ -73,7 +73,8 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
             /*createdDate=*/ null));
 
     cloneAllFoldersStep = new CloneAllFoldersStep(mockSamService(), folderDao);
-    when(mockSamService().getUserEmailFromSam(any())).thenReturn(DEFAULT_USER_EMAIL);
+    when(mockSamService().getUserEmailFromSamAndRethrowOnInterrupt(any()))
+        .thenReturn(DEFAULT_USER_EMAIL);
   }
 
   @Test

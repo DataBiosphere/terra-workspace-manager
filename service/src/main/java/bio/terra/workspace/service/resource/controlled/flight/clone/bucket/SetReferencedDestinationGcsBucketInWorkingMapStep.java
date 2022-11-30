@@ -7,7 +7,6 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -75,9 +74,6 @@ public class SetReferencedDestinationGcsBucketInWorkingMapStep implements Step {
     UUID destinationFolderId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_FOLDER_ID, UUID.class);
 
-    var userEmail =
-        SamRethrow.onInterrupted(
-            () -> samService.getUserEmailFromSam(userRequest), "Get user status info from SAM");
     ReferencedGcsBucketResource destinationBucketResource =
         sourceBucket
             .buildReferencedClone(
@@ -86,7 +82,7 @@ public class SetReferencedDestinationGcsBucketInWorkingMapStep implements Step {
                 destinationFolderId,
                 resourceName,
                 description,
-                userEmail)
+                samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest))
             .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_BUCKET);
 
     workingMap.put(

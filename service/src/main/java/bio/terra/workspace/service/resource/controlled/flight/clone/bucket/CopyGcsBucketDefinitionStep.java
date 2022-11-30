@@ -13,7 +13,6 @@ import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpGcsBucket;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
@@ -103,9 +102,6 @@ public class CopyGcsBucketDefinitionStep implements Step {
     workingMap.put(ControlledResourceKeys.DESTINATION_BUCKET_NAME, bucketName);
     UUID destinationResourceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.class);
-    var userEmail =
-        SamRethrow.onInterrupted(
-            () -> samService.getUserEmailFromSam(userRequest), "Fetch user status info from SAM");
     // bucket resource for create flight
     ControlledGcsBucketResource destinationBucketResource =
         buildDestinationControlledGcsBucket(
@@ -116,7 +112,7 @@ public class CopyGcsBucketDefinitionStep implements Step {
             resourceName,
             description,
             bucketName,
-            userEmail);
+            samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest));
 
     ApiGcpGcsBucketCreationParameters destinationCreationParameters =
         getDestinationCreationParameters(inputParameters, workingMap);

@@ -77,7 +77,8 @@ public class SetReferencedDestinationBigQueryDatasetInWorkingMapStep implements 
 
     var userEmail =
         SamRethrow.onInterrupted(
-            () -> samService.getUserEmailFromSam(userRequest), "Get user status info from sam");
+            () -> samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
+            "Get user status info from sam");
     ReferencedBigQueryDatasetResource destinationDatasetResource =
         sourceDataset
             .buildReferencedClone(
