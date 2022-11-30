@@ -7,6 +7,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;
 
 import bio.terra.stairway.FlightContext;
@@ -43,6 +44,7 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
       "source parent folder id description";
   private static final String SOURCE_SON_FOLDER_NAME = "source-son-folder-id";
   private static final String SOURCE_SON_FOLDER_DESCRIPTION = "source son folder id description";
+  private static final String DEFAULT_USER_EMAIL = "foo@gmail.com";
 
   @BeforeEach
   public void setup() throws InterruptedException {
@@ -56,7 +58,9 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
             SOURCE_PARENT_FOLDER_NAME,
             SOURCE_PARENT_FOLDER_DESCRIPTION,
             /*parentFolderId=*/ null,
-            /*properties=*/ Map.of("foo", "bar")));
+            /*properties=*/ Map.of("foo", "bar"),
+            DEFAULT_USER_EMAIL,
+            /*createdDate=*/ null));
     folderDao.createFolder(
         new Folder(
             SOURCE_SON_FOLDER_ID,
@@ -64,9 +68,13 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
             SOURCE_SON_FOLDER_NAME,
             SOURCE_SON_FOLDER_DESCRIPTION,
             SOURCE_PARENT_FOLDER_ID,
-            /*properties=*/ Map.of("fooSon", "barSon")));
+            /*properties=*/ Map.of("fooSon", "barSon"),
+            DEFAULT_USER_EMAIL,
+            /*createdDate=*/ null));
 
-    cloneAllFoldersStep = new CloneAllFoldersStep(folderDao);
+    cloneAllFoldersStep = new CloneAllFoldersStep(mockSamService(), folderDao);
+    when(mockSamService().getUserEmailFromSamAndRethrowOnInterrupt(any()))
+        .thenReturn(DEFAULT_USER_EMAIL);
   }
 
   @Test

@@ -229,7 +229,7 @@ components:
     # All resource objects include this resource metadata object and call it 'metadata'
     ResourceMetadata:
       type: object
-      required: [workspaceId, resourceId, name, resourceType, stewardshipType]
+      required: [workspaceId, resourceId, name, resourceType, stewardshipType, createdBy, createdDate]
       properties:
         workspaceId:
           type: string
@@ -256,6 +256,13 @@ components:
           $ref: '#/components/schemas/ResourceLineage'
         properties:
           $ref: '#/components/schemas/Properties'
+        createdBy:
+          description: User email of whom created the resource
+          type: string
+        createdDate:
+          description: Timestamp when the resource is created
+          type: string
+          format: date-time
 
     StewardshipType:
       description: Enum containing valid stewardship types. Used for enumeration

@@ -48,6 +48,6 @@ public class WorkspaceConnectedTestUtils {
   }
 
   public void deleteWorkspaceAndGcpContext(AuthenticatedUserRequest userRequest, UUID workspaceId) {
-    workspaceService.deleteWorkspace(WorkspaceFixtures.buildMcWorkspace(workspaceId), userRequest);
+    workspaceService.deleteWorkspace(workspaceService.getWorkspace(workspaceId), userRequest);
   }
 }

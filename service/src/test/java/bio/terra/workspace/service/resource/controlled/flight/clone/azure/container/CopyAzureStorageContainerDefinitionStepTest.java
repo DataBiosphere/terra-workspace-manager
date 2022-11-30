@@ -3,7 +3,6 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.azure.conta
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -12,13 +11,13 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
-import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.BaseAzureUnitTest;
+import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
-import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
@@ -29,7 +28,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
-public class CopyAzureStorageContainerDefinitionStepTest extends BaseUnitTest {
+public class CopyAzureStorageContainerDefinitionStepTest extends BaseAzureUnitTest {
 
   private UUID workspaceId;
   private FlightContext flightContext;
@@ -46,7 +45,7 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseUnitTest {
           .token(Optional.of("fake-token"));
 
   @BeforeEach
-  void setup() {
+  void setup() throws InterruptedException {
     workspaceId = UUID.randomUUID();
     flightContext = mock(FlightContext.class);
 
@@ -59,9 +58,12 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseUnitTest {
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_STORAGE_ACCOUNT_RESOURCE_ID,
         UUID.randomUUID());
 
-    doReturn(workingMap).when(flightContext).getWorkingMap();
-    doReturn(inputParams).when(flightContext).getInputParameters();
-    doReturn("fake-flight-id").when(flightContext).getFlightId();
+    when(flightContext.getWorkingMap()).thenReturn(workingMap);
+    when(flightContext.getInputParameters()).thenReturn(inputParams);
+    when(flightContext.getFlightId()).thenReturn("fake-flight-id");
+    when(mockSamService()
+            .getUserEmailFromSamAndRethrowOnInterrupt(any(AuthenticatedUserRequest.class)))
+        .thenReturn("foo@gmail.com");
   }
 
   private static ControlledAzureStorageContainerResource buildContainerResource(
@@ -70,7 +72,7 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseUnitTest {
         .storageContainerName(storageContainerName)
         .storageAccountId(UUID.randomUUID())
         .common(
-            ControlledResourceFields.builder()
+            ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                 .resourceId(resourceId)
                 .workspaceUuid(workspaceId)
                 .cloningInstructions(CloningInstructions.COPY_DEFINITION)
@@ -108,9 +110,8 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseUnitTest {
 
     var step =
         new CopyAzureStorageContainerDefinitionStep(
+            mockSamService(),
             testUser,
-            resourceDao,
-            lzApiDispatch,
             sourceContainer,
             controlledResourceService,
             CloningInstructions.COPY_DEFINITION);
@@ -139,9 +140,8 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseUnitTest {
 
     var step =
         new CopyAzureStorageContainerDefinitionStep(
+            mockSamService(),
             testUser,
-            resourceDao,
-            lzApiDispatch,
             null,
             controlledResourceService,
             CloningInstructions.COPY_DEFINITION);

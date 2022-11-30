@@ -9,6 +9,9 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.FolderDao;
 import bio.terra.workspace.service.folder.model.Folder;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.FolderKeys;
 import com.google.common.collect.ImmutableList;
@@ -22,9 +25,11 @@ import org.slf4j.LoggerFactory;
 public class CloneAllFoldersStep implements Step {
 
   private static final Logger logger = LoggerFactory.getLogger(CloneAllFoldersStep.class);
+  private final SamService samService;
   private final FolderDao folderDao;
 
-  public CloneAllFoldersStep(FolderDao folderDao) {
+  public CloneAllFoldersStep(SamService samService, FolderDao folderDao) {
+    this.samService = samService;
     this.folderDao = folderDao;
   }
 
@@ -45,6 +50,10 @@ public class CloneAllFoldersStep implements Step {
       logger.info("Source workspace {} doesn't have any folders to copy", sourceWorkspaceId);
       return StepResult.getStepResultSuccess();
     }
+    AuthenticatedUserRequest userRequest =
+        context
+            .getInputParameters()
+            .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
     for (Folder sourceFolder : sourceFolders) {
       // folderId is primary key in DB, so can't reuse source folder ID
       UUID destinationFolderId = UUID.randomUUID();
@@ -57,7 +66,9 @@ public class CloneAllFoldersStep implements Step {
               // Parent folder ID is different in dest and source, and parent folder might not have
               // been created yet. Skip setting now; will set below.
               /*parentFolderId=*/ null,
-              sourceFolder.properties()));
+              sourceFolder.properties(),
+              samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
+              /*createdDate=*/ null));
       folderIdMap.put(sourceFolder.id().toString(), destinationFolderId.toString());
     }
     // Update the cloned folders' parent folder id

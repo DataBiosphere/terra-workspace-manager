@@ -258,5 +258,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
     assertEquals(expectedMetadata.getStewardshipType(), actualMetadata.getStewardshipType());
     assertEquals(expectedMetadata.getResourceType(), actualMetadata.getResourceType());
     assertEquals(expectedMetadata.getProperties(), actualMetadata.getProperties());
+    assertEquals(expectedMetadata.getCreatedBy(), actualMetadata.getCreatedBy());
+    assertEquals(expectedMetadata.getCreatedDate(), actualMetadata.getCreatedDate());
   }
 }

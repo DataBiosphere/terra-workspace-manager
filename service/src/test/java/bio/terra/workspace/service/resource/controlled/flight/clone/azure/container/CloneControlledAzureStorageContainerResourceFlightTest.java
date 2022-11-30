@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.azure.container;
 
+import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import bio.terra.stairway.FlightMap;
@@ -52,7 +53,9 @@ public class CloneControlledAzureStorageContainerResourceFlightTest extends Base
             UUID.randomUUID(),
             UUID.randomUUID().toString(),
             null,
-            Map.of());
+            Map.of(),
+            DEFAULT_USER_EMAIL,
+            /*createdDate*/ null);
     FlightMap inputs = new FlightMap();
     inputs.put(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE, resource);
     inputs.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);

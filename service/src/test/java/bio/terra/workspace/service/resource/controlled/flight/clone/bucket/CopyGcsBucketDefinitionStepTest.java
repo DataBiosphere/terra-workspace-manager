@@ -90,7 +90,13 @@ public class CopyGcsBucketDefinitionStepTest extends BaseUnitTestMockGcpCloudCon
                 any(ControlledResourceIamRole.class),
                 any(AuthenticatedUserRequest.class)))
         .thenReturn(POLICY_GROUP);
-
+    when(mockSamService().getUserEmailFromSamAndRethrowOnInterrupt(any()))
+        .thenReturn(USER_REQUEST.getEmail());
+    when(mockSamService().getUserStatusInfo(any()))
+        .thenReturn(
+            new UserStatusInfo()
+                .userSubjectId(USER_REQUEST.getSubjectId())
+                .userEmail(USER_REQUEST.getEmail()));
     when(mockStorageClient.buckets()).thenReturn(mockBuckets);
     when(mockBuckets.get(any(String.class))).thenReturn(mockStorageBucketsGet);
     GoogleJsonResponseException fakeNotFoundError =
@@ -101,6 +107,7 @@ public class CopyGcsBucketDefinitionStepTest extends BaseUnitTestMockGcpCloudCon
 
     copyGcsBucketDefinitionStep =
         new CopyGcsBucketDefinitionStep(
+            mockSamService(),
             USER_REQUEST,
             SOURCE_BUCKET_RESOURCE,
             controlledResourceService,

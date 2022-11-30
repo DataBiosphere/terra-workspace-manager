@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
+import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -58,7 +59,9 @@ public class FindResourcesToCloneStepTest extends BaseUnitTest {
             null,
             "bucket-with-hole-in-it-dear-liza",
             /*resourceLineage=*/ null,
-            /*properties*/ Map.of());
+            /*properties*/ Map.of(),
+            DEFAULT_USER_EMAIL,
+            /*createdDate*/ null);
 
     findResourcesToCloneStep = new FindResourcesToCloneStep(mockResourceDao);
     doReturn(mockStairway).when(mockFlightContext).getStairway();

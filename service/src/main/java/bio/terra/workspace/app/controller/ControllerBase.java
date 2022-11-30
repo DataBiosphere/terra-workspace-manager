@@ -165,17 +165,12 @@ public class ControllerBase {
         {
           validateNoInputUser(inputUser);
 
-          // Fill in the user role for the creating user
-          String userEmail =
-              SamRethrow.onInterrupted(
-                  () -> samService.getUserEmailFromSam(userRequest), "getUserEmailFromSam");
-
           // At this time, all private resources grant EDITOR permission to the resource user.
           // This could be parameterized if we ever have reason to grant different permissions
           // to different objects.
           return new PrivateUserRole.Builder()
               .present(true)
-              .userEmail(userEmail)
+              .userEmail(samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest))
               .role(ControlledResourceIamRole.EDITOR)
               .build();
         }

@@ -97,6 +97,7 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
       // Destination dataset is referenced resource
       addStep(
           new SetReferencedDestinationBigQueryDatasetInWorkingMapStep(
+              flightBeanBag.getSamService(),
               userRequest,
               sourceDataset,
               flightBeanBag.getReferencedResourceService(),
@@ -113,6 +114,7 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
       // Destination dataset is controlled resource
       addStep(
           new CopyBigQueryDatasetDefinitionStep(
+              flightBeanBag.getSamService(),
               sourceDataset,
               flightBeanBag.getControlledResourceService(),
               userRequest,

@@ -118,9 +118,8 @@ public class CloneControlledAzureStorageContainerResourceFlight extends Flight {
               resourceDao, lzApiDispatch, userRequest));
       addStep(
           new CopyAzureStorageContainerDefinitionStep(
+              flightBeanBag.getSamService(),
               userRequest,
-              resourceDao,
-              lzApiDispatch,
               sourceContainer,
               flightBeanBag.getControlledResourceService(),
               cloningInstructions),
