@@ -18,6 +18,7 @@ public final class AzureVmHelper {
   public static final String WORKING_MAP_NETWORK_INTERFACE_KEY = "NetworkInterfaceName";
   public static final String WORKING_MAP_SUBNET_NAME = "SubnetName";
   public static final String WORKING_MAP_NETWORK_REGION = "NetworkRegion";
+  public static final String WORKING_MAP_VM_ID = "VmId";
   private static int NIC_RESERVED_FOR_ANOTHER_VM_ERROR_RETRY_SECONDS = 180;
   private static final Logger logger = LoggerFactory.getLogger(AzureVmHelper.class);
 

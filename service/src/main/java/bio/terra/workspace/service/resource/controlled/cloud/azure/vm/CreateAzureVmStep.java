@@ -139,20 +139,23 @@ public class CreateAzureVmStep implements Step {
               creationParameters,
               region);
 
-      virtualMachineDefinition.create(
-          Defaults.buildContext(
-              CreateVirtualMachineRequestData.builder()
-                  .setName(resource.getVmName())
-                  .setRegion(region)
-                  .setTenantId(azureCloudContext.getAzureTenantId())
-                  .setSubscriptionId(azureCloudContext.getAzureSubscriptionId())
-                  .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
-                  .setNetwork(networkInterface.primaryIPConfiguration().getNetwork())
-                  .setSubnetName(subnetName)
-                  .setPublicIpAddress(existingAzureIp.orElse(null))
-                  .setDisk(existingAzureDisk.orElse(null))
-                  .setImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
-                  .build()));
+      var createdVm =
+          virtualMachineDefinition.create(
+              Defaults.buildContext(
+                  CreateVirtualMachineRequestData.builder()
+                      .setName(resource.getVmName())
+                      .setRegion(region)
+                      .setTenantId(azureCloudContext.getAzureTenantId())
+                      .setSubscriptionId(azureCloudContext.getAzureSubscriptionId())
+                      .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
+                      .setNetwork(networkInterface.primaryIPConfiguration().getNetwork())
+                      .setSubnetName(subnetName)
+                      .setPublicIpAddress(existingAzureIp.orElse(null))
+                      .setDisk(existingAzureDisk.orElse(null))
+                      .setImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
+                      .build()));
+
+      context.getWorkingMap().put(AzureVmHelper.WORKING_MAP_VM_ID, createdVm.id());
 
     } catch (ManagementException e) {
       // Stairway steps may run multiple times, so we may already have created this resource. In all

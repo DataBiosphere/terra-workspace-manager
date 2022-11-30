@@ -25,6 +25,7 @@ import com.azure.core.management.AzureEnvironment;
 import com.azure.core.management.profile.AzureProfile;
 import com.azure.identity.ClientSecretCredentialBuilder;
 import com.azure.resourcemanager.compute.ComputeManager;
+import com.azure.resourcemanager.monitor.MonitorManager;
 import com.azure.resourcemanager.msi.MsiManager;
 import com.azure.resourcemanager.relay.RelayManager;
 import com.azure.resourcemanager.resources.ResourceManager;
@@ -203,6 +204,17 @@ public class CrlService {
     final var azureProfile = getAzureProfile(azureCloudContext);
     return bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
             clientConfig, MsiManager.configure())
+        .authenticate(azureCreds, azureProfile);
+  }
+
+  /** Returns an Azure {@link MonitorManager} configured for use with CRL. */
+  public MonitorManager getMonitorManager(
+      AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
+    assertCrlInUse();
+    final var azureCreds = getManagedAppCredentials(azureConfig);
+    final var azureProfile = getAzureProfile(azureCloudContext);
+    return bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
+            clientConfig, MonitorManager.configure())
         .authenticate(azureCreds, azureProfile);
   }
 
