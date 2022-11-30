@@ -70,7 +70,6 @@ public final class WorkspaceFlightMapKeys {
     public static final String DESTINATION_RESOURCE_ID = "destinationResourceId";
     public static final String DESTINATION_FOLDER_ID = "destinationFolderId";
     public static final String DESTINATION_CONTAINER_NAME = "destinationContainerName";
-    public static final String DESTINATION_STORAGE_ACCOUNT_ID = "destinationStorageAccountId";
   }
 
   public static class FolderKeys {

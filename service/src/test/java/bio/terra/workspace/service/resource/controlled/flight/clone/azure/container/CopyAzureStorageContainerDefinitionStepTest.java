@@ -51,11 +51,6 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseUnitTest {
     inputParams.put(
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID, workspaceId);
 
-    workingMap.put(
-        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_STORAGE_ACCOUNT_ID,
-        new DestinationStorageAccount(
-            StorageAccountType.LANDING_ZONE, UUID.randomUUID().toString(), null));
-
     doReturn(workingMap).when(flightContext).getWorkingMap();
     doReturn(inputParams).when(flightContext).getInputParameters();
     doReturn("fake-flight-id").when(flightContext).getFlightId();

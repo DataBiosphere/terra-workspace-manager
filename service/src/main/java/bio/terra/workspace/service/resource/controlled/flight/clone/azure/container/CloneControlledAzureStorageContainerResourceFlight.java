@@ -112,10 +112,7 @@ public class CloneControlledAzureStorageContainerResourceFlight extends Flight {
 
       // create the container in the cloud context
       var resourceDao = flightBeanBag.getResourceDao();
-      var lzApiDispatch = flightBeanBag.getLandingZoneApiDispatch();
-      addStep(
-          new RetrieveDestinationStorageAccountResourceIdStep(
-              resourceDao, lzApiDispatch, userRequest));
+
       addStep(
           new CopyAzureStorageContainerDefinitionStep(
               userRequest,
