@@ -144,6 +144,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
     String workspaceUserFacingId = workspaceDao.getWorkspace(getWorkspaceId()).getUserFacingId();
 
     RetryRule gcpRetryRule = RetryRules.cloud();
+    RetryRule shortDatabaseRetryRule = RetryRules.shortDatabase();
     flight.addStep(
         new RetrieveNetworkNameStep(
             flightBeanBag.getCrlService(), this, flightBeanBag.getGcpCloudContextService()),
@@ -171,6 +172,9 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
             this,
             userRequest),
         gcpRetryRule);
+    flight.addStep(
+        new UpdateNotebookResourceRegionMetadataStep(this, flightBeanBag.getResourceDao()),
+        shortDatabaseRetryRule);
   }
 
   /** {@inheritDoc} */
@@ -195,9 +199,13 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
   }
 
   public InstanceName toInstanceName(String workspaceProjectId) {
+    return toInstanceName(workspaceProjectId, getLocation());
+  }
+
+  public InstanceName toInstanceName(String workspaceProjectId, String requestedLocation) {
     return InstanceName.builder()
         .projectId(workspaceProjectId)
-        .location(getLocation())
+        .location(requestedLocation)
         .instanceId(instanceId)
         .build();
   }

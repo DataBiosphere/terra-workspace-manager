@@ -5,6 +5,7 @@ import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.ControlledGcpResourceApi;
 import bio.terra.workspace.generated.model.*;
+import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
@@ -50,6 +51,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   private final JobApiUtils jobApiUtils;
   private final GcpCloudContextService gcpCloudContextService;
   private final ControlledResourceMetadataManager controlledResourceMetadataManager;
+  private final CrlService crlService;
 
   @Autowired
   public ControlledGcpResourceApiController(
@@ -61,7 +63,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
       JobService jobService,
       JobApiUtils jobApiUtils,
       GcpCloudContextService gcpCloudContextService,
-      ControlledResourceMetadataManager controlledResourceMetadataManager) {
+      ControlledResourceMetadataManager controlledResourceMetadataManager,
+      CrlService crlService) {
     super(authenticatedUserRequestFactory, request, controlledResourceService, samService);
     this.controlledResourceService = controlledResourceService;
     this.workspaceService = workspaceService;
@@ -69,6 +72,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     this.jobApiUtils = jobApiUtils;
     this.gcpCloudContextService = gcpCloudContextService;
     this.controlledResourceMetadataManager = controlledResourceMetadataManager;
+    this.crlService = crlService;
   }
 
   @Override
@@ -415,14 +419,15 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     ControlledResourceFields commonFields =
         toCommonFields(workspaceUuid, body.getCommon(), userRequest);
     // Check authz before reading the projectId from workspace DB.
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
+    Workspace workspace =
+        workspaceService.validateWorkspaceAndAction(
+            userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceUuid);
 
     ControlledAiNotebookInstanceResource resource =
         ControlledAiNotebookInstanceResource.builder()
             .common(commonFields)
-            .location(body.getAiNotebookInstance().getLocation())
+            .location(getResourceLocation(workspace, body.getAiNotebookInstance().getLocation()))
             .projectId(projectId)
             .instanceId(
                 Optional.ofNullable(body.getAiNotebookInstance().getInstanceId())

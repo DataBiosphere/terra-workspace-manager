@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_LOCATION;
+
 import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
 import bio.terra.cloudres.google.notebooks.InstanceName;
 import bio.terra.stairway.FlightContext;
@@ -54,7 +56,11 @@ public class NotebookCloudSyncStep implements Step {
     List<Binding> newBindings = createBindings(cloudContext, flightContext.getWorkingMap());
 
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
-    InstanceName instanceName = resource.toInstanceName(cloudContext.getGcpProjectId());
+    String requestedLocation =
+        FlightUtils.getRequired(
+            flightContext.getWorkingMap(), CREATE_NOTEBOOK_LOCATION, String.class);
+    InstanceName instanceName =
+        resource.toInstanceName(cloudContext.getGcpProjectId(), requestedLocation);
     try {
       Policy policy = notebooks.instances().getIamPolicy(instanceName).execute();
       // Duplicating bindings is harmless (e.g. on retry). GCP de-duplicates.
