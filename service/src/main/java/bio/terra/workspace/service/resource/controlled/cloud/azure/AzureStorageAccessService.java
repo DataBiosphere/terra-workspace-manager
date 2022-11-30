@@ -259,6 +259,12 @@ public class AzureStorageAccessService {
         .buildClient();
   }
 
+  /**
+   * Builds a blob container client for the given storage data object.
+   *
+   * @param storageData Storage data object we want a container client for
+   * @return An azure blob container client
+   */
   public BlobContainerClient buildBlobContainerClient(StorageData storageData) {
     StorageSharedKeyCredential storageAccountKey =
         storageAccountKeyProvider.getStorageAccountKey(
@@ -281,6 +287,7 @@ public class AzureStorageAccessService {
    * @param workspaceUuid Workspace in which the container resides
    * @param storageContainerUuid WSM resource ID for the storage container
    * @param userRequest User request
+   * @throws IllegalStateException if no shared storage account is present
    * @return StorageData object
    */
   public StorageData getStorageAccountData(

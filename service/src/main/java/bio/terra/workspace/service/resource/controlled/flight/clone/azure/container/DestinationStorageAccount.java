@@ -13,4 +13,16 @@ import javax.annotation.Nullable;
 public record DestinationStorageAccount(
     StorageAccountType storageAccountType,
     @Nullable String lzResourceId,
-    @Nullable UUID wsmResourceId) {}
+    @Nullable UUID wsmResourceId) {
+  public DestinationStorageAccount(
+      StorageAccountType storageAccountType, String lzResourceId, UUID wsmResourceId) {
+    if (lzResourceId != null && wsmResourceId != null) {
+      throw new IllegalArgumentException(
+          "Destination storage account may not have both a landing zone resource ID and WSM resource ID");
+    }
+
+    this.storageAccountType = storageAccountType;
+    this.lzResourceId = lzResourceId;
+    this.wsmResourceId = wsmResourceId;
+  }
+}

@@ -8,11 +8,9 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.IamRoleUtils;
 import bio.terra.workspace.common.utils.ManagementExceptionUtils;
-import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureStorageContainerCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
@@ -39,8 +37,6 @@ public class CopyAzureStorageContainerDefinitionStep implements Step {
 
   public CopyAzureStorageContainerDefinitionStep(
       AuthenticatedUserRequest userRequest,
-      ResourceDao resourceDao,
-      LandingZoneApiDispatch landingZoneApiDispatch,
       ControlledAzureStorageContainerResource sourceContainer,
       ControlledResourceService controlledResourceService,
       CloningInstructions resolvedCloningInstructions) {

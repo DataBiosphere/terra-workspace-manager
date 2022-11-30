@@ -109,8 +109,6 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseUnitTest {
     var step =
         new CopyAzureStorageContainerDefinitionStep(
             testUser,
-            resourceDao,
-            lzApiDispatch,
             sourceContainer,
             controlledResourceService,
             CloningInstructions.COPY_DEFINITION);
@@ -139,12 +137,7 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseUnitTest {
 
     var step =
         new CopyAzureStorageContainerDefinitionStep(
-            testUser,
-            resourceDao,
-            lzApiDispatch,
-            null,
-            controlledResourceService,
-            CloningInstructions.COPY_DEFINITION);
+            testUser, null, controlledResourceService, CloningInstructions.COPY_DEFINITION);
 
     var result = step.undoStep(flightContext);
 
