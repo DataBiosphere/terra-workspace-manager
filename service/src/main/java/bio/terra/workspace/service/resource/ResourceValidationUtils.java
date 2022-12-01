@@ -6,6 +6,7 @@ import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.app.configuration.external.GitRepoReferencedResourceConfiguration;
+import bio.terra.workspace.generated.model.ApiAwsSageMakerNotebookCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
@@ -347,20 +348,11 @@ public class ResourceValidationUtils {
     }
   }
 
-  public static void validateAiNotebookInstanceId(
-      String name) { // TODO-Dex also check name? in validate()
+  public static void validateAiNotebookInstanceId(String name) {
     if (!AI_NOTEBOOK_INSTANCE_NAME_VALIDATION_PATTERN.matcher(name).matches()) {
       logger.warn("Invalid AI Notebook instance ID {}", name);
       throw new InvalidReferenceException(
           "Invalid AI Notebook instance ID specified. ID must be 1 to 63 alphanumeric lower case characters or dashes, where the first character is a lower case letter.");
-    }
-  }
-
-  public static void validateSageMakerNotebookInstanceName(String name) {
-    if (!SAGEMAKER_NOTEBOOK_INSTANCE_NAME_VALIDATION_PATTERN.matcher(name).matches()) {
-      logger.warn("Invalid SageMaker Notebook instance Name {}", name);
-      throw new InvalidReferenceException(
-          "Invalid SageMaker Notebook instance ID specified. ID must be 1 to 63 alphanumeric lower case characters or dashes, where the first character is a lower case letter.");
     }
   }
 
@@ -383,6 +375,18 @@ public class ResourceValidationUtils {
       throw new InconsistentFieldsException(
           "Exactly one of imageName or imageFamily must be specified for a valid vmImage.");
     }
+  }
+
+  public static void validateSageMakerNotebookInstanceId(String name) {
+    if (!SAGEMAKER_NOTEBOOK_INSTANCE_NAME_VALIDATION_PATTERN.matcher(name).matches()) {
+      logger.warn("Invalid SageMaker Notebook instance ID {}", name);
+      throw new InvalidReferenceException(
+          "Invalid SageMaker Notebook instance ID specified. ID must be 1 to 63 alphanumeric characters or dashes, where the first and last characters are not a dash.");
+    }
+  }
+
+  public static void validate(ApiAwsSageMakerNotebookCreationParameters creationParameters) {
+    validateSageMakerNotebookInstanceId(creationParameters.getInstanceId());
   }
 
   public static void validateResourceName(String name) {

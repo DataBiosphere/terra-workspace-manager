@@ -33,7 +33,8 @@ public class ControlledAwsBucketHandler implements WsmResourceHandler {
         .build();
   }
 
-  public String generateCloudName(@Nullable UUID workspaceUuid, String resourceName) { // TODO-Dex
+  // Naming rules: https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html
+  public String generateCloudName(@Nullable UUID workspaceUuid, String resourceName) {
     throw new FeatureNotSupportedException("This generate cloud name feature is not implement yet");
   }
 }
