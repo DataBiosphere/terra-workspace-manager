@@ -17,13 +17,22 @@ EOM
 yum install -y google-cloud-cli
 
 sudo -u ec2-user -i <<'EOF'
-unset SUDO_UID
 
-# Install google auth python package
-pip3 install --upgrade google-auth
+# Install google auth python package in all conda environments
+
+# Note that "base" is special environment name, include it there as well.
+for env in base /home/ec2-user/anaconda3/envs/*; do
+    source /home/ec2-user/anaconda3/bin/activate $(basename "$env")
+    if [ $env = 'JupyterSystemEnv' ]; then
+        continue
+    fi
+    pip install --upgrade google-auth
+    source /home/ec2-user/anaconda3/bin/deactivate
+done
 
 # Copy in the Terra auth helper CLI (eventually this will install Terra CLI instead)
 WORKING_DIR=/home/ec2-user/terra
 mkdir -p "$WORKING_DIR"
 wget https://raw.githubusercontent.com/DataBiosphere/terra-workspace-manager/jczerk/aws_wlz_interface/service/src/main/resources/tools/terra-auth.py -O "$WORKING_DIR/terra-auth.py"
 chmod +x "$WORKING_DIR/terra-auth.py"
+EOF
