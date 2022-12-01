@@ -10,6 +10,7 @@ import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.exception.FeatureNotSupportedException;
+import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
@@ -66,6 +67,7 @@ import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import bio.terra.workspace.service.workspace.model.WsmObjectType;
 import io.opencensus.contrib.spring.aop.Traced;
+import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -257,7 +259,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     }
 
     // When we have another cloud context, we will need to do a similar retrieval for it.
-    var lastChangeDetailsOptional = workspaceActivityLogService.getLastUpdatedDetails(workspaceUuid);
+    var lastChangeDetailsOptional =
+        workspaceActivityLogService.getLastUpdatedDetails(workspaceUuid);
 
     if (highestRole == WsmIamRole.DISCOVERER) {
       workspace = Workspace.stripWorkspaceForRequesterWithOnlyDiscovererRole(workspace);
@@ -279,6 +282,12 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         .azureContext(azureContext)
         .createdDate(workspace.createdDate())
         .createdBy(workspace.createdByEmail())
+        .lastUpdatedDate(
+            lastChangeDetailsOptional
+                .map(ActivityLogChangeDetails::changeDate)
+                .orElse(OffsetDateTime.MIN))
+        .lastUpdatedBy(
+            lastChangeDetailsOptional.map(ActivityLogChangeDetails::actorEmail).orElse("unknown"))
         .policies(workspacePolicies);
   }
 

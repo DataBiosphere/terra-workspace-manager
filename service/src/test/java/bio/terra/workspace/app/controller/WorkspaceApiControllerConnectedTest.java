@@ -8,6 +8,7 @@ import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UFI
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UUID_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_PATH;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
+import static bio.terra.workspace.db.WorkspaceActivityLogDao.ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.emptyString;
@@ -30,7 +31,6 @@ import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
-import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.WsmObjectType;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -42,6 +42,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.support.DataAccessUtils;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
@@ -62,7 +65,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @Autowired private MockMvcUtils mockMvcUtils;
   @Autowired private ObjectMapper objectMapper;
   @Autowired private UserAccessUtils userAccessUtils;
-  @Autowired private WorkspaceActivityLogService workspaceActivityLogService;
+  @Autowired private NamedParameterJdbcTemplate jdbcTemplate;
 
   private ApiCreatedWorkspace workspace;
 
@@ -261,13 +264,49 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
         WsmIamRole.DISCOVERER,
         userAccessUtils.getSecondUserEmail());
 
-    Optional<ActivityLogChangeDetails> changeDetails = workspaceActivityLogService.getLastUpdatedDetails(workspace.getId());
-    assertTrue(changeDetails.isPresent());
-    var details = changeDetails.get();
-    assertEquals(userAccessUtils.getSecondUserEmail(), details.changeSubjectId());
-    assertEquals(WsmObjectType.USER, details.changeSubjectType());
-    assertEquals(userAccessUtils.getDefaultUserEmail(), details.actorEmail());
-    assertEquals(OperationType.GRANT_WORKSPACE_ROLE, details.operationType());
+    ActivityLogChangeDetails changeDetails = getLastChangeDetails(workspace.getId());
+    assertEquals(userAccessUtils.getSecondUserEmail(), changeDetails.changeSubjectId());
+    assertEquals(WsmObjectType.USER, changeDetails.changeSubjectType());
+    assertEquals(userAccessUtils.getDefaultUserEmail(), changeDetails.actorEmail());
+    assertEquals(OperationType.GRANT_WORKSPACE_ROLE, changeDetails.operationType());
+  }
+
+  @Test
+  public void removeRole_logsAnActivity() throws Exception {
+    mockMvcUtils.grantRole(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspace.getId(),
+        WsmIamRole.DISCOVERER,
+        userAccessUtils.getSecondUserEmail());
+
+    mockMvcUtils.removeRole(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspace.getId(),
+        WsmIamRole.DISCOVERER,
+        userAccessUtils.getSecondUserEmail());
+
+    ActivityLogChangeDetails changeDetails = getLastChangeDetails(workspace.getId());
+    assertEquals(userAccessUtils.getSecondUserEmail(), changeDetails.changeSubjectId());
+    assertEquals(WsmObjectType.USER, changeDetails.changeSubjectType());
+    assertEquals(userAccessUtils.getDefaultUserEmail(), changeDetails.actorEmail());
+    assertEquals(OperationType.REMOVE_WORKSPACE_ROLE, changeDetails.operationType());
+  }
+
+  /**
+   * Get the latest activity log row where workspaceId matches.
+   *
+   * <p>Do not use WorkspaceActivityLogService#getLastUpdatedDetails because it filters out
+   * non-update change_type such as `GRANT_WORKSPACE_ROLE` and `REMOVE_WORKSPACE_ROLE`.
+   */
+  private ActivityLogChangeDetails getLastChangeDetails(UUID workspaceId) {
+    final String sql =
+        """
+            SELECT * FROM workspace_activity_log WHERE workspace_id = :workspace_id
+            ORDER BY change_date DESC LIMIT 1
+        """;
+    final var params = new MapSqlParameterSource().addValue("workspace_id", workspaceId.toString());
+    return DataAccessUtils.singleResult(
+        jdbcTemplate.query(sql, params, ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER));
   }
 
   @Test

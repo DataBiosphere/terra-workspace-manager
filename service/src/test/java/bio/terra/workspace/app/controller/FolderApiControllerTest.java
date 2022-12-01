@@ -28,6 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import bio.terra.common.exception.ForbiddenException;
 import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.generated.model.ApiCreateFolderRequestBody;
 import bio.terra.workspace.generated.model.ApiFolder;
@@ -42,6 +43,9 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
+import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
+import bio.terra.workspace.service.workspace.model.OperationType;
+import bio.terra.workspace.service.workspace.model.WsmObjectType;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Duration;
@@ -63,6 +67,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
   @Autowired ObjectMapper objectMapper;
+  @Autowired WorkspaceActivityLogService workspaceActivityLogService;
 
   @BeforeEach
   public void setUp() throws InterruptedException {
@@ -98,11 +103,22 @@ public class FolderApiControllerTest extends BaseUnitTest {
     assertNotNull(folder.getId());
     assertNull(folder.getParentFolderId());
     assertEquals(USER_REQUEST.getEmail(), folder.getCreatedBy());
+    assertActivityLogChangeDetails(
+        workspaceId,
+        new ActivityLogChangeDetails(
+            null,
+            USER_REQUEST.getEmail(),
+            USER_REQUEST.getSubjectId(),
+            OperationType.CREATE,
+            folder.getId().toString(),
+            WsmObjectType.FOLDER));
   }
 
   @Test
   public void createFolder_doesNotHaveWriteAccess_throws403() throws Exception {
     UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+    ActivityLogChangeDetails createDetail =
+        workspaceActivityLogService.getLastUpdatedDetails(workspaceId).get();
     doThrow(new ForbiddenException("User has no write access"))
         .when(mockSamService())
         .checkAuthz(
@@ -112,6 +128,8 @@ public class FolderApiControllerTest extends BaseUnitTest {
             eq(SamConstants.SamWorkspaceAction.WRITE));
 
     createFolderExpectCode(workspaceId, HttpStatus.SC_FORBIDDEN);
+    assertEquals(
+        createDetail, workspaceActivityLogService.getLastUpdatedDetails(workspaceId).get());
   }
 
   @Test
@@ -757,5 +775,17 @@ public class FolderApiControllerTest extends BaseUnitTest {
         .append(folder1.getParentFolderId(), folder2.getParentFolderId())
         .append(folder1.getCreatedBy(), folder2.getCreatedBy())
         .isEquals();
+  }
+
+  private void assertActivityLogChangeDetails(
+      UUID destinationWorkspaceId, ActivityLogChangeDetails expectedDetails) {
+    var changeDetails =
+        workspaceActivityLogService.getLastUpdatedDetails(destinationWorkspaceId).get();
+    assertEquals(expectedDetails.changeSubjectType(), changeDetails.changeSubjectType());
+    assertEquals(expectedDetails.changeSubjectId(), changeDetails.changeSubjectId());
+    assertEquals(expectedDetails.operationType(), changeDetails.operationType());
+    assertEquals(expectedDetails.actorEmail(), changeDetails.actorEmail());
+    assertEquals(expectedDetails.actorSubjectId(), changeDetails.actorSubjectId());
+    assertNotNull(changeDetails.changeDate());
   }
 }

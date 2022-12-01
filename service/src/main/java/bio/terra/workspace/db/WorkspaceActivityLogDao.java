@@ -7,6 +7,7 @@ import bio.terra.workspace.db.exception.UnknownFlightOperationTypeException;
 import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.WsmObjectType;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.time.Instant;
@@ -29,7 +30,9 @@ import org.springframework.stereotype.Component;
 public class WorkspaceActivityLogDao {
   private static final Logger logger = LoggerFactory.getLogger(WorkspaceActivityLogDao.class);
   private static final String DEFAULT_VALUE_UNKNOWN = "unknown";
-  private static final RowMapper<ActivityLogChangeDetails> ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER =
+
+  @VisibleForTesting
+  public static final RowMapper<ActivityLogChangeDetails> ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER =
       (rs, rowNum) -> {
         String changeSubjectTypeString = rs.getString("change_subject_type");
         var changeSubjectType =
@@ -38,7 +41,9 @@ public class WorkspaceActivityLogDao {
                 : WsmObjectType.valueOf(changeSubjectTypeString);
         String changeTypeString = rs.getString("change_type");
         OperationType changeType =
-            DEFAULT_VALUE_UNKNOWN.equals(changeTypeString)? OperationType.UNKNOWN : OperationType.valueOf(changeTypeString);
+            DEFAULT_VALUE_UNKNOWN.equals(changeTypeString)
+                ? OperationType.UNKNOWN
+                : OperationType.valueOf(changeTypeString);
         return new ActivityLogChangeDetails(
             OffsetDateTime.ofInstant(rs.getTimestamp("change_date").toInstant(), ZoneId.of("UTC")),
             rs.getString("actor_email"),
@@ -47,6 +52,7 @@ public class WorkspaceActivityLogDao {
             rs.getString("change_subject_id"),
             changeSubjectType);
       };
+
   private final NamedParameterJdbcTemplate jdbcTemplate;
 
   // These fields don't update workspace "Last updated" time in UI. For example,
@@ -66,11 +72,8 @@ public class WorkspaceActivityLogDao {
   public void writeActivity(UUID workspaceId, DbWorkspaceActivityLog dbWorkspaceActivityLog) {
     logger.info(
         String.format(
-            "Writing activity log: workspaceId=%s, operationType=%s, actorEmail=%s, actorSubjectId=%s",
-            workspaceId,
-            dbWorkspaceActivityLog.operationType(),
-            dbWorkspaceActivityLog.actorEmail(),
-            dbWorkspaceActivityLog.actorSubjectId()));
+            "Writing activity log: workspaceId=%s, activityLog=%s",
+            workspaceId, dbWorkspaceActivityLog.toString()));
     if (dbWorkspaceActivityLog.operationType() == OperationType.UNKNOWN) {
       throw new UnknownFlightOperationTypeException(
           String.format("Flight operation type is unknown in workspace %s", workspaceId));

@@ -318,7 +318,7 @@ public class WorkspaceService {
     workspaceActivityLogService.writeActivity(
         userRequest,
         workspaceUuid,
-        OperationType.UPDATE,
+        OperationType.UPDATE_PROPERTIES,
         workspaceUuid.toString(),
         WsmObjectType.WORKSPACE);
   }
@@ -352,7 +352,7 @@ public class WorkspaceService {
     workspaceActivityLogService.writeActivity(
         userRequest,
         workspaceUuid,
-        OperationType.DELETE,
+        OperationType.DELETE_PROPERTIES,
         workspaceUuid.toString(),
         WsmObjectType.WORKSPACE);
   }

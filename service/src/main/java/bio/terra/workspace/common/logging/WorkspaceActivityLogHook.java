@@ -4,6 +4,7 @@ import static bio.terra.workspace.common.utils.FlightUtils.getRequired;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.FOLDER_ID;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.UPDATED_WORKSPACES;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.USER_TO_REMOVE;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
@@ -132,6 +133,14 @@ public class WorkspaceActivityLogHook implements StairwayHook {
                 operationType,
                 getRequired(context.getInputParameters(), FOLDER_ID, UUID.class).toString(),
                 WsmObjectType.FOLDER));
+        case USER -> activityLogDao.writeActivity(
+            workspaceUuid,
+            new DbWorkspaceActivityLog(
+                userEmail,
+                subjectId,
+                operationType,
+                getRequired(context.getInputParameters(), USER_TO_REMOVE, String.class),
+                WsmObjectType.USER));
         default -> throw new UnhandledDeletionFlightException(
             String.format(
                 "Activity log should be updated for deletion flight %s failures",
