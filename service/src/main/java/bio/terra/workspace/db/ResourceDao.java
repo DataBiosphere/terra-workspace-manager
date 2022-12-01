@@ -30,6 +30,8 @@ import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsExc
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableMap;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -61,7 +63,7 @@ public class ResourceDao {
       SELECT workspace_id, cloud_platform, resource_id, name, description, stewardship_type,
         resource_type, exact_resource_type, cloning_instructions, attributes,
         access_scope, managed_by, associated_app, assigned_user, private_resource_state,
-        resource_lineage, properties
+        resource_lineage, properties, created_date, created_by_email
       FROM resource WHERE workspace_id = :workspace_id
       """;
 
@@ -101,7 +103,11 @@ public class ResourceDao {
                                   resourceLineage,
                                   new TypeReference<List<ResourceLineageEntry>>() {}))
                       .orElse(null))
-              .properties(DbSerDes.jsonToProperties(rs.getString("properties")));
+              .properties(DbSerDes.jsonToProperties(rs.getString("properties")))
+              .createdDate(
+                  OffsetDateTime.ofInstant(
+                      rs.getTimestamp("created_date").toInstant(), ZoneId.of("UTC")))
+              .createdByEmail(rs.getString("created_by_email"));
 
   private final NamedParameterJdbcTemplate jdbcTemplate;
 
@@ -689,11 +695,11 @@ public class ResourceDao {
         INSERT INTO resource (workspace_id, cloud_platform, resource_id, name, description,
           stewardship_type, exact_resource_type, resource_type, cloning_instructions, attributes,
           access_scope, managed_by, associated_app, assigned_user, private_resource_state,
-          resource_lineage, properties)
+          resource_lineage, properties, created_by_email)
         VALUES (:workspace_id, :cloud_platform, :resource_id, :name, :description,
           :stewardship_type, :exact_resource_type, :resource_type, :cloning_instructions,
           cast(:attributes AS jsonb), :access_scope, :managed_by, :associated_app, :assigned_user,
-          :private_resource_state, :resource_lineage::jsonb, :properties::jsonb);
+          :private_resource_state, :resource_lineage::jsonb, :properties::jsonb, :created_by_email);
         """;
 
     final var params =
@@ -709,7 +715,10 @@ public class ResourceDao {
             .addValue("cloning_instructions", resource.getCloningInstructions().toSql())
             .addValue("attributes", resource.attributesToJson())
             .addValue("resource_lineage", DbSerDes.toJson(resource.getResourceLineage()))
-            .addValue("properties", DbSerDes.propertiesToJson(resource.getProperties()));
+            .addValue("properties", DbSerDes.propertiesToJson(resource.getProperties()))
+            // Only set created_by_email and don't need to set created_by_date; that is set by
+            // defaultValueComputed
+            .addValue("created_by_email", resource.getCreatedByEmail());
     if (resource.getStewardshipType().equals(CONTROLLED)) {
       ControlledResource controlledResource = resource.castToControlledResource();
       //noinspection deprecation

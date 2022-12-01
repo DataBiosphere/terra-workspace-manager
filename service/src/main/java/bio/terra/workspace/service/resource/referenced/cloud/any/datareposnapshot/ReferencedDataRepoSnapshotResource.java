@@ -22,6 +22,7 @@ import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -53,7 +54,9 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
       @JsonProperty("instanceName") String instanceName,
       @JsonProperty("snapshotId") String snapshotId,
       @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
-      @JsonProperty("properties") Map<String, String> properties) {
+      @JsonProperty("properties") Map<String, String> properties,
+      @JsonProperty("createdByEmail") String createdByEmail,
+      @JsonProperty("createdDate") OffsetDateTime createdDate) {
     super(
         workspaceId,
         resourceId,
@@ -61,7 +64,9 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
         description,
         cloningInstructions,
         resourceLineage,
-        properties);
+        properties,
+        createdByEmail,
+        createdDate);
     this.instanceName = instanceName;
     this.snapshotId = snapshotId;
     validate();
@@ -172,7 +177,8 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
       UUID destinationResourceId,
       @Nullable UUID destinationFolderId,
       @Nullable String name,
-      @Nullable String description) {
+      @Nullable String description,
+      String createdByEmail) {
     ReferencedDataRepoSnapshotResource.Builder resultBuilder =
         toBuilder()
             .wsmResourceFields(
@@ -181,7 +187,8 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
                     destinationResourceId,
                     destinationFolderId,
                     name,
-                    description));
+                    description,
+                    createdByEmail));
     return resultBuilder.build();
   }
 

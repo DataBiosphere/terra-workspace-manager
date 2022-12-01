@@ -26,7 +26,9 @@ public class WorkspaceActivityLogService {
 
   /** Writes the change activity. */
   public void writeActivity(
-      AuthenticatedUserRequest userRequest, UUID workspaceUuid, OperationType operationType,
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceUuid,
+      OperationType operationType,
       String changeSubjectId,
       WsmObjectType objectType) {
     UserStatusInfo userStatusInfo =

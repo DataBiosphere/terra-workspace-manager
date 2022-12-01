@@ -296,7 +296,12 @@ public class WorkspaceService {
       @Nullable String description,
       AuthenticatedUserRequest userRequest) {
     if (workspaceDao.updateWorkspace(workspaceUuid, userFacingId, name, description)) {
-      workspaceActivityLogService.writeActivity(userRequest, workspaceUuid, OperationType.UPDATE, workspaceUuid.toString(), WsmObjectType.WORKSPACE);
+      workspaceActivityLogService.writeActivity(
+          userRequest,
+          workspaceUuid,
+          OperationType.UPDATE,
+          workspaceUuid.toString(),
+          WsmObjectType.WORKSPACE);
     }
     return workspaceDao.getWorkspace(workspaceUuid);
   }
@@ -310,7 +315,12 @@ public class WorkspaceService {
   public void updateWorkspaceProperties(
       UUID workspaceUuid, Map<String, String> properties, AuthenticatedUserRequest userRequest) {
     workspaceDao.updateWorkspaceProperties(workspaceUuid, properties);
-    workspaceActivityLogService.writeActivity(userRequest, workspaceUuid, OperationType.UPDATE, workspaceUuid.toString(), WsmObjectType.WORKSPACE);
+    workspaceActivityLogService.writeActivity(
+        userRequest,
+        workspaceUuid,
+        OperationType.UPDATE,
+        workspaceUuid.toString(),
+        WsmObjectType.WORKSPACE);
   }
 
   /** Delete an existing workspace by ID. */
@@ -339,7 +349,12 @@ public class WorkspaceService {
   public void deleteWorkspaceProperties(
       UUID workspaceUuid, List<String> propertyKeys, AuthenticatedUserRequest userRequest) {
     workspaceDao.deleteWorkspaceProperties(workspaceUuid, propertyKeys);
-    workspaceActivityLogService.writeActivity(userRequest, workspaceUuid, OperationType.DELETE, workspaceUuid.toString(), WsmObjectType.WORKSPACE);
+    workspaceActivityLogService.writeActivity(
+        userRequest,
+        workspaceUuid,
+        OperationType.DELETE,
+        workspaceUuid.toString(),
+        WsmObjectType.WORKSPACE);
   }
 
   /**

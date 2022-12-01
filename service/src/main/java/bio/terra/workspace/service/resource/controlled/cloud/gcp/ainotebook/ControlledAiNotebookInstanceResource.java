@@ -33,6 +33,7 @@ import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -78,7 +79,9 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
       @JsonProperty("location") String location,
       @JsonProperty("projectId") String projectId,
       @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
-      @JsonProperty("properties") Map<String, String> properties) {
+      @JsonProperty("properties") Map<String, String> properties,
+      @JsonProperty("createdByEmail") String createdByEmail,
+      @JsonProperty("createdDate") OffsetDateTime createdDate) {
     super(
         workspaceId,
         resourceId,
@@ -91,7 +94,9 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
         applicationId,
         privateResourceState,
         resourceLineage,
-        properties);
+        properties,
+        createdByEmail,
+        createdDate);
     this.instanceId = instanceId;
     this.location = location;
     this.projectId = projectId;
@@ -144,6 +149,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
     String workspaceUserFacingId = workspaceDao.getWorkspace(getWorkspaceId()).getUserFacingId();
 
     RetryRule gcpRetryRule = RetryRules.cloud();
+    RetryRule shortDatabaseRetryRule = RetryRules.shortDatabase();
     flight.addStep(
         new RetrieveNetworkNameStep(
             flightBeanBag.getCrlService(), this, flightBeanBag.getGcpCloudContextService()),
@@ -171,6 +177,9 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
             this,
             userRequest),
         gcpRetryRule);
+    flight.addStep(
+        new UpdateNotebookResourceRegionMetadataStep(this, flightBeanBag.getResourceDao()),
+        shortDatabaseRetryRule);
   }
 
   /** {@inheritDoc} */
@@ -195,9 +204,13 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
   }
 
   public InstanceName toInstanceName(String workspaceProjectId) {
+    return toInstanceName(workspaceProjectId, getLocation());
+  }
+
+  public InstanceName toInstanceName(String workspaceProjectId, String requestedLocation) {
     return InstanceName.builder()
         .projectId(workspaceProjectId)
-        .location(getLocation())
+        .location(requestedLocation)
         .instanceId(instanceId)
         .build();
   }

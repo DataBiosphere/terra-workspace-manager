@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource;
 
+import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -7,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import bio.terra.workspace.app.controller.ResourceApiController;
 import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiControlledResourceMetadata;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotAttributes;
@@ -22,7 +24,6 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.Cont
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
-import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -72,7 +73,9 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
             projectId,
             datasetName,
             /*resourceLineage=*/ null,
-            Map.of());
+            Map.of(),
+            DEFAULT_USER_EMAIL,
+            /*createdDate*/ null);
 
     ApiResourceDescription resourceDescription =
         resourceController.makeApiResourceDescription(resource);
@@ -101,7 +104,9 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
             datasetName,
             datatableName,
             /*resourceLineage=*/ null,
-            /*properties=*/ Map.of());
+            /*properties=*/ Map.of(),
+            DEFAULT_USER_EMAIL,
+            /*createdDate*/ null);
 
     ApiResourceDescription resourceDescription =
         resourceController.makeApiResourceDescription(resource);
@@ -129,7 +134,9 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
             instanceName,
             snapshotId,
             /*resourceLineage=*/ null,
-            /*properties=*/ Map.of());
+            /*properties=*/ Map.of(),
+            DEFAULT_USER_EMAIL,
+            /*createdDate*/ null);
 
     ApiResourceDescription resourceDescription =
         resourceController.makeApiResourceDescription(resource);
@@ -154,7 +161,9 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
             cloning,
             bucketName,
             /*resourceLineage=*/ null,
-            /*properties=*/ Map.of());
+            /*properties=*/ Map.of(),
+            DEFAULT_USER_EMAIL,
+            /*createdDate*/ null);
 
     ApiResourceDescription resourceDescription =
         resourceController.makeApiResourceDescription(resource);
@@ -206,7 +215,9 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
               null,
               bucketName,
               /*resourceLineage=*/ null,
-              /*properties=*/ Map.of());
+              /*properties=*/ Map.of(),
+              DEFAULT_USER_EMAIL,
+              /*createdDate*/ null);
 
       ApiResourceDescription resourceDescription =
           resourceController.makeApiResourceDescription(resource);
@@ -237,7 +248,9 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
               datasetName,
               projectId,
               /*resourceLineage=*/ null,
-              /*properties=*/ Map.of());
+              /*properties=*/ Map.of(),
+              DEFAULT_USER_EMAIL,
+              /*createdDate*/ null);
 
       ApiResourceDescription resourceDescription =
           resourceController.makeApiResourceDescription(resource);
@@ -256,7 +269,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
       var resource =
           ControlledAiNotebookInstanceResource.builder()
               .common(
-                  ControlledResourceFields.builder()
+                  ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                       .workspaceUuid(workspaceUuid)
                       .resourceId(resourceId)
                       .name(resourceName)

@@ -14,6 +14,7 @@ import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.GcpCloudUtils;
 import bio.terra.workspace.common.StairwayTestUtils;
+import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
@@ -229,7 +230,7 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
   private ControlledBigQueryDatasetResource buildPrivateDataset(
       UUID workspaceUuid, String datasetName, String projectId) {
     ControlledResourceFields commonFields =
-        ControlledResourceFields.builder()
+        ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
             .workspaceUuid(workspaceUuid)
             .resourceId(UUID.randomUUID())
             .name(datasetName)

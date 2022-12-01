@@ -56,13 +56,19 @@ public class WorkspaceCloneUtils {
       UUID destinationResourceId,
       String name,
       @Nullable String description,
-      String cloudInstanceName) {
+      String cloudInstanceName,
+      String createdByEmail) {
     return ControlledAzureStorageContainerResource.builder()
         .storageContainerName(cloudInstanceName)
         .storageAccountId(storageAccountId)
         .common(
             sourceContainer.buildControlledCloneResourceCommonFields(
-                destinationWorkspaceId, destinationResourceId, null, name, description))
+                destinationWorkspaceId,
+                destinationResourceId,
+                null,
+                name,
+                description,
+                createdByEmail))
         .build();
   }
 
@@ -75,7 +81,8 @@ public class WorkspaceCloneUtils {
       String name,
       @Nullable String description,
       String cloudInstanceName,
-      String destinationProjectId) {
+      String destinationProjectId,
+      String createdByEmail) {
     return ControlledBigQueryDatasetResource.builder()
         .projectId(destinationProjectId)
         .datasetName(cloudInstanceName)
@@ -85,7 +92,8 @@ public class WorkspaceCloneUtils {
                 destinationResourceId,
                 destinationFolderId,
                 name,
-                description))
+                description,
+                createdByEmail))
         .build();
   }
 
@@ -96,7 +104,8 @@ public class WorkspaceCloneUtils {
       @Nullable UUID destinationFolderId,
       String name,
       @Nullable String description,
-      String cloudInstanceName) {
+      String cloudInstanceName,
+      String createdByEmail) {
     return ControlledGcsBucketResource.builder()
         .bucketName(cloudInstanceName)
         .common(
@@ -105,7 +114,8 @@ public class WorkspaceCloneUtils {
                 destinationResourceId,
                 destinationFolderId,
                 name,
-                description))
+                description,
+                createdByEmail))
         .build();
   }
 }

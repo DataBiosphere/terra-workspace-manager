@@ -1,11 +1,13 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.WORKSPACE_ID;
 import static com.google.common.collect.MoreCollectors.onlyElement;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;
 
 import bio.terra.stairway.FlightContext;
@@ -15,9 +17,7 @@ import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.db.FolderDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.folder.model.Folder;
-import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +44,7 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
       "source parent folder id description";
   private static final String SOURCE_SON_FOLDER_NAME = "source-son-folder-id";
   private static final String SOURCE_SON_FOLDER_DESCRIPTION = "source son folder id description";
+  private static final String DEFAULT_USER_EMAIL = "foo@gmail.com";
 
   @BeforeEach
   public void setup() throws InterruptedException {
@@ -57,7 +58,9 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
             SOURCE_PARENT_FOLDER_NAME,
             SOURCE_PARENT_FOLDER_DESCRIPTION,
             /*parentFolderId=*/ null,
-            /*properties=*/ Map.of("foo", "bar")));
+            /*properties=*/ Map.of("foo", "bar"),
+            DEFAULT_USER_EMAIL,
+            /*createdDate=*/ null));
     folderDao.createFolder(
         new Folder(
             SOURCE_SON_FOLDER_ID,
@@ -65,9 +68,13 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
             SOURCE_SON_FOLDER_NAME,
             SOURCE_SON_FOLDER_DESCRIPTION,
             SOURCE_PARENT_FOLDER_ID,
-            /*properties=*/ Map.of("fooSon", "barSon")));
+            /*properties=*/ Map.of("fooSon", "barSon"),
+            DEFAULT_USER_EMAIL,
+            /*createdDate=*/ null));
 
-    cloneAllFoldersStep = new CloneAllFoldersStep(folderDao);
+    cloneAllFoldersStep = new CloneAllFoldersStep(mockSamService(), folderDao);
+    when(mockSamService().getUserEmailFromSamAndRethrowOnInterrupt(any()))
+        .thenReturn(DEFAULT_USER_EMAIL);
   }
 
   @Test
@@ -77,9 +84,8 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
 
     UUID destinationWorkspaceId =
         WorkspaceUnitTestUtils.createWorkspaceWithGcpContext(workspaceDao);
-    Workspace destinationWorkspace = workspaceDao.getWorkspace(destinationWorkspaceId);
     inputParameters.put(ControlledResourceKeys.SOURCE_WORKSPACE_ID, SOURCE_WORKSPACE_ID);
-    inputParameters.put(JobMapKeys.REQUEST.getKeyName(), destinationWorkspace);
+    inputParameters.put(WORKSPACE_ID, destinationWorkspaceId);
 
     when(mockFlightContext.getInputParameters()).thenReturn(inputParameters);
     when(mockFlightContext.getWorkingMap()).thenReturn(workingMap);
@@ -119,10 +125,8 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
 
     UUID destinationWorkspaceId =
         WorkspaceUnitTestUtils.createWorkspaceWithGcpContext(workspaceDao);
-    Workspace destinationWorkspace = workspaceDao.getWorkspace(destinationWorkspaceId);
     inputParameters.put(ControlledResourceKeys.SOURCE_WORKSPACE_ID, SOURCE_WORKSPACE_ID);
-    inputParameters.put(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId);
-    inputParameters.put(JobMapKeys.REQUEST.getKeyName(), destinationWorkspace);
+    inputParameters.put(WORKSPACE_ID, destinationWorkspaceId);
 
     when(mockFlightContext.getInputParameters()).thenReturn(inputParameters);
     when(mockFlightContext.getWorkingMap()).thenReturn(workingMap);

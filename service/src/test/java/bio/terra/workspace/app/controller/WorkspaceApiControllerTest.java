@@ -3,6 +3,8 @@ package bio.terra.workspace.app.controller;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.SHORT_DESCRIPTION_PROPERTY;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.TYPE_PROPERTY;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.VERSION_PROPERTY;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.WORKSPACE_NAME;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.getUserFacingId;
 import static bio.terra.workspace.common.utils.MockMvcUtils.UPDATE_WORKSPACES_V1_POLICIES_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.UPDATE_WORKSPACES_V1_PROPERTIES_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
@@ -120,6 +122,8 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
             new UserStatusInfo()
                 .userEmail(USER_REQUEST.getEmail())
                 .userSubjectId(USER_REQUEST.getSubjectId()));
+    when(mockSamService().getUserEmailFromSamAndRethrowOnInterrupt(any()))
+        .thenReturn(USER_REQUEST.getEmail());
     when(mockSamService().isAuthorized(any(), eq(SamConstants.SamResource.WORKSPACE), any(), any()))
         .thenReturn(true);
 
@@ -161,6 +165,21 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
     ApiErrorReport errorReport =
         createRawlsWorkspaceWithPolicyExpectError(HttpStatus.SC_NOT_IMPLEMENTED);
     assertTrue(errorReport.getMessage().contains("enabled"));
+  }
+
+  @Test
+  public void createWorkspace() throws Exception {
+    ApiCreatedWorkspace workspace = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
+
+    ApiWorkspaceDescription getWorkspace =
+        mockMvcUtils.getWorkspace(USER_REQUEST, workspace.getId());
+    assertEquals(WORKSPACE_NAME, getWorkspace.getDisplayName());
+    assertEquals(getUserFacingId(workspace.getId()), getWorkspace.getUserFacingId());
+    assertEquals(ApiWorkspaceStageModel.MC_WORKSPACE, getWorkspace.getStage());
+    assertEquals(USER_REQUEST.getEmail(), getWorkspace.getCreatedBy());
+    assertNotNull(getWorkspace.getCreatedDate());
+    assertEquals(USER_REQUEST.getEmail(), getWorkspace.getLastUpdatedBy());
+    assertNotNull(getWorkspace.getLastUpdatedDate());
   }
 
   @Test

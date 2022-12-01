@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource.model;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import com.google.common.collect.ImmutableMap;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -27,6 +28,8 @@ public class WsmResourceFields {
   private final CloningInstructions cloningInstructions;
   @Nullable private final List<ResourceLineageEntry> resourceLineage;
   private final ImmutableMap<String, String> properties;
+  private final String createdByEmail;
+  @Nullable private final OffsetDateTime createdDate;
 
   /** construct from database resource */
   public WsmResourceFields(DbResource dbResource) {
@@ -37,6 +40,8 @@ public class WsmResourceFields {
     cloningInstructions = dbResource.getCloningInstructions();
     resourceLineage = dbResource.getResourceLineage().orElse(null);
     properties = dbResource.getProperties();
+    createdByEmail = dbResource.getCreatedByEmail();
+    createdDate = dbResource.getCreatedDate();
   }
 
   protected WsmResourceFields(Builder<?> builder) {
@@ -47,6 +52,8 @@ public class WsmResourceFields {
     this.cloningInstructions = builder.cloningInstructions;
     this.resourceLineage = builder.resourceLineage;
     this.properties = builder.properties;
+    this.createdByEmail = builder.createdByEmail;
+    this.createdDate = builder.createdDate;
   }
 
   public static WsmResourceFields.Builder<?> builder() {
@@ -61,7 +68,8 @@ public class WsmResourceFields {
         .description(getDescription())
         .cloningInstructions(getCloningInstructions())
         .resourceLineage(getResourceLineage())
-        .properties(getProperties());
+        .properties(getProperties())
+        .createdByEmail(getCreatedByEmail());
   }
 
   public UUID getWorkspaceId() {
@@ -94,6 +102,14 @@ public class WsmResourceFields {
     return properties;
   }
 
+  public String getCreatedByEmail() {
+    return createdByEmail;
+  }
+
+  public OffsetDateTime getCreatedDate() {
+    return createdDate;
+  }
+
   public static class Builder<T extends Builder<T>> {
     private UUID workspaceUuid;
     private UUID resourceId;
@@ -102,6 +118,8 @@ public class WsmResourceFields {
     private CloningInstructions cloningInstructions;
     private List<ResourceLineageEntry> resourceLineage;
     private ImmutableMap<String, String> properties = ImmutableMap.of();
+    private String createdByEmail;
+    private OffsetDateTime createdDate;
 
     public Builder() {}
 
@@ -111,6 +129,7 @@ public class WsmResourceFields {
       ResourceValidationUtils.checkFieldNonNull(name, "name");
       ResourceValidationUtils.checkFieldNonNull(cloningInstructions, "cloningInstructions");
       ResourceValidationUtils.checkFieldNonNull(properties, "properties");
+      ResourceValidationUtils.checkFieldNonNull(createdByEmail, "createdByEmail");
     }
 
     public WsmResourceFields build() {
@@ -157,6 +176,18 @@ public class WsmResourceFields {
     @SuppressWarnings("unchecked")
     public T properties(Map<String, String> properties) {
       this.properties = ImmutableMap.copyOf(properties);
+      return (T) this;
+    }
+
+    @SuppressWarnings("unchecked")
+    public T createdByEmail(String createdByEmail) {
+      this.createdByEmail = createdByEmail;
+      return (T) this;
+    }
+
+    @SuppressWarnings("unchecked")
+    public T createdDate(OffsetDateTime createdDate) {
+      this.createdDate = createdDate;
       return (T) this;
     }
   }

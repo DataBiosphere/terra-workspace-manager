@@ -108,20 +108,30 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     UUID workspaceUuid = UUID.fromString(workspaceId);
     if (context.getFlightStatus() == FlightStatus.SUCCESS) {
       switch (af.getActivityLogChangedTarget()) {
-        case WORKSPACE, AZURE_CLOUD_CONTEXT, GCP_CLOUD_CONTEXT ->
-            activityLogDao.writeActivity(
-            workspaceUuid, new DbWorkspaceActivityLog(userEmail, subjectId, operationType, workspaceUuid.toString(), WsmObjectType.WORKSPACE));
-        case RESOURCE ->
-            activityLogDao.writeActivity(
-                workspaceUuid,
-                new DbWorkspaceActivityLog(userEmail, subjectId, operationType, getSingleResourceId(context).toString(), WsmObjectType.RESOURCE));
-        case FOLDER ->
-            activityLogDao.writeActivity(
-                workspaceUuid,
-                new DbWorkspaceActivityLog(
-                    userEmail, subjectId, operationType, getRequired(context.getInputParameters(), FOLDER_ID, UUID.class).toString(), WsmObjectType.FOLDER
-                )
-            );
+        case WORKSPACE, AZURE_CLOUD_CONTEXT, GCP_CLOUD_CONTEXT -> activityLogDao.writeActivity(
+            workspaceUuid,
+            new DbWorkspaceActivityLog(
+                userEmail,
+                subjectId,
+                operationType,
+                workspaceUuid.toString(),
+                WsmObjectType.WORKSPACE));
+        case RESOURCE -> activityLogDao.writeActivity(
+            workspaceUuid,
+            new DbWorkspaceActivityLog(
+                userEmail,
+                subjectId,
+                operationType,
+                getSingleResourceId(context).toString(),
+                WsmObjectType.RESOURCE));
+        case FOLDER -> activityLogDao.writeActivity(
+            workspaceUuid,
+            new DbWorkspaceActivityLog(
+                userEmail,
+                subjectId,
+                operationType,
+                getRequired(context.getInputParameters(), FOLDER_ID, UUID.class).toString(),
+                WsmObjectType.FOLDER));
         default -> throw new UnhandledDeletionFlightException(
             String.format(
                 "Activity log should be updated for deletion flight %s failures",
@@ -162,7 +172,13 @@ public class WorkspaceActivityLogHook implements StairwayHook {
               workspaceUuid));
     } catch (WorkspaceNotFoundException e) {
       activityLogDao.writeActivity(
-          workspaceUuid, new DbWorkspaceActivityLog(userEmail, subjectId, OperationType.DELETE, workspaceUuid.toString(), WsmObjectType.WORKSPACE));
+          workspaceUuid,
+          new DbWorkspaceActivityLog(
+              userEmail,
+              subjectId,
+              OperationType.DELETE,
+              workspaceUuid.toString(),
+              WsmObjectType.WORKSPACE));
     }
   }
 
@@ -171,7 +187,13 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     Optional<String> cloudContext = workspaceDao.getCloudContext(workspaceUuid, cloudPlatform);
     if (cloudContext.isEmpty()) {
       activityLogDao.writeActivity(
-          workspaceUuid, new DbWorkspaceActivityLog(userEmail, subjectId, OperationType.DELETE, workspaceUuid.toString(), WsmObjectType.WORKSPACE));
+          workspaceUuid,
+          new DbWorkspaceActivityLog(
+              userEmail,
+              subjectId,
+              OperationType.DELETE,
+              workspaceUuid.toString(),
+              WsmObjectType.WORKSPACE));
     } else {
       logger.warn(
           String.format(
@@ -186,7 +208,13 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     var folderId = getRequired(context.getInputParameters(), FOLDER_ID, UUID.class);
     if (folderDao.getFolderIfExists(workspaceUuid, folderId).isEmpty()) {
       activityLogDao.writeActivity(
-          workspaceUuid, new DbWorkspaceActivityLog(userEmail, subjectId, OperationType.DELETE, folderId.toString(), WsmObjectType.FOLDER));
+          workspaceUuid,
+          new DbWorkspaceActivityLog(
+              userEmail,
+              subjectId,
+              OperationType.DELETE,
+              folderId.toString(),
+              WsmObjectType.FOLDER));
     }
   }
 
@@ -202,7 +230,13 @@ public class WorkspaceActivityLogHook implements StairwayHook {
               resourceId, workspaceUuid));
     } catch (ResourceNotFoundException e) {
       activityLogDao.writeActivity(
-          workspaceUuid, new DbWorkspaceActivityLog(userEmail, subjectId, OperationType.DELETE, resourceId.toString(), WsmObjectType.RESOURCE));
+          workspaceUuid,
+          new DbWorkspaceActivityLog(
+              userEmail,
+              subjectId,
+              OperationType.DELETE,
+              resourceId.toString(),
+              WsmObjectType.RESOURCE));
     }
   }
 
@@ -224,7 +258,9 @@ public class WorkspaceActivityLogHook implements StairwayHook {
             context.getWorkingMap().get(UPDATED_WORKSPACES, new TypeReference<>() {}));
     for (var id : updatedWorkspaces) {
       activityLogDao.writeActivity(
-          UUID.fromString(id), new DbWorkspaceActivityLog(userEmail, subjectId, operationType, id, WsmObjectType.WORKSPACE));
+          UUID.fromString(id),
+          new DbWorkspaceActivityLog(
+              userEmail, subjectId, operationType, id, WsmObjectType.WORKSPACE));
     }
   }
 }

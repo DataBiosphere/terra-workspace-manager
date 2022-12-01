@@ -55,7 +55,11 @@ public class ReferencedResourceService {
       ReferencedResource resource, AuthenticatedUserRequest userRequest) {
     resourceDao.createReferencedResource(resource);
     workspaceActivityLogService.writeActivity(
-        userRequest, resource.getWorkspaceId(), OperationType.CREATE, resource.getResourceId().toString(), WsmObjectType.RESOURCE);
+        userRequest,
+        resource.getWorkspaceId(),
+        OperationType.CREATE,
+        resource.getResourceId().toString(),
+        WsmObjectType.RESOURCE);
     return getReferenceResource(resource.getWorkspaceId(), resource.getResourceId());
   }
 
@@ -64,7 +68,11 @@ public class ReferencedResourceService {
       ReferencedResource resource, AuthenticatedUserRequest userRequest) {
     resourceDao.createReferencedResource(resource);
     workspaceActivityLogService.writeActivity(
-        userRequest, resource.getWorkspaceId(), OperationType.CLONE, resource.getResourceId().toString(), WsmObjectType.RESOURCE);
+        userRequest,
+        resource.getWorkspaceId(),
+        OperationType.CLONE,
+        resource.getResourceId().toString(),
+        WsmObjectType.RESOURCE);
     return getReferenceResource(resource.getWorkspaceId(), resource.getResourceId());
   }
 
@@ -142,8 +150,12 @@ public class ReferencedResourceService {
           resourceDao.updateResource(
               workspaceUuid, resourceId, name, description, cloningInstructions);
       if (updated) {
-        workspaceActivityLogService.writeActivity(userRequest, workspaceUuid, OperationType.UPDATE,
-            resourceId.toString(), WsmObjectType.RESOURCE);
+        workspaceActivityLogService.writeActivity(
+            userRequest,
+            workspaceUuid,
+            OperationType.UPDATE,
+            resourceId.toString(),
+            WsmObjectType.RESOURCE);
       }
     }
     if (!updated) {
@@ -166,8 +178,12 @@ public class ReferencedResourceService {
       WsmResourceType resourceType,
       AuthenticatedUserRequest userRequest) {
     if (resourceDao.deleteResourceForResourceType(workspaceUuid, resourceId, resourceType)) {
-      workspaceActivityLogService.writeActivity(userRequest, workspaceUuid, OperationType.DELETE,
-          resourceId.toString(), WsmObjectType.RESOURCE);
+      workspaceActivityLogService.writeActivity(
+          userRequest,
+          workspaceUuid,
+          OperationType.DELETE,
+          resourceId.toString(),
+          WsmObjectType.RESOURCE);
     }
   }
 
@@ -205,6 +221,7 @@ public class ReferencedResourceService {
       @Nullable UUID destinationFolderId,
       @Nullable String name,
       @Nullable String description,
+      String createdByEmail,
       AuthenticatedUserRequest userRequest) {
     ReferencedResource destinationResource =
         sourceReferencedResource
@@ -213,7 +230,8 @@ public class ReferencedResourceService {
                 destinationResourceId,
                 destinationFolderId,
                 name,
-                description)
+                description,
+                createdByEmail)
             .castToReferencedResource();
 
     // launch the creation flight

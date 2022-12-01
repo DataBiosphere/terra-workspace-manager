@@ -10,7 +10,6 @@ import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.exception.FeatureNotSupportedException;
-import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
@@ -67,7 +66,6 @@ import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import bio.terra.workspace.service.workspace.model.WsmObjectType;
 import io.opencensus.contrib.spring.aop.Traced;
-import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -185,6 +183,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .spendProfileId(spendProfileId.orElse(null))
             .workspaceStage(internalStage)
             .properties(convertApiPropertyToMap(body.getProperties()))
+            .createdByEmail(getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest))
             .build();
     UUID createdWorkspaceUuid =
         workspaceService.createWorkspace(
@@ -258,7 +257,6 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     }
 
     // When we have another cloud context, we will need to do a similar retrieval for it.
-    var createDetailsOptional = workspaceActivityLogDao.getCreateDetails(workspaceUuid);
     var lastChangeDetailsOptional = workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
 
     if (highestRole == WsmIamRole.DISCOVERER) {
@@ -279,20 +277,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         .stage(workspace.getWorkspaceStage().toApiModel())
         .gcpContext(gcpContext)
         .azureContext(azureContext)
-        .createdDate(
-            createDetailsOptional
-                .map(ActivityLogChangeDetails::changeDate)
-                .orElse(OffsetDateTime.MIN))
-        .createdBy(
-            createDetailsOptional.map(ActivityLogChangeDetails::actorEmail).orElse("unknown"))
-        .lastUpdatedDate(
-            lastChangeDetailsOptional
-                .map(ActivityLogChangeDetails::changeDate)
-                .orElse(OffsetDateTime.MIN))
-        .lastUpdatedBy(
-            lastChangeDetailsOptional
-                .map(ActivityLogChangeDetails::actorEmail)
-                .orElse("unknown"))
+        .createdDate(workspace.createdDate())
+        .createdBy(workspace.createdByEmail())
         .policies(workspacePolicies);
   }
 
@@ -383,7 +369,12 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         tpsApiDispatch.updatePao(
             new BearerToken(userRequest.getRequiredToken()), workspaceId, body);
     if (Boolean.TRUE.equals(result.isUpdateApplied())) {
-      workspaceActivityLogService.writeActivity(userRequest, workspaceId, OperationType.UPDATE, workspaceId.toString(), WsmObjectType.WORKSPACE);
+      workspaceActivityLogService.writeActivity(
+          userRequest,
+          workspaceId,
+          OperationType.UPDATE,
+          workspaceId.toString(),
+          WsmObjectType.WORKSPACE);
       logger.info(
           "Finished updating workspace policies {} for {}", workspaceId, userRequest.getEmail());
     } else {
@@ -415,9 +406,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.DELETE);
     validatePropertiesDeleteRequestBody(propertyKeys);
     logger.info(
-        "Deleting the properties with the key {} in workspace {}",
-        propertyKeys.toString(),
-        workspaceUuid);
+        "Deleting the properties with the key {} in workspace {}", propertyKeys, workspaceUuid);
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamWorkspaceAction.DELETE);
     workspaceService.deleteWorkspaceProperties(workspaceUuid, propertyKeys, userRequest);
@@ -459,7 +448,11 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
                 uuid, getAuthenticatedInfo(), WsmIamRole.fromApiModel(role), body.getMemberEmail()),
         "grantWorkspaceRole");
     workspaceActivityLogService.writeActivity(
-        getAuthenticatedInfo(), uuid, OperationType.GRANT_WORKSPACE_ROLE, body.getMemberEmail(), WsmObjectType.USER);
+        getAuthenticatedInfo(),
+        uuid,
+        OperationType.GRANT_WORKSPACE_ROLE,
+        body.getMemberEmail(),
+        WsmObjectType.USER);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -585,9 +578,10 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     // not authenticate.
     workspaceService.validateMcWorkspaceAndAction(
         userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
-    String userEmail =
-        SamRethrow.onInterrupted(() -> samService.getUserEmailFromSam(userRequest), "enablePet");
-    petSaService.enablePetServiceAccountImpersonation(workspaceUuid, userEmail, userRequest);
+    petSaService.enablePetServiceAccountImpersonation(
+        workspaceUuid,
+        getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
+        userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -643,6 +637,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .displayName(Optional.ofNullable(body.getDisplayName()).orElse(generatedDisplayName))
             .description(body.getDescription())
             .properties(sourceWorkspace.getProperties())
+            .createdByEmail(getSamService().getUserEmailFromSamAndRethrowOnInterrupt(petRequest))
             .build();
 
     final String jobId =

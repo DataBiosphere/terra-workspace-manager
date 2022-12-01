@@ -1,6 +1,7 @@
 package bio.terra.workspace.app.controller;
 
 import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AZURE_VM_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
@@ -17,10 +18,12 @@ import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureVmRequestBody;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiJobReport;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -30,6 +33,13 @@ public class ControlledAzureResourceApiControllerTest extends BaseAzureUnitTest 
   @Autowired MockMvc mockMvc;
   @Autowired ObjectMapper objectMapper;
   @Autowired ControlledAzureResourceApiController controller;
+
+  @BeforeEach
+  void setUp() throws InterruptedException {
+    when(mockSamService()
+            .getUserEmailFromSamAndRethrowOnInterrupt(any(AuthenticatedUserRequest.class)))
+        .thenReturn(DEFAULT_USER_EMAIL);
+  }
 
   @Test
   public void createAzureVm400WithNoParameters() throws Exception {

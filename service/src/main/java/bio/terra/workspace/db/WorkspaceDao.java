@@ -16,6 +16,8 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.google.common.collect.ImmutableMap;
 import io.opencensus.contrib.spring.aop.Traced;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -47,26 +49,29 @@ import org.springframework.stereotype.Component;
 public class WorkspaceDao {
   /** SQL query for reading a workspace */
   private static final String WORKSPACE_SELECT_SQL =
-      "SELECT workspace_id, user_facing_id, display_name, description, spend_profile, properties, workspace_stage"
-          + " FROM workspace";
+      """
+          SELECT workspace_id, user_facing_id, display_name, description, spend_profile, properties,
+          workspace_stage, created_by_email, created_date
+          FROM workspace
+      """;
 
   private static final RowMapper<Workspace> WORKSPACE_ROW_MAPPER =
       (rs, rowNum) ->
-          Workspace.builder()
-              .workspaceId(UUID.fromString(rs.getString("workspace_id")))
-              .userFacingId(rs.getString("user_facing_id"))
-              .displayName(rs.getString("display_name"))
-              .description(rs.getString("description"))
-              .spendProfileId(
-                  Optional.ofNullable(rs.getString("spend_profile"))
-                      .map(SpendProfileId::new)
-                      .orElse(null))
-              .properties(
-                  Optional.ofNullable(rs.getString("properties"))
-                      .map(DbSerDes::jsonToProperties)
-                      .orElse(null))
-              .workspaceStage(WorkspaceStage.valueOf(rs.getString("workspace_stage")))
-              .build();
+          new Workspace(
+              UUID.fromString(rs.getString("workspace_id")),
+              rs.getString("user_facing_id"),
+              rs.getString("display_name"),
+              rs.getString("description"),
+              Optional.ofNullable(rs.getString("spend_profile"))
+                  .map(SpendProfileId::new)
+                  .orElse(null),
+              Optional.ofNullable(rs.getString("properties"))
+                  .map(DbSerDes::jsonToProperties)
+                  .orElse(Collections.emptyMap()),
+              WorkspaceStage.valueOf(rs.getString("workspace_stage")),
+              rs.getString("created_by_email"),
+              OffsetDateTime.ofInstant(
+                  rs.getTimestamp("created_date").toInstant(), ZoneId.of("UTC")));
   private final Logger logger = LoggerFactory.getLogger(WorkspaceDao.class);
   private final NamedParameterJdbcTemplate jdbcTemplate;
   private final ApplicationDao applicationDao;
@@ -86,9 +91,12 @@ public class WorkspaceDao {
   @WriteTransaction
   public UUID createWorkspace(Workspace workspace, @Nullable List<String> applicationIds) {
     final String sql =
-        "INSERT INTO workspace (workspace_id, user_facing_id, display_name, description, spend_profile, properties, workspace_stage) "
-            + "values (:workspace_id, :user_facing_id, :display_name, :description, :spend_profile,"
-            + " cast(:properties AS jsonb), :workspace_stage)";
+        """
+            INSERT INTO workspace (workspace_id, user_facing_id, display_name, description,
+            spend_profile, properties, workspace_stage, created_by_email)
+            values (:workspace_id, :user_facing_id, :display_name, :description, :spend_profile,
+            cast(:properties AS jsonb), :workspace_stage, :created_by_email)
+        """;
 
     final UUID workspaceUuid = workspace.getWorkspaceId();
     // validateUserFacingId() is called in controller. Also call here to be safe (eg see bug
@@ -105,7 +113,10 @@ public class WorkspaceDao {
                 "spend_profile",
                 workspace.getSpendProfileId().map(SpendProfileId::getId).orElse(null))
             .addValue("properties", DbSerDes.propertiesToJson(workspace.getProperties()))
-            .addValue("workspace_stage", workspace.getWorkspaceStage().toString());
+            .addValue("workspace_stage", workspace.getWorkspaceStage().toString())
+            // Only set created_by_email and don't need to set created_by_date; that is set by
+            // defaultValueComputed
+            .addValue("created_by_email", workspace.createdByEmail());
     try {
       jdbcTemplate.update(sql, params);
       logger.info("Inserted record for workspace {}", workspaceUuid);

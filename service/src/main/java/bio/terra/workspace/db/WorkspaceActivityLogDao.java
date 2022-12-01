@@ -13,6 +13,7 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -28,14 +29,21 @@ import org.springframework.stereotype.Component;
 @Component
 public class WorkspaceActivityLogDao {
   private static final Logger logger = LoggerFactory.getLogger(WorkspaceActivityLogDao.class);
+  private static final String DEFAULT_CHANGE_SUBJECT_TYPE = "unknown";
   private static final RowMapper<ActivityLogChangeDetails> ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER =
-      (rs, rowNum) ->
-          new ActivityLogChangeDetails(OffsetDateTime.ofInstant(
-              rs.getTimestamp("change_date").toInstant(), ZoneId.of("UTC")),
-              rs.getString("actor_email"),
-              rs.getString("actor_subject_id"),
-              rs.getString("change_subject_id"),
-              WsmObjectType.valueOf(rs.getString("change_subject_type")));
+      (rs, rowNum) -> {
+        String changeSubjectTypeString = rs.getString("change_subject_type");
+        var changeSubjectType =
+            Objects.equals(changeSubjectTypeString, "unknown")
+                ? WsmObjectType.UNKNOW
+                : WsmObjectType.valueOf(changeSubjectTypeString);
+        return new ActivityLogChangeDetails(
+            OffsetDateTime.ofInstant(rs.getTimestamp("change_date").toInstant(), ZoneId.of("UTC")),
+            rs.getString("actor_email"),
+            rs.getString("actor_subject_id"),
+            rs.getString("change_subject_id"),
+            changeSubjectType);
+      };
   private final NamedParameterJdbcTemplate jdbcTemplate;
 
   // These fields don't update workspace "Last updated" time in UI. For example,
@@ -67,9 +75,9 @@ public class WorkspaceActivityLogDao {
     final String sql =
         """
             INSERT INTO workspace_activity_log (
-              workspace_id, change_date, change_type, actor_email, actor_subject_id, 
+              workspace_id, change_date, change_type, actor_email, actor_subject_id,
               change_subject_id, change_subject_type)
-            VALUES (:workspace_id, :change_date, :change_type, :actor_email, :actor_subject_id, 
+            VALUES (:workspace_id, :change_date, :change_type, :actor_email, :actor_subject_id,
               :change_subject_id, :change_subject_type)
         """;
     final var params =
@@ -81,35 +89,7 @@ public class WorkspaceActivityLogDao {
             .addValue("actor_subject_id", dbWorkspaceActivityLog.actorSubjectId())
             .addValue("change_subject_id", dbWorkspaceActivityLog.changeSubjectId())
             .addValue("change_subject_type", dbWorkspaceActivityLog.changeSubjectType().name());
-        jdbcTemplate.update(sql, params);
-
-  }
-
-  /**
-   * Get the creation time of the given workspace.
-   *
-   * <p>In cases where workspace is created before activity logging is introduced, this method may
-   * return empty or the first change activity logged since {@code #writeActivity} is implemented.
-   */
-  @Traced
-  @ReadTransaction
-  public Optional<ActivityLogChangeDetails> getCreateDetails(UUID workspaceId) {
-    // In rare cases when there are more than one rows with the same max change date,
-    // sort the actor_email by alphabetical order and returns the first one.
-    final String sql =
-        """
-            SELECT w.change_date, w.actor_email, w.actor_subject_id, w.change_subject_id, w.change_subject_type FROM workspace_activity_log w
-            JOIN (SELECT MIN(change_date) AS min_date FROM workspace_activity_log
-            WHERE workspace_id = :workspace_id) m
-            ON w.change_date = m.min_date
-            ORDER BY w.actor_email ASC
-            LIMIT 1
-        """;
-
-    final var params = new MapSqlParameterSource().addValue("workspace_id", workspaceId.toString());
-    return Optional.ofNullable(
-        DataAccessUtils.singleResult(
-            jdbcTemplate.query(sql, params, ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER)));
+    jdbcTemplate.update(sql, params);
   }
 
   @Traced
@@ -119,7 +99,7 @@ public class WorkspaceActivityLogDao {
     // sort the actor_email by alphabetical order and returns the first one.
     final String sql =
         """
-            SELECT change_date, actor_email, actor_subject_id, change_subject_id, change_subject_type 
+            SELECT change_date, actor_email, actor_subject_id, change_subject_id, change_subject_type
             FROM workspace_activity_log
             WHERE workspace_id = :workspace_id AND change_type NOT IN (:change_type)
             ORDER BY change_date DESC

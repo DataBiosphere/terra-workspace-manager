@@ -79,7 +79,6 @@ import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.La
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.LaunchCreateGcpContextFlightStep;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
-import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
@@ -173,6 +172,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             new UserStatusInfo()
                 .userEmail(USER_REQUEST.getEmail())
                 .userSubjectId(USER_REQUEST.getSubjectId()));
+    when(mockSamService.getUserEmailFromSamAndRethrowOnInterrupt(
+            any(AuthenticatedUserRequest.class)))
+        .thenReturn(USER_REQUEST.getEmail());
   }
 
   /**
@@ -412,8 +414,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             .changeDate()
             .isBefore(workspaceUpdateChangeDetails.get().changeDate()));
     assertEquals(USER_REQUEST.getEmail(), workspaceUpdateChangeDetails.get().actorEmail());
-    assertEquals(
-        USER_REQUEST.getSubjectId(), workspaceUpdateChangeDetails.get().actorSubjectId());
+    assertEquals(USER_REQUEST.getSubjectId(), workspaceUpdateChangeDetails.get().actorSubjectId());
 
     assertEquals(userFacingId, updatedWorkspace.getUserFacingId());
     assertTrue(updatedWorkspace.getDisplayName().isPresent());
@@ -676,18 +677,10 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     workspaceService.createWorkspace(request, null, null, USER_REQUEST);
 
     // Next, add a data reference to that workspace.
-    UUID resourceId = UUID.randomUUID();
     ReferencedDataRepoSnapshotResource snapshot =
-        new ReferencedDataRepoSnapshotResource(
-            workspaceUuid,
-            resourceId,
-            "fake_data_reference",
-            null,
-            CloningInstructions.COPY_NOTHING,
-            "fakeinstance",
-            "fakesnapshot",
-            /*resourceLineage=*/ null,
-            /*properties=*/ Map.of());
+        ReferenceResourceFixtures.makeDataRepoSnapshotResource(workspaceUuid);
+    UUID resourceId = snapshot.getResourceId();
+
     referenceResourceService.createReferenceResource(snapshot, USER_REQUEST);
 
     // Validate that the reference exists.
@@ -796,7 +789,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         ControlledGcsBucketResource.builder()
             .bucketName("terra-test-" + UUID.randomUUID().toString().toLowerCase())
             .common(
-                ControlledResourceFields.builder()
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                     .name("bucket_1")
                     .description("Just a plain bucket.")
                     .cloningInstructions(CloningInstructions.COPY_RESOURCE)
@@ -807,7 +800,6 @@ class WorkspaceServiceTest extends BaseConnectedTest {
                     .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
                     .applicationId(null)
                     .iamRole(ControlledResourceIamRole.OWNER)
-                    .assignedUser(USER_REQUEST.getEmail())
                     .build())
             .build();
     final ApiGcpGcsBucketCreationParameters creationParameters =
@@ -839,7 +831,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             FOLDER_NAME,
             /*description=*/ null,
             /*parentFolderId=*/ null,
-            /*properties=*/ Map.of());
+            /*properties=*/ Map.of(),
+            "foo@gmail.com",
+            null);
     folderDao.createFolder(sourceFolder);
 
     final ControlledGcsBucketResource createdBucketResource =
@@ -929,7 +923,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             FOLDER_NAME,
             /*description=*/ null,
             /*parentFolderId=*/ null,
-            /*properties=*/ Map.of()));
+            /*properties=*/ Map.of(),
+            "foo@gmail.com",
+            null));
 
     // Create a referenced resource
     ReferencedBigQueryDatasetResource datasetReference =
@@ -977,6 +973,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         AwaitCloneAllResourcesFlightStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     FlightDebugInfo debugInfo =
         FlightDebugInfo.newBuilder().undoStepFailures(retrySteps).lastStepFailure(true).build();
+    // TODO(PF-2259): This test is not actually testing the undo of CloneGcpWorkspaceFlight. It is
+    // testing the undo of WorkspaceCreateFlight.
     jobService.setFlightDebugInfoForTest(debugInfo);
 
     assertThrows(

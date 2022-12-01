@@ -1,16 +1,22 @@
 package bio.terra.workspace.common.fixtures;
 
+import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
+
 import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiProperties;
 import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
+import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants.Properties;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.google.common.collect.ImmutableList;
+import java.util.Collections;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
+import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 
 public class WorkspaceFixtures {
 
@@ -31,6 +37,19 @@ public class WorkspaceFixtures {
    */
   public static ApiCreateWorkspaceRequestBody createWorkspaceRequestBody() {
     return createWorkspaceRequestBody(ApiWorkspaceStageModel.MC_WORKSPACE);
+  }
+
+  public static Workspace createDefaultMcWorkspace() {
+    return new Workspace(
+        UUID.randomUUID(),
+        RandomStringUtils.randomAlphabetic(10).toLowerCase(Locale.ROOT),
+        "default workspace",
+        "this is an awesome workspace",
+        new SpendProfileId("default-spend"),
+        Collections.emptyMap(),
+        WorkspaceStage.MC_WORKSPACE,
+        DEFAULT_USER_EMAIL,
+        null);
   }
 
   public static Workspace buildWorkspace(
@@ -60,7 +79,8 @@ public class WorkspaceFixtures {
     return Workspace.builder()
         .workspaceId(id)
         .userFacingId("a" + id)
-        .workspaceStage(WorkspaceStage.MC_WORKSPACE);
+        .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+        .createdByEmail(DEFAULT_USER_EMAIL);
   }
 
   public static ApiCreateWorkspaceRequestBody createWorkspaceRequestBody(

@@ -21,7 +21,6 @@ import bio.terra.workspace.service.resource.controlled.ControlledResourceService
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
-import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -107,10 +106,10 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
     ControlledAzureIpResource ipResource =
         ControlledAzureIpResource.builder()
             .common(
-                ControlledResourceFields.builder()
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                     .workspaceUuid(workspaceUuid)
                     .resourceId(ipId)
-                    .name("wsm-test" + ipId.toString())
+                    .name("wsm-test" + ipId)
                     .cloningInstructions(CloningInstructions.COPY_RESOURCE)
                     .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
                     .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
