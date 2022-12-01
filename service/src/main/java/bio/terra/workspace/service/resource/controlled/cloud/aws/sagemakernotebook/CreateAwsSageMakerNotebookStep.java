@@ -40,28 +40,6 @@ public class CreateAwsSageMakerNotebookStep implements Step {
 
     final SamUser samUser = inputParameters.get(WorkspaceFlightMapKeys.SAM_USER, SamUser.class);
 
-    Optional<AwsUtils.BucketTagsHelper> defaultBucket = Optional.empty();
-
-    if (inputParameters.containsKey(
-        WorkspaceFlightMapKeys.ControlledResourceKeys.NOTEBOOK_DEFAULT_BUCKET)) {
-      ControlledAwsBucketResource defaultBucketResource =
-          inputParameters.get(
-              WorkspaceFlightMapKeys.ControlledResourceKeys.NOTEBOOK_DEFAULT_BUCKET,
-              ControlledAwsBucketResource.class);
-
-      defaultBucket =
-          Optional.of(
-              new AwsUtils.BucketTagsHelper(
-                  creationParameters
-                          .getDefaultBucket()
-                          .getAccessScope()
-                          .equals(ApiAwsCredentialAccessScope.WRITE_READ)
-                      ? AwsUtils.RoleTag.WRITER
-                      : AwsUtils.RoleTag.READER,
-                  defaultBucketResource.getS3BucketName(),
-                  defaultBucketResource.getPrefix()));
-    }
-
     final String awsCloudContextString =
         workingMap.get(
             WorkspaceFlightMapKeys.ControlledResourceKeys.AWS_CLOUD_CONTEXT, String.class);
@@ -79,8 +57,7 @@ public class CreateAwsSageMakerNotebookStep implements Step {
         samUser,
         region,
         instanceType,
-        creationParameters.getInstanceId(),
-        defaultBucket);
+        creationParameters.getInstanceId());
 
     return StepResult.getStepResultSuccess();
   }

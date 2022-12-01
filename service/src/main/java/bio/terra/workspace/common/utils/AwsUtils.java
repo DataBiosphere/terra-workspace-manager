@@ -120,23 +120,6 @@ public class AwsUtils {
     tags.add(new Tag().withKey("terra_bucket").withValue(prefix));
   }
 
-  public static class BucketTagsHelper {
-
-    private final RoleTag role;
-    private final String s3Bucket;
-    private final String prefix;
-
-    public BucketTagsHelper(RoleTag role, String s3Bucket, String prefix) {
-      this.role = role;
-      this.s3Bucket = s3Bucket;
-      this.prefix = prefix;
-    }
-
-    public void addBucketTags(Collection<Tag> tags) {
-      AwsUtils.addBucketTags(tags, role, s3Bucket, prefix);
-    }
-  }
-
   public static Credentials assumeUserRole(
       AwsCloudContext awsCloudContext,
       Credentials serviceCredentials,
@@ -321,14 +304,12 @@ public class AwsUtils {
       SamUser user,
       Regions region,
       InstanceType instanceType,
-      String notebookName,
-      Optional<BucketTagsHelper> defaultBucket) {
+      String notebookName) {
     AmazonSageMaker sageMaker = getSagemakerSession(credentials, region);
 
     Collection<Tag> tags = new HashSet<>();
     addUserTags(tags, user);
     addWorkspaceTags(tags, workspaceUuid);
-    defaultBucket.ifPresent(db -> db.addBucketTags(tags));
 
     CreateNotebookInstanceRequest request =
         new CreateNotebookInstanceRequest()
