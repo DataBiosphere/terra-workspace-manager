@@ -11,6 +11,9 @@ components:
         region:
           description: Region in which the notebook was created
           type: string
+        instanceType:
+          description: Type of the compute instance to launch for the notebook instance.
+          type: string
 
     AwsSageMakerNotebookResource:
       type: object

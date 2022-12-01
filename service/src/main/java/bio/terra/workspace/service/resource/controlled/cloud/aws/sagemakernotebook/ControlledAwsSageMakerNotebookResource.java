@@ -140,7 +140,10 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
   }
 
   public ApiAwsSageMakerNotebookAttributes toApiAttributes() {
-    return new ApiAwsSageMakerNotebookAttributes().instanceId(getInstanceId()).region(getRegion());
+    return new ApiAwsSageMakerNotebookAttributes()
+        .instanceId(getInstanceId())
+        .region(getRegion())
+        .instanceType(getInstanceType());
   }
 
   public ApiAwsSageMakerNotebookResource toApiResource() {
