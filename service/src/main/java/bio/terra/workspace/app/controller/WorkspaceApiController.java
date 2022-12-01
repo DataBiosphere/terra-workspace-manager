@@ -184,6 +184,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .spendProfileId(spendProfileId.orElse(null))
             .workspaceStage(internalStage)
             .properties(convertApiPropertyToMap(body.getProperties()))
+            .createdByEmail(getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest))
             .build();
     UUID createdWorkspaceUuid =
         workspaceService.createWorkspace(
@@ -257,7 +258,6 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     }
 
     // When we have another cloud context, we will need to do a similar retrieval for it.
-    var createDetailsOptional = workspaceActivityLogDao.getCreateDetails(workspaceUuid);
     var lastChangeDetailsOptional = workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
 
     if (highestRole == WsmIamRole.DISCOVERER) {
@@ -278,12 +278,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         .stage(workspace.getWorkspaceStage().toApiModel())
         .gcpContext(gcpContext)
         .azureContext(azureContext)
-        .createdDate(
-            createDetailsOptional
-                .map(ActivityLogChangeDetails::getChangeDate)
-                .orElse(OffsetDateTime.MIN))
-        .createdBy(
-            createDetailsOptional.map(ActivityLogChangeDetails::getActorEmail).orElse("unknown"))
+        .createdDate(workspace.createdDate())
+        .createdBy(workspace.createdByEmail())
         .lastUpdatedDate(
             lastChangeDetailsOptional
                 .map(ActivityLogChangeDetails::getChangeDate)
@@ -414,9 +410,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.DELETE);
     validatePropertiesDeleteRequestBody(propertyKeys);
     logger.info(
-        "Deleting the properties with the key {} in workspace {}",
-        propertyKeys.toString(),
-        workspaceUuid);
+        "Deleting the properties with the key {} in workspace {}", propertyKeys, workspaceUuid);
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamWorkspaceAction.DELETE);
     workspaceService.deleteWorkspaceProperties(workspaceUuid, propertyKeys, userRequest);
@@ -584,9 +578,10 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     // not authenticate.
     workspaceService.validateMcWorkspaceAndAction(
         userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
-    String userEmail =
-        SamRethrow.onInterrupted(() -> samService.getUserEmailFromSam(userRequest), "enablePet");
-    petSaService.enablePetServiceAccountImpersonation(workspaceUuid, userEmail, userRequest);
+    petSaService.enablePetServiceAccountImpersonation(
+        workspaceUuid,
+        getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
+        userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -642,6 +637,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .displayName(Optional.ofNullable(body.getDisplayName()).orElse(generatedDisplayName))
             .description(body.getDescription())
             .properties(sourceWorkspace.getProperties())
+            .createdByEmail(getSamService().getUserEmailFromSamAndRethrowOnInterrupt(petRequest))
             .build();
 
     final String jobId =

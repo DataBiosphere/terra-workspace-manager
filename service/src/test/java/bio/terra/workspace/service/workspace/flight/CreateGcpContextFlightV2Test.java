@@ -14,6 +14,7 @@ import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
+import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.service.crl.CrlService;
@@ -36,7 +37,6 @@ import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.google.api.services.cloudresourcemanager.v3.model.Binding;
 import com.google.api.services.cloudresourcemanager.v3.model.GetIamPolicyRequest;
 import com.google.api.services.cloudresourcemanager.v3.model.Policy;
@@ -246,12 +246,8 @@ class CreateGcpContextFlightV2Test extends BaseConnectedTest {
    * not need to explicitly clean up the workspaces created here.
    */
   private UUID createWorkspace(@Nullable SpendProfileId spendProfileId) {
-    UUID uuid = UUID.randomUUID();
     Workspace request =
-        Workspace.builder()
-            .workspaceId(uuid)
-            .userFacingId("a" + uuid)
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+        WorkspaceFixtures.defaultWorkspaceBuilder(UUID.randomUUID())
             .spendProfileId(spendProfileId)
             .build();
     return workspaceService.createWorkspace(

@@ -13,6 +13,7 @@ import bio.terra.workspace.common.utils.IamRoleUtils;
 import bio.terra.workspace.common.utils.ManagementExceptionUtils;
 import bio.terra.workspace.generated.model.ApiAzureStorageContainerCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
@@ -30,16 +31,19 @@ public class CopyAzureStorageContainerDefinitionStep implements Step {
   private static final Logger logger =
       LoggerFactory.getLogger(CopyAzureStorageContainerDefinitionStep.class);
 
+  private final SamService samService;
   private final AuthenticatedUserRequest userRequest;
   private final ControlledAzureStorageContainerResource sourceContainer;
   private final ControlledResourceService controlledResourceService;
   private final CloningInstructions resolvedCloningInstructions;
 
   public CopyAzureStorageContainerDefinitionStep(
+      SamService samService,
       AuthenticatedUserRequest userRequest,
       ControlledAzureStorageContainerResource sourceContainer,
       ControlledResourceService controlledResourceService,
       CloningInstructions resolvedCloningInstructions) {
+    this.samService = samService;
     this.userRequest = userRequest;
     this.sourceContainer = sourceContainer;
     this.controlledResourceService = controlledResourceService;
@@ -83,7 +87,8 @@ public class CopyAzureStorageContainerDefinitionStep implements Step {
             destinationResourceId,
             destinationResourceName,
             description,
-            destinationContainerName);
+            destinationContainerName,
+            samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest));
     ApiAzureStorageContainerCreationParameters destinationCreationParameters =
         new ApiAzureStorageContainerCreationParameters()
             .storageContainerName(destinationContainerName);

@@ -33,6 +33,7 @@ import bio.terra.workspace.generated.model.ApiUpdateGcsBucketReferenceRequestBod
 import bio.terra.workspace.generated.model.ApiUpdateGitRepoReferenceRequestBody;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -59,7 +60,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 
 @Controller
-public class ReferencedGcpResourceController implements ReferencedGcpResourceApi {
+public class ReferencedGcpResourceController extends ControllerBase
+    implements ReferencedGcpResourceApi {
 
   private final ReferencedResourceService referenceResourceService;
   private final WorkspaceDao workspaceDao;
@@ -75,17 +77,15 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
       WorkspaceService workspaceService,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       ResourceValidationUtils validationUtils,
-      HttpServletRequest request) {
+      HttpServletRequest request,
+      SamService samService) {
+    super(authenticatedUserRequestFactory, request, samService);
     this.referenceResourceService = referenceResourceService;
     this.workspaceDao = workspaceDao;
     this.workspaceService = workspaceService;
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.validationUtils = validationUtils;
     this.request = request;
-  }
-
-  private AuthenticatedUserRequest getAuthenticatedInfo() {
-    return authenticatedUserRequestFactory.from(request);
   }
 
   // -- GCS Bucket object -- //
@@ -99,7 +99,11 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     // Construct a ReferenceGcsBucketResource object from the API input
     var resource =
         ReferencedGcsObjectResource.builder()
-            .wsmResourceFields(getWsmResourceFields(workspaceUuid, body.getMetadata()))
+            .wsmResourceFields(
+                getWsmResourceFields(
+                    workspaceUuid,
+                    body.getMetadata(),
+                    getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest)))
             .bucketName(body.getFile().getBucketName())
             .objectName(body.getFile().getFileName())
             .build();
@@ -210,7 +214,11 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     // Construct a ReferenceGcsBucketResource object from the API input
     var resource =
         ReferencedGcsBucketResource.builder()
-            .wsmResourceFields(getWsmResourceFields(workspaceUuid, body.getMetadata()))
+            .wsmResourceFields(
+                getWsmResourceFields(
+                    workspaceUuid,
+                    body.getMetadata(),
+                    getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest)))
             .bucketName(body.getBucket().getBucketName())
             .build();
 
@@ -311,7 +319,11 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
         userRequest, workspaceUuid, SamWorkspaceAction.CREATE_REFERENCE);
     var resource =
         ReferencedBigQueryDataTableResource.builder()
-            .wsmResourceFields(getWsmResourceFields(workspaceUuid, body.getMetadata()))
+            .wsmResourceFields(
+                getWsmResourceFields(
+                    workspaceUuid,
+                    body.getMetadata(),
+                    getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest)))
             .projectId(body.getDataTable().getProjectId())
             .datasetId(body.getDataTable().getDatasetId())
             .dataTableId(body.getDataTable().getDataTableId())
@@ -428,7 +440,11 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     // Construct a ReferenceBigQueryResource object from the API input
     var resource =
         ReferencedBigQueryDatasetResource.builder()
-            .wsmResourceFields(getWsmResourceFields(uuid, body.getMetadata()))
+            .wsmResourceFields(
+                getWsmResourceFields(
+                    uuid,
+                    body.getMetadata(),
+                    getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest)))
             .projectId(body.getDataset().getProjectId())
             .datasetName(body.getDataset().getDatasetId())
             .build();
@@ -536,7 +552,11 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
 
     var resource =
         ReferencedDataRepoSnapshotResource.builder()
-            .wsmResourceFields(getWsmResourceFields(uuid, body.getMetadata()))
+            .wsmResourceFields(
+                getWsmResourceFields(
+                    uuid,
+                    body.getMetadata(),
+                    getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest)))
             .instanceName(body.getSnapshot().getInstanceName())
             .snapshotId(body.getSnapshot().getSnapshot())
             .build();
@@ -666,6 +686,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
                 /*destinationFolderId=*/ null,
                 body.getName(),
                 body.getDescription(),
+                getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
                 userRequest)
             .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_OBJECT);
 
@@ -717,6 +738,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
                 /*destinationFolderId=*/ null,
                 body.getName(),
                 body.getDescription(),
+                getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
                 userRequest)
             .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_BUCKET);
 
@@ -769,6 +791,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
                 /*destinationFolderId=*/ null,
                 body.getName(),
                 body.getDescription(),
+                getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
                 userRequest)
             .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
 
@@ -821,6 +844,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
                 /*destinationFolderId=*/ null,
                 body.getName(),
                 body.getDescription(),
+                getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
                 userRequest)
             .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
 
@@ -874,6 +898,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
                 /*destinationFolderId=*/ null,
                 body.getName(),
                 body.getDescription(),
+                getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
                 userRequest)
             .castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
 
@@ -898,7 +923,11 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
         userRequest, workspaceUuid, SamWorkspaceAction.CREATE_REFERENCE);
     ReferencedGitRepoResource resource =
         ReferencedGitRepoResource.builder()
-            .wsmResourceFields(getWsmResourceFields(workspaceUuid, body.getMetadata()))
+            .wsmResourceFields(
+                getWsmResourceFields(
+                    workspaceUuid,
+                    body.getMetadata(),
+                    getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest)))
             .gitRepoUrl(body.getGitrepo().getGitRepoUrl())
             .build();
 
@@ -1025,6 +1054,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
                 /*destinationFolderId=*/ null,
                 body.getName(),
                 body.getDescription(),
+                getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
                 userRequest)
             .castByEnum(WsmResourceType.REFERENCED_ANY_GIT_REPO);
 
@@ -1054,7 +1084,11 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     // Construct a ReferencedTerraWorkspaceResource object from the API input
     ReferencedTerraWorkspaceResource resource =
         ReferencedTerraWorkspaceResource.builder()
-            .resourceCommonFields(getWsmResourceFields(workspaceUuid, body.getMetadata()))
+            .resourceCommonFields(
+                getWsmResourceFields(
+                    workspaceUuid,
+                    body.getMetadata(),
+                    getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest)))
             .referencedWorkspaceId(referencedWorkspaceId)
             .build();
 
@@ -1102,7 +1136,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   }
 
   private static WsmResourceFields getWsmResourceFields(
-      UUID workspaceUuid, ApiReferenceResourceCommonFields metadata) {
+      UUID workspaceUuid, ApiReferenceResourceCommonFields metadata, String createdByEmail) {
     return WsmResourceFields.builder()
         .workspaceUuid(workspaceUuid)
         .resourceId(UUID.randomUUID())
@@ -1110,6 +1144,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
         .description(metadata.getDescription())
         .properties(PropertiesUtils.convertApiPropertyToMap(metadata.getProperties()))
         .cloningInstructions(CloningInstructions.fromApiModel(metadata.getCloningInstructions()))
+        .createdByEmail(createdByEmail)
         .build();
   }
 }

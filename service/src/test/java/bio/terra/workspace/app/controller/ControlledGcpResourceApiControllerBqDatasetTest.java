@@ -544,6 +544,8 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
     assertEquals(expectedMetadata.getStewardshipType(), actualMetadata.getStewardshipType());
     assertEquals(expectedMetadata.getResourceType(), actualMetadata.getResourceType());
     assertEquals(expectedMetadata.getProperties(), actualMetadata.getProperties());
+    assertEquals(expectedMetadata.getCreatedDate(), actualMetadata.getCreatedDate());
+    assertEquals(expectedMetadata.getCreatedBy(), actualMetadata.getCreatedBy());
   }
 
   private void assertNoResourceWithName(
@@ -554,11 +556,5 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         .forEach(
             actualResource ->
                 assertNotEquals(unexpectedResourceName, actualResource.getMetadata().getName()));
-  }
-
-  private void assertWorkspaceHasNoPolicies(AuthenticatedUserRequest userRequest, UUID workspaceId)
-      throws Exception {
-    ApiWorkspaceDescription workspace = mockMvcUtils.getWorkspace(userRequest, workspaceId);
-    assertEquals(0, workspace.getPolicies().size());
   }
 }

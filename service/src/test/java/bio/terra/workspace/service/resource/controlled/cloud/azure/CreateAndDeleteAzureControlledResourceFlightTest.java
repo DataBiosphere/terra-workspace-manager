@@ -34,7 +34,6 @@ import bio.terra.workspace.service.resource.controlled.flight.create.CreateContr
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
-import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -55,6 +54,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -158,7 +158,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
     ControlledAzureIpResource resource =
         ControlledAzureIpResource.builder()
             .common(
-                ControlledResourceFields.builder()
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                     .workspaceUuid(workspaceUuid)
                     .resourceId(resourceId)
                     .name(getAzureName("ip"))
@@ -199,7 +199,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
     ControlledAzureRelayNamespaceResource resource =
         ControlledAzureRelayNamespaceResource.builder()
             .common(
-                ControlledResourceFields.builder()
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                     .workspaceUuid(workspaceUuid)
                     .resourceId(resourceId)
                     .name(getAzureName("relay"))
@@ -399,6 +399,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
     // no need to clean up resources
   }
 
+  @Disabled("TODO(TOAZ-286): Re-enable this test when the ticket is fixed")
   @Test
   public void
       createAzureStorageContainerFlightFailedBecauseLandingZoneDoesntHaveSharedStorageAccount()
@@ -620,7 +621,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
     ControlledAzureDiskResource resource =
         ControlledAzureDiskResource.builder()
             .common(
-                ControlledResourceFields.builder()
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                     .workspaceUuid(workspaceUuid)
                     .resourceId(resourceId)
                     .name(getAzureName("disk"))
@@ -672,7 +673,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
     ControlledAzureVmResource resource =
         ControlledAzureVmResource.builder()
             .common(
-                ControlledResourceFields.builder()
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                     .workspaceUuid(workspaceUuid)
                     .resourceId(resourceId)
                     .name(getAzureName("vm"))
@@ -784,7 +785,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
     ControlledAzureVmResource resource =
         ControlledAzureVmResource.builder()
             .common(
-                ControlledResourceFields.builder()
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                     .workspaceUuid(workspaceUuid)
                     .resourceId(resourceId)
                     .name(getAzureName("vm"))
@@ -903,7 +904,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
     ControlledAzureVmResource vmResource =
         ControlledAzureVmResource.builder()
             .common(
-                ControlledResourceFields.builder()
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                     .workspaceUuid(workspaceUuid)
                     .resourceId(resourceId)
                     .name(getAzureName("vm"))
@@ -1039,7 +1040,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
     ControlledAzureVmResource resource =
         ControlledAzureVmResource.builder()
             .common(
-                ControlledResourceFields.builder()
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                     .workspaceUuid(workspaceUuid)
                     .resourceId(resourceId)
                     .name(getAzureName("vm"))
@@ -1135,7 +1136,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
     ControlledAzureVmResource resource =
         ControlledAzureVmResource.builder()
             .common(
-                ControlledResourceFields.builder()
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                     .workspaceUuid(workspaceUuid)
                     .resourceId(resourceId)
                     .name(getAzureName("vm"))
@@ -1251,7 +1252,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
     ControlledAzureDiskResource resource =
         ControlledAzureDiskResource.builder()
             .common(
-                ControlledResourceFields.builder()
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                     .workspaceUuid(workspaceUuid)
                     .resourceId(resourceId)
                     .name(getAzureName("disk"))
@@ -1289,7 +1290,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
     ControlledAzureIpResource resource =
         ControlledAzureIpResource.builder()
             .common(
-                ControlledResourceFields.builder()
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                     .workspaceUuid(workspaceUuid)
                     .resourceId(resourceId)
                     .name(getAzureName("ip"))
@@ -1327,7 +1328,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
     ControlledAzureNetworkResource resource =
         ControlledAzureNetworkResource.builder()
             .common(
-                ControlledResourceFields.builder()
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                     .workspaceUuid(workspaceUuid)
                     .resourceId(resourceId)
                     .name(getAzureName("network"))
@@ -1377,7 +1378,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
     ControlledAzureNetworkResource resource =
         ControlledAzureNetworkResource.builder()
             .common(
-                ControlledResourceFields.builder()
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                     .workspaceUuid(workspaceUuid)
                     .resourceId(resourceId)
                     .name("testNetwork")

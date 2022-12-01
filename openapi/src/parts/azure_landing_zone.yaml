@@ -153,6 +153,25 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/landingzones/v1/azure/{landingZoneId}/resource-quota:
+    parameters:
+      - $ref: '#/components/parameters/LandingZoneId'
+      - $ref: '#/components/parameters/AzureResourceId'
+    get:
+      summary: Get the quota information of a resource an Azure Landing Zone
+      operationId: getResourceQuotaResult
+      tags: [ LandingZones ]
+      responses:
+        '200':
+          $ref: '#/components/responses/ResourceQuotaResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+
 openapi:
 info:
 components:
@@ -205,6 +224,25 @@ components:
           $ref: '#/components/schemas/JobReport'
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
+
+    ResourceQuota:
+      description: Resource quota information of an Azure landing zone resource.
+      type: object
+      properties:
+        landingZoneId:
+          description: An identifier of the Azure landing zone.
+          type: string
+          format: uuid
+        azureResourceId:
+          description:  The fully qualified ID of the Azure resource.
+          type: string
+        resourceType:
+          description: Azure resource type.
+          type: string
+        quotaValues:
+          description: A key-value pair of quota information values for the resource.
+          type: object
+          additionalProperties: true
 
     CreateLandingZoneResult:
       description: Result of starting an async job to create an Azure landing zone
@@ -399,6 +437,13 @@ components:
             $ref: '#/components/schemas/AzureLandingZone'
 
   responses:
+    ResourceQuotaResponse:
+      description: Response to get the quota information of an Azure landing zone resource.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ResourceQuota'
+
     CreateLandingZoneJobResponse:
       description: Response to get the status of an async job to create an Azure landing zone.
       content:
@@ -436,6 +481,15 @@ components:
       schema:
         type: string
         format: uuid
+
+    AzureResourceId:
+      name: azureResourceId
+      in: query
+      description: The fully qualified ID of the Azure resource, including the resource name and resource type. 
+                   Use the format, /subscriptions/{guid}/resourceGroups/{resource-group-name}/{resource-provider-namespace}/{resource-type}/{resource-name}.
+      required: true
+      schema:
+        type: string
 
     BillingProfileId:
       name: billingProfileId

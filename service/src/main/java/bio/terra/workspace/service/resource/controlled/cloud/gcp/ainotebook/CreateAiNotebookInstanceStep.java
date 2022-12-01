@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource.PROXY_MODE_METADATA_KEY;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource.SERVER_ID_METADATA_KEY;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource.WORKSPACE_ID_METADATA_KEY;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_LOCATION;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_NETWORK_NAME;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_REGION;
@@ -19,6 +20,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.CliConfiguration;
 import bio.terra.workspace.app.configuration.external.VersionConfiguration;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAcceleratorConfig;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceContainerImage;
@@ -103,7 +105,10 @@ public class CreateAiNotebookInstanceStep implements Step {
             .getWorkingMap()
             .get(ControlledResourceKeys.GCP_CLOUD_CONTEXT, GcpCloudContext.class);
     String projectId = gcpCloudContext.getGcpProjectId();
-    InstanceName instanceName = resource.toInstanceName(projectId);
+    String requestedLocation =
+        FlightUtils.getRequired(
+            flightContext.getWorkingMap(), CREATE_NOTEBOOK_LOCATION, String.class);
+    InstanceName instanceName = resource.toInstanceName(projectId, requestedLocation);
 
     Instance instance =
         createInstanceModel(
@@ -260,7 +265,11 @@ public class CreateAiNotebookInstanceStep implements Step {
         flightContext
             .getWorkingMap()
             .get(ControlledResourceKeys.GCP_CLOUD_CONTEXT, GcpCloudContext.class);
-    InstanceName instanceName = resource.toInstanceName(gcpCloudContext.getGcpProjectId());
+    String requestedLocation =
+        FlightUtils.getRequired(
+            flightContext.getWorkingMap(), CREATE_NOTEBOOK_LOCATION, String.class);
+    InstanceName instanceName =
+        resource.toInstanceName(gcpCloudContext.getGcpProjectId(), requestedLocation);
 
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
     try {

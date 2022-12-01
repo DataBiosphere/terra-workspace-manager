@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.referenced;
 
+import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -278,7 +279,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
                   DATA_REPO_INSTANCE_NAME,
                   "polaroid",
                   /*resourceLineage=*/ null,
-                  /*properties=*/ Map.of()));
+                  /*properties=*/ Map.of(),
+                  DEFAULT_USER_EMAIL,
+                  /*createdDate*/ null));
     }
 
     @Test
@@ -295,7 +298,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
                   DATA_REPO_INSTANCE_NAME,
                   "polaroid",
                   /*resourceLineage=*/ null,
-                  /*properties=*/ Map.of()));
+                  /*properties=*/ Map.of(),
+                  DEFAULT_USER_EMAIL,
+                  /*createdDate*/ null));
     }
 
     @Test
@@ -312,7 +317,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
                   DATA_REPO_INSTANCE_NAME,
                   "polaroid",
                   /*resourceLineage=*/ null,
-                  /*properties=*/ Map.of()));
+                  /*properties=*/ Map.of(),
+                  DEFAULT_USER_EMAIL,
+                  /*createdDate*/ null));
     }
 
     @Test
@@ -329,7 +336,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
                   DATA_REPO_INSTANCE_NAME,
                   "polaroid",
                   /*resourceLineage=*/ null,
-                  /*properties=*/ Map.of()));
+                  /*properties=*/ Map.of(),
+                  DEFAULT_USER_EMAIL,
+                  /*createdDate*/ null));
     }
   }
 
@@ -411,7 +420,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
                   null,
                   "polaroid",
                   /*resourceLineage=*/ null,
-                  /*properties=*/ Map.of()));
+                  /*properties=*/ Map.of(),
+                  DEFAULT_USER_EMAIL,
+                  /*createdDate*/ null));
     }
 
     @Test
@@ -431,7 +442,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
                   DATA_REPO_INSTANCE_NAME,
                   null,
                   /*resourceLineage=*/ null,
-                  /*properties=*/ Map.of()));
+                  /*properties=*/ Map.of(),
+                  DEFAULT_USER_EMAIL,
+                  /*createdDate*/ null));
     }
 
     @Test
@@ -495,7 +508,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
           /*bucketName=*/ "theres-a-hole-in-the-bottom-of-the",
           /*objectName=*/ "balloon",
           /*resourceLineage=*/ null,
-          /*properties=*/ Map.of());
+          /*properties=*/ Map.of(),
+          DEFAULT_USER_EMAIL,
+          /*createdDate*/ null);
     }
 
     @Test
@@ -565,7 +580,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
           CloningInstructions.COPY_REFERENCE,
           "theres-a-hole-in-the-bottom-of-the",
           /*resourceLineage=*/ null,
-          /*properties=*/ Map.of());
+          /*properties=*/ Map.of(),
+          DEFAULT_USER_EMAIL,
+          /*createdDate*/ null);
     }
 
     @Test
@@ -621,7 +638,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
                   /*bucketName=*/ "spongebob",
                   /*fileName=*/ "",
                   /*resourceLineage=*/ null,
-                  /*properties=*/ Map.of()));
+                  /*properties=*/ Map.of(),
+                  DEFAULT_USER_EMAIL,
+                  /*createdDate*/ null));
     }
 
     @Test
@@ -639,7 +658,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
                   CloningInstructions.COPY_REFERENCE,
                   null,
                   /*resourceLineage=*/ null,
-                  /*properties=*/ Map.of()));
+                  /*properties=*/ Map.of(),
+                  DEFAULT_USER_EMAIL,
+                  /*createdDate*/ null));
     }
 
     @Test
@@ -658,7 +679,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
                   CloningInstructions.COPY_REFERENCE,
                   "Buckets don't accept * in the names, either",
                   /*resourceLineage=*/ null,
-                  /*properties=*/ Map.of()));
+                  /*properties=*/ Map.of(),
+                  DEFAULT_USER_EMAIL,
+                  /*createdDate*/ null));
     }
 
     @Test
@@ -699,7 +722,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
           FAKE_PROJECT_ID,
           DATASET_NAME,
           /*resourceLineage=*/ null,
-          /*properties=*/ Map.of());
+          /*properties=*/ Map.of(),
+          DEFAULT_USER_EMAIL,
+          /*createdDate*/ null);
     }
 
     private ReferencedBigQueryDataTableResource makeBigQueryDataTableResource() {
@@ -715,7 +740,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
           DATASET_NAME,
           DATA_TABLE_NAME,
           /*resourceLineage=*/ null,
-          /*properties=*/ Map.of());
+          /*properties=*/ Map.of(),
+          DEFAULT_USER_EMAIL,
+          /*createdDate*/ null);
     }
 
     @Test
@@ -900,7 +927,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
                   null,
                   "testbq_datasetname",
                   /*resourceLineage=*/ null,
-                  /*properties=*/ Map.of()));
+                  /*properties=*/ Map.of(),
+                  DEFAULT_USER_EMAIL,
+                  /*createdDate*/ null));
     }
 
     @Test
@@ -921,7 +950,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
                   "testbq-datasetname",
                   "",
                   /*resourceLineage=*/ null,
-                  /*properties=*/ Map.of()));
+                  /*properties=*/ Map.of(),
+                  DEFAULT_USER_EMAIL,
+                  /*createdDate*/ null));
     }
 
     @Test
@@ -941,7 +972,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
                   "testbq-projectid",
                   "",
                   /*resourceLineage=*/ null,
-                  /*properties=*/ Map.of()));
+                  /*properties=*/ Map.of(),
+                  DEFAULT_USER_EMAIL,
+                  /*createdDate*/ null));
     }
 
     @Test
@@ -962,7 +995,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
                   DATASET_NAME,
                   "*&%@#",
                   /*resourceLineage=*/ null,
-                  /*Properties=*/ Map.of()));
+                  /*Properties=*/ Map.of(),
+                  DEFAULT_USER_EMAIL,
+                  /*createdDate*/ null));
     }
 
     @Test
@@ -982,7 +1017,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
                   "testbq-projectid",
                   "Nor do datasets; neither ' nor *",
                   /*resourceLineage=*/ null,
-                  /*properties=*/ Map.of()));
+                  /*properties=*/ Map.of(),
+                  DEFAULT_USER_EMAIL,
+                  /*createdDate*/ null));
     }
 
     @Test
@@ -1007,7 +1044,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
 
     private ReferencedTerraWorkspaceResource makeTerraWorkspaceReference() {
       UUID resourceId = UUID.randomUUID();
-      String resourceName = "terra-workspace-" + resourceId.toString();
+      String resourceName = "terra-workspace-" + resourceId;
 
       return new ReferencedTerraWorkspaceResource(
           workspaceUuid,
@@ -1017,7 +1054,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
           CloningInstructions.COPY_NOTHING,
           /*referencedWorkspaceId=*/ referencedWorkspaceId,
           /*resourceLineage=*/ null,
-          /*properties=*/ Map.of());
+          /*properties=*/ Map.of(),
+          DEFAULT_USER_EMAIL,
+          /*createdDate*/ null);
     }
 
     @Test
@@ -1123,7 +1162,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               DATA_REPO_INSTANCE_NAME,
               "polaroid",
               /*resourceLineage=*/ null,
-              /*properties=*/ Map.of());
+              /*properties=*/ Map.of(),
+              DEFAULT_USER_EMAIL,
+              /*createdDate*/ null);
 
       assertThrows(
           DuplicateResourceException.class,

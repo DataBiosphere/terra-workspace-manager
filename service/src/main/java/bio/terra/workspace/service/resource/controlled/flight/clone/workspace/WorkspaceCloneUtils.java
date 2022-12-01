@@ -54,14 +54,20 @@ public class WorkspaceCloneUtils {
       UUID destinationResourceId,
       String name,
       @Nullable String description,
-      String cloudInstanceName) {
-    var builder =
-        ControlledAzureStorageContainerResource.builder()
-            .storageContainerName(cloudInstanceName)
-            .common(
-                sourceContainer.buildControlledCloneResourceCommonFields(
-                    destinationWorkspaceId, destinationResourceId, null, name, description));
-    return builder.build();
+      String cloudInstanceName,
+      String createdByEmail) {
+    return ControlledAzureStorageContainerResource.builder()
+        .storageContainerName(cloudInstanceName)
+        .storageAccountId(storageAccountId)
+        .common(
+            sourceContainer.buildControlledCloneResourceCommonFields(
+                destinationWorkspaceId,
+                destinationResourceId,
+                null,
+                name,
+                description,
+                createdByEmail))
+        .build();
   }
 
   // TODO: PF-2107 as part of the refactor, these will move into the object hierarchy
@@ -73,7 +79,8 @@ public class WorkspaceCloneUtils {
       String name,
       @Nullable String description,
       String cloudInstanceName,
-      String destinationProjectId) {
+      String destinationProjectId,
+      String createdByEmail) {
     return ControlledBigQueryDatasetResource.builder()
         .projectId(destinationProjectId)
         .datasetName(cloudInstanceName)
@@ -83,7 +90,8 @@ public class WorkspaceCloneUtils {
                 destinationResourceId,
                 destinationFolderId,
                 name,
-                description))
+                description,
+                createdByEmail))
         .build();
   }
 
@@ -94,7 +102,8 @@ public class WorkspaceCloneUtils {
       @Nullable UUID destinationFolderId,
       String name,
       @Nullable String description,
-      String cloudInstanceName) {
+      String cloudInstanceName,
+      String createdByEmail) {
     return ControlledGcsBucketResource.builder()
         .bucketName(cloudInstanceName)
         .common(
@@ -103,7 +112,8 @@ public class WorkspaceCloneUtils {
                 destinationResourceId,
                 destinationFolderId,
                 name,
-                description))
+                description,
+                createdByEmail))
         .build();
   }
 }
