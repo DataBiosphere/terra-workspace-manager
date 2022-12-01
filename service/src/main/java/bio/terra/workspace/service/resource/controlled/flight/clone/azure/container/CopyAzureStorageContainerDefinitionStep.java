@@ -79,17 +79,10 @@ public class CopyAzureStorageContainerDefinitionStep implements Step {
     var destinationResourceId =
         inputParameters.get(
             WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.class);
-    var destStorageAccountId =
-        flightContext
-            .getWorkingMap()
-            .get(
-                WorkspaceFlightMapKeys.ControlledResourceKeys
-                    .DESTINATION_STORAGE_ACCOUNT_RESOURCE_ID,
-                UUID.class);
+
     ControlledAzureStorageContainerResource destinationContainerResource =
         buildDestinationControlledAzureContainer(
             sourceContainer,
-            destStorageAccountId,
             destinationWorkspaceId,
             destinationResourceId,
             destinationResourceName,
@@ -98,8 +91,7 @@ public class CopyAzureStorageContainerDefinitionStep implements Step {
             samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest));
     ApiAzureStorageContainerCreationParameters destinationCreationParameters =
         new ApiAzureStorageContainerCreationParameters()
-            .storageContainerName(destinationContainerName)
-            .storageAccountId(destStorageAccountId);
+            .storageContainerName(destinationContainerName);
     ControlledResourceIamRole iamRole =
         IamRoleUtils.getIamRoleForAccessScope(sourceContainer.getAccessScope());
 
@@ -141,9 +133,6 @@ public class CopyAzureStorageContainerDefinitionStep implements Step {
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_ID,
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_CONTAINER_NAME);
-    FlightUtils.validateRequiredEntries(
-        workingMap,
-        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_STORAGE_ACCOUNT_RESOURCE_ID);
   }
 
   @Override
