@@ -13,6 +13,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -20,6 +21,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.workspace.common.BaseConnectedTest;
+import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
@@ -28,6 +30,9 @@ import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
+import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
+import bio.terra.workspace.service.workspace.model.OperationType;
+import bio.terra.workspace.service.workspace.model.WsmObjectType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Optional;
@@ -57,6 +62,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @Autowired private MockMvcUtils mockMvcUtils;
   @Autowired private ObjectMapper objectMapper;
   @Autowired private UserAccessUtils userAccessUtils;
+  @Autowired private WorkspaceActivityLogService workspaceActivityLogService;
 
   private ApiCreatedWorkspace workspace;
 
@@ -245,6 +251,23 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
         listWorkspaces(userAccessUtils.secondUserAuthRequest(), Optional.of(ApiIamRole.READER));
 
     assertTrue(listedWorkspaces.isEmpty());
+  }
+
+  @Test
+  public void grantRole_logsAnActivity() throws Exception {
+    mockMvcUtils.grantRole(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspace.getId(),
+        WsmIamRole.DISCOVERER,
+        userAccessUtils.getSecondUserEmail());
+
+    Optional<ActivityLogChangeDetails> changeDetails = workspaceActivityLogService.getLastUpdatedDetails(workspace.getId());
+    assertTrue(changeDetails.isPresent());
+    var details = changeDetails.get();
+    assertEquals(userAccessUtils.getSecondUserEmail(), details.changeSubjectId());
+    assertEquals(WsmObjectType.USER, details.changeSubjectType());
+    assertEquals(userAccessUtils.getDefaultUserEmail(), details.actorEmail());
+    assertEquals(OperationType.GRANT_WORKSPACE_ROLE, details.operationType());
   }
 
   @Test

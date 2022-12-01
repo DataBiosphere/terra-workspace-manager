@@ -1,5 +1,6 @@
 package bio.terra.workspace.common.logging.model;
 
+import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.WsmObjectType;
 import java.time.OffsetDateTime;
 
@@ -11,5 +12,6 @@ public record ActivityLogChangeDetails(
     OffsetDateTime changeDate,
     String actorEmail,
     String actorSubjectId,
+    OperationType operationType,
     String changeSubjectId,
     WsmObjectType changeSubjectType) {}

@@ -257,7 +257,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     }
 
     // When we have another cloud context, we will need to do a similar retrieval for it.
-    var lastChangeDetailsOptional = workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
+    var lastChangeDetailsOptional = workspaceActivityLogService.getLastUpdatedDetails(workspaceUuid);
 
     if (highestRole == WsmIamRole.DISCOVERER) {
       workspace = Workspace.stripWorkspaceForRequesterWithOnlyDiscovererRole(workspace);

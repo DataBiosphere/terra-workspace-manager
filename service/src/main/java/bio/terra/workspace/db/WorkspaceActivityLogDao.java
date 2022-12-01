@@ -13,7 +13,6 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -29,18 +28,22 @@ import org.springframework.stereotype.Component;
 @Component
 public class WorkspaceActivityLogDao {
   private static final Logger logger = LoggerFactory.getLogger(WorkspaceActivityLogDao.class);
-  private static final String DEFAULT_CHANGE_SUBJECT_TYPE = "unknown";
+  private static final String DEFAULT_VALUE_UNKNOWN = "unknown";
   private static final RowMapper<ActivityLogChangeDetails> ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER =
       (rs, rowNum) -> {
         String changeSubjectTypeString = rs.getString("change_subject_type");
         var changeSubjectType =
-            Objects.equals(changeSubjectTypeString, "unknown")
+            DEFAULT_VALUE_UNKNOWN.equals(changeSubjectTypeString)
                 ? WsmObjectType.UNKNOW
                 : WsmObjectType.valueOf(changeSubjectTypeString);
+        String changeTypeString = rs.getString("change_type");
+        OperationType changeType =
+            DEFAULT_VALUE_UNKNOWN.equals(changeTypeString)? OperationType.UNKNOWN : OperationType.valueOf(changeTypeString);
         return new ActivityLogChangeDetails(
             OffsetDateTime.ofInstant(rs.getTimestamp("change_date").toInstant(), ZoneId.of("UTC")),
             rs.getString("actor_email"),
             rs.getString("actor_subject_id"),
+            changeType,
             rs.getString("change_subject_id"),
             changeSubjectType);
       };
@@ -99,7 +102,7 @@ public class WorkspaceActivityLogDao {
     // sort the actor_email by alphabetical order and returns the first one.
     final String sql =
         """
-            SELECT change_date, actor_email, actor_subject_id, change_subject_id, change_subject_type
+            SELECT change_date, actor_email, actor_subject_id, change_subject_id, change_subject_type, change_type
             FROM workspace_activity_log
             WHERE workspace_id = :workspace_id AND change_type NOT IN (:change_type)
             ORDER BY change_date DESC

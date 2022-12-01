@@ -85,6 +85,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
             null,
             USER_REQUEST.getEmail(),
             USER_REQUEST.getSubjectId(),
+            OperationType.CREATE,
             workspaceUuid.toString(),
             WsmObjectType.WORKSPACE));
   }
@@ -107,6 +108,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
             null,
             USER_REQUEST.getEmail(),
             USER_REQUEST.getSubjectId(),
+            OperationType.DELETE,
             workspaceUuid.toString(),
             WsmObjectType.WORKSPACE));
   }
@@ -163,6 +165,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
             null,
             USER_REQUEST.getEmail(),
             USER_REQUEST.getSubjectId(),
+            OperationType.DELETE,
             workspaceUuid.toString(),
             WsmObjectType.WORKSPACE));
   }
@@ -206,6 +209,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
             null,
             USER_REQUEST.getEmail(),
             USER_REQUEST.getSubjectId(),
+            OperationType.DELETE,
             workspaceUuid.toString(),
             WsmObjectType.WORKSPACE));
   }
@@ -258,6 +262,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
             null,
             USER_REQUEST.getEmail(),
             USER_REQUEST.getSubjectId(),
+            OperationType.DELETE,
             resourceToDelete.get(0).getResourceId().toString(),
             WsmObjectType.RESOURCE));
   }
@@ -313,6 +318,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
             null,
             USER_REQUEST.getEmail(),
             USER_REQUEST.getSubjectId(),
+            OperationType.DELETE,
             fooFolder.id().toString(),
             WsmObjectType.FOLDER));
   }
@@ -379,6 +385,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     assertEquals(expectedChangeDetail.actorSubjectId(), changeDetails.get().actorSubjectId());
     assertEquals(expectedChangeDetail.changeSubjectId(), changeDetails.get().changeSubjectId());
     assertEquals(expectedChangeDetail.changeSubjectType(), changeDetails.get().changeSubjectType());
+    assertEquals(expectedChangeDetail.operationType(), changeDetails.get().operationType());
     assertNotNull(changeDetails.get().changeDate());
   }
 
