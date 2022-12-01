@@ -57,7 +57,6 @@ import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
-import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudContextHolder;
@@ -509,14 +508,10 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         workspaceService.validateMcWorkspaceAndAction(userRequest, uuid, SamWorkspaceAction.WRITE);
 
     if (body.getCloudPlatform() == ApiCloudPlatform.AZURE) {
-      ApiAzureContext azureContext =
-          Optional.ofNullable(body.getAzureContext())
-              .orElseThrow(
-                  () ->
-                      new CloudContextRequiredException(
-                          "AzureContext is required when creating an azure cloud context for a workspace"));
+      AzureCloudContext azureContext =
+          Optional.ofNullable(body.getAzureContext()).map(AzureCloudContext::fromApi).orElse(null);
       workspaceService.createAzureCloudContext(
-          workspace, jobId, userRequest, resultPath, AzureCloudContext.fromApi(azureContext));
+          workspace, jobId, userRequest, resultPath, azureContext);
     } else {
       workspaceService.createGcpCloudContext(workspace, jobId, userRequest, resultPath);
     }

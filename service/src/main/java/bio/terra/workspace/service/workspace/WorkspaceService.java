@@ -449,9 +449,6 @@ public class WorkspaceService {
     // Create the destination workspace synchronously first.
     createWorkspace(destinationWorkspace, null, applicationIds, userRequest);
 
-    // todo: how to determine if this should be a gcp or azure workspace? what do we do if there's
-    // no cloud context in source ws? It's still a GCP workspace? why does it even need to be
-    // different?
     // Remaining steps are an async flight.
     return jobService
         .newJob()

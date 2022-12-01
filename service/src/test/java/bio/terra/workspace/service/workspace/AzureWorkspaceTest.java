@@ -1,7 +1,10 @@
 package bio.terra.workspace.service.workspace;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 
 import bio.terra.workspace.app.configuration.external.AzureTestConfiguration;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
@@ -11,11 +14,17 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
+import bio.terra.workspace.service.spendprofile.SpendProfile;
+import bio.terra.workspace.service.spendprofile.SpendProfileId;
+import bio.terra.workspace.service.spendprofile.SpendProfileService;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
+import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
@@ -28,6 +37,7 @@ public class AzureWorkspaceTest extends BaseAzureConnectedTest {
   @Autowired private WorkspaceService workspaceService;
   @Autowired private AzureCloudContextService azureCloudContextService;
   @MockBean private SamService mockSamService;
+  @MockBean private SpendProfileService mockSpendProfileService;
 
   @Test
   void createGetDeleteAzureContext() {
@@ -36,6 +46,17 @@ public class AzureWorkspaceTest extends BaseAzureConnectedTest {
             .token(Optional.of("fake-token"))
             .email("fake@email.com")
             .subjectId("fakeID123");
+
+    SpendProfileId spendProfileId = new SpendProfileId(UUID.randomUUID().toString());
+    Mockito.when(mockSpendProfileService.authorizeLinking(any(), anyBoolean(), any()))
+        .thenReturn(
+            new SpendProfile(
+                spendProfileId,
+                CloudPlatform.AZURE,
+                null,
+                UUID.fromString(azureTestConfiguration.getTenantId()),
+                UUID.fromString(azureTestConfiguration.getSubscriptionId()),
+                azureTestConfiguration.getManagedResourceGroupId()));
 
     Workspace workspace =
         WorkspaceFixtures.defaultWorkspaceBuilder(null)
@@ -59,5 +80,65 @@ public class AzureWorkspaceTest extends BaseAzureConnectedTest {
         azureCloudContextService.getAzureCloudContext(workspace.getWorkspaceId()).isPresent());
     workspaceService.deleteAzureCloudContext(workspace, userRequest);
     assertTrue(azureCloudContextService.getAzureCloudContext(workspace.getWorkspaceId()).isEmpty());
+  }
+
+  @Test
+  void cloneAzureWorkspace() {
+    AuthenticatedUserRequest userRequest =
+        new AuthenticatedUserRequest()
+            .token(Optional.of("fake-token"))
+            .email("fake@email.com")
+            .subjectId("fakeID123");
+
+    SpendProfileId spendProfileId = new SpendProfileId(UUID.randomUUID().toString());
+    Mockito.when(mockSpendProfileService.authorizeLinking(any(), anyBoolean(), any()))
+        .thenReturn(
+            new SpendProfile(
+                spendProfileId,
+                CloudPlatform.AZURE,
+                null,
+                UUID.fromString(azureTestConfiguration.getTenantId()),
+                UUID.fromString(azureTestConfiguration.getSubscriptionId()),
+                azureTestConfiguration.getManagedResourceGroupId()));
+
+    UUID sourceUUID = UUID.randomUUID();
+    Workspace sourceWorkspace =
+        Workspace.builder()
+            .workspaceId(sourceUUID)
+            .userFacingId("a" + sourceUUID)
+            .spendProfileId(spendProfileId)
+            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+            .createdByEmail(userRequest.getEmail())
+            .build();
+
+    workspaceService.createWorkspace(sourceWorkspace, null, null, userRequest);
+
+    String jobId = UUID.randomUUID().toString();
+
+    workspaceService.createAzureCloudContext(
+        sourceWorkspace, jobId, userRequest, "/fake/value", null);
+    jobService.waitForJob(jobId);
+
+    assertTrue(
+        azureCloudContextService
+            .getAzureCloudContext(sourceWorkspace.getWorkspaceId())
+            .isPresent());
+
+    UUID destUUID = UUID.randomUUID();
+    Workspace destWorkspace =
+        Workspace.builder()
+            .workspaceId(destUUID)
+            .userFacingId("a" + destUUID)
+            .spendProfileId(spendProfileId)
+            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+            .createdByEmail(userRequest.getEmail())
+            .build();
+    String cloneJobId =
+        workspaceService.cloneWorkspace(sourceWorkspace, userRequest, null, destWorkspace);
+    jobService.waitForJob(cloneJobId);
+
+    assertEquals(workspaceService.getWorkspace(destUUID), destWorkspace);
+    assertTrue(
+        azureCloudContextService.getAzureCloudContext(destWorkspace.getWorkspaceId()).isPresent());
   }
 }

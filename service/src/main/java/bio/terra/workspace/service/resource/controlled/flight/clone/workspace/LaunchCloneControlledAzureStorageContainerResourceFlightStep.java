@@ -68,6 +68,11 @@ public class LaunchCloneControlledAzureStorageContainerResourceFlightStep implem
         JobMapKeys.DESCRIPTION.getKeyName(),
         String.format("Clone Azure Storage Container %s", resource.getResourceId().toString()));
     subflightInputParameters.put(
+        ControlledResourceKeys.DESTINATION_CONTAINER_NAME,
+        UUID.randomUUID()
+            .toString()); // todo: what should this be named? worth implementing generateCloudName
+    // for the resourceHandler?
+    subflightInputParameters.put(
         ControlledResourceKeys.DESTINATION_RESOURCE_ID, destinationResourceId);
     subflightInputParameters.put(ControlledResourceKeys.DESTINATION_FOLDER_ID, destinationFolderId);
     // Do not do the policy merge on the sub-object clone
