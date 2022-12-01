@@ -10,10 +10,8 @@ import static org.mockito.Mockito.when;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepStatus;
-import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.common.BaseAzureUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
-import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
@@ -43,7 +41,7 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseAzureUnitTe
           .token(Optional.of("fake-token"));
 
   @BeforeEach
-  void setup() throws InterruptedException {
+  void setup() {
     workspaceId = UUID.randomUUID();
     flightContext = mock(FlightContext.class);
 
@@ -51,10 +49,6 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseAzureUnitTe
     inputParams = new FlightMap();
     inputParams.put(
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID, workspaceId);
-
-    workingMap.put(
-        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_STORAGE_ACCOUNT_RESOURCE_ID,
-        UUID.randomUUID());
 
     when(flightContext.getWorkingMap()).thenReturn(workingMap);
     when(flightContext.getInputParameters()).thenReturn(inputParams);

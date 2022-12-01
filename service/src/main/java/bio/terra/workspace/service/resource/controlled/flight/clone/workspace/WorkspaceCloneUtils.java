@@ -58,7 +58,6 @@ public class WorkspaceCloneUtils {
       String createdByEmail) {
     return ControlledAzureStorageContainerResource.builder()
         .storageContainerName(cloudInstanceName)
-        .storageAccountId(storageAccountId)
         .common(
             sourceContainer.buildControlledCloneResourceCommonFields(
                 destinationWorkspaceId,
