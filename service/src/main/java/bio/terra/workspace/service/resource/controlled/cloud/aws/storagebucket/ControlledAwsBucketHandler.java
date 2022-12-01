@@ -26,14 +26,14 @@ public class ControlledAwsBucketHandler implements WsmResourceHandler {
         DbSerDes.fromJson(dbResource.getAttributes(), ControlledAwsBucketAttributes.class);
 
     return ControlledAwsBucketResource.builder()
+        .common(new ControlledResourceFields(dbResource))
         .s3BucketName(attributes.getS3BucketName())
         .prefix(attributes.getPrefix())
         .region(attributes.getRegion())
-        .common(new ControlledResourceFields(dbResource))
         .build();
   }
 
-  public String generateCloudName(@Nullable UUID workspaceUuid, String resourceName) {
+  public String generateCloudName(@Nullable UUID workspaceUuid, String resourceName) { // TODO-Dex
     throw new FeatureNotSupportedException("This generate cloud name feature is not implement yet");
   }
 }

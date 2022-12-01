@@ -29,6 +29,7 @@ import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakernotebook.ControlledAwsSageMakerNotebookHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakernotebook.ControlledAwsSageMakerNotebookResource;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.storagebucket.ControlledAwsBucketResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
@@ -44,6 +45,7 @@ import java.net.URL;
 import java.time.ZoneOffset;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
@@ -277,7 +279,6 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
         body.getAwsSageMakerNotebook().getDefaultBucket();
 
     if (defaultBucket != null) {
-
       defaultBucketResource =
           controlledResourceMetadataManager
               .validateControlledResourceAndAction(
@@ -291,8 +292,13 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     ControlledAwsSageMakerNotebookResource resource =
         ControlledAwsSageMakerNotebookResource.builder()
             .common(commonFields)
-            .instanceId(body.getAwsSageMakerNotebook().getInstanceId())
+            .instanceId(
+                Optional.ofNullable(body.getAwsSageMakerNotebook().getInstanceId())
+                    .orElse(
+                        ControlledAwsSageMakerNotebookHandler.getHandler()
+                            .generateCloudName(workspaceUuid, commonFields.getName())))
             .region(body.getAwsSageMakerNotebook().getLocation())
+            .instanceType(body.getAwsSageMakerNotebook().getInstanceType())
             .build();
 
     String jobId =

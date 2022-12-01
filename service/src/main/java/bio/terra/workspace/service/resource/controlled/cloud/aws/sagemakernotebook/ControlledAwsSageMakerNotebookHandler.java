@@ -27,13 +27,15 @@ public class ControlledAwsSageMakerNotebookHandler implements WsmResourceHandler
             dbResource.getAttributes(), ControlledAwsSageMakerNotebookAttributes.class);
 
     return ControlledAwsSageMakerNotebookResource.builder()
+        .common(new ControlledResourceFields(dbResource))
         .instanceId(attributes.getInstanceId())
         .region(attributes.getRegion())
-        .common(new ControlledResourceFields(dbResource))
+        .instanceType(attributes.getInstanceId())
         .build();
   }
 
   public String generateCloudName(@Nullable UUID workspaceUuid, String resourceName) {
+    // TODO-Dex
     throw new FeatureNotSupportedException("This generate cloud name feature is not implement yet");
   }
 }

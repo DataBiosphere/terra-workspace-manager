@@ -13,6 +13,7 @@ import bio.terra.workspace.generated.model.ApiAwsSageMakerNotebookResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
@@ -35,6 +36,9 @@ import java.util.UUID;
 public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
   private final String instanceId;
   private final String region;
+  private final String instanceType;
+
+  protected static final String RESOURCE_DESCRIPTOR = "ControlledSageMakerNotebookInstance";
 
   @JsonCreator
   public ControlledAwsSageMakerNotebookResource(
@@ -50,6 +54,7 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
       @JsonProperty("applicationId") String applicationId,
       @JsonProperty("instanceId") String instanceId,
       @JsonProperty("region") String region,
+      @JsonProperty("instanceType") String instanceType,
       @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
       @JsonProperty("properties") Map<String, String> properties) {
     super(
@@ -67,14 +72,16 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
         properties);
     this.instanceId = instanceId;
     this.region = region;
+    this.instanceType = instanceType;
     validate();
   }
 
   private ControlledAwsSageMakerNotebookResource(
-      ControlledResourceFields common, String instanceId, String region) {
+      ControlledResourceFields common, String instanceId, String region, String instanceType) {
     super(common);
     this.instanceId = instanceId;
     this.region = region;
+    this.instanceType = instanceType;
     validate();
   }
 
@@ -128,6 +135,10 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
     return region;
   }
 
+  public String getInstanceType() {
+    return instanceType;
+  }
+
   public ApiAwsSageMakerNotebookAttributes toApiAttributes() {
     return new ApiAwsSageMakerNotebookAttributes().instanceId(getInstanceId()).region(getRegion());
   }
@@ -151,7 +162,8 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
   @Override
   public String attributesToJson() {
     return DbSerDes.toJson(
-        new ControlledAwsSageMakerNotebookAttributes(getInstanceId(), getRegion()));
+        new ControlledAwsSageMakerNotebookAttributes(
+            getInstanceId(), getRegion(), getInstanceType()));
   }
 
   @Override
@@ -176,12 +188,22 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
         || getStewardshipType() != StewardshipType.CONTROLLED) {
       throw new InconsistentFieldsException("Expected CONTROLLED_AWS_SAGEMAKER_NOTEBOOK");
     }
+    if (!getAccessScope().equals(AccessScopeType.ACCESS_SCOPE_PRIVATE)) {
+      throw new BadRequestException(
+          "Access scope must be private. Shared SageMaker Notebook instances are not yet implemented.");
+    }
+    ResourceValidationUtils.checkFieldNonNull(getInstanceId(), "instanceId", RESOURCE_DESCRIPTOR);
+    ResourceValidationUtils.checkFieldNonNull(getRegion(), "region", RESOURCE_DESCRIPTOR);
+    ResourceValidationUtils.checkFieldNonNull(
+        getInstanceType(), "instanceType", RESOURCE_DESCRIPTOR);
+    ResourceValidationUtils.validateSageMakerNotebookInstanceId(getInstanceId());
   }
 
   public static class Builder {
     private ControlledResourceFields common;
     private String instanceId;
     private String region;
+    private String instanceType;
 
     public Builder common(ControlledResourceFields common) {
       this.common = common;
@@ -198,8 +220,13 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
       return this;
     }
 
+    public Builder instanceType(String instanceType) {
+      this.instanceType = instanceType;
+      return this;
+    }
+
     public ControlledAwsSageMakerNotebookResource build() {
-      return new ControlledAwsSageMakerNotebookResource(common, instanceId, region);
+      return new ControlledAwsSageMakerNotebookResource(common, instanceId, region, instanceType);
     }
   }
 }

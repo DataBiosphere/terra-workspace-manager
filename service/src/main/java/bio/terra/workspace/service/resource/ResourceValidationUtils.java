@@ -101,6 +101,13 @@ public class ResourceValidationUtils {
       Pattern.compile("(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?)");
 
   /**
+   * AI Notebook instances must be 1-63 characters, using lower case letters, numbers, and dashes.
+   * The first character must be a lower case letter, and the last character must not be a dash.
+   */
+  public static final Pattern SAGEMAKER_NOTEBOOK_INSTANCE_NAME_VALIDATION_PATTERN =
+      Pattern.compile("^[a-zA-Z0-9](-*[a-zA-Z0-9])*");
+
+  /**
    * Resource names must be 1-1024 characters, using letters, numbers, dashes, and underscores and
    * must not start with a dash or underscore.
    */
@@ -340,11 +347,20 @@ public class ResourceValidationUtils {
     }
   }
 
-  public static void validateAiNotebookInstanceId(String name) {
+  public static void validateAiNotebookInstanceId(
+      String name) { // TODO-Dex also check name? in validate()
     if (!AI_NOTEBOOK_INSTANCE_NAME_VALIDATION_PATTERN.matcher(name).matches()) {
       logger.warn("Invalid AI Notebook instance ID {}", name);
       throw new InvalidReferenceException(
           "Invalid AI Notebook instance ID specified. ID must be 1 to 63 alphanumeric lower case characters or dashes, where the first character is a lower case letter.");
+    }
+  }
+
+  public static void validateSageMakerNotebookInstanceName(String name) {
+    if (!SAGEMAKER_NOTEBOOK_INSTANCE_NAME_VALIDATION_PATTERN.matcher(name).matches()) {
+      logger.warn("Invalid SageMaker Notebook instance Name {}", name);
+      throw new InvalidReferenceException(
+          "Invalid SageMaker Notebook instance ID specified. ID must be 1 to 63 alphanumeric lower case characters or dashes, where the first character is a lower case letter.");
     }
   }
 
@@ -433,9 +449,14 @@ public class ResourceValidationUtils {
   }
 
   public static <T> void checkFieldNonNull(@Nullable T fieldValue, String fieldName) {
+    checkFieldNonNull(fieldValue, fieldName, "Resource");
+  }
+
+  public static <T> void checkFieldNonNull(
+      @Nullable T fieldValue, String fieldName, String resourceDescriptor) {
     if (fieldValue == null) {
       throw new MissingRequiredFieldException(
-          String.format("Missing required field '%s' for resource", fieldName));
+          String.format("Missing required field '%s' for %s", fieldName, resourceDescriptor));
     }
   }
 
