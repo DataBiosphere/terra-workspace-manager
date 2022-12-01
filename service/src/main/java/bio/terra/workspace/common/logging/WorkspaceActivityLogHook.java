@@ -1,6 +1,7 @@
 package bio.terra.workspace.common.logging;
 
 import static bio.terra.workspace.common.utils.FlightUtils.getRequired;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.APPLICATION_IDS;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.FOLDER_ID;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.UPDATED_WORKSPACES;
@@ -14,6 +15,7 @@ import bio.terra.stairway.HookAction;
 import bio.terra.stairway.StairwayHook;
 import bio.terra.workspace.common.exception.UnhandledDeletionFlightException;
 import bio.terra.workspace.common.logging.model.ActivityFlight;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.FolderDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
@@ -26,7 +28,9 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
+import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.WsmObjectType;
@@ -123,7 +127,9 @@ public class WorkspaceActivityLogHook implements StairwayHook {
                 userEmail,
                 subjectId,
                 operationType,
-                getSingleResourceId(context).toString(),
+                getRequired(context.getInputParameters(), ResourceKeys.RESOURCE, WsmResource.class)
+                    .getResourceId()
+                    .toString(),
                 WsmObjectType.RESOURCE));
         case FOLDER -> activityLogDao.writeActivity(
             workspaceUuid,
@@ -141,10 +147,8 @@ public class WorkspaceActivityLogHook implements StairwayHook {
                 operationType,
                 getRequired(context.getInputParameters(), USER_TO_REMOVE, String.class),
                 WsmObjectType.USER));
-        default -> throw new UnhandledDeletionFlightException(
-            String.format(
-                "Activity log should be updated for deletion flight %s failures",
-                context.getFlightClassName()));
+        case APPLICATION -> logApplicationAbleFlight(
+            workspaceUuid, context, userEmail, subjectId, operationType);
       }
       return HookAction.CONTINUE;
     }
@@ -162,12 +166,28 @@ public class WorkspaceActivityLogHook implements StairwayHook {
       case RESOURCE -> maybeLogControlledResourceDeletion(
           context, workspaceUuid, userEmail, subjectId);
       case FOLDER -> maybeLogFolderDeletion(context, workspaceUuid, userEmail, subjectId);
-      default -> throw new UnhandledDeletionFlightException(
+      case APPLICATION, USER -> throw new UnhandledDeletionFlightException(
           String.format(
               "Activity log should be updated for deletion flight %s failures",
               context.getFlightClassName()));
     }
     return HookAction.CONTINUE;
+  }
+
+  private void logApplicationAbleFlight(
+      UUID workspaceUuid,
+      FlightContext context,
+      String actorEmail,
+      String actorSubjectId,
+      OperationType operationType) {
+    FlightUtils.validateRequiredEntries(context.getInputParameters(), APPLICATION_IDS);
+    List<String> ids = context.getInputParameters().get(APPLICATION_IDS, new TypeReference<>() {});
+    for (var id : ids) {
+      activityLogDao.writeActivity(
+          workspaceUuid,
+          new DbWorkspaceActivityLog(
+              actorEmail, actorSubjectId, operationType, id, WsmObjectType.APPLICATION));
+    }
   }
 
   private void maybeLogWorkspaceDeletionFlight(
@@ -229,7 +249,7 @@ public class WorkspaceActivityLogHook implements StairwayHook {
 
   private void maybeLogControlledResourceDeletion(
       FlightContext context, UUID workspaceUuid, String userEmail, String subjectId) {
-    UUID resourceId = getSingleResourceId(context);
+    UUID resourceId = getControlledResourceToDeleteFromFlight(context);
     try {
       resourceDao.getResource(workspaceUuid, resourceId);
       logger.warn(
@@ -249,7 +269,7 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     }
   }
 
-  private UUID getSingleResourceId(FlightContext context) {
+  private UUID getControlledResourceToDeleteFromFlight(FlightContext context) {
     List<ControlledResource> controlledResource =
         checkNotNull(
             context

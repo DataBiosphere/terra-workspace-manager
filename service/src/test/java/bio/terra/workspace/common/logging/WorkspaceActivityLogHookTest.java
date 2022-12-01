@@ -381,11 +381,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
       Optional<ActivityLogChangeDetails> changeDetails,
       ActivityLogChangeDetails expectedChangeDetail) {
     assertTrue(changeDetails.isPresent());
-    assertEquals(expectedChangeDetail.actorEmail(), changeDetails.get().actorEmail());
-    assertEquals(expectedChangeDetail.actorSubjectId(), changeDetails.get().actorSubjectId());
-    assertEquals(expectedChangeDetail.changeSubjectId(), changeDetails.get().changeSubjectId());
-    assertEquals(expectedChangeDetail.changeSubjectType(), changeDetails.get().changeSubjectType());
-    assertEquals(expectedChangeDetail.operationType(), changeDetails.get().operationType());
+    assertEquals(expectedChangeDetail, changeDetails.get());
     assertNotNull(changeDetails.get().changeDate());
   }
 

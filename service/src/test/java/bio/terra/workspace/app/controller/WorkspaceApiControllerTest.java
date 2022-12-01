@@ -325,10 +325,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
       UUID destinationWorkspaceId, ActivityLogChangeDetails expectedDetails) {
     var changeDetails =
         workspaceActivityLogService.getLastUpdatedDetails(destinationWorkspaceId).get();
-    assertEquals(expectedDetails.changeSubjectId(), changeDetails.changeSubjectId());
-    assertEquals(expectedDetails.operationType(), changeDetails.operationType());
-    assertEquals(expectedDetails.actorEmail(), changeDetails.actorEmail());
-    assertEquals(expectedDetails.actorSubjectId(), changeDetails.actorSubjectId());
+    assertEquals(expectedDetails, changeDetails);
     assertNotNull(changeDetails.changeDate());
   }
 
