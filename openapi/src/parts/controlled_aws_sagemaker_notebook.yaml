@@ -3,7 +3,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
     post:
-      summary: Create a new controlled AWS notebook
+      summary: Create a new controlled AWS SageMaker Notebook Instance
       operationId: createAwsSageMakerNotebook
       tags: [ControlledAwsResource]
       requestBody:
@@ -43,7 +43,7 @@ paths:
       - $ref: '#/components/parameters/WorkspaceId'
       - $ref: '#/components/parameters/ResourceId'
     get:
-      summary: Get a controlled AWS bucket resource
+      summary: Get a controlled AWS SageMaker Notebook resource
       operationId: getAwsSageMakerNotebook
       tags: [ControlledAwsResource]
       responses:
