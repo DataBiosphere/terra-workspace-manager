@@ -38,7 +38,7 @@ public class ControlledAwsSageMakerNotebookHandler implements WsmResourceHandler
 
   // Naming rules:
   // https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_CreateNotebookInstance.html#sagemaker-CreateNotebookInstance-request-NotebookInstanceName
-  public String generateCloudName(@Nullable UUID workspaceUuid, String sageMakerNotebookName) {
+  public String generateCloudName(@Nullable UUID workspaceUuid, String resourceName) {
     throw new FeatureNotSupportedException("This generate cloud name feature is not implement yet");
   }
 }

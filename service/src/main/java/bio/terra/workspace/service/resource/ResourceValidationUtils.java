@@ -102,8 +102,8 @@ public class ResourceValidationUtils {
       Pattern.compile("(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?)");
 
   /**
-   * AI Notebook instances must be 1-63 characters, using lower case letters, numbers, and dashes.
-   * The first character must be a lower case letter, and the last character must not be a dash.
+   * SageMaker Notebook instances must be 1-63 characters, using alphanumeric characters and dashes.
+   * The first and last characters must be alphanumeric.
    */
   public static final Pattern SAGEMAKER_NOTEBOOK_INSTANCE_NAME_VALIDATION_PATTERN =
       Pattern.compile("^[a-zA-Z0-9](-*[a-zA-Z0-9])*");
