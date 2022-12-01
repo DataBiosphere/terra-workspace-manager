@@ -26,7 +26,6 @@ import scripts.utils.ClientTestUtils;
 import scripts.utils.WorkspaceApiTestScriptBase;
 
 public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
-  private static final String USER_EMAIL = "liam.dragonmaw@test.firecloud.org";
 
   private static final String WORKSPACE_NAME = "name";
   private static final String WORKSPACE_DESCRIPTION = "description";
@@ -77,9 +76,9 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
     assertNotNull(createdDate);
 
     var lastUpdatedBy = workspaceDescription.getLastUpdatedBy();
-    assertEquals(USER_EMAIL, lastUpdatedBy);
+    assertEquals(testUser.userEmail, lastUpdatedBy);
     var createdBy = workspaceDescription.getCreatedBy();
-    assertEquals(USER_EMAIL, createdBy);
+    assertEquals(testUser.userEmail, createdBy);
 
     // Update workspace
     UpdateWorkspaceRequestBody updateBody =
