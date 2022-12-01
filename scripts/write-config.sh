@@ -19,6 +19,8 @@
 #   ---------------------------+-------------------------------------------------------------------------
 #   buffer-client-sa.json      | Creds to access Buffer service
 #   ---------------------------+-------------------------------------------------------------------------
+#   policy-client-sa.json      | Creds to access Policy service
+#   ---------------------------+-------------------------------------------------------------------------
 #   db-connection-name.txt     | Connection string for CloudSQL proxy
 #   ---------------------------+-------------------------------------------------------------------------
 #   db-name.txt                | Database name
@@ -226,6 +228,15 @@ if [ "${k8senv}" = "integration" ]; then
     vaultgetb64 "secret/dsde/terra/kernel/${k8senv}/tools/buffer/client-sa" "${outputdir}/buffer-client-sa.json"
 else
     vaultgetb64 "secret/dsde/terra/kernel/${k8senv}/${namespace}/buffer/client-sa" "${outputdir}/buffer-client-sa.json"
+fi
+
+# Policy SA is only setup for dev at this time
+if [ "${k8senv}" = "integration" ]; then
+    vaultgetb64 "secret/dsde/terra/kernel/dev/dev/tps/client-sa" "${outputdir}/policy-client-sa.json"
+elif [ "${k8senv}" = "dev" ]; then
+    vaultgetb64 "secret/dsde/terra/kernel/dev/dev/tps/client-sa" "${outputdir}/policy-client-sa.json"
+else
+    echo "No policy credentials for target ${target}"
 fi
 
 # Test Runner SA

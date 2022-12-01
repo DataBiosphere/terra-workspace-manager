@@ -1,23 +1,18 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone;
 
 import bio.terra.common.iam.BearerToken;
+import bio.terra.policy.model.TpsPaoGetResult;
+import bio.terra.policy.model.TpsPaoUpdateResult;
+import bio.terra.policy.model.TpsPolicyInputs;
+import bio.terra.policy.model.TpsUpdateMode;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
 import bio.terra.workspace.common.exception.InternalLogicException;
-import bio.terra.workspace.generated.model.ApiTpsComponent;
-import bio.terra.workspace.generated.model.ApiTpsObjectType;
-import bio.terra.workspace.generated.model.ApiTpsPaoCreateRequest;
-import bio.terra.workspace.generated.model.ApiTpsPaoGetResult;
-import bio.terra.workspace.generated.model.ApiTpsPaoReplaceRequest;
-import bio.terra.workspace.generated.model.ApiTpsPaoSourceRequest;
-import bio.terra.workspace.generated.model.ApiTpsPaoUpdateResult;
-import bio.terra.workspace.generated.model.ApiTpsPolicyInputs;
-import bio.terra.workspace.generated.model.ApiTpsUpdateMode;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.resource.exception.PolicyConflictException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import java.util.List;
@@ -47,28 +42,23 @@ public class ClonePolicyAttributesStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    BearerToken token = new BearerToken(userRequest.getRequiredToken());
-
     // Create PAOs if they don't exist; catch TPS exceptions and retry
     try {
-      createPaoIfNotExist(token, sourceWorkspaceId);
-      createPaoIfNotExist(token, destinationWorkspaceId);
+      createPaoIfNotExist(sourceWorkspaceId);
+      createPaoIfNotExist(destinationWorkspaceId);
     } catch (Exception ex) {
       logger.info("Attempt to create a PAO for workspace failed", ex);
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, ex);
     }
 
     // Save the destination attributes so we can restore them if the flight fails
-    ApiTpsPaoGetResult destinationPao = tpsApiDispatch.getPao(token, destinationWorkspaceId);
-    ApiTpsPolicyInputs destinationAttributes = destinationPao.getAttributes();
+    TpsPaoGetResult destinationPao = tpsApiDispatch.getPao(destinationWorkspaceId);
+    TpsPolicyInputs destinationAttributes = destinationPao.getAttributes();
     context.getWorkingMap().put(WorkspaceFlightMapKeys.POLICIES, destinationAttributes);
 
-    ApiTpsPaoSourceRequest request =
-        new ApiTpsPaoSourceRequest()
-            .sourceObjectId(sourceWorkspaceId)
-            .updateMode(ApiTpsUpdateMode.FAIL_ON_CONFLICT);
-
-    ApiTpsPaoUpdateResult result = tpsApiDispatch.mergePao(token, destinationWorkspaceId, request);
+    TpsPaoUpdateResult result =
+        tpsApiDispatch.mergePao(
+            destinationWorkspaceId, sourceWorkspaceId, TpsUpdateMode.FAIL_ON_CONFLICT);
     if (!result.isUpdateApplied()) {
       List<String> conflictList =
           result.getConflicts().stream().map(c -> c.getNamespace() + ':' + c.getName()).toList();
@@ -83,7 +73,7 @@ public class ClonePolicyAttributesStep implements Step {
   public StepResult undoStep(FlightContext context) throws InterruptedException {
     BearerToken token = new BearerToken(userRequest.getRequiredToken());
     var destinationAttributes =
-        context.getWorkingMap().get(WorkspaceFlightMapKeys.POLICIES, ApiTpsPolicyInputs.class);
+        context.getWorkingMap().get(WorkspaceFlightMapKeys.POLICIES, TpsPolicyInputs.class);
 
     // If the working map didn't get populated, we failed before the merge, so
     // consider it undone.
@@ -91,13 +81,9 @@ public class ClonePolicyAttributesStep implements Step {
       return StepResult.getStepResultSuccess();
     }
 
-    var request =
-        new ApiTpsPaoReplaceRequest()
-            .newAttributes(destinationAttributes)
-            .updateMode(ApiTpsUpdateMode.FAIL_ON_CONFLICT);
-
-    ApiTpsPaoUpdateResult result =
-        tpsApiDispatch.replacePao(token, destinationWorkspaceId, request);
+    TpsPaoUpdateResult result =
+        tpsApiDispatch.replacePao(
+            destinationWorkspaceId, destinationAttributes, TpsUpdateMode.FAIL_ON_CONFLICT);
     if (!result.isUpdateApplied()) {
       List<String> conflictList =
           result.getConflicts().stream().map(c -> c.getNamespace() + ':' + c.getName()).toList();
@@ -113,18 +99,12 @@ public class ClonePolicyAttributesStep implements Step {
   // Since policy attributes were added later in development, not all existing
   // workspaces have an associated policy attribute object. This method creates
   // an empty one if it does not exist.
-  private void createPaoIfNotExist(BearerToken token, UUID workspaceId) {
-    Optional<ApiTpsPaoGetResult> pao = tpsApiDispatch.getPaoIfExists(token, workspaceId);
+  private void createPaoIfNotExist(UUID workspaceId) {
+    Optional<TpsPaoGetResult> pao = tpsApiDispatch.getPaoIfExists(workspaceId);
     if (pao.isPresent()) {
       return;
     }
     // Workspace doesn't have a PAO, so create an empty one for it.
-    ApiTpsPaoCreateRequest request =
-        new ApiTpsPaoCreateRequest()
-            .objectId(workspaceId)
-            .component(ApiTpsComponent.WSM)
-            .objectType(ApiTpsObjectType.WORKSPACE)
-            .attributes(new ApiTpsPolicyInputs());
-    tpsApiDispatch.createPao(token, request);
+    tpsApiDispatch.createEmptyPao(workspaceId);
   }
 }
