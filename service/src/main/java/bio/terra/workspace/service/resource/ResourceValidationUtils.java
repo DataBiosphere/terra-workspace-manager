@@ -6,6 +6,7 @@ import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.app.configuration.external.GitRepoReferencedResourceConfiguration;
+import bio.terra.workspace.generated.model.ApiAwsSageMakerNotebookCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
@@ -99,6 +100,13 @@ public class ResourceValidationUtils {
    */
   public static final Pattern AI_NOTEBOOK_INSTANCE_NAME_VALIDATION_PATTERN =
       Pattern.compile("(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?)");
+
+  /**
+   * SageMaker Notebook instances must be 1-63 characters, using alphanumeric characters and dashes.
+   * The first and last characters must be alphanumeric.
+   */
+  public static final Pattern SAGEMAKER_NOTEBOOK_INSTANCE_NAME_VALIDATION_PATTERN =
+      Pattern.compile("^[a-zA-Z0-9](-*[a-zA-Z0-9])*");
 
   /**
    * Resource names must be 1-1024 characters, using letters, numbers, dashes, and underscores and
@@ -369,6 +377,18 @@ public class ResourceValidationUtils {
     }
   }
 
+  public static void validateSageMakerNotebookInstanceId(String name) {
+    if (!SAGEMAKER_NOTEBOOK_INSTANCE_NAME_VALIDATION_PATTERN.matcher(name).matches()) {
+      logger.warn("Invalid SageMaker Notebook instance ID {}", name);
+      throw new InvalidReferenceException(
+          "Invalid SageMaker Notebook instance ID specified. ID must be 1 to 63 alphanumeric characters or dashes, where the first and last characters are not a dash.");
+    }
+  }
+
+  public static void validate(ApiAwsSageMakerNotebookCreationParameters creationParameters) {
+    validateSageMakerNotebookInstanceId(creationParameters.getInstanceId());
+  }
+
   public static void validateResourceName(String name) {
     if (StringUtils.isEmpty(name) || !RESOURCE_NAME_VALIDATION_PATTERN.matcher(name).matches()) {
       logger.warn("Invalid resource name {}", name);
@@ -433,9 +453,14 @@ public class ResourceValidationUtils {
   }
 
   public static <T> void checkFieldNonNull(@Nullable T fieldValue, String fieldName) {
+    checkFieldNonNull(fieldValue, fieldName, "Resource");
+  }
+
+  public static <T> void checkFieldNonNull(
+      @Nullable T fieldValue, String fieldName, String resourceDescriptor) {
     if (fieldValue == null) {
       throw new MissingRequiredFieldException(
-          String.format("Missing required field '%s' for resource", fieldName));
+          String.format("Missing required field '%s' for %s", fieldName, resourceDescriptor));
     }
   }
 

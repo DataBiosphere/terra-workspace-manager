@@ -277,7 +277,6 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
         body.getAwsSageMakerNotebook().getDefaultBucket();
 
     if (defaultBucket != null) {
-
       defaultBucketResource =
           controlledResourceMetadataManager
               .validateControlledResourceAndAction(
@@ -293,6 +292,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
             .common(commonFields)
             .instanceId(body.getAwsSageMakerNotebook().getInstanceId())
             .region(body.getAwsSageMakerNotebook().getLocation())
+            .instanceType(body.getAwsSageMakerNotebook().getInstanceType())
             .build();
 
     String jobId =
