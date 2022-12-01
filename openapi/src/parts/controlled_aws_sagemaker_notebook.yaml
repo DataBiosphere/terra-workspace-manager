@@ -173,6 +173,7 @@ components:
     AwsSageMakerNotebookCreationParameters:
       description: Notebook creation parameters
       type: object
+      required: [instanceId, location, instanceType]
       properties:
         instanceId:
           description: Cloud-platform name for instance.
@@ -186,6 +187,7 @@ components:
           type: string
           default: "ml.t2.medium"
         defaultBucket:
+          description: Bucket to provide access to via the default configured credential in AWS CLI/SDK.
           $ref: '#/components/schemas/AwsSagemakerNotebookDefaultBucket'
 
     AwsSageMakerProxyUrlView:

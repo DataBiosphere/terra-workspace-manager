@@ -14,6 +14,10 @@ components:
         instanceType:
           description: Type of the compute instance to launch for the notebook instance.
           type: string
+        defaultBucket:
+          description: Bucket to provide access to via the default configured credential in AWS CLI/SDK.
+          $ref: '#/components/schemas/AwsSagemakerNotebookDefaultBucket'
+
 
     AwsSageMakerNotebookResource:
       type: object

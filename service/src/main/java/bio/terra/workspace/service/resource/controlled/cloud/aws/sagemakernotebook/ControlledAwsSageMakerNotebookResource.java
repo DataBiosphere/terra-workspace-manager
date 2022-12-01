@@ -10,6 +10,7 @@ import bio.terra.workspace.db.model.UniquenessCheckAttributes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
 import bio.terra.workspace.generated.model.ApiAwsSageMakerNotebookAttributes;
 import bio.terra.workspace.generated.model.ApiAwsSageMakerNotebookResource;
+import bio.terra.workspace.generated.model.ApiAwsSagemakerNotebookDefaultBucket;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -37,6 +38,7 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
   private final String instanceId;
   private final String region;
   private final String instanceType;
+  private final ControlledAwsSageMakerNotebookAttributes.DefaultBucket defaultBucket;
 
   protected static final String RESOURCE_DESCRIPTOR = "ControlledSageMakerNotebookInstance";
 
@@ -55,6 +57,8 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
       @JsonProperty("instanceId") String instanceId,
       @JsonProperty("region") String region,
       @JsonProperty("instanceType") String instanceType,
+      @JsonProperty("defaultBucket")
+          ControlledAwsSageMakerNotebookAttributes.DefaultBucket defaultBucket,
       @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
       @JsonProperty("properties") Map<String, String> properties) {
     super(
@@ -73,15 +77,21 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
     this.instanceId = instanceId;
     this.region = region;
     this.instanceType = instanceType;
+    this.defaultBucket = defaultBucket;
     validate();
   }
 
   private ControlledAwsSageMakerNotebookResource(
-      ControlledResourceFields common, String instanceId, String region, String instanceType) {
+      ControlledResourceFields common,
+      String instanceId,
+      String region,
+      String instanceType,
+      ControlledAwsSageMakerNotebookAttributes.DefaultBucket defaultBucket) {
     super(common);
     this.instanceId = instanceId;
     this.region = region;
     this.instanceType = instanceType;
+    this.defaultBucket = defaultBucket;
     validate();
   }
 
@@ -139,11 +149,19 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
     return instanceType;
   }
 
+  public ControlledAwsSageMakerNotebookAttributes.DefaultBucket getDefaultBucket() {
+    return defaultBucket;
+  }
+
   public ApiAwsSageMakerNotebookAttributes toApiAttributes() {
     return new ApiAwsSageMakerNotebookAttributes()
         .instanceId(getInstanceId())
         .region(getRegion())
-        .instanceType(getInstanceType());
+        .instanceType(getInstanceType())
+        .defaultBucket(
+            Optional.ofNullable(getDefaultBucket())
+                .map(ControlledAwsSageMakerNotebookAttributes.DefaultBucket::toApi)
+                .orElse(null));
   }
 
   public ApiAwsSageMakerNotebookResource toApiResource() {
@@ -166,7 +184,7 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
   public String attributesToJson() {
     return DbSerDes.toJson(
         new ControlledAwsSageMakerNotebookAttributes(
-            getInstanceId(), getRegion(), getInstanceType()));
+            getInstanceId(), getRegion(), getInstanceType(), getDefaultBucket()));
   }
 
   @Override
@@ -207,6 +225,7 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
     private String instanceId;
     private String region;
     private String instanceType;
+    private ControlledAwsSageMakerNotebookAttributes.DefaultBucket defaultBucket;
 
     public Builder common(ControlledResourceFields common) {
       this.common = common;
@@ -228,8 +247,23 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
       return this;
     }
 
+    public Builder defaultBucket(
+        ControlledAwsSageMakerNotebookAttributes.DefaultBucket defaultBucket) {
+      this.defaultBucket = defaultBucket;
+      return this;
+    }
+
+    public Builder defaultBucket(ApiAwsSagemakerNotebookDefaultBucket defaultBucket) {
+      if (defaultBucket != null) {
+        this.defaultBucket =
+            new ControlledAwsSageMakerNotebookAttributes.DefaultBucket(defaultBucket);
+      }
+      return this;
+    }
+
     public ControlledAwsSageMakerNotebookResource build() {
-      return new ControlledAwsSageMakerNotebookResource(common, instanceId, region, instanceType);
+      return new ControlledAwsSageMakerNotebookResource(
+          common, instanceId, region, instanceType, defaultBucket);
     }
   }
 }

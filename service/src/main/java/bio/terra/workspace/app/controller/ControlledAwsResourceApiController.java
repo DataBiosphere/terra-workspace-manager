@@ -293,6 +293,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
             .instanceId(body.getAwsSageMakerNotebook().getInstanceId())
             .region(body.getAwsSageMakerNotebook().getLocation())
             .instanceType(body.getAwsSageMakerNotebook().getInstanceType())
+            .defaultBucket(body.getAwsSageMakerNotebook().getDefaultBucket())
             .build();
 
     String jobId =

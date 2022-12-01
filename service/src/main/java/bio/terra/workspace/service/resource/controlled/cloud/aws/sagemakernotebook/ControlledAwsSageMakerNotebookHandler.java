@@ -33,6 +33,7 @@ public class ControlledAwsSageMakerNotebookHandler implements WsmResourceHandler
         .instanceId(attributes.getInstanceId())
         .region(attributes.getRegion())
         .instanceType(attributes.getInstanceId())
+        .defaultBucket(attributes.getDefaultBucket())
         .build();
   }
 
