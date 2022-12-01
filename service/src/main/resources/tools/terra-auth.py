@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import argparse
-import boto3
 import google.auth
 import json
 import os
@@ -26,6 +25,8 @@ def parse_args():
 
     parser.add_argument('--notebook', action='store_true', required=False,
         help='Terra Notebook to request access credential for.')
+
+    parser.add_argument('--access', action='store', required=False, default='WRITE_READ')
 
     return parser.parse_args()
 
@@ -90,33 +91,24 @@ def enumerate_workspace_resources(session, workspace_id, type):
                 more = False
         return out_resources
 
-def get_notebook_cred(session, workspace_id, notebook_id):
-    response = session.get(f'{WSM_API_ENDPOINT}/{workspace_id}/resources/controlled/aws/sagemaker-notebooks/{notebook_id}/getCredential', params={'accessScope': 'READ_ONLY', 'credentialDuration': 900})
+def get_notebook_cred(session, workspace_id, notebook_id, access):
+    response = session.get(f'{WSM_API_ENDPOINT}/{workspace_id}/resources/controlled/aws/sagemaker-notebooks/{notebook_id}/getCredential', params={'accessScope': access, 'credentialDuration': 900})
     if not response.ok:
         sys.exit(f'ERROR: Getting notebook cred failed with status {response.status_code}')
     return response.content.decode('ascii')
 
-def get_bucket_cred(session, workspace_id, bucket_id):
-    response = session.get(f'{WSM_API_ENDPOINT}/{workspace_id}/resources/controlled/aws/buckets/{bucket_id}/getCredential', params={'accessScope': 'WRITE_READ', 'credentialDuration': 3600})
+def get_bucket_cred(session, workspace_id, bucket_id, access):
+    response = session.get(f'{WSM_API_ENDPOINT}/{workspace_id}/resources/controlled/aws/buckets/{bucket_id}/getCredential', params={'accessScope': access, 'credentialDuration': 3600})
     if not response.ok:
         sys.exit(f'ERROR: Getting notebook cred failed with status {response.status_code}')
     return response.content.decode('ascii')
-
-def get_notebook_tags(session, workspace_id, notebook_id):
-    user_credentials = json.loads(get_notebook_cred(session, workspace_id, notebook_id))
-    user_sagemaker_session = boto3.client('sagemaker',
-              region_name='us-east-1',
-              aws_access_key_id=user_credentials['AccessKeyId'],
-              aws_secret_access_key=user_credentials['SecretAccessKey'],
-              aws_session_token=user_credentials['SessionToken'])
-    return user_sagemaker_session.list_tags(ResourceArn=get_notebook_resource_arn())
-
 
 def find_notebook_metadata(session):
     retVal = {
         'WorkspaceId': None,
         'ResourceId': None,
-        'DefaultBucketPrefix': None
+        'DefaultBucketId': None,
+        'DefaultBucketAccess': None
     }
     found = False
 
@@ -125,16 +117,16 @@ def find_notebook_metadata(session):
     for workspace_id in workspace_ids:
         resources = enumerate_workspace_resources(session, workspace_id, 'AWS_SAGEMAKER_NOTEBOOK')
         for resource in resources:
-            if resource['resourceAttributes']['awsSagemakerNotebook']['instanceId'] == resource_name:
+            notebook_attributes = resource['resourceAttributes']['awsSagemakerNotebook']
+            if notebook_attributes['instanceId'] == resource_name:
                 found = True
                 retVal['WorkspaceId'] = resource['metadata']['workspaceId']
                 retVal['ResourceId'] = resource['metadata']['resourceId']
 
-    if retVal['WorkspaceId'] is not None and retVal['ResourceId'] is not None:
-        tags = get_notebook_tags(session, retVal['WorkspaceId'], retVal['ResourceId'])
-        for tag in tags['Tags']:
-            if tag['Key'] == 'terra_bucket':
-                retVal['DefaultBucketPrefix'] = tag['Value']
+                default_bucket = notebook_attributes['defaultBucket']
+                if default_bucket is not None:
+                    retVal['DefaultBucketId'] = default_bucket['bucketId']
+                    retVal['DefaultBucketAccess'] = default_bucket['accessScope']
 
     return retVal
 
@@ -144,33 +136,37 @@ def get_notebook_metadata(session):
             return json.load(f)
     else:
         metadata = find_notebook_metadata(session)
+
+        if metadata['WorkspaceId'] is None or metadata['ResourceId'] is None:
+            sys.exit("Workspace and Notebook Resource ID could not be resolved.")
+
         with open(NOTEBOOK_METADATA_FILE, 'w') as f:
-            json.dump(metadata, f)
+            json.dump(metadata, f, indent=4)
         return metadata
 
 def get_notebook_config(label, notebook_metadata):
     return f'''[{label}]
 region = us-east-1
-credential_process = "{os.path.realpath(__file__)}" --notebook\n'''
+credential_process = "{os.path.realpath(__file__)}" --notebook --access WRITE_READ\n'''
 
-def get_bucket_configs(config, session, notebook_metadata):
+def get_bucket_configs(config, session, notebook_metadata, access):
     configs = config
+    suffix = '-ro' if access == 'READ_ONLY' else ''
 
-    notebook_resources = enumerate_workspace_resources(session, notebook_metadata['WorkspaceId'], 'AWS_BUCKET')
-    for notebook_resource in notebook_resources:
-        name = notebook_resource['metadata']['name']
-        id = notebook_resource['metadata']['resourceId']
-        prefix = notebook_resource['resourceAttributes']['awsBucket']['prefix']
+    bucket_resources = enumerate_workspace_resources(session, notebook_metadata['WorkspaceId'], 'AWS_BUCKET')
+    for bucket_resource in bucket_resources:
+        name = bucket_resource['metadata']['name']
+        id = bucket_resource['metadata']['resourceId']
         if len(configs) > 0:
             configs += '\n'
-        configs += f'''[profile bucket-{name}]
+        configs += f'''[profile bucket-{name}{suffix}]
 region = us-east-1
-credential_process = "{os.path.realpath(__file__)}" --bucket {id}\n'''
+credential_process = "{os.path.realpath(__file__)}" --bucket {id} --access {access}\n'''
 
-        if notebook_metadata['DefaultBucketPrefix'] == prefix:
+        if notebook_metadata['DefaultBucketId'] == id and notebook_metadata['DefaultBucketAccess'] == access:
             configs += f'''\n[default]
 region = us-east-1
-credential_process = "{os.path.realpath(__file__)}" --bucket {id}\n'''
+credential_process = "{os.path.realpath(__file__)}" --bucket {id} --access {access}\n'''
 
         return configs
 
@@ -181,16 +177,17 @@ def main():
 
     if args.configure:
         config = get_notebook_config('profile this-notebook', notebook_metadata)
-        config = get_bucket_configs(config, session, notebook_metadata)
+        config = get_bucket_configs(config, session, notebook_metadata, 'WRITE_READ')
+        config = get_bucket_configs(config, session, notebook_metadata, 'READ_ONLY')
         if config.find('[default]') == -1:
             config += '\n' + get_notebook_config('default', notebook_metadata)
         with open(f'{os.path.expanduser("~")}/.aws/config', 'w') as f:
             f.write(config)
     elif args.notebook:
-        print(get_notebook_cred(session, notebook_metadata['WorkspaceId'], notebook_metadata['ResourceId']))
+        print(get_notebook_cred(session, notebook_metadata['WorkspaceId'], notebook_metadata['ResourceId'], args.access))
 
     elif args.bucket:
-        print(get_bucket_cred(session, notebook_metadata['WorkspaceId'], args.bucket))
+        print(get_bucket_cred(session, notebook_metadata['WorkspaceId'], args.bucket, args.access))
 
 if __name__ == "__main__":
     main()
