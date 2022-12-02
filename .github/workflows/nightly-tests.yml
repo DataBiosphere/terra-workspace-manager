@@ -89,7 +89,7 @@ jobs:
         uses: ./.github/actions/write-config
         with:
           vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
-          target: wsmtest
+          target: dev
 
       # The ArgoCD sync triggers the synchronization of the wsmtest cluster. The ArgoCD CLI
       # will wait for the initial sync to complete, but it won't necessarily wait for WSM's
@@ -103,15 +103,15 @@ jobs:
           chmod +x ./argocd
       - name: ArgoCD sync
         run: |
-          version=$(curl https://workspace.wsmtest.integ.envs.broadinstitute.org/version)
-          echo "$(date "+%Y-%m-%dT%H:%M:%S") pre-sync wsmtest version: $version"
+          version=$(curl https://workspace.dsde-dev.broadinstitute.org/version)
+          echo "$(date "+%Y-%m-%dT%H:%M:%S") pre-sync dev version: $version"
           ./argocd --grpc-web --server ap-argocd.dsp-devops.broadinstitute.org:443 \
             --auth-token '${{ secrets.WSMTEST_SYNC_ARGOCD_TOKEN }}' \
             --header 'Proxy-Authorization: Bearer ${{ steps.auth.outputs.id_token }}' \
-            app sync workspacemanager-wsmtest
+            app sync workspacemanager-dev
           sleep 120
-          version=$(curl https://workspace.wsmtest.integ.envs.broadinstitute.org/version)
-          echo "$(date "+%Y-%m-%dT%H:%M:%S") post-sync wsmtest version: $version"
+          version=$(curl https://workspace.dsde-dev.broadinstitute.org/version)
+          echo "$(date "+%Y-%m-%dT%H:%M:%S") post-sync dev version: $version"
       - name: Remove ArgoCD CLI
         if: always()
         run: |
@@ -131,7 +131,7 @@ jobs:
         if: always()
         uses: ./.github/actions/integration-test
         with:
-          test-server: workspace-wsmtest.json
+          test-server: workspace-dev.json
           test: suites/NightlyOnlyIntegration.json
           
       - name: clean databases before integration suite
@@ -143,7 +143,7 @@ jobs:
         if: always()
         uses: ./.github/actions/integration-test
         with:
-          test-server: workspace-wsmtest.json
+          test-server: workspace-dev.json
           test: suites/FullIntegration.json
 
       - name: clean databases before perf suite
@@ -155,7 +155,7 @@ jobs:
         if: always()
         uses: ./.github/actions/integration-test
         with:
-          test-server: workspace-wsmtest.json
+          test-server: workspace-dev.json
           test: suites/BasicPerf.json
 
       - name: clean databases before resiliency suite
@@ -167,7 +167,7 @@ jobs:
         if: always()
         uses: ./.github/actions/integration-test
         with:
-          test-server: workspace-wsmtest.json
+          test-server: workspace-dev.json
           test: suites/BasicResiliency.json
 
       - name: Compose status message
