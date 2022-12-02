@@ -9,7 +9,6 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
-import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -55,13 +54,19 @@ public class EnableVmLoggingStep implements Step {
             dcr -> {
               MonitorManager monitorManager = getMonitorManager(context);
 
+              final String vmResourceId =
+                  context.getWorkingMap().get(AzureVmHelper.WORKING_MAP_VM_ID, String.class);
+              logger.info(
+                  "configuring vm [{}] to use collection rule [{}]",
+                  vmResourceId,
+                  dcr.getResourceId());
               monitorManager
                   .diagnosticSettings()
                   .manager()
                   .serviceClient()
                   .getDataCollectionRuleAssociations()
                   .createWithResponse(
-                      context.getWorkingMap().get(AzureVmHelper.WORKING_MAP_VM_ID, String.class),
+                      vmResourceId,
                       resource.getVmName(),
                       new DataCollectionRuleAssociationProxyOnlyResourceInner()
                           .withDataCollectionRuleId(dcr.getResourceId()),
@@ -85,9 +90,14 @@ public class EnableVmLoggingStep implements Step {
         landingZoneApiDispatch.getLandingZoneId(
             new BearerToken(userRequest.getRequiredToken()), resource.getWorkspaceId());
 
-    return listLandingZoneResources(
-            new BearerToken(userRequest.getRequiredToken()), lzId, ResourcePurpose.SHARED_RESOURCE)
-        .stream()
+    final List<ApiAzureLandingZoneDeployedResource> resources =
+        listLandingZoneResources(
+            new BearerToken(userRequest.getRequiredToken()), lzId, ResourcePurpose.SHARED_RESOURCE);
+    logger.info(
+        "shared resources in LZ [{}]: {}",
+        lzId,
+        String.join(",", resources.stream().map(r -> r.toString()).toList()));
+    return resources.stream()
         .filter(r -> DATA_COLLECTION_RULES_TYPE.equalsIgnoreCase(r.getResourceType()))
         .findFirst();
   }
