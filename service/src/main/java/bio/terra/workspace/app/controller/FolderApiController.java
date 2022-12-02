@@ -194,7 +194,7 @@ public class FolderApiController extends ControllerBase implements FolderApi {
     workspaceActivityLogService.writeActivity(
         userRequest,
         workspaceUuid,
-        OperationType.CREATE,
+        OperationType.DELETE_PROPERTIES,
         folderUuid.toString(),
         WsmObjectType.FOLDER);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);

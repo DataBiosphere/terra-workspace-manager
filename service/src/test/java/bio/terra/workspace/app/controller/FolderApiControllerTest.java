@@ -458,6 +458,17 @@ public class FolderApiControllerTest extends BaseUnitTest {
     properties = convertApiPropertyToMap(gotFolder2.getProperties());
     assertEquals("chocolate", properties.get("cake"));
     assertEquals("bar", properties.get("foo"));
+    ActivityLogChangeDetails changeDetails =
+        workspaceActivityLogService.getLastUpdatedDetails(workspaceId).get();
+    assertEquals(
+        changeDetails,
+        new ActivityLogChangeDetails(
+            changeDetails.changeDate(),
+            USER_REQUEST.getEmail(),
+            USER_REQUEST.getSubjectId(),
+            OperationType.UPDATE_PROPERTIES,
+            folder.getId().toString(),
+            WsmObjectType.FOLDER));
   }
 
   @Test
@@ -471,9 +482,14 @@ public class FolderApiControllerTest extends BaseUnitTest {
             eq(SamConstants.SamResource.WORKSPACE),
             anyString(),
             eq(SamConstants.SamWorkspaceAction.WRITE));
+    ActivityLogChangeDetails changeDetails =
+        workspaceActivityLogService.getLastUpdatedDetails(workspaceId).get();
 
     updateFolderPropertiesExpectCode(
         workspaceId, folder.getId(), Map.of("cake", "lava"), USER_REQUEST, HttpStatus.SC_FORBIDDEN);
+    // No new log.
+    assertEquals(changeDetails,
+        workspaceActivityLogService.getLastUpdatedDetails(workspaceId).get());
   }
 
   @Test
@@ -499,14 +515,28 @@ public class FolderApiControllerTest extends BaseUnitTest {
 
     ApiFolder gotFolder = getFolder(workspaceId, folder.getId());
     assertFalse(convertApiPropertyToMap(gotFolder.getProperties()).containsKey("foo"));
+    ActivityLogChangeDetails changeDetails = workspaceActivityLogService.getLastUpdatedDetails(workspaceId).get();
+    assertEquals(
+        changeDetails,
+        new ActivityLogChangeDetails(
+            changeDetails.changeDate(),
+            USER_REQUEST.getEmail(),
+            USER_REQUEST.getSubjectId(),
+            OperationType.DELETE_PROPERTIES,
+            folder.getId().toString(),
+            WsmObjectType.FOLDER));
   }
 
   @Test
   public void deleteFolderProperties_folderNotFound_throws404() throws Exception {
     UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+    ActivityLogChangeDetails changeDetails = workspaceActivityLogService.getLastUpdatedDetails(workspaceId).get();
 
     deleteFolderPropertiesExpectCode(
         workspaceId, UUID.randomUUID(), List.of("foo"), USER_REQUEST, HttpStatus.SC_NOT_FOUND);
+    // no new log
+    assertEquals(changeDetails,
+        workspaceActivityLogService.getLastUpdatedDetails(workspaceId).get());
   }
 
   @Test
@@ -520,9 +550,13 @@ public class FolderApiControllerTest extends BaseUnitTest {
             eq(SamConstants.SamResource.WORKSPACE),
             anyString(),
             eq(SamConstants.SamWorkspaceAction.WRITE));
+    ActivityLogChangeDetails changeDetails = workspaceActivityLogService.getLastUpdatedDetails(workspaceId).get();
 
     deleteFolderPropertiesExpectCode(
         workspaceId, folder.getId(), List.of("foo"), USER_REQUEST, HttpStatus.SC_FORBIDDEN);
+    // no new log
+    assertEquals(changeDetails,
+        workspaceActivityLogService.getLastUpdatedDetails(workspaceId).get());
   }
 
   private ApiFolder createFolder(UUID workspaceId) throws Exception {
