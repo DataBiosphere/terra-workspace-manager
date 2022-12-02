@@ -111,6 +111,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterAll;
@@ -120,6 +121,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 
@@ -127,6 +130,7 @@ import org.springframework.http.HttpStatus;
 // time creating and deleting GCP contexts.
 @TestInstance(Lifecycle.PER_CLASS)
 public class ControlledResourceServiceTest extends BaseConnectedTest {
+  private static final Logger logger = LoggerFactory.getLogger(ControlledResourceServiceTest.class);
   /** The default roles to use when creating user private AI notebook instance resources */
   private static final ControlledResourceIamRole DEFAULT_ROLE = ControlledResourceIamRole.WRITER;
   /** The default GCP location to create notebooks for this test. */
@@ -228,6 +232,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     String workspaceUserFacingId = workspaceService.getWorkspace(workspaceId).getUserFacingId();
     var instanceId = "create-ai-notebook-instance-do";
     var serverName = "verily-autopush";
+    int retryWaitSeconds = 30;
+    int retryCount = 10;
+
     cliConfiguration.setServerName(serverName);
     ApiGcpAiNotebookInstanceCreationParameters creationParameters =
         ControlledResourceFixtures.defaultNotebookCreationParameters()
@@ -284,16 +291,30 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             "notebooks.instances.start",
             "notebooks.instances.stop",
             "notebooks.instances.use");
-    assertThat(
-        AIPlatformNotebooksCow.create(crlService.getClientConfig(), user.getGoogleCredentials())
-            .instances()
-            .testIamPermissions(
-                instanceName,
-                new com.google.api.services.notebooks.v1.model.TestIamPermissionsRequest()
-                    .setPermissions(expectedWriterPermissions))
-            .execute()
-            .getPermissions(),
-        containsInAnyOrder(expectedWriterPermissions.toArray()));
+
+    // Wait for actual permissions to show up before asserting
+    List<String> actualPermissions = null;
+    for (int i = 0; i < retryCount; i++) {
+      actualPermissions =
+          AIPlatformNotebooksCow.create(crlService.getClientConfig(), user.getGoogleCredentials())
+              .instances()
+              .testIamPermissions(
+                  instanceName,
+                  new com.google.api.services.notebooks.v1.model.TestIamPermissionsRequest()
+                      .setPermissions(expectedWriterPermissions))
+              .execute()
+              .getPermissions();
+
+      // I have seen two return values before completion. A null string and just the 'get'
+      // permission.
+      if (actualPermissions != null && actualPermissions.size() > 1) {
+        break;
+      }
+      logger.warn("Permissions not set yet: {}. Retry {} of {}", actualPermissions, i + 1, 10);
+      TimeUnit.SECONDS.sleep(retryWaitSeconds);
+    }
+
+    assertThat(actualPermissions, containsInAnyOrder(expectedWriterPermissions.toArray()));
 
     // Test that the user has access to the notebook with a service account through proxy mode.
     // git secrets gets a false positive if 'service_account' is double quoted.
