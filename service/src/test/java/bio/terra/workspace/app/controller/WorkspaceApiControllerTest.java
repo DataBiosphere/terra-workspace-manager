@@ -58,6 +58,7 @@ import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
 import bio.terra.workspace.service.iam.model.SamConstants.SamSpendProfileAction;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
+import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants.Properties;
@@ -101,6 +102,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
   @Autowired MockMvcUtils mockMvcUtils;
   @Autowired ObjectMapper objectMapper;
   @Autowired WorkspaceActivityLogService workspaceActivityLogService;
+  @Autowired JobService jobService;
 
   private static ApiTpsPaoGetResult emptyWorkspacePao() {
     return new ApiTpsPaoGetResult()
@@ -248,15 +250,17 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
     ApiWorkspaceDescription gotWorkspace = mockMvcUtils.getWorkspace(USER_REQUEST, workspaceId);
     mockMvcUtils.assertProperties(
         List.of(SHORT_DESCRIPTION_PROPERTY, VERSION_PROPERTY), gotWorkspace.getProperties());
-    assertActivityLogChangeDetails(
-        workspaceId,
+    ActivityLogChangeDetails changeDetails =
+        workspaceActivityLogService.getLastUpdatedDetails(workspaceId).get();
+    assertEquals(
         new ActivityLogChangeDetails(
-            null,
+            changeDetails.changeDate(),
             USER_REQUEST.getEmail(),
             USER_REQUEST.getSubjectId(),
             OperationType.DELETE_PROPERTIES,
             workspaceId.toString(),
-            WsmObjectType.WORKSPACE));
+            WsmObjectType.WORKSPACE),
+        changeDetails);
   }
 
   @Test
@@ -281,15 +285,17 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
             newUserProperty,
             fooProperty),
         gotWorkspace.getProperties());
-    assertActivityLogChangeDetails(
-        workspaceId,
+    ActivityLogChangeDetails changeDetails =
+        workspaceActivityLogService.getLastUpdatedDetails(workspaceId).get();
+    assertEquals(
         new ActivityLogChangeDetails(
-            null,
+            changeDetails.changeDate(),
             USER_REQUEST.getEmail(),
             USER_REQUEST.getSubjectId(),
             OperationType.UPDATE_PROPERTIES,
             workspaceId.toString(),
-            WsmObjectType.WORKSPACE));
+            WsmObjectType.WORKSPACE),
+        changeDetails);
   }
 
   @Test
@@ -302,6 +308,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
 
     ApiCloneWorkspaceResult cloneWorkspace =
         mockMvcUtils.cloneWorkspace(USER_REQUEST, workspaceId, FAKE_SPEND_PROFILE, null);
+    jobService.waitForJob(cloneWorkspace.getJobReport().getId());
 
     UUID destinationWorkspaceId = cloneWorkspace.getWorkspace().getDestinationWorkspaceId();
     ApiWorkspaceDescription destinationWorkspace =
@@ -310,23 +317,17 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
     assertEquals(sourceWorkspace.getProperties(), destinationWorkspace.getProperties());
     assertEquals(
         sourceWorkspace.getDisplayName() + " (Copy)", destinationWorkspace.getDisplayName());
-    assertActivityLogChangeDetails(
-        destinationWorkspaceId,
+    ActivityLogChangeDetails changeDetails =
+        workspaceActivityLogService.getLastUpdatedDetails(destinationWorkspaceId).get();
+    assertEquals(
         new ActivityLogChangeDetails(
-            null,
+            changeDetails.changeDate(),
             USER_REQUEST.getEmail(),
             USER_REQUEST.getSubjectId(),
             OperationType.CLONE,
             destinationWorkspaceId.toString(),
-            WsmObjectType.WORKSPACE));
-  }
-
-  private void assertActivityLogChangeDetails(
-      UUID destinationWorkspaceId, ActivityLogChangeDetails expectedDetails) {
-    var changeDetails =
-        workspaceActivityLogService.getLastUpdatedDetails(destinationWorkspaceId).get();
-    assertEquals(expectedDetails, changeDetails);
-    assertNotNull(changeDetails.changeDate());
+            WsmObjectType.WORKSPACE),
+        changeDetails);
   }
 
   @Test
@@ -486,15 +487,15 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
     ActivityLogChangeDetails secondChangeDetails =
         workspaceActivityLogService.getLastUpdatedDetails(workspace.getId()).get();
     assertTrue(lastChangedDate.isBefore(secondChangeDetails.changeDate()));
-    assertActivityLogChangeDetails(
-        workspace.getId(),
+    assertEquals(
         new ActivityLogChangeDetails(
-            /*changeDate=*/ null,
+            /*changeDate=*/ secondChangeDetails.changeDate(),
             USER_REQUEST.getEmail(),
             USER_REQUEST.getSubjectId(),
             OperationType.UPDATE,
             workspace.getId().toString(),
-            WsmObjectType.WORKSPACE));
+            WsmObjectType.WORKSPACE),
+        secondChangeDetails);
   }
 
   @Test

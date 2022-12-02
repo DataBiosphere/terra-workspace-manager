@@ -127,8 +127,6 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
             .getAiNotebookInstance();
 
     assertEquals("europe-west1-b", notebook.getAttributes().getLocation());
-
-    mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
   }
 
   @Test

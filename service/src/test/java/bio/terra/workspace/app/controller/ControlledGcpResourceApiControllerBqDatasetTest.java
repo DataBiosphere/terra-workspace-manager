@@ -6,6 +6,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
@@ -15,6 +16,7 @@ import bio.terra.workspace.common.GcpCloudUtils;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.PolicyFixtures;
+import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
@@ -33,8 +35,9 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
+import bio.terra.workspace.service.workspace.model.WsmObjectType;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.api.services.bigquery.model.Dataset;
 import com.google.common.collect.ImmutableList;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
@@ -66,6 +69,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
   @Autowired GcpCloudUtils cloudUtils;
   @Autowired FeatureConfiguration features;
   @Autowired CrlService crlService;
+  @Autowired WorkspaceActivityLogService workspaceActivityLogService;
 
   private UUID workspaceId;
   private UUID workspaceId2;
@@ -128,10 +132,20 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
     assertEquals(
         expectedBqDataset.getAttributes().getProjectId(),
         actualBqDataset.getAttributes().getProjectId());
+    ActivityLogChangeDetails changeDetails =
+        workspaceActivityLogService.getLastUpdatedDetails(workspaceId).get();
+    assertEquals(userAccessUtils.getDefaultUserEmail(), changeDetails.actorEmail());
+    assertEquals(
+        actualBqDataset.getMetadata().getResourceId().toString(), changeDetails.changeSubjectId());
+    assertEquals(WsmObjectType.RESOURCE, changeDetails.changeSubjectType());
+    assertNotNull(changeDetails.changeDate());
   }
 
   @Test
   public void clone_requesterNoReadAccessOnSourceWorkspace_throws403() throws Exception {
+    ActivityLogChangeDetails changeDetails =
+        workspaceActivityLogService.getLastUpdatedDetails(workspaceId2).get();
+
     mockMvcUtils.cloneControlledBqDatasetAsync(
         userAccessUtils.secondUserAuthRequest(),
         /*sourceWorkspaceId=*/ workspaceId,
@@ -142,6 +156,8 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         /*destDatasetName=*/ null,
         HttpStatus.SC_FORBIDDEN,
         /*shouldUndo=*/ false);
+    assertEquals(
+        changeDetails, workspaceActivityLogService.getLastUpdatedDetails(workspaceId2).get());
   }
 
   @Test
@@ -156,6 +172,8 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         workspaceId2,
         WsmIamRole.READER,
         userAccessUtils.getSecondUserEmail());
+    ActivityLogChangeDetails changeDetails =
+        workspaceActivityLogService.getLastUpdatedDetails(workspaceId2).get();
 
     mockMvcUtils.cloneControlledBqDatasetAsync(
         userAccessUtils.secondUserAuthRequest(),
@@ -168,6 +186,8 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         HttpStatus.SC_FORBIDDEN,
         /*shouldUndo=*/ false);
 
+    assertEquals(
+        changeDetails, workspaceActivityLogService.getLastUpdatedDetails(workspaceId2).get());
     mockMvcUtils.removeRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
@@ -182,6 +202,9 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
 
   @Test
   void clone_duplicateDatasetName_jobThrows409() throws Exception {
+    ActivityLogChangeDetails changeDetails =
+        workspaceActivityLogService.getLastUpdatedDetails(workspaceId).get();
+
     ApiErrorReport errorReport =
         mockMvcUtils.cloneControlledBqDataset_jobError(
             userAccessUtils.defaultUserAuthRequest(),
@@ -192,6 +215,9 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
             /*destResourceName=*/ null,
             /*destDatasetName=*/ sourceControlledDataset.getAttributes().getDatasetId(),
             HttpStatus.SC_CONFLICT);
+
+    assertEquals(
+        changeDetails, workspaceActivityLogService.getLastUpdatedDetails(workspaceId).get());
     assertThat(
         errorReport.getMessage(), equalTo("A resource with matching attributes already exists"));
   }
@@ -525,14 +551,6 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         actualMetadata.getProperties());
 
     assertEquals(expectedDatasetName, actualDataset.getAttributes().getDatasetId());
-  }
-
-  /** Calls GCP directly to assert dataset location. */
-  private void assertBqDatasetLocation(String location, String projectId, String datasetId)
-      throws Exception {
-    Dataset dataset =
-        crlService.createWsmSaBigQueryCow().datasets().get(projectId, datasetId).execute();
-    assertEquals(location, dataset.getLocation());
   }
 
   private static void assertResourceMetadata(

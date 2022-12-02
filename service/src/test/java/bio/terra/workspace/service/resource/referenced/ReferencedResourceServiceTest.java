@@ -139,7 +139,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
             .isBefore(lastUpdateDetailsAfterResourceUpdate.get().changeDate()));
     assertEquals(
         new ActivityLogChangeDetails(
-            null,
+            lastUpdateDetailsAfterResourceUpdate.get().changeDate(),
             USER_REQUEST.getEmail(),
             USER_REQUEST.getSubjectId(),
             OperationType.UPDATE,
@@ -234,7 +234,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
             .isBefore(lastUpdateDetailsAfterResourceUpdate.get().changeDate()));
     assertEquals(
         new ActivityLogChangeDetails(
-            null,
+            lastUpdateDetailsAfterResourceUpdate.get().changeDate(),
             USER_REQUEST.getEmail(),
             USER_REQUEST.getSubjectId(),
             OperationType.UPDATE,
@@ -393,7 +393,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               .isBefore(lastUpdateDetailsAfterCreate.get().changeDate()));
       assertEquals(
           new ActivityLogChangeDetails(
-              null,
+              lastUpdateDetailsAfterCreate.get().changeDate(),
               USER_REQUEST.getEmail(),
               USER_REQUEST.getSubjectId(),
               OperationType.CREATE,
@@ -433,7 +433,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               .isBefore(lastUpdateDetailsAfterDelete.get().changeDate()));
       assertEquals(
           new ActivityLogChangeDetails(
-              null,
+              lastUpdateDetailsAfterDelete.get().changeDate(),
               USER_REQUEST.getEmail(),
               USER_REQUEST.getSubjectId(),
               OperationType.DELETE,
@@ -575,7 +575,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               .isBefore(lastUpdateDetailsAfterCreate.get().changeDate()));
       assertEquals(
           new ActivityLogChangeDetails(
-              null,
+              lastUpdateDetailsAfterCreate.get().changeDate(),
               USER_REQUEST.getEmail(),
               USER_REQUEST.getSubjectId(),
               OperationType.CREATE,
@@ -616,7 +616,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               .isBefore(lastUpdateDetailsAfterDelete.get().changeDate()));
       assertEquals(
           new ActivityLogChangeDetails(
-              null,
+              lastUpdateDetailsAfterDelete.get().changeDate(),
               USER_REQUEST.getEmail(),
               USER_REQUEST.getSubjectId(),
               OperationType.DELETE,
@@ -827,7 +827,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               .isBefore(lastUpdateDetailsAfterCreate.get().changeDate()));
       assertEquals(
           new ActivityLogChangeDetails(
-              null,
+              lastUpdateDetailsAfterCreate.get().changeDate(),
               USER_REQUEST.getEmail(),
               USER_REQUEST.getSubjectId(),
               OperationType.CREATE,
@@ -869,7 +869,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               .isBefore(lastUpdateDetailsAfterDelete.get().changeDate()));
       assertEquals(
           new ActivityLogChangeDetails(
-              null,
+              lastUpdateDetailsAfterDelete.get().changeDate(),
               USER_REQUEST.getEmail(),
               USER_REQUEST.getSubjectId(),
               OperationType.DELETE,
@@ -903,7 +903,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               .isBefore(lastUpdateDetailsAfterCreate.get().changeDate()));
       assertEquals(
           new ActivityLogChangeDetails(
-              null,
+              lastUpdateDetailsAfterCreate.get().changeDate(),
               USER_REQUEST.getEmail(),
               USER_REQUEST.getSubjectId(),
               OperationType.CREATE,
@@ -942,7 +942,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               .isBefore(lastUpdateDetailsAfterDelete.get().changeDate()));
       assertEquals(
           new ActivityLogChangeDetails(
-              null,
+              lastUpdateDetailsAfterDelete.get().changeDate(),
               USER_REQUEST.getEmail(),
               USER_REQUEST.getSubjectId(),
               OperationType.DELETE,
@@ -1007,7 +1007,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
     @Test
     void createReferencedBigQueryDatasetResource_missesProjectId_throwsException() {
       UUID resourceId = UUID.randomUUID();
-      String resourceName = "testdatarepo-" + resourceId.toString();
+      String resourceName = "testdatarepo-" + resourceId;
 
       assertThrows(
           MissingRequiredFieldException.class,
@@ -1173,6 +1173,15 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               .get()
               .changeDate()
               .isBefore(lastUpdateDetailsAfterCreate.get().changeDate()));
+      assertEquals(
+          new ActivityLogChangeDetails(
+              lastUpdateDetailsAfterCreate.get().changeDate(),
+              USER_REQUEST.getEmail(),
+              USER_REQUEST.getSubjectId(),
+              OperationType.CREATE,
+              referencedResource.getResourceId().toString(),
+              WsmObjectType.RESOURCE),
+          lastUpdateDetailsAfterCreate.get());
       ReferencedTerraWorkspaceResource actual =
           actualReferencedResourceGeneric.castByEnum(
               WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE);
@@ -1205,6 +1214,15 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               .get()
               .changeDate()
               .isBefore(lastUpdateDetailsAfterDelete.get().changeDate()));
+      assertEquals(
+          new ActivityLogChangeDetails(
+              lastUpdateDetailsAfterDelete.get().changeDate(),
+              USER_REQUEST.getEmail(),
+              USER_REQUEST.getSubjectId(),
+              OperationType.DELETE,
+              referencedResource.getResourceId().toString(),
+              WsmObjectType.RESOURCE),
+          lastUpdateDetailsAfterDelete.get());
     }
 
     @Test

@@ -103,15 +103,17 @@ public class FolderApiControllerTest extends BaseUnitTest {
     assertNotNull(folder.getId());
     assertNull(folder.getParentFolderId());
     assertEquals(USER_REQUEST.getEmail(), folder.getCreatedBy());
-    assertActivityLogChangeDetails(
-        workspaceId,
+    ActivityLogChangeDetails changeDetails =
+        workspaceActivityLogService.getLastUpdatedDetails(workspaceId).get();
+    assertEquals(
         new ActivityLogChangeDetails(
-            null,
+            changeDetails.changeDate(),
             USER_REQUEST.getEmail(),
             USER_REQUEST.getSubjectId(),
             OperationType.CREATE,
             folder.getId().toString(),
-            WsmObjectType.FOLDER));
+            WsmObjectType.FOLDER),
+        changeDetails);
   }
 
   @Test
@@ -775,13 +777,5 @@ public class FolderApiControllerTest extends BaseUnitTest {
         .append(folder1.getParentFolderId(), folder2.getParentFolderId())
         .append(folder1.getCreatedBy(), folder2.getCreatedBy())
         .isEquals();
-  }
-
-  private void assertActivityLogChangeDetails(
-      UUID destinationWorkspaceId, ActivityLogChangeDetails expectedDetails) {
-    var changeDetails =
-        workspaceActivityLogService.getLastUpdatedDetails(destinationWorkspaceId).get();
-    assertEquals(expectedDetails, changeDetails);
-    assertNotNull(changeDetails.changeDate());
   }
 }
