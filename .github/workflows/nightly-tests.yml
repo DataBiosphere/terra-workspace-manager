@@ -91,32 +91,6 @@ jobs:
           vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
           target: dev
 
-      # The ArgoCD sync triggers the synchronization of the wsmtest cluster. The ArgoCD CLI
-      # will wait for the initial sync to complete, but it won't necessarily wait for WSM's
-      # new version to actually come fully online--which could take minutes or hours in rare
-      # cases. We sleep for two minutes to try to allow WSM to come online.
-      # The sync is bracketed by /version probes so we have the pre and post sync versions
-      # in the log.
-      - name: Download ArgoCD CLI
-        run: |
-          curl -sSL -o ./argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
-          chmod +x ./argocd
-      - name: ArgoCD sync
-        run: |
-          version=$(curl https://workspace.dsde-dev.broadinstitute.org/version)
-          echo "$(date "+%Y-%m-%dT%H:%M:%S") pre-sync dev version: $version"
-          ./argocd --grpc-web --server ap-argocd.dsp-devops.broadinstitute.org:443 \
-            --auth-token '${{ secrets.WSMTEST_SYNC_ARGOCD_TOKEN }}' \
-            --header 'Proxy-Authorization: Bearer ${{ steps.auth.outputs.id_token }}' \
-            app sync workspacemanager-dev
-          sleep 120
-          version=$(curl https://workspace.dsde-dev.broadinstitute.org/version)
-          echo "$(date "+%Y-%m-%dT%H:%M:%S") post-sync dev version: $version"
-      - name: Remove ArgoCD CLI
-        if: always()
-        run: |
-          rm -f ./argocd
-
       - name: clean databases before nightly-only integration suite
         if: always()
         uses: ./.github/actions/clean-databases
@@ -145,19 +119,6 @@ jobs:
         with:
           test-server: workspace-dev.json
           test: suites/FullIntegration.json
-
-      - name: clean databases before perf suite
-        if: always()
-        uses: ./.github/actions/clean-databases
-
-      - name: Run the perf test suite
-        id: perf-test
-        if: always()
-        uses: ./.github/actions/integration-test
-        with:
-          test-server: workspace-dev.json
-          test: suites/BasicPerf.json
-
       - name: clean databases before resiliency suite
         if: always()
         uses: ./.github/actions/clean-databases
@@ -169,6 +130,23 @@ jobs:
         with:
           test-server: workspace-dev.json
           test: suites/BasicResiliency.json
+      - name: Write config
+        id: config
+        uses: ./.github/actions/write-config
+        with:
+          vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
+          target: perf
+      - name: clean databases before perf suite
+        if: always()
+        uses: ./.github/actions/clean-databases
+
+      - name: Run the perf test suite
+        id: perf-test
+        if: always()
+        uses: ./.github/actions/integration-test
+        with:
+          test-server: workspace-perf.json
+          test: suites/BasicPerf.json
 
       - name: Compose status message
         if: always()
