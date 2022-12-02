@@ -12,7 +12,7 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.UUID;
 
-/** Top-most flight for cloning a GCP workspace. Launches sub-flights for most of the work. */
+/** Top-most flight for cloning a workspace. Launches sub-flights for most of the work. */
 public class CloneWorkspaceFlight extends Flight {
 
   public CloneWorkspaceFlight(FlightMap inputParameters, Object applicationContext) {
@@ -21,7 +21,7 @@ public class CloneWorkspaceFlight extends Flight {
     // 0. Clone all folders in the workspace
     // 1. Build a list of resources to clone and attach the updated cloned folder id
     // 2. Create job IDs for future sub-flights and a couple other things
-    // 3. Launch a flight to create the GCP cloud context
+    // 3. Launch a flight to create a cloud context if necessary
     // 3a. Await the context flight
     // TODO: [PF-1972] 4. Merge Policy Attributes
     // 5. Launch a flight to clone all resources on the list

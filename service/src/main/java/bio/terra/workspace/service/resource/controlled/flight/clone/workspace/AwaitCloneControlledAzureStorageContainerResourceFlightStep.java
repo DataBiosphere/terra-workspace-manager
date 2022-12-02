@@ -30,7 +30,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Wait for the clone BigQuery dataset flight to complete and add the result to the appropriate map
+ * Wait for the clone storage container flight to complete and add the result to the appropriate map
  */
 public class AwaitCloneControlledAzureStorageContainerResourceFlightStep implements Step {
 

@@ -28,19 +28,18 @@ public class LaunchCreateAzureContextFlightStep implements Step {
     validateRequiredEntries(
         context.getInputParameters(),
         ControlledResourceKeys.SOURCE_WORKSPACE_ID,
-        JobMapKeys.AUTH_USER_INFO.getKeyName(),
-        JobMapKeys.REQUEST.getKeyName());
+        JobMapKeys.AUTH_USER_INFO.getKeyName());
     validateRequiredEntries(
         context.getWorkingMap(), ControlledResourceKeys.CREATE_CLOUD_CONTEXT_FLIGHT_ID);
 
-    var userRequest =
+    AuthenticatedUserRequest userRequest =
         context
             .getInputParameters()
             .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
-    var destinationWorkspace =
+    Workspace destinationWorkspace =
         context.getInputParameters().get(JobMapKeys.REQUEST.getKeyName(), Workspace.class);
 
-    var cloudContextJobId =
+    String cloudContextJobId =
         context
             .getWorkingMap()
             .get(ControlledResourceKeys.CREATE_CLOUD_CONTEXT_FLIGHT_ID, String.class);

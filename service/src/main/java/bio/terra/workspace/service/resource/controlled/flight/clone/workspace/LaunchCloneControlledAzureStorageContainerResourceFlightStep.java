@@ -1,7 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
-import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntries;
-
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
@@ -13,14 +11,16 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.stairway.exception.StairwayExecutionException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.CloneControlledAzureStorageContainerResourceFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
-import java.util.UUID;
+
 import javax.annotation.Nullable;
+import java.util.UUID;
+
+import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntries;
 
 public class LaunchCloneControlledAzureStorageContainerResourceFlightStep implements Step {
 
@@ -56,8 +56,7 @@ public class LaunchCloneControlledAzureStorageContainerResourceFlightStep implem
             .getInputParameters()
             .get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
 
-    // build input parameter map. Leave out resource name, description, and dataset name so that
-    // they will take values from the source dataset.
+    // build input parameter map.
     var subflightInputParameters = new FlightMap();
     subflightInputParameters.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
     subflightInputParameters.put(
@@ -74,7 +73,6 @@ public class LaunchCloneControlledAzureStorageContainerResourceFlightStep implem
                 String.format(
                     "clone-%s-%s",
                     destinationWorkspaceId, sourceResource.getStorageContainerName()));
-    // for the resourceHandler?
     subflightInputParameters.put(
         ControlledResourceKeys.DESTINATION_RESOURCE_ID, destinationResourceId);
     subflightInputParameters.put(ControlledResourceKeys.DESTINATION_FOLDER_ID, destinationFolderId);
