@@ -113,6 +113,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -892,7 +893,7 @@ public class MockMvcUtils {
       request.destinationDatasetName(destDatasetName);
     }
 
-    String serializedResponse =
+    MockHttpServletResponse response =
         mockMvc
             .perform(
                 addJsonContentType(
@@ -903,13 +904,17 @@ public class MockMvcUtils {
                         userRequest)))
             .andExpect(status().is(getExpectedCodesMatcher(expectedCodes)))
             .andReturn()
-            .getResponse()
-            .getContentAsString();
+            .getResponse();
+
     // If an exception was thrown, deserialization won't work, so don't attempt it.
-    return expectedCodes.get(0) < 300
-        ? objectMapper.readValue(
-            serializedResponse, ApiCloneControlledGcpBigQueryDatasetResult.class)
-        : null;
+    int actualCode = response.getStatus();
+    if (actualCode >= 300) {
+      return null;
+    }
+
+    String serializedResponse = response.getContentAsString();
+    return objectMapper.readValue(
+        serializedResponse, ApiCloneControlledGcpBigQueryDatasetResult.class);
   }
 
   private ApiErrorReport cloneControlledBqDataset_waitForJobError(
@@ -1169,7 +1174,7 @@ public class MockMvcUtils {
     if (destLocation != "") {
       request.location(destLocation);
     }
-    String serializedResponse =
+    MockHttpServletResponse response =
         mockMvc
             .perform(
                 addJsonContentType(
@@ -1180,12 +1185,16 @@ public class MockMvcUtils {
                         userRequest)))
             .andExpect(status().is(getExpectedCodesMatcher(expectedCodes)))
             .andReturn()
-            .getResponse()
-            .getContentAsString();
+            .getResponse();
+
     // If an exception was thrown, deserialization won't work, so don't attempt it.
-    return expectedCodes.get(0) >= 300
-        ? objectMapper.readValue(serializedResponse, ApiCloneControlledGcpGcsBucketResult.class)
-        : null;
+    int actualCode = response.getStatus();
+    if (actualCode >= 300) {
+      return null;
+    }
+
+    String serializedResponse = response.getContentAsString();
+    return objectMapper.readValue(serializedResponse, ApiCloneControlledGcpGcsBucketResult.class);
   }
 
   private ApiErrorReport cloneControlledGcsBucket_waitForJobError(
