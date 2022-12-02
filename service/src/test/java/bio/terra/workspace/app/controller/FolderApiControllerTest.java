@@ -488,8 +488,8 @@ public class FolderApiControllerTest extends BaseUnitTest {
     updateFolderPropertiesExpectCode(
         workspaceId, folder.getId(), Map.of("cake", "lava"), USER_REQUEST, HttpStatus.SC_FORBIDDEN);
     // No new log.
-    assertEquals(changeDetails,
-        workspaceActivityLogService.getLastUpdatedDetails(workspaceId).get());
+    assertEquals(
+        changeDetails, workspaceActivityLogService.getLastUpdatedDetails(workspaceId).get());
   }
 
   @Test
@@ -515,7 +515,8 @@ public class FolderApiControllerTest extends BaseUnitTest {
 
     ApiFolder gotFolder = getFolder(workspaceId, folder.getId());
     assertFalse(convertApiPropertyToMap(gotFolder.getProperties()).containsKey("foo"));
-    ActivityLogChangeDetails changeDetails = workspaceActivityLogService.getLastUpdatedDetails(workspaceId).get();
+    ActivityLogChangeDetails changeDetails =
+        workspaceActivityLogService.getLastUpdatedDetails(workspaceId).get();
     assertEquals(
         changeDetails,
         new ActivityLogChangeDetails(
@@ -530,13 +531,14 @@ public class FolderApiControllerTest extends BaseUnitTest {
   @Test
   public void deleteFolderProperties_folderNotFound_throws404() throws Exception {
     UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
-    ActivityLogChangeDetails changeDetails = workspaceActivityLogService.getLastUpdatedDetails(workspaceId).get();
+    ActivityLogChangeDetails changeDetails =
+        workspaceActivityLogService.getLastUpdatedDetails(workspaceId).get();
 
     deleteFolderPropertiesExpectCode(
         workspaceId, UUID.randomUUID(), List.of("foo"), USER_REQUEST, HttpStatus.SC_NOT_FOUND);
     // no new log
-    assertEquals(changeDetails,
-        workspaceActivityLogService.getLastUpdatedDetails(workspaceId).get());
+    assertEquals(
+        changeDetails, workspaceActivityLogService.getLastUpdatedDetails(workspaceId).get());
   }
 
   @Test
@@ -550,13 +552,14 @@ public class FolderApiControllerTest extends BaseUnitTest {
             eq(SamConstants.SamResource.WORKSPACE),
             anyString(),
             eq(SamConstants.SamWorkspaceAction.WRITE));
-    ActivityLogChangeDetails changeDetails = workspaceActivityLogService.getLastUpdatedDetails(workspaceId).get();
+    ActivityLogChangeDetails changeDetails =
+        workspaceActivityLogService.getLastUpdatedDetails(workspaceId).get();
 
     deleteFolderPropertiesExpectCode(
         workspaceId, folder.getId(), List.of("foo"), USER_REQUEST, HttpStatus.SC_FORBIDDEN);
     // no new log
-    assertEquals(changeDetails,
-        workspaceActivityLogService.getLastUpdatedDetails(workspaceId).get());
+    assertEquals(
+        changeDetails, workspaceActivityLogService.getLastUpdatedDetails(workspaceId).get());
   }
 
   private ApiFolder createFolder(UUID workspaceId) throws Exception {

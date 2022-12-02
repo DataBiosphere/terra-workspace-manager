@@ -53,6 +53,11 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
    * instances given a CLI specific name.
    */
   protected static final String SERVER_ID_METADATA_KEY = "terra-cli-server";
+  /**
+   * When notebook has a custom image, disable root access and requires user to log in as Jupyter.
+   * https://github.com/hashicorp/terraform-provider-google/issues/7900#issuecomment-1067097275.
+   */
+  protected static final String NOTEBOOK_DISABLE_ROOT_METADATA_KEY = "notebook-disable-root";
 
   /** Metadata keys that are reserved by terra. User cannot modify those. */
   public static final Set<String> RESERVED_METADATA_KEYS =

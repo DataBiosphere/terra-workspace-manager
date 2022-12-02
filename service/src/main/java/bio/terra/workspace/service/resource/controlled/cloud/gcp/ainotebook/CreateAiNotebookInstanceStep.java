@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 
+import static bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource.NOTEBOOK_DISABLE_ROOT_METADATA_KEY;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource.PROXY_MODE_METADATA_KEY;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource.SERVER_ID_METADATA_KEY;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource.WORKSPACE_ID_METADATA_KEY;
@@ -191,11 +192,6 @@ public class CreateAiNotebookInstanceStep implements Step {
         .setDataDiskType(creationParameters.getDataDiskType())
         .setDataDiskSizeGb(creationParameters.getDataDiskSizeGb());
 
-    Map<String, String> metadata = new HashMap<>();
-    Optional.ofNullable(creationParameters.getMetadata()).ifPresent(metadata::putAll);
-
-    addDefaultMetadata(metadata, workspaceUserFacingId, cliServer);
-    instance.setMetadata(metadata);
     instance.setServiceAccount(serviceAccountEmail);
     instance.setServiceAccountScopes(SERVICE_ACCOUNT_SCOPES);
 
@@ -215,6 +211,7 @@ public class CreateAiNotebookInstanceStep implements Step {
               .setImageFamily(vmImageParameters.getImageFamily())
               .setImageName(vmImageParameters.getImageName()));
     }
+
     ApiGcpAiNotebookInstanceContainerImage containerImageParameters =
         creationParameters.getContainerImage();
     if (containerImageParameters != null) {
@@ -223,6 +220,17 @@ public class CreateAiNotebookInstanceStep implements Step {
               .setRepository(containerImageParameters.getRepository())
               .setTag(containerImageParameters.getTag()));
     }
+    // Set metadata
+    Map<String, String> metadata = new HashMap<>();
+    if (containerImageParameters != null) {
+      // User needs to run as Jupyter instead of root to have the post-startup.sh run successfully.
+      // This is not a TERRA reserved metadata key, so it is overridable. If the creationParameter
+      // says otherwise, we will set the value to what the user specified.
+      metadata.put(NOTEBOOK_DISABLE_ROOT_METADATA_KEY, "true");
+    }
+    Optional.ofNullable(creationParameters.getMetadata()).ifPresent(metadata::putAll);
+    addDefaultMetadata(metadata, workspaceUserFacingId, cliServer);
+    instance.setMetadata(metadata);
     return instance;
   }
 
