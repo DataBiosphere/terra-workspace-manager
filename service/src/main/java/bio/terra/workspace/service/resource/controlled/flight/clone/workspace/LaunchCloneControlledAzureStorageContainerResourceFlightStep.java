@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
+import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntries;
+
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
@@ -16,11 +18,8 @@ import bio.terra.workspace.service.resource.controlled.flight.clone.azure.contai
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
-
-import javax.annotation.Nullable;
 import java.util.UUID;
-
-import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntries;
+import javax.annotation.Nullable;
 
 public class LaunchCloneControlledAzureStorageContainerResourceFlightStep implements Step {
 
@@ -70,9 +69,8 @@ public class LaunchCloneControlledAzureStorageContainerResourceFlightStep implem
             "Clone Azure Storage Container %s", sourceResource.getResourceId().toString()));
     subflightInputParameters.put(
         ControlledResourceKeys.DESTINATION_CONTAINER_NAME,
-                String.format(
-                    "clone-%s-%s",
-                    destinationWorkspaceId, sourceResource.getStorageContainerName()));
+        String.format(
+            "clone-%s-%s", destinationWorkspaceId, sourceResource.getStorageContainerName()));
     subflightInputParameters.put(
         ControlledResourceKeys.DESTINATION_RESOURCE_ID, destinationResourceId);
     subflightInputParameters.put(ControlledResourceKeys.DESTINATION_FOLDER_ID, destinationFolderId);
