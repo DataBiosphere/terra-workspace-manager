@@ -13,6 +13,7 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.stairway.exception.StairwayExecutionException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.CloneControlledAzureStorageContainerResourceFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
@@ -23,17 +24,17 @@ import javax.annotation.Nullable;
 
 public class LaunchCloneControlledAzureStorageContainerResourceFlightStep implements Step {
 
-  private final ControlledAzureStorageContainerResource resource;
+  private final ControlledAzureStorageContainerResource sourceResource;
   private final String subflightId;
   private final UUID destinationResourceId;
   private final UUID destinationFolderId;
 
   public LaunchCloneControlledAzureStorageContainerResourceFlightStep(
-      ControlledAzureStorageContainerResource resource,
+      ControlledAzureStorageContainerResource sourceResource,
       String subflightId,
       UUID destinationResourceId,
       @Nullable UUID destinationFolderId) {
-    this.resource = resource;
+    this.sourceResource = sourceResource;
     this.subflightId = subflightId;
     this.destinationResourceId = destinationResourceId;
     this.destinationFolderId = destinationFolderId;
@@ -62,15 +63,17 @@ public class LaunchCloneControlledAzureStorageContainerResourceFlightStep implem
     subflightInputParameters.put(
         ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId);
     subflightInputParameters.put(
-        ControlledResourceKeys.CLONING_INSTRUCTIONS, resource.getCloningInstructions());
-    subflightInputParameters.put(ResourceKeys.RESOURCE, resource);
+        ControlledResourceKeys.CLONING_INSTRUCTIONS, sourceResource.getCloningInstructions());
+    subflightInputParameters.put(ResourceKeys.RESOURCE, sourceResource);
     subflightInputParameters.put(
         JobMapKeys.DESCRIPTION.getKeyName(),
-        String.format("Clone Azure Storage Container %s", resource.getResourceId().toString()));
+        String.format(
+            "Clone Azure Storage Container %s", sourceResource.getResourceId().toString()));
     subflightInputParameters.put(
         ControlledResourceKeys.DESTINATION_CONTAINER_NAME,
-        UUID.randomUUID()
-            .toString()); // todo: what should this be named? worth implementing generateCloudName
+                String.format(
+                    "clone-%s-%s",
+                    destinationWorkspaceId, sourceResource.getStorageContainerName()));
     // for the resourceHandler?
     subflightInputParameters.put(
         ControlledResourceKeys.DESTINATION_RESOURCE_ID, destinationResourceId);

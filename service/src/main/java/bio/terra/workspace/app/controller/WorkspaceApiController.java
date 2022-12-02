@@ -600,7 +600,6 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   @Override
   public ResponseEntity<ApiCloneWorkspaceResult> cloneWorkspace(
       UUID workspaceUuid, @Valid ApiCloneWorkspaceRequest body) {
-    // todo: will this work with azure or do we need to use the new Sam endpoint
     final AuthenticatedUserRequest petRequest = getCloningCredentials(workspaceUuid);
 
     // Clone is creating the destination workspace so unlike other clone operations there's no
