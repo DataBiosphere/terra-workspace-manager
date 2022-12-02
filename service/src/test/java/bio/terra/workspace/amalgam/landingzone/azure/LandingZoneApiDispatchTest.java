@@ -1,5 +1,7 @@
 package bio.terra.workspace.amalgam.landingzone.azure;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -16,6 +18,7 @@ import bio.terra.landingzone.job.LandingZoneJobService;
 import bio.terra.landingzone.job.model.JobReport;
 import bio.terra.landingzone.library.landingzones.deployment.ResourcePurpose;
 import bio.terra.landingzone.library.landingzones.deployment.SubnetResourcePurpose;
+import bio.terra.landingzone.library.landingzones.management.quotas.ResourceQuota;
 import bio.terra.landingzone.service.landingzone.azure.LandingZoneService;
 import bio.terra.landingzone.service.landingzone.azure.model.LandingZone;
 import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneRequest;
@@ -29,6 +32,7 @@ import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesList;
 import bio.terra.workspace.generated.model.ApiCreateAzureLandingZoneRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateLandingZoneResult;
 import bio.terra.workspace.generated.model.ApiJobReport;
+import bio.terra.workspace.generated.model.ApiResourceQuota;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
@@ -36,7 +40,9 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -386,5 +392,27 @@ public class LandingZoneApiDispatchTest extends BaseAzureUnitTest {
     assertThrows(
         IllegalStateException.class,
         () -> landingZoneApiDispatch.getLandingZoneId(BEARER_TOKEN, WORKSPACE_ID));
+  }
+
+  @Test
+  public void getResourceQuota_returnsValidQuotaInformation() {
+
+    String azureResourceId =
+        "/subscription/00000000-0000-0000-0000-000000000000/resourceGroups/mrg/providers/Microsoft.Batch/batchAccounts/myaccount";
+    Map<String, Object> quotaValues = new HashMap<>();
+    quotaValues.put("key1", 1);
+    quotaValues.put("key2", false);
+    quotaValues.put("key3", "value");
+
+    String resourceType = "Microsoft.Batch/batchAccounts";
+    when(landingZoneService.getResourceQuota(BEARER_TOKEN, LANDING_ZONE_ID, azureResourceId))
+        .thenReturn(new ResourceQuota(azureResourceId, resourceType, quotaValues));
+
+    ApiResourceQuota apiResourceQuota =
+        landingZoneApiDispatch.getResourceQuota(BEARER_TOKEN, LANDING_ZONE_ID, azureResourceId);
+
+    assertThat(apiResourceQuota.getResourceType(), equalTo(resourceType));
+    assertThat(apiResourceQuota.getAzureResourceId(), equalTo(azureResourceId));
+    assertThat(apiResourceQuota.getQuotaValues(), equalTo(quotaValues));
   }
 }
