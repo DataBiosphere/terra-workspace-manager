@@ -65,7 +65,6 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
     assertEquals(111L, instance.getBootDiskSizeGb());
     assertEquals("data-disk-type", instance.getDataDiskType());
     assertEquals(222L, instance.getDataDiskSizeGb());
-    assertThat(instance.getMetadata(), Matchers.aMapWithSize(4));
     assertThat(instance.getMetadata(), Matchers.aMapWithSize(5));
     assertThat(instance.getMetadata(), Matchers.hasEntry("metadata-key", "metadata-value"));
     assertThat(instance.getMetadata(), Matchers.hasEntry(NOTEBOOK_DISABLE_ROOT_KEY, "true"));
