@@ -168,7 +168,9 @@ public class VerifyAzureStorageContainerCanBeCreatedStep implements Step {
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL,
           new LandingZoneNotFoundException(
-              "Landing zone associated with the billing profile not found."));
+              String.format(
+                  "Landing zone associated with the billing profile not found: %s", illegalStateException.getMessage()
+              )));
     }
   }
 
