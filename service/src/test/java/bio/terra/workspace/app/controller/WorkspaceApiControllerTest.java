@@ -6,7 +6,6 @@ import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.VERSION_PROP
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.WORKSPACE_NAME;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.getUserFacingId;
 import static bio.terra.workspace.common.utils.MockMvcUtils.UPDATE_WORKSPACES_V1_POLICIES_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.UPDATE_WORKSPACES_V1_PROPERTIES_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_PATH;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
@@ -23,7 +22,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.workspace.common.BaseUnitTestMockDataRepoService;
@@ -37,9 +35,7 @@ import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotAttributes;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
 import bio.terra.workspace.generated.model.ApiErrorReport;
-import bio.terra.workspace.generated.model.ApiProperties;
 import bio.terra.workspace.generated.model.ApiProperty;
-import bio.terra.workspace.generated.model.ApiPropertyKeys;
 import bio.terra.workspace.generated.model.ApiReferenceResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiResourceCloneDetails;
 import bio.terra.workspace.generated.model.ApiTpsComponent;
@@ -239,7 +235,8 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
     UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
 
     // Delete terra-type, userkey properties
-    deleteWorkspaceProperties(workspaceId, List.of(Properties.TYPE, "userkey"));
+    mockMvcUtils.deleteWorkspaceProperties(
+        USER_REQUEST, workspaceId, List.of(Properties.TYPE, "userkey"));
 
     // Assert remaining 2 properties
     ApiWorkspaceDescription gotWorkspace = mockMvcUtils.getWorkspace(USER_REQUEST, workspaceId);
@@ -257,7 +254,8 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
     // Change userkey value to uservalue2. Add new property foo=bar.
     ApiProperty newUserProperty = new ApiProperty().key("userkey").value("uservalue2");
     ApiProperty fooProperty = new ApiProperty().key("foo").value("bar");
-    updateWorkspaceProperties(workspaceId, List.of(newUserProperty, fooProperty));
+    mockMvcUtils.updateWorkspaceProperties(
+        USER_REQUEST, workspaceId, List.of(newUserProperty, fooProperty));
 
     // Assert 5 properties.
     ApiWorkspaceDescription gotWorkspace = mockMvcUtils.getWorkspace(USER_REQUEST, workspaceId);
@@ -474,38 +472,6 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
         ApiWorkspaceStageModel.RAWLS_WORKSPACE,
         policyInputs,
         expectedCode);
-  }
-
-  private void updateWorkspaceProperties(UUID workspaceId, List<ApiProperty> properties)
-      throws Exception {
-    ApiProperties apiProperties = new ApiProperties();
-    apiProperties.addAll(properties);
-    mockMvc
-        .perform(
-            addAuth(
-                post(String.format(UPDATE_WORKSPACES_V1_PROPERTIES_PATH_FORMAT, workspaceId))
-                    .contentType(MediaType.APPLICATION_JSON_VALUE)
-                    .accept(MediaType.APPLICATION_JSON)
-                    .characterEncoding("UTF-8")
-                    .content(objectMapper.writeValueAsString(apiProperties)),
-                USER_REQUEST))
-        .andExpect(status().is(HttpStatus.SC_NO_CONTENT));
-  }
-
-  private void deleteWorkspaceProperties(UUID workspaceId, List<String> propertyKeys)
-      throws Exception {
-    ApiPropertyKeys apiPropertyKeys = new ApiPropertyKeys();
-    apiPropertyKeys.addAll(propertyKeys);
-    mockMvc
-        .perform(
-            addAuth(
-                patch(String.format(UPDATE_WORKSPACES_V1_PROPERTIES_PATH_FORMAT, workspaceId))
-                    .contentType(MediaType.APPLICATION_JSON_VALUE)
-                    .accept(MediaType.APPLICATION_JSON)
-                    .characterEncoding("UTF-8")
-                    .content(objectMapper.writeValueAsString(apiPropertyKeys)),
-                USER_REQUEST))
-        .andExpect(status().is(HttpStatus.SC_NO_CONTENT));
   }
 
   /**

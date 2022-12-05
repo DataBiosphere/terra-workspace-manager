@@ -2,7 +2,6 @@ package bio.terra.workspace.service.resource.controlled;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.AI_NOTEBOOK_PREV_PARAMETERS;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.AI_NOTEBOOK_UPDATE_PARAMETERS;
-import static bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant.DEFAULT_REGION;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -10,14 +9,12 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.cloudres.google.bigquery.BigQueryCow;
 import bio.terra.cloudres.google.iam.IamCow;
 import bio.terra.cloudres.google.iam.ServiceAccountName;
 import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
 import bio.terra.cloudres.google.notebooks.InstanceName;
-import bio.terra.cloudres.google.storage.BucketCow;
 import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.stairway.StairwayComponent;
@@ -27,7 +24,6 @@ import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.configuration.external.CliConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
-import bio.terra.workspace.app.controller.shared.PropertiesUtils;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.GcpCloudUtils;
 import bio.terra.workspace.common.StairwayTestUtils;
@@ -37,19 +33,12 @@ import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
-import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookUpdateParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
 import bio.terra.workspace.generated.model.ApiJobControl;
-import bio.terra.workspace.generated.model.ApiResourceLineage;
-import bio.terra.workspace.generated.model.ApiResourceLineageEntry;
-import bio.terra.workspace.generated.model.ApiResourceMetadata;
-import bio.terra.workspace.generated.model.ApiResourceType;
-import bio.terra.workspace.generated.model.ApiStewardshipType;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -80,8 +69,6 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.GcsBu
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.RetrieveGcsBucketCloudAttributesStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.UpdateGcsBucketStep;
 import bio.terra.workspace.service.resource.controlled.exception.ReservedMetadataKeyException;
-import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.SetReferencedDestinationGcsBucketInWorkingMapStep;
-import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.SetReferencedDestinationGcsBucketResponseStep;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceMetadataStep;
@@ -91,8 +78,6 @@ import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
-import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.ReferencedGcsBucketResource;
-import bio.terra.workspace.service.resource.referenced.flight.create.CreateReferenceMetadataStep;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
@@ -102,7 +87,6 @@ import com.google.api.services.iam.v1.model.TestIamPermissionsRequest;
 import com.google.api.services.iam.v1.model.TestIamPermissionsResponse;
 import com.google.api.services.notebooks.v1.model.Instance;
 import com.google.cloud.storage.BucketInfo;
-import com.google.cloud.storage.BucketInfo.LifecycleRule;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -903,8 +887,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     String newName = "NEW_createGetUpdateDeleteBqDataset";
     String newDescription = "new resource description";
-    Integer newDefaultTableLifetime = 3600;
-    Integer newDefaultPartitionLifetime = 3601;
+    Long newDefaultTableLifetime = 3600L;
+    Long newDefaultPartitionLifetime = 3601L;
     ApiGcpBigQueryDatasetUpdateParameters updateParameters =
         new ApiGcpBigQueryDatasetUpdateParameters()
             .defaultTableLifetime(newDefaultTableLifetime)
@@ -944,8 +928,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   void createBqDatasetDo() throws Exception {
     String datasetId = ControlledResourceFixtures.uniqueDatasetId();
     String location = "us-central1";
-    Integer defaultTableLifetimeSec = 5900;
-    Integer defaultPartitionLifetimeSec = 5901;
+    Long defaultTableLifetimeSec = 5900L;
+    Long defaultPartitionLifetimeSec = 5901L;
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
         new ApiGcpBigQueryDatasetCreationParameters()
             .datasetId(datasetId)
@@ -1149,8 +1133,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     // update the dataset
     String newName = "NEW_updateBqDatasetDo";
     String newDescription = "new resource description";
-    Integer newDefaultTableLifetime = 3600;
-    Integer newDefaultPartitionLifetime = 3601;
+    Long newDefaultTableLifetime = 3600L;
+    Long newDefaultPartitionLifetime = 3601L;
     ApiGcpBigQueryDatasetUpdateParameters updateParameters =
         new ApiGcpBigQueryDatasetUpdateParameters()
             .defaultTableLifetime(newDefaultTableLifetime)
@@ -1180,8 +1164,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     // create the dataset
     String datasetId = ControlledResourceFixtures.uniqueDatasetId();
     String location = "us-central1";
-    Integer initialDefaultTableLifetime = 4800;
-    Integer initialDefaultPartitionLifetime = 4801;
+    Long initialDefaultTableLifetime = 4800L;
+    Long initialDefaultPartitionLifetime = 4801L;
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
         new ApiGcpBigQueryDatasetCreationParameters()
             .datasetId(datasetId)
@@ -1215,8 +1199,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     // update the dataset
     ApiGcpBigQueryDatasetUpdateParameters updateParameters =
         new ApiGcpBigQueryDatasetUpdateParameters()
-            .defaultTableLifetime(3600)
-            .defaultPartitionLifetime(3601);
+            .defaultTableLifetime(3600L)
+            .defaultPartitionLifetime(3601L);
 
     // Service methods which wait for a flight to complete will throw an
     // InvalidResultStateException when that flight fails without a cause, which occurs when a
@@ -1250,8 +1234,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     // create the dataset, with expiration times initially defined
     String datasetId = ControlledResourceFixtures.uniqueDatasetId();
     String location = "us-central1";
-    Integer initialDefaultTableLifetime = 4800;
-    Integer initialDefaultPartitionLifetime = 4801;
+    Long initialDefaultTableLifetime = 4800L;
+    Long initialDefaultPartitionLifetime = 4801L;
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
         new ApiGcpBigQueryDatasetCreationParameters()
             .datasetId(datasetId)
@@ -1279,8 +1263,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     // make an update request to set the expiration times to undefined values
     ApiGcpBigQueryDatasetUpdateParameters updateParameters =
         new ApiGcpBigQueryDatasetUpdateParameters()
-            .defaultTableLifetime(0)
-            .defaultPartitionLifetime(0);
+            .defaultTableLifetime(0L)
+            .defaultPartitionLifetime(0L);
     controlledResourceService.updateBqDataset(resource, updateParameters, null, null);
 
     // check the expiration times stored on the cloud are now undefined
@@ -1288,7 +1272,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         projectId, createdDataset.getDatasetName(), location, null, null);
 
     // update just one expiration time back to a defined value
-    Integer newDefaultTableLifetime = 3600;
+    Long newDefaultTableLifetime = 3600L;
     updateParameters =
         new ApiGcpBigQueryDatasetUpdateParameters().defaultTableLifetime(newDefaultTableLifetime);
     controlledResourceService.updateBqDataset(resource, updateParameters, null, null);
@@ -1298,7 +1282,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         projectId, createdDataset.getDatasetName(), location, newDefaultTableLifetime, null);
 
     // update the other expiration time back to a defined value
-    Integer newDefaultPartitionLifetime = 3601;
+    Long newDefaultPartitionLifetime = 3601L;
     updateParameters =
         new ApiGcpBigQueryDatasetUpdateParameters()
             .defaultPartitionLifetime(newDefaultPartitionLifetime);
@@ -1335,8 +1319,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     // make an update request to set the table expiration time to an invalid value (<3600)
     final ApiGcpBigQueryDatasetUpdateParameters updateParameters =
         new ApiGcpBigQueryDatasetUpdateParameters()
-            .defaultTableLifetime(3000)
-            .defaultPartitionLifetime(3601);
+            .defaultTableLifetime(3000L)
+            .defaultPartitionLifetime(3601L);
     assertThrows(
         BadRequestException.class,
         () -> controlledResourceService.updateBqDataset(resource, updateParameters, null, null));
@@ -1349,8 +1333,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     // make another update request to set the partition expiration time to an invalid value (<0)
     final ApiGcpBigQueryDatasetUpdateParameters updateParameters2 =
         new ApiGcpBigQueryDatasetUpdateParameters()
-            .defaultTableLifetime(3600)
-            .defaultPartitionLifetime(-2);
+            .defaultTableLifetime(3600L)
+            .defaultPartitionLifetime(-2L);
     assertThrows(
         BadRequestException.class,
         () -> controlledResourceService.updateBqDataset(resource, updateParameters2, null, null));
@@ -1359,36 +1343,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     // failed
     validateBigQueryDatasetCloudMetadata(
         projectId, createdDataset.getDatasetName(), location, null, null);
-  }
-
-  @Test
-  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  void createGcsBucketDo() throws Exception {
-    ControlledGcsBucketResource resource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceId).build();
-
-    // Test idempotency of bucket-specific steps by retrying them once.
-    Map<String, StepStatus> retrySteps = new HashMap<>();
-    retrySteps.put(CreateGcsBucketStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(GcsBucketCloudSyncStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    jobService.setFlightDebugInfoForTest(
-        FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
-    ControlledGcsBucketResource createdBucket =
-        controlledResourceService
-            .createControlledResourceSync(
-                resource,
-                null,
-                user.getAuthenticatedRequest(),
-                ControlledResourceFixtures.getGoogleBucketCreationParameters())
-            .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
-    assertEquals(resource, createdBucket);
-
-    StorageCow storageCow = crlService.createStorageCow(projectId);
-    BucketInfo cloudBucket = storageCow.get(resource.getBucketName()).getBucketInfo();
-    assertEquals(DEFAULT_REGION, cloudBucket.getLocation().toLowerCase());
-    assertEquals(
-        resource,
-        controlledResourceService.getControlledResource(workspaceId, resource.getResourceId()));
   }
 
   @Test
@@ -1442,107 +1396,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         ResourceNotFoundException.class,
         () ->
             controlledResourceService.getControlledResource(workspaceId, resource.getResourceId()));
-  }
-
-  @Test
-  void cloneGcsBucket_copyResource_do() throws Exception {
-    // Create COPY_DEFINITION bucket resource
-    ControlledGcsBucketResource sourceResource = createGcsBucket();
-    String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
-    ApiClonedControlledGcpGcsBucket clonedResource =
-        cloneGcsBucket(
-            sourceResource.getResourceId(), ApiCloningInstructionsEnum.RESOURCE, destResourceName);
-
-    // Assert resource returned in clone flight response
-    assertClonedGcsBucket(
-        clonedResource.getBucket().getGcpBucket(),
-        ApiStewardshipType.CONTROLLED,
-        DEST_BUCKET_NAME,
-        ApiCloningInstructionsEnum.DEFINITION,
-        destResourceName,
-        sourceResource.getResourceId());
-
-    // Assert resource returned by controlledResourceService.getControlledResource()
-    final UUID destResourceId = clonedResource.getBucket().getResourceId();
-    final ControlledGcsBucketResource gotBucket =
-        controlledResourceService
-            .getControlledResource(workspaceId, destResourceId)
-            .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
-    assertClonedGcsBucket(
-        gotBucket.toApiResource(),
-        ApiStewardshipType.CONTROLLED,
-        DEST_BUCKET_NAME,
-        ApiCloningInstructionsEnum.DEFINITION,
-        destResourceName,
-        sourceResource.getResourceId());
-
-    // Assert creation parameters on cloud (not stored by WSM).
-    assertGcsBucketCreationParameters();
-  }
-
-  @Test
-  void cloneGcsBucket_copyReference_do() throws Exception {
-    // Create COPY_DEFINITION bucket resource
-    ControlledGcsBucketResource sourceResource = createGcsBucket();
-    String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
-    ApiClonedControlledGcpGcsBucket clonedResource =
-        cloneGcsBucket(
-            sourceResource.getResourceId(), ApiCloningInstructionsEnum.REFERENCE, destResourceName);
-
-    // Assert resource returned in clone flight response
-    assertClonedGcsBucket(
-        clonedResource.getBucket().getGcpBucket(),
-        ApiStewardshipType.REFERENCED,
-        sourceResource.getBucketName(),
-        // COPY_DEFINITION doesn't make sense for referenced resources. COPY_DEFINITION was
-        // converted to COPY_REFERENCE.
-        ApiCloningInstructionsEnum.REFERENCE,
-        destResourceName,
-        sourceResource.getResourceId());
-
-    // Assert resource returned by referencedResourceService.getReferenceResource()
-    final UUID destResourceId = clonedResource.getBucket().getResourceId();
-    final ReferencedGcsBucketResource gotBucket =
-        referencedResourceService
-            .getReferenceResource(workspaceId, destResourceId)
-            .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_BUCKET);
-    assertClonedGcsBucket(
-        gotBucket.toApiResource(),
-        ApiStewardshipType.REFERENCED,
-        sourceResource.getBucketName(),
-        ApiCloningInstructionsEnum.REFERENCE,
-        destResourceName,
-        sourceResource.getResourceId());
-  }
-
-  @Test
-  void cloneGcsBucket_copyResource_undo() throws Exception {
-    ControlledGcsBucketResource sourceResource = createGcsBucket();
-    UUID destResourceId = UUID.randomUUID();
-    cloneGcsBucket_undo(
-        sourceResource.getResourceId(), destResourceId, ApiCloningInstructionsEnum.RESOURCE);
-
-    // Assert resource doesn't exist
-    ResourceNotFoundException ex =
-        assertThrows(
-            ResourceNotFoundException.class,
-            () -> controlledResourceService.getControlledResource(workspaceId, destResourceId));
-    assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
-  }
-
-  @Test
-  void cloneGcsBucket_copyReference_undo() throws Exception {
-    ControlledGcsBucketResource sourceBucket = createGcsBucket();
-    UUID destResourceId = UUID.randomUUID();
-    cloneGcsBucket_undo(
-        sourceBucket.getResourceId(), destResourceId, ApiCloningInstructionsEnum.REFERENCE);
-
-    // Assert resource doesn't exist
-    ResourceNotFoundException ex =
-        assertThrows(
-            ResourceNotFoundException.class,
-            () -> referencedResourceService.getReferenceResource(workspaceId, destResourceId));
-    assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
   }
 
   @Test
@@ -1791,8 +1644,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
       String projectId,
       String datasetId,
       String location,
-      Integer defaultTableExpirationSec,
-      Integer defaultPartitionExpirationSec)
+      Long defaultTableExpirationSec,
+      Long defaultPartitionExpirationSec)
       throws IOException {
     BigQueryCow bqCow = crlService.createWsmSaBigQueryCow();
     Dataset cloudDataset = bqCow.datasets().get(projectId, datasetId).execute();
@@ -1811,146 +1664,5 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
       assertEquals(
           defaultPartitionExpirationSec * 1000, cloudDataset.getDefaultPartitionExpirationMs());
     }
-  }
-
-  private ControlledGcsBucketResource createGcsBucket() {
-    final ControlledGcsBucketResource resourceToCreate =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceId).build();
-    final ControlledGcsBucketResource createdResource =
-        controlledResourceService
-            .createControlledResourceSync(
-                resourceToCreate,
-                null,
-                user.getAuthenticatedRequest(),
-                ControlledResourceFixtures.getGoogleBucketCreationParameters())
-            .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
-    assertEquals(resourceToCreate, createdResource);
-    return createdResource;
-  }
-
-  private ApiClonedControlledGcpGcsBucket cloneGcsBucket(
-      UUID sourceResourceId,
-      ApiCloningInstructionsEnum cloningInstructions,
-      String destResourceName)
-      throws Exception {
-    // Test idempotency of steps by retrying them once.
-    Map<String, StepStatus> retrySteps = new HashMap<>();
-    retrySteps.put(
-        SetReferencedDestinationGcsBucketInWorkingMapStep.class.getName(),
-        StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(
-        CreateReferenceMetadataStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(
-        SetReferencedDestinationGcsBucketResponseStep.class.getName(),
-        StepStatus.STEP_RESULT_FAILURE_RETRY);
-    jobService.setFlightDebugInfoForTest(
-        FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
-
-    final ApiJobControl apiJobControl = new ApiJobControl().id(UUID.randomUUID().toString());
-    final String jobId =
-        controlledResourceService.cloneGcsBucket(
-            workspaceId,
-            sourceResourceId,
-            workspaceId, // copy back into same workspace
-            UUID.randomUUID(),
-            apiJobControl,
-            user.getAuthenticatedRequest(),
-            destResourceName,
-            DEST_BUCKET_DESC,
-            DEST_BUCKET_NAME,
-            DEST_BUCKET_LOCATION,
-            cloningInstructions);
-
-    jobService.waitForJob(jobId);
-    final FlightState flightState = stairwayComponent.get().getFlightState(jobId);
-    assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
-    assertTrue(flightState.getException().isEmpty());
-    assertTrue(flightState.getResultMap().isPresent());
-    ApiClonedControlledGcpGcsBucket response =
-        flightState
-            .getResultMap()
-            .get()
-            .get(JobMapKeys.RESPONSE.getKeyName(), ApiClonedControlledGcpGcsBucket.class);
-    assertNotNull(response);
-    return response;
-  }
-
-  private void cloneGcsBucket_undo(
-      UUID sourceResourceId, UUID destResourceId, ApiCloningInstructionsEnum cloningInstructions)
-      throws Exception {
-    jobService.setFlightDebugInfoForTest(
-        FlightDebugInfo.newBuilder().lastStepFailure(true).build());
-
-    final ApiJobControl apiJobControl = new ApiJobControl().id(UUID.randomUUID().toString());
-    final String jobId =
-        controlledResourceService.cloneGcsBucket(
-            workspaceId,
-            sourceResourceId,
-            workspaceId, // copy back into same workspace
-            destResourceId,
-            apiJobControl,
-            user.getAuthenticatedRequest(),
-            TestUtils.appendRandomNumber("dest-resource-name"),
-            DEST_BUCKET_DESC,
-            DEST_BUCKET_NAME,
-            DEST_BUCKET_LOCATION,
-            cloningInstructions);
-
-    jobService.waitForJob(jobId);
-    final FlightState flightState = stairwayComponent.get().getFlightState(jobId);
-    assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
-  }
-
-  private void assertClonedGcsBucket(
-      ApiGcpGcsBucketResource actualBucket,
-      ApiStewardshipType expectedStewardshipType,
-      String expectedBucketName,
-      ApiCloningInstructionsEnum expectedCloningInstructions,
-      String expectedDestResourceName,
-      UUID sourceResourceId) {
-    ApiResourceMetadata actualMetadata = actualBucket.getMetadata();
-    assertEquals(workspaceId, actualMetadata.getWorkspaceId());
-    assertEquals(expectedDestResourceName, actualMetadata.getName());
-    assertEquals(DEST_BUCKET_DESC, actualMetadata.getDescription());
-    assertEquals(ApiResourceType.GCS_BUCKET, actualMetadata.getResourceType());
-    assertEquals(expectedStewardshipType, actualMetadata.getStewardshipType());
-    assertEquals(ApiCloudPlatform.GCP, actualMetadata.getCloudPlatform());
-    assertEquals(expectedCloningInstructions, actualMetadata.getCloningInstructions());
-
-    ApiResourceLineage expectedResourceLineage = new ApiResourceLineage();
-    expectedResourceLineage.add(
-        new ApiResourceLineageEntry()
-            .sourceWorkspaceId(workspaceId)
-            .sourceResourceId(sourceResourceId));
-    assertEquals(expectedResourceLineage, actualMetadata.getResourceLineage());
-
-    assertEquals(
-        PropertiesUtils.convertMapToApiProperties(
-            ControlledResourceFixtures.DEFAULT_RESOURCE_PROPERTIES),
-        actualMetadata.getProperties());
-
-    String actualBucketName = actualBucket.getAttributes().getBucketName();
-    assertEquals(expectedBucketName, actualBucketName);
-  }
-
-  /** Assert creation parameters on cloud (not stored by WSM). */
-  private void assertGcsBucketCreationParameters() {
-    final StorageCow storageCow =
-        crlService.createStorageCow(gcpCloudContextService.getRequiredGcpProject(workspaceId));
-    final BucketCow bucketCow = storageCow.get(DEST_BUCKET_NAME);
-    final BucketInfo bucketInfo = bucketCow.getBucketInfo();
-    assertEquals(DEST_BUCKET_LOCATION, bucketInfo.getLocation());
-    assertEquals(
-        GcsApiConversions.toGcsApi(
-            ControlledResourceFixtures.getGoogleBucketCreationParameters()
-                .getDefaultStorageClass()),
-        bucketInfo.getStorageClass());
-    final List<LifecycleRule> expectedLifecycleRules =
-        GcsApiConversions.toGcsApi(
-            ControlledResourceFixtures.getGoogleBucketCreationParameters()
-                .getLifecycle()
-                .getRules());
-    assertThat(
-        expectedLifecycleRules, containsInAnyOrder(bucketInfo.getLifecycleRules().toArray()));
   }
 }

@@ -120,7 +120,7 @@ public class CopyGcsBucketDefinitionStep implements Step {
     ControlledResourceIamRole iamRole =
         IamRoleUtils.getIamRoleForAccessScope(sourceBucket.getAccessScope());
 
-    // Launch a CreateControlledResourcesFlight to make the destination bucket
+    // Launch a CreateControlledResourceFlight to make the destination bucket
     ControlledGcsBucketResource clonedBucket =
         controlledResourceService
             .createControlledResourceSync(

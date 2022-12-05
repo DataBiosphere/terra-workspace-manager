@@ -73,21 +73,25 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTestMockGcpC
         ApiCloningInstructionsEnum.REFERENCE,
         /*destResourceName=*/ null,
         "datasetName",
-        HttpStatus.SC_BAD_REQUEST,
+        /*destLocation=*/ null,
+        List.of(HttpStatus.SC_BAD_REQUEST),
         /*shouldUndo=*/ false);
   }
 
   @Test
   public void cloneGcsBucket_badRequest_throws400() throws Exception {
     // Cannot set bucketName for COPY_REFERENCE clone
-    mockMvcUtils.cloneControlledGcsBucketAsyncError(
+    mockMvcUtils.cloneControlledGcsBucketAsync(
         USER_REQUEST,
         /*sourceWorkspaceId=*/ UUID.randomUUID(),
         /*sourceResourceId=*/ UUID.randomUUID(),
         /*destWorkspaceId=*/ UUID.randomUUID(),
         ApiCloningInstructionsEnum.REFERENCE,
+        /*destResourceName=*/ null,
         "bucketName",
-        HttpStatus.SC_BAD_REQUEST);
+        /*destLocation=*/ null,
+        List.of(HttpStatus.SC_BAD_REQUEST),
+        /*shouldUndo=*/ false);
   }
 
   @Test

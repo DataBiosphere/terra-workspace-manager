@@ -195,7 +195,7 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
 
     // Workspace owner can update the dataset resource through WSM
     String resourceDescription = "a description for WSM";
-    Integer defaultTableLifetimeSec = 5400;
+    Long defaultTableLifetimeSec = 5400L;
     var updateDatasetRequest =
         new UpdateControlledGcpBigQueryDatasetRequestBody()
             .description(resourceDescription)
