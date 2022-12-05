@@ -15,9 +15,11 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.util.Context;
+import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.monitor.MonitorManager;
 import com.azure.resourcemanager.monitor.fluent.models.DataCollectionRuleAssociationProxyOnlyResourceInner;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -49,30 +51,50 @@ public class EnableVmLoggingStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    getDataCollectionRuleFromLandingZone()
-        .ifPresent(
-            dcr -> {
-              MonitorManager monitorManager = getMonitorManager(context);
+    if(resource.getAssignedUser().isPresent()) {
+      getDataCollectionRuleFromLandingZone()
+          .ifPresent(
+              dcr -> {
+                final String vmId = context.getWorkingMap()
+                    .get(AzureVmHelper.WORKING_MAP_VM_ID, String.class);
+                final String petId = context.getWorkingMap()
+                    .get(AzureVmHelper.WORKING_MAP_PET_ID, String.class);
 
-              final String vmResourceId =
-                  context.getWorkingMap().get(AzureVmHelper.WORKING_MAP_VM_ID, String.class);
-              logger.info(
-                  "configuring vm [{}] to use collection rule [{}]",
-                  vmResourceId,
-                  dcr.getResourceId());
-              monitorManager
-                  .diagnosticSettings()
-                  .manager()
-                  .serviceClient()
-                  .getDataCollectionRuleAssociations()
-                  .createWithResponse(
-                      vmResourceId,
-                      resource.getVmName(),
-                      new DataCollectionRuleAssociationProxyOnlyResourceInner()
-                          .withDataCollectionRuleId(dcr.getResourceId()),
-                      Context.NONE);
-            });
+                addMonitorAgentToVm(context, vmId, petId);
+
+                createDataCollectionRuleAssociation(context, dcr, vmId);
+              });
+    }
     return StepResult.getStepResultSuccess();
+  }
+
+  private void createDataCollectionRuleAssociation(FlightContext context, ApiAzureLandingZoneDeployedResource dcr,
+      String vmId) {
+    MonitorManager monitorManager = getMonitorManager(context);
+    monitorManager
+        .diagnosticSettings()
+        .manager()
+        .serviceClient()
+        .getDataCollectionRuleAssociations()
+        .createWithResponse(
+            vmId,
+            resource.getVmName(),
+            new DataCollectionRuleAssociationProxyOnlyResourceInner()
+                .withDataCollectionRuleId(dcr.getResourceId()),
+            Context.NONE);
+  }
+
+  private void addMonitorAgentToVm(FlightContext context, String vmId, String petId) {
+    ComputeManager computeManager = getComputeManager(context);
+    computeManager.virtualMachines().getById(vmId).update()
+        .defineNewExtension("AzureMonitorLinuxAgent")
+        .withPublisher("Microsoft.Azure.Monitor")
+        .withType("AzureMonitorLinuxAgent")
+        .withVersion("1.22.2")
+        .withMinorVersionAutoUpgrade()
+        .withPublicSetting("authentication", Map.of("managedIdentity",
+            Map.of("identifier-name", "mi_res_id", "identifier-value", petId)))
+        .attach().apply();
   }
 
   private MonitorManager getMonitorManager(FlightContext context) {
@@ -85,19 +107,23 @@ public class EnableVmLoggingStep implements Step {
     return crlService.getMonitorManager(azureCloudContext, azureConfig);
   }
 
+  private ComputeManager getComputeManager(FlightContext context) {
+    final AzureCloudContext azureCloudContext =
+        context
+            .getWorkingMap()
+            .get(
+                WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_CLOUD_CONTEXT,
+                AzureCloudContext.class);
+    return crlService.getComputeManager(azureCloudContext, azureConfig);
+  }
+
   private Optional<ApiAzureLandingZoneDeployedResource> getDataCollectionRuleFromLandingZone() {
     final UUID lzId =
         landingZoneApiDispatch.getLandingZoneId(
             new BearerToken(userRequest.getRequiredToken()), resource.getWorkspaceId());
 
-    final List<ApiAzureLandingZoneDeployedResource> resources =
-        listLandingZoneResources(
-            new BearerToken(userRequest.getRequiredToken()), lzId, ResourcePurpose.SHARED_RESOURCE);
-    logger.info(
-        "shared resources in LZ [{}]: {}",
-        lzId,
-        String.join(",", resources.stream().map(r -> r.toString()).toList()));
-    return resources.stream()
+    return listLandingZoneResources(
+        new BearerToken(userRequest.getRequiredToken()), lzId, ResourcePurpose.SHARED_RESOURCE).stream()
         .filter(r -> DATA_COLLECTION_RULES_TYPE.equalsIgnoreCase(r.getResourceType()))
         .findFirst();
   }
