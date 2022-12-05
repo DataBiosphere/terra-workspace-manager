@@ -81,7 +81,8 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
       @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
       @JsonProperty("properties") Map<String, String> properties,
       @JsonProperty("createdByEmail") String createdByEmail,
-      @JsonProperty("createdDate") OffsetDateTime createdDate) {
+      @JsonProperty("createdDate") OffsetDateTime createdDate,
+      @JsonProperty("region") String region) {
     super(
         workspaceId,
         resourceId,
@@ -96,7 +97,8 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
         resourceLineage,
         properties,
         createdByEmail,
-        createdDate);
+        createdDate,
+        region);
     this.instanceId = instanceId;
     this.location = location;
     this.projectId = projectId;

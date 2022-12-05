@@ -72,7 +72,8 @@ public class ControlledAzureIpResource extends ControlledResource {
         resourceLineage,
         properties,
         createdByEmail,
-        createdDate);
+        createdDate,
+        region);
     this.ipName = ipName;
     this.region = region;
     validate();

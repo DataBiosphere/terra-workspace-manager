@@ -46,6 +46,7 @@ public abstract class WsmResource {
   private final ImmutableMap<String, String> properties;
   private final String createdByEmail;
   private final @Nullable OffsetDateTime createdDate;
+  private final @Nullable String region;
 
   /**
    * construct from individual fields
@@ -72,7 +73,8 @@ public abstract class WsmResource {
       @Nullable List<ResourceLineageEntry> resourceLineage,
       Map<String, String> properties,
       String createdByEmail,
-      @Nullable OffsetDateTime createdDate) {
+      @Nullable OffsetDateTime createdDate,
+      @Nullable String region) {
     this.workspaceUuid = workspaceUuid;
     this.resourceId = resourceId;
     this.name = name;
@@ -82,6 +84,7 @@ public abstract class WsmResource {
     this.properties = ImmutableMap.copyOf(properties);
     this.createdByEmail = createdByEmail;
     this.createdDate = createdDate;
+    this.region = region;
   }
 
   /** construct from database data */
@@ -95,7 +98,8 @@ public abstract class WsmResource {
         dbResource.getResourceLineage().orElse(new ArrayList<>()),
         dbResource.getProperties(),
         dbResource.getCreatedByEmail(),
-        dbResource.getCreatedDate());
+        dbResource.getCreatedDate(),
+        dbResource.getRegion());
   }
 
   public WsmResource(WsmResourceFields resourceFields) {
@@ -108,7 +112,8 @@ public abstract class WsmResource {
         resourceFields.getResourceLineage(),
         resourceFields.getProperties(),
         resourceFields.getCreatedByEmail(),
-        resourceFields.getCreatedDate());
+        resourceFields.getCreatedDate(),
+        resourceFields.getRegion());
   }
 
   public UUID getWorkspaceId() {
@@ -137,6 +142,7 @@ public abstract class WsmResource {
         .resourceLineage(resourceLineage)
         .properties(properties)
         .createdByEmail(createdByEmail)
+        .region(region)
         .build();
   }
 
@@ -390,7 +396,10 @@ public abstract class WsmResource {
         && Objects.equals(resourceId, that.resourceId)
         && StringUtils.equals(name, that.name)
         && StringUtils.equals(description, that.description)
-        && cloningInstructions == that.cloningInstructions;
+        && cloningInstructions == that.cloningInstructions
+        && properties.equals(that.properties)
+        && StringUtils.equals(createdByEmail, that.createdByEmail)
+        && StringUtils.equals(region, that.region);
   }
 
   @Override
@@ -400,6 +409,11 @@ public abstract class WsmResource {
     result = 31 * result + (name != null ? name.hashCode() : 0);
     result = 31 * result + (description != null ? description.hashCode() : 0);
     result = 31 * result + (cloningInstructions != null ? cloningInstructions.hashCode() : 0);
+    result = 31 * result + (resourceLineage != null ? resourceLineage.hashCode() : 0);
+    result = 31 * result + (properties.hashCode());
+    result = 31 * result + (createdByEmail != null? createdByEmail.hashCode() : 0);
+    result = 31 * result + (createdDate != null? createdDate.hashCode() : 0);
+    result = 31 * result + (region != null? region.hashCode() : 0);
     return result;
   }
 }

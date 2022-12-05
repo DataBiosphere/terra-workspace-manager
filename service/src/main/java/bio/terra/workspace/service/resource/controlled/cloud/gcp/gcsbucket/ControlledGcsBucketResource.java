@@ -59,7 +59,8 @@ public class ControlledGcsBucketResource extends ControlledResource {
       @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
       @JsonProperty("properties") Map<String, String> properties,
       @JsonProperty("createdByEmail") String createdByEmail,
-      @JsonProperty("createdDate") OffsetDateTime createdDate) {
+      @JsonProperty("createdDate") OffsetDateTime createdDate,
+      @JsonProperty("region") String region) {
 
     super(
         workspaceId,
@@ -75,7 +76,8 @@ public class ControlledGcsBucketResource extends ControlledResource {
         resourceLineage,
         properties,
         createdByEmail,
-        createdDate);
+        createdDate,
+        region);
     this.bucketName = bucketName;
     validate();
   }

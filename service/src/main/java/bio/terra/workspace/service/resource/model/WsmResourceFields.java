@@ -29,7 +29,8 @@ public class WsmResourceFields {
   @Nullable private final List<ResourceLineageEntry> resourceLineage;
   private final ImmutableMap<String, String> properties;
   private final String createdByEmail;
-  @Nullable private final OffsetDateTime createdDate;
+  private final @Nullable OffsetDateTime createdDate;
+  private final @Nullable String region;
 
   /** construct from database resource */
   public WsmResourceFields(DbResource dbResource) {
@@ -42,6 +43,7 @@ public class WsmResourceFields {
     properties = dbResource.getProperties();
     createdByEmail = dbResource.getCreatedByEmail();
     createdDate = dbResource.getCreatedDate();
+    region = dbResource.getRegion();
   }
 
   protected WsmResourceFields(Builder<?> builder) {
@@ -54,6 +56,7 @@ public class WsmResourceFields {
     this.properties = builder.properties;
     this.createdByEmail = builder.createdByEmail;
     this.createdDate = builder.createdDate;
+    this.region = builder.region;
   }
 
   public static WsmResourceFields.Builder<?> builder() {
@@ -69,7 +72,8 @@ public class WsmResourceFields {
         .cloningInstructions(getCloningInstructions())
         .resourceLineage(getResourceLineage())
         .properties(getProperties())
-        .createdByEmail(getCreatedByEmail());
+        .createdByEmail(getCreatedByEmail())
+        .region(getRegion());
   }
 
   public UUID getWorkspaceId() {
@@ -106,6 +110,11 @@ public class WsmResourceFields {
     return createdByEmail;
   }
 
+  public String getRegion() {
+    return region;
+  }
+
+
   public OffsetDateTime getCreatedDate() {
     return createdDate;
   }
@@ -120,6 +129,7 @@ public class WsmResourceFields {
     private ImmutableMap<String, String> properties = ImmutableMap.of();
     private String createdByEmail;
     private OffsetDateTime createdDate;
+    private String region;
 
     public Builder() {}
 
@@ -188,6 +198,12 @@ public class WsmResourceFields {
     @SuppressWarnings("unchecked")
     public T createdDate(OffsetDateTime createdDate) {
       this.createdDate = createdDate;
+      return (T) this;
+    }
+
+    @SuppressWarnings("unchecked")
+    public T region(String region) {
+      this.region = region;
       return (T) this;
     }
   }

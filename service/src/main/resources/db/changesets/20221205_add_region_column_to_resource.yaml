@@ -7,9 +7,9 @@ databaseChangeLog:
         tableName: resource
         columns:
         - column:
-            name: regions
+            name: region
             type: text
             constraints:
               nullable: true
             remarks: |
-              regions of the controlled cloud resource, e.g. us-central-1
+              The region of the controlled cloud resource, e.g. us-central-1
