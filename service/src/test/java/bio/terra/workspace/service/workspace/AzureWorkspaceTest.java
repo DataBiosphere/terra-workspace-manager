@@ -3,8 +3,6 @@ package bio.terra.workspace.service.workspace;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 
 import bio.terra.workspace.app.configuration.external.AzureTestConfiguration;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
@@ -14,17 +12,13 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
-import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
-import bio.terra.workspace.service.spendprofile.SpendProfileService;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
-import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
@@ -37,7 +31,6 @@ public class AzureWorkspaceTest extends BaseAzureConnectedTest {
   @Autowired private WorkspaceService workspaceService;
   @Autowired private AzureCloudContextService azureCloudContextService;
   @MockBean private SamService mockSamService;
-  @MockBean private SpendProfileService mockSpendProfileService;
 
   @Test
   void createGetDeleteAzureContext() {
@@ -46,17 +39,6 @@ public class AzureWorkspaceTest extends BaseAzureConnectedTest {
             .token(Optional.of("fake-token"))
             .email("fake@email.com")
             .subjectId("fakeID123");
-
-    SpendProfileId spendProfileId = new SpendProfileId(UUID.randomUUID().toString());
-    Mockito.when(mockSpendProfileService.authorizeLinking(any(), anyBoolean(), any()))
-        .thenReturn(
-            new SpendProfile(
-                spendProfileId,
-                CloudPlatform.AZURE,
-                null,
-                UUID.fromString(azureTestConfiguration.getTenantId()),
-                UUID.fromString(azureTestConfiguration.getSubscriptionId()),
-                azureTestConfiguration.getManagedResourceGroupId()));
 
     Workspace workspace =
         WorkspaceFixtures.defaultWorkspaceBuilder(null)
@@ -91,15 +73,6 @@ public class AzureWorkspaceTest extends BaseAzureConnectedTest {
             .subjectId("fakeID123");
 
     SpendProfileId spendProfileId = new SpendProfileId(UUID.randomUUID().toString());
-    Mockito.when(mockSpendProfileService.authorizeLinking(any(), anyBoolean(), any()))
-        .thenReturn(
-            new SpendProfile(
-                spendProfileId,
-                CloudPlatform.AZURE,
-                null,
-                UUID.fromString(azureTestConfiguration.getTenantId()),
-                UUID.fromString(azureTestConfiguration.getSubscriptionId()),
-                azureTestConfiguration.getManagedResourceGroupId()));
 
     UUID sourceUUID = UUID.randomUUID();
     Workspace sourceWorkspace =

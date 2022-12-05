@@ -14,10 +14,9 @@ import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.FlightWaitTimedOutException;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
-import bio.terra.workspace.generated.model.ApiClonedControlledAzureStorageContainer;
-import bio.terra.workspace.generated.model.ApiCreatedControlledAzureStorageContainer;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
+import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.ClonedAzureStorageContainer;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -56,16 +55,15 @@ public class AwaitCloneControlledAzureStorageContainerResourceFlightStep impleme
 
       FlightMap resultMap = FlightUtils.getResultMapRequired(subflightState);
       var clonedContainer =
-          resultMap.get(
-              JobMapKeys.RESPONSE.getKeyName(), ApiClonedControlledAzureStorageContainer.class);
+          resultMap.get(JobMapKeys.RESPONSE.getKeyName(), ClonedAzureStorageContainer.class);
       cloneDetails.setStewardshipType(StewardshipType.CONTROLLED);
       cloneDetails.setResourceType(WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
       cloneDetails.setCloningInstructions(resource.getCloningInstructions());
       cloneDetails.setSourceResourceId(resource.getResourceId());
       cloneDetails.setDestinationResourceId(
           Optional.ofNullable(clonedContainer)
-              .map(ApiClonedControlledAzureStorageContainer::getStorageContainer)
-              .map(ApiCreatedControlledAzureStorageContainer::getResourceId)
+              .map(ClonedAzureStorageContainer::storageContainer)
+              .map(ControlledAzureStorageContainerResource::getResourceId)
               .orElse(null));
       String errorMessage = FlightUtils.getFlightErrorMessage(subflightState);
       cloneDetails.setErrorMessage(errorMessage);
