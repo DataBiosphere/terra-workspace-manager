@@ -8,9 +8,6 @@
 This repository holds the MC Terra Workspace Manager (WSM) service, client, and
 integration test projects.
 
-This readme provides general information about WSM. Specifics about how to do development
-within the Broad Institute's CI/CD system can be found in [DEVELOPMENT](DEVELOPMENT.md).
-
 ## Overview
 
 WSM provides workspaces; contexts for holding the work of

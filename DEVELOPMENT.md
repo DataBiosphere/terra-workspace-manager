@@ -29,6 +29,7 @@
     * [Unit Tests](#unit-tests)
     * [Connected Tests](#connected-tests)
     * [Integration Tests](#integration-tests)
+    * [Making tests fast](#making-tests-fast)
     * [Cleaning up workspaces in tests](#cleaning-up-workspaces-in-tests)
 * [Adding a new flight](#adding-a-new-flight)
 * [Logging During Test Runs](#logging-during-test-runs)
