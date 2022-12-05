@@ -1,3 +1,56 @@
+terra-workspace-manager
+
+* [OpenAPI V3 - formerly swagger](#openapi-v3---formerly-swagger)
+* [Layering](#layering)
+    * [REST API Class Usage](#rest-api-class-usage)
+* [GitHub Interactions](#github-interactions)
+* [Deployment](#deployment)
+    * [On commit to main](#on-commit-to-main)
+* [Setup](#setup)
+    * [Prerequisites:](#prerequisites)
+        * [Postgres](#postgres)
+        * [JDK](#jdk)
+        * [Configuring IntelliJ SDK](#configuring-intellij-sdk)
+        * [Python3](#python3)
+    * [Database Configuration](#database-configuration)
+        * [Option A: Docker Postgres](#option-a-docker-postgres)
+        * [Option B: Local Postgres](#option-b-local-postgres)
+    * [IntelliJ Setup](#intellij-setup)
+* [Running](#running)
+    * [Writing Configuration](#writing-configuration)
+    * [Running Tests](#running-tests)
+    * [Code Coverage](#code-coverage)
+    * [Running Workspace Manager Locally](#running-workspace-manager-locally)
+* [Publishing and Versioning](#publishing-and-versioning)
+    * [Compatible Changes of Significance](#compatible-changes-of-significance)
+    * [Incompatible Changes](#incompatible-changes)
+* [Build Structure](#build-structure)
+    * [Dependencies](#dependencies)
+* [Workspace Manager Service](#workspace-manager-service)
+    * [Spring Boot](#spring-boot)
+        * [Configuration](#configuration)
+        * [Initialization](#initialization)
+        * [Annotating Singletons](#annotating-singletons)
+        * [Common Annotations](#common-annotations)
+            * [Autowiring](#autowiring)
+            * [REST Annotations](#rest-annotations)
+            * [JSON Annotations](#json-annotations)
+    * [Service Code Structure](#service-code-structure)
+    * [Service Test Structure](#service-test-structure)
+* [Tests](#tests)
+    * [Running tests](#running-tests)
+    * [Unit Tests](#unit-tests)
+    * [Connected Tests](#connected-tests)
+    * [Integration Tests](#integration-tests)
+    * [Cleaning up workspaces in tests](#cleaning-up-workspaces-in-tests)
+* [Adding a new flight](#adding-a-new-flight)
+* [Logging During Test Runs](#logging-during-test-runs)
+    * [Seeing Log Output](#seeing-log-output)
+    * [Human Readable Logging](#human-readable-logging)
+    * [Controlling Log Level](#controlling-log-level)
+* [Update custom IAM role permissions for GCP projects.](#update-custom-iam-role-permissions-for-gcp-projects)
+* [Tips](#tips)
+
 # Developing Workspace Manager in the Broad Institute Environment
 
 This document describes the nuts and bolts of developing on WSM in the Broad
@@ -176,7 +229,7 @@ to using a Docker container. As long as you can run a container, you do not need
 For running WSM locally, there are two options for running
 the Postgres server:
 
-#### Option A: Docker Postgres
+#### Option A: Docker Postgres (common)
 ##### Running the Postgres Container
 To start a postgres container configured with the necessary databases:
 ```sh
@@ -237,23 +290,6 @@ View current usage information for `write-config.sh` by entering
 ./scripts/write-config.sh help
 ```
 
-### Running Tests
-
-To run unit tests:
-
-```sh
-./gradlew :service:unitTest
-```
-  
-To run connected tests:
-
-```sh
-./scripts/write-config.sh # First time only
-./gradlew :service:connectedTest
-```
-To run integration tests, we use Test Runner. Learn to run the Test Runner
-integration tests by reading [Integration README](integration/README.md)
-
 ### Code Coverage
 We use Jacoco to generate code coverage reports. Coverage information is written
 to `service/build/jacoco/{task_name}.exec`, and the `combinedJaCoCoReport` 
@@ -309,6 +345,355 @@ backward compatible.
 Incompatible changes require incrementing the major version number. In our current state
 of development, we are allowing for some incompatible API changes in the feature-locked
 parts of the API without releasing a version `1.0.0`.
+
+## Build Structure
+
+We use [gradle](https://gradle.org/) as our build tool. The repository is organized as a
+composite build, with common build logic pulled into [convention plugins](https://docs.gradle.org/current/samples/sample_convention_plugins.html).
+There are three mostly independent projects:
+- _service_ - the Workspace Manager Service
+- _client_ - the OpenAPI-generated client
+- _integration_ - the TestRunner-based integration test project
+
+The build structure is:
+```
+terra-workspace-manager
+  |
+  + settings.gradle
+  + build.gradle
+  |
+  +-- buildSrc/src/main/groovy (convention plugins)
+  |    |
+  |    + terra-workspace-manager.java-conventions.gradle
+  |    + terra-workspace-manager.library-conventions.gradle
+  |
+  +-- service
+  |    |
+  |    + build.gradle (service build; test dependency on client)
+  |
+  +–- client
+  |    |
+  |    + build.gradle
+  |
+  +-- integration (formerly clienttest)
+       |
+       + build.gradle (dependency on client)
+```
+
+This build, and others in MC Terra require access to the Broad Institute's
+Artifactory server. That is where supporting libraries are published and where we publish
+the WSM client
+
+### Dependencies
+We use [Gradle's dependency locking](https://docs.gradle.org/current/userguide/dependency_locking.html)
+to ensure that builds use the same transitive dependencies, so they're reproducible. This means that
+adding or updating a dependency requires telling Gradle to save the change.
+
+Each WSM project has separate dependency lock state.  If you're getting errors
+that mention "dependency lock state" after changing a build file, you will need to one of
+these commands:
+
+```sh
+./gradlew :service:dependencies --write-locks
+./gradlew :client:dependencies --write-locks
+./gradlew :integration:dependencies --write-locks
+```
+
+## Workspace Manager Service
+The bulk of the code is in the `service` project. This section describes that project.
+
+### Spring Boot
+The service project uses Spring Boot as the framework for REST servers. The objective is to use a minimal set
+of Spring features; there are many ways to do the same thing and we would like to constrain ourselves
+to a common set of techniques.
+
+#### Configuration
+We only use YAML configuration. We never use XML or .properties files.
+
+In general, we use type-safe configuration parameters as shown here:
+[Type-safe Configuration Properties](https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#features.external-config.typesafe-configuration-properties).
+That allows proper typing of parameters read from property files or environment variables. Parameters are
+then accessed with normal accessor methods. You should never need to use an `@Value` annotation.
+
+Be aware that environment variables will override values in our YAML configuration.
+This should not be used for configuration as it makes the source of values harder to track,
+but it may be useful for debugging unexpected configurations. See Spring Boot's
+[Externalized Configuration documentation](https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#boot-features-external-config)
+for the exact priority order of configurations.
+
+#### Initialization
+When the applications starts, Spring wires up the components based on the profiles in place.
+Setting different profiles allows different components to be included. This technique is used
+as the way to choose the cloud platform (Google, Azure, AWS) code to include.
+
+We use the Spring idiom of the `postSetupInitialization`, found in ApplicationConfiguration.java,
+to perform initialization of the application between the point of having the entire application initialized and
+the point of opening the port to start accepting REST requests.
+
+#### Annotating Singletons
+The typical pattern when using Spring is to make singleton classes for each service, controller, and DAO.
+You do not have to write the class with its own singleton support. Instead, annotate the class with
+the appropriate Spring annotation. Here are ones we use:
+
+- `@Component` Regular singleton class, like a service.
+- `@Repository` DAO component
+- `@Controller` REST Controller
+- `@Configuration` Definition of properties
+
+#### Common Annotations
+There are other annotations that are handy to know about.
+
+Use `@Nullable` to mark method interface and return parameters that can be null.
+
+##### Autowiring
+Spring wires up the singletons and other beans when the application is launched.
+That allows us to use Spring profiles to control the collection of code that is
+run for different environments. Perhaps obviously, you can only autowire singletons to each other. You cannot autowire
+dynamically created objects.
+
+There are two styles for declaring autowiring.
+The preferred method of autowiring, is to put the annotation on the constructor
+of the class. Spring will autowire all of the inputs to the constructor.
+
+```java
+@Component
+public class Foo {
+    private final Bar bar;
+    private Fribble fribble;
+
+    @Autowired
+    public Foo(Bar bar, Fribble fribble) {
+        this.bar = bar;
+        this.foo = foo;
+    }
+}
+```
+
+Spring will pass in the instances of Bar and Fribble into the constructor.
+It is possible to autowire a specific class member, but that is rarely necessary:
+
+```java
+@Component
+public class Foo {
+    @Autowired
+    private Bar bar;
+}
+```
+
+##### REST Annotations
+- `@RequestBody` Marks the controller input parameter receiving the body of the request
+- `@PathVariable("x")` Marks the controller input parameter receiving the parameter `x`
+- `@RequestParam("y")` Marks the controller input parameter receiving the query parameter`y`
+
+
+##### JSON Annotations
+We use the Jackson JSON library for serializing objects to and from JSON. Most of the time, you don't need to
+use JSON annotations. It is sufficient to provide setter/getter methods for class members
+and let Jackson figure things out with interospection. There are cases where it needs help
+and you have to be specific.
+
+The common JSON annotations are:
+
+- `@JsonValue` Marks a class member as data that should be (de)serialized to(from) JSON.
+  You can specify a name as a parameter to specify the JSON name for the member.
+- `@JsonIgnore`  Marks a class member that should not be (de)serialized
+- `@JsonCreator` Marks a constructor to be used to create an object from JSON.
+
+For more details see [Jackson JSON Documentation](https://github.com/FasterXML/jackson-docs)
+
+
+### Service Code Structure
+This section explains the code structure of the template. Here is the directory structure:
+
+```
+src/main/
+  java/
+    bio/terra/workspace/
+      app/
+        configuration/
+        controller/
+      common/
+        exception/
+        utils/
+      db/
+        exception/
+        model/
+      service/
+        buffer/
+        crl/
+        datarepo/
+        iam/
+        job/
+        resource/
+        spendprofile/
+        stage/
+        status/
+        workspace/
+  resources/
+```
+- `app/` For the top of the application, including Main and the StartupInitializer
+- `app/configuration/` For all of the bean and property definitions
+- `app/controller/` For the REST controllers. The controllers typically do very little.
+  They perform access checks and validate input, invoke a service to do the work, and package the service output into the response. The
+  controller package also defines the global exception handling.
+- `common/` For common models, exceptions, and utilities.
+  shared by more than one service.
+- `common/exception/` A set of common abstract base classes that support the ErrorReport REST API
+  return structure live in the [Terra Common Library ](https://github.com/DataBiosphere/terra-common-lib).
+  All WSM exceptions derive from those. Exceptions common across services live here.
+- `service/` Each service gets a package within. We handle cloud-platform specializations
+  within each service.
+- `service/buffer/` Thin interface to access the
+  [Resource Buffer Service](https://github.com/DataBiosphere/terra-resource-buffer)
+  for allocating GCP projects: the cloud context for Google cloud.
+- `service/crl/` Thin interface to access the
+  [Terra Cloud Resource Library](https://github.com/DataBiosphere/terra-cloud-resource-lib)
+  used for allocating cloud resources.
+- `service/datarepo` Thin interface to access the
+  [Terra Data Repository](https://github.com/DataBiosphere/jade-data-repo) for making
+  _referenced resources_ pointing to TDR snapshots.
+- `service/iam` Methods for accessing [Sam](https://github.com/broadinstitute/sam) for
+  authorization definition and checking. This service provides retries and specific methods
+  for the WSM operations on Sam.
+- `service/job` Methods for launching Stairway flights, waiting on completion, and getting
+  flight results
+- `service/resource` One of the main services in WSM. Manages controlled and referenced resources.
+- `service/spendprofile` Temporary methods to use fake spend profiles. Eventually, it will
+  become a thin layer accessing the Spend Profile Manager when that arrives.
+- `service/stage` Feature locking service
+- `service/status` Implementation of the /status endpoint
+- `service/workspace` The other main service in WSM. Manages CRUD for workspaces and cloud
+  contexts.
+- `resources/` Properties definitions, database schema definitions, and the REST API definition
+
+## Tests
+
+### Running tests
+
+```sh
+# Unit tests
+./gradlew :service:unitTest
+
+# Connected tests
+./gradlew :service:connectedTest
+```
+
+For integration tests, see [Integration README](integration/README.md).
+
+### Unit Tests
+The unit tests are written using JUnit. The implementations are in
+`src/test/java/bio/terra/workspace/`.
+Some unit tests depend on the availability of a running Postgresql server.
+
+Every combination of `@MockBean` creates a distinct Spring application context. Each context holds several
+database connection pools: (WSM db, WSM Stairway db, and any amalgam connection pools). We have run out of
+database connections due to cached application contexts.
+
+To reduce the number of unique combinations, we have put **ALL** `@MockBean` into test base classes. That helps
+limit the unique combinations. You should **NEVER** code a naked `@MockBean` in a test. They should always be
+specified in these bases. That helps us control the number of unique combinations we have.
+
+The test base classes can be found in `src/test/java/bio/terra/workspace/common/`.
+
+The current inheritance for unit test base classes looks like this:
+- `BaseTest` - the base class for unit and connected tests
+    - `BaseUnitTestMocks` - the base set of mocks shared by all unit tests
+        - `BaseUnitTest` - enables the right test tags and profiles for unit testing
+            - `BaseUnitTestMockDataRepoService` - adds one more mock; used in one unit test
+            - `BaseUnitTestMockGcpCloudContextService` - adds one more mock; used by several tests
+        - `BaseAzureUnitTest` - adds mocks shared by azure unit tests and enables the right test tags and profiles
+
+We keep the Azure tests separated from the general tests, because the Azure feature is not live in all environments.
+Those tests will not successfully run in those environments.
+
+### Connected Tests
+The connected tests are also written using JUnit.
+The implementations are mixed in with the unit tests in
+`src/test/java/bio/terra/workspace/`. Connected tests derive from `common/BaseConnectedTest.java`.
+Connected tests depend on the availability of a running Postgresql server. They also rely
+on a populated "config" directory containing service accounts and keys that allows the tests
+to use dependent services such as Sam, Buffer, and TDR. The config collecting process relies on
+secrets maintained in Vault in the Broad Institute environment.
+
+In general, developers writing new endpoints should add MockMVC-based unit or
+connected tests to test their code (example: [WorkspaceApiControllerTest](service/src/test/java/bio/terra/workspace/app/configuration/external/controller/WorkspaceApiControllerTest.java)).
+These tests let us act as if we're making HTTP calls against a local server
+and validate the full request lifecycle through all
+the [layers of WSM](DEVELOPMENT.md#Layering), whereas the previous style of
+service-only tests did not cover code in the controller layer.
+
+### Integration Tests
+Integration testing is done using
+[Test Runner](https://github.com/DataBiosphere/terra-test-runner).
+The integration tests live in the `integration` project. Consult the integration
+[README](integration/README.md) for more details.
+
+In the early days of the project, there were JUnit-based integration tests. We are in
+process of migrating them to Test Runner.
+
+### Making tests fast
+
+#### Create one workspace/context/resource for entire test
+
+For connected tests, creating workspace/context is slow. Use `@BeforeAll` /
+`@TestInstance(Lifecycle.PER_CLASS)` to create one workspace/context that every
+test in the test file can use. [Example PR.](https://github.com/DataBiosphere/terra-workspace-manager/pull/941)
+
+If your test changes the workspace, just undo the changes at the end of the test.
+For example, if your test sets workspace properties, delete the properties at the
+end of your test.
+
+Similarly, if a resource is used by multiple tests, initialize it in `setup()`.
+For example, `ControlledGcpResourceApiControllerBqDatasetTest.java` has many
+tests that clone a BQ dataset. The source BQ dataset is initialized once in
+`setup()`, and reused for many tests.
+
+#### For local runs, skip workspace/context creation
+
+Say I'm running `ControlledGcpResourceApiControllerBqDatasetTest.java` which has
+10 tests. The previous section made it so that one workspace is created, instead
+of 10. This section makes it so that 0 workspaces are created.
+
+These changes make local development faster. They should not be merged.
+
+- [Optional] [Comment out these lines](https://cs.github.com/DataBiosphere/terra-workspace-manager/blob/05dba30e7f597690c46c95a974d31bde532bcbbd/service/src/main/java/bio/terra/workspace/app/StartupInitializer.java?q=startupinitializer#L33-L37)
+  This way, when you restart postgres container, your workspaces won't be clobbered.
+- Comment out [`cleanup()`](https://github.com/DataBiosphere/terra-workspace-manager/blob/0764301d03814ab13e6cce5291e191201bddd205/service/src/test/java/bio/terra/workspace/app/controller/ControlledGcpResourceApiControllerBqDatasetTest.java#L132-L133) in your test,
+  so workspaces aren't deleted at the end of the test.
+- Run a test so that `setup()` creates workspace(s). Get workspace ID from
+  DB:
+  ```
+  PGPASSWORD=dbpwd psql postgresql://127.0.0.1:5432/wsm_db -U dbuser
+  wsm_db=> select workspace_id from cloud_context;
+  
+  # If you need projectId
+  wsm_db=> select workspace_id, context->>'gcpProjectId' from cloud_context;
+  ```
+- In `setup()`, comment out workspace initialization and add:
+  ```
+  workspaceId = UUID.fromString("workspace-id");
+  ```
+
+### Cleaning up workspaces in tests
+
+We have 2 ways of cleaning up resources (WSM workspace, SAM workspace, GCP project):
+
+1. Connected tests use Janitor. Janitor deletes GCP project and not SAM
+   workspace (see
+   [here](https://github.com/DataBiosphere/terra-workspace-manager/pull/755#discussion_r942717257) for details).
+2. Tests call WSM `deleteWorkspace()`. This deletes WSM workspace + SAM workspace +
+   GCP project.
+
+Connected tests that use mock SamService: Tests don't need to call
+`deleteWorkspace()` because there is no SAM workspace to clean up.
+
+Connected tests that use real SamService: Tests should call `deleteWorkspace()`
+to clean up SAM workspaces. Why not just call `deleteWorkspace()` and not use
+janitor? Janitor is useful in case test fails (or `deleteWorkspace()` fails).
+
+Integration tests: Tests should call `deleteWorkspace()` because integration
+tests don't use janitor. Most tests don't need to worry about this because
+`WorkspaceAllocateTestScriptBase.java` deletes the workspace it creates.
 
 ## Adding a new flight
 
@@ -410,8 +795,6 @@ For each environment:
       reloading, you still have to refresh the browser, but at least you don't have to
       restart the server.
 ![Main Run Configuration Dialog](docs/images/main_run_config.png)
-- For local development of connected tests, [comment out these lines](https://cs.github.com/DataBiosphere/terra-workspace-manager/blob/05dba30e7f597690c46c95a974d31bde532bcbbd/service/src/main/java/bio/terra/workspace/app/StartupInitializer.java?q=startupinitializer#L33-L37)
-  to preserve workspace/cloud context between runs.
 - To run unit and connected tests with a local DB (which can be helpful for examining DB contents after testing), set the `TEST_LOCAL_DB` environment variable
   to point to a local postgres URI, e.g `export TEST_LOCAL_DB='postgresql://127.0.0.1:5432'`. See [above](/#Database Configuration) for setting up a local DB. 
   - Note that parallel tests using a shared database may interfere with each other - [you can set the `TEST_SINGLE_THREAD` env var](service/gradle/testing.gradle) to restrict tests to a single thread.
