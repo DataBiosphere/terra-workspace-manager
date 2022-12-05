@@ -90,7 +90,7 @@ public class EnableVmLoggingStep implements Step {
         .defineNewExtension("AzureMonitorLinuxAgent")
         .withPublisher("Microsoft.Azure.Monitor")
         .withType("AzureMonitorLinuxAgent")
-        .withVersion("1.22.2")
+        .withVersion("1.22")
         .withMinorVersionAutoUpgrade()
         .withPublicSetting("authentication", Map.of("managedIdentity",
             Map.of("identifier-name", "mi_res_id", "identifier-value", petId)))
