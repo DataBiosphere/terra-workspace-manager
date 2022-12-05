@@ -57,6 +57,7 @@ import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudContextHolder;
@@ -508,10 +509,22 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         workspaceService.validateMcWorkspaceAndAction(userRequest, uuid, SamWorkspaceAction.WRITE);
 
     if (body.getCloudPlatform() == ApiCloudPlatform.AZURE) {
-      AzureCloudContext azureContext =
-          Optional.ofNullable(body.getAzureContext()).map(AzureCloudContext::fromApi).orElse(null);
+      Optional<AzureCloudContext> optionalAzureCloudContext =
+          Optional.ofNullable(body.getAzureContext()).map(AzureCloudContext::fromApi);
+      AzureCloudContext azureCloudContext;
+      // if BPM is enabled for Azure, then the coordinates are not required in the request body as
+      // we can fetch them from BPM
+      if (featureConfiguration.isBpmAzureEnabled()) {
+        azureCloudContext = optionalAzureCloudContext.orElse(null);
+      } else {
+        azureCloudContext =
+            optionalAzureCloudContext.orElseThrow(
+                () ->
+                    new CloudContextRequiredException(
+                        "AzureContext is required when creating an azure cloud context for a workspace"));
+      }
       workspaceService.createAzureCloudContext(
-          workspace, jobId, userRequest, resultPath, azureContext);
+          workspace, jobId, userRequest, resultPath, azureCloudContext);
     } else {
       workspaceService.createGcpCloudContext(workspace, jobId, userRequest, resultPath);
     }
