@@ -83,7 +83,8 @@ public class ControlledAzureVmResource extends ControlledResource {
         resourceLineage,
         properties,
         createdByEmail,
-        createdDate);
+        createdDate,
+        region);
     this.vmName = vmName;
     this.region = region;
     this.vmSize = vmSize;
