@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.CreateAiNotebookInstanceStep.DEFAULT_POST_STARTUP_SCRIPT;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -28,6 +29,7 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
           "https://www.googleapis.com/auth/userinfo.profile");
   private static final String WORKSPACE_ID = "my-workspce-ufid";
   private static final String SERVER_ID = "test-server";
+  private static final String NOTEBOOK_DISABLE_ROOT_KEY = "notebook-disable-root";
 
   @Test
   public void setFields() {
@@ -53,7 +55,6 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
                     .imageName("image-name"))
             .containerImage(
                 new ApiGcpAiNotebookInstanceContainerImage().repository("repository").tag("tag"));
-
     Instance instance =
         CreateAiNotebookInstanceStep.setFields(
             creationParameters, "foo@bar.com", WORKSPACE_ID, SERVER_ID, new Instance(), "main");
@@ -64,8 +65,9 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
     assertEquals(111L, instance.getBootDiskSizeGb());
     assertEquals("data-disk-type", instance.getDataDiskType());
     assertEquals(222L, instance.getDataDiskSizeGb());
-    assertThat(instance.getMetadata(), Matchers.aMapWithSize(4));
+    assertThat(instance.getMetadata(), Matchers.aMapWithSize(5));
     assertThat(instance.getMetadata(), Matchers.hasEntry("metadata-key", "metadata-value"));
+    assertThat(instance.getMetadata(), Matchers.hasEntry(NOTEBOOK_DISABLE_ROOT_KEY, "true"));
     assertDefaultMetadata(instance);
     assertEquals("foo@bar.com", instance.getServiceAccount());
     assertEquals(SA_SCOPES, instance.getServiceAccountScopes());
@@ -95,6 +97,7 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
     assertEquals(SA_SCOPES, instance.getServiceAccountScopes());
     assertEquals(
         String.format(DEFAULT_POST_STARTUP_SCRIPT, localBranch), instance.getPostStartupScript());
+    assertFalse(instance.getMetadata().containsKey(NOTEBOOK_DISABLE_ROOT_KEY));
   }
 
   private void assertDefaultMetadata(Instance instance) {
@@ -102,6 +105,20 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
     assertThat(instance.getMetadata(), Matchers.hasEntry("proxy-mode", "service_" + "account"));
     assertThat(instance.getMetadata(), Matchers.hasEntry("terra-workspace-id", WORKSPACE_ID));
     assertThat(instance.getMetadata(), Matchers.hasEntry("terra-cli-server", SERVER_ID));
+  }
+
+  @Test
+  public void setFields_userSpecifiedNotebookDisableRootToFalse() {
+    var creationParameters =
+        new ApiGcpAiNotebookInstanceCreationParameters()
+            .metadata(Map.of(NOTEBOOK_DISABLE_ROOT_KEY, "false"))
+            .containerImage(
+                new ApiGcpAiNotebookInstanceContainerImage().repository("repository").tag("tag"));
+
+    Instance instance =
+        CreateAiNotebookInstanceStep.setFields(
+            creationParameters, "foo@bar.com", WORKSPACE_ID, SERVER_ID, new Instance(), "main");
+    assertThat(instance.getMetadata(), Matchers.hasEntry(NOTEBOOK_DISABLE_ROOT_KEY, "false"));
   }
 
   @Test
