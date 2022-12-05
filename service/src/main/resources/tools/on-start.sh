@@ -38,18 +38,6 @@ echo "c.NotebookApp.terminado_settings={'shell_command': ['/bin/bash']}" | tee -
 
 sudo -u ec2-user -i <<'EOF'
 
-# Install google auth python package in all conda environments
-
-# Note that "base" is special environment name, include it there as well.
-for env in base /home/ec2-user/anaconda3/envs/*; do
-    source /home/ec2-user/anaconda3/bin/activate $(basename "$env")
-    if [ $env = 'JupyterSystemEnv' ]; then
-        continue
-    fi
-    pip install google-auth
-    source /home/ec2-user/anaconda3/bin/deactivate
-done
-
 # Copy in the Terra auth helper CLI (eventually this will install Terra CLI instead)
 WORKING_DIR=/home/ec2-user/terra
 mkdir -p "$WORKING_DIR"
@@ -65,9 +53,15 @@ mkdir -p /home/ec2-user/SageMaker/.config/gcloud
 mkdir -p /home/ec2-user/.config
 ln -s /home/ec2-user/SageMaker/.config/gcloud /home/ec2-user/.config/gcloud
 
+# Activate base python env and install google-auth
+source /home/ec2-user/anaconda3/bin/activate base
+pip install google-auth
+
 # If we have ADC, attempt to re-configure at startup.
 if [ -f /home/ec2-user/.config/gcloud/application_default_credentials.json ]; then
   /home/ec2-user/terra/terra-auth.py --configure
 fi
+
+source /home/ec2-user/anaconda3/bin/deactivate
 
 EOF
