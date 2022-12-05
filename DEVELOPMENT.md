@@ -12,7 +12,6 @@
     * [IntelliJ Setup](#intellij-setup)
 * [Running](#running)
     * [Writing Configuration](#writing-configuration)
-    * [Running Tests](#running-tests)
     * [Code Coverage](#code-coverage)
     * [Running Workspace Manager Locally](#running-workspace-manager-locally)
 * [Publishing and Versioning](#publishing-and-versioning)
