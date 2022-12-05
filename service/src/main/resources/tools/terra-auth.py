@@ -11,9 +11,16 @@ import warnings
 from google.auth.exceptions import DefaultCredentialsError
 from google.auth.transport.requests import AuthorizedSession
 
+BAD_GOOGLE_CRED = 1
+GET_AWS_CRED_FAILED = 2
+LIST_WORKSPACES_FAILED = 3
+LIST_RESOURCES_FAILED = 4
+NO_INSTANCE_METADATA = 5
+NOTEBOOK_NOT_FOUND = 6
+
 WSM_API_ENDPOINT = 'https://terra-mc-feature-dev-wsm.api.verily.com/api/workspaces/v1'
 INSTANCE_METADATA_FILE = '/opt/ml/metadata/resource-metadata.json'
-NOTEBOOK_METADATA_FILE = f'{os.path.expanduser("~")}/.terra_notebook_metadata.json'
+NOTEBOOK_METADATA_FILE = f'{os.path.expanduser("~")}/SageMaker/.terra/notebook_metadata.json'
 
 def parse_args():
     parser = argparse.ArgumentParser(description = 'Terra AWS Auth Helper')
@@ -36,19 +43,25 @@ def get_authorized_session():
             warnings.simplefilter('ignore')
             credentials, project_id = google.auth.default()
     except DefaultCredentialsError:
-        sys.exit("ERROR: Application Default Credentials required, please run 'gcloud auth application-default login' and log in with your Terra user ID.")
+        print("ERROR: Application Default Credentials required, please run 'gcloud auth application-default login' and log in with your Terra user ID.", file=sys.stderr)
+        sys.exit(BAD_GOOGLE_CRED)
 
     return AuthorizedSession(credentials)
 
-def get_notebook_resource_name():
+def get_notebook_resource_attribute(attribute):
+    if not os.path.exists(INSTANCE_METADATA_FILE):
+        print(f'ERROR: Notebook resource file "{INSTANCE_METADATA_FILE}" does note exist.', file=sys.stderr)
+        sys.exit(NO_INSTANCE_METADATA)
+
     with open(INSTANCE_METADATA_FILE, 'r') as f:
         resource_metadata = json.load(f)
-        return resource_metadata['ResourceName']
+        return resource_metadata[attribute]
+
+def get_notebook_resource_name():
+    return get_notebook_resource_attribute('ResourceName')
 
 def get_notebook_resource_arn():
-    with open(INSTANCE_METADATA_FILE, 'r') as f:
-        resource_metadata = json.load(f)
-        return resource_metadata['ResourceArn']
+    return get_notebook_resource_attribute('ResourceArn')
 
 def enumerate_workspace_ids(session):
     workspace_ids = []
@@ -58,7 +71,8 @@ def enumerate_workspace_ids(session):
     while more:
         response = session.get(WSM_API_ENDPOINT, params={'request': request_count, 'offset': offset})
         if not response.ok:
-            sys.exit(f'ERROR: Listing workspaces failed with status {response.status_code}')
+            print(f'ERROR: Listing workspaces failed with status {response.status_code}', file=sys.stderr)
+            sys.exit(LIST_WORKSPACES_FAILED)
         workspaces = json.loads(response.content)
         received_count = 0
         for workspace in workspaces['workspaces']:
@@ -79,7 +93,8 @@ def enumerate_workspace_resources(session, workspace_id, type):
                 params={'request': request_count, 'offset': offset, 'resource': type})
 
             if not response.ok:
-                sys.exit(f'ERROR: Listing resources failed with status {response.status_code}')
+                print(f'ERROR: Listing resources failed with status {response.status_code}', file=sys.stderr)
+                sys.exit(LIST_RESOURCES_FAILED)
 
             resources = json.loads(response.content)
             received_count = 0
@@ -94,13 +109,15 @@ def enumerate_workspace_resources(session, workspace_id, type):
 def get_notebook_cred(session, workspace_id, notebook_id, access):
     response = session.get(f'{WSM_API_ENDPOINT}/{workspace_id}/resources/controlled/aws/sagemaker-notebooks/{notebook_id}/getCredential', params={'accessScope': access, 'credentialDuration': 900})
     if not response.ok:
-        sys.exit(f'ERROR: Getting notebook cred failed with status {response.status_code}')
+        print(f'ERROR: Getting notebook cred failed with status {response.status_code}', file=sys.stderr)
+        sys.exit(GET_AWS_CRED_FAILED)
     return response.content.decode('ascii')
 
 def get_bucket_cred(session, workspace_id, bucket_id, access):
     response = session.get(f'{WSM_API_ENDPOINT}/{workspace_id}/resources/controlled/aws/buckets/{bucket_id}/getCredential', params={'accessScope': access, 'credentialDuration': 3600})
     if not response.ok:
-        sys.exit(f'ERROR: Getting notebook cred failed with status {response.status_code}')
+        print(f'ERROR: Getting notebook cred failed with status {response.status_code}', file=sys.stderr)
+        sys.exit(GET_AWS_CRED_FAILED)
     return response.content.decode('ascii')
 
 def find_notebook_metadata(session):
@@ -138,7 +155,8 @@ def get_notebook_metadata(session):
         metadata = find_notebook_metadata(session)
 
         if metadata['WorkspaceId'] is None or metadata['ResourceId'] is None:
-            sys.exit("Workspace and Notebook Resource ID could not be resolved.")
+            print("Workspace and Notebook Resource ID could not be resolved.", file=sys.stderr)
+            sys.exit(NOTEBOOK_NOT_FOUND)
 
         with open(NOTEBOOK_METADATA_FILE, 'w') as f:
             json.dump(metadata, f, indent=4)
