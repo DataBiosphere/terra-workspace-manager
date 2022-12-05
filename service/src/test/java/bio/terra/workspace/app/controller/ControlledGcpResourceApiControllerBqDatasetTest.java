@@ -4,12 +4,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-<<<<<<< HEAD
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-=======
 import static org.junit.jupiter.api.Assertions.assertNull;
->>>>>>> main
 
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
@@ -34,6 +30,7 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.workspace.model.WsmObjectType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.api.services.bigquery.model.Dataset;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.UUID;
@@ -163,22 +160,6 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
             sourceDataset.getMetadata().getResourceId());
     assertEquals(sourceDataset, gotResource);
 
-<<<<<<< HEAD
-    assertResourceMetadata(expectedBqDataset.getMetadata(), actualBqDataset.getMetadata());
-    assertEquals(
-        expectedBqDataset.getAttributes().getDatasetId(),
-        actualBqDataset.getAttributes().getDatasetId());
-    assertEquals(
-        expectedBqDataset.getAttributes().getProjectId(),
-        actualBqDataset.getAttributes().getProjectId());
-    ActivityLogChangeDetails changeDetails =
-        workspaceActivityLogService.getLastUpdatedDetails(workspaceId).get();
-    assertEquals(userAccessUtils.getDefaultUserEmail(), changeDetails.actorEmail());
-    assertEquals(
-        actualBqDataset.getMetadata().getResourceId().toString(), changeDetails.changeSubjectId());
-    assertEquals(WsmObjectType.RESOURCE, changeDetails.changeSubjectType());
-    assertNotNull(changeDetails.changeDate());
-=======
     // Call GCP directly
     cloudUtils.assertBqTableContents(
         userAccessUtils.defaultUser().getGoogleCredentials(),
@@ -190,7 +171,13 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         LOCATION,
         DEFAULT_TABLE_LIFETIME,
         DEFAULT_PARTITION_LIFETIME);
->>>>>>> main
+    ActivityLogChangeDetails changeDetails =
+        workspaceActivityLogService.getLastUpdatedDetails(workspaceId).get();
+    assertEquals(userAccessUtils.getDefaultUserEmail(), changeDetails.actorEmail());
+    assertEquals(
+        gotResource.getMetadata().getResourceId().toString(), changeDetails.changeSubjectId());
+    assertEquals(WsmObjectType.RESOURCE, changeDetails.changeSubjectType());
+    assertNotNull(changeDetails.changeDate());
   }
 
   @Test
@@ -621,29 +608,6 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
     assertEquals(expectedDatasetName, actualDataset.getAttributes().getDatasetId());
   }
 
-<<<<<<< HEAD
-  private static void assertResourceMetadata(
-      ApiResourceMetadata expectedMetadata, ApiResourceMetadata actualMetadata) {
-    assertEquals(expectedMetadata.getName(), actualMetadata.getName());
-    assertEquals(expectedMetadata.getDescription(), actualMetadata.getDescription());
-    assertEquals(
-        expectedMetadata.getCloningInstructions(), actualMetadata.getCloningInstructions());
-    assertEquals(expectedMetadata.getStewardshipType(), actualMetadata.getStewardshipType());
-    assertEquals(expectedMetadata.getResourceType(), actualMetadata.getResourceType());
-    assertEquals(expectedMetadata.getProperties(), actualMetadata.getProperties());
-    assertEquals(expectedMetadata.getCreatedDate(), actualMetadata.getCreatedDate());
-    assertEquals(expectedMetadata.getCreatedBy(), actualMetadata.getCreatedBy());
-  }
-
-  private void assertNoResourceWithName(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, String unexpectedResourceName)
-      throws Exception {
-    mockMvcUtils
-        .enumerateResources(userRequest, workspaceId)
-        .forEach(
-            actualResource ->
-                assertNotEquals(unexpectedResourceName, actualResource.getMetadata().getName()));
-=======
   /** Calls GCP directly to assert dataset location, table lifetimes. */
   private void assertBqDatasetAttributes(
       String projectId,
@@ -666,6 +630,5 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
       assertEquals(
           expectedDefaultPartitionLifetime, dataset.getDefaultPartitionExpirationMs() / 1000);
     }
->>>>>>> main
   }
 }
