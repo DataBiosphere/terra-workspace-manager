@@ -1,4 +1,4 @@
-terra-workspace-manager
+# terra-workspace-manager
 
 * [OpenAPI V3 - formerly swagger](#openapi-v3---formerly-swagger)
 * [Layering](#layering)
@@ -8,13 +8,7 @@ terra-workspace-manager
     * [On commit to main](#on-commit-to-main)
 * [Setup](#setup)
     * [Prerequisites:](#prerequisites)
-        * [Postgres](#postgres)
-        * [JDK](#jdk)
-        * [Configuring IntelliJ SDK](#configuring-intellij-sdk)
-        * [Python3](#python3)
     * [Database Configuration](#database-configuration)
-        * [Option A: Docker Postgres](#option-a-docker-postgres)
-        * [Option B: Local Postgres](#option-b-local-postgres)
     * [IntelliJ Setup](#intellij-setup)
 * [Running](#running)
     * [Writing Configuration](#writing-configuration)
@@ -28,13 +22,6 @@ terra-workspace-manager
     * [Dependencies](#dependencies)
 * [Workspace Manager Service](#workspace-manager-service)
     * [Spring Boot](#spring-boot)
-        * [Configuration](#configuration)
-        * [Initialization](#initialization)
-        * [Annotating Singletons](#annotating-singletons)
-        * [Common Annotations](#common-annotations)
-            * [Autowiring](#autowiring)
-            * [REST Annotations](#rest-annotations)
-            * [JSON Annotations](#json-annotations)
     * [Service Code Structure](#service-code-structure)
     * [Service Test Structure](#service-test-structure)
 * [Tests](#tests)
