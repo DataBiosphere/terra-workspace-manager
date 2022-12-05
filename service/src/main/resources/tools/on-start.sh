@@ -65,4 +65,9 @@ mkdir -p /home/ec2-user/SageMaker/.config/gcloud
 mkdir -p /home/ec2-user/.config
 ln -s /home/ec2-user/SageMaker/.config/gcloud /home/ec2-user/.config/gcloud
 
+# If we have ADC, attempt to re-configure at startup.
+if [ -f /home/ec2-user/.config/gcloud/application_default_credentials.json ]; then
+  /home/ec2-user/terra/terra-auth.py --configure
+fi
+
 EOF
