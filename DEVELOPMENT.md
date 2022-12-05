@@ -661,6 +661,12 @@ These changes make local development faster. They should not be merged.
   workspaceId = UUID.fromString("workspace-id");
   ```
 
+Pre-requisites:
+
+- Your test must store `workspaceId`, not `workspace`.
+- Your test must be able to run more than once on the same workspace. For example,
+  instead of creating a resource named `resource-name`, call it `TestUtils.appendRandomNumber("resource-name")`.
+
 ### Cleaning up workspaces in tests
 
 We have 2 ways of cleaning up resources (WSM workspace, SAM workspace, GCP project):

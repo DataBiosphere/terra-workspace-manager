@@ -69,6 +69,8 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
   private ApiCreatedWorkspace workspace;
 
+  // See here for how to skip workspace creation for local runs:
+  // https://github.com/DataBiosphere/terra-workspace-manager/blob/main/DEVELOPMENT.md#for-local-runs-skip-workspacecontext-creation
   @BeforeAll
   public void setup() throws Exception {
     workspace =
