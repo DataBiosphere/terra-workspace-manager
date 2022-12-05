@@ -113,7 +113,9 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
         addStep(
             new CreateReferenceMetadataStep(flightBeanBag.getResourceDao()),
             RetryRules.shortDatabase());
-        addStep(new SetReferencedDestinationGcsBucketResponseStep(), RetryRules.shortExponential());
+        addStep(
+            new SetReferencedDestinationGcsBucketResponseStep(flightBeanBag.getResourceDao()),
+            RetryRules.shortExponential());
         return;
       }
       // Destination bucket is controlled resource

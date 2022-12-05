@@ -38,9 +38,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.support.DataAccessUtils;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -59,6 +61,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
  * <p>Use this instead of WorkspaceApiControllerTest, if you want to use real
  * bio.terra.workspace.service.iam.SamService.
  */
+@TestInstance(Lifecycle.PER_CLASS)
 public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
   @Autowired private MockMvc mockMvc;
@@ -69,14 +72,14 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
   private ApiCreatedWorkspace workspace;
 
-  @BeforeEach
+  @BeforeAll
   public void setup() throws Exception {
     workspace =
         mockMvcUtils.createWorkspaceWithoutCloudContext(userAccessUtils.defaultUserAuthRequest());
   }
 
   /** Clean up workspaces from Broad dev SAM. */
-  @AfterEach
+  @AfterAll
   public void cleanup() throws Exception {
     mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
   }

@@ -28,10 +28,10 @@ public class BigQueryApiConversions {
     // since we're trying to preserve the exiting state in case we need to put it back during an
     // undo, convert an existing null expiration time to a 0, so that it gets removed again
     if (updateParams.getDefaultTableLifetime() == null) {
-      updateParams.setDefaultTableLifetime(0);
+      updateParams.setDefaultTableLifetime(0L);
     }
     if (updateParams.getDefaultPartitionLifetime() == null) {
-      updateParams.setDefaultPartitionLifetime(0);
+      updateParams.setDefaultPartitionLifetime(0L);
     }
 
     return updateParams;
@@ -41,8 +41,8 @@ public class BigQueryApiConversions {
    * Helper method to convert ms -> sec, because the GCP API uses ms and the WSM API uses sec. The
    * bq command line also uses sec.
    */
-  public static Integer fromBqExpirationTime(@Nullable Long ms) {
-    return ms == null ? null : Math.toIntExact(ms / 1000);
+  public static Long fromBqExpirationTime(@Nullable Long ms) {
+    return ms == null ? null : ms / 1000;
   }
 
   /**
@@ -51,7 +51,7 @@ public class BigQueryApiConversions {
    *
    * <p>If the number of seconds is null or zero, then treat it as an undefined expiration time.
    */
-  public static Long toBqExpirationTime(@Nullable Integer sec) {
-    return sec == null || sec == 0 ? null : Long.valueOf(sec * 1000);
+  public static Long toBqExpirationTime(@Nullable Long sec) {
+    return sec == null || sec == 0 ? null : sec * 1000;
   }
 }

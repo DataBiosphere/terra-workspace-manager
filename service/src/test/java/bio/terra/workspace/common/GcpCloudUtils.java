@@ -1,9 +1,15 @@
 package bio.terra.workspace.common;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.text.IsEqualIgnoringCase.equalToIgnoringCase;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import bio.terra.cloudres.google.bigquery.BigQueryCow;
+import bio.terra.cloudres.google.storage.BlobCow;
+import bio.terra.cloudres.google.storage.StorageCow;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketDefaultStorageClass;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import com.google.api.gax.paging.Page;
@@ -11,8 +17,6 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.bigquery.BigQueryOptions;
 import com.google.cloud.bigquery.Field;
-import com.google.cloud.bigquery.FieldValue;
-import com.google.cloud.bigquery.FieldValue.Attribute;
 import com.google.cloud.bigquery.FieldValueList;
 import com.google.cloud.bigquery.LegacySQLTypeName;
 import com.google.cloud.bigquery.QueryJobConfiguration;
@@ -21,7 +25,13 @@ import com.google.cloud.bigquery.StandardTableDefinition;
 import com.google.cloud.bigquery.Table;
 import com.google.cloud.bigquery.TableId;
 import com.google.cloud.bigquery.TableInfo;
-import com.google.common.collect.ImmutableList;
+import com.google.cloud.storage.BlobId;
+import com.google.cloud.storage.BlobInfo;
+import com.google.cloud.storage.BucketInfo;
+import com.google.cloud.storage.BucketInfo.LifecycleRule;
+import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageOptions;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -40,6 +50,9 @@ public class GcpCloudUtils {
 
   public static final String BQ_EMPLOYEE_TABLE_NAME = "employee";
   public static final int BQ_EMPLOYEE_ID = 100;
+
+  private static final String GCS_FILE_NAME = "foo";
+  private static final String GCS_FILE_CONTENTS = "bar";
 
   @FunctionalInterface
   public interface SupplierWithException<T> {
@@ -78,8 +91,6 @@ public class GcpCloudUtils {
   /** Asserts table is populated as per populateBqTable(). */
   public void assertBqTableContents(
       GoogleCredentials userCredential, String projectId, String datasetId) throws Exception {
-    List<FieldValue> expectedRow = ImmutableList.of(FieldValue.of(Attribute.PRIMITIVE, 100));
-
     BigQuery bigQueryClient = getGcpBigQueryClient(userCredential, projectId);
     Page<FieldValueList> actualRows =
         bigQueryClient.listTableData(TableId.of(datasetId, BQ_EMPLOYEE_TABLE_NAME));
@@ -100,8 +111,64 @@ public class GcpCloudUtils {
     assertNull(actualTables);
   }
 
+  /** Adds a file called "foo" with the contents "bar". */
+  public void addFileToBucket(GoogleCredentials userCredential, String projectId, String bucketName)
+      throws Exception {
+    Storage storageClient = getGcpStorageClient(userCredential, projectId);
+    BlobId blobId = BlobId.of(bucketName, GCS_FILE_NAME);
+    BlobInfo blobInfo = BlobInfo.newBuilder(blobId).build();
+    storageClient.create(blobInfo, GCS_FILE_CONTENTS.getBytes(StandardCharsets.UTF_8));
+  }
+
+  /** Asserts bucket has file as per addFileToBucket(). */
+  public void assertBucketFiles(
+      AuthenticatedUserRequest userRequest,
+      GoogleCredentials userCredential,
+      String projectId,
+      String bucketName) {
+    Storage storageClient = getGcpStorageClient(userCredential, projectId);
+    String actualContents =
+        new String(storageClient.readAllBytes(bucketName, GCS_FILE_NAME), StandardCharsets.UTF_8);
+    assertEquals(GCS_FILE_CONTENTS, actualContents);
+  }
+
+  /** Asserts table is populated as per populateBqTable(). */
+  public void assertBucketHasNoFiles(
+      AuthenticatedUserRequest userRequest, String projectId, String bucketName) throws Exception {
+    StorageCow storageCow = crlService.createStorageCow(projectId, userRequest);
+    int numFiles = 0;
+    for (BlobCow blob : storageCow.get(bucketName).list().iterateAll()) {
+      numFiles++;
+    }
+    assertEquals(0, numFiles);
+  }
+
+  public void assertBucketAttributes(
+      AuthenticatedUserRequest userRequest,
+      String projectId,
+      String bucketName,
+      String expectedLocation,
+      ApiGcpGcsBucketDefaultStorageClass expectedStorageClass,
+      List<LifecycleRule> expectedLifecycleRules) {
+    StorageCow storageCow = crlService.createStorageCow(projectId, userRequest);
+    BucketInfo actualBucketInfo = storageCow.get(bucketName).getBucketInfo();
+
+    assertThat(expectedLocation, equalToIgnoringCase(actualBucketInfo.getLocation()));
+    assertEquals(expectedStorageClass.name(), actualBucketInfo.getStorageClass().name());
+    assertThat(
+        actualBucketInfo.getLifecycleRules(), containsInAnyOrder(expectedLifecycleRules.toArray()));
+  }
+
   private static BigQuery getGcpBigQueryClient(GoogleCredentials userCredential, String projectId) {
     return BigQueryOptions.newBuilder()
+        .setCredentials(userCredential)
+        .setProjectId(projectId)
+        .build()
+        .getService();
+  }
+
+  private static Storage getGcpStorageClient(GoogleCredentials userCredential, String projectId) {
+    return StorageOptions.newBuilder()
         .setCredentials(userCredential)
         .setProjectId(projectId)
         .build()

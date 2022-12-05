@@ -5,12 +5,15 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
+import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpBigQueryDataset;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
+import java.util.UUID;
 import org.springframework.http.HttpStatus;
 
 /**
@@ -21,19 +24,36 @@ import org.springframework.http.HttpStatus;
  * CreateReferenceMetadataStep.
  */
 public class SetReferencedDestinationBigQueryDatasetResponseStep implements Step {
+  private final ResourceDao resourceDao;
 
-  public SetReferencedDestinationBigQueryDatasetResponseStep() {}
+  public SetReferencedDestinationBigQueryDatasetResponseStep(ResourceDao resourceDao) {
+    this.resourceDao = resourceDao;
+  }
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
+    FlightUtils.validateRequiredEntries(
+        context.getInputParameters(),
+        ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
+        ControlledResourceKeys.DESTINATION_RESOURCE_ID);
+
+    UUID destWorkspaceId =
+        context
+            .getInputParameters()
+            .get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
+    UUID destResourceId =
+        context
+            .getInputParameters()
+            .get(ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.class);
     ControlledResource sourceDataset =
         context.getInputParameters().get(ResourceKeys.RESOURCE, ControlledResource.class);
+
+    // ControlledResourceKeys.DESTINATION_REFERENCED_RESOURCE contains destination dataset. However,
+    // that does not have createdDate set. So reread from dao, which will have createdDate.
     ReferencedBigQueryDatasetResource destDataset =
-        context
-            .getWorkingMap()
-            .get(
-                ControlledResourceKeys.DESTINATION_REFERENCED_RESOURCE,
-                ReferencedBigQueryDatasetResource.class);
+        resourceDao
+            .getResource(destWorkspaceId, destResourceId)
+            .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
 
     final ApiClonedControlledGcpBigQueryDataset apiClonedDataset =
         new ApiClonedControlledGcpBigQueryDataset()
