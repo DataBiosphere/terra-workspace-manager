@@ -2,15 +2,6 @@
 
 set -e
 
-# Lazy create terra persistence directory and symlink
-mkdir -p /home/ec2-user/SageMaker/.terra
-ln -s /home/ec2-user/SageMaker/.terra /home/ec2-user/.terra
-
-# Lazy create gcloud persistence directory and symlink
-mkdir -p /home/ec2-user/SageMaker/.config/gcloud
-mkdir -p /home/ec2-user/.config
-ln -s /home/ec2-user/SageMaker/.config/gcloud /home/ec2-user/.config/gcloud
-
 # Create the google cloud yum repo config
 tee -a /etc/yum.repos.d/google-cloud-sdk.repo << EOM
 [google-cloud-cli]
@@ -64,4 +55,14 @@ WORKING_DIR=/home/ec2-user/terra
 mkdir -p "$WORKING_DIR"
 wget https://raw.githubusercontent.com/DataBiosphere/terra-workspace-manager/jczerk/aws_wlz_interface/service/src/main/resources/tools/terra-auth.py -O "$WORKING_DIR/terra-auth.py"
 chmod +x "$WORKING_DIR/terra-auth.py"
+
+# Lazy create terra persistence directory and symlink
+mkdir -p /home/ec2-user/SageMaker/.terra
+ln -s /home/ec2-user/SageMaker/.terra /home/ec2-user/.terra
+
+# Lazy create gcloud persistence directory and symlink
+mkdir -p /home/ec2-user/SageMaker/.config/gcloud
+mkdir -p /home/ec2-user/.config
+ln -s /home/ec2-user/SageMaker/.config/gcloud /home/ec2-user/.config/gcloud
+
 EOF
