@@ -14,7 +14,6 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -23,6 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
+import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
@@ -30,9 +30,9 @@ import bio.terra.workspace.generated.model.ApiIamRole;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.workspace.model.OperationType;
-import bio.terra.workspace.service.workspace.model.WsmObjectType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Optional;
@@ -69,6 +69,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @Autowired private ObjectMapper objectMapper;
   @Autowired private UserAccessUtils userAccessUtils;
   @Autowired private NamedParameterJdbcTemplate jdbcTemplate;
+  @Autowired private SamService samService;
 
   private ApiCreatedWorkspace workspace;
 
@@ -268,10 +269,14 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
         userAccessUtils.getSecondUserEmail());
 
     ActivityLogChangeDetails changeDetails = getLastChangeDetails(workspace.getId());
-    assertEquals(userAccessUtils.getSecondUserEmail(), changeDetails.changeSubjectId());
-    assertEquals(WsmObjectType.USER, changeDetails.changeSubjectType());
-    assertEquals(userAccessUtils.getDefaultUserEmail(), changeDetails.actorEmail());
-    assertEquals(OperationType.GRANT_WORKSPACE_ROLE, changeDetails.operationType());
+
+    MockMvcUtils.assertActivityLogChangeDetails(
+        changeDetails,
+        userAccessUtils.getDefaultUserEmail(),
+        samService.getUserStatusInfo(userAccessUtils.defaultUserAuthRequest()).getUserSubjectId(),
+        OperationType.GRANT_WORKSPACE_ROLE,
+        userAccessUtils.getSecondUserEmail(),
+        ActivityLogChangedTarget.USER);
   }
 
   @Test
@@ -289,10 +294,14 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
         userAccessUtils.getSecondUserEmail());
 
     ActivityLogChangeDetails changeDetails = getLastChangeDetails(workspace.getId());
-    assertEquals(userAccessUtils.getSecondUserEmail(), changeDetails.changeSubjectId());
-    assertEquals(WsmObjectType.USER, changeDetails.changeSubjectType());
-    assertEquals(userAccessUtils.getDefaultUserEmail(), changeDetails.actorEmail());
-    assertEquals(OperationType.REMOVE_WORKSPACE_ROLE, changeDetails.operationType());
+
+    MockMvcUtils.assertActivityLogChangeDetails(
+        changeDetails,
+        userAccessUtils.getDefaultUserEmail(),
+        samService.getUserStatusInfo(userAccessUtils.defaultUserAuthRequest()).getUserSubjectId(),
+        OperationType.REMOVE_WORKSPACE_ROLE,
+        userAccessUtils.getSecondUserEmail(),
+        ActivityLogChangedTarget.USER);
   }
 
   /**

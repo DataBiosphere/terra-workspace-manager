@@ -24,6 +24,8 @@ import bio.terra.workspace.app.controller.shared.PropertiesUtils;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
+import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
+import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpBigQueryDatasetRequest;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpBigQueryDatasetResult;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketRequest;
@@ -94,6 +96,7 @@ import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.SetR
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.referenced.flight.create.CreateReferenceMetadataStep;
+import bio.terra.workspace.service.workspace.model.OperationType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.google.common.collect.ImmutableList;
@@ -1358,6 +1361,7 @@ public class MockMvcUtils {
             .sourceWorkspaceId(sourceWorkspaceId)
             .sourceResourceId(sourceResourceId));
 
+    // TODO (PF-2261): assert createdBy, lastUpdatedBy as well.
     assertResourceMetadata(
         actualMetadata,
         expectedResourceType,
@@ -1366,6 +1370,25 @@ public class MockMvcUtils {
         expectedWorkspaceId,
         expectedResourceName,
         expectedResourceLineage);
+  }
+
+  public static void assertActivityLogChangeDetails(
+      ActivityLogChangeDetails actualChangedDetails,
+      String expectedActorEmail,
+      String expectedActorSubjectId,
+      OperationType expectedOperationType,
+      String expectedChangeSubjectId,
+      ActivityLogChangedTarget expectedChangeTarget)
+      throws InterruptedException {
+    assertEquals(
+        new ActivityLogChangeDetails(
+            actualChangedDetails.changeDate(),
+            expectedActorEmail,
+            expectedActorSubjectId,
+            expectedOperationType,
+            expectedChangeSubjectId,
+            expectedChangeTarget),
+        actualChangedDetails);
   }
 
   public void assertNoResourceWithName(
@@ -1440,7 +1463,7 @@ public class MockMvcUtils {
   }
 
   // I can't figure out the proper way to do this
-  private static Matcher getExpectedCodesMatcher(List<Integer> expectedCodes) {
+  private static Matcher<? super Integer> getExpectedCodesMatcher(List<Integer> expectedCodes) {
     if (expectedCodes.size() == 1) {
       return equalTo(expectedCodes.get(0));
     } else if (expectedCodes.size() == 2) {

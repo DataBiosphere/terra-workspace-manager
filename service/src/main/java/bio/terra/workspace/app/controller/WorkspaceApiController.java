@@ -11,6 +11,7 @@ import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.exception.FeatureNotSupportedException;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
+import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
@@ -65,7 +66,6 @@ import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import bio.terra.workspace.service.workspace.model.WsmObjectType;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.time.OffsetDateTime;
 import java.util.Collections;
@@ -383,7 +383,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
           workspaceId,
           OperationType.UPDATE,
           workspaceId.toString(),
-          WsmObjectType.WORKSPACE);
+          ActivityLogChangedTarget.POLICIES);
       logger.info(
           "Finished updating workspace policies {} for {}", workspaceId, userRequest.getEmail());
     } else {
@@ -461,7 +461,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         uuid,
         OperationType.GRANT_WORKSPACE_ROLE,
         body.getMemberEmail(),
-        WsmObjectType.USER);
+        ActivityLogChangedTarget.USER);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 

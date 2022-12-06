@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.referenced;
 
+import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -15,7 +16,6 @@ import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import bio.terra.workspace.service.workspace.model.OperationType;
-import bio.terra.workspace.service.workspace.model.WsmObjectType;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
 import java.util.UUID;
@@ -59,7 +59,7 @@ public class ReferencedResourceService {
         resource.getWorkspaceId(),
         OperationType.CREATE,
         resource.getResourceId().toString(),
-        WsmObjectType.RESOURCE);
+        ActivityLogChangedTarget.RESOURCE);
     return getReferenceResource(resource.getWorkspaceId(), resource.getResourceId());
   }
 
@@ -72,7 +72,7 @@ public class ReferencedResourceService {
         resource.getWorkspaceId(),
         OperationType.CLONE,
         resource.getResourceId().toString(),
-        WsmObjectType.RESOURCE);
+        ActivityLogChangedTarget.RESOURCE);
     return getReferenceResource(resource.getWorkspaceId(), resource.getResourceId());
   }
 
@@ -155,7 +155,7 @@ public class ReferencedResourceService {
             workspaceUuid,
             OperationType.UPDATE,
             resourceId.toString(),
-            WsmObjectType.RESOURCE);
+            ActivityLogChangedTarget.RESOURCE);
       }
     }
     if (!updated) {
@@ -183,7 +183,7 @@ public class ReferencedResourceService {
           workspaceUuid,
           OperationType.DELETE,
           resourceId.toString(),
-          WsmObjectType.RESOURCE);
+          ActivityLogChangedTarget.RESOURCE);
     }
   }
 

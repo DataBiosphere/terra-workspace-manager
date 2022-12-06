@@ -3,6 +3,7 @@ package bio.terra.workspace.service.workspace;
 import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
+import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.ApiTpsPolicyInputs;
@@ -33,7 +34,6 @@ import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
-import bio.terra.workspace.service.workspace.model.WsmObjectType;
 import com.google.common.base.Preconditions;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
@@ -301,7 +301,7 @@ public class WorkspaceService {
           workspaceUuid,
           OperationType.UPDATE,
           workspaceUuid.toString(),
-          WsmObjectType.WORKSPACE);
+          ActivityLogChangedTarget.WORKSPACE);
     }
     return workspaceDao.getWorkspace(workspaceUuid);
   }
@@ -320,7 +320,7 @@ public class WorkspaceService {
         workspaceUuid,
         OperationType.UPDATE_PROPERTIES,
         workspaceUuid.toString(),
-        WsmObjectType.WORKSPACE);
+        ActivityLogChangedTarget.WORKSPACE);
   }
 
   /** Delete an existing workspace by ID. */
@@ -354,7 +354,7 @@ public class WorkspaceService {
         workspaceUuid,
         OperationType.DELETE_PROPERTIES,
         workspaceUuid.toString(),
-        WsmObjectType.WORKSPACE);
+        ActivityLogChangedTarget.WORKSPACE);
   }
 
   /**

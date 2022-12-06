@@ -4,12 +4,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
+import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.db.exception.UnknownFlightOperationTypeException;
 import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
 import bio.terra.workspace.service.workspace.model.OperationType;
-import bio.terra.workspace.service.workspace.model.WsmObjectType;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -42,7 +43,7 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
             ACTOR_SUBJECT_ID,
             OperationType.CREATE,
             workspaceId.toString(),
-            WsmObjectType.WORKSPACE));
+            ActivityLogChangedTarget.WORKSPACE));
 
     var lastUpdateDetails = activityLogDao.getLastUpdateDetails(workspaceId);
 
@@ -50,7 +51,36 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
     assertEquals(USER_EMAIL, lastUpdateDetails.get().actorEmail());
     assertEquals(ACTOR_SUBJECT_ID, lastUpdateDetails.get().actorSubjectId());
     assertEquals(workspaceId.toString(), lastUpdateDetails.get().changeSubjectId());
-    assertEquals(WsmObjectType.WORKSPACE, lastUpdateDetails.get().changeSubjectType());
+    assertEquals(ActivityLogChangedTarget.WORKSPACE, lastUpdateDetails.get().changeSubjectType());
+  }
+
+  @Test
+  public void writeActivity_changeSubjectIsNull() {
+    var workspaceId = UUID.randomUUID();
+
+    assertThrows(
+        InternalServerErrorException.class,
+        () ->
+            activityLogDao.writeActivity(
+                workspaceId,
+                new DbWorkspaceActivityLog(
+                    USER_EMAIL,
+                    ACTOR_SUBJECT_ID,
+                    OperationType.CREATE,
+                    null,
+                    ActivityLogChangedTarget.FOLDER)));
+  }
+
+  @Test
+  public void writeActivity_changeSubjectTypeIsNull() {
+    UUID workspaceId = UUID.randomUUID();
+    assertThrows(
+        InternalServerErrorException.class,
+        () ->
+            activityLogDao.writeActivity(
+                workspaceId,
+                new DbWorkspaceActivityLog(
+                    USER_EMAIL, ACTOR_SUBJECT_ID, OperationType.CREATE, "12345", null)));
   }
 
   @Test
@@ -65,7 +95,7 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
             ACTOR_SUBJECT_ID,
             OperationType.CREATE,
             workspaceId.toString(),
-            WsmObjectType.WORKSPACE));
+            ActivityLogChangedTarget.WORKSPACE));
 
     var lastUpdateDetails = activityLogDao.getLastUpdateDetails(workspaceId);
 
@@ -78,7 +108,7 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
             newUserSubjectId,
             OperationType.UPDATE,
             workspaceId.toString(),
-            WsmObjectType.WORKSPACE));
+            ActivityLogChangedTarget.WORKSPACE));
 
     var secondLastUpdateDetails = activityLogDao.getLastUpdateDetails(workspaceId);
     assertEquals(newUserEmail, secondLastUpdateDetails.get().actorEmail());
@@ -117,7 +147,7 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
             ACTOR_SUBJECT_ID,
             OperationType.CREATE,
             workspaceId.toString(),
-            WsmObjectType.WORKSPACE));
+            ActivityLogChangedTarget.WORKSPACE));
     var firstUpdateDetails = activityLogDao.getLastUpdateDetails(workspaceId);
     assertEquals(OperationType.CREATE.name(), getChangeType(workspaceId));
 
@@ -128,7 +158,7 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
             ACTOR_SUBJECT_ID,
             OperationType.UPDATE,
             workspaceId.toString(),
-            WsmObjectType.WORKSPACE));
+            ActivityLogChangedTarget.WORKSPACE));
     var secondUpdateDetails = activityLogDao.getLastUpdateDetails(workspaceId);
     assertEquals(OperationType.UPDATE.name(), getChangeType(workspaceId));
 
@@ -139,7 +169,7 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
             ACTOR_SUBJECT_ID,
             OperationType.DELETE,
             workspaceId.toString(),
-            WsmObjectType.WORKSPACE));
+            ActivityLogChangedTarget.WORKSPACE));
     var thirdUpdateDetails = activityLogDao.getLastUpdateDetails(workspaceId);
     assertEquals(OperationType.DELETE.name(), getChangeType(workspaceId));
 
@@ -150,7 +180,7 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
             ACTOR_SUBJECT_ID,
             OperationType.CLONE,
             workspaceId.toString(),
-            WsmObjectType.WORKSPACE));
+            ActivityLogChangedTarget.WORKSPACE));
     var fourthUpdateDetails = activityLogDao.getLastUpdateDetails(workspaceId);
 
     assertThrows(
@@ -163,7 +193,7 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
                     ACTOR_SUBJECT_ID,
                     OperationType.UNKNOWN,
                     workspaceId.toString(),
-                    WsmObjectType.WORKSPACE)));
+                    ActivityLogChangedTarget.WORKSPACE)));
     var fifthUpdateDate = activityLogDao.getLastUpdateDetails(workspaceId);
     assertEquals(fourthUpdateDetails.get().changeDate(), fifthUpdateDate.get().changeDate());
 
@@ -185,7 +215,7 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
             "bar",
             OperationType.SYSTEM_CLEANUP,
             workspaceId.toString(),
-            WsmObjectType.WORKSPACE));
+            ActivityLogChangedTarget.WORKSPACE));
 
     assertEquals(OperationType.SYSTEM_CLEANUP.name(), getChangeType(workspaceId));
     assertTrue(activityLogDao.getLastUpdateDetails(workspaceId).isEmpty());
@@ -201,7 +231,7 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
             ACTOR_SUBJECT_ID,
             OperationType.REMOVE_WORKSPACE_ROLE,
             "foo@monkeydomonkeysee.com",
-            WsmObjectType.USER));
+            ActivityLogChangedTarget.USER));
 
     assertEquals(OperationType.REMOVE_WORKSPACE_ROLE.name(), getChangeType(workspaceId));
     assertTrue(activityLogDao.getLastUpdateDetails(workspaceId).isEmpty());
@@ -217,7 +247,7 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
             ACTOR_SUBJECT_ID,
             OperationType.GRANT_WORKSPACE_ROLE,
             "foo@monkeydomonkeysee.com",
-            WsmObjectType.USER));
+            ActivityLogChangedTarget.USER));
 
     assertEquals(OperationType.GRANT_WORKSPACE_ROLE.name(), getChangeType(workspaceId));
     assertTrue(activityLogDao.getLastUpdateDetails(workspaceId).isEmpty());

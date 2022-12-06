@@ -2,11 +2,12 @@ package bio.terra.workspace.db;
 
 import bio.terra.common.db.ReadTransaction;
 import bio.terra.common.db.WriteTransaction;
+import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
+import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.db.exception.UnknownFlightOperationTypeException;
 import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
 import bio.terra.workspace.service.workspace.model.OperationType;
-import bio.terra.workspace.service.workspace.model.WsmObjectType;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import io.opencensus.contrib.spring.aop.Traced;
@@ -20,6 +21,7 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.support.DataAccessUtils;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -37,8 +39,8 @@ public class WorkspaceActivityLogDao {
         String changeSubjectTypeString = rs.getString("change_subject_type");
         var changeSubjectType =
             DEFAULT_VALUE_UNKNOWN.equals(changeSubjectTypeString)
-                ? WsmObjectType.UNKNOW
-                : WsmObjectType.valueOf(changeSubjectTypeString);
+                ? null
+                : ActivityLogChangedTarget.valueOf(changeSubjectTypeString);
         String changeTypeString = rs.getString("change_type");
         OperationType changeType =
             DEFAULT_VALUE_UNKNOWN.equals(changeTypeString)
@@ -94,8 +96,17 @@ public class WorkspaceActivityLogDao {
             .addValue("actor_email", dbWorkspaceActivityLog.actorEmail())
             .addValue("actor_subject_id", dbWorkspaceActivityLog.actorSubjectId())
             .addValue("change_subject_id", dbWorkspaceActivityLog.changeSubjectId())
-            .addValue("change_subject_type", dbWorkspaceActivityLog.changeSubjectType().name());
-    jdbcTemplate.update(sql, params);
+            .addValue(
+                "change_subject_type",
+                Optional.ofNullable(dbWorkspaceActivityLog.changeSubjectType())
+                    .map(ActivityLogChangedTarget::name)
+                    .orElse(null));
+    try {
+      jdbcTemplate.update(sql, params);
+    } catch (DataIntegrityViolationException e) {
+      throw new InternalServerErrorException(
+          "Invalid input: failed insert new row to WorkspaceActivityLog table", e);
+    }
   }
 
   @Traced

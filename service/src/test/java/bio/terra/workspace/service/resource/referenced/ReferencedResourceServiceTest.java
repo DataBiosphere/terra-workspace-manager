@@ -16,6 +16,7 @@ import bio.terra.workspace.common.BaseUnitTestMockDataRepoService;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
+import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.service.job.JobService;
@@ -38,7 +39,6 @@ import bio.terra.workspace.service.resource.referenced.terra.workspace.Reference
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WsmObjectType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -144,7 +144,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
             USER_REQUEST.getSubjectId(),
             OperationType.UPDATE,
             resourceId.toString(),
-            WsmObjectType.RESOURCE),
+            ActivityLogChangedTarget.RESOURCE),
         lastUpdateDetailsAfterResourceUpdate.get());
     assertEquals(originalName, result.getName());
     assertEquals(originalDescription, result.getDescription());
@@ -239,7 +239,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
             USER_REQUEST.getSubjectId(),
             OperationType.UPDATE,
             referencedResource.getResourceId().toString(),
-            WsmObjectType.RESOURCE),
+            ActivityLogChangedTarget.RESOURCE),
         lastUpdateDetailsAfterResourceUpdate.get());
     assertEquals(updatedName, referencedResource.getName());
     assertEquals(updatedDescription, referencedResource.getDescription());
@@ -398,7 +398,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               USER_REQUEST.getSubjectId(),
               OperationType.CREATE,
               referencedResource.getResourceId().toString(),
-              WsmObjectType.RESOURCE),
+              ActivityLogChangedTarget.RESOURCE),
           lastUpdateDetailsAfterCreate.get());
 
       ReferencedDataRepoSnapshotResource resultResource =
@@ -438,7 +438,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               USER_REQUEST.getSubjectId(),
               OperationType.DELETE,
               referencedResource.getResourceId().toString(),
-              WsmObjectType.RESOURCE),
+              ActivityLogChangedTarget.RESOURCE),
           lastUpdateDetailsAfterDelete.get());
     }
 
@@ -580,7 +580,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               USER_REQUEST.getSubjectId(),
               OperationType.CREATE,
               referencedResource.getResourceId().toString(),
-              WsmObjectType.RESOURCE),
+              ActivityLogChangedTarget.RESOURCE),
           lastUpdateDetailsAfterCreate.get());
 
       ReferencedGcsObjectResource resultResource =
@@ -621,7 +621,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               USER_REQUEST.getSubjectId(),
               OperationType.DELETE,
               referencedResource.getResourceId().toString(),
-              WsmObjectType.RESOURCE),
+              ActivityLogChangedTarget.RESOURCE),
           lastUpdateDetailsAfterDelete.get());
     }
 
@@ -832,7 +832,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               USER_REQUEST.getSubjectId(),
               OperationType.CREATE,
               referencedResource.getResourceId().toString(),
-              WsmObjectType.RESOURCE),
+              ActivityLogChangedTarget.RESOURCE),
           lastUpdateDetailsAfterCreate.get());
 
       ReferencedBigQueryDatasetResource resultResource =
@@ -874,7 +874,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               USER_REQUEST.getSubjectId(),
               OperationType.DELETE,
               referencedResource.getResourceId().toString(),
-              WsmObjectType.RESOURCE),
+              ActivityLogChangedTarget.RESOURCE),
           lastUpdateDetailsAfterDelete.get());
     }
 
@@ -908,7 +908,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               USER_REQUEST.getSubjectId(),
               OperationType.CREATE,
               referencedResource.getResourceId().toString(),
-              WsmObjectType.RESOURCE),
+              ActivityLogChangedTarget.RESOURCE),
           lastUpdateDetailsAfterCreate.get());
 
       ReferencedBigQueryDataTableResource resultResource =
@@ -947,7 +947,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               USER_REQUEST.getSubjectId(),
               OperationType.DELETE,
               referencedResource.getResourceId().toString(),
-              WsmObjectType.RESOURCE),
+              ActivityLogChangedTarget.RESOURCE),
           lastUpdateDetailsAfterDelete.get());
     }
 
@@ -1180,7 +1180,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               USER_REQUEST.getSubjectId(),
               OperationType.CREATE,
               referencedResource.getResourceId().toString(),
-              WsmObjectType.RESOURCE),
+              ActivityLogChangedTarget.RESOURCE),
           lastUpdateDetailsAfterCreate.get());
       ReferencedTerraWorkspaceResource actual =
           actualReferencedResourceGeneric.castByEnum(
@@ -1221,7 +1221,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               USER_REQUEST.getSubjectId(),
               OperationType.DELETE,
               referencedResource.getResourceId().toString(),
-              WsmObjectType.RESOURCE),
+              ActivityLogChangedTarget.RESOURCE),
           lastUpdateDetailsAfterDelete.get());
     }
 

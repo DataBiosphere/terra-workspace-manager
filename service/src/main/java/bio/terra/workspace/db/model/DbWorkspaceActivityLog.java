@@ -1,11 +1,11 @@
 package bio.terra.workspace.db.model;
 
+import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.service.workspace.model.OperationType;
-import bio.terra.workspace.service.workspace.model.WsmObjectType;
 
 public record DbWorkspaceActivityLog(
     String actorEmail,
     String actorSubjectId,
     OperationType operationType,
     String changeSubjectId,
-    WsmObjectType changeSubjectType) {}
+    ActivityLogChangedTarget changeSubjectType) {}

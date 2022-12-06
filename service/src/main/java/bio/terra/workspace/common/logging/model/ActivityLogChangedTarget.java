@@ -8,5 +8,6 @@ public enum ActivityLogChangedTarget {
   GCP_CLOUD_CONTEXT,
   RESOURCE,
   USER,
-  WORKSPACE
+  WORKSPACE,
+  POLICIES
 }

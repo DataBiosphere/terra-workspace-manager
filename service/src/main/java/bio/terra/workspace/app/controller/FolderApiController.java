@@ -6,6 +6,7 @@ import static bio.terra.workspace.common.utils.ControllerValidationUtils.validat
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesUpdateRequestBody;
 
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
+import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.generated.controller.FolderApi;
 import bio.terra.workspace.generated.model.ApiCreateFolderRequestBody;
 import bio.terra.workspace.generated.model.ApiFolder;
@@ -24,7 +25,6 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.OperationType;
-import bio.terra.workspace.service.workspace.model.WsmObjectType;
 import java.util.List;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
@@ -78,7 +78,11 @@ public class FolderApiController extends ControllerBase implements FolderApi {
                 getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
                 /*createdDate=*/ null));
     workspaceActivityLogService.writeActivity(
-        userRequest, workspaceId, OperationType.CREATE, folderId.toString(), WsmObjectType.FOLDER);
+        userRequest,
+        workspaceId,
+        OperationType.CREATE,
+        folderId.toString(),
+        ActivityLogChangedTarget.FOLDER);
     return new ResponseEntity<>(buildFolder(folder), HttpStatus.OK);
   }
 
@@ -97,7 +101,11 @@ public class FolderApiController extends ControllerBase implements FolderApi {
             body.getParentFolderId(),
             body.isUpdateParent());
     workspaceActivityLogService.writeActivity(
-        userRequest, workspaceId, OperationType.UPDATE, folderId.toString(), WsmObjectType.FOLDER);
+        userRequest,
+        workspaceId,
+        OperationType.UPDATE,
+        folderId.toString(),
+        ActivityLogChangedTarget.FOLDER);
     return new ResponseEntity<>(buildFolder(folder), HttpStatus.OK);
   }
 
@@ -179,7 +187,7 @@ public class FolderApiController extends ControllerBase implements FolderApi {
         workspaceUuid,
         OperationType.UPDATE_PROPERTIES,
         folderUuid.toString(),
-        WsmObjectType.FOLDER);
+        ActivityLogChangedTarget.FOLDER);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -196,7 +204,7 @@ public class FolderApiController extends ControllerBase implements FolderApi {
         workspaceUuid,
         OperationType.DELETE_PROPERTIES,
         folderUuid.toString(),
-        WsmObjectType.FOLDER);
+        ActivityLogChangedTarget.FOLDER);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 

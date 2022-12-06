@@ -24,6 +24,7 @@ import bio.terra.workspace.common.exception.UnknownFlightClassNameException;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
+import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.db.FolderDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
@@ -40,7 +41,6 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
-import bio.terra.workspace.service.workspace.model.WsmObjectType;
 import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import java.util.ArrayList;
 import java.util.List;
@@ -88,7 +88,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
             USER_REQUEST.getSubjectId(),
             OperationType.CREATE,
             workspaceUuid.toString(),
-            WsmObjectType.WORKSPACE));
+            ActivityLogChangedTarget.WORKSPACE));
   }
 
   @Test
@@ -112,7 +112,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
             USER_REQUEST.getSubjectId(),
             OperationType.DELETE,
             workspaceUuid.toString(),
-            WsmObjectType.WORKSPACE));
+            ActivityLogChangedTarget.WORKSPACE));
   }
 
   @Test
@@ -170,7 +170,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
             USER_REQUEST.getSubjectId(),
             OperationType.DELETE,
             workspaceUuid.toString(),
-            WsmObjectType.WORKSPACE));
+            ActivityLogChangedTarget.WORKSPACE));
   }
 
   @Test
@@ -215,7 +215,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
             USER_REQUEST.getSubjectId(),
             OperationType.DELETE,
             workspaceUuid.toString(),
-            WsmObjectType.WORKSPACE));
+            ActivityLogChangedTarget.WORKSPACE));
   }
 
   @Test
@@ -269,7 +269,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
             USER_REQUEST.getSubjectId(),
             OperationType.DELETE,
             resourceToDelete.get(0).getResourceId().toString(),
-            WsmObjectType.RESOURCE));
+            ActivityLogChangedTarget.RESOURCE));
   }
 
   @Test
@@ -324,7 +324,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
             USER_REQUEST.getSubjectId(),
             OperationType.DELETE,
             fooFolder.id().toString(),
-            WsmObjectType.FOLDER));
+            ActivityLogChangedTarget.FOLDER));
   }
 
   @Test

@@ -15,6 +15,7 @@ import bio.terra.stairway.HookAction;
 import bio.terra.stairway.StairwayHook;
 import bio.terra.workspace.common.exception.UnhandledDeletionFlightException;
 import bio.terra.workspace.common.logging.model.ActivityFlight;
+import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.FolderDao;
 import bio.terra.workspace.db.ResourceDao;
@@ -33,7 +34,6 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
-import bio.terra.workspace.service.workspace.model.WsmObjectType;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.HashSet;
 import java.util.List;
@@ -120,7 +120,7 @@ public class WorkspaceActivityLogHook implements StairwayHook {
                 subjectId,
                 operationType,
                 workspaceUuid.toString(),
-                WsmObjectType.WORKSPACE));
+                af.getActivityLogChangedTarget()));
         case RESOURCE -> activityLogDao.writeActivity(
             workspaceUuid,
             new DbWorkspaceActivityLog(
@@ -130,7 +130,7 @@ public class WorkspaceActivityLogHook implements StairwayHook {
                 getRequired(context.getInputParameters(), ResourceKeys.RESOURCE, WsmResource.class)
                     .getResourceId()
                     .toString(),
-                WsmObjectType.RESOURCE));
+                af.getActivityLogChangedTarget()));
         case FOLDER -> activityLogDao.writeActivity(
             workspaceUuid,
             new DbWorkspaceActivityLog(
@@ -138,7 +138,7 @@ public class WorkspaceActivityLogHook implements StairwayHook {
                 subjectId,
                 operationType,
                 getRequired(context.getInputParameters(), FOLDER_ID, UUID.class).toString(),
-                WsmObjectType.FOLDER));
+                af.getActivityLogChangedTarget()));
         case USER -> activityLogDao.writeActivity(
             workspaceUuid,
             new DbWorkspaceActivityLog(
@@ -146,7 +146,7 @@ public class WorkspaceActivityLogHook implements StairwayHook {
                 subjectId,
                 operationType,
                 getRequired(context.getInputParameters(), USER_TO_REMOVE, String.class),
-                WsmObjectType.USER));
+                af.getActivityLogChangedTarget()));
         case APPLICATION -> logApplicationAbleFlight(
             workspaceUuid, context, userEmail, subjectId, operationType);
       }
@@ -186,7 +186,7 @@ public class WorkspaceActivityLogHook implements StairwayHook {
       activityLogDao.writeActivity(
           workspaceUuid,
           new DbWorkspaceActivityLog(
-              actorEmail, actorSubjectId, operationType, id, WsmObjectType.APPLICATION));
+              actorEmail, actorSubjectId, operationType, id, ActivityLogChangedTarget.APPLICATION));
     }
   }
 
@@ -207,7 +207,7 @@ public class WorkspaceActivityLogHook implements StairwayHook {
               subjectId,
               OperationType.DELETE,
               workspaceUuid.toString(),
-              WsmObjectType.WORKSPACE));
+              ActivityLogChangedTarget.WORKSPACE));
     }
   }
 
@@ -222,7 +222,7 @@ public class WorkspaceActivityLogHook implements StairwayHook {
               subjectId,
               OperationType.DELETE,
               workspaceUuid.toString(),
-              WsmObjectType.WORKSPACE));
+              ActivityLogChangedTarget.WORKSPACE));
     } else {
       logger.warn(
           String.format(
@@ -243,7 +243,7 @@ public class WorkspaceActivityLogHook implements StairwayHook {
               subjectId,
               OperationType.DELETE,
               folderId.toString(),
-              WsmObjectType.FOLDER));
+              ActivityLogChangedTarget.FOLDER));
     }
   }
 
@@ -265,7 +265,7 @@ public class WorkspaceActivityLogHook implements StairwayHook {
               subjectId,
               OperationType.DELETE,
               resourceId.toString(),
-              WsmObjectType.RESOURCE));
+              ActivityLogChangedTarget.RESOURCE));
     }
   }
 
@@ -289,7 +289,7 @@ public class WorkspaceActivityLogHook implements StairwayHook {
       activityLogDao.writeActivity(
           UUID.fromString(id),
           new DbWorkspaceActivityLog(
-              userEmail, subjectId, operationType, id, WsmObjectType.WORKSPACE));
+              userEmail, subjectId, operationType, id, ActivityLogChangedTarget.WORKSPACE));
     }
   }
 }
