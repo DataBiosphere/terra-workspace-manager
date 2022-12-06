@@ -76,7 +76,7 @@ import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.Aw
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneAllFoldersStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.FindResourcesToCloneStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.LaunchCloneAllResourcesFlightStep;
-import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.LaunchCreateGcpContextFlightStep;
+import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.LaunchCreateCloudContextFlightStep;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
@@ -964,7 +964,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     retrySteps.put(CloneAllFoldersStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(FindResourcesToCloneStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
-        LaunchCreateGcpContextFlightStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+        LaunchCreateCloudContextFlightStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
         AwaitCreateCloudContextFlightStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(

@@ -13,14 +13,18 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 
-public class LaunchCreateGcpContextFlightStep implements Step {
+public class LaunchCreateCloudContextFlightStep implements Step {
 
   private final WorkspaceService workspaceService;
+  private final CloudPlatform cloudPlatform;
 
-  public LaunchCreateGcpContextFlightStep(WorkspaceService workspaceService) {
+  public LaunchCreateCloudContextFlightStep(
+      WorkspaceService workspaceService, CloudPlatform cloudPlatform) {
     this.workspaceService = workspaceService;
+    this.cloudPlatform = cloudPlatform;
   }
 
   @Override
@@ -56,7 +60,13 @@ public class LaunchCreateGcpContextFlightStep implements Step {
     }
     // if we already have a flight, don't launch another one
     if (!flightAlreadyExists) {
-      workspaceService.createGcpCloudContext(destinationWorkspace, cloudContextJobId, userRequest);
+      if (CloudPlatform.GCP == cloudPlatform) {
+        workspaceService.createGcpCloudContext(
+            destinationWorkspace, cloudContextJobId, userRequest);
+      } else if (CloudPlatform.AZURE == cloudPlatform) {
+        workspaceService.createAzureCloudContext(
+            destinationWorkspace, cloudContextJobId, userRequest, null, null);
+      }
     }
     return StepResult.getStepResultSuccess();
   }
