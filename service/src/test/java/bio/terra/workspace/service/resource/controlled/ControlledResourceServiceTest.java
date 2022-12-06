@@ -217,7 +217,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     var instanceId = "create-ai-notebook-instance-do";
     var serverName = "verily-autopush";
     int retryWaitSeconds = 30;
-    int retryCount = 20;
+    int retryCount = 40;
 
     cliConfiguration.setServerName(serverName);
     ApiGcpAiNotebookInstanceCreationParameters creationParameters =
@@ -294,7 +294,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
       if (actualPermissions != null && actualPermissions.size() > 1) {
         break;
       }
-      logger.warn("Permissions not set yet: {}. Retry {} of {}", actualPermissions, i + 1, 10);
+      logger.warn(
+          "Permissions not set yet: {}. Retry {} of {}", actualPermissions, i + 1, retryCount);
       TimeUnit.SECONDS.sleep(retryWaitSeconds);
     }
 
