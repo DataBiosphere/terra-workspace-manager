@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.vm;
 
 import bio.terra.common.iam.BearerToken;
+import bio.terra.landingzone.db.exception.LandingZoneNotFoundException;
 import bio.terra.landingzone.library.landingzones.deployment.LandingZonePurpose;
 import bio.terra.landingzone.library.landingzones.deployment.ResourcePurpose;
 import bio.terra.stairway.FlightContext;
@@ -128,15 +129,23 @@ public class EnableVmLoggingStep implements Step {
   }
 
   private Optional<ApiAzureLandingZoneDeployedResource> getDataCollectionRuleFromLandingZone() {
-    final UUID lzId =
-        landingZoneApiDispatch.getLandingZoneId(
-            new BearerToken(userRequest.getRequiredToken()), resource.getWorkspaceId());
+    try {
+      final UUID lzId =
+          landingZoneApiDispatch.getLandingZoneId(
+              new BearerToken(userRequest.getRequiredToken()), resource.getWorkspaceId());
 
-    return listLandingZoneResources(
-            new BearerToken(userRequest.getRequiredToken()), lzId, ResourcePurpose.SHARED_RESOURCE)
-        .stream()
-        .filter(r -> DATA_COLLECTION_RULES_TYPE.equalsIgnoreCase(r.getResourceType()))
-        .findFirst();
+      return listLandingZoneResources(
+              new BearerToken(userRequest.getRequiredToken()),
+              lzId,
+              ResourcePurpose.SHARED_RESOURCE)
+          .stream()
+          .filter(r -> DATA_COLLECTION_RULES_TYPE.equalsIgnoreCase(r.getResourceType()))
+          .findFirst();
+    } catch (LandingZoneNotFoundException notFound) {
+      logger.info(
+          "landing zone not found for workspace %s".formatted(resource.getWorkspaceId()), notFound);
+      return Optional.empty();
+    }
   }
 
   private List<ApiAzureLandingZoneDeployedResource> listLandingZoneResources(
