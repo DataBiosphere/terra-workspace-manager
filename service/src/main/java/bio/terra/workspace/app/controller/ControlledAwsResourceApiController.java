@@ -310,12 +310,6 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     ApiCreatedControlledAwsSageMakerNotebookResult result =
         fetchNotebookInstanceCreateResult(jobId);
 
-    result
-        .getAiNotebookInstance()
-        .getAttributes()
-        .setAwsAccountNumber(
-            awsCloudContextService.getRequiredAwsCloudContext(workspaceUuid).getAccountNumber());
-
     return new ResponseEntity<>(result, getAsyncResponseCode((result.getJobReport())));
   }
 
@@ -338,11 +332,18 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     if (jobResult.getJobReport().getStatus().equals(ApiJobReport.StatusEnum.SUCCEEDED)) {
       ControlledAwsSageMakerNotebookResource resource = jobResult.getResult();
       apiResource = resource.toApiResource();
+      apiResource.getAttributes().setAwsAccountNumber(getAwsAccountNumber(apiResource));
     }
     return new ApiCreatedControlledAwsSageMakerNotebookResult()
         .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getApiErrorReport())
         .aiNotebookInstance(apiResource);
+  }
+
+  private String getAwsAccountNumber(ApiAwsSageMakerNotebookResource apiResource) {
+    return awsCloudContextService
+        .getRequiredAwsCloudContext(apiResource.getMetadata().getWorkspaceId())
+        .getAccountNumber();
   }
 
   @Override
@@ -358,7 +359,10 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
                 SamConstants.SamControlledResourceActions.READ_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_AWS_SAGEMAKER_NOTEBOOK);
 
-    return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
+    ApiAwsSageMakerNotebookResource apiResource = resource.toApiResource();
+    apiResource.getAttributes().setAwsAccountNumber(getAwsAccountNumber(apiResource));
+
+    return new ResponseEntity<>(apiResource, HttpStatus.OK);
   }
 
   @Override

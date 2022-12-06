@@ -76,7 +76,7 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
         privateResourceState,
         resourceLineage,
         properties);
-    this.awsAccountNumber = instanceId;
+    this.awsAccountNumber = awsAccountNumber;
     this.instanceId = instanceId;
     this.region = region;
     this.instanceType = instanceType;
@@ -140,6 +140,10 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
   @Override
   public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
     // TODO: Implement and add delete flight steps.
+  }
+
+  public String getAwsAccountNumber() {
+    return awsAccountNumber;
   }
 
   public String getInstanceId() {
