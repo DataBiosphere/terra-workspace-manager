@@ -17,6 +17,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.util.Context;
 import com.azure.resourcemanager.compute.ComputeManager;
+import com.azure.resourcemanager.compute.models.VirtualMachine;
 import com.azure.resourcemanager.monitor.MonitorManager;
 import com.azure.resourcemanager.monitor.fluent.models.DataCollectionRuleAssociationProxyOnlyResourceInner;
 import io.opencensus.contrib.spring.aop.Traced;
@@ -84,10 +85,10 @@ public class EnableVmLoggingStep implements Step {
 
   @Traced
   private void addMonitorAgentToVm(FlightContext context, String vmId) {
+    var virtualMachine = getComputeManager(context).virtualMachines().getById(vmId);
+
     var extension =
-        getComputeManager(context)
-            .virtualMachines()
-            .getById(vmId)
+        virtualMachine
             .update()
             .defineNewExtension("AzureMonitorLinuxAgent")
             .withPublisher("Microsoft.Azure.Monitor")
@@ -97,15 +98,21 @@ public class EnableVmLoggingStep implements Step {
 
     // use the pet identity if one is defined, otherwise a system identity will be used
     Optional.ofNullable(context.getWorkingMap().get(AzureVmHelper.WORKING_MAP_PET_ID, String.class))
-        .ifPresent(
-            petId ->
+        .ifPresentOrElse(
+            (petId ->
                 extension.withPublicSetting(
                     "authentication",
                     Map.of(
                         "managedIdentity",
-                        Map.of("identifier-name", "mi_res_id", "identifier-value", petId))));
+                        Map.of("identifier-name", "mi_res_id", "identifier-value", petId)))),
+            (() -> enableSystemAssignedIdentity(virtualMachine)));
 
     extension.attach().apply();
+  }
+
+  private void enableSystemAssignedIdentity(VirtualMachine virtualMachine) {
+    logger.info("enabling system assigned managed identity for vm {}", virtualMachine.id());
+    virtualMachine.update().withSystemAssignedManagedServiceIdentity().apply();
   }
 
   private MonitorManager getMonitorManager(FlightContext context) {
