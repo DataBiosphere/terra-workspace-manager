@@ -5,11 +5,17 @@ components:
         SageMaker Notebook properties included in post-creation get.
       type: object
       properties:
+        awsAccountNumber:
+          description: Account number of the account containing the notebook instance.
+          type: string
+        landingZoneId:
+          description: ID of the landing zone (workapce) containing the notebook instance.
+          type: string
         instanceId:
           description: ID of the created SageMaker notebook instance.
           type: string
         region:
-          description: Region in which the notebook was created
+          description: AWS Region containing the notebook instance.
           type: string
         instanceType:
           description: Type of the compute instance to launch for the notebook instance.
