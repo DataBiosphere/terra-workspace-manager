@@ -184,7 +184,7 @@ components:
     WorkspaceId:
       name: workspaceId
       in: path
-      description: A UUID to used to identify a workspace in the workspace manager
+      description: A UUID to used to identify a workspace (landing zone) in the workspace manager
       required: true
       schema:
         type: string
