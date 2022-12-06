@@ -30,6 +30,7 @@ public class ControlledAwsSageMakerNotebookHandler implements WsmResourceHandler
 
     return ControlledAwsSageMakerNotebookResource.builder()
         .common(new ControlledResourceFields(dbResource))
+        .awsAccountNumber(attributes.getAwsAccountNumber())
         .instanceId(attributes.getInstanceId())
         .region(attributes.getRegion())
         .instanceType(attributes.getInstanceId())
