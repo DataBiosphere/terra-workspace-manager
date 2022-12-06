@@ -637,14 +637,12 @@ tests that clone a BQ dataset. The source BQ dataset is initialized once in
 
 #### For local runs, skip workspace/context creation
 
-Say I'm running `ControlledGcpResourceApiControllerBqDatasetTest.java` which has
-10 tests. The previous section made it so that one workspace is created, instead
-of 10. This section makes it so that 0 workspaces are created.
+This section is optional. For local development, it's useful to run tests
+against existing workspaces/contexts, so you don't have to wait for workspace/context
+creation. These changes should not be merged.
 
-These changes make local development faster. They should not be merged.
-
-- [Optional] [Comment out these lines](https://cs.github.com/DataBiosphere/terra-workspace-manager/blob/05dba30e7f597690c46c95a974d31bde532bcbbd/service/src/main/java/bio/terra/workspace/app/StartupInitializer.java?q=startupinitializer#L33-L37)
-  This way, when you restart postgres container, your workspaces won't be clobbered.
+- [Comment out these lines](https://cs.github.com/DataBiosphere/terra-workspace-manager/blob/05dba30e7f597690c46c95a974d31bde532bcbbd/service/src/main/java/bio/terra/workspace/app/StartupInitializer.java?q=startupinitializer#L33-L37)
+  When test starts postgres, DB won't be wiped.
 - Comment out [`cleanup()`](https://github.com/DataBiosphere/terra-workspace-manager/blob/0764301d03814ab13e6cce5291e191201bddd205/service/src/test/java/bio/terra/workspace/app/controller/ControlledGcpResourceApiControllerBqDatasetTest.java#L132-L133) in your test,
   so workspaces aren't deleted at the end of the test.
 - Run a test so that `setup()` creates workspace(s). Get workspace ID from
