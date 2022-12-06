@@ -47,8 +47,6 @@ public class ReferencedGcpResourceControllerBqDatasetTest extends BaseConnectedT
   @Autowired UserAccessUtils userAccessUtils;
   @Autowired FeatureConfiguration features;
 
-  // Store workspace ID instead of workspace, we can easily use existing workspaces
-  // for local development.
   private UUID workspaceId;
   private String projectId;
   private UUID workspaceId2;
@@ -57,12 +55,10 @@ public class ReferencedGcpResourceControllerBqDatasetTest extends BaseConnectedT
   private String sourceDatasetName = TestUtils.appendRandomNumber("source-dataset-name");
   private ApiGcpBigQueryDatasetResource sourceResource;
 
+  // See here for how to skip workspace creation for local runs:
+  // https://github.com/DataBiosphere/terra-workspace-manager/blob/main/DEVELOPMENT.md#for-local-runs-skip-workspacecontext-creation
   @BeforeAll
   public void setup() throws Exception {
-    // workspaceId = UUID.fromString("bed24987-d9ef-4ed4-9808-eef57fb668bb");
-    // projectId = "terra-wsm-t-cold-haricot-7091";
-    // workspaceId2 = UUID.fromString("09342484-f022-4c58-ba58-69c198799f3d");
-
     workspaceId =
         mockMvcUtils
             .createWorkspaceWithCloudContext(userAccessUtils.defaultUserAuthRequest())
