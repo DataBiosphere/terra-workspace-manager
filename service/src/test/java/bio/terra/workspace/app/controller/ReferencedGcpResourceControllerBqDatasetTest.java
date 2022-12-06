@@ -73,7 +73,6 @@ public class ReferencedGcpResourceControllerBqDatasetTest extends BaseConnectedT
     ApiWorkspaceDescription workspace2 =
         mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
 
-    // Note to resource authors: Set all request fields (to non-default values).
     sourceResource =
         mockMvcUtils.createReferencedBqDataset(
             userAccessUtils.defaultUserAuthRequest(),
