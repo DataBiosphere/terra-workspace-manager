@@ -76,8 +76,8 @@ public class UpdateBigQueryDatasetStep implements Step {
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, isEx);
       }
 
-      final Integer newDefaultTableLifetime = updateParameters.getDefaultTableLifetime();
-      final Integer newDefaultPartitionLifetime = updateParameters.getDefaultPartitionLifetime();
+      final Long newDefaultTableLifetime = updateParameters.getDefaultTableLifetime();
+      final Long newDefaultPartitionLifetime = updateParameters.getDefaultPartitionLifetime();
 
       final boolean defaultTableLifetimeChanged =
           valueChanged(
@@ -112,7 +112,7 @@ public class UpdateBigQueryDatasetStep implements Step {
    * Helper method to check if the default expiration time fields changed. Since this WSM API is a
    * PATCH, not an UPDATE, a null for the new value means no update.
    */
-  private static boolean valueChanged(Integer newVal, Integer prevVal) {
+  private static boolean valueChanged(Long newVal, Long prevVal) {
     return newVal == null ? false : !newVal.equals(prevVal);
   }
 }

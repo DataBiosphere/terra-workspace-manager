@@ -241,9 +241,11 @@ components:
         defaultTableLifetime:
           description: Optional. Default lifetime (in seconds) for newly created tables.
           type: integer
+          format: int64
         defaultPartitionLifetime:
           description: Optional. Default lifetime (in seconds) for partitions in newly created partitioned tables.
           type: integer
+          format: int64
 
     GcpBigQueryDatasetUpdateParameters:
       description: >-
@@ -255,12 +257,14 @@ components:
             Specify zero (0) to unset an existing value.
             The default table lifetime will not be updated if this is omitted.
           type: integer
+          format: int64
         defaultPartitionLifetime:
           description:  >-
             Optional. Default lifetime (in seconds) for partitions in newly created partitioned tables.
             Specify zero (0) to unset an existing value.
             The default partition lifetime will not be updated if this is omitted.
           type: integer
+          format: int64
         cloningInstructions:
           $ref: '#/components/schemas/CloningInstructionsEnum'
 
