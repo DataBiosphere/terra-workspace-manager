@@ -35,6 +35,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
+  private final String awsAccountNumber;
   private final String instanceId;
   private final String region;
   private final String instanceType;
@@ -54,6 +55,7 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
       @JsonProperty("accessScope") AccessScopeType accessScope,
       @JsonProperty("managedBy") ManagedByType managedBy,
       @JsonProperty("applicationId") String applicationId,
+      @JsonProperty("awsAccountNumber") String awsAccountNumber,
       @JsonProperty("instanceId") String instanceId,
       @JsonProperty("region") String region,
       @JsonProperty("instanceType") String instanceType,
@@ -74,6 +76,7 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
         privateResourceState,
         resourceLineage,
         properties);
+    this.awsAccountNumber = instanceId;
     this.instanceId = instanceId;
     this.region = region;
     this.instanceType = instanceType;
@@ -83,11 +86,13 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
 
   private ControlledAwsSageMakerNotebookResource(
       ControlledResourceFields common,
+      String awsAccountNumber,
       String instanceId,
       String region,
       String instanceType,
       ControlledAwsSageMakerNotebookAttributes.DefaultBucket defaultBucket) {
     super(common);
+    this.awsAccountNumber = awsAccountNumber;
     this.instanceId = instanceId;
     this.region = region;
     this.instanceType = instanceType;
@@ -155,6 +160,7 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
 
   public ApiAwsSageMakerNotebookAttributes toApiAttributes() {
     return new ApiAwsSageMakerNotebookAttributes()
+        .awsAccountNumber(awsAccountNumber)
         .instanceId(getInstanceId())
         .region(getRegion())
         .instanceType(getInstanceType())
@@ -184,7 +190,7 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
   public String attributesToJson() {
     return DbSerDes.toJson(
         new ControlledAwsSageMakerNotebookAttributes(
-            getInstanceId(), getRegion(), getInstanceType(), getDefaultBucket()));
+            awsAccountNumber, getInstanceId(), getRegion(), getInstanceType(), getDefaultBucket()));
   }
 
   @Override
@@ -222,6 +228,7 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
 
   public static class Builder {
     private ControlledResourceFields common;
+    private String awsAccountNumber;
     private String instanceId;
     private String region;
     private String instanceType;
@@ -229,6 +236,11 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
 
     public Builder common(ControlledResourceFields common) {
       this.common = common;
+      return this;
+    }
+
+    public Builder awsAccountNumber(String awsAccountNumber) {
+      this.awsAccountNumber = awsAccountNumber;
       return this;
     }
 
@@ -263,7 +275,7 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
 
     public ControlledAwsSageMakerNotebookResource build() {
       return new ControlledAwsSageMakerNotebookResource(
-          common, instanceId, region, instanceType, defaultBucket);
+          common, awsAccountNumber, instanceId, region, instanceType, defaultBucket);
     }
   }
 }

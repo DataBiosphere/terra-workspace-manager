@@ -10,10 +10,12 @@ public class ControlledAwsSageMakerNotebookAttributes {
 
   @JsonCreator
   public ControlledAwsSageMakerNotebookAttributes(
+      @JsonProperty("awsAccountNumber") String awsAccountNumber,
       @JsonProperty("instanceId") String instanceId,
       @JsonProperty("region") String region,
       @JsonProperty("instanceType") String instanceType,
       @JsonProperty("defaultBucket") DefaultBucket defaultBucket) {
+    this.awsAccountNumber = awsAccountNumber;
     this.instanceId = instanceId;
     this.region = region;
     this.instanceType = instanceType;
@@ -51,10 +53,15 @@ public class ControlledAwsSageMakerNotebookAttributes {
     }
   }
 
+  private final String awsAccountNumber;
   private final String instanceId;
   private final String region;
   private final String instanceType;
   private final DefaultBucket defaultBucket;
+
+  public String getAwsAccountNumber() {
+    return awsAccountNumber;
+  }
 
   public String getInstanceId() {
     return instanceId;

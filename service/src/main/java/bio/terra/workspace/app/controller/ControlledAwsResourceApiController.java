@@ -309,6 +309,13 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
 
     ApiCreatedControlledAwsSageMakerNotebookResult result =
         fetchNotebookInstanceCreateResult(jobId);
+
+    result
+        .getAiNotebookInstance()
+        .getAttributes()
+        .setAwsAccountNumber(
+            awsCloudContextService.getRequiredAwsCloudContext(workspaceUuid).getAccountNumber());
+
     return new ResponseEntity<>(result, getAsyncResponseCode((result.getJobReport())));
   }
 
