@@ -3,6 +3,7 @@ package bio.terra.workspace.common.utils;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.defaultNotebookCreationParameters;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi;
+import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeDefaultReferencedResourceFieldsApi;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -28,6 +29,8 @@ import bio.terra.workspace.generated.model.ApiCloneControlledGcpBigQueryDatasetR
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpBigQueryDatasetResult;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketRequest;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketResult;
+import bio.terra.workspace.generated.model.ApiCloneReferencedGcpBigQueryDatasetResourceResult;
+import bio.terra.workspace.generated.model.ApiCloneReferencedResourceRequestBody;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceRequest;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceResult;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
@@ -38,6 +41,7 @@ import bio.terra.workspace.generated.model.ApiCreateControlledGcpAiNotebookInsta
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpBigQueryDatasetRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateDataRepoSnapshotReferenceRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateGcpBigQueryDatasetReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpAiNotebookInstanceResult;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpBigQueryDataset;
@@ -46,6 +50,7 @@ import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotAttributes;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
 import bio.terra.workspace.generated.model.ApiErrorReport;
+import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetAttributes;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
@@ -205,6 +210,8 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/referenced/gcp/bigquerydatasets";
   public static final String REFERENCED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/referenced/gcp/bigquerydatasets/%s";
+  public static final String CLONE_REFERENCED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/referenced/gcp/bigquerydatasets/%s/clone";
   public static final String REFERENCED_GCP_BIG_QUERY_DATA_TABLE_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/referenced/gcp/bigquerydatatables";
   public static final String REFERENCED_GIT_REPO_V1_PATH_FORMAT =
@@ -680,7 +687,7 @@ public class MockMvcUtils {
     if (defaultPartitionLifetime != null) {
       creationParameters.defaultPartitionLifetime(defaultPartitionLifetime);
     }
-    ApiCreateControlledGcpBigQueryDatasetRequestBody datasetCreationRequest =
+    ApiCreateControlledGcpBigQueryDatasetRequestBody request =
         new ApiCreateControlledGcpBigQueryDatasetRequestBody()
             .common(makeDefaultControlledResourceFieldsApi().name(resourceName))
             .dataset(creationParameters);
@@ -695,7 +702,7 @@ public class MockMvcUtils {
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .accept(MediaType.APPLICATION_JSON)
                         .characterEncoding("UTF-8")
-                        .content(objectMapper.writeValueAsString(datasetCreationRequest)),
+                        .content(objectMapper.writeValueAsString(request)),
                     userRequest))
             .andExpect(status().is(HttpStatus.SC_OK))
             .andReturn()
@@ -710,12 +717,6 @@ public class MockMvcUtils {
       AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
     return getBqDataset(
         userRequest, workspaceId, resourceId, CONTROLLED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT);
-  }
-
-  public ApiGcpBigQueryDatasetResource getReferencedBqDataset(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
-    return getBqDataset(
-        userRequest, workspaceId, resourceId, REFERENCED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT);
   }
 
   private ApiGcpBigQueryDatasetResource getBqDataset(
@@ -1229,6 +1230,106 @@ public class MockMvcUtils {
     String serializedResponse =
         getCloneControlledGcsBucketResult_serializedResponse(userRequest, workspaceId, jobId);
     return objectMapper.readValue(serializedResponse, ApiCloneControlledGcpGcsBucketResult.class);
+  }
+
+  public ApiGcpBigQueryDatasetResource createReferencedBqDataset(
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      String resourceName,
+      String projectId,
+      String datasetName)
+      throws Exception {
+    ApiGcpBigQueryDatasetAttributes creationParameters =
+        new ApiGcpBigQueryDatasetAttributes().projectId(projectId).datasetId(datasetName);
+    ApiCreateGcpBigQueryDatasetReferenceRequestBody request =
+        new ApiCreateGcpBigQueryDatasetReferenceRequestBody()
+            .metadata(makeDefaultReferencedResourceFieldsApi().name(resourceName))
+            .dataset(creationParameters);
+
+    String serializedGetResponse =
+        mockMvc
+            .perform(
+                addAuth(
+                    post(String.format(
+                            REFERENCED_GCP_BIG_QUERY_DATASETS_V1_PATH_FORMAT,
+                            workspaceId.toString()))
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .characterEncoding("UTF-8")
+                        .content(objectMapper.writeValueAsString(request)),
+                    userRequest))
+            .andExpect(status().is(HttpStatus.SC_OK))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    return objectMapper.readValue(serializedGetResponse, ApiGcpBigQueryDatasetResource.class);
+  }
+
+  public ApiGcpBigQueryDatasetResource getReferencedBqDataset(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
+    return getBqDataset(
+        userRequest, workspaceId, resourceId, REFERENCED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT);
+  }
+
+  public ApiGcpBigQueryDatasetResource cloneReferencedBqDataset(
+      AuthenticatedUserRequest userRequest,
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId,
+      UUID destWorkspaceId,
+      ApiCloningInstructionsEnum cloningInstructions,
+      @Nullable String destResourceName)
+      throws Exception {
+    return cloneReferencedBqDataset(
+        userRequest,
+        sourceWorkspaceId,
+        sourceResourceId,
+        destWorkspaceId,
+        cloningInstructions,
+        destResourceName,
+        HttpStatus.SC_OK);
+  }
+
+  public ApiGcpBigQueryDatasetResource cloneReferencedBqDataset(
+      AuthenticatedUserRequest userRequest,
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId,
+      UUID destWorkspaceId,
+      ApiCloningInstructionsEnum cloningInstructions,
+      @Nullable String destResourceName,
+      int expectedCode)
+      throws Exception {
+    ApiCloneReferencedResourceRequestBody request =
+        new ApiCloneReferencedResourceRequestBody()
+            .destinationWorkspaceId(destWorkspaceId)
+            .cloningInstructions(cloningInstructions);
+    if (!StringUtils.isEmpty(destResourceName)) {
+      request.name(destResourceName);
+    }
+
+    MockHttpServletResponse response =
+        mockMvc
+            .perform(
+                addJsonContentType(
+                    addAuth(
+                        post(CLONE_REFERENCED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT.formatted(
+                                sourceWorkspaceId, sourceResourceId))
+                            .content(objectMapper.writeValueAsString(request)),
+                        userRequest)))
+            .andExpect(status().is(expectedCode))
+            .andReturn()
+            .getResponse();
+
+    // If an exception was thrown, deserialization won't work, so don't attempt it.
+    int actualCode = response.getStatus();
+    if (actualCode >= 300) {
+      return null;
+    }
+
+    String serializedResponse = response.getContentAsString();
+    return objectMapper
+        .readValue(serializedResponse, ApiCloneReferencedGcpBigQueryDatasetResourceResult.class)
+        .getResource();
   }
 
   private String getCloneControlledGcsBucketResult_serializedResponse(
