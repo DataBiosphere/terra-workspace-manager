@@ -12,7 +12,6 @@ import bio.terra.workspace.common.utils.AzureTestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.spendprofile.SpendProfileService;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
@@ -21,7 +20,6 @@ import java.time.Duration;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 
 class CreateAzureContextFlightTest extends BaseAzureConnectedTest {
   /** How long to wait for a Stairway flight to complete before timing out the test. */
@@ -32,7 +30,6 @@ class CreateAzureContextFlightTest extends BaseAzureConnectedTest {
   @Autowired private JobService jobService;
   @Autowired private AzureTestUtils azureTestUtils;
   @Autowired private UserAccessUtils userAccessUtils;
-  @MockBean private SpendProfileService mockSpendProfileService;
 
   @Test
   void successCreatesContext() throws Exception {
