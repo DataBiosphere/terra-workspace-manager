@@ -18,6 +18,7 @@ import com.azure.core.util.Context;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.monitor.MonitorManager;
 import com.azure.resourcemanager.monitor.fluent.models.DataCollectionRuleAssociationProxyOnlyResourceInner;
+import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -51,27 +52,23 @@ public class EnableVmLoggingStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    if(resource.getAssignedUser().isPresent()) {
-      getDataCollectionRuleFromLandingZone()
-          .ifPresent(
-              dcr -> {
-                final String vmId = context.getWorkingMap()
-                    .get(AzureVmHelper.WORKING_MAP_VM_ID, String.class);
-                final String petId = context.getWorkingMap()
-                    .get(AzureVmHelper.WORKING_MAP_PET_ID, String.class);
+    getDataCollectionRuleFromLandingZone()
+        .ifPresent(
+            dcr -> {
+              final String vmId =
+                  context.getWorkingMap().get(AzureVmHelper.WORKING_MAP_VM_ID, String.class);
 
-                addMonitorAgentToVm(context, vmId, petId);
+              addMonitorAgentToVm(context, vmId);
 
-                createDataCollectionRuleAssociation(context, dcr, vmId);
-              });
-    }
+              createDataCollectionRuleAssociation(context, dcr, vmId);
+            });
     return StepResult.getStepResultSuccess();
   }
 
-  private void createDataCollectionRuleAssociation(FlightContext context, ApiAzureLandingZoneDeployedResource dcr,
-      String vmId) {
-    MonitorManager monitorManager = getMonitorManager(context);
-    monitorManager
+  @Traced
+  private void createDataCollectionRuleAssociation(
+      FlightContext context, ApiAzureLandingZoneDeployedResource dcr, String vmId) {
+    getMonitorManager(context)
         .diagnosticSettings()
         .manager()
         .serviceClient()
@@ -84,17 +81,30 @@ public class EnableVmLoggingStep implements Step {
             Context.NONE);
   }
 
-  private void addMonitorAgentToVm(FlightContext context, String vmId, String petId) {
-    ComputeManager computeManager = getComputeManager(context);
-    computeManager.virtualMachines().getById(vmId).update()
-        .defineNewExtension("AzureMonitorLinuxAgent")
-        .withPublisher("Microsoft.Azure.Monitor")
-        .withType("AzureMonitorLinuxAgent")
-        .withVersion("1.22")
-        .withMinorVersionAutoUpgrade()
-        .withPublicSetting("authentication", Map.of("managedIdentity",
-            Map.of("identifier-name", "mi_res_id", "identifier-value", petId)))
-        .attach().apply();
+  @Traced
+  private void addMonitorAgentToVm(FlightContext context, String vmId) {
+    var extension =
+        getComputeManager(context)
+            .virtualMachines()
+            .getById(vmId)
+            .update()
+            .defineNewExtension("AzureMonitorLinuxAgent")
+            .withPublisher("Microsoft.Azure.Monitor")
+            .withType("AzureMonitorLinuxAgent")
+            .withVersion("1.22")
+            .withMinorVersionAutoUpgrade();
+
+    // use the pet identity if one is defined, otherwise a system identity will be used
+    Optional.ofNullable(context.getWorkingMap().get(AzureVmHelper.WORKING_MAP_PET_ID, String.class))
+        .ifPresent(
+            petId ->
+                extension.withPublicSetting(
+                    "authentication",
+                    Map.of(
+                        "managedIdentity",
+                        Map.of("identifier-name", "mi_res_id", "identifier-value", petId))));
+
+    extension.attach().apply();
   }
 
   private MonitorManager getMonitorManager(FlightContext context) {
@@ -123,7 +133,8 @@ public class EnableVmLoggingStep implements Step {
             new BearerToken(userRequest.getRequiredToken()), resource.getWorkspaceId());
 
     return listLandingZoneResources(
-        new BearerToken(userRequest.getRequiredToken()), lzId, ResourcePurpose.SHARED_RESOURCE).stream()
+            new BearerToken(userRequest.getRequiredToken()), lzId, ResourcePurpose.SHARED_RESOURCE)
+        .stream()
         .filter(r -> DATA_COLLECTION_RULES_TYPE.equalsIgnoreCase(r.getResourceType()))
         .findFirst();
   }
