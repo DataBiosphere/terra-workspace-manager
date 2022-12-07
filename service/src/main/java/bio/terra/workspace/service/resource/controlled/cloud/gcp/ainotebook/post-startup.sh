@@ -176,6 +176,9 @@ sudo -u "${JUPYTER_USER}" sh -c "echo \"export GOOGLE_CLOUD_PROJECT='${GOOGLE_PR
 # and is specific to the GCP project backing the workspace.
 sudo -u "${JUPYTER_USER}" sh -c "echo \"export GOOGLE_SERVICE_ACCOUNT_EMAIL='${PET_SA_EMAIL}'\" >> /home/${JUPYTER_USER}/.bash_profile"
 
+# restart jupyterlab service to load environment variables set in post startup script
+sudo systemctl restart jupyter.service
+
 ###############
 # git setup
 ###############
@@ -194,9 +197,6 @@ fi
 
 # Generate cromwell.conf
 sudo -u "${JUPYTER_USER}" sh -c "terra cromwell generate-config"
-
-# restart jupyterlab service to load environment variables set in post startup script
-sudo systemctl restart jupyter.service
 
 # Attempt to clone all the git repo references in the workspace. If the user's ssh key does not exist or doesn't have access
 # to the git references, the corresponding git repo cloning will be skipped.
