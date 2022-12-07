@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.folder;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
+import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -269,7 +270,15 @@ public class FolderServiceTest extends BaseConnectedTest {
 
   public Folder createFolder(String displayName, UUID folderId, @Nullable UUID parentFolderId) {
     return folderService.createFolder(
-        new Folder(folderId, workspaceId, displayName, null, parentFolderId, Map.of()));
+        new Folder(
+            folderId,
+            workspaceId,
+            displayName,
+            null,
+            parentFolderId,
+            Map.of(),
+            DEFAULT_USER_EMAIL,
+            null));
   }
 
   private static ControlledResourceFields createControlledResourceCommonFieldWithFolderId(

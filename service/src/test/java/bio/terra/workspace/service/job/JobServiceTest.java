@@ -111,7 +111,6 @@ class JobServiceTest extends BaseUnitTest {
 
     List<String> jobIds1 = new ArrayList<>();
     UUID workspace1 = WorkspaceUnitTestUtils.createWorkspaceWithoutGcpContext(workspaceDao);
-    ;
     for (int i = 0; i < 3; i++) {
       String jobId = runFlight(workspace1, makeDescription(i));
       jobIds1.add(jobId);
@@ -119,7 +118,7 @@ class JobServiceTest extends BaseUnitTest {
 
     List<String> jobIds2 = new ArrayList<>();
     UUID workspace2 = WorkspaceUnitTestUtils.createWorkspaceWithoutGcpContext(workspaceDao);
-    ;
+
     for (int i = 0; i < 4; i++) {
       String jobId = runFlight(workspace2, makeDescription(i));
       jobIds2.add(jobId);

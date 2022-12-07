@@ -22,6 +22,7 @@ import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenc
 import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -49,7 +50,9 @@ public class ReferencedTerraWorkspaceResource extends ReferencedResource {
       @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
       @JsonProperty("referencedWorkspaceId") UUID referencedWorkspaceId,
       @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
-      @JsonProperty("properties") Map<String, String> properties) {
+      @JsonProperty("properties") Map<String, String> properties,
+      @JsonProperty("createdByEmail") String createdByEmail,
+      @JsonProperty("createdDate") OffsetDateTime createdDate) {
     super(
         workspaceId,
         resourceId,
@@ -57,7 +60,9 @@ public class ReferencedTerraWorkspaceResource extends ReferencedResource {
         description,
         cloningInstructions,
         resourceLineage,
-        properties);
+        properties,
+        createdByEmail,
+        createdDate);
     this.referencedWorkspaceId = referencedWorkspaceId;
     validate();
   }

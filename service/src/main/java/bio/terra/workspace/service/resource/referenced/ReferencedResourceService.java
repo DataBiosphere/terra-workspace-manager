@@ -202,6 +202,7 @@ public class ReferencedResourceService {
       @Nullable UUID destinationFolderId,
       @Nullable String name,
       @Nullable String description,
+      String createdByEmail,
       AuthenticatedUserRequest userRequest) {
     ReferencedResource destinationResource =
         sourceReferencedResource
@@ -210,10 +211,10 @@ public class ReferencedResourceService {
                 destinationResourceId,
                 destinationFolderId,
                 name,
-                description)
+                description,
+                createdByEmail)
             .castToReferencedResource();
 
-    // launch the creation flight
     return createReferenceResourceForClone(destinationResource, userRequest);
   }
 }

@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_LOCATION;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_NETWORK_NAME;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_REGION;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_SUBNETWORK_NAME;
@@ -19,6 +20,7 @@ import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.compute.model.Subnetwork;
 import com.google.api.services.compute.model.SubnetworkList;
 import com.google.api.services.compute.model.Zone;
+import com.google.api.services.compute.model.ZoneList;
 import java.io.IOException;
 import org.springframework.http.HttpStatus;
 
@@ -48,7 +50,9 @@ public class RetrieveNetworkNameStep implements Step {
     CloudComputeCow compute = crlService.getCloudComputeCow();
     SubnetworkList subnetworks;
     try {
-      String region = getRegionForNotebook(projectId);
+      String location = getValidLocation(projectId);
+      flightContext.getWorkingMap().put(CREATE_NOTEBOOK_LOCATION, location);
+      String region = getRegionForNotebook(projectId, location);
       flightContext.getWorkingMap().put(CREATE_NOTEBOOK_REGION, region);
       subnetworks = compute.subnetworks().list(projectId, region).execute();
     } catch (IOException e) {
@@ -58,18 +62,28 @@ public class RetrieveNetworkNameStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
-  private String getRegionForNotebook(String projectId) throws IOException {
+  private String getValidLocation(String projectId) throws IOException {
+    String location = resource.getLocation();
+    ZoneList zoneList = crlService.getCloudComputeCow().zones().list(projectId).execute();
+
+    return zoneList.getItems().stream()
+        .filter(zone -> extractNameFromUrl(zone.getRegion()).equalsIgnoreCase(location))
+        .map(zone -> zone.getName())
+        .sorted()
+        .findAny()
+        .orElse(location);
+  }
+
+  private String getRegionForNotebook(String projectId, String location) throws IOException {
     try {
       // GCP is a little loose with its zone/location naming. An AI notebook location has the
       // same id as a GCE zone. Use the location to look up the zone.
-      Zone zone =
-          crlService.getCloudComputeCow().zones().get(projectId, resource.getLocation()).execute();
+      Zone zone = crlService.getCloudComputeCow().zones().get(projectId, location).execute();
       return extractNameFromUrl(zone.getRegion());
     } catch (GoogleJsonResponseException e) {
       if (e.getStatusCode() == HttpStatus.NOT_FOUND.value()) {
         // Throw a better error message if the location isn't known.
-        throw new BadRequestException(
-            String.format("Unsupported location '%s'", resource.getLocation()));
+        throw new BadRequestException(String.format("Unsupported location '%s'", location));
       }
       throw e;
     }

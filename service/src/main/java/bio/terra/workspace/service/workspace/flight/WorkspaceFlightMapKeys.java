@@ -41,6 +41,7 @@ public final class WorkspaceFlightMapKeys {
     public static final String CREATE_NOTEBOOK_NETWORK_NAME = "createNotebookNetworkName";
     public static final String CREATE_NOTEBOOK_PARAMETERS = "createNotebookParameters";
     public static final String CREATE_NOTEBOOK_REGION = "createNotebookRegion";
+    public static final String CREATE_NOTEBOOK_LOCATION = "createNotebookLocation";
     public static final String CREATE_NOTEBOOK_SUBNETWORK_NAME = "createNotebookSubnetworkName";
     public static final String NOTEBOOK_PET_SERVICE_ACCOUNT = "notebookPetServiceAccount";
 
@@ -70,8 +71,6 @@ public final class WorkspaceFlightMapKeys {
     public static final String DESTINATION_RESOURCE_ID = "destinationResourceId";
     public static final String DESTINATION_FOLDER_ID = "destinationFolderId";
     public static final String DESTINATION_CONTAINER_NAME = "destinationContainerName";
-    public static final String DESTINATION_STORAGE_ACCOUNT_RESOURCE_ID =
-        "destinationStorageAccountResourceId";
   }
 
   public static class FolderKeys {

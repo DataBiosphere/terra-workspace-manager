@@ -41,7 +41,6 @@ public class WorkspaceCloneUtils {
    * Builds an Azure storage container resource object from a source container
    *
    * @param sourceContainer Source container from which to derive common resource fields
-   * @param storageAccountId Destination Azure storage account resource ID
    * @param destinationWorkspaceId Destination workspace ID
    * @param destinationResourceId Destination resource ID for the new container object
    * @param name WSM-internal resource name
@@ -51,18 +50,22 @@ public class WorkspaceCloneUtils {
    */
   public static ControlledAzureStorageContainerResource buildDestinationControlledAzureContainer(
       ControlledAzureStorageContainerResource sourceContainer,
-      UUID storageAccountId,
       UUID destinationWorkspaceId,
       UUID destinationResourceId,
       String name,
       @Nullable String description,
-      String cloudInstanceName) {
+      String cloudInstanceName,
+      String createdByEmail) {
     return ControlledAzureStorageContainerResource.builder()
         .storageContainerName(cloudInstanceName)
-        .storageAccountId(storageAccountId)
         .common(
             sourceContainer.buildControlledCloneResourceCommonFields(
-                destinationWorkspaceId, destinationResourceId, null, name, description))
+                destinationWorkspaceId,
+                destinationResourceId,
+                null,
+                name,
+                description,
+                createdByEmail))
         .build();
   }
 
@@ -75,7 +78,8 @@ public class WorkspaceCloneUtils {
       String name,
       @Nullable String description,
       String cloudInstanceName,
-      String destinationProjectId) {
+      String destinationProjectId,
+      String createdByEmail) {
     return ControlledBigQueryDatasetResource.builder()
         .projectId(destinationProjectId)
         .datasetName(cloudInstanceName)
@@ -85,7 +89,8 @@ public class WorkspaceCloneUtils {
                 destinationResourceId,
                 destinationFolderId,
                 name,
-                description))
+                description,
+                createdByEmail))
         .build();
   }
 
@@ -96,7 +101,8 @@ public class WorkspaceCloneUtils {
       @Nullable UUID destinationFolderId,
       String name,
       @Nullable String description,
-      String cloudInstanceName) {
+      String cloudInstanceName,
+      String createdByEmail) {
     return ControlledGcsBucketResource.builder()
         .bucketName(cloudInstanceName)
         .common(
@@ -105,7 +111,8 @@ public class WorkspaceCloneUtils {
                 destinationResourceId,
                 destinationFolderId,
                 name,
-                description))
+                description,
+                createdByEmail))
         .build();
   }
 }

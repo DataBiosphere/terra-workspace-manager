@@ -179,7 +179,10 @@ landingzone:
     tracing-enabled: true
     retention-check-interval: 1d
     completed-flight-retention: 7d
-  sam.base-path: ${env.urls.sam}
+  sam:
+    base-path: ${env.urls.sam}
+    landing-zone-resource-users:
+      - leonardo-prod@broad-dsde-prod.iam.gserviceaccount.com
   bpm.base-path: ${env.urls.bpm}
 
 # Feature flags

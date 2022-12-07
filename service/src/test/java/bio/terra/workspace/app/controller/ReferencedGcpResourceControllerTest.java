@@ -3,12 +3,10 @@ package bio.terra.workspace.app.controller;
 import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeBqDataTableReferenceRequestBody;
 import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeDataRepoSnapshotReferenceRequestBody;
 import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeDefaultReferencedResourceFieldsApi;
-import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeGcpBqDatasetReferenceRequestBody;
 import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeGcsBucketReferenceRequestBody;
 import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeGcsObjectReferenceRequestBody;
 import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeGitRepoReferenceRequestBody;
 import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_DATA_REPO_SNAPSHOTS_V1_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_GCP_BIG_QUERY_DATASETS_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_GCP_BIG_QUERY_DATA_TABLE_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_GCP_GCS_BUCKETS_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_GCP_GCS_OBJECTS_V1_PATH_FORMAT;
@@ -17,6 +15,7 @@ import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties.FOLDER_ID_KEY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -25,15 +24,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import bio.terra.workspace.app.controller.shared.PropertiesUtils;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.utils.MockMvcUtils;
+import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiCreateDataRepoSnapshotReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateGcpBigQueryDataTableReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateGcpBigQueryDatasetReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateGcpGcsBucketReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateGcpGcsObjectReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateGitRepoReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableResource;
-import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsObjectResource;
 import bio.terra.workspace.generated.model.ApiGitRepoResource;
@@ -70,6 +68,8 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
             new UserStatusInfo()
                 .userEmail(USER_REQUEST.getEmail())
                 .userSubjectId(USER_REQUEST.getSubjectId()));
+    when(mockSamService().getUserEmailFromSamAndRethrowOnInterrupt(any()))
+        .thenReturn(USER_REQUEST.getEmail());
     // Needed for assertion that requester has role on workspace.
     when(mockSamService().listRequesterRoles(any(), any(), any()))
         .thenReturn(List.of(WsmIamRole.OWNER));
@@ -141,20 +141,31 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
   }
 
   @Test
-  public void createReferencedBqDatasetResource_commonFieldsAndAttributesCorrectlyPopulated()
-      throws Exception {
+  public void cloneReferencedBqDatasetResource_copyDefinition_throws400() throws Exception {
     UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
-    ApiCreateGcpBigQueryDatasetReferenceRequestBody requestBody =
-        makeGcpBqDatasetReferenceRequestBody();
 
-    ApiGcpBigQueryDatasetResource createdResource =
-        createReferencedBigQueryDatasetResource(workspaceId, requestBody);
+    mockMvcUtils.cloneReferencedBqDataset(
+        USER_REQUEST,
+        workspaceId,
+        /*sourceResourceId=*/ UUID.randomUUID(),
+        /*destWorkspaceId=*/ workspaceId,
+        ApiCloningInstructionsEnum.DEFINITION,
+        /*destResourceName=*/ null,
+        HttpStatus.SC_BAD_REQUEST);
+  }
 
-    assertReferenceResourceCommonFields(requestBody.getMetadata(), createdResource.getMetadata());
-    assertEquals(
-        requestBody.getDataset().getDatasetId(), createdResource.getAttributes().getDatasetId());
-    assertEquals(
-        requestBody.getDataset().getProjectId(), createdResource.getAttributes().getProjectId());
+  @Test
+  public void cloneReferencedBqDatasetResource_copyResource_throws400() throws Exception {
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+
+    mockMvcUtils.cloneReferencedBqDataset(
+        USER_REQUEST,
+        workspaceId,
+        /*sourceResourceId=*/ UUID.randomUUID(),
+        /*destWorkspaceId=*/ workspaceId,
+        ApiCloningInstructionsEnum.RESOURCE,
+        /*destResourceName=*/ null,
+        HttpStatus.SC_BAD_REQUEST);
   }
 
   @Test
@@ -224,18 +235,6 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
     return objectMapper.readValue(serializedResponse, ApiGcpGcsObjectResource.class);
   }
 
-  private ApiGcpBigQueryDatasetResource createReferencedBigQueryDatasetResource(
-      UUID workspaceId, ApiCreateGcpBigQueryDatasetReferenceRequestBody requestBody)
-      throws Exception {
-    var request = objectMapper.writeValueAsString(requestBody);
-
-    String serializedResponse =
-        createReferencedResourceAndGetSerializedResponse(
-            workspaceId, request, REFERENCED_GCP_BIG_QUERY_DATASETS_V1_PATH_FORMAT);
-
-    return objectMapper.readValue(serializedResponse, ApiGcpBigQueryDatasetResource.class);
-  }
-
   private ApiGcpBigQueryDataTableResource createReferencedBigQueryDataTableResource(
       UUID workspaceId, ApiCreateGcpBigQueryDataTableReferenceRequestBody requestBody)
       throws Exception {
@@ -282,5 +281,7 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
     assertEquals(expectedFields.getDescription(), resourceFields.getDescription());
     assertEquals(expectedFields.getCloningInstructions(), resourceFields.getCloningInstructions());
     assertEquals(expectedFields.getProperties(), resourceFields.getProperties());
+    assertEquals(USER_REQUEST.getEmail(), resourceFields.getCreatedBy());
+    assertNotNull(resourceFields.getCreatedDate());
   }
 }

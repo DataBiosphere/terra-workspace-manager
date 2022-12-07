@@ -41,7 +41,6 @@ import org.springframework.test.web.servlet.MockMvc;
 
 /** ControlledGcpResourceApiController unit tests. */
 public class ControlledGcpResourceApiControllerTest extends BaseUnitTestMockGcpCloudContextService {
-
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
   @Autowired ObjectMapper objectMapper;
@@ -59,6 +58,8 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTestMockGcpC
             new UserStatusInfo()
                 .userEmail(USER_REQUEST.getEmail())
                 .userSubjectId(USER_REQUEST.getSubjectId()));
+    when(mockSamService().getUserEmailFromSamAndRethrowOnInterrupt(any()))
+        .thenReturn(USER_REQUEST.getEmail());
   }
 
   @Test
@@ -72,21 +73,25 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTestMockGcpC
         ApiCloningInstructionsEnum.REFERENCE,
         /*destResourceName=*/ null,
         "datasetName",
-        HttpStatus.SC_BAD_REQUEST,
+        /*destLocation=*/ null,
+        List.of(HttpStatus.SC_BAD_REQUEST),
         /*shouldUndo=*/ false);
   }
 
   @Test
   public void cloneGcsBucket_badRequest_throws400() throws Exception {
     // Cannot set bucketName for COPY_REFERENCE clone
-    mockMvcUtils.cloneControlledGcsBucketAsyncError(
+    mockMvcUtils.cloneControlledGcsBucketAsync(
         USER_REQUEST,
         /*sourceWorkspaceId=*/ UUID.randomUUID(),
         /*sourceResourceId=*/ UUID.randomUUID(),
         /*destWorkspaceId=*/ UUID.randomUUID(),
         ApiCloningInstructionsEnum.REFERENCE,
+        /*destResourceName=*/ null,
         "bucketName",
-        HttpStatus.SC_BAD_REQUEST);
+        /*destLocation=*/ null,
+        List.of(HttpStatus.SC_BAD_REQUEST),
+        /*shouldUndo=*/ false);
   }
 
   @Test

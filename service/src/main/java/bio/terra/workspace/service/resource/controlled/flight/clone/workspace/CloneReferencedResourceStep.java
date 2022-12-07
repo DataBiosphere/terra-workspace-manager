@@ -6,6 +6,8 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.ResourceDao;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
@@ -22,16 +24,19 @@ import javax.annotation.Nullable;
 
 public class CloneReferencedResourceStep implements Step {
 
+  private final SamService samService;
   private final ResourceDao resourceDao;
   private final ReferencedResource resource;
   private final UUID destinationResourceId;
   private final UUID destinationFolderId;
 
   public CloneReferencedResourceStep(
+      SamService samService,
       ResourceDao resourceDao,
       ReferencedResource resource,
       UUID destinationResourceId,
       @Nullable UUID destinationFolderId) {
+    this.samService = samService;
     this.resourceDao = resourceDao;
     this.resource = resource;
     this.destinationResourceId = destinationResourceId;
@@ -57,6 +62,11 @@ public class CloneReferencedResourceStep implements Step {
               .getInputParameters()
               .get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
 
+      AuthenticatedUserRequest userRequest =
+          FlightUtils.getRequired(
+              context.getInputParameters(),
+              JobMapKeys.AUTH_USER_INFO.getKeyName(),
+              AuthenticatedUserRequest.class);
       ReferencedResource destinationResource =
           resource
               .buildReferencedClone(
@@ -64,7 +74,8 @@ public class CloneReferencedResourceStep implements Step {
                   destinationResourceId,
                   destinationFolderId,
                   resource.getName(),
-                  resource.getDescription())
+                  resource.getDescription(),
+                  samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest))
               .castToReferencedResource();
 
       cloneDetails

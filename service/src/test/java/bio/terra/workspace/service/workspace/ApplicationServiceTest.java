@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
 
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
@@ -14,6 +15,7 @@ import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.RawDaoTestFixture;
 import bio.terra.workspace.db.ResourceDao;
+import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.exception.ApplicationNotFoundException;
 import bio.terra.workspace.db.exception.InvalidApplicationStateException;
 import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
@@ -36,6 +38,7 @@ import bio.terra.workspace.service.workspace.model.WsmWorkspaceApplication;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -89,26 +92,32 @@ public class ApplicationServiceTest extends BaseUnitTest {
   @Autowired JobService jobService;
   @Autowired RawDaoTestFixture rawDaoTestFixture;
   @Autowired ResourceDao resourceDao;
+  @Autowired WorkspaceDao workspaceDao;
 
+  private UUID workspaceId1;
   private Workspace workspace;
+  private UUID workspaceId2;
   private Workspace workspace2;
 
   @BeforeEach
   void setup() throws Exception {
     // Set up so all spend profile and workspace checks are successful
-    Mockito.when(
-            mockSamService()
-                .isAuthorized(
-                    Mockito.any(),
-                    Mockito.eq(SamResource.SPEND_PROFILE),
-                    Mockito.any(),
-                    Mockito.eq(SamSpendProfileAction.LINK)))
+    when(mockSamService()
+            .isAuthorized(
+                Mockito.any(),
+                Mockito.eq(SamResource.SPEND_PROFILE),
+                Mockito.any(),
+                Mockito.eq(SamSpendProfileAction.LINK)))
         .thenReturn(true);
-    Mockito.when(
-            mockSamService()
-                .isAuthorized(
-                    Mockito.any(), Mockito.eq(SamResource.WORKSPACE), Mockito.any(), Mockito.any()))
+    when(mockSamService()
+            .isAuthorized(
+                Mockito.any(), Mockito.eq(SamResource.WORKSPACE), Mockito.any(), Mockito.any()))
         .thenReturn(true);
+    when(mockSamService().getUserStatusInfo(USER_REQUEST))
+        .thenReturn(
+            new UserStatusInfo()
+                .userEmail(USER_REQUEST.getEmail())
+                .userSubjectId(USER_REQUEST.getSubjectId()));
 
     appService.enableTestMode();
     // Populate the applications - this should be idempotent since we are
@@ -154,6 +163,7 @@ public class ApplicationServiceTest extends BaseUnitTest {
     assertThrows(
         ApplicationNotFoundException.class,
         () -> appService.enableWorkspaceApplication(USER_REQUEST, workspace, UNKNOWN_ID));
+
     Workspace fakeWorkspace = WorkspaceFixtures.buildMcWorkspace();
     // This calls a service method, rather than a controller method, so it does not hit the authz
     // check. Instead, we validate that inserting this into the DB violates constraints.

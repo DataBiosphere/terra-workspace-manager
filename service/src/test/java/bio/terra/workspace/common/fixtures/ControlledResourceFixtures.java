@@ -4,6 +4,7 @@ import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertM
 
 import bio.terra.stairway.ShortUUID;
 import bio.terra.workspace.common.utils.AzureVmUtils;
+import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
@@ -103,8 +104,8 @@ public class ControlledResourceFixtures {
   public static ApiGcpBigQueryDatasetCreationParameters getGcpBigQueryDatasetCreationParameters() {
     return new ApiGcpBigQueryDatasetCreationParameters()
         .datasetId(uniqueDatasetId())
-        .defaultPartitionLifetime(5901)
-        .defaultTableLifetime(5900)
+        .defaultPartitionLifetime(5901L)
+        .defaultTableLifetime(5900L)
         .location("us-central1");
   }
 
@@ -311,7 +312,9 @@ public class ControlledResourceFixtures {
         null,
         bucketName,
         /*resourceLineage=*/ null,
-        Map.of());
+        Map.of(),
+        MockMvcUtils.DEFAULT_USER_EMAIL,
+        /*createdDate=*/ null);
   }
 
   public static ControlledAzureIpResource getAzureIp(String ipName, String region) {
@@ -330,7 +333,9 @@ public class ControlledResourceFixtures {
         ipName,
         region,
         /*resourceLineage=*/ null,
-        /*properties=*/ Map.of());
+        /*properties=*/ Map.of(),
+        MockMvcUtils.DEFAULT_USER_EMAIL,
+        /*createdDate*/ null);
   }
 
   public static ControlledAzureRelayNamespaceResource getAzureRelayNamespace(
@@ -349,7 +354,9 @@ public class ControlledResourceFixtures {
         namespaceName,
         region,
         /*resourceLineage=*/ null,
-        /*properties=*/ Map.of());
+        /*properties=*/ Map.of(),
+        MockMvcUtils.DEFAULT_USER_EMAIL,
+        /*createdDate*/ null);
   }
 
   public static ControlledAzureDiskResource getAzureDisk(String diskName, String region, int size) {
@@ -369,7 +376,9 @@ public class ControlledResourceFixtures {
         region,
         size,
         /*resourceLineage=*/ null,
-        /*properties=*/ Map.of());
+        /*properties=*/ Map.of(),
+        MockMvcUtils.DEFAULT_USER_EMAIL,
+        /*createdDate*/ null);
   }
 
   public static ControlledAzureNetworkResource getAzureNetwork(
@@ -392,7 +401,9 @@ public class ControlledResourceFixtures {
         creationParameters.getSubnetAddressCidr(),
         creationParameters.getRegion(),
         /*resourceLineage=*/ null,
-        /*properties=*/ Map.of());
+        /*properties=*/ Map.of(),
+        MockMvcUtils.DEFAULT_USER_EMAIL,
+        /*createdDate*/ null);
   }
 
   public static ControlledAzureStorageResource getAzureStorage(
@@ -412,7 +423,9 @@ public class ControlledResourceFixtures {
         storageAccountName,
         region,
         /*resourceLineage=*/ null,
-        /*properties=*/ Map.of());
+        /*properties=*/ Map.of(),
+        MockMvcUtils.DEFAULT_USER_EMAIL,
+        /*createdDate*/ null);
   }
 
   public static ControlledAzureStorageResource getAzureStorage(
@@ -453,7 +466,9 @@ public class ControlledResourceFixtures {
         storageAccountId,
         storageContainerName,
         /*resourceLineage=*/ null,
-        /*properties=*/ Map.of());
+        /*properties=*/ Map.of(),
+        MockMvcUtils.DEFAULT_USER_EMAIL,
+        /*createdDate*/ null);
   }
 
   public static ControlledAzureStorageContainerResource getAzureStorageContainer(
@@ -465,7 +480,7 @@ public class ControlledResourceFixtures {
       String resourceDescription) {
     return ControlledAzureStorageContainerResource.builder()
         .common(
-            ControlledResourceFields.builder()
+            makeDefaultControlledResourceFieldsBuilder()
                 .workspaceUuid(workspaceUuid)
                 .resourceId(containerResourceId)
                 .name(resourceName)
@@ -501,7 +516,9 @@ public class ControlledResourceFixtures {
         creationParameters.getNetworkId(),
         creationParameters.getDiskId(),
         /*resourceLineage=*/ null,
-        /*properties=*/ Map.of());
+        /*properties=*/ Map.of(),
+        MockMvcUtils.DEFAULT_USER_EMAIL,
+        /*createdDate*/ null);
   }
 
   private ControlledResourceFixtures() {}
@@ -518,7 +535,8 @@ public class ControlledResourceFixtures {
         .assignedUser(null)
         .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
         .managedBy(ManagedByType.MANAGED_BY_USER)
-        .properties(DEFAULT_RESOURCE_PROPERTIES);
+        .properties(DEFAULT_RESOURCE_PROPERTIES)
+        .createdByEmail(MockMvcUtils.DEFAULT_USER_EMAIL);
   }
 
   /**
@@ -582,12 +600,12 @@ public class ControlledResourceFixtures {
 
   public static final ApiGcpBigQueryDatasetUpdateParameters BQ_DATASET_UPDATE_PARAMETERS_NEW =
       new ApiGcpBigQueryDatasetUpdateParameters()
-          .defaultTableLifetime(3600)
-          .defaultPartitionLifetime(3601);
+          .defaultTableLifetime(3600L)
+          .defaultPartitionLifetime(3601L);
   public static final ApiGcpBigQueryDatasetUpdateParameters BQ_DATASET_UPDATE_PARAMETERS_PREV =
       new ApiGcpBigQueryDatasetUpdateParameters()
-          .defaultTableLifetime(4800)
-          .defaultPartitionLifetime(4801);
+          .defaultTableLifetime(4800L)
+          .defaultPartitionLifetime(4801L);
   public static final Dataset BQ_DATASET_WITH_EXPIRATION =
       new Dataset().setDefaultTableExpirationMs(5900000L).setDefaultPartitionExpirationMs(5901000L);
   public static final Dataset BQ_DATASET_WITHOUT_EXPIRATION = new Dataset();
@@ -611,12 +629,22 @@ public class ControlledResourceFixtures {
         .cloningInstructions(CloningInstructions.COPY_NOTHING)
         .assignedUser("myusername@mydomain.mine")
         .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
-        .managedBy(ManagedByType.MANAGED_BY_USER);
+        .managedBy(ManagedByType.MANAGED_BY_USER)
+        .createdByEmail(MockMvcUtils.DEFAULT_USER_EMAIL);
   }
 
   public static ControlledAiNotebookInstanceResource.Builder makeDefaultAiNotebookInstance() {
     return ControlledAiNotebookInstanceResource.builder()
         .common(makeNotebookCommonFieldsBuilder().build())
+        .instanceId(TestUtils.appendRandomNumber("my-cloud-id"))
+        .location("us-east1-b")
+        .projectId("my-project-id");
+  }
+
+  public static ControlledAiNotebookInstanceResource.Builder makeDefaultAiNotebookInstance(
+      UUID workspaceId) {
+    return ControlledAiNotebookInstanceResource.builder()
+        .common(makeNotebookCommonFieldsBuilder().workspaceUuid(workspaceId).build())
         .instanceId(TestUtils.appendRandomNumber("my-cloud-id"))
         .location("us-east1-b")
         .projectId("my-project-id");

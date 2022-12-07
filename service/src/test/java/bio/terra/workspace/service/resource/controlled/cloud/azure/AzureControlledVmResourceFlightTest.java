@@ -110,7 +110,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
     ControlledAzureVmResource resource =
         ControlledAzureVmResource.builder()
             .common(
-                ControlledResourceFields.builder()
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                     .workspaceUuid(workspaceUuid)
                     .resourceId(resourceId)
                     .name(getAzureName("vm"))
@@ -181,7 +181,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
     ControlledAzureVmResource resource =
         ControlledAzureVmResource.builder()
             .common(
-                ControlledResourceFields.builder()
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                     .workspaceUuid(workspaceUuid)
                     .resourceId(resourceId)
                     .name(getAzureName("vm"))
@@ -251,7 +251,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
     ControlledAzureVmResource vmResource =
         ControlledAzureVmResource.builder()
             .common(
-                ControlledResourceFields.builder()
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                     .workspaceUuid(workspaceUuid)
                     .resourceId(resourceId)
                     .name(getAzureName("vm"))
@@ -339,7 +339,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
     ControlledAzureVmResource resource =
         ControlledAzureVmResource.builder()
             .common(
-                ControlledResourceFields.builder()
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                     .workspaceUuid(workspaceUuid)
                     .resourceId(resourceId)
                     .name(getAzureName("vm"))
@@ -410,7 +410,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
     ControlledAzureVmResource resource =
         ControlledAzureVmResource.builder()
             .common(
-                ControlledResourceFields.builder()
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                     .workspaceUuid(workspaceUuid)
                     .resourceId(resourceId)
                     .name(getAzureName("vm"))
@@ -531,7 +531,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
     ControlledAzureDiskResource resource =
         ControlledAzureDiskResource.builder()
             .common(
-                ControlledResourceFields.builder()
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                     .workspaceUuid(workspaceUuid)
                     .resourceId(resourceId)
                     .name(getAzureName("disk"))
@@ -569,7 +569,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
     ControlledAzureIpResource resource =
         ControlledAzureIpResource.builder()
             .common(
-                ControlledResourceFields.builder()
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                     .workspaceUuid(workspaceUuid)
                     .resourceId(resourceId)
                     .name(getAzureName("ip"))
@@ -607,7 +607,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
     ControlledAzureNetworkResource resource =
         ControlledAzureNetworkResource.builder()
             .common(
-                ControlledResourceFields.builder()
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                     .workspaceUuid(workspaceUuid)
                     .resourceId(resourceId)
                     .name(getAzureName("network"))

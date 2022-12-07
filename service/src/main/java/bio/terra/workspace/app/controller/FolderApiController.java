@@ -59,7 +59,6 @@ public class FolderApiController extends ControllerBase implements FolderApi {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceId, SamConstants.SamWorkspaceAction.WRITE);
-
     Folder folder =
         folderService.createFolder(
             new Folder(
@@ -68,7 +67,9 @@ public class FolderApiController extends ControllerBase implements FolderApi {
                 body.getDisplayName(),
                 body.getDescription(),
                 body.getParentFolderId(),
-                convertApiPropertyToMap(body.getProperties())));
+                convertApiPropertyToMap(body.getProperties()),
+                getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
+                /*createdDate=*/ null));
     return new ResponseEntity<>(buildFolder(folder), HttpStatus.OK);
   }
 
@@ -182,6 +183,8 @@ public class FolderApiController extends ControllerBase implements FolderApi {
         .displayName(folder.displayName())
         .description(folder.description())
         .parentFolderId(folder.parentFolderId())
-        .properties(convertMapToApiProperties(folder.properties()));
+        .properties(convertMapToApiProperties(folder.properties()))
+        .createdBy(folder.createdByEmail())
+        .createdDate(folder.createdDate());
   }
 }

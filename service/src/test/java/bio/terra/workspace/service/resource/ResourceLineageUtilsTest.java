@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource;
 
+import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import bio.terra.workspace.common.BaseUnitTest;
@@ -13,6 +14,7 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.any.datareposnapshot.ReferencedDataRepoSnapshotAttributes;
 import bio.terra.workspace.service.resource.referenced.cloud.any.datareposnapshot.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -37,7 +39,9 @@ public class ResourceLineageUtilsTest extends BaseUnitTest {
             "terra",
             "polaroid",
             /*resourceLineage=*/ null,
-            propertyMap);
+            propertyMap,
+            DEFAULT_USER_EMAIL,
+            /*createdDate*/ null);
 
     assertEquals(new ArrayList<>(), resource.getResourceLineage());
   }
@@ -64,7 +68,9 @@ public class ResourceLineageUtilsTest extends BaseUnitTest {
             .cloningInstructions(CloningInstructions.COPY_REFERENCE)
             .attributes(attributesJson)
             .resourceLineage(null)
-            .properties(propertyMap);
+            .properties(propertyMap)
+            .createdByEmail(DEFAULT_USER_EMAIL)
+            .createdDate(OffsetDateTime.now());
 
     var resource = new ReferencedDataRepoSnapshotResource(dbResource);
     assertEquals(new ArrayList<>(), resource.getResourceLineage());
@@ -89,7 +95,9 @@ public class ResourceLineageUtilsTest extends BaseUnitTest {
             "terra",
             "polaroid",
             lineage,
-            propertyMap);
+            propertyMap,
+            DEFAULT_USER_EMAIL,
+            /*createdDate*/ null);
 
     assertEquals(lineage, resource.getResourceLineage());
   }
@@ -119,7 +127,9 @@ public class ResourceLineageUtilsTest extends BaseUnitTest {
             .cloningInstructions(CloningInstructions.COPY_REFERENCE)
             .attributes(attributesJson)
             .resourceLineage(lineage)
-            .properties(propertyMap);
+            .properties(propertyMap)
+            .createdByEmail(DEFAULT_USER_EMAIL)
+            .createdDate(OffsetDateTime.now());
 
     var resource = new ReferencedDataRepoSnapshotResource(dbResource);
     assertEquals(lineage, resource.getResourceLineage());

@@ -1,6 +1,8 @@
 package bio.terra.workspace.common.fixtures;
 
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
+import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.common.utils.TestUtils.appendRandomNumber;
 
 import bio.terra.workspace.common.utils.TestUtils;
@@ -35,7 +37,8 @@ public class ReferenceResourceFixtures {
         .resourceId(UUID.randomUUID())
         .name(TestUtils.appendRandomNumber("a-referenced-resource"))
         .cloningInstructions(CloningInstructions.COPY_NOTHING)
-        .properties(DEFAULT_RESOURCE_PROPERTIES);
+        .properties(DEFAULT_RESOURCE_PROPERTIES)
+        .createdByEmail(DEFAULT_USER_EMAIL);
   }
 
   public static ReferencedDataRepoSnapshotResource makeDataRepoSnapshotResource(
@@ -52,7 +55,9 @@ public class ReferenceResourceFixtures {
         "terra",
         "polaroid",
         /*resourceLineage=*/ null,
-        /*properties*/ DEFAULT_RESOURCE_PROPERTIES);
+        /*properties*/ DEFAULT_RESOURCE_PROPERTIES,
+        DEFAULT_USER_EMAIL,
+        /*createdDate*/ null);
   }
 
   public static ReferencedBigQueryDatasetResource makeReferencedBqDatasetResource(
@@ -68,7 +73,9 @@ public class ReferenceResourceFixtures {
         projectId,
         bqDataset,
         /*resourceLineage=*/ null,
-        /*properties*/ DEFAULT_RESOURCE_PROPERTIES);
+        /*properties*/ DEFAULT_RESOURCE_PROPERTIES,
+        DEFAULT_USER_EMAIL,
+        /*createdDate*/ null);
   }
 
   public static ApiCreateDataRepoSnapshotReferenceRequestBody
@@ -128,7 +135,7 @@ public class ReferenceResourceFixtures {
   public static ApiReferenceResourceCommonFields makeDefaultReferencedResourceFieldsApi() {
     return new ApiReferenceResourceCommonFields()
         .name(appendRandomNumber("test_resource"))
-        .description("This is a referenced resource")
+        .description(RESOURCE_DESCRIPTION)
         .cloningInstructions(ApiCloningInstructionsEnum.NOTHING)
         .properties(convertMapToApiProperties(DEFAULT_RESOURCE_PROPERTIES));
   }

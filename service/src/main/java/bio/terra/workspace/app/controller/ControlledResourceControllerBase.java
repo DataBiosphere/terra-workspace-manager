@@ -41,6 +41,8 @@ public class ControlledResourceControllerBase extends ControllerBase {
     PrivateUserRole privateUserRole =
         computePrivateUserRole(workspaceUuid, apiCommonFields, userRequest);
 
+    String userEmail = getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest);
+
     return ControlledResourceFields.builder()
         .workspaceUuid(workspaceUuid)
         .resourceId(
@@ -57,6 +59,7 @@ public class ControlledResourceControllerBase extends ControllerBase {
         .managedBy(managedBy)
         .applicationId(controlledResourceService.getAssociatedApp(managedBy, userRequest))
         .properties(PropertiesUtils.convertApiPropertyToMap(apiCommonFields.getProperties()))
+        .createdByEmail(userEmail)
         .build();
   }
 }
