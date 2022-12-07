@@ -5,8 +5,10 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.app.configuration.external.AzureTestConfiguration;
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
+import bio.terra.workspace.common.utils.AzureTestUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -30,6 +32,7 @@ public class AzureWorkspaceTest extends BaseAzureConnectedTest {
   @Autowired private WorkspaceConnectedTestUtils testUtils;
   @Autowired private WorkspaceService workspaceService;
   @Autowired private AzureCloudContextService azureCloudContextService;
+  @Autowired private AzureTestUtils azureTestUtils;
   @MockBean private SamService mockSamService;
 
   @Test
@@ -89,7 +92,7 @@ public class AzureWorkspaceTest extends BaseAzureConnectedTest {
     String jobId = UUID.randomUUID().toString();
 
     workspaceService.createAzureCloudContext(
-        sourceWorkspace, jobId, userRequest, "/fake/value", null);
+        sourceWorkspace, jobId, userRequest, "/fake/value", azureTestUtils.getAzureCloudContext());
     jobService.waitForJob(jobId);
 
     assertTrue(
@@ -107,7 +110,7 @@ public class AzureWorkspaceTest extends BaseAzureConnectedTest {
             .createdByEmail(userRequest.getEmail())
             .build();
     String cloneJobId =
-        workspaceService.cloneWorkspace(sourceWorkspace, userRequest, null, destWorkspace);
+        workspaceService.cloneWorkspace(sourceWorkspace, userRequest, null, destWorkspace, azureTestUtils.getAzureCloudContext());
     jobService.waitForJob(cloneJobId);
 
     assertEquals(workspaceService.getWorkspace(destUUID), destWorkspace);
