@@ -114,13 +114,15 @@ jobs:
         ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
         ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
         ARTIFACTORY_REPO_KEY: "libs-snapshot-local"
-    - name: Auth to GCR
+    - name: Auth to Google
       if: steps.skiptest.outputs.is-bump == 'no'
-      uses: google-github-actions/setup-gcloud@v1
+      uses: google-github-actions/setup-auth@v1
       with:
         version: '411.0.0'
-        service_account_email: ${{ secrets.GCR_PUBLISH_EMAIL }}
-        service_account_key: ${{ secrets.GCR_PUBLISH_KEY }}
+        credentials_json: ${{ secrets.GCR_PUBLISH_KEY }}
+    - name: Setup gcloud
+      if: steps.skiptest.outputs.is-bump == 'no'
+      uses: google-github-actions/setup-gcloud@v1
     - name: Explicitly auth Docker for GCR
       if: steps.skiptest.outputs.is-bump == 'no'
       run: gcloud auth configure-docker --quiet
