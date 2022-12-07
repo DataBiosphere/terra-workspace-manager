@@ -87,6 +87,9 @@ components:
           format: uuid
         properties:
           $ref: '#/components/schemas/Properties'
+        region:
+          description: The canonical id for this location. For example, \'us-east1\'.
+          type: string
   
     DeleteControlledAzureResourceRequest:
       type: object
