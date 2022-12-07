@@ -118,7 +118,7 @@ jobs:
       if: steps.skiptest.outputs.is-bump == 'no'
       uses: google-github-actions/setup-gcloud@v1
       with:
-        version: '270.0.0'
+        version: '411.0.0'
         service_account_email: ${{ secrets.GCR_PUBLISH_EMAIL }}
         service_account_key: ${{ secrets.GCR_PUBLISH_KEY }}
     - name: Explicitly auth Docker for GCR
