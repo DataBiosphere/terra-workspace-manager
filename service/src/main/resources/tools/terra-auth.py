@@ -20,7 +20,7 @@ NOTEBOOK_NOT_FOUND = 6
 
 WSM_API_ENDPOINT = 'https://terra-mc-feature-dev-wsm.api.verily.com/api/workspaces/v1'
 INSTANCE_METADATA_FILE = '/opt/ml/metadata/resource-metadata.json'
-NOTEBOOK_METADATA_FILE = f'{os.path.expanduser("~")}/SageMaker/.terra/notebook_metadata.json'
+NOTEBOOK_METADATA_FILE = f'{os.path.expanduser("~")}/.terra/notebook_metadata.json'
 
 def parse_args():
     parser = argparse.ArgumentParser(description = 'Terra AWS Auth Helper')

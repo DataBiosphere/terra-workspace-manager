@@ -54,16 +54,18 @@ mkdir -p /home/ec2-user/.config
 ln -s /home/ec2-user/SageMaker/.config/gcloud /home/ec2-user/.config/gcloud
 
 # Install google auth python package in all conda environments
+pip download google-auth
 
 # Note that "base" is special environment name, include it there as well.
 for env in base /home/ec2-user/anaconda3/envs/*; do
-    source /home/ec2-user/anaconda3/bin/activate $(basename "$env")
     if [ $env = 'JupyterSystemEnv' ]; then
         continue
     fi
-    pip install google-auth
-    source /home/ec2-user/anaconda3/bin/deactivate
+    source /home/ec2-user/anaconda3/bin/activate $(basename "$env") && \
+    pip install google-auth && \
+    source /home/ec2-user/anaconda3/bin/deactivate &
 done
+wait
 
 # If we have ADC, attempt to re-configure at startup.
 if [ -f /home/ec2-user/.config/gcloud/application_default_credentials.json ]; then
