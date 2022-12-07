@@ -60,6 +60,7 @@ public class ControlledResourceControllerBase extends ControllerBase {
         .applicationId(controlledResourceService.getAssociatedApp(managedBy, userRequest))
         .properties(PropertiesUtils.convertApiPropertyToMap(apiCommonFields.getProperties()))
         .createdByEmail(userEmail)
+        .region()
         .build();
   }
 }

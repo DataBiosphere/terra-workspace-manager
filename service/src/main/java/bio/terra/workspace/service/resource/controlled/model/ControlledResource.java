@@ -34,6 +34,7 @@ public abstract class ControlledResource extends WsmResource {
   @Nullable private final PrivateResourceState privateResourceState;
   private final ManagedByType managedBy;
   private final String applicationId;
+  private final String region;
 
   public ControlledResource(
       UUID workspaceUuid,
@@ -60,13 +61,13 @@ public abstract class ControlledResource extends WsmResource {
         resourceLineage,
         properties,
         createdByEmail,
-        createdDate,
-        region);
+        createdDate);
     this.assignedUser = assignedUser;
     this.accessScope = accessScope;
     this.managedBy = managedBy;
     this.applicationId = applicationId;
     this.privateResourceState = privateResourceState;
+    this.region = region;
   }
 
   public ControlledResource(DbResource dbResource) {
@@ -74,11 +75,15 @@ public abstract class ControlledResource extends WsmResource {
     if (dbResource.getStewardshipType() != StewardshipType.CONTROLLED) {
       throw new InvalidMetadataException("Expected CONTROLLED");
     }
+    if (dbResource.getRegion() == null) {
+      throw new InvalidMetadataException("Controlled resource must have an associated region");
+    }
     this.assignedUser = dbResource.getAssignedUser().orElse(null);
     this.accessScope = dbResource.getAccessScope();
     this.managedBy = dbResource.getManagedBy();
     this.applicationId = dbResource.getApplicationId().orElse(null);
     this.privateResourceState = dbResource.getPrivateResourceState().orElse(null);
+    this.region = dbResource.getRegion();
   }
 
   public ControlledResource(ControlledResourceFields builder) {
@@ -91,13 +96,13 @@ public abstract class ControlledResource extends WsmResource {
         builder.getResourceLineage(),
         builder.getProperties(),
         builder.getCreatedByEmail(),
-        builder.getCreatedDate(),
-        builder.getRegion());
+        builder.getCreatedDate());
     this.assignedUser = builder.getAssignedUser();
     this.accessScope = builder.getAccessScope();
     this.managedBy = builder.getManagedBy();
     this.applicationId = builder.getApplicationId();
     this.privateResourceState = builder.getPrivateResourceState();
+    this.region = builder.getRegion();
   }
 
   /**
@@ -151,6 +156,10 @@ public abstract class ControlledResource extends WsmResource {
     return managedBy;
   }
 
+  public String getRegion() {
+    return region;
+  }
+
   public String getApplicationId() {
     return applicationId;
   }
@@ -190,7 +199,8 @@ public abstract class ControlledResource extends WsmResource {
     if (getResourceType() == null
         || attributesToJson() == null
         || getAccessScope() == null
-        || getManagedBy() == null) {
+        || getManagedBy() == null
+        || getRegion() == null) {
       throw new MissingRequiredFieldException("Missing required field for ControlledResource.");
     }
     if (getAssignedUser().isPresent() && getAccessScope() == AccessScopeType.ACCESS_SCOPE_SHARED) {

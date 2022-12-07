@@ -200,11 +200,5 @@ public class WsmResourceFields {
       this.createdDate = createdDate;
       return (T) this;
     }
-
-    @SuppressWarnings("unchecked")
-    public T region(String region) {
-      this.region = region;
-      return (T) this;
-    }
   }
 }
