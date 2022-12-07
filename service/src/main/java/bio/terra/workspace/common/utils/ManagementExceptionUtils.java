@@ -17,6 +17,9 @@ public class ManagementExceptionUtils {
   public static final String CONFLICT = "Conflict";
   public static final String SUBNETS_NOT_IN_SAME_VNET = "SubnetsNotInSameVnet";
   public static final String NIC_RESERVED_FOR_ANOTHER_VM = "NicReservedForAnotherVm";
+  public static final String SUBNET_IS_FULL = "SubnetIsFull";
+  public static final String IMAGE_NOT_FOUND = "ImageNotFound";
+  public static final String INVALID_PARAMETER = "InvalidParameter";
 
   /** Returns true iff the exception's code matches the supplied value. */
   public static boolean isExceptionCode(ManagementException ex, String exceptionCode) {

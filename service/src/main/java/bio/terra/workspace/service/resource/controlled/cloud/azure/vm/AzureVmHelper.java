@@ -54,8 +54,7 @@ public final class AzureVmHelper {
   public static StepResult deleteNetworkInterface(
       AzureCloudContext azureCloudContext,
       ComputeManager computeManager,
-      String networkInterfaceName)
-      throws InterruptedException {
+      String networkInterfaceName) {
     try {
       computeManager
           .networkManager()
@@ -86,7 +85,12 @@ public final class AzureVmHelper {
         // /subscriptions/3efc5bdf-be0e-44e7-b1d7-c08931e3c16c/resourceGroups/mrg-terra-integration-test-20211118/providers/Microsoft.Compute/virtualMachines/az-vm-b606ad7d-9b00-463d-9b6e-d70586d17eb2",
         //          "details": []
         // }
-        TimeUnit.SECONDS.sleep(NIC_RESERVED_FOR_ANOTHER_VM_ERROR_RETRY_SECONDS);
+        try {
+          TimeUnit.SECONDS.sleep(NIC_RESERVED_FOR_ANOTHER_VM_ERROR_RETRY_SECONDS);
+        } catch (InterruptedException ex) {
+          Thread.currentThread().interrupt();
+          return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
+        }
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
       }
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);

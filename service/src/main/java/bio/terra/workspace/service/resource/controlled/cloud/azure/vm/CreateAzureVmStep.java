@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class CreateAzureVmStep implements Step {
+
   private static final Logger logger = LoggerFactory.getLogger(CreateAzureVmStep.class);
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
@@ -160,28 +161,34 @@ public class CreateAzureVmStep implements Step {
     } catch (ManagementException e) {
       // Stairway steps may run multiple times, so we may already have created this resource. In all
       // other cases, surface the exception and attempt to retry.
-      if (ManagementExceptionUtils.isExceptionCode(e, ManagementExceptionUtils.CONFLICT)) {
-        logger.info(
-            "Azure Vm {} in managed resource group {} already exists",
-            resource.getVmName(),
-            azureCloudContext.getAzureResourceGroupId());
-        return StepResult.getStepResultSuccess();
-      }
-      if (ManagementExceptionUtils.isExceptionCode(
-          e, ManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
-        logger.info(
-            "Either the disk, ip, or network passed into this createVm does not exist "
-                + String.format(
-                    "%nResource Group: %s%n\tIp Name: %s%n\tNetwork Name: %s%n\tDisk Name: %s",
-                    azureCloudContext.getAzureResourceGroupId(),
-                    ipResource.map(ControlledAzureIpResource::getIpName).orElse("<no public ip>"),
-                    resource.getNetworkId(),
-                    diskResource
-                        .map(ControlledAzureDiskResource::getDiskName)
-                        .orElse("<no disk>")));
-        return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
-      }
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+      return switch (e.getValue().getCode()) {
+        case ManagementExceptionUtils.CONFLICT -> {
+          logger.info(
+              "Azure Vm {} in managed resource group {} already exists",
+              resource.getVmName(),
+              azureCloudContext.getAzureResourceGroupId());
+          yield StepResult.getStepResultSuccess();
+        }
+
+        case ManagementExceptionUtils.RESOURCE_NOT_FOUND -> {
+          logger.info(
+              "Either the disk, ip, or network passed into this createVm does not exist "
+                  + String.format(
+                      "%nResource Group: %s%n\tIp Name: %s%n\tNetwork Name: %s%n\tDisk Name: %s",
+                      azureCloudContext.getAzureResourceGroupId(),
+                      ipResource.map(ControlledAzureIpResource::getIpName).orElse("<no public ip>"),
+                      resource.getNetworkId(),
+                      diskResource
+                          .map(ControlledAzureDiskResource::getDiskName)
+                          .orElse("<no disk>")));
+          yield new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
+        }
+
+        case ManagementExceptionUtils.IMAGE_NOT_FOUND, ManagementExceptionUtils
+            .INVALID_PARAMETER -> new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
+
+        default -> new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+      };
     }
     return StepResult.getStepResultSuccess();
   }
