@@ -19,7 +19,7 @@ public class BlobCopier {
   private final AzureStorageAccessService storageAccessService;
   private final AuthenticatedUserRequest userRequest;
 
-  private static final Duration MAX_POLL_TIMEOUT = Duration.ofMinutes(60);
+  public static final Duration MAX_POLL_TIMEOUT = Duration.ofMinutes(60);
 
   public BlobCopier(
       AzureStorageAccessService storageAccessService, AuthenticatedUserRequest userRequest) {
