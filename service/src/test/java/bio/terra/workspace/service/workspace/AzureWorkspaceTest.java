@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.app.configuration.external.AzureTestConfiguration;
-import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.utils.AzureTestUtils;
@@ -110,7 +109,12 @@ public class AzureWorkspaceTest extends BaseAzureConnectedTest {
             .createdByEmail(userRequest.getEmail())
             .build();
     String cloneJobId =
-        workspaceService.cloneWorkspace(sourceWorkspace, userRequest, null, destWorkspace, azureTestUtils.getAzureCloudContext());
+        workspaceService.cloneWorkspace(
+            sourceWorkspace,
+            userRequest,
+            null,
+            destWorkspace,
+            azureTestUtils.getAzureCloudContext());
     jobService.waitForJob(cloneJobId);
 
     assertEquals(workspaceService.getWorkspace(destUUID), destWorkspace);

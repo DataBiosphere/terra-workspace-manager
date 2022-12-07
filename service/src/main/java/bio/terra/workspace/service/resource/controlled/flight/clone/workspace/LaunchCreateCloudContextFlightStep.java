@@ -66,7 +66,13 @@ public class LaunchCreateCloudContextFlightStep implements Step {
             destinationWorkspace, cloudContextJobId, userRequest);
       } else if (CloudPlatform.AZURE == cloudPlatform) {
         workspaceService.createAzureCloudContext(
-            destinationWorkspace, cloudContextJobId, userRequest, null, context.getInputParameters().get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class));
+            destinationWorkspace,
+            cloudContextJobId,
+            userRequest,
+            null,
+            context
+                .getInputParameters()
+                .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class));
       }
     }
     return StepResult.getStepResultSuccess();
