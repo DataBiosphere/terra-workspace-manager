@@ -217,7 +217,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     var instanceId = "create-ai-notebook-instance-do";
     var serverName = "verily-autopush";
     int retryWaitSeconds = 30;
-    int retryCount = 40;
+    int retryCount = 30;
 
     cliConfiguration.setServerName(serverName);
     ApiGcpAiNotebookInstanceCreationParameters creationParameters =
