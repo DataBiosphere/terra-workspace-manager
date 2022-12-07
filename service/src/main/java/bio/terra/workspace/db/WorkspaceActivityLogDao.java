@@ -31,6 +31,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class WorkspaceActivityLogDao {
   private static final Logger logger = LoggerFactory.getLogger(WorkspaceActivityLogDao.class);
+  // Only rows that existed before the column was added will have "unknown"
   private static final String DEFAULT_VALUE_UNKNOWN = "unknown";
 
   @VisibleForTesting

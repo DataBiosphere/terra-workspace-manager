@@ -8,7 +8,6 @@ import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UFI
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UUID_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_PATH;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
-import static bio.terra.workspace.db.WorkspaceActivityLogDao.ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.emptyString;
@@ -21,7 +20,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.workspace.common.BaseConnectedTest;
-import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
@@ -44,8 +42,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.support.DataAccessUtils;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -268,10 +264,9 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
         WsmIamRole.DISCOVERER,
         userAccessUtils.getSecondUserEmail());
 
-    ActivityLogChangeDetails changeDetails = getLastChangeDetails(workspace.getId());
-
-    MockMvcUtils.assertActivityLogChangeDetails(
-        changeDetails,
+    // TODO(PF-2314): Change to call API. We don't expose this in API yet, so read from db
+    mockMvcUtils.assertLatestActivityLogChangeDetails(
+        workspace.getId(),
         userAccessUtils.getDefaultUserEmail(),
         samService.getUserStatusInfo(userAccessUtils.defaultUserAuthRequest()).getUserSubjectId(),
         OperationType.GRANT_WORKSPACE_ROLE,
@@ -293,32 +288,14 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
         WsmIamRole.DISCOVERER,
         userAccessUtils.getSecondUserEmail());
 
-    ActivityLogChangeDetails changeDetails = getLastChangeDetails(workspace.getId());
-
-    MockMvcUtils.assertActivityLogChangeDetails(
-        changeDetails,
+    // TODO(PF-2314): Change to call API. We don't expose this in API yet, so read from db.
+    mockMvcUtils.assertLatestActivityLogChangeDetails(
+        workspace.getId(),
         userAccessUtils.getDefaultUserEmail(),
         samService.getUserStatusInfo(userAccessUtils.defaultUserAuthRequest()).getUserSubjectId(),
         OperationType.REMOVE_WORKSPACE_ROLE,
         userAccessUtils.getSecondUserEmail(),
         ActivityLogChangedTarget.USER);
-  }
-
-  /**
-   * Get the latest activity log row where workspaceId matches.
-   *
-   * <p>Do not use WorkspaceActivityLogService#getLastUpdatedDetails because it filters out
-   * non-update change_type such as `GRANT_WORKSPACE_ROLE` and `REMOVE_WORKSPACE_ROLE`.
-   */
-  private ActivityLogChangeDetails getLastChangeDetails(UUID workspaceId) {
-    final String sql =
-        """
-            SELECT * FROM workspace_activity_log WHERE workspace_id = :workspace_id
-            ORDER BY change_date DESC LIMIT 1
-        """;
-    final var params = new MapSqlParameterSource().addValue("workspace_id", workspaceId.toString());
-    return DataAccessUtils.singleResult(
-        jdbcTemplate.query(sql, params, ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER));
   }
 
   @Test

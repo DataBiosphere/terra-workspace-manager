@@ -248,12 +248,9 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
     mockMvcUtils.assertProperties(
         List.of(SHORT_DESCRIPTION_PROPERTY, VERSION_PROPERTY), gotWorkspace.getProperties());
 
-    // TODO(PF-2314): Change to call API. We don't expose this in API yet, so read from the
-    //  WorkspaceActivityLogService.
-    ActivityLogChangeDetails changeDetails =
-        workspaceActivityLogService.getLastUpdatedDetails(workspaceId).get();
-    MockMvcUtils.assertActivityLogChangeDetails(
-        changeDetails,
+    // TODO(PF-2314): Change to call API. We don't expose this in API yet, so read from db.
+    mockMvcUtils.assertLatestActivityLogChangeDetails(
+        workspaceId,
         USER_REQUEST.getEmail(),
         USER_REQUEST.getSubjectId(),
         OperationType.DELETE_PROPERTIES,
@@ -285,12 +282,9 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
             fooProperty),
         gotWorkspace.getProperties());
 
-    // TODO(PF-2314): Change to call API. We don't expose this in API yet, so read from the
-    //  WorkspaceActivityLogService.
-    ActivityLogChangeDetails changeDetails =
-        workspaceActivityLogService.getLastUpdatedDetails(workspaceId).get();
-    MockMvcUtils.assertActivityLogChangeDetails(
-        changeDetails,
+    // TODO(PF-2314): Change to call API. We don't expose this in API yet, so read from db.
+    mockMvcUtils.assertLatestActivityLogChangeDetails(
+        workspaceId,
         USER_REQUEST.getEmail(),
         USER_REQUEST.getSubjectId(),
         OperationType.UPDATE_PROPERTIES,
@@ -318,12 +312,9 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
     assertEquals(
         sourceWorkspace.getDisplayName() + " (Copy)", destinationWorkspace.getDisplayName());
 
-    // TODO(PF-2314): Change to call API. We don't expose this in API yet, so read from the
-    // WorkspaceActivityLogService.
-    ActivityLogChangeDetails changeDetails =
-        workspaceActivityLogService.getLastUpdatedDetails(destinationWorkspaceId).get();
-    MockMvcUtils.assertActivityLogChangeDetails(
-        changeDetails,
+    // TODO(PF-2314): Change to call API. We don't expose this in API yet, so read from db
+    mockMvcUtils.assertLatestActivityLogChangeDetails(
+        destinationWorkspaceId,
         USER_REQUEST.getEmail(),
         USER_REQUEST.getSubjectId(),
         OperationType.CLONE,
@@ -489,10 +480,9 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
         workspaceActivityLogService.getLastUpdatedDetails(workspace.getId()).get();
     assertTrue(lastChangedDate.isBefore(secondChangeDetails.changeDate()));
 
-    // TODO(PF-2314): Change to call API. We don't expose this in API yet, so read from the
-    //  WorkspaceActivityLogService.
-    MockMvcUtils.assertActivityLogChangeDetails(
-        secondChangeDetails,
+    // TODO(PF-2314): Change to call API. We don't expose this in API yet, so read from db
+    mockMvcUtils.assertLatestActivityLogChangeDetails(
+        workspace.getId(),
         USER_REQUEST.getEmail(),
         USER_REQUEST.getSubjectId(),
         OperationType.UPDATE,

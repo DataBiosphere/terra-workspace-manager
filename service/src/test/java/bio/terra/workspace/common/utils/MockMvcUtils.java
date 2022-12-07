@@ -3,6 +3,7 @@ package bio.terra.workspace.common.utils;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.defaultNotebookCreationParameters;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi;
+import static bio.terra.workspace.db.WorkspaceActivityLogDao.ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -115,7 +116,10 @@ import org.hamcrest.Matcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.support.DataAccessUtils;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.servlet.MockMvc;
@@ -233,8 +237,9 @@ public class MockMvcUtils {
   // (since unit tests don't use real SAM). Instead, each method must take in userRequest.
   @Autowired private MockMvc mockMvc;
   @Autowired private ObjectMapper objectMapper;
-  @Autowired JobService jobService;
-  @Autowired StairwayComponent stairwayComponent;
+  @Autowired private JobService jobService;
+  @Autowired private StairwayComponent stairwayComponent;
+  @Autowired private NamedParameterJdbcTemplate jdbcTemplate;
 
   public static MockHttpServletRequestBuilder addAuth(
       MockHttpServletRequestBuilder request, AuthenticatedUserRequest userRequest) {
@@ -1361,7 +1366,7 @@ public class MockMvcUtils {
             .sourceWorkspaceId(sourceWorkspaceId)
             .sourceResourceId(sourceResourceId));
 
-    // TODO (PF-2261): assert createdBy, lastUpdatedBy as well.
+    // TODO (PF-2261): assert createdBy, lastUpdatedBy, createdDate, lastUpdatedDate.
     assertResourceMetadata(
         actualMetadata,
         expectedResourceType,
@@ -1372,14 +1377,15 @@ public class MockMvcUtils {
         expectedResourceLineage);
   }
 
-  public static void assertActivityLogChangeDetails(
-      ActivityLogChangeDetails actualChangedDetails,
+  public void assertLatestActivityLogChangeDetails(
+      UUID workspaceId,
       String expectedActorEmail,
       String expectedActorSubjectId,
       OperationType expectedOperationType,
       String expectedChangeSubjectId,
-      ActivityLogChangedTarget expectedChangeTarget)
-      throws InterruptedException {
+      ActivityLogChangedTarget expectedChangeTarget) {
+    ActivityLogChangeDetails actualChangedDetails =
+        getLastChangeDetails(workspaceId, expectedChangeSubjectId);
     assertEquals(
         new ActivityLogChangeDetails(
             actualChangedDetails.changeDate(),
@@ -1389,6 +1395,27 @@ public class MockMvcUtils {
             expectedChangeSubjectId,
             expectedChangeTarget),
         actualChangedDetails);
+  }
+
+  /**
+   * Get the latest activity log row where workspaceId matches.
+   *
+   * <p>Do not use WorkspaceActivityLogService#getLastUpdatedDetails because it filters out
+   * non-update change_type such as `GRANT_WORKSPACE_ROLE` and `REMOVE_WORKSPACE_ROLE`.
+   */
+  private ActivityLogChangeDetails getLastChangeDetails(UUID workspaceId, String changeSubjectId) {
+    final String sql =
+        """
+            SELECT * FROM workspace_activity_log
+            WHERE workspace_id = :workspace_id AND change_subject_id=:change_subject_id
+            ORDER BY change_date DESC LIMIT 1
+        """;
+    final var params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceId.toString())
+            .addValue("change_subject_id", changeSubjectId);
+    return DataAccessUtils.singleResult(
+        jdbcTemplate.query(sql, params, ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER));
   }
 
   public void assertNoResourceWithName(
