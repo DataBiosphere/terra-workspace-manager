@@ -116,7 +116,7 @@ jobs:
         ARTIFACTORY_REPO_KEY: "libs-snapshot-local"
     - name: Auth to Google
       if: steps.skiptest.outputs.is-bump == 'no'
-      uses: google-github-actions/setup-auth@v1
+      uses: google-github-actions/auth@v1
       with:
         version: '411.0.0'
         credentials_json: ${{ secrets.GCR_PUBLISH_KEY }}
