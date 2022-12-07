@@ -10,6 +10,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
+import bio.terra.workspace.common.utils.AzureManagementException;
 import bio.terra.workspace.common.utils.ManagementExceptionUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
@@ -122,7 +123,7 @@ public class CreateAzureNetworkInterfaceStep implements Step {
         }
 
         case ManagementExceptionUtils.SUBNET_IS_FULL -> new StepResult(
-            StepStatus.STEP_RESULT_FAILURE_FATAL, e);
+            StepStatus.STEP_RESULT_FAILURE_FATAL, new AzureManagementException(e));
 
         default -> new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
       };

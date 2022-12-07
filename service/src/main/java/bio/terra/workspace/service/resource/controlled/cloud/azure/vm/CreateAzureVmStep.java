@@ -5,6 +5,7 @@ import bio.terra.cloudres.azure.resourcemanager.compute.data.CreateVirtualMachin
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
+import bio.terra.workspace.common.utils.AzureManagementException;
 import bio.terra.workspace.common.utils.AzureVmUtils;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.ManagementExceptionUtils;
@@ -181,11 +182,13 @@ public class CreateAzureVmStep implements Step {
                       diskResource
                           .map(ControlledAzureDiskResource::getDiskName)
                           .orElse("<no disk>")));
-          yield new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
+          yield new StepResult(
+              StepStatus.STEP_RESULT_FAILURE_FATAL, new AzureManagementException(e));
         }
 
         case ManagementExceptionUtils.IMAGE_NOT_FOUND, ManagementExceptionUtils
-            .INVALID_PARAMETER -> new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
+            .INVALID_PARAMETER -> new StepResult(
+            StepStatus.STEP_RESULT_FAILURE_FATAL, new AzureManagementException(e));
 
         default -> new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
       };
