@@ -234,7 +234,6 @@ public class ReferencedResourceService {
                 createdByEmail)
             .castToReferencedResource();
 
-    // launch the creation flight
     return createReferenceResourceForClone(destinationResource, userRequest);
   }
 }
