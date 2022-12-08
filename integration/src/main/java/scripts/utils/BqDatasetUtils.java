@@ -24,7 +24,6 @@ import bio.terra.workspace.model.ManagedBy;
 import bio.terra.workspace.model.PrivateResourceUser;
 import bio.terra.workspace.model.UpdateBigQueryDatasetReferenceRequestBody;
 import com.google.cloud.bigquery.BigQuery;
-import com.google.cloud.bigquery.BigQueryException;
 import com.google.cloud.bigquery.Field;
 import com.google.cloud.bigquery.InsertAllRequest;
 import com.google.cloud.bigquery.JobInfo.WriteDisposition;
@@ -40,14 +39,12 @@ import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 
 public class BqDatasetUtils {
 
@@ -303,32 +300,19 @@ public class BqDatasetUtils {
     // be in the streaming buffer where it's un-copyable for up to 90 minutes.
     // Retry because if project was created recently, it may take time for bigquery.jobs.create to
     // propagate
-    int retryCount = 10;
-    int retryWaitSeconds = 5;
-    for (int i = 0; i < retryCount; i++) {
-      TimeUnit.SECONDS.sleep(retryWaitSeconds);
-      try {
-        bigQueryClient.query(
-            QueryJobConfiguration.newBuilder(
-                    "INSERT INTO `"
-                        + projectId
-                        + "."
-                        + dataset.getAttributes().getDatasetId()
-                        + "."
-                        + BQ_EMPLOYEE_TABLE_NAME
-                        + "` (employee_id, name) VALUES("
-                        + "101, 'Aquaman'), (102, 'Superman');")
-                .build());
-      } catch (BigQueryException e) {
-        // bigquery.jobs.create hasn't propagated yet; retry
-        if (e.getCode() == HttpStatus.FORBIDDEN.value()) {
-          continue;
-        }
-        throw e;
-      }
-      // Insert succeeded
-      break;
-    }
+    ClientTestUtils.getWithRetryOnException(
+        () ->
+            bigQueryClient.query(
+                QueryJobConfiguration.newBuilder(
+                        "INSERT INTO `"
+                            + projectId
+                            + "."
+                            + dataset.getAttributes().getDatasetId()
+                            + "."
+                            + BQ_EMPLOYEE_TABLE_NAME
+                            + "` (employee_id, name) VALUES("
+                            + "101, 'Aquaman'), (102, 'Superman');")
+                    .build()));
 
     bigQueryClient.query(
         QueryJobConfiguration.newBuilder(
