@@ -3,6 +3,6 @@
   "description": "All integration tests - to be run on a K8s environment",
   "serverSpecificationFile": "workspace-local.json",
   "testConfigurationFiles": [
-    "integration/CloneWorkspace.json",
+    "integration/CloneWorkspace.json"
   ]
 }
