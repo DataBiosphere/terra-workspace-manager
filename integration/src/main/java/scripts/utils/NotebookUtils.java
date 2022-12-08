@@ -205,6 +205,7 @@ public class NotebookUtils {
                 if (e.getStatusCode() == HttpStatus.SC_FORBIDDEN) {
                   throw e;
                 }
+              } catch (IOException ignored) {
               }
               return null;
             });
