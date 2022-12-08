@@ -81,11 +81,12 @@ public class GcpCloudUtils {
     // Add row to table
     // Retry because if project was created recently, it takes time for bigquery.jobs.create to
     // propagate
-    for (int i = 0; i < 10; i++) {
+    int retryCount = 10;
+    int retryWaitSeconds = 5;
+    for (int i = 0; i < retryCount; i++) {
       try {
         // Don't call insertAll() with InsertAllRequest. That inserts via stream. Stream buffer may
-        // not
-        // be copied for up to 90 minutes:
+        // not be copied for up to 90 minutes:
         // https://cloud.google.com/bigquery/docs/streaming-data-into-bigquery#dataavailability
         // Instead, use DDL to insert rows.
         bigQueryClient.query(
@@ -100,7 +101,7 @@ public class GcpCloudUtils {
         throw e;
       }
 
-      TimeUnit.SECONDS.sleep(5);
+      TimeUnit.SECONDS.sleep(retryWaitSeconds);
     }
   }
 
