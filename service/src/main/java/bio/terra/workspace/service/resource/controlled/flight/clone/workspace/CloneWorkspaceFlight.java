@@ -11,7 +11,6 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import java.util.Optional;
 import java.util.UUID;
 
 /** Top-most flight for cloning a workspace. Launches sub-flights for most of the work. */
@@ -46,27 +45,26 @@ public class CloneWorkspaceFlight extends Flight {
     addStep(new CreateIdsForFutureStepsStep());
 
     // Only create a cloud context if the source workspace has a cloud context
-    Optional<CloudPlatform> optionalCloudContextPlatform;
     if (flightBeanBag
         .getGcpCloudContextService()
         .getGcpCloudContext(sourceWorkspaceId)
         .isPresent()) {
-      optionalCloudContextPlatform = Optional.of(CloudPlatform.GCP);
-    } else if (flightBeanBag
+      addStep(
+          new LaunchCreateCloudContextFlightStep(
+              flightBeanBag.getWorkspaceService(), CloudPlatform.GCP),
+          cloudRetryRule);
+      addStep(new AwaitCreateCloudContextFlightStep(), longCloudRetryRule);
+    }
+
+    if (flightBeanBag
         .getAzureCloudContextService()
         .getAzureCloudContext(sourceWorkspaceId)
         .isPresent()) {
-      optionalCloudContextPlatform = Optional.of(CloudPlatform.AZURE);
-    } else {
-      optionalCloudContextPlatform = Optional.empty();
-    }
-
-    if (optionalCloudContextPlatform.isPresent()) {
       addStep(
           new LaunchCreateCloudContextFlightStep(
-              flightBeanBag.getWorkspaceService(), optionalCloudContextPlatform.get()),
-          RetryRules.cloud());
-      addStep(new AwaitCreateCloudContextFlightStep(), longCloudRetryRule);
+              flightBeanBag.getWorkspaceService(), CloudPlatform.AZURE),
+          cloudRetryRule);
+      addStep(new AwaitCreateCloudContextFlightStep(), cloudRetryRule);
     }
 
     // If TPS is enabled, clone the policy attributes

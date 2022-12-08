@@ -43,7 +43,6 @@ public class AwaitCloneControlledAzureStorageContainerResourceFlightStep impleme
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    // wait for the flight
     try {
       FlightState subflightState =
           context

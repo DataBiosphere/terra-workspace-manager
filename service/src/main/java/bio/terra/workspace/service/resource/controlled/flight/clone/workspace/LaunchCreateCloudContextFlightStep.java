@@ -35,8 +35,15 @@ public class LaunchCreateCloudContextFlightStep implements Step {
         ControlledResourceKeys.SOURCE_WORKSPACE_ID,
         JobMapKeys.AUTH_USER_INFO.getKeyName(),
         JobMapKeys.REQUEST.getKeyName());
-    validateRequiredEntries(
-        context.getWorkingMap(), ControlledResourceKeys.CREATE_CLOUD_CONTEXT_FLIGHT_ID);
+    String flightIdKey;
+    if (CloudPlatform.AZURE == cloudPlatform) {
+      flightIdKey = ControlledResourceKeys.CREATE_AZURE_CLOUD_CONTEXT_FLIGHT_ID;
+    } else if (CloudPlatform.GCP == cloudPlatform) {
+      flightIdKey = ControlledResourceKeys.CREATE_GCP_CLOUD_CONTEXT_FLIGHT_ID;
+    } else {
+      return StepResult.getStepResultSuccess();
+    }
+    validateRequiredEntries(context.getWorkingMap(), flightIdKey);
 
     var userRequest =
         context
@@ -45,10 +52,7 @@ public class LaunchCreateCloudContextFlightStep implements Step {
     var destinationWorkspace =
         context.getInputParameters().get(JobMapKeys.REQUEST.getKeyName(), Workspace.class);
 
-    var cloudContextJobId =
-        context
-            .getWorkingMap()
-            .get(ControlledResourceKeys.CREATE_CLOUD_CONTEXT_FLIGHT_ID, String.class);
+    var cloudContextJobId = context.getWorkingMap().get(flightIdKey, String.class);
 
     boolean flightAlreadyExists;
     try {
@@ -61,10 +65,7 @@ public class LaunchCreateCloudContextFlightStep implements Step {
     }
     // if we already have a flight, don't launch another one
     if (!flightAlreadyExists) {
-      if (CloudPlatform.GCP == cloudPlatform) {
-        workspaceService.createGcpCloudContext(
-            destinationWorkspace, cloudContextJobId, userRequest);
-      } else if (CloudPlatform.AZURE == cloudPlatform) {
+      if (CloudPlatform.AZURE == cloudPlatform) {
         workspaceService.createAzureCloudContext(
             destinationWorkspace,
             cloudContextJobId,
@@ -73,6 +74,9 @@ public class LaunchCreateCloudContextFlightStep implements Step {
             context
                 .getInputParameters()
                 .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class));
+      } else {
+        workspaceService.createGcpCloudContext(
+            destinationWorkspace, cloudContextJobId, userRequest);
       }
     }
     return StepResult.getStepResultSuccess();
