@@ -1,7 +1,10 @@
 package bio.terra.workspace.common.utils;
 
+import bio.terra.stairway.StepStatus;
 import com.azure.core.management.exception.ManagementException;
+import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.http.HttpStatus;
 
 /**
  * Parses the Azure ManagementException code for the reason of the failure.
@@ -17,12 +20,24 @@ public class ManagementExceptionUtils {
   public static final String CONFLICT = "Conflict";
   public static final String SUBNETS_NOT_IN_SAME_VNET = "SubnetsNotInSameVnet";
   public static final String NIC_RESERVED_FOR_ANOTHER_VM = "NicReservedForAnotherVm";
-  public static final String SUBNET_IS_FULL = "SubnetIsFull";
-  public static final String IMAGE_NOT_FOUND = "ImageNotFound";
-  public static final String INVALID_PARAMETER = "InvalidParameter";
 
   /** Returns true iff the exception's code matches the supplied value. */
   public static boolean isExceptionCode(ManagementException ex, String exceptionCode) {
     return StringUtils.equals(ex.getValue().getCode(), exceptionCode);
+  }
+
+  public static Optional<HttpStatus> getHttpStatus(ManagementException me) {
+    try {
+      return Optional.of(HttpStatus.valueOf(me.getResponse().getStatusCode()));
+    } catch (Throwable t) {
+      return Optional.empty();
+    }
+  }
+
+  public static StepStatus maybeRetryStatus(ManagementException me) {
+    return getHttpStatus(me)
+        .filter(sc -> sc.is4xxClientError())
+        .map(sc -> StepStatus.STEP_RESULT_FAILURE_FATAL)
+        .orElse(StepStatus.STEP_RESULT_FAILURE_RETRY);
   }
 }

@@ -186,11 +186,8 @@ public class CreateAzureVmStep implements Step {
               StepStatus.STEP_RESULT_FAILURE_FATAL, new AzureManagementException(e));
         }
 
-        case ManagementExceptionUtils.IMAGE_NOT_FOUND, ManagementExceptionUtils
-            .INVALID_PARAMETER -> new StepResult(
-            StepStatus.STEP_RESULT_FAILURE_FATAL, new AzureManagementException(e));
-
-        default -> new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+        default -> new StepResult(
+            ManagementExceptionUtils.maybeRetryStatus(e), new AzureManagementException(e));
       };
     }
     return StepResult.getStepResultSuccess();
