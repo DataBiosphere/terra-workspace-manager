@@ -79,7 +79,7 @@ public class GcpCloudUtils {
     logger.debug("Employee Table: {}", createdEmployeeTable);
 
     // Add row to table
-    // Retry because if project was created recently, it takes time for bigquery.jobs.create to
+    // Retry because if project was created recently, it may take time for bigquery.jobs.create to
     // propagate
     int retryCount = 10;
     int retryWaitSeconds = 5;
