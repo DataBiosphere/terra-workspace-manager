@@ -80,7 +80,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
       UUID workspaceUuid, @Valid ApiCreateControlledGcpGcsBucketRequestBody body) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledResourceFields commonFields =
-        toCommonFields(workspaceUuid, body.getCommon(), userRequest);
+        toCommonFields(
+            workspaceUuid, body.getCommon(), body.getGcsBucket().getLocation(), userRequest);
     ControlledGcsBucketResource resource =
         ControlledGcsBucketResource.builder()
             .bucketName(
@@ -310,7 +311,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
       UUID workspaceUuid, ApiCreateControlledGcpBigQueryDatasetRequestBody body) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledResourceFields commonFields =
-        toCommonFields(workspaceUuid, body.getCommon(), userRequest);
+        toCommonFields(
+            workspaceUuid, body.getCommon(), body.getDataset().getLocation(), userRequest);
     // Check authz before reading the projectId from workspace DB.
     Workspace workspace =
         workspaceService.validateWorkspaceAndAction(
@@ -417,7 +419,11 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
       UUID workspaceUuid, @Valid ApiCreateControlledGcpAiNotebookInstanceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledResourceFields commonFields =
-        toCommonFields(workspaceUuid, body.getCommon(), userRequest);
+        toCommonFields(
+            workspaceUuid,
+            body.getCommon(),
+            body.getAiNotebookInstance().getLocation(),
+            userRequest);
     // Check authz before reading the projectId from workspace DB.
     Workspace workspace =
         workspaceService.validateWorkspaceAndAction(

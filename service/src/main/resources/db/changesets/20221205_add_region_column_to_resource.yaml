@@ -13,8 +13,3 @@ databaseChangeLog:
               nullable: true
             remarks: |
               The region of the controlled cloud resource, e.g. us-central-1
-    - sql:
-          sql: >
-              UPDATE resource
-              SET region='unknown'
-              WHERE stewardship_type = 'CONTROLLED'

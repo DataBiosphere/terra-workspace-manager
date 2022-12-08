@@ -199,8 +199,10 @@ public abstract class ControlledResource extends WsmResource {
     if (getResourceType() == null
         || attributesToJson() == null
         || getAccessScope() == null
-        || getManagedBy() == null
-        || getRegion() == null) {
+        || getManagedBy() == null) {
+      // TODO(PF-2290): validate that the region field is null once we backfill the existing
+      // resource rows
+      // with regions.
       throw new MissingRequiredFieldException("Missing required field for ControlledResource.");
     }
     if (getAssignedUser().isPresent() && getAccessScope() == AccessScopeType.ACCESS_SCOPE_SHARED) {

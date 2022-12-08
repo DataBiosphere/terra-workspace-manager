@@ -202,6 +202,17 @@ public class LandingZoneApiDispatch {
         .findFirst();
   }
 
+  public Optional<ApiAzureLandingZoneDeployedResource> getStorageAccount(
+      BearerToken bearerToken, UUID landingZoneId, UUID storageAccountId) {
+    return listAzureLandingZoneResources(bearerToken, landingZoneId).getResources().stream()
+        .flatMap(r -> r.getDeployedResources().stream())
+        .filter(
+            r ->
+                r.getResourceType().equalsIgnoreCase(AZURE_STORAGE_ACCOUNT_RESOURCE_TYPE)
+                    && r.getResourceId().equals(storageAccountId.toString()))
+        .findFirst();
+  }
+
   public ApiAzureLandingZoneResourcesList listAzureLandingZoneResourcesByPurpose(
       BearerToken bearerToken, UUID landingZoneId, LandingZonePurpose resourcePurpose) {
     features.azureEnabledCheck();

@@ -72,7 +72,9 @@ public class ControlledAzureResourceApiControllerTest extends BaseAzureUnitTest 
 
     ControlledAzureVmResource resource =
         controller.buildControlledAzureVmResource(
-            creationParameters, controller.toCommonFields(workspaceId, commonFields, USER_REQUEST));
+            creationParameters,
+            controller.toCommonFields(
+                workspaceId, commonFields, creationParameters.getRegion(), USER_REQUEST));
 
     when(getMockJobApiUtils().retrieveAsyncJobResult(any(), eq(ControlledAzureVmResource.class)))
         .thenReturn(

@@ -63,7 +63,7 @@ public class ResourceDao {
       SELECT workspace_id, cloud_platform, resource_id, name, description, stewardship_type,
         resource_type, exact_resource_type, cloning_instructions, attributes,
         access_scope, managed_by, associated_app, assigned_user, private_resource_state,
-        resource_lineage, properties, created_date, created_by_email
+        resource_lineage, properties, created_date, created_by_email, region
       FROM resource WHERE workspace_id = :workspace_id
       """;
 
@@ -107,7 +107,8 @@ public class ResourceDao {
               .createdDate(
                   OffsetDateTime.ofInstant(
                       rs.getTimestamp("created_date").toInstant(), ZoneId.of("UTC")))
-              .createdByEmail(rs.getString("created_by_email"));
+              .createdByEmail(rs.getString("created_by_email"))
+              .region(rs.getString("region"));
 
   private final NamedParameterJdbcTemplate jdbcTemplate;
 
@@ -695,13 +696,12 @@ public class ResourceDao {
         INSERT INTO resource (workspace_id, cloud_platform, resource_id, name, description,
           stewardship_type, exact_resource_type, resource_type, cloning_instructions, attributes,
           access_scope, managed_by, associated_app, assigned_user, private_resource_state,
-          resource_lineage, properties, created_by_email)
+          resource_lineage, properties, created_by_email, region)
         VALUES (:workspace_id, :cloud_platform, :resource_id, :name, :description,
           :stewardship_type, :exact_resource_type, :resource_type, :cloning_instructions,
           cast(:attributes AS jsonb), :access_scope, :managed_by, :associated_app, :assigned_user,
-          :private_resource_state, :resource_lineage::jsonb, :properties::jsonb, :created_by_email);
+          :private_resource_state, :resource_lineage::jsonb, :properties::jsonb, :created_by_email, :region);
         """;
-
     final var params =
         new MapSqlParameterSource()
             .addValue("workspace_id", resource.getWorkspaceId().toString())
@@ -732,7 +732,8 @@ public class ResourceDao {
               controlledResource
                   .getPrivateResourceState()
                   .map(PrivateResourceState::toSql)
-                  .orElse(null));
+                  .orElse(null))
+          .addValue("region", controlledResource.getRegion());
     } else {
       params
           .addValue("access_scope", null)

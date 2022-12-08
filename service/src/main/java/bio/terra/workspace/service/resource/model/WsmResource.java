@@ -404,8 +404,8 @@ public abstract class WsmResource {
     result = 31 * result + (cloningInstructions != null ? cloningInstructions.hashCode() : 0);
     result = 31 * result + (resourceLineage != null ? resourceLineage.hashCode() : 0);
     result = 31 * result + (properties.hashCode());
-    result = 31 * result + (createdByEmail != null? createdByEmail.hashCode() : 0);
-    result = 31 * result + (createdDate != null? createdDate.hashCode() : 0);
+    result = 31 * result + (createdByEmail != null ? createdByEmail.hashCode() : 0);
+    result = 31 * result + (createdDate != null ? createdDate.hashCode() : 0);
     return result;
   }
 }

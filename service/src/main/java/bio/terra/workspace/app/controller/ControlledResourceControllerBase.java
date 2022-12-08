@@ -1,5 +1,7 @@
 package bio.terra.workspace.app.controller;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import bio.terra.workspace.app.controller.shared.PropertiesUtils;
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -34,6 +36,7 @@ public class ControlledResourceControllerBase extends ControllerBase {
   public ControlledResourceFields toCommonFields(
       UUID workspaceUuid,
       ApiControlledResourceCommonFields apiCommonFields,
+      String region,
       AuthenticatedUserRequest userRequest) {
 
     ManagedByType managedBy = ManagedByType.fromApi(apiCommonFields.getManagedBy());
@@ -42,6 +45,7 @@ public class ControlledResourceControllerBase extends ControllerBase {
         computePrivateUserRole(workspaceUuid, apiCommonFields, userRequest);
 
     String userEmail = getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest);
+    checkArgument(region != null, "Controlled resource must have an associated region");
 
     return ControlledResourceFields.builder()
         .workspaceUuid(workspaceUuid)
@@ -60,7 +64,7 @@ public class ControlledResourceControllerBase extends ControllerBase {
         .applicationId(controlledResourceService.getAssociatedApp(managedBy, userRequest))
         .properties(PropertiesUtils.convertApiPropertyToMap(apiCommonFields.getProperties()))
         .createdByEmail(userEmail)
-        .region()
+        .region(region)
         .build();
   }
 }

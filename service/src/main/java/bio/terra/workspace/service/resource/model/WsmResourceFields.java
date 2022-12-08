@@ -72,8 +72,7 @@ public class WsmResourceFields {
         .cloningInstructions(getCloningInstructions())
         .resourceLineage(getResourceLineage())
         .properties(getProperties())
-        .createdByEmail(getCreatedByEmail())
-        .region(getRegion());
+        .createdByEmail(getCreatedByEmail());
   }
 
   public UUID getWorkspaceId() {
@@ -113,7 +112,6 @@ public class WsmResourceFields {
   public String getRegion() {
     return region;
   }
-
 
   public OffsetDateTime getCreatedDate() {
     return createdDate;
