@@ -331,7 +331,8 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
   private TableResult runBigQueryJob(BigQuery bigQueryClient, QueryJobConfiguration jobConfig)
       throws Exception {
     JobId jobId = JobId.of(UUID.randomUUID().toString());
-    Job queryJob = bigQueryClient.create(JobInfo.newBuilder(jobConfig).setJobId(jobId).build());
+    // Retry because bigquery.jobs.create can take time to propagate
+    Job queryJob = ClientTestUtils.getWithRetryOnException(() -> bigQueryClient.create(JobInfo.newBuilder(jobConfig).setJobId(jobId).build()));
     Job completedJob = queryJob.waitFor();
 
     // Check for errors
