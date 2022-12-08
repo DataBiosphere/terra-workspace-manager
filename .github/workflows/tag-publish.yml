@@ -49,6 +49,9 @@ env:
 jobs:
   tag-publish-job:
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+      is-bump: ${{ steps.skiptest.outputs.is-bump }}
     steps:
     - name: Set part of semantic version to bump
       id: controls
@@ -139,14 +142,6 @@ jobs:
     - name: Push GCR image
       if: steps.skiptest.outputs.is-bump == 'no'
       run: "docker push ${{ steps.image-name.outputs.name }}"
-    - name: Deploy to Terra Dev environment
-      if: github.event_name == 'push' && steps.skiptest.outputs.is-bump == 'no'
-      uses: broadinstitute/repository-dispatch@master
-      with:
-        token: ${{ secrets.BROADBOT_TOKEN }}
-        repository: broadinstitute/terra-helmfile
-        event-type: update-service
-        client-payload: '{"service": "workspacemanager", "version": "${{ steps.tag.outputs.tag }}", "dev_only": false}'
     - name: Build the OpenAPI interface
       if: steps.skiptest.outputs.is-bump == 'no'
       run: ./gradlew :service:generateSwaggerCodeServer
@@ -162,3 +157,29 @@ jobs:
       with:
         tag: ${{ steps.tag.outputs.tag }}
         artifacts: "service/build/resources/main/api/service_openapi.yaml"
+
+  report-to-sherlock:
+    # Report new WSM version to Broad DevOps
+    uses: broadinstitute/sherlock/.github/workflows/client-report-app-version.yaml@main
+    needs: tag-publish-job
+    if: ${{ needs.tag-publish-job.outputs.is-bump == 'no' }}
+    with:
+      new-version: ${{ needs.tag-publish-job.outputs.tag }}
+      chart-name: 'workspacemanager'
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+  set-version-in-dev:
+    # Put new WSM version in Broad dev environment
+    uses: broadinstitute/sherlock/.github/workflows/client-set-environment-app-version.yaml
+    needs: [tag-publish-job, report-to-sherlock]
+    if: ${{ needs.tag-publish-job.outputs.is-bump == 'no' }}
+    with:
+      new-version: ${{ needs.tag-publish-job.outputs.tag }}
+      chart-name: 'workspacemanager'
+      environment-name: 'dev'
+    secrets:
+      sync-git-token: ${{ secrets.BROADBOT_TOKEN }}
+    permissions:
+      id-token: 'write'
