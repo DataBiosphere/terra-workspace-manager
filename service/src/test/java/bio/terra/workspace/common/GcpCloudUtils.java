@@ -84,6 +84,7 @@ public class GcpCloudUtils {
     int retryCount = 10;
     int retryWaitSeconds = 5;
     for (int i = 0; i < retryCount; i++) {
+      TimeUnit.SECONDS.sleep(retryWaitSeconds);
       try {
         // Don't call insertAll() with InsertAllRequest. That inserts via stream. Stream buffer may
         // not be copied for up to 90 minutes:
@@ -95,13 +96,14 @@ public class GcpCloudUtils {
                         .formatted(projectId, datasetId, BQ_EMPLOYEE_TABLE_NAME, BQ_EMPLOYEE_ID))
                 .build());
       } catch (BigQueryException e) {
+        // bigquery.jobs.create hasn't propagated yet; retry
         if (e.getCode() == HttpStatus.FORBIDDEN.value()) {
           continue;
         }
         throw e;
       }
-
-      TimeUnit.SECONDS.sleep(retryWaitSeconds);
+      // Insert succeeded
+      break;
     }
   }
 
