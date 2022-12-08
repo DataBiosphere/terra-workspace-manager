@@ -176,9 +176,6 @@ sudo -u "${JUPYTER_USER}" sh -c "echo \"export GOOGLE_CLOUD_PROJECT='${GOOGLE_PR
 # and is specific to the GCP project backing the workspace.
 sudo -u "${JUPYTER_USER}" sh -c "echo \"export GOOGLE_SERVICE_ACCOUNT_EMAIL='${PET_SA_EMAIL}'\" >> /home/${JUPYTER_USER}/.bash_profile"
 
-# restart jupyterlab service to load environment variables set in post startup script
-sudo systemctl restart jupyter.service
-
 ###############
 # git setup
 ###############
@@ -233,3 +230,8 @@ readonly TERRA_GCP_NOTEBOOK_RESOURCE_NAME="$(get_metadata_value "instance/attrib
 if [[ -n "${TERRA_TEST_VALUE}" ]]; then
   sudo -u "${JUPYTER_USER}" sh -c "terra resource update gcp-notebook --name=${TERRA_GCP_NOTEBOOK_RESOURCE_NAME} --new-metadata=terra-test-result=${TERRA_TEST_VALUE}"
 fi
+
+####################################
+# Restart kernel so environment variables work in notebook. See PF-2178.
+####################################
+sudo systemctl restart jupyter.service
