@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 public class AwsCloudContext {
@@ -20,6 +21,7 @@ public class AwsCloudContext {
   private final Arn serviceRoleArn;
   private final String serviceRoleAudience;
   private final Arn userRoleArn;
+  private final Arn notebookLifecycleConfigArn;
   private final Map<Regions, String> regionToBucketNameMap;
 
   public String getLandingZoneName() {
@@ -42,6 +44,10 @@ public class AwsCloudContext {
     return userRoleArn;
   }
 
+  public Arn getNotebookLifecycleConfigArn() {
+    return notebookLifecycleConfigArn;
+  }
+
   public @Nullable String getBucketNameForRegion(Regions region) {
     return regionToBucketNameMap.get(region);
   }
@@ -57,6 +63,11 @@ public class AwsCloudContext {
             .serviceRoleArn(Arn.fromString(landingZoneConfiguration.getServiceRoleArn()))
             .serviceRoleAudience(serviceRoleAudience)
             .userRoleArn(Arn.fromString(landingZoneConfiguration.getUserRoleArn()));
+
+    // Configuration Lifecycle may not be configured, so check for null before attempting to
+    // construct an ARN.
+    Optional.ofNullable(landingZoneConfiguration.getNotebookLifecycleConfigArn())
+        .map(arn -> builder.notebookLifecycleConfigArn(Arn.fromString(arn)));
 
     for (AwsConfiguration.AwsLandingZoneBucket bucket : landingZoneConfiguration.getBuckets()) {
       builder.addBucket(Regions.fromName(bucket.getRegion()), bucket.getName());
@@ -86,6 +97,11 @@ public class AwsCloudContext {
             .serviceRoleAudience(dbContext.serviceRoleAudience)
             .userRoleArn(Arn.fromString(dbContext.userRoleArn));
 
+    // Serialized context may not have a notebook lifecycle defined, so check for null before
+    // attempting to construct an ARN.
+    Optional.ofNullable(dbContext.notebookLifecycleConfigArn)
+        .map(arn -> builder.notebookLifecycleConfigArn(Arn.fromString(arn)));
+
     for (AwsCloudContextBucketV1 bucket : dbContext.bucketList) {
       bucket.validateVersion();
       builder.addBucket(Regions.fromName(bucket.regionName), bucket.bucketName);
@@ -100,6 +116,7 @@ public class AwsCloudContext {
     private Arn serviceRoleArn;
     private String serviceRoleAudience;
     private Arn userRoleArn;
+    private Arn notebookLifecycleConfigArn;
     private Map<Regions, String> bucketMap;
 
     private Builder() {
@@ -135,6 +152,11 @@ public class AwsCloudContext {
       return this;
     }
 
+    public Builder notebookLifecycleConfigArn(Arn notebookLifecycleConfigArn) {
+      this.notebookLifecycleConfigArn = notebookLifecycleConfigArn;
+      return this;
+    }
+
     public Builder addBucket(Regions region, String bucketName) {
       bucketMap.put(region, bucketName);
       return this;
@@ -151,6 +173,7 @@ public class AwsCloudContext {
     this.serviceRoleArn = builder.serviceRoleArn;
     this.serviceRoleAudience = builder.serviceRoleAudience;
     this.userRoleArn = builder.userRoleArn;
+    this.notebookLifecycleConfigArn = builder.notebookLifecycleConfigArn;
     this.regionToBucketNameMap = builder.bucketMap;
   }
 
@@ -201,6 +224,7 @@ public class AwsCloudContext {
     public String serviceRoleArn;
     public String serviceRoleAudience;
     public String userRoleArn;
+    public String notebookLifecycleConfigArn;
     public List<AwsCloudContextBucketV1> bucketList;
 
     public AwsCloudContextV1(
@@ -210,6 +234,7 @@ public class AwsCloudContext {
         @JsonProperty("serviceRoleArn") String serviceRoleArn,
         @JsonProperty("serviceRoleAudience") String serviceRoleAudience,
         @JsonProperty("userRoleArn") String userRoleArn,
+        @JsonProperty("notebookLifecycleConfigArn") String notebookLifecycleConfigArn,
         @JsonProperty("bucketList") List<AwsCloudContextBucketV1> bucketList) {
       this.version = version;
       this.landingZoneName = landingZoneName;
@@ -217,6 +242,7 @@ public class AwsCloudContext {
       this.serviceRoleArn = serviceRoleArn;
       this.serviceRoleAudience = serviceRoleAudience;
       this.userRoleArn = userRoleArn;
+      this.notebookLifecycleConfigArn = notebookLifecycleConfigArn;
       this.bucketList = bucketList;
     }
 
@@ -227,6 +253,10 @@ public class AwsCloudContext {
       this.serviceRoleArn = context.serviceRoleArn.toString();
       this.serviceRoleAudience = context.serviceRoleAudience;
       this.userRoleArn = context.userRoleArn.toString();
+
+      // Notebook Lifecycle Config is optional and may be null
+      this.notebookLifecycleConfigArn =
+          Optional.ofNullable(context.notebookLifecycleConfigArn).map(Arn::toString).orElse(null);
 
       this.bucketList = new ArrayList<>();
       for (Map.Entry<Regions, String> entry : context.regionToBucketNameMap.entrySet()) {

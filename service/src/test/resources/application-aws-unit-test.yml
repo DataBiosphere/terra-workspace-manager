@@ -7,6 +7,7 @@ workspace:
         account-number: "123456789012"
         service-role-arn: "arn:aws:iam::123456789012:ServiceRole"
         user-role-arn: "arn:aws:iam::123456789012:UserRole"
+        notebook-lifecycle-config-arn: "arn:aws:sagemaker:us-east-1:123456789012:notebook-instance-lifecycle-config/terra-nb-lifecycle-config-default"
         buckets:
           - name: "east-region-bucket"
             region: "us-east-1"

@@ -311,12 +311,26 @@ public class AwsUtils {
     addUserTags(tags, user);
     addWorkspaceTags(tags, workspaceUuid);
 
+    logger.info(
+        String.format(
+            "Creating SageMaker notebook instance with name '%s' and type '%s'.",
+            notebookName, instanceType));
+
     CreateNotebookInstanceRequest request =
         new CreateNotebookInstanceRequest()
             .withNotebookInstanceName(notebookName)
             .withInstanceType(instanceType)
             .withRoleArn(awsCloudContext.getUserRoleArn().toString())
             .withTags(toSagemakerTags(tags));
+
+    if (awsCloudContext.getNotebookLifecycleConfigArn() != null) {
+      String policyName =
+          awsCloudContext.getNotebookLifecycleConfigArn().getResource().getResource();
+      logger.info(
+          String.format(
+              "Attaching lifecycle policy '%s' to notebook '%s'.", policyName, notebookName));
+      request.withLifecycleConfigName(policyName);
+    }
 
     sageMaker.createNotebookInstance(request);
   }

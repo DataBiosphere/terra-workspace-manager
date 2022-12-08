@@ -65,6 +65,7 @@ public class AwsConfiguration {
     private String accountNumber;
     private String serviceRoleArn;
     private String userRoleArn;
+    private String notebookLifecycleConfigArn;
     private List<AwsLandingZoneBucket> buckets;
 
     public String getName() {
@@ -97,6 +98,14 @@ public class AwsConfiguration {
 
     public void setUserRoleArn(String userRoleArn) {
       this.userRoleArn = userRoleArn;
+    }
+
+    public String getNotebookLifecycleConfigArn() {
+      return notebookLifecycleConfigArn;
+    }
+
+    public void setNotebookLifecycleConfigArn(String notebookLifecycleConfigArn) {
+      this.notebookLifecycleConfigArn = notebookLifecycleConfigArn;
     }
 
     public List<AwsLandingZoneBucket> getBuckets() {
