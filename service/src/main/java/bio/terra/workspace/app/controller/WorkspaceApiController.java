@@ -57,7 +57,6 @@ import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
-import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudContextHolder;
@@ -509,20 +508,9 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         workspaceService.validateMcWorkspaceAndAction(userRequest, uuid, SamWorkspaceAction.WRITE);
 
     if (body.getCloudPlatform() == ApiCloudPlatform.AZURE) {
-      Optional<AzureCloudContext> optionalAzureCloudContext =
-          Optional.ofNullable(body.getAzureContext()).map(AzureCloudContext::fromApi);
-      AzureCloudContext azureCloudContext;
-      // if BPM is enabled for Azure, then the coordinates are not required in the request body as
-      // we can fetch them from BPM
-      if (featureConfiguration.isBpmAzureEnabled()) {
-        azureCloudContext = optionalAzureCloudContext.orElse(null);
-      } else {
-        azureCloudContext =
-            optionalAzureCloudContext.orElseThrow(
-                () ->
-                    new CloudContextRequiredException(
-                        "AzureContext is required when creating an azure cloud context for a workspace"));
-      }
+      AzureCloudContext azureCloudContext =
+          ControllerValidationUtils.validateAzureContextRequestBody(
+              body.getAzureContext(), featureConfiguration.isBpmAzureEnabled());
       workspaceService.createAzureCloudContext(
           workspace, jobId, userRequest, resultPath, azureCloudContext);
     } else {
@@ -643,7 +631,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         sourceWorkspace.getDisplayName().orElse(sourceWorkspace.getUserFacingId()) + " (Copy)";
 
     AzureCloudContext azureCloudContext =
-        Optional.ofNullable(body.getAzureContext()).map(AzureCloudContext::fromApi).orElse(null);
+        ControllerValidationUtils.validateAzureContextRequestBody(
+            body.getAzureContext(), featureConfiguration.isBpmAzureEnabled());
 
     // Construct the target workspace object from the inputs
     // Policies are cloned in the flight instead of here so that they get cleaned appropriately if

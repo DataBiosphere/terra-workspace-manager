@@ -21,11 +21,13 @@ public class LaunchCreateCloudContextFlightStep implements Step {
 
   private final WorkspaceService workspaceService;
   private final CloudPlatform cloudPlatform;
+  private final String flightIdKey;
 
   public LaunchCreateCloudContextFlightStep(
-      WorkspaceService workspaceService, CloudPlatform cloudPlatform) {
+      WorkspaceService workspaceService, CloudPlatform cloudPlatform, String flightIdKey) {
     this.workspaceService = workspaceService;
     this.cloudPlatform = cloudPlatform;
+    this.flightIdKey = flightIdKey;
   }
 
   @Override
@@ -35,14 +37,6 @@ public class LaunchCreateCloudContextFlightStep implements Step {
         ControlledResourceKeys.SOURCE_WORKSPACE_ID,
         JobMapKeys.AUTH_USER_INFO.getKeyName(),
         JobMapKeys.REQUEST.getKeyName());
-    String flightIdKey;
-    if (CloudPlatform.AZURE == cloudPlatform) {
-      flightIdKey = ControlledResourceKeys.CREATE_AZURE_CLOUD_CONTEXT_FLIGHT_ID;
-    } else if (CloudPlatform.GCP == cloudPlatform) {
-      flightIdKey = ControlledResourceKeys.CREATE_GCP_CLOUD_CONTEXT_FLIGHT_ID;
-    } else {
-      return StepResult.getStepResultSuccess();
-    }
     validateRequiredEntries(context.getWorkingMap(), flightIdKey);
 
     var userRequest =

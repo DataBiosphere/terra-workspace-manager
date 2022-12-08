@@ -8,6 +8,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.flight.clone.ClonePolicyAttributesStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
@@ -51,9 +52,14 @@ public class CloneWorkspaceFlight extends Flight {
         .isPresent()) {
       addStep(
           new LaunchCreateCloudContextFlightStep(
-              flightBeanBag.getWorkspaceService(), CloudPlatform.GCP),
+              flightBeanBag.getWorkspaceService(),
+              CloudPlatform.GCP,
+              ControlledResourceKeys.CREATE_GCP_CLOUD_CONTEXT_FLIGHT_ID),
           cloudRetryRule);
-      addStep(new AwaitCreateCloudContextFlightStep(), longCloudRetryRule);
+      addStep(
+          new AwaitCreateCloudContextFlightStep(
+              ControlledResourceKeys.CREATE_GCP_CLOUD_CONTEXT_FLIGHT_ID),
+          longCloudRetryRule);
     }
 
     if (flightBeanBag
@@ -62,9 +68,14 @@ public class CloneWorkspaceFlight extends Flight {
         .isPresent()) {
       addStep(
           new LaunchCreateCloudContextFlightStep(
-              flightBeanBag.getWorkspaceService(), CloudPlatform.AZURE),
+              flightBeanBag.getWorkspaceService(),
+              CloudPlatform.AZURE,
+              ControlledResourceKeys.CREATE_AZURE_CLOUD_CONTEXT_FLIGHT_ID),
           cloudRetryRule);
-      addStep(new AwaitCreateCloudContextFlightStep(), cloudRetryRule);
+      addStep(
+          new AwaitCreateCloudContextFlightStep(
+              ControlledResourceKeys.CREATE_AZURE_CLOUD_CONTEXT_FLIGHT_ID),
+          cloudRetryRule);
     }
 
     // If TPS is enabled, clone the policy attributes
