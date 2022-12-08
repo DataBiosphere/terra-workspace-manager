@@ -89,7 +89,7 @@ public final class AzureVmHelper {
           TimeUnit.SECONDS.sleep(NIC_RESERVED_FOR_ANOTHER_VM_ERROR_RETRY_SECONDS);
         } catch (InterruptedException ex) {
           Thread.currentThread().interrupt();
-          return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
+          return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
         }
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
       }

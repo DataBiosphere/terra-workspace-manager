@@ -29,7 +29,7 @@ public class ManagementExceptionUtils {
   public static Optional<HttpStatus> getHttpStatus(ManagementException me) {
     try {
       return Optional.of(HttpStatus.valueOf(me.getResponse().getStatusCode()));
-    } catch (Throwable t) {
+    } catch (RuntimeException e) {
       return Optional.empty();
     }
   }

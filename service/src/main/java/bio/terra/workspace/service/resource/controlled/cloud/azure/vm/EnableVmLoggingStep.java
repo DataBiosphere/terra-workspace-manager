@@ -93,7 +93,7 @@ public class EnableVmLoggingStep implements Step {
             .defineNewExtension("AzureMonitorLinuxAgent")
             .withPublisher("Microsoft.Azure.Monitor")
             .withType("AzureMonitorLinuxAgent")
-            .withVersion("1.22")
+            .withVersion(azureConfig.getAzureMonitorLinuxAgentVersion())
             .withMinorVersionAutoUpgrade();
 
     // use the pet identity if one is defined, otherwise a system identity will be used
