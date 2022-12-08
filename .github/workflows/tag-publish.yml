@@ -172,7 +172,7 @@ jobs:
 
   set-version-in-dev:
     # Put new WSM version in Broad dev environment
-    uses: broadinstitute/sherlock/.github/workflows/client-set-environment-app-version.yaml
+    uses: broadinstitute/sherlock/.github/workflows/client-set-environment-app-version.yaml@main
     needs: [tag-publish-job, report-to-sherlock]
     if: ${{ needs.tag-publish-job.outputs.is-bump == 'no' }}
     with:
