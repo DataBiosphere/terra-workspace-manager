@@ -32,7 +32,6 @@ dependencies {
         testRunnerVersion = "0.1.7-SNAPSHOT"
         samClient = "0.1-41409f6"
         tclClient = "0.0.66-SNAPSHOT"
-        tpsClient = "0.2.24-SNAPSHOT"
     }
     implementation group: 'org.apache.commons', name: 'commons-math3', version: "${apacheMath}"
     implementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: "${jUnit}"
