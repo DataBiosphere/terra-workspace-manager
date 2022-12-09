@@ -3,6 +3,7 @@ package bio.terra.workspace.service.workspace;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 
 import bio.terra.landingzone.db.LandingZoneDao;
@@ -143,7 +144,18 @@ public class AzureWorkspaceTest extends BaseAzureConnectedTest {
     testLandingZoneManager.createLandingZoneWithSharedStorageAccount(
         landingZoneId, sourceWorkspace.getWorkspaceId(), storageAccountName, "eastus");
 
-    TimeUnit.MINUTES.sleep(1);
+    int timeout = 0;
+    while (crlService
+        .getStorageManager(azureTestUtils.getAzureCloudContext(), azureConfig)
+        .storageAccounts()
+        .list()
+        .stream()
+        .noneMatch(storageAccount -> storageAccount.name().equals(storageAccountName))) {
+      if (timeout++ > 60) {
+        fail("Landing zone storage account never finished creating");
+      }
+      TimeUnit.SECONDS.sleep(1);
+    }
 
     final UUID containerResourceId = UUID.randomUUID();
     final String storageContainerName = ControlledResourceFixtures.uniqueBucketName();
