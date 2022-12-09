@@ -69,9 +69,7 @@ public class LaunchCloneControlledAzureStorageContainerResourceFlightStep implem
             "Clone Azure Storage Container %s", sourceResource.getResourceId().toString()));
     String destinationContainerName =
         String.format(
-            "clone-%s-%s",
-            destinationWorkspaceId,
-            sourceResource.getStorageContainerName());
+            "clone-%s-%s", destinationWorkspaceId, sourceResource.getStorageContainerName());
     subflightInputParameters.put(
         ControlledResourceKeys.DESTINATION_CONTAINER_NAME,
         destinationContainerName.substring(0, Math.min(63, destinationContainerName.length())));
