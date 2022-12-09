@@ -17,7 +17,9 @@ EOM
 nohup yum install -y google-cloud-cli &
 
 # In bash login script, check if the environment has been configured for Terra and, if not, attempt to do so.
-cat << EOM | sed -i '/^# User specific aliases and functions$/ r /dev/stdin' /home/ec2-user/.bashrc
+cat << EOM | sed -i '/^# <<< conda initialize <<<$/ r /dev/stdin' /home/ec2-user/.bashrc
+
+# Terra Configuration
 if [ ! -f '/home/ec2-user/SageMaker/.terra/notebook_metadata.json' ]; then
     # The user has not configured their environment to access Terra yet, call now.
     /usr/local/bin/terra-auth --configure
