@@ -25,6 +25,8 @@ NOTEBOOK_METADATA_FILE = f'{os.path.expanduser("~")}/.terra/notebook_metadata.js
 def parse_args():
     parser = argparse.ArgumentParser(description = 'Terra AWS Auth Helper')
 
+    parser.add_argument('--whoami', action='store_true', required=False)
+
     parser.add_argument('--configure', action='store_true', required=False)
 
     parser.add_argument('--bucket', action='store', required=False,
@@ -63,8 +65,8 @@ def get_notebook_resource_name():
 def get_notebook_resource_arn():
     return get_notebook_resource_attribute('ResourceArn')
 
-def enumerate_workspace_ids(session):
-    workspace_ids = []
+def enumerate_workspaces(session):
+    workspaces_out = []
     request_count = 10
     offset = 0
     more = True
@@ -76,12 +78,12 @@ def enumerate_workspace_ids(session):
         workspaces = json.loads(response.content)
         received_count = 0
         for workspace in workspaces['workspaces']:
-            workspace_ids.append(workspace['id'])
+            workspaces_out.append(workspace)
             received_count = received_count + 1
             offset = offset + 1
         if received_count < request_count:
             more = False
-    return workspace_ids
+    return workspaces_out
 
 def enumerate_workspace_resources(session, workspace_id, type):
         out_resources = []
@@ -122,23 +124,24 @@ def get_bucket_cred(session, workspace_id, bucket_id, access):
 
 def find_notebook_metadata(session):
     retVal = {
-        'WorkspaceId': None,
-        'ResourceId': None,
+        'Workspace': None,
+        'Notebook': None,
         'DefaultBucketId': None,
         'DefaultBucketAccess': None
     }
     found = False
 
     resource_name = get_notebook_resource_name()
-    workspace_ids = enumerate_workspace_ids(session)
-    for workspace_id in workspace_ids:
+    workspaces = enumerate_workspaces(session)
+    for workspace in workspaces:
+        workspace_id = workspace['id']
         resources = enumerate_workspace_resources(session, workspace_id, 'AWS_SAGEMAKER_NOTEBOOK')
         for resource in resources:
             notebook_attributes = resource['resourceAttributes']['awsSagemakerNotebook']
             if notebook_attributes['instanceId'] == resource_name:
                 found = True
-                retVal['WorkspaceId'] = resource['metadata']['workspaceId']
-                retVal['ResourceId'] = resource['metadata']['resourceId']
+                retVal['Workspace'] = workspace
+                retVal['Notebook'] = resource
 
                 default_bucket = notebook_attributes['defaultBucket']
                 if default_bucket is not None:
@@ -154,7 +157,7 @@ def get_notebook_metadata(session):
     else:
         metadata = find_notebook_metadata(session)
 
-        if metadata['WorkspaceId'] is None or metadata['ResourceId'] is None:
+        if metadata['Workspace'] is None or metadata['Notebook'] is None:
             print("Workspace and Notebook Resource ID could not be resolved.", file=sys.stderr)
             sys.exit(NOTEBOOK_NOT_FOUND)
 
@@ -171,7 +174,8 @@ def get_bucket_configs(config, session, notebook_metadata, access):
     configs = config
     suffix = '-ro' if access == 'READ_ONLY' else ''
 
-    bucket_resources = enumerate_workspace_resources(session, notebook_metadata['WorkspaceId'], 'AWS_BUCKET')
+    workspace_id = notebook_metadata['Workspace']['id']
+    bucket_resources = enumerate_workspace_resources(session, workspace_id, 'AWS_BUCKET')
     for bucket_resource in bucket_resources:
         name = bucket_resource['metadata']['name']
         id = bucket_resource['metadata']['resourceId']
@@ -186,12 +190,69 @@ credential_process = "{os.path.realpath(__file__)}" --bucket {id} --access {acce
 region = us-east-1
 credential_process = "{os.path.realpath(__file__)}" --bucket {id} --access {access}\n'''
 
-        return configs
+    return configs
+
+def print_bucket_details(bucket, default, write_read):
+    bucket_metadata = bucket['metadata']
+    bucket_attributes = bucket['resourceAttributes']['awsBucket']
+
+    default_string = ''
+    profile_string = ''
+    ro_profile_string = ''
+
+    if default:
+        default_string = f' (DEFAULT, {"READ/WRITE" if write_read else "READ ONLY"})'
+
+        if write_read:
+            profile_string = 'default, '
+
+        else:
+            ro_profile_string = 'default, '
+
+    print(f'            Terra Storage Bucket Name: {bucket_metadata["name"]}{default_string}')
+    print(f'     Terra Storage Bucket Description: {bucket_metadata["description"]}')
+    print(f'             Terra Storage Bucket URI: s3://{bucket_attributes["s3BucketName"]}/{bucket_attributes["prefix"]}/')
+    print(f'           AWS SDK/CLI Access Profile: {profile_string}bucket-{bucket_metadata["name"]}')
+    print(f' Read Only AWS SDK/CLI Access Profile: {ro_profile_string}bucket-{bucket_metadata["name"]}-ro')
+    print('')
+
+def print_details(notebook_metadata, session):
+    workspace = notebook_metadata["Workspace"]
+    print('')
+    print(f'                 Terra Workspace Name: {workspace["displayName"]}')
+    print(f'                   Terra Workspace ID: {workspace["userFacingId"]}')
+    print(f'                 Terra Workspace UUID: {workspace["id"]}')
+    print(f'           Terra Workspace Descrption: {workspace["description"]}')
+    print('')
+    notebook = notebook_metadata["Notebook"]
+    print(f'        Terra SageMaker Notebook Name: {notebook["metadata"]["name"]}')
+    print(f'        Terra SageMaker Notebook UUID: {notebook["metadata"]["resourceId"]}')
+    print(f' Terra SageMaker Notebook Instance ID: {notebook["resourceAttributes"]["awsSagemakerNotebook"]["instanceId"]}')
+    print('')
+
+    workspace_id = workspace['id']
+    bucket_resources = enumerate_workspace_resources(session, workspace_id, 'AWS_BUCKET')
+
+    # Loop once and only print default (so it shows up first)
+    for bucket in bucket_resources:
+        if bucket['metadata']['resourceId'] == notebook_metadata['DefaultBucketId']:
+            print_bucket_details(bucket, True, notebook_metadata['DefaultBucketAccess'] == 'WRITE_READ')
+
+    # Loop again and only print NOT default
+    for bucket in bucket_resources:
+        if bucket['metadata']['resourceId'] != notebook_metadata['DefaultBucketId']:
+             print_bucket_details(bucket, False, False)
+
+    print(f'')
 
 def main():
     args = parse_args()
     session = get_authorized_session()
     notebook_metadata = get_notebook_metadata(session)
+    workspace_id = notebook_metadata['Workspace']['id']
+
+    if args.whoami:
+        print_details(notebook_metadata, session)
 
     if args.configure:
         config = get_notebook_config('profile this-notebook', notebook_metadata)
@@ -202,10 +263,11 @@ def main():
         with open(f'{os.path.expanduser("~")}/.aws/config', 'w') as f:
             f.write(config)
     elif args.notebook:
-        print(get_notebook_cred(session, notebook_metadata['WorkspaceId'], notebook_metadata['ResourceId'], args.access))
+        notebook_id = notebook_metadata['Notebook']['resourceId']
+        print(get_notebook_cred(session, workspace_id, notebook_id, args.access))
 
     elif args.bucket:
-        print(get_bucket_cred(session, notebook_metadata['WorkspaceId'], args.bucket, args.access))
+        print(get_bucket_cred(session, workspace_id, args.bucket, args.access))
 
 if __name__ == "__main__":
     main()

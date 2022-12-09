@@ -13,8 +13,8 @@ repo_gpgcheck=0
 gpgkey=https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
 EOM
 
-# Install gcloud CLI
-yum install -y google-cloud-cli
+# Install gcloud CLI in the background with nohup so we don't delay startup
+nohup yum install -y google-cloud-cli &
 
 # In bash login script, check if the environment has been configured for Terra and, if not, attempt to do so.
 cat << EOM | sed -i '/^# User specific aliases and functions$/ r /dev/stdin' /home/ec2-user/.bashrc
@@ -39,10 +39,8 @@ echo "exec -l bash" > /home/ec2-user/.profile
 sudo -u ec2-user -i <<'EOF'
 
 # Copy in the Terra auth helper CLI (eventually this will install Terra CLI instead)
-WORKING_DIR=/home/ec2-user/terra
-mkdir -p "$WORKING_DIR"
-wget https://raw.githubusercontent.com/DataBiosphere/terra-workspace-manager/jczerk/aws_wlz_interface/service/src/main/resources/tools/terra-auth.py -O "$WORKING_DIR/terra-auth.py"
-chmod +x "$WORKING_DIR/terra-auth.py"
+wget https://raw.githubusercontent.com/DataBiosphere/terra-workspace-manager/jczerk/aws_wlz_interface/service/src/main/resources/tools/terra-auth.py -O "/usr/local/bin/terra-auth"
+chmod +x "/usr/local/bin/terra-auth"
 
 # Lazy create terra persistence directory and symlink
 mkdir -p /home/ec2-user/SageMaker/.terra
@@ -56,20 +54,21 @@ ln -s /home/ec2-user/SageMaker/.config/gcloud /home/ec2-user/.config/gcloud
 # Install google auth python package in all conda environments
 pip download google-auth
 
-# Note that "base" is special environment name, include it there as well.
-for env in base /home/ec2-user/anaconda3/envs/*; do
+for env in /home/ec2-user/anaconda3/envs/*; do
     if [ $env = 'JupyterSystemEnv' ]; then
         continue
     fi
-    source /home/ec2-user/anaconda3/bin/activate $(basename "$env") && \
+
+    # We don't need to wait for these and delay startup, so nohup them in background
+    nohup -c 'source /home/ec2-user/anaconda3/bin/activate $(basename "$env") && \
     pip install google-auth && \
-    source /home/ec2-user/anaconda3/bin/deactivate &
+    source /home/ec2-user/anaconda3/bin/deactivate' &
 done
-wait
 
 # If we have ADC, attempt to re-configure at startup.
 if [ -f /home/ec2-user/.config/gcloud/application_default_credentials.json ]; then
   source /home/ec2-user/anaconda3/bin/activate base
+  pip install google-auth
   /home/ec2-user/terra/terra-auth.py --configure
   source /home/ec2-user/anaconda3/bin/deactivate
 fi
