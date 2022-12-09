@@ -298,17 +298,21 @@ public class BqDatasetUtils {
 
     // Use DDL to insert rows instead of InsertAllRequest so that data won't
     // be in the streaming buffer where it's un-copyable for up to 90 minutes.
-    bigQueryClient.query(
-        QueryJobConfiguration.newBuilder(
-                "INSERT INTO `"
-                    + projectId
-                    + "."
-                    + dataset.getAttributes().getDatasetId()
-                    + "."
-                    + BQ_EMPLOYEE_TABLE_NAME
-                    + "` (employee_id, name) VALUES("
-                    + "101, 'Aquaman'), (102, 'Superman');")
-            .build());
+    // Retry because if project was created recently, it may take time for bigquery.jobs.create to
+    // propagate
+    ClientTestUtils.getWithRetryOnException(
+        () ->
+            bigQueryClient.query(
+                QueryJobConfiguration.newBuilder(
+                        "INSERT INTO `"
+                            + projectId
+                            + "."
+                            + dataset.getAttributes().getDatasetId()
+                            + "."
+                            + BQ_EMPLOYEE_TABLE_NAME
+                            + "` (employee_id, name) VALUES("
+                            + "101, 'Aquaman'), (102, 'Superman');")
+                    .build()));
 
     bigQueryClient.query(
         QueryJobConfiguration.newBuilder(
