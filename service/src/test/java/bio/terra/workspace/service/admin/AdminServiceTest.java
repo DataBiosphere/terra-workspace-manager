@@ -103,7 +103,7 @@ public class AdminServiceTest extends BaseConnectedTest {
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
 
     OffsetDateTime lastChangeTimestampOfWorkspace1 =
-        workspaceActivityLogDao.getLastUpdateDetails(workspaceIds.get(0)).get().getChangeDate();
+        workspaceActivityLogDao.getLastUpdateDetails(workspaceIds.get(0)).get().changeDate();
     // First update. No change will be applied.
     String jobId =
         adminService.syncIamRoleForAllGcpProjects(
@@ -114,7 +114,7 @@ public class AdminServiceTest extends BaseConnectedTest {
           projectId, CUSTOM_GCP_PROJECT_IAM_ROLES.get(WsmIamRole.READER).getIncludedPermissions());
     }
     OffsetDateTime newChangeTimestampOfWorkspace1 =
-        workspaceActivityLogDao.getLastUpdateDetails(workspaceIds.get(0)).get().getChangeDate();
+        workspaceActivityLogDao.getLastUpdateDetails(workspaceIds.get(0)).get().changeDate();
     assertTrue(newChangeTimestampOfWorkspace1.isEqual(lastChangeTimestampOfWorkspace1));
 
     // Change the existing project to have incomplete permissions on PROJECT_READER
@@ -122,9 +122,9 @@ public class AdminServiceTest extends BaseConnectedTest {
       updateCustomRole(INCOMPLETE_PROJECT_READER, project);
     }
     OffsetDateTime lastChangeTimestampOfWorkspace2 =
-        workspaceActivityLogDao.getLastUpdateDetails(workspaceIds.get(1)).get().getChangeDate();
+        workspaceActivityLogDao.getLastUpdateDetails(workspaceIds.get(1)).get().changeDate();
     OffsetDateTime lastChangeTimestampOfWorkspace3 =
-        workspaceActivityLogDao.getLastUpdateDetails(workspaceIds.get(2)).get().getChangeDate();
+        workspaceActivityLogDao.getLastUpdateDetails(workspaceIds.get(2)).get().changeDate();
 
     // Second update, dry run
     jobId =
@@ -150,19 +150,19 @@ public class AdminServiceTest extends BaseConnectedTest {
         workspaceActivityLogDao
             .getLastUpdateDetails(workspaceIds.get(0))
             .get()
-            .getChangeDate()
+            .changeDate()
             .isAfter(lastChangeTimestampOfWorkspace1));
     assertTrue(
         workspaceActivityLogDao
             .getLastUpdateDetails(workspaceIds.get(1))
             .get()
-            .getChangeDate()
+            .changeDate()
             .isAfter(lastChangeTimestampOfWorkspace2));
     assertTrue(
         workspaceActivityLogDao
             .getLastUpdateDetails(workspaceIds.get(2))
             .get()
-            .getChangeDate()
+            .changeDate()
             .isAfter(lastChangeTimestampOfWorkspace3));
 
     cleanUpWorkspace();
@@ -177,7 +177,7 @@ public class AdminServiceTest extends BaseConnectedTest {
       updateCustomRole(INCOMPLETE_PROJECT_READER, project);
     }
     OffsetDateTime lastChangeTimestampOfWorkspace1 =
-        workspaceActivityLogDao.getLastUpdateDetails(workspaceIds.get(0)).get().getChangeDate();
+        workspaceActivityLogDao.getLastUpdateDetails(workspaceIds.get(0)).get().changeDate();
     // Test idempotency of steps by retrying them once.
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(
@@ -195,7 +195,7 @@ public class AdminServiceTest extends BaseConnectedTest {
           projectId, INCOMPLETE_PROJECT_READER.getIncludedPermissions());
     }
     OffsetDateTime newChangeTimestampOfWorkspace1 =
-        workspaceActivityLogDao.getLastUpdateDetails(workspaceIds.get(0)).get().getChangeDate();
+        workspaceActivityLogDao.getLastUpdateDetails(workspaceIds.get(0)).get().changeDate();
     assertTrue(newChangeTimestampOfWorkspace1.isEqual(lastChangeTimestampOfWorkspace1));
 
     cleanUpWorkspace();

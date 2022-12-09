@@ -4,6 +4,7 @@ import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RES
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.defaultNotebookCreationParameters;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi;
 import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeDefaultReferencedResourceFieldsApi;
+import static bio.terra.workspace.db.WorkspaceActivityLogDao.ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -25,6 +26,8 @@ import bio.terra.workspace.app.controller.shared.PropertiesUtils;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
+import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
+import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpBigQueryDatasetRequest;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpBigQueryDatasetResult;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketRequest;
@@ -99,6 +102,7 @@ import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.SetR
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.referenced.flight.create.CreateReferenceMetadataStep;
+import bio.terra.workspace.service.workspace.model.OperationType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.google.common.collect.ImmutableList;
@@ -117,7 +121,10 @@ import org.hamcrest.Matcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.support.DataAccessUtils;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.servlet.MockMvc;
@@ -237,8 +244,9 @@ public class MockMvcUtils {
   // (since unit tests don't use real SAM). Instead, each method must take in userRequest.
   @Autowired private MockMvc mockMvc;
   @Autowired private ObjectMapper objectMapper;
-  @Autowired JobService jobService;
-  @Autowired StairwayComponent stairwayComponent;
+  @Autowired private JobService jobService;
+  @Autowired private StairwayComponent stairwayComponent;
+  @Autowired private NamedParameterJdbcTemplate jdbcTemplate;
 
   public static MockHttpServletRequestBuilder addAuth(
       MockHttpServletRequestBuilder request, AuthenticatedUserRequest userRequest) {
@@ -1459,6 +1467,7 @@ public class MockMvcUtils {
             .sourceWorkspaceId(sourceWorkspaceId)
             .sourceResourceId(sourceResourceId));
 
+    // TODO (PF-2261): assert createdBy, lastUpdatedBy, createdDate, lastUpdatedDate.
     assertResourceMetadata(
         actualMetadata,
         expectedResourceType,
@@ -1467,6 +1476,47 @@ public class MockMvcUtils {
         expectedWorkspaceId,
         expectedResourceName,
         expectedResourceLineage);
+  }
+
+  public void assertLatestActivityLogChangeDetails(
+      UUID workspaceId,
+      String expectedActorEmail,
+      String expectedActorSubjectId,
+      OperationType expectedOperationType,
+      String expectedChangeSubjectId,
+      ActivityLogChangedTarget expectedChangeTarget) {
+    ActivityLogChangeDetails actualChangedDetails =
+        getLastChangeDetails(workspaceId, expectedChangeSubjectId);
+    assertEquals(
+        new ActivityLogChangeDetails(
+            actualChangedDetails.changeDate(),
+            expectedActorEmail,
+            expectedActorSubjectId,
+            expectedOperationType,
+            expectedChangeSubjectId,
+            expectedChangeTarget),
+        actualChangedDetails);
+  }
+
+  /**
+   * Get the latest activity log row where workspaceId matches.
+   *
+   * <p>Do not use WorkspaceActivityLogService#getLastUpdatedDetails because it filters out
+   * non-update change_type such as `GRANT_WORKSPACE_ROLE` and `REMOVE_WORKSPACE_ROLE`.
+   */
+  private ActivityLogChangeDetails getLastChangeDetails(UUID workspaceId, String changeSubjectId) {
+    final String sql =
+        """
+            SELECT * FROM workspace_activity_log
+            WHERE workspace_id = :workspace_id AND change_subject_id=:change_subject_id
+            ORDER BY change_date DESC LIMIT 1
+        """;
+    final var params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceId.toString())
+            .addValue("change_subject_id", changeSubjectId);
+    return DataAccessUtils.singleResult(
+        jdbcTemplate.query(sql, params, ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER));
   }
 
   public void assertNoResourceWithName(
@@ -1541,7 +1591,7 @@ public class MockMvcUtils {
   }
 
   // I can't figure out the proper way to do this
-  private static Matcher getExpectedCodesMatcher(List<Integer> expectedCodes) {
+  private static Matcher<? super Integer> getExpectedCodesMatcher(List<Integer> expectedCodes) {
     if (expectedCodes.size() == 1) {
       return equalTo(expectedCodes.get(0));
     } else if (expectedCodes.size() == 2) {

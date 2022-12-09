@@ -25,8 +25,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.workspace.common.BaseUnitTestMockDataRepoService;
+import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
+import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.MockMvcUtils;
-import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.generated.model.ApiCloneResourceResult;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceResult;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
@@ -54,6 +55,9 @@ import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
 import bio.terra.workspace.service.iam.model.SamConstants.SamSpendProfileAction;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
+import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
+import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants.Properties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
@@ -93,7 +97,8 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
   @Autowired ObjectMapper objectMapper;
-  @Autowired WorkspaceActivityLogDao workspaceActivityLogDao;
+  @Autowired WorkspaceActivityLogService workspaceActivityLogService;
+  @Autowired JobService jobService;
 
   private static ApiTpsPaoGetResult emptyWorkspacePao() {
     return new ApiTpsPaoGetResult()
@@ -242,6 +247,15 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
     ApiWorkspaceDescription gotWorkspace = mockMvcUtils.getWorkspace(USER_REQUEST, workspaceId);
     mockMvcUtils.assertProperties(
         List.of(SHORT_DESCRIPTION_PROPERTY, VERSION_PROPERTY), gotWorkspace.getProperties());
+
+    // TODO(PF-2314): Change to call API. We don't expose this in API yet, so read from db.
+    mockMvcUtils.assertLatestActivityLogChangeDetails(
+        workspaceId,
+        USER_REQUEST.getEmail(),
+        USER_REQUEST.getSubjectId(),
+        OperationType.DELETE_PROPERTIES,
+        workspaceId.toString(),
+        ActivityLogChangedTarget.WORKSPACE);
   }
 
   @Test
@@ -267,6 +281,15 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
             newUserProperty,
             fooProperty),
         gotWorkspace.getProperties());
+
+    // TODO(PF-2314): Change to call API. We don't expose this in API yet, so read from db.
+    mockMvcUtils.assertLatestActivityLogChangeDetails(
+        workspaceId,
+        USER_REQUEST.getEmail(),
+        USER_REQUEST.getSubjectId(),
+        OperationType.UPDATE_PROPERTIES,
+        workspaceId.toString(),
+        ActivityLogChangedTarget.WORKSPACE);
   }
 
   @Test
@@ -279,6 +302,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
 
     ApiCloneWorkspaceResult cloneWorkspace =
         mockMvcUtils.cloneWorkspace(USER_REQUEST, workspaceId, FAKE_SPEND_PROFILE, null);
+    jobService.waitForJob(cloneWorkspace.getJobReport().getId());
 
     UUID destinationWorkspaceId = cloneWorkspace.getWorkspace().getDestinationWorkspaceId();
     ApiWorkspaceDescription destinationWorkspace =
@@ -287,6 +311,15 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
     assertEquals(sourceWorkspace.getProperties(), destinationWorkspace.getProperties());
     assertEquals(
         sourceWorkspace.getDisplayName() + " (Copy)", destinationWorkspace.getDisplayName());
+
+    // TODO(PF-2314): Change to call API. We don't expose this in API yet, so read from db
+    mockMvcUtils.assertLatestActivityLogChangeDetails(
+        destinationWorkspaceId,
+        USER_REQUEST.getEmail(),
+        USER_REQUEST.getSubjectId(),
+        OperationType.CLONE,
+        destinationWorkspaceId.toString(),
+        ActivityLogChangedTarget.WORKSPACE);
   }
 
   @Test
@@ -436,14 +469,25 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
     ApiCreatedWorkspace workspace = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
     when(mockTpsApiDispatch().updatePao(any(), eq(workspace.getId()), any()))
         .thenReturn(new ApiTpsPaoUpdateResult().updateApplied(true));
-    OffsetDateTime lastChangedDate =
-        workspaceActivityLogDao.getLastUpdateDetails(workspace.getId()).get().getChangeDate();
+    ActivityLogChangeDetails lastChangeDetails =
+        workspaceActivityLogService.getLastUpdatedDetails(workspace.getId()).get();
+    OffsetDateTime lastChangedDate = lastChangeDetails.changeDate();
+    assertEquals(OperationType.CREATE, lastChangeDetails.operationType());
 
     ApiTpsPaoUpdateResult result = updatePolicies(workspace.getId());
     assertTrue(result.isUpdateApplied());
-    assertTrue(
-        lastChangedDate.isBefore(
-            workspaceActivityLogDao.getLastUpdateDetails(workspace.getId()).get().getChangeDate()));
+    ActivityLogChangeDetails secondChangeDetails =
+        workspaceActivityLogService.getLastUpdatedDetails(workspace.getId()).get();
+    assertTrue(lastChangedDate.isBefore(secondChangeDetails.changeDate()));
+
+    // TODO(PF-2314): Change to call API. We don't expose this in API yet, so read from db
+    mockMvcUtils.assertLatestActivityLogChangeDetails(
+        workspace.getId(),
+        USER_REQUEST.getEmail(),
+        USER_REQUEST.getSubjectId(),
+        OperationType.UPDATE,
+        workspace.getId().toString(),
+        ActivityLogChangedTarget.POLICIES);
   }
 
   @Test
@@ -451,14 +495,15 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
     ApiCreatedWorkspace workspace = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
     when(mockTpsApiDispatch().updatePao(any(), eq(workspace.getId()), any()))
         .thenReturn(new ApiTpsPaoUpdateResult().updateApplied(false));
-    OffsetDateTime lastChangedDate =
-        workspaceActivityLogDao.getLastUpdateDetails(workspace.getId()).get().getChangeDate();
+    ActivityLogChangeDetails lastChangeDetails =
+        workspaceActivityLogService.getLastUpdatedDetails(workspace.getId()).get();
+    assertEquals(OperationType.CREATE, lastChangeDetails.operationType());
 
     ApiTpsPaoUpdateResult result = updatePolicies(workspace.getId());
     assertFalse(result.isUpdateApplied());
-    assertTrue(
-        lastChangedDate.isEqual(
-            workspaceActivityLogDao.getLastUpdateDetails(workspace.getId()).get().getChangeDate()));
+    assertEquals(
+        lastChangeDetails,
+        workspaceActivityLogService.getLastUpdatedDetails(workspace.getId()).get());
   }
 
   private ApiErrorReport createRawlsWorkspaceWithPolicyExpectError(int expectedCode)

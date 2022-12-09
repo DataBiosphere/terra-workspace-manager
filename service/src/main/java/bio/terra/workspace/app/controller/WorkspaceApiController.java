@@ -11,6 +11,7 @@ import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.exception.FeatureNotSupportedException;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
+import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
@@ -258,7 +259,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     }
 
     // When we have another cloud context, we will need to do a similar retrieval for it.
-    var lastChangeDetailsOptional = workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
+    var lastChangeDetailsOptional =
+        workspaceActivityLogService.getLastUpdatedDetails(workspaceUuid);
 
     if (highestRole == WsmIamRole.DISCOVERER) {
       workspace = Workspace.stripWorkspaceForRequesterWithOnlyDiscovererRole(workspace);
@@ -282,12 +284,10 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         .createdBy(workspace.createdByEmail())
         .lastUpdatedDate(
             lastChangeDetailsOptional
-                .map(ActivityLogChangeDetails::getChangeDate)
+                .map(ActivityLogChangeDetails::changeDate)
                 .orElse(OffsetDateTime.MIN))
         .lastUpdatedBy(
-            lastChangeDetailsOptional
-                .map(ActivityLogChangeDetails::getActorEmail)
-                .orElse("unknown"))
+            lastChangeDetailsOptional.map(ActivityLogChangeDetails::actorEmail).orElse("unknown"))
         .policies(workspacePolicies);
   }
 
@@ -378,7 +378,12 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         tpsApiDispatch.updatePao(
             new BearerToken(userRequest.getRequiredToken()), workspaceId, body);
     if (Boolean.TRUE.equals(result.isUpdateApplied())) {
-      workspaceActivityLogService.writeActivity(userRequest, workspaceId, OperationType.UPDATE);
+      workspaceActivityLogService.writeActivity(
+          userRequest,
+          workspaceId,
+          OperationType.UPDATE,
+          workspaceId.toString(),
+          ActivityLogChangedTarget.POLICIES);
       logger.info(
           "Finished updating workspace policies {} for {}", workspaceId, userRequest.getEmail());
     } else {
@@ -452,7 +457,11 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
                 uuid, getAuthenticatedInfo(), WsmIamRole.fromApiModel(role), body.getMemberEmail()),
         "grantWorkspaceRole");
     workspaceActivityLogService.writeActivity(
-        getAuthenticatedInfo(), uuid, OperationType.GRANT_WORKSPACE_ROLE);
+        getAuthenticatedInfo(),
+        uuid,
+        OperationType.GRANT_WORKSPACE_ROLE,
+        body.getMemberEmail(),
+        ActivityLogChangedTarget.USER);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 

@@ -3,6 +3,7 @@ package bio.terra.workspace.service.workspace;
 import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
+import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.ApiTpsPolicyInputs;
@@ -295,7 +296,12 @@ public class WorkspaceService {
       @Nullable String description,
       AuthenticatedUserRequest userRequest) {
     if (workspaceDao.updateWorkspace(workspaceUuid, userFacingId, name, description)) {
-      workspaceActivityLogService.writeActivity(userRequest, workspaceUuid, OperationType.UPDATE);
+      workspaceActivityLogService.writeActivity(
+          userRequest,
+          workspaceUuid,
+          OperationType.UPDATE,
+          workspaceUuid.toString(),
+          ActivityLogChangedTarget.WORKSPACE);
     }
     return workspaceDao.getWorkspace(workspaceUuid);
   }
@@ -309,7 +315,12 @@ public class WorkspaceService {
   public void updateWorkspaceProperties(
       UUID workspaceUuid, Map<String, String> properties, AuthenticatedUserRequest userRequest) {
     workspaceDao.updateWorkspaceProperties(workspaceUuid, properties);
-    workspaceActivityLogService.writeActivity(userRequest, workspaceUuid, OperationType.UPDATE);
+    workspaceActivityLogService.writeActivity(
+        userRequest,
+        workspaceUuid,
+        OperationType.UPDATE_PROPERTIES,
+        workspaceUuid.toString(),
+        ActivityLogChangedTarget.WORKSPACE);
   }
 
   /** Delete an existing workspace by ID. */
@@ -338,7 +349,12 @@ public class WorkspaceService {
   public void deleteWorkspaceProperties(
       UUID workspaceUuid, List<String> propertyKeys, AuthenticatedUserRequest userRequest) {
     workspaceDao.deleteWorkspaceProperties(workspaceUuid, propertyKeys);
-    workspaceActivityLogService.writeActivity(userRequest, workspaceUuid, OperationType.DELETE);
+    workspaceActivityLogService.writeActivity(
+        userRequest,
+        workspaceUuid,
+        OperationType.DELETE_PROPERTIES,
+        workspaceUuid.toString(),
+        ActivityLogChangedTarget.WORKSPACE);
   }
 
   /**

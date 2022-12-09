@@ -20,6 +20,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.workspace.common.BaseConnectedTest;
+import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
@@ -27,7 +28,9 @@ import bio.terra.workspace.generated.model.ApiIamRole;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
+import bio.terra.workspace.service.workspace.model.OperationType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Optional;
@@ -39,6 +42,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
@@ -60,6 +64,8 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @Autowired private MockMvcUtils mockMvcUtils;
   @Autowired private ObjectMapper objectMapper;
   @Autowired private UserAccessUtils userAccessUtils;
+  @Autowired private NamedParameterJdbcTemplate jdbcTemplate;
+  @Autowired private SamService samService;
 
   private ApiCreatedWorkspace workspace;
 
@@ -248,6 +254,48 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
         listWorkspaces(userAccessUtils.secondUserAuthRequest(), Optional.of(ApiIamRole.READER));
 
     assertTrue(listedWorkspaces.isEmpty());
+  }
+
+  @Test
+  public void grantRole_logsAnActivity() throws Exception {
+    mockMvcUtils.grantRole(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspace.getId(),
+        WsmIamRole.DISCOVERER,
+        userAccessUtils.getSecondUserEmail());
+
+    // TODO(PF-2314): Change to call API. We don't expose this in API yet, so read from db
+    mockMvcUtils.assertLatestActivityLogChangeDetails(
+        workspace.getId(),
+        userAccessUtils.getDefaultUserEmail(),
+        samService.getUserStatusInfo(userAccessUtils.defaultUserAuthRequest()).getUserSubjectId(),
+        OperationType.GRANT_WORKSPACE_ROLE,
+        userAccessUtils.getSecondUserEmail(),
+        ActivityLogChangedTarget.USER);
+  }
+
+  @Test
+  public void removeRole_logsAnActivity() throws Exception {
+    mockMvcUtils.grantRole(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspace.getId(),
+        WsmIamRole.DISCOVERER,
+        userAccessUtils.getSecondUserEmail());
+
+    mockMvcUtils.removeRole(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspace.getId(),
+        WsmIamRole.DISCOVERER,
+        userAccessUtils.getSecondUserEmail());
+
+    // TODO(PF-2314): Change to call API. We don't expose this in API yet, so read from db.
+    mockMvcUtils.assertLatestActivityLogChangeDetails(
+        workspace.getId(),
+        userAccessUtils.getDefaultUserEmail(),
+        samService.getUserStatusInfo(userAccessUtils.defaultUserAuthRequest()).getUserSubjectId(),
+        OperationType.REMOVE_WORKSPACE_ROLE,
+        userAccessUtils.getSecondUserEmail(),
+        ActivityLogChangedTarget.USER);
   }
 
   @Test
