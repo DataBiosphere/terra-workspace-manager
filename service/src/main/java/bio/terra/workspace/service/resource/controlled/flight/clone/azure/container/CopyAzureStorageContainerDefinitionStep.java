@@ -88,7 +88,8 @@ public class CopyAzureStorageContainerDefinitionStep implements Step {
             destinationResourceName,
             description,
             destinationContainerName,
-            samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest));
+            samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
+            sourceContainer.getRegion());
     ApiAzureStorageContainerCreationParameters destinationCreationParameters =
         new ApiAzureStorageContainerCreationParameters()
             .storageContainerName(destinationContainerName);

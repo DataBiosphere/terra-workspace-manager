@@ -106,7 +106,8 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
             description,
             datasetName,
             destinationProjectId,
-            samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest));
+            samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
+            location);
 
     var creationParameters =
         new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetName).location(location);
