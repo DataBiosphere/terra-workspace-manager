@@ -111,6 +111,10 @@ components:
         location:
           description: A valid bucket location per https://docs.aws.amazon.com/general/latest/gr/s3.html.
           type: string
+        seed:
+          description: Seed bucket with sample data.
+          type: boolean
+          default: false
 
   responses:
     CreatedControlledAwsBucketResponse:

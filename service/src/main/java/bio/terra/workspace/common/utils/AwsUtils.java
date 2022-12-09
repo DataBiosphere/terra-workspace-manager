@@ -258,16 +258,26 @@ public class AwsUtils {
   public static void createFolder(
       Credentials credentials, Regions region, String bucketName, String folder) {
     // Creating a "folder" requires writing an empty object ending with the delimiter ('/').
-    AmazonS3 s3 = getS3Session(credentials, region);
     String folderKey = String.format("%s/", folder);
-    s3.putObject(bucketName, folderKey, "");
+    putObject(credentials, region, bucketName, folderKey, "");
   }
 
   public static void undoCreateFolder(
       Credentials credentials, Regions region, String bucketName, String folder) {
-    AmazonS3 s3 = getS3Session(credentials, region);
     String folderKey = String.format("%s/", folder);
-    DeleteObjectRequest deleteObjectRequest = new DeleteObjectRequest(bucketName, folderKey);
+    deleteObject(credentials, region, bucketName, folderKey);
+  }
+
+  public static void putObject(
+      Credentials credentials, Regions region, String bucketName, String key, String content) {
+    AmazonS3 s3 = getS3Session(credentials, region);
+    s3.putObject(bucketName, key, content);
+  }
+
+  public static void deleteObject(
+      Credentials credentials, Regions region, String bucketName, String key) {
+    AmazonS3 s3 = getS3Session(credentials, region);
+    DeleteObjectRequest deleteObjectRequest = new DeleteObjectRequest(bucketName, key);
     s3.deleteObject(deleteObjectRequest);
   }
 

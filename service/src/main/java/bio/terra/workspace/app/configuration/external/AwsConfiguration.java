@@ -15,6 +15,8 @@ public class AwsConfiguration {
 
   private List<AwsLandingZoneConfiguration> landingZones;
 
+  private List<AwsBucketSeedFile> bucketSeedFiles;
+
   public String getDefaultLandingZone() {
     return defaultLandingZone;
   }
@@ -37,6 +39,14 @@ public class AwsConfiguration {
 
   public void setLandingZones(List<AwsLandingZoneConfiguration> landingZones) {
     this.landingZones = landingZones;
+  }
+
+  public List<AwsBucketSeedFile> getBucketSeedFiles() {
+    return bucketSeedFiles;
+  }
+
+  public void setBucketSeedFiles(List<AwsBucketSeedFile> bucketSeedFiles) {
+    this.bucketSeedFiles = bucketSeedFiles;
   }
 
   public static class AwsLandingZoneBucket {
@@ -114,6 +124,27 @@ public class AwsConfiguration {
 
     public void setBuckets(List<AwsLandingZoneBucket> buckets) {
       this.buckets = buckets;
+    }
+  }
+
+  public static class AwsBucketSeedFile {
+    private String path;
+    private String content;
+
+    public String getPath() {
+      return path;
+    }
+
+    public void setPath(String path) {
+      this.path = path;
+    }
+
+    public String getContent() {
+      return content;
+    }
+
+    public void setContent(String content) {
+      this.content = content;
     }
   }
 }

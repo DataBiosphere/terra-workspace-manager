@@ -3,12 +3,14 @@ package bio.terra.workspace.service.resource.controlled.cloud.aws.storagebucket;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.stairway.RetryRule;
+import bio.terra.workspace.app.configuration.external.AwsConfiguration;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
 import bio.terra.workspace.generated.model.ApiAwsBucketAttributes;
+import bio.terra.workspace.generated.model.ApiAwsBucketCreationParameters;
 import bio.terra.workspace.generated.model.ApiAwsBucketResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.generated.model.ApiResourceUnion;
@@ -21,6 +23,7 @@ import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
@@ -112,6 +115,23 @@ public class ControlledAwsBucketResource extends ControlledResource {
 
     flight.addStep(new ValidateAwsBucketCreationStep(this), cloudRetry);
     flight.addStep(new CreateAwsBucketStep(this), cloudRetry);
+
+    // Check if the user requested that the bucket be seeded with sample data.
+    ApiAwsBucketCreationParameters creationParameters =
+        flight
+            .getInputParameters()
+            .get(
+                WorkspaceFlightMapKeys.ControlledResourceKeys.CREATION_PARAMETERS,
+                ApiAwsBucketCreationParameters.class);
+
+    if (creationParameters.isSeed()) {
+      // Check that we actually have example data to seed with.
+      List<AwsConfiguration.AwsBucketSeedFile> seedFiles =
+          flightBeanBag.getAwsConfiguration().getBucketSeedFiles();
+      if (seedFiles != null && !seedFiles.isEmpty()) {
+        flight.addStep(new SeedAwsBucketStep(seedFiles, this), cloudRetry);
+      }
+    }
   }
 
   /** {@inheritDoc} */
