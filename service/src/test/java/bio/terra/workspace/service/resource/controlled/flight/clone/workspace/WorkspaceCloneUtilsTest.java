@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeControlledResourceFieldsBuilder;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.uniqueDatasetId;
+import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_GCP_RESOURCE_REGION;
 import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.service.resource.controlled.flight.clone.workspace.WorkspaceCloneUtils.buildDestinationControlledBigQueryDataset;
 import static bio.terra.workspace.service.resource.controlled.flight.clone.workspace.WorkspaceCloneUtils.buildDestinationControlledGcsBucket;
@@ -55,7 +56,8 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             cloneDescription,
             cloneDatasetName,
             cloneProjectName,
-            DEFAULT_USER_EMAIL);
+            DEFAULT_USER_EMAIL,
+            DEFAULT_GCP_RESOURCE_REGION);
 
     assertResourceCommonFields(sourceDataset, cloneResourceName, cloneDescription, datasetToClone);
     assertControlledResourceCommonField(sourceDataset, datasetToClone);
@@ -87,7 +89,8 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             /*description=*/ null,
             RandomStringUtils.randomAlphabetic(5),
             "my-cloned-gcp-project",
-            DEFAULT_USER_EMAIL);
+            DEFAULT_USER_EMAIL,
+            DEFAULT_GCP_RESOURCE_REGION);
 
     assertEquals(PrivateResourceState.INITIALIZING, datasetToClone.getPrivateResourceState().get());
     assertControlledResourceCommonField(sourceDataset, datasetToClone);
@@ -112,7 +115,8 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             /*description=*/ "This is a cloned dataset",
             /*cloudInstanceName=*/ RandomStringUtils.randomAlphabetic(5),
             /*destinationProjectId=*/ "my-cloned-gcp-project",
-            DEFAULT_USER_EMAIL);
+            DEFAULT_USER_EMAIL,
+            DEFAULT_GCP_RESOURCE_REGION);
 
     ImmutableMap<String, String> properties = datasetToClone.getProperties();
     assertFalse(properties.containsKey(FOLDER_ID_KEY));
@@ -138,7 +142,8 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             /*description=*/ "This is a cloned dataset",
             /*cloudInstanceName=*/ RandomStringUtils.randomAlphabetic(5),
             /*destinationProjectId=*/ "my-gcp-project",
-            DEFAULT_USER_EMAIL);
+            DEFAULT_USER_EMAIL,
+            DEFAULT_GCP_RESOURCE_REGION);
 
     assertTrue(datasetToClone.getProperties().containsKey(FOLDER_ID_KEY));
   }
@@ -161,7 +166,8 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             cloneResourceName,
             cloneDescription,
             cloneBucketName,
-            DEFAULT_USER_EMAIL);
+            DEFAULT_USER_EMAIL,
+            DEFAULT_GCP_RESOURCE_REGION);
 
     assertResourceCommonFields(sourceBucket, cloneResourceName, cloneDescription, bucketToClone);
     assertControlledResourceCommonField(sourceBucket, bucketToClone);
@@ -191,7 +197,8 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             "This is a cloned private bucket",
             // Gcs bucket cloud instance id must be lower-case.
             TestUtils.appendRandomNumber("gcsbucket"),
-            DEFAULT_USER_EMAIL);
+            DEFAULT_USER_EMAIL,
+            DEFAULT_GCP_RESOURCE_REGION);
 
     assertEquals(PrivateResourceState.INITIALIZING, bucketToClone.getPrivateResourceState().get());
     assertControlledResourceCommonField(sourceBucket, bucketToClone);
@@ -213,7 +220,8 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             /*description=*/ "This is a cloned bucket",
             // Gcs bucket cloud instance id must be lower-case.
             /*cloudInstanceName=*/ TestUtils.appendRandomNumber("gcsbucket"),
-            DEFAULT_USER_EMAIL);
+            DEFAULT_USER_EMAIL,
+            DEFAULT_GCP_RESOURCE_REGION);
 
     ImmutableMap<String, String> properties = bucketToClone.getProperties();
     assertFalse(properties.containsKey(FOLDER_ID_KEY));
@@ -322,5 +330,6 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
       ControlledResource sourceResource, ControlledResource resourceToClone) {
     assertEquals(sourceResource.getAccessScope(), resourceToClone.getAccessScope());
     assertEquals(sourceResource.getAssignedUser(), resourceToClone.getAssignedUser());
+    assertEquals(DEFAULT_GCP_RESOURCE_REGION, resourceToClone.getRegion());
   }
 }
