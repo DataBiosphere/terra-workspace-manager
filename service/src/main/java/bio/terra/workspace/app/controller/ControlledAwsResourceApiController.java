@@ -130,7 +130,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
         ControlledAwsBucketResource.builder()
             .common(commonFields)
             .s3BucketName(s3BucketName)
-            .prefix(AwsUtils.generateUniquePrefix())
+            .prefix(commonFields.getName())
             .region(creationParameters.getLocation())
             .build();
 
