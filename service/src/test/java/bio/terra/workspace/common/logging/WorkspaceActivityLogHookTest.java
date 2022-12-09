@@ -24,6 +24,7 @@ import bio.terra.workspace.common.exception.UnknownFlightClassNameException;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
+import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.db.FolderDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
@@ -77,8 +78,17 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     hook.endFlight(
         new FakeFlightContext(
             WorkspaceCreateFlight.class.getName(), inputParams, FlightStatus.SUCCESS));
-    var changeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
-    assertChangeDetails(changeDetails);
+    ActivityLogChangeDetails changeDetails =
+        activityLogDao.getLastUpdateDetails(workspaceUuid).get();
+    assertEquals(
+        changeDetails,
+        new ActivityLogChangeDetails(
+            changeDetails.changeDate(),
+            USER_REQUEST.getEmail(),
+            USER_REQUEST.getSubjectId(),
+            OperationType.CREATE,
+            workspaceUuid.toString(),
+            ActivityLogChangedTarget.WORKSPACE));
   }
 
   @Test
@@ -92,8 +102,17 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
         new FakeFlightContext(
             WorkspaceDeleteFlight.class.getName(), inputParams, FlightStatus.SUCCESS));
 
-    var changeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
-    assertChangeDetails(changeDetails);
+    ActivityLogChangeDetails changeDetails =
+        activityLogDao.getLastUpdateDetails(workspaceUuid).get();
+    assertEquals(
+        changeDetails,
+        new ActivityLogChangeDetails(
+            changeDetails.changeDate(),
+            USER_REQUEST.getEmail(),
+            USER_REQUEST.getSubjectId(),
+            OperationType.DELETE,
+            workspaceUuid.toString(),
+            ActivityLogChangedTarget.WORKSPACE));
   }
 
   @Test
@@ -141,8 +160,17 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
             WorkspaceDeleteFlight.class.getName(), inputParams, FlightStatus.ERROR));
 
     assertTrue(workspaceDao.getWorkspaceIfExists(workspaceUuid).isEmpty());
-    var changeDetailsAfterFailedFlight = activityLogDao.getLastUpdateDetails(workspaceUuid);
-    assertChangeDetails(changeDetailsAfterFailedFlight);
+    ActivityLogChangeDetails changeDetailsAfterFailedFlight =
+        activityLogDao.getLastUpdateDetails(workspaceUuid).get();
+    assertEquals(
+        changeDetailsAfterFailedFlight,
+        new ActivityLogChangeDetails(
+            changeDetailsAfterFailedFlight.changeDate(),
+            USER_REQUEST.getEmail(),
+            USER_REQUEST.getSubjectId(),
+            OperationType.DELETE,
+            workspaceUuid.toString(),
+            ActivityLogChangedTarget.WORKSPACE));
   }
 
   @Test
@@ -177,8 +205,17 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
             DeleteGcpContextFlight.class.getName(), inputParams, FlightStatus.ERROR));
 
     assertTrue(workspaceDao.getCloudContext(workspaceUuid, CloudPlatform.GCP).isEmpty());
-    var changeDetailsAfterFailedFlight = activityLogDao.getLastUpdateDetails(workspaceUuid);
-    assertChangeDetails(changeDetailsAfterFailedFlight);
+    ActivityLogChangeDetails changeDetailsAfterFailedFlight =
+        activityLogDao.getLastUpdateDetails(workspaceUuid).get();
+    assertEquals(
+        changeDetailsAfterFailedFlight,
+        new ActivityLogChangeDetails(
+            changeDetailsAfterFailedFlight.changeDate(),
+            USER_REQUEST.getEmail(),
+            USER_REQUEST.getSubjectId(),
+            OperationType.DELETE,
+            workspaceUuid.toString(),
+            ActivityLogChangedTarget.WORKSPACE));
   }
 
   @Test
@@ -222,8 +259,17 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
         new FakeFlightContext(
             DeleteControlledResourcesFlight.class.getName(), inputParams, FlightStatus.ERROR));
 
-    var changeDetailsAfterFailedFlight = activityLogDao.getLastUpdateDetails(workspaceUuid);
-    assertChangeDetails(changeDetailsAfterFailedFlight);
+    ActivityLogChangeDetails changeDetailsAfterFailedFlight =
+        activityLogDao.getLastUpdateDetails(workspaceUuid).get();
+    assertEquals(
+        changeDetailsAfterFailedFlight,
+        new ActivityLogChangeDetails(
+            changeDetailsAfterFailedFlight.changeDate(),
+            USER_REQUEST.getEmail(),
+            USER_REQUEST.getSubjectId(),
+            OperationType.DELETE,
+            resourceToDelete.get(0).getResourceId().toString(),
+            ActivityLogChangedTarget.RESOURCE));
   }
 
   @Test
@@ -269,9 +315,16 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     hook.endFlight(
         new FakeFlightContext(DeleteFolderFlight.class.getName(), inputParams, FlightStatus.ERROR));
 
-    Optional<ActivityLogChangeDetails> changeDetails =
-        activityLogDao.getLastUpdateDetails(workspaceId);
-    assertChangeDetails(changeDetails);
+    ActivityLogChangeDetails changeDetails = activityLogDao.getLastUpdateDetails(workspaceId).get();
+    assertEquals(
+        changeDetails,
+        new ActivityLogChangeDetails(
+            changeDetails.changeDate(),
+            USER_REQUEST.getEmail(),
+            USER_REQUEST.getSubjectId(),
+            OperationType.DELETE,
+            fooFolder.id().toString(),
+            ActivityLogChangedTarget.FOLDER));
   }
 
   @Test
@@ -326,13 +379,6 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     inputParams.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
     inputParams.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), USER_REQUEST);
     return inputParams;
-  }
-
-  private void assertChangeDetails(Optional<ActivityLogChangeDetails> changeDetails) {
-    assertTrue(changeDetails.isPresent());
-    assertEquals(USER_REQUEST.getEmail(), changeDetails.get().getActorEmail());
-    assertEquals(USER_REQUEST.getSubjectId(), changeDetails.get().getActorSubjectId());
-    assertNotNull(changeDetails.get().getChangeDate());
   }
 
   /**

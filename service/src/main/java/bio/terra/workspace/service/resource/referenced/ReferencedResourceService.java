@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.referenced;
 
+import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -54,7 +55,11 @@ public class ReferencedResourceService {
       ReferencedResource resource, AuthenticatedUserRequest userRequest) {
     resourceDao.createReferencedResource(resource);
     workspaceActivityLogService.writeActivity(
-        userRequest, resource.getWorkspaceId(), OperationType.CREATE);
+        userRequest,
+        resource.getWorkspaceId(),
+        OperationType.CREATE,
+        resource.getResourceId().toString(),
+        ActivityLogChangedTarget.RESOURCE);
     return getReferenceResource(resource.getWorkspaceId(), resource.getResourceId());
   }
 
@@ -63,7 +68,11 @@ public class ReferencedResourceService {
       ReferencedResource resource, AuthenticatedUserRequest userRequest) {
     resourceDao.createReferencedResource(resource);
     workspaceActivityLogService.writeActivity(
-        userRequest, resource.getWorkspaceId(), OperationType.CLONE);
+        userRequest,
+        resource.getWorkspaceId(),
+        OperationType.CLONE,
+        resource.getResourceId().toString(),
+        ActivityLogChangedTarget.RESOURCE);
     return getReferenceResource(resource.getWorkspaceId(), resource.getResourceId());
   }
 
@@ -141,7 +150,12 @@ public class ReferencedResourceService {
           resourceDao.updateResource(
               workspaceUuid, resourceId, name, description, cloningInstructions);
       if (updated) {
-        workspaceActivityLogService.writeActivity(userRequest, workspaceUuid, OperationType.UPDATE);
+        workspaceActivityLogService.writeActivity(
+            userRequest,
+            workspaceUuid,
+            OperationType.UPDATE,
+            resourceId.toString(),
+            ActivityLogChangedTarget.RESOURCE);
       }
     }
     if (!updated) {
@@ -164,7 +178,12 @@ public class ReferencedResourceService {
       WsmResourceType resourceType,
       AuthenticatedUserRequest userRequest) {
     if (resourceDao.deleteResourceForResourceType(workspaceUuid, resourceId, resourceType)) {
-      workspaceActivityLogService.writeActivity(userRequest, workspaceUuid, OperationType.DELETE);
+      workspaceActivityLogService.writeActivity(
+          userRequest,
+          workspaceUuid,
+          OperationType.DELETE,
+          resourceId.toString(),
+          ActivityLogChangedTarget.RESOURCE);
     }
   }
 

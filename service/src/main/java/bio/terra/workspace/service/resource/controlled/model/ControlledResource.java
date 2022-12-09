@@ -233,12 +233,8 @@ public abstract class ControlledResource extends WsmResource {
             .createdByEmail(createByEmail);
 
     // override name and description if provided
-    if (name != null) {
-      cloneResourceCommonFields.name(name);
-    }
-    if (description != null) {
-      cloneResourceCommonFields.description(description);
-    }
+    cloneResourceCommonFields.name(name == null ? getName() : name);
+    cloneResourceCommonFields.description(description == null ? getDescription() : description);
     return cloneResourceCommonFields.build();
   }
 
