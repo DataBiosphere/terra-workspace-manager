@@ -18,6 +18,8 @@ public final class AzureVmHelper {
   public static final String WORKING_MAP_NETWORK_INTERFACE_KEY = "NetworkInterfaceName";
   public static final String WORKING_MAP_SUBNET_NAME = "SubnetName";
   public static final String WORKING_MAP_NETWORK_REGION = "NetworkRegion";
+  public static final String WORKING_MAP_VM_ID = "VmId";
+  public static final String WORKING_MAP_PET_ID = "PetId";
   private static int NIC_RESERVED_FOR_ANOTHER_VM_ERROR_RETRY_SECONDS = 180;
   private static final Logger logger = LoggerFactory.getLogger(AzureVmHelper.class);
 
@@ -52,8 +54,7 @@ public final class AzureVmHelper {
   public static StepResult deleteNetworkInterface(
       AzureCloudContext azureCloudContext,
       ComputeManager computeManager,
-      String networkInterfaceName)
-      throws InterruptedException {
+      String networkInterfaceName) {
     try {
       computeManager
           .networkManager()
@@ -84,7 +85,12 @@ public final class AzureVmHelper {
         // /subscriptions/3efc5bdf-be0e-44e7-b1d7-c08931e3c16c/resourceGroups/mrg-terra-integration-test-20211118/providers/Microsoft.Compute/virtualMachines/az-vm-b606ad7d-9b00-463d-9b6e-d70586d17eb2",
         //          "details": []
         // }
-        TimeUnit.SECONDS.sleep(NIC_RESERVED_FOR_ANOTHER_VM_ERROR_RETRY_SECONDS);
+        try {
+          TimeUnit.SECONDS.sleep(NIC_RESERVED_FOR_ANOTHER_VM_ERROR_RETRY_SECONDS);
+        } catch (InterruptedException ex) {
+          Thread.currentThread().interrupt();
+          return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+        }
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
       }
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);

@@ -58,6 +58,8 @@ public class AssignManagedIdentityAzureVmStep implements Step {
                       azureCloudContext.getAzureResourceGroupId()),
               "getPetManagedIdentity");
 
+      context.getWorkingMap().put(AzureVmHelper.WORKING_MAP_PET_ID, petManagedIdentityId);
+
       return AzureVmHelper.assignPetManagedIdentityToVm(
           azureCloudContext,
           computeManager,
