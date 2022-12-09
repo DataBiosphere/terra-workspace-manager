@@ -26,6 +26,15 @@ on:
         required: true
 
 jobs:
+  refresh-environment:
+    uses: broadinstitute/sherlock/.github/workflows/client-set-environment-app-version.yaml@main
+    with:
+      environment-name: 'wsmtest-eng'
+    permissions:
+      id-token: 'write'
+    secrets:
+      sync-git-token: ${{ secrets.BROADBOT_TOKEN }}
+
   test-job:
     runs-on: ubuntu-latest
 

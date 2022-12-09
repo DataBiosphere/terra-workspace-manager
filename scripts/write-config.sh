@@ -309,6 +309,8 @@ workspace:
     sas-token-start-time-minutes-offset: 15
     sas-token-expiry-time-minutes-offset: 60
     sas-token-expiry-time-maximum-minutes-offset: 1440
+  policy:
+    base-path: https://tps.wsmtest-eng.bee.envs-terra.bio/
 feature:
   tps-enabled: true
 EOF
