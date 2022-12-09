@@ -6,10 +6,11 @@ import bio.terra.landingzone.library.landingzones.deployment.SubnetResourcePurpo
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
-import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
+import bio.terra.workspace.common.utils.AzureManagementException;
+import bio.terra.workspace.common.utils.ManagementExceptionUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.crl.CrlService;
@@ -28,7 +29,6 @@ import com.azure.resourcemanager.network.models.PublicIpAddress;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -112,14 +112,18 @@ public class CreateAzureNetworkInterfaceStep implements Step {
           .put(AzureVmHelper.WORKING_MAP_NETWORK_REGION, existingNetwork.network().region());
 
     } catch (ManagementException e) {
-      if (StringUtils.equals(e.getValue().getCode(), "Conflict")) {
-        logger.info(
-            "Azure Network Interface {} in managed resource group {} already exists",
-            networkInterfaceName,
-            azureCloudContext.getAzureResourceGroupId());
-        return StepResult.getStepResultSuccess();
-      }
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+      return switch (e.getValue().getCode()) {
+        case ManagementExceptionUtils.CONFLICT -> {
+          logger.info(
+              "Azure Network Interface {} in managed resource group {} already exists",
+              networkInterfaceName,
+              azureCloudContext.getAzureResourceGroupId());
+          yield StepResult.getStepResultSuccess();
+        }
+
+        default -> new StepResult(
+            ManagementExceptionUtils.maybeRetryStatus(e), new AzureManagementException(e));
+      };
     }
     return StepResult.getStepResultSuccess();
   }
@@ -187,10 +191,15 @@ public class CreateAzureNetworkInterfaceStep implements Step {
                 WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_CLOUD_CONTEXT,
                 AzureCloudContext.class);
     ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
-    String networkInterfaceName =
-        context.getWorkingMap().get(AzureVmHelper.WORKING_MAP_NETWORK_INTERFACE_KEY, String.class);
-    return AzureVmHelper.deleteNetworkInterface(
-        azureCloudContext, computeManager, networkInterfaceName);
+    var networkInterfaceName =
+        Optional.ofNullable(
+            context
+                .getWorkingMap()
+                .get(AzureVmHelper.WORKING_MAP_NETWORK_INTERFACE_KEY, String.class));
+
+    return networkInterfaceName
+        .map(name -> AzureVmHelper.deleteNetworkInterface(azureCloudContext, computeManager, name))
+        .orElse(StepResult.getStepResultSuccess());
   }
 
   private NetworkInterface createNetworkInterface(

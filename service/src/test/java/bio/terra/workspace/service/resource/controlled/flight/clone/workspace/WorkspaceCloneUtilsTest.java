@@ -68,6 +68,35 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
 
   @Test
   public void
+      buildDestinationControlledBigQueryDataset_nameAndDescriptionIsNull_preserveSourceResourceNameAndDescription() {
+    var sourceDataset =
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(WORKSPACE_ID).build();
+    var cloneDatasetName = RandomStringUtils.randomAlphabetic(5);
+    var cloneProjectName = "my-cloned-gcp-project";
+
+    ControlledBigQueryDatasetResource datasetToClone =
+        buildDestinationControlledBigQueryDataset(
+            sourceDataset,
+            DESTINATION_WORKSPACE_ID,
+            DESTINATION_RESOURCE_ID,
+            /*destinationFolderId=*/ null,
+            /*name=*/ null,
+            /*description=*/ null,
+            cloneDatasetName,
+            cloneProjectName,
+            DEFAULT_USER_EMAIL,
+            DEFAULT_GCP_RESOURCE_REGION);
+
+    assertResourceCommonFields(
+        sourceDataset, sourceDataset.getName(), sourceDataset.getDescription(), datasetToClone);
+    assertControlledResourceCommonField(sourceDataset, datasetToClone);
+    assertEquals(sourceDataset.getPrivateResourceState(), datasetToClone.getPrivateResourceState());
+    assertEquals(cloneDatasetName, datasetToClone.getDatasetName());
+    assertEquals(cloneProjectName, datasetToClone.getProjectId());
+  }
+
+  @Test
+  public void
       buildDestinationControlledBigQueryDataset_private_setPrivateResourceStateToInitializing() {
     ControlledBigQueryDatasetResource sourceDataset =
         ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(WORKSPACE_ID)
@@ -170,6 +199,33 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             DEFAULT_GCP_RESOURCE_REGION);
 
     assertResourceCommonFields(sourceBucket, cloneResourceName, cloneDescription, bucketToClone);
+    assertControlledResourceCommonField(sourceBucket, bucketToClone);
+    assertEquals(sourceBucket.getPrivateResourceState(), bucketToClone.getPrivateResourceState());
+    assertEquals(cloneBucketName, bucketToClone.getBucketName());
+  }
+
+  @Test
+  public void
+      buildDestinationControlledGcsBucket_nameAndDescriptionIsNull_preserveSourceResourceNameAndDescription() {
+    ControlledGcsBucketResource sourceBucket =
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(WORKSPACE_ID).build();
+    // Gcs bucket cloud instance id must be lower-case.
+    var cloneBucketName = RandomStringUtils.randomAlphabetic(5).toLowerCase(Locale.ROOT);
+
+    ControlledGcsBucketResource bucketToClone =
+        buildDestinationControlledGcsBucket(
+            sourceBucket,
+            DESTINATION_WORKSPACE_ID,
+            DESTINATION_RESOURCE_ID,
+            /*destinationFolderId=*/ null,
+            /*name=*/ null,
+            /*description=*/ null,
+            cloneBucketName,
+            DEFAULT_USER_EMAIL,
+            DEFAULT_GCP_RESOURCE_REGION);
+
+    assertResourceCommonFields(
+        sourceBucket, sourceBucket.getName(), sourceBucket.getDescription(), bucketToClone);
     assertControlledResourceCommonField(sourceBucket, bucketToClone);
     assertEquals(sourceBucket.getPrivateResourceState(), bucketToClone.getPrivateResourceState());
     assertEquals(cloneBucketName, bucketToClone.getBucketName());

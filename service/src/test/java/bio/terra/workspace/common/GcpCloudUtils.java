@@ -15,6 +15,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import com.google.api.gax.paging.Page;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.bigquery.BigQuery;
+import com.google.cloud.bigquery.BigQueryException;
 import com.google.cloud.bigquery.BigQueryOptions;
 import com.google.cloud.bigquery.Field;
 import com.google.cloud.bigquery.FieldValueList;
@@ -39,6 +40,7 @@ import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 /** Utils for working with cloud objects. */
@@ -77,15 +79,32 @@ public class GcpCloudUtils {
     logger.debug("Employee Table: {}", createdEmployeeTable);
 
     // Add row to table
-    // Don't call insertAll() with InsertAllRequest. That inserts via stream. Stream buffer may not
-    // be copied for up to 90 minutes:
-    // https://cloud.google.com/bigquery/docs/streaming-data-into-bigquery#dataavailability
-    // Instead, use DDL to insert rows.
-    bigQueryClient.query(
-        QueryJobConfiguration.newBuilder(
-                "INSERT INTO `%s.%s.%s` (employee_id) VALUES(%s)"
-                    .formatted(projectId, datasetId, BQ_EMPLOYEE_TABLE_NAME, BQ_EMPLOYEE_ID))
-            .build());
+    // Retry because if project was created recently, it may take time for bigquery.jobs.create to
+    // propagate
+    int retryCount = 10;
+    int retryWaitSeconds = 5;
+    for (int i = 0; i < retryCount; i++) {
+      TimeUnit.SECONDS.sleep(retryWaitSeconds);
+      try {
+        // Don't call insertAll() with InsertAllRequest. That inserts via stream. Stream buffer may
+        // not be copied for up to 90 minutes:
+        // https://cloud.google.com/bigquery/docs/streaming-data-into-bigquery#dataavailability
+        // Instead, use DDL to insert rows.
+        bigQueryClient.query(
+            QueryJobConfiguration.newBuilder(
+                    "INSERT INTO `%s.%s.%s` (employee_id) VALUES(%s)"
+                        .formatted(projectId, datasetId, BQ_EMPLOYEE_TABLE_NAME, BQ_EMPLOYEE_ID))
+                .build());
+      } catch (BigQueryException e) {
+        // bigquery.jobs.create hasn't propagated yet; retry
+        if (e.getCode() == HttpStatus.FORBIDDEN.value()) {
+          continue;
+        }
+        throw e;
+      }
+      // Insert succeeded
+      break;
+    }
   }
 
   /** Asserts table is populated as per populateBqTable(). */

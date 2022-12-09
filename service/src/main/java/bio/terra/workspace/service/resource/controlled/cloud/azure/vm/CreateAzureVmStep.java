@@ -5,6 +5,7 @@ import bio.terra.cloudres.azure.resourcemanager.compute.data.CreateVirtualMachin
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
+import bio.terra.workspace.common.utils.AzureManagementException;
 import bio.terra.workspace.common.utils.AzureVmUtils;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.ManagementExceptionUtils;
@@ -29,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class CreateAzureVmStep implements Step {
+
   private static final Logger logger = LoggerFactory.getLogger(CreateAzureVmStep.class);
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
@@ -139,46 +141,54 @@ public class CreateAzureVmStep implements Step {
               creationParameters,
               region);
 
-      virtualMachineDefinition.create(
-          Defaults.buildContext(
-              CreateVirtualMachineRequestData.builder()
-                  .setName(resource.getVmName())
-                  .setRegion(region)
-                  .setTenantId(azureCloudContext.getAzureTenantId())
-                  .setSubscriptionId(azureCloudContext.getAzureSubscriptionId())
-                  .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
-                  .setNetwork(networkInterface.primaryIPConfiguration().getNetwork())
-                  .setSubnetName(subnetName)
-                  .setPublicIpAddress(existingAzureIp.orElse(null))
-                  .setDisk(existingAzureDisk.orElse(null))
-                  .setImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
-                  .build()));
+      var createdVm =
+          virtualMachineDefinition.create(
+              Defaults.buildContext(
+                  CreateVirtualMachineRequestData.builder()
+                      .setName(resource.getVmName())
+                      .setRegion(region)
+                      .setTenantId(azureCloudContext.getAzureTenantId())
+                      .setSubscriptionId(azureCloudContext.getAzureSubscriptionId())
+                      .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
+                      .setNetwork(networkInterface.primaryIPConfiguration().getNetwork())
+                      .setSubnetName(subnetName)
+                      .setPublicIpAddress(existingAzureIp.orElse(null))
+                      .setDisk(existingAzureDisk.orElse(null))
+                      .setImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
+                      .build()));
+
+      context.getWorkingMap().put(AzureVmHelper.WORKING_MAP_VM_ID, createdVm.id());
 
     } catch (ManagementException e) {
       // Stairway steps may run multiple times, so we may already have created this resource. In all
       // other cases, surface the exception and attempt to retry.
-      if (ManagementExceptionUtils.isExceptionCode(e, ManagementExceptionUtils.CONFLICT)) {
-        logger.info(
-            "Azure Vm {} in managed resource group {} already exists",
-            resource.getVmName(),
-            azureCloudContext.getAzureResourceGroupId());
-        return StepResult.getStepResultSuccess();
-      }
-      if (ManagementExceptionUtils.isExceptionCode(
-          e, ManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
-        logger.info(
-            "Either the disk, ip, or network passed into this createVm does not exist "
-                + String.format(
-                    "%nResource Group: %s%n\tIp Name: %s%n\tNetwork Name: %s%n\tDisk Name: %s",
-                    azureCloudContext.getAzureResourceGroupId(),
-                    ipResource.map(ControlledAzureIpResource::getIpName).orElse("<no public ip>"),
-                    resource.getNetworkId(),
-                    diskResource
-                        .map(ControlledAzureDiskResource::getDiskName)
-                        .orElse("<no disk>")));
-        return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
-      }
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+      return switch (e.getValue().getCode()) {
+        case ManagementExceptionUtils.CONFLICT -> {
+          logger.info(
+              "Azure Vm {} in managed resource group {} already exists",
+              resource.getVmName(),
+              azureCloudContext.getAzureResourceGroupId());
+          yield StepResult.getStepResultSuccess();
+        }
+
+        case ManagementExceptionUtils.RESOURCE_NOT_FOUND -> {
+          logger.info(
+              "Either the disk, ip, or network passed into this createVm does not exist "
+                  + String.format(
+                      "%nResource Group: %s%n\tIp Name: %s%n\tNetwork Name: %s%n\tDisk Name: %s",
+                      azureCloudContext.getAzureResourceGroupId(),
+                      ipResource.map(ControlledAzureIpResource::getIpName).orElse("<no public ip>"),
+                      resource.getNetworkId(),
+                      diskResource
+                          .map(ControlledAzureDiskResource::getDiskName)
+                          .orElse("<no disk>")));
+          yield new StepResult(
+              StepStatus.STEP_RESULT_FAILURE_FATAL, new AzureManagementException(e));
+        }
+
+        default -> new StepResult(
+            ManagementExceptionUtils.maybeRetryStatus(e), new AzureManagementException(e));
+      };
     }
     return StepResult.getStepResultSuccess();
   }
