@@ -199,7 +199,12 @@ public class NotebookUtils {
                   throw new NullPointerException();
                 }
                 return p;
-                // Do not retry if it's an IO exception.
+                // Retry 403s as permissions may take time to propagate, but do not retry if it's
+                // any other IO exception.
+              } catch (GoogleJsonResponseException e) {
+                if (e.getStatusCode() == HttpStatus.SC_FORBIDDEN) {
+                  throw e;
+                }
               } catch (IOException ignored) {
               }
               return null;
