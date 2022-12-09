@@ -34,7 +34,7 @@ fi
 EOM
 
 # Change the terminal shell to bash
-echo "c.NotebookApp.terminado_settings={'shell_command': ['/bin/bash']}" | tee -a /home/ec2-user/.jupyter/jupyter_notebook_config.py >/dev/null
+echo "exec -l bash" > /home/ec2-user/.profile
 
 sudo -u ec2-user -i <<'EOF'
 
