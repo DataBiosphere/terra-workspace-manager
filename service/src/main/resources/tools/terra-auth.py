@@ -153,17 +153,20 @@ def find_notebook_metadata(session):
 def get_notebook_metadata(session):
     if(os.path.exists(NOTEBOOK_METADATA_FILE)):
         with open(NOTEBOOK_METADATA_FILE, 'r') as f:
-            return json.load(f)
-    else:
-        metadata = find_notebook_metadata(session)
+            metadata = json.load(f)
+            if 'Workspace' in metadata and 'Notebook' in metadata:
+                return metadata
 
-        if metadata['Workspace'] is None or metadata['Notebook'] is None:
-            print("Workspace and Notebook Resource ID could not be resolved.", file=sys.stderr)
-            sys.exit(NOTEBOOK_NOT_FOUND)
+    metadata = find_notebook_metadata(session)
 
-        with open(NOTEBOOK_METADATA_FILE, 'w') as f:
-            json.dump(metadata, f, indent=4)
-        return metadata
+    if metadata['Workspace'] is None or metadata['Notebook'] is None:
+        print("Workspace and Notebook Resource ID could not be resolved.", file=sys.stderr)
+        sys.exit(NOTEBOOK_NOT_FOUND)
+
+    with open(NOTEBOOK_METADATA_FILE, 'w') as f:
+        json.dump(metadata, f, indent=4)
+
+    return metadata
 
 def get_notebook_config(label, notebook_metadata):
     return f'''[{label}]
