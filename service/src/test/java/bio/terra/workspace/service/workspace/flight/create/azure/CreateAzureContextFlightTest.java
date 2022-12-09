@@ -43,8 +43,8 @@ class CreateAzureContextFlightTest extends BaseAzureConnectedTest {
     workspaceService.createAzureCloudContext(
         workspace,
         jobId,
-        userRequest, /* resultPath */
-        null,
+        userRequest,
+        /* resultPath */ null,
         azureTestUtils.getAzureCloudContext());
 
     // Wait for the job to complete
