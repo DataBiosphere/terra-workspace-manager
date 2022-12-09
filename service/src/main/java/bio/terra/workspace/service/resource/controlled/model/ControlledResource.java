@@ -229,7 +229,8 @@ public abstract class ControlledResource extends WsmResource {
       @Nullable UUID destinationFolderId,
       @Nullable String name,
       @Nullable String description,
-      String createByEmail) {
+      String createByEmail,
+      String region) {
 
     var cloneResourceCommonFields =
         ControlledResourceFields.builder()
@@ -245,7 +246,8 @@ public abstract class ControlledResource extends WsmResource {
                 getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE
                     ? PrivateResourceState.INITIALIZING
                     : PrivateResourceState.NOT_APPLICABLE)
-            .createdByEmail(createByEmail);
+            .createdByEmail(createByEmail)
+            .region(region);
 
     // override name and description if provided
     if (name != null) {

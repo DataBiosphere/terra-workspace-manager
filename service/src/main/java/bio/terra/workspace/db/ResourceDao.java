@@ -740,7 +740,8 @@ public class ResourceDao {
           .addValue("managed_by", null)
           .addValue("associated_app", null)
           .addValue("assigned_user", null)
-          .addValue("private_resource_state", null);
+          .addValue("private_resource_state", null)
+          .addValue("region", null);
     }
 
     try {

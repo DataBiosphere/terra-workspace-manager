@@ -55,7 +55,8 @@ public class WorkspaceCloneUtils {
       String name,
       @Nullable String description,
       String cloudInstanceName,
-      String createdByEmail) {
+      String createdByEmail,
+      String region) {
     return ControlledAzureStorageContainerResource.builder()
         .storageContainerName(cloudInstanceName)
         .common(
@@ -65,7 +66,8 @@ public class WorkspaceCloneUtils {
                 null,
                 name,
                 description,
-                createdByEmail))
+                createdByEmail,
+                region))
         .build();
   }
 
@@ -79,7 +81,8 @@ public class WorkspaceCloneUtils {
       @Nullable String description,
       String cloudInstanceName,
       String destinationProjectId,
-      String createdByEmail) {
+      String createdByEmail,
+      String region) {
     return ControlledBigQueryDatasetResource.builder()
         .projectId(destinationProjectId)
         .datasetName(cloudInstanceName)
@@ -90,7 +93,8 @@ public class WorkspaceCloneUtils {
                 destinationFolderId,
                 name,
                 description,
-                createdByEmail))
+                createdByEmail,
+                region == null? sourceDataset.getRegion(): region))
         .build();
   }
 
@@ -102,7 +106,8 @@ public class WorkspaceCloneUtils {
       String name,
       @Nullable String description,
       String cloudInstanceName,
-      String createdByEmail) {
+      String createdByEmail,
+      String region) {
     return ControlledGcsBucketResource.builder()
         .bucketName(cloudInstanceName)
         .common(
@@ -112,7 +117,8 @@ public class WorkspaceCloneUtils {
                 destinationFolderId,
                 name,
                 description,
-                createdByEmail))
+                createdByEmail,
+                region))
         .build();
   }
 }
