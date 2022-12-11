@@ -58,8 +58,8 @@ import bio.terra.workspace.service.iam.model.SamConstants.SamSpendProfileAction;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
-import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.policy.TpsApiConversionUtils;
+import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants.Properties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
@@ -481,7 +481,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
   public void updatePolicies_tpsEnabledAndPolicyUpdated_log() throws Exception {
     ApiCreatedWorkspace workspace = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
     when(mockTpsApiDispatch().updatePao(eq(workspace.getId()), any(), any(), any()))
-      .thenReturn(new TpsPaoUpdateResult().updateApplied(true));
+        .thenReturn(new TpsPaoUpdateResult().updateApplied(true));
     ActivityLogChangeDetails lastChangeDetails =
         workspaceActivityLogService.getLastUpdatedDetails(workspace.getId()).get();
     OffsetDateTime lastChangedDate = lastChangeDetails.changeDate();
@@ -507,7 +507,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
   public void updatePolicies_tpsEnabledAndPolicyNotUpdated_notLog() throws Exception {
     ApiCreatedWorkspace workspace = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
     when(mockTpsApiDispatch().updatePao(eq(workspace.getId()), any(), any(), any()))
-      .thenReturn(new TpsPaoUpdateResult().updateApplied(false));
+        .thenReturn(new TpsPaoUpdateResult().updateApplied(false));
     ActivityLogChangeDetails lastChangeDetails =
         workspaceActivityLogService.getLastUpdatedDetails(workspace.getId()).get();
     assertEquals(OperationType.CREATE, lastChangeDetails.operationType());
