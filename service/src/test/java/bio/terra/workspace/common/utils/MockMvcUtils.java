@@ -32,7 +32,6 @@ import bio.terra.workspace.generated.model.ApiCloneControlledGcpBigQueryDatasetR
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpBigQueryDatasetResult;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketRequest;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketResult;
-import bio.terra.workspace.generated.model.ApiCloneReferencedGcpBigQueryDatasetResourceResult;
 import bio.terra.workspace.generated.model.ApiCloneReferencedGcpBigQueryDataTableResourceResult;
 import bio.terra.workspace.generated.model.ApiCloneReferencedGcpBigQueryDatasetResourceResult;
 import bio.terra.workspace.generated.model.ApiCloneReferencedGcpGcsBucketResourceResult;
@@ -49,7 +48,6 @@ import bio.terra.workspace.generated.model.ApiCreateControlledGcpAiNotebookInsta
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpBigQueryDatasetRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateDataRepoSnapshotReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateGcpBigQueryDatasetReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateGcpBigQueryDataTableReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateGcpBigQueryDatasetReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateGcpGcsBucketReferenceRequestBody;
@@ -660,8 +658,7 @@ public class MockMvcUtils {
             CONTROLLED_GCP_BIG_QUERY_DATASETS_V1_PATH_FORMAT,
             workspaceId,
             objectMapper.writeValueAsString(request));
-    return objectMapper.readValue(
-        serializedResponse, ApiCreatedControlledGcpBigQueryDataset.class);
+    return objectMapper.readValue(serializedResponse, ApiCreatedControlledGcpBigQueryDataset.class);
   }
 
   public ApiGcpBigQueryDatasetResource getControlledBqDataset(
