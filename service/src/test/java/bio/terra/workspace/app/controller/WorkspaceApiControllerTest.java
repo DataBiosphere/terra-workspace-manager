@@ -28,6 +28,7 @@ import bio.terra.workspace.common.BaseUnitTestMockDataRepoService;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.MockMvcUtils;
+import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.generated.model.ApiCloneResourceResult;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceResult;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
@@ -188,7 +189,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
     ApiCreatedWorkspace workspace = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
 
     // Update workspace
-    String newUserFacingId = "new-ufid";
+    String newUserFacingId = TestUtils.appendRandomNumber("new-ufid");
     String newDisplayName = "new workspace display name";
     String newDescription = "new description for the workspace";
     ApiWorkspaceDescription updatedWorkspace =

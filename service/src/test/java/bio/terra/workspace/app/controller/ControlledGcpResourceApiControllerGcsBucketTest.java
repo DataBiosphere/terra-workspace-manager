@@ -16,6 +16,7 @@ import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
+import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpGcsBucket;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketDefaultStorageClass;
@@ -565,6 +566,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
       String expectedBucketName) {
     mockMvcUtils.assertResourceMetadata(
         actualBucket.getMetadata(),
+        ApiCloudPlatform.GCP,
         ApiResourceType.GCS_BUCKET,
         expectedStewardshipType,
         expectedCloningInstructions,
@@ -584,6 +586,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
       String expectedBucketName) {
     mockMvcUtils.assertClonedResourceMetadata(
         actualBucket.getMetadata(),
+        ApiCloudPlatform.GCP,
         ApiResourceType.GCS_BUCKET,
         expectedStewardshipType,
         expectedCloningInstructions,

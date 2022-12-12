@@ -1,16 +1,8 @@
 package bio.terra.workspace.app.controller;
 
-import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeBqDataTableReferenceRequestBody;
 import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeDataRepoSnapshotReferenceRequestBody;
 import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeDefaultReferencedResourceFieldsApi;
-import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeGcsBucketReferenceRequestBody;
-import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeGcsObjectReferenceRequestBody;
-import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeGitRepoReferenceRequestBody;
 import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_DATA_REPO_SNAPSHOTS_V1_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_GCP_BIG_QUERY_DATA_TABLE_V1_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_GCP_GCS_BUCKETS_V1_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_GCP_GCS_OBJECTS_V1_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_GIT_REPO_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties.FOLDER_ID_KEY;
@@ -26,15 +18,7 @@ import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiCreateDataRepoSnapshotReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateGcpBigQueryDataTableReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateGcpGcsBucketReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateGcpGcsObjectReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateGitRepoReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
-import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableResource;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
-import bio.terra.workspace.generated.model.ApiGcpGcsObjectResource;
-import bio.terra.workspace.generated.model.ApiGitRepoResource;
 import bio.terra.workspace.generated.model.ApiReferenceResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiResourceMetadata;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
@@ -105,43 +89,14 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
                         PropertiesUtils.convertMapToApiProperties(Map.of(FOLDER_ID_KEY, "root"))));
 
     mockMvcUtils.postExpect(
+        USER_REQUEST,
         objectMapper.writeValueAsString(requestBody),
         String.format(REFERENCED_DATA_REPO_SNAPSHOTS_V1_PATH_FORMAT, workspaceId),
         HttpStatus.SC_BAD_REQUEST);
   }
 
   @Test
-  public void createReferencedGcsBucketResource_commonFieldsAndAttributesCorrectlyPopulated()
-      throws Exception {
-    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
-    ApiCreateGcpGcsBucketReferenceRequestBody requestBody = makeGcsBucketReferenceRequestBody();
-
-    ApiGcpGcsBucketResource createdResource =
-        createReferencedGcsBucketResource(workspaceId, requestBody);
-
-    assertReferenceResourceCommonFields(requestBody.getMetadata(), createdResource.getMetadata());
-    assertEquals(
-        requestBody.getBucket().getBucketName(), createdResource.getAttributes().getBucketName());
-  }
-
-  @Test
-  public void createReferencedGcsObjectResource_commonFieldsAndAttributesCorrectlyPopulated()
-      throws Exception {
-    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
-    ApiCreateGcpGcsObjectReferenceRequestBody requestBody = makeGcsObjectReferenceRequestBody();
-
-    ApiGcpGcsObjectResource createdResource =
-        createReferencedGcsObjectResource(workspaceId, requestBody);
-
-    assertReferenceResourceCommonFields(requestBody.getMetadata(), createdResource.getMetadata());
-    assertEquals(
-        requestBody.getFile().getBucketName(), createdResource.getAttributes().getBucketName());
-    assertEquals(
-        requestBody.getFile().getFileName(), createdResource.getAttributes().getFileName());
-  }
-
-  @Test
-  public void cloneReferencedBqDatasetResource_copyDefinition_throws400() throws Exception {
+  public void cloneReferencedBqDataset_copyDefinition_throws400() throws Exception {
     UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
 
     mockMvcUtils.cloneReferencedBqDataset(
@@ -155,7 +110,7 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
   }
 
   @Test
-  public void cloneReferencedBqDatasetResource_copyResource_throws400() throws Exception {
+  public void cloneReferencedBqDataset_copyResource_throws400() throws Exception {
     UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
 
     mockMvcUtils.cloneReferencedBqDataset(
@@ -169,36 +124,115 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
   }
 
   @Test
-  public void createReferencedBqDatatableResource_commonFieldsAndAttributesCorrectlyPopulated()
-      throws Exception {
+  public void cloneReferencedBqTable_copyDefinition_throws400() throws Exception {
     UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
-    ApiCreateGcpBigQueryDataTableReferenceRequestBody requestBody =
-        makeBqDataTableReferenceRequestBody();
 
-    ApiGcpBigQueryDataTableResource createdResource =
-        createReferencedBigQueryDataTableResource(workspaceId, requestBody);
-
-    assertReferenceResourceCommonFields(requestBody.getMetadata(), createdResource.getMetadata());
-    assertEquals(
-        requestBody.getDataTable().getDataTableId(),
-        createdResource.getAttributes().getDataTableId());
-    assertEquals(
-        requestBody.getDataTable().getDatasetId(), createdResource.getAttributes().getDatasetId());
-    assertEquals(
-        requestBody.getDataTable().getProjectId(), createdResource.getAttributes().getProjectId());
+    mockMvcUtils.cloneReferencedBqTable(
+        USER_REQUEST,
+        workspaceId,
+        /*sourceResourceId=*/ UUID.randomUUID(),
+        /*destWorkspaceId=*/ workspaceId,
+        ApiCloningInstructionsEnum.DEFINITION,
+        /*destResourceName=*/ null,
+        HttpStatus.SC_BAD_REQUEST);
   }
 
   @Test
-  public void createReferencedGitRepoResource_commonFieldsAndAttributesCorrectlyPopulated()
-      throws Exception {
+  public void cloneReferencedBqTable_copyResource_throws400() throws Exception {
     UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
-    ApiCreateGitRepoReferenceRequestBody requestBody = makeGitRepoReferenceRequestBody();
 
-    ApiGitRepoResource createdResource = createReferencedGitRepoResource(workspaceId, requestBody);
+    mockMvcUtils.cloneReferencedBqTable(
+        USER_REQUEST,
+        workspaceId,
+        /*sourceResourceId=*/ UUID.randomUUID(),
+        /*destWorkspaceId=*/ workspaceId,
+        ApiCloningInstructionsEnum.RESOURCE,
+        /*destResourceName=*/ null,
+        HttpStatus.SC_BAD_REQUEST);
+  }
 
-    assertReferenceResourceCommonFields(requestBody.getMetadata(), createdResource.getMetadata());
-    assertEquals(
-        requestBody.getGitrepo().getGitRepoUrl(), createdResource.getAttributes().getGitRepoUrl());
+  @Test
+  public void cloneReferencedGcsBucket_copyDefinition_throws400() throws Exception {
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+
+    mockMvcUtils.cloneReferencedGcsBucket(
+        USER_REQUEST,
+        workspaceId,
+        /*sourceResourceId=*/ UUID.randomUUID(),
+        /*destWorkspaceId=*/ workspaceId,
+        ApiCloningInstructionsEnum.DEFINITION,
+        /*destResourceName=*/ null,
+        HttpStatus.SC_BAD_REQUEST);
+  }
+
+  @Test
+  public void cloneReferencedGcsBucket_copyResource_throws400() throws Exception {
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+
+    mockMvcUtils.cloneReferencedGcsBucket(
+        USER_REQUEST,
+        workspaceId,
+        /*sourceResourceId=*/ UUID.randomUUID(),
+        /*destWorkspaceId=*/ workspaceId,
+        ApiCloningInstructionsEnum.RESOURCE,
+        /*destResourceName=*/ null,
+        HttpStatus.SC_BAD_REQUEST);
+  }
+
+  @Test
+  public void cloneReferencedGcsObject_copyDefinition_throws400() throws Exception {
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+
+    mockMvcUtils.cloneReferencedGcsObject(
+        USER_REQUEST,
+        workspaceId,
+        /*sourceResourceId=*/ UUID.randomUUID(),
+        /*destWorkspaceId=*/ workspaceId,
+        ApiCloningInstructionsEnum.DEFINITION,
+        /*destResourceName=*/ null,
+        HttpStatus.SC_BAD_REQUEST);
+  }
+
+  @Test
+  public void cloneReferencedGcsObject_copyResource_throws400() throws Exception {
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+
+    mockMvcUtils.cloneReferencedGcsObject(
+        USER_REQUEST,
+        workspaceId,
+        /*sourceResourceId=*/ UUID.randomUUID(),
+        /*destWorkspaceId=*/ workspaceId,
+        ApiCloningInstructionsEnum.RESOURCE,
+        /*destResourceName=*/ null,
+        HttpStatus.SC_BAD_REQUEST);
+  }
+
+  @Test
+  public void cloneReferencedGitRepo_copyDefinition_throws400() throws Exception {
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+
+    mockMvcUtils.cloneReferencedGitRepo(
+        USER_REQUEST,
+        workspaceId,
+        /*sourceResourceId=*/ UUID.randomUUID(),
+        /*destWorkspaceId=*/ workspaceId,
+        ApiCloningInstructionsEnum.DEFINITION,
+        /*destResourceName=*/ null,
+        HttpStatus.SC_BAD_REQUEST);
+  }
+
+  @Test
+  public void cloneReferencedGitRepo_copyResource_throws400() throws Exception {
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+
+    mockMvcUtils.cloneReferencedGitRepo(
+        USER_REQUEST,
+        workspaceId,
+        /*sourceResourceId=*/ UUID.randomUUID(),
+        /*destWorkspaceId=*/ workspaceId,
+        ApiCloningInstructionsEnum.RESOURCE,
+        /*destResourceName=*/ null,
+        HttpStatus.SC_BAD_REQUEST);
   }
 
   public ApiDataRepoSnapshotResource createReferencedDataRepoSnapshotResource(
@@ -211,51 +245,6 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
             workspaceId, request, REFERENCED_DATA_REPO_SNAPSHOTS_V1_PATH_FORMAT);
 
     return objectMapper.readValue(serializedResponse, ApiDataRepoSnapshotResource.class);
-  }
-
-  private ApiGcpGcsBucketResource createReferencedGcsBucketResource(
-      UUID workspaceId, ApiCreateGcpGcsBucketReferenceRequestBody requestBody) throws Exception {
-    var request = objectMapper.writeValueAsString(requestBody);
-
-    String serializedResponse =
-        createReferencedResourceAndGetSerializedResponse(
-            workspaceId, request, REFERENCED_GCP_GCS_BUCKETS_V1_PATH_FORMAT);
-
-    return objectMapper.readValue(serializedResponse, ApiGcpGcsBucketResource.class);
-  }
-
-  private ApiGcpGcsObjectResource createReferencedGcsObjectResource(
-      UUID workspaceId, ApiCreateGcpGcsObjectReferenceRequestBody requestBody) throws Exception {
-    var request = objectMapper.writeValueAsString(requestBody);
-
-    String serializedResponse =
-        createReferencedResourceAndGetSerializedResponse(
-            workspaceId, request, REFERENCED_GCP_GCS_OBJECTS_V1_PATH_FORMAT);
-
-    return objectMapper.readValue(serializedResponse, ApiGcpGcsObjectResource.class);
-  }
-
-  private ApiGcpBigQueryDataTableResource createReferencedBigQueryDataTableResource(
-      UUID workspaceId, ApiCreateGcpBigQueryDataTableReferenceRequestBody requestBody)
-      throws Exception {
-    var request = objectMapper.writeValueAsString(requestBody);
-
-    String serializedResponse =
-        createReferencedResourceAndGetSerializedResponse(
-            workspaceId, request, REFERENCED_GCP_BIG_QUERY_DATA_TABLE_V1_PATH_FORMAT);
-
-    return objectMapper.readValue(serializedResponse, ApiGcpBigQueryDataTableResource.class);
-  }
-
-  private ApiGitRepoResource createReferencedGitRepoResource(
-      UUID workspaceId, ApiCreateGitRepoReferenceRequestBody requestBody) throws Exception {
-    var request = objectMapper.writeValueAsString(requestBody);
-
-    String serializedResponse =
-        createReferencedResourceAndGetSerializedResponse(
-            workspaceId, request, REFERENCED_GIT_REPO_V1_PATH_FORMAT);
-
-    return objectMapper.readValue(serializedResponse, ApiGitRepoResource.class);
   }
 
   private String createReferencedResourceAndGetSerializedResponse(
