@@ -33,8 +33,11 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.hamcrest.Matchers;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class NotebookUtils {
+  private static final Logger logger = LoggerFactory.getLogger(NotebookUtils.class);
 
   /**
    * Create and return a private AI Platform Notebook controlled resource with constant values. This
@@ -196,6 +199,7 @@ public class NotebookUtils {
                         .execute()
                         .getProxyUri();
                 if (p == null) {
+                  logger.info("Notebook proxy url is null, retry");
                   throw new NullPointerException();
                 }
                 return p;
@@ -203,9 +207,12 @@ public class NotebookUtils {
                 // any other IO exception.
               } catch (GoogleJsonResponseException e) {
                 if (e.getStatusCode() == HttpStatus.SC_FORBIDDEN) {
+                  logger.info("Fails to fetch notebook proxy url due to 403, retry", e);
                   throw e;
                 }
-              } catch (IOException ignored) {
+                logger.info("Fails to fetch notebook proxy url, do not retry", e);
+              } catch (Exception ignored) {
+                logger.info("Fails to fetch notebook proxy url, do not retry", ignored);
               }
               return null;
             });
