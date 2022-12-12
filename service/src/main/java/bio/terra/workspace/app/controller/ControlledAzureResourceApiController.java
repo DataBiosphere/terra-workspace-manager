@@ -2,7 +2,6 @@ package bio.terra.workspace.app.controller;
 
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.ValidationException;
-import bio.terra.common.iam.BearerToken;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
@@ -12,7 +11,6 @@ import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.ControlledAzureResourceApi;
 import bio.terra.workspace.generated.model.ApiAzureDiskResource;
 import bio.terra.workspace.generated.model.ApiAzureIpResource;
-import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.generated.model.ApiAzureNetworkResource;
 import bio.terra.workspace.generated.model.ApiAzureRelayNamespaceResource;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
@@ -64,7 +62,6 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import com.google.common.annotations.VisibleForTesting;
 import java.time.OffsetDateTime;
-import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -124,7 +121,11 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledResourceFields commonFields =
         toCommonFields(
-            workspaceUuid, body.getCommon(), body.getAzureDisk().getRegion(), userRequest);
+            workspaceUuid,
+            body.getCommon(),
+            body.getAzureDisk().getRegion(),
+            userRequest,
+            WsmResourceType.CONTROLLED_AZURE_DISK);
     workspaceService.validateMcWorkspaceAndAction(
         userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
 
@@ -157,7 +158,12 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledResourceFields commonFields =
-        toCommonFields(workspaceUuid, body.getCommon(), body.getAzureIp().getRegion(), userRequest);
+        toCommonFields(
+            workspaceUuid,
+            body.getCommon(),
+            body.getAzureIp().getRegion(),
+            userRequest,
+            WsmResourceType.CONTROLLED_AZURE_IP);
     workspaceService.validateMcWorkspaceAndAction(
         userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
 
@@ -192,7 +198,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             workspaceUuid,
             body.getCommon(),
             body.getAzureRelayNamespace().getRegion(),
-            userRequest);
+            userRequest,
+            WsmResourceType.CONTROLLED_AZURE_RELAY_NAMESPACE);
     workspaceService.validateMcWorkspaceAndAction(
         userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
 
@@ -276,7 +283,11 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final ControlledResourceFields commonFields =
         toCommonFields(
-            workspaceUuid, body.getCommon(), body.getAzureStorage().getRegion(), userRequest);
+            workspaceUuid,
+            body.getCommon(),
+            body.getAzureStorage().getRegion(),
+            userRequest,
+            WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT);
     workspaceService.validateMcWorkspaceAndAction(
         userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
 
@@ -305,19 +316,13 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     features.azureEnabledCheck();
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    var token = new BearerToken(userRequest.getRequiredToken());
-    Optional<ApiAzureLandingZoneDeployedResource> storageAccountOptional =
-        landingZoneApiDispatch.getStorageAccount(
-            token,
-            landingZoneApiDispatch.getLandingZoneId(token, workspaceUuid),
-            body.getAzureStorageContainer().getStorageAccountId());
-    // DO NOT SUBMIT: figure out the region.
     final ControlledResourceFields commonFields =
         toCommonFields(
             workspaceUuid,
             body.getCommon(),
-            storageAccountOptional.map(account -> account.getRegion()).orElse("unknown"),
-            userRequest);
+            null,
+            userRequest,
+            WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
     workspaceService.validateMcWorkspaceAndAction(
         userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
 
@@ -346,9 +351,13 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     features.azureEnabledCheck();
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    // DO NOT SUBMIT: figure out the vm region
     final ControlledResourceFields commonFields =
-        toCommonFields(workspaceUuid, body.getCommon(), body.getAzureVm().getRegion(), userRequest);
+        toCommonFields(
+            workspaceUuid,
+            body.getCommon(),
+            body.getAzureVm().getRegion(),
+            userRequest,
+            WsmResourceType.CONTROLLED_AZURE_VM);
     workspaceService.validateMcWorkspaceAndAction(
         userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
 
@@ -404,7 +413,11 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final ControlledResourceFields commonFields =
         toCommonFields(
-            workspaceUuid, body.getCommon(), body.getAzureNetwork().getRegion(), userRequest);
+            workspaceUuid,
+            body.getCommon(),
+            body.getAzureNetwork().getRegion(),
+            userRequest,
+            WsmResourceType.CONTROLLED_AZURE_NETWORK);
     workspaceService.validateMcWorkspaceAndAction(
         userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
 

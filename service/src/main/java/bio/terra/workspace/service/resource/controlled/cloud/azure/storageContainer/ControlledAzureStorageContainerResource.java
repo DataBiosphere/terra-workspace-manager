@@ -130,6 +130,10 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
         new CreateAzureStorageContainerStep(
             flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
         cloudRetry);
+    flight.addStep(
+        new UpdateAzureStorageContainerRegionStep(
+            flightBeanBag.getResourceDao(), getWorkspaceId(), getResourceId()),
+        RetryRules.shortDatabase());
   }
 
   /** {@inheritDoc} */

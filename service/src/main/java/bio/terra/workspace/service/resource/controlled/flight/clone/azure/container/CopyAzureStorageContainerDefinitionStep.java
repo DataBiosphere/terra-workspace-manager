@@ -1,9 +1,10 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.azure.container;
 
+import static bio.terra.workspace.common.utils.FlightUtils.getInputParameterOrWorkingValue;
+import static bio.terra.workspace.common.utils.FlightUtils.getRequired;
 import static bio.terra.workspace.service.resource.controlled.flight.clone.workspace.WorkspaceCloneUtils.buildDestinationControlledAzureContainer;
 
 import bio.terra.stairway.FlightContext;
-import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
@@ -11,16 +12,19 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.IamRoleUtils;
 import bio.terra.workspace.common.utils.ManagementExceptionUtils;
+import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.generated.model.ApiAzureStorageContainerCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
+import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.azure.core.management.exception.ManagementException;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -55,31 +59,51 @@ public class CopyAzureStorageContainerDefinitionStep implements Step {
       throws InterruptedException, RetryException {
     var inputParameters = flightContext.getInputParameters();
     var workingMap = flightContext.getWorkingMap();
-    validateInputs(inputParameters, workingMap);
 
     // get the inputs from the flight context
     var destinationResourceName =
-        FlightUtils.getInputParameterOrWorkingValue(
+        getInputParameterOrWorkingValue(
             flightContext,
             WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_NAME,
             WorkspaceFlightMapKeys.ResourceKeys.PREVIOUS_RESOURCE_NAME,
             String.class);
     var description =
-        FlightUtils.getInputParameterOrWorkingValue(
+        getInputParameterOrWorkingValue(
             flightContext,
             WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_DESCRIPTION,
             WorkspaceFlightMapKeys.ResourceKeys.PREVIOUS_RESOURCE_DESCRIPTION,
             String.class);
     var destinationWorkspaceId =
-        inputParameters.get(
-            WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
+        getRequired(
+            inputParameters,
+            WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
+            UUID.class);
     var destinationContainerName =
-        inputParameters.get(
-            WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_CONTAINER_NAME, String.class);
+        getRequired(
+            inputParameters,
+            WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_CONTAINER_NAME,
+            String.class);
     var destinationResourceId =
-        inputParameters.get(
-            WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.class);
+        getRequired(
+            inputParameters,
+            WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_ID,
+            UUID.class);
+    var userRequest =
+        getRequired(
+            inputParameters,
+            JobMapKeys.AUTH_USER_INFO.getKeyName(),
+            AuthenticatedUserRequest.class);
 
+    ApiAzureLandingZoneDeployedResource sharedAccount =
+        getRequired(
+            workingMap,
+            ControlledResourceKeys.STORAGE_ACCOUNT,
+            ApiAzureLandingZoneDeployedResource.class);
+
+    ApiAzureStorageContainerCreationParameters destinationCreationParameters =
+        new ApiAzureStorageContainerCreationParameters()
+            .storageContainerName(destinationContainerName)
+            .storageAccountId(UUID.fromString(sharedAccount.getResourceId()));
     ControlledAzureStorageContainerResource destinationContainerResource =
         buildDestinationControlledAzureContainer(
             sourceContainer,
@@ -87,12 +111,10 @@ public class CopyAzureStorageContainerDefinitionStep implements Step {
             destinationResourceId,
             destinationResourceName,
             description,
-            destinationContainerName,
+            destinationCreationParameters.getStorageContainerName(),
+            destinationCreationParameters.getStorageAccountId(),
             samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
-            sourceContainer.getRegion());
-    ApiAzureStorageContainerCreationParameters destinationCreationParameters =
-        new ApiAzureStorageContainerCreationParameters()
-            .storageContainerName(destinationContainerName);
+            sharedAccount.getRegion());
     ControlledResourceIamRole iamRole =
         IamRoleUtils.getIamRoleForAccessScope(sourceContainer.getAccessScope());
 
@@ -126,14 +148,6 @@ public class CopyAzureStorageContainerDefinitionStep implements Step {
     }
 
     return StepResult.getStepResultSuccess();
-  }
-
-  private void validateInputs(FlightMap inputParameters, FlightMap workingMap) {
-    FlightUtils.validateRequiredEntries(
-        inputParameters,
-        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
-        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_ID,
-        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_CONTAINER_NAME);
   }
 
   @Override

@@ -21,7 +21,9 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.Contr
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
+import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
+import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -79,9 +81,17 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   public ResponseEntity<ApiCreatedControlledGcpGcsBucket> createBucket(
       UUID workspaceUuid, @Valid ApiCreateControlledGcpGcsBucketRequestBody body) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    Workspace workspace =
+        workspaceService.validateMcWorkspaceAndAction(
+            userRequest, workspaceUuid, getSamAction(body.getCommon()));
+    String resourceLocation = getResourceLocation(workspace, body.getGcsBucket().getLocation());
     ControlledResourceFields commonFields =
         toCommonFields(
-            workspaceUuid, body.getCommon(), body.getGcsBucket().getLocation(), userRequest);
+            workspaceUuid,
+            body.getCommon(),
+            resourceLocation,
+            userRequest,
+            WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
     ControlledGcsBucketResource resource =
         ControlledGcsBucketResource.builder()
             .bucketName(
@@ -91,11 +101,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
                     : body.getGcsBucket().getName())
             .common(commonFields)
             .build();
-    Workspace workspace =
-        workspaceService.validateMcWorkspaceAndAction(
-            userRequest, workspaceUuid, resource.getCategory().getSamCreateResourceAction());
 
-    body.getGcsBucket().location(getResourceLocation(workspace, body.getGcsBucket().getLocation()));
+    body.getGcsBucket().location(resourceLocation);
 
     final ControlledGcsBucketResource createdBucket =
         controlledResourceService
@@ -310,13 +317,19 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   public ResponseEntity<ApiCreatedControlledGcpBigQueryDataset> createBigQueryDataset(
       UUID workspaceUuid, ApiCreateControlledGcpBigQueryDatasetRequestBody body) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    ControlledResourceFields commonFields =
-        toCommonFields(
-            workspaceUuid, body.getCommon(), body.getDataset().getLocation(), userRequest);
-    // Check authz before reading the projectId from workspace DB.
     Workspace workspace =
         workspaceService.validateWorkspaceAndAction(
-            userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
+            userRequest, workspaceUuid, getSamAction(body.getCommon()));
+    String resourceLocation = getResourceLocation(workspace, body.getDataset().getLocation());
+    ControlledResourceFields commonFields =
+        toCommonFields(
+            workspaceUuid,
+            body.getCommon(),
+            resourceLocation,
+            userRequest,
+            WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
+    // Check authz before reading the projectId from workspace DB.
+
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceUuid);
     ControlledBigQueryDatasetResource resource =
         ControlledBigQueryDatasetResource.builder()
@@ -330,7 +343,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .common(commonFields)
             .build();
 
-    body.getDataset().location(getResourceLocation(workspace, body.getDataset().getLocation()));
+    body.getDataset().location(resourceLocation);
 
     final ControlledBigQueryDatasetResource createdDataset =
         controlledResourceService
@@ -343,6 +356,12 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .resourceId(createdDataset.getResourceId())
             .bigQueryDataset(createdDataset.toApiResource());
     return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  private String getSamAction(ApiControlledResourceCommonFields common) {
+    return ControllerValidationUtils.samCreateAction(
+        AccessScopeType.fromApi(common.getAccessScope()),
+        ManagedByType.fromApi(common.getManagedBy()));
   }
 
   @Override
@@ -418,22 +437,25 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   public ResponseEntity<ApiCreatedControlledGcpAiNotebookInstanceResult> createAiNotebookInstance(
       UUID workspaceUuid, @Valid ApiCreateControlledGcpAiNotebookInstanceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    // Check authz before reading the projectId from workspace DB.
+    Workspace workspace =
+        workspaceService.validateWorkspaceAndAction(
+            userRequest, workspaceUuid, getSamAction(body.getCommon()));
+    String resourceLocation =
+        getResourceLocation(workspace, body.getAiNotebookInstance().getLocation());
     ControlledResourceFields commonFields =
         toCommonFields(
             workspaceUuid,
             body.getCommon(),
-            body.getAiNotebookInstance().getLocation(),
-            userRequest);
-    // Check authz before reading the projectId from workspace DB.
-    Workspace workspace =
-        workspaceService.validateWorkspaceAndAction(
-            userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
+            resourceLocation,
+            userRequest,
+            WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceUuid);
 
     ControlledAiNotebookInstanceResource resource =
         ControlledAiNotebookInstanceResource.builder()
             .common(commonFields)
-            .location(getResourceLocation(workspace, body.getAiNotebookInstance().getLocation()))
+            .location(resourceLocation)
             .projectId(projectId)
             .instanceId(
                 Optional.ofNullable(body.getAiNotebookInstance().getInstanceId())

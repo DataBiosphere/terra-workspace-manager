@@ -13,6 +13,7 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResourceF
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateUserRole;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
@@ -37,7 +38,8 @@ public class ControlledResourceControllerBase extends ControllerBase {
       UUID workspaceUuid,
       ApiControlledResourceCommonFields apiCommonFields,
       String region,
-      AuthenticatedUserRequest userRequest) {
+      AuthenticatedUserRequest userRequest,
+      WsmResourceType wsmResourceType) {
 
     ManagedByType managedBy = ManagedByType.fromApi(apiCommonFields.getManagedBy());
     AccessScopeType accessScopeType = AccessScopeType.fromApi(apiCommonFields.getAccessScope());
@@ -45,7 +47,12 @@ public class ControlledResourceControllerBase extends ControllerBase {
         computePrivateUserRole(workspaceUuid, apiCommonFields, userRequest);
 
     String userEmail = getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest);
-    checkArgument(region != null, "Controlled resource must have an associated region");
+    checkArgument(
+        wsmResourceType != WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER
+            && wsmResourceType != WsmResourceType.CONTROLLED_AZURE_VM
+            && region != null,
+        "Controlled resource must have an associated region specified"
+            + "on creation except for azure storage container and VM");
 
     return ControlledResourceFields.builder()
         .workspaceUuid(workspaceUuid)

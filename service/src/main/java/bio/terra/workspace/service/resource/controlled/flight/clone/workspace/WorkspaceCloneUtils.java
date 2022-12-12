@@ -45,7 +45,8 @@ public class WorkspaceCloneUtils {
    * @param destinationResourceId Destination resource ID for the new container object
    * @param name WSM-internal resource name
    * @param description Human-friendly description for the container resource
-   * @param cloudInstanceName Name that the resource will receive when created in Azure
+   * @param cloudInstanceName storage container name
+   * @param storageAccountId the landing zone resource id of the shared storage account
    * @return An Azure storage container object
    */
   public static ControlledAzureStorageContainerResource buildDestinationControlledAzureContainer(
@@ -55,10 +56,12 @@ public class WorkspaceCloneUtils {
       String name,
       @Nullable String description,
       String cloudInstanceName,
+      UUID storageAccountId,
       String createdByEmail,
       String region) {
     return ControlledAzureStorageContainerResource.builder()
         .storageContainerName(cloudInstanceName)
+        .storageAccountId(storageAccountId)
         .common(
             sourceContainer.buildControlledCloneResourceCommonFields(
                 destinationWorkspaceId,
@@ -94,7 +97,7 @@ public class WorkspaceCloneUtils {
                 name,
                 description,
                 createdByEmail,
-                region == null? sourceDataset.getRegion(): region))
+                region == null ? sourceDataset.getRegion() : region))
         .build();
   }
 

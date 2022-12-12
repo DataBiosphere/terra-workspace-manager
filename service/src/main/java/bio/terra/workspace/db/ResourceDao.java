@@ -440,8 +440,13 @@ public class ResourceDao {
       @Nullable String name,
       @Nullable String description,
       @Nullable String attributes,
+      @Nullable String region,
       @Nullable CloningInstructions cloningInstructions) {
-    if (name == null && description == null && attributes == null && cloningInstructions == null) {
+    if (name == null
+        && description == null
+        && attributes == null
+        && cloningInstructions == null
+        && region == null) {
       return false;
     }
 
@@ -458,6 +463,9 @@ public class ResourceDao {
     }
     if (null != cloningInstructions) {
       params.addValue("cloning_instructions", cloningInstructions.toSql());
+    }
+    if (!StringUtils.isEmpty(region)) {
+      params.addValue("region", region);
     }
     StringBuilder sb = new StringBuilder("UPDATE resource SET ");
 
@@ -482,6 +490,42 @@ public class ResourceDao {
   }
 
   /**
+   * Update controlled resource's region
+   *
+   * @return whether the resource's region is successfully updated.
+   */
+  @WriteTransaction
+  public boolean updateControlledResourceRegion(
+      UUID workspaceUuid, UUID resourceId, String region) {
+    if (region == null) {
+      return false;
+    }
+
+    var sql =
+        """
+            UPDATE resource SET region = :region
+            WHERE workspace_id = :workspace_id AND resource_id = :resource_id
+        """;
+
+    var params =
+        new MapSqlParameterSource()
+            .addValue("region", region)
+            .addValue("workspace_id", workspaceUuid.toString())
+            .addValue("resource_id", resourceId.toString());
+
+    int rowsAffected = jdbcTemplate.update(sql, params);
+    boolean updated = rowsAffected > 0;
+
+    logger.info(
+        "{} region for resource {} in workspace {}",
+        (updated ? "Updated" : "No Update - did not find"),
+        resourceId,
+        workspaceUuid);
+
+    return updated;
+  }
+
+  /**
    * Update name, description, and/or attributes of the resource.
    *
    * @param name name of the resource, may be null if it does not need to be updated
@@ -498,7 +542,13 @@ public class ResourceDao {
       @Nullable String attributes,
       @Nullable CloningInstructions cloningInstructions) {
     return updateResourceWorker(
-        workspaceUuid, resourceId, name, description, attributes, cloningInstructions);
+        workspaceUuid,
+        resourceId,
+        name,
+        description,
+        /*region=*/ null,
+        attributes,
+        cloningInstructions);
   }
 
   /**
@@ -515,7 +565,13 @@ public class ResourceDao {
       @Nullable String description,
       @Nullable CloningInstructions cloningInstructions) {
     return updateResourceWorker(
-        workspaceUuid, resourceId, name, description, /*attributes=*/ null, cloningInstructions);
+        workspaceUuid,
+        resourceId,
+        name,
+        description,
+        /*region=*/ null,
+        /*attributes=*/ null,
+        cloningInstructions);
   }
 
   /**

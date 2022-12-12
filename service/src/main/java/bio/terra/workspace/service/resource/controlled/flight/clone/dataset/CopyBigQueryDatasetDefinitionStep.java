@@ -96,6 +96,9 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
         inputParameters.get(ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.class);
     UUID destinationFolderId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_FOLDER_ID, UUID.class);
+    var creationParameters =
+        new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetName).location(location);
+
     ControlledBigQueryDatasetResource destinationResource =
         buildDestinationControlledBigQueryDataset(
             sourceDataset,
@@ -107,10 +110,8 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
             datasetName,
             destinationProjectId,
             samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
-            location);
+            creationParameters.getLocation());
 
-    var creationParameters =
-        new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetName).location(location);
     ControlledResourceIamRole iamRole =
         IamRoleUtils.getIamRoleForAccessScope(destinationResource.getAccessScope());
 

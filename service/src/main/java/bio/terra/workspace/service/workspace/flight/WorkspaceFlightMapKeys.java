@@ -67,7 +67,9 @@ public final class WorkspaceFlightMapKeys {
     public static final String STORAGE_TRANSFER_SERVICE_SA_EMAIL = "storageTransferServiceSAEmail";
     public static final String TABLE_TO_JOB_ID_MAP = "tableToJobIdMap";
     public static final String WORKSPACE_CREATE_FLIGHT_ID = "workspaceCreateFlightId";
+    public static final String STORAGE_ACCOUNT = "storageAccount";
     public static final String STORAGE_ACCOUNT_NAME = "storageAccountName";
+    public static final String STORAGE_ACCOUNT_REGION = "storageAccountRegion";
     public static final String DESTINATION_RESOURCE_ID = "destinationResourceId";
     public static final String DESTINATION_FOLDER_ID = "destinationFolderId";
     public static final String DESTINATION_CONTAINER_NAME = "destinationContainerName";
