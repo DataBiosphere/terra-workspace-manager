@@ -866,7 +866,7 @@ public class MockMvcUtils {
     while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
       Thread.sleep(/*millis=*/ 3000);
       String serializedResponse =
-          getSerializedResponseForGet(
+          getSerializedResponseForGet_error(
               userRequest,
               CLONE_RESULT_CONTROLLED_GCP_BIG_QUERY_DATASET_FORMAT,
               workspaceId,
@@ -1111,7 +1111,7 @@ public class MockMvcUtils {
     while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
       Thread.sleep(/*millis=*/ 3000);
       String serializedResponse =
-          getSerializedResponseForGet(
+          getSerializedResponseForGet_error(
               userRequest, CLONE_RESULT_CONTROLLED_GCP_GCS_BUCKET_FORMAT, workspaceId, jobId);
       try {
         result =
@@ -1781,6 +1781,16 @@ public class MockMvcUtils {
     return mockMvc
         .perform(addAuth(get(path.formatted(workspaceId, jobId)), userRequest))
         .andExpect(status().is2xxSuccessful())
+        .andReturn()
+        .getResponse()
+        .getContentAsString();
+  }
+
+  private String getSerializedResponseForGet_error(
+      AuthenticatedUserRequest userRequest, String path, UUID workspaceId, String jobId)
+      throws Exception {
+    return mockMvc
+        .perform(addAuth(get(path.formatted(workspaceId, jobId)), userRequest))
         .andReturn()
         .getResponse()
         .getContentAsString();

@@ -209,7 +209,7 @@ public class ReferencedGcpResourceControllerBqTableTest extends BaseConnectedTes
     final ApiGcpBigQueryDataTableResource gotResource =
         mockMvcUtils.getReferencedBqTable(
             userAccessUtils.defaultUserAuthRequest(),
-            workspaceId2,
+            workspaceId,
             clonedResource.getMetadata().getResourceId());
     assertEquals(clonedResource, gotResource);
   }
