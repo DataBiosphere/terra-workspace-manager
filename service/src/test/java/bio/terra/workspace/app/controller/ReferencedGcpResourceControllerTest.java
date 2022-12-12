@@ -1,8 +1,5 @@
 package bio.terra.workspace.app.controller;
 
-import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeDataRepoSnapshotReferenceRequestBody;
-import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeDefaultReferencedResourceFieldsApi;
-import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_DATA_REPO_SNAPSHOTS_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -10,10 +7,6 @@ import static org.mockito.Mockito.when;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
-import bio.terra.workspace.generated.model.ApiCreateDataRepoSnapshotReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
-import bio.terra.workspace.generated.model.ApiReferenceResourceCommonFields;
-import bio.terra.workspace.generated.model.ApiResourceMetadata;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
