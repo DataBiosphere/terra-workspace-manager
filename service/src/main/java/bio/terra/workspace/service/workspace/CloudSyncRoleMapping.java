@@ -49,6 +49,7 @@ public class CloudSyncRoleMapping {
           "cloudbuild.builds.list",
           "compute.acceleratorTypes.list",
           "compute.diskTypes.list",
+          "compute.instances.get",
           "compute.instances.list",
           "compute.machineTypes.list",
           "compute.subnetworks.list",
