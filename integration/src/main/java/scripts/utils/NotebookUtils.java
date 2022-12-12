@@ -199,7 +199,7 @@ public class NotebookUtils {
                         .execute()
                         .getProxyUri();
                 if (p == null) {
-                  logger.info("Fails to fetch notebook proxy url, retry");
+                  logger.info("Notebook proxy url is null, retry");
                   throw new NullPointerException();
                 }
                 return p;
@@ -210,7 +210,8 @@ public class NotebookUtils {
                   logger.info("Fails to fetch notebook proxy url due to 403, retry", e);
                   throw e;
                 }
-              } catch (IOException ignored) {
+                logger.info("Fails to fetch notebook proxy url, do not retry", e);
+              } catch (Exception ignored) {
                 logger.info("Fails to fetch notebook proxy url, do not retry", ignored);
               }
               return null;
