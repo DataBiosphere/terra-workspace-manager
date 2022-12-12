@@ -108,6 +108,8 @@ public class ResourceDao {
                   OffsetDateTime.ofInstant(
                       rs.getTimestamp("created_date").toInstant(), ZoneId.of("UTC")))
               .createdByEmail(rs.getString("created_by_email"))
+              // TODO(PF-2290): throw if resource is controlled resource and the region is null once
+              // we backfill the existing resource rows with regions.
               .region(rs.getString("region"));
 
   private final NamedParameterJdbcTemplate jdbcTemplate;
@@ -440,13 +442,8 @@ public class ResourceDao {
       @Nullable String name,
       @Nullable String description,
       @Nullable String attributes,
-      @Nullable String region,
       @Nullable CloningInstructions cloningInstructions) {
-    if (name == null
-        && description == null
-        && attributes == null
-        && cloningInstructions == null
-        && region == null) {
+    if (name == null && description == null && attributes == null && cloningInstructions == null) {
       return false;
     }
 
@@ -463,9 +460,6 @@ public class ResourceDao {
     }
     if (null != cloningInstructions) {
       params.addValue("cloning_instructions", cloningInstructions.toSql());
-    }
-    if (!StringUtils.isEmpty(region)) {
-      params.addValue("region", region);
     }
     StringBuilder sb = new StringBuilder("UPDATE resource SET ");
 
@@ -542,13 +536,7 @@ public class ResourceDao {
       @Nullable String attributes,
       @Nullable CloningInstructions cloningInstructions) {
     return updateResourceWorker(
-        workspaceUuid,
-        resourceId,
-        name,
-        description,
-        /*region=*/ null,
-        attributes,
-        cloningInstructions);
+        workspaceUuid, resourceId, name, description, attributes, cloningInstructions);
   }
 
   /**
@@ -565,13 +553,7 @@ public class ResourceDao {
       @Nullable String description,
       @Nullable CloningInstructions cloningInstructions) {
     return updateResourceWorker(
-        workspaceUuid,
-        resourceId,
-        name,
-        description,
-        /*region=*/ null,
-        /*attributes=*/ null,
-        cloningInstructions);
+        workspaceUuid, resourceId, name, description, /*attributes=*/ null, cloningInstructions);
   }
 
   /**

@@ -52,7 +52,7 @@ public class ControlledResourceControllerBase extends ControllerBase {
             && wsmResourceType != WsmResourceType.CONTROLLED_AZURE_VM
             && region != null,
         "Controlled resource must have an associated region specified"
-            + "on creation except for azure storage container and VM");
+            + "on creation except for azure storage container and azure VM");
 
     return ControlledResourceFields.builder()
         .workspaceUuid(workspaceUuid)

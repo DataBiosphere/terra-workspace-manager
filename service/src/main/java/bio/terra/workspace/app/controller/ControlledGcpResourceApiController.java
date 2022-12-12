@@ -328,7 +328,6 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             resourceLocation,
             userRequest,
             WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
-    // Check authz before reading the projectId from workspace DB.
 
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceUuid);
     ControlledBigQueryDatasetResource resource =
@@ -437,7 +436,6 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   public ResponseEntity<ApiCreatedControlledGcpAiNotebookInstanceResult> createAiNotebookInstance(
       UUID workspaceUuid, @Valid ApiCreateControlledGcpAiNotebookInstanceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    // Check authz before reading the projectId from workspace DB.
     Workspace workspace =
         workspaceService.validateWorkspaceAndAction(
             userRequest, workspaceUuid, getSamAction(body.getCommon()));

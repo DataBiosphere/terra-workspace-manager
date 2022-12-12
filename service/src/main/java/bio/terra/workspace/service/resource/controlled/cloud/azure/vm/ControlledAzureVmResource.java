@@ -142,7 +142,6 @@ public class ControlledAzureVmResource extends ControlledResource {
       AuthenticatedUserRequest userRequest,
       FlightBeanBag flightBeanBag) {
     RetryRule cloudRetry = RetryRules.cloud();
-    RetryRule dbRetry = RetryRules.shortDatabase();
     flight.addStep(
         new GetAzureVmStep(flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
         cloudRetry);
@@ -165,7 +164,7 @@ public class ControlledAzureVmResource extends ControlledResource {
     flight.addStep(
         new UpdateVmRegionMetadataStep(
             flightBeanBag.getResourceDao(), getWorkspaceId(), getResourceId()),
-        dbRetry);
+        RetryRules.shortDatabase());
     flight.addStep(
         new AssignManagedIdentityAzureVmStep(
             flightBeanBag.getAzureConfig(),

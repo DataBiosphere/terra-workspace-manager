@@ -2,7 +2,6 @@ package bio.terra.workspace.app.controller;
 
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.ValidationException;
-import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
@@ -85,7 +84,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   private final AzureConfiguration azureConfiguration;
   private final WorkspaceService workspaceService;
   private final ControlledResourceMetadataManager controlledResourceMetadataManager;
-  private final LandingZoneApiDispatch landingZoneApiDispatch;
 
   @Autowired
   public ControlledAzureResourceApiController(
@@ -99,8 +97,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       FeatureConfiguration features,
       AzureConfiguration azureConfiguration,
       WorkspaceService workspaceService,
-      ControlledResourceMetadataManager controlledResourceMetadataManager,
-      LandingZoneApiDispatch landingZoneApiDispatch) {
+      ControlledResourceMetadataManager controlledResourceMetadataManager) {
     super(authenticatedUserRequestFactory, request, controlledResourceService, samService);
     this.controlledResourceService = controlledResourceService;
     this.azureControlledStorageResourceService = azureControlledStorageResourceService;
@@ -110,7 +107,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     this.azureConfiguration = azureConfiguration;
     this.workspaceService = workspaceService;
     this.controlledResourceMetadataManager = controlledResourceMetadataManager;
-    this.landingZoneApiDispatch = landingZoneApiDispatch;
   }
 
   @Override

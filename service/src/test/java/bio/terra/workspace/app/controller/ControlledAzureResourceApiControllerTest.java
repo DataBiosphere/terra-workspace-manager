@@ -20,6 +20,7 @@ import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
@@ -74,7 +75,11 @@ public class ControlledAzureResourceApiControllerTest extends BaseAzureUnitTest 
         controller.buildControlledAzureVmResource(
             creationParameters,
             controller.toCommonFields(
-                workspaceId, commonFields, creationParameters.getRegion(), USER_REQUEST));
+                workspaceId,
+                commonFields,
+                /*region=*/ null,
+                USER_REQUEST,
+                WsmResourceType.CONTROLLED_AZURE_VM));
 
     when(getMockJobApiUtils().retrieveAsyncJobResult(any(), eq(ControlledAzureVmResource.class)))
         .thenReturn(

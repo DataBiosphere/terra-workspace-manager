@@ -83,6 +83,7 @@ public class GetSharedStorageAccountStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    return null;
+    // Do nothing. This is a read only step.
+    return StepResult.getStepResultSuccess();
   }
 }
