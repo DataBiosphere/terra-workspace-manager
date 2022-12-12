@@ -935,7 +935,7 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
 
   private static void assertDatasetHasNoTables(
       String destinationProjectId, BigQuery bigQueryClient, String datasetName)
-      throws InterruptedException {
+      throws Exception {
     // The result table will not be created if there are no results.
     TableId resultTableId = TableId.of(destinationProjectId, datasetName, "FAKE TABLE NAME");
     final QueryJobConfiguration listTablesQuery =
@@ -949,7 +949,10 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
             .setWriteDisposition(WriteDisposition.WRITE_TRUNCATE)
             .build();
     // Will throw not found if the dataset doesn't exist
-    final TableResult listTablesResult = bigQueryClient.query(listTablesQuery);
+    // Retry because in rare cases, it can take a while for bigquery.jobs.create to propagate
+    // TODO(PF-2335): Delete retry after PF-2335 is fixed
+    final TableResult listTablesResult = ClientTestUtils.getWithRetryOnException(
+        () -> bigQueryClient.query(listTablesQuery));
     final long numRows =
         StreamSupport.stream(listTablesResult.getValues().spliterator(), false).count();
     assertEquals(0, numRows, "Expected zero tables for COPY_DEFINITION dataset");
