@@ -165,7 +165,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     ControllerValidationUtils.validateUserFacingId(userFacingId);
 
     // Validate that this workspace can have policies attached, if necessary.
-    ApiTpsPolicyInputs policies = null;
+    TpsPolicyInputs policies = null;
     if (body.getPolicies() != null) {
       if (!featureConfiguration.isTpsEnabled()) {
         throw new FeatureNotSupportedException(
@@ -175,7 +175,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         throw new StageDisabledException(
             "Cannot apply policies to a RAWLS_WORKSPACE stage workspace");
       }
-      policies = body.getPolicies();
+      policies = TpsApiConversionUtils.tpsFromApiTpsPolicyInputs(body.getPolicies());
     }
 
     Workspace workspace =
