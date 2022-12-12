@@ -182,7 +182,40 @@ public class ReferencedGcpResourceControllerBqTableTest extends BaseConnectedTes
   }
 
   @Test
-  void clone_copyReference() throws Exception {
+  void clone_copyReference_sameWorkspace() throws Exception {
+    // Clone resource
+    String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
+    ApiGcpBigQueryDataTableResource clonedResource =
+        mockMvcUtils.cloneReferencedBqTable(
+            userAccessUtils.defaultUserAuthRequest(),
+            /*sourceWorkspaceId=*/ workspaceId,
+            sourceResource.getMetadata().getResourceId(),
+            /*destWorkspaceId=*/ workspaceId,
+            ApiCloningInstructionsEnum.REFERENCE,
+            destResourceName);
+
+    // Assert resource returned in clone flight response
+    assertClonedBqTable(
+        clonedResource,
+        ApiStewardshipType.REFERENCED,
+        ApiCloningInstructionsEnum.NOTHING,
+        /*expectedDestWorkspaceId=*/ workspaceId,
+        destResourceName,
+        projectId,
+        sourceDatasetName,
+        sourceTableId);
+
+    // Assert resource returned by ReferencedGcpResource.getBigQueryReference()
+    final ApiGcpBigQueryDataTableResource gotResource =
+        mockMvcUtils.getReferencedBqTable(
+            userAccessUtils.defaultUserAuthRequest(),
+            workspaceId2,
+            clonedResource.getMetadata().getResourceId());
+    assertEquals(clonedResource, gotResource);
+  }
+
+  @Test
+  void clone_copyReference_differentWorkspace() throws Exception {
     // Clone resource
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
     ApiGcpBigQueryDataTableResource clonedResource =

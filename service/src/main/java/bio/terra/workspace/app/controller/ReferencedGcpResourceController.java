@@ -653,15 +653,17 @@ public class ReferencedGcpResourceController extends ControllerBase
   public ResponseEntity<ApiCloneReferencedGcpGcsObjectResourceResult> cloneGcpGcsObjectReference(
       UUID workspaceUuid, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    // For cloning, we need to check that the caller has both read access to the source workspace
+    // and write access to the destination workspace.
+    workspaceService.validateCloneReferenceAction(
+        userRequest, workspaceUuid, body.getDestinationWorkspaceId());
+    // Do this after permission check. If both permission check and this fail, it's better to show
+    // permission check error.
     if (body.getCloningInstructions() != null) {
       ResourceValidationUtils.validateCloningInstructions(
           StewardshipType.REFERENCED,
           CloningInstructions.fromApiModel(body.getCloningInstructions()));
     }
-    // For cloning, we need to check that the caller has both read access to the source workspace
-    // and write access to the destination workspace.
-    workspaceService.validateCloneReferenceAction(
-        userRequest, workspaceUuid, body.getDestinationWorkspaceId());
 
     final ReferencedResource sourceReferencedResource =
         referenceResourceService.getReferenceResource(workspaceUuid, resourceId);
@@ -710,15 +712,18 @@ public class ReferencedGcpResourceController extends ControllerBase
   public ResponseEntity<ApiCloneReferencedGcpGcsBucketResourceResult> cloneGcpGcsBucketReference(
       UUID workspaceUuid, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    // For cloning, we need to check that the caller has both read access to the source workspace
+    // and write access to the destination workspace.
+    workspaceService.validateCloneReferenceAction(
+        userRequest, workspaceUuid, body.getDestinationWorkspaceId());
+    // Do this after permission check. If both permission check and this fail, it's better to show
+    // permission check error.
     if (body.getCloningInstructions() != null) {
       ResourceValidationUtils.validateCloningInstructions(
           StewardshipType.REFERENCED,
           CloningInstructions.fromApiModel(body.getCloningInstructions()));
     }
-    // For cloning, we need to check that the caller has both read access to the source workspace
-    // and write access to the destination workspace.
-    workspaceService.validateCloneReferenceAction(
-        userRequest, workspaceUuid, body.getDestinationWorkspaceId());
+
     final ReferencedResource sourceReferencedResource =
         referenceResourceService.getReferenceResource(workspaceUuid, resourceId);
 
@@ -768,15 +773,17 @@ public class ReferencedGcpResourceController extends ControllerBase
       cloneGcpBigQueryDataTableReference(
           UUID workspaceUuid, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    // For cloning, we need to check that the caller has both read access to the source workspace
+    // and write access to the destination workspace.
+    workspaceService.validateCloneReferenceAction(
+        userRequest, workspaceUuid, body.getDestinationWorkspaceId());
+    // Do this after permission check. If both permission check and this fail, it's better to show
+    // permission check error.
     if (body.getCloningInstructions() != null) {
       ResourceValidationUtils.validateCloningInstructions(
           StewardshipType.REFERENCED,
           CloningInstructions.fromApiModel(body.getCloningInstructions()));
     }
-    // For cloning, we need to check that the caller has both read access to the source workspace
-    // and write access to the destination workspace.
-    workspaceService.validateCloneReferenceAction(
-        userRequest, workspaceUuid, body.getDestinationWorkspaceId());
 
     final ReferencedResource sourceReferencedResource =
         referenceResourceService.getReferenceResource(workspaceUuid, resourceId);
@@ -826,15 +833,17 @@ public class ReferencedGcpResourceController extends ControllerBase
       cloneGcpBigQueryDatasetReference(
           UUID workspaceUuid, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    // For cloning, we need to check that the caller has both read access to the source workspace
+    // and write access to the destination workspace.
+    workspaceService.validateCloneReferenceAction(
+        userRequest, workspaceUuid, body.getDestinationWorkspaceId());
+    // Do this after permission check. If both permission check and this fail, it's better to show
+    // permission check error.
     if (body.getCloningInstructions() != null) {
       ResourceValidationUtils.validateCloningInstructions(
           StewardshipType.REFERENCED,
           CloningInstructions.fromApiModel(body.getCloningInstructions()));
     }
-    // For cloning, we need to check that the caller has both read access to the source workspace
-    // and write access to the destination workspace.
-    workspaceService.validateCloneReferenceAction(
-        userRequest, workspaceUuid, body.getDestinationWorkspaceId());
 
     final ReferencedResource sourceReferencedResource =
         referenceResourceService.getReferenceResource(workspaceUuid, resourceId);
@@ -1042,15 +1051,17 @@ public class ReferencedGcpResourceController extends ControllerBase
   public ResponseEntity<ApiCloneReferencedGitRepoResourceResult> cloneGitRepoReference(
       UUID workspaceUuid, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    // For cloning, we need to check that the caller has both read access to the source workspace
+    // and write access to the destination workspace.
+    workspaceService.validateCloneReferenceAction(
+        userRequest, workspaceUuid, body.getDestinationWorkspaceId());
+    // Do this after permission check. If both permission check and this fail, it's better to show
+    // permission check error.
     if (body.getCloningInstructions() != null) {
       ResourceValidationUtils.validateCloningInstructions(
           StewardshipType.REFERENCED,
           CloningInstructions.fromApiModel(body.getCloningInstructions()));
     }
-    // For cloning, we need to check that the caller has both read access to the source workspace
-    // and write access to the destination workspace.
-    workspaceService.validateCloneReferenceAction(
-        userRequest, workspaceUuid, body.getDestinationWorkspaceId());
 
     final ReferencedResource sourceReferencedResource =
         referenceResourceService.getReferenceResource(workspaceUuid, resourceId);

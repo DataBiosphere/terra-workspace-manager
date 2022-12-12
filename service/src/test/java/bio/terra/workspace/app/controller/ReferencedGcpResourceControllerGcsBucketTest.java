@@ -171,7 +171,38 @@ public class ReferencedGcpResourceControllerGcsBucketTest extends BaseConnectedT
   }
 
   @Test
-  void clone_copyReference() throws Exception {
+  void clone_copyReference_sameWorkspace() throws Exception {
+    // Clone resource
+    String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
+    ApiGcpGcsBucketResource clonedResource =
+        mockMvcUtils.cloneReferencedGcsBucket(
+            userAccessUtils.defaultUserAuthRequest(),
+            /*sourceWorkspaceId=*/ workspaceId,
+            sourceResource.getMetadata().getResourceId(),
+            /*destWorkspaceId=*/ workspaceId,
+            ApiCloningInstructionsEnum.REFERENCE,
+            destResourceName);
+
+    // Assert resource returned in clone flight response
+    assertClonedGcsBucket(
+        clonedResource,
+        ApiStewardshipType.REFERENCED,
+        ApiCloningInstructionsEnum.NOTHING,
+        workspaceId,
+        destResourceName,
+        sourceBucketName);
+
+    // Assert resource returned by ReferencedGcpResource.getGcsBucketReference()
+    final ApiGcpGcsBucketResource gotResource =
+        mockMvcUtils.getReferencedGcsBucket(
+            userAccessUtils.defaultUserAuthRequest(),
+            workspaceId,
+            clonedResource.getMetadata().getResourceId());
+    assertEquals(clonedResource, gotResource);
+  }
+
+  @Test
+  void clone_copyReference_differentWorkspace() throws Exception {
     // Clone resource
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
     ApiGcpGcsBucketResource clonedResource =
