@@ -44,14 +44,14 @@ import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiResourceCloneDetails;
-import bio.terra.workspace.generated.model.ApiTpsPaoUpdateRequest;
-import bio.terra.workspace.generated.model.ApiTpsPolicyInput;
-import bio.terra.workspace.generated.model.ApiTpsPolicyInputs;
-import bio.terra.workspace.generated.model.ApiTpsPolicyPair;
-import bio.terra.workspace.generated.model.ApiTpsUpdateMode;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
+import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
+import bio.terra.workspace.generated.model.ApiWsmPolicyInputs;
+import bio.terra.workspace.generated.model.ApiWsmPolicyPair;
+import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateMode;
+import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateRequest;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
 import bio.terra.workspace.service.iam.model.SamConstants.SamSpendProfileAction;
@@ -522,14 +522,14 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
   private ApiErrorReport createRawlsWorkspaceWithPolicyExpectError(int expectedCode)
       throws Exception {
     // Note: this is the WSM REST API form of the policy inputs
-    ApiTpsPolicyInputs policyInputs =
-        new ApiTpsPolicyInputs()
+    ApiWsmPolicyInputs policyInputs =
+        new ApiWsmPolicyInputs()
             .addInputsItem(
-                new ApiTpsPolicyInput()
+                new ApiWsmPolicyInput()
                     .namespace("terra")
                     .name("group-constraint")
                     .addAdditionalDataItem(
-                        new ApiTpsPolicyPair().key("group").value("my_fake_group")));
+                        new ApiWsmPolicyPair().key("group").value("my_fake_group")));
 
     return mockMvcUtils.createWorkspaceWithoutCloudContextExpectError(
         USER_REQUEST,
@@ -569,17 +569,17 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
   }
 
   private ResultActions updatePoliciesExpect(UUID workspaceId, int code) throws Exception {
-    ApiTpsPaoUpdateRequest updateRequest =
-        new ApiTpsPaoUpdateRequest()
-            .updateMode(ApiTpsUpdateMode.ENFORCE_CONFLICT)
+    ApiWsmPolicyUpdateRequest updateRequest =
+        new ApiWsmPolicyUpdateRequest()
+            .updateMode(ApiWsmPolicyUpdateMode.ENFORCE_CONFLICT)
             .addAttributes(
-                new ApiTpsPolicyInputs()
+                new ApiWsmPolicyInputs()
                     .addInputsItem(
-                        new ApiTpsPolicyInput()
+                        new ApiWsmPolicyInput()
                             .namespace("terra")
                             .name("region-constraint")
                             .addAdditionalDataItem(
-                                new ApiTpsPolicyPair().key("foo").value("bar"))));
+                                new ApiWsmPolicyPair().key("foo").value("bar"))));
     return mockMvc
         .perform(
             addAuth(

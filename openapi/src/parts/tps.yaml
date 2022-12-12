@@ -7,12 +7,12 @@
 #
 components:
   schemas:
-    TpsComponent:
+    WsmPolicyComponent:
       type: string
       description: Enum representing a policy-bearing Terra component.
       enum: [ 'WSM' ]
 
-    TpsObjectId:
+    WsmPolicyObjectId:
       description: |
         The Terra object associated with this PAO; for example, a workspace UUID associated 
         with its policy attribute object. Since these are UUIDs, they will not conflict even 
@@ -20,43 +20,43 @@ components:
       type: string
       format: uuid
 
-    TpsObjectType:
+    WsmPolicyObjectType:
       type: string
       description: Enum representing an object type of a policy-bearing Terra component.
       enum: [ 'workspace' ]
 
-    TpsPaoGetResult:
+    WsmPolicy:
       type: object
       required: [objectId, component, objectType]
       properties:
         objectId:
-          $ref: '#/components/schemas/TpsObjectId'
+          $ref: '#/components/schemas/WsmPolicyObjectId'
         component:
-          $ref: '#/components/schemas/TpsComponent'
+          $ref: '#/components/schemas/WsmPolicyComponent'
         objectType:
-          $ref: '#/components/schemas/TpsObjectType'
+          $ref: '#/components/schemas/WsmPolicyObjectType'
         attributes:
-          $ref: '#/components/schemas/TpsPolicyInputs'
+          $ref: '#/components/schemas/WsmPolicyInputs'
         effectiveAttributes:
-          $ref: '#/components/schemas/TpsPolicyInputs'
+          $ref: '#/components/schemas/WsmPolicyInputs'
         deleted:
           type: boolean
         sourcesObjectIds:
           type: array
           uniqueItems: true
           items:
-            $ref: '#/components/schemas/TpsObjectId'
+            $ref: '#/components/schemas/WsmPolicyObjectId'
 
-    TpsPolicyInputs:
+    WsmPolicyInputs:
       type: object
       required: [inputs]
       properties:
         inputs:
           type: array
           items:
-            $ref: '#/components/schemas/TpsPolicyInput'
+            $ref: '#/components/schemas/WsmPolicyInput'
 
-    TpsPolicyInput:
+    WsmPolicyInput:
       type: object
       required: [namespace, name]
       properties:
@@ -70,9 +70,9 @@ components:
           description: Key-value pairs of additional data
           type: array
           items:
-            $ref: '#/components/schemas/TpsPolicyPair'
+            $ref: '#/components/schemas/WsmPolicyPair'
 
-    TpsPolicyPair:
+    WsmPolicyPair:
       description: Container for key-value pairs of policy inputs
       type: object
       properties:
@@ -81,22 +81,22 @@ components:
         value:
           type: string
 
-    TpsPaoDescription:
+    WsmPolicyDescription:
       type: object
       description: Description of a PAO
       required: [ objectId, component, objectType ]
       properties:
         objectId:
-          $ref: '#/components/schemas/TpsObjectId'
+          $ref: '#/components/schemas/WsmPolicyObjectId'
         component:
-          $ref: '#/components/schemas/TpsComponent'
+          $ref: '#/components/schemas/WsmPolicyComponent'
         objectType:
-          $ref: '#/components/schemas/TpsObjectType'
+          $ref: '#/components/schemas/WsmPolicyObjectType'
 
-    TpsPaoConflict:
+    WsmPolicyConflict:
       type: object
-      description: Describes a policy conflict between two PAOs
-      required: [targetPao, conflictPao, namespace, name]
+      description: Describes a policy conflict between two policies
+      required: [targetPolicy, conflictPolicy, namespace, name]
       properties:
         namespace:
           description: Namespace of the conflicting policy; e.g., terra
@@ -104,26 +104,26 @@ components:
         name:
           description: Name of the conflicting policy; e.g., group-constraint
           type: string
-        targetPao:
-          description: The target PAO receiving policy
-          $ref: '#/components/schemas/TpsPaoDescription'
-        conflictPao:
-          description: The PAO attempting to combine the conflicting policy
-          $ref: '#/components/schemas/TpsPaoDescription'
+        targetPolicy:
+          description: The target policy object under change
+          $ref: '#/components/schemas/WsmPolicyDescription'
+        conflictPolicy:
+          description: The policy object attempting to combine the conflicting policy
+          $ref: '#/components/schemas/WsmPolicyDescription'
 
-    TpsPaoUpdateRequest:
+    WsmPolicyUpdateRequest:
       description: Update request body
       type: object
       required: [updateMode]
       properties:
         removeAttributes:
-          $ref: '#/components/schemas/TpsPolicyInputs'
+          $ref: '#/components/schemas/WsmPolicyInputs'
         addAttributes:
-          $ref: '#/components/schemas/TpsPolicyInputs'
+          $ref: '#/components/schemas/WsmPolicyInputs'
         updateMode:
-          $ref: '#/components/schemas/TpsUpdateMode'
+          $ref: '#/components/schemas/WsmPolicyUpdateMode'
 
-    TpsPaoUpdateResult:
+    WsmPolicyUpdateResult:
       type: object
       required: [updateApplied, conflicts]
       properties:
@@ -132,19 +132,19 @@ components:
             true if the update was applied; false if it was not. The response code will be 200
             even if the update was not applied.
           type: boolean
-        resultingPao:
+        resultingPolicy:
           description: |
-            resulting PAO; this reflects the state of the PAO as it would be if the update
-            was applied. It does not necessarily reflect the PAO state in Terra Policy Service
-          $ref: '#/components/schemas/TpsPaoGetResult'
+            resulting policy; this reflects the state of the policy as it would be if the update
+            was applied. It does not necessarily reflect the policy state in Terra Policy Service
+          $ref: '#/components/schemas/WsmPolicy'
         conflicts:
           description: |
             list of conflicts; may be present on success or failure, depending on the updateMode setting
           type: array
           items:
-            $ref: '#/components/schemas/TpsPaoConflict'
+            $ref: '#/components/schemas/WsmPolicyConflict'
 
-    TpsUpdateMode:
+    WsmPolicyUpdateMode:
       type: string
       description: |
         Enum controlling how policy updates are processed.
