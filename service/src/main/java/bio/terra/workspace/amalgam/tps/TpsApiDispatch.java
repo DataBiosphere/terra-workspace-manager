@@ -249,7 +249,7 @@ public class TpsApiDispatch {
     features.tpsEnabledCheck();
     PolicyUpdateResult result =
         paoService.mergeFromPao(
-            objectId, body.getSourceObjectId(), updateModeFromApi(body.getUpdateMode()));
+            body.getSourceObjectId(), objectId, updateModeFromApi(body.getUpdateMode()));
 
     return updateResultToApi(result);
   }
