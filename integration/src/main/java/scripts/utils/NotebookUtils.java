@@ -38,6 +38,8 @@ import org.slf4j.LoggerFactory;
 
 public class NotebookUtils {
   private static final Logger logger = LoggerFactory.getLogger(NotebookUtils.class);
+  private static final int ASSERT_PROXY_URL_RETRY_MAX = 40;
+  private static final int ASSERT_PROXY_URL_RETRY_SECONDS = 15;
 
   /**
    * Create and return a private AI Platform Notebook controlled resource with constant values. This
@@ -186,9 +188,7 @@ public class NotebookUtils {
    */
   public static void assertInstanceHasProxyUrl(
       AIPlatformNotebooks userNotebooks, String instanceName) throws Exception {
-    final int retryMax = 40;
-    final int retrySeconds = 15;
-    for (int retryCount = 0; retryCount < retryMax; retryCount++) {
+    for (int retryCount = 0; retryCount < ASSERT_PROXY_URL_RETRY_MAX; retryCount++) {
       try {
         String proxyUrl =
             userNotebooks
@@ -218,10 +218,10 @@ public class NotebookUtils {
       // If we are here, we are retrying
       logger.info(
           "Retrying getProxyUrl after {} seconds; retry {} of {}",
-          retrySeconds,
+          ASSERT_PROXY_URL_RETRY_SECONDS,
           retryCount + 1,
-          retryMax);
-      TimeUnit.SECONDS.sleep(retrySeconds);
+          ASSERT_PROXY_URL_RETRY_MAX);
+      TimeUnit.SECONDS.sleep(ASSERT_PROXY_URL_RETRY_SECONDS);
     }
     throw new RuntimeException("Retries of getProxyUrl are exhausted");
   }
