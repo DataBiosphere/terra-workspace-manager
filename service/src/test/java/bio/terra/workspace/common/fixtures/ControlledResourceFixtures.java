@@ -162,6 +162,7 @@ public class ControlledResourceFixtures {
     return new ApiAzureVmCreationParameters()
         .name(uniqueAzureName(AZURE_VM_NAME_PREFIX))
         .vmSize(VirtualMachineSizeTypes.STANDARD_D2S_V3.toString())
+        .region("westcentralus")
         // TODO: it'd be nice to support standard Linux OSes in addition to custom image URIs.
         // The below image is a Jupyter image and should be stable.
         .vmImage(

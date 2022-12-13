@@ -300,7 +300,6 @@ public class ControlledAzureVmResource extends ControlledResource {
     }
     ResourceValidationUtils.validateAzureIPorSubnetName(getVmName());
     ResourceValidationUtils.validateAzureVmSize(getVmSize());
-    ResourceValidationUtils.validateRegion(getRegion());
   }
 
   @Override

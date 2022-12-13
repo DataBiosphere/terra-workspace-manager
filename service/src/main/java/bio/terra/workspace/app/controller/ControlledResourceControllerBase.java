@@ -47,12 +47,13 @@ public class ControlledResourceControllerBase extends ControllerBase {
         computePrivateUserRole(workspaceUuid, apiCommonFields, userRequest);
 
     String userEmail = getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest);
-    checkArgument(
-        wsmResourceType != WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER
-            && wsmResourceType != WsmResourceType.CONTROLLED_AZURE_VM
-            && region != null,
-        "Controlled resource must have an associated region specified"
-            + "on creation except for azure storage container and azure VM");
+    if (wsmResourceType != WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER
+        && wsmResourceType != WsmResourceType.CONTROLLED_AZURE_VM) {
+      checkArgument(
+          region != null,
+          "Controlled resource must have an associated region specified"
+              + "on creation except for azure storage container and azure VM");
+    }
 
     return ControlledResourceFields.builder()
         .workspaceUuid(workspaceUuid)
