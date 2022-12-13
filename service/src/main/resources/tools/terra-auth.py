@@ -266,7 +266,7 @@ def main():
         with open(f'{os.path.expanduser("~")}/.aws/config', 'w') as f:
             f.write(config)
     elif args.notebook:
-        notebook_id = notebook_metadata['Notebook']['resourceId']
+        notebook_id = notebook_metadata['Notebook']['metadata']['resourceId']
         print(get_notebook_cred(session, workspace_id, notebook_id, args.access))
 
     elif args.bucket:

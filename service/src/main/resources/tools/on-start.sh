@@ -13,15 +13,14 @@ repo_gpgcheck=0
 gpgkey=https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
 EOM
 
-# Install gcloud CLI in the background with nohup so we don't delay startup
+# Install gcloud CLI
 nohup yum install -y google-cloud-cli &
 
 # In bash login script, check if the environment has been configured for Terra and, if not, attempt to do so.
-cat << EOM | sed -i '/^# <<< conda initialize <<<$/ r /dev/stdin' /home/ec2-user/.bashrc
-
-# Terra Configuration
+cat << EOM | sed -i '/^# User specific aliases and functions$/ r /dev/stdin' /home/ec2-user/.bashrc
 if [ ! -f '/home/ec2-user/SageMaker/.terra/notebook_metadata.json' ]; then
     # The user has not configured their environment to access Terra yet, call now.
+    pip install google-auth
     /usr/local/bin/terra-auth --configure
     retVal=\$?
 
@@ -35,12 +34,12 @@ if [ ! -f '/home/ec2-user/SageMaker/.terra/notebook_metadata.json' ]; then
 fi
 EOM
 
-# Change the terminal shell to bash
-echo "exec -l bash" > /home/ec2-user/.profile
-
 # Copy in the Terra auth helper CLI (eventually this will install Terra CLI instead)
 wget https://raw.githubusercontent.com/DataBiosphere/terra-workspace-manager/jczerk/aws_wlz_interface/service/src/main/resources/tools/terra-auth.py -O "/usr/local/bin/terra-auth"
 chmod +x "/usr/local/bin/terra-auth"
+
+# Change the terminal shell to bash
+echo "exec -l bash" > /home/ec2-user/.profile
 
 sudo -u ec2-user -i <<'EOF'
 
@@ -54,19 +53,16 @@ mkdir -p /home/ec2-user/.config
 ln -s /home/ec2-user/SageMaker/.config/gcloud /home/ec2-user/.config/gcloud
 
 # Install google auth python package in all conda environments
-pip download google-auth
+pip download google-auth pyathena
 
-for env in /home/ec2-user/anaconda3/envs/*; do
+# Note that "base" is special environment name, include it there as well.
+for env in base /home/ec2-user/anaconda3/envs/*; do
     if [ $env = 'JupyterSystemEnv' ]; then
         continue
     fi
-
-    # We don't need to wait for these and delay startup, so nohup them in background
-    nohup sh -c \
-        'source /home/ec2-user/anaconda3/bin/activate $(basename "$env") && \
-         pip install google-auth && \
-         source /home/ec2-user/anaconda3/bin/deactivate'\
-    &> "nohup.out.pip.$(basename $env)" &
+    source /home/ec2-user/anaconda3/bin/activate $(basename "$env")
+    pip install google-auth pyathena
+    source /home/ec2-user/anaconda3/bin/deactivate
 done
 
 # If we have ADC, attempt to re-configure at startup.
