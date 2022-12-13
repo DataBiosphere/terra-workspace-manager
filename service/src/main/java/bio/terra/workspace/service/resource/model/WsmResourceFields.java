@@ -29,7 +29,7 @@ public class WsmResourceFields {
   @Nullable private final List<ResourceLineageEntry> resourceLineage;
   private final ImmutableMap<String, String> properties;
   private final String createdByEmail;
-  private final @Nullable OffsetDateTime createdDate;
+  @Nullable private final OffsetDateTime createdDate;
 
   /** construct from database resource */
   public WsmResourceFields(DbResource dbResource) {

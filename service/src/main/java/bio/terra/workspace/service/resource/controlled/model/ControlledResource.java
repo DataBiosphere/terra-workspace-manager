@@ -75,9 +75,8 @@ public abstract class ControlledResource extends WsmResource {
     if (dbResource.getStewardshipType() != StewardshipType.CONTROLLED) {
       throw new InvalidMetadataException("Expected CONTROLLED");
     }
-    if (dbResource.getRegion() == null) {
-      throw new InvalidMetadataException("Controlled resource must have an associated region");
-    }
+    // TODO(PF-2290): throws if dbResource does not have a region once we backfill the existing
+    // resource rows with regions.
     this.assignedUser = dbResource.getAssignedUser().orElse(null);
     this.accessScope = dbResource.getAccessScope();
     this.managedBy = dbResource.getManagedBy();
