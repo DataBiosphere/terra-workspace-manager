@@ -66,7 +66,8 @@ public class BlobCopier {
         sourceStorageData.storageContainerResource().getWorkspaceId(),
         destStorageData.storageContainerResource().getResourceId(),
         destStorageData.storageContainerResource().getWorkspaceId());
-    var pollResults = blobPollers.map(blobPoller -> blobPoller.waitForCompletion(MAX_BLOB_COPY_POLL_TIMEOUT));
+    var pollResults =
+        blobPollers.map(blobPoller -> blobPoller.waitForCompletion(MAX_BLOB_COPY_POLL_TIMEOUT));
     logger.info(
         "Finished copying blobs [source_container_id = {}, source_workspace_id = {}, destination_container_id = {}, destination_workspace_id={}]",
         sourceStorageData.storageContainerResource().getResourceId(),

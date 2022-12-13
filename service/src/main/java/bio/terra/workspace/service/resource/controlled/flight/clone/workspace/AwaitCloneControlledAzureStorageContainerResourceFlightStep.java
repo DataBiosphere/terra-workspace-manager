@@ -47,7 +47,8 @@ public class AwaitCloneControlledAzureStorageContainerResourceFlightStep impleme
       FlightState subflightState =
           context
               .getStairway()
-              .waitForFlight(subflightId, 1, ((int) BlobCopier.MAX_BLOB_COPY_POLL_TIMEOUT.toSeconds()));
+              .waitForFlight(
+                  subflightId, 1, ((int) BlobCopier.MAX_BLOB_COPY_POLL_TIMEOUT.toSeconds()));
       WsmResourceCloneDetails cloneDetails = new WsmResourceCloneDetails();
       WsmCloneResourceResult cloneResult =
           WorkspaceCloneUtils.flightStatusToCloneResult(subflightState.getFlightStatus(), resource);
