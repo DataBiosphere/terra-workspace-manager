@@ -1,5 +1,7 @@
 package bio.terra.workspace.app.controller;
 
+import static bio.terra.workspace.common.utils.MockMvcUtils.assertClonedResourceMetadata;
+import static bio.terra.workspace.common.utils.MockMvcUtils.assertResourceMetadata;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
@@ -569,7 +571,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
       UUID expectedWorkspaceId,
       String expectedResourceName,
       String expectedBucketName) {
-    mockMvcUtils.assertResourceMetadata(
+    assertResourceMetadata(
         actualBucket.getMetadata(),
         ApiResourceType.GCS_BUCKET,
         expectedStewardshipType,
@@ -612,7 +614,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
       UUID expectedWorkspaceId,
       String expectedResourceName,
       String expectedBucketName) {
-    mockMvcUtils.assertClonedResourceMetadata(
+    assertClonedResourceMetadata(
         actualBucket.getMetadata(),
         ApiResourceType.GCS_BUCKET,
         expectedStewardshipType,

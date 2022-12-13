@@ -1,5 +1,7 @@
 package bio.terra.workspace.app.controller;
 
+import static bio.terra.workspace.common.utils.MockMvcUtils.assertClonedResourceMetadata;
+import static bio.terra.workspace.common.utils.MockMvcUtils.assertResourceMetadata;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -268,7 +270,7 @@ public class ReferencedGcpResourceControllerBqDatasetTest extends BaseConnectedT
       String expectedResourceName,
       String expectedProjectId,
       String expectedDatasetName) {
-    mockMvcUtils.assertResourceMetadata(
+    assertResourceMetadata(
         actualDataset.getMetadata(),
         ApiResourceType.BIG_QUERY_DATASET,
         expectedStewardshipType,
@@ -289,7 +291,7 @@ public class ReferencedGcpResourceControllerBqDatasetTest extends BaseConnectedT
       String expectedResourceName,
       String expectedProjectId,
       String expectedDatasetName) {
-    mockMvcUtils.assertClonedResourceMetadata(
+    assertClonedResourceMetadata(
         actualDataset.getMetadata(),
         ApiResourceType.BIG_QUERY_DATASET,
         expectedStewardshipType,

@@ -1435,7 +1435,7 @@ public class MockMvcUtils {
     return objectMapper.readValue(serializedResponse, ApiResourceList.class).getResources();
   }
 
-  public void assertControlledResourceMetadata(
+  public static void assertControlledResourceMetadata(
       ApiControlledResourceMetadata actualMetadata,
       ApiAccessScope expectedAccessScope,
       ApiManagedBy expectedManagedByType,
@@ -1449,7 +1449,7 @@ public class MockMvcUtils {
     assertEquals(region, actualMetadata.getRegion());
   }
 
-  public void assertResourceMetadata(
+  public static void assertResourceMetadata(
       ApiResourceMetadata actualMetadata,
       ApiResourceType expectedResourceType,
       ApiStewardshipType expectedStewardshipType,
@@ -1472,7 +1472,7 @@ public class MockMvcUtils {
         actualMetadata.getProperties());
   }
 
-  public void assertClonedResourceMetadata(
+  public static void assertClonedResourceMetadata(
       ApiResourceMetadata actualMetadata,
       ApiResourceType expectedResourceType,
       ApiStewardshipType expectedStewardshipType,
