@@ -76,7 +76,9 @@ public class LaunchCloneControlledAzureStorageContainerResourceFlightStep implem
     subflightInputParameters.put(
         ControlledResourceKeys.DESTINATION_RESOURCE_ID, destinationResourceId);
     subflightInputParameters.put(ControlledResourceKeys.DESTINATION_FOLDER_ID, destinationFolderId);
-    // Do not do the policy merge on the sub-object clone
+    // Do not do the policy merge on the sub-object clone. Policies are propagated to the
+    // destination workspace as a separate step during the workspace clone flight, so we do not
+    // do a policy merge for individual resource clones within the workspace
     subflightInputParameters.put(WorkspaceFlightMapKeys.MERGE_POLICIES, false);
 
     // launch the flight
