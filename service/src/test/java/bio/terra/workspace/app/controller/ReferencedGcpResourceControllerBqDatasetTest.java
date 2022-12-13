@@ -302,7 +302,7 @@ public class ReferencedGcpResourceControllerBqDatasetTest extends BaseConnectedT
       String expectedProjectId,
       String expectedDatasetName) {
     assertResourceMetadata(
-        actualDataset.getMetadata(),
+        actualResource.getMetadata(),
         ApiCloudPlatform.GCP,
         ApiResourceType.BIG_QUERY_DATASET,
         expectedStewardshipType,
@@ -324,7 +324,7 @@ public class ReferencedGcpResourceControllerBqDatasetTest extends BaseConnectedT
       String expectedProjectId,
       String expectedDatasetName) {
     assertClonedResourceMetadata(
-        actualDataset.getMetadata(),
+        actualResource.getMetadata(),
         ApiCloudPlatform.GCP,
         ApiResourceType.BIG_QUERY_DATASET,
         expectedStewardshipType,
