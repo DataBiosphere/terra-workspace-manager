@@ -34,7 +34,6 @@ public class RetryRules {
     // maxOperationTimeSeconds must be larger than socket timeout (20s), otherwise a socket timeout
     // won't be retried.
     return new RetryRuleExponentialBackoff(1, 8, /* maxOperationTimeSeconds */ 30);
-    return new RetryRuleExponentialBackoff(1, 8, 30);
   }
 
   /**
