@@ -677,7 +677,7 @@ In general, developers writing new endpoints should add MockMVC-based unit or
 connected tests to test their code (example: [WorkspaceApiControllerTest](service/src/test/java/bio/terra/workspace/app/configuration/external/controller/WorkspaceApiControllerTest.java)).
 These tests let us act as if we're making HTTP calls against a local server
 and validate the full request lifecycle through all
-the [layers of WSM](DEVELOPMENT.md#Layering), whereas the previous style of
+the [layers of WSM](#layering), whereas the previous style of
 service-only tests did not cover code in the controller layer.
 
 ### Integration Tests

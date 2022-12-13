@@ -82,7 +82,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
   private ApiGcpBigQueryDatasetResource sourceResource;
 
   // See here for how to skip workspace creation for local runs:
-  // https://github.com/DataBiosphere/terra-workspace-manager/blob/main/DEVELOPMENT.md#for-local-runs-skip-workspacecontext-creation
+  // https://github.com/DataBiosphere/terra-workspace-manager#for-local-runs-skip-workspacecontext-creation
   @BeforeAll
   public void setup() throws Exception {
     workspaceId =
