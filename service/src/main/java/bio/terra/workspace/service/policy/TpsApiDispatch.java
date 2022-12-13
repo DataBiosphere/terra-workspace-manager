@@ -24,20 +24,20 @@ import io.opencensus.contrib.http.jaxrs.JaxrsClientExtractor;
 import io.opencensus.contrib.http.jaxrs.JaxrsClientFilter;
 import io.opencensus.contrib.spring.aop.Traced;
 import io.opencensus.trace.Tracing;
-import java.io.IOException;
-import java.util.Optional;
-import java.util.UUID;
-import javax.ws.rs.client.Client;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Nullable;
+import javax.ws.rs.client.Client;
+import java.io.IOException;
+import java.util.Optional;
+import java.util.UUID;
+
 @Component
 public class TpsApiDispatch {
-  // TODO: PF-1714 pass through bearer token in all cases
-
   private final FeatureConfiguration features;
   private final PolicyServiceConfiguration policyServiceConfiguration;
   private final Client commonHttpClient;
@@ -55,51 +55,11 @@ public class TpsApiDispatch {
                     new JaxrsClientExtractor(), Tracing.getPropagationComponent().getB3Format()));
   }
 
-  private ApiClient getApiClient(String accessToken) {
-    ApiClient client =
-        new ApiClient()
-            .setHttpClient(commonHttpClient)
-            .addDefaultHeader(
-                RequestIdFilter.REQUEST_ID_HEADER, MDC.get(RequestIdFilter.REQUEST_ID_MDC_KEY));
-    client.setAccessToken(accessToken);
-    return client;
-  }
-
-  private TpsApi policyApi() {
-    try {
-      return new TpsApi(
-          getApiClient(policyServiceConfiguration.getAccessToken())
-              .setBasePath(policyServiceConfiguration.getBasePath()));
-    } catch (IOException e) {
-      throw new PolicyServiceAuthorizationException(
-          String.format(
-              "Error reading or parsing credentials file at %s",
-              policyServiceConfiguration.getClientCredentialFilePath()),
-          e.getCause());
-    }
-  }
-
-  private RuntimeException convertApiException(ApiException ex) {
-    if (ex.getCode() == HttpStatus.UNAUTHORIZED.value()) {
-      return new PolicyServiceAuthorizationException(
-          "Not authorized to access Terra Policy Service", ex.getCause());
-    } else if (ex.getCode() == HttpStatus.NOT_FOUND.value()) {
-      return new PolicyServiceNotFoundException("Policy service not found", ex);
-    } else if (ex.getCode() == HttpStatus.BAD_REQUEST.value()
-        && StringUtils.containsIgnoreCase(ex.getMessage(), "duplicate")) {
-      return new PolicyServiceDuplicateException("Policy service duplicate", ex);
-    } else {
-      return new PolicyServiceAPIException(ex);
-    }
-  }
-
   // -- Policy Attribute Object Interface --
-  public void createEmptyPao(UUID workspaceId) {
-    createPao(workspaceId, new TpsPolicyInputs());
-  }
-
-  public void createPao(UUID workspaceUuid, TpsPolicyInputs policyInputs) {
+  public void createPao(UUID workspaceUuid, @Nullable TpsPolicyInputs policyInputs) {
     features.tpsEnabledCheck();
+    TpsPolicyInputs inputs = (policyInputs == null) ? new TpsPolicyInputs() : policyInputs;
+
     TpsApi tpsApi = policyApi();
     try {
       tpsApi.createPao(
@@ -107,7 +67,7 @@ public class TpsApiDispatch {
               .objectId(workspaceUuid)
               .component(TpsComponent.WSM)
               .objectType(TpsObjectType.WORKSPACE)
-              .attributes(policyInputs));
+              .attributes(inputs));
     } catch (ApiException e) {
       throw convertApiException(e);
     }
@@ -208,4 +168,43 @@ public class TpsApiDispatch {
       throw convertApiException(e);
     }
   }
+
+  private ApiClient getApiClient(String accessToken) {
+    ApiClient client =
+      new ApiClient()
+        .setHttpClient(commonHttpClient)
+        .addDefaultHeader(
+          RequestIdFilter.REQUEST_ID_HEADER, MDC.get(RequestIdFilter.REQUEST_ID_MDC_KEY));
+    client.setAccessToken(accessToken);
+    return client;
+  }
+
+  private TpsApi policyApi() {
+    try {
+      return new TpsApi(
+        getApiClient(policyServiceConfiguration.getAccessToken())
+          .setBasePath(policyServiceConfiguration.getBasePath()));
+    } catch (IOException e) {
+      throw new PolicyServiceAuthorizationException(
+        String.format(
+          "Error reading or parsing credentials file at %s",
+          policyServiceConfiguration.getClientCredentialFilePath()),
+        e.getCause());
+    }
+  }
+
+  private RuntimeException convertApiException(ApiException ex) {
+    if (ex.getCode() == HttpStatus.UNAUTHORIZED.value()) {
+      return new PolicyServiceAuthorizationException(
+        "Not authorized to access Terra Policy Service", ex.getCause());
+    } else if (ex.getCode() == HttpStatus.NOT_FOUND.value()) {
+      return new PolicyServiceNotFoundException("Policy service not found", ex);
+    } else if (ex.getCode() == HttpStatus.BAD_REQUEST.value()
+      && StringUtils.containsIgnoreCase(ex.getMessage(), "duplicate")) {
+      return new PolicyServiceDuplicateException("Policy service duplicate", ex);
+    } else {
+      return new PolicyServiceAPIException(ex);
+    }
+  }
+
 }

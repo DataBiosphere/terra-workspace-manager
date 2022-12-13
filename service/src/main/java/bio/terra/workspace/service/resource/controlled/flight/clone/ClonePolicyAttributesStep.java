@@ -105,6 +105,6 @@ public class ClonePolicyAttributesStep implements Step {
       return;
     }
     // Workspace doesn't have a PAO, so create an empty one for it.
-    tpsApiDispatch.createEmptyPao(workspaceId);
+    tpsApiDispatch.createPao(workspaceId, null);
   }
 }

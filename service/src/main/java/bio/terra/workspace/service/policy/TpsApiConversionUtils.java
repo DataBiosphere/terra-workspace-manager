@@ -21,6 +21,8 @@ import bio.terra.workspace.generated.model.ApiWsmPolicyObjectType;
 import bio.terra.workspace.generated.model.ApiWsmPolicyPair;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateMode;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateResult;
+
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -65,7 +67,7 @@ public class TpsApiConversionUtils {
         .conflicts(apiFromTpsPaoConflictList(tpsUpdateResult.getConflicts()));
   }
 
-  public static ApiWsmPolicy apiFromTpsPao(TpsPaoGetResult tpsPao) {
+  public static @Nullable ApiWsmPolicy apiFromTpsPao(@Nullable TpsPaoGetResult tpsPao) {
     if (tpsPao == null) {
       return null;
     }
@@ -120,7 +122,7 @@ public class TpsApiConversionUtils {
         .additionalData(additionalData);
   }
 
-  public static TpsPolicyInputs tpsFromApiTpsPolicyInputs(ApiWsmPolicyInputs apiInputs) {
+  public static @Nullable TpsPolicyInputs tpsFromApiTpsPolicyInputs(@Nullable ApiWsmPolicyInputs apiInputs) {
     if (apiInputs == null) {
       return null;
     }

@@ -35,11 +35,7 @@ public class CreateWorkspacePoliciesStep implements Step {
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     try {
-      if (policyInputs == null) {
-        tpsApiDispatch.createEmptyPao(workspace.getWorkspaceId());
-      } else {
         tpsApiDispatch.createPao(workspace.getWorkspaceId(), policyInputs);
-      }
     } catch (PolicyServiceDuplicateException e) {
       // Before the flight we check that the workspace does not exist, so it's safe to assume that
       // any policy on this workspace object was created by this flight, and we can ignore
