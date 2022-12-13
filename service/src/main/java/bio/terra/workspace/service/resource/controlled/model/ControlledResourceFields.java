@@ -28,7 +28,7 @@ public class ControlledResourceFields extends WsmResourceFields {
   private final AccessScopeType accessScope;
   private final ManagedByType managedBy;
   @Nullable private final String applicationId;
-  private final String region;
+  @Nullable private final String region;
 
   /** construct from database resource */
   public ControlledResourceFields(DbResource dbResource) {
@@ -91,6 +91,11 @@ public class ControlledResourceFields extends WsmResourceFields {
     return applicationId;
   }
 
+  @Nullable
+  public String getRegion() {
+    return region;
+  }
+
   public static class Builder extends WsmResourceFields.Builder<Builder> {
 
     @Nullable private String assignedUser;
@@ -102,7 +107,7 @@ public class ControlledResourceFields extends WsmResourceFields {
     private AccessScopeType accessScope;
     private ManagedByType managedBy;
     @Nullable private String applicationId;
-    private String region;
+    @Nullable private String region;
 
     public Builder() {}
 
@@ -148,7 +153,7 @@ public class ControlledResourceFields extends WsmResourceFields {
       return this;
     }
 
-    public Builder region(String region) {
+    public Builder region(@Nullable String region) {
       this.region = region;
       return this;
     }

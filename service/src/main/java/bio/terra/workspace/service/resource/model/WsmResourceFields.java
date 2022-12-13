@@ -30,7 +30,6 @@ public class WsmResourceFields {
   private final ImmutableMap<String, String> properties;
   private final String createdByEmail;
   private final @Nullable OffsetDateTime createdDate;
-  private final @Nullable String region;
 
   /** construct from database resource */
   public WsmResourceFields(DbResource dbResource) {
@@ -43,7 +42,6 @@ public class WsmResourceFields {
     properties = dbResource.getProperties();
     createdByEmail = dbResource.getCreatedByEmail();
     createdDate = dbResource.getCreatedDate();
-    region = dbResource.getRegion();
   }
 
   protected WsmResourceFields(Builder<?> builder) {
@@ -56,7 +54,6 @@ public class WsmResourceFields {
     this.properties = builder.properties;
     this.createdByEmail = builder.createdByEmail;
     this.createdDate = builder.createdDate;
-    this.region = builder.region;
   }
 
   public static WsmResourceFields.Builder<?> builder() {
@@ -109,10 +106,6 @@ public class WsmResourceFields {
     return createdByEmail;
   }
 
-  public String getRegion() {
-    return region;
-  }
-
   public OffsetDateTime getCreatedDate() {
     return createdDate;
   }
@@ -127,7 +120,6 @@ public class WsmResourceFields {
     private ImmutableMap<String, String> properties = ImmutableMap.of();
     private String createdByEmail;
     private OffsetDateTime createdDate;
-    private String region;
 
     public Builder() {}
 

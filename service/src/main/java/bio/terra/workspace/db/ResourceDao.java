@@ -490,11 +490,7 @@ public class ResourceDao {
    */
   @WriteTransaction
   public boolean updateControlledResourceRegion(
-      UUID workspaceUuid, UUID resourceId, String region) {
-    if (region == null) {
-      return false;
-    }
-
+      UUID workspaceUuid, UUID resourceId, @Nullable String region) {
     var sql =
         """
             UPDATE resource SET region = :region

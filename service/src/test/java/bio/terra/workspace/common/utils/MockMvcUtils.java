@@ -28,6 +28,7 @@ import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
+import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpBigQueryDatasetRequest;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpBigQueryDatasetResult;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketRequest;
@@ -38,6 +39,7 @@ import bio.terra.workspace.generated.model.ApiCloneWorkspaceRequest;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceResult;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
+import bio.terra.workspace.generated.model.ApiControlledResourceMetadata;
 import bio.terra.workspace.generated.model.ApiCreateCloudContextRequest;
 import bio.terra.workspace.generated.model.ApiCreateCloudContextResult;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpAiNotebookInstanceRequestBody;
@@ -65,6 +67,9 @@ import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
 import bio.terra.workspace.generated.model.ApiJobResult;
+import bio.terra.workspace.generated.model.ApiManagedBy;
+import bio.terra.workspace.generated.model.ApiPrivateResourceState;
+import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
 import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiPropertyKeys;
 import bio.terra.workspace.generated.model.ApiReferenceResourceCommonFields;
@@ -1428,6 +1433,20 @@ public class MockMvcUtils {
             .getResponse()
             .getContentAsString();
     return objectMapper.readValue(serializedResponse, ApiResourceList.class).getResources();
+  }
+
+  public void assertControlledResourceMetadata(
+      ApiControlledResourceMetadata actualMetadata,
+      ApiAccessScope expectedAccessScope,
+      ApiManagedBy expectedManagedByType,
+      ApiPrivateResourceUser expectedPrivateResourceUser,
+      ApiPrivateResourceState expectedPrivateResourceState,
+      String region) {
+    assertEquals(expectedAccessScope, actualMetadata.getAccessScope());
+    assertEquals(expectedManagedByType, actualMetadata.getManagedBy());
+    assertEquals(expectedPrivateResourceUser, actualMetadata.getPrivateResourceUser());
+    assertEquals(expectedPrivateResourceState, actualMetadata.getPrivateResourceState());
+    assertEquals(region, actualMetadata.getRegion());
   }
 
   public void assertResourceMetadata(

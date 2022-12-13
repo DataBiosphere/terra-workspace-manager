@@ -161,7 +161,6 @@ public class ControlledResourceFixtures {
   public static ApiAzureVmCreationParameters getAzureVmCreationParameters() {
     return new ApiAzureVmCreationParameters()
         .name(uniqueAzureName(AZURE_VM_NAME_PREFIX))
-        .region("westcentralus")
         .vmSize(VirtualMachineSizeTypes.STANDARD_D2S_V3.toString())
         // TODO: it'd be nice to support standard Linux OSes in addition to custom image URIs.
         // The below image is a Jupyter image and should be stable.
@@ -642,7 +641,8 @@ public class ControlledResourceFixtures {
         .assignedUser("myusername@mydomain.mine")
         .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
         .managedBy(ManagedByType.MANAGED_BY_USER)
-        .createdByEmail(MockMvcUtils.DEFAULT_USER_EMAIL);
+        .createdByEmail(MockMvcUtils.DEFAULT_USER_EMAIL)
+        .region(DEFAULT_RESOURCE_REGION);
   }
 
   public static ControlledAiNotebookInstanceResource.Builder makeDefaultAiNotebookInstance() {

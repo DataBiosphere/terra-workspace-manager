@@ -30,7 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-public class ControlledAzureResourceApiControllerTest extends BaseAzureUnitTest {
+public class ControlledAzureResourceApiControllerAzureVmTest extends BaseAzureUnitTest {
   @Autowired MockMvc mockMvc;
   @Autowired ObjectMapper objectMapper;
   @Autowired ControlledAzureResourceApiController controller;

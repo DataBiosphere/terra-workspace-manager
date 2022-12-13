@@ -61,7 +61,6 @@ public class ControlledGcsBucketResource extends ControlledResource {
       @JsonProperty("createdByEmail") String createdByEmail,
       @JsonProperty("createdDate") OffsetDateTime createdDate,
       @JsonProperty("region") String region) {
-
     super(
         workspaceId,
         resourceId,

@@ -188,7 +188,8 @@ public abstract class ControlledResource extends WsmResource {
                 // TODO: PF-616 figure out how to supply the assigned user's role
                 new ApiPrivateResourceUser().userName(assignedUser))
             .privateResourceState(
-                getPrivateResourceState().map(PrivateResourceState::toApiModel).orElse(null));
+                getPrivateResourceState().map(PrivateResourceState::toApiModel).orElse(null))
+            .region(getRegion());
     metadata.controlledResourceMetadata(controlled);
     return metadata;
   }
