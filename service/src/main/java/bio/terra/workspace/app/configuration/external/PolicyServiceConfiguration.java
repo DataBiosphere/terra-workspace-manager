@@ -41,7 +41,8 @@ public class PolicyServiceConfiguration {
   public String getAccessToken() throws IOException {
     try (FileInputStream fileInputStream = new FileInputStream(clientCredentialFilePath)) {
       GoogleCredentials credentials =
-          ServiceAccountCredentials.fromStream(fileInputStream).createScoped(POLICY_SERVICE_ACCOUNT_SCOPES);
+          ServiceAccountCredentials.fromStream(fileInputStream)
+              .createScoped(POLICY_SERVICE_ACCOUNT_SCOPES);
       AccessToken token = credentials.refreshAccessToken();
       return token.getTokenValue();
     }

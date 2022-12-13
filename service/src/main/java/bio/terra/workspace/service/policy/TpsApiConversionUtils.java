@@ -21,10 +21,9 @@ import bio.terra.workspace.generated.model.ApiWsmPolicyObjectType;
 import bio.terra.workspace.generated.model.ApiWsmPolicyPair;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateMode;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateResult;
-
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * The WSM interface uses an identical, but different set of classes for TPS data. This utility
@@ -122,7 +121,8 @@ public class TpsApiConversionUtils {
         .additionalData(additionalData);
   }
 
-  public static @Nullable TpsPolicyInputs tpsFromApiTpsPolicyInputs(@Nullable ApiWsmPolicyInputs apiInputs) {
+  public static @Nullable TpsPolicyInputs tpsFromApiTpsPolicyInputs(
+      @Nullable ApiWsmPolicyInputs apiInputs) {
     if (apiInputs == null) {
       return null;
     }
