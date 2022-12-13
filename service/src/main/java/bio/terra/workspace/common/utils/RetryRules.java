@@ -31,7 +31,7 @@ public class RetryRules {
    * few seconds.
    */
   public static RetryRule shortExponential() {
-    return new RetryRuleExponentialBackoff(1, 8, 16);
+    return new RetryRuleExponentialBackoff(1, 8, 30);
   }
 
   /**
