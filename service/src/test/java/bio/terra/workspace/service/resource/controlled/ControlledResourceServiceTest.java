@@ -4,6 +4,7 @@ import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.AI_
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.AI_NOTEBOOK_UPDATE_PARAMETERS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import org.junit.Ignore;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -101,6 +102,7 @@ import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
@@ -211,8 +213,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  @Ignore
-  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
+  @Disabled
+    //  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void createAiNotebookInstanceDo() throws Exception {
     String workspaceUserFacingId = workspaceService.getWorkspace(workspaceId).getUserFacingId();
     var instanceId = "create-ai-notebook-instance-do";
