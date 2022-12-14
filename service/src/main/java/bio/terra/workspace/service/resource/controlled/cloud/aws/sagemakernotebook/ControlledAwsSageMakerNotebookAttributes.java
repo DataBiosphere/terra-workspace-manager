@@ -11,11 +11,13 @@ public class ControlledAwsSageMakerNotebookAttributes {
   @JsonCreator
   public ControlledAwsSageMakerNotebookAttributes(
       @JsonProperty("awsAccountNumber") String awsAccountNumber,
+      @JsonProperty("landingZoneId") UUID landingZoneId,
       @JsonProperty("instanceId") String instanceId,
       @JsonProperty("region") String region,
       @JsonProperty("instanceType") String instanceType,
       @JsonProperty("defaultBucket") DefaultBucket defaultBucket) {
     this.awsAccountNumber = awsAccountNumber;
+    this.landingZoneId = landingZoneId;
     this.instanceId = instanceId;
     this.region = region;
     this.instanceType = instanceType;
@@ -54,6 +56,7 @@ public class ControlledAwsSageMakerNotebookAttributes {
   }
 
   private final String awsAccountNumber;
+  private final UUID landingZoneId;
   private final String instanceId;
   private final String region;
   private final String instanceType;
@@ -61,6 +64,10 @@ public class ControlledAwsSageMakerNotebookAttributes {
 
   public String getAwsAccountNumber() {
     return awsAccountNumber;
+  }
+
+  public UUID getLandingZoneId() {
+    return landingZoneId;
   }
 
   public String getInstanceId() {

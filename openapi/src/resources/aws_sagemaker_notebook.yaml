@@ -8,6 +8,10 @@ components:
         awsAccountNumber:
           description: Account number of the account containing the notebook instance.
           type: string
+        landingZoneId:
+          description: ID of the AWS landing zone containing the notebook instance.
+          type: string
+          format: uuid
         instanceId:
           description: ID of the created SageMaker notebook instance.
           type: string

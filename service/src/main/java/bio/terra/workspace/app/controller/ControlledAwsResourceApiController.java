@@ -332,6 +332,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
       ControlledAwsSageMakerNotebookResource resource = jobResult.getResult();
       apiResource = resource.toApiResource();
       apiResource.getAttributes().setAwsAccountNumber(getAwsAccountNumber(apiResource));
+      apiResource.getAttributes().setLandingZoneId(getLandingZoneId(apiResource));
     }
     return new ApiCreatedControlledAwsSageMakerNotebookResult()
         .jobReport(jobResult.getJobReport())
@@ -343,6 +344,13 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     return awsCloudContextService
         .getRequiredAwsCloudContext(apiResource.getMetadata().getWorkspaceId())
         .getAccountNumber();
+  }
+
+  private UUID getLandingZoneId(ApiAwsSageMakerNotebookResource apiResource) {
+    return UUID.fromString(
+        awsCloudContextService
+            .getRequiredAwsCloudContext(apiResource.getMetadata().getWorkspaceId())
+            .getLandingZoneName());
   }
 
   @Override
@@ -360,6 +368,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
 
     ApiAwsSageMakerNotebookResource apiResource = resource.toApiResource();
     apiResource.getAttributes().setAwsAccountNumber(getAwsAccountNumber(apiResource));
+    apiResource.getAttributes().setLandingZoneId(getLandingZoneId(apiResource));
 
     return new ResponseEntity<>(apiResource, HttpStatus.OK);
   }

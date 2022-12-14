@@ -36,6 +36,7 @@ import java.util.UUID;
 
 public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
   private final String awsAccountNumber;
+  private final UUID landingZoneId;
   private final String instanceId;
   private final String region;
   private final String instanceType;
@@ -56,6 +57,7 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
       @JsonProperty("managedBy") ManagedByType managedBy,
       @JsonProperty("applicationId") String applicationId,
       @JsonProperty("awsAccountNumber") String awsAccountNumber,
+      @JsonProperty("landingZoneId") UUID landingZoneId,
       @JsonProperty("instanceId") String instanceId,
       @JsonProperty("region") String region,
       @JsonProperty("instanceType") String instanceType,
@@ -77,6 +79,7 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
         resourceLineage,
         properties);
     this.awsAccountNumber = awsAccountNumber;
+    this.landingZoneId = landingZoneId;
     this.instanceId = instanceId;
     this.region = region;
     this.instanceType = instanceType;
@@ -87,12 +90,14 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
   private ControlledAwsSageMakerNotebookResource(
       ControlledResourceFields common,
       String awsAccountNumber,
+      UUID landingZoneId,
       String instanceId,
       String region,
       String instanceType,
       ControlledAwsSageMakerNotebookAttributes.DefaultBucket defaultBucket) {
     super(common);
     this.awsAccountNumber = awsAccountNumber;
+    this.landingZoneId = landingZoneId;
     this.instanceId = instanceId;
     this.region = region;
     this.instanceType = instanceType;
@@ -146,6 +151,10 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
     return awsAccountNumber;
   }
 
+  public UUID getLandingZoneId() {
+    return landingZoneId;
+  }
+
   public String getInstanceId() {
     return instanceId;
   }
@@ -165,6 +174,7 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
   public ApiAwsSageMakerNotebookAttributes toApiAttributes() {
     return new ApiAwsSageMakerNotebookAttributes()
         .awsAccountNumber(awsAccountNumber)
+        .landingZoneId(landingZoneId)
         .instanceId(getInstanceId())
         .region(getRegion())
         .instanceType(getInstanceType())
@@ -194,7 +204,12 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
   public String attributesToJson() {
     return DbSerDes.toJson(
         new ControlledAwsSageMakerNotebookAttributes(
-            awsAccountNumber, getInstanceId(), getRegion(), getInstanceType(), getDefaultBucket()));
+            awsAccountNumber,
+            landingZoneId,
+            getInstanceId(),
+            getRegion(),
+            getInstanceType(),
+            getDefaultBucket()));
   }
 
   @Override
@@ -233,6 +248,7 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
   public static class Builder {
     private ControlledResourceFields common;
     private String awsAccountNumber;
+    private UUID landingZoneId;
     private String instanceId;
     private String region;
     private String instanceType;
@@ -245,6 +261,11 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
 
     public Builder awsAccountNumber(String awsAccountNumber) {
       this.awsAccountNumber = awsAccountNumber;
+      return this;
+    }
+
+    public Builder landingZoneId(UUID landingZoneId) {
+      this.landingZoneId = landingZoneId;
       return this;
     }
 
@@ -279,7 +300,7 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
 
     public ControlledAwsSageMakerNotebookResource build() {
       return new ControlledAwsSageMakerNotebookResource(
-          common, awsAccountNumber, instanceId, region, instanceType, defaultBucket);
+          common, awsAccountNumber, landingZoneId, instanceId, region, instanceType, defaultBucket);
     }
   }
 }
