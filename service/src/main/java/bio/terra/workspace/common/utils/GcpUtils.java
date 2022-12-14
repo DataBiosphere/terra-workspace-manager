@@ -97,19 +97,13 @@ public class GcpUtils {
    * @param code gRPC status code.
    */
   private static boolean is4xxClientError(int code) {
-    return Code.INVALID_ARGUMENT.value() == code
-        || // 400
-        Code.OUT_OF_RANGE.value() == code
-        || // 400
-        Code.FAILED_PRECONDITION.value() == code
-        || // 400
-        Code.ALREADY_EXISTS.value() == code
-        || // 409
-        Code.ABORTED.value() == code
-        || // 409
-        Code.UNAUTHENTICATED.value() == code
-        || // 401
-        Code.RESOURCE_EXHAUSTED.value() == code; // 429
+    return Code.INVALID_ARGUMENT.value() == code // 400
+        || Code.OUT_OF_RANGE.value() == code // 400
+        || Code.FAILED_PRECONDITION.value() == code // 400
+        || Code.ALREADY_EXISTS.value() == code // 409
+        || Code.ABORTED.value() == code // 409
+        || Code.UNAUTHENTICATED.value() == code // 401
+        || Code.RESOURCE_EXHAUSTED.value() == code; // 429
   }
 
   public static String getControlPlaneProjectId() {
