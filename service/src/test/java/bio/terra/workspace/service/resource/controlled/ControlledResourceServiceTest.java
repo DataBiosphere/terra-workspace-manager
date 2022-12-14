@@ -211,6 +211,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   }
 
   @Test
+  @Ignore
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void createAiNotebookInstanceDo() throws Exception {
     String workspaceUserFacingId = workspaceService.getWorkspace(workspaceId).getUserFacingId();
