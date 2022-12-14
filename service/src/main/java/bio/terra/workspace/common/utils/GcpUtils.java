@@ -75,9 +75,11 @@ public class GcpUtils {
       throws RetryException, IOException, InterruptedException {
     operation = OperationUtils.pollUntilComplete(operation, pollingInterval, timeout);
     if (operation.getOperationAdapter().getError() != null) {
-      if (is4xxClientError(operation.getOperationAdapter().getError().getCode())) {
+      int code = operation.getOperationAdapter().getError().getCode();
+      if (is4xxClientError(code)) {
         // do not waste time retrying on client error.
-        throw new InternalServerErrorException("gcp calls failed with client error. Do not retry");
+        throw new InternalServerErrorException(
+            String.format("gcp calls failed with client error code %s. Do not retry", code));
       } else {
         throw new RetryException(
             String.format(
