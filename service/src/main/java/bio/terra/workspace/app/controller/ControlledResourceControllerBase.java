@@ -48,7 +48,8 @@ public class ControlledResourceControllerBase extends ControllerBase {
 
     String userEmail = getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest);
     if (wsmResourceType != WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER
-        && wsmResourceType != WsmResourceType.CONTROLLED_AZURE_VM) {
+        && wsmResourceType != WsmResourceType.CONTROLLED_AZURE_VM
+        && wsmResourceType != WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE) {
       checkArgument(
           region != null,
           "Controlled resource must have an associated region specified"

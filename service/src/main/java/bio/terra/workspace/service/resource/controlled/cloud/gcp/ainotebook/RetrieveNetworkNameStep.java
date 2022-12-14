@@ -50,7 +50,7 @@ public class RetrieveNetworkNameStep implements Step {
     CloudComputeCow compute = crlService.getCloudComputeCow();
     SubnetworkList subnetworks;
     try {
-      String location = getValidLocation(projectId);
+      String location = maybeGetValidZone(projectId);
       flightContext.getWorkingMap().put(CREATE_NOTEBOOK_LOCATION, location);
       String region = getRegionForNotebook(projectId, location);
       flightContext.getWorkingMap().put(CREATE_NOTEBOOK_REGION, region);
@@ -62,7 +62,11 @@ public class RetrieveNetworkNameStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
-  private String getValidLocation(String projectId) throws IOException {
+  /**
+   * Fetches the valid zone given resource location. If none is found, returns the Ai notebook
+   * location attributes.
+   */
+  private String maybeGetValidZone(String projectId) throws IOException {
     String location = resource.getLocation();
     ZoneList zoneList = crlService.getCloudComputeCow().zones().list(projectId).execute();
 

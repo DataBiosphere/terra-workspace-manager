@@ -445,7 +445,10 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
         toCommonFields(
             workspaceUuid,
             body.getCommon(),
-            resourceLocation,
+            // AI notebook is a zonal resource. The resource location might be a zone instead of
+            // a region so we do not set this field in the wsm db yet. The region will be computed
+            // as part of the AI notebook creation flight.
+            /*region=*/ null,
             userRequest,
             WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceUuid);

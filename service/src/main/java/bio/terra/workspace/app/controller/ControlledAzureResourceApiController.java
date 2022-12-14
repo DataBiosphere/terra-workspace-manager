@@ -316,7 +316,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         toCommonFields(
             workspaceUuid,
             body.getCommon(),
-            null,
+            /*region=*/ null,
             userRequest,
             WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
     workspaceService.validateMcWorkspaceAndAction(
