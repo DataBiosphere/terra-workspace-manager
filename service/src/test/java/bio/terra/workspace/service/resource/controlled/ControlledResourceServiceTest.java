@@ -101,6 +101,7 @@ import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
@@ -211,7 +212,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
+  @Disabled
+  //  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches =
+  // BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void createAiNotebookInstanceDo() throws Exception {
     String workspaceUserFacingId = workspaceService.getWorkspace(workspaceId).getUserFacingId();
     var instanceId = "create-ai-notebook-instance-do";
