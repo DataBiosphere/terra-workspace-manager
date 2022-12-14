@@ -307,7 +307,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
         destResourceName,
         destBucketName);
 
-    // Assert resource returned by getBucket()
+    // Assert resource returned by get
     ApiGcpGcsBucketResource gotResource =
         mockMvcUtils.getControlledGcsBucket(
             userAccessUtils.defaultUserAuthRequest(),
@@ -360,7 +360,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
         destResourceName,
         destBucketName);
 
-    // Assert resource returned by getBucket()
+    // Assert resource returned by get
     ApiGcpGcsBucketResource gotResource =
         mockMvcUtils.getControlledGcsBucket(
             userAccessUtils.defaultUserAuthRequest(),
@@ -414,7 +414,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
         destResourceName,
         destBucketName);
 
-    // Assert resource returned by getBucket()
+    // Assert resource returned by get
     ApiGcpGcsBucketResource gotResource =
         mockMvcUtils.getControlledGcsBucket(
             userAccessUtils.defaultUserAuthRequest(),
@@ -467,7 +467,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
         destResourceName,
         sourceBucketName);
 
-    // Assert resource returned by ReferencedGcpResource.getBucketReference()
+    // Assert resource returned by get
     ApiGcpGcsBucketResource gotResource =
         mockMvcUtils.getReferencedGcsBucket(
             userAccessUtils.defaultUserAuthRequest(),
