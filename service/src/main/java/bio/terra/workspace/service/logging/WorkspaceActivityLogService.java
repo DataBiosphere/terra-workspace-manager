@@ -51,4 +51,9 @@ public class WorkspaceActivityLogService {
   public Optional<ActivityLogChangeDetails> getLastUpdatedDetails(UUID workspaceId) {
     return workspaceActivityLogDao.getLastUpdateDetails(workspaceId);
   }
+
+  public Optional<ActivityLogChangeDetails> getLastUpdatedDetails(
+      UUID workspaceId, String changeSubjectId) {
+    return workspaceActivityLogDao.getLastUpdateDetails(workspaceId, changeSubjectId);
+  }
 }
