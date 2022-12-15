@@ -71,7 +71,7 @@ jobs:
           mkdir -p $( dirname "${OVERRIDES_FILE}" )
 
           # write an empty overrides file
-          touch "${OVERRIDES_FILE}"
+          echo "releases: {}" > "${OVERRIDES_FILE}"
 
           #
           # call the chart-releases endpoint to get a list of chart-releases in the target env
