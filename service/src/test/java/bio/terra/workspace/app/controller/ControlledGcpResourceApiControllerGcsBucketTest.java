@@ -33,6 +33,7 @@ import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.storage.BucketInfo.LifecycleRule;
 import com.google.cloud.storage.BucketInfo.LifecycleRule.LifecycleAction;
@@ -236,6 +237,55 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId2,
         WsmIamRole.READER,
+        userAccessUtils.getSecondUserEmail());
+  }
+
+  @Test
+  public void clone_secondUserWithWriteAccessOnDestWorkspace_succeeds() throws Exception {
+    mockMvcUtils.grantRole(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId,
+        WsmIamRole.READER,
+        userAccessUtils.getSecondUserEmail());
+    mockMvcUtils.grantRole(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId2,
+        WsmIamRole.WRITER,
+        userAccessUtils.getSecondUserEmail());
+
+    ApiGcpGcsBucketResource clonedResource =
+        mockMvcUtils
+            .cloneControlledGcsBucket(
+                userAccessUtils.secondUserAuthRequest(),
+                /*sourceWorkspaceId=*/ workspaceId,
+                sourceBucket.getMetadata().getResourceId(),
+                /*destWorkspaceId=*/ workspaceId2,
+                ApiCloningInstructionsEnum.RESOURCE,
+                /*destResourceName=*/ null,
+                /*destBucketName=*/ null,
+                /*destLocation*/ null)
+            .getGcpBucket();
+
+    // Assert resource returned in clone flight response
+    assertClonedGcsBucket(
+        clonedResource,
+        ApiStewardshipType.CONTROLLED,
+        ApiCloningInstructionsEnum.DEFINITION,
+        workspaceId2,
+        sourceResourceName,
+        ControlledGcsBucketHandler.getHandler()
+            .generateCloudName(workspaceId2, "cloned-" + sourceResourceName),
+        userAccessUtils.getSecondUserEmail());
+
+    mockMvcUtils.removeRole(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId,
+        WsmIamRole.READER,
+        userAccessUtils.getSecondUserEmail());
+    mockMvcUtils.removeRole(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId2,
+        WsmIamRole.WRITER,
         userAccessUtils.getSecondUserEmail());
   }
 
