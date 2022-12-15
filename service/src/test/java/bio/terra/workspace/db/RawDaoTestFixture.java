@@ -1,9 +1,14 @@
 package bio.terra.workspace.db;
 
+import static bio.terra.workspace.db.WorkspaceActivityLogDao.ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER;
+
+import bio.terra.common.db.ReadTransaction;
 import bio.terra.common.db.WriteTransaction;
+import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
@@ -80,6 +85,7 @@ public class RawDaoTestFixture {
     }
   }
 
+  @WriteTransaction
   public void writeActivityLogWithTimestamp(
       UUID workspaceId, String actorEmail, OffsetDateTime timestamp) {
     final String sql =
@@ -93,5 +99,21 @@ public class RawDaoTestFixture {
             .addValue("actor_email", actorEmail)
             .addValue("actor_subject_id", RandomStringUtils.randomAlphabetic(5));
     jdbcTemplate.update(sql, params);
+  }
+
+  @ReadTransaction
+  public List<ActivityLogChangeDetails> readActivityLogs(
+      UUID workspaceId, List<String> changeSubjects) {
+    var sql =
+        """
+        SELECT * FROM workspace_activity_log
+        WHERE workspace_id = :workspace_id AND change_subject_id in (:change_subject_ids)
+        ORDER BY change_date DESC
+      """;
+    final var params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceId.toString())
+            .addValue("change_subject_ids", changeSubjects);
+    return jdbcTemplate.query(sql, params, ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER);
   }
 }
