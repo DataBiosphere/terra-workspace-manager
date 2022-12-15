@@ -13,14 +13,21 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import bio.terra.workspace.service.workspace.model.AzureCloudContext;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 
-public class LaunchCreateGcpContextFlightStep implements Step {
+public class LaunchCreateCloudContextFlightStep implements Step {
 
   private final WorkspaceService workspaceService;
+  private final CloudPlatform cloudPlatform;
+  private final String flightIdKey;
 
-  public LaunchCreateGcpContextFlightStep(WorkspaceService workspaceService) {
+  public LaunchCreateCloudContextFlightStep(
+      WorkspaceService workspaceService, CloudPlatform cloudPlatform, String flightIdKey) {
     this.workspaceService = workspaceService;
+    this.cloudPlatform = cloudPlatform;
+    this.flightIdKey = flightIdKey;
   }
 
   @Override
@@ -30,8 +37,7 @@ public class LaunchCreateGcpContextFlightStep implements Step {
         ControlledResourceKeys.SOURCE_WORKSPACE_ID,
         JobMapKeys.AUTH_USER_INFO.getKeyName(),
         JobMapKeys.REQUEST.getKeyName());
-    validateRequiredEntries(
-        context.getWorkingMap(), ControlledResourceKeys.CREATE_CLOUD_CONTEXT_FLIGHT_ID);
+    validateRequiredEntries(context.getWorkingMap(), flightIdKey);
 
     var userRequest =
         context
@@ -40,10 +46,7 @@ public class LaunchCreateGcpContextFlightStep implements Step {
     var destinationWorkspace =
         context.getInputParameters().get(JobMapKeys.REQUEST.getKeyName(), Workspace.class);
 
-    var cloudContextJobId =
-        context
-            .getWorkingMap()
-            .get(ControlledResourceKeys.CREATE_CLOUD_CONTEXT_FLIGHT_ID, String.class);
+    var cloudContextJobId = context.getWorkingMap().get(flightIdKey, String.class);
 
     boolean flightAlreadyExists;
     try {
@@ -56,7 +59,19 @@ public class LaunchCreateGcpContextFlightStep implements Step {
     }
     // if we already have a flight, don't launch another one
     if (!flightAlreadyExists) {
-      workspaceService.createGcpCloudContext(destinationWorkspace, cloudContextJobId, userRequest);
+      if (CloudPlatform.AZURE == cloudPlatform) {
+        workspaceService.createAzureCloudContext(
+            destinationWorkspace,
+            cloudContextJobId,
+            userRequest,
+            null,
+            context
+                .getInputParameters()
+                .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class));
+      } else {
+        workspaceService.createGcpCloudContext(
+            destinationWorkspace, cloudContextJobId, userRequest);
+      }
     }
     return StepResult.getStepResultSuccess();
   }

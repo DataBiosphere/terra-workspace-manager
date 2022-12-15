@@ -17,7 +17,7 @@ import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
-import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneGcpWorkspaceFlight;
+import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneWorkspaceFlight;
 import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.exceptions.BufferServiceDisabledException;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceException;
@@ -372,7 +372,7 @@ public class WorkspaceService {
       String jobId,
       AuthenticatedUserRequest userRequest,
       @Nullable String resultPath,
-      AzureCloudContext azureContext) {
+      @Nullable AzureCloudContext azureContext) {
     features.azureEnabledCheck();
 
     jobService
@@ -435,7 +435,8 @@ public class WorkspaceService {
       Workspace sourceWorkspace,
       AuthenticatedUserRequest userRequest,
       @Nullable String location,
-      Workspace destinationWorkspace) {
+      Workspace destinationWorkspace,
+      @Nullable AzureCloudContext azureCloudContext) {
     String workspaceUuid = sourceWorkspace.getWorkspaceId().toString();
     String jobDescription =
         String.format(
@@ -453,7 +454,7 @@ public class WorkspaceService {
     return jobService
         .newJob()
         .description(jobDescription)
-        .flightClass(CloneGcpWorkspaceFlight.class)
+        .flightClass(CloneWorkspaceFlight.class)
         .userRequest(userRequest)
         .request(destinationWorkspace)
         .operationType(OperationType.CLONE)
@@ -463,6 +464,7 @@ public class WorkspaceService {
             ControlledResourceKeys.SOURCE_WORKSPACE_ID,
             sourceWorkspace.getWorkspaceId()) // TODO: remove this duplication
         .addParameter(ControlledResourceKeys.LOCATION, location)
+        .addParameter(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, azureCloudContext)
         .submit();
   }
 
