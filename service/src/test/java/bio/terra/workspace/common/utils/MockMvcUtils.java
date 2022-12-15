@@ -34,6 +34,7 @@ import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketRequest
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketResult;
 import bio.terra.workspace.generated.model.ApiCloneReferencedGcpBigQueryDataTableResourceResult;
 import bio.terra.workspace.generated.model.ApiCloneReferencedGcpBigQueryDatasetResourceResult;
+import bio.terra.workspace.generated.model.ApiCloneReferencedGcpDataRepoSnapshotResourceResult;
 import bio.terra.workspace.generated.model.ApiCloneReferencedGcpGcsBucketResourceResult;
 import bio.terra.workspace.generated.model.ApiCloneReferencedGcpGcsObjectResourceResult;
 import bio.terra.workspace.generated.model.ApiCloneReferencedGitRepoResourceResult;
@@ -82,7 +83,6 @@ import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
 import bio.terra.workspace.generated.model.ApiJobResult;
 import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiPropertyKeys;
-import bio.terra.workspace.generated.model.ApiReferenceResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiResourceDescription;
 import bio.terra.workspace.generated.model.ApiResourceLineage;
 import bio.terra.workspace.generated.model.ApiResourceLineageEntry;
@@ -129,7 +129,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.hamcrest.Matcher;
@@ -227,6 +226,10 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/controlled/gcp/buckets/%s";
   public static final String REFERENCED_DATA_REPO_SNAPSHOTS_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/referenced/datarepo/snapshots";
+  public static final String REFERENCED_DATA_REPO_SNAPSHOT_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/referenced/datarepo/snapshots/%s";
+  public static final String CLONE_REFERENCED_DATA_REPO_SNAPSHOT_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/referenced/datarepo/snapshots/%s/clone";
   public static final String REFERENCED_GCP_GCS_BUCKETS_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/referenced/gcp/buckets";
   public static final String REFERENCED_GCP_GCS_BUCKET_V1_PATH_FORMAT =
@@ -1135,6 +1138,90 @@ public class MockMvcUtils {
     return objectMapper.readValue(serializedResponse, ApiCloneControlledGcpGcsBucketResult.class);
   }
 
+  public ApiDataRepoSnapshotResource createReferencedDataRepoSnapshot(
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      ApiCloningInstructionsEnum cloningInstructions,
+      String resourceName,
+      String instanceName,
+      String snapshot)
+      throws Exception {
+    ApiDataRepoSnapshotAttributes creationParameters =
+        new ApiDataRepoSnapshotAttributes().instanceName(instanceName).snapshot(snapshot);
+    ApiCreateDataRepoSnapshotReferenceRequestBody request =
+        new ApiCreateDataRepoSnapshotReferenceRequestBody()
+            .metadata(
+                makeDefaultReferencedResourceFieldsApi()
+                    .name(resourceName)
+                    .cloningInstructions(cloningInstructions))
+            .snapshot(creationParameters);
+    String serializedResponse =
+        getSerializedResponseForPost(
+            userRequest,
+            REFERENCED_DATA_REPO_SNAPSHOTS_V1_PATH_FORMAT,
+            workspaceId,
+            objectMapper.writeValueAsString(request));
+    return objectMapper.readValue(serializedResponse, ApiDataRepoSnapshotResource.class);
+  }
+
+  public ApiDataRepoSnapshotResource getReferencedDataRepoSnapshot(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
+    String serializedResponse =
+        getSerializedResponseForGet(
+            userRequest, REFERENCED_DATA_REPO_SNAPSHOT_V1_PATH_FORMAT, workspaceId, resourceId);
+    return objectMapper.readValue(serializedResponse, ApiDataRepoSnapshotResource.class);
+  }
+
+  public ApiDataRepoSnapshotResource cloneReferencedDataRepoSnapshot(
+      AuthenticatedUserRequest userRequest,
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId,
+      UUID destWorkspaceId,
+      ApiCloningInstructionsEnum cloningInstructions,
+      @Nullable String destResourceName)
+      throws Exception {
+    return cloneReferencedDataRepoSnapshot(
+        userRequest,
+        sourceWorkspaceId,
+        sourceResourceId,
+        destWorkspaceId,
+        cloningInstructions,
+        destResourceName,
+        HttpStatus.SC_OK);
+  }
+
+  public ApiDataRepoSnapshotResource cloneReferencedDataRepoSnapshot(
+      AuthenticatedUserRequest userRequest,
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId,
+      UUID destWorkspaceId,
+      ApiCloningInstructionsEnum cloningInstructions,
+      @Nullable String destResourceName,
+      int expectedCode)
+      throws Exception {
+    MockHttpServletResponse response =
+        cloneReferencedResource(
+            userRequest,
+            CLONE_REFERENCED_DATA_REPO_SNAPSHOT_V1_PATH_FORMAT,
+            sourceWorkspaceId,
+            sourceResourceId,
+            destWorkspaceId,
+            cloningInstructions,
+            destResourceName,
+            expectedCode);
+
+    // If an exception was thrown, deserialization won't work, so don't attempt it.
+    int actualCode = response.getStatus();
+    if (actualCode >= 300) {
+      return null;
+    }
+
+    String serializedResponse = response.getContentAsString();
+    return objectMapper
+        .readValue(serializedResponse, ApiCloneReferencedGcpDataRepoSnapshotResourceResult.class)
+        .getResource();
+  }
+
   public ApiGcpBigQueryDatasetResource createReferencedBqDataset(
       AuthenticatedUserRequest userRequest,
       UUID workspaceId,
@@ -1535,36 +1622,6 @@ public class MockMvcUtils {
     return objectMapper
         .readValue(serializedResponse, ApiCloneReferencedGitRepoResourceResult.class)
         .getResource();
-  }
-
-  public ApiDataRepoSnapshotResource createDataRepoSnapshotReference(
-      AuthenticatedUserRequest userRequest, UUID workspaceId) throws Exception {
-
-    var datarepoSnapshotRequest =
-        new ApiCreateDataRepoSnapshotReferenceRequestBody()
-            .metadata(
-                new ApiReferenceResourceCommonFields()
-                    .cloningInstructions(ApiCloningInstructionsEnum.REFERENCE)
-                    .description("description")
-                    .name(RandomStringUtils.randomAlphabetic(10)))
-            .snapshot(
-                new ApiDataRepoSnapshotAttributes().instanceName("terra").snapshot("polaroid"));
-
-    return createDataRepoSnapshotReference(userRequest, workspaceId, datarepoSnapshotRequest);
-  }
-
-  public ApiDataRepoSnapshotResource createDataRepoSnapshotReference(
-      AuthenticatedUserRequest userRequest,
-      UUID workspaceId,
-      ApiCreateDataRepoSnapshotReferenceRequestBody request)
-      throws Exception {
-    String serializedResponse =
-        getSerializedResponseForPost(
-            userRequest,
-            REFERENCED_DATA_REPO_SNAPSHOTS_V1_PATH_FORMAT,
-            workspaceId,
-            objectMapper.writeValueAsString(request));
-    return objectMapper.readValue(serializedResponse, ApiDataRepoSnapshotResource.class);
   }
 
   private MockHttpServletResponse cloneReferencedResource(
