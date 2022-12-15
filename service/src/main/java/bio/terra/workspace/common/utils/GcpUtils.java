@@ -3,7 +3,7 @@ package bio.terra.workspace.common.utils;
 import bio.terra.cloudres.google.api.services.common.OperationCow;
 import bio.terra.cloudres.google.api.services.common.OperationUtils;
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
-import bio.terra.common.exception.InternalServerErrorException;
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.workspace.exceptions.SaCredentialsMissingException;
@@ -78,8 +78,8 @@ public class GcpUtils {
       int code = operation.getOperationAdapter().getError().getCode();
       if (is4xxClientError(code)) {
         // do not waste time retrying on client error.
-        throw new InternalServerErrorException(
-            String.format("gcp calls failed with client error code %s. Do not retry", code));
+        throw new BadRequestException(
+            String.format("Gcp calls failed with client error code %s. Do not retry", code));
       } else {
         throw new RetryException(
             String.format(
