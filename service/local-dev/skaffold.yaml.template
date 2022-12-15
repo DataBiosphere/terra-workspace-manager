@@ -3,7 +3,7 @@ apiVersion: skaffold/v2beta17
 kind: Config
 build:
   artifacts:
-  - image: gcr.io/broad-dsp-gcr-public/terra-workspace-manager
+  - image: gcr.io/terra-kernel-k8s/terra-workspace-manager
     context: ../../
     jib:
       project: service
