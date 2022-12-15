@@ -112,7 +112,7 @@ public class WorkspaceActivityLogDao {
 
   @Traced
   @ReadTransaction
-  public Optional<ActivityLogChangeDetails> getLastUpdateDetails(UUID workspaceId) {
+  public Optional<ActivityLogChangeDetails> getLastUpdatedDetails(UUID workspaceId) {
     final String sql =
         """
             SELECT change_date, actor_email, actor_subject_id, change_subject_id, change_subject_type, change_type
@@ -131,10 +131,10 @@ public class WorkspaceActivityLogDao {
             jdbcTemplate.query(sql, params, ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER)));
   }
 
-  /** Get the last update Details of a given change subject in a given workspace. */
+  /** Get the last update details of a given change subject in a given workspace. */
   @Traced
   @ReadTransaction
-  public Optional<ActivityLogChangeDetails> getLastUpdateDetails(
+  public Optional<ActivityLogChangeDetails> getLastUpdatedDetails(
       UUID workspaceId, String changeSubjectId) {
     final String sql =
         """
