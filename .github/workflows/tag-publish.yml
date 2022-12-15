@@ -44,8 +44,6 @@ on:
         default: 'main'
 env:
   SERVICE_NAME: ${{ github.event.repository.name }}
-  GOOGLE_PROJECT: terra-kernel-k8s
-  GKE_CLUSTER: terra-kernel-k8s
 jobs:
   tag-publish-job:
     runs-on: ubuntu-latest
@@ -131,7 +129,7 @@ jobs:
       id: image-name
       run: |
         DOCKER_TAG=${{ steps.tag.outputs.tag }}
-        echo name=gcr.io/${GOOGLE_PROJECT}/${SERVICE_NAME}:${DOCKER_TAG} >> $GITHUB_OUTPUT
+        echo name=gcr.io/broad-dsp-gcr-public/${SERVICE_NAME}:${DOCKER_TAG} >> $GITHUB_OUTPUT
     - name: Build image locally with jib
       if: steps.skiptest.outputs.is-bump == 'no'
       run: "./gradlew :service:jibDockerBuild --image=${{ steps.image-name.outputs.name }} -Djib.console=plain"

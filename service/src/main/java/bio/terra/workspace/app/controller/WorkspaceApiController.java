@@ -57,7 +57,6 @@ import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
-import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudContextHolder;
@@ -509,14 +508,11 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         workspaceService.validateMcWorkspaceAndAction(userRequest, uuid, SamWorkspaceAction.WRITE);
 
     if (body.getCloudPlatform() == ApiCloudPlatform.AZURE) {
-      ApiAzureContext azureContext =
-          Optional.ofNullable(body.getAzureContext())
-              .orElseThrow(
-                  () ->
-                      new CloudContextRequiredException(
-                          "AzureContext is required when creating an azure cloud context for a workspace"));
+      AzureCloudContext azureCloudContext =
+          ControllerValidationUtils.validateAzureContextRequestBody(
+              body.getAzureContext(), featureConfiguration.isBpmAzureEnabled());
       workspaceService.createAzureCloudContext(
-          workspace, jobId, userRequest, resultPath, AzureCloudContext.fromApi(azureContext));
+          workspace, jobId, userRequest, resultPath, azureCloudContext);
     } else {
       workspaceService.createGcpCloudContext(workspace, jobId, userRequest, resultPath);
     }
@@ -634,6 +630,9 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     String generatedDisplayName =
         sourceWorkspace.getDisplayName().orElse(sourceWorkspace.getUserFacingId()) + " (Copy)";
 
+    AzureCloudContext azureCloudContext =
+        ControllerValidationUtils.validateAzureContextRequestBody(body.getAzureContext(), true);
+
     // Construct the target workspace object from the inputs
     // Policies are cloned in the flight instead of here so that they get cleaned appropriately if
     // the flight fails.
@@ -651,7 +650,11 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
     final String jobId =
         workspaceService.cloneWorkspace(
-            sourceWorkspace, petRequest, body.getLocation(), destinationWorkspace);
+            sourceWorkspace,
+            petRequest,
+            body.getLocation(),
+            destinationWorkspace,
+            azureCloudContext);
 
     final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId);
     final ApiClonedWorkspace clonedWorkspaceStub =
