@@ -88,6 +88,8 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
   private String sourceDatasetName = TestUtils.appendRandomNumber("sourcedatasetname");
   private ApiGcpBigQueryDatasetResource sourceResource;
 
+  // See here for how to skip workspace creation for local runs:
+  // https://github.com/DataBiosphere/terra-workspace-manager#for-local-runs-skip-workspacecontext-creation
   @BeforeAll
   public void setup() throws Exception {
     workspaceId =
@@ -294,7 +296,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         /*expectedProjectId=*/ projectId2,
         /*expectedDatasetName=*/ sourceDatasetName);
 
-    // Assert resource returned by getBigQueryDataset()
+    // Assert resource returned by get
     final ApiGcpBigQueryDatasetResource gotResource =
         mockMvcUtils.getControlledBqDataset(
             userAccessUtils.defaultUserAuthRequest(),
@@ -350,7 +352,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         /*expectedDatasetName=*/ destDatasetName,
         LOCATION);
 
-    // Assert resource returned by getBigQueryDataset()
+    // Assert resource returned by get
     final ApiGcpBigQueryDatasetResource gotResource =
         mockMvcUtils.getControlledBqDataset(
             userAccessUtils.defaultUserAuthRequest(),
@@ -406,7 +408,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         /*expectedDatasetName=*/ destDatasetName,
         LOCATION);
 
-    // Assert resource returned by getBigQueryDataset()
+    // Assert resource returned by get
     final ApiGcpBigQueryDatasetResource gotResource =
         mockMvcUtils.getControlledBqDataset(
             userAccessUtils.defaultUserAuthRequest(),
@@ -457,7 +459,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         /*expectedProjectId=*/ projectId,
         /*expectedDatasetName=*/ sourceDatasetName);
 
-    // Assert resource returned by ReferencedGcpResource.getBigQueryDatasetReference()
+    // Assert resource returned by get
     final ApiGcpBigQueryDatasetResource gotResource =
         mockMvcUtils.getReferencedBqDataset(
             userAccessUtils.defaultUserAuthRequest(),

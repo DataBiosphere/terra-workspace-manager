@@ -196,7 +196,7 @@ public class ReferencedGcpResourceControllerGcsObjectTest extends BaseConnectedT
         sourceBucketName,
         sourceFileName);
 
-    // Assert resource returned by ReferencedGcpResource.getGcsObjectReference()
+    // Assert resource returned by get
     final ApiGcpGcsObjectResource gotResource =
         mockMvcUtils.getReferencedGcsObject(
             userAccessUtils.defaultUserAuthRequest(),
@@ -228,7 +228,7 @@ public class ReferencedGcpResourceControllerGcsObjectTest extends BaseConnectedT
         sourceBucketName,
         sourceFileName);
 
-    // Assert resource returned by ReferencedGcpResource.getGcsObjectReference()
+    // Assert resource returned by get
     final ApiGcpGcsObjectResource gotResource =
         mockMvcUtils.getReferencedGcsObject(
             userAccessUtils.defaultUserAuthRequest(),

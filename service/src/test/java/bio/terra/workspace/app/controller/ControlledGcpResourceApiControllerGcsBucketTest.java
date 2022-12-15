@@ -107,6 +107,8 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
   private String sourceBucketName = TestUtils.appendRandomNumber("source-bucket-name");
   private ApiGcpGcsBucketResource sourceBucket;
 
+  // See here for how to skip workspace creation for local runs:
+  // https://github.com/DataBiosphere/terra-workspace-manager#for-local-runs-skip-workspacecontext-creation
   @BeforeAll
   public void setup() throws Exception {
     workspaceId =
@@ -311,7 +313,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
         destResourceName,
         destBucketName);
 
-    // Assert resource returned by getBucket()
+    // Assert resource returned by get
     ApiGcpGcsBucketResource gotResource =
         mockMvcUtils.getControlledGcsBucket(
             userAccessUtils.defaultUserAuthRequest(),
@@ -365,7 +367,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
         destBucketName,
         destLocation);
 
-    // Assert resource returned by getBucket()
+    // Assert resource returned by get
     ApiGcpGcsBucketResource gotResource =
         mockMvcUtils.getControlledGcsBucket(
             userAccessUtils.defaultUserAuthRequest(),
@@ -420,7 +422,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
         destBucketName,
         destLocation);
 
-    // Assert resource returned by getBucket()
+    // Assert resource returned by get
     ApiGcpGcsBucketResource gotResource =
         mockMvcUtils.getControlledGcsBucket(
             userAccessUtils.defaultUserAuthRequest(),
@@ -473,7 +475,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
         destResourceName,
         sourceBucketName);
 
-    // Assert resource returned by ReferencedGcpResource.getBucketReference()
+    // Assert resource returned by get
     ApiGcpGcsBucketResource gotResource =
         mockMvcUtils.getReferencedGcsBucket(
             userAccessUtils.defaultUserAuthRequest(),
