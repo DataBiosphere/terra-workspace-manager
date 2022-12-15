@@ -192,6 +192,10 @@ public class ReferencedGcpResourceControllerGitRepoTest extends BaseConnectedTes
         workspaceId2,
         WsmIamRole.WRITER,
         userAccessUtils.getSecondUserEmail());
+    mockMvcUtils.deleteReferencedGcsBucket(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId2,
+        clonedResource.getMetadata().getResourceId());
   }
 
   @Test

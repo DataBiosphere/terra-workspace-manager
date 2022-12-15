@@ -191,6 +191,10 @@ public class ReferencedGcpResourceControllerGcsBucketTest extends BaseConnectedT
         workspaceId2,
         WsmIamRole.WRITER,
         userAccessUtils.getSecondUserEmail());
+    mockMvcUtils.deleteReferencedGcsBucket(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId2,
+        clonedResource.getMetadata().getResourceId());
   }
 
   @Test

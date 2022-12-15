@@ -26,6 +26,7 @@ import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.resource.model.StewardshipType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.services.bigquery.model.Dataset;
 import com.google.common.collect.ImmutableList;
@@ -220,7 +221,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
     mockMvcUtils.removeRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId2,
-        WsmIamRole.WRITER,
+        WsmIamRole.READER,
         userAccessUtils.getSecondUserEmail());
   }
 
@@ -266,8 +267,13 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
     mockMvcUtils.removeRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId2,
-        WsmIamRole.READER,
+        WsmIamRole.WRITER,
         userAccessUtils.getSecondUserEmail());
+    mockMvcUtils.deleteBqDataset(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId2,
+        clonedBqDataset.getMetadata().getResourceId(),
+        /*isControlled=*/ StewardshipType.CONTROLLED);
   }
 
   // Tests getUniquenessCheckAttributes() works
@@ -358,6 +364,11 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         /*defaultTableLifetime*/ null,
         // TODO(PF-2269): Change to DEFAULT_PARTITION_LIFETIME after PF-2269 is fixed
         /*defaultPartitionLifetime*/ null);
+    mockMvcUtils.deleteBqDataset(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId2,
+        gotResource.getMetadata().getResourceId(),
+        /*isControlled=*/ StewardshipType.REFERENCED);
   }
 
   @Test

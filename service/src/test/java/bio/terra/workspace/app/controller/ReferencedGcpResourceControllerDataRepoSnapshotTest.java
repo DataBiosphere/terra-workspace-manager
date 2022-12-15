@@ -195,6 +195,10 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotTest extends BaseCon
         workspaceId2,
         WsmIamRole.WRITER,
         userAccessUtils.getSecondUserEmail());
+    mockMvcUtils.deleteDataRepoSnapshot(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId2,
+        clonedResource.getMetadata().getResourceId());
   }
 
   @Test

@@ -195,6 +195,10 @@ public class ReferencedGcpResourceControllerGcsObjectTest extends BaseConnectedT
         workspaceId2,
         WsmIamRole.READER,
         userAccessUtils.getSecondUserEmail());
+    mockMvcUtils.deleteGcsObject(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId2,
+        clonedResource.getMetadata().getResourceId());
   }
 
   @Test

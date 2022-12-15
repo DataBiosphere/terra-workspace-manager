@@ -253,6 +253,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
         WsmIamRole.WRITER,
         userAccessUtils.getSecondUserEmail());
 
+    var destResourceName = TestUtils.appendRandomNumber("clonedbucket");
     ApiGcpGcsBucketResource clonedResource =
         mockMvcUtils
             .cloneControlledGcsBucket(
@@ -261,7 +262,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
                 sourceBucket.getMetadata().getResourceId(),
                 /*destWorkspaceId=*/ workspaceId2,
                 ApiCloningInstructionsEnum.RESOURCE,
-                /*destResourceName=*/ null,
+                destResourceName,
                 /*destBucketName=*/ null,
                 /*destLocation*/ null)
             .getGcpBucket();
@@ -272,7 +273,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
         ApiStewardshipType.CONTROLLED,
         ApiCloningInstructionsEnum.DEFINITION,
         workspaceId2,
-        sourceResourceName,
+        destResourceName,
         ControlledGcsBucketHandler.getHandler()
             .generateCloudName(workspaceId2, "cloned-" + sourceResourceName),
         userAccessUtils.getSecondUserEmail());
