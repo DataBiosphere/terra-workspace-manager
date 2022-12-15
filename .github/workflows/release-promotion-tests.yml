@@ -15,6 +15,11 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    # required for IAP authentication - see terra-helmfile-shim
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
     steps:
       - uses: actions/checkout@v3
 
