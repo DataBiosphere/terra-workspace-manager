@@ -93,7 +93,8 @@ public class ReferencedGcpResourceControllerGcsBucketTest extends BaseConnectedT
         ApiCloningInstructionsEnum.NOTHING,
         workspaceId,
         sourceResourceName,
-        sourceBucketName);
+        sourceBucketName,
+        userAccessUtils.getDefaultUserEmail());
 
     // Assert resource returned by get
     ApiGcpGcsBucketResource gotResource =
@@ -190,7 +191,8 @@ public class ReferencedGcpResourceControllerGcsBucketTest extends BaseConnectedT
         ApiCloningInstructionsEnum.NOTHING,
         workspaceId,
         destResourceName,
-        sourceBucketName);
+        sourceBucketName,
+        userAccessUtils.getDefaultUserEmail());
 
     // Assert resource returned by get
     final ApiGcpGcsBucketResource gotResource =
@@ -221,7 +223,8 @@ public class ReferencedGcpResourceControllerGcsBucketTest extends BaseConnectedT
         ApiCloningInstructionsEnum.NOTHING,
         workspaceId2,
         destResourceName,
-        sourceBucketName);
+        sourceBucketName,
+        userAccessUtils.getDefaultUserEmail());
 
     // Assert resource returned by get
     final ApiGcpGcsBucketResource gotResource =
@@ -287,7 +290,8 @@ public class ReferencedGcpResourceControllerGcsBucketTest extends BaseConnectedT
       ApiCloningInstructionsEnum expectedCloningInstructions,
       UUID expectedWorkspaceId,
       String expectedResourceName,
-      String expectedBucketName) {
+      String expectedBucketName,
+      String expectedCreatedBy) {
     mockMvcUtils.assertResourceMetadata(
         actualResource.getMetadata(),
         ApiCloudPlatform.GCP,
@@ -296,7 +300,8 @@ public class ReferencedGcpResourceControllerGcsBucketTest extends BaseConnectedT
         expectedCloningInstructions,
         expectedWorkspaceId,
         expectedResourceName,
-        /*expectedResourceLineage=*/ new ApiResourceLineage());
+        /*expectedResourceLineage=*/ new ApiResourceLineage(),
+        expectedCreatedBy);
 
     assertEquals(expectedBucketName, actualResource.getAttributes().getBucketName());
   }
@@ -307,7 +312,8 @@ public class ReferencedGcpResourceControllerGcsBucketTest extends BaseConnectedT
       ApiCloningInstructionsEnum expectedCloningInstructions,
       UUID expectedWorkspaceId,
       String expectedResourceName,
-      String expectedBucketName) {
+      String expectedBucketName,
+      String expectedCreatedBy) {
     mockMvcUtils.assertClonedResourceMetadata(
         actualResource.getMetadata(),
         ApiCloudPlatform.GCP,
@@ -317,7 +323,8 @@ public class ReferencedGcpResourceControllerGcsBucketTest extends BaseConnectedT
         expectedWorkspaceId,
         expectedResourceName,
         /*sourceWorkspaceId=*/ workspaceId,
-        /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId());
+        /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
+        expectedCreatedBy);
 
     assertEquals(expectedBucketName, actualResource.getAttributes().getBucketName());
   }

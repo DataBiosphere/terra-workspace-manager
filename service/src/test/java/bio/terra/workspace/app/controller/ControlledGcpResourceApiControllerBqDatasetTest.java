@@ -148,7 +148,8 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         workspaceId,
         sourceResourceName,
         projectId,
-        sourceDatasetName);
+        sourceDatasetName,
+        userAccessUtils.getDefaultUserEmail());
 
     // Assert resource returned by get
     ApiGcpBigQueryDatasetResource gotResource =
@@ -287,7 +288,8 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         /*expectedDestWorkspaceId=*/ workspaceId2,
         destResourceName,
         /*expectedProjectId=*/ projectId2,
-        /*expectedDatasetName=*/ sourceDatasetName);
+        /*expectedDatasetName=*/ sourceDatasetName,
+        userAccessUtils.getDefaultUserEmail());
 
     // Assert resource returned by get
     final ApiGcpBigQueryDatasetResource gotResource =
@@ -342,7 +344,8 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         /*expectedDestWorkspaceId=*/ workspaceId,
         destResourceName,
         /*expectedProjectId=*/ projectId,
-        /*expectedDatasetName=*/ destDatasetName);
+        /*expectedDatasetName=*/ destDatasetName,
+        userAccessUtils.getDefaultUserEmail());
 
     // Assert resource returned by get
     final ApiGcpBigQueryDatasetResource gotResource =
@@ -397,7 +400,8 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         /*expectedDestWorkspaceId=*/ workspaceId2,
         destResourceName,
         /*expectedProjectId=*/ projectId2,
-        /*expectedDatasetName=*/ destDatasetName);
+        /*expectedDatasetName=*/ destDatasetName,
+        userAccessUtils.getDefaultUserEmail());
 
     // Assert resource returned by get
     final ApiGcpBigQueryDatasetResource gotResource =
@@ -448,7 +452,8 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         /*expectedDestWorkspaceId=*/ workspaceId,
         destResourceName,
         /*expectedProjectId=*/ projectId,
-        /*expectedDatasetName=*/ sourceDatasetName);
+        /*expectedDatasetName=*/ sourceDatasetName,
+        userAccessUtils.getDefaultUserEmail());
 
     // Assert resource returned by get
     final ApiGcpBigQueryDatasetResource gotResource =
@@ -548,7 +553,8 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
       UUID expectedWorkspaceId,
       String expectedResourceName,
       String expectedProjectId,
-      String expectedDatasetName) {
+      String expectedDatasetName,
+      String expectedCreatedBy) {
     mockMvcUtils.assertResourceMetadata(
         actualDataset.getMetadata(),
         ApiCloudPlatform.GCP,
@@ -557,7 +563,8 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         expectedCloningInstructions,
         expectedWorkspaceId,
         expectedResourceName,
-        /*expectedResourceLineage=*/ new ApiResourceLineage());
+        /*expectedResourceLineage=*/ new ApiResourceLineage(),
+        expectedCreatedBy);
 
     assertEquals(expectedProjectId, actualDataset.getAttributes().getProjectId());
     assertEquals(expectedDatasetName, actualDataset.getAttributes().getDatasetId());
@@ -570,7 +577,8 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
       UUID expectedWorkspaceId,
       String expectedResourceName,
       String expectedProjectId,
-      String expectedDatasetName) {
+      String expectedDatasetName,
+      String expectedCreatedBy) {
     mockMvcUtils.assertClonedResourceMetadata(
         actualDataset.getMetadata(),
         ApiCloudPlatform.GCP,
@@ -580,7 +588,8 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         expectedWorkspaceId,
         expectedResourceName,
         /*sourceWorkspaceId=*/ workspaceId,
-        /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId());
+        /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
+        expectedCreatedBy);
 
     assertEquals(expectedProjectId, actualDataset.getAttributes().getProjectId());
     assertEquals(expectedDatasetName, actualDataset.getAttributes().getDatasetId());

@@ -1669,7 +1669,8 @@ public class MockMvcUtils {
       ApiCloningInstructionsEnum expectedCloningInstructions,
       UUID expectedWorkspaceId,
       String expectedResourceName,
-      ApiResourceLineage expectedResourceLineage) {
+      ApiResourceLineage expectedResourceLineage,
+      String expectedCreatedBy) {
     assertEquals(expectedWorkspaceId, actualMetadata.getWorkspaceId());
     assertEquals(expectedResourceName, actualMetadata.getName());
     assertEquals(RESOURCE_DESCRIPTION, actualMetadata.getDescription());
@@ -1678,6 +1679,8 @@ public class MockMvcUtils {
     assertEquals(expectedCloudPlatform, actualMetadata.getCloudPlatform());
     assertEquals(expectedCloningInstructions, actualMetadata.getCloningInstructions());
     assertEquals(expectedResourceLineage, actualMetadata.getResourceLineage());
+    assertEquals(expectedCreatedBy, actualMetadata.getCreatedBy());
+    assertNotNull(actualMetadata.getCreatedDate());
 
     assertEquals(
         PropertiesUtils.convertMapToApiProperties(
@@ -1694,7 +1697,8 @@ public class MockMvcUtils {
       UUID expectedWorkspaceId,
       String expectedResourceName,
       UUID sourceWorkspaceId,
-      UUID sourceResourceId) {
+      UUID sourceResourceId,
+      String expectedCreatedBy) {
     ApiResourceLineage expectedResourceLineage = new ApiResourceLineage();
     expectedResourceLineage.add(
         new ApiResourceLineageEntry()
@@ -1710,7 +1714,8 @@ public class MockMvcUtils {
         expectedCloningInstructions,
         expectedWorkspaceId,
         expectedResourceName,
-        expectedResourceLineage);
+        expectedResourceLineage,
+        expectedCreatedBy);
   }
 
   public void assertLatestActivityLogChangeDetails(
