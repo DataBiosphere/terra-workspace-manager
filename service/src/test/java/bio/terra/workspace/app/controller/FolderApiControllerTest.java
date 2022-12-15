@@ -367,6 +367,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
             /*updateParent=*/ true);
 
     assertNull(updatedFolder.getParentFolderId());
+    assertTrue(updatedFolder.getLastUpdatedDate().isAfter(secondFolder.getLastUpdatedDate()));
   }
 
   @Test
