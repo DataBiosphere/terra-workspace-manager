@@ -113,8 +113,6 @@ public class WorkspaceActivityLogDao {
   @Traced
   @ReadTransaction
   public Optional<ActivityLogChangeDetails> getLastUpdateDetails(UUID workspaceId) {
-    // In rare cases when there are more than one rows with the same max change date,
-    // sort the actor_email by alphabetical order and returns the first one.
     final String sql =
         """
             SELECT change_date, actor_email, actor_subject_id, change_subject_id, change_subject_type, change_type
@@ -138,8 +136,6 @@ public class WorkspaceActivityLogDao {
   @ReadTransaction
   public Optional<ActivityLogChangeDetails> getLastUpdateDetails(
       UUID workspaceId, String changeSubjectId) {
-    // In rare cases when there are more than one rows with the same max change date,
-    // sort the actor_email by alphabetical order and returns the first one.
     final String sql =
         """
             SELECT change_date, actor_email, actor_subject_id, change_subject_id, change_subject_type, change_type

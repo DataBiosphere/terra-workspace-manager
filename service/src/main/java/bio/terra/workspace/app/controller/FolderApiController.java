@@ -223,7 +223,7 @@ public class FolderApiController extends ControllerBase implements FolderApi {
         .createdBy(folder.createdByEmail())
         .createdDate(folder.createdDate())
         .lastUpdatedBy(lastUpdatedDetail.map(detail -> detail.actorEmail()).orElse("unknown"))
-        // should only return MIN if the log doesn't exist which means the resource was last updated
+        // should only return MIN if the log doesn't exist which means the folder was last updated
         // before the implementation of change subject id logging.
         .lastUpdatedDate(
             lastUpdatedDetail.map(detail -> detail.changeDate()).orElse(OffsetDateTime.MIN));
