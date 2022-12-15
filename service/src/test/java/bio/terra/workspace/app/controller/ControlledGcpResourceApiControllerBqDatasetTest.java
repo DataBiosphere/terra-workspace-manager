@@ -273,7 +273,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId2,
         clonedBqDataset.getMetadata().getResourceId(),
-        /*isControlled=*/ StewardshipType.CONTROLLED);
+        StewardshipType.CONTROLLED);
   }
 
   // Tests getUniquenessCheckAttributes() works

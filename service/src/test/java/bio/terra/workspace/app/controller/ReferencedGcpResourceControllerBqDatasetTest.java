@@ -19,6 +19,7 @@ import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
+import bio.terra.workspace.service.resource.model.StewardshipType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import java.util.UUID;
@@ -200,6 +201,11 @@ public class ReferencedGcpResourceControllerBqDatasetTest extends BaseConnectedT
         workspaceId2,
         WsmIamRole.WRITER,
         userAccessUtils.getSecondUserEmail());
+    mockMvcUtils.deleteBqDataset(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId2,
+        clonedResource.getMetadata().getResourceId(),
+        StewardshipType.REFERENCED);
   }
 
   @Test

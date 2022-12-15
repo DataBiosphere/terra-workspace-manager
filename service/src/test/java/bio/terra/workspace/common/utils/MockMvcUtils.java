@@ -677,6 +677,12 @@ public class MockMvcUtils {
             : REFERENCED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT);
   }
 
+  public void deleteBqDataTable(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
+    deleteResource(
+        userRequest, workspaceId, resourceId, REFERENCED_GCP_BIG_QUERY_DATA_TABLE_V1_PATH_FORMAT);
+  }
+
   public void deleteReferencedGcsBucket(
       AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
     deleteResource(userRequest, workspaceId, resourceId, REFERENCED_GCP_GCS_BUCKET_V1_PATH_FORMAT);

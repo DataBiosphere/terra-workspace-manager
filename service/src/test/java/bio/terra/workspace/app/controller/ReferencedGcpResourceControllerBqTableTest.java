@@ -204,6 +204,10 @@ public class ReferencedGcpResourceControllerBqTableTest extends BaseConnectedTes
         workspaceId2,
         WsmIamRole.WRITER,
         userAccessUtils.getSecondUserEmail());
+    mockMvcUtils.deleteBqDataTable(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId2,
+        clonedResource.getMetadata().getResourceId());
   }
 
   @Test
