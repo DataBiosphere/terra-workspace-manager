@@ -67,7 +67,7 @@ jobs:
           VERSIONS_DIR="${OLD_TERRA_HELMFILE_DIR}/versions/app"
           VERSIONS_FILE="${VERSIONS_DIR}/${ENV}.yaml"
           
-          mkdir -p "{VERSIONS_DIR}"
+          mkdir -p "${VERSIONS_DIR}"
 
           #
           # call the chart-releases endpoint to get a list of chart-releases in the target env
