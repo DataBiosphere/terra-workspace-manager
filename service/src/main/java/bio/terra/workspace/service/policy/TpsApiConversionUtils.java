@@ -31,6 +31,7 @@ import javax.annotation.Nullable;
  * classes. It is our buffer when TPS API changes and WSM is not in sync.
  */
 public class TpsApiConversionUtils {
+  private TpsApiConversionUtils() {}
 
   public static List<ApiWsmPolicyInput> apiEffectivePolicyListFromTpsPao(TpsPaoGetResult tpsPao) {
     ApiWsmPolicyInputs apiInputs = apiFromTpsPolicyInputs(tpsPao.getEffectiveAttributes());

@@ -55,6 +55,7 @@ public class TpsApiDispatch {
   }
 
   // -- Policy Attribute Object Interface --
+  @Traced
   public void createPao(UUID workspaceUuid, @Nullable TpsPolicyInputs policyInputs) {
     features.tpsEnabledCheck();
     TpsPolicyInputs inputs = (policyInputs == null) ? new TpsPolicyInputs() : policyInputs;
@@ -72,6 +73,7 @@ public class TpsApiDispatch {
     }
   }
 
+  @Traced
   public void deletePao(UUID workspaceUuid) {
     features.tpsEnabledCheck();
     TpsApi tpsApi = policyApi();
@@ -86,7 +88,6 @@ public class TpsApiDispatch {
     }
   }
 
-  @Traced
   public Optional<TpsPaoGetResult> getPaoIfExists(UUID workspaceUuid) {
     features.tpsEnabledCheck();
     try {
@@ -97,6 +98,7 @@ public class TpsApiDispatch {
     }
   }
 
+  @Traced
   public TpsPaoGetResult getPao(UUID workspaceUuid) {
     features.tpsEnabledCheck();
     TpsApi tpsApi = policyApi();
@@ -107,6 +109,7 @@ public class TpsApiDispatch {
     }
   }
 
+  @Traced
   public TpsPaoUpdateResult linkPao(
       UUID workspaceUuid, UUID sourceObjectId, TpsUpdateMode updateMode) {
     features.tpsEnabledCheck();
@@ -121,6 +124,7 @@ public class TpsApiDispatch {
     }
   }
 
+  @Traced
   public TpsPaoUpdateResult mergePao(
       UUID workspaceUuid, UUID sourceObjectId, TpsUpdateMode updateMode) {
     features.tpsEnabledCheck();
@@ -135,6 +139,7 @@ public class TpsApiDispatch {
     }
   }
 
+  @Traced
   public TpsPaoUpdateResult replacePao(
       UUID workspaceUuid, TpsPolicyInputs policyInputs, TpsUpdateMode updateMode) {
     features.tpsEnabledCheck();
@@ -149,6 +154,7 @@ public class TpsApiDispatch {
     }
   }
 
+  @Traced
   public TpsPaoUpdateResult updatePao(
       UUID workspaceUuid,
       TpsPolicyInputs addAttributes,
