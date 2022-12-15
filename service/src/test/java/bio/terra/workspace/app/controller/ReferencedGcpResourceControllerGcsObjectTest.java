@@ -193,7 +193,7 @@ public class ReferencedGcpResourceControllerGcsObjectTest extends BaseConnectedT
     mockMvcUtils.removeRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId2,
-        WsmIamRole.READER,
+        WsmIamRole.WRITER,
         userAccessUtils.getSecondUserEmail());
     mockMvcUtils.deleteGcsObject(
         userAccessUtils.defaultUserAuthRequest(),
