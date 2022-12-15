@@ -304,7 +304,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
       throws InterruptedException {
     UUID workspaceId = WorkspaceUnitTestUtils.createWorkspaceWithGcpContext(workspaceDao);
     Optional<ActivityLogChangeDetails> emptyChangeDetails =
-        activityLogDao.getLastUpdateDetails(workspaceId);
+        activityLogDao.getLastUpdatedDetails(workspaceId);
     assertTrue(emptyChangeDetails.isEmpty());
     List<WsmResource> resourcesToDelete = new ArrayList<>();
     // an AI notebook that is not "deleted" as it is put into the resource DAO.
@@ -422,7 +422,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   @Test
   void resourceDeletionFlightSucceed_logUpdated() throws InterruptedException {
     var workspaceUuid = UUID.randomUUID();
-    var emptyChangeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    var emptyChangeDetails = activityLogDao.getLastUpdatedDetails(workspaceUuid);
     assertTrue(emptyChangeDetails.isEmpty());
 
     FlightMap inputParams = buildInputParams(workspaceUuid, OperationType.DELETE);
