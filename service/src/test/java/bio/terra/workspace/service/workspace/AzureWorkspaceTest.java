@@ -99,7 +99,7 @@ public class AzureWorkspaceTest extends BaseAzureConnectedTest {
   }
 
   @Test
-  void cloneAzureWorkspaceWithContainer() throws InterruptedException {
+  void cloneAzureWorkspace() {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     Mockito.when(mockSamService.getUserEmailFromSamAndRethrowOnInterrupt(any()))
         .thenReturn(userRequest.getEmail());
@@ -129,59 +129,6 @@ public class AzureWorkspaceTest extends BaseAzureConnectedTest {
             .getAzureCloudContext(sourceWorkspace.getWorkspaceId())
             .isPresent());
 
-    UUID landingZoneId = UUID.fromString(landingZoneTestUtils.getDefaultLandingZoneId());
-    String storageAccountName = String.format("lzsharedstacc%s", TestUtils.getRandomString(6));
-
-    TestLandingZoneManager testLandingZoneManager =
-        new TestLandingZoneManager(
-            azureCloudContextService,
-            landingZoneDao,
-            workspaceDao,
-            crlService,
-            azureConfig,
-            sourceWorkspace.getWorkspaceId());
-
-    testLandingZoneManager.createLandingZoneWithSharedStorageAccount(
-        landingZoneId, sourceWorkspace.getWorkspaceId(), storageAccountName, "eastus");
-
-    int timeout = 0;
-    while (crlService
-        .getStorageManager(azureTestUtils.getAzureCloudContext(), azureConfig)
-        .storageAccounts()
-        .list()
-        .stream()
-        .noneMatch(storageAccount -> storageAccount.name().equals(storageAccountName))) {
-      if (timeout++ > 60) {
-        fail("Landing zone storage account never finished creating");
-      }
-      TimeUnit.SECONDS.sleep(1);
-    }
-
-    final UUID containerResourceId = UUID.randomUUID();
-    final String storageContainerName = ControlledResourceFixtures.uniqueBucketName();
-    ControlledAzureStorageContainerResource containerResource =
-        ControlledAzureStorageContainerResource.builder()
-            .common(
-                ControlledResourceFields.builder()
-                    .workspaceUuid(sourceWorkspace.getWorkspaceId())
-                    .resourceId(containerResourceId)
-                    .name(storageContainerName)
-                    .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
-                    .iamRole(ControlledResourceIamRole.OWNER)
-                    .managedBy(ManagedByType.MANAGED_BY_USER)
-                    .createdByEmail(userRequest.getEmail())
-                    .cloningInstructions(CloningInstructions.COPY_RESOURCE)
-                    .build())
-            .storageContainerName(storageContainerName)
-            .build();
-
-    controlledResourceService.createControlledResourceSync(
-        containerResource,
-        ControlledResourceIamRole.OWNER,
-        userRequest,
-        new ApiAzureStorageContainerCreationParameters()
-            .storageContainerName("storageContainerName"));
-
     UUID destUUID = UUID.randomUUID();
     Workspace destWorkspace =
         Workspace.builder()
@@ -203,15 +150,5 @@ public class AzureWorkspaceTest extends BaseAzureConnectedTest {
     assertEquals(workspaceService.getWorkspace(destUUID), destWorkspace);
     assertTrue(
         azureCloudContextService.getAzureCloudContext(destWorkspace.getWorkspaceId()).isPresent());
-    assertEquals(
-        wsmResourceService
-            .enumerateResources(
-                destWorkspace.getWorkspaceId(),
-                WsmResourceFamily.AZURE_STORAGE_CONTAINER,
-                StewardshipType.CONTROLLED,
-                0,
-                100)
-            .size(),
-        1);
   }
 }
