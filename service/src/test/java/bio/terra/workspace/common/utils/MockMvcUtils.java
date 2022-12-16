@@ -10,6 +10,7 @@ import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -1669,7 +1670,8 @@ public class MockMvcUtils {
       ApiCloningInstructionsEnum expectedCloningInstructions,
       UUID expectedWorkspaceId,
       String expectedResourceName,
-      ApiResourceLineage expectedResourceLineage) {
+      ApiResourceLineage expectedResourceLineage,
+      String expectedLastUpdatedBy) {
     assertEquals(expectedWorkspaceId, actualMetadata.getWorkspaceId());
     assertEquals(expectedResourceName, actualMetadata.getName());
     assertEquals(RESOURCE_DESCRIPTION, actualMetadata.getDescription());
@@ -1678,6 +1680,10 @@ public class MockMvcUtils {
     assertEquals(expectedCloudPlatform, actualMetadata.getCloudPlatform());
     assertEquals(expectedCloningInstructions, actualMetadata.getCloningInstructions());
     assertEquals(expectedResourceLineage, actualMetadata.getResourceLineage());
+    assertEquals(expectedLastUpdatedBy, actualMetadata.getLastUpdatedBy());
+    assertNotNull(actualMetadata.getLastUpdatedDate());
+    // last updated date must be equals or after created date.
+    assertFalse(actualMetadata.getLastUpdatedDate().isBefore(actualMetadata.getCreatedDate()));
 
     assertEquals(
         PropertiesUtils.convertMapToApiProperties(
@@ -1694,14 +1700,15 @@ public class MockMvcUtils {
       UUID expectedWorkspaceId,
       String expectedResourceName,
       UUID sourceWorkspaceId,
-      UUID sourceResourceId) {
+      UUID sourceResourceId,
+      String expectedLastUpdatedBy) {
     ApiResourceLineage expectedResourceLineage = new ApiResourceLineage();
     expectedResourceLineage.add(
         new ApiResourceLineageEntry()
             .sourceWorkspaceId(sourceWorkspaceId)
             .sourceResourceId(sourceResourceId));
 
-    // TODO (PF-2261): assert createdBy, lastUpdatedBy, createdDate, lastUpdatedDate.
+    // TODO (PF-2261): assert createdBy, createdDate.
     assertResourceMetadata(
         actualMetadata,
         expectedCloudPlatform,
@@ -1710,7 +1717,8 @@ public class MockMvcUtils {
         expectedCloningInstructions,
         expectedWorkspaceId,
         expectedResourceName,
-        expectedResourceLineage);
+        expectedResourceLineage,
+        expectedLastUpdatedBy);
   }
 
   public void assertLatestActivityLogChangeDetails(

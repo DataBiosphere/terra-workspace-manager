@@ -21,6 +21,7 @@ import bio.terra.workspace.service.resource.controlled.model.*;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
+import bio.terra.workspace.service.resource.model.WsmResourceApiFields;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -147,12 +148,12 @@ public class ControlledAzureStorageResource extends ControlledResource {
   public ApiAzureStorageAttributes toApiAttributes() {
     return new ApiAzureStorageAttributes()
         .storageAccountName(getStorageAccountName())
-        .region(region.toString());
+        .region(region);
   }
 
-  public ApiAzureStorageResource toApiResource() {
+  public ApiAzureStorageResource toApiResource(WsmResourceApiFields apiFields) {
     return new ApiAzureStorageResource()
-        .metadata(super.toApiMetadata())
+        .metadata(super.toApiMetadata(apiFields))
         .attributes(toApiAttributes());
   }
 
@@ -186,9 +187,9 @@ public class ControlledAzureStorageResource extends ControlledResource {
   }
 
   @Override
-  public ApiResourceUnion toApiResourceUnion() {
+  public ApiResourceUnion toApiResourceUnion(WsmResourceApiFields apiFields) {
     ApiResourceUnion union = new ApiResourceUnion();
-    union.azureStorageAccount(toApiResource());
+    union.azureStorageAccount(toApiResource(apiFields));
     return union;
   }
 

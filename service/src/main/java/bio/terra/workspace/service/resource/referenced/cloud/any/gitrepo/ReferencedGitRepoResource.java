@@ -14,6 +14,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.WsmResource;
+import bio.terra.workspace.service.resource.model.WsmResourceApiFields;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
@@ -107,8 +108,8 @@ public class ReferencedGitRepoResource extends ReferencedResource {
   }
 
   @Override
-  public ApiResourceUnion toApiResourceUnion() {
-    return new ApiResourceUnion().gitRepo(toApiResource());
+  public ApiResourceUnion toApiResourceUnion(WsmResourceApiFields apiFields) {
+    return new ApiResourceUnion().gitRepo(toApiResource(apiFields));
   }
 
   @Override
@@ -144,8 +145,10 @@ public class ReferencedGitRepoResource extends ReferencedResource {
     return new ApiGitRepoAttributes().gitRepoUrl(gitRepoUrl);
   }
 
-  public ApiGitRepoResource toApiResource() {
-    return new ApiGitRepoResource().metadata(super.toApiMetadata()).attributes(toApiAttributes());
+  public ApiGitRepoResource toApiResource(WsmResourceApiFields apiFields) {
+    return new ApiGitRepoResource()
+        .metadata(super.toApiMetadata(apiFields))
+        .attributes(toApiAttributes());
   }
 
   public String getGitRepoUrl() {

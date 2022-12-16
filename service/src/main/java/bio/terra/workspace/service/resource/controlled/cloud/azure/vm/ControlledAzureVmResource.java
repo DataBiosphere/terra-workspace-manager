@@ -25,6 +25,7 @@ import bio.terra.workspace.service.resource.controlled.model.PrivateResourceStat
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
+import bio.terra.workspace.service.resource.model.WsmResourceApiFields;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -232,8 +233,10 @@ public class ControlledAzureVmResource extends ControlledResource {
         .networkId(getNetworkId());
   }
 
-  public ApiAzureVmResource toApiResource() {
-    return new ApiAzureVmResource().metadata(super.toApiMetadata()).attributes(toApiAttributes());
+  public ApiAzureVmResource toApiResource(WsmResourceApiFields apiFields) {
+    return new ApiAzureVmResource()
+        .metadata(super.toApiMetadata(apiFields))
+        .attributes(toApiAttributes());
   }
 
   @Override
@@ -244,9 +247,9 @@ public class ControlledAzureVmResource extends ControlledResource {
   }
 
   @Override
-  public ApiResourceUnion toApiResourceUnion() {
+  public ApiResourceUnion toApiResourceUnion(WsmResourceApiFields apiFields) {
     ApiResourceUnion union = new ApiResourceUnion();
-    union.azureVm(toApiResource());
+    union.azureVm(toApiResource(apiFields));
     return union;
   }
 

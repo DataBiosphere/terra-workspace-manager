@@ -29,6 +29,7 @@ import bio.terra.workspace.service.resource.controlled.model.PrivateResourceStat
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
+import bio.terra.workspace.service.resource.model.WsmResourceApiFields;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -220,9 +221,9 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
         .build();
   }
 
-  public ApiGcpAiNotebookInstanceResource toApiResource() {
+  public ApiGcpAiNotebookInstanceResource toApiResource(WsmResourceApiFields apiFields) {
     return new ApiGcpAiNotebookInstanceResource()
-        .metadata(toApiMetadata())
+        .metadata(toApiMetadata(apiFields))
         .attributes(toApiAttributes());
   }
 
@@ -257,9 +258,9 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
   }
 
   @Override
-  public ApiResourceUnion toApiResourceUnion() {
+  public ApiResourceUnion toApiResourceUnion(WsmResourceApiFields apiFields) {
     ApiResourceUnion union = new ApiResourceUnion();
-    union.gcpAiNotebookInstance(toApiResource());
+    union.gcpAiNotebookInstance(toApiResource(apiFields));
     return union;
   }
 

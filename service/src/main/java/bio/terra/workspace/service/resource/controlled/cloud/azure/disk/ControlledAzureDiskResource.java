@@ -25,6 +25,7 @@ import bio.terra.workspace.service.resource.controlled.model.PrivateResourceStat
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
+import bio.terra.workspace.service.resource.model.WsmResourceApiFields;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -153,8 +154,10 @@ public class ControlledAzureDiskResource extends ControlledResource {
     return size;
   }
 
-  public ApiAzureDiskResource toApiResource() {
-    return new ApiAzureDiskResource().metadata(super.toApiMetadata()).attributes(toApiAttributes());
+  public ApiAzureDiskResource toApiResource(WsmResourceApiFields apiFields) {
+    return new ApiAzureDiskResource()
+        .metadata(super.toApiMetadata(apiFields))
+        .attributes(toApiAttributes());
   }
 
   private ApiAzureDiskAttributes toApiAttributes() {
@@ -185,9 +188,9 @@ public class ControlledAzureDiskResource extends ControlledResource {
   }
 
   @Override
-  public ApiResourceUnion toApiResourceUnion() {
+  public ApiResourceUnion toApiResourceUnion(WsmResourceApiFields apiFields) {
     ApiResourceUnion union = new ApiResourceUnion();
-    union.azureDisk(toApiResource());
+    union.azureDisk(toApiResource(apiFields));
     return union;
   }
 

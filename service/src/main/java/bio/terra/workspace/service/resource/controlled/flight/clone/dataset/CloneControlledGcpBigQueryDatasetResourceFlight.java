@@ -107,7 +107,8 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
           new CreateReferenceMetadataStep(flightBeanBag.getResourceDao()),
           RetryRules.shortDatabase());
       addStep(
-          new SetReferencedDestinationBigQueryDatasetResponseStep(flightBeanBag.getResourceDao()),
+          new SetReferencedDestinationBigQueryDatasetResponseStep(
+              flightBeanBag.getResourceDao(), flightBeanBag.getWorkspaceActivityLogService()),
           RetryRules.shortExponential());
       return;
     } else if (CloningInstructions.COPY_DEFINITION == resolvedCloningInstructions
@@ -120,7 +121,8 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
               flightBeanBag.getControlledResourceService(),
               userRequest,
               flightBeanBag.getGcpCloudContextService(),
-              resolvedCloningInstructions));
+              resolvedCloningInstructions,
+              flightBeanBag.getWorkspaceActivityLogService()));
       if (CloningInstructions.COPY_RESOURCE == resolvedCloningInstructions) {
         addStep(
             new CreateTableCopyJobsStep(

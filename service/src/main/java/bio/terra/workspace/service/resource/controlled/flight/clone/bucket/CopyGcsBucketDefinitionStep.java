@@ -7,6 +7,7 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.IamRoleUtils;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
@@ -15,13 +16,16 @@ import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
+import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.WsmResourceApiFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
+import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -48,18 +52,21 @@ public class CopyGcsBucketDefinitionStep implements Step {
   private final ControlledGcsBucketResource sourceBucket;
   private final ControlledResourceService controlledResourceService;
   private final CloningInstructions resolvedCloningInstructions;
+  private final WorkspaceActivityLogService workspaceActivityLogService;
 
   public CopyGcsBucketDefinitionStep(
       SamService samService,
       AuthenticatedUserRequest userRequest,
       ControlledGcsBucketResource sourceBucket,
       ControlledResourceService controlledResourceService,
-      CloningInstructions resolvedCloningInstructions) {
+      CloningInstructions resolvedCloningInstructions,
+      WorkspaceActivityLogService workspaceActivityLogService) {
     this.samService = samService;
     this.userRequest = userRequest;
     this.sourceBucket = sourceBucket;
     this.controlledResourceService = controlledResourceService;
     this.resolvedCloningInstructions = resolvedCloningInstructions;
+    this.workspaceActivityLogService = workspaceActivityLogService;
   }
 
   @Override
@@ -130,7 +137,9 @@ public class CopyGcsBucketDefinitionStep implements Step {
 
     var apiCreatedBucket =
         new ApiCreatedControlledGcpGcsBucket()
-            .gcpBucket(clonedBucket.toApiResource())
+            .gcpBucket(
+                clonedBucket.toApiResource(
+                    getWsmResourceApiFields(destinationWorkspaceId, destinationResourceId)))
             .resourceId(destinationBucketResource.getResourceId());
 
     var apiBucketResult =
@@ -144,6 +153,14 @@ public class CopyGcsBucketDefinitionStep implements Step {
       FlightUtils.setResponse(flightContext, apiBucketResult, HttpStatus.OK);
     }
     return StepResult.getStepResultSuccess();
+  }
+
+  private WsmResourceApiFields getWsmResourceApiFields(UUID workspaceUuid, UUID resourceId) {
+    Optional<ActivityLogChangeDetails> logChangeDetails =
+        workspaceActivityLogService.getLastUpdatedDetails(workspaceUuid, resourceId.toString());
+    return new WsmResourceApiFields(
+        logChangeDetails.map(ActivityLogChangeDetails::actorEmail).orElse("unknown"),
+        logChangeDetails.map(ActivityLogChangeDetails::changeDate).orElse(OffsetDateTime.MIN));
   }
 
   // Delete the bucket and its row in the resource table

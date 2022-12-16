@@ -2,6 +2,7 @@ package bio.terra.workspace.app.controller;
 
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
+import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.common.utils.ErrorReportUtils;
 import bio.terra.workspace.generated.controller.Alpha1Api;
@@ -17,13 +18,16 @@ import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.model.EnumeratedJob;
 import bio.terra.workspace.service.job.model.EnumeratedJobs;
+import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
+import bio.terra.workspace.service.resource.model.WsmResourceApiFields;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.JobStateFilter;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -46,6 +50,7 @@ public class Alpha1ApiController implements Alpha1Api {
   private final JobService jobService;
   private final JobApiUtils jobApiUtils;
   private final HttpServletRequest request;
+  private final WorkspaceActivityLogService workspaceActivityLogService;
 
   @Autowired
   public Alpha1ApiController(
@@ -54,13 +59,15 @@ public class Alpha1ApiController implements Alpha1Api {
       FeatureConfiguration features,
       JobService jobService,
       JobApiUtils jobApiUtils,
-      HttpServletRequest request) {
+      HttpServletRequest request,
+      WorkspaceActivityLogService workspaceActivityLogService) {
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.workspaceService = workspaceService;
     this.features = features;
     this.jobService = jobService;
     this.jobApiUtils = jobApiUtils;
     this.request = request;
+    this.workspaceActivityLogService = workspaceActivityLogService;
   }
 
   @Override
@@ -121,7 +128,13 @@ public class Alpha1ApiController implements Alpha1Api {
               .jobDescription(enumeratedJob.getJobDescription())
               .operationType(enumeratedJob.getOperationType().toApiModel())
               .resourceType(optResource.map(r -> r.getResourceType().toApiModel()).orElse(null))
-              .metadata(optResource.map(WsmResource::toApiMetadata).orElse(null))
+              .metadata(
+                  optResource
+                      .map(
+                          r ->
+                              r.toApiMetadata(
+                                  getWsmResourceApiFields(r.getWorkspaceId(), r.getResourceId())))
+                      .orElse(null))
               .resourceAttributes(optResource.map(WsmResource::toApiAttributesUnion).orElse(null))
               .destinationResourceId(destinationResourceIdMaybe.orElse(null));
       apiJobList.add(apiJob);
@@ -134,6 +147,14 @@ public class Alpha1ApiController implements Alpha1Api {
             .results(apiJobList);
 
     return new ResponseEntity<>(result, HttpStatus.OK);
+  }
+
+  private WsmResourceApiFields getWsmResourceApiFields(UUID workspaceUuid, UUID resourceId) {
+    Optional<ActivityLogChangeDetails> logChangeDetails =
+        workspaceActivityLogService.getLastUpdatedDetails(workspaceUuid, resourceId.toString());
+    return new WsmResourceApiFields(
+        logChangeDetails.map(ActivityLogChangeDetails::actorEmail).orElse("unknown"),
+        logChangeDetails.map(ActivityLogChangeDetails::changeDate).orElse(OffsetDateTime.MIN));
   }
 
   private AuthenticatedUserRequest getAuthenticatedInfo() {

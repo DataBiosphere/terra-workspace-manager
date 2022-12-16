@@ -199,9 +199,11 @@ public abstract class WsmResource {
   /**
    * Each resource is able to create the API union object to return resources
    *
+   * @param apiFields WSM resource API fields that needs to be fetched separately from the WSM
+   *     resource common fields.
    * @return resource union with the proper resource filled in
    */
-  public abstract ApiResourceUnion toApiResourceUnion();
+  public abstract ApiResourceUnion toApiResourceUnion(WsmResourceApiFields apiFields);
 
   /**
    * Every subclass mst implement this cast to its own type. This implementation should be made in
@@ -316,7 +318,7 @@ public abstract class WsmResource {
    *
    * @return partially constructed Api Model common resource description
    */
-  public ApiResourceMetadata toApiMetadata() {
+  public ApiResourceMetadata toApiMetadata(WsmResourceApiFields apiFields) {
     ApiProperties apiProperties = convertMapToApiProperties(properties);
 
     ApiResourceMetadata apiResourceMetadata =
@@ -331,7 +333,9 @@ public abstract class WsmResource {
             .cloningInstructions(cloningInstructions.toApiModel())
             .properties(apiProperties)
             .createdBy(createdByEmail)
-            .createdDate(createdDate);
+            .createdDate(createdDate)
+            .lastUpdatedBy(apiFields.lastUpdatedBy())
+            .lastUpdatedDate(apiFields.lastUpdatedDate());
     ApiResourceLineage apiResourceLineage = new ApiResourceLineage();
     apiResourceLineage.addAll(
         resourceLineage.stream().map(ResourceLineageEntry::toApiModel).toList());

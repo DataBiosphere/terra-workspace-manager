@@ -4,15 +4,20 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpBigQueryDataset;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
+import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.model.WsmResourceApiFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
+import java.time.OffsetDateTime;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 
@@ -25,9 +30,12 @@ import org.springframework.http.HttpStatus;
  */
 public class SetReferencedDestinationBigQueryDatasetResponseStep implements Step {
   private final ResourceDao resourceDao;
+  private final WorkspaceActivityLogService workspaceActivityLogService;
 
-  public SetReferencedDestinationBigQueryDatasetResponseStep(ResourceDao resourceDao) {
+  public SetReferencedDestinationBigQueryDatasetResponseStep(
+      ResourceDao resourceDao, WorkspaceActivityLogService workspaceActivityLogService) {
     this.resourceDao = resourceDao;
+    this.workspaceActivityLogService = workspaceActivityLogService;
   }
 
   @Override
@@ -58,12 +66,21 @@ public class SetReferencedDestinationBigQueryDatasetResponseStep implements Step
     final ApiClonedControlledGcpBigQueryDataset apiClonedDataset =
         new ApiClonedControlledGcpBigQueryDataset()
             .effectiveCloningInstructions(ApiCloningInstructionsEnum.REFERENCE)
-            .dataset(destDataset.toApiResource())
+            .dataset(
+                destDataset.toApiResource(getWsmResourceApiFields(destWorkspaceId, destResourceId)))
             .sourceWorkspaceId(sourceDataset.getWorkspaceId())
             .sourceResourceId(sourceDataset.getResourceId());
     FlightUtils.setResponse(context, apiClonedDataset, HttpStatus.OK);
 
     return StepResult.getStepResultSuccess();
+  }
+
+  private WsmResourceApiFields getWsmResourceApiFields(UUID workspaceUuid, UUID resourceId) {
+    Optional<ActivityLogChangeDetails> logChangeDetails =
+        workspaceActivityLogService.getLastUpdatedDetails(workspaceUuid, resourceId.toString());
+    return new WsmResourceApiFields(
+        logChangeDetails.map(ActivityLogChangeDetails::actorEmail).orElse("unknown"),
+        logChangeDetails.map(ActivityLogChangeDetails::changeDate).orElse(OffsetDateTime.MIN));
   }
 
   // No side effects to undo.

@@ -114,7 +114,8 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
             new CreateReferenceMetadataStep(flightBeanBag.getResourceDao()),
             RetryRules.shortDatabase());
         addStep(
-            new SetReferencedDestinationGcsBucketResponseStep(flightBeanBag.getResourceDao()),
+            new SetReferencedDestinationGcsBucketResponseStep(
+                flightBeanBag.getResourceDao(), flightBeanBag.getWorkspaceActivityLogService()),
             RetryRules.shortExponential());
         return;
       }
@@ -125,7 +126,8 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
               userRequest,
               sourceBucket,
               flightBeanBag.getControlledResourceService(),
-              resolvedCloningInstructions));
+              resolvedCloningInstructions,
+              flightBeanBag.getWorkspaceActivityLogService()));
 
       if (CloningInstructions.COPY_RESOURCE == resolvedCloningInstructions) {
         addStep(

@@ -15,6 +15,7 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
+import bio.terra.workspace.service.resource.model.WsmResourceApiFields;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
@@ -102,9 +103,9 @@ public class ReferencedTerraWorkspaceResource extends ReferencedResource {
     return new ApiTerraWorkspaceAttributes().referencedWorkspaceId(referencedWorkspaceId);
   }
 
-  public ApiTerraWorkspaceResource toApiResource() {
+  public ApiTerraWorkspaceResource toApiResource(WsmResourceApiFields apiFields) {
     return new ApiTerraWorkspaceResource()
-        .metadata(super.toApiMetadata())
+        .metadata(super.toApiMetadata(apiFields))
         .attributes(toApiAttributes());
   }
 
@@ -139,8 +140,8 @@ public class ReferencedTerraWorkspaceResource extends ReferencedResource {
   }
 
   @Override
-  public ApiResourceUnion toApiResourceUnion() {
-    return new ApiResourceUnion().terraWorkspace(toApiResource());
+  public ApiResourceUnion toApiResourceUnion(WsmResourceApiFields apiFields) {
+    return new ApiResourceUnion().terraWorkspace(toApiResource(apiFields));
   }
 
   @Override

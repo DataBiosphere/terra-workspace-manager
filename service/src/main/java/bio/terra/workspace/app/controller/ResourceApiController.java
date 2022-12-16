@@ -5,7 +5,6 @@ import static bio.terra.workspace.common.utils.ControllerValidationUtils.validat
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesUpdateRequestBody;
 
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
-import bio.terra.workspace.db.FolderDao;
 import bio.terra.workspace.generated.controller.ResourceApi;
 import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
@@ -16,7 +15,9 @@ import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.model.StewardshipType;
@@ -38,7 +39,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
-public class ResourceApiController implements ResourceApi {
+public class ResourceApiController extends WsmResourceControllerBase implements ResourceApi {
 
   private final WsmResourceService resourceService;
   private final WorkspaceService workspaceService;
@@ -46,7 +47,6 @@ public class ResourceApiController implements ResourceApi {
 
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final HttpServletRequest request;
-  private final FolderDao folderDao;
 
   @Autowired
   public ResourceApiController(
@@ -55,17 +55,14 @@ public class ResourceApiController implements ResourceApi {
       ReferencedResourceService referencedResourceService,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request,
-      FolderDao folderDao) {
+      SamService samService,
+      WorkspaceActivityLogService workspaceActivityLogService) {
+    super(authenticatedUserRequestFactory, request, samService, workspaceActivityLogService);
     this.resourceService = resourceService;
     this.workspaceService = workspaceService;
     this.referencedResourceService = referencedResourceService;
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.request = request;
-    this.folderDao = folderDao;
-  }
-
-  private AuthenticatedUserRequest getAuthenticatedInfo() {
-    return authenticatedUserRequestFactory.from(request);
   }
 
   @Override
@@ -133,7 +130,9 @@ public class ResourceApiController implements ResourceApi {
   // Convert a WsmResource into the API format for enumeration
   @VisibleForTesting
   public ApiResourceDescription makeApiResourceDescription(WsmResource wsmResource) {
-    ApiResourceMetadata common = wsmResource.toApiMetadata();
+    ApiResourceMetadata common =
+        wsmResource.toApiMetadata(
+            getWsmResourceApiFields(wsmResource.getWorkspaceId(), wsmResource.getResourceId()));
     ApiResourceAttributesUnion union = wsmResource.toApiAttributesUnion();
     return new ApiResourceDescription().metadata(common).resourceAttributes(union);
   }

@@ -16,6 +16,7 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
+import bio.terra.workspace.service.resource.model.WsmResourceApiFields;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
@@ -166,8 +167,8 @@ public abstract class ControlledResource extends WsmResource {
   }
 
   @Override
-  public ApiResourceMetadata toApiMetadata() {
-    ApiResourceMetadata metadata = super.toApiMetadata();
+  public ApiResourceMetadata toApiMetadata(WsmResourceApiFields apiFields) {
+    ApiResourceMetadata metadata = super.toApiMetadata(apiFields);
     var controlled =
         new ApiControlledResourceMetadata()
             .accessScope(accessScope.toApiModel())

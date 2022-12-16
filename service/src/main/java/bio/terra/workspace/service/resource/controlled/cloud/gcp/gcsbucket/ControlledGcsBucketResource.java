@@ -26,6 +26,7 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
+import bio.terra.workspace.service.resource.model.WsmResourceApiFields;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
@@ -146,9 +147,9 @@ public class ControlledGcsBucketResource extends ControlledResource {
     return new ApiGcpGcsBucketAttributes().bucketName(getBucketName());
   }
 
-  public ApiGcpGcsBucketResource toApiResource() {
+  public ApiGcpGcsBucketResource toApiResource(WsmResourceApiFields apiFields) {
     return new ApiGcpGcsBucketResource()
-        .metadata(super.toApiMetadata())
+        .metadata(super.toApiMetadata(apiFields))
         .attributes(toApiAttributes());
   }
 
@@ -197,8 +198,8 @@ public class ControlledGcsBucketResource extends ControlledResource {
   }
 
   @Override
-  public ApiResourceUnion toApiResourceUnion() {
-    return new ApiResourceUnion().gcpGcsBucket(toApiResource());
+  public ApiResourceUnion toApiResourceUnion(WsmResourceApiFields apiFields) {
+    return new ApiResourceUnion().gcpGcsBucket(toApiResource(apiFields));
   }
 
   @Override

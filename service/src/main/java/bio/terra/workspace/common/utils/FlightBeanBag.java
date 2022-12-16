@@ -14,6 +14,7 @@ import bio.terra.workspace.service.buffer.BufferService;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
@@ -63,6 +64,7 @@ public class FlightBeanBag {
   private final VersionConfiguration versionConfiguration;
   private final StorageAccountKeyProvider storageAccountKeyProvider;
   private final LandingZoneApiDispatch landingZoneApiDispatch;
+  private final WorkspaceActivityLogService workspaceActivityLogService;
 
   @Lazy
   @Autowired
@@ -91,7 +93,8 @@ public class FlightBeanBag {
       WorkspaceService workspaceService,
       VersionConfiguration versionConfiguration,
       StorageAccountKeyProvider storageAccountKeyProvider,
-      LandingZoneApiDispatch landingZoneApiDispatch) {
+      LandingZoneApiDispatch landingZoneApiDispatch,
+      WorkspaceActivityLogService workspaceActivityLogService) {
     this.applicationDao = applicationDao;
     this.azureCloudContextService = azureCloudContextService;
     this.azureConfig = azureConfig;
@@ -117,6 +120,7 @@ public class FlightBeanBag {
     this.versionConfiguration = versionConfiguration;
     this.storageAccountKeyProvider = storageAccountKeyProvider;
     this.landingZoneApiDispatch = landingZoneApiDispatch;
+    this.workspaceActivityLogService = workspaceActivityLogService;
   }
 
   public static FlightBeanBag getFromObject(Object object) {
@@ -221,5 +225,9 @@ public class FlightBeanBag {
 
   public FolderDao getFolderDao() {
     return folderDao;
+  }
+
+  public WorkspaceActivityLogService getWorkspaceActivityLogService() {
+    return workspaceActivityLogService;
   }
 }

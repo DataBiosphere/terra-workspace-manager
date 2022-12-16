@@ -101,7 +101,8 @@ public class ReferencedGcpResourceControllerBqDatasetTest extends BaseConnectedT
         workspaceId,
         sourceResourceName,
         projectId,
-        sourceDatasetName);
+        sourceDatasetName,
+        /*expectedLastUpdatedBy=*/ userAccessUtils.getDefaultUserEmail());
 
     // Assert resource returned by get
     ApiGcpBigQueryDatasetResource gotResource =
@@ -199,7 +200,8 @@ public class ReferencedGcpResourceControllerBqDatasetTest extends BaseConnectedT
         workspaceId,
         destResourceName,
         projectId,
-        sourceDatasetName);
+        sourceDatasetName,
+        /*expectedLastUpdatedBy=*/ userAccessUtils.getDefaultUserEmail());
 
     // Assert resource returned by get
     final ApiGcpBigQueryDatasetResource gotResource =
@@ -231,7 +233,8 @@ public class ReferencedGcpResourceControllerBqDatasetTest extends BaseConnectedT
         workspaceId2,
         destResourceName,
         projectId,
-        sourceDatasetName);
+        sourceDatasetName,
+        /*expectedLastUpdatedBy=*/ userAccessUtils.getDefaultUserEmail());
 
     // Assert resource returned by get
     final ApiGcpBigQueryDatasetResource gotResource =
@@ -298,7 +301,8 @@ public class ReferencedGcpResourceControllerBqDatasetTest extends BaseConnectedT
       UUID expectedWorkspaceId,
       String expectedResourceName,
       String expectedProjectId,
-      String expectedDatasetName) {
+      String expectedDatasetName,
+      String expectedLastUpdatedBy) {
     mockMvcUtils.assertResourceMetadata(
         actualResource.getMetadata(),
         ApiCloudPlatform.GCP,
@@ -307,7 +311,8 @@ public class ReferencedGcpResourceControllerBqDatasetTest extends BaseConnectedT
         expectedCloningInstructions,
         expectedWorkspaceId,
         expectedResourceName,
-        /*expectedResourceLineage=*/ new ApiResourceLineage());
+        /*expectedResourceLineage=*/ new ApiResourceLineage(),
+        expectedLastUpdatedBy);
 
     assertEquals(expectedProjectId, actualResource.getAttributes().getProjectId());
     assertEquals(expectedDatasetName, actualResource.getAttributes().getDatasetId());
@@ -320,7 +325,8 @@ public class ReferencedGcpResourceControllerBqDatasetTest extends BaseConnectedT
       UUID expectedWorkspaceId,
       String expectedResourceName,
       String expectedProjectId,
-      String expectedDatasetName) {
+      String expectedDatasetName,
+      String expectedLastUpdatedBy) {
     mockMvcUtils.assertClonedResourceMetadata(
         actualResource.getMetadata(),
         ApiCloudPlatform.GCP,
@@ -330,7 +336,8 @@ public class ReferencedGcpResourceControllerBqDatasetTest extends BaseConnectedT
         expectedWorkspaceId,
         expectedResourceName,
         /*sourceWorkspaceId=*/ workspaceId,
-        /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId());
+        /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
+        expectedLastUpdatedBy);
 
     assertEquals(expectedProjectId, actualResource.getAttributes().getProjectId());
     assertEquals(expectedDatasetName, actualResource.getAttributes().getDatasetId());

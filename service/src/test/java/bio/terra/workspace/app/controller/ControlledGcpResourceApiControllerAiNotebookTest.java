@@ -19,8 +19,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -29,9 +27,6 @@ import org.springframework.test.web.servlet.MockMvc;
 // time creating and deleting GCP contexts.
 @TestInstance(Lifecycle.PER_CLASS)
 public class ControlledGcpResourceApiControllerAiNotebookTest extends BaseConnectedTest {
-  private static final Logger logger =
-      LoggerFactory.getLogger(ControlledGcpResourceApiControllerAiNotebookTest.class);
-
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
   @Autowired UserAccessUtils userAccessUtils;

@@ -25,6 +25,7 @@ import bio.terra.workspace.service.resource.controlled.model.PrivateResourceStat
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
+import bio.terra.workspace.service.resource.model.WsmResourceApiFields;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -179,12 +180,12 @@ public class ControlledAzureNetworkResource extends ControlledResource {
         .subnetName(getSubnetName())
         .addressSpaceCidr(getAddressSpaceCidr())
         .subnetAddressCidr(getSubnetAddressCidr())
-        .region(region.toString());
+        .region(region);
   }
 
-  public ApiAzureNetworkResource toApiResource() {
+  public ApiAzureNetworkResource toApiResource(WsmResourceApiFields apiFields) {
     return new ApiAzureNetworkResource()
-        .metadata(super.toApiMetadata())
+        .metadata(super.toApiMetadata(apiFields))
         .attributes(toApiAttributes());
   }
 
@@ -217,9 +218,9 @@ public class ControlledAzureNetworkResource extends ControlledResource {
   }
 
   @Override
-  public ApiResourceUnion toApiResourceUnion() {
+  public ApiResourceUnion toApiResourceUnion(WsmResourceApiFields apiFields) {
     ApiResourceUnion union = new ApiResourceUnion();
-    union.azureNetwork(toApiResource());
+    union.azureNetwork(toApiResource(apiFields));
     return union;
   }
 

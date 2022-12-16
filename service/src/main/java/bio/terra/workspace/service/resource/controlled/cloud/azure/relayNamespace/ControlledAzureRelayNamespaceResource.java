@@ -25,6 +25,7 @@ import bio.terra.workspace.service.resource.controlled.model.PrivateResourceStat
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
+import bio.terra.workspace.service.resource.model.WsmResourceApiFields;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -148,9 +149,9 @@ public class ControlledAzureRelayNamespaceResource extends ControlledResource {
     return new ApiAzureRelayNamespaceAttributes().namespaceName(getNamespaceName()).region(region);
   }
 
-  public ApiAzureRelayNamespaceResource toApiResource() {
+  public ApiAzureRelayNamespaceResource toApiResource(WsmResourceApiFields apiFields) {
     return new ApiAzureRelayNamespaceResource()
-        .metadata(super.toApiMetadata())
+        .metadata(super.toApiMetadata(apiFields))
         .attributes(toApiAttributes());
   }
 
@@ -178,9 +179,9 @@ public class ControlledAzureRelayNamespaceResource extends ControlledResource {
   }
 
   @Override
-  public ApiResourceUnion toApiResourceUnion() {
+  public ApiResourceUnion toApiResourceUnion(WsmResourceApiFields apiFields) {
     ApiResourceUnion union = new ApiResourceUnion();
-    union.azureRelayNamespace(toApiResource());
+    union.azureRelayNamespace(toApiResource(apiFields));
     return union;
   }
 
