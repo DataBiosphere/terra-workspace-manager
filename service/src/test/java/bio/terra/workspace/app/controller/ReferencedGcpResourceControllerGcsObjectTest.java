@@ -97,6 +97,7 @@ public class ReferencedGcpResourceControllerGcsObjectTest extends BaseConnectedT
         sourceResourceName,
         sourceBucketName,
         sourceFileName,
+        /*expectedCreatedBy=*/ userAccessUtils.getDefaultUserEmail(),
         /*expectedLastUpdatedBy=*/ userAccessUtils.getDefaultUserEmail());
 
     // Assert resource returned by get
@@ -155,6 +156,53 @@ public class ReferencedGcpResourceControllerGcsObjectTest extends BaseConnectedT
   }
 
   @Test
+  public void clone_secondUserHasWriteAccessOnDestWorkspace_succeeds() throws Exception {
+    mockMvcUtils.grantRole(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId,
+        WsmIamRole.READER,
+        userAccessUtils.getSecondUserEmail());
+    mockMvcUtils.grantRole(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId2,
+        WsmIamRole.WRITER,
+        userAccessUtils.getSecondUserEmail());
+
+    ApiGcpGcsObjectResource clonedResource =
+        mockMvcUtils.cloneReferencedGcsObject(
+            userAccessUtils.secondUserAuthRequest(),
+            /*sourceWorkspaceId=*/ workspaceId,
+            /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
+            /*destWorkspaceId=*/ workspaceId2,
+            ApiCloningInstructionsEnum.REFERENCE,
+            /*destResourceName=*/ null);
+
+    assertClonedGcsObject(
+        clonedResource,
+        ApiStewardshipType.REFERENCED,
+        ApiCloningInstructionsEnum.NOTHING,
+        workspaceId2,
+        sourceResourceName,
+        sourceBucketName,
+        sourceFileName,
+        userAccessUtils.getSecondUserEmail());
+    mockMvcUtils.removeRole(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId,
+        WsmIamRole.READER,
+        userAccessUtils.getSecondUserEmail());
+    mockMvcUtils.removeRole(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId2,
+        WsmIamRole.WRITER,
+        userAccessUtils.getSecondUserEmail());
+    mockMvcUtils.deleteGcsObject(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId2,
+        clonedResource.getMetadata().getResourceId());
+  }
+
+  @Test
   void clone_copyNothing() throws Exception {
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
     ApiGcpGcsObjectResource clonedResource =
@@ -196,6 +244,7 @@ public class ReferencedGcpResourceControllerGcsObjectTest extends BaseConnectedT
         destResourceName,
         sourceBucketName,
         sourceFileName,
+        /*expectedCreatedBy=*/ userAccessUtils.getDefaultUserEmail(),
         /*expectedLastUpdatedBy=*/ userAccessUtils.getDefaultUserEmail());
 
     // Assert resource returned by get
@@ -229,6 +278,7 @@ public class ReferencedGcpResourceControllerGcsObjectTest extends BaseConnectedT
         destResourceName,
         sourceBucketName,
         sourceFileName,
+        /*expectedCreatedBy=*/ userAccessUtils.getDefaultUserEmail(),
         /*expectedLastUpdatedBy=*/ userAccessUtils.getDefaultUserEmail());
 
     // Assert resource returned by get
@@ -297,6 +347,7 @@ public class ReferencedGcpResourceControllerGcsObjectTest extends BaseConnectedT
       String expectedResourceName,
       String expectedBucketName,
       String expectedFileName,
+      String expectedCreatedBy,
       String expectedLastUpdatedBy) {
     mockMvcUtils.assertResourceMetadata(
         actualResource.getMetadata(),
@@ -307,6 +358,7 @@ public class ReferencedGcpResourceControllerGcsObjectTest extends BaseConnectedT
         expectedWorkspaceId,
         expectedResourceName,
         /*expectedResourceLineage=*/ new ApiResourceLineage(),
+        expectedCreatedBy,
         expectedLastUpdatedBy);
 
     assertEquals(expectedBucketName, actualResource.getAttributes().getBucketName());
@@ -321,6 +373,7 @@ public class ReferencedGcpResourceControllerGcsObjectTest extends BaseConnectedT
       String expectedResourceName,
       String expectedBucketName,
       String expectedFileName,
+      String expectedCreatedBy,
       String expectedLastUpdatedBy) {
     mockMvcUtils.assertClonedResourceMetadata(
         actualResource.getMetadata(),
@@ -332,7 +385,8 @@ public class ReferencedGcpResourceControllerGcsObjectTest extends BaseConnectedT
         expectedResourceName,
         /*sourceWorkspaceId=*/ workspaceId,
         /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
-        /*expectedLastUpdatedBy=*/ userAccessUtils.getDefaultUserEmail());
+        expectedCreatedBy,
+        expectedLastUpdatedBy);
 
     assertEquals(expectedBucketName, actualResource.getAttributes().getBucketName());
     assertEquals(expectedFileName, actualResource.getAttributes().getFileName());
