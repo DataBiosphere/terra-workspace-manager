@@ -15,16 +15,13 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    # required for IAP authentication - see terra-helmfile-shim
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
     steps:
       - uses: actions/checkout@v3
-
-      # Sparse check out terra-helmfile repo version directories
-      - uses: ./.github/actions/checkout-helm-versions
-        with:
-          repository: broadinstitute/terra-helmfile
-          ref: master
-          token: ${{ secrets.BROADBOT_TOKEN }}
-          path: integration/terra-helmfile
 
       - name: Set env
         id: set-env-step
@@ -36,6 +33,69 @@ jobs:
             exit 1
           fi
           echo test-env=$ENV >> $GITHUB_OUTPUT
+
+      #
+      #
+      # 2022-12-15 DDO-2528 terra-helmfile shim
+      # Release version information has been migrated to Sherlock.
+      # These two steps add a temporary shim to simulate the old versions file format
+      # until testrunner can be configured to talk to it.
+      #
+
+      # Set up workload-identity so we can auth to Sherlock
+      - name: "Authenticate to GCP"
+        id: 'auth'
+        uses: google-github-actions/auth@v0
+        with:
+          workload_identity_provider: 'projects/1038484894585/locations/global/workloadIdentityPools/github-wi-pool/providers/github-wi-provider'
+          service_account: 'dsp-tools-iap-access@dsp-tools-k8s.iam.gserviceaccount.com'
+          token_format: 'id_token'
+          id_token_audience: '1038484894585-k8qvf7l876733laev0lm8kenfa2lj6bn.apps.googleusercontent.com'
+          id_token_include_email: true
+          create_credentials_file: false
+          export_environment_variables: false
+
+      # Generate versions file
+      - name: terra-helmfile-shim
+        run: |
+          set -exo pipefail
+          
+          ENV="${{ steps.set-env-step.outputs.test-env }}"
+          SHERLOCK_URL="https://sherlock.dsp-devops.broadinstitute.org"
+
+          OLD_TERRA_HELMFILE_DIR="integration/terra-helmfile"
+          VERSIONS_FILE="${OLD_TERRA_HELMFILE_DIR}/versions/app/${ENV}.yaml"
+          OVERRIDES_FILE="${OLD_TERRA_HELMFILE_DIR}/environments/live/${ENV}.yaml"
+          
+          mkdir -p $( dirname "${VERSIONS_FILE}" )
+          mkdir -p $( dirname "${OVERRIDES_FILE}" )
+
+          # write an empty overrides file
+          echo "releases: {}" > "${OVERRIDES_FILE}"
+
+          #
+          # call the chart-releases endpoint to get a list of chart-releases in the target env
+          #
+          curl --fail \
+            -H 'Authorization: Bearer ${{ steps.auth.outputs.id_token }}' \
+            "${SHERLOCK_URL}/api/v2/chart-releases?environment=${ENV}" \
+            > /tmp/.chart-releases.json
+
+          #
+          # use jq to massage the output into the old versions file format, which looks like:
+          # releases:
+          #   workspacemanager:
+          #     appVersion: 1.2.3
+          #     chartVersion: 4.5.6
+          #
+          # happily, YAML is a superset of JSON so we don't need to do a format conversion
+          #
+          cat /tmp/.chart-releases.json |\
+           jq 'map({ (.chart): {appVersion: .appVersionExact, chartVersion: .chartVersionExact}}) | add  | { releases: . }' \
+            > "${VERSIONS_FILE}"
+
+          echo "Wrote versions file to ${VERSIONS_FILE}:"
+          cat "${VERSIONS_FILE}"
 
       - name: Set config files
         id: set-config-files-step
