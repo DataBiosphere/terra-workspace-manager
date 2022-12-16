@@ -13,6 +13,7 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
+import com.google.api.services.notebooks.v1.model.AcceleratorConfig;
 import com.google.api.services.notebooks.v1.model.Instance;
 import java.io.IOException;
 import java.util.Map;
@@ -41,6 +42,9 @@ public class RetrieveAiNotebookResourceAttributesStep implements Step {
     AIPlatformNotebooksCow notebooksCow = crlService.getAIPlatformNotebooksCow();
     try {
       Instance instance = notebooksCow.instances().get(instanceName).execute();
+      workingMap.put(ControlledResourceKeys.PREVIOUS_MACHINE_TYPE, instance.getMachineType());
+      AcceleratorConfig acceleratorConfig = instance.getAcceleratorConfig();
+      workingMap.put(ControlledResourceKeys.PREVIOUS_ACCELERATOR_CONFIG, acceleratorConfig);
       Map<String, String> metadata = instance.getMetadata();
       ApiGcpAiNotebookUpdateParameters existingUpdateParameters =
           new ApiGcpAiNotebookUpdateParameters().metadata(metadata);

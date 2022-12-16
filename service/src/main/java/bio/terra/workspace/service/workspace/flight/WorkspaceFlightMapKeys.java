@@ -32,7 +32,11 @@ public final class WorkspaceFlightMapKeys {
     public static final String GCP_CLOUD_CONTEXT = "gcpCloudContext";
     public static final String AZURE_CLOUD_CONTEXT = "azureCloudContext";
     public static final String UPDATE_PARAMETERS = "updateParameters";
+    public static final String MACHINE_TYPE = "machineType";
+    public static final String ACCELERATOR_CONFIG = "acceleratorConfig";
     public static final String PREVIOUS_UPDATE_PARAMETERS = "previousUpdateParameters";
+    public static final String PREVIOUS_MACHINE_TYPE = "previousMachineType";
+    public static final String PREVIOUS_ACCELERATOR_CONFIG = "previousAcceleratorConfig";
 
     public static final String RESOURCE_ROLES_TO_REMOVE = "resourceRolesToRemove";
     public static final String REMOVED_USER_IS_WORKSPACE_MEMBER = "removedUserIsWorkspaceMember";

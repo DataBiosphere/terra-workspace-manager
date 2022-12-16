@@ -100,15 +100,6 @@ public class ControlledResourceFixtures {
         .lifecycle(new ApiGcpGcsBucketLifecycle().rules(LIFECYCLE_RULES));
   }
 
-  /** Construct a creation parameter object with a unique data set name. */
-  public static ApiGcpBigQueryDatasetCreationParameters getGcpBigQueryDatasetCreationParameters() {
-    return new ApiGcpBigQueryDatasetCreationParameters()
-        .datasetId(uniqueDatasetId())
-        .defaultPartitionLifetime(5901L)
-        .defaultTableLifetime(5900L)
-        .location("us-central1");
-  }
-
   /** Construct a parameter object with a unique ip name to avoid unintended clashes. */
   public static ApiAzureIpCreationParameters getAzureIpCreationParameters() {
     return new ApiAzureIpCreationParameters()
@@ -277,7 +268,7 @@ public class ControlledResourceFixtures {
     return new ApiGcpAiNotebookInstanceCreationParameters()
         .instanceId("default-instance-id")
         .location("us-east1-b")
-        .machineType("e2-standard-2")
+        .machineType("n1-standard-2")
         .vmImage(
             new ApiGcpAiNotebookInstanceVmImage()
                 .projectId("deeplearning-platform-release")
@@ -286,10 +277,6 @@ public class ControlledResourceFixtures {
 
   public static ApiGcpBigQueryDatasetCreationParameters defaultBigQueryDatasetCreationParameters() {
     return new ApiGcpBigQueryDatasetCreationParameters().datasetId(uniqueDatasetId());
-  }
-
-  public static ApiGcpGcsBucketCreationParameters defaultGcsBucketCreationParameters() {
-    return new ApiGcpGcsBucketCreationParameters().name(uniqueBucketName());
   }
 
   public static final String RESOURCE_NAME = "my_first_bucket";

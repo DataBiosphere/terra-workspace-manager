@@ -12,7 +12,15 @@ import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketDefaultStorageClass;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.gax.paging.Page;
+import com.google.api.services.compute.Compute;
+import com.google.api.services.compute.model.AcceleratorConfig;
+import com.google.api.services.compute.model.Instance;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.bigquery.BigQueryException;
@@ -32,8 +40,11 @@ import com.google.cloud.storage.BucketInfo;
 import com.google.cloud.storage.BucketInfo.LifecycleRule;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
@@ -109,7 +120,7 @@ public class GcpCloudUtils {
 
   /** Asserts table is populated as per populateBqTable(). */
   public void assertBqTableContents(
-      GoogleCredentials userCredential, String projectId, String datasetId) throws Exception {
+      GoogleCredentials userCredential, String projectId, String datasetId) {
     BigQuery bigQueryClient = getGcpBigQueryClient(userCredential, projectId);
     Page<FieldValueList> actualRows =
         bigQueryClient.listTableData(TableId.of(datasetId, BQ_EMPLOYEE_TABLE_NAME));
@@ -131,8 +142,8 @@ public class GcpCloudUtils {
   }
 
   /** Adds a file called "foo" with the contents "bar". */
-  public void addFileToBucket(GoogleCredentials userCredential, String projectId, String bucketName)
-      throws Exception {
+  public void addFileToBucket(
+      GoogleCredentials userCredential, String projectId, String bucketName) {
     Storage storageClient = getGcpStorageClient(userCredential, projectId);
     BlobId blobId = BlobId.of(bucketName, GCS_FILE_NAME);
     BlobInfo blobInfo = BlobInfo.newBuilder(blobId).build();
@@ -153,7 +164,7 @@ public class GcpCloudUtils {
 
   /** Asserts table is populated as per populateBqTable(). */
   public void assertBucketHasNoFiles(
-      AuthenticatedUserRequest userRequest, String projectId, String bucketName) throws Exception {
+      AuthenticatedUserRequest userRequest, String projectId, String bucketName) {
     StorageCow storageCow = crlService.createStorageCow(projectId, userRequest);
     int numFiles = 0;
     for (BlobCow blob : storageCow.get(bucketName).list().iterateAll()) {
@@ -193,6 +204,56 @@ public class GcpCloudUtils {
         .build()
         .getService();
   }
+
+  public static void assertNotebookCpuGpu(
+      String projectId,
+      String zone,
+      String instanceId,
+      @Nullable String newMachineType,
+      @Nullable AcceleratorConfig newAcceleratorConfig)
+      throws GeneralSecurityException, IOException {
+    Compute computeService = createComputeService();
+    Compute.Instances.Get request = computeService.instances().get(projectId, zone, instanceId);
+    Instance response = request.execute();
+
+    // Machine type and accelerator type response obtained from GCP is in URL format, and need a
+    // conversion to compare
+    String machineType =
+        response.getMachineType().substring(response.getMachineType().lastIndexOf("/") + 1);
+    assertEquals(newMachineType, machineType);
+
+    if (response.getGuestAccelerators() != null) {
+      AcceleratorConfig acceleratorConfig = response.getGuestAccelerators().get(0);
+      String acceleratorType = acceleratorConfig.getAcceleratorType();
+      assertEquals(
+          newAcceleratorConfig.getAcceleratorType().toLowerCase().replace("_", "-"),
+          acceleratorType.substring(acceleratorType.lastIndexOf("/") + 1));
+      assertEquals(
+          newAcceleratorConfig.getAcceleratorCount(), acceleratorConfig.getAcceleratorCount());
+    } else {
+      assertEquals(new AcceleratorConfig(), newAcceleratorConfig);
+    }
+  }
+
+  /**
+   * Directly calling the gcp api to get/update instance, requires the createComputeService, see the
+   * example in https://cloud.google.com/compute/docs/reference/rest/v1/instances/get
+   */
+  public static Compute createComputeService() throws IOException, GeneralSecurityException {
+    HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
+    JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
+
+    GoogleCredential credential = GoogleCredential.getApplicationDefault();
+    if (credential.createScopedRequired()) {
+      credential =
+          credential.createScoped(Arrays.asList("https://www.googleapis.com/auth/cloud-platform"));
+    }
+
+    return new Compute.Builder(httpTransport, jsonFactory, credential)
+        .setApplicationName("Google-ComputeSample/0.1")
+        .build();
+  }
+
   /**
    * Get a result from a call that might throw an exception. Treat the exception as retryable, sleep
    * for 15 seconds, and retry up to 40 times. This structure is useful for situations where we are

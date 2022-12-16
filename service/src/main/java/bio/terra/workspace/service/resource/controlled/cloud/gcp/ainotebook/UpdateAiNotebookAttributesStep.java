@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.ACCELERATOR_CONFIG;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.MACHINE_TYPE;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.PREVIOUS_UPDATE_PARAMETERS;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_PARAMETERS;
 
@@ -15,10 +17,24 @@ import bio.terra.workspace.generated.model.ApiGcpAiNotebookUpdateParameters;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.exception.ReservedMetadataKeyException;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.services.compute.Compute;
+import com.google.api.services.compute.model.AcceleratorConfig;
+import com.google.api.services.compute.model.Instance;
+import com.google.api.services.compute.model.Scheduling;
 import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -57,8 +73,13 @@ public class UpdateAiNotebookAttributesStep implements Step {
       }
       sanitizedMetadata.put(entrySet.getKey(), entrySet.getValue());
     }
+    String machineType = inputMap.get(MACHINE_TYPE, String.class);
+    AcceleratorConfig acceleratorConfig = inputMap.get(ACCELERATOR_CONFIG, AcceleratorConfig.class);
     return updateAiNotebook(
-        sanitizedMetadata, cloudContextService.getRequiredGcpProject(resource.getWorkspaceId()));
+        sanitizedMetadata,
+        cloudContextService.getRequiredGcpProject(resource.getWorkspaceId()),
+        machineType,
+        acceleratorConfig);
   }
 
   @Override
@@ -66,6 +87,13 @@ public class UpdateAiNotebookAttributesStep implements Step {
     final FlightMap workingMap = context.getWorkingMap();
     final ApiGcpAiNotebookUpdateParameters prevParameters =
         workingMap.get(PREVIOUS_UPDATE_PARAMETERS, ApiGcpAiNotebookUpdateParameters.class);
+    String machineType =
+        workingMap.get(
+            WorkspaceFlightMapKeys.ControlledResourceKeys.PREVIOUS_MACHINE_TYPE, String.class);
+    AcceleratorConfig acceleratorConfig =
+        workingMap.get(
+            WorkspaceFlightMapKeys.ControlledResourceKeys.PREVIOUS_ACCELERATOR_CONFIG,
+            AcceleratorConfig.class);
     var projectId = cloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
     try {
       var currentMetadata =
@@ -81,7 +109,7 @@ public class UpdateAiNotebookAttributesStep implements Step {
         currentMetadata.put(
             entry.getKey(), prevParameters.getMetadata().getOrDefault(entry.getKey(), ""));
       }
-      return updateAiNotebook(currentMetadata, projectId);
+      return updateAiNotebook(currentMetadata, projectId, machineType, acceleratorConfig);
     } catch (GoogleJsonResponseException e) {
       if (HttpStatus.BAD_REQUEST.value() == e.getStatusCode()
           || HttpStatus.NOT_FOUND.value() == e.getStatusCode()) {
@@ -93,20 +121,94 @@ public class UpdateAiNotebookAttributesStep implements Step {
     }
   }
 
-  private StepResult updateAiNotebook(Map<String, String> metadataToUpdate, String projectId) {
+  private StepResult updateAiNotebook(
+      Map<String, String> metadataToUpdate,
+      String projectId,
+      @Nullable String machineType,
+      @Nullable AcceleratorConfig acceleratorConfig) {
     InstanceName instanceName = resource.toInstanceName(projectId);
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
     try {
       notebooks.instances().updateMetadataItems(instanceName, metadataToUpdate).execute();
+      updateAiNotebookCpuGpu(
+          projectId,
+          instanceName.location(),
+          instanceName.instanceId(),
+          machineType,
+          acceleratorConfig);
     } catch (GoogleJsonResponseException e) {
       if (HttpStatus.BAD_REQUEST.value() == e.getStatusCode()
           || HttpStatus.NOT_FOUND.value() == e.getStatusCode()) {
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
       }
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+    } catch (GeneralSecurityException e) {
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
     } catch (IOException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
     return StepResult.getStepResultSuccess();
+  }
+
+  private void updateAiNotebookCpuGpu(
+      String projectId,
+      String location,
+      String instanceId,
+      String machineType,
+      AcceleratorConfig acceleratorConfig)
+      throws GeneralSecurityException, IOException {
+    Compute computeService = createComputeService();
+    Instance instanceInfo =
+        computeService.instances().get(projectId, location, instanceId).execute();
+
+    // Set the scheduling policy so that can update GPU
+    Scheduling content = new Scheduling();
+    content.setOnHostMaintenance("TERMINATE");
+    content.setAutomaticRestart(true);
+    computeService.instances().setScheduling(projectId, location, instanceId, content).execute();
+
+    // GCP requires a URL as machine type and accelerator type. If user input a machine type name,
+    // like "n1-standard-2", we augment it into a URL.
+    String machineTypeUrl = machineType;
+    if (machineTypeUrl.lastIndexOf("/") == -1) {
+      machineTypeUrl = createBaseUrl(projectId, location) + "/machineTypes/" + machineTypeUrl;
+    }
+    instanceInfo.setMachineType(machineTypeUrl);
+
+    if (acceleratorConfig != null) {
+      String gpuTypeUrl = acceleratorConfig.getAcceleratorType();
+      if (gpuTypeUrl.lastIndexOf("/") == -1) {
+        gpuTypeUrl =
+            createBaseUrl(projectId, location)
+                + "/acceleratorTypes/"
+                + gpuTypeUrl.toLowerCase().replace("_", "-");
+      }
+      acceleratorConfig.setAcceleratorType(gpuTypeUrl);
+      instanceInfo.setGuestAccelerators(List.of(acceleratorConfig));
+    }
+    computeService.instances().update(projectId, location, instanceId, instanceInfo).execute();
+  }
+
+  /**
+   * Directly calling the gcp api to get/update instance, requires the createComputeService, see the
+   * example in https://cloud.google.com/compute/docs/reference/rest/v1/instances/get
+   */
+  public static Compute createComputeService() throws IOException, GeneralSecurityException {
+    HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
+    JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
+
+    GoogleCredential credential = GoogleCredential.getApplicationDefault();
+    if (credential.createScopedRequired()) {
+      credential =
+          credential.createScoped(Arrays.asList("https://www.googleapis.com/auth/cloud-platform"));
+    }
+
+    return new Compute.Builder(httpTransport, jsonFactory, credential)
+        .setApplicationName("Google-ComputeSample/0.1")
+        .build();
+  }
+
+  private String createBaseUrl(String projectId, String location) {
+    return "https://www.googleapis.com/compute/v1/projects/" + projectId + "/zones/" + location;
   }
 }

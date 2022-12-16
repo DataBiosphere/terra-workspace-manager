@@ -52,6 +52,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Resou
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.WsmApplication;
+import com.google.api.services.compute.model.AcceleratorConfig;
 import com.google.cloud.Policy;
 import java.time.Duration;
 import java.time.Instant;
@@ -440,6 +441,8 @@ public class ControlledResourceService {
       @Nullable ApiGcpAiNotebookUpdateParameters updateParameters,
       @Nullable String newName,
       @Nullable String newDescription,
+      @Nullable String machineType,
+      @Nullable AcceleratorConfig acceleratorConfig,
       AuthenticatedUserRequest userRequest) {
     final String jobDescription =
         String.format(
@@ -458,7 +461,9 @@ public class ControlledResourceService {
             .stewardshipType(resource.getStewardshipType())
             .addParameter(ControlledResourceKeys.UPDATE_PARAMETERS, updateParameters)
             .addParameter(ResourceKeys.RESOURCE_NAME, newName)
-            .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, newDescription);
+            .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, newDescription)
+            .addParameter(ControlledResourceKeys.MACHINE_TYPE, machineType)
+            .addParameter(ControlledResourceKeys.ACCELERATOR_CONFIG, acceleratorConfig);
     return jobBuilder.submitAndWait(ControlledAiNotebookInstanceResource.class);
   }
 

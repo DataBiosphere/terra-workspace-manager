@@ -348,6 +348,11 @@ components:
         description:
           description: Optional. New description to give to this resource. The resource description will not be updated if this is omitted.
           type: string
+        machineType:
+          description: The Compute Engine machine type of this instance, see https://cloud.google.com/compute/docs/machine-types
+          type: string
+        acceleratorConfig:
+          $ref: '#/components/schemas/GcpAiNotebookInstanceAcceleratorConfig'
         updateParameters:
           $ref: '#/components/schemas/GcpAiNotebookUpdateParameters'
 

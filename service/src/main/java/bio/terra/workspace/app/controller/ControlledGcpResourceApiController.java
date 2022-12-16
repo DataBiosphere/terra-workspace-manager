@@ -27,6 +27,7 @@ import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants;
+import com.google.api.services.compute.model.AcceleratorConfig;
 import com.google.common.base.Strings;
 import java.util.Optional;
 import java.util.UUID;
@@ -476,11 +477,18 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
                 userRequest, workspaceUuid, resourceId, SamControlledResourceActions.EDIT_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
 
+    ApiGcpAiNotebookInstanceAcceleratorConfig gcpAcceleratorConfig =
+        requestBody.getAcceleratorConfig();
+    AcceleratorConfig acceleratorConfig = new AcceleratorConfig();
+    acceleratorConfig.setAcceleratorType(gcpAcceleratorConfig.getType());
+    acceleratorConfig.setAcceleratorCount(Math.toIntExact(gcpAcceleratorConfig.getCoreCount()));
     controlledResourceService.updateAiNotebookInstance(
         resource,
         requestBody.getUpdateParameters(),
         requestBody.getName(),
         requestBody.getDescription(),
+        requestBody.getMachineType(),
+        acceleratorConfig,
         userRequest);
 
     final ControlledAiNotebookInstanceResource updatedResource =

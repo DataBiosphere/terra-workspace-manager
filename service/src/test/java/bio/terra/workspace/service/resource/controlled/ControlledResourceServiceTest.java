@@ -28,7 +28,6 @@ import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.GcpCloudUtils;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
-import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
@@ -77,18 +76,20 @@ import bio.terra.workspace.service.resource.exception.DuplicateResourceException
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
-import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.bigquery.model.Dataset;
+import com.google.api.services.compute.Compute;
+import com.google.api.services.compute.model.AcceleratorConfig;
 import com.google.api.services.iam.v1.model.TestIamPermissionsRequest;
 import com.google.api.services.iam.v1.model.TestIamPermissionsResponse;
 import com.google.api.services.notebooks.v1.model.Instance;
 import com.google.cloud.storage.BucketInfo;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -120,14 +121,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   /** The default GCP location to create notebooks for this test. */
   private static final String DEFAULT_NOTEBOOK_LOCATION = "us-east1-b";
 
-  private static final String DEST_DATASET_NAME = TestUtils.appendRandomNumber("dest_dataset_name");
-
-  private static final String DEST_BUCKET_DESC =
-      "A bucket cloned individually into the same workspace.";
-  private static final String DEST_BUCKET_NAME =
-      "cloned-bucket-" + UUID.randomUUID().toString().toLowerCase();
-  private static final String DEST_BUCKET_LOCATION = "US-EAST1";
-
   // Store workspaceId instead of workspace so that for local development, one can easily use a
   // previously created workspace.
   private UUID workspaceId;
@@ -136,7 +129,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Autowired private CliConfiguration cliConfiguration;
   @Autowired private ControlledResourceService controlledResourceService;
-  @Autowired private ReferencedResourceService referencedResourceService;
   @Autowired private CrlService crlService;
   @Autowired private FeatureConfiguration features;
   @Autowired private GcpCloudContextService gcpCloudContextService;
@@ -204,7 +196,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   /** After running all tests, delete the shared workspace. */
   @AfterAll
-  private void cleanUp() {
+  public void cleanUp() {
     user = userAccessUtils.defaultUser();
     Workspace workspace = workspaceService.getWorkspace(workspaceId);
     workspaceService.deleteWorkspace(workspace, user.getAuthenticatedRequest());
@@ -260,8 +252,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     InstanceName instanceName =
         resource.toInstanceName(gcpCloudContextService.getRequiredGcpProject(workspaceId));
-    Instance instance =
-        crlService.getAIPlatformNotebooksCow().instances().get(instanceName).execute();
+    Instance instance = crlGetInstance(instanceName);
 
     // Test that the user has permissions from WRITER roles on the notebooks instance. Only notebook
     // instance level permissions can be checked on the notebook instance test IAM permissions
@@ -439,11 +430,21 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  void updateAiNotebookResourceDo() throws InterruptedException, IOException {
+  void updateAiNotebookResourceDo()
+      throws InterruptedException, IOException, GeneralSecurityException {
     var instanceId = "update-ai-notebook-instance-do";
     var name = "update-ai-notebook-instance-do-name";
     var newName = "update-ai-notebook-instance-do-name-NEW";
     var newDescription = "new description for update-ai-notebook-instance-do-name-NEW";
+    var newMachineType = "n1-standard-1";
+    var newGpuType = "NVIDIA_TESLA_P100";
+    int newGpuCount = 2;
+    int retryWaitSeconds = 30;
+    int retryCount = 30;
+
+    AcceleratorConfig newAcceleratorConfig = new AcceleratorConfig();
+    newAcceleratorConfig.setAcceleratorType(newGpuType);
+    newAcceleratorConfig.setAcceleratorCount(newGpuCount);
 
     var creationParameters =
         ControlledResourceFixtures.defaultNotebookCreationParameters()
@@ -467,13 +468,39 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .getControlledResource(workspaceId, resource.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
 
-    var instanceFromCloud =
-        crlService
-            .getAIPlatformNotebooksCow()
-            .instances()
-            .get(fetchedInstance.toInstanceName(projectId))
-            .execute();
+    var instanceFromCloud = crlGetInstance(fetchedInstance.toInstanceName(projectId));
     var metadata = instanceFromCloud.getMetadata();
+
+    // When the instance is running. Updating with cpu and gpu is expected to fail.
+    jobService.setFlightDebugInfoForTest(
+        FlightDebugInfo.newBuilder().lastStepFailure(true).build());
+    assertThrows(
+        InvalidResultStateException.class,
+        () ->
+            controlledResourceService.updateAiNotebookInstance(
+                fetchedInstance,
+                AI_NOTEBOOK_UPDATE_PARAMETERS,
+                newName,
+                newDescription,
+                newMachineType,
+                newAcceleratorConfig,
+                user.getAuthenticatedRequest()));
+
+    Compute computeService = GcpCloudUtils.createComputeService();
+    computeService.instances().stop(projectId, resource.getLocation(), instanceId).execute();
+
+    // Wait for the instance to finish stopping
+    for (int i = 0; i < retryCount; i++) {
+      var instance = crlGetInstance(fetchedInstance.toInstanceName(projectId));
+      var actualState = instance.getState();
+
+      if (actualState.equals("STOPPED")) {
+        break;
+      }
+      logger.warn(
+          "Instance state is not ready yet: {}. Retry {} of {}", actualState, i + 1, retryCount);
+      TimeUnit.SECONDS.sleep(retryWaitSeconds);
+    }
 
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(
@@ -493,6 +520,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         AI_NOTEBOOK_UPDATE_PARAMETERS,
         newName,
         newDescription,
+        newMachineType,
+        newAcceleratorConfig,
         user.getAuthenticatedRequest());
 
     ControlledAiNotebookInstanceResource updatedInstance =
@@ -503,12 +532,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertEquals(newName, updatedInstance.getName());
     assertEquals(newDescription, updatedInstance.getDescription());
     // cloud notebook attributes are updated.
-    var updatedInstanceFromCloud =
-        crlService
-            .getAIPlatformNotebooksCow()
-            .instances()
-            .get(updatedInstance.toInstanceName(projectId))
-            .execute();
+    var updatedInstanceFromCloud = crlGetInstance(updatedInstance.toInstanceName(projectId));
     // Merge metadata from AI_NOTEBOOK_UPDATE_PARAMETERS to metadata.
     AI_NOTEBOOK_UPDATE_PARAMETERS
         .getMetadata()
@@ -520,12 +544,14 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
       assertEquals(
           entrySet.getValue(), updatedInstanceFromCloud.getMetadata().get(entrySet.getKey()));
     }
+
+    GcpCloudUtils.assertNotebookCpuGpu(
+        projectId, updatedInstance.getLocation(), instanceId, newMachineType, newAcceleratorConfig);
   }
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  void updateAiNotebookResourceDo_nameAndDescriptionOnly()
-      throws InterruptedException, IOException {
+  void updateAiNotebookResourceDo_nameAndDescriptionOnly() throws InterruptedException {
     var instanceId = "update-ai-notebook-instance-do-name-and-description-only";
     var name = "update-ai-notebook-instance-do-name-and-description-only";
     var newName = "update-ai-notebook-instance-do-name-and-description-only-NEW";
@@ -554,14 +580,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .getControlledResource(workspaceId, resource.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
 
-    var instanceFromCloud =
-        crlService
-            .getAIPlatformNotebooksCow()
-            .instances()
-            .get(fetchedInstance.toInstanceName(projectId))
-            .execute();
-    var metadata = instanceFromCloud.getMetadata();
-
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(
         RetrieveControlledResourceMetadataStep.class.getName(),
@@ -576,7 +594,13 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
     controlledResourceService.updateAiNotebookInstance(
-        fetchedInstance, null, newName, newDescription, user.getAuthenticatedRequest());
+        fetchedInstance,
+        null,
+        newName,
+        newDescription,
+        /*machineTyp=*/ null,
+        /*acceleratorConfig=*/ null,
+        user.getAuthenticatedRequest());
 
     ControlledAiNotebookInstanceResource updatedInstance =
         controlledResourceService
@@ -589,11 +613,19 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  void updateAiNotebookResourceUndo() throws InterruptedException, IOException {
+  void updateAiNotebookResourceUndo()
+      throws InterruptedException, IOException, GeneralSecurityException {
     String instanceId = "update-ai-notebook-instance-undo";
     String name = "update-ai-notebook-instance-undo-name";
     String newName = "update-ai-notebook-instance-undo-name-NEW";
     String newDescription = "new description for update-ai-notebook-instance-undo-name-NEW";
+    var newMachineType = "n1-standard-1";
+    var newGpuType = "NVIDIA_TESLA_P100";
+    int newGpuCount = 2;
+
+    AcceleratorConfig newAcceleratorConfig = new AcceleratorConfig();
+    newAcceleratorConfig.setAcceleratorType(newGpuType);
+    newAcceleratorConfig.setAcceleratorCount(newGpuCount);
 
     Map<String, String> prevCustomMetadata = AI_NOTEBOOK_PREV_PARAMETERS.getMetadata();
     var creationParameters =
@@ -640,6 +672,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 AI_NOTEBOOK_UPDATE_PARAMETERS,
                 newName,
                 newDescription,
+                newMachineType,
+                newAcceleratorConfig,
                 user.getAuthenticatedRequest()));
 
     ControlledAiNotebookInstanceResource updatedInstance =
@@ -650,12 +684,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertEquals(resource.getName(), updatedInstance.getName());
     assertEquals(resource.getDescription(), updatedInstance.getDescription());
     // cloud notebook attributes are not updated.
-    var instanceFromCloud =
-        crlService
-            .getAIPlatformNotebooksCow()
-            .instances()
-            .get(updatedInstance.toInstanceName(projectId))
-            .execute();
+    var instanceFromCloud = crlGetInstance(updatedInstance.toInstanceName(projectId));
     Map<String, String> metadataToUpdate = AI_NOTEBOOK_UPDATE_PARAMETERS.getMetadata();
     Map<String, String> currentCloudInstanceMetadata = instanceFromCloud.getMetadata();
     for (var entrySet : metadataToUpdate.entrySet()) {
@@ -663,6 +692,12 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
           prevCustomMetadata.getOrDefault(entrySet.getKey(), ""),
           currentCloudInstanceMetadata.get(entrySet.getKey()));
     }
+    GcpCloudUtils.assertNotebookCpuGpu(
+        projectId,
+        updatedInstance.getLocation(),
+        instanceId,
+        ControlledResourceFixtures.defaultNotebookCreationParameters().getMachineType(),
+        new AcceleratorConfig());
   }
 
   @Test
@@ -696,12 +731,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         controlledResourceService
             .getControlledResource(workspaceId, resource.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
-    var prevInstanceFromCloud =
-        crlService
-            .getAIPlatformNotebooksCow()
-            .instances()
-            .get(fetchedInstance.toInstanceName(projectId))
-            .execute();
+    var prevInstanceFromCloud = crlGetInstance(fetchedInstance.toInstanceName(projectId));
 
     Map<String, String> illegalMetadataToUpdate = new HashMap<>();
     for (var key : ControlledAiNotebookInstanceResource.RESERVED_METADATA_KEYS) {
@@ -715,6 +745,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 new ApiGcpAiNotebookUpdateParameters().metadata(illegalMetadataToUpdate),
                 newName,
                 newDescription,
+                /*machineTyp=*/ null, /*acceleratorConfig*/
+                null,
                 user.getAuthenticatedRequest()));
 
     ControlledAiNotebookInstanceResource updatedInstance =
@@ -725,12 +757,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertEquals(resource.getName(), updatedInstance.getName());
     assertEquals(resource.getDescription(), updatedInstance.getDescription());
     // cloud notebook attributes are not updated.
-    var instanceFromCloud =
-        crlService
-            .getAIPlatformNotebooksCow()
-            .instances()
-            .get(updatedInstance.toInstanceName(projectId))
-            .execute();
+    var instanceFromCloud = crlGetInstance(updatedInstance.toInstanceName(projectId));
     Map<String, String> currentCloudInstanceMetadata = instanceFromCloud.getMetadata();
     Map<String, String> prevCloudInstanceMetadata = prevInstanceFromCloud.getMetadata();
     for (var entrySet : illegalMetadataToUpdate.entrySet()) {
@@ -760,7 +787,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  void createAiNotebookInstanceNoWriterRoleThrowsBadRequest() throws Exception {
+  void createAiNotebookInstanceNoWriterRoleThrowsBadRequest() {
     String instanceId = "create-ai-notebook-instance-shared";
 
     ApiGcpAiNotebookInstanceCreationParameters creationParameters =
@@ -791,7 +818,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  void deleteAiNotebookInstanceDo() throws Exception {
+  void deleteAiNotebookInstanceDo() {
     ControlledAiNotebookInstanceResource resource =
         createDefaultPrivateAiNotebookInstance("delete-ai-notebook-instance-do", user);
     InstanceName instanceName = resource.toInstanceName(projectId);
@@ -817,7 +844,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  void deleteAiNotebookInstanceUndoIsDismalFailure() throws Exception {
+  void deleteAiNotebookInstanceUndoIsDismalFailure() {
     ControlledAiNotebookInstanceResource resource =
         createDefaultPrivateAiNotebookInstance("delete-ai-notebook-instance-undo", user);
 
@@ -969,7 +996,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  void createBqDatasetUndo() throws Exception {
+  void createBqDatasetUndo() {
     String datasetId = ControlledResourceFixtures.uniqueDatasetId();
     String location = "us-central1";
 
@@ -1014,7 +1041,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  void deleteBqDatasetDo() throws Exception {
+  void deleteBqDatasetDo() {
     String datasetId = ControlledResourceFixtures.uniqueDatasetId();
     String location = "us-central1";
 
@@ -1058,7 +1085,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  void deleteBqDatasetUndo() throws Exception {
+  void deleteBqDatasetUndo() {
     String datasetId = ControlledResourceFixtures.uniqueDatasetId();
     String location = "us-central1";
 
@@ -1348,7 +1375,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  void createGcsBucketDo_invalidBucketName_throwsBadRequestException() throws Exception {
+  void createGcsBucketDo_invalidBucketName_throwsBadRequestException() {
     ControlledGcsBucketResource resource =
         ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceId)
             .bucketName("192.168.5.4")
@@ -1366,7 +1393,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  void createGcsBucketUndo() throws Exception {
+  void createGcsBucketUndo() {
     ControlledGcsBucketResource resource =
         ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceId).build();
 
@@ -1515,8 +1542,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  void updateGcsBucketDo() throws Exception {
-    Workspace workspace = workspaceService.getWorkspace(workspaceId);
+  void updateGcsBucketDo() {
     ControlledGcsBucketResource createdBucket = createDefaultSharedGcsBucket(user);
 
     Map<String, StepStatus> retrySteps = new HashMap<>();
@@ -1553,8 +1579,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  void updateGcsBucketUndo() throws Exception {
-    Workspace workspace = workspaceService.getWorkspace(workspaceId);
+  void updateGcsBucketUndo() {
     ControlledGcsBucketResource createdBucket = createDefaultSharedGcsBucket(user);
 
     Map<String, StepStatus> retrySteps = new HashMap<>();
@@ -1622,21 +1647,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     return createdBucket;
   }
 
-  private ControlledBigQueryDatasetResource createBqDataset() {
-    final ControlledBigQueryDatasetResource resourceToCreate =
-        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId).build();
-    final ControlledBigQueryDatasetResource createdResource =
-        controlledResourceService
-            .createControlledResourceSync(
-                resourceToCreate,
-                null,
-                user.getAuthenticatedRequest(),
-                ControlledResourceFixtures.defaultBigQueryDatasetCreationParameters())
-            .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
-    assertEquals(resourceToCreate, createdResource);
-    return createdResource;
-  }
-
   /**
    * Lookup the location and expiration times stored on the cloud for a BigQuery dataset, and assert
    * they match the given values.
@@ -1665,5 +1675,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
       assertEquals(
           defaultPartitionExpirationSec * 1000, cloudDataset.getDefaultPartitionExpirationMs());
     }
+  }
+
+  private Instance crlGetInstance(InstanceName instanceName) throws IOException {
+    return crlService.getAIPlatformNotebooksCow().instances().get(instanceName).execute();
   }
 }
