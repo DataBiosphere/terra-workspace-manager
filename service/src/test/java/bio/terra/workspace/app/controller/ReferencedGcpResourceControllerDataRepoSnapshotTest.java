@@ -96,7 +96,8 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotTest extends BaseCon
         workspaceId,
         sourceResourceName,
         sourceInstanceName,
-        sourceSnapshot);
+        sourceSnapshot,
+        userAccessUtils.getDefaultUserEmail());
 
     // Assert resource returned by get
     ApiDataRepoSnapshotResource gotResource =
@@ -154,6 +155,53 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotTest extends BaseCon
   }
 
   @Test
+  public void clone_writerHasWriteAccessOnDestWorkspace_succeeds() throws Exception {
+    mockMvcUtils.grantRole(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId,
+        WsmIamRole.READER,
+        userAccessUtils.getSecondUserEmail());
+    mockMvcUtils.grantRole(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId2,
+        WsmIamRole.WRITER,
+        userAccessUtils.getSecondUserEmail());
+
+    ApiDataRepoSnapshotResource clonedResource =
+        mockMvcUtils.cloneReferencedDataRepoSnapshot(
+            userAccessUtils.secondUserAuthRequest(),
+            /*sourceWorkspaceId=*/ workspaceId,
+            /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
+            /*destWorkspaceId=*/ workspaceId2,
+            ApiCloningInstructionsEnum.REFERENCE,
+            /*destResourceName=*/ null);
+    assertClonedDataRepoSnapshot(
+        clonedResource,
+        ApiStewardshipType.REFERENCED,
+        ApiCloningInstructionsEnum.NOTHING,
+        workspaceId2,
+        sourceResourceName,
+        sourceInstanceName,
+        sourceSnapshot,
+        userAccessUtils.getSecondUserEmail());
+
+    mockMvcUtils.removeRole(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId,
+        WsmIamRole.READER,
+        userAccessUtils.getSecondUserEmail());
+    mockMvcUtils.removeRole(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId2,
+        WsmIamRole.WRITER,
+        userAccessUtils.getSecondUserEmail());
+    mockMvcUtils.deleteDataRepoSnapshot(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId2,
+        clonedResource.getMetadata().getResourceId());
+  }
+
+  @Test
   void clone_copyNothing() throws Exception {
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
     ApiDataRepoSnapshotResource clonedResource =
@@ -194,7 +242,8 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotTest extends BaseCon
         workspaceId,
         destResourceName,
         sourceInstanceName,
-        sourceSnapshot);
+        sourceSnapshot,
+        userAccessUtils.getDefaultUserEmail());
 
     // Assert resource returned by get
     final ApiDataRepoSnapshotResource gotResource =
@@ -226,7 +275,8 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotTest extends BaseCon
         workspaceId2,
         destResourceName,
         sourceInstanceName,
-        sourceSnapshot);
+        sourceSnapshot,
+        userAccessUtils.getDefaultUserEmail());
 
     // Assert resource returned by get
     final ApiDataRepoSnapshotResource gotResource =
@@ -293,7 +343,8 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotTest extends BaseCon
       UUID expectedWorkspaceId,
       String expectedResourceName,
       String expectedInstanceName,
-      String expectedSnapshot) {
+      String expectedSnapshot,
+      String expectedCreatedBy) {
     mockMvcUtils.assertResourceMetadata(
         actualResource.getMetadata(),
         /*expectedCloudPlatform=*/ null,
@@ -302,7 +353,8 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotTest extends BaseCon
         expectedCloningInstructions,
         expectedWorkspaceId,
         expectedResourceName,
-        /*expectedResourceLineage=*/ new ApiResourceLineage());
+        /*expectedResourceLineage=*/ new ApiResourceLineage(),
+        expectedCreatedBy);
 
     assertEquals(expectedInstanceName, actualResource.getAttributes().getInstanceName());
     assertEquals(expectedSnapshot, actualResource.getAttributes().getSnapshot());
@@ -315,7 +367,8 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotTest extends BaseCon
       UUID expectedWorkspaceId,
       String expectedResourceName,
       String expectedInstanceName,
-      String expectedSnapshot) {
+      String expectedSnapshot,
+      String expectedCreatedBy) {
     mockMvcUtils.assertClonedResourceMetadata(
         actualResource.getMetadata(),
         /*expectedCloudPlatform=*/ null,
@@ -325,7 +378,8 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotTest extends BaseCon
         expectedWorkspaceId,
         expectedResourceName,
         /*sourceWorkspaceId=*/ workspaceId,
-        /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId());
+        /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
+        expectedCreatedBy);
 
     assertEquals(expectedInstanceName, actualResource.getAttributes().getInstanceName());
     assertEquals(expectedSnapshot, actualResource.getAttributes().getSnapshot());

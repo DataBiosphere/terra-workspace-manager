@@ -94,7 +94,8 @@ public class ReferencedGcpResourceControllerGitRepoTest extends BaseConnectedTes
         ApiCloningInstructionsEnum.NOTHING,
         workspaceId,
         sourceResourceName,
-        sourceGitRepoUrl);
+        sourceGitRepoUrl,
+        userAccessUtils.getDefaultUserEmail());
 
     // Assert resource returned by get
     ApiGitRepoResource gotResource =
@@ -152,6 +153,52 @@ public class ReferencedGcpResourceControllerGitRepoTest extends BaseConnectedTes
   }
 
   @Test
+  public void clone_secondUserHasWriteAccessOnDestWorkspace_succeeds() throws Exception {
+    mockMvcUtils.grantRole(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId,
+        WsmIamRole.READER,
+        userAccessUtils.getSecondUserEmail());
+    mockMvcUtils.grantRole(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId2,
+        WsmIamRole.WRITER,
+        userAccessUtils.getSecondUserEmail());
+
+    ApiGitRepoResource clonedResource =
+        mockMvcUtils.cloneReferencedGitRepo(
+            userAccessUtils.secondUserAuthRequest(),
+            /*sourceWorkspaceId=*/ workspaceId,
+            /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
+            /*destWorkspaceId=*/ workspaceId2,
+            ApiCloningInstructionsEnum.REFERENCE,
+            /*destResourceName=*/ null);
+
+    assertClonedGitRepo(
+        clonedResource,
+        ApiStewardshipType.REFERENCED,
+        ApiCloningInstructionsEnum.NOTHING,
+        workspaceId2,
+        sourceResourceName,
+        sourceGitRepoUrl,
+        userAccessUtils.getSecondUserEmail());
+    mockMvcUtils.removeRole(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId,
+        WsmIamRole.READER,
+        userAccessUtils.getSecondUserEmail());
+    mockMvcUtils.removeRole(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId2,
+        WsmIamRole.WRITER,
+        userAccessUtils.getSecondUserEmail());
+    mockMvcUtils.deleteReferencedGcsBucket(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId2,
+        clonedResource.getMetadata().getResourceId());
+  }
+
+  @Test
   void clone_copyNothing() throws Exception {
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
     ApiGitRepoResource clonedResource =
@@ -191,7 +238,8 @@ public class ReferencedGcpResourceControllerGitRepoTest extends BaseConnectedTes
         ApiCloningInstructionsEnum.NOTHING,
         workspaceId,
         destResourceName,
-        sourceGitRepoUrl);
+        sourceGitRepoUrl,
+        userAccessUtils.getDefaultUserEmail());
 
     // Assert resource returned by get
     final ApiGitRepoResource gotResource =
@@ -222,7 +270,8 @@ public class ReferencedGcpResourceControllerGitRepoTest extends BaseConnectedTes
         ApiCloningInstructionsEnum.NOTHING,
         workspaceId2,
         destResourceName,
-        sourceGitRepoUrl);
+        sourceGitRepoUrl,
+        userAccessUtils.getDefaultUserEmail());
 
     // Assert resource returned by get
     final ApiGitRepoResource gotResource =
@@ -288,7 +337,8 @@ public class ReferencedGcpResourceControllerGitRepoTest extends BaseConnectedTes
       ApiCloningInstructionsEnum expectedCloningInstructions,
       UUID expectedWorkspaceId,
       String expectedResourceName,
-      String expectedGitRepoUrl) {
+      String expectedGitRepoUrl,
+      String expectedCreatedBy) {
     mockMvcUtils.assertResourceMetadata(
         actualResource.getMetadata(),
         /*expectedCloudPlatform=*/ null,
@@ -297,7 +347,8 @@ public class ReferencedGcpResourceControllerGitRepoTest extends BaseConnectedTes
         expectedCloningInstructions,
         expectedWorkspaceId,
         expectedResourceName,
-        /*expectedResourceLineage=*/ new ApiResourceLineage());
+        /*expectedResourceLineage=*/ new ApiResourceLineage(),
+        expectedCreatedBy);
 
     assertEquals(expectedGitRepoUrl, actualResource.getAttributes().getGitRepoUrl());
   }
@@ -308,7 +359,8 @@ public class ReferencedGcpResourceControllerGitRepoTest extends BaseConnectedTes
       ApiCloningInstructionsEnum expectedCloningInstructions,
       UUID expectedWorkspaceId,
       String expectedResourceName,
-      String expectedGitRepoUrl) {
+      String expectedGitRepoUrl,
+      String expectedCreatedBy) {
     mockMvcUtils.assertClonedResourceMetadata(
         actualResource.getMetadata(),
         /*expectedCloudPlatform=*/ null,
@@ -318,7 +370,8 @@ public class ReferencedGcpResourceControllerGitRepoTest extends BaseConnectedTes
         expectedWorkspaceId,
         expectedResourceName,
         /*sourceWorkspaceId=*/ workspaceId,
-        /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId());
+        /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
+        expectedCreatedBy);
 
     assertEquals(expectedGitRepoUrl, actualResource.getAttributes().getGitRepoUrl());
   }
