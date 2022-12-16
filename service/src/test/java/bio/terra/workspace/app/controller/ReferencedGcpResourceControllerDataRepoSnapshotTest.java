@@ -184,7 +184,8 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotTest extends BaseCon
         sourceResourceName,
         sourceInstanceName,
         sourceSnapshot,
-        userAccessUtils.getSecondUserEmail());
+        /*expectedCreatedBy=*/ userAccessUtils.getSecondUserEmail(),
+        /*expectedLastUpdatedBy=*/ userAccessUtils.getSecondUserEmail());
 
     mockMvcUtils.removeRole(
         userAccessUtils.defaultUserAuthRequest(),

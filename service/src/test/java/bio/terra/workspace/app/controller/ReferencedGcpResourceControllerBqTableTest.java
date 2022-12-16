@@ -194,7 +194,8 @@ public class ReferencedGcpResourceControllerBqTableTest extends BaseConnectedTes
         projectId,
         sourceDatasetName,
         sourceTableId,
-        userAccessUtils.getSecondUserEmail());
+        /*expectedCreatedBy=*/ userAccessUtils.getSecondUserEmail(),
+        /*expectedLastUpdatedBy=*/ userAccessUtils.getSecondUserEmail());
     mockMvcUtils.removeRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,

@@ -181,7 +181,8 @@ public class ReferencedGcpResourceControllerGcsBucketTest extends BaseConnectedT
         workspaceId2,
         sourceResourceName,
         sourceBucketName,
-        userAccessUtils.getSecondUserEmail());
+        /*expectedCreatedBy=*/ userAccessUtils.getSecondUserEmail(),
+        /*expectedLastUpdatedBy=*/ userAccessUtils.getSecondUserEmail());
     mockMvcUtils.removeRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,

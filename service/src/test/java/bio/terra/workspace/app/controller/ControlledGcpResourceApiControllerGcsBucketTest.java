@@ -277,7 +277,8 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
         destResourceName,
         ControlledGcsBucketHandler.getHandler()
             .generateCloudName(workspaceId2, "cloned-" + destResourceName),
-        userAccessUtils.getSecondUserEmail());
+        /*expectedCreatedBy=*/ userAccessUtils.getSecondUserEmail(),
+        /*expectedLastUpdatedBy=*/ userAccessUtils.getSecondUserEmail());
 
     mockMvcUtils.removeRole(
         userAccessUtils.defaultUserAuthRequest(),

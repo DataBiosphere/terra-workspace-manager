@@ -257,7 +257,8 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         sourceResourceName,
         projectId2,
         sourceDatasetName,
-        userAccessUtils.getSecondUserEmail());
+        /*expectedCreatedBy=*/ userAccessUtils.getSecondUserEmail(),
+        /*expectedLastUpdatedBy=*/ userAccessUtils.getSecondUserEmail());
 
     mockMvcUtils.removeRole(
         userAccessUtils.defaultUserAuthRequest(),
