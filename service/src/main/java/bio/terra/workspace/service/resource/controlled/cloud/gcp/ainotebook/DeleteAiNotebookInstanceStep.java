@@ -49,7 +49,7 @@ public class DeleteAiNotebookInstanceStep implements Step {
         logger.info("Notebook instance {} already deleted", instanceName.formatName());
         return StepResult.getStepResultSuccess();
       }
-      GcpUtils.pollUntilSuccess(
+      GcpUtils.pollAndRetry(
           notebooks.operations().operationCow(rawOperation.get()),
           Duration.ofSeconds(20),
           Duration.ofMinutes(10));

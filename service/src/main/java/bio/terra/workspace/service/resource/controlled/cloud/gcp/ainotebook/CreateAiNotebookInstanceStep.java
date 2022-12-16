@@ -141,7 +141,7 @@ public class CreateAiNotebookInstanceStep implements Step {
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
       }
 
-      GcpUtils.pollUntilSuccess(creationOperation, Duration.ofSeconds(20), Duration.ofMinutes(12));
+      GcpUtils.pollAndRetry(creationOperation, Duration.ofSeconds(20), Duration.ofMinutes(12));
     } catch (IOException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
@@ -294,7 +294,7 @@ public class CreateAiNotebookInstanceStep implements Step {
         }
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
       }
-      GcpUtils.pollUntilSuccess(deletionOperation, Duration.ofSeconds(20), Duration.ofMinutes(12));
+      GcpUtils.pollAndRetry(deletionOperation, Duration.ofSeconds(20), Duration.ofMinutes(12));
     } catch (IOException | RetryException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
