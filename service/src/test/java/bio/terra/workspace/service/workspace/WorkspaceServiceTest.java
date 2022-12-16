@@ -72,11 +72,11 @@ import bio.terra.workspace.service.resource.controlled.ControlledResourceService
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.AwaitCloneAllResourcesFlightStep;
-import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.AwaitCreateGcpContextFlightStep;
+import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.AwaitCreateCloudContextFlightStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneAllFoldersStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.FindResourcesToCloneStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.LaunchCloneAllResourcesFlightStep;
-import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.LaunchCreateGcpContextFlightStep;
+import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.LaunchCreateCloudContextFlightStep;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
@@ -848,7 +848,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     final String destinationLocation = "us-east1";
     final String cloneJobId =
         workspaceService.cloneWorkspace(
-            sourceWorkspace, USER_REQUEST, destinationLocation, destinationWorkspace);
+            sourceWorkspace, USER_REQUEST, destinationLocation, destinationWorkspace, null);
     jobService.waitForJob(cloneJobId);
     final JobResultOrException<ApiClonedWorkspace> cloneResultOrException =
         jobService.retrieveJobResult(cloneJobId, ApiClonedWorkspace.class);
@@ -964,9 +964,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     retrySteps.put(CloneAllFoldersStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(FindResourcesToCloneStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
-        LaunchCreateGcpContextFlightStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+        LaunchCreateCloudContextFlightStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
-        AwaitCreateGcpContextFlightStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+        AwaitCreateCloudContextFlightStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
         LaunchCloneAllResourcesFlightStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
@@ -981,7 +981,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         InvalidResultStateException.class,
         () ->
             workspaceService.cloneWorkspace(
-                sourceWorkspace, USER_REQUEST, destinationLocation, destinationWorkspace));
+                sourceWorkspace, USER_REQUEST, destinationLocation, destinationWorkspace, null));
     assertThrows(
         WorkspaceNotFoundException.class,
         () -> workspaceService.getWorkspace(destinationWorkspace.getWorkspaceId()));

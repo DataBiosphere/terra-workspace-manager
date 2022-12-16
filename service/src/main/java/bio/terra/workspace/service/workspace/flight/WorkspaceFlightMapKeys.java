@@ -51,7 +51,9 @@ public final class WorkspaceFlightMapKeys {
     public static final String CLONED_RESOURCE_DEFINITION = "clonedResourceDefinition";
     public static final String CLONING_INSTRUCTIONS = "cloningInstructions";
     public static final String CONTROL_PLANE_PROJECT_ID = "controlPlaneProjectId";
-    public static final String CREATE_CLOUD_CONTEXT_FLIGHT_ID = "createCloudContextFlightId";
+    public static final String CREATE_GCP_CLOUD_CONTEXT_FLIGHT_ID = "createGcpCloudContextFlightId";
+    public static final String CREATE_AZURE_CLOUD_CONTEXT_FLIGHT_ID =
+        "createAzureCloudContextFlightId";
     public static final String DESTINATION_BUCKET_NAME = "destinationBucketName";
     public static final String DESTINATION_CLONE_INPUTS = "destinationCloneInputs";
     public static final String DESTINATION_DATASET_NAME = "destinationDatasetName";

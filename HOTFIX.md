@@ -20,14 +20,14 @@ branch name for the `branch` input.
 
 ## Delivering The Hotfix
 
-1) `gcloud auth login` as an account that has push access to gcr.io/terra-kernel-k8s, likely your @broadinstitute.org account
+1) `gcloud auth login` as an account that has push access to gcr.io/broad-dsp-gcr-public, likely your @broadinstitute.org account
 
 2) Run `gcloud auth configure-docker`
 
 3) Build and push the image that you would like to use for your hotfix:
 
 ```sh
-./gradlew jib --image=gcr.io/terra-kernel-k8s/terra-workspace-manager:hotfix-<DATE>
+./gradlew jib --image=gcr.io/broad-dsp-gcr-public/terra-workspace-manager:hotfix-<DATE>
 ```
 
 4) Follow Step 1 in terra-helmfile/[HOTFIX.md](https://github.com/broadinstitute/terra-helmfile/blob/master/docs/HOTFIX.md)
