@@ -11,6 +11,7 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
+import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.WsmCloneResourceResult;
@@ -24,20 +25,23 @@ import javax.annotation.Nullable;
 
 public class CloneReferencedResourceStep implements Step {
 
+  private final AuthenticatedUserRequest userRequest;
   private final SamService samService;
-  private final ResourceDao resourceDao;
+  private final ReferencedResourceService referencedResourceService;
   private final ReferencedResource resource;
   private final UUID destinationResourceId;
   private final UUID destinationFolderId;
 
   public CloneReferencedResourceStep(
+      AuthenticatedUserRequest userRequest,
       SamService samService,
-      ResourceDao resourceDao,
+      ReferencedResourceService referencedResourceService,
       ReferencedResource resource,
       UUID destinationResourceId,
       @Nullable UUID destinationFolderId) {
+    this.userRequest = userRequest;
     this.samService = samService;
-    this.resourceDao = resourceDao;
+    this.referencedResourceService = referencedResourceService;
     this.resource = resource;
     this.destinationResourceId = destinationResourceId;
     this.destinationFolderId = destinationFolderId;
@@ -62,11 +66,6 @@ public class CloneReferencedResourceStep implements Step {
               .getInputParameters()
               .get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
 
-      AuthenticatedUserRequest userRequest =
-          FlightUtils.getRequired(
-              context.getInputParameters(),
-              JobMapKeys.AUTH_USER_INFO.getKeyName(),
-              AuthenticatedUserRequest.class);
       ReferencedResource destinationResource =
           resource
               .buildReferencedClone(
@@ -91,7 +90,7 @@ public class CloneReferencedResourceStep implements Step {
           .put(ControlledResourceKeys.DESTINATION_REFERENCED_RESOURCE, destinationResource);
 
       try {
-        resourceDao.createReferencedResource(destinationResource);
+        referencedResourceService.createReferenceResourceForClone(destinationResource.castToReferencedResource(), userRequest);
         cloneDetails.setResult(WsmCloneResourceResult.SUCCEEDED);
       } catch (Exception e) {
         cloneDetails.setResult(WsmCloneResourceResult.FAILED).setErrorMessage(e.getMessage());
@@ -134,7 +133,7 @@ public class CloneReferencedResourceStep implements Step {
               .getWorkingMap()
               .get(
                   ControlledResourceKeys.DESTINATION_REFERENCED_RESOURCE, ReferencedResource.class);
-      resourceDao.deleteResource(resource.getWorkspaceId(), resource.getResourceId());
+      referencedResourceService.deleteReferenceResourceForResourceType(resource.getWorkspaceId(), resource.getResourceId(), resource.getResourceType(), userRequest);
     }
 
     return StepResult.getStepResultSuccess();
