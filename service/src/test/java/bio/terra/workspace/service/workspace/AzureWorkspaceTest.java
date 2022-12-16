@@ -42,6 +42,7 @@ import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -99,6 +100,8 @@ public class AzureWorkspaceTest extends BaseAzureConnectedTest {
   }
 
   @Test
+  @Disabled
+  // TODO: TOAZ-286 - problem with LZ configuration
   void cloneAzureWorkspaceWithContainer() throws InterruptedException {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     Mockito.when(mockSamService.getUserEmailFromSamAndRethrowOnInterrupt(any()))
