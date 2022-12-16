@@ -116,11 +116,7 @@ public class CloneControlledAzureStorageContainerResourceFlight extends Flight {
       RetryRule cloudRetry = RetryRules.cloud();
       addStep(
           new GetSharedStorageAccountStep(
-              flightBeanBag.getAzureConfig(),
-              flightBeanBag.getCrlService(),
-              destinationWorkspaceId,
-              flightBeanBag.getLandingZoneApiDispatch(),
-              userRequest),
+              destinationWorkspaceId, flightBeanBag.getLandingZoneApiDispatch(), userRequest),
           cloudRetry);
       addStep(
           new CopyAzureStorageContainerDefinitionStep(

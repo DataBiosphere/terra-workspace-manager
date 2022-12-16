@@ -316,6 +316,10 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         toCommonFields(
             workspaceUuid,
             body.getCommon(),
+            // azure storage container's region is determined by the storage account id associated
+            // with it. The storage account maybe specified by the user in the creation parameters
+            // or we will use the shared storage account from the landing zone. Therefore, the
+            // region will be set later during the storage container creation flight.
             /*region=*/ null,
             userRequest,
             WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
