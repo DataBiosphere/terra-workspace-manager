@@ -7,6 +7,7 @@ import bio.terra.workspace.common.utils.AzureVmUtils;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.generated.model.*;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.ControlledAzureBatchPoolResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
@@ -24,6 +25,7 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResourceF
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import com.azure.resourcemanager.batch.models.DeploymentConfiguration;
 import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.google.api.client.util.DateTime;
 import com.google.api.services.bigquery.model.Dataset;
@@ -510,6 +512,29 @@ public class ControlledResourceFixtures {
         .storageAccountId(accountResourceId)
         .storageContainerName(containerName)
         .build();
+  }
+
+  public static ControlledAzureBatchPoolResource.Builder getAzureBatchPoolResourceBuilder(
+      UUID batchPoolId,
+      String batchPoolDisplayName,
+      String vmSize,
+      DeploymentConfiguration deploymentConfiguration,
+      String resourceDescription) {
+    return ControlledAzureBatchPoolResource.builder()
+        .common(
+            makeDefaultControlledResourceFieldsBuilder()
+                .workspaceUuid(WORKSPACE_ID)
+                .resourceId(batchPoolId)
+                .name(batchPoolDisplayName)
+                .description(resourceDescription)
+                .cloningInstructions(CloningInstructions.COPY_NOTHING)
+                .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                .build())
+        .id(batchPoolId.toString())
+        .displayName(batchPoolDisplayName)
+        .vmSize(vmSize)
+        .deploymentConfiguration(deploymentConfiguration);
   }
 
   public static ControlledAzureVmResource getAzureVm(

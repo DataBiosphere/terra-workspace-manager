@@ -25,6 +25,7 @@ import com.azure.core.credential.TokenCredential;
 import com.azure.core.management.AzureEnvironment;
 import com.azure.core.management.profile.AzureProfile;
 import com.azure.identity.ClientSecretCredentialBuilder;
+import com.azure.resourcemanager.batch.BatchManager;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.monitor.MonitorManager;
 import com.azure.resourcemanager.msi.MsiManager;
@@ -181,6 +182,17 @@ public class CrlService {
     final var azureProfile = getAzureProfile(azureCloudContext);
     return bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
             clientConfig, StorageManager.configure())
+        .authenticate(azureCreds, azureProfile);
+  }
+
+  public BatchManager getBatchManager(
+      AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
+    assertCrlInUse();
+    final var azureCreds = getManagedAppCredentials(azureConfig);
+    final var azureProfile = getAzureProfile(azureCloudContext);
+
+    return bio.terra.cloudres.azure.resourcemanager.batch.Defaults.crlConfigure(
+            clientConfig, BatchManager.configure())
         .authenticate(azureCreds, azureProfile);
   }
 

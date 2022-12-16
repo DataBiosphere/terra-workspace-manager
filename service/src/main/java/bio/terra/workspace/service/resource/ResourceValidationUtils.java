@@ -110,6 +110,10 @@ public class ResourceValidationUtils {
   public static final Pattern AZURE_RELAY_NAMESPACE_PATTERN =
       Pattern.compile("^[a-zA-Z0-9][a-zA-Z0-9-]{0,78}[a-zA-Z0-9]$");
 
+  /** Batch Pool id must be -64 characters, using letters, numbers, dashes, and underscores */
+  public static final Pattern AZURE_BATCH_POOL_ID_VALIDATION_PATTERN =
+      Pattern.compile("^[-_a-zA-Z0-9]{0,63}$");
+
   // An object named "." or ".." is nearly impossible for a user to delete.
   private static final ImmutableList<String> DISALLOWED_OBJECT_NAMES = ImmutableList.of(".", "..");
 
@@ -125,6 +129,7 @@ public class ResourceValidationUtils {
   private static final String GOOG_PREFIX = "goog";
   private static final ImmutableList<String> GOOGLE_NAMES = ImmutableList.of("google", "g00gle");
   private static final int MAX_RESOURCE_DESCRIPTION_NAME = 2048;
+  private static final int MAX_BATCH_POOL_DISPLAY_NAME = 1024;
 
   private final GitRepoReferencedResourceConfiguration gitRepoReferencedResourceConfiguration;
 
@@ -310,6 +315,14 @@ public class ResourceValidationUtils {
     }
   }
 
+  public static void validateAzureBatchPoolId(String id) {
+    if (!AZURE_BATCH_POOL_ID_VALIDATION_PATTERN.matcher(id).matches()) {
+      logger.warn("Invalid Azure Batch Pool id {}", id);
+      throw new InvalidReferenceException(
+          "Invalid Azure Batch Pool id specified. Name must be 1 to 64 alphanumeric characters or underscores or dashes.");
+    }
+  }
+
   public static void validateAzureCidrBlock(String range) {
     Pattern pattern =
         Pattern.compile(
@@ -389,6 +402,13 @@ public class ResourceValidationUtils {
     if (name != null && name.length() > MAX_RESOURCE_DESCRIPTION_NAME) {
       throw new InvalidNameException(
           "Invalid description specified. Description must be under 2048 characters.");
+    }
+  }
+
+  public static void validateBatchPoolDisplayName(@Nullable String displayName) {
+    if (displayName != null && displayName.length() > MAX_BATCH_POOL_DISPLAY_NAME) {
+      throw new InvalidNameException(
+          "Invalid display name specified. Display name must be under 1024 characters.");
     }
   }
 
