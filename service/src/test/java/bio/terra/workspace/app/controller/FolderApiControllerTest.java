@@ -346,6 +346,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
     assertEquals(newDisplayName, updatedFolder.getDisplayName());
     assertEquals(newDescription, updatedFolder.getDescription());
     assertEquals(secondFolder.getParentFolderId(), updatedFolder.getParentFolderId());
+    assertTrue(updatedFolder.getLastUpdatedDate().isAfter(secondFolder.getLastUpdatedDate()));
   }
 
   @Test
@@ -366,6 +367,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
             /*updateParent=*/ true);
 
     assertNull(updatedFolder.getParentFolderId());
+    assertTrue(updatedFolder.getLastUpdatedDate().isAfter(secondFolder.getLastUpdatedDate()));
   }
 
   @Test
@@ -388,6 +390,9 @@ public class FolderApiControllerTest extends BaseUnitTest {
         /*parentFolderId=*/ null,
         /*updateParent=*/ true,
         HttpStatus.SC_FORBIDDEN);
+
+    ApiFolder gotFolder = getFolder(workspaceId, folder.getId());
+    assertTrue(folder.getLastUpdatedDate().isEqual(gotFolder.getLastUpdatedDate()));
   }
 
   @Test
@@ -405,6 +410,9 @@ public class FolderApiControllerTest extends BaseUnitTest {
         /*parentFolderId=*/ UUID.randomUUID(),
         /*updateParent=*/ false,
         HttpStatus.SC_NOT_FOUND);
+
+    ApiFolder gotFolder = getFolder(workspaceId, folder.getId());
+    assertTrue(folder.getLastUpdatedDate().isEqual(gotFolder.getLastUpdatedDate()));
   }
 
   @Test
@@ -438,6 +446,12 @@ public class FolderApiControllerTest extends BaseUnitTest {
     properties = convertApiPropertyToMap(gotFolder2.getProperties());
     assertEquals("chocolate", properties.get("cake"));
     assertEquals("bar", properties.get("foo"));
+
+    assertTrue(gotFolder.getLastUpdatedDate().isAfter(folder.getLastUpdatedDate()));
+    assertTrue(gotFolder2.getLastUpdatedDate().isAfter(gotFolder.getLastUpdatedDate()));
+    assertEquals(USER_REQUEST.getEmail(), folder.getLastUpdatedBy());
+    assertEquals(USER_REQUEST.getEmail(), gotFolder2.getLastUpdatedBy());
+    assertEquals(USER_REQUEST.getEmail(), gotFolder.getLastUpdatedBy());
   }
 
   @Test
@@ -479,6 +493,8 @@ public class FolderApiControllerTest extends BaseUnitTest {
 
     ApiFolder gotFolder = getFolder(workspaceId, folder.getId());
     assertFalse(convertApiPropertyToMap(gotFolder.getProperties()).containsKey("foo"));
+    assertTrue(gotFolder.getLastUpdatedDate().isAfter(folder.getLastUpdatedDate()));
+    assertEquals(USER_REQUEST.getEmail(), gotFolder.getLastUpdatedBy());
   }
 
   @Test
@@ -503,6 +519,8 @@ public class FolderApiControllerTest extends BaseUnitTest {
 
     deleteFolderPropertiesExpectCode(
         workspaceId, folder.getId(), List.of("foo"), USER_REQUEST, HttpStatus.SC_FORBIDDEN);
+    ApiFolder gotFolder = getFolder(workspaceId, folder.getId());
+    assertTrue(gotFolder.getLastUpdatedDate().isEqual(folder.getLastUpdatedDate()));
   }
 
   private ApiFolder createFolder(UUID workspaceId) throws Exception {

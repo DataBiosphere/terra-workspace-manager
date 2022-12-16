@@ -34,7 +34,7 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
   @Test
   public void writeActivityAndGet() {
     var workspaceId = UUID.randomUUID();
-    assertTrue(activityLogDao.getLastUpdateDetails(workspaceId).isEmpty());
+    assertTrue(activityLogDao.getLastUpdatedDetails(workspaceId).isEmpty());
 
     activityLogDao.writeActivity(
         workspaceId,
@@ -45,7 +45,7 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
             workspaceId.toString(),
             ActivityLogChangedTarget.WORKSPACE));
 
-    var lastUpdateDetails = activityLogDao.getLastUpdateDetails(workspaceId);
+    var lastUpdateDetails = activityLogDao.getLastUpdatedDetails(workspaceId);
 
     assertTrue(lastUpdateDetails.isPresent());
     assertEquals(USER_EMAIL, lastUpdateDetails.get().actorEmail());
@@ -86,7 +86,7 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
   @Test
   public void getLastUpdateDetails() {
     var workspaceId = UUID.randomUUID();
-    assertTrue(activityLogDao.getLastUpdateDetails(workspaceId).isEmpty());
+    assertTrue(activityLogDao.getLastUpdatedDetails(workspaceId).isEmpty());
 
     activityLogDao.writeActivity(
         workspaceId,
@@ -97,7 +97,7 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
             workspaceId.toString(),
             ActivityLogChangedTarget.WORKSPACE));
 
-    var lastUpdateDetails = activityLogDao.getLastUpdateDetails(workspaceId);
+    var lastUpdateDetails = activityLogDao.getLastUpdatedDetails(workspaceId);
 
     var newUserEmail = "foo@gmail.com";
     var newUserSubjectId = "foo";
@@ -110,7 +110,7 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
             workspaceId.toString(),
             ActivityLogChangedTarget.WORKSPACE));
 
-    var secondLastUpdateDetails = activityLogDao.getLastUpdateDetails(workspaceId);
+    var secondLastUpdateDetails = activityLogDao.getLastUpdatedDetails(workspaceId);
     assertEquals(newUserEmail, secondLastUpdateDetails.get().actorEmail());
     assertEquals(newUserSubjectId, secondLastUpdateDetails.get().actorSubjectId());
     var secondLastUpdatedDate = secondLastUpdateDetails.get().changeDate();
@@ -128,7 +128,7 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
     rawDaoTestFixture.writeActivityLogWithTimestamp(workspaceId, "bella@gmail.com", now);
 
     Optional<ActivityLogChangeDetails> updateDetails =
-        activityLogDao.getLastUpdateDetails(workspaceId);
+        activityLogDao.getLastUpdatedDetails(workspaceId);
 
     assertEquals("anne@gmail.com", updateDetails.get().actorEmail());
     // The two offset date time can have different granularity, resulting flakiness.
@@ -148,7 +148,7 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
             OperationType.CREATE,
             workspaceId.toString(),
             ActivityLogChangedTarget.WORKSPACE));
-    var firstUpdateDetails = activityLogDao.getLastUpdateDetails(workspaceId);
+    var firstUpdateDetails = activityLogDao.getLastUpdatedDetails(workspaceId);
     assertEquals(OperationType.CREATE.name(), getChangeType(workspaceId));
 
     activityLogDao.writeActivity(
@@ -159,7 +159,7 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
             OperationType.UPDATE,
             workspaceId.toString(),
             ActivityLogChangedTarget.WORKSPACE));
-    var secondUpdateDetails = activityLogDao.getLastUpdateDetails(workspaceId);
+    var secondUpdateDetails = activityLogDao.getLastUpdatedDetails(workspaceId);
     assertEquals(OperationType.UPDATE.name(), getChangeType(workspaceId));
 
     activityLogDao.writeActivity(
@@ -170,7 +170,7 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
             OperationType.DELETE,
             workspaceId.toString(),
             ActivityLogChangedTarget.WORKSPACE));
-    var thirdUpdateDetails = activityLogDao.getLastUpdateDetails(workspaceId);
+    var thirdUpdateDetails = activityLogDao.getLastUpdatedDetails(workspaceId);
     assertEquals(OperationType.DELETE.name(), getChangeType(workspaceId));
 
     activityLogDao.writeActivity(
@@ -181,7 +181,7 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
             OperationType.CLONE,
             workspaceId.toString(),
             ActivityLogChangedTarget.WORKSPACE));
-    var fourthUpdateDetails = activityLogDao.getLastUpdateDetails(workspaceId);
+    var fourthUpdateDetails = activityLogDao.getLastUpdatedDetails(workspaceId);
 
     assertThrows(
         UnknownFlightOperationTypeException.class,
@@ -194,7 +194,7 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
                     OperationType.UNKNOWN,
                     workspaceId.toString(),
                     ActivityLogChangedTarget.WORKSPACE)));
-    var fifthUpdateDate = activityLogDao.getLastUpdateDetails(workspaceId);
+    var fifthUpdateDate = activityLogDao.getLastUpdatedDetails(workspaceId);
     assertEquals(fourthUpdateDetails.get().changeDate(), fifthUpdateDate.get().changeDate());
 
     assertTrue(
@@ -218,7 +218,7 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
             ActivityLogChangedTarget.WORKSPACE));
 
     assertEquals(OperationType.SYSTEM_CLEANUP.name(), getChangeType(workspaceId));
-    assertTrue(activityLogDao.getLastUpdateDetails(workspaceId).isEmpty());
+    assertTrue(activityLogDao.getLastUpdatedDetails(workspaceId).isEmpty());
   }
 
   @Test
@@ -234,7 +234,7 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
             ActivityLogChangedTarget.USER));
 
     assertEquals(OperationType.REMOVE_WORKSPACE_ROLE.name(), getChangeType(workspaceId));
-    assertTrue(activityLogDao.getLastUpdateDetails(workspaceId).isEmpty());
+    assertTrue(activityLogDao.getLastUpdatedDetails(workspaceId).isEmpty());
   }
 
   @Test
@@ -250,12 +250,12 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
             ActivityLogChangedTarget.USER));
 
     assertEquals(OperationType.GRANT_WORKSPACE_ROLE.name(), getChangeType(workspaceId));
-    assertTrue(activityLogDao.getLastUpdateDetails(workspaceId).isEmpty());
+    assertTrue(activityLogDao.getLastUpdatedDetails(workspaceId).isEmpty());
   }
 
   @Test
   public void getLastUpdatedDate_emptyTable_getEmpty() {
-    assertTrue(activityLogDao.getLastUpdateDetails(UUID.randomUUID()).isEmpty());
+    assertTrue(activityLogDao.getLastUpdatedDetails(UUID.randomUUID()).isEmpty());
   }
 
   private String getChangeType(UUID workspaceId) {

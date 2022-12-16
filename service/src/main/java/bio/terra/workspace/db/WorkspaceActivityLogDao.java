@@ -112,9 +112,7 @@ public class WorkspaceActivityLogDao {
 
   @Traced
   @ReadTransaction
-  public Optional<ActivityLogChangeDetails> getLastUpdateDetails(UUID workspaceId) {
-    // In rare cases when there are more than one rows with the same max change date,
-    // sort the actor_email by alphabetical order and returns the first one.
+  public Optional<ActivityLogChangeDetails> getLastUpdatedDetails(UUID workspaceId) {
     final String sql =
         """
             SELECT change_date, actor_email, actor_subject_id, change_subject_id, change_subject_type, change_type
@@ -128,6 +126,29 @@ public class WorkspaceActivityLogDao {
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
             .addValue("change_type", NON_UPDATE_TYPE_OPERATION);
+    return Optional.ofNullable(
+        DataAccessUtils.singleResult(
+            jdbcTemplate.query(sql, params, ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER)));
+  }
+
+  /** Get the last update details of a given change subject in a given workspace. */
+  @Traced
+  @ReadTransaction
+  public Optional<ActivityLogChangeDetails> getLastUpdatedDetails(
+      UUID workspaceId, String changeSubjectId) {
+    final String sql =
+        """
+            SELECT change_date, actor_email, actor_subject_id, change_subject_id, change_subject_type, change_type
+            FROM workspace_activity_log
+            WHERE workspace_id = :workspace_id AND change_subject_id = :change_subject_id
+            ORDER BY change_date DESC
+            LIMIT 1
+        """;
+
+    final var params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceId.toString())
+            .addValue("change_subject_id", changeSubjectId);
     return Optional.ofNullable(
         DataAccessUtils.singleResult(
             jdbcTemplate.query(sql, params, ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER)));
