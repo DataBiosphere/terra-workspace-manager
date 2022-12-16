@@ -644,7 +644,8 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
       String expectedResourceName,
       String expectedProjectId,
       String expectedDatasetName,
-      String expectedRegion) {
+      String expectedRegion,
+      String expectedCreatedBy) {
     assertClonedBqDataset(
         actualDataset,
         expectedStewardshipType,
@@ -652,7 +653,8 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         expectedWorkspaceId,
         expectedResourceName,
         expectedProjectId,
-        expectedDatasetName);
+        expectedDatasetName,
+        expectedCreatedBy);
 
     assertControlledResourceMetadata(
         actualDataset.getMetadata().getControlledResourceMetadata(),
