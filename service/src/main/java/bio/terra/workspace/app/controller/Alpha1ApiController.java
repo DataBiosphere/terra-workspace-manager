@@ -2,7 +2,6 @@ package bio.terra.workspace.app.controller;
 
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
-import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.common.utils.ErrorReportUtils;
 import bio.terra.workspace.generated.controller.Alpha1Api;
@@ -27,7 +26,6 @@ import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.JobStateFilter;
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -133,7 +131,10 @@ public class Alpha1ApiController implements Alpha1Api {
                       .map(
                           r ->
                               r.toApiMetadata(
-                                  getWsmResourceApiFields(r.getWorkspaceId(), r.getResourceId())))
+                                  WsmResourceApiFields.build(
+                                      workspaceActivityLogService,
+                                      r.getWorkspaceId(),
+                                      r.getResourceId())))
                       .orElse(null))
               .resourceAttributes(optResource.map(WsmResource::toApiAttributesUnion).orElse(null))
               .destinationResourceId(destinationResourceIdMaybe.orElse(null));
@@ -147,14 +148,6 @@ public class Alpha1ApiController implements Alpha1Api {
             .results(apiJobList);
 
     return new ResponseEntity<>(result, HttpStatus.OK);
-  }
-
-  private WsmResourceApiFields getWsmResourceApiFields(UUID workspaceUuid, UUID resourceId) {
-    Optional<ActivityLogChangeDetails> logChangeDetails =
-        workspaceActivityLogService.getLastUpdatedDetails(workspaceUuid, resourceId.toString());
-    return new WsmResourceApiFields(
-        logChangeDetails.map(ActivityLogChangeDetails::actorEmail).orElse("unknown"),
-        logChangeDetails.map(ActivityLogChangeDetails::changeDate).orElse(OffsetDateTime.MIN));
   }
 
   private AuthenticatedUserRequest getAuthenticatedInfo() {

@@ -7,7 +7,6 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.IamRoleUtils;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpBigQueryDataset;
@@ -24,7 +23,6 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
-import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -131,8 +129,10 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
         new ApiClonedControlledGcpBigQueryDataset()
             .dataset(
                 clonedResource.toApiResource(
-                    getWsmResourceApiFields(
-                        clonedResource.getWorkspaceId(), clonedResource.getResourceId())))
+                    WsmResourceApiFields.build(
+                        workspaceActivityLogService,
+                        clonedResource.getWorkspaceId(),
+                        clonedResource.getResourceId())))
             .effectiveCloningInstructions(resolvedCloningInstructions.toApiModel())
             .sourceWorkspaceId(sourceDataset.getWorkspaceId())
             .sourceResourceId(sourceDataset.getResourceId());
@@ -159,15 +159,5 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
           clonedDataset.getWorkspaceId(), clonedDataset.getResourceId(), userRequest);
     }
     return StepResult.getStepResultSuccess();
-  }
-
-  private WsmResourceApiFields getWsmResourceApiFields(UUID workspaceUuid, UUID resourceId) {
-    Optional<ActivityLogChangeDetails> logChangeDetails =
-        workspaceActivityLogService.getLastUpdatedDetails(workspaceUuid, resourceId.toString());
-    WsmResourceApiFields apiFields =
-        new WsmResourceApiFields(
-            logChangeDetails.map(ActivityLogChangeDetails::actorEmail).orElse("unknown"),
-            logChangeDetails.map(ActivityLogChangeDetails::changeDate).orElse(OffsetDateTime.MIN));
-    return apiFields;
   }
 }

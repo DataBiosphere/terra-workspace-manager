@@ -4,7 +4,6 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
@@ -17,8 +16,6 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.ReferencedGcsBucketResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
-import java.time.OffsetDateTime;
-import java.util.Optional;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 
@@ -67,7 +64,9 @@ public class SetReferencedDestinationGcsBucketResponseStep implements Step {
     ApiCreatedControlledGcpGcsBucket apiCreatedBucket =
         new ApiCreatedControlledGcpGcsBucket()
             .gcpBucket(
-                destBucket.toApiResource(getWsmResourceApiFields(destWorkspaceId, destResourceId)))
+                destBucket.toApiResource(
+                    WsmResourceApiFields.build(
+                        workspaceActivityLogService, destWorkspaceId, destResourceId)))
             .resourceId(destBucket.getResourceId());
 
     final ApiClonedControlledGcpGcsBucket apiClonedBucket =
@@ -79,14 +78,6 @@ public class SetReferencedDestinationGcsBucketResponseStep implements Step {
     FlightUtils.setResponse(context, apiClonedBucket, HttpStatus.OK);
 
     return StepResult.getStepResultSuccess();
-  }
-
-  private WsmResourceApiFields getWsmResourceApiFields(UUID workspaceUuid, UUID resourceId) {
-    Optional<ActivityLogChangeDetails> logChangeDetails =
-        workspaceActivityLogService.getLastUpdatedDetails(workspaceUuid, resourceId.toString());
-    return new WsmResourceApiFields(
-        logChangeDetails.map(ActivityLogChangeDetails::actorEmail).orElse("unknown"),
-        logChangeDetails.map(ActivityLogChangeDetails::changeDate).orElse(OffsetDateTime.MIN));
   }
 
   // No side effects to undo.
