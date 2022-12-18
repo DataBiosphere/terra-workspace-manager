@@ -8,10 +8,10 @@ import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.common.utils.MultiCloudUtils;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.securitytoken.model.Credentials;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.sts.model.Credentials;
 
 public class CreateAwsBucketStep implements Step {
   private static final Logger logger = LoggerFactory.getLogger(CreateAwsBucketStep.class);
@@ -35,7 +35,7 @@ public class CreateAwsBucketStep implements Step {
 
     AwsUtils.createFolder(
         awsCredentials,
-        Regions.fromName(resource.getRegion()),
+        Region.of(resource.getRegion()),
         resource.getS3BucketName(),
         resource.getPrefix());
     return StepResult.getStepResultSuccess();
@@ -53,7 +53,7 @@ public class CreateAwsBucketStep implements Step {
 
     AwsUtils.undoCreateFolder(
         awsCredentials,
-        Regions.fromName(resource.getRegion()),
+        Region.of(resource.getRegion()),
         resource.getS3BucketName(),
         resource.getPrefix());
     return StepResult.getStepResultSuccess();

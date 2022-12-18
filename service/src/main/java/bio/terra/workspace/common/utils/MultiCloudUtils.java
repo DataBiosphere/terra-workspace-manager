@@ -2,9 +2,9 @@ package bio.terra.workspace.common.utils;
 
 import bio.terra.common.iam.SamUser;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
-import com.amazonaws.services.securitytoken.model.Credentials;
-import com.amazonaws.services.securitytoken.model.Tag;
 import java.util.Collection;
+import software.amazon.awssdk.services.sts.model.Credentials;
+import software.amazon.awssdk.services.sts.model.Tag;
 
 public class MultiCloudUtils {
   public static Credentials assumeAwsServiceRoleFromGcp(

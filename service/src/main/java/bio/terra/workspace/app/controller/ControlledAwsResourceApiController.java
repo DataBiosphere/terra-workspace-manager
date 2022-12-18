@@ -36,9 +36,6 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.securitytoken.model.Credentials;
-import com.amazonaws.services.securitytoken.model.Tag;
 import java.net.URI;
 import java.net.URL;
 import java.time.ZoneOffset;
@@ -55,6 +52,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.sts.model.Credentials;
+import software.amazon.awssdk.services.sts.model.Tag;
 
 @Controller
 public class ControlledAwsResourceApiController extends ControlledResourceControllerBase
@@ -107,10 +107,10 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
         awsCloudContextService.getRequiredAwsCloudContext(workspaceUuid);
 
     final ApiAwsBucketCreationParameters creationParameters = body.getAwsBucket();
-    Regions requestedRegion;
+    Region requestedRegion;
 
     try {
-      requestedRegion = Regions.fromName(creationParameters.getLocation());
+      requestedRegion = Region.of(creationParameters.getLocation());
     } catch (IllegalArgumentException e) {
       throw new BadRequestException(
           String.format(
@@ -251,10 +251,10 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     return new ResponseEntity<>(
         new ApiAwsCredential()
             .version(1)
-            .accessKeyId(awsCredentials.getAccessKeyId())
-            .secretAccessKey(awsCredentials.getSecretAccessKey())
-            .sessionToken(awsCredentials.getSessionToken())
-            .expiration(awsCredentials.getExpiration().toInstant().atOffset(ZoneOffset.UTC)),
+            .accessKeyId(awsCredentials.accessKeyId())
+            .secretAccessKey(awsCredentials.secretAccessKey())
+            .sessionToken(awsCredentials.sessionToken())
+            .expiration(awsCredentials.expiration().atOffset(ZoneOffset.UTC)),
         HttpStatus.OK);
   }
 
@@ -424,10 +424,10 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     return new ResponseEntity<>(
         new ApiAwsCredential()
             .version(1)
-            .accessKeyId(awsCredentials.getAccessKeyId())
-            .secretAccessKey(awsCredentials.getSecretAccessKey())
-            .sessionToken(awsCredentials.getSessionToken())
-            .expiration(awsCredentials.getExpiration().toInstant().atOffset(ZoneOffset.UTC)),
+            .accessKeyId(awsCredentials.accessKeyId())
+            .secretAccessKey(awsCredentials.secretAccessKey())
+            .sessionToken(awsCredentials.sessionToken())
+            .expiration(awsCredentials.expiration().atOffset(ZoneOffset.UTC)),
         HttpStatus.OK);
   }
 
@@ -457,7 +457,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     URL url =
         AwsUtils.getSageMakerNotebookProxyUrl(
             awsCredentials,
-            Regions.fromName(resource.getRegion()),
+            Region.of(resource.getRegion()),
             resource.getInstanceId(),
             duration,
             view.equals(ApiAwsSageMakerProxyUrlView.JUPYTERLAB) ? "lab" : "classic");

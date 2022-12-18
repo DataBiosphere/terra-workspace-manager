@@ -9,11 +9,11 @@ import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.common.utils.MultiCloudUtils;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.securitytoken.model.Credentials;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.sts.model.Credentials;
 
 public class SeedAwsBucketStep implements Step {
 
@@ -48,7 +48,7 @@ public class SeedAwsBucketStep implements Step {
       String key = getKey(seedFile.getPath());
       AwsUtils.putObject(
           awsCredentials,
-          Regions.fromName(resource.getRegion()),
+          Region.of(resource.getRegion()),
           resource.getS3BucketName(),
           key,
           content);
@@ -70,7 +70,7 @@ public class SeedAwsBucketStep implements Step {
     for (AwsConfiguration.AwsBucketSeedFile seedFile : seedFiles) {
       String key = getKey(seedFile.getPath());
       AwsUtils.deleteObject(
-          awsCredentials, Regions.fromName(resource.getRegion()), resource.getS3BucketName(), key);
+          awsCredentials, Region.of(resource.getRegion()), resource.getS3BucketName(), key);
     }
     return StepResult.getStepResultSuccess();
   }

@@ -4,8 +4,6 @@ import bio.terra.workspace.app.configuration.external.AwsConfiguration;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.generated.model.ApiAwsContext;
 import bio.terra.workspace.service.workspace.exceptions.InvalidSerializedVersionException;
-import com.amazonaws.arn.Arn;
-import com.amazonaws.regions.Regions;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
@@ -14,6 +12,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nullable;
+import software.amazon.awssdk.arns.Arn;
+import software.amazon.awssdk.regions.Region;
 
 public class AwsCloudContext {
   private final String landingZoneName;
@@ -22,7 +22,7 @@ public class AwsCloudContext {
   private final String serviceRoleAudience;
   private final Arn userRoleArn;
   private final Arn notebookLifecycleConfigArn;
-  private final Map<Regions, String> regionToBucketNameMap;
+  private final Map<Region, String> regionToBucketNameMap;
 
   public String getLandingZoneName() {
     return landingZoneName;
@@ -48,7 +48,7 @@ public class AwsCloudContext {
     return notebookLifecycleConfigArn;
   }
 
-  public @Nullable String getBucketNameForRegion(Regions region) {
+  public @Nullable String getBucketNameForRegion(Region region) {
     return regionToBucketNameMap.get(region);
   }
 
@@ -70,7 +70,7 @@ public class AwsCloudContext {
         .map(arn -> builder.notebookLifecycleConfigArn(Arn.fromString(arn)));
 
     for (AwsConfiguration.AwsLandingZoneBucket bucket : landingZoneConfiguration.getBuckets()) {
-      builder.addBucket(Regions.fromName(bucket.getRegion()), bucket.getName());
+      builder.addBucket(Region.of(bucket.getRegion()), bucket.getName());
     }
 
     return builder.build();
@@ -104,7 +104,7 @@ public class AwsCloudContext {
 
     for (AwsCloudContextBucketV1 bucket : dbContext.bucketList) {
       bucket.validateVersion();
-      builder.addBucket(Regions.fromName(bucket.regionName), bucket.bucketName);
+      builder.addBucket(Region.of(bucket.regionName), bucket.bucketName);
     }
 
     return builder.build();
@@ -117,7 +117,7 @@ public class AwsCloudContext {
     private String serviceRoleAudience;
     private Arn userRoleArn;
     private Arn notebookLifecycleConfigArn;
-    private Map<Regions, String> bucketMap;
+    private Map<Region, String> bucketMap;
 
     private Builder() {
       bucketMap = new HashMap<>();
@@ -157,7 +157,7 @@ public class AwsCloudContext {
       return this;
     }
 
-    public Builder addBucket(Regions region, String bucketName) {
+    public Builder addBucket(Region region, String bucketName) {
       bucketMap.put(region, bucketName);
       return this;
     }
@@ -259,10 +259,10 @@ public class AwsCloudContext {
           Optional.ofNullable(context.notebookLifecycleConfigArn).map(Arn::toString).orElse(null);
 
       this.bucketList = new ArrayList<>();
-      for (Map.Entry<Regions, String> entry : context.regionToBucketNameMap.entrySet()) {
-        Regions region = entry.getKey();
+      for (Map.Entry<Region, String> entry : context.regionToBucketNameMap.entrySet()) {
+        Region region = entry.getKey();
         String bucketName = entry.getValue();
-        this.bucketList.add(new AwsCloudContextBucketV1(region.getName(), bucketName));
+        this.bucketList.add(new AwsCloudContextBucketV1(region.toString(), bucketName));
       }
     }
 

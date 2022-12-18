@@ -10,8 +10,8 @@ import bio.terra.workspace.common.utils.MultiCloudUtils;
 import bio.terra.workspace.generated.model.ApiAwsSageMakerNotebookCreationParameters;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.securitytoken.model.Credentials;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.sts.model.Credentials;
 
 public class WaitForAwsSageMakerNotebookInService implements Step {
   @Override
@@ -32,7 +32,7 @@ public class WaitForAwsSageMakerNotebookInService implements Step {
     final AwsCloudContext awsCloudContext = AwsCloudContext.deserialize(awsCloudContextString);
     final Credentials awsCredentials = MultiCloudUtils.assumeAwsServiceRoleFromGcp(awsCloudContext);
 
-    Regions region = Regions.fromName(creationParameters.getLocation());
+    Region region = Region.of(creationParameters.getLocation());
 
     AwsUtils.waitForSageMakerNotebookInService(
         awsCredentials, region, creationParameters.getInstanceId());
