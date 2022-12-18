@@ -98,6 +98,7 @@ import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.RetrieveGcsBucketCloudAttributesStep;
@@ -281,6 +282,7 @@ public class MockMvcUtils {
   @Autowired private ObjectMapper objectMapper;
   @Autowired private JobService jobService;
   @Autowired private NamedParameterJdbcTemplate jdbcTemplate;
+  @Autowired private SamService samService;
 
   public static MockHttpServletRequestBuilder addAuth(
       MockHttpServletRequestBuilder request, AuthenticatedUserRequest userRequest) {
@@ -1818,7 +1820,7 @@ public class MockMvcUtils {
     ActivityLogChangeDetails sourceChangeDetails =
         getLastChangeDetails(sourceWorkspaceId, sourceChangeSubjectId.toString());
     var actorEmail = userRequest.getEmail();
-    var actorSubjectId = userRequest.getSubjectId();
+    var actorSubjectId = samService.getUserStatusInfo(userRequest).getUserSubjectId();
     assertEquals(
         new ActivityLogChangeDetails(
             null,
