@@ -18,6 +18,7 @@ import bio.terra.workspace.generated.model.ApiResourceLineage;
 import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
@@ -47,6 +48,7 @@ public class ReferencedGcpResourceControllerBqTableTest extends BaseConnectedTes
   @Autowired ObjectMapper objectMapper;
   @Autowired UserAccessUtils userAccessUtils;
   @Autowired FeatureConfiguration features;
+  @Autowired SamService samService;
 
   private UUID workspaceId;
   private String projectId;
@@ -72,8 +74,6 @@ public class ReferencedGcpResourceControllerBqTableTest extends BaseConnectedTes
         mockMvcUtils
             .createWorkspaceWithCloudContext(userAccessUtils.defaultUserAuthRequest())
             .getId();
-    ApiWorkspaceDescription workspace2 =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
 
     sourceResource =
         mockMvcUtils.createReferencedBqTable(
@@ -104,7 +104,8 @@ public class ReferencedGcpResourceControllerBqTableTest extends BaseConnectedTes
         sourceResourceName,
         projectId,
         sourceDatasetName,
-        sourceTableId);
+        sourceTableId,
+        userAccessUtils.getDefaultUserEmail());
 
     // Assert resource returned by get
     ApiGcpBigQueryDataTableResource gotResource =
@@ -162,6 +163,54 @@ public class ReferencedGcpResourceControllerBqTableTest extends BaseConnectedTes
   }
 
   @Test
+  public void clone_secondUserHasWriteAccessOnDestWorkspace_succeeds() throws Exception {
+    mockMvcUtils.grantRole(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId,
+        WsmIamRole.READER,
+        userAccessUtils.getSecondUserEmail());
+    mockMvcUtils.grantRole(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId2,
+        WsmIamRole.WRITER,
+        userAccessUtils.getSecondUserEmail());
+
+    ApiGcpBigQueryDataTableResource clonedResource =
+        mockMvcUtils.cloneReferencedBqTable(
+            userAccessUtils.secondUserAuthRequest(),
+            workspaceId,
+            sourceResource.getMetadata().getResourceId(),
+            workspaceId2,
+            ApiCloningInstructionsEnum.REFERENCE,
+            /*destResourceName=*/ null);
+
+    assertClonedBqTable(
+        clonedResource,
+        ApiStewardshipType.REFERENCED,
+        ApiCloningInstructionsEnum.NOTHING,
+        workspaceId2,
+        sourceResourceName,
+        projectId,
+        sourceDatasetName,
+        sourceTableId,
+        userAccessUtils.getSecondUserEmail());
+    mockMvcUtils.removeRole(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId,
+        WsmIamRole.READER,
+        userAccessUtils.getSecondUserEmail());
+    mockMvcUtils.removeRole(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId2,
+        WsmIamRole.WRITER,
+        userAccessUtils.getSecondUserEmail());
+    mockMvcUtils.deleteBqDataTable(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId2,
+        clonedResource.getMetadata().getResourceId());
+  }
+
+  @Test
   void clone_copyNothing() throws Exception {
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
     ApiGcpBigQueryDataTableResource clonedResource =
@@ -203,7 +252,14 @@ public class ReferencedGcpResourceControllerBqTableTest extends BaseConnectedTes
         destResourceName,
         projectId,
         sourceDatasetName,
-        sourceTableId);
+        sourceTableId,
+        userAccessUtils.getDefaultUserEmail());
+    mockMvcUtils.assertCloneActivityIsLogged(
+        workspaceId,
+        sourceResource.getMetadata().getResourceId(),
+        workspaceId,
+        clonedResource.getMetadata().getResourceId(),
+        userAccessUtils.defaultUserAuthRequest());
 
     // Assert resource returned by get
     final ApiGcpBigQueryDataTableResource gotResource =
@@ -236,7 +292,14 @@ public class ReferencedGcpResourceControllerBqTableTest extends BaseConnectedTes
         destResourceName,
         projectId,
         sourceDatasetName,
-        sourceTableId);
+        sourceTableId,
+        userAccessUtils.getDefaultUserEmail());
+    mockMvcUtils.assertCloneActivityIsLogged(
+        workspaceId,
+        sourceResource.getMetadata().getResourceId(),
+        /*destWorkspaceId=*/ workspaceId2,
+        clonedResource.getMetadata().getResourceId(),
+        userAccessUtils.defaultUserAuthRequest());
 
     // Assert resource returned by get
     final ApiGcpBigQueryDataTableResource gotResource =
@@ -304,7 +367,8 @@ public class ReferencedGcpResourceControllerBqTableTest extends BaseConnectedTes
       String expectedResourceName,
       String expectedProjectId,
       String expectedDatasetName,
-      String expectedTableId) {
+      String expectedTableId,
+      String expectedCreatedBy) {
     mockMvcUtils.assertResourceMetadata(
         actualResource.getMetadata(),
         ApiCloudPlatform.GCP,
@@ -313,7 +377,8 @@ public class ReferencedGcpResourceControllerBqTableTest extends BaseConnectedTes
         expectedCloningInstructions,
         expectedWorkspaceId,
         expectedResourceName,
-        /*expectedResourceLineage=*/ new ApiResourceLineage());
+        /*expectedResourceLineage=*/ new ApiResourceLineage(),
+        expectedCreatedBy);
 
     assertEquals(expectedProjectId, actualResource.getAttributes().getProjectId());
     assertEquals(expectedDatasetName, actualResource.getAttributes().getDatasetId());
@@ -328,7 +393,8 @@ public class ReferencedGcpResourceControllerBqTableTest extends BaseConnectedTes
       String expectedResourceName,
       String expectedProjectId,
       String expectedDatasetName,
-      String expectedTableId) {
+      String expectedTableId,
+      String expectedCreatedBy) {
     mockMvcUtils.assertClonedResourceMetadata(
         actualResource.getMetadata(),
         ApiCloudPlatform.GCP,
@@ -338,7 +404,8 @@ public class ReferencedGcpResourceControllerBqTableTest extends BaseConnectedTes
         expectedWorkspaceId,
         expectedResourceName,
         /*sourceWorkspaceId=*/ workspaceId,
-        /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId());
+        /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
+        expectedCreatedBy);
 
     assertEquals(expectedProjectId, actualResource.getAttributes().getProjectId());
     assertEquals(expectedDatasetName, actualResource.getAttributes().getDatasetId());

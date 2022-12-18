@@ -7,7 +7,6 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
-import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
@@ -26,8 +25,7 @@ public class CreateReferenceMetadataStep implements Step {
   private final ReferencedResourceService referencedResourceService;
 
   public CreateReferenceMetadataStep(
-      AuthenticatedUserRequest userRequest,
-      ReferencedResourceService referencedResourceService) {
+      AuthenticatedUserRequest userRequest, ReferencedResourceService referencedResourceService) {
     this.userRequest = userRequest;
     this.referencedResourceService = referencedResourceService;
   }
@@ -40,8 +38,8 @@ public class CreateReferenceMetadataStep implements Step {
       logger.warn("Fails to get referenced resource to create");
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL);
     }
-    referencedResourceService
-        .createReferenceResourceForClone(referencedResource.castToReferencedResource(), userRequest);
+    referencedResourceService.createReferenceResource(
+        referencedResource.castToReferencedResource(), userRequest);
     FlightUtils.setResponse(flightContext, referencedResource.getResourceId(), HttpStatus.OK);
     return StepResult.getStepResultSuccess();
   }
@@ -51,8 +49,10 @@ public class CreateReferenceMetadataStep implements Step {
     WsmResource referencedResource = getReferencedResource(flightContext);
 
     referencedResourceService.deleteReferenceResourceForResourceType(
-        referencedResource.getWorkspaceId(), referencedResource.getResourceId(), referencedResource.getResourceType(), userRequest
-    );
+        referencedResource.getWorkspaceId(),
+        referencedResource.getResourceId(),
+        referencedResource.getResourceType(),
+        userRequest);
 
     return StepResult.getStepResultSuccess();
   }

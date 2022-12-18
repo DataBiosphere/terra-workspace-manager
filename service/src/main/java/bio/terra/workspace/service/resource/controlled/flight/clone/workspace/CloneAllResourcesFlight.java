@@ -42,7 +42,9 @@ public class CloneAllResourcesFlight extends Flight {
   }
 
   private void addFlightLaunchStepsForResource(
-      ResourceCloneInputs resourceCloneInputs, FlightBeanBag flightBeanBag, AuthenticatedUserRequest userRequest) {
+      ResourceCloneInputs resourceCloneInputs,
+      FlightBeanBag flightBeanBag,
+      AuthenticatedUserRequest userRequest) {
     WsmResource resource = resourceCloneInputs.getResource();
 
     switch (resource.getStewardshipType()) {
@@ -99,10 +101,10 @@ public class CloneAllResourcesFlight extends Flight {
                 RetryRules.cloudLongRunning());
           }
           case CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE ->
-              // Can't throw in a flight constructor
-              logger.error(
-                  "Unsupported controlled resource type {}",
-                  resourceCloneInputs.getResource().getResourceType());
+          // Can't throw in a flight constructor
+          logger.error(
+              "Unsupported controlled resource type {}",
+              resourceCloneInputs.getResource().getResourceType());
         }
         break;
       default:

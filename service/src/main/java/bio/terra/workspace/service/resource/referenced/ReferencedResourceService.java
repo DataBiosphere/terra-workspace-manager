@@ -63,19 +63,6 @@ public class ReferencedResourceService {
     return getReferenceResource(resource.getWorkspaceId(), resource.getResourceId());
   }
 
-  @Traced
-  public ReferencedResource createReferenceResourceForClone(
-      ReferencedResource resource, AuthenticatedUserRequest userRequest) {
-    resourceDao.createReferencedResource(resource);
-    workspaceActivityLogService.writeActivity(
-        userRequest,
-        resource.getWorkspaceId(),
-        OperationType.CLONE,
-        resource.getResourceId().toString(),
-        ActivityLogChangedTarget.RESOURCE);
-    return getReferenceResource(resource.getWorkspaceId(), resource.getResourceId());
-  }
-
   /**
    * Updates name and/or description of the reference resource.
    *
@@ -234,6 +221,6 @@ public class ReferencedResourceService {
                 createdByEmail)
             .castToReferencedResource();
 
-    return createReferenceResourceForClone(destinationResource, userRequest);
+    return createReferenceResource(destinationResource, userRequest);
   }
 }

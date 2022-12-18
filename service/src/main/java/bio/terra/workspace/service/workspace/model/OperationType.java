@@ -9,6 +9,7 @@ public enum OperationType {
   APPLICATION_DISABLED(ApiOperationType.APPLICATION_DISABLED),
   APPLICATION_ENABLED(ApiOperationType.APPLICATION_ENABLED),
   CLONE(ApiOperationType.CLONE),
+  CLONED(ApiOperationType.CLONE),
   CREATE(ApiOperationType.CREATE),
   DELETE(ApiOperationType.DELETE),
   DELETE_PROPERTIES(ApiOperationType.DELETE),

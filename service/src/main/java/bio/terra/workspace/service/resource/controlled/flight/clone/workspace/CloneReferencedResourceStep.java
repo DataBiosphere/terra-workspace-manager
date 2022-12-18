@@ -5,7 +5,6 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
-import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobMapKeys;
@@ -90,7 +89,8 @@ public class CloneReferencedResourceStep implements Step {
           .put(ControlledResourceKeys.DESTINATION_REFERENCED_RESOURCE, destinationResource);
 
       try {
-        referencedResourceService.createReferenceResourceForClone(destinationResource.castToReferencedResource(), userRequest);
+        referencedResourceService.createReferenceResource(
+            destinationResource.castToReferencedResource(), userRequest);
         cloneDetails.setResult(WsmCloneResourceResult.SUCCEEDED);
       } catch (Exception e) {
         cloneDetails.setResult(WsmCloneResourceResult.FAILED).setErrorMessage(e.getMessage());
@@ -133,7 +133,11 @@ public class CloneReferencedResourceStep implements Step {
               .getWorkingMap()
               .get(
                   ControlledResourceKeys.DESTINATION_REFERENCED_RESOURCE, ReferencedResource.class);
-      referencedResourceService.deleteReferenceResourceForResourceType(resource.getWorkspaceId(), resource.getResourceId(), resource.getResourceType(), userRequest);
+      referencedResourceService.deleteReferenceResourceForResourceType(
+          resource.getWorkspaceId(),
+          resource.getResourceId(),
+          resource.getResourceType(),
+          userRequest);
     }
 
     return StepResult.getStepResultSuccess();
