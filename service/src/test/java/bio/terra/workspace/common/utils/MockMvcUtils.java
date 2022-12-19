@@ -1809,6 +1809,8 @@ public class MockMvcUtils {
         jdbcTemplate.query(sql, params, ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER));
   }
 
+  // TODO(PF-2261): assert resource lastUpdatedBy and lastUpdatedDate instead of calling
+  // directly into the `WorkspaceActivityLogDao`.
   public void assertCloneActivityIsLogged(
       UUID sourceWorkspaceId,
       UUID sourceChangeSubjectId,
