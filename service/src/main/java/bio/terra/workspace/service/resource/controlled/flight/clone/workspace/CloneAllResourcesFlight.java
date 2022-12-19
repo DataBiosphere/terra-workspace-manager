@@ -40,18 +40,13 @@ public class CloneAllResourcesFlight extends Flight {
     switch (resource.getStewardshipType()) {
       case REFERENCED:
         addStep(
-            new LaunchCreateReferenceResourceFlightStep(
-                flightBeanBag.getReferencedResourceService(),
+            new CloneReferencedResourceStep(
+                flightBeanBag.getSamService(),
+                flightBeanBag.getResourceDao(),
                 resourceCloneInputs.getResource().castToReferencedResource(),
-                resourceCloneInputs.getFlightId(),
                 resourceCloneInputs.getDestinationResourceId(),
-                resourceCloneInputs.getDestinationFolderId()));
-        addStep(
-            new AwaitCreateReferenceResourceFlightStep(
-                resourceCloneInputs.getResource().castToReferencedResource(),
-                resourceCloneInputs.getFlightId(),
-                flightBeanBag.getResourceDao()),
-            RetryRules.cloudLongRunning());
+                resourceCloneInputs.getDestinationFolderId()),
+            RetryRules.shortDatabase());
         break;
       case CONTROLLED:
         switch (resourceCloneInputs.getResource().getResourceType()) {
@@ -78,6 +73,19 @@ public class CloneAllResourcesFlight extends Flight {
             addStep(
                 new AwaitCloneControlledGcpBigQueryDatasetResourceFlightStep(
                     resource.castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET),
+                    resourceCloneInputs.getFlightId()),
+                RetryRules.cloudLongRunning());
+            break;
+          case CONTROLLED_AZURE_STORAGE_CONTAINER:
+            addStep(
+                new LaunchCloneControlledAzureStorageContainerResourceFlightStep(
+                    resource.castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER),
+                    resourceCloneInputs.getFlightId(),
+                    resourceCloneInputs.getDestinationResourceId(),
+                    resourceCloneInputs.getDestinationFolderId()));
+            addStep(
+                new AwaitCloneControlledAzureStorageContainerResourceFlightStep(
+                    resource.castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER),
                     resourceCloneInputs.getFlightId()),
                 RetryRules.cloudLongRunning());
             break;

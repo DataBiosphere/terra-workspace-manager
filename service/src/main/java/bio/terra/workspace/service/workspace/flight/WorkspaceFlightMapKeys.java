@@ -43,6 +43,7 @@ public final class WorkspaceFlightMapKeys {
     public static final String CREATE_NOTEBOOK_NETWORK_NAME = "createNotebookNetworkName";
     public static final String CREATE_NOTEBOOK_PARAMETERS = "createNotebookParameters";
     public static final String CREATE_NOTEBOOK_REGION = "createNotebookRegion";
+    public static final String CREATE_NOTEBOOK_LOCATION = "createNotebookLocation";
     public static final String CREATE_NOTEBOOK_SUBNETWORK_NAME = "createNotebookSubnetworkName";
     public static final String NOTEBOOK_PET_SERVICE_ACCOUNT = "notebookPetServiceAccount";
     public static final String NOTEBOOK_DEFAULT_BUCKET = "notebookDefaultBucket";
@@ -53,7 +54,9 @@ public final class WorkspaceFlightMapKeys {
     public static final String CLONED_RESOURCE_DEFINITION = "clonedResourceDefinition";
     public static final String CLONING_INSTRUCTIONS = "cloningInstructions";
     public static final String CONTROL_PLANE_PROJECT_ID = "controlPlaneProjectId";
-    public static final String CREATE_CLOUD_CONTEXT_FLIGHT_ID = "createCloudContextFlightId";
+    public static final String CREATE_GCP_CLOUD_CONTEXT_FLIGHT_ID = "createGcpCloudContextFlightId";
+    public static final String CREATE_AZURE_CLOUD_CONTEXT_FLIGHT_ID =
+        "createAzureCloudContextFlightId";
     public static final String DESTINATION_BUCKET_NAME = "destinationBucketName";
     public static final String DESTINATION_CLONE_INPUTS = "destinationCloneInputs";
     public static final String DESTINATION_DATASET_NAME = "destinationDatasetName";
@@ -73,8 +76,6 @@ public final class WorkspaceFlightMapKeys {
     public static final String DESTINATION_RESOURCE_ID = "destinationResourceId";
     public static final String DESTINATION_FOLDER_ID = "destinationFolderId";
     public static final String DESTINATION_CONTAINER_NAME = "destinationContainerName";
-    public static final String DESTINATION_STORAGE_ACCOUNT_RESOURCE_ID =
-        "destinationStorageAccountResourceId";
   }
 
   public static class FolderKeys {

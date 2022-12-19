@@ -1,7 +1,6 @@
 package scripts.utils;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static scripts.utils.CommonResourceFieldsUtil.makeControlledResourceCommonFields;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
@@ -28,13 +27,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.hamcrest.Matchers;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class NotebookUtils {
+  private static final Logger logger = LoggerFactory.getLogger(NotebookUtils.class);
+  private static final int ASSERT_PROXY_URL_RETRY_MAX = 40;
+  private static final int ASSERT_PROXY_URL_RETRY_SECONDS = 15;
 
   /**
    * Create and return a private AI Platform Notebook controlled resource with constant values. This
@@ -183,27 +188,41 @@ public class NotebookUtils {
    */
   public static void assertInstanceHasProxyUrl(
       AIPlatformNotebooks userNotebooks, String instanceName) throws Exception {
-    String proxyUrl =
-        ClientTestUtils.getWithRetryOnException(
-            () -> {
-              try {
-                String p =
-                    userNotebooks
-                        .projects()
-                        .locations()
-                        .instances()
-                        .get(instanceName)
-                        .execute()
-                        .getProxyUri();
-                if (p == null) {
-                  throw new NullPointerException();
-                }
-                return p;
-                // Do not retry if it's an IO exception.
-              } catch (IOException ignored) {
-              }
-              return null;
-            });
-    assertNotNull(proxyUrl);
+    for (int retryCount = 0; retryCount < ASSERT_PROXY_URL_RETRY_MAX; retryCount++) {
+      try {
+        String proxyUrl =
+            userNotebooks
+                .projects()
+                .locations()
+                .instances()
+                .get(instanceName)
+                .execute()
+                .getProxyUri();
+        if (proxyUrl != null) {
+          return;
+        }
+        logger.info("Notebook proxy url is null, retry");
+      } catch (GoogleJsonResponseException e) {
+        // Retry 403s as permissions may take time to propagate, but do not retry if it's
+        // any other IO exception.
+        if (e.getStatusCode() == HttpStatus.SC_FORBIDDEN) {
+          logger.info("Fails to fetch notebook proxy url due to 403, retry", e);
+        } else {
+          logger.info("Fails to fetch notebook proxy url, do not retry", e);
+          throw e;
+        }
+      } catch (Exception e) {
+        logger.info("Fails to fetch notebook proxy url, do not retry", e);
+        throw e;
+      }
+      // If we are here, we are retrying
+      logger.info(
+          "Retrying getProxyUrl after {} seconds; retry {} of {}",
+          ASSERT_PROXY_URL_RETRY_SECONDS,
+          retryCount + 1,
+          ASSERT_PROXY_URL_RETRY_MAX);
+      TimeUnit.SECONDS.sleep(ASSERT_PROXY_URL_RETRY_SECONDS);
+    }
+    throw new RuntimeException("Retries of getProxyUrl are exhausted");
   }
 }

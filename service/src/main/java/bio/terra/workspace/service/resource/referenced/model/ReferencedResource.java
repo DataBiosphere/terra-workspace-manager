@@ -9,6 +9,7 @@ import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -22,7 +23,9 @@ public abstract class ReferencedResource extends WsmResource {
       @Nullable String description,
       CloningInstructions cloningInstructions,
       @Nullable List<ResourceLineageEntry> resourceLineage,
-      Map<String, String> properties) {
+      Map<String, String> properties,
+      String createdByEmail,
+      OffsetDateTime createdDate) {
     super(
         workspaceUuid,
         resourceId,
@@ -30,7 +33,9 @@ public abstract class ReferencedResource extends WsmResource {
         description,
         cloningInstructions,
         resourceLineage,
-        properties);
+        properties,
+        createdByEmail,
+        createdDate);
   }
 
   public ReferencedResource(WsmResourceFields resourceFields) {

@@ -32,6 +32,7 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -59,7 +60,9 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
       @JsonProperty("datasetName") String datasetName,
       @JsonProperty("projectId") String projectId,
       @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
-      @JsonProperty("properties") Map<String, String> properties) {
+      @JsonProperty("properties") Map<String, String> properties,
+      @JsonProperty("createdByEmail") String createdByEmail,
+      @JsonProperty("createdDate") OffsetDateTime createdDate) {
     super(
         workspaceId,
         resourceId,
@@ -72,7 +75,9 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
         applicationId,
         privateResourceState,
         resourceLineage,
-        properties);
+        properties,
+        createdByEmail,
+        createdDate);
     this.datasetName = datasetName;
     this.projectId = projectId;
     validate();
@@ -163,14 +168,16 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
       UUID destinationResourceId,
       @Nullable UUID destinationFolderId,
       @Nullable String name,
-      @Nullable String description) {
+      @Nullable String description,
+      String createdByEmail) {
     WsmResourceFields wsmResourceFields =
         buildReferencedCloneResourceCommonFields(
             destinationWorkspaceUuid,
             destinationResourceId,
             destinationFolderId,
             name,
-            description);
+            description,
+            createdByEmail);
 
     final ReferencedBigQueryDatasetResource.Builder resultBuilder =
         ReferencedBigQueryDatasetResource.builder()

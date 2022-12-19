@@ -15,4 +15,6 @@
     <include file="changesets/20220907_add_resource_properties_column.yaml" relativeToChangelogFile="true" />
     <include file="changesets/20220920_add_folder_properties_column.yaml" relativeToChangelogFile="true" />
     <include file="changesets/20221014_workspace_activity_log_add_index.yaml" relativeToChangelogFile="true" />
+    <include file="changesets/20221118_add_created_date_and_created_by_email_columns.yaml" relativeToChangelogFile="true" />
+    <include file="changesets/20221130_add_change_subject_id_and_change_subject_type_column.yaml" relativeToChangelogFile="true" />
 </databaseChangeLog>

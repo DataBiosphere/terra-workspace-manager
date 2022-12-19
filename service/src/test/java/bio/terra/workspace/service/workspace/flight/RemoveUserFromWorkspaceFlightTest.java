@@ -14,7 +14,9 @@ import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.GcpCloudUtils;
 import bio.terra.workspace.common.StairwayTestUtils;
+import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
 import bio.terra.workspace.service.iam.SamService;
@@ -33,12 +35,10 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResourceF
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
-import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.CloudContextHolder;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.iam.v1.Iam;
@@ -68,24 +68,16 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
   @Autowired private JobApiUtils jobApiUtils;
   @Autowired private SamService samService;
   @Autowired private PetSaService petSaService;
-  @Autowired private SpendConnectedTestUtils spendUtils;
   @Autowired private UserAccessUtils userAccessUtils;
+  @Autowired private WorkspaceConnectedTestUtils connectedTestUtils;
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void removeUserFromWorkspaceFlightDoUndo() throws Exception {
     // Create a workspace as the default test user
-    UUID uuid = UUID.randomUUID();
     Workspace workspace =
-        Workspace.builder()
-            .workspaceId(uuid)
-            .userFacingId("a" + uuid.toString())
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .spendProfileId(spendUtils.defaultSpendId())
-            .build();
-    UUID workspaceUuid =
-        workspaceService.createWorkspace(
-            workspace, null, null, userAccessUtils.defaultUserAuthRequest());
+        connectedTestUtils.createWorkspace(userAccessUtils.defaultUserAuthRequest());
+    var workspaceUuid = workspace.getWorkspaceId();
     // Add the secondary test user as a writer
     samService.grantWorkspaceRole(
         workspaceUuid,
@@ -238,7 +230,7 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
   private ControlledBigQueryDatasetResource buildPrivateDataset(
       UUID workspaceUuid, String datasetName, String projectId) {
     ControlledResourceFields commonFields =
-        ControlledResourceFields.builder()
+        ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
             .workspaceUuid(workspaceUuid)
             .resourceId(UUID.randomUUID())
             .name(datasetName)

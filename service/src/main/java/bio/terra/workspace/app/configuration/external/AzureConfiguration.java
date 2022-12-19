@@ -16,6 +16,7 @@ public class AzureConfiguration {
   private Long sasTokenExpiryTimeMinutesOffset;
   private Long sasTokenExpiryTimeMaximumMinutesOffset;
   private String corsAllowedOrigins;
+  private String azureMonitorLinuxAgentVersion;
 
   public String getManagedAppClientId() {
     return managedAppClientId;
@@ -72,5 +73,13 @@ public class AzureConfiguration {
 
   public void setCorsAllowedOrigins(String corsAllowedOrigins) {
     this.corsAllowedOrigins = corsAllowedOrigins;
+  }
+
+  public String getAzureMonitorLinuxAgentVersion() {
+    return azureMonitorLinuxAgentVersion;
+  }
+
+  public void setAzureMonitorLinuxAgentVersion(String azureMonitorLinuxAgentVersion) {
+    this.azureMonitorLinuxAgentVersion = azureMonitorLinuxAgentVersion;
   }
 }

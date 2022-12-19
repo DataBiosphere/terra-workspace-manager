@@ -13,20 +13,19 @@ import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.FlightWaitTimedOutException;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 
-public class AwaitCreateGcpContextFlightStep implements Step {
+public class AwaitCreateCloudContextFlightStep implements Step {
 
-  public AwaitCreateGcpContextFlightStep() {}
+  private final String flightIdKey;
+
+  public AwaitCreateCloudContextFlightStep(String flightIdKey) {
+    this.flightIdKey = flightIdKey;
+  }
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    FlightUtils.validateRequiredEntries(
-        context.getWorkingMap(), ControlledResourceKeys.CREATE_CLOUD_CONTEXT_FLIGHT_ID);
-    var jobId =
-        context
-            .getWorkingMap()
-            .get(ControlledResourceKeys.CREATE_CLOUD_CONTEXT_FLIGHT_ID, String.class);
+    FlightUtils.validateRequiredEntries(context.getWorkingMap(), flightIdKey);
+    var jobId = context.getWorkingMap().get(flightIdKey, String.class);
     try {
       FlightState subflightState =
           context.getStairway().waitForFlight(jobId, FLIGHT_POLL_SECONDS, FLIGHT_POLL_CYCLES);

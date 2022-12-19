@@ -1,11 +1,14 @@
 package bio.terra.workspace.service.logging;
 
+import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
+import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.workspace.model.OperationType;
+import java.util.Optional;
 import java.util.UUID;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.springframework.stereotype.Component;
@@ -25,17 +28,32 @@ public class WorkspaceActivityLogService {
 
   /** Writes the change activity. */
   public void writeActivity(
-      AuthenticatedUserRequest userRequest, UUID workspaceUuid, OperationType operationType) {
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceUuid,
+      OperationType operationType,
+      String changeSubjectId,
+      ActivityLogChangedTarget objectType) {
     UserStatusInfo userStatusInfo =
         SamRethrow.onInterrupted(
             () -> samService.getUserStatusInfo(userRequest), "Get user status info from SAM");
     workspaceActivityLogDao.writeActivity(
         workspaceUuid,
-        DbWorkspaceActivityLog.getDbWorkspaceActivityLog(
-            operationType,
+        new DbWorkspaceActivityLog(
             // Use the userEmail from UserStatusInfo instead of userRequest because the email
             // in userRequest could be the pet SA email.
             userStatusInfo.getUserEmail(),
-            userStatusInfo.getUserSubjectId()));
+            userStatusInfo.getUserSubjectId(),
+            operationType,
+            changeSubjectId,
+            objectType));
+  }
+
+  public Optional<ActivityLogChangeDetails> getLastUpdatedDetails(UUID workspaceId) {
+    return workspaceActivityLogDao.getLastUpdatedDetails(workspaceId);
+  }
+
+  public Optional<ActivityLogChangeDetails> getLastUpdatedDetails(
+      UUID workspaceId, String changeSubjectId) {
+    return workspaceActivityLogDao.getLastUpdatedDetails(workspaceId, changeSubjectId);
   }
 }

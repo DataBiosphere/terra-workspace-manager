@@ -14,6 +14,7 @@ import bio.terra.workspace.generated.model.ApiCreateLandingZoneResult;
 import bio.terra.workspace.generated.model.ApiDeleteAzureLandingZoneJobResult;
 import bio.terra.workspace.generated.model.ApiDeleteAzureLandingZoneRequestBody;
 import bio.terra.workspace.generated.model.ApiDeleteAzureLandingZoneResult;
+import bio.terra.workspace.generated.model.ApiResourceQuota;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -116,6 +117,18 @@ public class LandingZoneApiController implements LandingZonesApi {
     ApiAzureLandingZoneList result =
         landingZoneApiDispatch.listAzureLandingZones(
             bearerTokenFactory.from(request), billingProfileId);
+    return new ResponseEntity<>(result, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiResourceQuota> getResourceQuotaResult(
+      @PathVariable("landingZoneId") UUID landingZoneId,
+      @Valid @RequestParam(value = "azureResourceId", required = true) String azureResourceId) {
+
+    ApiResourceQuota result =
+        landingZoneApiDispatch.getResourceQuota(
+            bearerTokenFactory.from(request), landingZoneId, azureResourceId);
+
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
 }

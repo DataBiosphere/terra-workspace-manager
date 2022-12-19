@@ -10,5 +10,5 @@ public enum ActivityLogChangedTarget {
   RESOURCE,
   USER,
   WORKSPACE,
-  NONE
+  POLICIES
 }

@@ -1,12 +1,12 @@
 package bio.terra.workspace.service.workspace;
 
+import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.common.iam.SamUser;
-import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
+import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.WorkspaceDao;
-import bio.terra.workspace.generated.model.ApiTpsPolicyInputs;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
@@ -17,7 +17,8 @@ import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
-import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneGcpWorkspaceFlight;
+import bio.terra.workspace.service.policy.TpsApiDispatch;
+import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneWorkspaceFlight;
 import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.exceptions.BufferServiceDisabledException;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceException;
@@ -97,7 +98,7 @@ public class WorkspaceService {
   @Traced
   public UUID createWorkspace(
       Workspace workspace,
-      @Nullable ApiTpsPolicyInputs policies,
+      @Nullable TpsPolicyInputs policies,
       @Nullable List<String> applications,
       AuthenticatedUserRequest userRequest) {
     String workspaceUuid = workspace.getWorkspaceId().toString();
@@ -297,7 +298,12 @@ public class WorkspaceService {
       @Nullable String description,
       AuthenticatedUserRequest userRequest) {
     if (workspaceDao.updateWorkspace(workspaceUuid, userFacingId, name, description)) {
-      workspaceActivityLogService.writeActivity(userRequest, workspaceUuid, OperationType.UPDATE);
+      workspaceActivityLogService.writeActivity(
+          userRequest,
+          workspaceUuid,
+          OperationType.UPDATE,
+          workspaceUuid.toString(),
+          ActivityLogChangedTarget.WORKSPACE);
     }
     return workspaceDao.getWorkspace(workspaceUuid);
   }
@@ -311,7 +317,12 @@ public class WorkspaceService {
   public void updateWorkspaceProperties(
       UUID workspaceUuid, Map<String, String> properties, AuthenticatedUserRequest userRequest) {
     workspaceDao.updateWorkspaceProperties(workspaceUuid, properties);
-    workspaceActivityLogService.writeActivity(userRequest, workspaceUuid, OperationType.UPDATE);
+    workspaceActivityLogService.writeActivity(
+        userRequest,
+        workspaceUuid,
+        OperationType.UPDATE_PROPERTIES,
+        workspaceUuid.toString(),
+        ActivityLogChangedTarget.WORKSPACE);
   }
 
   /** Delete an existing workspace by ID. */
@@ -340,7 +351,12 @@ public class WorkspaceService {
   public void deleteWorkspaceProperties(
       UUID workspaceUuid, List<String> propertyKeys, AuthenticatedUserRequest userRequest) {
     workspaceDao.deleteWorkspaceProperties(workspaceUuid, propertyKeys);
-    workspaceActivityLogService.writeActivity(userRequest, workspaceUuid, OperationType.DELETE);
+    workspaceActivityLogService.writeActivity(
+        userRequest,
+        workspaceUuid,
+        OperationType.DELETE_PROPERTIES,
+        workspaceUuid.toString(),
+        ActivityLogChangedTarget.WORKSPACE);
   }
 
   /**
@@ -358,7 +374,7 @@ public class WorkspaceService {
       String jobId,
       AuthenticatedUserRequest userRequest,
       @Nullable String resultPath,
-      AzureCloudContext azureContext) {
+      @Nullable AzureCloudContext azureContext) {
     features.azureEnabledCheck();
 
     jobService
@@ -456,7 +472,8 @@ public class WorkspaceService {
       Workspace sourceWorkspace,
       AuthenticatedUserRequest userRequest,
       @Nullable String location,
-      Workspace destinationWorkspace) {
+      Workspace destinationWorkspace,
+      @Nullable AzureCloudContext azureCloudContext) {
     String workspaceUuid = sourceWorkspace.getWorkspaceId().toString();
     String jobDescription =
         String.format(
@@ -474,7 +491,7 @@ public class WorkspaceService {
     return jobService
         .newJob()
         .description(jobDescription)
-        .flightClass(CloneGcpWorkspaceFlight.class)
+        .flightClass(CloneWorkspaceFlight.class)
         .userRequest(userRequest)
         .request(destinationWorkspace)
         .operationType(OperationType.CLONE)
@@ -484,6 +501,7 @@ public class WorkspaceService {
             ControlledResourceKeys.SOURCE_WORKSPACE_ID,
             sourceWorkspace.getWorkspaceId()) // TODO: remove this duplication
         .addParameter(ControlledResourceKeys.LOCATION, location)
+        .addParameter(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, azureCloudContext)
         .submit();
   }
 

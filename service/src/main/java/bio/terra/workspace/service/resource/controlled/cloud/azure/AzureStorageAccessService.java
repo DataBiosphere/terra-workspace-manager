@@ -46,11 +46,6 @@ import org.springframework.stereotype.Component;
 public class AzureStorageAccessService {
   private static final Logger logger = LoggerFactory.getLogger(AzureStorageAccessService.class);
 
-  record StorageData(
-      String storageAccountName,
-      String endpoint,
-      ControlledAzureStorageContainerResource storageContainerResource) {}
-
   private final SamService samService;
   private final CrlService crlService;
   private final FeatureConfiguration features;
@@ -193,7 +188,7 @@ public class AzureStorageAccessService {
         getSasTokenPermissions(
             userRequest,
             storageData.storageContainerResource().getResourceId(),
-            storageData.storageContainerResource.getCategory().getSamResourceName(),
+            storageData.storageContainerResource().getCategory().getSamResourceName(),
             sasTokenOptions.permissions());
 
     StorageSharedKeyCredential storageKey =
@@ -205,7 +200,7 @@ public class AzureStorageAccessService {
             .credential(storageKey)
             .endpoint(storageData.endpoint())
             .httpClient(HttpClient.createDefault())
-            .containerName(storageData.storageContainerResource.getStorageContainerName())
+            .containerName(storageData.storageContainerResource().getStorageContainerName())
             .buildClient();
     BlobServiceSasSignatureValues sasValues =
         new BlobServiceSasSignatureValues(sasTokenOptions.expiryTime(), blobContainerSasPermission)
@@ -264,7 +259,38 @@ public class AzureStorageAccessService {
         .buildClient();
   }
 
-  private StorageData getStorageAccountData(
+  /**
+   * Builds a blob container client for the given storage data object.
+   *
+   * @param storageData Storage data object we want a container client for
+   * @return An azure blob container client
+   */
+  public BlobContainerClient buildBlobContainerClient(StorageData storageData) {
+    StorageSharedKeyCredential storageAccountKey =
+        storageAccountKeyProvider.getStorageAccountKey(
+            storageData.storageContainerResource().getWorkspaceId(),
+            storageData.storageAccountName());
+
+    return new BlobContainerClientBuilder()
+        .credential(storageAccountKey)
+        .endpoint(storageData.endpoint())
+        .httpClient(HttpClient.createDefault())
+        .containerName(storageData.storageContainerResource().getStorageContainerName())
+        .buildClient();
+  }
+
+  /**
+   * Fetches the parent Azure storage account data for a given container resource, either from the
+   * workspace's storage account (if present), or the parent landing zone. The requesting user must
+   * have READ on the container
+   *
+   * @param workspaceUuid Workspace in which the container resides
+   * @param storageContainerUuid WSM resource ID for the storage container
+   * @param userRequest User request
+   * @throws IllegalStateException if no shared storage account is present
+   * @return StorageData object
+   */
+  public StorageData getStorageAccountData(
       UUID workspaceUuid, UUID storageContainerUuid, AuthenticatedUserRequest userRequest) {
     // Creating an AzureStorageContainerSasToken requires checking the user's access to both the
     // storage container and storage account resource

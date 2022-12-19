@@ -154,6 +154,15 @@ public class SamService {
   }
 
   /**
+   * Fetch the email associated with user credentials directly from Sam. Call this method outside a
+   * flight as we don't need to retry when `InterruptException` happens outside a flight.
+   */
+  public String getUserEmailFromSamAndRethrowOnInterrupt(AuthenticatedUserRequest userRequest) {
+    return SamRethrow.onInterrupted(
+        () -> getUserEmailFromSam(userRequest), "Get user email from SAM");
+  }
+
+  /**
    * Fetch the email associated with user credentials directly from Sam. Unlike {@code
    * getRequestUserEmail}, this will always call Sam to fetch an email and will never read it from
    * the AuthenticatedUserRequest. This is important for calls made by pet service accounts, which

@@ -52,9 +52,7 @@ public class CopyAzureStorageContainerBlobsStepUnitTest extends BaseAzureUnitTes
         ControlledResourceFixtures.getAzureStorageContainer(
             storageAccount.getResourceId(), "sc-" + UUID.randomUUID());
     var workingMap = new FlightMap();
-    workingMap.put(
-        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_STORAGE_ACCOUNT_RESOURCE_ID,
-        storageAccount.getResourceId());
+
     workingMap.put(
         WorkspaceFlightMapKeys.ControlledResourceKeys.CLONED_RESOURCE_DEFINITION,
         destinationContainer);
@@ -74,7 +72,7 @@ public class CopyAzureStorageContainerBlobsStepUnitTest extends BaseAzureUnitTes
             azureStorageAccessService, sourceContainer, resourceDao, userRequest, copier);
     var copyResult =
         new BlobCopierResult(Map.of(LongRunningOperationStatus.SUCCESSFULLY_COMPLETED, List.of()));
-    when(copier.copyBlobs(any(), any(), any(), any())).thenReturn(copyResult);
+    when(copier.copyBlobs(any(), any())).thenReturn(copyResult);
 
     var result = copyBlobsStep.doStep(flightContext);
 
@@ -94,7 +92,7 @@ public class CopyAzureStorageContainerBlobsStepUnitTest extends BaseAzureUnitTes
                 List.of(),
                 LongRunningOperationStatus.FAILED,
                 List.of()));
-    when(copier.copyBlobs(any(), any(), any(), any())).thenReturn(errorCopyResult);
+    when(copier.copyBlobs(any(), any())).thenReturn(errorCopyResult);
 
     var result = copyBlobsStep.doStep(flightContext);
 

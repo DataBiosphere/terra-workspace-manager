@@ -553,11 +553,9 @@ public class ControlledResourceService {
       return null;
     }
 
-    String applicationEmail =
-        SamRethrow.onInterrupted(
-            () -> samService.getUserEmailFromSam(userRequest), "get application email");
-
-    WsmApplication application = applicationDao.getApplicationByEmail(applicationEmail);
+    WsmApplication application =
+        applicationDao.getApplicationByEmail(
+            samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest));
     return application.getApplicationId();
   }
 

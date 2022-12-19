@@ -201,7 +201,7 @@ components:
             $ref: '#/components/schemas/Folder'
     Folder:
       type: object
-      required: [id, displayName]
+      required: [id, displayName, createdBy, createdDate, lastUpdatedBy, lastUpdatedDate]
       properties:
         id:
           description: The ID of the folder. Immutable.
@@ -215,6 +215,20 @@ components:
           $ref: '#/components/schemas/FolderId'
         properties:
           $ref: '#/components/schemas/Properties'
+        createdBy:
+          description: User email of whom created the folder
+          type: string
+        createdDate:
+          description: Timestamp when the folder is created
+          type: string
+          format: date-time
+        lastUpdatedBy:
+          description: User email of whom last updated the folder
+          type: string
+        lastUpdatedDate:
+          description: Timestamp where the folder was last updated
+          type: string
+          format: date-time
     CreateFolderRequestBody:
       type: object
       required: [displayName]

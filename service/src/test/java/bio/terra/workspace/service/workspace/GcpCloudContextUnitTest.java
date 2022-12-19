@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.workspace;
 
+import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -10,6 +11,7 @@ import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
+import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.model.SamConstants.SamSpendProfileAction;
@@ -127,16 +129,8 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
 
     // Create a workspace record
     UUID workspaceUuid = UUID.randomUUID();
-    var workspace =
-        new Workspace(
-            workspaceUuid,
-            "cloud-context-user-facing-id",
-            "gcpCloudContextAutoUpgradeTest",
-            "cloud context description",
-            new SpendProfileId("spend-profile"),
-            Collections.emptyMap(),
-            WorkspaceStage.MC_WORKSPACE);
-    workspaceDao.createWorkspace(workspace, /* applicationIds */ null);
+    var workspace = WorkspaceFixtures.buildMcWorkspace(workspaceUuid);
+    workspaceDao.createWorkspace(workspace, /* applicationIds= */ null);
 
     // Create a cloud context in the database with a V1 format
     final String flightId = UUID.randomUUID().toString();
@@ -163,8 +157,10 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
             "description",
             new SpendProfileId("spend-profile"),
             Collections.emptyMap(),
-            WorkspaceStage.MC_WORKSPACE);
-    workspaceDao.createWorkspace(workspace, /* applicationIds */ null);
+            WorkspaceStage.MC_WORKSPACE,
+            DEFAULT_USER_EMAIL,
+            null);
+    workspaceDao.createWorkspace(workspace, /* applicationIds= */ null);
     // Create a cloud context record in the DB
     String projectId = "fake-project-id";
     GcpCloudContext fakeContext =

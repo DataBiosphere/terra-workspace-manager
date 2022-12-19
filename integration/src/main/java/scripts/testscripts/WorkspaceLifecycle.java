@@ -26,7 +26,6 @@ import scripts.utils.ClientTestUtils;
 import scripts.utils.WorkspaceApiTestScriptBase;
 
 public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
-  private static final String USER_EMAIL = "liam.dragonmaw@test.firecloud.org";
 
   private static final String WORKSPACE_NAME = "name";
   private static final String WORKSPACE_DESCRIPTION = "description";
@@ -73,16 +72,13 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
     assertThat(workspaceDescription.getStage(), equalTo(WorkspaceStageModel.MC_WORKSPACE));
     assertNotNull(workspaceDescription.getLastUpdatedDate());
 
-    var firstLastUpdatedDate = workspaceDescription.getLastUpdatedDate();
     var createdDate = workspaceDescription.getCreatedDate();
-    assertEquals(firstLastUpdatedDate, createdDate);
+    assertNotNull(createdDate);
 
-    // TODO(PF-1752): Change to assert lastUpdatedBy equals to user email once the code changes 735
-    //  is deployed to all environments.
-    // var lastUpdatedBy = workspaceDescription.getLastUpdatedBy();
-    // assertEquals(USER_EMAIL, lastUpdatedBy);
-    // var createdBy = workspaceDescription.getCreatedBy();
-    // assertEquals(USER_EMAIL, createdBy);
+    var lastUpdatedBy = workspaceDescription.getLastUpdatedBy();
+    assertEquals(testUser.userEmail, lastUpdatedBy);
+    var createdBy = workspaceDescription.getCreatedBy();
+    assertEquals(testUser.userEmail, createdBy);
 
     // Update workspace
     UpdateWorkspaceRequestBody updateBody =
@@ -106,7 +102,7 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
     assertThat(updatedDescription.getDisplayName(), equalTo(WORKSPACE_NAME));
     assertThat(updatedDescription.getDescription(), equalTo(WORKSPACE_DESCRIPTION));
     assertNotNull(updatedDescription.getLastUpdatedDate());
-    assertTrue(firstLastUpdatedDate.isBefore(updatedDescription.getLastUpdatedDate()));
+    assertTrue(createdDate.isBefore(updatedDescription.getLastUpdatedDate()));
 
     Properties updateProperties = buildProperties(Map.of("foo", "barUpdate", "ted", "lasso"));
 

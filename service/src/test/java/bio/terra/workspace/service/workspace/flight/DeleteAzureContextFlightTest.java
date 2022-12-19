@@ -6,6 +6,7 @@ import bio.terra.stairway.*;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.utils.AzureTestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
@@ -20,7 +21,6 @@ import bio.terra.workspace.service.resource.controlled.ControlledResourceService
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
-import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -66,10 +66,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
     // Create a new workspace at the start of each test.
     workspaceUuid = UUID.randomUUID();
     workspace =
-        Workspace.builder()
-            .workspaceId(workspaceUuid)
-            .userFacingId("a" + workspaceUuid.toString())
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+        WorkspaceFixtures.defaultWorkspaceBuilder(workspaceUuid)
             .spendProfileId(spendUtils.defaultSpendId())
             .build();
     workspaceService.createWorkspace(
@@ -109,10 +106,10 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
     ControlledAzureIpResource ipResource =
         ControlledAzureIpResource.builder()
             .common(
-                ControlledResourceFields.builder()
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                     .workspaceUuid(workspaceUuid)
                     .resourceId(ipId)
-                    .name("wsm-test" + ipId.toString())
+                    .name("wsm-test" + ipId)
                     .cloningInstructions(CloningInstructions.COPY_RESOURCE)
                     .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
                     .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
@@ -247,10 +244,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
     // create new workspace so delete at end of test won't interfere with @AfterEach teardown
     UUID uuid = UUID.randomUUID();
     Workspace request =
-        Workspace.builder()
-            .workspaceId(uuid)
-            .userFacingId("a" + uuid.toString())
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+        WorkspaceFixtures.defaultWorkspaceBuilder(uuid)
             .spendProfileId(spendUtils.defaultSpendId())
             .build();
     UUID mcWorkspaceUuid = workspaceService.createWorkspace(request, null, null, userRequest);

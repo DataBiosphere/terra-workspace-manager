@@ -11,6 +11,7 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import com.google.common.collect.ImmutableMap;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -42,6 +43,8 @@ public class DbResource {
   @Nullable private String assignedUser;
   @Nullable private PrivateResourceState privateResourceState;
   @Nullable private ImmutableMap<String, String> properties;
+  private String createdByEmail;
+  @Nullable private OffsetDateTime createdDate;
 
   private static final Supplier<RuntimeException> MISSING_REQUIRED_FIELD =
       () -> new MissingRequiredFieldsException("Missing required field");
@@ -197,5 +200,23 @@ public class DbResource {
   public DbResource properties(Map<String, String> properties) {
     this.properties = ImmutableMap.copyOf(properties);
     return this;
+  }
+
+  public DbResource createdByEmail(String createdByEmail) {
+    this.createdByEmail = createdByEmail;
+    return this;
+  }
+
+  public String getCreatedByEmail() {
+    return createdByEmail;
+  }
+
+  public DbResource createdDate(OffsetDateTime createdDate) {
+    this.createdDate = createdDate;
+    return this;
+  }
+
+  public OffsetDateTime getCreatedDate() {
+    return createdDate;
   }
 }

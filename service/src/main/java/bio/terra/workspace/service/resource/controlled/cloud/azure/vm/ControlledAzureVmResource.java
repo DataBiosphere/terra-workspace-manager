@@ -29,6 +29,7 @@ import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -64,7 +65,9 @@ public class ControlledAzureVmResource extends ControlledResource {
       @JsonProperty("networkId") UUID networkId,
       @JsonProperty("diskId") UUID diskId,
       @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
-      @JsonProperty("properties") Map<String, String> properties) {
+      @JsonProperty("properties") Map<String, String> properties,
+      @JsonProperty("createdByEmail") String createdByEmail,
+      @JsonProperty("createdDate") OffsetDateTime createdDate) {
 
     super(
         workspaceId,
@@ -78,7 +81,9 @@ public class ControlledAzureVmResource extends ControlledResource {
         applicationId,
         privateResourceState,
         resourceLineage,
-        properties);
+        properties,
+        createdByEmail,
+        createdDate);
     this.vmName = vmName;
     this.region = region;
     this.vmSize = vmSize;
@@ -161,6 +166,14 @@ public class ControlledAzureVmResource extends ControlledResource {
             flightBeanBag.getCrlService(),
             flightBeanBag.getSamService(),
             this),
+        cloudRetry);
+    flight.addStep(
+        new EnableVmLoggingStep(
+            flightBeanBag.getAzureConfig(),
+            flightBeanBag.getCrlService(),
+            this,
+            flightBeanBag.getLandingZoneApiDispatch(),
+            userRequest),
         cloudRetry);
   }
 

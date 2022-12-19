@@ -1,12 +1,14 @@
 package bio.terra.workspace.db;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_RESOURCE_PROPERTIES;
+import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant.DEFAULT_ZONE;
 import static bio.terra.workspace.unit.WorkspaceUnitTestUtils.createWorkspaceWithGcpContext;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -60,8 +62,10 @@ public class ResourceDaoTest extends BaseUnitTest {
         ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
     resourceDao.createControlledResource(resource);
 
-    assertEquals(
-        resource, resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId()));
+    var getResource = resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId());
+    assertEquals(resource, getResource);
+    assertEquals(DEFAULT_USER_EMAIL, getResource.getCreatedByEmail());
+    assertNotNull(getResource.getCreatedDate());
   }
 
   @Test
@@ -70,8 +74,10 @@ public class ResourceDaoTest extends BaseUnitTest {
         ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid).build();
     resourceDao.createControlledResource(resource);
 
-    assertEquals(
-        resource, resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId()));
+    var getResource = resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId());
+    assertEquals(resource, getResource);
+    assertEquals(DEFAULT_USER_EMAIL, getResource.getCreatedByEmail());
+    assertNotNull(getResource.getCreatedDate());
   }
 
   @Test
@@ -84,8 +90,10 @@ public class ResourceDaoTest extends BaseUnitTest {
         ControlledResourceFixtures.makeDefaultAiNotebookInstance().common(commonFields).build();
     resourceDao.createControlledResource(resource);
 
-    assertEquals(
-        resource, resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId()));
+    var getResource = resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId());
+    assertEquals(resource, getResource);
+    assertEquals(DEFAULT_USER_EMAIL, getResource.getCreatedByEmail());
+    assertNotNull(getResource.getCreatedDate());
   }
 
   @Test

@@ -1,10 +1,12 @@
 package bio.terra.workspace.service.workspace.model;
 
+import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants.Properties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
+import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -21,31 +23,16 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
  * have an associated billing account and may have zero or one associated GCP projects.
  */
 @JsonDeserialize(builder = Workspace.Builder.class)
-public class Workspace {
-  private final UUID workspaceId;
-  private final String userFacingId;
-  private final @Nullable String displayName;
-  private final @Nullable String description;
-  private final SpendProfileId spendProfileId;
-  private final Map<String, String> properties;
-  private final WorkspaceStage workspaceStage;
-
-  public Workspace(
-      UUID workspaceId,
-      String userFacingId,
-      @Nullable String displayName,
-      @Nullable String description,
-      SpendProfileId spendProfileId,
-      Map<String, String> properties,
-      WorkspaceStage workspaceStage) {
-    this.workspaceId = workspaceId;
-    this.userFacingId = userFacingId;
-    this.displayName = displayName;
-    this.description = description;
-    this.spendProfileId = spendProfileId;
-    this.properties = properties;
-    this.workspaceStage = workspaceStage;
-  }
+public record Workspace(
+    UUID workspaceId,
+    String userFacingId,
+    @Nullable String displayName,
+    @Nullable String description,
+    SpendProfileId spendProfileId,
+    Map<String, String> properties,
+    WorkspaceStage workspaceStage,
+    String createdByEmail,
+    OffsetDateTime createdDate) {
 
   /** The globally unique identifier of this workspace */
   public UUID getWorkspaceId() {
@@ -104,6 +91,7 @@ public class Workspace {
         .append(spendProfileId, workspace.spendProfileId)
         .append(properties, workspace.properties)
         .append(workspaceStage, workspace.workspaceStage)
+        .append(createdByEmail, workspace.createdByEmail)
         .isEquals();
   }
 
@@ -133,6 +121,8 @@ public class Workspace {
     private SpendProfileId spendProfileId;
     private Map<String, String> properties;
     private WorkspaceStage workspaceStage;
+    private String createdByEmail;
+    private @Nullable OffsetDateTime createdDate;
 
     public Builder workspaceId(UUID workspaceUuid) {
       this.workspaceId = workspaceUuid;
@@ -169,6 +159,16 @@ public class Workspace {
       return this;
     }
 
+    public Builder createdByEmail(String email) {
+      this.createdByEmail = email;
+      return this;
+    }
+
+    public Builder createdDate(OffsetDateTime createdDate) {
+      this.createdDate = createdDate;
+      return this;
+    }
+
     public Workspace build() {
       // Always have a map, even if it is empty
       if (properties == null) {
@@ -177,6 +177,10 @@ public class Workspace {
       if (workspaceId == null || workspaceStage == null) {
         throw new MissingRequiredFieldsException("Workspace requires id and stage");
       }
+      if (createdByEmail == null) {
+        throw new InternalServerErrorException(
+            "Something went wrong, createdByEmail shouldn't be null");
+      }
       return new Workspace(
           workspaceId,
           userFacingId,
@@ -184,7 +188,9 @@ public class Workspace {
           description,
           spendProfileId,
           properties,
-          workspaceStage);
+          workspaceStage,
+          createdByEmail,
+          createdDate);
     }
   }
 
@@ -205,7 +211,9 @@ public class Workspace {
             .workspaceId(fullWorkspace.getWorkspaceId())
             .userFacingId(fullWorkspace.getUserFacingId())
             .workspaceStage(fullWorkspace.getWorkspaceStage())
-            .displayName(fullWorkspace.getDisplayName().orElse(null));
+            .displayName(fullWorkspace.getDisplayName().orElse(null))
+            .createdByEmail(fullWorkspace.createdByEmail)
+            .createdDate(fullWorkspace.createdDate);
 
     Map<String, String> strippedProperties = new HashMap<>();
     if (fullWorkspace.getProperties().containsKey(Properties.TYPE)) {

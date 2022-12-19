@@ -41,7 +41,6 @@ import org.springframework.test.web.servlet.MockMvc;
 
 /** ControlledGcpResourceApiController unit tests. */
 public class ControlledGcpResourceApiControllerTest extends BaseUnitTestMockGcpCloudContextService {
-
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
   @Autowired ObjectMapper objectMapper;
@@ -59,6 +58,8 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTestMockGcpC
             new UserStatusInfo()
                 .userEmail(USER_REQUEST.getEmail())
                 .userSubjectId(USER_REQUEST.getSubjectId()));
+    when(mockSamService().getUserEmailFromSamAndRethrowOnInterrupt(any()))
+        .thenReturn(USER_REQUEST.getEmail());
   }
 
   @Test
@@ -72,7 +73,8 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTestMockGcpC
         ApiCloningInstructionsEnum.REFERENCE,
         /*destResourceName=*/ null,
         "datasetName",
-        HttpStatus.SC_BAD_REQUEST,
+        /*destLocation=*/ null,
+        List.of(HttpStatus.SC_BAD_REQUEST),
         /*shouldUndo=*/ false);
   }
 
@@ -85,8 +87,11 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTestMockGcpC
         /*sourceResourceId=*/ UUID.randomUUID(),
         /*destWorkspaceId=*/ UUID.randomUUID(),
         ApiCloningInstructionsEnum.REFERENCE,
+        /*destResourceName=*/ null,
         "bucketName",
-        HttpStatus.SC_BAD_REQUEST);
+        /*destLocation=*/ null,
+        List.of(HttpStatus.SC_BAD_REQUEST),
+        /*shouldUndo=*/ false);
   }
 
   @Test
@@ -187,6 +192,7 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTestMockGcpC
             .dataset(defaultBigQueryDatasetCreationParameters());
 
     mockMvcUtils.postExpect(
+        USER_REQUEST,
         objectMapper.writeValueAsString(datasetCreationRequest),
         String.format(CONTROLLED_GCP_BIG_QUERY_DATASETS_V1_PATH_FORMAT, workspaceId),
         HttpStatus.SC_BAD_REQUEST);

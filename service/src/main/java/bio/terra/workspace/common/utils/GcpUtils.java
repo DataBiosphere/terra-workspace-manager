@@ -3,6 +3,7 @@ package bio.terra.workspace.common.utils;
 import bio.terra.cloudres.google.api.services.common.OperationCow;
 import bio.terra.cloudres.google.api.services.common.OperationUtils;
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.workspace.exceptions.SaCredentialsMissingException;
@@ -13,6 +14,7 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.IdTokenCredentials;
 import com.google.auth.oauth2.IdTokenProvider;
 import com.google.cloud.ServiceOptions;
+import io.grpc.Status.Code;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Arrays;
@@ -40,7 +42,7 @@ public class GcpUtils {
       // The project is already being deleted.
       return;
     }
-    pollUntilSuccess(
+    pollAndRetry(
         resourceManager
             .operations()
             .operationCow(resourceManager.projects().delete(projectId).execute()),
@@ -68,20 +70,45 @@ public class GcpUtils {
   }
 
   /**
-   * Poll until the Google Service API operation has completed. Throws any error or timeouts as a
+   * Poll until the Google Service API operation has completed. If an error is retryable, throws a
    * {@link RetryException}.
    */
-  public static void pollUntilSuccess(
+  public static void pollAndRetry(
       OperationCow<?> operation, Duration pollingInterval, Duration timeout)
       throws RetryException, IOException, InterruptedException {
     operation = OperationUtils.pollUntilComplete(operation, pollingInterval, timeout);
     if (operation.getOperationAdapter().getError() != null) {
-      throw new RetryException(
-          String.format(
-              "Error polling operation. name [%s] message [%s]",
-              operation.getOperationAdapter().getName(),
-              operation.getOperationAdapter().getError().getMessage()));
+      int code = operation.getOperationAdapter().getError().getCode();
+      if (is4xxClientError(code)) {
+        // do not waste time retrying on client error.
+        throw new BadRequestException(
+            String.format("Gcp calls failed with client error code %s. Do not retry", code));
+      } else {
+        throw new RetryException(
+            String.format(
+                "Error polling operation. name [%s] message [%s]",
+                operation.getOperationAdapter().getName(),
+                operation.getOperationAdapter().getError().getMessage()));
+      }
     }
+  }
+
+  /**
+   * Check whether the grpc status code is a client error.
+   *
+   * <p>Details of mapping of gRPC status code to http in
+   * https://chromium.googlesource.com/external/github.com/grpc/grpc/+/refs/tags/v1.21.4-pre1/doc/statuscodes.md
+   *
+   * @param code gRPC status code.
+   */
+  private static boolean is4xxClientError(int code) {
+    return Code.INVALID_ARGUMENT.value() == code // 400
+        || Code.OUT_OF_RANGE.value() == code // 400
+        || Code.FAILED_PRECONDITION.value() == code // 400
+        || Code.ALREADY_EXISTS.value() == code // 409
+        || Code.ABORTED.value() == code // 409
+        || Code.UNAUTHENTICATED.value() == code // 401
+        || Code.RESOURCE_EXHAUSTED.value() == code; // 429
   }
 
   public static String getControlPlaneProjectId() {
