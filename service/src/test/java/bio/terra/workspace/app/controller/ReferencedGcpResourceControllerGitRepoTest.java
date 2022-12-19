@@ -249,7 +249,7 @@ public class ReferencedGcpResourceControllerGitRepoTest extends BaseConnectedTes
     mockMvcUtils.assertCloneActivityIsLogged(
         workspaceId,
         sourceResource.getMetadata().getResourceId(),
-        workspaceId2,
+        workspaceId,
         clonedResource.getMetadata().getResourceId(),
         userAccessUtils.defaultUserAuthRequest());
 
