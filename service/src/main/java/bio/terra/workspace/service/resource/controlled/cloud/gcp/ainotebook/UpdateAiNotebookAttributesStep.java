@@ -158,24 +158,29 @@ public class UpdateAiNotebookAttributesStep implements Step {
       AcceleratorConfig acceleratorConfig)
       throws GeneralSecurityException, IOException {
     Compute computeService = createComputeService();
+
+    if (acceleratorConfig != null) {
+      // Set the scheduling policy so that can update GPU
+      Scheduling content = new Scheduling();
+      content.setOnHostMaintenance("TERMINATE");
+      content.setAutomaticRestart(true);
+      computeService.instances().setScheduling(projectId, location, instanceId, content).execute();
+    }
+
     Instance instanceInfo =
         computeService.instances().get(projectId, location, instanceId).execute();
 
-    // Set the scheduling policy so that can update GPU
-    Scheduling content = new Scheduling();
-    content.setOnHostMaintenance("TERMINATE");
-    content.setAutomaticRestart(true);
-    computeService.instances().setScheduling(projectId, location, instanceId, content).execute();
-
-    // GCP requires a URL as machine type and accelerator type. If user input a machine type name,
-    // like "n1-standard-2", we augment it into a URL.
-    String machineTypeUrl = machineType;
-    if (machineTypeUrl.lastIndexOf("/") == -1) {
-      machineTypeUrl = createBaseUrl(projectId, location) + "/machineTypes/" + machineTypeUrl;
+    if (machineType != null) {
+      // GCP requires a URL as machine type and accelerator type. If user input a machine type name,
+      // like "n1-standard-2", we augment it into a URL.
+      String machineTypeUrl = machineType;
+      if (machineTypeUrl.lastIndexOf("/") == -1) {
+        machineTypeUrl = createBaseUrl(projectId, location) + "/machineTypes/" + machineTypeUrl;
+      }
+      instanceInfo.setMachineType(machineTypeUrl);
     }
-    instanceInfo.setMachineType(machineTypeUrl);
 
-    if (acceleratorConfig != null) {
+    if (acceleratorConfig != null && acceleratorConfig.getAcceleratorType() != null) {
       String gpuTypeUrl = acceleratorConfig.getAcceleratorType();
       if (gpuTypeUrl.lastIndexOf("/") == -1) {
         gpuTypeUrl =

@@ -477,11 +477,14 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
                 userRequest, workspaceUuid, resourceId, SamControlledResourceActions.EDIT_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
 
+    AcceleratorConfig acceleratorConfig = null;
     ApiGcpAiNotebookInstanceAcceleratorConfig gcpAcceleratorConfig =
         requestBody.getAcceleratorConfig();
-    AcceleratorConfig acceleratorConfig = new AcceleratorConfig();
-    acceleratorConfig.setAcceleratorType(gcpAcceleratorConfig.getType());
-    acceleratorConfig.setAcceleratorCount(Math.toIntExact(gcpAcceleratorConfig.getCoreCount()));
+    if (gcpAcceleratorConfig != null) {
+      acceleratorConfig = new AcceleratorConfig();
+      acceleratorConfig.setAcceleratorType(gcpAcceleratorConfig.getType());
+      acceleratorConfig.setAcceleratorCount(Math.toIntExact(gcpAcceleratorConfig.getCoreCount()));
+    }
     controlledResourceService.updateAiNotebookInstance(
         resource,
         requestBody.getUpdateParameters(),
