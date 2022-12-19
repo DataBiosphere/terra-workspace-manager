@@ -1,9 +1,9 @@
 package bio.terra.workspace.common;
 
+import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.policy.TpsApiDispatch;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 /*

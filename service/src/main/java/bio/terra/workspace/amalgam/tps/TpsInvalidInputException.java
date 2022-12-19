@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.policy.exception;
+package bio.terra.workspace.amalgam.tps;
 
 import bio.terra.common.exception.BadRequestException;
 

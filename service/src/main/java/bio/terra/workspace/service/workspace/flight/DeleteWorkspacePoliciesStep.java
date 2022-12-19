@@ -1,11 +1,12 @@
 package bio.terra.workspace.service.workspace.flight;
 
+import bio.terra.common.iam.BearerToken;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.policy.TpsApiDispatch;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,7 +28,7 @@ public class DeleteWorkspacePoliciesStep implements Step {
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     // deletePao does not throw if the policy object is missing, so this operation is idempotent.
-    tpsApiDispatch.deletePao(workspaceId);
+    tpsApiDispatch.deletePao(new BearerToken(userRequest.getRequiredToken()), workspaceId);
     return StepResult.getStepResultSuccess();
   }
 

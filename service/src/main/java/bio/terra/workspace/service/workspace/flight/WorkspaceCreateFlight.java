@@ -1,12 +1,12 @@
 package bio.terra.workspace.service.workspace.flight;
 
-import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
+import bio.terra.workspace.generated.model.ApiTpsPolicyInputs;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.model.Workspace;
@@ -24,8 +24,8 @@ public class WorkspaceCreateFlight extends Flight {
     AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
     Workspace workspace = inputParameters.get(JobMapKeys.REQUEST.getKeyName(), Workspace.class);
-    TpsPolicyInputs policyInputs =
-        inputParameters.get(WorkspaceFlightMapKeys.POLICIES, TpsPolicyInputs.class);
+    ApiTpsPolicyInputs policyInputs =
+        inputParameters.get(WorkspaceFlightMapKeys.POLICIES, ApiTpsPolicyInputs.class);
     List<String> applicationIds =
         inputParameters.get(
             WorkspaceFlightMapKeys.APPLICATION_IDS, new TypeReference<List<String>>() {});

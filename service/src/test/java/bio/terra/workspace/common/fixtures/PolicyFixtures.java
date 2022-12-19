@@ -1,7 +1,7 @@
 package bio.terra.workspace.common.fixtures;
 
-import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
-import bio.terra.workspace.generated.model.ApiWsmPolicyPair;
+import bio.terra.workspace.generated.model.ApiTpsPolicyInput;
+import bio.terra.workspace.generated.model.ApiTpsPolicyPair;
 
 public class PolicyFixtures {
   public static final String NAMESPACE = "terra";
@@ -12,15 +12,15 @@ public class PolicyFixtures {
   public static final String DDGROUP = "ddgroup";
   public static final String US_REGION = "US";
 
-  public static ApiWsmPolicyInput GROUP_POLICY =
-      new ApiWsmPolicyInput()
+  public static ApiTpsPolicyInput GROUP_POLICY =
+      new ApiTpsPolicyInput()
           .namespace(NAMESPACE)
           .name(GROUP_CONSTRAINT)
-          .addAdditionalDataItem(new ApiWsmPolicyPair().key(GROUP).value(DDGROUP));
+          .addAdditionalDataItem(new ApiTpsPolicyPair().key(GROUP).value(DDGROUP));
 
-  public static ApiWsmPolicyInput REGION_POLICY =
-      new ApiWsmPolicyInput()
+  public static ApiTpsPolicyInput REGION_POLICY =
+      new ApiTpsPolicyInput()
           .namespace(NAMESPACE)
           .name(REGION_CONSTRAINT)
-          .addAdditionalDataItem(new ApiWsmPolicyPair().key(REGION).value(US_REGION));
+          .addAdditionalDataItem(new ApiTpsPolicyPair().key(REGION).value(US_REGION));
 }

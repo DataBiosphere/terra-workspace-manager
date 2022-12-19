@@ -5,10 +5,8 @@ import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertM
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesDeleteRequestBody;
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesUpdateRequestBody;
 
-import bio.terra.policy.model.TpsPaoGetResult;
-import bio.terra.policy.model.TpsPaoUpdateResult;
-import bio.terra.policy.model.TpsPolicyInputs;
-import bio.terra.policy.model.TpsUpdateMode;
+import bio.terra.common.iam.BearerToken;
+import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.exception.FeatureNotSupportedException;
@@ -35,13 +33,15 @@ import bio.terra.workspace.generated.model.ApiProperties;
 import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiRoleBinding;
 import bio.terra.workspace.generated.model.ApiRoleBindingList;
+import bio.terra.workspace.generated.model.ApiTpsPaoGetResult;
+import bio.terra.workspace.generated.model.ApiTpsPaoUpdateRequest;
+import bio.terra.workspace.generated.model.ApiTpsPaoUpdateResult;
+import bio.terra.workspace.generated.model.ApiTpsPolicyInput;
+import bio.terra.workspace.generated.model.ApiTpsPolicyInputs;
 import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
-import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
-import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateRequest;
-import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateResult;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamRethrow;
@@ -53,8 +53,6 @@ import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
-import bio.terra.workspace.service.policy.TpsApiConversionUtils;
-import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
@@ -164,7 +162,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     ControllerValidationUtils.validateUserFacingId(userFacingId);
 
     // Validate that this workspace can have policies attached, if necessary.
-    TpsPolicyInputs policies = null;
+    ApiTpsPolicyInputs policies = null;
     if (body.getPolicies() != null) {
       if (!featureConfiguration.isTpsEnabled()) {
         throw new FeatureNotSupportedException(
@@ -174,7 +172,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         throw new StageDisabledException(
             "Cannot apply policies to a RAWLS_WORKSPACE stage workspace");
       }
-      policies = TpsApiConversionUtils.tpsFromApiTpsPolicyInputs(body.getPolicies());
+      policies = body.getPolicies();
     }
 
     Workspace workspace =
@@ -245,15 +243,17 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .map(AzureCloudContext::toApi)
             .orElse(null);
 
-    List<ApiWsmPolicyInput> workspacePolicies = null;
+    List<ApiTpsPolicyInput> workspacePolicies = null;
     if (featureConfiguration.isTpsEnabled()) {
       // New workspaces will always be created with empty policies, but some workspaces predate
       // policy and so will not have associated PAOs.
-      Optional<TpsPaoGetResult> workspacePao = tpsApiDispatch.getPaoIfExists(workspaceUuid);
-
+      Optional<ApiTpsPaoGetResult> workspacePao =
+          tpsApiDispatch.getPaoIfExists(
+              new BearerToken(userRequest.getRequiredToken()), workspaceUuid);
       workspacePolicies =
           workspacePao
-              .map(TpsApiConversionUtils::apiEffectivePolicyListFromTpsPao)
+              .map(ApiTpsPaoGetResult::getEffectiveAttributes)
+              .map(ApiTpsPolicyInputs::getInputs)
               .orElse(Collections.emptyList());
     }
 
@@ -360,22 +360,22 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   }
 
   @Override
-  public ResponseEntity<ApiWsmPolicyUpdateResult> updatePolicies(
-      @PathVariable("workspaceId") UUID workspaceId, @RequestBody ApiWsmPolicyUpdateRequest body) {
+  public ResponseEntity<ApiTpsPaoUpdateResult> updatePolicies(
+      @PathVariable("workspaceId") UUID workspaceId, @RequestBody ApiTpsPaoUpdateRequest body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     logger.info("Updating workspace policies {} for {}", workspaceId, userRequest.getEmail());
 
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceId, SamConstants.SamWorkspaceAction.WRITE);
 
-    featureConfiguration.tpsEnabledCheck();
-    TpsPolicyInputs adds = TpsApiConversionUtils.tpsFromApiTpsPolicyInputs(body.getAddAttributes());
-    TpsPolicyInputs removes =
-        TpsApiConversionUtils.tpsFromApiTpsPolicyInputs(body.getRemoveAttributes());
-    TpsUpdateMode updateMode = TpsApiConversionUtils.tpsFromApiTpsUpdateMode(body.getUpdateMode());
+    if (!featureConfiguration.isTpsEnabled()) {
+      throw new FeatureNotSupportedException(
+          "TPS is not enabled on this instance of Workspace Manager, cannot update policies for workspace.");
+    }
 
-    TpsPaoUpdateResult result = tpsApiDispatch.updatePao(workspaceId, adds, removes, updateMode);
-
+    ApiTpsPaoUpdateResult result =
+        tpsApiDispatch.updatePao(
+            new BearerToken(userRequest.getRequiredToken()), workspaceId, body);
     if (Boolean.TRUE.equals(result.isUpdateApplied())) {
       workspaceActivityLogService.writeActivity(
           userRequest,
@@ -391,9 +391,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
           workspaceId,
           userRequest.getEmail());
     }
-
-    ApiWsmPolicyUpdateResult apiResult = TpsApiConversionUtils.apiFromTpsUpdateResult(result);
-    return new ResponseEntity<>(apiResult, HttpStatus.OK);
+    return new ResponseEntity<>(result, HttpStatus.OK);
   }
 
   @Override
