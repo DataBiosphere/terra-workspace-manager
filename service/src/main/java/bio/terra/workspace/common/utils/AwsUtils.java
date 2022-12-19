@@ -5,29 +5,6 @@ import bio.terra.common.iam.SamUser;
 import bio.terra.stairway.ShortUUID;
 import bio.terra.workspace.service.workspace.exceptions.SaCredentialsMissingException;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.AnonymousAWSCredentials;
-import com.amazonaws.auth.BasicSessionCredentials;
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.model.DeleteObjectRequest;
-import com.amazonaws.services.s3.model.ListObjectsV2Request;
-import com.amazonaws.services.s3.model.ListObjectsV2Result;
-import com.amazonaws.services.sagemaker.AmazonSageMaker;
-import com.amazonaws.services.sagemaker.AmazonSageMakerClientBuilder;
-import com.amazonaws.services.sagemaker.model.CreateNotebookInstanceRequest;
-import com.amazonaws.services.sagemaker.model.CreatePresignedNotebookInstanceUrlRequest;
-import com.amazonaws.services.sagemaker.model.CreatePresignedNotebookInstanceUrlResult;
-import com.amazonaws.services.sagemaker.model.DescribeNotebookInstanceRequest;
-import com.amazonaws.services.sagemaker.model.DescribeNotebookInstanceResult;
-import com.amazonaws.services.sagemaker.model.InstanceType;
-import com.amazonaws.services.securitytoken.AWSSecurityTokenService;
-import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder;
-import com.amazonaws.services.securitytoken.model.AssumeRoleRequest;
-import com.amazonaws.services.securitytoken.model.AssumeRoleWithWebIdentityRequest;
-import com.amazonaws.services.securitytoken.model.Credentials;
-import com.amazonaws.services.securitytoken.model.Tag;
 import com.nimbusds.jwt.JWT;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.JWTParser;
@@ -48,6 +25,28 @@ import org.apache.http.client.utils.URIBuilder;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.sagemaker.SageMakerClient;
+import software.amazon.awssdk.services.sagemaker.model.CreateNotebookInstanceRequest;
+import software.amazon.awssdk.services.sagemaker.model.CreatePresignedNotebookInstanceUrlRequest;
+import software.amazon.awssdk.services.sagemaker.model.CreatePresignedNotebookInstanceUrlResponse;
+import software.amazon.awssdk.services.sagemaker.model.DescribeNotebookInstanceRequest;
+import software.amazon.awssdk.services.sagemaker.model.DescribeNotebookInstanceResponse;
+import software.amazon.awssdk.services.sagemaker.model.InstanceType;
+import software.amazon.awssdk.services.sts.StsClient;
+import software.amazon.awssdk.services.sts.model.AssumeRoleRequest;
+import software.amazon.awssdk.services.sts.model.AssumeRoleWithWebIdentityRequest;
+import software.amazon.awssdk.services.sts.model.Credentials;
+import software.amazon.awssdk.services.sts.model.Tag;
 
 public class AwsUtils {
   private static final Logger logger = LoggerFactory.getLogger(AwsUtils.class);
@@ -55,18 +54,18 @@ public class AwsUtils {
 
   public static Credentials assumeServiceRole(
       AwsCloudContext awsCloudContext, String idToken, String serviceEmail, Integer duration) {
-    AssumeRoleWithWebIdentityRequest request = new AssumeRoleWithWebIdentityRequest();
-    request.setDurationSeconds(duration);
-    request.setRoleArn(awsCloudContext.getServiceRoleArn().toString());
-    request.setRoleSessionName(serviceEmail);
-    request.setWebIdentityToken(idToken);
+    AssumeRoleWithWebIdentityRequest request =
+        AssumeRoleWithWebIdentityRequest.builder()
+            .durationSeconds(duration)
+            .roleArn(awsCloudContext.getServiceRoleArn().toString())
+            .roleSessionName(serviceEmail)
+            .webIdentityToken(idToken)
+            .build();
 
     logger.info(
         String.format(
             "Assuming Service role ('%s') with session name `%s`, duration %d seconds.",
-            request.getRoleArn().toString(),
-            request.getRoleSessionName(),
-            request.getDurationSeconds()));
+            request.roleArn(), request.roleSessionName(), request.durationSeconds()));
 
     if (logger.isInfoEnabled()) {
       try {
@@ -80,13 +79,13 @@ public class AwsUtils {
             String.format("Passed SA credential is not a valid JWT: '%s'", e.getMessage()));
       }
     }
-    AWSSecurityTokenService securityTokenService =
-        AWSSecurityTokenServiceClientBuilder.standard()
-            .withRegion(Regions.DEFAULT_REGION) // STS not regional but API requires
-            .withCredentials(new AWSStaticCredentialsProvider(new AnonymousAWSCredentials()))
+    StsClient securityTokenService =
+        StsClient.builder()
+            .region(Region.AWS_GLOBAL) // STS not regional but API requires
+            .credentialsProvider(AnonymousCredentialsProvider.create())
             .build();
 
-    return securityTokenService.assumeRoleWithWebIdentity(request).getCredentials();
+    return securityTokenService.assumeRoleWithWebIdentity(request).credentials();
   }
 
   public static enum RoleTag {
@@ -105,19 +104,19 @@ public class AwsUtils {
   }
 
   public static void addUserTags(Collection<Tag> tags, SamUser user) {
-    tags.add(new Tag().withKey("user_email").withValue(user.getEmail()));
-    tags.add(new Tag().withKey("user_id").withValue(user.getSubjectId()));
+    tags.add(Tag.builder().key("user_email").value(user.getEmail()).build());
+    tags.add(Tag.builder().key("user_id").value(user.getSubjectId()).build());
   }
 
   public static void addWorkspaceTags(Collection<Tag> tags, UUID workspaceUuid) {
-    tags.add(new Tag().withKey("ws_id").withValue(workspaceUuid.toString()));
+    tags.add(Tag.builder().key("ws_id").value(workspaceUuid.toString()).build());
   }
 
   public static void addBucketTags(
       Collection<Tag> tags, RoleTag role, String s3BucketName, String prefix) {
-    tags.add(new Tag().withKey("ws_role").withValue(role.getValue()));
-    tags.add(new Tag().withKey("s3_bucket").withValue(s3BucketName));
-    tags.add(new Tag().withKey("terra_bucket").withValue(prefix));
+    tags.add(Tag.builder().key("ws_role").value(role.getValue()).build());
+    tags.add(Tag.builder().key("s3_bucket").value(s3BucketName).build());
+    tags.add(Tag.builder().key("terra_bucket").value(prefix).build());
   }
 
   public static Credentials assumeUserRole(
@@ -131,33 +130,35 @@ public class AwsUtils {
     addUserTags(tags, user);
     userTags.addAll(tags);
 
-    AssumeRoleRequest request = new AssumeRoleRequest();
-    request.setDurationSeconds(duration);
-    request.setRoleArn(awsCloudContext.getUserRoleArn().toString());
-    request.setRoleSessionName(user.getEmail());
-    request.setTags(userTags);
+    AssumeRoleRequest request =
+        AssumeRoleRequest.builder()
+            .durationSeconds(duration)
+            .roleArn(awsCloudContext.getUserRoleArn().toString())
+            .roleSessionName(user.getEmail())
+            .tags(userTags)
+            .build();
 
     logger.info(
         String.format(
             "Assuming User role ('%s') with session name `%s`, duration %d seconds, and tags: '%s'.",
-            request.getRoleArn().toString(),
-            request.getRoleSessionName(),
-            request.getDurationSeconds(),
-            request.getTags()));
+            request.roleArn(),
+            request.roleSessionName(),
+            request.durationSeconds(),
+            request.tags()));
 
-    BasicSessionCredentials sessionCredentials =
-        new BasicSessionCredentials(
-            serviceCredentials.getAccessKeyId(),
-            serviceCredentials.getSecretAccessKey(),
-            serviceCredentials.getSessionToken());
+    AwsSessionCredentials sessionCredentials =
+        AwsSessionCredentials.create(
+            serviceCredentials.accessKeyId(),
+            serviceCredentials.secretAccessKey(),
+            serviceCredentials.sessionToken());
 
-    AWSSecurityTokenService securityTokenService =
-        AWSSecurityTokenServiceClientBuilder.standard()
-            .withRegion(Regions.DEFAULT_REGION) // STS not regional but API requires
-            .withCredentials(new AWSStaticCredentialsProvider(sessionCredentials))
+    StsClient securityTokenService =
+        StsClient.builder()
+            .region(Region.AWS_GLOBAL) // STS not regional but API requires
+            .credentialsProvider(StaticCredentialsProvider.create(sessionCredentials))
             .build();
 
-    return securityTokenService.assumeRole(request).getCredentials();
+    return securityTokenService.assumeRole(request).credentials();
   }
 
   public static Credentials assumeUserRole(
@@ -176,9 +177,9 @@ public class AwsUtils {
       Credentials userCredentials, Integer duration, URL destination) {
 
     Map<String, String> credentialMap = new HashMap<>();
-    credentialMap.put("sessionId", userCredentials.getAccessKeyId());
-    credentialMap.put("sessionKey", userCredentials.getSecretAccessKey());
-    credentialMap.put("sessionToken", userCredentials.getSessionToken());
+    credentialMap.put("sessionId", userCredentials.accessKeyId());
+    credentialMap.put("sessionKey", userCredentials.secretAccessKey());
+    credentialMap.put("sessionToken", userCredentials.sessionToken());
 
     try {
       String encodedCredential =
@@ -222,16 +223,14 @@ public class AwsUtils {
     }
   }
 
-  private static AmazonS3 getS3Session(Credentials credentials, Regions region) {
-    BasicSessionCredentials sessionCredentials =
-        new BasicSessionCredentials(
-            credentials.getAccessKeyId(),
-            credentials.getSecretAccessKey(),
-            credentials.getSessionToken());
+  private static S3Client getS3Session(Credentials credentials, Region region) {
+    AwsSessionCredentials sessionCredentials =
+        AwsSessionCredentials.create(
+            credentials.accessKeyId(), credentials.secretAccessKey(), credentials.sessionToken());
 
-    return AmazonS3Client.builder()
-        .withRegion(region)
-        .withCredentials(new AWSStaticCredentialsProvider(sessionCredentials))
+    return S3Client.builder()
+        .region(region)
+        .credentialsProvider(StaticCredentialsProvider.create(sessionCredentials))
         .build();
   }
 
@@ -240,69 +239,72 @@ public class AwsUtils {
   }
 
   public static boolean checkFolderExistence(
-      Credentials credentials, Regions region, String bucketName, String folder) {
-    AmazonS3 s3 = getS3Session(credentials, region);
+      Credentials credentials, Region region, String bucketName, String folder) {
+    S3Client s3 = getS3Session(credentials, region);
     String prefix = String.format("%s/", folder);
 
     ListObjectsV2Request request =
-        new ListObjectsV2Request()
-            .withBucketName(bucketName)
-            .withPrefix(prefix)
-            .withDelimiter("/")
-            .withMaxKeys(1);
+        ListObjectsV2Request.builder()
+            .bucket(bucketName)
+            .prefix(prefix)
+            .delimiter("/")
+            .maxKeys(1)
+            .build();
 
-    ListObjectsV2Result result = s3.listObjectsV2(request);
-    return result.getKeyCount() > 0;
+    ListObjectsV2Response result = s3.listObjectsV2(request);
+    return result.keyCount() > 0;
   }
 
   public static void createFolder(
-      Credentials credentials, Regions region, String bucketName, String folder) {
+      Credentials credentials, Region region, String bucketName, String folder) {
     // Creating a "folder" requires writing an empty object ending with the delimiter ('/').
     String folderKey = String.format("%s/", folder);
     putObject(credentials, region, bucketName, folderKey, "");
   }
 
   public static void undoCreateFolder(
-      Credentials credentials, Regions region, String bucketName, String folder) {
+      Credentials credentials, Region region, String bucketName, String folder) {
     String folderKey = String.format("%s/", folder);
     deleteObject(credentials, region, bucketName, folderKey);
   }
 
   public static void putObject(
-      Credentials credentials, Regions region, String bucketName, String key, String content) {
-    AmazonS3 s3 = getS3Session(credentials, region);
-    s3.putObject(bucketName, key, content);
+      Credentials credentials, Region region, String bucketName, String key, String content) {
+    S3Client s3 = getS3Session(credentials, region);
+    s3.putObject(
+        PutObjectRequest.builder().bucket(bucketName).key(key).build(),
+        RequestBody.fromString(content));
   }
 
   public static void deleteObject(
-      Credentials credentials, Regions region, String bucketName, String key) {
-    AmazonS3 s3 = getS3Session(credentials, region);
-    DeleteObjectRequest deleteObjectRequest = new DeleteObjectRequest(bucketName, key);
+      Credentials credentials, Region region, String bucketName, String key) {
+    S3Client s3 = getS3Session(credentials, region);
+    DeleteObjectRequest deleteObjectRequest =
+        DeleteObjectRequest.builder().bucket(bucketName).key(key).build();
     s3.deleteObject(deleteObjectRequest);
   }
 
-  private static AmazonSageMaker getSagemakerSession(Credentials credentials, Regions region) {
-    BasicSessionCredentials sessionCredentials =
-        new BasicSessionCredentials(
-            credentials.getAccessKeyId(),
-            credentials.getSecretAccessKey(),
-            credentials.getSessionToken());
+  private static SageMakerClient getSagemakerSession(Credentials credentials, Region region) {
+    AwsSessionCredentials sessionCredentials =
+        AwsSessionCredentials.create(
+            credentials.accessKeyId(), credentials.secretAccessKey(), credentials.sessionToken());
 
-    return AmazonSageMakerClientBuilder.standard()
-        .withRegion(region)
-        .withCredentials(new AWSStaticCredentialsProvider(sessionCredentials))
+    return SageMakerClient.builder()
+        .region(region)
+        .credentialsProvider(StaticCredentialsProvider.create(sessionCredentials))
         .build();
   }
 
   // TODO: Can we avoid this with generics??
-  private static Collection<com.amazonaws.services.sagemaker.model.Tag> toSagemakerTags(
+  private static Collection<software.amazon.awssdk.services.sagemaker.model.Tag> toSagemakerTags(
       Collection<Tag> stsTags) {
-    Collection<com.amazonaws.services.sagemaker.model.Tag> tags = new HashSet<>();
+    Collection<software.amazon.awssdk.services.sagemaker.model.Tag> tags = new HashSet<>();
     for (Tag stsTag : stsTags) {
       tags.add(
-          new com.amazonaws.services.sagemaker.model.Tag()
-              .withKey(stsTag.getKey())
-              .withValue(stsTag.getValue()));
+          software.amazon.awssdk.services.sagemaker.model.Tag.builder()
+              .key(stsTag.key())
+              .value(stsTag.value())
+              .build());
     }
     return tags;
   }
@@ -312,10 +314,10 @@ public class AwsUtils {
       Credentials credentials,
       UUID workspaceUuid,
       SamUser user,
-      Regions region,
+      Region region,
       InstanceType instanceType,
       String notebookName) {
-    AmazonSageMaker sageMaker = getSagemakerSession(credentials, region);
+    SageMakerClient sageMaker = getSagemakerSession(credentials, region);
 
     Collection<Tag> tags = new HashSet<>();
     addUserTags(tags, user);
@@ -326,36 +328,34 @@ public class AwsUtils {
             "Creating SageMaker notebook instance with name '%s' and type '%s'.",
             notebookName, instanceType));
 
-    CreateNotebookInstanceRequest request =
-        new CreateNotebookInstanceRequest()
-            .withNotebookInstanceName(notebookName)
-            .withInstanceType(instanceType)
-            .withRoleArn(awsCloudContext.getUserRoleArn().toString())
-            .withTags(toSagemakerTags(tags));
+    CreateNotebookInstanceRequest.Builder requestBuilder =
+        CreateNotebookInstanceRequest.builder()
+            .notebookInstanceName(notebookName)
+            .instanceType(instanceType)
+            .roleArn(awsCloudContext.getUserRoleArn().toString())
+            .tags(toSagemakerTags(tags));
 
     if (awsCloudContext.getNotebookLifecycleConfigArn() != null) {
-      String policyName =
-          awsCloudContext.getNotebookLifecycleConfigArn().getResource().getResource();
+      String policyName = awsCloudContext.getNotebookLifecycleConfigArn().resource().resource();
       logger.info(
           String.format(
               "Attaching lifecycle policy '%s' to notebook '%s'.", policyName, notebookName));
-      request.withLifecycleConfigName(policyName);
+      requestBuilder.lifecycleConfigName(policyName);
     }
 
-    sageMaker.createNotebookInstance(request);
+    sageMaker.createNotebookInstance(requestBuilder.build());
   }
 
   public static void waitForSageMakerNotebookInService(
-      Credentials credentials, Regions region, String notebookName) {
-    AmazonSageMaker sageMaker = getSagemakerSession(credentials, region);
+      Credentials credentials, Region region, String notebookName) {
+    SageMakerClient sageMaker = getSagemakerSession(credentials, region);
     DescribeNotebookInstanceRequest describeNotebookInstanceRequest =
-        new DescribeNotebookInstanceRequest().withNotebookInstanceName(notebookName);
+        DescribeNotebookInstanceRequest.builder().notebookInstanceName(notebookName).build();
 
     while (true) {
-      DescribeNotebookInstanceResult result =
+      DescribeNotebookInstanceResponse result =
           sageMaker.describeNotebookInstance(describeNotebookInstanceRequest);
-      result.getNotebookInstanceStatus();
-      String status = result.getNotebookInstanceStatus();
+      String status = result.notebookInstanceStatus().name();
 
       if (status.equals("InService")) return;
 
@@ -376,19 +376,20 @@ public class AwsUtils {
   }
 
   public static URL getSageMakerNotebookProxyUrl(
-      Credentials credentials, Regions region, String notebookName, Integer duration, String view) {
-    AmazonSageMaker sageMaker = getSagemakerSession(credentials, region);
+      Credentials credentials, Region region, String notebookName, Integer duration, String view) {
+    SageMakerClient sageMaker = getSagemakerSession(credentials, region);
 
     CreatePresignedNotebookInstanceUrlRequest request =
-        new CreatePresignedNotebookInstanceUrlRequest()
-            .withNotebookInstanceName(notebookName)
-            .withSessionExpirationDurationInSeconds(duration);
+        CreatePresignedNotebookInstanceUrlRequest.builder()
+            .notebookInstanceName(notebookName)
+            .sessionExpirationDurationInSeconds(duration)
+            .build();
 
-    CreatePresignedNotebookInstanceUrlResult result =
+    CreatePresignedNotebookInstanceUrlResponse result =
         sageMaker.createPresignedNotebookInstanceUrl(request);
 
     try {
-      return new URIBuilder(result.getAuthorizedUrl()).addParameter("view", view).build().toURL();
+      return new URIBuilder(result.authorizedUrl()).addParameter("view", view).build().toURL();
 
     } catch (Exception e) {
       throw new ApiException("Failed to get URL.", e);

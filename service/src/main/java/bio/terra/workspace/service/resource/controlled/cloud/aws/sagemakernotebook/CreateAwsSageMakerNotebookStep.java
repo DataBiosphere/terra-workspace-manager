@@ -11,11 +11,11 @@ import bio.terra.workspace.common.utils.MultiCloudUtils;
 import bio.terra.workspace.generated.model.ApiAwsSageMakerNotebookCreationParameters;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.sagemaker.model.InstanceType;
-import com.amazonaws.services.securitytoken.model.Credentials;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.sagemaker.model.InstanceType;
+import software.amazon.awssdk.services.sts.model.Credentials;
 
 public class CreateAwsSageMakerNotebookStep implements Step {
   private static final Logger logger =
@@ -48,7 +48,7 @@ public class CreateAwsSageMakerNotebookStep implements Step {
     final Credentials awsCredentials = MultiCloudUtils.assumeAwsServiceRoleFromGcp(awsCloudContext);
 
     InstanceType instanceType = InstanceType.fromValue(creationParameters.getInstanceType());
-    Regions region = Regions.fromName(creationParameters.getLocation());
+    Region region = Region.of(creationParameters.getLocation());
 
     AwsUtils.createSageMakerNotebook(
         awsCloudContext,

@@ -9,10 +9,10 @@ import bio.terra.workspace.app.configuration.external.AwsConfiguration;
 import bio.terra.workspace.common.BaseAwsUnitTest;
 import bio.terra.workspace.service.workspace.exceptions.InvalidSerializedVersionException;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
-import com.amazonaws.arn.Arn;
-import com.amazonaws.regions.Regions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import software.amazon.awssdk.arns.Arn;
+import software.amazon.awssdk.regions.Region;
 
 public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
 
@@ -32,21 +32,21 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
 
   private static Arn getRoleArn(String accountId, String roleName) {
     return Arn.builder()
-        .withPartition("aws")
-        .withService("iam")
-        .withRegion("") // Roles do not have a region; this must be blank, not null.
-        .withAccountId(accountId)
-        .withResource(roleName)
+        .partition("aws")
+        .service("iam")
+        .region("") // Roles do not have a region; this must be blank, not null.
+        .accountId(accountId)
+        .resource(roleName)
         .build();
   }
 
   private static Arn getLifecycleConfigArn(String accountId, String configName) {
     return Arn.builder()
-        .withPartition("aws")
-        .withService("sagemaker")
-        .withRegion("us-east-1")
-        .withAccountId(accountId)
-        .withResource(String.format("notebook-instance-lifecycle-config/%s", configName))
+        .partition("aws")
+        .service("sagemaker")
+        .region("us-east-1")
+        .accountId(accountId)
+        .resource(String.format("notebook-instance-lifecycle-config/%s", configName))
         .build();
   }
 
@@ -59,8 +59,8 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
         .userRoleArn(ROLE_ARN_USER)
         .notebookLifecycleConfigArn(
             includeNotebookLifecycleConfig ? NOTEBOOK_LIFECYCLE_CONFIG_ARN : null)
-        .addBucket(Regions.US_EAST_1, BUCKET_NAME_US_EAST)
-        .addBucket(Regions.US_WEST_1, BUCKET_NAME_US_WEST)
+        .addBucket(Region.US_EAST_1, BUCKET_NAME_US_EAST)
+        .addBucket(Region.US_WEST_1, BUCKET_NAME_US_WEST)
         .build();
   }
 
@@ -78,9 +78,9 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
     assertEquals(
         expectNotebookLifecycleConfig ? NOTEBOOK_LIFECYCLE_CONFIG_ARN : null,
         compareContext.getNotebookLifecycleConfigArn());
-    assertEquals(BUCKET_NAME_US_EAST, compareContext.getBucketNameForRegion(Regions.US_EAST_1));
-    assertEquals(BUCKET_NAME_US_WEST, compareContext.getBucketNameForRegion(Regions.US_WEST_1));
-    assertEquals(null, compareContext.getBucketNameForRegion(Regions.EU_CENTRAL_1));
+    assertEquals(BUCKET_NAME_US_EAST, compareContext.getBucketNameForRegion(Region.US_EAST_1));
+    assertEquals(BUCKET_NAME_US_WEST, compareContext.getBucketNameForRegion(Region.US_WEST_1));
+    assertEquals(null, compareContext.getBucketNameForRegion(Region.EU_CENTRAL_1));
   }
 
   private void validateContext(AwsCloudContext compareContext) {
