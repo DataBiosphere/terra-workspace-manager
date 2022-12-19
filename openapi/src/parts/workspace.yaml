@@ -183,14 +183,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WsmPolicyUpdateRequest'
+              $ref: '#/components/schemas/TpsPaoUpdateRequest'
       responses:
         '200':
           description: Update successfully processed. The update itself may or may not have succeeded.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WsmPolicyUpdateResult'
+                $ref: '#/components/schemas/TpsPaoUpdateResult'
         '400':
           $ref: '#/components/responses/BadRequest'
         '403':
@@ -454,7 +454,7 @@ components:
           description: ID of provided spend profile
           type: string
         policies:
-          $ref: '#/components/schemas/WsmPolicyInputs'
+          $ref: '#/components/schemas/TpsPolicyInputs'
         stage:
           $ref: '#/components/schemas/WorkspaceStageModel'
         properties:
@@ -566,7 +566,7 @@ components:
         policies:
           type: array
           items:
-            $ref: '#/components/schemas/WsmPolicyInput'
+            $ref: '#/components/schemas/TpsPolicyInput'
 
     WorkspaceDescriptionList:
       type: object

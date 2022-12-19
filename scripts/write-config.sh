@@ -19,8 +19,6 @@
 #   ---------------------------+-------------------------------------------------------------------------
 #   buffer-client-sa.json      | Creds to access Buffer service
 #   ---------------------------+-------------------------------------------------------------------------
-#   policy-client-sa.json      | Creds to access Policy service
-#   ---------------------------+-------------------------------------------------------------------------
 #   db-connection-name.txt     | Connection string for CloudSQL proxy
 #   ---------------------------+-------------------------------------------------------------------------
 #   db-name.txt                | Database name
@@ -230,15 +228,6 @@ else
     vaultgetb64 "secret/dsde/terra/kernel/${k8senv}/${namespace}/buffer/client-sa" "${outputdir}/buffer-client-sa.json"
 fi
 
-# Policy SA is only setup for dev at this time
-if [ "${k8senv}" = "integration" ]; then
-    vaultgetb64 "secret/dsde/terra/kernel/dev/dev/tps/client-sa" "${outputdir}/policy-client-sa.json"
-elif [ "${k8senv}" = "dev" ]; then
-    vaultgetb64 "secret/dsde/terra/kernel/dev/dev/tps/client-sa" "${outputdir}/policy-client-sa.json"
-else
-    echo "No policy credentials for target ${target}"
-fi
-
 # Test Runner SA
 vaultgetb64 "secret/dsde/terra/kernel/integration/common/testrunner/testrunner-sa" "${outputdir}/testrunner-sa.json"
 
@@ -309,8 +298,6 @@ workspace:
     sas-token-start-time-minutes-offset: 15
     sas-token-expiry-time-minutes-offset: 60
     sas-token-expiry-time-maximum-minutes-offset: 1440
-  policy:
-    base-path: https://tps.wsmtest-eng.bee.envs-terra.bio/
 feature:
   tps-enabled: true
 EOF

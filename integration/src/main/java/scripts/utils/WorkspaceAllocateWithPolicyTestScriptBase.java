@@ -8,9 +8,9 @@ import bio.terra.workspace.model.CreateWorkspaceRequestBody;
 import bio.terra.workspace.model.CreatedWorkspace;
 import bio.terra.workspace.model.Properties;
 import bio.terra.workspace.model.Property;
-import bio.terra.workspace.model.WsmPolicyInput;
-import bio.terra.workspace.model.WsmPolicyInputs;
-import bio.terra.workspace.model.WsmPolicyPair;
+import bio.terra.workspace.model.TpsPolicyInput;
+import bio.terra.workspace.model.TpsPolicyInputs;
+import bio.terra.workspace.model.TpsPolicyPair;
 import java.util.UUID;
 
 // TODO(PF-1948): This script only exists because environments above dev do not support policies
@@ -28,14 +28,14 @@ public abstract class WorkspaceAllocateWithPolicyTestScriptBase
     properties.add(property1);
     properties.add(property2);
 
-    WsmPolicyInputs policies =
-        new WsmPolicyInputs()
+    TpsPolicyInputs policies =
+        new TpsPolicyInputs()
             .addInputsItem(
-                new WsmPolicyInput()
+                new TpsPolicyInput()
                     .name("region-constraint")
                     .namespace("terra")
                     .addAdditionalDataItem(
-                        new WsmPolicyPair().key("region-name").value("us-central1")));
+                        new TpsPolicyPair().key("region-name").value("us-central1")));
 
     final var requestBody =
         new CreateWorkspaceRequestBody()
