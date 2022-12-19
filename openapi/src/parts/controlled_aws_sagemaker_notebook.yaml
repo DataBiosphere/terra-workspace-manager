@@ -56,7 +56,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{workspaceId}/resources/controlled/aws/sagemaker-notebooks/{resourceId}/getConsoleLink:
+  /api/workspaces/v1/{workspaceId}/resources/controlled/aws/sagemaker-notebooks/{resourceId}/consoleLink:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
       - $ref: '#/components/parameters/ResourceId'
@@ -76,7 +76,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{workspaceId}/resources/controlled/aws/sagemaker-notebooks/{resourceId}/getCredential:
+  /api/workspaces/v1/{workspaceId}/resources/controlled/aws/sagemaker-notebooks/{resourceId}/credential:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
       - $ref: '#/components/parameters/ResourceId'
@@ -96,7 +96,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{workspaceId}/resources/controlled/aws/sagemaker-notebooks/{resourceId}/getProxyUrl:
+  /api/workspaces/v1/{workspaceId}/resources/controlled/aws/sagemaker-notebooks/{resourceId}/proxyUrl:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
       - $ref: '#/components/parameters/ResourceId'
