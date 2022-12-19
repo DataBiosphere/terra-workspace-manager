@@ -89,8 +89,8 @@ public class CloneReferencedResourceStep implements Step {
           .put(ControlledResourceKeys.DESTINATION_REFERENCED_RESOURCE, destinationResource);
 
       try {
-        referencedResourceService.createReferenceResource(
-            destinationResource.castToReferencedResource(), userRequest);
+        referencedResourceService.createReferenceResourceForClone(
+            destinationResource.castToReferencedResource(), resource, userRequest);
         cloneDetails.setResult(WsmCloneResourceResult.SUCCEEDED);
       } catch (Exception e) {
         cloneDetails.setResult(WsmCloneResourceResult.FAILED).setErrorMessage(e.getMessage());
