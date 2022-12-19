@@ -1,0 +1,232 @@
+paths:
+  /api/workspaces/v1/{workspaceId}/resources/controlled/aws/sagemaker-notebooks:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Create a new controlled AWS SageMaker Notebook Instance
+      operationId: createAwsSageMakerNotebook
+      tags: [ControlledAwsResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateControlledAwsSageMakerNotebookRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CreatedControlledAwsSageMakerNotebookResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/aws/sagemaker-notebooks/create-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about a AWS SageMaker Notebook create instance job.
+      operationId: getCreateAwsSageMakerNotebookResult
+      tags: [ ControlledAwsResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/CreatedControlledAwsSageMakerNotebookResponse'
+        '202':
+          $ref: '#/components/responses/CreatedControlledAwsSageMakerNotebookResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/aws/sagemaker-notebooks/{resourceId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Get a controlled AWS SageMaker Notebook resource
+      operationId: getAwsSageMakerNotebook
+      tags: [ControlledAwsResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/GetControlledAwsSageMakerNotebookResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/aws/sagemaker-notebooks/{resourceId}/getConsoleLink:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+      - $ref: '#/components/parameters/AwsCredentialAccessScope'
+      - $ref: '#/components/parameters/AwsConsoleSessionDuration'
+    get:
+      summary: Get a link to manage this notebook in the AWS SageMaker Console
+      operationId: getAwsSageMakerNotebookConsoleLink
+      tags: [ ControlledAwsResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/GetControlledAwsSageMakerNotebookConsoleLinkResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/aws/sagemaker-notebooks/{resourceId}/getCredential:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+      - $ref: '#/components/parameters/AwsCredentialAccessScope'
+      - $ref: '#/components/parameters/AwsCredentialDuration'
+    get:
+      summary: Get a credential to access this notebook instance in the AWS CLI or SDK
+      operationId: getAwsSageMakerNotebookCredential
+      tags: [ ControlledAwsResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/GetControlledAwsSageMakerNotebookCredentialResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/aws/sagemaker-notebooks/{resourceId}/getProxyUrl:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+      - $ref: '#/components/parameters/AwsSageMakerProxyUrlDurationParameter'
+      - $ref: '#/components/parameters/AwsSageMakerProxyUrlViewParameter'
+    get:
+      summary: Get a proxy URL for direct access to the AWS SageMaker Notebook
+      operationId: getAwsSageMakerNotebookProxyUrl
+      tags: [ ControlledAwsResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/GetControlledAwsSageMakerNotebookProxyUrlResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+components:
+  parameters:
+    AwsSageMakerProxyUrlDurationParameter:
+      name: duration
+      in: query
+      description: Duration for console link
+      schema:
+        type: integer
+        minimum: 1800
+        maximum: 43200
+        default: 43200
+
+    AwsSageMakerProxyUrlViewParameter:
+      name: view
+      in: query
+      description: Parameters for getting a Notebook Proxy URL
+      required: true
+      schema:
+        $ref: '#/components/schemas/AwsSageMakerProxyUrlView'
+
+  schemas:
+
+    CreatedControlledAwsSageMakerNotebookResult:
+      type: object
+      properties:
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+        aiNotebookInstance:
+          $ref: '#/components/schemas/AwsSageMakerNotebookResource'
+
+    CreateControlledAwsSageMakerNotebookRequestBody:
+      description: Payload for requesting a new controlled AWS SageMaker Notebook resource.
+      type: object
+      required: [ common, awsSageMakerNotebook, jobControl ]
+      properties:
+        common:
+          $ref: '#/components/schemas/ControlledResourceCommonFields'
+        awsSageMakerNotebook:
+          $ref: '#/components/schemas/AwsSageMakerNotebookCreationParameters'
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+
+    AwsSagemakerNotebookDefaultBucket:
+      description: Default bucket to use with notebook
+      type: object
+      required: [bucketId, accessScope]
+      properties:
+        bucketId:
+          type: string
+          format: uuid
+        accessScope:
+          $ref: '#/components/schemas/AwsCredentialAccessScope'
+
+    AwsSageMakerNotebookCreationParameters:
+      description: Notebook creation parameters
+      type: object
+      required: [instanceId, location, instanceType]
+      properties:
+        instanceId:
+          description: Cloud-platform name for instance.
+          type: string
+        location:
+          description: A valid notebook location per https://docs.aws.amazon.com/general/latest/gr/sagemaker.html
+          type: string
+          default: "us-east-1"
+        instanceType:
+          description: A valid instance type per https://docs.aws.amazon.com/general/latest/gr/sagemaker.html
+          type: string
+          default: "ml.t2.medium"
+        defaultBucket:
+          description: Bucket to provide access to via the default configured credential in AWS CLI/SDK.
+          $ref: '#/components/schemas/AwsSagemakerNotebookDefaultBucket'
+
+    AwsSageMakerProxyUrlView:
+      type: string
+      enum: [ 'JUPYTER', 'JUPYTERLAB' ]
+      default: 'JUPYTERLAB'
+
+  responses:
+    CreatedControlledAwsSageMakerNotebookResponse:
+      description: Response to Create controlled AWS SageMaker Notebook
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreatedControlledAwsSageMakerNotebookResult'
+
+    GetControlledAwsSageMakerNotebookResponse:
+      description: Response to get AWS SageMaker Notebook
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AwsSageMakerNotebookResource'
+
+    GetControlledAwsSageMakerNotebookConsoleLinkResponse:
+      description: Response to get AWS SageMaker Notebook Console Link
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AwsConsoleLink'
+
+    GetControlledAwsSageMakerNotebookCredentialResponse:
+      description: Response to get AWS SageMaker Notebook Credential
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AwsCredential'
+
+    GetControlledAwsSageMakerNotebookProxyUrlResponse:
+      description: Response to get AWS SageMaker Notebook Proxy URL
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AwsConsoleLink'

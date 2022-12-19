@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.flight.create;
 
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.AWS_CLOUD_CONTEXT;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_CLOUD_CONTEXT;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.GCP_CLOUD_CONTEXT;
 
@@ -12,8 +13,10 @@ import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
@@ -29,16 +32,19 @@ public class GetCloudContextStep implements Step {
   private final CloudPlatform cloudPlatform;
   private final GcpCloudContextService gcpCloudContextService;
   private final AzureCloudContextService azureCloudContextService;
+  private final AwsCloudContextService awsCloudContextService;
 
   public GetCloudContextStep(
       UUID workspaceUuid,
       CloudPlatform cloudPlatform,
       GcpCloudContextService gcpCloudContextService,
-      AzureCloudContextService azureCloudContextService) {
+      AzureCloudContextService azureCloudContextService,
+      AwsCloudContextService awsCloudContextService) {
     this.workspaceUuid = workspaceUuid;
     this.cloudPlatform = cloudPlatform;
     this.gcpCloudContextService = gcpCloudContextService;
     this.azureCloudContextService = azureCloudContextService;
+    this.awsCloudContextService = awsCloudContextService;
   }
 
   @Override
@@ -65,6 +71,13 @@ public class GetCloudContextStep implements Step {
           workingMap.put(
               GCP_CLOUD_CONTEXT,
               gcpCloudContextService.getRequiredGcpCloudContext(workspaceUuid, userRequest));
+        }
+      }
+      case AWS -> {
+        if (workingMap.get(AWS_CLOUD_CONTEXT, AwsCloudContext.class) == null) {
+          AwsCloudContext awsCloudContext =
+              awsCloudContextService.getRequiredAwsCloudContext(workspaceUuid);
+          workingMap.put(AWS_CLOUD_CONTEXT, awsCloudContext.serialize());
         }
       }
       case ANY ->
