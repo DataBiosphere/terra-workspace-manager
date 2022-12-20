@@ -165,7 +165,7 @@ public final class FlightUtils {
   public static <T> T getRequired(FlightMap flightMap, String key, Class<T> tClass) {
     var value = flightMap.get(key, tClass);
     if (value == null) {
-      throw new IllegalArgumentException("Missing required flight map key: " + key);
+      throw new MissingRequiredFieldsException("Missing required flight map key: " + key);
     }
     return value;
   }
