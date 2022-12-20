@@ -69,7 +69,8 @@ public class ControlledAzureStorageResource extends ControlledResource {
         resourceLineage,
         properties,
         createdByEmail,
-        createdDate);
+        createdDate,
+        region);
     this.storageAccountName = storageAccountName;
     this.region = region;
     validate();

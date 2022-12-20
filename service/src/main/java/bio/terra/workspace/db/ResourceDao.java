@@ -63,7 +63,7 @@ public class ResourceDao {
       SELECT workspace_id, cloud_platform, resource_id, name, description, stewardship_type,
         resource_type, exact_resource_type, cloning_instructions, attributes,
         access_scope, managed_by, associated_app, assigned_user, private_resource_state,
-        resource_lineage, properties, created_date, created_by_email
+        resource_lineage, properties, created_date, created_by_email, region
       FROM resource WHERE workspace_id = :workspace_id
       """;
 
@@ -107,7 +107,10 @@ public class ResourceDao {
               .createdDate(
                   OffsetDateTime.ofInstant(
                       rs.getTimestamp("created_date").toInstant(), ZoneId.of("UTC")))
-              .createdByEmail(rs.getString("created_by_email"));
+              .createdByEmail(rs.getString("created_by_email"))
+              // TODO(PF-2290): throw if resource is controlled resource and the region is null once
+              // we backfill the existing resource rows with regions.
+              .region(rs.getString("region"));
 
   private final NamedParameterJdbcTemplate jdbcTemplate;
 
@@ -481,6 +484,38 @@ public class ResourceDao {
   }
 
   /**
+   * Update controlled resource's region
+   *
+   * @return whether the resource's region is successfully updated.
+   */
+  @WriteTransaction
+  public boolean updateControlledResourceRegion(
+      UUID workspaceUuid, UUID resourceId, @Nullable String region) {
+    var sql =
+        """
+            UPDATE resource SET region = :region
+            WHERE workspace_id = :workspace_id AND resource_id = :resource_id
+        """;
+
+    var params =
+        new MapSqlParameterSource()
+            .addValue("region", region)
+            .addValue("workspace_id", workspaceUuid.toString())
+            .addValue("resource_id", resourceId.toString());
+
+    int rowsAffected = jdbcTemplate.update(sql, params);
+    boolean updated = rowsAffected > 0;
+
+    logger.info(
+        "{} region for resource {} in workspace {}",
+        (updated ? "Updated" : "No Update - did not find"),
+        resourceId,
+        workspaceUuid);
+
+    return updated;
+  }
+
+  /**
    * Update name, description, and/or attributes of the resource.
    *
    * @param name name of the resource, may be null if it does not need to be updated
@@ -695,13 +730,12 @@ public class ResourceDao {
         INSERT INTO resource (workspace_id, cloud_platform, resource_id, name, description,
           stewardship_type, exact_resource_type, resource_type, cloning_instructions, attributes,
           access_scope, managed_by, associated_app, assigned_user, private_resource_state,
-          resource_lineage, properties, created_by_email)
+          resource_lineage, properties, created_by_email, region)
         VALUES (:workspace_id, :cloud_platform, :resource_id, :name, :description,
           :stewardship_type, :exact_resource_type, :resource_type, :cloning_instructions,
           cast(:attributes AS jsonb), :access_scope, :managed_by, :associated_app, :assigned_user,
-          :private_resource_state, :resource_lineage::jsonb, :properties::jsonb, :created_by_email);
+          :private_resource_state, :resource_lineage::jsonb, :properties::jsonb, :created_by_email, :region);
         """;
-
     final var params =
         new MapSqlParameterSource()
             .addValue("workspace_id", resource.getWorkspaceId().toString())
@@ -732,14 +766,16 @@ public class ResourceDao {
               controlledResource
                   .getPrivateResourceState()
                   .map(PrivateResourceState::toSql)
-                  .orElse(null));
+                  .orElse(null))
+          .addValue("region", controlledResource.getRegion());
     } else {
       params
           .addValue("access_scope", null)
           .addValue("managed_by", null)
           .addValue("associated_app", null)
           .addValue("assigned_user", null)
-          .addValue("private_resource_state", null);
+          .addValue("private_resource_state", null)
+          .addValue("region", null);
     }
 
     try {

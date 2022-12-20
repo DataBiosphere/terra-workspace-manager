@@ -9,6 +9,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -94,6 +95,44 @@ public class ResourceDaoTest extends BaseUnitTest {
     assertEquals(resource, getResource);
     assertEquals(DEFAULT_USER_EMAIL, getResource.getCreatedByEmail());
     assertNotNull(getResource.getCreatedDate());
+  }
+
+  @Test
+  public void updateControlledResourceRegion() {
+    ControlledResourceFields commonFields =
+        ControlledResourceFixtures.makeNotebookCommonFieldsBuilder()
+            .workspaceUuid(workspaceUuid)
+            .build();
+    ControlledAiNotebookInstanceResource resource =
+        ControlledResourceFixtures.makeDefaultAiNotebookInstance().common(commonFields).build();
+    resourceDao.createControlledResource(resource);
+
+    var newRegion = "great-new-world";
+    assertTrue(
+        resourceDao.updateControlledResourceRegion(
+            workspaceUuid, resource.getResourceId(), newRegion));
+
+    ControlledResource controlledResource =
+        resourceDao.getResource(workspaceUuid, resource.getResourceId()).castToControlledResource();
+    assertEquals(newRegion, controlledResource.getRegion());
+  }
+
+  @Test
+  public void updateControlledResourceRegion_regionNull() {
+    ControlledResourceFields commonFields =
+        ControlledResourceFixtures.makeNotebookCommonFieldsBuilder()
+            .workspaceUuid(workspaceUuid)
+            .build();
+    ControlledAiNotebookInstanceResource resource =
+        ControlledResourceFixtures.makeDefaultAiNotebookInstance().common(commonFields).build();
+    resourceDao.createControlledResource(resource);
+
+    assertTrue(
+        resourceDao.updateControlledResourceRegion(workspaceUuid, resource.getResourceId(), null));
+
+    ControlledResource controlledResource =
+        resourceDao.getResource(workspaceUuid, resource.getResourceId()).castToControlledResource();
+    assertNull(controlledResource.getRegion());
   }
 
   @Test

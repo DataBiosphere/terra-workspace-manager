@@ -1,5 +1,7 @@
 package bio.terra.workspace.app.controller;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import bio.terra.workspace.app.controller.shared.PropertiesUtils;
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -11,6 +13,8 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResourceF
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateUserRole;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
@@ -21,6 +25,16 @@ import javax.servlet.http.HttpServletRequest;
  */
 public class ControlledResourceControllerBase extends ControllerBase {
   private final ControlledResourceService controlledResourceService;
+
+  /**
+   * The region field of these wsm resource type are filled during the creation flight because the
+   * region is computed at runtime based on e.g. network and storage account.
+   */
+  private static final List<WsmResourceType> WSM_RESOURCE_WITHOUT_REGION_IN_CREATION_PARAMS =
+      List.of(
+          WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER,
+          WsmResourceType.CONTROLLED_AZURE_VM,
+          WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
 
   public ControlledResourceControllerBase(
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
@@ -34,7 +48,9 @@ public class ControlledResourceControllerBase extends ControllerBase {
   public ControlledResourceFields toCommonFields(
       UUID workspaceUuid,
       ApiControlledResourceCommonFields apiCommonFields,
-      AuthenticatedUserRequest userRequest) {
+      String region,
+      AuthenticatedUserRequest userRequest,
+      WsmResourceType wsmResourceType) {
 
     ManagedByType managedBy = ManagedByType.fromApi(apiCommonFields.getManagedBy());
     AccessScopeType accessScopeType = AccessScopeType.fromApi(apiCommonFields.getAccessScope());
@@ -42,6 +58,12 @@ public class ControlledResourceControllerBase extends ControllerBase {
         computePrivateUserRole(workspaceUuid, apiCommonFields, userRequest);
 
     String userEmail = getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest);
+    if (!WSM_RESOURCE_WITHOUT_REGION_IN_CREATION_PARAMS.contains(wsmResourceType)) {
+      checkArgument(
+          region != null,
+          "Controlled resource must have an associated region specified"
+              + "on creation except for azure storage container and azure VM");
+    }
 
     return ControlledResourceFields.builder()
         .workspaceUuid(workspaceUuid)
@@ -60,6 +82,7 @@ public class ControlledResourceControllerBase extends ControllerBase {
         .applicationId(controlledResourceService.getAssociatedApp(managedBy, userRequest))
         .properties(PropertiesUtils.convertApiPropertyToMap(apiCommonFields.getProperties()))
         .createdByEmail(userEmail)
+        .region(region)
         .build();
   }
 }

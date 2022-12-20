@@ -152,8 +152,8 @@ public class ControlledResourceFixtures {
   public static ApiAzureVmCreationParameters getAzureVmCreationParameters() {
     return new ApiAzureVmCreationParameters()
         .name(uniqueAzureName(AZURE_VM_NAME_PREFIX))
-        .region("westcentralus")
         .vmSize(VirtualMachineSizeTypes.STANDARD_D2S_V3.toString())
+        .region("westcentralus")
         // TODO: it'd be nice to support standard Linux OSes in addition to custom image URIs.
         // The below image is a Jupyter image and should be stable.
         .vmImage(
@@ -291,6 +291,7 @@ public class ControlledResourceFixtures {
   public static final String RESOURCE_DESCRIPTION =
       "A bucket that had beer in it, briefly. \uD83C\uDF7B";
   public static final CloningInstructions CLONING_INSTRUCTIONS = CloningInstructions.COPY_RESOURCE;
+  public static final String DEFAULT_RESOURCE_REGION = "us-central1";
 
   public static ControlledGcsBucketResource getBucketResource(String bucketName) {
     return new ControlledGcsBucketResource(
@@ -308,7 +309,8 @@ public class ControlledResourceFixtures {
         /*resourceLineage=*/ null,
         Map.of(),
         MockMvcUtils.DEFAULT_USER_EMAIL,
-        /*createdDate=*/ null);
+        /*createdDate=*/ null,
+        DEFAULT_RESOURCE_REGION);
   }
 
   public static ControlledAzureIpResource getAzureIp(String ipName, String region) {
@@ -462,7 +464,8 @@ public class ControlledResourceFixtures {
         /*resourceLineage=*/ null,
         /*properties=*/ Map.of(),
         MockMvcUtils.DEFAULT_USER_EMAIL,
-        /*createdDate*/ null);
+        /*createdDate*/ null,
+        DEFAULT_RESOURCE_REGION);
   }
 
   public static ControlledAzureStorageContainerResource getAzureStorageContainer(
@@ -530,7 +533,16 @@ public class ControlledResourceFixtures {
         .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
         .managedBy(ManagedByType.MANAGED_BY_USER)
         .properties(DEFAULT_RESOURCE_PROPERTIES)
-        .createdByEmail(MockMvcUtils.DEFAULT_USER_EMAIL);
+        .createdByEmail(MockMvcUtils.DEFAULT_USER_EMAIL)
+        .region(DEFAULT_RESOURCE_REGION);
+  }
+
+  public static ControlledAzureStorageContainerResource.Builder
+      makeDefaultAzureStorageContainerResourceBuilder(UUID workspaceId) {
+    return ControlledAzureStorageContainerResource.builder()
+        .common(makeDefaultControlledResourceFields(workspaceId))
+        .storageContainerName(TestUtils.appendRandomNumber("storageaccountfoo"))
+        .storageAccountId(UUID.randomUUID());
   }
 
   /**
@@ -624,7 +636,8 @@ public class ControlledResourceFixtures {
         .assignedUser("myusername@mydomain.mine")
         .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
         .managedBy(ManagedByType.MANAGED_BY_USER)
-        .createdByEmail(MockMvcUtils.DEFAULT_USER_EMAIL);
+        .createdByEmail(MockMvcUtils.DEFAULT_USER_EMAIL)
+        .region(DEFAULT_RESOURCE_REGION);
   }
 
   public static ControlledAiNotebookInstanceResource.Builder makeDefaultAiNotebookInstance() {

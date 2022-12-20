@@ -45,7 +45,8 @@ public class WorkspaceCloneUtils {
    * @param destinationResourceId Destination resource ID for the new container object
    * @param name WSM-internal resource name
    * @param description Human-friendly description for the container resource
-   * @param cloudInstanceName Name that the resource will receive when created in Azure
+   * @param cloudInstanceName storage container name
+   * @param storageAccountId the landing zone resource id of the shared storage account
    * @return An Azure storage container object
    */
   public static ControlledAzureStorageContainerResource buildDestinationControlledAzureContainer(
@@ -55,9 +56,12 @@ public class WorkspaceCloneUtils {
       String name,
       @Nullable String description,
       String cloudInstanceName,
-      String createdByEmail) {
+      UUID storageAccountId,
+      String createdByEmail,
+      String region) {
     return ControlledAzureStorageContainerResource.builder()
         .storageContainerName(cloudInstanceName)
+        .storageAccountId(storageAccountId)
         .common(
             sourceContainer.buildControlledCloneResourceCommonFields(
                 destinationWorkspaceId,
@@ -65,7 +69,8 @@ public class WorkspaceCloneUtils {
                 null,
                 name,
                 description,
-                createdByEmail))
+                createdByEmail,
+                region))
         .build();
   }
 
@@ -79,7 +84,8 @@ public class WorkspaceCloneUtils {
       @Nullable String description,
       String cloudInstanceName,
       String destinationProjectId,
-      String createdByEmail) {
+      String createdByEmail,
+      String region) {
     return ControlledBigQueryDatasetResource.builder()
         .projectId(destinationProjectId)
         .datasetName(cloudInstanceName)
@@ -90,7 +96,8 @@ public class WorkspaceCloneUtils {
                 destinationFolderId,
                 name,
                 description,
-                createdByEmail))
+                createdByEmail,
+                region == null ? sourceDataset.getRegion() : region))
         .build();
   }
 
@@ -102,7 +109,8 @@ public class WorkspaceCloneUtils {
       String name,
       @Nullable String description,
       String cloudInstanceName,
-      String createdByEmail) {
+      String createdByEmail,
+      String region) {
     return ControlledGcsBucketResource.builder()
         .bucketName(cloudInstanceName)
         .common(
@@ -112,7 +120,8 @@ public class WorkspaceCloneUtils {
                 destinationFolderId,
                 name,
                 description,
-                createdByEmail))
+                createdByEmail,
+                region))
         .build();
   }
 }

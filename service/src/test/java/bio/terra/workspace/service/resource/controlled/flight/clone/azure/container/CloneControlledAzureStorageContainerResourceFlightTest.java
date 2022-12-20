@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.azure.container;
 
+import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_GCP_RESOURCE_REGION;
 import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -7,8 +8,6 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.utils.AzureTestUtils;
-import bio.terra.workspace.generated.model.ApiClonedControlledAzureStorageContainer;
-import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
@@ -55,7 +54,8 @@ public class CloneControlledAzureStorageContainerResourceFlightTest extends Base
             null,
             Map.of(),
             DEFAULT_USER_EMAIL,
-            /*createdDate*/ null);
+            /*createdDate*/ null,
+            DEFAULT_GCP_RESOURCE_REGION);
     FlightMap inputs = new FlightMap();
     inputs.put(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE, resource);
     inputs.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
@@ -77,9 +77,8 @@ public class CloneControlledAzureStorageContainerResourceFlightTest extends Base
         result
             .getResultMap()
             .get()
-            .get(JobMapKeys.RESPONSE.getKeyName(), ApiClonedControlledAzureStorageContainer.class);
+            .get(JobMapKeys.RESPONSE.getKeyName(), ClonedAzureStorageContainer.class);
 
-    assertEquals(
-        resultContainer.getEffectiveCloningInstructions(), ApiCloningInstructionsEnum.NOTHING);
+    assertEquals(resultContainer.effectiveCloningInstructions(), CloningInstructions.COPY_NOTHING);
   }
 }

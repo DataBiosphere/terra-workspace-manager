@@ -101,10 +101,8 @@ public class VerifyAzureStorageContainerCanBeCreatedStep implements Step {
               .castToControlledResource()
               .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT);
 
-      context
-          .getWorkingMap()
-          .put(ControlledResourceKeys.STORAGE_ACCOUNT_NAME, storageAccount.getStorageAccountName());
-
+      putStorageAccountNameAndRegionInWorkingMap(
+          context, storageAccount.getStorageAccountName(), storageAccount.getRegion());
       storageManager
           .storageAccounts()
           .getByResourceGroup(
@@ -137,6 +135,14 @@ public class VerifyAzureStorageContainerCanBeCreatedStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
+  private static void putStorageAccountNameAndRegionInWorkingMap(
+      FlightContext context, String storageAccount, String storageAccountRegion) {
+    context.getWorkingMap().put(ControlledResourceKeys.STORAGE_ACCOUNT_NAME, storageAccount);
+    context
+        .getWorkingMap()
+        .put(ControlledResourceKeys.CREATE_RESOURCE_REGION, storageAccountRegion);
+  }
+
   private StepResult validateLandingZoneSharedStorageAccountExist(
       FlightContext context, StorageManager storageManager) {
     try {
@@ -152,9 +158,8 @@ public class VerifyAzureStorageContainerCanBeCreatedStep implements Step {
                 .storageAccounts()
                 .getById(existingSharedStorageAccount.get().getResourceId());
 
-        context
-            .getWorkingMap()
-            .put(ControlledResourceKeys.STORAGE_ACCOUNT_NAME, storageAccount.name());
+        putStorageAccountNameAndRegionInWorkingMap(
+            context, storageAccount.name(), storageAccount.regionName());
         return StepResult.getStepResultSuccess();
       }
 

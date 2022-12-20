@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource;
 
+import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_GCP_RESOURCE_REGION;
 import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -217,7 +218,8 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
               /*resourceLineage=*/ null,
               /*properties=*/ Map.of(),
               DEFAULT_USER_EMAIL,
-              /*createdDate*/ null);
+              /*createdDate*/ null,
+              DEFAULT_GCP_RESOURCE_REGION);
 
       ApiResourceDescription resourceDescription =
           resourceController.makeApiResourceDescription(resource);
@@ -250,7 +252,8 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
               /*resourceLineage=*/ null,
               /*properties=*/ Map.of(),
               DEFAULT_USER_EMAIL,
-              /*createdDate*/ null);
+              /*createdDate*/ null,
+              DEFAULT_GCP_RESOURCE_REGION);
 
       ApiResourceDescription resourceDescription =
           resourceController.makeApiResourceDescription(resource);

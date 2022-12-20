@@ -183,14 +183,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TpsPaoUpdateRequest'
+              $ref: '#/components/schemas/WsmPolicyUpdateRequest'
       responses:
         '200':
           description: Update successfully processed. The update itself may or may not have succeeded.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TpsPaoUpdateResult'
+                $ref: '#/components/schemas/WsmPolicyUpdateResult'
         '400':
           $ref: '#/components/responses/BadRequest'
         '403':
@@ -348,7 +348,7 @@ components:
         - SUCCEEDED
         - FAILED
         - SKIPPED
-        
+
     CloneWorkspaceRequest:
       description: >-
         Request body for cloning an entire workspace. Cloning instructions
@@ -378,6 +378,8 @@ components:
             GCP Location to use for cloud-based resources. If omitted, the location of the source
             resource will be used.
           type: string
+        azureContext:
+          $ref: '#/components/schemas/AzureContext'
 
     ResourceCloneDetails:
       description: >-
@@ -452,7 +454,7 @@ components:
           description: ID of provided spend profile
           type: string
         policies:
-          $ref: '#/components/schemas/TpsPolicyInputs'
+          $ref: '#/components/schemas/WsmPolicyInputs'
         stage:
           $ref: '#/components/schemas/WorkspaceStageModel'
         properties:
@@ -564,7 +566,7 @@ components:
         policies:
           type: array
           items:
-            $ref: '#/components/schemas/TpsPolicyInput'
+            $ref: '#/components/schemas/WsmPolicyInput'
 
     WorkspaceDescriptionList:
       type: object

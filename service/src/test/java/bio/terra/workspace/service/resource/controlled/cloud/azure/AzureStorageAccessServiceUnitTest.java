@@ -13,6 +13,7 @@ import bio.terra.common.exception.ForbiddenException;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseAzureUnitTest;
+import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.SamConstants;
@@ -103,23 +104,16 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
       AccessScopeType accessScopeType,
       ManagedByType managedByType,
       UUID storageAccountId) {
-    return new ControlledAzureStorageContainerResource(
-        UUID.randomUUID(),
-        UUID.randomUUID(),
-        "fake",
-        "description",
-        CloningInstructions.COPY_NOTHING,
-        null,
-        privateResourceState,
-        accessScopeType,
-        managedByType,
-        null,
-        storageAccountId,
-        "fake",
-        /*resourceLineage=*/ null,
-        /*properties*/ Map.of(),
-        "foo@gmail.com",
-        /*createdDate*/ null);
+    return ControlledResourceFixtures.makeDefaultAzureStorageContainerResourceBuilder(
+            /*workspaceId=*/ UUID.randomUUID())
+        .common(
+            ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+                .managedBy(managedByType)
+                .accessScope(accessScopeType)
+                .privateResourceState(privateResourceState)
+                .build())
+        .storageAccountId(storageAccountId)
+        .build();
   }
 
   private void assertValidToken(

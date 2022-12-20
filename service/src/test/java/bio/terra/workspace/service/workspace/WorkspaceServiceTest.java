@@ -72,11 +72,11 @@ import bio.terra.workspace.service.resource.controlled.ControlledResourceService
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.AwaitCloneAllResourcesFlightStep;
-import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.AwaitCreateGcpContextFlightStep;
+import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.AwaitCreateCloudContextFlightStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneAllFoldersStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.FindResourcesToCloneStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.LaunchCloneAllResourcesFlightStep;
-import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.LaunchCreateGcpContextFlightStep;
+import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.LaunchCreateCloudContextFlightStep;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
@@ -392,7 +392,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     Workspace request = WorkspaceFixtures.buildMcWorkspace();
     workspaceService.createWorkspace(request, null, null, USER_REQUEST);
     UUID workspaceUuid = request.getWorkspaceId();
-    var lastUpdateDetails = workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
+    var lastUpdateDetails = workspaceActivityLogDao.getLastUpdatedDetails(workspaceUuid);
     assertTrue(lastUpdateDetails.isPresent());
     Workspace createdWorkspace = workspaceService.getWorkspace(request.getWorkspaceId());
     assertEquals(request.getWorkspaceId(), createdWorkspace.getWorkspaceId());
@@ -407,7 +407,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         workspaceService.updateWorkspace(
             workspaceUuid, userFacingId, name, description, USER_REQUEST);
 
-    var workspaceUpdateChangeDetails = workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
+    var workspaceUpdateChangeDetails = workspaceActivityLogDao.getLastUpdatedDetails(workspaceUuid);
     assertTrue(
         lastUpdateDetails
             .get()
@@ -428,7 +428,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         workspaceService.updateWorkspace(
             workspaceUuid, /*userFacingId=*/ null, /*name=*/ null, otherDescription, USER_REQUEST);
 
-    var secondUpdateChangeDetails = workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
+    var secondUpdateChangeDetails = workspaceActivityLogDao.getLastUpdatedDetails(workspaceUuid);
     assertTrue(
         workspaceUpdateChangeDetails
             .get()
@@ -447,7 +447,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         workspaceService.updateWorkspace(workspaceUuid, userFacingId, "", "", USER_REQUEST);
 
     var thirdUpdatedDateAfterWorkspaceUpdate =
-        workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
+        workspaceActivityLogDao.getLastUpdatedDetails(workspaceUuid);
     assertTrue(
         secondUpdateChangeDetails
             .get()
@@ -468,7 +468,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
                 /*name=*/ null,
                 /*description=*/ null,
                 USER_REQUEST));
-    var failedUpdateDate = workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
+    var failedUpdateDate = workspaceActivityLogDao.getLastUpdatedDetails(workspaceUuid);
     assertEquals(
         thirdUpdatedDateAfterWorkspaceUpdate.get().changeDate(),
         failedUpdateDate.get().changeDate());
@@ -508,7 +508,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     Workspace request = defaultWorkspaceBuilder(null).build();
     workspaceService.createWorkspace(request, null, null, USER_REQUEST);
     UUID workspaceUuid = request.getWorkspaceId();
-    var lastUpdateDetails = workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
+    var lastUpdateDetails = workspaceActivityLogDao.getLastUpdatedDetails(workspaceUuid);
     OffsetDateTime lastUpdatedDate = lastUpdateDetails.get().changeDate();
     assertNotNull(lastUpdatedDate);
 
@@ -517,7 +517,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     Workspace updatedWorkspace = workspaceService.getWorkspace(workspaceUuid);
 
     var updateDetailsAfterWorkspaceUpdate =
-        workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
+        workspaceActivityLogDao.getLastUpdatedDetails(workspaceUuid);
     assertTrue(lastUpdatedDate.isBefore(updateDetailsAfterWorkspaceUpdate.get().changeDate()));
     assertEquals(
         propertyMap, updatedWorkspace.getProperties(), "Workspace properties update successfully");
@@ -617,7 +617,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     Workspace request = defaultWorkspaceBuilder(null).properties(propertyMap).build();
     workspaceService.createWorkspace(request, null, null, USER_REQUEST);
     UUID workspaceUuid = request.getWorkspaceId();
-    var lastUpdateDetails = workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
+    var lastUpdateDetails = workspaceActivityLogDao.getLastUpdatedDetails(workspaceUuid);
     assertTrue(lastUpdateDetails.isPresent());
 
     List<String> propertyKeys = new ArrayList<>(Arrays.asList("foo", "foo1"));
@@ -626,7 +626,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     Workspace deletedWorkspace = workspaceService.getWorkspace(workspaceUuid);
 
     var updateDetailsAfterWorkspaceUpdate =
-        workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
+        workspaceActivityLogDao.getLastUpdatedDetails(workspaceUuid);
     assertTrue(
         lastUpdateDetails
             .get()
@@ -848,7 +848,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     final String destinationLocation = "us-east1";
     final String cloneJobId =
         workspaceService.cloneWorkspace(
-            sourceWorkspace, USER_REQUEST, destinationLocation, destinationWorkspace);
+            sourceWorkspace, USER_REQUEST, destinationLocation, destinationWorkspace, null);
     jobService.waitForJob(cloneJobId);
     final JobResultOrException<ApiClonedWorkspace> cloneResultOrException =
         jobService.retrieveJobResult(cloneJobId, ApiClonedWorkspace.class);
@@ -964,9 +964,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     retrySteps.put(CloneAllFoldersStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(FindResourcesToCloneStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
-        LaunchCreateGcpContextFlightStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+        LaunchCreateCloudContextFlightStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
-        AwaitCreateGcpContextFlightStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+        AwaitCreateCloudContextFlightStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
         LaunchCloneAllResourcesFlightStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
@@ -981,7 +981,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         InvalidResultStateException.class,
         () ->
             workspaceService.cloneWorkspace(
-                sourceWorkspace, USER_REQUEST, destinationLocation, destinationWorkspace));
+                sourceWorkspace, USER_REQUEST, destinationLocation, destinationWorkspace, null));
     assertThrows(
         WorkspaceNotFoundException.class,
         () -> workspaceService.getWorkspace(destinationWorkspace.getWorkspaceId()));

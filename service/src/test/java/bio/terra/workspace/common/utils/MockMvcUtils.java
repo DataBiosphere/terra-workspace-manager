@@ -19,7 +19,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import bio.terra.common.stairway.StairwayComponent;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.controller.shared.PropertiesUtils;
@@ -28,23 +27,34 @@ import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
+import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpBigQueryDatasetRequest;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpBigQueryDatasetResult;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketRequest;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketResult;
+import bio.terra.workspace.generated.model.ApiCloneReferencedGcpBigQueryDataTableResourceResult;
 import bio.terra.workspace.generated.model.ApiCloneReferencedGcpBigQueryDatasetResourceResult;
+import bio.terra.workspace.generated.model.ApiCloneReferencedGcpDataRepoSnapshotResourceResult;
+import bio.terra.workspace.generated.model.ApiCloneReferencedGcpGcsBucketResourceResult;
+import bio.terra.workspace.generated.model.ApiCloneReferencedGcpGcsObjectResourceResult;
+import bio.terra.workspace.generated.model.ApiCloneReferencedGitRepoResourceResult;
 import bio.terra.workspace.generated.model.ApiCloneReferencedResourceRequestBody;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceRequest;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceResult;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
+import bio.terra.workspace.generated.model.ApiControlledResourceMetadata;
 import bio.terra.workspace.generated.model.ApiCreateCloudContextRequest;
 import bio.terra.workspace.generated.model.ApiCreateCloudContextResult;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpAiNotebookInstanceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpBigQueryDatasetRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateDataRepoSnapshotReferenceRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateGcpBigQueryDataTableReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateGcpBigQueryDatasetReferenceRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateGcpGcsBucketReferenceRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateGcpGcsObjectReferenceRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateGitRepoReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpAiNotebookInstanceResult;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpBigQueryDataset;
@@ -53,21 +63,30 @@ import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotAttributes;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
 import bio.terra.workspace.generated.model.ApiErrorReport;
+import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableAttributes;
+import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableResource;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetAttributes;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketAttributes;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketDefaultStorageClass;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycle;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
+import bio.terra.workspace.generated.model.ApiGcpGcsObjectAttributes;
+import bio.terra.workspace.generated.model.ApiGcpGcsObjectResource;
+import bio.terra.workspace.generated.model.ApiGitRepoAttributes;
+import bio.terra.workspace.generated.model.ApiGitRepoResource;
 import bio.terra.workspace.generated.model.ApiGrantRoleRequestBody;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
 import bio.terra.workspace.generated.model.ApiJobResult;
+import bio.terra.workspace.generated.model.ApiManagedBy;
+import bio.terra.workspace.generated.model.ApiPrivateResourceState;
+import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
 import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiPropertyKeys;
-import bio.terra.workspace.generated.model.ApiReferenceResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiResourceDescription;
 import bio.terra.workspace.generated.model.ApiResourceLineage;
 import bio.terra.workspace.generated.model.ApiResourceLineageEntry;
@@ -75,14 +94,14 @@ import bio.terra.workspace.generated.model.ApiResourceList;
 import bio.terra.workspace.generated.model.ApiResourceMetadata;
 import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
-import bio.terra.workspace.generated.model.ApiTpsPaoUpdateRequest;
-import bio.terra.workspace.generated.model.ApiTpsPaoUpdateResult;
-import bio.terra.workspace.generated.model.ApiTpsPolicyInput;
-import bio.terra.workspace.generated.model.ApiTpsPolicyInputs;
-import bio.terra.workspace.generated.model.ApiTpsUpdateMode;
 import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
+import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
+import bio.terra.workspace.generated.model.ApiWsmPolicyInputs;
+import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateMode;
+import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateRequest;
+import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateResult;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
@@ -101,6 +120,7 @@ import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.SetR
 import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.SetReferencedDestinationBigQueryDatasetResponseStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
+import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.referenced.flight.create.CreateReferenceMetadataStep;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -114,7 +134,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.hamcrest.Matcher;
@@ -134,6 +153,9 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
  * A collection of utilities and constants useful for MockMVC-based tests. This style of tests lets
  * us test controller-layer code (request/response parsing, authz, and validation) without actually
  * spinning up a local server.
+ *
+ * <p>All methods must work for unit and connected tests. Take in AuthenticatedUserRequest
+ * parameter; don't hard-code AuthenticatedUserRequest.
  *
  * <p>TODO: it's probably worth looking into whether we can automatically pull routes from the
  * generated swagger, instead of manually wrapping them here.
@@ -173,8 +195,6 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/controlled/azure/vm";
   public static final String CREATE_AZURE_SAS_TOKEN_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/azure/storageContainer/%s/getSasToken";
-  public static final String GET_REFERENCED_GCP_GCS_BUCKET_FORMAT =
-      "/api/workspaces/v1/%s/resources/referenced/gcp/buckets/%s";
   public static final String CLONE_CONTROLLED_GCP_GCS_BUCKET_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/gcp/buckets/%s/clone";
   public static final String CLONE_RESULT_CONTROLLED_GCP_GCS_BUCKET_FORMAT =
@@ -209,20 +229,40 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/controlled/gcp/buckets/%s";
   public static final String REFERENCED_DATA_REPO_SNAPSHOTS_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/referenced/datarepo/snapshots";
+  public static final String REFERENCED_DATA_REPO_SNAPSHOT_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/referenced/datarepo/snapshots/%s";
+  public static final String CLONE_REFERENCED_DATA_REPO_SNAPSHOT_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/referenced/datarepo/snapshots/%s/clone";
   public static final String REFERENCED_GCP_GCS_BUCKETS_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/referenced/gcp/buckets";
+  public static final String REFERENCED_GCP_GCS_BUCKET_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/referenced/gcp/buckets/%s";
+  public static final String CLONE_REFERENCED_GCP_GCS_BUCKET_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/referenced/gcp/buckets/%s/clone";
   public static final String REFERENCED_GCP_GCS_OBJECTS_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/referenced/gcp/bucket/objects";
+  public static final String REFERENCED_GCP_GCS_OBJECT_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/referenced/gcp/bucket/objects/%s";
+  public static final String CLONE_REFERENCED_GCP_GCS_OBJECT_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/referenced/gcp/bucket/objects/%s/clone";
   public static final String REFERENCED_GCP_BIG_QUERY_DATASETS_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/referenced/gcp/bigquerydatasets";
   public static final String REFERENCED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/referenced/gcp/bigquerydatasets/%s";
   public static final String CLONE_REFERENCED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/referenced/gcp/bigquerydatasets/%s/clone";
-  public static final String REFERENCED_GCP_BIG_QUERY_DATA_TABLE_V1_PATH_FORMAT =
+  public static final String REFERENCED_GCP_BIG_QUERY_DATA_TABLES_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/referenced/gcp/bigquerydatatables";
-  public static final String REFERENCED_GIT_REPO_V1_PATH_FORMAT =
+  public static final String REFERENCED_GCP_BIG_QUERY_DATA_TABLE_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/referenced/gcp/bigquerydatatables/%s";
+  public static final String CLONE_REFERENCED_GCP_BIG_QUERY_DATA_TABLE_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/referenced/gcp/bigquerydatatables/%s/clone";
+  public static final String REFERENCED_GIT_REPOS_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/referenced/gitrepos";
+  public static final String REFERENCED_GIT_REPO_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/referenced/gitrepos/%s";
+  public static final String CLONE_REFERENCED_GIT_REPO_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/referenced/gitrepos/%s/clone";
   public static final String DELETE_FOLDER_JOB_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/folders/%s/result/%s";
   public static final String UPDATE_POLICIES_PATH_FORMAT = "/api/workspaces/v1/%s/policies";
@@ -233,6 +273,7 @@ public class MockMvcUtils {
   public static final AuthenticatedUserRequest USER_REQUEST =
       new AuthenticatedUserRequest(
           DEFAULT_USER_EMAIL, "subjectId123456", Optional.of("ThisIsNotARealBearerToken"));
+  public static final String DEFAULT_GCP_RESOURCE_REGION = "us-central1";
   private static final Logger logger = LoggerFactory.getLogger(MockMvcUtils.class);
   private static final String DEST_BUCKET_RESOURCE_NAME =
       TestUtils.appendRandomNumber("i-am-the-cloned-bucket");
@@ -245,7 +286,6 @@ public class MockMvcUtils {
   @Autowired private MockMvc mockMvc;
   @Autowired private ObjectMapper objectMapper;
   @Autowired private JobService jobService;
-  @Autowired private StairwayComponent stairwayComponent;
   @Autowired private NamedParameterJdbcTemplate jdbcTemplate;
 
   public static MockHttpServletRequestBuilder addAuth(
@@ -258,23 +298,11 @@ public class MockMvcUtils {
     return request.contentType("application/json");
   }
 
-  public ApiWorkspaceDescription getWorkspace(AuthenticatedUserRequest userRequest, UUID id)
-      throws Exception {
-    MockHttpServletRequestBuilder requestBuilder =
-        get(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, id));
+  public ApiWorkspaceDescription getWorkspace(
+      AuthenticatedUserRequest userRequest, UUID workspaceId) throws Exception {
     String serializedResponse =
-        mockMvc
-            .perform(addAuth(requestBuilder, userRequest))
-            .andExpect(status().is(HttpStatus.SC_OK))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
+        getSerializedResponseForGet(userRequest, WORKSPACES_V1_BY_UUID_PATH_FORMAT, workspaceId);
     return objectMapper.readValue(serializedResponse, ApiWorkspaceDescription.class);
-  }
-
-  public String getGcpProjectId(AuthenticatedUserRequest userRequest, UUID workspaceId)
-      throws Exception {
-    return getWorkspace(userRequest, workspaceId).getGcpContext().getProjectId();
   }
 
   public ApiCloneWorkspaceResult cloneWorkspace(
@@ -283,28 +311,18 @@ public class MockMvcUtils {
       String spendProfile,
       @Nullable UUID destinationWorkspaceId)
       throws Exception {
-
-    String serializedGetResponse =
-        mockMvc
-            .perform(
-                addAuth(
-                    post(String.format(CLONE_WORKSPACE_PATH_FORMAT, sourceWorkspaceId))
-                        .contentType(MediaType.APPLICATION_JSON_VALUE)
-                        .accept(MediaType.APPLICATION_JSON)
-                        .characterEncoding("UTF-8")
-                        .content(
-                            objectMapper.writeValueAsString(
-                                new ApiCloneWorkspaceRequest()
-                                    .destinationWorkspaceId(destinationWorkspaceId)
-                                    .spendProfile(spendProfile))),
-                    userRequest))
-            .andExpect(status().is(HttpStatus.SC_ACCEPTED))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-
+    ApiCloneWorkspaceRequest request =
+        new ApiCloneWorkspaceRequest()
+            .destinationWorkspaceId(destinationWorkspaceId)
+            .spendProfile(spendProfile);
+    String serializedResponse =
+        getSerializedResponseForPost(
+            userRequest,
+            CLONE_WORKSPACE_PATH_FORMAT,
+            sourceWorkspaceId,
+            objectMapper.writeValueAsString(request));
     ApiCloneWorkspaceResult cloneWorkspace =
-        objectMapper.readValue(serializedGetResponse, ApiCloneWorkspaceResult.class);
+        objectMapper.readValue(serializedResponse, ApiCloneWorkspaceResult.class);
     if (destinationWorkspaceId == null) {
       destinationWorkspaceId = cloneWorkspace.getWorkspace().getDestinationWorkspaceId();
     }
@@ -339,16 +357,8 @@ public class MockMvcUtils {
     ApiCreateWorkspaceRequestBody request =
         WorkspaceFixtures.createWorkspaceRequestBody(stageModel);
     String serializedResponse =
-        mockMvc
-            .perform(
-                addJsonContentType(
-                    addAuth(
-                        post(WORKSPACES_V1_PATH).content(objectMapper.writeValueAsString(request)),
-                        userRequest)))
-            .andExpect(status().is(HttpStatus.SC_OK))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
+        getSerializedResponseForPost(
+            userRequest, WORKSPACES_V1_PATH, objectMapper.writeValueAsString(request));
     return objectMapper.readValue(serializedResponse, ApiCreatedWorkspace.class);
   }
 
@@ -356,7 +366,7 @@ public class MockMvcUtils {
       @Nullable AuthenticatedUserRequest userRequest,
       UUID workspaceId,
       @Nullable ApiWorkspaceStageModel stageModel,
-      @Nullable ApiTpsPolicyInputs policyInputs,
+      @Nullable ApiWsmPolicyInputs policyInputs,
       int expectedCode)
       throws Exception {
     ApiCreateWorkspaceRequestBody request =
@@ -391,7 +401,7 @@ public class MockMvcUtils {
   private void createGcpCloudContextAndWait(AuthenticatedUserRequest userRequest, UUID workspaceId)
       throws Exception {
     ApiCreateCloudContextResult result = createGcpCloudContext(userRequest, workspaceId);
-    UUID jobId = UUID.fromString(result.getJobReport().getId());
+    String jobId = result.getJobReport().getId();
     while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
       Thread.sleep(/*millis=*/ 5000);
       result = getCreateCloudContextResult(userRequest, workspaceId, jobId);
@@ -410,53 +420,27 @@ public class MockMvcUtils {
             .cloudPlatform(ApiCloudPlatform.GCP)
             .jobControl(new ApiJobControl().id(jobId));
     String serializedResponse =
-        mockMvc
-            .perform(
-                addJsonContentType(
-                    addAuth(
-                        post(CREATE_CLOUD_CONTEXT_PATH_FORMAT.formatted(workspaceId.toString()))
-                            .content(objectMapper.writeValueAsString(request)),
-                        userRequest)))
-            .andExpect(status().is(HttpStatus.SC_ACCEPTED))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
+        getSerializedResponseForPost(
+            userRequest,
+            CREATE_CLOUD_CONTEXT_PATH_FORMAT,
+            workspaceId,
+            objectMapper.writeValueAsString(request));
     return objectMapper.readValue(serializedResponse, ApiCreateCloudContextResult.class);
   }
 
   private ApiCreateCloudContextResult getCreateCloudContextResult(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID jobId) throws Exception {
+      AuthenticatedUserRequest userRequest, UUID workspaceId, String jobId) throws Exception {
     String serializedResponse =
-        mockMvc
-            .perform(
-                addJsonContentType(
-                    addAuth(
-                        get(
-                            GET_CLOUD_CONTEXT_PATH_FORMAT.formatted(
-                                workspaceId.toString(), jobId.toString())),
-                        userRequest)))
-            .andExpect(status().is2xxSuccessful())
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
+        getSerializedResponseForGetJobResult(
+            userRequest, GET_CLOUD_CONTEXT_PATH_FORMAT, workspaceId, jobId);
     return objectMapper.readValue(serializedResponse, ApiCreateCloudContextResult.class);
   }
 
   public ApiCloneWorkspaceResult getCloneWorkspaceResult(
       AuthenticatedUserRequest userRequest, UUID workspaceId, String jobId) throws Exception {
     String serializedResponse =
-        mockMvc
-            .perform(
-                addJsonContentType(
-                    addAuth(
-                        get(
-                            CLONE_WORKSPACE_RESULT_PATH_FORMAT.formatted(
-                                workspaceId.toString(), jobId)),
-                        userRequest)))
-            .andExpect(status().is2xxSuccessful())
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
+        getSerializedResponseForGetJobResult(
+            userRequest, CLONE_WORKSPACE_RESULT_PATH_FORMAT, workspaceId, jobId);
     return objectMapper.readValue(serializedResponse, ApiCloneWorkspaceResult.class);
   }
 
@@ -497,16 +481,11 @@ public class MockMvcUtils {
   public void updateWorkspaceProperties(
       AuthenticatedUserRequest userRequest, UUID workspaceId, List<ApiProperty> properties)
       throws Exception {
-    mockMvc
-        .perform(
-            addAuth(
-                post(String.format(UPDATE_WORKSPACES_V1_PROPERTIES_PATH_FORMAT, workspaceId))
-                    .contentType(MediaType.APPLICATION_JSON_VALUE)
-                    .accept(MediaType.APPLICATION_JSON)
-                    .characterEncoding("UTF-8")
-                    .content(objectMapper.writeValueAsString(properties)),
-                userRequest))
-        .andExpect(status().is(HttpStatus.SC_NO_CONTENT));
+    getSerializedResponseForPost(
+        userRequest,
+        UPDATE_WORKSPACES_V1_PROPERTIES_PATH_FORMAT,
+        workspaceId,
+        objectMapper.writeValueAsString(properties));
   }
 
   public void deleteWorkspaceProperties(
@@ -540,19 +519,19 @@ public class MockMvcUtils {
         .andExpect(status().is(HttpStatus.SC_NOT_FOUND));
   }
 
-  public ApiTpsPaoUpdateResult updatePolicies(
+  public ApiWsmPolicyUpdateResult updatePolicies(
       AuthenticatedUserRequest userRequest,
       UUID workspaceId,
-      @Nullable List<ApiTpsPolicyInput> policiesToAdd,
-      @Nullable List<ApiTpsPolicyInput> policiesToRemove)
+      @Nullable List<ApiWsmPolicyInput> policiesToAdd,
+      @Nullable List<ApiWsmPolicyInput> policiesToRemove)
       throws Exception {
-    ApiTpsPaoUpdateRequest requestBody =
-        new ApiTpsPaoUpdateRequest().updateMode(ApiTpsUpdateMode.FAIL_ON_CONFLICT);
+    ApiWsmPolicyUpdateRequest requestBody =
+        new ApiWsmPolicyUpdateRequest().updateMode(ApiWsmPolicyUpdateMode.FAIL_ON_CONFLICT);
     if (policiesToAdd != null) {
-      requestBody.addAttributes(new ApiTpsPolicyInputs().inputs(policiesToAdd));
+      requestBody.addAttributes(new ApiWsmPolicyInputs().inputs(policiesToAdd));
     }
     if (policiesToRemove != null) {
-      requestBody.removeAttributes(new ApiTpsPolicyInputs().inputs(policiesToRemove));
+      requestBody.removeAttributes(new ApiWsmPolicyInputs().inputs(policiesToRemove));
     }
     String serializedResponse =
         mockMvc
@@ -568,7 +547,7 @@ public class MockMvcUtils {
             .andReturn()
             .getResponse()
             .getContentAsString();
-    return objectMapper.readValue(serializedResponse, ApiTpsPaoUpdateResult.class);
+    return objectMapper.readValue(serializedResponse, ApiWsmPolicyUpdateResult.class);
   }
 
   public void deletePolicies(AuthenticatedUserRequest userRequest, UUID workspaceId)
@@ -603,7 +582,7 @@ public class MockMvcUtils {
   public ApiCreatedControlledGcpAiNotebookInstanceResult createAiNotebookInstance(
       AuthenticatedUserRequest userRequest, UUID workspaceId, @Nullable String location)
       throws Exception {
-    ApiCreateControlledGcpAiNotebookInstanceRequestBody notebookCreationRequest =
+    ApiCreateControlledGcpAiNotebookInstanceRequestBody request =
         new ApiCreateControlledGcpAiNotebookInstanceRequestBody()
             .common(
                 makeDefaultControlledResourceFieldsApi()
@@ -615,26 +594,16 @@ public class MockMvcUtils {
                     .location(location)
                     .instanceId(TestUtils.appendRandomNumber("instance-id")));
 
-    String serializedGetResponse =
-        mockMvc
-            .perform(
-                addAuth(
-                    post(String.format(
-                            CONTROLLED_GCP_AI_NOTEBOOKS_V1_PATH_FORMAT, workspaceId.toString()))
-                        .contentType(MediaType.APPLICATION_JSON_VALUE)
-                        .accept(MediaType.APPLICATION_JSON)
-                        .characterEncoding("UTF-8")
-                        .content(objectMapper.writeValueAsString(notebookCreationRequest)),
-                    userRequest))
-            .andExpect(status().is(HttpStatus.SC_ACCEPTED))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-
+    String serializedResponse =
+        getSerializedResponseForPost(
+            userRequest,
+            CONTROLLED_GCP_AI_NOTEBOOKS_V1_PATH_FORMAT,
+            workspaceId,
+            objectMapper.writeValueAsString(request));
     ApiCreatedControlledGcpAiNotebookInstanceResult result =
         objectMapper.readValue(
-            serializedGetResponse, ApiCreatedControlledGcpAiNotebookInstanceResult.class);
-    UUID jobId = UUID.fromString(result.getJobReport().getId());
+            serializedResponse, ApiCreatedControlledGcpAiNotebookInstanceResult.class);
+    String jobId = result.getJobReport().getId();
     while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
       Thread.sleep(/*millis=*/ 5000);
       result = getAiNotebookInstanceResult(userRequest, workspaceId, jobId);
@@ -645,20 +614,10 @@ public class MockMvcUtils {
   }
 
   private ApiCreatedControlledGcpAiNotebookInstanceResult getAiNotebookInstanceResult(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID jobId) throws Exception {
+      AuthenticatedUserRequest userRequest, UUID workspaceId, String jobId) throws Exception {
     String serializedResponse =
-        mockMvc
-            .perform(
-                addJsonContentType(
-                    addAuth(
-                        get(
-                            CONTROLLED_GCP_AI_NOTEBOOKS_V1_RESULT_PATH_FORMAT.formatted(
-                                workspaceId.toString(), jobId.toString())),
-                        userRequest)))
-            .andExpect(status().is2xxSuccessful())
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
+        getSerializedResponseForGetJobResult(
+            userRequest, CONTROLLED_GCP_AI_NOTEBOOKS_V1_RESULT_PATH_FORMAT, workspaceId, jobId);
     return objectMapper.readValue(
         serializedResponse, ApiCreatedControlledGcpAiNotebookInstanceResult.class);
   }
@@ -700,25 +659,63 @@ public class MockMvcUtils {
             .common(makeDefaultControlledResourceFieldsApi().name(resourceName))
             .dataset(creationParameters);
 
-    String serializedGetResponse =
-        mockMvc
-            .perform(
-                addAuth(
-                    post(String.format(
-                            CONTROLLED_GCP_BIG_QUERY_DATASETS_V1_PATH_FORMAT,
-                            workspaceId.toString()))
-                        .contentType(MediaType.APPLICATION_JSON_VALUE)
-                        .accept(MediaType.APPLICATION_JSON)
-                        .characterEncoding("UTF-8")
-                        .content(objectMapper.writeValueAsString(request)),
-                    userRequest))
-            .andExpect(status().is(HttpStatus.SC_OK))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
+    String serializedResponse =
+        getSerializedResponseForPost(
+            userRequest,
+            CONTROLLED_GCP_BIG_QUERY_DATASETS_V1_PATH_FORMAT,
+            workspaceId,
+            objectMapper.writeValueAsString(request));
+    return objectMapper.readValue(serializedResponse, ApiCreatedControlledGcpBigQueryDataset.class);
+  }
 
-    return objectMapper.readValue(
-        serializedGetResponse, ApiCreatedControlledGcpBigQueryDataset.class);
+  public void deleteBqDataset(
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      UUID resourceId,
+      StewardshipType stewardshipType)
+      throws Exception {
+    deleteResource(
+        userRequest,
+        workspaceId,
+        resourceId,
+        StewardshipType.CONTROLLED.equals(stewardshipType)
+            ? CONTROLLED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT
+            : REFERENCED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT);
+  }
+
+  public void deleteBqDataTable(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
+    deleteResource(
+        userRequest, workspaceId, resourceId, REFERENCED_GCP_BIG_QUERY_DATA_TABLE_V1_PATH_FORMAT);
+  }
+
+  public void deleteReferencedGcsBucket(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
+    deleteResource(userRequest, workspaceId, resourceId, REFERENCED_GCP_GCS_BUCKET_V1_PATH_FORMAT);
+  }
+
+  public void deleteGcsObject(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
+    deleteResource(userRequest, workspaceId, resourceId, REFERENCED_GCP_GCS_OBJECT_V1_PATH_FORMAT);
+  }
+
+  public void deleteDataRepoSnapshot(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
+    deleteResource(
+        userRequest, workspaceId, resourceId, REFERENCED_DATA_REPO_SNAPSHOT_V1_PATH_FORMAT);
+  }
+
+  public void deleteGitRepo(AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId)
+      throws Exception {
+    deleteResource(userRequest, workspaceId, resourceId, REFERENCED_GIT_REPO_V1_PATH_FORMAT);
+  }
+
+  private void deleteResource(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId, String path)
+      throws Exception {
+    mockMvc
+        .perform(addAuth(delete(String.format(path, workspaceId, resourceId)), userRequest))
+        .andExpect(status().is(HttpStatus.SC_NO_CONTENT));
   }
 
   public ApiGcpBigQueryDatasetResource getControlledBqDataset(
@@ -730,18 +727,9 @@ public class MockMvcUtils {
   private ApiGcpBigQueryDatasetResource getBqDataset(
       AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId, String path)
       throws Exception {
-    String serializedGetResponse =
-        mockMvc
-            .perform(
-                addAuth(
-                    get(String.format(path, workspaceId.toString(), resourceId.toString())),
-                    userRequest))
-            .andExpect(status().is(HttpStatus.SC_OK))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-
-    return objectMapper.readValue(serializedGetResponse, ApiGcpBigQueryDatasetResource.class);
+    String serializedResponse =
+        getSerializedResponseForGet(userRequest, path, workspaceId, resourceId);
+    return objectMapper.readValue(serializedResponse, ApiGcpBigQueryDatasetResource.class);
   }
 
   public ApiGcpBigQueryDatasetResource cloneControlledBqDataset(
@@ -789,7 +777,7 @@ public class MockMvcUtils {
             // to avoid flakes.
             JOB_SUCCESS_CODES,
             /*shouldUndo=*/ false);
-    UUID jobId = UUID.fromString(result.getJobReport().getId());
+    String jobId = result.getJobReport().getId();
     while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
       Thread.sleep(/*millis=*/ 5000);
       result = getCloneControlledBqDatasetResult(userRequest, sourceWorkspaceId, jobId);
@@ -824,10 +812,7 @@ public class MockMvcUtils {
             List.of(HttpStatus.SC_ACCEPTED),
             /*shouldUndo=*/ false);
     return cloneControlledBqDataset_waitForJobError(
-        userRequest,
-        sourceWorkspaceId,
-        UUID.fromString(result.getJobReport().getId()),
-        expectedCode);
+        userRequest, sourceWorkspaceId, result.getJobReport().getId(), expectedCode);
   }
 
   public void cloneControlledBqDataset_undo(
@@ -853,7 +838,7 @@ public class MockMvcUtils {
     cloneControlledBqDataset_waitForJobError(
         userRequest,
         sourceWorkspaceId,
-        UUID.fromString(result.getJobReport().getId()),
+        result.getJobReport().getId(),
         HttpStatus.SC_INTERNAL_SERVER_ERROR);
   }
 
@@ -927,7 +912,7 @@ public class MockMvcUtils {
   }
 
   private ApiErrorReport cloneControlledBqDataset_waitForJobError(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID jobId, int expectedCode)
+      AuthenticatedUserRequest userRequest, UUID workspaceId, String jobId, int expectedCode)
       throws Exception {
     // While job is running, cloneBigQueryDataset returns ApiCloneControlledGcpBigQueryDatasetResult
     // After job fails, cloneBigQueryData returns ApiCloneControlledGcpBigQueryDatasetResult OR
@@ -938,7 +923,11 @@ public class MockMvcUtils {
     while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
       Thread.sleep(/*millis=*/ 3000);
       String serializedResponse =
-          getCloneControlledBqDatasetResult_serializedResponse(userRequest, workspaceId, jobId);
+          getSerializedResponseForGetJobResult_error(
+              userRequest,
+              CLONE_RESULT_CONTROLLED_GCP_BIG_QUERY_DATASET_FORMAT,
+              workspaceId,
+              jobId);
       try {
         result =
             objectMapper.readValue(
@@ -955,26 +944,12 @@ public class MockMvcUtils {
   }
 
   private ApiCloneControlledGcpBigQueryDatasetResult getCloneControlledBqDatasetResult(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID jobId) throws Exception {
+      AuthenticatedUserRequest userRequest, UUID workspaceId, String jobId) throws Exception {
     String serializedResponse =
-        getCloneControlledBqDatasetResult_serializedResponse(userRequest, workspaceId, jobId);
+        getSerializedResponseForGetJobResult(
+            userRequest, CLONE_RESULT_CONTROLLED_GCP_BIG_QUERY_DATASET_FORMAT, workspaceId, jobId);
     return objectMapper.readValue(
         serializedResponse, ApiCloneControlledGcpBigQueryDatasetResult.class);
-  }
-
-  private String getCloneControlledBqDatasetResult_serializedResponse(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID jobId) throws Exception {
-    return mockMvc
-        .perform(
-            addJsonContentType(
-                addAuth(
-                    get(
-                        CLONE_RESULT_CONTROLLED_GCP_BIG_QUERY_DATASET_FORMAT.formatted(
-                            workspaceId.toString(), jobId.toString())),
-                    userRequest)))
-        .andReturn()
-        .getResponse()
-        .getContentAsString();
   }
 
   public ApiCreatedControlledGcpGcsBucket createControlledGcsBucket(
@@ -986,7 +961,7 @@ public class MockMvcUtils {
       ApiGcpGcsBucketDefaultStorageClass storageClass,
       ApiGcpGcsBucketLifecycle lifecycle)
       throws Exception {
-    ApiCreateControlledGcpGcsBucketRequestBody gcsBucketCreationRequest =
+    ApiCreateControlledGcpGcsBucketRequestBody request =
         new ApiCreateControlledGcpGcsBucketRequestBody()
             .common(makeDefaultControlledResourceFieldsApi().name(resourceName))
             .gcsBucket(
@@ -996,42 +971,20 @@ public class MockMvcUtils {
                     .defaultStorageClass(storageClass)
                     .lifecycle(lifecycle));
 
-    String serializedGetResponse =
-        mockMvc
-            .perform(
-                addAuth(
-                    post(String.format(
-                            CONTROLLED_GCP_GCS_BUCKETS_V1_PATH_FORMAT, workspaceId.toString()))
-                        .contentType(MediaType.APPLICATION_JSON_VALUE)
-                        .accept(MediaType.APPLICATION_JSON)
-                        .characterEncoding("UTF-8")
-                        .content(objectMapper.writeValueAsString(gcsBucketCreationRequest)),
-                    userRequest))
-            .andExpect(status().is(HttpStatus.SC_OK))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-
-    return objectMapper.readValue(serializedGetResponse, ApiCreatedControlledGcpGcsBucket.class);
+    String serializedResponse =
+        getSerializedResponseForPost(
+            userRequest,
+            CONTROLLED_GCP_GCS_BUCKETS_V1_PATH_FORMAT,
+            workspaceId,
+            objectMapper.writeValueAsString(request));
+    return objectMapper.readValue(serializedResponse, ApiCreatedControlledGcpGcsBucket.class);
   }
 
   public ApiGcpGcsBucketResource getControlledGcsBucket(
       AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
     String serializedGetResponse =
-        mockMvc
-            .perform(
-                addAuth(
-                    get(
-                        String.format(
-                            CONTROLLED_GCP_GCS_BUCKET_V1_PATH_FORMAT,
-                            workspaceId.toString(),
-                            resourceId.toString())),
-                    userRequest))
-            .andExpect(status().is(HttpStatus.SC_OK))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-
+        getSerializedResponseForGet(
+            userRequest, CONTROLLED_GCP_GCS_BUCKET_V1_PATH_FORMAT, workspaceId, resourceId);
     return objectMapper.readValue(serializedGetResponse, ApiGcpGcsBucketResource.class);
   }
 
@@ -1060,7 +1013,7 @@ public class MockMvcUtils {
             // to avoid flakes.
             JOB_SUCCESS_CODES,
             /*shouldUndo=*/ false);
-    UUID jobId = UUID.fromString(result.getJobReport().getId());
+    String jobId = result.getJobReport().getId();
     while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
       Thread.sleep(/*millis=*/ 5000);
       result = getCloneControlledGcsBucketResult(userRequest, sourceWorkspaceId, jobId);
@@ -1096,10 +1049,7 @@ public class MockMvcUtils {
             JOB_SUCCESS_CODES,
             /*shouldUndo=*/ false);
     return cloneControlledGcsBucket_waitForJobError(
-        userRequest,
-        sourceWorkspaceId,
-        UUID.fromString(result.getJobReport().getId()),
-        expectedCode);
+        userRequest, sourceWorkspaceId, result.getJobReport().getId(), expectedCode);
   }
 
   public void cloneControlledGcsBucket_undo(
@@ -1127,7 +1077,7 @@ public class MockMvcUtils {
     cloneControlledBqDataset_waitForJobError(
         userRequest,
         sourceWorkspaceId,
-        UUID.fromString(result.getJobReport().getId()),
+        result.getJobReport().getId(),
         HttpStatus.SC_INTERNAL_SERVER_ERROR);
   }
 
@@ -1207,7 +1157,7 @@ public class MockMvcUtils {
   }
 
   private ApiErrorReport cloneControlledGcsBucket_waitForJobError(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID jobId, int expectedCode)
+      AuthenticatedUserRequest userRequest, UUID workspaceId, String jobId, int expectedCode)
       throws Exception {
     // While job is running, cloneGcsBucket returns ApiCloneControlledGcpGcsBucketResult
     // After job fails, cloneGcsBucket returns ApiCloneControlledGcpGcsBucketResult OR
@@ -1218,7 +1168,8 @@ public class MockMvcUtils {
     while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
       Thread.sleep(/*millis=*/ 3000);
       String serializedResponse =
-          getCloneControlledGcsBucketResult_serializedResponse(userRequest, workspaceId, jobId);
+          getSerializedResponseForGetJobResult_error(
+              userRequest, CLONE_RESULT_CONTROLLED_GCP_GCS_BUCKET_FORMAT, workspaceId, jobId);
       try {
         result =
             objectMapper.readValue(serializedResponse, ApiCloneControlledGcpGcsBucketResult.class);
@@ -1234,10 +1185,95 @@ public class MockMvcUtils {
   }
 
   private ApiCloneControlledGcpGcsBucketResult getCloneControlledGcsBucketResult(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID jobId) throws Exception {
+      AuthenticatedUserRequest userRequest, UUID workspaceId, String jobId) throws Exception {
     String serializedResponse =
-        getCloneControlledGcsBucketResult_serializedResponse(userRequest, workspaceId, jobId);
+        getSerializedResponseForGetJobResult(
+            userRequest, CLONE_RESULT_CONTROLLED_GCP_GCS_BUCKET_FORMAT, workspaceId, jobId);
     return objectMapper.readValue(serializedResponse, ApiCloneControlledGcpGcsBucketResult.class);
+  }
+
+  public ApiDataRepoSnapshotResource createReferencedDataRepoSnapshot(
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      ApiCloningInstructionsEnum cloningInstructions,
+      String resourceName,
+      String instanceName,
+      String snapshot)
+      throws Exception {
+    ApiDataRepoSnapshotAttributes creationParameters =
+        new ApiDataRepoSnapshotAttributes().instanceName(instanceName).snapshot(snapshot);
+    ApiCreateDataRepoSnapshotReferenceRequestBody request =
+        new ApiCreateDataRepoSnapshotReferenceRequestBody()
+            .metadata(
+                makeDefaultReferencedResourceFieldsApi()
+                    .name(resourceName)
+                    .cloningInstructions(cloningInstructions))
+            .snapshot(creationParameters);
+    String serializedResponse =
+        getSerializedResponseForPost(
+            userRequest,
+            REFERENCED_DATA_REPO_SNAPSHOTS_V1_PATH_FORMAT,
+            workspaceId,
+            objectMapper.writeValueAsString(request));
+    return objectMapper.readValue(serializedResponse, ApiDataRepoSnapshotResource.class);
+  }
+
+  public ApiDataRepoSnapshotResource getReferencedDataRepoSnapshot(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
+    String serializedResponse =
+        getSerializedResponseForGet(
+            userRequest, REFERENCED_DATA_REPO_SNAPSHOT_V1_PATH_FORMAT, workspaceId, resourceId);
+    return objectMapper.readValue(serializedResponse, ApiDataRepoSnapshotResource.class);
+  }
+
+  public ApiDataRepoSnapshotResource cloneReferencedDataRepoSnapshot(
+      AuthenticatedUserRequest userRequest,
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId,
+      UUID destWorkspaceId,
+      ApiCloningInstructionsEnum cloningInstructions,
+      @Nullable String destResourceName)
+      throws Exception {
+    return cloneReferencedDataRepoSnapshot(
+        userRequest,
+        sourceWorkspaceId,
+        sourceResourceId,
+        destWorkspaceId,
+        cloningInstructions,
+        destResourceName,
+        HttpStatus.SC_OK);
+  }
+
+  public ApiDataRepoSnapshotResource cloneReferencedDataRepoSnapshot(
+      AuthenticatedUserRequest userRequest,
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId,
+      UUID destWorkspaceId,
+      ApiCloningInstructionsEnum cloningInstructions,
+      @Nullable String destResourceName,
+      int expectedCode)
+      throws Exception {
+    MockHttpServletResponse response =
+        cloneReferencedResource(
+            userRequest,
+            CLONE_REFERENCED_DATA_REPO_SNAPSHOT_V1_PATH_FORMAT,
+            sourceWorkspaceId,
+            sourceResourceId,
+            destWorkspaceId,
+            cloningInstructions,
+            destResourceName,
+            expectedCode);
+
+    // If an exception was thrown, deserialization won't work, so don't attempt it.
+    int actualCode = response.getStatus();
+    if (actualCode >= 300) {
+      return null;
+    }
+
+    String serializedResponse = response.getContentAsString();
+    return objectMapper
+        .readValue(serializedResponse, ApiCloneReferencedGcpDataRepoSnapshotResourceResult.class)
+        .getResource();
   }
 
   public ApiGcpBigQueryDatasetResource createReferencedBqDataset(
@@ -1253,25 +1289,13 @@ public class MockMvcUtils {
         new ApiCreateGcpBigQueryDatasetReferenceRequestBody()
             .metadata(makeDefaultReferencedResourceFieldsApi().name(resourceName))
             .dataset(creationParameters);
-
-    String serializedGetResponse =
-        mockMvc
-            .perform(
-                addAuth(
-                    post(String.format(
-                            REFERENCED_GCP_BIG_QUERY_DATASETS_V1_PATH_FORMAT,
-                            workspaceId.toString()))
-                        .contentType(MediaType.APPLICATION_JSON_VALUE)
-                        .accept(MediaType.APPLICATION_JSON)
-                        .characterEncoding("UTF-8")
-                        .content(objectMapper.writeValueAsString(request)),
-                    userRequest))
-            .andExpect(status().is(HttpStatus.SC_OK))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-
-    return objectMapper.readValue(serializedGetResponse, ApiGcpBigQueryDatasetResource.class);
+    String serializedResponse =
+        getSerializedResponseForPost(
+            userRequest,
+            REFERENCED_GCP_BIG_QUERY_DATASETS_V1_PATH_FORMAT,
+            workspaceId,
+            objectMapper.writeValueAsString(request));
+    return objectMapper.readValue(serializedResponse, ApiGcpBigQueryDatasetResource.class);
   }
 
   public ApiGcpBigQueryDatasetResource getReferencedBqDataset(
@@ -1307,26 +1331,16 @@ public class MockMvcUtils {
       @Nullable String destResourceName,
       int expectedCode)
       throws Exception {
-    ApiCloneReferencedResourceRequestBody request =
-        new ApiCloneReferencedResourceRequestBody()
-            .destinationWorkspaceId(destWorkspaceId)
-            .cloningInstructions(cloningInstructions);
-    if (!StringUtils.isEmpty(destResourceName)) {
-      request.name(destResourceName);
-    }
-
     MockHttpServletResponse response =
-        mockMvc
-            .perform(
-                addJsonContentType(
-                    addAuth(
-                        post(CLONE_REFERENCED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT.formatted(
-                                sourceWorkspaceId, sourceResourceId))
-                            .content(objectMapper.writeValueAsString(request)),
-                        userRequest)))
-            .andExpect(status().is(expectedCode))
-            .andReturn()
-            .getResponse();
+        cloneReferencedResource(
+            userRequest,
+            CLONE_REFERENCED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT,
+            sourceWorkspaceId,
+            sourceResourceId,
+            destWorkspaceId,
+            cloningInstructions,
+            destResourceName,
+            expectedCode);
 
     // If an exception was thrown, deserialization won't work, so don't attempt it.
     int actualCode = response.getStatus();
@@ -1340,142 +1354,436 @@ public class MockMvcUtils {
         .getResource();
   }
 
-  private String getCloneControlledGcsBucketResult_serializedResponse(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID jobId) throws Exception {
-    return mockMvc
-        .perform(
-            addJsonContentType(
-                addAuth(
-                    get(
-                        CLONE_RESULT_CONTROLLED_GCP_GCS_BUCKET_FORMAT.formatted(
-                            workspaceId.toString(), jobId.toString())),
-                    userRequest)))
-        .andReturn()
-        .getResponse()
-        .getContentAsString();
+  public ApiGcpBigQueryDataTableResource createReferencedBqTable(
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      String resourceName,
+      String projectId,
+      String datasetName,
+      String tableId)
+      throws Exception {
+    ApiGcpBigQueryDataTableAttributes creationParameters =
+        new ApiGcpBigQueryDataTableAttributes()
+            .projectId(projectId)
+            .datasetId(datasetName)
+            .dataTableId(tableId);
+    ApiCreateGcpBigQueryDataTableReferenceRequestBody request =
+        new ApiCreateGcpBigQueryDataTableReferenceRequestBody()
+            .metadata(makeDefaultReferencedResourceFieldsApi().name(resourceName))
+            .dataTable(creationParameters);
+    String serializedResponse =
+        getSerializedResponseForPost(
+            userRequest,
+            REFERENCED_GCP_BIG_QUERY_DATA_TABLES_V1_PATH_FORMAT,
+            workspaceId,
+            objectMapper.writeValueAsString(request));
+    return objectMapper.readValue(serializedResponse, ApiGcpBigQueryDataTableResource.class);
+  }
+
+  public ApiGcpBigQueryDataTableResource getReferencedBqTable(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
+    String serializedResponse =
+        getSerializedResponseForGet(
+            userRequest,
+            REFERENCED_GCP_BIG_QUERY_DATA_TABLE_V1_PATH_FORMAT,
+            workspaceId,
+            resourceId);
+    return objectMapper.readValue(serializedResponse, ApiGcpBigQueryDataTableResource.class);
+  }
+
+  public ApiGcpBigQueryDataTableResource cloneReferencedBqTable(
+      AuthenticatedUserRequest userRequest,
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId,
+      UUID destWorkspaceId,
+      ApiCloningInstructionsEnum cloningInstructions,
+      @Nullable String destResourceName)
+      throws Exception {
+    return cloneReferencedBqTable(
+        userRequest,
+        sourceWorkspaceId,
+        sourceResourceId,
+        destWorkspaceId,
+        cloningInstructions,
+        destResourceName,
+        HttpStatus.SC_OK);
+  }
+
+  public ApiGcpBigQueryDataTableResource cloneReferencedBqTable(
+      AuthenticatedUserRequest userRequest,
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId,
+      UUID destWorkspaceId,
+      ApiCloningInstructionsEnum cloningInstructions,
+      @Nullable String destResourceName,
+      int expectedCode)
+      throws Exception {
+    MockHttpServletResponse response =
+        cloneReferencedResource(
+            userRequest,
+            CLONE_REFERENCED_GCP_BIG_QUERY_DATA_TABLE_V1_PATH_FORMAT,
+            sourceWorkspaceId,
+            sourceResourceId,
+            destWorkspaceId,
+            cloningInstructions,
+            destResourceName,
+            expectedCode);
+
+    // If an exception was thrown, deserialization won't work, so don't attempt it.
+    int actualCode = response.getStatus();
+    if (actualCode >= 300) {
+      return null;
+    }
+
+    String serializedResponse = response.getContentAsString();
+    return objectMapper
+        .readValue(serializedResponse, ApiCloneReferencedGcpBigQueryDataTableResourceResult.class)
+        .getResource();
+  }
+
+  public ApiGcpGcsBucketResource createReferencedGcsBucket(
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      String resourceName,
+      String bucketName)
+      throws Exception {
+    ApiGcpGcsBucketAttributes creationParameters =
+        new ApiGcpGcsBucketAttributes().bucketName(bucketName);
+    ApiCreateGcpGcsBucketReferenceRequestBody request =
+        new ApiCreateGcpGcsBucketReferenceRequestBody()
+            .metadata(makeDefaultReferencedResourceFieldsApi().name(resourceName))
+            .bucket(creationParameters);
+    String serializedResponse =
+        getSerializedResponseForPost(
+            userRequest,
+            REFERENCED_GCP_GCS_BUCKETS_V1_PATH_FORMAT,
+            workspaceId,
+            objectMapper.writeValueAsString(request));
+    return objectMapper.readValue(serializedResponse, ApiGcpGcsBucketResource.class);
   }
 
   public ApiGcpGcsBucketResource getReferencedGcsBucket(
       AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
     String serializedResponse =
-        mockMvc
-            .perform(
-                addJsonContentType(
-                    addAuth(
-                        get(
-                            GET_REFERENCED_GCP_GCS_BUCKET_FORMAT.formatted(
-                                workspaceId.toString(), resourceId.toString())),
-                        userRequest)))
-            .andExpect(status().is(HttpStatus.SC_OK))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
+        getSerializedResponseForGet(
+            userRequest, REFERENCED_GCP_GCS_BUCKET_V1_PATH_FORMAT, workspaceId, resourceId);
     return objectMapper.readValue(serializedResponse, ApiGcpGcsBucketResource.class);
   }
 
-  public ApiDataRepoSnapshotResource createDataRepoSnapshotReference(
-      AuthenticatedUserRequest userRequest, UUID workspaceId) throws Exception {
-
-    var datarepoSnapshotRequest =
-        new ApiCreateDataRepoSnapshotReferenceRequestBody()
-            .metadata(
-                new ApiReferenceResourceCommonFields()
-                    .cloningInstructions(ApiCloningInstructionsEnum.REFERENCE)
-                    .description("description")
-                    .name(RandomStringUtils.randomAlphabetic(10)))
-            .snapshot(
-                new ApiDataRepoSnapshotAttributes().instanceName("terra").snapshot("polaroid"));
-
-    return createDataRepoSnapshotReference(userRequest, workspaceId, datarepoSnapshotRequest);
+  public ApiGcpGcsBucketResource cloneReferencedGcsBucket(
+      AuthenticatedUserRequest userRequest,
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId,
+      UUID destWorkspaceId,
+      ApiCloningInstructionsEnum cloningInstructions,
+      @Nullable String destResourceName)
+      throws Exception {
+    return cloneReferencedGcsBucket(
+        userRequest,
+        sourceWorkspaceId,
+        sourceResourceId,
+        destWorkspaceId,
+        cloningInstructions,
+        destResourceName,
+        HttpStatus.SC_OK);
   }
 
-  public ApiDataRepoSnapshotResource createDataRepoSnapshotReference(
+  public ApiGcpGcsBucketResource cloneReferencedGcsBucket(
+      AuthenticatedUserRequest userRequest,
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId,
+      UUID destWorkspaceId,
+      ApiCloningInstructionsEnum cloningInstructions,
+      @Nullable String destResourceName,
+      int expectedCode)
+      throws Exception {
+    MockHttpServletResponse response =
+        cloneReferencedResource(
+            userRequest,
+            CLONE_REFERENCED_GCP_GCS_BUCKET_V1_PATH_FORMAT,
+            sourceWorkspaceId,
+            sourceResourceId,
+            destWorkspaceId,
+            cloningInstructions,
+            destResourceName,
+            expectedCode);
+
+    // If an exception was thrown, deserialization won't work, so don't attempt it.
+    int actualCode = response.getStatus();
+    if (actualCode >= 300) {
+      return null;
+    }
+
+    String serializedResponse = response.getContentAsString();
+    return objectMapper
+        .readValue(serializedResponse, ApiCloneReferencedGcpGcsBucketResourceResult.class)
+        .getResource();
+  }
+
+  public ApiGcpGcsObjectResource createReferencedGcsObject(
       AuthenticatedUserRequest userRequest,
       UUID workspaceId,
-      ApiCreateDataRepoSnapshotReferenceRequestBody datarepoSnapshotRequest)
+      String resourceName,
+      String bucketName,
+      String fileName)
       throws Exception {
+    ApiGcpGcsObjectAttributes creationParameters =
+        new ApiGcpGcsObjectAttributes().bucketName(bucketName).fileName(fileName);
+    ApiCreateGcpGcsObjectReferenceRequestBody request =
+        new ApiCreateGcpGcsObjectReferenceRequestBody()
+            .metadata(makeDefaultReferencedResourceFieldsApi().name(resourceName))
+            .file(creationParameters);
+    String serializedResponse =
+        getSerializedResponseForPost(
+            userRequest,
+            REFERENCED_GCP_GCS_OBJECTS_V1_PATH_FORMAT,
+            workspaceId,
+            objectMapper.writeValueAsString(request));
+    return objectMapper.readValue(serializedResponse, ApiGcpGcsObjectResource.class);
+  }
 
-    String serializedGetResponse =
-        mockMvc
-            .perform(
+  public ApiGcpGcsObjectResource getReferencedGcsObject(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
+    String serializedResponse =
+        getSerializedResponseForGet(
+            userRequest, REFERENCED_GCP_GCS_OBJECT_V1_PATH_FORMAT, workspaceId, resourceId);
+    return objectMapper.readValue(serializedResponse, ApiGcpGcsObjectResource.class);
+  }
+
+  public ApiGcpGcsObjectResource cloneReferencedGcsObject(
+      AuthenticatedUserRequest userRequest,
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId,
+      UUID destWorkspaceId,
+      ApiCloningInstructionsEnum cloningInstructions,
+      @Nullable String destResourceName)
+      throws Exception {
+    return cloneReferencedGcsObject(
+        userRequest,
+        sourceWorkspaceId,
+        sourceResourceId,
+        destWorkspaceId,
+        cloningInstructions,
+        destResourceName,
+        HttpStatus.SC_OK);
+  }
+
+  public ApiGcpGcsObjectResource cloneReferencedGcsObject(
+      AuthenticatedUserRequest userRequest,
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId,
+      UUID destWorkspaceId,
+      ApiCloningInstructionsEnum cloningInstructions,
+      @Nullable String destResourceName,
+      int expectedCode)
+      throws Exception {
+    MockHttpServletResponse response =
+        cloneReferencedResource(
+            userRequest,
+            CLONE_REFERENCED_GCP_GCS_OBJECT_V1_PATH_FORMAT,
+            sourceWorkspaceId,
+            sourceResourceId,
+            destWorkspaceId,
+            cloningInstructions,
+            destResourceName,
+            expectedCode);
+
+    // If an exception was thrown, deserialization won't work, so don't attempt it.
+    int actualCode = response.getStatus();
+    if (actualCode >= 300) {
+      return null;
+    }
+
+    String serializedResponse = response.getContentAsString();
+    return objectMapper
+        .readValue(serializedResponse, ApiCloneReferencedGcpGcsObjectResourceResult.class)
+        .getResource();
+  }
+
+  public ApiGitRepoResource createReferencedGitRepo(
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      String resourceName,
+      String gitRepoUrl)
+      throws Exception {
+    ApiGitRepoAttributes creationParameters = new ApiGitRepoAttributes().gitRepoUrl(gitRepoUrl);
+    ApiCreateGitRepoReferenceRequestBody request =
+        new ApiCreateGitRepoReferenceRequestBody()
+            .metadata(makeDefaultReferencedResourceFieldsApi().name(resourceName))
+            .gitrepo(creationParameters);
+    String serializedResponse =
+        getSerializedResponseForPost(
+            userRequest,
+            REFERENCED_GIT_REPOS_V1_PATH_FORMAT,
+            workspaceId,
+            objectMapper.writeValueAsString(request));
+    return objectMapper.readValue(serializedResponse, ApiGitRepoResource.class);
+  }
+
+  public ApiGitRepoResource getReferencedGitRepo(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
+    String serializedResponse =
+        getSerializedResponseForGet(
+            userRequest, REFERENCED_GIT_REPO_V1_PATH_FORMAT, workspaceId, resourceId);
+    return objectMapper.readValue(serializedResponse, ApiGitRepoResource.class);
+  }
+
+  public ApiGitRepoResource cloneReferencedGitRepo(
+      AuthenticatedUserRequest userRequest,
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId,
+      UUID destWorkspaceId,
+      ApiCloningInstructionsEnum cloningInstructions,
+      @Nullable String destResourceName)
+      throws Exception {
+    return cloneReferencedGitRepo(
+        userRequest,
+        sourceWorkspaceId,
+        sourceResourceId,
+        destWorkspaceId,
+        cloningInstructions,
+        destResourceName,
+        HttpStatus.SC_OK);
+  }
+
+  public ApiGitRepoResource cloneReferencedGitRepo(
+      AuthenticatedUserRequest userRequest,
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId,
+      UUID destWorkspaceId,
+      ApiCloningInstructionsEnum cloningInstructions,
+      @Nullable String destResourceName,
+      int expectedCode)
+      throws Exception {
+    MockHttpServletResponse response =
+        cloneReferencedResource(
+            userRequest,
+            CLONE_REFERENCED_GIT_REPO_V1_PATH_FORMAT,
+            sourceWorkspaceId,
+            sourceResourceId,
+            destWorkspaceId,
+            cloningInstructions,
+            destResourceName,
+            expectedCode);
+
+    // If an exception was thrown, deserialization won't work, so don't attempt it.
+    int actualCode = response.getStatus();
+    if (actualCode >= 300) {
+      return null;
+    }
+
+    String serializedResponse = response.getContentAsString();
+    return objectMapper
+        .readValue(serializedResponse, ApiCloneReferencedGitRepoResourceResult.class)
+        .getResource();
+  }
+
+  private MockHttpServletResponse cloneReferencedResource(
+      AuthenticatedUserRequest userRequest,
+      String path,
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId,
+      UUID destWorkspaceId,
+      ApiCloningInstructionsEnum cloningInstructions,
+      @Nullable String destResourceName,
+      int expectedCode)
+      throws Exception {
+    ApiCloneReferencedResourceRequestBody request =
+        new ApiCloneReferencedResourceRequestBody()
+            .destinationWorkspaceId(destWorkspaceId)
+            .cloningInstructions(cloningInstructions);
+    if (!StringUtils.isEmpty(destResourceName)) {
+      request.name(destResourceName);
+    }
+
+    return mockMvc
+        .perform(
+            addJsonContentType(
                 addAuth(
-                    post(String.format(
-                            REFERENCED_DATA_REPO_SNAPSHOTS_V1_PATH_FORMAT, workspaceId.toString()))
-                        .contentType(MediaType.APPLICATION_JSON_VALUE)
-                        .accept(MediaType.APPLICATION_JSON)
-                        .characterEncoding("UTF-8")
-                        .content(objectMapper.writeValueAsString(datarepoSnapshotRequest)),
-                    userRequest))
-            .andExpect(status().is2xxSuccessful())
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-
-    return objectMapper.readValue(serializedGetResponse, ApiDataRepoSnapshotResource.class);
+                    post(path.formatted(sourceWorkspaceId, sourceResourceId))
+                        .content(objectMapper.writeValueAsString(request)),
+                    userRequest)))
+        .andExpect(status().is(expectedCode))
+        .andReturn()
+        .getResponse();
   }
 
   public List<ApiResourceDescription> enumerateResources(
       AuthenticatedUserRequest userRequest, UUID workspaceId) throws Exception {
     String serializedResponse =
-        mockMvc
-            .perform(
-                addJsonContentType(
-                    addAuth(
-                        get(RESOURCES_PATH_FORMAT.formatted(workspaceId.toString())), userRequest)))
-            .andExpect(status().is(HttpStatus.SC_OK))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
+        getSerializedResponseForGet(userRequest, RESOURCES_PATH_FORMAT, workspaceId);
     return objectMapper.readValue(serializedResponse, ApiResourceList.class).getResources();
   }
 
-  public void assertResourceMetadata(
+  public static void assertControlledResourceMetadata(
+      ApiControlledResourceMetadata actualMetadata,
+      ApiAccessScope expectedAccessScope,
+      ApiManagedBy expectedManagedByType,
+      ApiPrivateResourceUser expectedPrivateResourceUser,
+      ApiPrivateResourceState expectedPrivateResourceState,
+      String region) {
+    assertEquals(expectedAccessScope, actualMetadata.getAccessScope());
+    assertEquals(expectedManagedByType, actualMetadata.getManagedBy());
+    assertEquals(expectedPrivateResourceUser, actualMetadata.getPrivateResourceUser());
+    assertEquals(expectedPrivateResourceState, actualMetadata.getPrivateResourceState());
+    assertEquals(region, actualMetadata.getRegion());
+  }
+
+  public static void assertResourceMetadata(
       ApiResourceMetadata actualMetadata,
+      ApiCloudPlatform expectedCloudPlatform,
       ApiResourceType expectedResourceType,
       ApiStewardshipType expectedStewardshipType,
       ApiCloningInstructionsEnum expectedCloningInstructions,
       UUID expectedWorkspaceId,
       String expectedResourceName,
-      ApiResourceLineage expectedResourceLineage) {
+      ApiResourceLineage expectedResourceLineage,
+      String expectedCreatedBy) {
     assertEquals(expectedWorkspaceId, actualMetadata.getWorkspaceId());
     assertEquals(expectedResourceName, actualMetadata.getName());
     assertEquals(RESOURCE_DESCRIPTION, actualMetadata.getDescription());
     assertEquals(expectedResourceType, actualMetadata.getResourceType());
     assertEquals(expectedStewardshipType, actualMetadata.getStewardshipType());
-    assertEquals(ApiCloudPlatform.GCP, actualMetadata.getCloudPlatform());
+    assertEquals(expectedCloudPlatform, actualMetadata.getCloudPlatform());
     assertEquals(expectedCloningInstructions, actualMetadata.getCloningInstructions());
     assertEquals(expectedResourceLineage, actualMetadata.getResourceLineage());
+    assertEquals(expectedCreatedBy, actualMetadata.getCreatedBy());
+    assertNotNull(actualMetadata.getCreatedDate());
 
     assertEquals(
         PropertiesUtils.convertMapToApiProperties(
             ControlledResourceFixtures.DEFAULT_RESOURCE_PROPERTIES),
         actualMetadata.getProperties());
+    // TODO (PF-2261): assert lastUpdatedBy, lastUpdatedDate.
   }
 
-  public void assertClonedResourceMetadata(
+  public static void assertClonedResourceMetadata(
       ApiResourceMetadata actualMetadata,
+      ApiCloudPlatform expectedCloudPlatform,
       ApiResourceType expectedResourceType,
       ApiStewardshipType expectedStewardshipType,
       ApiCloningInstructionsEnum expectedCloningInstructions,
       UUID expectedWorkspaceId,
       String expectedResourceName,
       UUID sourceWorkspaceId,
-      UUID sourceResourceId) {
+      UUID sourceResourceId,
+      String expectedCreatedBy) {
     ApiResourceLineage expectedResourceLineage = new ApiResourceLineage();
     expectedResourceLineage.add(
         new ApiResourceLineageEntry()
             .sourceWorkspaceId(sourceWorkspaceId)
             .sourceResourceId(sourceResourceId));
 
-    // TODO (PF-2261): assert createdBy, lastUpdatedBy, createdDate, lastUpdatedDate.
     assertResourceMetadata(
         actualMetadata,
+        expectedCloudPlatform,
         expectedResourceType,
         expectedStewardshipType,
         expectedCloningInstructions,
         expectedWorkspaceId,
         expectedResourceName,
-        expectedResourceLineage);
+        expectedResourceLineage,
+        expectedCreatedBy);
   }
 
   public void assertLatestActivityLogChangeDetails(
@@ -1531,13 +1839,13 @@ public class MockMvcUtils {
   public void grantRole(
       AuthenticatedUserRequest userRequest, UUID workspaceId, WsmIamRole role, String memberEmail)
       throws Exception {
-    var requestBody = new ApiGrantRoleRequestBody().memberEmail(memberEmail);
+    var request = new ApiGrantRoleRequestBody().memberEmail(memberEmail);
     mockMvc
         .perform(
             addJsonContentType(
                 addAuth(
                     post(String.format(GRANT_ROLE_PATH_FORMAT, workspaceId, role.name()))
-                        .content(objectMapper.writeValueAsString(requestBody)),
+                        .content(objectMapper.writeValueAsString(request)),
                     userRequest)))
         .andExpect(status().is(HttpStatus.SC_NO_CONTENT));
   }
@@ -1576,8 +1884,87 @@ public class MockMvcUtils {
     assertEquals(0, workspace.getPolicies().size());
   }
 
+  private String getSerializedResponseForGet(
+      AuthenticatedUserRequest userRequest, String path, UUID workspaceId) throws Exception {
+    return mockMvc
+        .perform(addAuth(get(path.formatted(workspaceId)), userRequest))
+        .andExpect(status().is2xxSuccessful())
+        .andReturn()
+        .getResponse()
+        .getContentAsString();
+  }
+
+  private String getSerializedResponseForGet(
+      AuthenticatedUserRequest userRequest, String path, UUID workspaceId, UUID resourceId)
+      throws Exception {
+    return mockMvc
+        .perform(addAuth(get(path.formatted(workspaceId, resourceId)), userRequest))
+        .andExpect(status().is2xxSuccessful())
+        .andReturn()
+        .getResponse()
+        .getContentAsString();
+  }
+
+  private String getSerializedResponseForGetJobResult(
+      AuthenticatedUserRequest userRequest, String path, UUID workspaceId, String jobId)
+      throws Exception {
+    return mockMvc
+        .perform(addAuth(get(path.formatted(workspaceId, jobId)), userRequest))
+        .andExpect(status().is2xxSuccessful())
+        .andReturn()
+        .getResponse()
+        .getContentAsString();
+  }
+
+  private String getSerializedResponseForGetJobResult_error(
+      AuthenticatedUserRequest userRequest, String path, UUID workspaceId, String jobId)
+      throws Exception {
+    return mockMvc
+        .perform(addAuth(get(path.formatted(workspaceId, jobId)), userRequest))
+        .andReturn()
+        .getResponse()
+        .getContentAsString();
+  }
+
+  private String getSerializedResponseForPost(
+      AuthenticatedUserRequest userRequest, String path, String request) throws Exception {
+    return mockMvc
+        .perform(
+            addAuth(
+                post(path)
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .characterEncoding("UTF-8")
+                    .content(request),
+                userRequest))
+        .andExpect(status().is2xxSuccessful())
+        .andReturn()
+        .getResponse()
+        .getContentAsString();
+  }
+
+  private String getSerializedResponseForPost(
+      AuthenticatedUserRequest userRequest, String path, UUID workspaceId, String request)
+      throws Exception {
+    return mockMvc
+        .perform(
+            addAuth(
+                post(path.formatted(workspaceId))
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .characterEncoding("UTF-8")
+                    .content(request),
+                userRequest))
+        .andExpect(status().is2xxSuccessful())
+        .andReturn()
+        .getResponse()
+        .getContentAsString();
+  }
+
   /** Posts http request and expect error thrown. */
-  public void postExpect(String request, String api, int httpStatus) throws Exception {
+  public void postExpect(
+      AuthenticatedUserRequest userRequest, String request, String api, int httpStatus)
+      throws Exception {
     mockMvc
         .perform(
             addAuth(
@@ -1586,7 +1973,7 @@ public class MockMvcUtils {
                     .accept(MediaType.APPLICATION_JSON)
                     .characterEncoding("UTF-8")
                     .content(request),
-                USER_REQUEST))
+                userRequest))
         .andExpect(status().is(httpStatus));
   }
 

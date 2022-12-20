@@ -35,6 +35,7 @@ public final class WorkspaceFlightMapKeys {
     public static final String MACHINE_TYPE = "machineType";
     public static final String ACCELERATOR_CONFIG = "acceleratorConfig";
     public static final String PREVIOUS_UPDATE_PARAMETERS = "previousUpdateParameters";
+    public static final String CREATE_RESOURCE_REGION = "createResourceRegion";
     public static final String PREVIOUS_MACHINE_TYPE = "previousMachineType";
     public static final String PREVIOUS_ACCELERATOR_CONFIG = "previousAcceleratorConfig";
 
@@ -44,7 +45,6 @@ public final class WorkspaceFlightMapKeys {
     // Notebooks keys
     public static final String CREATE_NOTEBOOK_NETWORK_NAME = "createNotebookNetworkName";
     public static final String CREATE_NOTEBOOK_PARAMETERS = "createNotebookParameters";
-    public static final String CREATE_NOTEBOOK_REGION = "createNotebookRegion";
     public static final String CREATE_NOTEBOOK_LOCATION = "createNotebookLocation";
     public static final String CREATE_NOTEBOOK_SUBNETWORK_NAME = "createNotebookSubnetworkName";
     public static final String NOTEBOOK_PET_SERVICE_ACCOUNT = "notebookPetServiceAccount";
@@ -55,7 +55,9 @@ public final class WorkspaceFlightMapKeys {
     public static final String CLONED_RESOURCE_DEFINITION = "clonedResourceDefinition";
     public static final String CLONING_INSTRUCTIONS = "cloningInstructions";
     public static final String CONTROL_PLANE_PROJECT_ID = "controlPlaneProjectId";
-    public static final String CREATE_CLOUD_CONTEXT_FLIGHT_ID = "createCloudContextFlightId";
+    public static final String CREATE_GCP_CLOUD_CONTEXT_FLIGHT_ID = "createGcpCloudContextFlightId";
+    public static final String CREATE_AZURE_CLOUD_CONTEXT_FLIGHT_ID =
+        "createAzureCloudContextFlightId";
     public static final String DESTINATION_BUCKET_NAME = "destinationBucketName";
     public static final String DESTINATION_CLONE_INPUTS = "destinationCloneInputs";
     public static final String DESTINATION_DATASET_NAME = "destinationDatasetName";
@@ -71,6 +73,7 @@ public final class WorkspaceFlightMapKeys {
     public static final String STORAGE_TRANSFER_SERVICE_SA_EMAIL = "storageTransferServiceSAEmail";
     public static final String TABLE_TO_JOB_ID_MAP = "tableToJobIdMap";
     public static final String WORKSPACE_CREATE_FLIGHT_ID = "workspaceCreateFlightId";
+    public static final String STORAGE_ACCOUNT = "storageAccount";
     public static final String STORAGE_ACCOUNT_NAME = "storageAccountName";
     public static final String DESTINATION_RESOURCE_ID = "destinationResourceId";
     public static final String DESTINATION_FOLDER_ID = "destinationFolderId";

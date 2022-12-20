@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.azure.conta
 
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
+import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
@@ -112,7 +113,11 @@ public class CloneControlledAzureStorageContainerResourceFlight extends Flight {
 
       // create the container in the cloud context
       var resourceDao = flightBeanBag.getResourceDao();
-
+      RetryRule cloudRetry = RetryRules.cloud();
+      addStep(
+          new GetSharedStorageAccountStep(
+              destinationWorkspaceId, flightBeanBag.getLandingZoneApiDispatch(), userRequest),
+          cloudRetry);
       addStep(
           new CopyAzureStorageContainerDefinitionStep(
               flightBeanBag.getSamService(),

@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.vm;
 
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_RESOURCE_REGION;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.any;
@@ -297,7 +298,7 @@ public class CreateAzureVmStepTest extends BaseAzureConnectedTest {
         .thenReturn(STUB_NETWORK_INTERFACE_NAME);
     when(mockWorkingMap.get(AzureVmHelper.WORKING_MAP_SUBNET_NAME, String.class))
         .thenReturn(STUB_SUBNET_NAME);
-    when(mockWorkingMap.get(AzureVmHelper.WORKING_MAP_NETWORK_REGION, String.class))
+    when(mockWorkingMap.get(CREATE_RESOURCE_REGION, String.class))
         .thenReturn(STUB_NETWORK_REGION_NAME);
   }
 

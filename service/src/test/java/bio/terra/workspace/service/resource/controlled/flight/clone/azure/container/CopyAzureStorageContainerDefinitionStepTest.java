@@ -12,13 +12,16 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseAzureUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -81,6 +84,7 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseAzureUnitTe
     var destResourceId = UUID.randomUUID();
     var destResourceName = "fake-dest-resource-name";
     var destContainerName = "fake-dest-storage-container-name";
+    var sharedAccountRegion = "centralus";
 
     inputParams.put(
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_ID, destResourceId);
@@ -88,6 +92,12 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseAzureUnitTe
     inputParams.put(
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_CONTAINER_NAME,
         destContainerName);
+    inputParams.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), testUser);
+    workingMap.put(
+        ControlledResourceKeys.STORAGE_ACCOUNT,
+        new ApiAzureLandingZoneDeployedResource()
+            .resourceId(UUID.randomUUID().toString())
+            .region(sharedAccountRegion));
     var sourceContainer =
         buildContainerResource(
             "fake-source-container",
@@ -120,6 +130,7 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseAzureUnitTe
     assertEquals(cloned.getStorageContainerName(), destContainerName);
     assertEquals(cloned.getName(), destResourceName);
     assertEquals(cloned.getCloningInstructions(), CloningInstructions.COPY_DEFINITION);
+    assertEquals(sharedAccountRegion, cloned.getRegion());
   }
 
   @Test

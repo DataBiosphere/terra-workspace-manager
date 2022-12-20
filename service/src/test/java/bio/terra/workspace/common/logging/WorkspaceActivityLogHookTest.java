@@ -5,6 +5,8 @@ import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.FOLDER_ID;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -26,6 +28,7 @@ import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.db.FolderDao;
+import bio.terra.workspace.db.RawDaoTestFixture;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -38,7 +41,6 @@ import bio.terra.workspace.service.workspace.flight.DeleteGcpContextFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
@@ -62,6 +64,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   @Autowired private ResourceDao resourceDao;
   @Autowired private WorkspaceActivityLogHook hook;
   @Autowired private FolderDao folderDao;
+  @Autowired private RawDaoTestFixture rawDaoTestFixture;
 
   @BeforeEach
   void setUpOnce() throws InterruptedException {
@@ -71,7 +74,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   @Test
   void createFlightSucceeds_activityLogUpdated() throws InterruptedException {
     var workspaceUuid = UUID.randomUUID();
-    var emptyChangeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    var emptyChangeDetails = activityLogDao.getLastUpdatedDetails(workspaceUuid);
     assertTrue(emptyChangeDetails.isEmpty());
 
     FlightMap inputParams = buildInputParams(workspaceUuid, OperationType.CREATE);
@@ -79,7 +82,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
         new FakeFlightContext(
             WorkspaceCreateFlight.class.getName(), inputParams, FlightStatus.SUCCESS));
     ActivityLogChangeDetails changeDetails =
-        activityLogDao.getLastUpdateDetails(workspaceUuid).get();
+        activityLogDao.getLastUpdatedDetails(workspaceUuid).get();
     assertEquals(
         changeDetails,
         new ActivityLogChangeDetails(
@@ -94,7 +97,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   @Test
   void deleteFlightSucceeds_activityLogUpdated() throws InterruptedException {
     var workspaceUuid = UUID.randomUUID();
-    var emptyChangeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    var emptyChangeDetails = activityLogDao.getLastUpdatedDetails(workspaceUuid);
     assertTrue(emptyChangeDetails.isEmpty());
 
     FlightMap inputParams = buildInputParams(workspaceUuid, OperationType.DELETE);
@@ -103,7 +106,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
             WorkspaceDeleteFlight.class.getName(), inputParams, FlightStatus.SUCCESS));
 
     ActivityLogChangeDetails changeDetails =
-        activityLogDao.getLastUpdateDetails(workspaceUuid).get();
+        activityLogDao.getLastUpdatedDetails(workspaceUuid).get();
     assertEquals(
         changeDetails,
         new ActivityLogChangeDetails(
@@ -118,7 +121,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   @Test
   void unknownFlightSucceeds_activityLogNotUpdated() {
     var workspaceUuid = UUID.randomUUID();
-    var emptyChangeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    var emptyChangeDetails = activityLogDao.getLastUpdatedDetails(workspaceUuid);
     assertTrue(emptyChangeDetails.isEmpty());
 
     FlightMap inputParams = buildInputParams(workspaceUuid, OperationType.DELETE);
@@ -128,14 +131,14 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
         () ->
             hook.endFlight(new FakeFlightContext("TestFlight", inputParams, FlightStatus.SUCCESS)));
 
-    var changeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    var changeDetails = activityLogDao.getLastUpdatedDetails(workspaceUuid);
     assertTrue(changeDetails.isEmpty());
   }
 
   @Test
   void createFlightFails_activityLogNotUpdated() throws InterruptedException {
     var workspaceUuid = UUID.randomUUID();
-    var emptyChangeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    var emptyChangeDetails = activityLogDao.getLastUpdatedDetails(workspaceUuid);
     assertTrue(emptyChangeDetails.isEmpty());
 
     FlightMap inputParams = buildInputParams(workspaceUuid, OperationType.CREATE);
@@ -144,14 +147,14 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
         new FakeFlightContext(
             WorkspaceCreateFlight.class.getName(), inputParams, FlightStatus.ERROR));
 
-    var changeDetailsAfterFailedFlight = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    var changeDetailsAfterFailedFlight = activityLogDao.getLastUpdatedDetails(workspaceUuid);
     assertTrue(changeDetailsAfterFailedFlight.isEmpty());
   }
 
   @Test
   void deleteWorkspaceFlightFails_workspaceNotExist_logChangeDetails() throws InterruptedException {
     var workspaceUuid = UUID.randomUUID();
-    var emptyChangeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    var emptyChangeDetails = activityLogDao.getLastUpdatedDetails(workspaceUuid);
     assertTrue(emptyChangeDetails.isEmpty());
 
     FlightMap inputParams = buildInputParams(workspaceUuid, OperationType.DELETE);
@@ -161,7 +164,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
 
     assertTrue(workspaceDao.getWorkspaceIfExists(workspaceUuid).isEmpty());
     ActivityLogChangeDetails changeDetailsAfterFailedFlight =
-        activityLogDao.getLastUpdateDetails(workspaceUuid).get();
+        activityLogDao.getLastUpdatedDetails(workspaceUuid).get();
     assertEquals(
         changeDetailsAfterFailedFlight,
         new ActivityLogChangeDetails(
@@ -178,7 +181,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
       throws InterruptedException {
     var workspace = WorkspaceFixtures.createDefaultMcWorkspace();
     var workspaceUuid = workspace.getWorkspaceId();
-    var emptyChangeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    var emptyChangeDetails = activityLogDao.getLastUpdatedDetails(workspaceUuid);
     assertTrue(emptyChangeDetails.isEmpty());
 
     workspaceDao.createWorkspace(buildMcWorkspace(workspaceUuid), /* applicationIds */ null);
@@ -188,7 +191,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
             WorkspaceDeleteFlight.class.getName(), inputParams, FlightStatus.ERROR));
 
     assertTrue(workspaceDao.getWorkspaceIfExists(workspaceUuid).isPresent());
-    var changeDetailsAfterFailedFlight = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    var changeDetailsAfterFailedFlight = activityLogDao.getLastUpdatedDetails(workspaceUuid);
     assertTrue(changeDetailsAfterFailedFlight.isEmpty());
   }
 
@@ -196,7 +199,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   void deleteCloudContextFlightFails_cloudContextNotExist_logChangeDetails()
       throws InterruptedException {
     var workspaceUuid = UUID.randomUUID();
-    var emptyChangeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    var emptyChangeDetails = activityLogDao.getLastUpdatedDetails(workspaceUuid);
     assertTrue(emptyChangeDetails.isEmpty());
 
     FlightMap inputParams = buildInputParams(workspaceUuid, OperationType.DELETE);
@@ -206,7 +209,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
 
     assertTrue(workspaceDao.getCloudContext(workspaceUuid, CloudPlatform.GCP).isEmpty());
     ActivityLogChangeDetails changeDetailsAfterFailedFlight =
-        activityLogDao.getLastUpdateDetails(workspaceUuid).get();
+        activityLogDao.getLastUpdatedDetails(workspaceUuid).get();
     assertEquals(
         changeDetailsAfterFailedFlight,
         new ActivityLogChangeDetails(
@@ -223,7 +226,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
       throws InterruptedException {
     var workspace = WorkspaceFixtures.createDefaultMcWorkspace();
     var workspaceUuid = workspace.getWorkspaceId();
-    var emptyChangeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    var emptyChangeDetails = activityLogDao.getLastUpdatedDetails(workspaceUuid);
     assertTrue(emptyChangeDetails.isEmpty());
 
     workspaceDao.createWorkspace(buildMcWorkspace(workspaceUuid), /* applicationIds */ null);
@@ -241,14 +244,14 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
             DeleteGcpContextFlight.class.getName(), inputParams, FlightStatus.ERROR));
 
     assertTrue(workspaceDao.getCloudContext(workspaceUuid, CloudPlatform.GCP).isPresent());
-    var changeDetailsAfterFailedFlight = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    var changeDetailsAfterFailedFlight = activityLogDao.getLastUpdatedDetails(workspaceUuid);
     assertTrue(changeDetailsAfterFailedFlight.isEmpty());
   }
 
   @Test
   void deleteResourceFlightFails_resourceNotExist_logChangeDetails() throws InterruptedException {
     var workspaceUuid = UUID.randomUUID();
-    var emptyChangeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    var emptyChangeDetails = activityLogDao.getLastUpdatedDetails(workspaceUuid);
     assertTrue(emptyChangeDetails.isEmpty());
 
     FlightMap inputParams = buildInputParams(workspaceUuid, OperationType.DELETE);
@@ -260,7 +263,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
             DeleteControlledResourcesFlight.class.getName(), inputParams, FlightStatus.ERROR));
 
     ActivityLogChangeDetails changeDetailsAfterFailedFlight =
-        activityLogDao.getLastUpdateDetails(workspaceUuid).get();
+        activityLogDao.getLastUpdatedDetails(workspaceUuid).get();
     assertEquals(
         changeDetailsAfterFailedFlight,
         new ActivityLogChangeDetails(
@@ -277,27 +280,69 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
       throws InterruptedException {
     UUID workspaceId = WorkspaceUnitTestUtils.createWorkspaceWithGcpContext(workspaceDao);
     Optional<ActivityLogChangeDetails> emptyChangeDetails =
-        activityLogDao.getLastUpdateDetails(workspaceId);
+        activityLogDao.getLastUpdatedDetails(workspaceId);
     assertTrue(emptyChangeDetails.isEmpty());
-
+    List<WsmResource> resourcesToDelete = new ArrayList<>();
+    // an AI notebook that is not "deleted" as it is put into the resource DAO.
     var resource = ControlledResourceFixtures.makeDefaultAiNotebookInstance(workspaceId).build();
     resourceDao.createControlledResource(resource);
+    resourcesToDelete.add(resource);
 
     FlightMap inputParams = buildInputParams(workspaceId, OperationType.DELETE);
-    inputParams.put(ResourceKeys.RESOURCE, resource);
+    inputParams.put(CONTROLLED_RESOURCES_TO_DELETE, resourcesToDelete);
     hook.endFlight(
         new FakeFlightContext(
-            DeleteGcpContextFlight.class.getName(), inputParams, FlightStatus.ERROR));
+            DeleteControlledResourcesFlight.class.getName(), inputParams, FlightStatus.ERROR));
 
     assertNotNull(resourceDao.getResource(workspaceId, resource.getResourceId()));
-    var changeDetailsAfterFailedFlight = activityLogDao.getLastUpdateDetails(workspaceId);
+    var changeDetailsAfterFailedFlight = activityLogDao.getLastUpdatedDetails(workspaceId);
     assertTrue(changeDetailsAfterFailedFlight.isEmpty());
+  }
+
+  @Test
+  void deleteResourceFlightFails_resourcesPartialDelete_logChangeDetails()
+      throws InterruptedException {
+    UUID workspaceId = WorkspaceUnitTestUtils.createWorkspaceWithGcpContext(workspaceDao);
+    Optional<ActivityLogChangeDetails> emptyChangeDetails =
+        activityLogDao.getLastUpdatedDetails(workspaceId);
+    assertTrue(emptyChangeDetails.isEmpty());
+    List<WsmResource> resourcesToDelete = new ArrayList<>();
+    // an AI notebook that is not "deleted" as it is put into the resource DAO.
+    var aiNotebook = ControlledResourceFixtures.makeDefaultAiNotebookInstance(workspaceId).build();
+    resourceDao.createControlledResource(aiNotebook);
+    resourcesToDelete.add(aiNotebook);
+    // a dataset that is "deleted" as it is never put into the resource DAO.
+    var dataset =
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId).build();
+    resourcesToDelete.add(dataset);
+
+    FlightMap inputParams = buildInputParams(workspaceId, OperationType.DELETE);
+    inputParams.put(CONTROLLED_RESOURCES_TO_DELETE, resourcesToDelete);
+    hook.endFlight(
+        new FakeFlightContext(
+            DeleteControlledResourcesFlight.class.getName(), inputParams, FlightStatus.ERROR));
+
+    assertNotNull(resourceDao.getResource(workspaceId, aiNotebook.getResourceId()));
+    List<ActivityLogChangeDetails> changeDetails =
+        rawDaoTestFixture.readActivityLogs(
+            workspaceId,
+            List.of(dataset.getResourceId().toString(), aiNotebook.getResourceId().toString()));
+    assertEquals(1, changeDetails.size());
+    assertEquals(
+        new ActivityLogChangeDetails(
+            changeDetails.get(0).changeDate(),
+            USER_REQUEST.getEmail(),
+            USER_REQUEST.getSubjectId(),
+            OperationType.DELETE,
+            dataset.getResourceId().toString(),
+            ActivityLogChangedTarget.RESOURCE),
+        changeDetails.get(0));
   }
 
   @Test
   void deleteFolderFlightFails_folderDeleted_activityLogUpdated() throws InterruptedException {
     UUID workspaceId = UUID.randomUUID();
-    var emptyChangeDetails = activityLogDao.getLastUpdateDetails(workspaceId);
+    var emptyChangeDetails = activityLogDao.getLastUpdatedDetails(workspaceId);
     assertTrue(emptyChangeDetails.isEmpty());
 
     Folder fooFolder =
@@ -315,7 +360,8 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     hook.endFlight(
         new FakeFlightContext(DeleteFolderFlight.class.getName(), inputParams, FlightStatus.ERROR));
 
-    ActivityLogChangeDetails changeDetails = activityLogDao.getLastUpdateDetails(workspaceId).get();
+    ActivityLogChangeDetails changeDetails =
+        activityLogDao.getLastUpdatedDetails(workspaceId).get();
     assertEquals(
         changeDetails,
         new ActivityLogChangeDetails(
@@ -331,7 +377,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   void deleteFolderFlightFails_folderNotDeleted_activityLogNotUpdated()
       throws InterruptedException {
     UUID workspaceId = WorkspaceUnitTestUtils.createWorkspaceWithGcpContext(workspaceDao);
-    var emptyChangeDetails = activityLogDao.getLastUpdateDetails(workspaceId);
+    var emptyChangeDetails = activityLogDao.getLastUpdatedDetails(workspaceId);
     assertTrue(emptyChangeDetails.isEmpty());
 
     Folder fooFolder =
@@ -351,14 +397,14 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
         new FakeFlightContext(DeleteFolderFlight.class.getName(), inputParams, FlightStatus.ERROR));
 
     Optional<ActivityLogChangeDetails> changeDetails =
-        activityLogDao.getLastUpdateDetails(workspaceId);
+        activityLogDao.getLastUpdatedDetails(workspaceId);
     assertTrue(changeDetails.isEmpty());
   }
 
   @Test
   void unknownFlightFails_activityLogNotUpdated() {
     UUID workspaceUuid = UUID.randomUUID();
-    var emptyChangeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    var emptyChangeDetails = activityLogDao.getLastUpdatedDetails(workspaceUuid);
     assertTrue(emptyChangeDetails.isEmpty());
 
     FlightMap inputParams = buildInputParams(workspaceUuid, OperationType.DELETE);
@@ -369,8 +415,52 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
             hook.endFlight(
                 new FakeFlightContext("TestDeleteFlight", inputParams, FlightStatus.ERROR)));
 
-    var changeDetailsAfterFailedFlight = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    var changeDetailsAfterFailedFlight = activityLogDao.getLastUpdatedDetails(workspaceUuid);
     assertTrue(changeDetailsAfterFailedFlight.isEmpty());
+  }
+
+  @Test
+  void resourceDeletionFlightSucceed_logUpdated() throws InterruptedException {
+    var workspaceUuid = UUID.randomUUID();
+    var emptyChangeDetails = activityLogDao.getLastUpdatedDetails(workspaceUuid);
+    assertTrue(emptyChangeDetails.isEmpty());
+
+    FlightMap inputParams = buildInputParams(workspaceUuid, OperationType.DELETE);
+    List<WsmResource> resourceToDelete = new ArrayList<>();
+    resourceToDelete.add(ControlledResourceFixtures.makeDefaultAiNotebookInstance().build());
+    resourceToDelete.add(
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid).build());
+    inputParams.put(CONTROLLED_RESOURCES_TO_DELETE, resourceToDelete);
+    hook.endFlight(
+        new FakeFlightContext(
+            DeleteControlledResourcesFlight.class.getName(), inputParams, FlightStatus.SUCCESS));
+
+    List<ActivityLogChangeDetails> logTrails =
+        rawDaoTestFixture.readActivityLogs(
+            workspaceUuid,
+            resourceToDelete.stream().map(r -> r.getResourceId().toString()).toList());
+    assertEquals(2, logTrails.size());
+    assertThat(
+        // Clear the changeDate for easier testing.
+        logTrails.stream()
+            .filter(log -> log.changeDate() != null)
+            .map(log -> log.withChangeDate(null))
+            .toList(),
+        containsInAnyOrder(
+            new ActivityLogChangeDetails(
+                null,
+                USER_REQUEST.getEmail(),
+                USER_REQUEST.getSubjectId(),
+                OperationType.DELETE,
+                resourceToDelete.get(0).getResourceId().toString(),
+                ActivityLogChangedTarget.RESOURCE),
+            new ActivityLogChangeDetails(
+                null,
+                USER_REQUEST.getEmail(),
+                USER_REQUEST.getSubjectId(),
+                OperationType.DELETE,
+                resourceToDelete.get(1).getResourceId().toString(),
+                ActivityLogChangedTarget.RESOURCE)));
   }
 
   private FlightMap buildInputParams(UUID workspaceUuid, OperationType operationType) {

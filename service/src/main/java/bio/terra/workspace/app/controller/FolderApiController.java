@@ -6,6 +6,7 @@ import static bio.terra.workspace.common.utils.ControllerValidationUtils.validat
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesUpdateRequestBody;
 
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
+import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.generated.controller.FolderApi;
 import bio.terra.workspace.generated.model.ApiCreateFolderRequestBody;
@@ -25,7 +26,9 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.OperationType;
+import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -83,7 +86,7 @@ public class FolderApiController extends ControllerBase implements FolderApi {
         OperationType.CREATE,
         folderId.toString(),
         ActivityLogChangedTarget.FOLDER);
-    return new ResponseEntity<>(buildFolder(folder), HttpStatus.OK);
+    return new ResponseEntity<>(buildFolder(folder, workspaceId), HttpStatus.OK);
   }
 
   @Override
@@ -106,7 +109,7 @@ public class FolderApiController extends ControllerBase implements FolderApi {
         OperationType.UPDATE,
         folderId.toString(),
         ActivityLogChangedTarget.FOLDER);
-    return new ResponseEntity<>(buildFolder(folder), HttpStatus.OK);
+    return new ResponseEntity<>(buildFolder(folder, workspaceId), HttpStatus.OK);
   }
 
   @Override
@@ -116,7 +119,7 @@ public class FolderApiController extends ControllerBase implements FolderApi {
         userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
 
     Folder folder = folderService.getFolder(workspaceId, folderId);
-    return new ResponseEntity<>(buildFolder(folder), HttpStatus.OK);
+    return new ResponseEntity<>(buildFolder(folder, workspaceId), HttpStatus.OK);
   }
 
   @Override
@@ -129,7 +132,7 @@ public class FolderApiController extends ControllerBase implements FolderApi {
 
     var response =
         new ApiFolderList()
-            .folders(folders.stream().map(FolderApiController::buildFolder).toList());
+            .folders(folders.stream().map(f -> buildFolder(f, workspaceId)).toList());
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
@@ -208,7 +211,9 @@ public class FolderApiController extends ControllerBase implements FolderApi {
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
-  private static ApiFolder buildFolder(Folder folder) {
+  private ApiFolder buildFolder(Folder folder, UUID workspaceId) {
+    Optional<ActivityLogChangeDetails> lastUpdatedDetail =
+        workspaceActivityLogService.getLastUpdatedDetails(workspaceId, folder.id().toString());
     return new ApiFolder()
         .id(folder.id())
         .displayName(folder.displayName())
@@ -216,6 +221,11 @@ public class FolderApiController extends ControllerBase implements FolderApi {
         .parentFolderId(folder.parentFolderId())
         .properties(convertMapToApiProperties(folder.properties()))
         .createdBy(folder.createdByEmail())
-        .createdDate(folder.createdDate());
+        .createdDate(folder.createdDate())
+        .lastUpdatedBy(lastUpdatedDetail.map(detail -> detail.actorEmail()).orElse("unknown"))
+        // should only return MIN if the log doesn't exist which means the folder was last updated
+        // before the implementation of change subject id logging.
+        .lastUpdatedDate(
+            lastUpdatedDetail.map(detail -> detail.changeDate()).orElse(OffsetDateTime.MIN));
   }
 }

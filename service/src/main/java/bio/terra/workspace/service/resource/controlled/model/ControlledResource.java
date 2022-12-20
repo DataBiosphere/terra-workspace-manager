@@ -34,6 +34,7 @@ public abstract class ControlledResource extends WsmResource {
   @Nullable private final PrivateResourceState privateResourceState;
   private final ManagedByType managedBy;
   private final String applicationId;
+  private final String region;
 
   public ControlledResource(
       UUID workspaceUuid,
@@ -49,7 +50,8 @@ public abstract class ControlledResource extends WsmResource {
       List<ResourceLineageEntry> resourceLineage,
       Map<String, String> properties,
       String createdByEmail,
-      OffsetDateTime createdDate) {
+      OffsetDateTime createdDate,
+      String region) {
     super(
         workspaceUuid,
         resourceId,
@@ -65,6 +67,7 @@ public abstract class ControlledResource extends WsmResource {
     this.managedBy = managedBy;
     this.applicationId = applicationId;
     this.privateResourceState = privateResourceState;
+    this.region = region;
   }
 
   public ControlledResource(DbResource dbResource) {
@@ -72,11 +75,14 @@ public abstract class ControlledResource extends WsmResource {
     if (dbResource.getStewardshipType() != StewardshipType.CONTROLLED) {
       throw new InvalidMetadataException("Expected CONTROLLED");
     }
+    // TODO(PF-2290): throws if dbResource does not have a region once we backfill the existing
+    // resource rows with regions.
     this.assignedUser = dbResource.getAssignedUser().orElse(null);
     this.accessScope = dbResource.getAccessScope();
     this.managedBy = dbResource.getManagedBy();
     this.applicationId = dbResource.getApplicationId().orElse(null);
     this.privateResourceState = dbResource.getPrivateResourceState().orElse(null);
+    this.region = dbResource.getRegion();
   }
 
   public ControlledResource(ControlledResourceFields builder) {
@@ -95,6 +101,7 @@ public abstract class ControlledResource extends WsmResource {
     this.managedBy = builder.getManagedBy();
     this.applicationId = builder.getApplicationId();
     this.privateResourceState = builder.getPrivateResourceState();
+    this.region = builder.getRegion();
   }
 
   /**
@@ -148,6 +155,10 @@ public abstract class ControlledResource extends WsmResource {
     return managedBy;
   }
 
+  public String getRegion() {
+    return region;
+  }
+
   public String getApplicationId() {
     return applicationId;
   }
@@ -176,7 +187,8 @@ public abstract class ControlledResource extends WsmResource {
                 // TODO: PF-616 figure out how to supply the assigned user's role
                 new ApiPrivateResourceUser().userName(assignedUser))
             .privateResourceState(
-                getPrivateResourceState().map(PrivateResourceState::toApiModel).orElse(null));
+                getPrivateResourceState().map(PrivateResourceState::toApiModel).orElse(null))
+            .region(getRegion());
     metadata.controlledResourceMetadata(controlled);
     return metadata;
   }
@@ -214,7 +226,8 @@ public abstract class ControlledResource extends WsmResource {
       @Nullable UUID destinationFolderId,
       @Nullable String name,
       @Nullable String description,
-      String createByEmail) {
+      String createByEmail,
+      String region) {
 
     var cloneResourceCommonFields =
         ControlledResourceFields.builder()
@@ -230,7 +243,8 @@ public abstract class ControlledResource extends WsmResource {
                 getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE
                     ? PrivateResourceState.INITIALIZING
                     : PrivateResourceState.NOT_APPLICABLE)
-            .createdByEmail(createByEmail);
+            .createdByEmail(createByEmail)
+            .region(region);
 
     // override name and description if provided
     cloneResourceCommonFields.name(name == null ? getName() : name);
