@@ -269,12 +269,6 @@ public class ReferencedGcpResourceControllerBqDatasetTest extends BaseConnectedT
             workspaceId,
             clonedResource.getMetadata().getResourceId());
     assertEquals(clonedResource, gotResource);
-    mockMvcUtils.assertCloneActivityIsLogged(
-        workspaceId,
-        sourceResource.getMetadata().getResourceId(),
-        workspaceId,
-        clonedResource.getMetadata().getResourceId(),
-        userAccessUtils.defaultUserAuthRequest());
   }
 
   @Test
@@ -309,12 +303,6 @@ public class ReferencedGcpResourceControllerBqDatasetTest extends BaseConnectedT
             workspaceId2,
             clonedResource.getMetadata().getResourceId());
     assertEquals(clonedResource, gotResource);
-    mockMvcUtils.assertCloneActivityIsLogged(
-        workspaceId,
-        sourceResource.getMetadata().getResourceId(),
-        workspaceId2,
-        clonedResource.getMetadata().getResourceId(),
-        userAccessUtils.defaultUserAuthRequest());
   }
 
   // Destination workspace policy is the merge of source workspace policy and pre-clone destination

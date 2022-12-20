@@ -1837,46 +1837,6 @@ public class MockMvcUtils {
         jdbcTemplate.query(sql, params, ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER));
   }
 
-  // TODO(PF-2261): assert resource lastUpdatedBy and lastUpdatedDate instead of calling
-  // directly into the `WorkspaceActivityLogDao`.
-  public void assertCloneActivityIsLogged(
-      UUID sourceWorkspaceId,
-      UUID sourceChangeSubjectId,
-      UUID destWorkspaceId,
-      UUID destChangeSubjectId,
-      AuthenticatedUserRequest userRequest)
-      throws InterruptedException {
-    // log in source Workspace
-    ActivityLogChangeDetails sourceChangeDetails =
-        getLastChangeDetails(sourceWorkspaceId, sourceChangeSubjectId.toString());
-    var actorEmail = userRequest.getEmail();
-    var actorSubjectId = samService.getUserStatusInfo(userRequest).getUserSubjectId();
-    assertEquals(
-        new ActivityLogChangeDetails(
-            /*changeDate=*/ null,
-            actorEmail,
-            actorSubjectId,
-            OperationType.CLONE,
-            sourceChangeSubjectId.toString(),
-            ActivityLogChangedTarget.RESOURCE),
-        // Clear change date for easier comparison
-        sourceChangeDetails.withChangeDate(null));
-
-    // log in destWorkspace
-    ActivityLogChangeDetails destChangeDetails =
-        getLastChangeDetails(destWorkspaceId, destChangeSubjectId.toString());
-    assertEquals(
-        new ActivityLogChangeDetails(
-            null,
-            actorEmail,
-            actorSubjectId,
-            OperationType.CREATE,
-            destChangeSubjectId.toString(),
-            ActivityLogChangedTarget.RESOURCE),
-        // Clear change date for easier comparison
-        destChangeDetails.withChangeDate(null));
-  }
-
   public void assertNoResourceWithName(
       AuthenticatedUserRequest userRequest, UUID workspaceId, String unexpectedResourceName)
       throws Exception {

@@ -375,12 +375,6 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         /*defaultTableLifetime*/ null,
         // TODO(PF-2269): Change to DEFAULT_PARTITION_LIFETIME after PF-2269 is fixed
         /*defaultPartitionLifetime*/ null);
-    mockMvcUtils.assertCloneActivityIsLogged(
-        workspaceId,
-        sourceResource.getMetadata().getResourceId(),
-        workspaceId2,
-        clonedResource.getMetadata().getResourceId(),
-        userAccessUtils.defaultUserAuthRequest());
     mockMvcUtils.deleteBqDataset(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId2,
@@ -442,12 +436,6 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         /*defaultTableLifetime*/ null,
         // TODO(PF-2269): Change to DEFAULT_PARTITION_LIFETIME after PF-2269 is fixed
         /*defaultPartitionLifetime*/ null);
-    mockMvcUtils.assertCloneActivityIsLogged(
-        workspaceId,
-        sourceResource.getMetadata().getResourceId(),
-        workspaceId,
-        clonedResource.getMetadata().getResourceId(),
-        userAccessUtils.defaultUserAuthRequest());
   }
 
   @Test
@@ -504,12 +492,6 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         /*defaultTableLifetime*/ null,
         // TODO(PF-2269): Change to DEFAULT_PARTITION_LIFETIME after PF-2269 is fixed
         /*defaultPartitionLifetime*/ null);
-    mockMvcUtils.assertCloneActivityIsLogged(
-        workspaceId,
-        sourceResource.getMetadata().getResourceId(),
-        workspaceId2,
-        clonedResource.getMetadata().getResourceId(),
-        userAccessUtils.defaultUserAuthRequest());
   }
 
   @Test
@@ -549,12 +531,6 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
             workspaceId,
             clonedResource.getMetadata().getResourceId());
     assertEquals(clonedResource, gotResource);
-    mockMvcUtils.assertCloneActivityIsLogged(
-        workspaceId,
-        sourceResource.getMetadata().getResourceId(),
-        workspaceId,
-        clonedResource.getMetadata().getResourceId(),
-        userAccessUtils.defaultUserAuthRequest());
   }
 
   // Destination workspace policy is the merge of source workspace policy and pre-clone destination
