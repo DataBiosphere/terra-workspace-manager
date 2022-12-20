@@ -1,5 +1,8 @@
 package bio.terra.workspace.app.controller;
 
+import static bio.terra.workspace.common.utils.MockMvcUtils.assertClonedResourceMetadata;
+import static bio.terra.workspace.common.utils.MockMvcUtils.assertControlledResourceMetadata;
+import static bio.terra.workspace.common.utils.MockMvcUtils.assertResourceMetadata;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
@@ -15,10 +18,14 @@ import bio.terra.workspace.common.fixtures.PolicyFixtures;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
+import bio.terra.workspace.generated.model.ApiManagedBy;
+import bio.terra.workspace.generated.model.ApiPrivateResourceState;
+import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
 import bio.terra.workspace.generated.model.ApiResourceLineage;
 import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
@@ -82,8 +89,8 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
   private UUID workspaceId2;
   private String projectId2;
 
-  private String sourceResourceName = TestUtils.appendRandomNumber("source-resource-name");
-  private String sourceDatasetName = TestUtils.appendRandomNumber("source-dataset-name");
+  private String sourceResourceName = TestUtils.appendRandomNumber("sourceresourcename");
+  private String sourceDatasetName = TestUtils.appendRandomNumber("sourcedatasetname");
   private ApiGcpBigQueryDatasetResource sourceResource;
 
   // See here for how to skip workspace creation for local runs:
@@ -388,7 +395,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
     // Clone resource to europe-west1
     // Note to resource authors: Set all request fields, eg BQ dataset location.
     // TODO(PF-2184): Set location to europe-west1 after PF-2184 is fixed.
-    // String destLocation = "europe-west1";
+    // destLocation = "europe-west1";
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
     String destDatasetName = TestUtils.appendRandomNumber("dest-dataset-name");
     ApiGcpBigQueryDatasetResource clonedResource =
@@ -404,7 +411,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
     // destLocation);
 
     // Assert resource returned in clone flight response
-    assertClonedBqDataset(
+    assertClonedControlledBqDataset(
         clonedResource,
         ApiStewardshipType.CONTROLLED,
         ApiCloningInstructionsEnum.DEFINITION,
@@ -412,6 +419,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         destResourceName,
         /*expectedProjectId=*/ projectId,
         /*expectedDatasetName=*/ destDatasetName,
+        LOCATION,
         userAccessUtils.getDefaultUserEmail());
 
     // Assert resource returned by get
@@ -466,7 +474,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
     // destLocation);
 
     // Assert resource returned in clone flight response
-    assertClonedBqDataset(
+    assertClonedControlledBqDataset(
         clonedResource,
         ApiStewardshipType.CONTROLLED,
         ApiCloningInstructionsEnum.DEFINITION,
@@ -474,6 +482,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         destResourceName,
         /*expectedProjectId=*/ projectId2,
         /*expectedDatasetName=*/ destDatasetName,
+        LOCATION,
         userAccessUtils.getDefaultUserEmail());
 
     // Assert resource returned by get
@@ -640,7 +649,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
       String expectedProjectId,
       String expectedDatasetName,
       String expectedCreatedBy) {
-    mockMvcUtils.assertResourceMetadata(
+    assertResourceMetadata(
         actualDataset.getMetadata(),
         ApiCloudPlatform.GCP,
         ApiResourceType.BIG_QUERY_DATASET,
@@ -655,6 +664,35 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
     assertEquals(expectedDatasetName, actualDataset.getAttributes().getDatasetId());
   }
 
+  private void assertClonedControlledBqDataset(
+      ApiGcpBigQueryDatasetResource actualDataset,
+      ApiStewardshipType expectedStewardshipType,
+      ApiCloningInstructionsEnum expectedCloningInstructions,
+      UUID expectedWorkspaceId,
+      String expectedResourceName,
+      String expectedProjectId,
+      String expectedDatasetName,
+      String expectedRegion,
+      String expectedCreatedBy) {
+    assertClonedBqDataset(
+        actualDataset,
+        expectedStewardshipType,
+        expectedCloningInstructions,
+        expectedWorkspaceId,
+        expectedResourceName,
+        expectedProjectId,
+        expectedDatasetName,
+        expectedCreatedBy);
+
+    assertControlledResourceMetadata(
+        actualDataset.getMetadata().getControlledResourceMetadata(),
+        ApiAccessScope.SHARED_ACCESS,
+        ApiManagedBy.USER,
+        new ApiPrivateResourceUser(),
+        ApiPrivateResourceState.NOT_APPLICABLE,
+        expectedRegion);
+  }
+
   private void assertClonedBqDataset(
       ApiGcpBigQueryDatasetResource actualDataset,
       ApiStewardshipType expectedStewardshipType,
@@ -664,7 +702,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
       String expectedProjectId,
       String expectedDatasetName,
       String expectedCreatedBy) {
-    mockMvcUtils.assertClonedResourceMetadata(
+    assertClonedResourceMetadata(
         actualDataset.getMetadata(),
         ApiCloudPlatform.GCP,
         ApiResourceType.BIG_QUERY_DATASET,

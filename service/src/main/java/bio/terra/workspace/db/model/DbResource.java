@@ -45,6 +45,7 @@ public class DbResource {
   @Nullable private ImmutableMap<String, String> properties;
   private String createdByEmail;
   @Nullable private OffsetDateTime createdDate;
+  @Nullable private String region;
 
   private static final Supplier<RuntimeException> MISSING_REQUIRED_FIELD =
       () -> new MissingRequiredFieldsException("Missing required field");
@@ -106,10 +107,6 @@ public class DbResource {
   public DbResource cloudResourceType(WsmResourceFamily cloudResourceType) {
     this.cloudResourceType = cloudResourceType;
     return this;
-  }
-
-  public WsmResourceFamily getCloudResourceType() {
-    return cloudResourceType;
   }
 
   public WsmResourceType getResourceType() {
@@ -218,5 +215,14 @@ public class DbResource {
 
   public OffsetDateTime getCreatedDate() {
     return createdDate;
+  }
+
+  public DbResource region(String region) {
+    this.region = region;
+    return this;
+  }
+
+  public String getRegion() {
+    return region;
   }
 }

@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.vm;
 
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_RESOURCE_REGION;
+
 import bio.terra.cloudres.azure.resourcemanager.common.Defaults;
 import bio.terra.cloudres.azure.resourcemanager.compute.data.CreateVirtualMachineRequestData;
 import bio.terra.stairway.*;
@@ -129,8 +131,7 @@ public class CreateAzureVmStep implements Step {
       // validation that the user provided region is the same as network region,
       // therefore rendering the flexibility of the option moot.
       var region =
-          Region.fromName(
-              context.getWorkingMap().get(AzureVmHelper.WORKING_MAP_NETWORK_REGION, String.class));
+          Region.fromName(context.getWorkingMap().get(CREATE_RESOURCE_REGION, String.class));
 
       var virtualMachineDefinition =
           buildVmConfiguration(

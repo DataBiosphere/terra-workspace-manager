@@ -65,6 +65,10 @@ components:
           $ref: '#/components/schemas/PrivateResourceUser'
         privateResourceState:
           $ref: '#/components/schemas/PrivateResourceState'
+        region:
+          description: |
+            A valid region string representation of the cloud resource.
+          type: string
   
     ControlledResourceCommonFields:
       type: object

@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.vm;
 
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_RESOURCE_REGION;
+
 import bio.terra.common.iam.BearerToken;
 import bio.terra.landingzone.library.landingzones.deployment.LandingZonePurpose;
 import bio.terra.landingzone.library.landingzones.deployment.SubnetResourcePurpose;
@@ -107,9 +109,7 @@ public class CreateAzureNetworkInterfaceStep implements Step {
       context
           .getWorkingMap()
           .put(AzureVmHelper.WORKING_MAP_SUBNET_NAME, existingNetwork.subnet().name());
-      context
-          .getWorkingMap()
-          .put(AzureVmHelper.WORKING_MAP_NETWORK_REGION, existingNetwork.network().region());
+      context.getWorkingMap().put(CREATE_RESOURCE_REGION, existingNetwork.network().region());
 
     } catch (ManagementException e) {
       return switch (e.getValue().getCode()) {

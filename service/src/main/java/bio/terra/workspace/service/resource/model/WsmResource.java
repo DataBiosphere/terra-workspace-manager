@@ -390,7 +390,9 @@ public abstract class WsmResource {
         && Objects.equals(resourceId, that.resourceId)
         && StringUtils.equals(name, that.name)
         && StringUtils.equals(description, that.description)
-        && cloningInstructions == that.cloningInstructions;
+        && cloningInstructions == that.cloningInstructions
+        && properties.equals(that.properties)
+        && StringUtils.equals(createdByEmail, that.createdByEmail);
   }
 
   @Override
@@ -400,6 +402,10 @@ public abstract class WsmResource {
     result = 31 * result + (name != null ? name.hashCode() : 0);
     result = 31 * result + (description != null ? description.hashCode() : 0);
     result = 31 * result + (cloningInstructions != null ? cloningInstructions.hashCode() : 0);
+    result = 31 * result + (resourceLineage != null ? resourceLineage.hashCode() : 0);
+    result = 31 * result + (properties.hashCode());
+    result = 31 * result + (createdByEmail != null ? createdByEmail.hashCode() : 0);
+    result = 31 * result + (createdDate != null ? createdDate.hashCode() : 0);
     return result;
   }
 }
