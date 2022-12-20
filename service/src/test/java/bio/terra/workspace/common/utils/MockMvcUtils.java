@@ -1739,6 +1739,7 @@ public class MockMvcUtils {
       UUID expectedWorkspaceId,
       String expectedResourceName,
       ApiResourceLineage expectedResourceLineage,
+      String expectedRegion,
       String expectedCreatedBy,
       String expectedLastUpdatedBy) {
     assertEquals(expectedWorkspaceId, actualMetadata.getWorkspaceId());
@@ -1749,6 +1750,7 @@ public class MockMvcUtils {
     assertEquals(expectedCloudPlatform, actualMetadata.getCloudPlatform());
     assertEquals(expectedCloningInstructions, actualMetadata.getCloningInstructions());
     assertEquals(expectedResourceLineage, actualMetadata.getResourceLineage());
+    assertEquals(expectedRegion, actualMetadata.getRegion());
     assertEquals(expectedLastUpdatedBy, actualMetadata.getLastUpdatedBy());
     assertNotNull(actualMetadata.getLastUpdatedDate());
     assertEquals(expectedCreatedBy, actualMetadata.getCreatedBy());
@@ -1791,6 +1793,7 @@ public class MockMvcUtils {
         expectedWorkspaceId,
         expectedResourceName,
         expectedResourceLineage,
+        expectedRegion,
         expectedCreatedBy,
         expectedLastUpdatedBy);
   }
