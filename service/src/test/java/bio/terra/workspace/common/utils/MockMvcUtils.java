@@ -1825,7 +1825,7 @@ public class MockMvcUtils {
     var actorSubjectId = samService.getUserStatusInfo(userRequest).getUserSubjectId();
     assertEquals(
         new ActivityLogChangeDetails(
-            null,
+            /*changeDate=*/null,
             actorEmail,
             actorSubjectId,
             OperationType.CLONE,
