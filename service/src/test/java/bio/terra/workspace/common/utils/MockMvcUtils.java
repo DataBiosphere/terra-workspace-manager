@@ -103,6 +103,7 @@ import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateMode;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateRequest;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateResult;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.RetrieveGcsBucketCloudAttributesStep;
@@ -287,6 +288,7 @@ public class MockMvcUtils {
   @Autowired private ObjectMapper objectMapper;
   @Autowired private JobService jobService;
   @Autowired private NamedParameterJdbcTemplate jdbcTemplate;
+  @Autowired private SamService samService;
 
   public static MockHttpServletRequestBuilder addAuth(
       MockHttpServletRequestBuilder request, AuthenticatedUserRequest userRequest) {
@@ -1825,6 +1827,46 @@ public class MockMvcUtils {
             .addValue("change_subject_id", changeSubjectId);
     return DataAccessUtils.singleResult(
         jdbcTemplate.query(sql, params, ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER));
+  }
+
+  // TODO(PF-2261): assert resource lastUpdatedBy and lastUpdatedDate instead of calling
+  // directly into the `WorkspaceActivityLogDao`.
+  public void assertCloneActivityIsLogged(
+      UUID sourceWorkspaceId,
+      UUID sourceChangeSubjectId,
+      UUID destWorkspaceId,
+      UUID destChangeSubjectId,
+      AuthenticatedUserRequest userRequest)
+      throws InterruptedException {
+    // log in source Workspace
+    ActivityLogChangeDetails sourceChangeDetails =
+        getLastChangeDetails(sourceWorkspaceId, sourceChangeSubjectId.toString());
+    var actorEmail = userRequest.getEmail();
+    var actorSubjectId = samService.getUserStatusInfo(userRequest).getUserSubjectId();
+    assertEquals(
+        new ActivityLogChangeDetails(
+            /*changeDate=*/ null,
+            actorEmail,
+            actorSubjectId,
+            OperationType.CLONE,
+            sourceChangeSubjectId.toString(),
+            ActivityLogChangedTarget.RESOURCE),
+        // Clear change date for easier comparison
+        sourceChangeDetails.withChangeDate(null));
+
+    // log in destWorkspace
+    ActivityLogChangeDetails destChangeDetails =
+        getLastChangeDetails(destWorkspaceId, destChangeSubjectId.toString());
+    assertEquals(
+        new ActivityLogChangeDetails(
+            null,
+            actorEmail,
+            actorSubjectId,
+            OperationType.CREATE,
+            destChangeSubjectId.toString(),
+            ActivityLogChangedTarget.RESOURCE),
+        // Clear change date for easier comparison
+        destChangeDetails.withChangeDate(null));
   }
 
   public void assertNoResourceWithName(

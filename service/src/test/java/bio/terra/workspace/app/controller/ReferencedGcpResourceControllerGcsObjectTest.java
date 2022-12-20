@@ -185,6 +185,12 @@ public class ReferencedGcpResourceControllerGcsObjectTest extends BaseConnectedT
         sourceBucketName,
         sourceFileName,
         userAccessUtils.getSecondUserEmail());
+    mockMvcUtils.assertCloneActivityIsLogged(
+        workspaceId,
+        sourceResource.getMetadata().getResourceId(),
+        workspaceId2,
+        clonedResource.getMetadata().getResourceId(),
+        userAccessUtils.secondUserAuthRequest());
     mockMvcUtils.removeRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
@@ -244,6 +250,12 @@ public class ReferencedGcpResourceControllerGcsObjectTest extends BaseConnectedT
         sourceBucketName,
         sourceFileName,
         userAccessUtils.getDefaultUserEmail());
+    mockMvcUtils.assertCloneActivityIsLogged(
+        workspaceId,
+        sourceResource.getMetadata().getResourceId(),
+        workspaceId,
+        clonedResource.getMetadata().getResourceId(),
+        userAccessUtils.defaultUserAuthRequest());
 
     // Assert resource returned by get
     final ApiGcpGcsObjectResource gotResource =
@@ -277,6 +289,12 @@ public class ReferencedGcpResourceControllerGcsObjectTest extends BaseConnectedT
         sourceBucketName,
         sourceFileName,
         userAccessUtils.getDefaultUserEmail());
+    mockMvcUtils.assertCloneActivityIsLogged(
+        workspaceId,
+        sourceResource.getMetadata().getResourceId(),
+        workspaceId2,
+        clonedResource.getMetadata().getResourceId(),
+        userAccessUtils.defaultUserAuthRequest());
 
     // Assert resource returned by get
     final ApiGcpGcsObjectResource gotResource =

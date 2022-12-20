@@ -18,6 +18,7 @@ import bio.terra.workspace.generated.model.ApiResourceLineage;
 import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
@@ -47,6 +48,7 @@ public class ReferencedGcpResourceControllerBqTableTest extends BaseConnectedTes
   @Autowired ObjectMapper objectMapper;
   @Autowired UserAccessUtils userAccessUtils;
   @Autowired FeatureConfiguration features;
+  @Autowired SamService samService;
 
   private UUID workspaceId;
   private String projectId;
@@ -72,8 +74,6 @@ public class ReferencedGcpResourceControllerBqTableTest extends BaseConnectedTes
         mockMvcUtils
             .createWorkspaceWithCloudContext(userAccessUtils.defaultUserAuthRequest())
             .getId();
-    ApiWorkspaceDescription workspace2 =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
 
     sourceResource =
         mockMvcUtils.createReferencedBqTable(
@@ -254,6 +254,12 @@ public class ReferencedGcpResourceControllerBqTableTest extends BaseConnectedTes
         sourceDatasetName,
         sourceTableId,
         userAccessUtils.getDefaultUserEmail());
+    mockMvcUtils.assertCloneActivityIsLogged(
+        workspaceId,
+        sourceResource.getMetadata().getResourceId(),
+        workspaceId,
+        clonedResource.getMetadata().getResourceId(),
+        userAccessUtils.defaultUserAuthRequest());
 
     // Assert resource returned by get
     final ApiGcpBigQueryDataTableResource gotResource =
@@ -288,6 +294,12 @@ public class ReferencedGcpResourceControllerBqTableTest extends BaseConnectedTes
         sourceDatasetName,
         sourceTableId,
         userAccessUtils.getDefaultUserEmail());
+    mockMvcUtils.assertCloneActivityIsLogged(
+        workspaceId,
+        sourceResource.getMetadata().getResourceId(),
+        /*destWorkspaceId=*/ workspaceId2,
+        clonedResource.getMetadata().getResourceId(),
+        userAccessUtils.defaultUserAuthRequest());
 
     // Assert resource returned by get
     final ApiGcpBigQueryDataTableResource gotResource =
