@@ -724,7 +724,7 @@ public class SamService {
       return resourcesApi.resourceActionV2(
           SamConstants.SamResource.WORKSPACE,
           workspaceUuid.toString(),
-          SamConstants.SamWorkspaceAction.CREATE_CONTROLLED_USER_PRIVATE,
+          SamConstants.SamWorkspaceAction.CREATE_CONTROLLED_APPLICATION_PRIVATE,
           email);
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Sam error querying role in Sam", apiException);
