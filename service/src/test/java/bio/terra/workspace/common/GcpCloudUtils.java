@@ -19,8 +19,6 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.gax.paging.Page;
 import com.google.api.services.compute.Compute;
-import com.google.api.services.compute.model.AcceleratorConfig;
-import com.google.api.services.compute.model.Instance;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.bigquery.BigQueryException;
@@ -59,7 +57,7 @@ import org.springframework.stereotype.Component;
 public class GcpCloudUtils {
   private static final Logger logger = LoggerFactory.getLogger(GcpCloudUtils.class);
 
-  @Autowired CrlService crlService;
+  @Autowired private static CrlService crlService;
 
   public static final String BQ_EMPLOYEE_TABLE_NAME = "employee";
   public static final int BQ_EMPLOYEE_ID = 100;
@@ -203,36 +201,6 @@ public class GcpCloudUtils {
         .setProjectId(projectId)
         .build()
         .getService();
-  }
-
-  public static void assertNotebookCpuGpu(
-      String projectId,
-      String zone,
-      String instanceId,
-      @Nullable String newMachineType,
-      @Nullable AcceleratorConfig newAcceleratorConfig)
-      throws GeneralSecurityException, IOException {
-    Compute computeService = createComputeService();
-    Compute.Instances.Get request = computeService.instances().get(projectId, zone, instanceId);
-    Instance response = request.execute();
-
-    // Machine type and accelerator type response obtained from GCP is in URL format, and need a
-    // conversion to compare
-    String machineType =
-        response.getMachineType().substring(response.getMachineType().lastIndexOf("/") + 1);
-    assertEquals(newMachineType, machineType);
-
-    if (response.getGuestAccelerators() != null) {
-      AcceleratorConfig acceleratorConfig = response.getGuestAccelerators().get(0);
-      String acceleratorType = acceleratorConfig.getAcceleratorType();
-      assertEquals(
-          newAcceleratorConfig.getAcceleratorType().toLowerCase().replace("_", "-"),
-          acceleratorType.substring(acceleratorType.lastIndexOf("/") + 1));
-      assertEquals(
-          newAcceleratorConfig.getAcceleratorCount(), acceleratorConfig.getAcceleratorCount());
-    } else {
-      assertEquals(new AcceleratorConfig(), newAcceleratorConfig);
-    }
   }
 
   /**

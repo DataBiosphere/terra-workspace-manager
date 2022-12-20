@@ -13,6 +13,7 @@ import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
+import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAcceleratorConfig;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAttributes;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
@@ -67,6 +68,8 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
   private final String instanceId;
   private final String location;
   private final String projectId;
+  private final String machineType;
+  private final ApiGcpAiNotebookInstanceAcceleratorConfig acceleratorConfig;
 
   @JsonCreator
   public ControlledAiNotebookInstanceResource(
@@ -83,6 +86,9 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
       @JsonProperty("instanceId") String instanceId,
       @JsonProperty("location") String location,
       @JsonProperty("projectId") String projectId,
+      @JsonProperty("machineType") String machineType,
+      @JsonProperty("acceleratorConfig")
+          ApiGcpAiNotebookInstanceAcceleratorConfig acceleratorConfig,
       @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
       @JsonProperty("properties") Map<String, String> properties,
       @JsonProperty("createdByEmail") String createdByEmail,
@@ -105,16 +111,25 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
     this.instanceId = instanceId;
     this.location = location;
     this.projectId = projectId;
+    this.machineType = machineType;
+    this.acceleratorConfig = acceleratorConfig;
     validate();
   }
 
   // Constructor for the builder
   private ControlledAiNotebookInstanceResource(
-      ControlledResourceFields common, String instanceId, String location, String projectId) {
+      ControlledResourceFields common,
+      String instanceId,
+      String location,
+      String projectId,
+      String machineType,
+      ApiGcpAiNotebookInstanceAcceleratorConfig acceleratorConfig) {
     super(common);
     this.instanceId = instanceId;
     this.location = location;
     this.projectId = projectId;
+    this.machineType = machineType;
+    this.acceleratorConfig = acceleratorConfig;
     validate();
   }
 
@@ -208,6 +223,16 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
     return projectId;
   }
 
+  /** The GCP machine type where the notebook is created */
+  public String getMachineType() {
+    return machineType;
+  }
+
+  /** The GCP accelerator config where the notebook is created */
+  public ApiGcpAiNotebookInstanceAcceleratorConfig getAcceleratorConfig() {
+    return acceleratorConfig;
+  }
+
   public InstanceName toInstanceName(String workspaceProjectId) {
     return toInstanceName(workspaceProjectId, getLocation());
   }
@@ -223,7 +248,9 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
   public ApiGcpAiNotebookInstanceResource toApiResource() {
     return new ApiGcpAiNotebookInstanceResource()
         .metadata(toApiMetadata())
-        .attributes(toApiAttributes());
+        .attributes(toApiAttributes())
+        .machineType(machineType)
+        .acceleratorConfig(acceleratorConfig);
   }
 
   public ApiGcpAiNotebookInstanceAttributes toApiAttributes() {
@@ -278,6 +305,8 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
     checkFieldNonNull(getInstanceId(), "instanceId");
     checkFieldNonNull(getLocation(), "location");
     checkFieldNonNull(getProjectId(), "projectId");
+    //    checkFieldNonNull(getMachineType(), "machineType");
+    //    checkFieldNonNull(getAcceleratorConfig(), "acceleratorConfig");
     ResourceValidationUtils.validateAiNotebookInstanceId(getInstanceId());
   }
 
@@ -313,6 +342,8 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
     private String instanceId;
     private String location;
     private String projectId;
+    private String machineType;
+    private ApiGcpAiNotebookInstanceAcceleratorConfig acceleratorConfig;
 
     public Builder common(ControlledResourceFields common) {
       this.common = common;
@@ -334,8 +365,19 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
       return this;
     }
 
+    public Builder machineType(String machineType) {
+      this.machineType = machineType;
+      return this;
+    }
+
+    public Builder acceleratorConfig(ApiGcpAiNotebookInstanceAcceleratorConfig acceleratorConfig) {
+      this.acceleratorConfig = acceleratorConfig;
+      return this;
+    }
+
     public ControlledAiNotebookInstanceResource build() {
-      return new ControlledAiNotebookInstanceResource(common, instanceId, location, projectId);
+      return new ControlledAiNotebookInstanceResource(
+          common, instanceId, location, projectId, machineType, acceleratorConfig);
     }
   }
 }

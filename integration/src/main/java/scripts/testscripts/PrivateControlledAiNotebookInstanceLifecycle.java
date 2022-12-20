@@ -19,6 +19,7 @@ import bio.terra.workspace.model.AiNotebookCloudId;
 import bio.terra.workspace.model.CreatedControlledGcpAiNotebookInstanceResult;
 import bio.terra.workspace.model.DeleteControlledGcpAiNotebookInstanceRequest;
 import bio.terra.workspace.model.DeleteControlledGcpAiNotebookInstanceResult;
+import bio.terra.workspace.model.GcpAiNotebookInstanceAcceleratorConfig;
 import bio.terra.workspace.model.GcpAiNotebookInstanceResource;
 import bio.terra.workspace.model.GcpAiNotebookUpdateParameters;
 import bio.terra.workspace.model.GenerateGcpAiNotebookCloudIdRequestBody;
@@ -180,16 +181,36 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
         directDeleteForbidden.getStatusCode(),
         "User may not delete notebook directly on GCP");
 
+    assertEquals(
+        NotebookUtils.machineType, creationResult.getAiNotebookInstance().getMachineType());
+    assertEquals(
+        NotebookUtils.gpuType,
+        creationResult.getAiNotebookInstance().getAcceleratorConfig().getType());
+    assertEquals(
+        NotebookUtils.gpuCount,
+        creationResult.getAiNotebookInstance().getAcceleratorConfig().getCoreCount());
+
     // Update the AI Notebook through WSM.
     var newName = "new-instance-notebook-name";
     var newDescription = "new description for the new instance notebook name";
     var newMetadata = ImmutableMap.of("foo", "bar", "count", "3");
+    var newMachineType = "n1-standard-1";
+    var newGpuType = "NVIDIA_TESLA_P100";
+    long newGpuCount = 2;
+
+    GcpAiNotebookInstanceAcceleratorConfig newAcceleratorConfig =
+        new GcpAiNotebookInstanceAcceleratorConfig();
+    newAcceleratorConfig.setType(newGpuType);
+    newAcceleratorConfig.setCoreCount(newGpuCount);
+
     GcpAiNotebookInstanceResource updatedResource =
         resourceUserApi.updateAiNotebookInstance(
             new UpdateControlledGcpAiNotebookInstanceRequestBody()
                 .description(newDescription)
                 .name(newName)
-                .updateParameters(new GcpAiNotebookUpdateParameters().metadata(newMetadata)),
+                .updateParameters(new GcpAiNotebookUpdateParameters().metadata(newMetadata))
+                .machineType(newMachineType)
+                .acceleratorConfig(newAcceleratorConfig),
             getWorkspaceId(),
             resourceId);
 
@@ -200,6 +221,10 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
     for (var entrySet : newMetadata.entrySet()) {
       assertThat(metadata, IsMapContaining.hasEntry(entrySet.getKey(), entrySet.getValue()));
     }
+
+    assertEquals(newMachineType, updatedResource.getMachineType());
+    assertEquals(newGpuType, updatedResource.getAcceleratorConfig().getType());
+    assertEquals(newGpuCount, updatedResource.getAcceleratorConfig().getCoreCount());
 
     // Delete the AI Notebook through WSM.
     DeleteControlledGcpAiNotebookInstanceResult deleteResult =
@@ -268,7 +293,7 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
 
   private void createAControlledAiNotebookInstanceWithoutSpecifiedInstanceId_specifyLocation(
       ControlledGcpResourceApi resourceUserApi) throws ApiException, InterruptedException {
-    String location = "us-east1-b";
+    String location = "us-central1-c";
     CreatedControlledGcpAiNotebookInstanceResult resourceWithNotebookInstanceIdNotSpecified =
         NotebookUtils.makeControlledNotebookUserPrivate(
             getWorkspaceId(),

@@ -27,3 +27,8 @@ components:
           $ref: '#/components/schemas/ResourceMetadata'
         attributes:
           $ref: '#/components/schemas/GcpAiNotebookInstanceAttributes'
+        machineType:
+          description: The Compute Engine machine type of this instance, see https://cloud.google.com/compute/docs/machine-types
+          type: string
+        acceleratorConfig:
+          $ref: '#/components/schemas/GcpAiNotebookInstanceAcceleratorConfig'

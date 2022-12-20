@@ -42,7 +42,7 @@ public class ControlledAiNotebookInstanceResourceTest extends BaseUnitTest {
             ControlledAiNotebookInstanceResource.builder()
                 .common(commonFields)
                 .instanceId("an-instance")
-                .location("us-east1-b")
+                .location("us-central1-c")
                 .projectId("a-projecct-id")
                 .build());
   }
@@ -66,13 +66,13 @@ public class ControlledAiNotebookInstanceResourceTest extends BaseUnitTest {
     ControlledAiNotebookInstanceResource resource =
         ControlledResourceFixtures.makeDefaultAiNotebookInstance()
             .instanceId("my-instance-id")
-            .location("us-east1-b")
+            .location("us-central1-c")
             .projectId("my-project-id")
             .build();
 
     ApiGcpAiNotebookInstanceResource apiResource = resource.toApiResource();
     assertEquals("my-project-id", apiResource.getAttributes().getProjectId());
-    assertEquals("us-east1-b", apiResource.getAttributes().getLocation());
+    assertEquals("us-central1-c", apiResource.getAttributes().getLocation());
     assertEquals("my-instance-id", apiResource.getAttributes().getInstanceId());
   }
 }

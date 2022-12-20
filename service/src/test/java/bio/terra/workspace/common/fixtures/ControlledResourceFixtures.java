@@ -265,10 +265,17 @@ public class ControlledResourceFixtures {
   }
 
   public static ApiGcpAiNotebookInstanceCreationParameters defaultNotebookCreationParameters() {
+
+    ApiGcpAiNotebookInstanceAcceleratorConfig acceleratorConfig =
+        new ApiGcpAiNotebookInstanceAcceleratorConfig();
+    acceleratorConfig.setCoreCount(2L);
+    acceleratorConfig.setType("NVIDIA_TESLA_T4");
+
     return new ApiGcpAiNotebookInstanceCreationParameters()
         .instanceId("default-instance-id")
-        .location("us-east1-b")
+        .location("us-central1-c")
         .machineType("n1-standard-2")
+        .acceleratorConfig(acceleratorConfig)
         .vmImage(
             new ApiGcpAiNotebookInstanceVmImage()
                 .projectId("deeplearning-platform-release")
@@ -624,7 +631,7 @@ public class ControlledResourceFixtures {
     return ControlledAiNotebookInstanceResource.builder()
         .common(makeNotebookCommonFieldsBuilder().build())
         .instanceId(TestUtils.appendRandomNumber("my-cloud-id"))
-        .location("us-east1-b")
+        .location("us-central1-c")
         .projectId("my-project-id");
   }
 
@@ -633,7 +640,7 @@ public class ControlledResourceFixtures {
     return ControlledAiNotebookInstanceResource.builder()
         .common(makeNotebookCommonFieldsBuilder().workspaceUuid(workspaceId).build())
         .instanceId(TestUtils.appendRandomNumber("my-cloud-id"))
-        .location("us-east1-b")
+        .location("us-central1-c")
         .projectId("my-project-id");
   }
 

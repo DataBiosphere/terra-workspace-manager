@@ -13,6 +13,7 @@ import bio.terra.workspace.model.CreateControlledGcpAiNotebookInstanceRequestBod
 import bio.terra.workspace.model.CreatedControlledGcpAiNotebookInstanceResult;
 import bio.terra.workspace.model.DeleteControlledGcpAiNotebookInstanceRequest;
 import bio.terra.workspace.model.DeleteControlledGcpAiNotebookInstanceResult;
+import bio.terra.workspace.model.GcpAiNotebookInstanceAcceleratorConfig;
 import bio.terra.workspace.model.GcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.model.GcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.model.JobControl;
@@ -38,6 +39,10 @@ import org.slf4j.LoggerFactory;
 
 public class NotebookUtils {
   private static final Logger logger = LoggerFactory.getLogger(NotebookUtils.class);
+  public static final String resourceName = RandomStringUtils.randomAlphabetic(6);
+  public static final String machineType = "n1-standard-1";
+  public static final String gpuType = "NVIDIA_TESLA_T4";
+  public static final long gpuCount = 1;
 
   /**
    * Create and return a private AI Platform Notebook controlled resource with constant values. This
@@ -51,13 +56,18 @@ public class NotebookUtils {
       @Nullable String testValue,
       @Nullable String postStartupScript)
       throws ApiException, InterruptedException {
-    var resourceName = RandomStringUtils.randomAlphabetic(6);
+
+    GcpAiNotebookInstanceAcceleratorConfig acceleratorConfig =
+        new GcpAiNotebookInstanceAcceleratorConfig();
+    acceleratorConfig.setType(gpuType);
+    acceleratorConfig.setCoreCount(gpuCount);
     // Fill out the minimum required fields to arbitrary values.
     var creationParameters =
         new GcpAiNotebookInstanceCreationParameters()
             .instanceId(instanceId)
             .location(location)
-            .machineType("e2-standard-2")
+            .machineType(machineType)
+            .acceleratorConfig(acceleratorConfig)
             .vmImage(
                 new GcpAiNotebookInstanceVmImage()
                     .projectId("deeplearning-platform-release")

@@ -1,12 +1,19 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 
+import bio.terra.cloudres.google.notebooks.InstanceName;
+import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
+import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAcceleratorConfig;
+import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import com.google.api.services.notebooks.v1.model.AcceleratorConfig;
+import com.google.api.services.notebooks.v1.model.Instance;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.PostConstruct;
@@ -23,9 +30,12 @@ public class ControlledAiNotebookHandler implements WsmResourceHandler {
   private static final int MAX_INSTANCE_NAME_LENGTH = 63;
   private static ControlledAiNotebookHandler theHandler;
   private final GcpCloudContextService gcpCloudContextService;
+  private final CrlService crlService;
 
   @Autowired
-  public ControlledAiNotebookHandler(GcpCloudContextService gcpCloudContextService) {
+  public ControlledAiNotebookHandler(
+      CrlService crlService, GcpCloudContextService gcpCloudContextService) {
+    this.crlService = crlService;
     this.gcpCloudContextService = gcpCloudContextService;
   }
 
@@ -47,6 +57,27 @@ public class ControlledAiNotebookHandler implements WsmResourceHandler {
     String projectId =
         Optional.ofNullable(attributes.getProjectId())
             .orElse(gcpCloudContextService.getRequiredGcpProject(dbResource.getWorkspaceId()));
+    InstanceName instanceName =
+        InstanceName.builder()
+            .projectId(projectId)
+            .location(attributes.getLocation())
+            .instanceId(attributes.getInstanceId())
+            .build();
+    String machineType = null;
+    ApiGcpAiNotebookInstanceAcceleratorConfig acceleratorConfig =
+        new ApiGcpAiNotebookInstanceAcceleratorConfig();
+    try {
+      Instance instance =
+          crlService.getAIPlatformNotebooksCow().instances().get(instanceName).execute();
+      machineType = instance.getMachineType();
+      AcceleratorConfig accelerator = instance.getAcceleratorConfig();
+      acceleratorConfig.setType(accelerator.getType());
+      acceleratorConfig.setCoreCount(accelerator.getCoreCount());
+    } catch (IOException e) {
+      System.out.println("come here now, catch hhhh" + e);
+      throw new InternalServerErrorException(
+          "Invalid input: failed insert new row to WorkspaceActivityLog table", e);
+    }
 
     var resource =
         ControlledAiNotebookInstanceResource.builder()
@@ -54,6 +85,8 @@ public class ControlledAiNotebookHandler implements WsmResourceHandler {
             .instanceId(attributes.getInstanceId())
             .location(attributes.getLocation())
             .projectId(projectId)
+            .machineType(machineType)
+            .acceleratorConfig(acceleratorConfig)
             .build();
     return resource;
   }

@@ -32,6 +32,7 @@ import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
+import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAcceleratorConfig;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookUpdateParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
@@ -119,7 +120,16 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   /** The default roles to use when creating user private AI notebook instance resources */
   private static final ControlledResourceIamRole DEFAULT_ROLE = ControlledResourceIamRole.WRITER;
   /** The default GCP location to create notebooks for this test. */
-  private static final String DEFAULT_NOTEBOOK_LOCATION = "us-east1-b";
+  private static final String DEFAULT_NOTEBOOK_LOCATION = "us-central1-c";
+
+  private static final String DEFAULT_MACHINE_TYPE = "n1-standard-2";
+  //  private static ApiGcpAiNotebookInstanceAcceleratorConfig DEFAULT_ACCELERATOR_CONFIG =
+  //          new ApiGcpAiNotebookInstanceAcceleratorConfig();
+  //    DEFAULT_ACCELERATOR_CONFIG.setCoreCount(2L);
+  //    DEFAULT_ACCELERATOR_CONFIG.setType("NVIDIA_TESLA_T4");
+
+  private static final ApiGcpAiNotebookInstanceAcceleratorConfig DEFAULT_ACCELERATOR_CONFIG =
+      new ApiGcpAiNotebookInstanceAcceleratorConfig().coreCount(2L).type("NVIDIA_TESLA_T4");
 
   // Store workspaceId instead of workspace so that for local development, one can easily use a
   // previously created workspace.
@@ -253,6 +263,23 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     InstanceName instanceName =
         resource.toInstanceName(gcpCloudContextService.getRequiredGcpProject(workspaceId));
     Instance instance = crlGetInstance(instanceName);
+
+    assertEquals(
+        ControlledResourceFixtures.defaultNotebookCreationParameters().getMachineType(),
+        instance.getMachineType().substring(instance.getMachineType().lastIndexOf("/") + 1));
+    assertEquals(
+        ControlledResourceFixtures.defaultNotebookCreationParameters()
+            .getAcceleratorConfig()
+            .getCoreCount(),
+        instance.getAcceleratorConfig().getCoreCount());
+    assertEquals(
+        ControlledResourceFixtures.defaultNotebookCreationParameters()
+            .getAcceleratorConfig()
+            .getType(),
+        instance
+            .getAcceleratorConfig()
+            .getType()
+            .substring(instance.getAcceleratorConfig().getType().lastIndexOf("/") + 1));
 
     // Test that the user has permissions from WRITER roles on the notebooks instance. Only notebook
     // instance level permissions can be checked on the notebook instance test IAM permissions
@@ -545,8 +572,13 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
           entrySet.getValue(), updatedInstanceFromCloud.getMetadata().get(entrySet.getKey()));
     }
 
-    GcpCloudUtils.assertNotebookCpuGpu(
-        projectId, updatedInstance.getLocation(), instanceId, newMachineType, newAcceleratorConfig);
+    System.out.println("updatedInstance is here" + updatedInstance);
+
+    // Machine type and accelerator type response obtained from GCP is in URL format, and need a
+    // conversion to compare
+    assertEquals(newMachineType, updatedInstance.getMachineType());
+    assertEquals(newGpuType, updatedInstance.getAcceleratorConfig().getType());
+    assertEquals(newGpuCount, updatedInstance.getAcceleratorConfig().getCoreCount());
   }
 
   @Test
@@ -613,8 +645,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  void updateAiNotebookResourceUndo()
-      throws InterruptedException, IOException, GeneralSecurityException {
+  void updateAiNotebookResourceUndo() throws InterruptedException, IOException {
     String instanceId = "update-ai-notebook-instance-undo";
     String name = "update-ai-notebook-instance-undo-name";
     String newName = "update-ai-notebook-instance-undo-name-NEW";
@@ -692,12 +723,12 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
           prevCustomMetadata.getOrDefault(entrySet.getKey(), ""),
           currentCloudInstanceMetadata.get(entrySet.getKey()));
     }
-    GcpCloudUtils.assertNotebookCpuGpu(
-        projectId,
-        updatedInstance.getLocation(),
-        instanceId,
+    assertEquals(
         ControlledResourceFixtures.defaultNotebookCreationParameters().getMachineType(),
-        new AcceleratorConfig());
+        instanceFromCloud
+            .getMachineType()
+            .substring(instanceFromCloud.getMachineType().lastIndexOf("/") + 1));
+    assertNull(instanceFromCloud.getAcceleratorConfig());
   }
 
   @Test
@@ -782,6 +813,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         .instanceId(instanceId)
         .location(DEFAULT_NOTEBOOK_LOCATION)
         .projectId("my-project-id")
+        .machineType(DEFAULT_MACHINE_TYPE)
+        .acceleratorConfig(DEFAULT_ACCELERATOR_CONFIG)
         .build();
   }
 
