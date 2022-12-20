@@ -17,6 +17,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
+import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceRegionStep;
 import bio.terra.workspace.service.resource.controlled.model.*;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
@@ -131,7 +132,7 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
             flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
         cloudRetry);
     flight.addStep(
-        new UpdateAzureStorageContainerRegionStep(
+        new UpdateControlledResourceRegionStep(
             flightBeanBag.getResourceDao(), getWorkspaceId(), getResourceId()),
         RetryRules.shortDatabase());
   }

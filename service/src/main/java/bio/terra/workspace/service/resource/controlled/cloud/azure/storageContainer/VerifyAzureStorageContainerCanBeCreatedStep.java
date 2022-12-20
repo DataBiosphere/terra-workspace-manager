@@ -136,9 +136,11 @@ public class VerifyAzureStorageContainerCanBeCreatedStep implements Step {
   }
 
   private static void putStorageAccountNameAndRegionInWorkingMap(
-      FlightContext context, String storageAccount, String storageAccount1) {
+      FlightContext context, String storageAccount, String storageAccountRegion) {
     context.getWorkingMap().put(ControlledResourceKeys.STORAGE_ACCOUNT_NAME, storageAccount);
-    context.getWorkingMap().put(ControlledResourceKeys.STORAGE_ACCOUNT_REGION, storageAccount1);
+    context
+        .getWorkingMap()
+        .put(ControlledResourceKeys.CREATE_RESOURCE_REGION, storageAccountRegion);
   }
 
   private StepResult validateLandingZoneSharedStorageAccountExist(

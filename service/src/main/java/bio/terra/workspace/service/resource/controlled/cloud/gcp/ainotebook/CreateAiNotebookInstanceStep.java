@@ -7,8 +7,8 @@ import static bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebo
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_LOCATION;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_NETWORK_NAME;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_REGION;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_SUBNETWORK_NAME;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_RESOURCE_REGION;
 
 import bio.terra.cloudres.google.api.services.common.OperationCow;
 import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
@@ -258,7 +258,7 @@ public class CreateAiNotebookInstanceStep implements Step {
   }
 
   private static void setNetworks(Instance instance, String projectId, FlightMap workingMap) {
-    String region = workingMap.get(CREATE_NOTEBOOK_REGION, String.class);
+    String region = workingMap.get(CREATE_RESOURCE_REGION, String.class);
     String networkName = workingMap.get(CREATE_NOTEBOOK_NETWORK_NAME, String.class);
     String subnetworkName = workingMap.get(CREATE_NOTEBOOK_SUBNETWORK_NAME, String.class);
     instance.setNetwork("projects/" + projectId + "/global/networks/" + networkName);

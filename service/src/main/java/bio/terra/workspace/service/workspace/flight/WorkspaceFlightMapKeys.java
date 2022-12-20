@@ -33,6 +33,7 @@ public final class WorkspaceFlightMapKeys {
     public static final String AZURE_CLOUD_CONTEXT = "azureCloudContext";
     public static final String UPDATE_PARAMETERS = "updateParameters";
     public static final String PREVIOUS_UPDATE_PARAMETERS = "previousUpdateParameters";
+    public static final String CREATE_RESOURCE_REGION = "createResourceRegion";
 
     public static final String RESOURCE_ROLES_TO_REMOVE = "resourceRolesToRemove";
     public static final String REMOVED_USER_IS_WORKSPACE_MEMBER = "removedUserIsWorkspaceMember";
@@ -40,7 +41,6 @@ public final class WorkspaceFlightMapKeys {
     // Notebooks keys
     public static final String CREATE_NOTEBOOK_NETWORK_NAME = "createNotebookNetworkName";
     public static final String CREATE_NOTEBOOK_PARAMETERS = "createNotebookParameters";
-    public static final String CREATE_NOTEBOOK_REGION = "createNotebookRegion";
     public static final String CREATE_NOTEBOOK_LOCATION = "createNotebookLocation";
     public static final String CREATE_NOTEBOOK_SUBNETWORK_NAME = "createNotebookSubnetworkName";
     public static final String NOTEBOOK_PET_SERVICE_ACCOUNT = "notebookPetServiceAccount";
@@ -71,7 +71,6 @@ public final class WorkspaceFlightMapKeys {
     public static final String WORKSPACE_CREATE_FLIGHT_ID = "workspaceCreateFlightId";
     public static final String STORAGE_ACCOUNT = "storageAccount";
     public static final String STORAGE_ACCOUNT_NAME = "storageAccountName";
-    public static final String STORAGE_ACCOUNT_REGION = "storageAccountRegion";
     public static final String DESTINATION_RESOURCE_ID = "destinationResourceId";
     public static final String DESTINATION_FOLDER_ID = "destinationFolderId";
     public static final String DESTINATION_CONTAINER_NAME = "destinationContainerName";

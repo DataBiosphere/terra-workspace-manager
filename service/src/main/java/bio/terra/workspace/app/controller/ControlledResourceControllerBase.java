@@ -14,6 +14,7 @@ import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateUserRole;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
@@ -24,6 +25,16 @@ import javax.servlet.http.HttpServletRequest;
  */
 public class ControlledResourceControllerBase extends ControllerBase {
   private final ControlledResourceService controlledResourceService;
+
+  /**
+   * The region field of these wsm resource type are filled during the creation flight because the
+   * region is computed at runtime based on e.g. network and storage account.
+   */
+  private static final List<WsmResourceType> WSM_RESOURCE_WITHOUT_REGION_IN_CREATION_PARAMS =
+      List.of(
+          WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER,
+          WsmResourceType.CONTROLLED_AZURE_VM,
+          WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
 
   public ControlledResourceControllerBase(
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
@@ -47,9 +58,7 @@ public class ControlledResourceControllerBase extends ControllerBase {
         computePrivateUserRole(workspaceUuid, apiCommonFields, userRequest);
 
     String userEmail = getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest);
-    if (wsmResourceType != WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER
-        && wsmResourceType != WsmResourceType.CONTROLLED_AZURE_VM
-        && wsmResourceType != WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE) {
+    if (!WSM_RESOURCE_WITHOUT_REGION_IN_CREATION_PARAMS.contains(wsmResourceType)) {
       checkArgument(
           region != null,
           "Controlled resource must have an associated region specified"
