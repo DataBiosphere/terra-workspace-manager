@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
-import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -14,12 +13,8 @@ import bio.terra.stairway.Stairway;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.db.ResourceDao;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
-import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
-import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
-import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -27,7 +22,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,22 +40,7 @@ public class FindResourcesToCloneStepTest extends BaseUnitTest {
   @BeforeEach
   public void setup() {
     resource =
-        new ControlledGcsBucketResource(
-            UUID.randomUUID(),
-            UUID.randomUUID(),
-            "foo",
-            "as in foobar",
-            CloningInstructions.COPY_RESOURCE,
-            null,
-            PrivateResourceState.NOT_APPLICABLE,
-            AccessScopeType.ACCESS_SCOPE_SHARED,
-            ManagedByType.MANAGED_BY_USER,
-            null,
-            "bucket-with-hole-in-it-dear-liza",
-            /*resourceLineage=*/ null,
-            /*properties*/ Map.of(),
-            DEFAULT_USER_EMAIL,
-            /*createdDate*/ null);
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(UUID.randomUUID()).build();
 
     findResourcesToCloneStep = new FindResourcesToCloneStep(mockResourceDao);
     doReturn(mockStairway).when(mockFlightContext).getStairway();

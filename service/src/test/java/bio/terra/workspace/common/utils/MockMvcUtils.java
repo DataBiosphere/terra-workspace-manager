@@ -27,6 +27,7 @@ import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
+import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpBigQueryDatasetRequest;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpBigQueryDatasetResult;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketRequest;
@@ -42,6 +43,7 @@ import bio.terra.workspace.generated.model.ApiCloneWorkspaceRequest;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceResult;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
+import bio.terra.workspace.generated.model.ApiControlledResourceMetadata;
 import bio.terra.workspace.generated.model.ApiCreateCloudContextRequest;
 import bio.terra.workspace.generated.model.ApiCreateCloudContextResult;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpAiNotebookInstanceRequestBody;
@@ -80,6 +82,9 @@ import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
 import bio.terra.workspace.generated.model.ApiJobResult;
+import bio.terra.workspace.generated.model.ApiManagedBy;
+import bio.terra.workspace.generated.model.ApiPrivateResourceState;
+import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
 import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiPropertyKeys;
 import bio.terra.workspace.generated.model.ApiResourceDescription;
@@ -268,6 +273,7 @@ public class MockMvcUtils {
   public static final AuthenticatedUserRequest USER_REQUEST =
       new AuthenticatedUserRequest(
           DEFAULT_USER_EMAIL, "subjectId123456", Optional.of("ThisIsNotARealBearerToken"));
+  public static final String DEFAULT_GCP_RESOURCE_REGION = "us-central1";
   private static final Logger logger = LoggerFactory.getLogger(MockMvcUtils.class);
   private static final String DEST_BUCKET_RESOURCE_NAME =
       TestUtils.appendRandomNumber("i-am-the-cloned-bucket");
@@ -1709,7 +1715,21 @@ public class MockMvcUtils {
     return objectMapper.readValue(serializedResponse, ApiResourceList.class).getResources();
   }
 
-  public void assertResourceMetadata(
+  public static void assertControlledResourceMetadata(
+      ApiControlledResourceMetadata actualMetadata,
+      ApiAccessScope expectedAccessScope,
+      ApiManagedBy expectedManagedByType,
+      ApiPrivateResourceUser expectedPrivateResourceUser,
+      ApiPrivateResourceState expectedPrivateResourceState,
+      String region) {
+    assertEquals(expectedAccessScope, actualMetadata.getAccessScope());
+    assertEquals(expectedManagedByType, actualMetadata.getManagedBy());
+    assertEquals(expectedPrivateResourceUser, actualMetadata.getPrivateResourceUser());
+    assertEquals(expectedPrivateResourceState, actualMetadata.getPrivateResourceState());
+    assertEquals(region, actualMetadata.getRegion());
+  }
+
+  public static void assertResourceMetadata(
       ApiResourceMetadata actualMetadata,
       ApiCloudPlatform expectedCloudPlatform,
       ApiResourceType expectedResourceType,
@@ -1737,7 +1757,7 @@ public class MockMvcUtils {
     // TODO (PF-2261): assert lastUpdatedBy, lastUpdatedDate.
   }
 
-  public void assertClonedResourceMetadata(
+  public static void assertClonedResourceMetadata(
       ApiResourceMetadata actualMetadata,
       ApiCloudPlatform expectedCloudPlatform,
       ApiResourceType expectedResourceType,

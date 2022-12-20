@@ -75,7 +75,8 @@ public class ControlledAzureDiskResource extends ControlledResource {
         resourceLineage,
         properties,
         createdByEmail,
-        createdDate);
+        createdDate,
+        region);
     this.diskName = diskName;
     this.region = region;
     this.size = size;
