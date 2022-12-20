@@ -84,7 +84,12 @@ public class ControlledGcpResourceApiControllerAiNotebookTest extends BaseConnec
 
     assertEquals("asia-east1-a", notebook.getAttributes().getLocation());
     assertAiNotebook(
-        notebook, workspaceId, "asia-east1-a", "asia-east1", userAccessUtils.getDefaultUserEmail());
+        notebook,
+        workspaceId,
+        "asia-east1-a",
+        "asia-east1",
+        userAccessUtils.getDefaultUserEmail(),
+        userAccessUtils.getDefaultUserEmail());
 
     notebook =
         mockMvcUtils
@@ -97,6 +102,7 @@ public class ControlledGcpResourceApiControllerAiNotebookTest extends BaseConnec
         workspaceId,
         "europe-west1-b",
         "europe-west1",
+        userAccessUtils.getDefaultUserEmail(),
         userAccessUtils.getDefaultUserEmail());
 
     mockMvcUtils.deleteWorkspaceProperties(
@@ -110,7 +116,8 @@ public class ControlledGcpResourceApiControllerAiNotebookTest extends BaseConnec
       UUID expectedWorkspaceId,
       String expectedLocation,
       String expectedRegion,
-      String expectedCreatedBy) {
+      String expectedCreatedBy,
+      String expectedLastUpdatedBy) {
     assertResourceMetadata(
         actualResource.getMetadata(),
         ApiCloudPlatform.GCP,
@@ -120,7 +127,8 @@ public class ControlledGcpResourceApiControllerAiNotebookTest extends BaseConnec
         expectedWorkspaceId,
         actualResource.getMetadata().getName(),
         /*expectedResourceLineage=*/ new ApiResourceLineage(),
-        expectedCreatedBy);
+        expectedCreatedBy,
+        expectedLastUpdatedBy);
 
     assertEquals(expectedLocation, actualResource.getAttributes().getLocation());
 

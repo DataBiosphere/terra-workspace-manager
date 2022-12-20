@@ -184,6 +184,7 @@ public class ReferencedGcpResourceControllerGitRepoTest extends BaseConnectedTes
         sourceGitRepoUrl,
         /*expectedCreatedBy=*/ userAccessUtils.getSecondUserEmail(),
         /*expectedLastUpdatedBy=*/ userAccessUtils.getSecondUserEmail());
+
     mockMvcUtils.removeRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
