@@ -32,7 +32,7 @@ public class WorkspaceConnectedTestUtils {
     workspaceService.createGcpCloudContext(
         workspace, gcpContextJobId, userRequest, "fakeResultPath");
     jobService.waitForJob(gcpContextJobId);
-    assertNull(jobService.retrieveJobResult(gcpContextJobId, Object.class).getException());
+    assertNull(jobService.retrieveJobResult(gcpContextJobId, Object.class, null).getException());
     return workspaceService.getWorkspace(workspaceUuid);
   }
 

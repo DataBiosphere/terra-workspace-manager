@@ -1,8 +1,11 @@
 package bio.terra.workspace.service.resource.controlled;
 
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.IS_WET_RUN;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.WORKSPACE_ID_TO_GCP_PROJECT_ID_MAP;
 
 import bio.terra.common.exception.BadRequestException;
+import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.exception.ServiceUnavailableException;
 import bio.terra.stairway.FlightState;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
@@ -17,6 +20,7 @@ import bio.terra.workspace.generated.model.ApiGcpAiNotebookUpdateParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
 import bio.terra.workspace.generated.model.ApiJobControl;
+import bio.terra.workspace.service.admin.flights.cloudcontexts.gcp.SyncGcpIamRolesFlight;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
@@ -33,6 +37,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.Cont
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.UpdateControlledAiNotebookResourceFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.UpdateControlledBigQueryDatasetResourceFlight;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.flight.UpdateGcpControlledResourceRegionFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.UpdateControlledGcsBucketResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.CloneControlledAzureStorageContainerResourceFlight;
@@ -49,25 +54,34 @@ import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.WsmApplication;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.cloud.Policy;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /** CRUD methods for controlled objects. */
 @Component
 public class ControlledResourceService {
+  private static final Logger logger = LoggerFactory.getLogger(ControlledResourceService.class);
 
   // These are chosen to retry a maximum wait time so we return under a 30 second
   // network timeout.
@@ -600,6 +614,27 @@ public class ControlledResourceService {
     }
 
     return gcpPolicyBuilder.build();
+  }
+
+  public List<ControlledResource> updateGcpControlledResourcesRegion() {
+    String wsmSaToken = samService.getWsmServiceAccountToken();
+    AuthenticatedUserRequest wsmSaRequest =
+        new AuthenticatedUserRequest().token(Optional.of(wsmSaToken));
+    JobBuilder job =
+        jobService
+            .newJob()
+            .description("sync custom iam roles in all gcp projects")
+            .jobId(UUID.randomUUID().toString())
+            .flightClass(UpdateGcpControlledResourceRegionFlight.class)
+            .userRequest(wsmSaRequest)
+            .operationType(OperationType.UPDATE);
+    try {
+      List<ControlledResource> updatedResource = job.submitAndWait(new TypeReference<>() {});
+      return updatedResource;
+    } catch (RuntimeException e) {
+      logger.error("Failed to update controlled gcp resource region");
+    }
+    return Collections.emptyList();
   }
 
   private final Supplier<InternalLogicException> badState =

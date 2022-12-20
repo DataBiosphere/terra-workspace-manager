@@ -327,7 +327,7 @@ public class CrlService {
    * @param datasetName name of the dataset
    * @return the fetched Dataset object
    */
-  public Dataset getBigQueryDataset(BigQueryCow bigQueryCow, String projectId, String datasetName)
+  public static Dataset getBigQueryDataset(BigQueryCow bigQueryCow, String projectId, String datasetName)
       throws IOException {
     return bigQueryCow.datasets().get(projectId, datasetName).execute();
   }

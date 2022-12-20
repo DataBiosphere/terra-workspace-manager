@@ -118,11 +118,12 @@ public class JobService {
       Class<? extends Flight> flightClass,
       FlightMap parameterMap,
       Class<T> resultClass,
+      TypeReference<T> typeReference,
       String jobId) {
     submit(flightClass, parameterMap, jobId);
     waitForJob(jobId);
 
-    JobResultOrException<T> resultOrException = retrieveJobResult(jobId, resultClass);
+    JobResultOrException<T> resultOrException = retrieveJobResult(jobId, resultClass, typeReference);
     if (resultOrException.getException() != null) {
       throw resultOrException.getException();
     }
@@ -281,6 +282,11 @@ public class JobService {
     }
   }
 
+  @Traced
+  public <T> JobResultOrException<T> retrieveJobResult(String jobId, Class<T> resultClass) {
+    return retrieveJobResult(jobId, resultClass, /*typeReference=*/null);
+  }
+
   /**
    * There are four cases to handle here:
    *
@@ -302,7 +308,7 @@ public class JobService {
    * @return object of the result class pulled from the result map
    */
   @Traced
-  public <T> JobResultOrException<T> retrieveJobResult(String jobId, Class<T> resultClass) {
+  public <T> JobResultOrException<T> retrieveJobResult(String jobId, Class<T> resultClass, TypeReference<T> typeReference) {
     try {
       FlightState flightState = stairwayComponent.get().getFlightState(jobId);
       FlightMap resultMap =
@@ -315,8 +321,16 @@ public class JobService {
         case ERROR:
           return handleFailedFlight(flightState);
         case SUCCESS:
-          return new JobResultOrException<T>()
-              .result(resultMap.get(JobMapKeys.RESPONSE.getKeyName(), resultClass));
+          if (resultClass != null) {
+            return new JobResultOrException<T>()
+                .result(resultMap.get(JobMapKeys.RESPONSE.getKeyName(), resultClass));
+          }
+          if (typeReference != null) {
+            return new JobResultOrException<T>()
+                .result(resultMap.get(JobMapKeys.RESPONSE.getKeyName(), typeReference));
+          }
+          return new JobResultOrException<T>().result(resultMap.get(JobMapKeys.RESPONSE.getKeyName(),
+              (Class<T>) null));
         case RUNNING:
           throw new JobNotCompleteException(
               "Attempt to retrieve job result before job is complete; job id: "

@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.cloudres.google.bigquery.BigQueryCow;
 import bio.terra.cloudres.google.iam.IamCow;
@@ -72,6 +73,7 @@ import bio.terra.workspace.service.resource.controlled.exception.ReservedMetadat
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceMetadataStep;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
@@ -343,7 +345,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     jobService.waitForJob(duplicateResourceJobId);
     JobService.JobResultOrException<ControlledAiNotebookInstanceResource> duplicateJobResult =
         jobService.retrieveJobResult(
-            duplicateResourceJobId, ControlledAiNotebookInstanceResource.class);
+            duplicateResourceJobId, ControlledAiNotebookInstanceResource.class, /*typeReference=*/null);
     assertEquals(DuplicateResourceException.class, duplicateJobResult.getException().getClass());
   }
 
@@ -1604,6 +1606,18 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertEquals(createdBucket.getDescription(), fetchedResource.getDescription());
   }
 
+  @Test
+  public void updateGcpControlledResourceRegion_nothingToUpdate() {
+    List<ControlledResource> updatedResource = controlledResourceService.updateGcpControlledResourcesRegion();
+
+    assertTrue(updatedResource.isEmpty());
+  }
+
+  @Test
+  public void updateGcpControlledResourceRegion_updateResource() {
+
+  }
+
   /**
    * Creates a user-shared controlled GCS bucket in the provided workspace, using the credentials of
    * the provided user. This uses the default bucket creation parameters from {@code
@@ -1623,21 +1637,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
     assertEquals(originalResource, createdBucket);
     return createdBucket;
-  }
-
-  private ControlledBigQueryDatasetResource createBqDataset() {
-    final ControlledBigQueryDatasetResource resourceToCreate =
-        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId).build();
-    final ControlledBigQueryDatasetResource createdResource =
-        controlledResourceService
-            .createControlledResourceSync(
-                resourceToCreate,
-                null,
-                user.getAuthenticatedRequest(),
-                ControlledResourceFixtures.defaultBigQueryDatasetCreationParameters())
-            .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
-    assertEquals(resourceToCreate, createdResource);
-    return createdResource;
   }
 
   /**

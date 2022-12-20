@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset;
 
+import static bio.terra.workspace.service.crl.CrlService.getBigQueryDataset;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.BigQueryApiConversions.fromBqExpirationTime;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.PREVIOUS_UPDATE_PARAMETERS;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_PARAMETERS;
@@ -68,7 +69,7 @@ public class UpdateBigQueryDatasetStep implements Step {
     final BigQueryCow bigQueryCow = crlService.createWsmSaBigQueryCow();
     try {
       // get the existing dataset
-      Dataset existingDataset = crlService.getBigQueryDataset(bigQueryCow, projectId, datasetId);
+      Dataset existingDataset = getBigQueryDataset(bigQueryCow, projectId, datasetId);
       if (existingDataset == null) {
         IllegalStateException isEx =
             new IllegalStateException("No dataset found to update with id " + datasetId);

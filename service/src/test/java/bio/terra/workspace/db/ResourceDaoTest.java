@@ -1,6 +1,8 @@
 package bio.terra.workspace.db;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_RESOURCE_PROPERTIES;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeNotebookCommonFieldsBuilder;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
 import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant.DEFAULT_ZONE;
 import static bio.terra.workspace.unit.WorkspaceUnitTestUtils.createWorkspaceWithGcpContext;
@@ -145,11 +147,11 @@ public class ResourceDaoTest extends BaseUnitTest {
     resourceDao.createControlledResource(dataset);
 
     List<ControlledResource> gcpList =
-        resourceDao.listControlledResources(workspaceUuid, CloudPlatform.GCP);
+        resourceDao.listControlledResourcesWithMissingRegion(workspaceUuid, CloudPlatform.GCP);
     List<ControlledResource> azureList =
-        resourceDao.listControlledResources(workspaceUuid, CloudPlatform.AZURE);
+        resourceDao.listControlledResourcesWithMissingRegion(workspaceUuid, CloudPlatform.AZURE);
     List<ControlledResource> allCloudList =
-        resourceDao.listControlledResources(workspaceUuid, null);
+        resourceDao.listControlledResourcesWithMissingRegion(workspaceUuid, null);
 
     assertTrue(azureList.isEmpty());
     assertThat(gcpList, containsInAnyOrder(bucket, dataset));
@@ -158,7 +160,7 @@ public class ResourceDaoTest extends BaseUnitTest {
     assertTrue(resourceDao.deleteAllControlledResources(workspaceUuid, CloudPlatform.GCP));
     assertFalse(resourceDao.deleteAllControlledResources(workspaceUuid, CloudPlatform.AZURE));
     List<ControlledResource> listAfterDeletion =
-        resourceDao.listControlledResources(workspaceUuid, CloudPlatform.GCP);
+        resourceDao.listControlledResourcesWithMissingRegion(workspaceUuid, CloudPlatform.GCP);
     assertTrue(listAfterDeletion.isEmpty());
   }
 
@@ -401,4 +403,33 @@ public class ResourceDaoTest extends BaseUnitTest {
             resourceDao.deleteResourceProperties(
                 workspaceUuid, resource.getResourceId(), List.of()));
   }
+
+  @Test
+  public void listControlledResourceWithoutRegion() {
+    UUID workspaceUuid = createWorkspaceWithGcpContext(workspaceDao);
+    UUID workspaceUuid2 = createWorkspaceWithGcpContext(workspaceDao);
+    UUID workspaceUuid3 = createWorkspaceWithGcpContext(workspaceDao);
+    for (int i = 0; i < 5; i++) {
+      ControlledBigQueryDatasetResource dataset =
+          ControlledResourceFixtures
+              .makeDefaultControlledBqDatasetBuilder(workspaceUuid)
+              .common(makeDefaultControlledResourceFieldsBuilder().workspaceUuid(workspaceUuid)
+                  .region(null).build()).build();
+      ControlledGcsBucketResource bucket =
+          ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid2)
+              .common(makeDefaultControlledResourceFieldsBuilder().workspaceUuid(workspaceUuid2)
+                  .region(null).build()).build();
+      ControlledAiNotebookInstanceResource notebook =
+          ControlledResourceFixtures.makeDefaultAiNotebookInstance()
+              .common(makeNotebookCommonFieldsBuilder().workspaceUuid(workspaceUuid3)
+                  .region(null).build()).build();
+      resourceDao.createControlledResource(dataset);
+      resourceDao.createControlledResource(bucket);
+      resourceDao.createControlledResource(notebook);
+    }
+
+    assertEquals(15, resourceDao.listControlledResourcesWithMissingRegion(CloudPlatform.GCP).size());
+    assertTrue(resourceDao.listControlledResourcesWithMissingRegion(CloudPlatform.AZURE).isEmpty());
+  }
+
 }
