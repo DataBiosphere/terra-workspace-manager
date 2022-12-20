@@ -2,8 +2,8 @@ package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_LOCATION;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_NETWORK_NAME;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_REGION;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_SUBNETWORK_NAME;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_RESOURCE_REGION;
 
 import bio.terra.cloudres.google.compute.CloudComputeCow;
 import bio.terra.common.exception.BadRequestException;
@@ -50,10 +50,10 @@ public class RetrieveNetworkNameStep implements Step {
     CloudComputeCow compute = crlService.getCloudComputeCow();
     SubnetworkList subnetworks;
     try {
-      String location = getValidLocation(projectId);
+      String location = maybeGetValidZone(projectId);
       flightContext.getWorkingMap().put(CREATE_NOTEBOOK_LOCATION, location);
       String region = getRegionForNotebook(projectId, location);
-      flightContext.getWorkingMap().put(CREATE_NOTEBOOK_REGION, region);
+      flightContext.getWorkingMap().put(CREATE_RESOURCE_REGION, region);
       subnetworks = compute.subnetworks().list(projectId, region).execute();
     } catch (IOException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
@@ -62,7 +62,11 @@ public class RetrieveNetworkNameStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
-  private String getValidLocation(String projectId) throws IOException {
+  /**
+   * Fetches the valid zone given resource location. If none is found, returns the Ai notebook
+   * location attributes.
+   */
+  private String maybeGetValidZone(String projectId) throws IOException {
     String location = resource.getLocation();
     ZoneList zoneList = crlService.getCloudComputeCow().zones().list(projectId).execute();
 

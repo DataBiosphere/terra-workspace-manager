@@ -17,6 +17,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
+import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceRegionStep;
 import bio.terra.workspace.service.resource.controlled.model.*;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
@@ -53,7 +54,8 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
       @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
       @JsonProperty("properties") Map<String, String> properties,
       @JsonProperty("createdByEmail") String createdByEmail,
-      @JsonProperty("createdDate") OffsetDateTime createdDate) {
+      @JsonProperty("createdDate") OffsetDateTime createdDate,
+      @JsonProperty("region") String region) {
     super(
         workspaceId,
         resourceId,
@@ -68,7 +70,8 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
         resourceLineage,
         properties,
         createdByEmail,
-        createdDate);
+        createdDate,
+        region);
     this.storageAccountId = storageAccountId;
     this.storageContainerName = storageContainerName;
     validate();
@@ -129,6 +132,10 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
         new CreateAzureStorageContainerStep(
             flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
         cloudRetry);
+    flight.addStep(
+        new UpdateControlledResourceRegionStep(
+            flightBeanBag.getResourceDao(), getWorkspaceId(), getResourceId()),
+        RetryRules.shortDatabase());
   }
 
   /** {@inheritDoc} */

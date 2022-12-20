@@ -107,6 +107,8 @@ public class CopyGcsBucketDefinitionStep implements Step {
     workingMap.put(ControlledResourceKeys.DESTINATION_BUCKET_NAME, bucketName);
     UUID destinationResourceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.class);
+    ApiGcpGcsBucketCreationParameters destinationCreationParameters =
+        getDestinationCreationParameters(inputParameters, workingMap);
     // bucket resource for create flight
     ControlledGcsBucketResource destinationBucketResource =
         buildDestinationControlledGcsBucket(
@@ -117,10 +119,8 @@ public class CopyGcsBucketDefinitionStep implements Step {
             resourceName,
             description,
             bucketName,
-            samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest));
-
-    ApiGcpGcsBucketCreationParameters destinationCreationParameters =
-        getDestinationCreationParameters(inputParameters, workingMap);
+            samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
+            destinationCreationParameters.getLocation());
 
     ControlledResourceIamRole iamRole =
         IamRoleUtils.getIamRoleForAccessScope(sourceBucket.getAccessScope());

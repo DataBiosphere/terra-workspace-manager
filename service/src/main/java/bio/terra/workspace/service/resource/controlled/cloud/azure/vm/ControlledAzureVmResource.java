@@ -17,6 +17,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
+import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceRegionStep;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
@@ -84,7 +85,8 @@ public class ControlledAzureVmResource extends ControlledResource {
         resourceLineage,
         properties,
         createdByEmail,
-        createdDate);
+        createdDate,
+        region);
     this.vmName = vmName;
     this.region = region;
     this.vmSize = vmSize;
@@ -161,6 +163,10 @@ public class ControlledAzureVmResource extends ControlledResource {
             this,
             flightBeanBag.getResourceDao()),
         cloudRetry);
+    flight.addStep(
+        new UpdateControlledResourceRegionStep(
+            flightBeanBag.getResourceDao(), getWorkspaceId(), getResourceId()),
+        RetryRules.shortDatabase());
     flight.addStep(
         new AssignManagedIdentityAzureVmStep(
             flightBeanBag.getAzureConfig(),
@@ -298,7 +304,6 @@ public class ControlledAzureVmResource extends ControlledResource {
     }
     ResourceValidationUtils.validateAzureIPorSubnetName(getVmName());
     ResourceValidationUtils.validateAzureVmSize(getVmSize());
-    ResourceValidationUtils.validateRegion(getRegion());
   }
 
   @Override

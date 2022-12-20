@@ -11,12 +11,12 @@ import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 
-public class UpdateNotebookResourceRegionMetadataStep implements Step {
+public class UpdateNotebookResourceLocationAttributesStep implements Step {
 
   private final ControlledAiNotebookInstanceResource resource;
   private final ResourceDao resourceDao;
 
-  public UpdateNotebookResourceRegionMetadataStep(
+  public UpdateNotebookResourceLocationAttributesStep(
       ControlledAiNotebookInstanceResource resource, ResourceDao resourceDao) {
     this.resource = resource;
     this.resourceDao = resourceDao;

@@ -73,7 +73,8 @@ public class ControlledAzureRelayNamespaceResource extends ControlledResource {
         resourceLineage,
         properties,
         createdByEmail,
-        createdDate);
+        createdDate,
+        region);
     this.namespaceName = namespaceName;
     this.region = region;
     validate();

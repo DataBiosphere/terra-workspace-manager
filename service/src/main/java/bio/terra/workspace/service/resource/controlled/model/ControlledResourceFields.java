@@ -28,6 +28,7 @@ public class ControlledResourceFields extends WsmResourceFields {
   private final AccessScopeType accessScope;
   private final ManagedByType managedBy;
   @Nullable private final String applicationId;
+  @Nullable private final String region;
 
   /** construct from database resource */
   public ControlledResourceFields(DbResource dbResource) {
@@ -39,6 +40,7 @@ public class ControlledResourceFields extends WsmResourceFields {
     accessScope = dbResource.getAccessScope();
     managedBy = dbResource.getManagedBy();
     applicationId = dbResource.getApplicationId().orElse(null);
+    region = dbResource.getRegion();
   }
 
   // constructor for the builder
@@ -50,6 +52,7 @@ public class ControlledResourceFields extends WsmResourceFields {
     this.accessScope = builder.accessScope;
     this.managedBy = builder.managedBy;
     this.applicationId = builder.applicationId;
+    this.region = builder.region;
   }
 
   public static ControlledResourceFields.Builder builder() {
@@ -88,6 +91,11 @@ public class ControlledResourceFields extends WsmResourceFields {
     return applicationId;
   }
 
+  @Nullable
+  public String getRegion() {
+    return region;
+  }
+
   public static class Builder extends WsmResourceFields.Builder<Builder> {
 
     @Nullable private String assignedUser;
@@ -99,6 +107,7 @@ public class ControlledResourceFields extends WsmResourceFields {
     private AccessScopeType accessScope;
     private ManagedByType managedBy;
     @Nullable private String applicationId;
+    @Nullable private String region;
 
     public Builder() {}
 
@@ -141,6 +150,11 @@ public class ControlledResourceFields extends WsmResourceFields {
 
     public Builder applicationId(@Nullable String applicationId) {
       this.applicationId = applicationId;
+      return this;
+    }
+
+    public Builder region(@Nullable String region) {
+      this.region = region;
       return this;
     }
   }

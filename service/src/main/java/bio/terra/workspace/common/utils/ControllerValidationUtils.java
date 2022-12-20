@@ -4,8 +4,10 @@ import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.generated.model.ApiAzureContext;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiProperty;
+import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceCategory;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
+import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.exceptions.CloudPlatformNotImplementedException;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
@@ -118,8 +120,12 @@ public final class ControllerValidationUtils {
 
   /** Return the appropriate IAM action for creating the specified controlled resource in Sam. */
   public static String samCreateAction(ControlledResourceFields commonFields) {
-    return ControlledResourceCategory.get(
-            commonFields.getAccessScope(), commonFields.getManagedBy())
+    return samCreateAction(commonFields.getAccessScope(), commonFields.getManagedBy());
+  }
+
+  public static String samCreateAction(
+      AccessScopeType accessScopeType, ManagedByType managedByType) {
+    return ControlledResourceCategory.get(accessScopeType, managedByType)
         .getSamCreateResourceAction();
   }
 

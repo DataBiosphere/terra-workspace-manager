@@ -21,6 +21,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
+import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceRegionStep;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
@@ -87,7 +88,8 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
       @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
       @JsonProperty("properties") Map<String, String> properties,
       @JsonProperty("createdByEmail") String createdByEmail,
-      @JsonProperty("createdDate") OffsetDateTime createdDate) {
+      @JsonProperty("createdDate") OffsetDateTime createdDate,
+      @JsonProperty("region") String region) {
     super(
         workspaceId,
         resourceId,
@@ -102,7 +104,8 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
         resourceLineage,
         properties,
         createdByEmail,
-        createdDate);
+        createdDate,
+        region);
     this.instanceId = instanceId;
     this.location = location;
     this.projectId = projectId;
@@ -184,7 +187,11 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
             userRequest),
         gcpRetryRule);
     flight.addStep(
-        new UpdateNotebookResourceRegionMetadataStep(this, flightBeanBag.getResourceDao()),
+        new UpdateNotebookResourceLocationAttributesStep(this, flightBeanBag.getResourceDao()),
+        shortDatabaseRetryRule);
+    flight.addStep(
+        new UpdateControlledResourceRegionStep(
+            flightBeanBag.getResourceDao(), getWorkspaceId(), getResourceId()),
         shortDatabaseRetryRule);
   }
 
