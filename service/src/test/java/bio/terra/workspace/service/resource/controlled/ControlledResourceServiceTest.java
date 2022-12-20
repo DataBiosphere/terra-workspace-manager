@@ -32,6 +32,8 @@ import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
+import bio.terra.workspace.db.DbSerDes;
+import bio.terra.workspace.db.RawDaoTestFixture;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
@@ -62,6 +64,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.Creat
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.DeleteBigQueryDatasetStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.RetrieveBigQueryDatasetCloudAttributesStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.UpdateBigQueryDatasetStep;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketAttributes;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.CreateGcsBucketStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.DeleteGcsBucketStep;
@@ -73,15 +76,22 @@ import bio.terra.workspace.service.resource.controlled.exception.ReservedMetadat
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceMetadataStep;
+import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
+import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
+import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
+import bio.terra.workspace.service.resource.model.StewardshipType;
+import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.bigquery.model.Dataset;
@@ -123,14 +133,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   /** The default GCP location to create notebooks for this test. */
   private static final String DEFAULT_NOTEBOOK_LOCATION = "us-east1-b";
 
-  private static final String DEST_DATASET_NAME = TestUtils.appendRandomNumber("dest_dataset_name");
-
-  private static final String DEST_BUCKET_DESC =
-      "A bucket cloned individually into the same workspace.";
-  private static final String DEST_BUCKET_NAME =
-      "cloned-bucket-" + UUID.randomUUID().toString().toLowerCase();
-  private static final String DEST_BUCKET_LOCATION = "US-EAST1";
-
   // Store workspaceId instead of workspace so that for local development, one can easily use a
   // previously created workspace.
   private UUID workspaceId;
@@ -150,6 +152,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @Autowired private UserAccessUtils userAccessUtils;
   @Autowired private WorkspaceConnectedTestUtils workspaceUtils;
   @Autowired private WorkspaceService workspaceService;
+  @Autowired private RawDaoTestFixture rawDaoTestFixture;
 
   private static void assertNotFound(InstanceName instanceName, AIPlatformNotebooksCow notebooks) {
     GoogleJsonResponseException exception =
@@ -345,7 +348,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     jobService.waitForJob(duplicateResourceJobId);
     JobService.JobResultOrException<ControlledAiNotebookInstanceResource> duplicateJobResult =
         jobService.retrieveJobResult(
-            duplicateResourceJobId, ControlledAiNotebookInstanceResource.class, /*typeReference=*/null);
+            duplicateResourceJobId, ControlledAiNotebookInstanceResource.class);
     assertEquals(DuplicateResourceException.class, duplicateJobResult.getException().getClass());
   }
 
@@ -1615,7 +1618,18 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Test
   public void updateGcpControlledResourceRegion_updateResource() {
-
+    ControlledGcsBucketResource resource =
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceId).build();
+    List<ResourceLineageEntry> expectedLineage = new ArrayList<>();
+    // original bucket
+    ControlledGcsBucketResource createdBucket =
+        controlledResourceService
+            .createControlledResourceSync(
+                resource,
+                null,
+                user.getAuthenticatedRequest(),
+                ControlledResourceFixtures.getGoogleBucketCreationParameters())
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
   }
 
   /**

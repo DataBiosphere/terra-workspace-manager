@@ -282,6 +282,26 @@ public class JobService {
     }
   }
 
+  /**
+   * There are four cases to handle here:
+   *
+   * <ol>
+   *   <li>Flight is still running. Throw an JobNotComplete exception
+   *   <li>Successful flight: extract the resultMap RESPONSE as the target class.
+   *   <li>Failed flight: if there is an exception, store it in the returned JobResultOrException.
+   *       Note that we only store RuntimeExceptions to allow higher-level methods to throw these
+   *       exceptions if they choose. Non-runtime exceptions require throw clauses on the controller
+   *       methods; those are not present in the swagger-generated code, so it introduces a
+   *       mismatch. Instead, in this code if the caught exception is not a runtime exception, then
+   *       we store JobResponseException, passing in the Throwable to the exception. In the global
+   *       exception handler, we retrieve the Throwable and use the error text from that in the
+   *       error model.
+   *   <li>Failed flight: no exception present. Throw an InvalidResultState exception
+   * </ol>
+   *
+   * @param jobId to process
+   * @return object of the result class pulled from the result map
+   */
   @Traced
   public <T> JobResultOrException<T> retrieveJobResult(String jobId, Class<T> resultClass) {
     return retrieveJobResult(jobId, resultClass, /*typeReference=*/null);
