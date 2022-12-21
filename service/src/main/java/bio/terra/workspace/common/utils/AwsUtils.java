@@ -42,6 +42,7 @@ import software.amazon.awssdk.services.sagemaker.model.CreatePresignedNotebookIn
 import software.amazon.awssdk.services.sagemaker.model.DescribeNotebookInstanceRequest;
 import software.amazon.awssdk.services.sagemaker.model.DescribeNotebookInstanceResponse;
 import software.amazon.awssdk.services.sagemaker.model.InstanceType;
+import software.amazon.awssdk.services.sagemaker.model.NotebookInstanceStatus;
 import software.amazon.awssdk.services.sts.StsClient;
 import software.amazon.awssdk.services.sts.model.AssumeRoleRequest;
 import software.amazon.awssdk.services.sts.model.AssumeRoleWithWebIdentityRequest;
@@ -356,19 +357,21 @@ public class AwsUtils {
     while (true) {
       DescribeNotebookInstanceResponse result =
           sageMaker.describeNotebookInstance(describeNotebookInstanceRequest);
-      String status = result.notebookInstanceStatus().name();
+      NotebookInstanceStatus status = result.notebookInstanceStatus();
 
-      if (status.equals("InService")) return;
+      if (status.equals(NotebookInstanceStatus.IN_SERVICE)) {
+        return;
+      }
 
-      if (status.equals("Failed")) {
-        throw new ApiException("Notebook creation failed.");
+      else if (!status.equals(NotebookInstanceStatus.PENDING)){
+        throw new ApiException(String.format("Unexpected notebook state '%s' at creation time.", status));
       }
 
       try {
         logger.info(
             String.format(
-                "Creating notebook '%s' waiting for 'InService' status, current status is '%s'.",
-                notebookName, status));
+                "Creating notebook '%s' waiting for '%s' status, current status is '%s'.",
+                notebookName, NotebookInstanceStatus.IN_SERVICE, status));
         TimeUnit.SECONDS.sleep(30);
       } catch (InterruptedException e) {
         // Don't care...
