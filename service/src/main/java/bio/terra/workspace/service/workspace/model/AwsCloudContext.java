@@ -21,6 +21,7 @@ public class AwsCloudContext {
   private final Arn serviceRoleArn;
   private final String serviceRoleAudience;
   private final Arn userRoleArn;
+  private final Arn kmsKeyArn;
   private final Arn notebookLifecycleConfigArn;
   private final Map<Region, String> regionToBucketNameMap;
 
@@ -44,6 +45,10 @@ public class AwsCloudContext {
     return userRoleArn;
   }
 
+  public Arn getKmsKeyArn() {
+    return kmsKeyArn;
+  }
+
   public Arn getNotebookLifecycleConfigArn() {
     return notebookLifecycleConfigArn;
   }
@@ -62,7 +67,8 @@ public class AwsCloudContext {
             .accountNumber(landingZoneConfiguration.getAccountNumber())
             .serviceRoleArn(Arn.fromString(landingZoneConfiguration.getServiceRoleArn()))
             .serviceRoleAudience(serviceRoleAudience)
-            .userRoleArn(Arn.fromString(landingZoneConfiguration.getUserRoleArn()));
+            .userRoleArn(Arn.fromString(landingZoneConfiguration.getUserRoleArn()))
+            .kmsKeyArn(Arn.fromString(landingZoneConfiguration.getKmsKeyArn()));
 
     // Configuration Lifecycle may not be configured, so check for null before attempting to
     // construct an ARN.
@@ -95,7 +101,8 @@ public class AwsCloudContext {
             .accountNumber(dbContext.accountNumber)
             .serviceRoleArn(Arn.fromString(dbContext.serviceRoleArn))
             .serviceRoleAudience(dbContext.serviceRoleAudience)
-            .userRoleArn(Arn.fromString(dbContext.userRoleArn));
+            .userRoleArn(Arn.fromString(dbContext.userRoleArn))
+            .kmsKeyArn(Arn.fromString(dbContext.kmsKeyArn));
 
     // Serialized context may not have a notebook lifecycle defined, so check for null before
     // attempting to construct an ARN.
@@ -116,6 +123,7 @@ public class AwsCloudContext {
     private Arn serviceRoleArn;
     private String serviceRoleAudience;
     private Arn userRoleArn;
+    private Arn kmsKeyArn;
     private Arn notebookLifecycleConfigArn;
     private Map<Region, String> bucketMap;
 
@@ -152,6 +160,11 @@ public class AwsCloudContext {
       return this;
     }
 
+    public Builder kmsKeyArn(Arn kmsKeyArn) {
+      this.kmsKeyArn = kmsKeyArn;
+      return this;
+    }
+
     public Builder notebookLifecycleConfigArn(Arn notebookLifecycleConfigArn) {
       this.notebookLifecycleConfigArn = notebookLifecycleConfigArn;
       return this;
@@ -173,6 +186,7 @@ public class AwsCloudContext {
     this.serviceRoleArn = builder.serviceRoleArn;
     this.serviceRoleAudience = builder.serviceRoleAudience;
     this.userRoleArn = builder.userRoleArn;
+    this.kmsKeyArn = builder.kmsKeyArn;
     this.notebookLifecycleConfigArn = builder.notebookLifecycleConfigArn;
     this.regionToBucketNameMap = builder.bucketMap;
   }
@@ -224,6 +238,7 @@ public class AwsCloudContext {
     public String serviceRoleArn;
     public String serviceRoleAudience;
     public String userRoleArn;
+    public String kmsKeyArn;
     public String notebookLifecycleConfigArn;
     public List<AwsCloudContextBucketV1> bucketList;
 
@@ -234,6 +249,7 @@ public class AwsCloudContext {
         @JsonProperty("serviceRoleArn") String serviceRoleArn,
         @JsonProperty("serviceRoleAudience") String serviceRoleAudience,
         @JsonProperty("userRoleArn") String userRoleArn,
+        @JsonProperty("kmsKeyArn") String kmsKeyArn,
         @JsonProperty("notebookLifecycleConfigArn") String notebookLifecycleConfigArn,
         @JsonProperty("bucketList") List<AwsCloudContextBucketV1> bucketList) {
       this.version = version;
@@ -242,6 +258,7 @@ public class AwsCloudContext {
       this.serviceRoleArn = serviceRoleArn;
       this.serviceRoleAudience = serviceRoleAudience;
       this.userRoleArn = userRoleArn;
+      this.kmsKeyArn = kmsKeyArn;
       this.notebookLifecycleConfigArn = notebookLifecycleConfigArn;
       this.bucketList = bucketList;
     }
@@ -253,6 +270,7 @@ public class AwsCloudContext {
       this.serviceRoleArn = context.serviceRoleArn.toString();
       this.serviceRoleAudience = context.serviceRoleAudience;
       this.userRoleArn = context.userRoleArn.toString();
+      this.kmsKeyArn = context.kmsKeyArn.toString();
 
       // Notebook Lifecycle Config is optional and may be null
       this.notebookLifecycleConfigArn =

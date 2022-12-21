@@ -333,6 +333,7 @@ public class AwsUtils {
             .notebookInstanceName(notebookName)
             .instanceType(instanceType)
             .roleArn(awsCloudContext.getUserRoleArn().toString())
+            .kmsKeyId(awsCloudContext.getKmsKeyArn().resource().resource())
             .tags(toSagemakerTags(tags));
 
     if (awsCloudContext.getNotebookLifecycleConfigArn() != null) {

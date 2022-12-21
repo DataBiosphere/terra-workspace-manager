@@ -75,6 +75,7 @@ public class AwsConfiguration {
     private String accountNumber;
     private String serviceRoleArn;
     private String userRoleArn;
+    private String kmsKeyArn;
     private String notebookLifecycleConfigArn;
     private List<AwsLandingZoneBucket> buckets;
 
@@ -108,6 +109,14 @@ public class AwsConfiguration {
 
     public void setUserRoleArn(String userRoleArn) {
       this.userRoleArn = userRoleArn;
+    }
+
+    public String getKmsKeyArn() {
+      return kmsKeyArn;
+    }
+
+    public void setKmsKeyArn(String kmsKeyArn) {
+      this.kmsKeyArn = kmsKeyArn;
     }
 
     public String getNotebookLifecycleConfigArn() {

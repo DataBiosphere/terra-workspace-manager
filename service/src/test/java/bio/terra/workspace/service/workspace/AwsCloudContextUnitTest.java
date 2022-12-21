@@ -9,6 +9,7 @@ import bio.terra.workspace.app.configuration.external.AwsConfiguration;
 import bio.terra.workspace.common.BaseAwsUnitTest;
 import bio.terra.workspace.service.workspace.exceptions.InvalidSerializedVersionException;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import software.amazon.awssdk.arns.Arn;
@@ -21,12 +22,16 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
   // This configuration must match the default configuration as defined in
   // services/src/test/resources/application-aws-unit-tests.yml
   static final String LZ_NAME = "test-lz";
+  static final Region REGION = Region.US_EAST_1;
   static final String ACCOUNT_ID = "123456789012";
   static final String GOOGLE_JWT_AUDIENCE = "test_jwt_audience";
   static final Arn ROLE_ARN_SERVICE = getRoleArn(ACCOUNT_ID, "ServiceRole");
   static final Arn ROLE_ARN_USER = getRoleArn(ACCOUNT_ID, "UserRole");
+  static final Arn KMS_KEY_ARN =
+      getKmsKeyArn(
+          Region.US_EAST_1, ACCOUNT_ID, UUID.fromString("00000000-1111-2222-3333-444444444444"));
   static final Arn NOTEBOOK_LIFECYCLE_CONFIG_ARN =
-      getLifecycleConfigArn(ACCOUNT_ID, "terra-nb-lifecycle-config-default");
+      getLifecycleConfigArn(REGION, ACCOUNT_ID, "terra-nb-lifecycle-config-default");
   static final String BUCKET_NAME_US_EAST = "east-region-bucket";
   static final String BUCKET_NAME_US_WEST = "west-region-bucket";
 
@@ -40,13 +45,23 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
         .build();
   }
 
-  private static Arn getLifecycleConfigArn(String accountId, String configName) {
+  private static Arn getLifecycleConfigArn(Region region, String accountId, String configName) {
     return Arn.builder()
         .partition("aws")
         .service("sagemaker")
-        .region("us-east-1")
+        .region(region.toString())
         .accountId(accountId)
         .resource(String.format("notebook-instance-lifecycle-config/%s", configName))
+        .build();
+  }
+
+  private static Arn getKmsKeyArn(Region region, String accountId, UUID keyId) {
+    return Arn.builder()
+        .partition("aws")
+        .service("kms")
+        .region(region.toString())
+        .accountId(accountId)
+        .resource(String.format("key/%s", keyId))
         .build();
   }
 
@@ -57,6 +72,7 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
         .serviceRoleArn(ROLE_ARN_SERVICE)
         .serviceRoleAudience(GOOGLE_JWT_AUDIENCE)
         .userRoleArn(ROLE_ARN_USER)
+        .kmsKeyArn(KMS_KEY_ARN)
         .notebookLifecycleConfigArn(
             includeNotebookLifecycleConfig ? NOTEBOOK_LIFECYCLE_CONFIG_ARN : null)
         .addBucket(Region.US_EAST_1, BUCKET_NAME_US_EAST)
@@ -75,6 +91,7 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
     assertEquals(ROLE_ARN_SERVICE, compareContext.getServiceRoleArn());
     assertEquals(GOOGLE_JWT_AUDIENCE, compareContext.getServiceRoleAudience());
     assertEquals(ROLE_ARN_USER, compareContext.getUserRoleArn());
+    assertEquals(KMS_KEY_ARN, compareContext.getKmsKeyArn());
     assertEquals(
         expectNotebookLifecycleConfig ? NOTEBOOK_LIFECYCLE_CONFIG_ARN : null,
         compareContext.getNotebookLifecycleConfigArn());
@@ -134,7 +151,7 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
   @Test
   void formatV1() {
     String goodJson =
-        "{\"version\":257,\"landingZoneName\":\"test-lz\",\"accountNumber\":\"123456789012\",\"serviceRoleArn\":\"arn:aws:iam::123456789012:ServiceRole\",\"serviceRoleAudience\":\"test_jwt_audience\",\"userRoleArn\":\"arn:aws:iam::123456789012:UserRole\",\"notebookLifecycleConfigArn\":\"arn:aws:sagemaker:us-east-1:123456789012:notebook-instance-lifecycle-config/terra-nb-lifecycle-config-default\",\"bucketList\":[{\"version\":257,\"regionName\":\"us-east-1\",\"bucketName\":\"east-region-bucket\"},{\"version\":257,\"regionName\":\"us-west-1\",\"bucketName\":\"west-region-bucket\"}]}";
+        "{\"version\":257,\"landingZoneName\":\"test-lz\",\"accountNumber\":\"123456789012\",\"serviceRoleArn\":\"arn:aws:iam::123456789012:ServiceRole\",\"serviceRoleAudience\":\"test_jwt_audience\",\"userRoleArn\":\"arn:aws:iam::123456789012:UserRole\",\"kmsKeyArn\":\"arn:aws:kms:us-east-1:123456789012:key/00000000-1111-2222-3333-444444444444\",\"notebookLifecycleConfigArn\":\"arn:aws:sagemaker:us-east-1:123456789012:notebook-instance-lifecycle-config/terra-nb-lifecycle-config-default\",\"bucketList\":[{\"version\":257,\"regionName\":\"us-east-1\",\"bucketName\":\"east-region-bucket\"},{\"version\":257,\"regionName\":\"us-west-1\",\"bucketName\":\"west-region-bucket\"}]}";
     AwsCloudContext compareContext = AwsCloudContext.deserialize(goodJson);
     validateContext(compareContext);
   }
@@ -142,7 +159,7 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
   @Test
   void formatV1NoNotebookLifecycleConfig() {
     String goodJson =
-        "{\"version\":257,\"landingZoneName\":\"test-lz\",\"accountNumber\":\"123456789012\",\"serviceRoleArn\":\"arn:aws:iam::123456789012:ServiceRole\",\"serviceRoleAudience\":\"test_jwt_audience\",\"userRoleArn\":\"arn:aws:iam::123456789012:UserRole\",\"bucketList\":[{\"version\":257,\"regionName\":\"us-east-1\",\"bucketName\":\"east-region-bucket\"},{\"version\":257,\"regionName\":\"us-west-1\",\"bucketName\":\"west-region-bucket\"}]}\n";
+        "{\"version\":257,\"landingZoneName\":\"test-lz\",\"accountNumber\":\"123456789012\",\"serviceRoleArn\":\"arn:aws:iam::123456789012:ServiceRole\",\"serviceRoleAudience\":\"test_jwt_audience\",\"userRoleArn\":\"arn:aws:iam::123456789012:UserRole\",\"kmsKeyArn\":\"arn:aws:kms:us-east-1:123456789012:key/00000000-1111-2222-3333-444444444444\",\"bucketList\":[{\"version\":257,\"regionName\":\"us-east-1\",\"bucketName\":\"east-region-bucket\"},{\"version\":257,\"regionName\":\"us-west-1\",\"bucketName\":\"west-region-bucket\"}]}\n";
     AwsCloudContext compareContext = AwsCloudContext.deserialize(goodJson);
     validateContext(compareContext, false);
   }
@@ -150,7 +167,7 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
   @Test
   void badVersion() {
     String badJson =
-        "{\"version\":0,\"landingZoneName\":\"test-lz\",\"accountNumber\":\"123456789012\",\"serviceRoleArn\":\"arn:aws:iam::123456789012:ServiceRole\",\"serviceRoleAudience\":\"test_jwt_audience\",\"userRoleArn\":\"arn:aws:iam::123456789012:UserRole\",\"bucketList\":[{\"version\":257,\"regionName\":\"us-east-1\",\"bucketName\":\"east-region-bucket\"},{\"version\":257,\"regionName\":\"us-west-1\",\"bucketName\":\"west-region-bucket\"}]}\n";
+        "{\"version\":0,\"landingZoneName\":\"test-lz\",\"accountNumber\":\"123456789012\",\"serviceRoleArn\":\"arn:aws:iam::123456789012:ServiceRole\",\"serviceRoleAudience\":\"test_jwt_audience\",\"userRoleArn\":\"arn:aws:iam::123456789012:UserRole\",\"kmsKeyArn\":\"arn:aws:kms:us-east-1:123456789012:key/00000000-1111-2222-3333-444444444444\",\"bucketList\":[{\"version\":257,\"regionName\":\"us-east-1\",\"bucketName\":\"east-region-bucket\"},{\"version\":257,\"regionName\":\"us-west-1\",\"bucketName\":\"west-region-bucket\"}]}\n";
     assertThrows(
         InvalidSerializedVersionException.class, () -> AwsCloudContext.deserialize(badJson));
   }
@@ -158,7 +175,7 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
   @Test
   void badBucketVersion() {
     String badJson =
-        "{\"version\":257,\"landingZoneName\":\"test-lz\",\"accountNumber\":\"123456789012\",\"serviceRoleArn\":\"arn:aws:iam::123456789012:ServiceRole\",\"serviceRoleAudience\":\"test_jwt_audience\",\"userRoleArn\":\"arn:aws:iam::123456789012:UserRole\",\"bucketList\":[{\"version\":0,\"regionName\":\"us-east-1\",\"bucketName\":\"east-region-bucket\"},{\"version\":257,\"regionName\":\"us-west-1\",\"bucketName\":\"west-region-bucket\"}]}\n";
+        "{\"version\":257,\"landingZoneName\":\"test-lz\",\"accountNumber\":\"123456789012\",\"serviceRoleArn\":\"arn:aws:iam::123456789012:ServiceRole\",\"serviceRoleAudience\":\"test_jwt_audience\",\"userRoleArn\":\"arn:aws:iam::123456789012:UserRole\",\"kmsKeyArn\":\"arn:aws:kms:us-east-1:123456789012:key/00000000-1111-2222-3333-444444444444\",\"bucketList\":[{\"version\":0,\"regionName\":\"us-east-1\",\"bucketName\":\"east-region-bucket\"},{\"version\":257,\"regionName\":\"us-west-1\",\"bucketName\":\"west-region-bucket\"}]}\n";
     assertThrows(
         InvalidSerializedVersionException.class, () -> AwsCloudContext.deserialize(badJson));
   }
