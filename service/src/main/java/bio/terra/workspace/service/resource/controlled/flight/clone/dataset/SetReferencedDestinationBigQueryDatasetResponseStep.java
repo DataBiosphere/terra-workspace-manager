@@ -65,8 +65,7 @@ public class SetReferencedDestinationBigQueryDatasetResponseStep implements Step
             .effectiveCloningInstructions(ApiCloningInstructionsEnum.REFERENCE)
             .dataset(
                 destDataset.toApiResource(
-                    WsmResourceApiFields.build(
-                        workspaceActivityLogService, destWorkspaceId, destResourceId)))
+                    WsmResourceApiFields.build(workspaceActivityLogService, destDataset)))
             .sourceWorkspaceId(sourceDataset.getWorkspaceId())
             .sourceResourceId(sourceDataset.getResourceId());
     FlightUtils.setResponse(context, apiClonedDataset, HttpStatus.OK);

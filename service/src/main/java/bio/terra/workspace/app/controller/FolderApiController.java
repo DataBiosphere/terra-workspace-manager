@@ -226,6 +226,6 @@ public class FolderApiController extends ControllerBase implements FolderApi {
         // should only return MIN if the log doesn't exist which means the folder was last updated
         // before the implementation of change subject id logging.
         .lastUpdatedDate(
-            lastUpdatedDetail.map(detail -> detail.changeDate()).orElse(OffsetDateTime.MIN));
+            lastUpdatedDetail.map(detail -> detail.changeDate()).orElse(OffsetDateTime.now()));
   }
 }

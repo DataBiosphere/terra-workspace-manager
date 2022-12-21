@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.controller;
 
+import static bio.terra.workspace.common.utils.MockMvcUtils.assertApiBqDatasetEquals;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertClonedResourceMetadata;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertResourceMetadata;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -118,7 +119,7 @@ public class ReferencedGcpResourceControllerBqDatasetTest extends BaseConnectedT
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId,
             sourceResource.getMetadata().getResourceId());
-    assertEquals(sourceResource, gotResource);
+    assertApiBqDatasetEquals(sourceResource, gotResource);
   }
 
   @Test
@@ -268,7 +269,7 @@ public class ReferencedGcpResourceControllerBqDatasetTest extends BaseConnectedT
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId,
             clonedResource.getMetadata().getResourceId());
-    assertEquals(clonedResource, gotResource);
+    assertApiBqDatasetEquals(clonedResource, gotResource);
   }
 
   @Test
@@ -302,7 +303,7 @@ public class ReferencedGcpResourceControllerBqDatasetTest extends BaseConnectedT
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId2,
             clonedResource.getMetadata().getResourceId());
-    assertEquals(clonedResource, gotResource);
+    assertApiBqDatasetEquals(clonedResource, gotResource);
   }
 
   // Destination workspace policy is the merge of source workspace policy and pre-clone destination

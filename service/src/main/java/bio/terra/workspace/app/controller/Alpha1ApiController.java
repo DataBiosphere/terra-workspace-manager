@@ -131,10 +131,7 @@ public class Alpha1ApiController implements Alpha1Api {
                       .map(
                           r ->
                               r.toApiMetadata(
-                                  WsmResourceApiFields.build(
-                                      workspaceActivityLogService,
-                                      r.getWorkspaceId(),
-                                      r.getResourceId())))
+                                  WsmResourceApiFields.build(workspaceActivityLogService, r)))
                       .orElse(null))
               .resourceAttributes(optResource.map(WsmResource::toApiAttributesUnion).orElse(null))
               .destinationResourceId(destinationResourceIdMaybe.orElse(null));

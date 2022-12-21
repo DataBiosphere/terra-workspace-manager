@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.controller;
 
+import static bio.terra.workspace.common.utils.MockMvcUtils.assertApiBqDatasetEquals;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertClonedResourceMetadata;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertControlledResourceMetadata;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertResourceMetadata;
@@ -169,7 +170,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId,
             sourceResource.getMetadata().getResourceId());
-    assertEquals(sourceResource, gotResource);
+    assertApiBqDatasetEquals(sourceResource, gotResource);
 
     // Call GCP directly
     cloudUtils.assertBqTableContents(
@@ -360,7 +361,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId2,
             clonedResource.getMetadata().getResourceId());
-    assertEquals(clonedResource, gotResource);
+    assertApiBqDatasetEquals(clonedResource, gotResource);
 
     // Call GCP directly
     cloudUtils.assertDatasetHasNoTables(
@@ -421,7 +422,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId,
             clonedResource.getMetadata().getResourceId());
-    assertEquals(clonedResource, gotResource);
+    assertApiBqDatasetEquals(clonedResource, gotResource);
 
     // Call GCP directly
     cloudUtils.assertBqTableContents(
@@ -477,7 +478,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId2,
             clonedResource.getMetadata().getResourceId());
-    assertEquals(clonedResource, gotResource);
+    assertApiBqDatasetEquals(clonedResource, gotResource);
 
     // Call GCP directly
     cloudUtils.assertBqTableContents(
@@ -530,7 +531,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId,
             clonedResource.getMetadata().getResourceId());
-    assertEquals(clonedResource, gotResource);
+    assertApiBqDatasetEquals(clonedResource, gotResource);
   }
 
   // Destination workspace policy is the merge of source workspace policy and pre-clone destination

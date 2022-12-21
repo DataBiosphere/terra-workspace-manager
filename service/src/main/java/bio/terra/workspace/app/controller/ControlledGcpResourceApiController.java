@@ -116,8 +116,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
                 resource, commonFields.getIamRole(), userRequest, body.getGcsBucket())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
 
-    WsmResourceApiFields apiFields =
-        getWsmResourceApiFields(workspaceUuid, resource.getResourceId());
+    WsmResourceApiFields apiFields = getWsmResourceApiFields(resource);
     var response =
         new ApiCreatedControlledGcpGcsBucket()
             .resourceId(createdBucket.getResourceId())
@@ -182,7 +181,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
                 userRequest, workspaceUuid, resourceId, SamControlledResourceActions.READ_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
     return new ResponseEntity<>(
-        resource.toApiResource(getWsmResourceApiFields(workspaceUuid, resourceId)), HttpStatus.OK);
+        resource.toApiResource(getWsmResourceApiFields(resource)), HttpStatus.OK);
   }
 
   @Override
@@ -222,8 +221,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .getControlledResource(workspaceUuid, resourceId)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
     return new ResponseEntity<>(
-        updatedResource.toApiResource(getWsmResourceApiFields(workspaceUuid, resourceId)),
-        HttpStatus.OK);
+        updatedResource.toApiResource(getWsmResourceApiFields(updatedResource)), HttpStatus.OK);
   }
 
   @Override
@@ -292,7 +290,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
                 userRequest, workspaceUuid, resourceId, SamControlledResourceActions.READ_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
     return new ResponseEntity<>(
-        resource.toApiResource(getWsmResourceApiFields(workspaceUuid, resourceId)), HttpStatus.OK);
+        resource.toApiResource(getWsmResourceApiFields(resource)), HttpStatus.OK);
   }
 
   @Override
@@ -327,8 +325,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .getControlledResource(workspaceUuid, resourceId)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
     return new ResponseEntity<>(
-        updatedResource.toApiResource(getWsmResourceApiFields(workspaceUuid, resourceId)),
-        HttpStatus.OK);
+        updatedResource.toApiResource(getWsmResourceApiFields(updatedResource)), HttpStatus.OK);
   }
 
   @Override
@@ -372,8 +369,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     var response =
         new ApiCreatedControlledGcpBigQueryDataset()
             .resourceId(resourceId)
-            .bigQueryDataset(
-                createdDataset.toApiResource(getWsmResourceApiFields(workspaceUuid, resourceId)));
+            .bigQueryDataset(createdDataset.toApiResource(getWsmResourceApiFields(createdDataset)));
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
@@ -542,8 +538,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
 
     return new ResponseEntity<>(
-        updatedResource.toApiResource(getWsmResourceApiFields(workspaceUuid, resourceId)),
-        HttpStatus.OK);
+        updatedResource.toApiResource(getWsmResourceApiFields(updatedResource)), HttpStatus.OK);
   }
 
   @Override
@@ -564,9 +559,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     ApiGcpAiNotebookInstanceResource apiResource = null;
     if (jobResult.getJobReport().getStatus().equals(ApiJobReport.StatusEnum.SUCCEEDED)) {
       ControlledAiNotebookInstanceResource resource = jobResult.getResult();
-      apiResource =
-          resource.toApiResource(
-              getWsmResourceApiFields(resource.getWorkspaceId(), resource.getResourceId()));
+      apiResource = resource.toApiResource(getWsmResourceApiFields(resource));
     }
     return new ApiCreatedControlledGcpAiNotebookInstanceResult()
         .jobReport(jobResult.getJobReport())
@@ -629,6 +622,6 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
                 userRequest, workspaceUuid, resourceId, SamControlledResourceActions.READ_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
     return new ResponseEntity<>(
-        resource.toApiResource(getWsmResourceApiFields(workspaceUuid, resourceId)), HttpStatus.OK);
+        resource.toApiResource(getWsmResourceApiFields(resource)), HttpStatus.OK);
   }
 }

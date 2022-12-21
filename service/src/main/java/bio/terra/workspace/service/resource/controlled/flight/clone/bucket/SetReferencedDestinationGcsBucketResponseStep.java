@@ -65,8 +65,7 @@ public class SetReferencedDestinationGcsBucketResponseStep implements Step {
         new ApiCreatedControlledGcpGcsBucket()
             .gcpBucket(
                 destBucket.toApiResource(
-                    WsmResourceApiFields.build(
-                        workspaceActivityLogService, destWorkspaceId, destResourceId)))
+                    WsmResourceApiFields.build(workspaceActivityLogService, destBucket)))
             .resourceId(destBucket.getResourceId());
 
     final ApiClonedControlledGcpGcsBucket apiClonedBucket =

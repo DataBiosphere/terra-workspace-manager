@@ -4,7 +4,6 @@ import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import java.time.OffsetDateTime;
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * Api fields in WsmResource that is not stored as common fields in the WsmResource and needs to be
@@ -13,11 +12,19 @@ import java.util.UUID;
 public record WsmResourceApiFields(String lastUpdatedBy, OffsetDateTime lastUpdatedDate) {
 
   public static WsmResourceApiFields build(
-      WorkspaceActivityLogService service, UUID workspaceId, UUID resourceId) {
+      WorkspaceActivityLogService service, WsmResource resource) {
     Optional<ActivityLogChangeDetails> logChangeDetails =
-        service.getLastUpdatedDetails(workspaceId, resourceId.toString());
+        service.getLastUpdatedDetails(
+            resource.getWorkspaceId(), resource.getResourceId().toString());
     return new WsmResourceApiFields(
-        logChangeDetails.map(ActivityLogChangeDetails::actorEmail).orElse("unknown"),
-        logChangeDetails.map(ActivityLogChangeDetails::changeDate).orElse(OffsetDateTime.MIN));
+        // There can be a race when the `WorkspaceActivityLogHook` log a resource creation activity
+        // and we fetch the resource from the database. So if that occurs, we will use the
+        // createdBy and createdDate instead.
+        logChangeDetails
+            .map(ActivityLogChangeDetails::actorEmail)
+            .orElse(resource.getCreatedByEmail()),
+        logChangeDetails
+            .map(ActivityLogChangeDetails::changeDate)
+            .orElse(resource.getCreatedDate()));
   }
 }

@@ -130,9 +130,7 @@ public class ResourceApiController extends WsmResourceControllerBase implements 
   // Convert a WsmResource into the API format for enumeration
   @VisibleForTesting
   public ApiResourceDescription makeApiResourceDescription(WsmResource wsmResource) {
-    ApiResourceMetadata common =
-        wsmResource.toApiMetadata(
-            getWsmResourceApiFields(wsmResource.getWorkspaceId(), wsmResource.getResourceId()));
+    ApiResourceMetadata common = wsmResource.toApiMetadata(getWsmResourceApiFields(wsmResource));
     ApiResourceAttributesUnion union = wsmResource.toApiAttributesUnion();
     return new ApiResourceDescription().metadata(common).resourceAttributes(union);
   }

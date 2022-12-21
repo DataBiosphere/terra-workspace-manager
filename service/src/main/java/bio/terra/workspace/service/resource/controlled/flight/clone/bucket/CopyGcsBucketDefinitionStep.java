@@ -138,9 +138,7 @@ public class CopyGcsBucketDefinitionStep implements Step {
             .gcpBucket(
                 clonedBucket.toApiResource(
                     WsmResourceApiFields.build(
-                        workspaceActivityLogService,
-                        destinationWorkspaceId,
-                        destinationResourceId)))
+                        workspaceActivityLogService, destinationBucketResource)))
             .resourceId(destinationBucketResource.getResourceId());
 
     var apiBucketResult =

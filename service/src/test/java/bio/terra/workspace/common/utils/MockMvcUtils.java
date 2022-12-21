@@ -131,6 +131,7 @@ import com.google.common.collect.ImmutableList;
 import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -1729,7 +1730,8 @@ public class MockMvcUtils {
     assertEquals(expectedManagedByType, actualMetadata.getManagedBy());
     assertEquals(expectedPrivateResourceUser, actualMetadata.getPrivateResourceUser());
     assertEquals(expectedPrivateResourceState, actualMetadata.getPrivateResourceState());
-    assertEquals(region, actualMetadata.getRegion());
+    assertEquals(
+        region.toLowerCase(Locale.ROOT), actualMetadata.getRegion().toLowerCase(Locale.ROOT));
   }
 
   public static void assertResourceMetadata(
@@ -1985,6 +1987,43 @@ public class MockMvcUtils {
                     .content(request),
                 userRequest))
         .andExpect(status().is(httpStatus));
+  }
+
+  public static void assertApiGcsBucketEquals(
+      ApiGcpGcsBucketResource expectedBucket, ApiGcpGcsBucketResource actualBucket) {
+    // Clear last updated by and last updated date because all the tests are reading and modifying
+    // the same source resources. The last updated date is always in flux.
+    assertEquals(
+        expectedBucket.getMetadata().lastUpdatedDate(null).lastUpdatedBy(null),
+        actualBucket.getMetadata().lastUpdatedDate(null).lastUpdatedBy(null));
+  }
+
+  public static void assertApiBqDatasetEquals(
+      ApiGcpBigQueryDatasetResource expectedDataset, ApiGcpBigQueryDatasetResource actualDataset) {
+    // Clear last updated by and last updated date because all the tests are reading and modifying
+    // the same source resources. The last updated date is always in flux.
+    assertEquals(
+        expectedDataset.getMetadata().lastUpdatedDate(null).lastUpdatedBy(null),
+        actualDataset.getMetadata().lastUpdatedDate(null).lastUpdatedBy(null));
+  }
+
+  public static void assertApiBqDataTableEquals(
+      ApiGcpBigQueryDataTableResource expectedDataTable,
+      ApiGcpBigQueryDataTableResource actualDataTable) {
+    // Clear last updated by and last updated date because all the tests are reading and modifying
+    // the same source resources. The last updated date is always in flux.
+    assertEquals(
+        expectedDataTable.getMetadata().lastUpdatedDate(null).lastUpdatedBy(null),
+        actualDataTable.getMetadata().lastUpdatedDate(null).lastUpdatedBy(null));
+  }
+
+  public static void assertApiDataRepoEquals(
+      ApiDataRepoSnapshotResource expectedDataRepo, ApiDataRepoSnapshotResource actualDataRepo) {
+    // Clear last updated by and last updated date because all the tests are reading and modifying
+    // the same source resources. The last updated date is always in flux.
+    assertEquals(
+        expectedDataRepo.getMetadata().lastUpdatedDate(null).lastUpdatedBy(null),
+        actualDataRepo.getMetadata().lastUpdatedDate(null).lastUpdatedBy(null));
   }
 
   // I can't figure out the proper way to do this

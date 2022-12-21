@@ -131,10 +131,7 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
         new ApiClonedControlledGcpBigQueryDataset()
             .dataset(
                 clonedResource.toApiResource(
-                    WsmResourceApiFields.build(
-                        workspaceActivityLogService,
-                        clonedResource.getWorkspaceId(),
-                        clonedResource.getResourceId())))
+                    WsmResourceApiFields.build(workspaceActivityLogService, clonedResource)))
             .effectiveCloningInstructions(resolvedCloningInstructions.toApiModel())
             .sourceWorkspaceId(sourceDataset.getWorkspaceId())
             .sourceResourceId(sourceDataset.getResourceId());

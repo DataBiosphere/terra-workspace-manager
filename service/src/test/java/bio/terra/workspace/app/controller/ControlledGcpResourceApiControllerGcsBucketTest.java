@@ -1,6 +1,8 @@
 package bio.terra.workspace.app.controller;
 
+import static bio.terra.workspace.common.utils.MockMvcUtils.assertApiGcsBucketEquals;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertClonedResourceMetadata;
+import static bio.terra.workspace.common.utils.MockMvcUtils.assertControlledResourceMetadata;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertResourceMetadata;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -182,7 +184,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId,
             sourceBucket.getMetadata().getResourceId());
-    assertEquals(sourceBucket, gotBucket);
+    assertApiGcsBucketEquals(sourceBucket, gotBucket);
 
     // Call GCP directly.
     cloudUtils.assertBucketFiles(
@@ -378,7 +380,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId2,
             clonedResource.getMetadata().getResourceId());
-    assertEquals(clonedResource, gotResource);
+    assertApiGcsBucketEquals(clonedResource, gotResource);
 
     // Call GCP directly.
     cloudUtils.assertBucketHasNoFiles(
@@ -432,7 +434,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId,
             clonedResource.getMetadata().getResourceId());
-    assertEquals(clonedResource, gotResource);
+    assertApiGcsBucketEquals(clonedResource, gotResource);
 
     // Call GCP directly.
     cloudUtils.assertBucketFiles(
@@ -487,7 +489,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId2,
             clonedResource.getMetadata().getResourceId());
-    assertEquals(clonedResource, gotResource);
+    assertApiGcsBucketEquals(clonedResource, gotResource);
 
     // Call GCP directly.
     cloudUtils.assertBucketFiles(
@@ -542,7 +544,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId,
             clonedResource.getMetadata().getResourceId());
-    assertEquals(clonedResource, gotResource);
+    assertApiGcsBucketEquals(clonedResource, gotResource);
   }
 
   // Destination workspace policy is the merge of source workspace policy and pre-clone destination
@@ -669,7 +671,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
         expectedBucketName,
         expectedCreatedBy,
         expectedLastUpdatedBy);
-    mockMvcUtils.assertControlledResourceMetadata(
+    assertControlledResourceMetadata(
         actualBucket.getMetadata().getControlledResourceMetadata(),
         ApiAccessScope.SHARED_ACCESS,
         ApiManagedBy.USER,
