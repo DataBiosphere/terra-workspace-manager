@@ -231,7 +231,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .location(DEFAULT_NOTEBOOK_LOCATION);
 
     ControlledAiNotebookInstanceResource resource =
-        makeNotebookTestResource(workspaceId, "initial-notebook-name", instanceId);
+        makeNotebookTestResource(workspaceId, projectId, "initial-notebook-name", instanceId);
 
     // Test idempotency of steps by retrying them once.
     Map<String, StepStatus> retrySteps = new HashMap<>();
@@ -348,7 +348,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     // Creating a controlled resource with a duplicate underlying notebook instance is not allowed.
     ControlledAiNotebookInstanceResource duplicateResource =
-        makeNotebookTestResource(workspaceId, "new-name-same-notebook-instance", instanceId);
+        makeNotebookTestResource(
+            workspaceId, projectId, "new-name-same-notebook-instance", instanceId);
     String duplicateResourceJobId =
         controlledResourceService.createAiNotebookInstance(
             duplicateResource,
@@ -376,7 +377,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .instanceId(instanceId)
             .location(DEFAULT_NOTEBOOK_LOCATION);
     ControlledAiNotebookInstanceResource resource =
-        makeNotebookTestResource(workspaceId, name, instanceId);
+        makeNotebookTestResource(workspaceId, projectId, name, instanceId);
 
     // Test idempotency of undo steps by retrying them once.
     Map<String, StepStatus> retrySteps = new HashMap<>();
@@ -480,7 +481,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         ControlledResourceFixtures.defaultNotebookCreationParameters()
             .instanceId(instanceId)
             .location(DEFAULT_NOTEBOOK_LOCATION);
-    var resource = makeNotebookTestResource(workspaceId, name, instanceId);
+    var resource = makeNotebookTestResource(workspaceId, projectId, name, instanceId);
+
+    System.out.println("Project Id: " + projectId);
     String jobId =
         controlledResourceService.createAiNotebookInstance(
             resource,
@@ -579,8 +582,14 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     // Machine type and accelerator type response obtained from GCP is in URL format, and need a
     // conversion to compare
-    assertEquals(newMachineType, updatedInstance.getMachineType());
-    assertEquals(newGpuType, updatedInstance.getAcceleratorConfig().getType());
+    String actualMachineType = updatedInstance.getMachineType();
+    actualMachineType = actualMachineType.substring(actualMachineType.lastIndexOf("/") + 1);
+    assertEquals(newMachineType, actualMachineType);
+
+    String actualGpuType = updatedInstance.getAcceleratorConfig().getType();
+    actualGpuType = actualGpuType.substring(actualGpuType.lastIndexOf("/") + 1);
+    actualGpuType = actualGpuType.toUpperCase().replace("-", "_");
+    assertEquals(newGpuType, actualGpuType);
     assertEquals(newGpuCount, updatedInstance.getAcceleratorConfig().getCoreCount());
   }
 
@@ -597,7 +606,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         ControlledResourceFixtures.defaultNotebookCreationParameters()
             .instanceId(instanceId)
             .location(DEFAULT_NOTEBOOK_LOCATION);
-    var resource = makeNotebookTestResource(workspaceId, name, instanceId);
+    var resource = makeNotebookTestResource(workspaceId, projectId, name, instanceId);
     String jobId =
         controlledResourceService.createAiNotebookInstance(
             resource,
@@ -667,7 +676,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .instanceId(instanceId)
             .location(DEFAULT_NOTEBOOK_LOCATION)
             .metadata(prevCustomMetadata);
-    var resource = makeNotebookTestResource(workspaceId, name, instanceId);
+    var resource = makeNotebookTestResource(workspaceId, projectId, name, instanceId);
     String jobId =
         controlledResourceService.createAiNotebookInstance(
             resource,
@@ -748,7 +757,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         ControlledResourceFixtures.defaultNotebookCreationParameters()
             .instanceId(instanceId)
             .location(DEFAULT_NOTEBOOK_LOCATION);
-    var resource = makeNotebookTestResource(workspaceId, name, instanceId);
+    var resource = makeNotebookTestResource(workspaceId, projectId, name, instanceId);
     String jobId =
         controlledResourceService.createAiNotebookInstance(
             resource,
@@ -802,7 +811,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   }
 
   private ControlledAiNotebookInstanceResource makeNotebookTestResource(
-      UUID workspaceUuid, String name, String instanceId) {
+      UUID workspaceUuid, String projectId, String name, String instanceId) {
 
     ControlledResourceFields commonFields =
         ControlledResourceFixtures.makeNotebookCommonFieldsBuilder()
@@ -815,7 +824,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         .common(commonFields)
         .instanceId(instanceId)
         .location(DEFAULT_NOTEBOOK_LOCATION)
-        .projectId("my-project-id")
+        .projectId(projectId)
         .machineType(DEFAULT_MACHINE_TYPE)
         .acceleratorConfig(DEFAULT_ACCELERATOR_CONFIG)
         .build();
@@ -831,7 +840,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .instanceId(instanceId)
             .location(DEFAULT_NOTEBOOK_LOCATION);
     ControlledAiNotebookInstanceResource resource =
-        makeNotebookTestResource(workspaceId, instanceId, instanceId);
+        makeNotebookTestResource(workspaceId, projectId, instanceId, instanceId);
 
     // Shared notebooks not yet implemented.
     // Private IAM roles must include writer role.
@@ -904,7 +913,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .instanceId(instanceId)
             .location(DEFAULT_NOTEBOOK_LOCATION);
     ControlledAiNotebookInstanceResource resource =
-        makeNotebookTestResource(workspaceId, instanceId, instanceId);
+        makeNotebookTestResource(workspaceId, projectId, instanceId, instanceId);
 
     String createJobId =
         controlledResourceService.createAiNotebookInstance(

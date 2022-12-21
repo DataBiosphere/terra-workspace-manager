@@ -38,6 +38,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.http.HttpStatus;
 import org.hamcrest.collection.IsMapContaining;
@@ -100,6 +101,11 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
             resourceUserApi,
             /*testValue=*/ null,
             /*postStartupScript=*/ null);
+
+    System.out.println(
+        "Instance Id: " + creationResult.getAiNotebookInstance().getAttributes().getInstanceId());
+    System.out.println("Attributes: " + creationResult.getAiNotebookInstance().getAttributes());
+    System.out.println("Metadata: " + creationResult.getAiNotebookInstance().getMetadata());
 
     UUID resourceId = creationResult.getAiNotebookInstance().getMetadata().getResourceId();
     assertEquals(
@@ -181,11 +187,13 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
         directDeleteForbidden.getStatusCode(),
         "User may not delete notebook directly on GCP");
 
-    assertEquals(
-        NotebookUtils.machineType, creationResult.getAiNotebookInstance().getMachineType());
-    assertEquals(
-        NotebookUtils.gpuType,
-        creationResult.getAiNotebookInstance().getAcceleratorConfig().getType());
+    String actualMachineType = creationResult.getAiNotebookInstance().getMachineType();
+    actualMachineType = actualMachineType.substring(actualMachineType.lastIndexOf("/") + 1);
+    assertEquals(NotebookUtils.machineType, actualMachineType);
+
+    String actualGpuType = creationResult.getAiNotebookInstance().getAcceleratorConfig().getType();
+    actualGpuType = actualGpuType.substring(actualGpuType.lastIndexOf("/") + 1);
+    assertEquals(NotebookUtils.gpuType, actualGpuType);
     assertEquals(
         NotebookUtils.gpuCount,
         creationResult.getAiNotebookInstance().getAcceleratorConfig().getCoreCount());
@@ -194,9 +202,39 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
     var newName = "new-instance-notebook-name";
     var newDescription = "new description for the new instance notebook name";
     var newMetadata = ImmutableMap.of("foo", "bar", "count", "3");
-    var newMachineType = "n1-standard-1";
-    var newGpuType = "NVIDIA_TESLA_P100";
+    var newMachineType = "n1-standard-4";
+    var newGpuType = "NVIDIA_TESLA_V100";
     long newGpuCount = 2;
+
+    //    Compute computeService = createComputeService();
+    //    computeService.instances().stop(resource.getAttributes().getProjectId(),
+    // resource.getAttributes().getLocation(),
+    //            resource.getAttributes().getInstanceId()).execute();
+    userNotebooks
+        .projects()
+        .locations()
+        .instances()
+        .stop(instanceName, new StopInstanceRequest())
+        .execute();
+
+    // Wait for the instance to finish stopping
+    int retryWaitSeconds = 30;
+    int retryCount = 30;
+    for (int i = 0; i < retryCount; i++) {
+      //      var instance =
+      // computeService.instances().get(resource.getAttributes().getProjectId(),
+      // resource.getAttributes().getLocation(),
+      //              resource.getAttributes().getInstanceId()).execute();
+      var instance = userNotebooks.projects().locations().instances().get(instanceName).execute();
+      var actualState = instance.getState();
+
+      if (actualState.equals("STOPPED")) {
+        break;
+      }
+      logger.warn(
+          "Instance state is not ready yet: {}. Retry {} of {}", actualState, i + 1, retryCount);
+      TimeUnit.SECONDS.sleep(retryWaitSeconds);
+    }
 
     GcpAiNotebookInstanceAcceleratorConfig newAcceleratorConfig =
         new GcpAiNotebookInstanceAcceleratorConfig();
@@ -222,9 +260,18 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
       assertThat(metadata, IsMapContaining.hasEntry(entrySet.getKey(), entrySet.getValue()));
     }
 
-    assertEquals(newMachineType, updatedResource.getMachineType());
-    assertEquals(newGpuType, updatedResource.getAcceleratorConfig().getType());
+    String actualUpdatedMachineType = updatedResource.getMachineType();
+    actualUpdatedMachineType =
+        actualUpdatedMachineType.substring(actualUpdatedMachineType.lastIndexOf("/") + 1);
+    assertEquals(newMachineType, actualUpdatedMachineType);
+
+    String actualUpdatedGpuType = updatedResource.getAcceleratorConfig().getType();
+    actualUpdatedGpuType =
+        actualUpdatedGpuType.substring(actualUpdatedGpuType.lastIndexOf("/") + 1);
+    assertEquals(newGpuType, actualUpdatedGpuType);
     assertEquals(newGpuCount, updatedResource.getAcceleratorConfig().getCoreCount());
+
+    System.out.println("Deleting instance: " + instanceName);
 
     // Delete the AI Notebook through WSM.
     DeleteControlledGcpAiNotebookInstanceResult deleteResult =

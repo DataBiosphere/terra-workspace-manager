@@ -12,7 +12,12 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
+import bio.terra.cloudres.google.notebooks.InstanceName;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.utils.TestUtils;
@@ -26,6 +31,9 @@ import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
+import com.google.api.services.notebooks.v1.model.AcceleratorConfig;
+import com.google.api.services.notebooks.v1.model.Instance;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +41,7 @@ import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
@@ -49,6 +58,24 @@ public class ResourceDaoTest extends BaseUnitTest {
   @BeforeAll
   public void setUp() {
     workspaceUuid = createWorkspaceWithGcpContext(workspaceDao);
+  }
+
+  @BeforeEach
+  public void setUpMocks() throws IOException {
+    Instance returnInstance = new Instance();
+    returnInstance.setMachineType("n2-standard-1");
+    AcceleratorConfig acceleratorConfig = new AcceleratorConfig();
+    acceleratorConfig.setType("NVIDIA_TESLA_V100");
+    acceleratorConfig.setCoreCount(1L);
+    returnInstance.setAcceleratorConfig(acceleratorConfig);
+
+    AIPlatformNotebooksCow mockAIPlatformNotebooksCow = mock(AIPlatformNotebooksCow.class);
+    AIPlatformNotebooksCow.Instances mockInstances = mock(AIPlatformNotebooksCow.Instances.class);
+    AIPlatformNotebooksCow.Instances.Get mockGet = mock(AIPlatformNotebooksCow.Instances.Get.class);
+    when(mockCrlService().getAIPlatformNotebooksCow()).thenReturn(mockAIPlatformNotebooksCow);
+    when(mockAIPlatformNotebooksCow.instances()).thenReturn(mockInstances);
+    when(mockInstances.get(any(InstanceName.class))).thenReturn(mockGet);
+    when(mockGet.execute()).thenReturn(returnInstance);
   }
 
   @AfterAll

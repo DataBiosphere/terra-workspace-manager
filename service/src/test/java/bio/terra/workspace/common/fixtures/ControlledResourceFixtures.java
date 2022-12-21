@@ -645,7 +645,8 @@ public class ControlledResourceFixtures {
         .common(makeNotebookCommonFieldsBuilder().build())
         .instanceId(TestUtils.appendRandomNumber("my-cloud-id"))
         .location("us-central1-c")
-        .projectId("my-project-id");
+        .projectId("my-project-id")
+        .machineType("n1-standard-1");
   }
 
   public static ControlledAiNotebookInstanceResource.Builder makeDefaultAiNotebookInstance(

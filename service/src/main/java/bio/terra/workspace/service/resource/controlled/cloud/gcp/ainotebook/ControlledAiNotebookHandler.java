@@ -10,10 +10,18 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResourceF
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.services.compute.Compute;
 import com.google.api.services.notebooks.v1.model.AcceleratorConfig;
 import com.google.api.services.notebooks.v1.model.Instance;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.PostConstruct;
@@ -69,14 +77,23 @@ public class ControlledAiNotebookHandler implements WsmResourceHandler {
     try {
       Instance instance =
           crlService.getAIPlatformNotebooksCow().instances().get(instanceName).execute();
+      //      Compute computeService = createComputeService();
+      //      Instance instance =
+      //              computeService.instances().get(projectId, attributes.getLocation(),
+      // attributes.getInstanceId()).execute();
       machineType = instance.getMachineType();
-      AcceleratorConfig accelerator = instance.getAcceleratorConfig();
-      acceleratorConfig.setType(accelerator.getType());
-      acceleratorConfig.setCoreCount(accelerator.getCoreCount());
+      if (instance.getAcceleratorConfig() != null) {
+        AcceleratorConfig accelerator = instance.getAcceleratorConfig();
+        acceleratorConfig.setType(accelerator.getType());
+        acceleratorConfig.setCoreCount(accelerator.getCoreCount());
+      }
     } catch (IOException e) {
-      System.out.println("come here now, catch hhhh" + e);
-      throw new InternalServerErrorException(
-          "Invalid input: failed insert new row to WorkspaceActivityLog table", e);
+      // When a notebook instance is just deleted in GCP in a deletion flight,
+      // there will be a moment that we need to access this instance to delete
+      // it on SAM
+      if (!e.getMessage().contains("404 Not Found")) {
+        throw new InternalServerErrorException("IOException", e);
+      }
     }
 
     var resource =
@@ -89,6 +106,25 @@ public class ControlledAiNotebookHandler implements WsmResourceHandler {
             .acceleratorConfig(acceleratorConfig)
             .build();
     return resource;
+  }
+
+  /**
+   * Directly calling the gcp api to get/update instance, requires the createComputeService, see the
+   * example in https://cloud.google.com/compute/docs/reference/rest/v1/instances/get
+   */
+  public static Compute createComputeService() throws IOException, GeneralSecurityException {
+    HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
+    JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
+
+    GoogleCredential credential = GoogleCredential.getApplicationDefault();
+    if (credential.createScopedRequired()) {
+      credential =
+          credential.createScoped(Arrays.asList("https://www.googleapis.com/auth/cloud-platform"));
+    }
+
+    return new Compute.Builder(httpTransport, jsonFactory, credential)
+        .setApplicationName("Google-ComputeSample/0.1")
+        .build();
   }
 
   /**

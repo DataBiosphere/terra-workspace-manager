@@ -39,8 +39,7 @@ import org.slf4j.LoggerFactory;
 
 public class NotebookUtils {
   private static final Logger logger = LoggerFactory.getLogger(NotebookUtils.class);
-  public static final String resourceName = RandomStringUtils.randomAlphabetic(6);
-  public static final String machineType = "n1-standard-1";
+  public static final String machineType = "n1-standard-2";
   public static final String gpuType = "NVIDIA_TESLA_T4";
   public static final long gpuCount = 1;
   private static final int ASSERT_PROXY_URL_RETRY_MAX = 40;
@@ -58,6 +57,7 @@ public class NotebookUtils {
       @Nullable String testValue,
       @Nullable String postStartupScript)
       throws ApiException, InterruptedException {
+    var resourceName = RandomStringUtils.randomAlphabetic(6);
 
     GcpAiNotebookInstanceAcceleratorConfig acceleratorConfig =
         new GcpAiNotebookInstanceAcceleratorConfig();

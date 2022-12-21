@@ -12,8 +12,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
+import bio.terra.cloudres.google.notebooks.InstanceName;
 import bio.terra.stairway.Direction;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
@@ -44,6 +47,9 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
+import com.google.api.services.notebooks.v1.model.AcceleratorConfig;
+import com.google.api.services.notebooks.v1.model.Instance;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -67,8 +73,23 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   @Autowired private RawDaoTestFixture rawDaoTestFixture;
 
   @BeforeEach
-  void setUpOnce() throws InterruptedException {
+  void setUpOnce() throws InterruptedException, IOException {
     when(mockSamService().getUserStatusInfo(any())).thenReturn(USER_STATUS_INFO);
+
+    Instance returnInstance = new Instance();
+    returnInstance.setMachineType("n2-standard-1");
+    AcceleratorConfig acceleratorConfig = new AcceleratorConfig();
+    acceleratorConfig.setType("NVIDIA_TESLA_V100");
+    acceleratorConfig.setCoreCount(1L);
+    returnInstance.setAcceleratorConfig(acceleratorConfig);
+
+    AIPlatformNotebooksCow mockAIPlatformNotebooksCow = mock(AIPlatformNotebooksCow.class);
+    AIPlatformNotebooksCow.Instances mockInstances = mock(AIPlatformNotebooksCow.Instances.class);
+    AIPlatformNotebooksCow.Instances.Get mockGet = mock(AIPlatformNotebooksCow.Instances.Get.class);
+    when(mockCrlService().getAIPlatformNotebooksCow()).thenReturn(mockAIPlatformNotebooksCow);
+    when(mockAIPlatformNotebooksCow.instances()).thenReturn(mockInstances);
+    when(mockInstances.get(any(InstanceName.class))).thenReturn(mockGet);
+    when(mockGet.execute()).thenReturn(returnInstance);
   }
 
   @Test

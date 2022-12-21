@@ -26,6 +26,7 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.compute.Compute;
 import com.google.api.services.compute.model.AcceleratorConfig;
+import com.google.api.services.compute.model.Instance;
 import com.google.api.services.compute.model.InstancesSetMachineResourcesRequest;
 import com.google.api.services.compute.model.InstancesSetMachineTypeRequest;
 import com.google.api.services.compute.model.Scheduling;
@@ -35,6 +36,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,6 +62,7 @@ public class UpdateAiNotebookAttributesStep implements Step {
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     final FlightMap inputMap = context.getInputParameters();
+    final FlightMap workingMap = context.getWorkingMap();
     final ApiGcpAiNotebookUpdateParameters updateParameters =
         inputMap.get(UPDATE_PARAMETERS, ApiGcpAiNotebookUpdateParameters.class);
     if (updateParameters == null) {
@@ -77,6 +80,7 @@ public class UpdateAiNotebookAttributesStep implements Step {
     String machineType = inputMap.get(MACHINE_TYPE, String.class);
     AcceleratorConfig acceleratorConfig = inputMap.get(ACCELERATOR_CONFIG, AcceleratorConfig.class);
     return updateAiNotebook(
+        workingMap,
         sanitizedMetadata,
         cloudContextService.getRequiredGcpProject(resource.getWorkspaceId()),
         machineType,
@@ -110,7 +114,14 @@ public class UpdateAiNotebookAttributesStep implements Step {
         currentMetadata.put(
             entry.getKey(), prevParameters.getMetadata().getOrDefault(entry.getKey(), ""));
       }
-      return updateAiNotebook(currentMetadata, projectId, machineType, acceleratorConfig);
+      if (workingMap.get(
+              WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATED_MACHINE_CONFIG, String.class)
+          == null) {
+        machineType = null;
+        acceleratorConfig = null;
+      }
+      return updateAiNotebook(
+          workingMap, currentMetadata, projectId, machineType, acceleratorConfig);
     } catch (GoogleJsonResponseException e) {
       if (HttpStatus.BAD_REQUEST.value() == e.getStatusCode()
           || HttpStatus.NOT_FOUND.value() == e.getStatusCode()) {
@@ -123,6 +134,7 @@ public class UpdateAiNotebookAttributesStep implements Step {
   }
 
   private StepResult updateAiNotebook(
+      FlightMap workingMap,
       Map<String, String> metadataToUpdate,
       String projectId,
       @Nullable String machineType,
@@ -137,6 +149,7 @@ public class UpdateAiNotebookAttributesStep implements Step {
           instanceName.instanceId(),
           machineType,
           acceleratorConfig);
+      workingMap.put(WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATED_MACHINE_CONFIG, "true");
     } catch (GoogleJsonResponseException e) {
       if (HttpStatus.BAD_REQUEST.value() == e.getStatusCode()
           || HttpStatus.NOT_FOUND.value() == e.getStatusCode()) {
@@ -157,13 +170,27 @@ public class UpdateAiNotebookAttributesStep implements Step {
       String instanceId,
       String machineType,
       AcceleratorConfig acceleratorConfig)
-      throws GeneralSecurityException, IOException {
-    Compute computeService = createComputeService();
+      throws GeneralSecurityException, IOException, IllegalStateException {
+    if (machineType != null
+        || (acceleratorConfig != null && acceleratorConfig.getAcceleratorType() != null)) {
+      InstanceName instanceName =
+          InstanceName.builder()
+              .projectId(projectId)
+              .location(location)
+              .instanceId(instanceId)
+              .build();
+      var instance = crlService.getAIPlatformNotebooksCow().instances().get(instanceName).execute();
+      if (!instance.getState().equals("STOPPED")) {
+        throw new IllegalStateException("Notebook instance has to be stopped before updating.");
+      }
+    }
 
+    Compute computeService = createComputeService();
+    String machineTypeUrl = null, gpuTypeUrl = null;
     if (machineType != null) {
+      machineTypeUrl = machineType;
       // GCP requires a URL as machine type and accelerator type. If user input a machine type name,
       // like "n1-standard-2", we augment it into a URL.
-      String machineTypeUrl = machineType;
       if (machineTypeUrl.lastIndexOf("/") == -1) {
         machineTypeUrl = createBaseUrl(projectId, location) + "/machineTypes/" + machineTypeUrl;
       }
@@ -176,7 +203,7 @@ public class UpdateAiNotebookAttributesStep implements Step {
     }
 
     if (acceleratorConfig != null && acceleratorConfig.getAcceleratorType() != null) {
-      String gpuTypeUrl = acceleratorConfig.getAcceleratorType();
+      gpuTypeUrl = acceleratorConfig.getAcceleratorType();
       if (gpuTypeUrl.lastIndexOf("/") == -1) {
         gpuTypeUrl =
             createBaseUrl(projectId, location)
@@ -198,6 +225,30 @@ public class UpdateAiNotebookAttributesStep implements Step {
           .instances()
           .setMachineResources(projectId, location, instanceId, setMachineResourcesRequest)
           .execute();
+    }
+
+    // Wait for the instance to finish updating
+    int retryCount = 5, retryWaitSeconds = 2;
+
+    for (int i = 0; i < retryCount; i++) {
+      Instance instanceInfo =
+          computeService.instances().get(projectId, location, instanceId).execute();
+
+      if ((machineType == null || instanceInfo.getMachineType().equals(machineTypeUrl))
+          && (acceleratorConfig == null
+              || acceleratorConfig.getAcceleratorType() == null
+              || instanceInfo
+                  .getGuestAccelerators()
+                  .get(0)
+                  .getAcceleratorType()
+                  .equals(gpuTypeUrl))) {
+        break;
+      }
+      try {
+        TimeUnit.SECONDS.sleep(retryWaitSeconds);
+      } catch (InterruptedException e) {
+
+      }
     }
   }
 
