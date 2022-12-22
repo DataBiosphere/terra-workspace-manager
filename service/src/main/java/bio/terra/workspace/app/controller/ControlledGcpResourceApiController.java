@@ -306,7 +306,11 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
     getControlledResourceService()
         .updateBqDataset(
-            resource, body.getUpdateParameters(), body.getName(), body.getDescription());
+            resource,
+            body.getUpdateParameters(),
+            body.getName(),
+            body.getDescription(),
+            userRequest);
 
     final ControlledBigQueryDatasetResource updatedResource =
         getControlledResourceService()

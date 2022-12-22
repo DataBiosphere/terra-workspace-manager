@@ -253,7 +253,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
         sourceBucket.getMetadata().getResourceId(),
         sourceResourceName,
         RESOURCE_DESCRIPTION,
-        ApiCloningInstructionsEnum.NOTHING);
+        ApiCloningInstructionsEnum.DEFINITION);
   }
 
   @Test

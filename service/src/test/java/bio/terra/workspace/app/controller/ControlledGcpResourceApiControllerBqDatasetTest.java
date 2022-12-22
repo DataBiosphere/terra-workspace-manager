@@ -161,6 +161,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         ApiCloningInstructionsEnum.DEFINITION,
         workspaceId,
         sourceResourceName,
+        RESOURCE_DESCRIPTION,
         projectId,
         sourceDatasetName,
         /*expectedCreatedBy=*/ userAccessUtils.getDefaultUserEmail(),
@@ -197,7 +198,6 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
     var newName = TestUtils.appendRandomNumber("newdatatableresourcename");
     var newDescription = "This is an updated description";
     var newCloningInstruction = ApiCloningInstructionsEnum.REFERENCE;
-    var newDataset = TestUtils.appendRandomNumber("newdataset");
     ApiGcpBigQueryDatasetResource updatedResource =
         mockMvcUtils.updateControlledBqDataset(
             userAccessUtils.secondUserAuthRequest(),
@@ -220,7 +220,8 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         workspaceId,
         newName,
         newDescription,
-        newDataset,
+        projectId,
+        sourceDatasetName,
         userAccessUtils.getDefaultUserEmail(),
         userAccessUtils.getSecondUserEmail());
 
@@ -235,7 +236,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         sourceResource.getMetadata().getResourceId(),
         sourceResourceName,
         RESOURCE_DESCRIPTION,
-        ApiCloningInstructionsEnum.NOTHING);
+        ApiCloningInstructionsEnum.DEFINITION);
   }
 
   @Test
@@ -680,6 +681,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
       ApiCloningInstructionsEnum expectedCloningInstructions,
       UUID expectedWorkspaceId,
       String expectedResourceName,
+      String expectedResourceDescription,
       String expectedProjectId,
       String expectedDatasetName,
       String expectedCreatedBy,
@@ -692,7 +694,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         expectedCloningInstructions,
         expectedWorkspaceId,
         expectedResourceName,
-        actualDataset.getMetadata().getDescription(),
+        expectedResourceDescription,
         /*expectedResourceLineage=*/ new ApiResourceLineage(),
         expectedCreatedBy,
         expectedLastUpdatedBy);

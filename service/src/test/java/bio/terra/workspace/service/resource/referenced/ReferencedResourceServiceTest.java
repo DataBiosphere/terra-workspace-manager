@@ -713,9 +713,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
                   /*resourceLineage=*/ null,
                   /*properties=*/ Map.of(),
                   DEFAULT_USER_EMAIL,
-                  /*createdDate*/ null,
-                  DEFAULT_USER_EMAIL,
-                  /*lastUpdatedDate*/ null));
+                  /*createdDate=*/ null,
+                  /*lastUpdatedBy=*/ null,
+                  /*lastUpdatedDate=*/ null));
     }
 
     @Test
@@ -735,9 +735,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
                   /*resourceLineage=*/ null,
                   /*properties=*/ Map.of(),
                   DEFAULT_USER_EMAIL,
-                  /*createdDate*/ null,
-                  DEFAULT_USER_EMAIL,
-                  /*lastUpdatedDate*/ null));
+                  /*createdDate=*/ null,
+                  /*lastUpdatedBy=*/ null,
+                  /*lastUpdatedDate=*/ null));
     }
 
     @Test
@@ -758,9 +758,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
                   /*resourceLineage=*/ null,
                   /*properties=*/ Map.of(),
                   DEFAULT_USER_EMAIL,
-                  /*createdDate*/ null,
-                  DEFAULT_USER_EMAIL,
-                  /*lastUpdatedDate*/ null));
+                  /*createdDate=*/ null,
+                  /*lastUpdatedBy=*/ null,
+                  /*lastUpdatedDate=*/ null));
     }
 
     @Test
@@ -803,9 +803,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
           /*resourceLineage=*/ null,
           /*properties=*/ Map.of(),
           DEFAULT_USER_EMAIL,
-          /*createdDate*/ null,
-          DEFAULT_USER_EMAIL,
-          /*lastUpdatedDate*/ null);
+          /*createdDate=*/ null,
+          /*lastUpdatedBy=*/ null,
+          /*lastUpdatedDate=*/ null);
     }
 
     private ReferencedBigQueryDataTableResource makeBigQueryDataTableResource() {
@@ -823,9 +823,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
           /*resourceLineage=*/ null,
           /*properties=*/ Map.of(),
           DEFAULT_USER_EMAIL,
-          /*createdDate*/ null,
-          DEFAULT_USER_EMAIL,
-          /*lastUpdatedDate*/ null);
+          /*createdDate=*/ null,
+          /*lastUpdatedBy=*/ null,
+          /*lastUpdatedDate=*/ null);
     }
 
     @Test
@@ -1049,9 +1049,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
                   /*resourceLineage=*/ null,
                   /*properties=*/ Map.of(),
                   DEFAULT_USER_EMAIL,
-                  /*createdDate*/ null,
-                  DEFAULT_USER_EMAIL,
-                  /*lastUpdatedDate*/ null));
+                  /*createdDate=*/ null,
+                  /*lastUpdatedBy=*/ null,
+                  /*lastUpdatedDate=*/ null));
     }
 
     @Test
@@ -1074,9 +1074,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
                   /*resourceLineage=*/ null,
                   /*properties=*/ Map.of(),
                   DEFAULT_USER_EMAIL,
-                  /*createdDate*/ null,
-                  DEFAULT_USER_EMAIL,
-                  /*lastUpdatedDate*/ null));
+                  /*createdDate=*/ null,
+                  /*lastUpdatedBy=*/ null,
+                  /*lastUpdatedDate=*/ null));
     }
 
     @Test
@@ -1098,9 +1098,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
                   /*resourceLineage=*/ null,
                   /*properties=*/ Map.of(),
                   DEFAULT_USER_EMAIL,
-                  /*createdDate*/ null,
-                  DEFAULT_USER_EMAIL,
-                  /*lastUpdatedDate*/ null));
+                  /*createdDate=*/ null,
+                  /*lastUpdatedBy=*/ null,
+                  /*lastUpdatedDate=*/ null));
     }
 
     @Test
@@ -1123,9 +1123,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
                   /*resourceLineage=*/ null,
                   /*Properties=*/ Map.of(),
                   DEFAULT_USER_EMAIL,
-                  /*createdDate*/ null,
-                  DEFAULT_USER_EMAIL,
-                  /*lastUpdatedDate*/ null));
+                  /*createdDate=*/ null,
+                  /*lastUpdatedBy=*/ null,
+                  /*lastUpdatedDate=*/ null));
     }
 
     @Test
@@ -1147,9 +1147,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
                   /*resourceLineage=*/ null,
                   /*properties=*/ Map.of(),
                   DEFAULT_USER_EMAIL,
-                  /*createdDate*/ null,
-                  DEFAULT_USER_EMAIL,
-                  /*lastUpdatedDate*/ null));
+                  /*createdDate=*/ null,
+                  /*lastUpdatedBy=*/ null,
+                  /*lastUpdatedDate=*/ null));
     }
 
     @Test
@@ -1186,9 +1186,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
           /*resourceLineage=*/ null,
           /*properties=*/ Map.of(),
           DEFAULT_USER_EMAIL,
-          /*createdDate*/ null,
-          DEFAULT_USER_EMAIL,
-          /*lastUpdatedDate*/ null);
+          /*createdDate=*/ null,
+          /*lastUpdatedBy=*/ null,
+          /*lastUpdatedDate=*/ null);
     }
 
     @Test
@@ -1314,9 +1314,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               /*resourceLineage=*/ null,
               /*properties=*/ Map.of(),
               DEFAULT_USER_EMAIL,
-              /*createdDate*/ null,
-              DEFAULT_USER_EMAIL,
-              /*lastUpdatedDate*/ null);
+              /*createdDate=*/ null,
+              /*lastUpdatedBy=*/ null,
+              /*lastUpdatedDate=*/ null);
 
       assertThrows(
           DuplicateResourceException.class,

@@ -17,7 +17,6 @@ import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.model.EnumeratedJob;
 import bio.terra.workspace.service.job.model.EnumeratedJobs;
-import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
@@ -30,8 +29,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -39,7 +36,6 @@ import org.springframework.stereotype.Controller;
 
 @Controller
 public class Alpha1ApiController implements Alpha1Api {
-  private final Logger logger = LoggerFactory.getLogger(Alpha1ApiController.class);
 
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final WorkspaceService workspaceService;
@@ -47,7 +43,6 @@ public class Alpha1ApiController implements Alpha1Api {
   private final JobService jobService;
   private final JobApiUtils jobApiUtils;
   private final HttpServletRequest request;
-  private final WorkspaceActivityLogService workspaceActivityLogService;
 
   @Autowired
   public Alpha1ApiController(
@@ -56,15 +51,13 @@ public class Alpha1ApiController implements Alpha1Api {
       FeatureConfiguration features,
       JobService jobService,
       JobApiUtils jobApiUtils,
-      HttpServletRequest request,
-      WorkspaceActivityLogService workspaceActivityLogService) {
+      HttpServletRequest request) {
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.workspaceService = workspaceService;
     this.features = features;
     this.jobService = jobService;
     this.jobApiUtils = jobApiUtils;
     this.request = request;
-    this.workspaceActivityLogService = workspaceActivityLogService;
   }
 
   @Override
@@ -125,7 +118,7 @@ public class Alpha1ApiController implements Alpha1Api {
               .jobDescription(enumeratedJob.getJobDescription())
               .operationType(enumeratedJob.getOperationType().toApiModel())
               .resourceType(optResource.map(r -> r.getResourceType().toApiModel()).orElse(null))
-              .metadata(optResource.map(r -> r.toApiMetadata()).orElse(null))
+              .metadata(optResource.map(WsmResource::toApiMetadata).orElse(null))
               .resourceAttributes(optResource.map(WsmResource::toApiAttributesUnion).orElse(null))
               .destinationResourceId(destinationResourceIdMaybe.orElse(null));
       apiJobList.add(apiJob);
