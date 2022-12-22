@@ -1,6 +1,9 @@
 package bio.terra.workspace.app.controller;
 
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertApiGcsBucketEquals;
+import static bio.terra.workspace.common.utils.MockMvcUtils.assertClonedResourceMetadata;
+import static bio.terra.workspace.common.utils.MockMvcUtils.assertResourceMetadata;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -90,10 +93,10 @@ public class ReferencedGcpResourceControllerGcsBucketTest extends BaseConnectedT
     // Assert resource returned by create
     assertGcsBucket(
         sourceResource,
-        ApiStewardshipType.REFERENCED,
         ApiCloningInstructionsEnum.NOTHING,
         workspaceId,
         sourceResourceName,
+        RESOURCE_DESCRIPTION,
         sourceBucketName,
         /*expectedCreatedBy=*/ userAccessUtils.getDefaultUserEmail(),
         /*expectedLastUpdatedBy=*/ userAccessUtils.getDefaultUserEmail());
@@ -105,6 +108,60 @@ public class ReferencedGcpResourceControllerGcsBucketTest extends BaseConnectedT
             workspaceId,
             sourceResource.getMetadata().getResourceId());
     assertApiGcsBucketEquals(sourceResource, gotResource);
+  }
+
+  @Test
+  public void update() throws Exception {
+    mockMvcUtils.grantRole(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId,
+        WsmIamRole.WRITER,
+        userAccessUtils.getSecondUserEmail());
+
+    var newName = TestUtils.appendRandomNumber("newbucketresourcename");
+    var newDescription = "This is an updated description";
+    var newBucketName = TestUtils.appendRandomNumber("newcloudbucketname");
+    var newCloningInstruction = ApiCloningInstructionsEnum.REFERENCE;
+
+    ApiGcpGcsBucketResource updatedResource =
+        mockMvcUtils.updateReferencedGcsBucket(
+            userAccessUtils.secondUserAuthRequest(),
+            workspaceId,
+            sourceResource.getMetadata().getResourceId(),
+            newName,
+            newDescription,
+            newBucketName,
+            newCloningInstruction);
+    // Update the sourceResource to the updated one as all the tests are sharing
+    // the same resource.
+    ApiGcpGcsBucketResource getResource =
+        mockMvcUtils.getReferencedGcsBucket(
+            userAccessUtils.defaultUserAuthRequest(),
+            workspaceId,
+            sourceResource.getMetadata().getResourceId());
+    assertEquals(updatedResource, getResource);
+    assertGcsBucket(
+        updatedResource,
+        newCloningInstruction,
+        workspaceId,
+        newName,
+        newDescription,
+        newBucketName,
+        userAccessUtils.getDefaultUserEmail(),
+        userAccessUtils.getSecondUserEmail());
+    mockMvcUtils.removeRole(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId,
+        WsmIamRole.WRITER,
+        userAccessUtils.getSecondUserEmail());
+    mockMvcUtils.updateReferencedGcsBucket(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId,
+        sourceResource.getMetadata().getResourceId(),
+        sourceResourceName,
+        RESOURCE_DESCRIPTION,
+        sourceBucketName,
+        ApiCloningInstructionsEnum.NOTHING);
   }
 
   @Test
@@ -177,7 +234,6 @@ public class ReferencedGcpResourceControllerGcsBucketTest extends BaseConnectedT
 
     assertClonedGcsBucket(
         clonedResource,
-        ApiStewardshipType.REFERENCED,
         ApiCloningInstructionsEnum.NOTHING,
         workspaceId2,
         sourceResourceName,
@@ -236,7 +292,6 @@ public class ReferencedGcpResourceControllerGcsBucketTest extends BaseConnectedT
     // Assert resource returned in clone flight response
     assertClonedGcsBucket(
         clonedResource,
-        ApiStewardshipType.REFERENCED,
         ApiCloningInstructionsEnum.NOTHING,
         workspaceId,
         destResourceName,
@@ -269,7 +324,6 @@ public class ReferencedGcpResourceControllerGcsBucketTest extends BaseConnectedT
     // Assert resource returned in clone flight response
     assertClonedGcsBucket(
         clonedResource,
-        ApiStewardshipType.REFERENCED,
         ApiCloningInstructionsEnum.NOTHING,
         workspaceId2,
         destResourceName,
@@ -337,21 +391,22 @@ public class ReferencedGcpResourceControllerGcsBucketTest extends BaseConnectedT
 
   private void assertGcsBucket(
       ApiGcpGcsBucketResource actualResource,
-      ApiStewardshipType expectedStewardshipType,
       ApiCloningInstructionsEnum expectedCloningInstructions,
       UUID expectedWorkspaceId,
       String expectedResourceName,
+      String expectedDescription,
       String expectedBucketName,
       String expectedCreatedBy,
       String expectedLastUpdatedBy) {
-    mockMvcUtils.assertResourceMetadata(
+    assertResourceMetadata(
         actualResource.getMetadata(),
         ApiCloudPlatform.GCP,
         ApiResourceType.GCS_BUCKET,
-        expectedStewardshipType,
+        ApiStewardshipType.REFERENCED,
         expectedCloningInstructions,
         expectedWorkspaceId,
         expectedResourceName,
+        expectedDescription,
         /*expectedResourceLineage=*/ new ApiResourceLineage(),
         expectedCreatedBy,
         expectedLastUpdatedBy);
@@ -361,21 +416,21 @@ public class ReferencedGcpResourceControllerGcsBucketTest extends BaseConnectedT
 
   private void assertClonedGcsBucket(
       ApiGcpGcsBucketResource actualResource,
-      ApiStewardshipType expectedStewardshipType,
       ApiCloningInstructionsEnum expectedCloningInstructions,
       UUID expectedWorkspaceId,
       String expectedResourceName,
       String expectedBucketName,
       String expectedCreatedBy,
       String expectedLastUpdatedBy) {
-    mockMvcUtils.assertClonedResourceMetadata(
+    assertClonedResourceMetadata(
         actualResource.getMetadata(),
         ApiCloudPlatform.GCP,
         ApiResourceType.GCS_BUCKET,
-        expectedStewardshipType,
+        ApiStewardshipType.REFERENCED,
         expectedCloningInstructions,
         expectedWorkspaceId,
         expectedResourceName,
+        RESOURCE_DESCRIPTION,
         /*sourceWorkspaceId=*/ workspaceId,
         /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
         expectedCreatedBy,

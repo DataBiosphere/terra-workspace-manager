@@ -12,7 +12,6 @@ import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
 import bio.terra.workspace.generated.model.ApiAzureDiskAttributes;
 import bio.terra.workspace.generated.model.ApiAzureDiskResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
-import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
@@ -25,7 +24,6 @@ import bio.terra.workspace.service.resource.controlled.model.PrivateResourceStat
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
-import bio.terra.workspace.service.resource.model.WsmResourceApiFields;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -60,7 +58,9 @@ public class ControlledAzureDiskResource extends ControlledResource {
       @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
       @JsonProperty("properties") Map<String, String> properties,
       @JsonProperty("createdByEmail") String createdByEmail,
-      @JsonProperty("createdDate") OffsetDateTime createdDate) {
+      @JsonProperty("createdDate") OffsetDateTime createdDate,
+      @JsonProperty("lastUpdatedByEmail") String lastUpdatedByEmail,
+      @JsonProperty("lastUpdatedDate") OffsetDateTime lastUpdatedDate) {
 
     super(
         workspaceId,
@@ -77,6 +77,8 @@ public class ControlledAzureDiskResource extends ControlledResource {
         properties,
         createdByEmail,
         createdDate,
+        lastUpdatedByEmail,
+        lastUpdatedDate,
         region);
     this.diskName = diskName;
     this.region = region;
@@ -155,10 +157,8 @@ public class ControlledAzureDiskResource extends ControlledResource {
     return size;
   }
 
-  public ApiAzureDiskResource toApiResource(WsmResourceApiFields apiFields) {
-    return new ApiAzureDiskResource()
-        .metadata(super.toApiMetadata(apiFields))
-        .attributes(toApiAttributes());
+  public ApiAzureDiskResource toApiResource() {
+    return new ApiAzureDiskResource().metadata(super.toApiMetadata()).attributes(toApiAttributes());
   }
 
   private ApiAzureDiskAttributes toApiAttributes() {
@@ -185,13 +185,6 @@ public class ControlledAzureDiskResource extends ControlledResource {
   public ApiResourceAttributesUnion toApiAttributesUnion() {
     ApiResourceAttributesUnion union = new ApiResourceAttributesUnion();
     union.azureDisk(toApiAttributes());
-    return union;
-  }
-
-  @Override
-  public ApiResourceUnion toApiResourceUnion(WsmResourceApiFields apiFields) {
-    ApiResourceUnion union = new ApiResourceUnion();
-    union.azureDisk(toApiResource(apiFields));
     return union;
   }
 

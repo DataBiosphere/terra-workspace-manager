@@ -9,12 +9,10 @@ import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.generated.model.ApiGitRepoAttributes;
 import bio.terra.workspace.generated.model.ApiGitRepoResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
-import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.WsmResource;
-import bio.terra.workspace.service.resource.model.WsmResourceApiFields;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
@@ -43,7 +41,9 @@ public class ReferencedGitRepoResource extends ReferencedResource {
       @JsonProperty("resourceLineage") @Nullable List<ResourceLineageEntry> resourceLineage,
       @JsonProperty("properties") Map<String, String> properties,
       @JsonProperty("createdByEmail") String createdByEmail,
-      @JsonProperty("createdDate") OffsetDateTime createdDate) {
+      @JsonProperty("createdDate") OffsetDateTime createdDate,
+      @JsonProperty("lastUpdatedByEmail") String lastUpdatedByEmail,
+      @JsonProperty("lastUpdatedDate") OffsetDateTime lastUpdatedDate) {
     super(
         workspaceId,
         resourceId,
@@ -53,7 +53,9 @@ public class ReferencedGitRepoResource extends ReferencedResource {
         resourceLineage,
         properties,
         createdByEmail,
-        createdDate);
+        createdDate,
+        lastUpdatedByEmail,
+        lastUpdatedDate);
     this.gitRepoUrl = gitRepoUrl;
     validate();
   }
@@ -108,11 +110,6 @@ public class ReferencedGitRepoResource extends ReferencedResource {
   }
 
   @Override
-  public ApiResourceUnion toApiResourceUnion(WsmResourceApiFields apiFields) {
-    return new ApiResourceUnion().gitRepo(toApiResource(apiFields));
-  }
-
-  @Override
   public boolean checkAccess(FlightBeanBag context, AuthenticatedUserRequest userRequest) {
     // WSM doesn't yet store user credential, in this case private auth token or private SSH key.
     // Given it is useful to clone a git repo reference when cloning a workspace even though the
@@ -145,10 +142,8 @@ public class ReferencedGitRepoResource extends ReferencedResource {
     return new ApiGitRepoAttributes().gitRepoUrl(gitRepoUrl);
   }
 
-  public ApiGitRepoResource toApiResource(WsmResourceApiFields apiFields) {
-    return new ApiGitRepoResource()
-        .metadata(super.toApiMetadata(apiFields))
-        .attributes(toApiAttributes());
+  public ApiGitRepoResource toApiResource() {
+    return new ApiGitRepoResource().metadata(super.toApiMetadata()).attributes(toApiAttributes());
   }
 
   public String getGitRepoUrl() {

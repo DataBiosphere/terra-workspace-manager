@@ -316,6 +316,8 @@ public class ControlledResourceFixtures {
         Map.of(),
         MockMvcUtils.DEFAULT_USER_EMAIL,
         /*createdDate=*/ null,
+        /*lastUpdatedByEmail=*/ null,
+        /*lastUpdatedDate=*/ null,
         DEFAULT_RESOURCE_REGION);
   }
 
@@ -337,7 +339,9 @@ public class ControlledResourceFixtures {
         /*resourceLineage=*/ null,
         /*properties=*/ Map.of(),
         MockMvcUtils.DEFAULT_USER_EMAIL,
-        /*createdDate*/ null);
+        /*createdDate*/ null,
+        MockMvcUtils.DEFAULT_USER_EMAIL,
+        /*lastUpdatedDate=*/ null);
   }
 
   public static ControlledAzureRelayNamespaceResource getAzureRelayNamespace(
@@ -358,7 +362,9 @@ public class ControlledResourceFixtures {
         /*resourceLineage=*/ null,
         /*properties=*/ Map.of(),
         MockMvcUtils.DEFAULT_USER_EMAIL,
-        /*createdDate*/ null);
+        /*createdDate*/ null,
+        MockMvcUtils.DEFAULT_USER_EMAIL,
+        /*lastUpdatedDate=*/ null);
   }
 
   public static ControlledAzureDiskResource getAzureDisk(String diskName, String region, int size) {
@@ -380,7 +386,9 @@ public class ControlledResourceFixtures {
         /*resourceLineage=*/ null,
         /*properties=*/ Map.of(),
         MockMvcUtils.DEFAULT_USER_EMAIL,
-        /*createdDate*/ null);
+        /*createdDate*/ null,
+        MockMvcUtils.DEFAULT_USER_EMAIL,
+        /*lastUpdatedDate=*/ null);
   }
 
   public static ControlledAzureNetworkResource getAzureNetwork(
@@ -405,7 +413,9 @@ public class ControlledResourceFixtures {
         /*resourceLineage=*/ null,
         /*properties=*/ Map.of(),
         MockMvcUtils.DEFAULT_USER_EMAIL,
-        /*createdDate*/ null);
+        /*createdDate*/ null,
+        MockMvcUtils.DEFAULT_USER_EMAIL,
+        /*lastUpdatedDate=*/ null);
   }
 
   public static ControlledAzureStorageResource getAzureStorage(
@@ -427,7 +437,9 @@ public class ControlledResourceFixtures {
         /*resourceLineage=*/ null,
         /*properties=*/ Map.of(),
         MockMvcUtils.DEFAULT_USER_EMAIL,
-        /*createdDate*/ null);
+        /*createdDate*/ null,
+        /*lastUpdatedByEmail=*/ null,
+        /*lastUpdatedDate=*/ null);
   }
 
   public static ControlledAzureStorageResource getAzureStorage(
@@ -471,6 +483,8 @@ public class ControlledResourceFixtures {
         /*properties=*/ Map.of(),
         MockMvcUtils.DEFAULT_USER_EMAIL,
         /*createdDate*/ null,
+        /*lastUpdatedByEmail=*/ null,
+        /*lastUpdatedDate=*/ null,
         DEFAULT_RESOURCE_REGION);
   }
 
@@ -521,7 +535,9 @@ public class ControlledResourceFixtures {
         /*resourceLineage=*/ null,
         /*properties=*/ Map.of(),
         MockMvcUtils.DEFAULT_USER_EMAIL,
-        /*createdDate*/ null);
+        /*createdDate*/ null,
+        /*lastUpdatedByEmail=*/ null,
+        /*lastUpdatedDate=*/ null);
   }
 
   private ControlledResourceFixtures() {}

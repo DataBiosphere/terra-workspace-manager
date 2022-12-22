@@ -11,7 +11,6 @@ import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpGcsBucket;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
-import bio.terra.workspace.service.resource.model.WsmResourceApiFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.ReferencedGcsBucketResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -63,9 +62,7 @@ public class SetReferencedDestinationGcsBucketResponseStep implements Step {
 
     ApiCreatedControlledGcpGcsBucket apiCreatedBucket =
         new ApiCreatedControlledGcpGcsBucket()
-            .gcpBucket(
-                destBucket.toApiResource(
-                    WsmResourceApiFields.build(workspaceActivityLogService, destBucket)))
+            .gcpBucket(destBucket.toApiResource())
             .resourceId(destBucket.getResourceId());
 
     final ApiClonedControlledGcpGcsBucket apiClonedBucket =

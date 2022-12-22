@@ -17,7 +17,6 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
-import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.model.StewardshipType;
@@ -39,7 +38,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
-public class ResourceApiController extends WsmResourceControllerBase implements ResourceApi {
+public class ResourceApiController extends ControllerBase implements ResourceApi {
 
   private final WsmResourceService resourceService;
   private final WorkspaceService workspaceService;
@@ -55,9 +54,8 @@ public class ResourceApiController extends WsmResourceControllerBase implements 
       ReferencedResourceService referencedResourceService,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request,
-      SamService samService,
-      WorkspaceActivityLogService workspaceActivityLogService) {
-    super(authenticatedUserRequestFactory, request, samService, workspaceActivityLogService);
+      SamService samService) {
+    super(authenticatedUserRequestFactory, request, samService);
     this.resourceService = resourceService;
     this.workspaceService = workspaceService;
     this.referencedResourceService = referencedResourceService;
@@ -130,7 +128,7 @@ public class ResourceApiController extends WsmResourceControllerBase implements 
   // Convert a WsmResource into the API format for enumeration
   @VisibleForTesting
   public ApiResourceDescription makeApiResourceDescription(WsmResource wsmResource) {
-    ApiResourceMetadata common = wsmResource.toApiMetadata(getWsmResourceApiFields(wsmResource));
+    ApiResourceMetadata common = wsmResource.toApiMetadata();
     ApiResourceAttributesUnion union = wsmResource.toApiAttributesUnion();
     return new ApiResourceDescription().metadata(common).resourceAttributes(union);
   }

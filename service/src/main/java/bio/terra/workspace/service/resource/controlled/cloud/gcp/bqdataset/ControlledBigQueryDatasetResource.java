@@ -12,7 +12,6 @@ import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetAttributes;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
-import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
@@ -26,7 +25,6 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
-import bio.terra.workspace.service.resource.model.WsmResourceApiFields;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
@@ -64,6 +62,8 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
       @JsonProperty("properties") Map<String, String> properties,
       @JsonProperty("createdByEmail") String createdByEmail,
       @JsonProperty("createdDate") OffsetDateTime createdDate,
+      @JsonProperty("lastUpdatedByEmail") String lastUpdatedByEmail,
+      @JsonProperty("lastUpdatedDate") OffsetDateTime lastUpdatedDate,
       @JsonProperty("region") String region) {
     super(
         workspaceId,
@@ -80,6 +80,8 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
         properties,
         createdByEmail,
         createdDate,
+        lastUpdatedByEmail,
+        lastUpdatedDate,
         region);
     this.datasetName = datasetName;
     this.projectId = projectId;
@@ -159,9 +161,9 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
         .datasetId(getDatasetName());
   }
 
-  public ApiGcpBigQueryDatasetResource toApiResource(WsmResourceApiFields apiFields) {
+  public ApiGcpBigQueryDatasetResource toApiResource() {
     return new ApiGcpBigQueryDatasetResource()
-        .metadata(super.toApiMetadata(apiFields))
+        .metadata(super.toApiMetadata())
         .attributes(toApiAttributes());
   }
 
@@ -210,11 +212,6 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
   @Override
   public ApiResourceAttributesUnion toApiAttributesUnion() {
     return new ApiResourceAttributesUnion().gcpBqDataset(toApiAttributes());
-  }
-
-  @Override
-  public ApiResourceUnion toApiResourceUnion(WsmResourceApiFields apiFields) {
-    return new ApiResourceUnion().gcpBqDataset(toApiResource(apiFields));
   }
 
   @Override

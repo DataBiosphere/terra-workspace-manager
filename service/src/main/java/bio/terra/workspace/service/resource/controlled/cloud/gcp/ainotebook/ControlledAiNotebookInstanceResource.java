@@ -16,7 +16,6 @@ import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAttributes;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
-import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
@@ -30,7 +29,6 @@ import bio.terra.workspace.service.resource.controlled.model.PrivateResourceStat
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
-import bio.terra.workspace.service.resource.model.WsmResourceApiFields;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -89,6 +87,8 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
       @JsonProperty("properties") Map<String, String> properties,
       @JsonProperty("createdByEmail") String createdByEmail,
       @JsonProperty("createdDate") OffsetDateTime createdDate,
+      @JsonProperty("lastUpdatedByEmail") String lastUpdatedByEmail,
+      @JsonProperty("lastUpdatedDate") OffsetDateTime lastUpdatedDate,
       @JsonProperty("region") String region) {
     super(
         workspaceId,
@@ -105,6 +105,8 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
         properties,
         createdByEmail,
         createdDate,
+        lastUpdatedByEmail,
+        lastUpdatedDate,
         region);
     this.instanceId = instanceId;
     this.location = location;
@@ -228,9 +230,9 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
         .build();
   }
 
-  public ApiGcpAiNotebookInstanceResource toApiResource(WsmResourceApiFields apiFields) {
+  public ApiGcpAiNotebookInstanceResource toApiResource() {
     return new ApiGcpAiNotebookInstanceResource()
-        .metadata(toApiMetadata(apiFields))
+        .metadata(toApiMetadata())
         .attributes(toApiAttributes());
   }
 
@@ -261,13 +263,6 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
   public ApiResourceAttributesUnion toApiAttributesUnion() {
     ApiResourceAttributesUnion union = new ApiResourceAttributesUnion();
     union.gcpAiNotebookInstance(toApiAttributes());
-    return union;
-  }
-
-  @Override
-  public ApiResourceUnion toApiResourceUnion(WsmResourceApiFields apiFields) {
-    ApiResourceUnion union = new ApiResourceUnion();
-    union.gcpAiNotebookInstance(toApiResource(apiFields));
     return union;
   }
 

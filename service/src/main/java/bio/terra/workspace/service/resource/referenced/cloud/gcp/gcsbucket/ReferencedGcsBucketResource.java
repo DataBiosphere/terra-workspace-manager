@@ -9,7 +9,6 @@ import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketAttributes;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
-import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
@@ -17,7 +16,6 @@ import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.WsmResource;
-import bio.terra.workspace.service.resource.model.WsmResourceApiFields;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
@@ -57,7 +55,9 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
       @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
       @JsonProperty("properties") Map<String, String> properties,
       @JsonProperty("createdByEmail") String createdByEmail,
-      @JsonProperty("createdDate") OffsetDateTime createdDate) {
+      @JsonProperty("createdDate") OffsetDateTime createdDate,
+      @JsonProperty("lastUpdatedByEmail") String lastUpdatedByEmail,
+      @JsonProperty("lastUpdatedDate") OffsetDateTime lastUpdatedDate) {
     super(
         workspaceId,
         resourceId,
@@ -67,7 +67,9 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
         resourceLineage,
         properties,
         createdByEmail,
-        createdDate);
+        createdDate,
+        lastUpdatedByEmail,
+        lastUpdatedDate);
     this.bucketName = bucketName;
     validate();
   }
@@ -99,9 +101,9 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
     return new ApiGcpGcsBucketAttributes().bucketName(getBucketName());
   }
 
-  public ApiGcpGcsBucketResource toApiResource(WsmResourceApiFields apiFields) {
+  public ApiGcpGcsBucketResource toApiResource() {
     return new ApiGcpGcsBucketResource()
-        .metadata(super.toApiMetadata(apiFields))
+        .metadata(super.toApiMetadata())
         .attributes(toApiAttributes());
   }
 
@@ -133,11 +135,6 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
   @Override
   public ApiResourceAttributesUnion toApiAttributesUnion() {
     return new ApiResourceAttributesUnion().gcpGcsBucket(toApiAttributes());
-  }
-
-  @Override
-  public ApiResourceUnion toApiResourceUnion(WsmResourceApiFields apiFields) {
-    return new ApiResourceUnion().gcpGcsBucket(toApiResource(apiFields));
   }
 
   @Override

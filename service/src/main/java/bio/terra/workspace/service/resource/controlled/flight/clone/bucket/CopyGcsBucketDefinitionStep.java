@@ -20,7 +20,6 @@ import bio.terra.workspace.service.resource.controlled.ControlledResourceService
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.model.WsmResourceApiFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
@@ -135,10 +134,7 @@ public class CopyGcsBucketDefinitionStep implements Step {
 
     var apiCreatedBucket =
         new ApiCreatedControlledGcpGcsBucket()
-            .gcpBucket(
-                clonedBucket.toApiResource(
-                    WsmResourceApiFields.build(
-                        workspaceActivityLogService, destinationBucketResource)))
+            .gcpBucket(clonedBucket.toApiResource())
             .resourceId(destinationBucketResource.getResourceId());
 
     var apiBucketResult =

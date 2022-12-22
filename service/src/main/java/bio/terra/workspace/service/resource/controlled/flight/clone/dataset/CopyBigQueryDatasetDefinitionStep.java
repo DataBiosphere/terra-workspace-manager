@@ -18,7 +18,6 @@ import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.model.WsmResourceApiFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -129,9 +128,7 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
     workingMap.put(ControlledResourceKeys.CLONED_RESOURCE_DEFINITION, clonedResource);
     var apiResult =
         new ApiClonedControlledGcpBigQueryDataset()
-            .dataset(
-                clonedResource.toApiResource(
-                    WsmResourceApiFields.build(workspaceActivityLogService, clonedResource)))
+            .dataset(clonedResource.toApiResource())
             .effectiveCloningInstructions(resolvedCloningInstructions.toApiModel())
             .sourceWorkspaceId(sourceDataset.getWorkspaceId())
             .sourceResourceId(sourceDataset.getResourceId());

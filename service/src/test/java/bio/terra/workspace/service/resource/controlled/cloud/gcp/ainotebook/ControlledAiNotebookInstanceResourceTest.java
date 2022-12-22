@@ -8,12 +8,9 @@ import bio.terra.common.exception.BadRequestException;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
-import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
-import bio.terra.workspace.service.resource.model.WsmResourceApiFields;
-import java.time.OffsetDateTime;
 import org.junit.jupiter.api.Test;
 
 public class ControlledAiNotebookInstanceResourceTest extends BaseUnitTest {
@@ -73,9 +70,7 @@ public class ControlledAiNotebookInstanceResourceTest extends BaseUnitTest {
             .projectId("my-project-id")
             .build();
 
-    ApiGcpAiNotebookInstanceResource apiResource =
-        resource.toApiResource(
-            new WsmResourceApiFields(MockMvcUtils.DEFAULT_USER_EMAIL, OffsetDateTime.now()));
+    ApiGcpAiNotebookInstanceResource apiResource = resource.toApiResource();
     assertEquals("my-project-id", apiResource.getAttributes().getProjectId());
     assertEquals("us-east1-b", apiResource.getAttributes().getLocation());
     assertEquals("my-instance-id", apiResource.getAttributes().getInstanceId());

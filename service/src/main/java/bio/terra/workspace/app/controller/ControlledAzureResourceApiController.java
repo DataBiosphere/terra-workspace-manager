@@ -42,7 +42,6 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
@@ -98,14 +97,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       FeatureConfiguration features,
       AzureConfiguration azureConfiguration,
       WorkspaceService workspaceService,
-      ControlledResourceMetadataManager controlledResourceMetadataManager,
-      WorkspaceActivityLogService workspaceActivityLogService) {
-    super(
-        authenticatedUserRequestFactory,
-        request,
-        controlledResourceService,
-        samService,
-        workspaceActivityLogService);
+      ControlledResourceMetadataManager controlledResourceMetadataManager) {
+    super(authenticatedUserRequestFactory, request, controlledResourceService, samService);
     this.controlledResourceService = controlledResourceService;
     this.azureControlledStorageResourceService = azureControlledStorageResourceService;
     this.jobService = jobService;
@@ -150,7 +143,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     var response =
         new ApiCreatedControlledAzureDisk()
             .resourceId(createdDisk.getResourceId())
-            .azureDisk(createdDisk.toApiResource(getWsmResourceApiFields(createdDisk)));
+            .azureDisk(createdDisk.toApiResource());
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
@@ -185,9 +178,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
     UUID resourceId = createdIp.getResourceId();
     var response =
-        new ApiCreatedControlledAzureIp()
-            .resourceId(resourceId)
-            .azureIp(createdIp.toApiResource(getWsmResourceApiFields(createdIp)));
+        new ApiCreatedControlledAzureIp().resourceId(resourceId).azureIp(createdIp.toApiResource());
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
@@ -311,7 +302,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     var response =
         new ApiCreatedControlledAzureStorage()
             .resourceId(resourceId)
-            .azureStorage(createdStorage.toApiResource(getWsmResourceApiFields(createdStorage)));
+            .azureStorage(createdStorage.toApiResource());
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
@@ -351,9 +342,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     var response =
         new ApiCreatedControlledAzureStorageContainer()
             .resourceId(resourceId)
-            .azureStorageContainer(
-                createdStorageContainer.toApiResource(
-                    getWsmResourceApiFields(createdStorageContainer)));
+            .azureStorageContainer(createdStorageContainer.toApiResource());
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
@@ -452,7 +441,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     var response =
         new ApiCreatedControlledAzureNetwork()
             .resourceId(resourceId)
-            .azureNetwork(createdNetwork.toApiResource(getWsmResourceApiFields(createdNetwork)));
+            .azureNetwork(createdNetwork.toApiResource());
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
@@ -501,8 +490,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .validateControlledResourceAndAction(
                 userRequest, workspaceUuid, resourceId, SamControlledResourceActions.READ_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_IP);
-    return new ResponseEntity<>(
-        resource.toApiResource(getWsmResourceApiFields(resource)), HttpStatus.OK);
+    return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -515,8 +503,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .validateControlledResourceAndAction(
                 userRequest, workspaceId, resourceId, SamControlledResourceActions.READ_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_RELAY_NAMESPACE);
-    return new ResponseEntity<>(
-        resource.toApiResource(getWsmResourceApiFields(resource)), HttpStatus.OK);
+    return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -528,8 +515,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .validateControlledResourceAndAction(
                 userRequest, workspaceUuid, resourceId, SamControlledResourceActions.READ_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_DISK);
-    return new ResponseEntity<>(
-        resource.toApiResource(getWsmResourceApiFields(resource)), HttpStatus.OK);
+    return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -541,8 +527,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .validateControlledResourceAndAction(
                 userRequest, workspaceUuid, resourceId, SamControlledResourceActions.READ_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_VM);
-    return new ResponseEntity<>(
-        resource.toApiResource(getWsmResourceApiFields(resource)), HttpStatus.OK);
+    return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -555,8 +540,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .validateControlledResourceAndAction(
                 userRequest, workspaceUuid, resourceId, SamControlledResourceActions.READ_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_NETWORK);
-    return new ResponseEntity<>(
-        resource.toApiResource(getWsmResourceApiFields(resource)), HttpStatus.OK);
+    return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -647,7 +631,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     ApiAzureVmResource apiResource = null;
     if (jobResult.getJobReport().getStatus().equals(ApiJobReport.StatusEnum.SUCCEEDED)) {
       ControlledAzureVmResource resource = jobResult.getResult();
-      apiResource = resource.toApiResource(getWsmResourceApiFields(resource));
+      apiResource = resource.toApiResource();
     }
     return new ApiCreatedControlledAzureVmResult()
         .jobReport(jobResult.getJobReport())
@@ -663,7 +647,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     ApiAzureRelayNamespaceResource apiResource = null;
     if (jobResult.getJobReport().getStatus().equals(ApiJobReport.StatusEnum.SUCCEEDED)) {
       ControlledAzureRelayNamespaceResource resource = jobResult.getResult();
-      apiResource = resource.toApiResource(getWsmResourceApiFields(resource));
+      apiResource = resource.toApiResource();
     }
     return new ApiCreateControlledAzureRelayNamespaceResult()
         .jobReport(jobResult.getJobReport())
@@ -722,8 +706,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
           jobResult.getResult().storageContainer();
       var container =
           new ApiCreatedControlledAzureStorageContainer()
-              .azureStorageContainer(
-                  containerResource.toApiResource(getWsmResourceApiFields(containerResource)));
+              .azureStorageContainer(containerResource.toApiResource());
       containerResult =
           new ApiClonedControlledAzureStorageContainer()
               .effectiveCloningInstructions(

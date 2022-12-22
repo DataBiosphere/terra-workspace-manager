@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.controller;
 
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertApiBqDatasetEquals;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertClonedResourceMetadata;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertControlledResourceMetadata;
@@ -186,6 +187,58 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
   }
 
   @Test
+  public void update() throws Exception {
+    mockMvcUtils.grantRole(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId,
+        WsmIamRole.WRITER,
+        userAccessUtils.getSecondUserEmail());
+
+    var newName = TestUtils.appendRandomNumber("newdatatableresourcename");
+    var newDescription = "This is an updated description";
+    var newCloningInstruction = ApiCloningInstructionsEnum.REFERENCE;
+    var newDataset = TestUtils.appendRandomNumber("newdataset");
+    ApiGcpBigQueryDatasetResource updatedResource =
+        mockMvcUtils.updateControlledBqDataset(
+            userAccessUtils.secondUserAuthRequest(),
+            workspaceId,
+            sourceResource.getMetadata().getResourceId(),
+            newName,
+            newDescription,
+            newCloningInstruction);
+
+    ApiGcpBigQueryDatasetResource gotResource =
+        mockMvcUtils.getControlledBqDataset(
+            userAccessUtils.defaultUserAuthRequest(),
+            workspaceId,
+            sourceResource.getMetadata().getResourceId());
+    assertEquals(updatedResource, gotResource);
+    assertBqDataset(
+        gotResource,
+        ApiStewardshipType.CONTROLLED,
+        newCloningInstruction,
+        workspaceId,
+        newName,
+        newDescription,
+        newDataset,
+        userAccessUtils.getDefaultUserEmail(),
+        userAccessUtils.getSecondUserEmail());
+
+    mockMvcUtils.removeRole(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId,
+        WsmIamRole.WRITER,
+        userAccessUtils.getSecondUserEmail());
+    mockMvcUtils.updateControlledBqDataset(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId,
+        sourceResource.getMetadata().getResourceId(),
+        sourceResourceName,
+        RESOURCE_DESCRIPTION,
+        ApiCloningInstructionsEnum.NOTHING);
+  }
+
+  @Test
   public void clone_requesterNoReadAccessOnSourceWorkspace_throws403() throws Exception {
     mockMvcUtils.cloneControlledBqDatasetAsync(
         userAccessUtils.secondUserAuthRequest(),
@@ -265,6 +318,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         clonedBqDataset,
         workspaceId2,
         sourceResourceName,
+        sourceResource.getMetadata().getDescription(),
         projectId2,
         sourceDatasetName,
         LOCATION,
@@ -349,6 +403,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         clonedResource,
         /*expectedDestWorkspaceId=*/ workspaceId2,
         destResourceName,
+        sourceResource.getMetadata().getDescription(),
         /*expectedProjectId=*/ projectId2,
         /*expectedDatasetName=*/ sourceDatasetName,
         LOCATION,
@@ -410,6 +465,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         clonedResource,
         /*expectedDestWorkspaceId=*/ workspaceId,
         destResourceName,
+        sourceResource.getMetadata().getDescription(),
         /*expectedProjectId=*/ projectId,
         /*expectedDatasetName=*/ destDatasetName,
         LOCATION,
@@ -466,6 +522,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         clonedResource,
         /*expectedDestWorkspaceId=*/ workspaceId2,
         destResourceName,
+        sourceResource.getMetadata().getDescription(),
         /*expectedProjectId=*/ projectId2,
         /*expectedDatasetName=*/ destDatasetName,
         LOCATION,
@@ -520,6 +577,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         ApiCloningInstructionsEnum.REFERENCE,
         /*expectedDestWorkspaceId=*/ workspaceId,
         destResourceName,
+        sourceResource.getMetadata().getDescription(),
         /*expectedProjectId=*/ projectId,
         /*expectedDatasetName=*/ sourceDatasetName,
         /*expectedCreatedBy=*/ userAccessUtils.getDefaultUserEmail(),
@@ -634,6 +692,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         expectedCloningInstructions,
         expectedWorkspaceId,
         expectedResourceName,
+        actualDataset.getMetadata().getDescription(),
         /*expectedResourceLineage=*/ new ApiResourceLineage(),
         expectedCreatedBy,
         expectedLastUpdatedBy);
@@ -646,6 +705,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
       ApiGcpBigQueryDatasetResource actualDataset,
       UUID expectedWorkspaceId,
       String expectedResourceName,
+      String expectedResourceDescription,
       String expectedProjectId,
       String expectedDatasetName,
       String expectedRegion,
@@ -657,6 +717,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         ApiCloningInstructionsEnum.DEFINITION,
         expectedWorkspaceId,
         expectedResourceName,
+        expectedResourceDescription,
         expectedProjectId,
         expectedDatasetName,
         expectedCreatedBy,
@@ -677,6 +738,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
       ApiCloningInstructionsEnum expectedCloningInstructions,
       UUID expectedWorkspaceId,
       String expectedResourceName,
+      String expectedResourceDescription,
       String expectedProjectId,
       String expectedDatasetName,
       String expectedCreatedBy,
@@ -689,6 +751,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         expectedCloningInstructions,
         expectedWorkspaceId,
         expectedResourceName,
+        expectedResourceDescription,
         /*sourceWorkspaceId=*/ workspaceId,
         /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
         expectedCreatedBy,

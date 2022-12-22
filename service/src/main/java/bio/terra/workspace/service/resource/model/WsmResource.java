@@ -13,7 +13,6 @@ import bio.terra.workspace.generated.model.ApiProperties;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.generated.model.ApiResourceLineage;
 import bio.terra.workspace.generated.model.ApiResourceMetadata;
-import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
@@ -46,6 +45,8 @@ public abstract class WsmResource {
   private final ImmutableMap<String, String> properties;
   private final String createdByEmail;
   private final @Nullable OffsetDateTime createdDate;
+  private final @Nullable String lastUpdatedByEmail;
+  private final @Nullable OffsetDateTime lastUpdatedDate;
 
   /**
    * construct from individual fields
@@ -72,7 +73,9 @@ public abstract class WsmResource {
       @Nullable List<ResourceLineageEntry> resourceLineage,
       Map<String, String> properties,
       String createdByEmail,
-      @Nullable OffsetDateTime createdDate) {
+      @Nullable OffsetDateTime createdDate,
+      String lastUpdatedByEmail,
+      OffsetDateTime lastUpdatedDate) {
     this.workspaceUuid = workspaceUuid;
     this.resourceId = resourceId;
     this.name = name;
@@ -82,6 +85,8 @@ public abstract class WsmResource {
     this.properties = ImmutableMap.copyOf(properties);
     this.createdByEmail = createdByEmail;
     this.createdDate = createdDate;
+    this.lastUpdatedByEmail = lastUpdatedByEmail;
+    this.lastUpdatedDate = lastUpdatedDate;
   }
 
   /** construct from database data */
@@ -95,7 +100,9 @@ public abstract class WsmResource {
         dbResource.getResourceLineage().orElse(new ArrayList<>()),
         dbResource.getProperties(),
         dbResource.getCreatedByEmail(),
-        dbResource.getCreatedDate());
+        dbResource.getCreatedDate(),
+        dbResource.getLastUpdatedByEmail(),
+        dbResource.getLastUpdatedDate());
   }
 
   public WsmResource(WsmResourceFields resourceFields) {
@@ -108,7 +115,9 @@ public abstract class WsmResource {
         resourceFields.getResourceLineage(),
         resourceFields.getProperties(),
         resourceFields.getCreatedByEmail(),
-        resourceFields.getCreatedDate());
+        resourceFields.getCreatedDate(),
+        resourceFields.getLastUpdatedByEmail(),
+        resourceFields.getLastUpdatedDate());
   }
 
   public UUID getWorkspaceId() {
@@ -159,6 +168,14 @@ public abstract class WsmResource {
   public OffsetDateTime getCreatedDate() {
     return createdDate;
   }
+
+  public String getLastUpdatedByEmail() {
+    return lastUpdatedByEmail;
+  }
+
+  public OffsetDateTime getLastUpdatedDate() {
+    return lastUpdatedDate;
+  }
   /**
    * Sub-classes must identify their stewardship type
    *
@@ -195,15 +212,6 @@ public abstract class WsmResource {
    * @return attributes union with the proper attribute filled in
    */
   public abstract ApiResourceAttributesUnion toApiAttributesUnion();
-
-  /**
-   * Each resource is able to create the API union object to return resources
-   *
-   * @param apiFields WSM resource API fields that needs to be fetched separately from the WSM
-   *     resource common fields.
-   * @return resource union with the proper resource filled in
-   */
-  public abstract ApiResourceUnion toApiResourceUnion(WsmResourceApiFields apiFields);
 
   /**
    * Every subclass mst implement this cast to its own type. This implementation should be made in
@@ -318,7 +326,7 @@ public abstract class WsmResource {
    *
    * @return partially constructed Api Model common resource description
    */
-  public ApiResourceMetadata toApiMetadata(WsmResourceApiFields apiFields) {
+  public ApiResourceMetadata toApiMetadata() {
     ApiProperties apiProperties = convertMapToApiProperties(properties);
 
     ApiResourceMetadata apiResourceMetadata =
@@ -334,8 +342,8 @@ public abstract class WsmResource {
             .properties(apiProperties)
             .createdBy(createdByEmail)
             .createdDate(createdDate)
-            .lastUpdatedBy(apiFields.lastUpdatedBy())
-            .lastUpdatedDate(apiFields.lastUpdatedDate());
+            .lastUpdatedBy(Optional.ofNullable(lastUpdatedByEmail).orElse(createdByEmail))
+            .lastUpdatedDate(Optional.ofNullable(lastUpdatedDate).orElse(createdDate));
     ApiResourceLineage apiResourceLineage = new ApiResourceLineage();
     apiResourceLineage.addAll(
         resourceLineage.stream().map(ResourceLineageEntry::toApiModel).toList());

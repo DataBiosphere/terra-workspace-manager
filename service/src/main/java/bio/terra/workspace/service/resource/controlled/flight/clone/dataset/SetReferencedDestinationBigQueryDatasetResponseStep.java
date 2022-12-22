@@ -10,7 +10,6 @@ import bio.terra.workspace.generated.model.ApiClonedControlledGcpBigQueryDataset
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
-import bio.terra.workspace.service.resource.model.WsmResourceApiFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -63,9 +62,7 @@ public class SetReferencedDestinationBigQueryDatasetResponseStep implements Step
     final ApiClonedControlledGcpBigQueryDataset apiClonedDataset =
         new ApiClonedControlledGcpBigQueryDataset()
             .effectiveCloningInstructions(ApiCloningInstructionsEnum.REFERENCE)
-            .dataset(
-                destDataset.toApiResource(
-                    WsmResourceApiFields.build(workspaceActivityLogService, destDataset)))
+            .dataset(destDataset.toApiResource())
             .sourceWorkspaceId(sourceDataset.getWorkspaceId())
             .sourceResourceId(sourceDataset.getResourceId());
     FlightUtils.setResponse(context, apiClonedDataset, HttpStatus.OK);

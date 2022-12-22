@@ -21,7 +21,6 @@ import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
-import bio.terra.workspace.service.resource.model.WsmResourceApiFields;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -126,13 +125,7 @@ public class Alpha1ApiController implements Alpha1Api {
               .jobDescription(enumeratedJob.getJobDescription())
               .operationType(enumeratedJob.getOperationType().toApiModel())
               .resourceType(optResource.map(r -> r.getResourceType().toApiModel()).orElse(null))
-              .metadata(
-                  optResource
-                      .map(
-                          r ->
-                              r.toApiMetadata(
-                                  WsmResourceApiFields.build(workspaceActivityLogService, r)))
-                      .orElse(null))
+              .metadata(optResource.map(r -> r.toApiMetadata()).orElse(null))
               .resourceAttributes(optResource.map(WsmResource::toApiAttributesUnion).orElse(null))
               .destinationResourceId(destinationResourceIdMaybe.orElse(null));
       apiJobList.add(apiJob);

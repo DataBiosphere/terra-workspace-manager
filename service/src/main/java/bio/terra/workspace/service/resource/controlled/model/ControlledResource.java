@@ -16,7 +16,6 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
-import bio.terra.workspace.service.resource.model.WsmResourceApiFields;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +51,8 @@ public abstract class ControlledResource extends WsmResource {
       Map<String, String> properties,
       String createdByEmail,
       OffsetDateTime createdDate,
+      String lastUpdatedByEmail,
+      OffsetDateTime lastUpdatedDate,
       String region) {
     super(
         workspaceUuid,
@@ -62,7 +63,9 @@ public abstract class ControlledResource extends WsmResource {
         resourceLineage,
         properties,
         createdByEmail,
-        createdDate);
+        createdDate,
+        lastUpdatedByEmail,
+        lastUpdatedDate);
     this.assignedUser = assignedUser;
     this.accessScope = accessScope;
     this.managedBy = managedBy;
@@ -96,7 +99,9 @@ public abstract class ControlledResource extends WsmResource {
         builder.getResourceLineage(),
         builder.getProperties(),
         builder.getCreatedByEmail(),
-        builder.getCreatedDate());
+        builder.getCreatedDate(),
+        builder.getLastUpdatedByEmail(),
+        builder.getLastUpdatedDate());
     this.assignedUser = builder.getAssignedUser();
     this.accessScope = builder.getAccessScope();
     this.managedBy = builder.getManagedBy();
@@ -178,8 +183,8 @@ public abstract class ControlledResource extends WsmResource {
   }
 
   @Override
-  public ApiResourceMetadata toApiMetadata(WsmResourceApiFields apiFields) {
-    ApiResourceMetadata metadata = super.toApiMetadata(apiFields);
+  public ApiResourceMetadata toApiMetadata() {
+    ApiResourceMetadata metadata = super.toApiMetadata();
     var controlled =
         new ApiControlledResourceMetadata()
             .accessScope(accessScope.toApiModel())

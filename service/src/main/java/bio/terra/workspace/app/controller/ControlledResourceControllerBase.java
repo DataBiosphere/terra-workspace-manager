@@ -7,7 +7,6 @@ import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
@@ -24,7 +23,7 @@ import javax.servlet.http.HttpServletRequest;
  * Super class for controllers containing common code. The code in here requires the @Autowired
  * beans from the @Controller classes, so it is better as a superclass rather than static methods.
  */
-public class ControlledResourceControllerBase extends WsmResourceControllerBase {
+public class ControlledResourceControllerBase extends ControllerBase {
   private final ControlledResourceService controlledResourceService;
 
   /**
@@ -41,9 +40,8 @@ public class ControlledResourceControllerBase extends WsmResourceControllerBase 
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request,
       ControlledResourceService controlledResourceService,
-      SamService samService,
-      WorkspaceActivityLogService workspaceActivityLogService) {
-    super(authenticatedUserRequestFactory, request, samService, workspaceActivityLogService);
+      SamService samService) {
+    super(authenticatedUserRequestFactory, request, samService);
     this.controlledResourceService = controlledResourceService;
   }
 

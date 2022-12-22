@@ -62,7 +62,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 
 @Controller
-public class ReferencedGcpResourceController extends WsmResourceControllerBase
+public class ReferencedGcpResourceController extends ControllerBase
     implements ReferencedGcpResourceApi {
 
   private final ReferencedResourceService referenceResourceService;
@@ -83,7 +83,7 @@ public class ReferencedGcpResourceController extends WsmResourceControllerBase
       HttpServletRequest request,
       SamService samService,
       WorkspaceActivityLogService workspaceActivityLogService) {
-    super(authenticatedUserRequestFactory, request, samService, workspaceActivityLogService);
+    super(authenticatedUserRequestFactory, request, samService);
     this.referenceResourceService = referenceResourceService;
     this.workspaceDao = workspaceDao;
     this.workspaceService = workspaceService;
@@ -117,9 +117,7 @@ public class ReferencedGcpResourceController extends WsmResourceControllerBase
         referenceResourceService
             .createReferenceResource(resource, userRequest)
             .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_OBJECT);
-    return new ResponseEntity<>(
-        referencedResource.toApiResource(getWsmResourceApiFields(referencedResource)),
-        HttpStatus.OK);
+    return new ResponseEntity<>(referencedResource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -131,8 +129,7 @@ public class ReferencedGcpResourceController extends WsmResourceControllerBase
         referenceResourceService
             .getReferenceResource(uuid, referenceId)
             .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_OBJECT);
-    return new ResponseEntity<>(
-        referenceResource.toApiResource(getWsmResourceApiFields(referenceResource)), HttpStatus.OK);
+    return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -144,8 +141,7 @@ public class ReferencedGcpResourceController extends WsmResourceControllerBase
         referenceResourceService
             .getReferenceResourceByName(uuid, name)
             .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_OBJECT);
-    return new ResponseEntity<>(
-        referenceResource.toApiResource(getWsmResourceApiFields(referenceResource)), HttpStatus.OK);
+    return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -200,8 +196,7 @@ public class ReferencedGcpResourceController extends WsmResourceControllerBase
         referenceResourceService
             .getReferenceResource(workspaceUuid, referenceId)
             .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_OBJECT);
-    return new ResponseEntity<>(
-        updatedResource.toApiResource(getWsmResourceApiFields(updatedResource)), HttpStatus.OK);
+    return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -236,8 +231,7 @@ public class ReferencedGcpResourceController extends WsmResourceControllerBase
         referenceResourceService
             .createReferenceResource(resource, userRequest)
             .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_BUCKET);
-    return new ResponseEntity<>(
-        referenceResource.toApiResource(getWsmResourceApiFields(referenceResource)), HttpStatus.OK);
+    return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -248,8 +242,7 @@ public class ReferencedGcpResourceController extends WsmResourceControllerBase
         referenceResourceService
             .getReferenceResource(uuid, referenceId)
             .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_BUCKET);
-    return new ResponseEntity<>(
-        referenceResource.toApiResource(getWsmResourceApiFields(referenceResource)), HttpStatus.OK);
+    return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -260,8 +253,7 @@ public class ReferencedGcpResourceController extends WsmResourceControllerBase
         referenceResourceService
             .getReferenceResourceByName(uuid, name)
             .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_BUCKET);
-    return new ResponseEntity<>(
-        referenceResource.toApiResource(getWsmResourceApiFields(referenceResource)), HttpStatus.OK);
+    return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -310,8 +302,7 @@ public class ReferencedGcpResourceController extends WsmResourceControllerBase
         referenceResourceService
             .getReferenceResource(workspaceUuid, referenceId)
             .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_BUCKET);
-    return new ResponseEntity<>(
-        updatedResource.toApiResource(getWsmResourceApiFields(updatedResource)), HttpStatus.OK);
+    return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -346,8 +337,7 @@ public class ReferencedGcpResourceController extends WsmResourceControllerBase
         referenceResourceService
             .createReferenceResource(resource, userRequest)
             .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
-    return new ResponseEntity<>(
-        referenceResource.toApiResource(getWsmResourceApiFields(referenceResource)), HttpStatus.OK);
+    return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -359,8 +349,7 @@ public class ReferencedGcpResourceController extends WsmResourceControllerBase
         referenceResourceService
             .getReferenceResource(uuid, referenceId)
             .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
-    return new ResponseEntity<>(
-        referenceResource.toApiResource(getWsmResourceApiFields(referenceResource)), HttpStatus.OK);
+    return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -372,8 +361,7 @@ public class ReferencedGcpResourceController extends WsmResourceControllerBase
         referenceResourceService
             .getReferenceResourceByName(uuid, name)
             .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
-    return new ResponseEntity<>(
-        referenceResource.toApiResource(getWsmResourceApiFields(referenceResource)), HttpStatus.OK);
+    return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -414,6 +402,12 @@ public class ReferencedGcpResourceController extends WsmResourceControllerBase
       if (!StringUtils.isEmpty(updatedDataTableId)) {
         updateBqTableResource.dataTableId(updatedDataTableId);
       }
+      if (cloningInstructions != null) {
+        updateBqTableResource.wsmResourceFields(
+            referencedResource.getWsmResourceFields().toBuilder()
+                .cloningInstructions(cloningInstructions)
+                .build());
+      }
       referenceResourceService.updateReferenceResource(
           workspaceUuid,
           referenceId,
@@ -428,8 +422,7 @@ public class ReferencedGcpResourceController extends WsmResourceControllerBase
         referenceResourceService
             .getReferenceResource(workspaceUuid, referenceId)
             .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
-    return new ResponseEntity<>(
-        updatedResource.toApiResource(getWsmResourceApiFields(updatedResource)), HttpStatus.OK);
+    return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -471,8 +464,7 @@ public class ReferencedGcpResourceController extends WsmResourceControllerBase
         referenceResourceService
             .createReferenceResource(resource, userRequest)
             .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
-    return new ResponseEntity<>(
-        referenceResource.toApiResource(getWsmResourceApiFields(referenceResource)), HttpStatus.OK);
+    return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -484,8 +476,7 @@ public class ReferencedGcpResourceController extends WsmResourceControllerBase
         referenceResourceService
             .getReferenceResource(uuid, referenceId)
             .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
-    return new ResponseEntity<>(
-        referenceResource.toApiResource(getWsmResourceApiFields(referenceResource)), HttpStatus.OK);
+    return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -497,8 +488,7 @@ public class ReferencedGcpResourceController extends WsmResourceControllerBase
         referenceResourceService
             .getReferenceResourceByName(uuid, name)
             .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
-    return new ResponseEntity<>(
-        referenceResource.toApiResource(getWsmResourceApiFields(referenceResource)), HttpStatus.OK);
+    return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -535,6 +525,12 @@ public class ReferencedGcpResourceController extends WsmResourceControllerBase
       if (!StringUtils.isEmpty(updatedDatasetId)) {
         updatedBqDatasetResourceBuilder.datasetName(updatedDatasetId);
       }
+      if (cloningInstructions != null) {
+        updatedBqDatasetResourceBuilder.wsmResourceFields(
+            referenceResource.getWsmResourceFields().toBuilder()
+                .cloningInstructions(cloningInstructions)
+                .build());
+      }
       referenceResourceService.updateReferenceResource(
           workspaceUuid,
           resourceId,
@@ -549,8 +545,7 @@ public class ReferencedGcpResourceController extends WsmResourceControllerBase
         referenceResourceService
             .getReferenceResource(workspaceUuid, resourceId)
             .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
-    return new ResponseEntity<>(
-        updatedResource.toApiResource(getWsmResourceApiFields(updatedResource)), HttpStatus.OK);
+    return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -587,8 +582,7 @@ public class ReferencedGcpResourceController extends WsmResourceControllerBase
         referenceResourceService
             .createReferenceResource(resource, userRequest)
             .castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
-    return new ResponseEntity<>(
-        referenceResource.toApiResource(getWsmResourceApiFields(referenceResource)), HttpStatus.OK);
+    return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -600,8 +594,7 @@ public class ReferencedGcpResourceController extends WsmResourceControllerBase
         referenceResourceService
             .getReferenceResource(uuid, referenceId)
             .castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
-    return new ResponseEntity<>(
-        referenceResource.toApiResource(getWsmResourceApiFields(referenceResource)), HttpStatus.OK);
+    return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -613,8 +606,7 @@ public class ReferencedGcpResourceController extends WsmResourceControllerBase
         referenceResourceService
             .getReferenceResourceByName(uuid, name)
             .castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
-    return new ResponseEntity<>(
-        referenceResource.toApiResource(getWsmResourceApiFields(referenceResource)), HttpStatus.OK);
+    return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -625,6 +617,8 @@ public class ReferencedGcpResourceController extends WsmResourceControllerBase
         userRequest, workspaceUuid, SamWorkspaceAction.UPDATE_REFERENCE);
     String updatedSnapshot = body.getSnapshot();
     String updatedInstanceName = body.getInstanceName();
+    CloningInstructions cloningInstructions =
+        CloningInstructions.fromApiModel(body.getCloningInstructions());
     if (StringUtils.isEmpty(updatedSnapshot) && StringUtils.isEmpty(updatedInstanceName)) {
       referenceResourceService.updateReferenceResource(
           workspaceUuid,
@@ -632,7 +626,7 @@ public class ReferencedGcpResourceController extends WsmResourceControllerBase
           body.getName(),
           body.getDescription(),
           null,
-          CloningInstructions.fromApiModel(body.getCloningInstructions()),
+          cloningInstructions,
           userRequest);
     } else {
       ReferencedDataRepoSnapshotResource referencedResource =
@@ -647,21 +641,26 @@ public class ReferencedGcpResourceController extends WsmResourceControllerBase
       if (!StringUtils.isEmpty(updatedInstanceName)) {
         updatedResourceBuilder.instanceName(updatedInstanceName);
       }
+      if (cloningInstructions != null) {
+        updatedResourceBuilder.wsmResourceFields(
+            referencedResource.getWsmResourceFields().toBuilder()
+                .cloningInstructions(cloningInstructions)
+                .build());
+      }
       referenceResourceService.updateReferenceResource(
           workspaceUuid,
           resourceId,
           body.getName(),
           body.getDescription(),
           updatedResourceBuilder.build(),
-          CloningInstructions.fromApiModel(body.getCloningInstructions()),
+          cloningInstructions,
           userRequest);
     }
     final ReferencedDataRepoSnapshotResource updatedResource =
         referenceResourceService
             .getReferenceResource(workspaceUuid, resourceId)
             .castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
-    return new ResponseEntity<>(
-        updatedResource.toApiResource(getWsmResourceApiFields(updatedResource)), HttpStatus.OK);
+    return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -726,9 +725,7 @@ public class ReferencedGcpResourceController extends WsmResourceControllerBase
     // Build the correct response type
     final var result =
         new ApiCloneReferencedGcpGcsObjectResourceResult()
-            .resource(
-                clonedReferencedResource.toApiResource(
-                    getWsmResourceApiFields(clonedReferencedResource)))
+            .resource(clonedReferencedResource.toApiResource())
             .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
             .sourceResourceId(sourceReferencedResource.getResourceId())
             .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel());
@@ -788,9 +785,7 @@ public class ReferencedGcpResourceController extends WsmResourceControllerBase
     // Build the correct response type
     final var result =
         new ApiCloneReferencedGcpGcsBucketResourceResult()
-            .resource(
-                clonedReferencedResource.toApiResource(
-                    getWsmResourceApiFields(clonedReferencedResource)))
+            .resource(clonedReferencedResource.toApiResource())
             .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
             .sourceResourceId(sourceReferencedResource.getResourceId())
             .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel());
@@ -850,9 +845,7 @@ public class ReferencedGcpResourceController extends WsmResourceControllerBase
     // Build the correct response type
     final var result =
         new ApiCloneReferencedGcpBigQueryDataTableResourceResult()
-            .resource(
-                clonedReferencedResource.toApiResource(
-                    getWsmResourceApiFields(clonedReferencedResource)))
+            .resource(clonedReferencedResource.toApiResource())
             .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
             .sourceResourceId(sourceReferencedResource.getResourceId())
             .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel());
@@ -913,9 +906,7 @@ public class ReferencedGcpResourceController extends WsmResourceControllerBase
     // Build the correct response type
     final var result =
         new ApiCloneReferencedGcpBigQueryDatasetResourceResult()
-            .resource(
-                clonedReferencedResource.toApiResource(
-                    getWsmResourceApiFields(clonedReferencedResource)))
+            .resource(clonedReferencedResource.toApiResource())
             .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
             .sourceResourceId(sourceReferencedResource.getResourceId())
             .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel());
@@ -976,9 +967,7 @@ public class ReferencedGcpResourceController extends WsmResourceControllerBase
     // Build the correct response type
     final var result =
         new ApiCloneReferencedGcpDataRepoSnapshotResourceResult()
-            .resource(
-                clonedReferencedResource.toApiResource(
-                    getWsmResourceApiFields(clonedReferencedResource)))
+            .resource(clonedReferencedResource.toApiResource())
             .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
             .sourceResourceId(sourceReferencedResource.getResourceId())
             .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel());
@@ -1008,8 +997,7 @@ public class ReferencedGcpResourceController extends WsmResourceControllerBase
         referenceResourceService
             .createReferenceResource(resource, userRequest)
             .castByEnum(WsmResourceType.REFERENCED_ANY_GIT_REPO);
-    return new ResponseEntity<>(
-        referenceResource.toApiResource(getWsmResourceApiFields(referenceResource)), HttpStatus.OK);
+    return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -1022,8 +1010,7 @@ public class ReferencedGcpResourceController extends WsmResourceControllerBase
         referenceResourceService
             .getReferenceResource(workspaceUuid, resourceId)
             .castByEnum(WsmResourceType.REFERENCED_ANY_GIT_REPO);
-    return new ResponseEntity<>(
-        referenceResource.toApiResource(getWsmResourceApiFields(referenceResource)), HttpStatus.OK);
+    return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -1036,8 +1023,7 @@ public class ReferencedGcpResourceController extends WsmResourceControllerBase
         referenceResourceService
             .getReferenceResourceByName(workspaceUuid, resourceName)
             .castByEnum(WsmResourceType.REFERENCED_ANY_GIT_REPO);
-    return new ResponseEntity<>(
-        referenceResource.toApiResource(getWsmResourceApiFields(referenceResource)), HttpStatus.OK);
+    return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -1047,6 +1033,8 @@ public class ReferencedGcpResourceController extends WsmResourceControllerBase
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamWorkspaceAction.UPDATE_REFERENCE);
     String gitRepoUrl = body.getGitRepoUrl();
+    CloningInstructions cloningInstructions =
+        CloningInstructions.fromApiModel(body.getCloningInstructions());
     if (StringUtils.isEmpty(gitRepoUrl)) {
       referenceResourceService.updateReferenceResource(
           workspaceUuid,
@@ -1054,7 +1042,7 @@ public class ReferencedGcpResourceController extends WsmResourceControllerBase
           body.getName(),
           body.getDescription(),
           null,
-          CloningInstructions.fromApiModel(body.getCloningInstructions()),
+          cloningInstructions,
           userRequest);
     } else {
       ReferencedGitRepoResource referencedResource =
@@ -1065,6 +1053,12 @@ public class ReferencedGcpResourceController extends WsmResourceControllerBase
       ReferencedGitRepoResource.Builder updateGitRepoResource = referencedResource.toBuilder();
       validationUtils.validateGitRepoUri(gitRepoUrl);
       updateGitRepoResource.gitRepoUrl(gitRepoUrl);
+      if (body.getCloningInstructions() != null) {
+        updateGitRepoResource.wsmResourceFields(
+            referencedResource.getWsmResourceFields().toBuilder()
+                .cloningInstructions(cloningInstructions)
+                .build());
+      }
 
       referenceResourceService.updateReferenceResource(
           workspaceUuid,
@@ -1072,7 +1066,7 @@ public class ReferencedGcpResourceController extends WsmResourceControllerBase
           body.getName(),
           body.getDescription(),
           updateGitRepoResource.build(),
-          CloningInstructions.fromApiModel(body.getCloningInstructions()),
+          cloningInstructions,
           userRequest);
     }
 
@@ -1080,8 +1074,7 @@ public class ReferencedGcpResourceController extends WsmResourceControllerBase
         referenceResourceService
             .getReferenceResource(workspaceUuid, referenceId)
             .castByEnum(WsmResourceType.REFERENCED_ANY_GIT_REPO);
-    return new ResponseEntity<>(
-        updatedResource.toApiResource(getWsmResourceApiFields(updatedResource)), HttpStatus.OK);
+    return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -1145,9 +1138,7 @@ public class ReferencedGcpResourceController extends WsmResourceControllerBase
     // Build the correct response type
     ApiCloneReferencedGitRepoResourceResult result =
         new ApiCloneReferencedGitRepoResourceResult()
-            .resource(
-                clonedReferencedResource.toApiResource(
-                    getWsmResourceApiFields(clonedReferencedResource)))
+            .resource(clonedReferencedResource.toApiResource())
             .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
             .sourceResourceId(sourceReferencedResource.getResourceId())
             .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel());
@@ -1182,8 +1173,7 @@ public class ReferencedGcpResourceController extends WsmResourceControllerBase
         referenceResourceService
             .createReferenceResource(resource, userRequest)
             .castByEnum(WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE);
-    return new ResponseEntity<>(
-        referenceResource.toApiResource(getWsmResourceApiFields(referenceResource)), HttpStatus.OK);
+    return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -1196,8 +1186,7 @@ public class ReferencedGcpResourceController extends WsmResourceControllerBase
         referenceResourceService
             .getReferenceResource(workspaceUuid, resourceId)
             .castByEnum(WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE);
-    return new ResponseEntity<>(
-        referenceResource.toApiResource(getWsmResourceApiFields(referenceResource)), HttpStatus.OK);
+    return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -1210,8 +1199,7 @@ public class ReferencedGcpResourceController extends WsmResourceControllerBase
         referenceResourceService
             .getReferenceResourceByName(workspaceUuid, resourceName)
             .castByEnum(WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE);
-    return new ResponseEntity<>(
-        referenceResource.toApiResource(getWsmResourceApiFields(referenceResource)), HttpStatus.OK);
+    return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
 
   @Override

@@ -12,7 +12,6 @@ import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
 import bio.terra.workspace.generated.model.ApiAzureStorageContainerAttributes;
 import bio.terra.workspace.generated.model.ApiAzureStorageContainerResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
-import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
@@ -22,7 +21,6 @@ import bio.terra.workspace.service.resource.controlled.model.*;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
-import bio.terra.workspace.service.resource.model.WsmResourceApiFields;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -55,6 +53,8 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
       @JsonProperty("properties") Map<String, String> properties,
       @JsonProperty("createdByEmail") String createdByEmail,
       @JsonProperty("createdDate") OffsetDateTime createdDate,
+      @JsonProperty("lastUpdatedByEmail") String lastUpdatedByEmail,
+      @JsonProperty("lastUpdatedDate") OffsetDateTime lastUpdatedDate,
       @JsonProperty("region") String region) {
     super(
         workspaceId,
@@ -71,6 +71,8 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
         properties,
         createdByEmail,
         createdDate,
+        lastUpdatedByEmail,
+        lastUpdatedDate,
         region);
     this.storageAccountId = storageAccountId;
     this.storageContainerName = storageContainerName;
@@ -165,9 +167,9 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
         .storageContainerName(getStorageContainerName());
   }
 
-  public ApiAzureStorageContainerResource toApiResource(WsmResourceApiFields apiFields) {
+  public ApiAzureStorageContainerResource toApiResource() {
     return new ApiAzureStorageContainerResource()
-        .metadata(super.toApiMetadata(apiFields))
+        .metadata(super.toApiMetadata())
         .attributes(toApiAttributes());
   }
 
@@ -192,13 +194,6 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
   public ApiResourceAttributesUnion toApiAttributesUnion() {
     ApiResourceAttributesUnion union = new ApiResourceAttributesUnion();
     union.azureStorageContainer(toApiAttributes());
-    return union;
-  }
-
-  @Override
-  public ApiResourceUnion toApiResourceUnion(WsmResourceApiFields apiFields) {
-    ApiResourceUnion union = new ApiResourceUnion();
-    union.azureStorageContainer(toApiResource(apiFields));
     return union;
   }
 

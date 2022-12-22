@@ -126,6 +126,7 @@ public class ControlledGcpResourceApiControllerAiNotebookTest extends BaseConnec
         actualResource.getMetadata().getCloningInstructions(),
         expectedWorkspaceId,
         actualResource.getMetadata().getName(),
+        actualResource.getMetadata().getDescription(),
         /*expectedResourceLineage=*/ new ApiResourceLineage(),
         expectedCreatedBy,
         expectedLastUpdatedBy);
