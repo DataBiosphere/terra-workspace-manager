@@ -4,7 +4,6 @@ import argparse
 import google.auth
 import json
 import os
-import subprocess
 import sys
 import warnings
 
@@ -85,28 +84,28 @@ def enumerate_workspaces(session):
             more = False
     return workspaces_out
 
-def enumerate_workspace_resources(session, workspace_id, type):
-        out_resources = []
-        request_count = 10
-        offset = 0
-        more = True
-        while more:
-            response = session.get(f'{WSM_API_ENDPOINT}/{workspace_id}/resources',
-                params={'request': request_count, 'offset': offset, 'resource': type})
+def enumerate_workspace_resources(session, workspace_id, resource_type):
+      out_resources = []
+      request_count = 10
+      offset = 0
+      more = True
+      while more:
+          response = session.get(f'{WSM_API_ENDPOINT}/{workspace_id}/resources',
+              params={'request': request_count, 'offset': offset, 'resource': resource_type})
 
-            if not response.ok:
-                print(f'ERROR: Listing resources failed with status {response.status_code}', file=sys.stderr)
-                sys.exit(LIST_RESOURCES_FAILED)
+          if not response.ok:
+              print(f'ERROR: Listing resources failed with status {response.status_code}', file=sys.stderr)
+              sys.exit(LIST_RESOURCES_FAILED)
 
-            resources = json.loads(response.content)
-            received_count = 0
-            for resource in resources['resources']:
-                out_resources.append(resource)
-                received_count = received_count + 1
-                offset = offset + 1
-            if received_count < request_count:
-                more = False
-        return out_resources
+          resources = json.loads(response.content)
+          received_count = 0
+          for resource in resources['resources']:
+              out_resources.append(resource)
+              received_count = received_count + 1
+              offset = offset + 1
+          if received_count < request_count:
+              more = False
+      return out_resources
 
 def get_notebook_cred(session, workspace_id, notebook_id, access):
     response = session.get(f'{WSM_API_ENDPOINT}/{workspace_id}/resources/controlled/aws/sagemaker-notebooks/{notebook_id}/credential', params={'accessScope': access, 'credentialDuration': 900})
@@ -129,7 +128,6 @@ def find_notebook_metadata(session):
         'DefaultBucketId': None,
         'DefaultBucketAccess': None
     }
-    found = False
 
     resource_name = get_notebook_resource_name()
     workspaces = enumerate_workspaces(session)
@@ -139,7 +137,6 @@ def find_notebook_metadata(session):
         for resource in resources:
             notebook_attributes = resource['resourceAttributes']['awsSagemakerNotebook']
             if notebook_attributes['instanceId'] == resource_name:
-                found = True
                 retVal['Workspace'] = workspace
                 retVal['Notebook'] = resource
 
@@ -181,17 +178,17 @@ def get_bucket_configs(config, session, notebook_metadata, access):
     bucket_resources = enumerate_workspace_resources(session, workspace_id, 'AWS_BUCKET')
     for bucket_resource in bucket_resources:
         name = bucket_resource['metadata']['name']
-        id = bucket_resource['metadata']['resourceId']
+        resourceId = bucket_resource['metadata']['resourceId']
         if len(configs) > 0:
             configs += '\n'
         configs += f'''[profile bucket-{name}{suffix}]
 region = us-east-1
-credential_process = "{os.path.realpath(__file__)}" --bucket {id} --access {access}\n'''
+credential_process = "{os.path.realpath(__file__)}" --bucket {resourceId} --access {access}\n'''
 
         if notebook_metadata['DefaultBucketId'] == id and notebook_metadata['DefaultBucketAccess'] == access:
             configs += f'''\n[default]
 region = us-east-1
-credential_process = "{os.path.realpath(__file__)}" --bucket {id} --access {access}\n'''
+credential_process = "{os.path.realpath(__file__)}" --bucket {resourceId} --access {access}\n'''
 
     return configs
 
@@ -244,9 +241,9 @@ def print_details(notebook_metadata, session):
     # Loop again and only print NOT default
     for bucket in bucket_resources:
         if bucket['metadata']['resourceId'] != notebook_metadata['DefaultBucketId']:
-             print_bucket_details(bucket, False, False)
+           print_bucket_details(bucket, False, False)
 
-    print(f'')
+    print('')
 
 def main():
     args = parse_args()
@@ -271,6 +268,7 @@ def main():
 
     elif args.bucket:
         print(get_bucket_cred(session, workspace_id, args.bucket, args.access))
+
 
 if __name__ == "__main__":
     main()

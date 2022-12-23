@@ -341,4 +341,3 @@ components:
         Expiration:
           type: string
           format: date-time
-
