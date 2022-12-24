@@ -26,6 +26,7 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -34,7 +35,6 @@ import java.util.UUID;
 public class ControlledAwsBucketResource extends ControlledResource {
   private final String s3BucketName;
   private final String prefix;
-  private final String region;
 
   @JsonCreator
   public ControlledAwsBucketResource(
@@ -50,9 +50,11 @@ public class ControlledAwsBucketResource extends ControlledResource {
       @JsonProperty("applicationId") String applicationId,
       @JsonProperty("s3BucketName") String s3BucketName,
       @JsonProperty("prefix") String prefix,
-      @JsonProperty("region") String region,
       @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
-      @JsonProperty("properties") Map<String, String> properties) {
+      @JsonProperty("properties") Map<String, String> properties,
+      @JsonProperty("createdByEmail") String createdByEmail,
+      @JsonProperty("createdDate") OffsetDateTime createdDate,
+      @JsonProperty("region") String region) {
     super(
         workspaceId,
         resourceId,
@@ -65,19 +67,20 @@ public class ControlledAwsBucketResource extends ControlledResource {
         applicationId,
         privateResourceState,
         resourceLineage,
-        properties);
+        properties,
+        createdByEmail,
+        createdDate,
+        region);
     this.s3BucketName = s3BucketName;
     this.prefix = prefix;
-    this.region = region;
     validate();
   }
 
   private ControlledAwsBucketResource(
-      ControlledResourceFields common, String s3BucketName, String prefix, String region) {
+      ControlledResourceFields common, String s3BucketName, String prefix) {
     super(common);
     this.s3BucketName = s3BucketName;
     this.prefix = prefix;
-    this.region = region;
     validate();
   }
 
@@ -146,10 +149,6 @@ public class ControlledAwsBucketResource extends ControlledResource {
 
   public String getPrefix() {
     return prefix;
-  }
-
-  public String getRegion() {
-    return region;
   }
 
   public ApiAwsBucketAttributes toApiAttributes() {
@@ -230,7 +229,7 @@ public class ControlledAwsBucketResource extends ControlledResource {
     }
 
     public ControlledAwsBucketResource build() {
-      return new ControlledAwsBucketResource(common, s3BucketName, prefix, region);
+      return new ControlledAwsBucketResource(common, s3BucketName, prefix);
     }
   }
 }

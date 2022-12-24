@@ -99,7 +99,12 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final ControlledResourceFields commonFields =
-        toCommonFields(workspaceUuid, body.getCommon(), userRequest);
+        toCommonFields(
+            workspaceUuid,
+            body.getCommon(),
+            body.getAwsBucket().getLocation(),
+            userRequest,
+            WsmResourceType.CONTROLLED_AWS_BUCKET);
     workspaceService.validateMcWorkspaceAndAction(
         userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
 
@@ -265,7 +270,12 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
 
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledResourceFields commonFields =
-        toCommonFields(workspaceUuid, body.getCommon(), userRequest);
+        toCommonFields(
+            workspaceUuid,
+            body.getCommon(),
+            body.getAwsSageMakerNotebook().getLocation(),
+            userRequest,
+            WsmResourceType.CONTROLLED_AWS_SAGEMAKER_NOTEBOOK);
 
     // Check authz before reading the cloud context.
     workspaceService.validateWorkspaceAndAction(

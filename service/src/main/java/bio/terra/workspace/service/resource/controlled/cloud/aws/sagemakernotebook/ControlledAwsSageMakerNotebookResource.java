@@ -29,6 +29,7 @@ import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -36,7 +37,6 @@ import java.util.UUID;
 
 public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
   private final String instanceId;
-  private final String region;
   private final String instanceType;
   private final ControlledAwsSageMakerNotebookAttributes.DefaultBucket defaultBucket;
 
@@ -55,12 +55,14 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
       @JsonProperty("managedBy") ManagedByType managedBy,
       @JsonProperty("applicationId") String applicationId,
       @JsonProperty("instanceId") String instanceId,
-      @JsonProperty("region") String region,
       @JsonProperty("instanceType") String instanceType,
       @JsonProperty("defaultBucket")
           ControlledAwsSageMakerNotebookAttributes.DefaultBucket defaultBucket,
       @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
-      @JsonProperty("properties") Map<String, String> properties) {
+      @JsonProperty("properties") Map<String, String> properties,
+      @JsonProperty("createdByEmail") String createdByEmail,
+      @JsonProperty("createdDate") OffsetDateTime createdDate,
+      @JsonProperty("region") String region) {
     super(
         workspaceId,
         resourceId,
@@ -73,9 +75,11 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
         applicationId,
         privateResourceState,
         resourceLineage,
-        properties);
+        properties,
+        createdByEmail,
+        createdDate,
+        region);
     this.instanceId = instanceId;
-    this.region = region;
     this.instanceType = instanceType;
     this.defaultBucket = defaultBucket;
     validate();
@@ -84,12 +88,10 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
   private ControlledAwsSageMakerNotebookResource(
       ControlledResourceFields common,
       String instanceId,
-      String region,
       String instanceType,
       ControlledAwsSageMakerNotebookAttributes.DefaultBucket defaultBucket) {
     super(common);
     this.instanceId = instanceId;
-    this.region = region;
     this.instanceType = instanceType;
     this.defaultBucket = defaultBucket;
     validate();
@@ -139,10 +141,6 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
 
   public String getInstanceId() {
     return instanceId;
-  }
-
-  public String getRegion() {
-    return region;
   }
 
   public String getInstanceType() {
@@ -263,7 +261,7 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
 
     public ControlledAwsSageMakerNotebookResource build() {
       return new ControlledAwsSageMakerNotebookResource(
-          common, instanceId, region, instanceType, defaultBucket);
+          common, instanceId, instanceType, defaultBucket);
     }
   }
 }
