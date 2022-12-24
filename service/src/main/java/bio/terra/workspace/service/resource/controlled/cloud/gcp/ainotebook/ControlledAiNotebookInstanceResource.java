@@ -5,7 +5,6 @@ import static bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResou
 import bio.terra.cloudres.google.notebooks.InstanceName;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
-import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
@@ -59,6 +58,8 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
    * https://github.com/hashicorp/terraform-provider-google/issues/7900#issuecomment-1067097275.
    */
   protected static final String NOTEBOOK_DISABLE_ROOT_METADATA_KEY = "notebook-disable-root";
+
+  protected static final String RESOURCE_DESCRIPTOR = "ControlledAiNotebookInstance";
 
   /** Metadata keys that are reserved by terra. User cannot modify those. */
   public static final Set<String> RESERVED_METADATA_KEYS =
@@ -282,17 +283,10 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
       throw new BadRequestException(
           "Access scope must be private. Shared AI Notebook instances are not yet implemented.");
     }
-    checkFieldNonNull(getInstanceId(), "instanceId");
-    checkFieldNonNull(getLocation(), "location");
-    checkFieldNonNull(getProjectId(), "projectId");
+    ResourceValidationUtils.checkFieldNonNull(getInstanceId(), "instanceId", RESOURCE_DESCRIPTOR);
+    ResourceValidationUtils.checkFieldNonNull(getLocation(), "location", RESOURCE_DESCRIPTOR);
+    ResourceValidationUtils.checkFieldNonNull(getProjectId(), "projectId", RESOURCE_DESCRIPTOR);
     ResourceValidationUtils.validateAiNotebookInstanceId(getInstanceId());
-  }
-
-  private static <T> void checkFieldNonNull(@Nullable T fieldValue, String fieldName) {
-    if (fieldValue == null) {
-      throw new MissingRequiredFieldException(
-          String.format("Missing required field '%s' for ControlledNotebookInstance.", fieldName));
-    }
   }
 
   @Override
