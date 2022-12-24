@@ -42,9 +42,10 @@ def get_authorized_session():
     try:
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
-            credentials, project_id = google.auth.default()
+            credentials, _ = google.auth.default()
     except DefaultCredentialsError:
-        print("ERROR: Application Default Credentials required, please run 'gcloud auth application-default login' and log in with your Terra user ID.", file=sys.stderr)
+        print("ERROR: Application Default Credentials required, please run 'gcloud auth application-default login' "
+        + "and log in with your Terra user ID.", file=sys.stderr)
         sys.exit(BAD_GOOGLE_CRED)
 
     return AuthorizedSession(credentials)
@@ -85,37 +86,39 @@ def enumerate_workspaces(session):
     return workspaces_out
 
 def enumerate_workspace_resources(session, workspace_id, resource_type):
-      out_resources = []
-      request_count = 10
-      offset = 0
-      more = True
-      while more:
-          response = session.get(f'{WSM_API_ENDPOINT}/{workspace_id}/resources',
-              params={'request': request_count, 'offset': offset, 'resource': resource_type})
+    out_resources = []
+    request_count = 10
+    offset = 0
+    more = True
+    while more:
+        response = session.get(f'{WSM_API_ENDPOINT}/{workspace_id}/resources',
+            params={'request': request_count, 'offset': offset, 'resource': resource_type})
 
-          if not response.ok:
-              print(f'ERROR: Listing resources failed with status {response.status_code}', file=sys.stderr)
-              sys.exit(LIST_RESOURCES_FAILED)
+        if not response.ok:
+            print(f'ERROR: Listing resources failed with status {response.status_code}', file=sys.stderr)
+            sys.exit(LIST_RESOURCES_FAILED)
 
-          resources = json.loads(response.content)
-          received_count = 0
-          for resource in resources['resources']:
-              out_resources.append(resource)
-              received_count = received_count + 1
-              offset = offset + 1
-          if received_count < request_count:
-              more = False
-      return out_resources
+        resources = json.loads(response.content)
+        received_count = 0
+        for resource in resources['resources']:
+            out_resources.append(resource)
+            received_count = received_count + 1
+            offset = offset + 1
+        if received_count < request_count:
+            more = False
+    return out_resources
 
 def get_notebook_cred(session, workspace_id, notebook_id, access):
-    response = session.get(f'{WSM_API_ENDPOINT}/{workspace_id}/resources/controlled/aws/sagemaker-notebooks/{notebook_id}/credential', params={'accessScope': access, 'credentialDuration': 900})
+    response = session.get(f'{WSM_API_ENDPOINT}/{workspace_id}/resources/controlled/aws/sagemaker-notebooks/"
+     + "{notebook_id}/credential', params={'accessScope': access, 'credentialDuration': 900})
     if not response.ok:
         print(f'ERROR: Getting notebook cred failed with status {response.status_code}', file=sys.stderr)
         sys.exit(GET_AWS_CRED_FAILED)
     return response.content.decode('ascii')
 
 def get_bucket_cred(session, workspace_id, bucket_id, access):
-    response = session.get(f'{WSM_API_ENDPOINT}/{workspace_id}/resources/controlled/aws/buckets/{bucket_id}/credential', params={'accessScope': access, 'credentialDuration': 3600})
+    response = session.get(f'{WSM_API_ENDPOINT}/{workspace_id}/resources/controlled/aws/buckets/{bucket_id}/credential',
+     params={'accessScope': access, 'credentialDuration': 3600})
     if not response.ok:
         print(f'ERROR: Getting notebook cred failed with status {response.status_code}', file=sys.stderr)
         sys.exit(GET_AWS_CRED_FAILED)
