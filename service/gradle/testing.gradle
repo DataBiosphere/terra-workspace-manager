@@ -126,3 +126,37 @@ task azureUnitTest(type: Test) {
   finalizedBy tasks.combinedJaCoCoReport
   maxParallelForks = runnerThreads
 }
+
+task awsConnectedTest(type: Test) {
+  useJUnitPlatform {
+    includeTags "aws"
+  }
+  outputs.upToDateWhen { false }
+  finalizedBy tasks.combinedJaCoCoReport
+
+  // For GHA runs, retry failing tests. If 2nd time passes, workflow will still
+  // fail and oncall will still be notified. This way, oncall dosen't have to
+  // rerun workflow in GHA.
+  retry {
+    // This is set automatically on Github Actions runners, and never set
+    // otherwise.
+    if (System.getenv().containsKey("CI")) {
+      // Max retries per test.
+      maxRetries = 1
+      // Max total test failures.
+      // This is an estimate based on current failure rates, but if more
+      // than 5 tests fail in a run it's likely a real source of failure
+      // and we should stop retrying.
+      maxFailures = 5
+    }
+    failOnPassedAfterRetry = true
+  }
+}
+
+task awsUnitTest(type: Test) {
+  useJUnitPlatform {
+    includeTags "aws-unit"
+  }
+  outputs.upToDateWhen { false }
+  finalizedBy tasks.combinedJaCoCoReport
+}

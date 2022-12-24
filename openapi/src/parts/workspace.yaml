@@ -547,6 +547,9 @@ components:
         azureContext:
           description: Azure context, if one exists
           $ref: '#/components/schemas/AzureContext'
+        awsContext:
+          description: AWS context, if one exists
+          $ref: '#/components/schemas/AwsContext'
         properties:
           $ref: '#/components/schemas/Properties'
         createdDate:

@@ -73,7 +73,7 @@ public class ControlledAiNotebookHandler implements WsmResourceHandler {
             : generatedName;
 
     /**
-     * The regular expression only allow legal character combinations which start with lowercase
+     * The regular expression only allows legal character combinations which start with lowercase
      * letter, lowercase letter and numbers and dash("-") in the string, and lowercase letter and
      * number at the end of the string. It trims any other combinations.
      */
