@@ -109,8 +109,7 @@ def enumerate_workspace_resources(session, workspace_id, resource_type):
     return out_resources
 
 def get_notebook_cred(session, workspace_id, notebook_id, access):
-    response = session.get(f'{WSM_API_ENDPOINT}/{workspace_id}/resources/controlled/aws/sagemaker-notebooks/"
-     + "{notebook_id}/credential', params={'accessScope': access, 'credentialDuration': 900})
+    response = session.get(f'{WSM_API_ENDPOINT}/{workspace_id}/resources/controlled/aws/sagemaker-notebooks/{notebook_id}/credential', params={'accessScope': access, 'credentialDuration': 900})
     if not response.ok:
         print(f'ERROR: Getting notebook cred failed with status {response.status_code}', file=sys.stderr)
         sys.exit(GET_AWS_CRED_FAILED)
@@ -118,7 +117,7 @@ def get_notebook_cred(session, workspace_id, notebook_id, access):
 
 def get_bucket_cred(session, workspace_id, bucket_id, access):
     response = session.get(f'{WSM_API_ENDPOINT}/{workspace_id}/resources/controlled/aws/buckets/{bucket_id}/credential',
-     params={'accessScope': access, 'credentialDuration': 3600})
+        params={'accessScope': access, 'credentialDuration': 3600})
     if not response.ok:
         print(f'ERROR: Getting notebook cred failed with status {response.status_code}', file=sys.stderr)
         sys.exit(GET_AWS_CRED_FAILED)
