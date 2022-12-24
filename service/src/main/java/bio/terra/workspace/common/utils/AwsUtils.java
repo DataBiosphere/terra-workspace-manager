@@ -361,10 +361,9 @@ public class AwsUtils {
 
       if (status.equals(NotebookInstanceStatus.IN_SERVICE)) {
         return;
-      }
-
-      else if (!status.equals(NotebookInstanceStatus.PENDING)){
-        throw new ApiException(String.format("Unexpected notebook state '%s' at creation time.", status));
+      } else if (!status.equals(NotebookInstanceStatus.PENDING)) {
+        throw new ApiException(
+            String.format("Unexpected notebook state '%s' at creation time.", status));
       }
 
       try {
