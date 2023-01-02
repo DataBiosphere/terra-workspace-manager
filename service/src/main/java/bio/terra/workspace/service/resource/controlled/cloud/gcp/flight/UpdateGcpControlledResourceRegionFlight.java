@@ -15,12 +15,17 @@ public class UpdateGcpControlledResourceRegionFlight extends Flight {
    * @param inputParameters FlightMap of the inputs for the flight
    * @param beanBag Anonymous context meaningful to the application using Stairway
    */
-  public UpdateGcpControlledResourceRegionFlight(FlightMap inputParameters,
-      Object beanBag) {
+  public UpdateGcpControlledResourceRegionFlight(FlightMap inputParameters, Object beanBag) {
     super(inputParameters, beanBag);
     FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
-    addStep(new RetrieveControlledResourceWithoutRegionStep(CloudPlatform.GCP,
-        flightBeanBag.getResourceDao()), RetryRules.shortDatabase());
-    addStep(new RetrieveGcpResourcesRegionStep(flightBeanBag.getCrlService(), flightBeanBag.getGcpCloudContextService()), RetryRules.shortExponential());
+    addStep(
+        new RetrieveControlledResourceWithoutRegionStep(
+            CloudPlatform.GCP, flightBeanBag.getResourceDao()),
+        RetryRules.shortDatabase());
+    addStep(
+        new RetrieveGcpResourcesRegionStep(
+            flightBeanBag.getCrlService(), flightBeanBag.getGcpCloudContextService()),
+        RetryRules.shortExponential());
     addStep(new UpdateGcpResourcesRegionStep(flightBeanBag.getResourceDao()));
-  }}
+  }
+}

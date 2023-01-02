@@ -133,7 +133,8 @@ public class JobBuilder {
   @Traced
   public <T> T submitAndWait(Class<T> resultClass) {
     populateInputParams();
-    return jobService.submitAndWait(flightClass, jobParameterMap, resultClass, /*typeReference=*/null, jobId);
+    return jobService.submitAndWait(
+        flightClass, jobParameterMap, resultClass, /*typeReference=*/ null, jobId);
   }
 
   /**
@@ -145,7 +146,8 @@ public class JobBuilder {
   @Traced
   public <T> T submitAndWait(TypeReference<T> typeReference) {
     populateInputParams();
-    return jobService.submitAndWait(flightClass, jobParameterMap, /*resultClass=*/null, typeReference, jobId);
+    return jobService.submitAndWait(
+        flightClass, jobParameterMap, /*resultClass=*/ null, typeReference, jobId);
   }
 
   /**
@@ -156,9 +158,9 @@ public class JobBuilder {
   @Traced
   public <T> T submitAndWait() {
     populateInputParams();
-    return jobService.submitAndWait(flightClass, jobParameterMap, /*resultClass=*/null, /*typeReference=*/null, jobId);
+    return jobService.submitAndWait(
+        flightClass, jobParameterMap, /*resultClass=*/ null, /*typeReference=*/ null, jobId);
   }
-
 
   // Check the inputs, supply defaults and finalize the input parameter map
   private void populateInputParams() {

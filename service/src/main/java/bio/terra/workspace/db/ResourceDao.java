@@ -67,7 +67,8 @@ public class ResourceDao {
       """;
 
   /** SQL query for reading all columns from the resource table */
-  private static final String RESOURCE_SELECT_SQL = RESOURCE_SELECT_SQL_WITHOUT_WORKSPACE_ID + " WHERE workspace_id = :workspace_id";
+  private static final String RESOURCE_SELECT_SQL =
+      RESOURCE_SELECT_SQL_WITHOUT_WORKSPACE_ID + " WHERE workspace_id = :workspace_id";
 
   private static final RowMapper<DbResource> DB_RESOURCE_ROW_MAPPER =
       (rs, rowNum) ->
@@ -307,10 +308,11 @@ public class ResourceDao {
   @ReadTransaction
   public List<ControlledResource> listControlledResourcesWithMissingRegion(
       @Nullable CloudPlatform cloudPlatform) {
-    String sql = RESOURCE_SELECT_SQL_WITHOUT_WORKSPACE_ID + " WHERE stewardship_type = :controlled_resource AND region IS NULL";
+    String sql =
+        RESOURCE_SELECT_SQL_WITHOUT_WORKSPACE_ID
+            + " WHERE stewardship_type = :controlled_resource AND region IS NULL";
     MapSqlParameterSource params =
-        new MapSqlParameterSource()
-            .addValue("controlled_resource", CONTROLLED.toSql());
+        new MapSqlParameterSource().addValue("controlled_resource", CONTROLLED.toSql());
 
     if (cloudPlatform != null) {
       sql += " AND cloud_platform = :cloud_platform";
@@ -518,28 +520,21 @@ public class ResourceDao {
    * @return whether the resource's region is successfully updated.
    */
   @WriteTransaction
-  public boolean updateControlledResourceRegion(
-      UUID workspaceUuid, UUID resourceId, @Nullable String region) {
-    var sql =
-        """
-            UPDATE resource SET region = :region
-            WHERE workspace_id = :workspace_id AND resource_id = :resource_id
-        """;
+  public boolean updateControlledResourceRegion(UUID resourceId, @Nullable String region) {
+    var sql = "UPDATE resource SET region = :region WHERE resource_id = :resource_id";
 
     var params =
         new MapSqlParameterSource()
             .addValue("region", region)
-            .addValue("workspace_id", workspaceUuid.toString())
             .addValue("resource_id", resourceId.toString());
 
     int rowsAffected = jdbcTemplate.update(sql, params);
     boolean updated = rowsAffected > 0;
 
     logger.info(
-        "{} region for resource {} in workspace {}",
+        "{} region for resource {}",
         (updated ? "Updated" : "No Update - did not find"),
-        resourceId,
-        workspaceUuid);
+        resourceId);
 
     return updated;
   }

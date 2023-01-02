@@ -16,14 +16,16 @@ public class RetrieveControlledResourceWithoutRegionStep implements Step {
   private final CloudPlatform cloudPlatform;
   private final ResourceDao resourceDao;
 
-  public RetrieveControlledResourceWithoutRegionStep(CloudPlatform cloudPlatform, ResourceDao resourceDao) {
+  public RetrieveControlledResourceWithoutRegionStep(
+      CloudPlatform cloudPlatform, ResourceDao resourceDao) {
     this.cloudPlatform = cloudPlatform;
     this.resourceDao = resourceDao;
   }
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    List<ControlledResource> controlledResources = resourceDao.listControlledResourcesWithMissingRegion(cloudPlatform);
+    List<ControlledResource> controlledResources =
+        resourceDao.listControlledResourcesWithMissingRegion(cloudPlatform);
     context.getWorkingMap().put(CONTROLLED_RESOURCES_WITHOUT_REGION, controlledResources);
     return StepResult.getStepResultSuccess();
   }

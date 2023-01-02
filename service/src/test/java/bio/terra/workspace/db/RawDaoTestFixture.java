@@ -17,7 +17,6 @@ import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.Locale;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
@@ -40,8 +39,10 @@ public class RawDaoTestFixture {
   }
 
   @WriteTransaction
-  public void storeControlledGcpResource(UUID workspaceUuid, UUID resourceId, String resourceAttributes) {
-    storeResource(workspaceUuid.toString(),
+  public void storeControlledGcpResource(
+      UUID workspaceUuid, UUID resourceId, String resourceAttributes) {
+    storeResource(
+        workspaceUuid.toString(),
         CloudPlatform.GCP.name(),
         resourceId.toString(),
         RandomStringUtils.randomAlphabetic(10),

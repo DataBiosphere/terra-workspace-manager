@@ -3,7 +3,8 @@ package bio.terra.workspace.common.logging;
 import static bio.terra.workspace.common.utils.FlightUtils.getRequired;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.APPLICATION_IDS;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCE_TO_REGION_MAP;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCE_ID_TO_REGION_MAP;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.FOLDER_ID;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.UPDATED_WORKSPACES;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.USER_TO_REMOVE;
@@ -75,8 +76,7 @@ public class WorkspaceActivityLogHook implements StairwayHook {
   @Override
   public HookAction endFlight(FlightContext context) throws InterruptedException {
     String flightClassName = context.getFlightClassName();
-    logger.info(
-        String.format("endFlight %s: %s", flightClassName, context.getFlightStatus()));
+    logger.info(String.format("endFlight %s: %s", flightClassName, context.getFlightStatus()));
     var workspaceId =
         context.getInputParameters().get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class);
     var operationType =
@@ -108,7 +108,8 @@ public class WorkspaceActivityLogHook implements StairwayHook {
       if (SyncGcpIamRolesFlight.class.getName().equals(flightClassName)) {
         maybeLogForSyncGcpIamRolesFlight(context, operationType, userEmail, subjectId);
       } else if (UpdateGcpControlledResourceRegionFlight.class.getName().equals(flightClassName)) {
-        maybeLogUpdateGcpControlledResourceRegionFlight(context, operationType, userEmail, subjectId);
+        maybeLogUpdateGcpControlledResourceRegionFlight(
+            context, operationType, userEmail, subjectId);
       } else {
         throw new UnhandledActivityLogException(
             String.format(
@@ -132,8 +133,7 @@ public class WorkspaceActivityLogHook implements StairwayHook {
         case FOLDER -> maybeLogFolderDeletionFlight(context, workspaceUuid, userEmail, subjectId);
         case APPLICATION, USER -> throw new UnhandledDeletionFlightException(
             String.format(
-                "Activity log should be updated for deletion flight %s failures",
-                flightClassName));
+                "Activity log should be updated for deletion flight %s failures", flightClassName));
       }
       return HookAction.CONTINUE;
     }
@@ -300,17 +300,31 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     }
   }
 
-  private void maybeLogUpdateGcpControlledResourceRegionFlight(FlightContext context, OperationType operationType, String userEmail, String subjectId) {
+  private void maybeLogUpdateGcpControlledResourceRegionFlight(
+      FlightContext context, OperationType operationType, String userEmail, String subjectId) {
     if (!context.getFlightStatus().equals(FlightStatus.SUCCESS)) {
       return;
     }
-    Map<ControlledResource, String> resourceToRegionMap = context.getWorkingMap().get(CONTROLLED_RESOURCE_TO_REGION_MAP, new TypeReference<>() {});
-    for (var resource: resourceToRegionMap.keySet()) {
+    FlightUtils.validateRequiredEntries(
+        context.getWorkingMap(),
+        CONTROLLED_RESOURCE_ID_TO_REGION_MAP,
+        CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP);
+    Map<UUID, String> resourceIdToRegionMap =
+        context.getWorkingMap().get(CONTROLLED_RESOURCE_ID_TO_REGION_MAP, new TypeReference<>() {});
+    Map<UUID, String> resourceIdToWorkspaceIdMap =
+        context
+            .getWorkingMap()
+            .get(CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP, new TypeReference<>() {});
+
+    for (var resourceId : resourceIdToRegionMap.keySet()) {
       activityLogDao.writeActivity(
-          resource.getWorkspaceId(),
+          UUID.fromString(resourceIdToWorkspaceIdMap.get(resourceId)),
           new DbWorkspaceActivityLog(
-              userEmail, subjectId, operationType, resource.getResourceId().toString(), ActivityLogChangedTarget.RESOURCE)
-      );
+              userEmail,
+              subjectId,
+              operationType,
+              resourceId.toString(),
+              ActivityLogChangedTarget.RESOURCE));
     }
   }
 }

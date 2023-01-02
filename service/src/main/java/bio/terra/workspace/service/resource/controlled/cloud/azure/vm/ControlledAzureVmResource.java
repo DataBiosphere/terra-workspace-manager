@@ -163,8 +163,7 @@ public class ControlledAzureVmResource extends ControlledResource {
             flightBeanBag.getResourceDao()),
         cloudRetry);
     flight.addStep(
-        new UpdateControlledResourceRegionStep(
-            flightBeanBag.getResourceDao(), getWorkspaceId(), getResourceId()),
+        new UpdateControlledResourceRegionStep(flightBeanBag.getResourceDao(), getResourceId()),
         RetryRules.shortDatabase());
     flight.addStep(
         new AssignManagedIdentityAzureVmStep(

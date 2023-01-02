@@ -1,9 +1,10 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.flight;
 
 import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntries;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCES_WITHOUT_REGION;
 import static bio.terra.workspace.service.crl.CrlService.getBigQueryDataset;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCE_TO_REGION_MAP;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCES_WITHOUT_REGION;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCE_ID_TO_REGION_MAP;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP;
 
 import bio.terra.cloudres.google.storage.BucketCow;
 import bio.terra.cloudres.google.storage.StorageCow;
@@ -30,13 +31,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class RetrieveGcpResourcesRegionStep implements Step {
-  private static final Logger logger = LoggerFactory.getLogger(RetrieveGcpResourcesRegionStep.class);
+  private static final Logger logger =
+      LoggerFactory.getLogger(RetrieveGcpResourcesRegionStep.class);
   private final CrlService crlService;
   private final GcpCloudContextService cloudContextService;
   private static final String REGIONS_PATH = "regions";
 
-  public RetrieveGcpResourcesRegionStep(CrlService crlService,
-      GcpCloudContextService cloudContextService) {
+  public RetrieveGcpResourcesRegionStep(
+      CrlService crlService, GcpCloudContextService cloudContextService) {
     this.crlService = crlService;
     this.cloudContextService = cloudContextService;
   }
@@ -44,40 +46,77 @@ public class RetrieveGcpResourcesRegionStep implements Step {
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     validateRequiredEntries(context.getWorkingMap(), CONTROLLED_RESOURCES_WITHOUT_REGION);
-    List<ControlledResource> controlledResources = context.getWorkingMap().get(CONTROLLED_RESOURCES_WITHOUT_REGION, new TypeReference<>() {});
-    Map<ControlledResource, String> resourcesToRegionMap = new HashMap<>();
-    for (var resource: controlledResources) {
+    List<ControlledResource> controlledResources =
+        context.getWorkingMap().get(CONTROLLED_RESOURCES_WITHOUT_REGION, new TypeReference<>() {});
+    Map<UUID, String> resourceIdToRegionMap = new HashMap<>();
+    Map<UUID, String> resourceIdToWorkspaceIdMap = new HashMap<>();
+    for (var resource : controlledResources) {
       WsmResourceType resourceType = resource.getResourceType();
-      logger.info("Getting cloud region for resource {} in workspace {}", resource.getResourceId(), resource.getWorkspaceId());
+      logger.info(
+          "Getting cloud region for resource {} in workspace {}",
+          resource.getResourceId(),
+          resource.getWorkspaceId());
       switch (resourceType) {
-        case CONTROLLED_GCP_GCS_BUCKET -> resourcesToRegionMap.put(resource, getGcsBucketRegion(resource.castByEnum(
-            resourceType)));
-        case CONTROLLED_GCP_BIG_QUERY_DATASET -> resourcesToRegionMap.put(resource, getBqDatasetRegion(resource.castByEnum(
-            resourceType)));
-        case CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE -> resourcesToRegionMap.put(resource, getAiNotebookRegion(resource.castByEnum(
-            resourceType)));
-        default -> throw new UnsupportedOperationException(String.format("resource of type %s is not a GCP resource or is a referenced resource",
-            resourceType));
+        case CONTROLLED_GCP_GCS_BUCKET -> populateMapsWithResourceIdKey(
+            resourceIdToRegionMap,
+            resourceIdToWorkspaceIdMap,
+            resource,
+            getGcsBucketRegion(resource.castByEnum(resourceType)));
+        case CONTROLLED_GCP_BIG_QUERY_DATASET -> populateMapsWithResourceIdKey(
+            resourceIdToRegionMap,
+            resourceIdToWorkspaceIdMap,
+            resource,
+            getBqDatasetRegion(resource.castByEnum(resourceType)));
+        case CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE -> populateMapsWithResourceIdKey(
+            resourceIdToRegionMap,
+            resourceIdToWorkspaceIdMap,
+            resource,
+            getAiNotebookRegion(resource.castByEnum(resourceType)));
+        default -> throw new UnsupportedOperationException(
+            String.format(
+                "resource of type %s is not a GCP resource or is a referenced resource",
+                resourceType));
       }
     }
-    context.getWorkingMap().put(CONTROLLED_RESOURCE_TO_REGION_MAP, resourcesToRegionMap);
+    context.getWorkingMap().put(CONTROLLED_RESOURCE_ID_TO_REGION_MAP, resourceIdToRegionMap);
+    context
+        .getWorkingMap()
+        .put(CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP, resourceIdToWorkspaceIdMap);
     return StepResult.getStepResultSuccess();
+  }
+
+  private void populateMapsWithResourceIdKey(
+      Map<UUID, String> resourceIdToRegionMap,
+      Map<UUID, String> resourceIdToWorkspaceIdMap,
+      ControlledResource resource,
+      @Nullable String region) {
+    if (region != null) {
+      UUID resourceId = resource.getResourceId();
+      resourceIdToRegionMap.put(resourceId, region);
+      resourceIdToWorkspaceIdMap.put(resourceId, resource.getWorkspaceId().toString());
+    }
   }
 
   @Nullable
   private String getBqDatasetRegion(ControlledBigQueryDatasetResource resource) {
     try {
-      Dataset dataset = getBigQueryDataset(crlService.createWsmSaBigQueryCow(), resource.getProjectId(), resource.getDatasetName());
+      Dataset dataset =
+          getBigQueryDataset(
+              crlService.createWsmSaBigQueryCow(),
+              resource.getProjectId(),
+              resource.getDatasetName());
       return dataset.getLocation();
     } catch (IOException e) {
-      logger.error("Failed to get the cloud dataset instance for resource {} in workspace {}", resource.getResourceId(), resource.getWorkspaceId());
+      logger.error(
+          "Failed to get the cloud dataset instance for resource {} in workspace {}",
+          resource.getResourceId(),
+          resource.getWorkspaceId());
       return null;
     }
   }
 
   private String getGcsBucketRegion(ControlledGcsBucketResource resource) {
-    String projectId =
-        cloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
+    String projectId = cloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
     StorageCow storageCow = crlService.createStorageCow(projectId);
 
     BucketCow existingBucketCow = storageCow.get(resource.getBucketName());
@@ -89,13 +128,18 @@ public class RetrieveGcpResourcesRegionStep implements Step {
     var projectId = cloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
     String subnet;
     try {
-      subnet = crlService
-          .getAIPlatformNotebooksCow()
-          .instances()
-          .get(resource.toInstanceName(projectId))
-          .execute().getSubnet();
+      subnet =
+          crlService
+              .getAIPlatformNotebooksCow()
+              .instances()
+              .get(resource.toInstanceName(projectId))
+              .execute()
+              .getSubnet();
     } catch (IOException e) {
-      logger.error("Failed to get ai notebook cloud instance from resource {} in workspace {}", resource.getResourceId(), resource.getWorkspaceId());
+      logger.error(
+          "Failed to get ai notebook cloud instance from resource {} in workspace {}",
+          resource.getResourceId(),
+          resource.getWorkspaceId());
       return null;
     }
     if (subnet == null) {
@@ -104,7 +148,7 @@ public class RetrieveGcpResourcesRegionStep implements Step {
     }
     // Format of subnet is: projects/{project_id}/regions/{region}/subnetworks/{subnetwork_id}
     var paths = subnet.split("/");
-    for (int i = 0; i < paths.length - 1; i ++) {
+    for (int i = 0; i < paths.length - 1; i++) {
       if (paths[i].equalsIgnoreCase(REGIONS_PATH)) {
         return paths[i + 1];
       }

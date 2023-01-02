@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.admin;
 
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.IS_WET_RUN;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.POLICIES;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.WORKSPACE_ID_TO_GCP_PROJECT_ID_MAP;
 
 import bio.terra.common.exception.InternalServerErrorException;
@@ -16,7 +15,6 @@ import bio.terra.workspace.service.workspace.model.OperationType;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;

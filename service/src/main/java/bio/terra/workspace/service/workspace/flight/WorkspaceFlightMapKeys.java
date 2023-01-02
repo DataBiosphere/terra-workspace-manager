@@ -38,8 +38,12 @@ public final class WorkspaceFlightMapKeys {
     public static final String RESOURCE_ROLES_TO_REMOVE = "resourceRolesToRemove";
     public static final String REMOVED_USER_IS_WORKSPACE_MEMBER = "removedUserIsWorkspaceMember";
 
-    public static final String CONTROLLED_RESOURCES_WITHOUT_REGION = "controlledResourcesWithoutRegion";
-    public static final String CONTROLLED_RESOURCE_TO_REGION_MAP = "controlledResourceToRegionMap";
+    public static final String CONTROLLED_RESOURCES_WITHOUT_REGION =
+        "controlledResourcesWithoutRegion";
+    public static final String CONTROLLED_RESOURCE_ID_TO_REGION_MAP =
+        "controlledResourceToRegionMap";
+    public static final String CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP =
+        "controlledReourceIdToWorkspaceIdMap";
     // Notebooks keys
     public static final String CREATE_NOTEBOOK_NETWORK_NAME = "createNotebookNetworkName";
     public static final String CREATE_NOTEBOOK_PARAMETERS = "createNotebookParameters";

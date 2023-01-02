@@ -75,8 +75,7 @@ public enum ActivityFlight {
       CloneControlledAzureStorageContainerResourceFlight.class.getName(),
       ActivityLogChangedTarget.RESOURCE),
   UPDATE_GCP_CONTROLLED_RESOURCES_REGION_FLIGHT(
-      UpdateGcpControlledResourceRegionFlight.class.getName(),
-      ActivityLogChangedTarget.RESOURCE);
+      UpdateGcpControlledResourceRegionFlight.class.getName(), ActivityLogChangedTarget.RESOURCE);
 
   private final String flightClassName;
   private final ActivityLogChangedTarget changedTarget;
