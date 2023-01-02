@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.controlled.cloud.gcp.flight;
+package bio.terra.workspace.service.resource.controlled.flight.update;
 
 import static bio.terra.workspace.common.utils.FlightUtils.setResponse;
 import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntries;
@@ -19,11 +19,11 @@ import java.util.Map;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 
-public class UpdateGcpResourcesRegionStep implements Step {
+public class UpdateControlledResourcesRegionStep implements Step {
 
   private final ResourceDao resourceDao;
 
-  public UpdateGcpResourcesRegionStep(ResourceDao resourceDao) {
+  public UpdateControlledResourcesRegionStep(ResourceDao resourceDao) {
     this.resourceDao = resourceDao;
   }
 

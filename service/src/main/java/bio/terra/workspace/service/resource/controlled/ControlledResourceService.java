@@ -26,6 +26,7 @@ import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceSyncMapping.SyncMapping;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.flight.UpdateAzureControlledResourceRegionFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespace.ControlledAzureRelayNamespaceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpPolicyBuilder;
@@ -618,6 +619,27 @@ public class ControlledResourceService {
             .description("sync custom iam roles in all gcp projects")
             .jobId(UUID.randomUUID().toString())
             .flightClass(UpdateGcpControlledResourceRegionFlight.class)
+            .userRequest(wsmSaRequest)
+            .operationType(OperationType.UPDATE);
+    try {
+      List<ControlledResource> updatedResource = job.submitAndWait(new TypeReference<>() {});
+      return updatedResource;
+    } catch (RuntimeException e) {
+      logger.error("Failed to update controlled gcp resource region");
+    }
+    return Collections.emptyList();
+  }
+
+  public List<ControlledResource> updateAzureControlledResourcesRegion() {
+    String wsmSaToken = samService.getWsmServiceAccountToken();
+    AuthenticatedUserRequest wsmSaRequest =
+        new AuthenticatedUserRequest().token(Optional.of(wsmSaToken));
+    JobBuilder job =
+        jobService
+            .newJob()
+            .description("sync custom iam roles in all gcp projects")
+            .jobId(UUID.randomUUID().toString())
+            .flightClass(UpdateAzureControlledResourceRegionFlight.class)
             .userRequest(wsmSaRequest)
             .operationType(OperationType.UPDATE);
     try {

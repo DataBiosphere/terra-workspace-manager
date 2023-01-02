@@ -56,5 +56,6 @@ public final class StartupInitializer {
     ControlledResourceService controlledResourceService =
         applicationContext.getBean(ControlledResourceService.class);
     controlledResourceService.updateGcpControlledResourcesRegion();
+    controlledResourceService.updateAzureControlledResourcesRegion();
   }
 }
