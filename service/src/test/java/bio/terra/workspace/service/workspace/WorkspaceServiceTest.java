@@ -175,6 +175,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     when(mockSamService.getUserEmailFromSamAndRethrowOnInterrupt(
             any(AuthenticatedUserRequest.class)))
         .thenReturn(USER_REQUEST.getEmail());
+    when(mockSamService.getWsmServiceAccountToken()).thenReturn("faketoken");
   }
 
   /**

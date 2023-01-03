@@ -26,10 +26,14 @@ import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.configuration.external.CliConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
+import bio.terra.workspace.app.controller.shared.JobApiUtils;
+import bio.terra.workspace.app.controller.shared.JobApiUtils.AsyncJobResult;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.GcpCloudUtils;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
+import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
@@ -50,6 +54,7 @@ import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.exception.InvalidResultStateException;
+import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.CreateAiNotebookInstanceStep;
@@ -85,7 +90,9 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.bigquery.model.Dataset;
 import com.google.api.services.iam.v1.model.TestIamPermissionsRequest;
@@ -147,6 +154,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @Autowired private WorkspaceConnectedTestUtils workspaceUtils;
   @Autowired private WorkspaceService workspaceService;
   @Autowired private ResourceDao resourceDao;
+  @Autowired private JobApiUtils jobApiUtils;
+  @Autowired private WorkspaceActivityLogService workspaceActivityLogService;
 
   private static void assertNotFound(InstanceName instanceName, AIPlatformNotebooksCow notebooks) {
     GoogleJsonResponseException exception =
@@ -1605,14 +1614,14 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Test
   public void updateGcpControlledResourceRegion_nothingToUpdate() {
-    List<ControlledResource> updatedResource =
-        controlledResourceService.updateGcpControlledResourcesRegion();
+    List<ControlledResource> emptyList = updateControlledResourcesRegionAndWait();
 
-    assertTrue(updatedResource.isEmpty());
+    assertTrue(emptyList.isEmpty());
   }
 
   @Test
-  public void updateGcpControlledResourcesRegion_onlyUpdateWhenRegionIsEmpty() {
+  public void updateGcpControlledResourcesRegion_onlyUpdateWhenRegionIsEmpty()
+      throws InterruptedException {
     // create bucket
     ApiGcpGcsBucketCreationParameters bucketCreationParameters =
         ControlledResourceFixtures.getGoogleBucketCreationParameters();
@@ -1667,8 +1676,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .getRegion());
 
     // check resource region and update region.
-    List<ControlledResource> emptyList =
-        controlledResourceService.updateGcpControlledResourcesRegion();
+    List<ControlledResource> emptyList = updateControlledResourcesRegionAndWait();
 
     // Update nothing because regions are all populated.
     assertTrue(emptyList.isEmpty());
@@ -1678,37 +1686,41 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     resourceDao.updateControlledResourceRegion(createdDataset.getResourceId(), /*region=*/ null);
     resourceDao.updateControlledResourceRegion(notebookResource.getResourceId(), /*region=*/ null);
 
-    List<ControlledResource> updatedResource =
-        controlledResourceService.updateGcpControlledResourcesRegion();
+    List<ControlledResource> updatedResource = updateControlledResourcesRegionAndWait();
 
     // The three controlled resources are updated as the regions are null.
     assertEquals(3, updatedResource.size());
-    ControlledResource bucket =
-        updatedResource.stream()
-            .filter(
-                resource ->
-                    WsmResourceType.CONTROLLED_GCP_GCS_BUCKET.equals(resource.getResourceType()))
-            .findAny()
-            .get();
-    assertEquals(DEFAULT_RESOURCE_REGION, bucket.getRegion().toLowerCase(Locale.ROOT));
+    assertResourceRegionIsUpdatedAndActivityIsLogged(
+        updatedResource, createdBucket.getResourceId(), DEFAULT_RESOURCE_REGION);
+    assertResourceRegionIsUpdatedAndActivityIsLogged(
+        updatedResource, createdDataset.getResourceId(), DEFAULT_RESOURCE_REGION);
+    assertResourceRegionIsUpdatedAndActivityIsLogged(
+        updatedResource, notebookResource.getResourceId(), "us-east1");
+  }
+
+  private void assertResourceRegionIsUpdatedAndActivityIsLogged(
+      List<ControlledResource> updatedResource, UUID resourceId, String expectedResourceRegion) {
     ControlledResource dataset =
         updatedResource.stream()
-            .filter(
-                resource ->
-                    WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET.equals(
-                        resource.getResourceType()))
+            .filter(resource -> resourceId.equals(resource.getResourceId()))
             .findAny()
             .get();
-    assertEquals(DEFAULT_RESOURCE_REGION, dataset.getRegion().toLowerCase(Locale.ROOT));
-    ControlledResource notebook =
-        updatedResource.stream()
-            .filter(
-                resource ->
-                    WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE.equals(
-                        resource.getResourceType()))
-            .findAny()
-            .get();
-    assertEquals("us-east1", notebook.getRegion().toLowerCase(Locale.ROOT));
+    assertEquals(expectedResourceRegion, dataset.getRegion().toLowerCase(Locale.ROOT));
+    assertActivityLogForResourceUpdate(resourceId.toString());
+  }
+
+  private void assertActivityLogForResourceUpdate(String changeSubjectId) {
+    ActivityLogChangeDetails bucketLog =
+        workspaceActivityLogService.getLastUpdatedDetails(workspaceId, changeSubjectId).get();
+    assertEquals(
+        new ActivityLogChangeDetails(
+            bucketLog.changeDate(),
+            bucketLog.actorEmail(),
+            bucketLog.actorSubjectId(),
+            OperationType.UPDATE,
+            changeSubjectId,
+            ActivityLogChangedTarget.RESOURCE),
+        bucketLog);
   }
 
   @Test
@@ -1738,70 +1750,19 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     resourceDao.updateControlledResourceRegion(dataset.getResourceId(), /*region=*/ null);
     resourceDao.updateControlledResourceRegion(notebookResource.getResourceId(), /*region=*/ null);
 
-    List<ControlledResource> updatedResource =
-        controlledResourceService.updateGcpControlledResourcesRegion();
+    List<ControlledResource> updatedResource = updateControlledResourcesRegionAndWait();
 
     // The three controlled resources are updated as the regions are null.
     assertTrue(updatedResource.isEmpty());
   }
 
-  @Test
-  public void
-      updateGcpControlledResourcesRegion_allResourcesHaveNoRegion_updatesResourceRegionCorrectly() {
-    // create bucket
-    ApiGcpGcsBucketCreationParameters bucketCreationParameters =
-        ControlledResourceFixtures.getGoogleBucketCreationParameters();
-    ControlledGcsBucketResource createdBucket =
-        controlledResourceService
-            .createControlledResourceSync(
-                ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceId)
-                    .bucketName(bucketCreationParameters.getName())
-                    .build(),
-                null,
-                user.getAuthenticatedRequest(),
-                bucketCreationParameters)
-            .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
-    assertEquals(DEFAULT_RESOURCE_REGION, createdBucket.getRegion());
-    ApiGcpBigQueryDatasetCreationParameters creationParameters =
-        ControlledResourceFixtures.getGcpBigQueryDatasetCreationParameters();
-    // create dataset
-    ControlledBigQueryDatasetResource createdDataset =
-        controlledResourceService
-            .createControlledResourceSync(
-                ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
-                    .datasetName(creationParameters.getDatasetId())
-                    .build(),
-                null,
-                user.getAuthenticatedRequest(),
-                creationParameters)
-            .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
-    assertEquals(DEFAULT_RESOURCE_REGION, createdDataset.getRegion());
-    // create notebook
-    ApiGcpAiNotebookInstanceCreationParameters notebookCreationParameters =
-        ControlledResourceFixtures.defaultNotebookCreationParameters();
-    ControlledAiNotebookInstanceResource notebookResource =
-        makeNotebookTestResource(
-            workspaceId,
-            TestUtils.appendRandomNumber("notebookresourcename"),
-            notebookCreationParameters.getInstanceId());
-    String jobId =
-        controlledResourceService.createAiNotebookInstance(
-            notebookResource,
-            ControlledResourceFixtures.defaultNotebookCreationParameters(),
-            DEFAULT_ROLE,
-            new ApiJobControl().id(UUID.randomUUID().toString()),
-            "fakeResultPath",
-            user.getAuthenticatedRequest());
+  private List<ControlledResource> updateControlledResourcesRegionAndWait() {
+    String jobId = controlledResourceService.updateGcpControlledResourcesRegionAsync();
     jobService.waitForJob(jobId);
-    assertNotNull(
-        controlledResourceService.getControlledResource(
-            workspaceId, notebookResource.getResourceId()));
 
-    // check resource region and update region.
-    List<ControlledResource> updatedResource =
-        controlledResourceService.updateGcpControlledResourcesRegion();
-
-    assertTrue(updatedResource.isEmpty());
+    AsyncJobResult<List<ControlledResource>> jobResult =
+        jobApiUtils.retrieveAsyncJobResult(jobId, new TypeReference<>() {});
+    return jobResult.getResult();
   }
 
   /**

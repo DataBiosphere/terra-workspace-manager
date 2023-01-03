@@ -278,7 +278,7 @@ public class ResourceDao {
    *     cloud platform. If null, this will return resources from all cloud platforms.
    */
   @ReadTransaction
-  public List<ControlledResource> listControlledResourcesWithMissingRegion(
+  public List<ControlledResource> listControlledResources(
       UUID workspaceUuid, @Nullable CloudPlatform cloudPlatform) {
     String sql = RESOURCE_SELECT_SQL + " AND stewardship_type = :controlled_resource ";
     MapSqlParameterSource params =

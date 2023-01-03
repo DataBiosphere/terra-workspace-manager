@@ -108,8 +108,7 @@ public class WorkspaceActivityLogHook implements StairwayHook {
       if (SyncGcpIamRolesFlight.class.getName().equals(flightClassName)) {
         maybeLogForSyncGcpIamRolesFlight(context, operationType, userEmail, subjectId);
       } else if (UpdateGcpControlledResourceRegionFlight.class.getName().equals(flightClassName)) {
-        maybeLogUpdateGcpControlledResourceRegionFlight(
-            context, operationType, userEmail, subjectId);
+        maybeLogUpdateControlledResourceRegionFlight(context, operationType, userEmail, subjectId);
       } else {
         throw new UnhandledActivityLogException(
             String.format(
@@ -300,7 +299,7 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     }
   }
 
-  private void maybeLogUpdateGcpControlledResourceRegionFlight(
+  private void maybeLogUpdateControlledResourceRegionFlight(
       FlightContext context, OperationType operationType, String userEmail, String subjectId) {
     if (!context.getFlightStatus().equals(FlightStatus.SUCCESS)) {
       return;

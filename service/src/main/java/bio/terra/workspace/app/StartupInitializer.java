@@ -49,8 +49,9 @@ public final class StartupInitializer {
     // Fill in this method with any other initialization that needs to happen
     // between the point of having the entire application initialized and
     // the point of opening the port to start accepting REST requests.
+    // TODO (PF-2368): clean this up once back-fill is done in all Terra environment.
     ControlledResourceService controlledResourceService =
         applicationContext.getBean(ControlledResourceService.class);
-    controlledResourceService.updateGcpControlledResourcesRegion();
+    controlledResourceService.updateGcpControlledResourcesRegionAsync();
   }
 }

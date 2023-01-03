@@ -8,6 +8,7 @@ import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveCon
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateResourcesRegionStep;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 
+// TODO (PF-2368): clean this up once back-fill is done in all Terra environment.
 public class UpdateGcpControlledResourceRegionFlight extends Flight {
 
   /**

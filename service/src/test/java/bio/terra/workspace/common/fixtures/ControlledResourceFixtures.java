@@ -275,7 +275,7 @@ public class ControlledResourceFixtures {
 
   public static ApiGcpAiNotebookInstanceCreationParameters defaultNotebookCreationParameters() {
     return new ApiGcpAiNotebookInstanceCreationParameters()
-        .instanceId("default-instance-id")
+        .instanceId(TestUtils.appendRandomNumber("default-instance-id"))
         .location("us-east1-b")
         .machineType("e2-standard-2")
         .vmImage(
