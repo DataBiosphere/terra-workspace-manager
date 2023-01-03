@@ -686,8 +686,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   }
 
   @Override
-  public ResponseEntity<ApiDataCenterList> listValidDataCenter(
-      UUID workspaceId, String platform) {
+  public ResponseEntity<ApiDataCenterList> listValidDataCenter(UUID workspaceId, String platform) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);

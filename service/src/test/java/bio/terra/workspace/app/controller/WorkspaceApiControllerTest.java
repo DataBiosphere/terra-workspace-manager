@@ -611,16 +611,18 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
   }
 
   private ApiDataCenterList listValid(UUID workspaceId, String platform) throws Exception {
-    var serializedResponse = mockMvc
-        .perform(
-            addAuth(
-                get(String.format(WORKSPACES_V1_LIST_VALID_DATA_CENTER_PATH_FORMAT, workspaceId))
-                    .queryParam("platform", platform),
-                USER_REQUEST))
-        .andExpect(status().is(HttpStatus.SC_OK))
-        .andReturn()
-        .getResponse()
-        .getContentAsString();
+    var serializedResponse =
+        mockMvc
+            .perform(
+                addAuth(
+                    get(String.format(
+                            WORKSPACES_V1_LIST_VALID_DATA_CENTER_PATH_FORMAT, workspaceId))
+                        .queryParam("platform", platform),
+                    USER_REQUEST))
+            .andExpect(status().is(HttpStatus.SC_OK))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
     return objectMapper.readValue(serializedResponse, ApiDataCenterList.class);
   }
 }
