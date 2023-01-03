@@ -609,8 +609,15 @@ public class ControlledResourceService {
 
   // TODO (PF-2368): clean this up once back-fill is done in all Terra environment.
   @Traced
+  @Nullable
   public String updateGcpControlledResourcesRegionAsync() {
     String wsmSaToken = samService.getWsmServiceAccountToken();
+    // wsmSaToken is null for unit test when samService is mocked out.
+    if (wsmSaToken == null) {
+      logger.warn(
+          "#updateGcpControlledResourcesRegionAsync: workspace manager service account token is null");
+      return null;
+    }
     AuthenticatedUserRequest wsmSaRequest =
         new AuthenticatedUserRequest().token(Optional.of(wsmSaToken));
     return jobService
