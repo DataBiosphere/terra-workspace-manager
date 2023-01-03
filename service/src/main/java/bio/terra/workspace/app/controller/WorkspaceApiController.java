@@ -27,6 +27,7 @@ import bio.terra.workspace.generated.model.ApiCreateCloudContextRequest;
 import bio.terra.workspace.generated.model.ApiCreateCloudContextResult;
 import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
+import bio.terra.workspace.generated.model.ApiDataCenterList;
 import bio.terra.workspace.generated.model.ApiGcpContext;
 import bio.terra.workspace.generated.model.ApiGrantRoleRequestBody;
 import bio.terra.workspace.generated.model.ApiIamRole;
@@ -682,6 +683,19 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
     final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId);
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
+  }
+
+  @Override
+  public ResponseEntity<ApiDataCenterList> listValidDataCenter(
+      UUID workspaceId, String platform) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
+
+    List<String> datacenters = tpsApiDispatch.listValidDataCenter(workspaceId, platform);
+    ApiDataCenterList apiDataCenterList = new ApiDataCenterList();
+    apiDataCenterList.addAll(datacenters);
+    return new ResponseEntity<>(apiDataCenterList, HttpStatus.OK);
   }
 
   // Retrieve the async result or progress for clone workspace.
