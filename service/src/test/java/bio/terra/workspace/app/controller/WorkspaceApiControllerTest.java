@@ -524,7 +524,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
   @Test
   public void listValidDataCenter_tpsEnabled() throws Exception {
     ApiCreatedWorkspace workspace = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
-    List<String> availableRegions = List.of("Oregon", "los Angeles", "Salt Lake City", "Las Vegas");
+    List<String> availableRegions = List.of("US", "EU", "asia-northeast3");
     when(mockTpsApiDispatch().listValidDataCenter(eq(workspace.getId()), eq("gcp")))
         .thenReturn(availableRegions);
     when(mockTpsApiDispatch().listValidDataCenter(eq(workspace.getId()), eq("azure")))
