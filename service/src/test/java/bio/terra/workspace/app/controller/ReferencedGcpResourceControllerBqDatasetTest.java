@@ -105,6 +105,7 @@ public class ReferencedGcpResourceControllerBqDatasetTest extends BaseConnectedT
         ApiCloningInstructionsEnum.NOTHING,
         workspaceId,
         sourceResourceName,
+        sourceResource.getMetadata().getDescription(),
         projectId,
         sourceDatasetName,
         /*expectedCreatedBy=*/ userAccessUtils.getDefaultUserEmail(),
@@ -153,6 +154,7 @@ public class ReferencedGcpResourceControllerBqDatasetTest extends BaseConnectedT
         workspaceId,
         newName,
         newDescription,
+        projectId,
         newDataset,
         userAccessUtils.getDefaultUserEmail(),
         userAccessUtils.getSecondUserEmail());
@@ -413,6 +415,7 @@ public class ReferencedGcpResourceControllerBqDatasetTest extends BaseConnectedT
       ApiCloningInstructionsEnum expectedCloningInstructions,
       UUID expectedWorkspaceId,
       String expectedResourceName,
+      String expectedDescription,
       String expectedProjectId,
       String expectedDatasetName,
       String expectedCreatedBy,
@@ -425,7 +428,7 @@ public class ReferencedGcpResourceControllerBqDatasetTest extends BaseConnectedT
         expectedCloningInstructions,
         expectedWorkspaceId,
         expectedResourceName,
-        actualResource.getMetadata().getDescription(),
+        expectedDescription,
         /*expectedResourceLineage=*/ new ApiResourceLineage(),
         expectedCreatedBy,
         expectedLastUpdatedBy);

@@ -1040,12 +1040,13 @@ public class MockMvcUtils {
             .description(newDescription)
             .updateParameters(
                 new ApiGcpGcsBucketUpdateParameters().cloningInstructions(newCloningInstruction));
-    var serializedResponse =
-        getSerializedResponseForPost(
-            userRequest,
-            String.format(CONTROLLED_GCP_GCS_BUCKET_V1_PATH_FORMAT, workspaceId, resourceId),
-            objectMapper.writeValueAsString(requestBody));
-    return objectMapper.readValue(serializedResponse, ApiGcpGcsBucketResource.class);
+    return updateResource(
+        ApiGcpGcsBucketResource.class,
+        CONTROLLED_GCP_GCS_BUCKET_V1_PATH_FORMAT,
+        workspaceId,
+        resourceId,
+        objectMapper.writeValueAsString(requestBody),
+        userRequest);
   }
 
   /** Call cloneGcsBucket() and wait for flight to finish. */
