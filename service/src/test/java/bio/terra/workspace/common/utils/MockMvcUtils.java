@@ -94,15 +94,16 @@ import bio.terra.workspace.generated.model.ApiResourceList;
 import bio.terra.workspace.generated.model.ApiResourceMetadata;
 import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
-import bio.terra.workspace.generated.model.ApiTpsPaoUpdateRequest;
-import bio.terra.workspace.generated.model.ApiTpsPaoUpdateResult;
-import bio.terra.workspace.generated.model.ApiTpsPolicyInput;
-import bio.terra.workspace.generated.model.ApiTpsPolicyInputs;
-import bio.terra.workspace.generated.model.ApiTpsUpdateMode;
 import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
+import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
+import bio.terra.workspace.generated.model.ApiWsmPolicyInputs;
+import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateMode;
+import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateRequest;
+import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateResult;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.RetrieveGcsBucketCloudAttributesStep;
@@ -287,6 +288,7 @@ public class MockMvcUtils {
   @Autowired private ObjectMapper objectMapper;
   @Autowired private JobService jobService;
   @Autowired private NamedParameterJdbcTemplate jdbcTemplate;
+  @Autowired private SamService samService;
 
   public static MockHttpServletRequestBuilder addAuth(
       MockHttpServletRequestBuilder request, AuthenticatedUserRequest userRequest) {
@@ -366,7 +368,7 @@ public class MockMvcUtils {
       @Nullable AuthenticatedUserRequest userRequest,
       UUID workspaceId,
       @Nullable ApiWorkspaceStageModel stageModel,
-      @Nullable ApiTpsPolicyInputs policyInputs,
+      @Nullable ApiWsmPolicyInputs policyInputs,
       int expectedCode)
       throws Exception {
     ApiCreateWorkspaceRequestBody request =
@@ -519,19 +521,19 @@ public class MockMvcUtils {
         .andExpect(status().is(HttpStatus.SC_NOT_FOUND));
   }
 
-  public ApiTpsPaoUpdateResult updatePolicies(
+  public ApiWsmPolicyUpdateResult updatePolicies(
       AuthenticatedUserRequest userRequest,
       UUID workspaceId,
-      @Nullable List<ApiTpsPolicyInput> policiesToAdd,
-      @Nullable List<ApiTpsPolicyInput> policiesToRemove)
+      @Nullable List<ApiWsmPolicyInput> policiesToAdd,
+      @Nullable List<ApiWsmPolicyInput> policiesToRemove)
       throws Exception {
-    ApiTpsPaoUpdateRequest requestBody =
-        new ApiTpsPaoUpdateRequest().updateMode(ApiTpsUpdateMode.FAIL_ON_CONFLICT);
+    ApiWsmPolicyUpdateRequest requestBody =
+        new ApiWsmPolicyUpdateRequest().updateMode(ApiWsmPolicyUpdateMode.FAIL_ON_CONFLICT);
     if (policiesToAdd != null) {
-      requestBody.addAttributes(new ApiTpsPolicyInputs().inputs(policiesToAdd));
+      requestBody.addAttributes(new ApiWsmPolicyInputs().inputs(policiesToAdd));
     }
     if (policiesToRemove != null) {
-      requestBody.removeAttributes(new ApiTpsPolicyInputs().inputs(policiesToRemove));
+      requestBody.removeAttributes(new ApiWsmPolicyInputs().inputs(policiesToRemove));
     }
     String serializedResponse =
         mockMvc
@@ -547,7 +549,7 @@ public class MockMvcUtils {
             .andReturn()
             .getResponse()
             .getContentAsString();
-    return objectMapper.readValue(serializedResponse, ApiTpsPaoUpdateResult.class);
+    return objectMapper.readValue(serializedResponse, ApiWsmPolicyUpdateResult.class);
   }
 
   public void deletePolicies(AuthenticatedUserRequest userRequest, UUID workspaceId)
@@ -1825,6 +1827,46 @@ public class MockMvcUtils {
             .addValue("change_subject_id", changeSubjectId);
     return DataAccessUtils.singleResult(
         jdbcTemplate.query(sql, params, ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER));
+  }
+
+  // TODO(PF-2261): assert resource lastUpdatedBy and lastUpdatedDate instead of calling
+  // directly into the `WorkspaceActivityLogDao`.
+  public void assertCloneActivityIsLogged(
+      UUID sourceWorkspaceId,
+      UUID sourceChangeSubjectId,
+      UUID destWorkspaceId,
+      UUID destChangeSubjectId,
+      AuthenticatedUserRequest userRequest)
+      throws InterruptedException {
+    // log in source Workspace
+    ActivityLogChangeDetails sourceChangeDetails =
+        getLastChangeDetails(sourceWorkspaceId, sourceChangeSubjectId.toString());
+    var actorEmail = userRequest.getEmail();
+    var actorSubjectId = samService.getUserStatusInfo(userRequest).getUserSubjectId();
+    assertEquals(
+        new ActivityLogChangeDetails(
+            /*changeDate=*/ null,
+            actorEmail,
+            actorSubjectId,
+            OperationType.CLONE,
+            sourceChangeSubjectId.toString(),
+            ActivityLogChangedTarget.RESOURCE),
+        // Clear change date for easier comparison
+        sourceChangeDetails.withChangeDate(null));
+
+    // log in destWorkspace
+    ActivityLogChangeDetails destChangeDetails =
+        getLastChangeDetails(destWorkspaceId, destChangeSubjectId.toString());
+    assertEquals(
+        new ActivityLogChangeDetails(
+            null,
+            actorEmail,
+            actorSubjectId,
+            OperationType.CREATE,
+            destChangeSubjectId.toString(),
+            ActivityLogChangedTarget.RESOURCE),
+        // Clear change date for easier comparison
+        destChangeDetails.withChangeDate(null));
   }
 
   public void assertNoResourceWithName(

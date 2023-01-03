@@ -14,7 +14,6 @@ import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.JobsApi;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
 import bio.terra.workspace.api.ResourceApi;
-import bio.terra.workspace.api.TpsApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiClient;
 import bio.terra.workspace.client.ApiException;
@@ -53,11 +52,10 @@ public class ClientTestUtils {
   public static final String RESOURCE_NAME_PREFIX = "terratest";
   // We may want this to be a test parameter. It has to match what is in the config or in the helm
   public static final String TEST_WSM_APP = "TestWsmApp";
-  private static final Logger logger = LoggerFactory.getLogger(ClientTestUtils.class);
-
   // Required scopes for client tests include the usual login scopes and GCP scope.
   public static final List<String> TEST_USER_SCOPES =
       List.of("openid", "email", "profile", "https://www.googleapis.com/auth/cloud-platform");
+  private static final Logger logger = LoggerFactory.getLogger(ClientTestUtils.class);
 
   private ClientTestUtils() {}
 
@@ -160,12 +158,6 @@ public class ClientTestUtils {
     return options.getService();
   }
 
-  public static TpsApi getTpsClient(TestUserSpecification testUser, ServerSpecification server)
-      throws IOException {
-    final ApiClient apiClient = getClientForTestUser(testUser, server);
-    return new TpsApi(apiClient);
-  }
-
   public static WorkspaceApi getWorkspaceClient(
       TestUserSpecification testUser, ServerSpecification server) throws IOException {
     final ApiClient apiClient = getClientForTestUser(testUser, server);
@@ -261,11 +253,6 @@ public class ClientTestUtils {
     return jobReport.getStatus().equals(JobReport.StatusEnum.RUNNING);
   }
 
-  @FunctionalInterface
-  public interface SupplierWithException<T> {
-    T get() throws Exception;
-  }
-
   /**
    * Get a result from a call that might throw an exception. Treat the exception as retryable, sleep
    * for 15 seconds, and retry up to 40 times. This structure is useful for situations where we are
@@ -308,13 +295,6 @@ public class ClientTestUtils {
           fn.run();
           return null;
         });
-  }
-
-  /** An interface for an arbitrary workspace operation that throws an {@link ApiException}. */
-  @FunctionalInterface
-  public interface WorkspaceOperation<T> {
-
-    T apply() throws ApiException;
   }
 
   /**
@@ -387,5 +367,17 @@ public class ClientTestUtils {
   @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
   public static <T> T assertPresent(Optional<T> optional) {
     return assertPresent(optional, null);
+  }
+
+  @FunctionalInterface
+  public interface SupplierWithException<T> {
+    T get() throws Exception;
+  }
+
+  /** An interface for an arbitrary workspace operation that throws an {@link ApiException}. */
+  @FunctionalInterface
+  public interface WorkspaceOperation<T> {
+
+    T apply() throws ApiException;
   }
 }

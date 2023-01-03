@@ -31,8 +31,10 @@ import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.services.bigquery.model.Dataset;
@@ -77,6 +79,8 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
   @Autowired GcpCloudUtils cloudUtils;
   @Autowired FeatureConfiguration features;
   @Autowired CrlService crlService;
+  @Autowired WorkspaceActivityLogService activityLogService;
+  @Autowired SamService samService;
 
   // Store workspace ID instead of workspace, we can easily use existing workspaces
   // for local development.
@@ -371,6 +375,12 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         /*defaultTableLifetime*/ null,
         // TODO(PF-2269): Change to DEFAULT_PARTITION_LIFETIME after PF-2269 is fixed
         /*defaultPartitionLifetime*/ null);
+    mockMvcUtils.assertCloneActivityIsLogged(
+        workspaceId,
+        sourceResource.getMetadata().getResourceId(),
+        workspaceId2,
+        clonedResource.getMetadata().getResourceId(),
+        userAccessUtils.defaultUserAuthRequest());
     mockMvcUtils.deleteBqDataset(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId2,
@@ -433,6 +443,12 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         /*defaultTableLifetime*/ null,
         // TODO(PF-2269): Change to DEFAULT_PARTITION_LIFETIME after PF-2269 is fixed
         /*defaultPartitionLifetime*/ null);
+    mockMvcUtils.assertCloneActivityIsLogged(
+        workspaceId,
+        sourceResource.getMetadata().getResourceId(),
+        workspaceId,
+        clonedResource.getMetadata().getResourceId(),
+        userAccessUtils.defaultUserAuthRequest());
   }
 
   @Test
@@ -490,6 +506,12 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         /*defaultTableLifetime*/ null,
         // TODO(PF-2269): Change to DEFAULT_PARTITION_LIFETIME after PF-2269 is fixed
         /*defaultPartitionLifetime*/ null);
+    mockMvcUtils.assertCloneActivityIsLogged(
+        workspaceId,
+        sourceResource.getMetadata().getResourceId(),
+        workspaceId2,
+        clonedResource.getMetadata().getResourceId(),
+        userAccessUtils.defaultUserAuthRequest());
   }
 
   @Test
@@ -528,6 +550,12 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
             workspaceId,
             clonedResource.getMetadata().getResourceId());
     assertEquals(clonedResource, gotResource);
+    mockMvcUtils.assertCloneActivityIsLogged(
+        workspaceId,
+        sourceResource.getMetadata().getResourceId(),
+        workspaceId,
+        clonedResource.getMetadata().getResourceId(),
+        userAccessUtils.defaultUserAuthRequest());
   }
 
   // Destination workspace policy is the merge of source workspace policy and pre-clone destination

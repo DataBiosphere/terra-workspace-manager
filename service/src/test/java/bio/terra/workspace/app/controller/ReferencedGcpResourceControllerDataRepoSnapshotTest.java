@@ -184,6 +184,12 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotTest extends BaseCon
         sourceInstanceName,
         sourceSnapshot,
         userAccessUtils.getSecondUserEmail());
+    mockMvcUtils.assertCloneActivityIsLogged(
+        workspaceId,
+        sourceResource.getMetadata().getResourceId(),
+        workspaceId2,
+        clonedResource.getMetadata().getResourceId(),
+        userAccessUtils.secondUserAuthRequest());
 
     mockMvcUtils.removeRole(
         userAccessUtils.defaultUserAuthRequest(),
@@ -244,6 +250,12 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotTest extends BaseCon
         sourceInstanceName,
         sourceSnapshot,
         userAccessUtils.getDefaultUserEmail());
+    mockMvcUtils.assertCloneActivityIsLogged(
+        workspaceId,
+        sourceResource.getMetadata().getResourceId(),
+        workspaceId,
+        clonedResource.getMetadata().getResourceId(),
+        userAccessUtils.defaultUserAuthRequest());
 
     // Assert resource returned by get
     final ApiDataRepoSnapshotResource gotResource =
@@ -277,6 +289,12 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotTest extends BaseCon
         sourceInstanceName,
         sourceSnapshot,
         userAccessUtils.getDefaultUserEmail());
+    mockMvcUtils.assertCloneActivityIsLogged(
+        workspaceId,
+        sourceResource.getMetadata().getResourceId(),
+        workspaceId2,
+        clonedResource.getMetadata().getResourceId(),
+        userAccessUtils.defaultUserAuthRequest());
 
     // Assert resource returned by get
     final ApiDataRepoSnapshotResource gotResource =

@@ -20,7 +20,9 @@ import bio.terra.workspace.generated.model.ApiResourceLineage;
 import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
+import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
@@ -50,6 +52,8 @@ public class ReferencedGcpResourceControllerBqDatasetTest extends BaseConnectedT
   @Autowired ObjectMapper objectMapper;
   @Autowired UserAccessUtils userAccessUtils;
   @Autowired FeatureConfiguration features;
+  @Autowired WorkspaceActivityLogService activityLogService;
+  @Autowired SamService samService;
 
   private UUID workspaceId;
   private String projectId;
@@ -193,6 +197,13 @@ public class ReferencedGcpResourceControllerBqDatasetTest extends BaseConnectedT
         projectId,
         sourceDatasetName,
         userAccessUtils.getSecondUserEmail());
+    mockMvcUtils.assertCloneActivityIsLogged(
+        workspaceId,
+        sourceResource.getMetadata().getResourceId(),
+        workspaceId2,
+        clonedResource.getMetadata().getResourceId(),
+        userAccessUtils.secondUserAuthRequest());
+
     mockMvcUtils.removeRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
@@ -261,6 +272,12 @@ public class ReferencedGcpResourceControllerBqDatasetTest extends BaseConnectedT
             workspaceId,
             clonedResource.getMetadata().getResourceId());
     assertEquals(clonedResource, gotResource);
+    mockMvcUtils.assertCloneActivityIsLogged(
+        workspaceId,
+        sourceResource.getMetadata().getResourceId(),
+        workspaceId,
+        clonedResource.getMetadata().getResourceId(),
+        userAccessUtils.defaultUserAuthRequest());
   }
 
   @Test
@@ -294,6 +311,12 @@ public class ReferencedGcpResourceControllerBqDatasetTest extends BaseConnectedT
             workspaceId2,
             clonedResource.getMetadata().getResourceId());
     assertEquals(clonedResource, gotResource);
+    mockMvcUtils.assertCloneActivityIsLogged(
+        workspaceId,
+        sourceResource.getMetadata().getResourceId(),
+        workspaceId2,
+        clonedResource.getMetadata().getResourceId(),
+        userAccessUtils.defaultUserAuthRequest());
   }
 
   // Destination workspace policy is the merge of source workspace policy and pre-clone destination

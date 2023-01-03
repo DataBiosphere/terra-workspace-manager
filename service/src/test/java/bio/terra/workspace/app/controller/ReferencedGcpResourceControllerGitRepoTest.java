@@ -182,6 +182,12 @@ public class ReferencedGcpResourceControllerGitRepoTest extends BaseConnectedTes
         sourceResourceName,
         sourceGitRepoUrl,
         userAccessUtils.getSecondUserEmail());
+    mockMvcUtils.assertCloneActivityIsLogged(
+        workspaceId,
+        sourceResource.getMetadata().getResourceId(),
+        workspaceId2,
+        clonedResource.getMetadata().getResourceId(),
+        userAccessUtils.secondUserAuthRequest());
     mockMvcUtils.removeRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
@@ -240,6 +246,12 @@ public class ReferencedGcpResourceControllerGitRepoTest extends BaseConnectedTes
         destResourceName,
         sourceGitRepoUrl,
         userAccessUtils.getDefaultUserEmail());
+    mockMvcUtils.assertCloneActivityIsLogged(
+        workspaceId,
+        sourceResource.getMetadata().getResourceId(),
+        workspaceId,
+        clonedResource.getMetadata().getResourceId(),
+        userAccessUtils.defaultUserAuthRequest());
 
     // Assert resource returned by get
     final ApiGitRepoResource gotResource =
@@ -272,6 +284,12 @@ public class ReferencedGcpResourceControllerGitRepoTest extends BaseConnectedTes
         destResourceName,
         sourceGitRepoUrl,
         userAccessUtils.getDefaultUserEmail());
+    mockMvcUtils.assertCloneActivityIsLogged(
+        workspaceId,
+        sourceResource.getMetadata().getResourceId(),
+        workspaceId2,
+        clonedResource.getMetadata().getResourceId(),
+        userAccessUtils.defaultUserAuthRequest());
 
     // Assert resource returned by get
     final ApiGitRepoResource gotResource =
