@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
@@ -123,7 +122,10 @@ public class RetrieveGcpResourcesRegionStep implements Step {
 
     BucketCow existingBucketCow = storageCow.get(resource.getBucketName());
     if (existingBucketCow == null) {
-      logger.error("Failed to get gcs bucket {} in workspace {}", resource.getResourceId(), resource.getWorkspaceId());
+      logger.error(
+          "Failed to get gcs bucket {} in workspace {}",
+          resource.getResourceId(),
+          resource.getWorkspaceId());
       return null;
     }
     return existingBucketCow.getBucketInfo().getLocation();

@@ -5,7 +5,6 @@ import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.AI_
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_RESOURCE_REGION;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -1715,17 +1714,17 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @Test
   public void updateGcpControlledResourcesRegion_cloudResourceDoesNotExist_noUpdate() {
     // create bucket in db
-    ControlledGcsBucketResource bucket = ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(
-            workspaceId)
-        .bucketName(ControlledResourceFixtures.uniqueBucketName())
-        .build();
+    ControlledGcsBucketResource bucket =
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceId)
+            .bucketName(ControlledResourceFixtures.uniqueBucketName())
+            .build();
     resourceDao.createControlledResource(bucket);
     // create dataset in db
-    ControlledBigQueryDatasetResource dataset = ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(
-            workspaceId)
-        .datasetName(ControlledResourceFixtures.uniqueDatasetId())
-        .projectId(projectId)
-        .build();
+    ControlledBigQueryDatasetResource dataset =
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
+            .datasetName(ControlledResourceFixtures.uniqueDatasetId())
+            .projectId(projectId)
+            .build();
     resourceDao.createControlledResource(dataset);
     // create notebook in db
     ControlledAiNotebookInstanceResource notebookResource =
