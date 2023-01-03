@@ -10,6 +10,7 @@ import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveCon
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourcesRegionStep;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 
+/** A flight to back-fill azure controlled resources that are missing the region fields. */
 public class UpdateAzureControlledResourceRegionFlight extends Flight {
 
   /**

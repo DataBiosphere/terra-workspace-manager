@@ -1,6 +1,7 @@
 package bio.terra.workspace.common.fixtures;
 
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
+import static bio.terra.workspace.connected.AzureConnectedTestUtils.getAzureName;
 
 import bio.terra.stairway.ShortUUID;
 import bio.terra.workspace.common.utils.AzureVmUtils;
@@ -90,6 +91,7 @@ public class ControlledResourceFixtures {
       new ApiGcpGcsBucketCreationParameters()
           .name(TestUtils.appendRandomNumber(BUCKET_NAME_PREFIX))
           .location(GcpResourceConstant.DEFAULT_REGION);
+  public static String DEFAULT_AZURE_RESOURCE_REGION = "westcentralus";
 
   /** Construct a parameter object with a unique bucket name to avoid unintended clashes. */
   public static ApiGcpGcsBucketCreationParameters getGoogleBucketCreationParameters() {
@@ -113,7 +115,7 @@ public class ControlledResourceFixtures {
   public static ApiAzureIpCreationParameters getAzureIpCreationParameters() {
     return new ApiAzureIpCreationParameters()
         .name(uniqueAzureName(AZURE_IP_NAME_PREFIX))
-        .region("westcentralus");
+        .region(DEFAULT_AZURE_RESOURCE_REGION);
   }
 
   /** Construct a parameter object with a unique ip name to avoid unintended clashes. */
@@ -767,4 +769,97 @@ public class ControlledResourceFixtures {
           .lifecycle(new ApiGcpGcsBucketLifecycle().rules(ImmutableList.of(WSM_LIFECYCLE_RULE_3)));
   public static final ApiGcpGcsBucketUpdateParameters BUCKET_UPDATE_PARAMETERS_EMPTY =
       new ApiGcpGcsBucketUpdateParameters();
+
+  public static ControlledAzureIpResource.Builder makeDefaultAzureIpResource(
+      ApiAzureIpCreationParameters ipCreationParameters, UUID workspaceId) {
+    return ControlledAzureIpResource.builder()
+        .common(
+            makeDefaultControlledResourceFieldsBuilder()
+                .workspaceUuid(workspaceId)
+                .name(getAzureName("ip"))
+                .cloningInstructions(CloningInstructions.COPY_RESOURCE)
+                .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                .region(ipCreationParameters.getRegion())
+                .build())
+        .ipName(ipCreationParameters.getName())
+        .region(ipCreationParameters.getRegion());
+  }
+
+  public static ControlledAzureDiskResource.Builder makeDefaultAzureDiskBuilder(
+      ApiAzureDiskCreationParameters creationParameters, UUID workspaceId) {
+    return ControlledAzureDiskResource.builder()
+        .common(
+            makeDefaultControlledResourceFieldsBuilder()
+                .workspaceUuid(workspaceId)
+                .name(getAzureName("disk"))
+                .cloningInstructions(CloningInstructions.COPY_RESOURCE)
+                .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                .region(creationParameters.getRegion())
+                .build())
+        .diskName(creationParameters.getName())
+        .region(creationParameters.getRegion())
+        .size(creationParameters.getSize());
+  }
+
+  public static ControlledAzureNetworkResource.Builder makeDefaultAzureNetworkResourceBuilder(
+      ApiAzureNetworkCreationParameters creationParameters, UUID workspaceId) {
+    return ControlledAzureNetworkResource.builder()
+        .common(
+            makeDefaultControlledResourceFieldsBuilder()
+                .workspaceUuid(workspaceId)
+                .name(getAzureName("network"))
+                .cloningInstructions(CloningInstructions.COPY_RESOURCE)
+                .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                .region(creationParameters.getRegion())
+                .build())
+        .networkName(creationParameters.getName())
+        .region(creationParameters.getRegion())
+        .subnetName(creationParameters.getSubnetName())
+        .addressSpaceCidr(creationParameters.getAddressSpaceCidr())
+        .subnetAddressCidr(creationParameters.getSubnetAddressCidr());
+  }
+
+  public static ControlledAzureVmResource.Builder makeDefaultControlledAzureVmResourceBuilder(
+      ApiAzureVmCreationParameters creationParameters,
+      UUID workspaceId,
+      UUID ipResourceId,
+      UUID networksResourceId,
+      UUID diskResourceId) {
+    return ControlledAzureVmResource.builder()
+        .common(
+            makeDefaultControlledResourceFieldsBuilder()
+                .workspaceUuid(workspaceId)
+                .name(getAzureName("vm"))
+                .cloningInstructions(CloningInstructions.COPY_RESOURCE)
+                .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                .region(creationParameters.getRegion())
+                .build())
+        .vmName(creationParameters.getName())
+        .vmSize(creationParameters.getVmSize())
+        .vmImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
+        .region(creationParameters.getRegion())
+        .ipId(ipResourceId)
+        .diskId(diskResourceId)
+        .networkId(networksResourceId);
+  }
+
+  public static ControlledAzureRelayNamespaceResource.Builder makeDefaultRelayNamespaceBuilder(
+      ApiAzureRelayNamespaceCreationParameters creationParameters, UUID workspaceId) {
+    return ControlledAzureRelayNamespaceResource.builder()
+        .common(
+            makeDefaultControlledResourceFieldsBuilder()
+                .workspaceUuid(workspaceId)
+                .name(getAzureName("relaynamespace"))
+                .cloningInstructions(CloningInstructions.COPY_RESOURCE)
+                .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                .region(DEFAULT_AZURE_RESOURCE_REGION)
+                .build())
+        .namespaceName(TestUtils.appendRandomNumber("namespace"))
+        .region(DEFAULT_AZURE_RESOURCE_REGION);
+  }
 }

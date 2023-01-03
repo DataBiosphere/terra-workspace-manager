@@ -19,6 +19,11 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * Retrieves the azure cloud context of the Terra workspace where the resources with missing regions
+ * are in. The azure cloud context are deserialized and used in {@link
+ * RetrieveAzureResourcesRegionStep}.
+ */
 public class RetrieveAzureCloudContexts implements Step {
 
   final AzureCloudContextService azureCloudContextService;

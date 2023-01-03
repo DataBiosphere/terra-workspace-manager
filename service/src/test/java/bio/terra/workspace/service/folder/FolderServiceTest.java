@@ -157,7 +157,7 @@ public class FolderServiceTest extends BaseConnectedTest {
 
   @AfterAll
   public void cleanUpAfterAll() {
-    workspaceConnectedTestUtils.deleteWorkspaceAndGcpContext(
+    workspaceConnectedTestUtils.deleteWorkspaceAndCloudContext(
         userAccessUtils.defaultUserAuthRequest(), workspaceId);
   }
 

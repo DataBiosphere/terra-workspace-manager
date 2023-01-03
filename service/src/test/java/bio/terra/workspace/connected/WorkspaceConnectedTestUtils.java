@@ -47,7 +47,8 @@ public class WorkspaceConnectedTestUtils {
     return workspaceService.getWorkspace(workspaceUuid);
   }
 
-  public void deleteWorkspaceAndGcpContext(AuthenticatedUserRequest userRequest, UUID workspaceId) {
+  public void deleteWorkspaceAndCloudContext(
+      AuthenticatedUserRequest userRequest, UUID workspaceId) {
     workspaceService.deleteWorkspace(workspaceService.getWorkspace(workspaceId), userRequest);
   }
 }

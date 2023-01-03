@@ -85,7 +85,7 @@ public class AdminServiceTest extends BaseConnectedTest {
   void cleanUpWorkspace() {
     jobService.setFlightDebugInfoForTest(null);
     for (UUID workspaceId : workspaceIds) {
-      connectedTestUtils.deleteWorkspaceAndGcpContext(
+      connectedTestUtils.deleteWorkspaceAndCloudContext(
           userAccessUtils.defaultUserAuthRequest(), workspaceId);
     }
   }
