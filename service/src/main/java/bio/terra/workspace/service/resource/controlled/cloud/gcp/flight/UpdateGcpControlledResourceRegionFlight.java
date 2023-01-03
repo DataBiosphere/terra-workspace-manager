@@ -5,6 +5,7 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceWithoutRegionStep;
+import bio.terra.workspace.service.resource.controlled.flight.update.UpdateResourcesRegionStep;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 
 public class UpdateGcpControlledResourceRegionFlight extends Flight {
@@ -26,6 +27,6 @@ public class UpdateGcpControlledResourceRegionFlight extends Flight {
         new RetrieveGcpResourcesRegionStep(
             flightBeanBag.getCrlService(), flightBeanBag.getGcpCloudContextService()),
         RetryRules.shortExponential());
-    addStep(new UpdateGcpResourcesRegionStep(flightBeanBag.getResourceDao()));
+    addStep(new UpdateResourcesRegionStep(flightBeanBag.getResourceDao()));
   }
 }

@@ -5,6 +5,7 @@ import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.AI_
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_RESOURCE_REGION;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -1709,6 +1710,40 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .findAny()
             .get();
     assertEquals("us-east1", notebook.getRegion().toLowerCase(Locale.ROOT));
+  }
+
+  @Test
+  public void updateGcpControlledResourcesRegion_cloudResourceDoesNotExist_noUpdate() {
+    // create bucket in db
+    ControlledGcsBucketResource bucket = ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(
+            workspaceId)
+        .bucketName(ControlledResourceFixtures.uniqueBucketName())
+        .build();
+    resourceDao.createControlledResource(bucket);
+    // create dataset in db
+    ControlledBigQueryDatasetResource dataset = ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(
+            workspaceId)
+        .datasetName(ControlledResourceFixtures.uniqueDatasetId())
+        .projectId(projectId)
+        .build();
+    resourceDao.createControlledResource(dataset);
+    // create notebook in db
+    ControlledAiNotebookInstanceResource notebookResource =
+        makeNotebookTestResource(
+            workspaceId,
+            TestUtils.appendRandomNumber("notebookresourcename"),
+            TestUtils.appendRandomNumber("default-instance-id"));
+    resourceDao.createControlledResource(notebookResource);
+    // Artificially set regions to null in the database.
+    resourceDao.updateControlledResourceRegion(bucket.getResourceId(), /*region=*/ null);
+    resourceDao.updateControlledResourceRegion(dataset.getResourceId(), /*region=*/ null);
+    resourceDao.updateControlledResourceRegion(notebookResource.getResourceId(), /*region=*/ null);
+
+    List<ControlledResource> updatedResource =
+        controlledResourceService.updateGcpControlledResourcesRegion();
+
+    // The three controlled resources are updated as the regions are null.
+    assertTrue(updatedResource.isEmpty());
   }
 
   @Test
