@@ -132,6 +132,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   private static final UUID FOLDER_ID = UUID.randomUUID();
 
   @MockBean private DataRepoService mockDataRepoService;
+  /** Mock SamService does nothing for all calls that would throw if unauthorized. */
   @MockBean private SamService mockSamService;
 
   @Autowired private MockMvc mockMvc;
@@ -174,7 +175,6 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     when(mockSamService.getUserEmailFromSamAndRethrowOnInterrupt(
             any(AuthenticatedUserRequest.class)))
         .thenReturn(USER_REQUEST.getEmail());
-    when(mockSamService.getWsmServiceAccountToken()).thenReturn("faketoken");
   }
 
   /**
