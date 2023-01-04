@@ -313,16 +313,14 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{workspaceId}/list-valid-datacenters:
+  /api/workspaces/v1/{workspaceId}/listValidDataCenters:
     parameters:
     - $ref: '#/components/parameters/WorkspaceId'
     - $ref: '#/components/parameters/Platform'
     get:
       summary: |
-        delete existing Workspace properties. Only properties with keys in
-        request are deleted. Properties with keys not in request are not
-        deleted.
-      operationId: listValidDataCenter
+        list valid data centers of a given workspace on a cloud platform.
+      operationId: listValidDataCenters
       tags: [ Workspace ]
       responses:
         '200':
