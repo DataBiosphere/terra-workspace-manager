@@ -41,7 +41,7 @@ public class GetSharedStorageAccountStep implements Step {
       if (existingSharedStorageAccount.isPresent()) {
         context
             .getWorkingMap()
-            .put(ControlledResourceKeys.STORAGE_ACCOUNT, existingSharedStorageAccount.get());
+            .put(ControlledResourceKeys.SHARED_STORAGE_ACCOUNT, existingSharedStorageAccount.get());
         return StepResult.getStepResultSuccess();
       }
 
