@@ -5,6 +5,7 @@ import bio.terra.policy.api.TpsApi;
 import bio.terra.policy.client.ApiClient;
 import bio.terra.policy.client.ApiException;
 import bio.terra.policy.model.TpsComponent;
+import bio.terra.policy.model.TpsDatacenterList;
 import bio.terra.policy.model.TpsObjectType;
 import bio.terra.policy.model.TpsPaoCreateRequest;
 import bio.terra.policy.model.TpsPaoGetResult;
@@ -25,6 +26,8 @@ import io.opencensus.contrib.http.jaxrs.JaxrsClientFilter;
 import io.opencensus.contrib.spring.aop.Traced;
 import io.opencensus.trace.Tracing;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -172,6 +175,22 @@ public class TpsApiDispatch {
     } catch (ApiException e) {
       throw convertApiException(e);
     }
+  }
+
+  @Traced
+  public List<String> listValidDataCenter(UUID workspaceId, String platform) {
+    features.tpsEnabledCheck();
+    TpsApi tpsApi = policyApi();
+    TpsDatacenterList tpsDatacenterList;
+    try {
+      tpsDatacenterList = tpsApi.listValidDatacenters(workspaceId, platform);
+    } catch (ApiException e) {
+      throw convertApiException(e);
+    }
+    if (tpsDatacenterList != null) {
+      return tpsDatacenterList.stream().toList();
+    }
+    return new ArrayList<>();
   }
 
   private ApiClient getApiClient(String accessToken) {
