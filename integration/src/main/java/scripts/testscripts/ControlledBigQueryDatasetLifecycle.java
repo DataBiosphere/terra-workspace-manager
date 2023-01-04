@@ -111,7 +111,8 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
     logger.info("Retrieving dataset resource id {}", resourceId.toString());
     GcpBigQueryDatasetResource fetchedResource =
         ownerResourceApi.getBigQueryDataset(getWorkspaceId(), resourceId);
-    assertEquals(createdDataset, fetchedResource);
+    assertEquals(createdDataset.metadata(createdDataset.getMetadata()
+        .lastUpdatedDate(fetchedResource.getMetadata().getLastUpdatedDate())), fetchedResource);
     assertEquals(DATASET_RESOURCE_NAME, fetchedResource.getAttributes().getDatasetId());
 
     GenerateGcpBigQueryDatasetCloudIDRequestBody bqDatasetNameRequest =

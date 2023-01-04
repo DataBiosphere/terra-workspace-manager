@@ -44,7 +44,8 @@ public class DeleteWorkspaceWithControlledResource extends WorkspaceAllocateTest
     // Confirm the dataset was created in WSM
     GcpBigQueryDatasetResource fetchedDataset =
         resourceApi.getBigQueryDataset(getWorkspaceId(), resourceId);
-    assertEquals(createdDataset, fetchedDataset);
+    assertEquals(createdDataset.metadata(createdDataset.getMetadata().lastUpdatedDate(fetchedDataset.getMetadata()
+        .getLastUpdatedDate())), fetchedDataset);
 
     // Delete the workspace, which should delete the included context and resource
     workspaceApi.deleteWorkspace(getWorkspaceId());
