@@ -111,12 +111,7 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
     logger.info("Retrieving dataset resource id {}", resourceId.toString());
     GcpBigQueryDatasetResource fetchedResource =
         ownerResourceApi.getBigQueryDataset(getWorkspaceId(), resourceId);
-    assertEquals(
-        createdDataset.metadata(
-            createdDataset
-                .getMetadata()
-                .lastUpdatedDate(fetchedResource.getMetadata().getLastUpdatedDate())),
-        fetchedResource);
+    assertDatasetsAreEqualIgnoringLastUpdatedDate(createdDataset, fetchedResource);
     assertEquals(DATASET_RESOURCE_NAME, fetchedResource.getAttributes().getDatasetId());
 
     GenerateGcpBigQueryDatasetCloudIDRequestBody bqDatasetNameRequest =
@@ -282,12 +277,27 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
     GcpBigQueryDatasetResource fetchedResourceWithDifferentDatasetId =
         ownerResourceApi.getBigQueryDataset(
             getWorkspaceId(), createdDatasetWithDifferentDatasetId.getMetadata().getResourceId());
-    assertEquals(createdDatasetWithDifferentDatasetId, fetchedResourceWithDifferentDatasetId);
+    assertDatasetsAreEqualIgnoringLastUpdatedDate(
+        createdDatasetWithDifferentDatasetId, fetchedResourceWithDifferentDatasetId);
     assertEquals(
         datasetIdName, fetchedResourceWithDifferentDatasetId.getAttributes().getDatasetId());
 
     ownerResourceApi.deleteBigQueryDataset(
         getWorkspaceId(), createdDatasetWithDifferentDatasetId.getMetadata().getResourceId());
+  }
+
+  /**
+   * The dataset at creation can have an earlier LastUpdatedDate than the current dataset. So do not
+   * compare the lastUpdatedDate.
+   */
+  private void assertDatasetsAreEqualIgnoringLastUpdatedDate(
+      GcpBigQueryDatasetResource createdDataset, GcpBigQueryDatasetResource fetchedDataset) {
+    assertEquals(
+        createdDataset.metadata(
+            createdDataset
+                .getMetadata()
+                .lastUpdatedDate(fetchedDataset.getMetadata().getLastUpdatedDate())),
+        fetchedDataset);
   }
 
   /**
