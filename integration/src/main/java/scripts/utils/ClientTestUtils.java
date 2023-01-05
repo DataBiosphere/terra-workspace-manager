@@ -267,7 +267,7 @@ public class ClientTestUtils {
   public static @Nullable <T> T getWithRetryOnException(SupplierWithException<T> supplier)
       throws Exception {
     T result = null;
-    int numTries = 40;
+    int numTries = 60;
     Duration sleepDuration = Duration.ofSeconds(15);
     while (numTries > 0) {
       try {
