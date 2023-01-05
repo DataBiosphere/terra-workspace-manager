@@ -1710,17 +1710,17 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   }
 
   private void assertActivityLogForResourceUpdate(String changeSubjectId) {
-    ActivityLogChangeDetails bucketLog =
+    ActivityLogChangeDetails latestLog =
         workspaceActivityLogService.getLastUpdatedDetails(workspaceId, changeSubjectId).get();
     assertEquals(
         new ActivityLogChangeDetails(
-            bucketLog.changeDate(),
-            bucketLog.actorEmail(),
-            bucketLog.actorSubjectId(),
+            latestLog.changeDate(),
+            latestLog.actorEmail(),
+            latestLog.actorSubjectId(),
             OperationType.UPDATE,
             changeSubjectId,
             ActivityLogChangedTarget.RESOURCE),
-        bucketLog);
+        latestLog);
   }
 
   @Test
@@ -1752,7 +1752,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     List<ControlledResource> updatedResource = updateControlledResourcesRegionAndWait();
 
-    // The three controlled resources are updated as the regions are null.
+    // The three controlled resources are not updated as the cloud resource does not exist.
     assertTrue(updatedResource.isEmpty());
   }
 

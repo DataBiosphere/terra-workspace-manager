@@ -299,8 +299,7 @@ public class ResourceDao {
   }
 
   /**
-   * Returns a list of all controlled resources in a workspace, optionally filtering by cloud
-   * platform.
+   * Returns a list of all controlled resources without region field.
    *
    * @param cloudPlatform Optional. If present, this will only return resources from the specified
    *     cloud platform. If null, this will return resources from all cloud platforms.

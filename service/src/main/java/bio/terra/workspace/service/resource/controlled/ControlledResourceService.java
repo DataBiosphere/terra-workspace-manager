@@ -622,7 +622,9 @@ public class ControlledResourceService {
         new AuthenticatedUserRequest().token(Optional.of(wsmSaToken));
     return jobService
         .newJob()
-        .description("sync custom iam roles in all gcp projects")
+        .description(
+            "A flight to update controlled resource's missing region in all the existing"
+                + "terra managed gcp projects")
         .jobId(UUID.randomUUID().toString())
         .flightClass(UpdateGcpControlledResourceRegionFlight.class)
         .userRequest(wsmSaRequest)
