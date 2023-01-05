@@ -302,6 +302,8 @@ workspace:
         description: WSM test application
         service-account: Elizabeth.Shadowmoon@test.firecloud.org
         state: operating
+      leo:
+        service-account: leonardo-dev@broad-dsde-dev.iam.gserviceaccount.com
   azure:
     managed-app-client-id: ${clientid}
     managed-app-client-secret: ${clientsecret}
@@ -313,6 +315,10 @@ workspace:
     base-path: https://tps.wsmtest-eng.bee.envs-terra.bio/
 feature:
   tps-enabled: true
+landingzone:
+  sam:
+    landing-zone-resource-users:
+      - leonardo-dev@broad-dsde-dev.iam.gserviceaccount.com
 EOF
 else
   cat /dev/null > "${outputdir}/local-properties.yml"
