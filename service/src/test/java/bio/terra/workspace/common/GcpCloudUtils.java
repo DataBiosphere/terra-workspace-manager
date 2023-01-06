@@ -208,7 +208,7 @@ public class GcpCloudUtils {
   public static @Nullable <T> T getWithRetryOnException(SupplierWithException<T> supplier)
       throws Exception {
     T result = null;
-    int numTries = 60;
+    int numTries = 90;
     Duration sleepDuration = Duration.ofSeconds(15);
     while (numTries > 0) {
       try {
