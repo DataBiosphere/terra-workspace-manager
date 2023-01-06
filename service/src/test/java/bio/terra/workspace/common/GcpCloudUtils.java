@@ -136,7 +136,8 @@ public class GcpCloudUtils {
     Storage storageClient = getGcpStorageClient(userCredential, projectId);
     BlobId blobId = BlobId.of(bucketName, GCS_FILE_NAME);
     BlobInfo blobInfo = BlobInfo.newBuilder(blobId).build();
-    storageClient.create(blobInfo, GCS_FILE_CONTENTS.getBytes(StandardCharsets.UTF_8));
+    GcpCloudUtils.runWithRetryOnException(
+        () -> storageClient.create(blobInfo, GCS_FILE_CONTENTS.getBytes(StandardCharsets.UTF_8)));
   }
 
   /** Asserts bucket has file as per addFileToBucket(). */
