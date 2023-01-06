@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
+import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.BaseFooTest;
 import bio.terra.workspace.common.GcpCloudUtils;
 import bio.terra.workspace.common.StairwayTestUtils;
@@ -59,7 +60,7 @@ import org.springframework.test.web.servlet.MockMvc;
 // Per-class lifecycle on this test to allow a shared workspace object across tests, which saves
 // time creating and deleting GCP contexts.
 @TestInstance(Lifecycle.PER_CLASS)
-public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseFooTest {
+public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnectedTest {
   private static final Logger logger =
       LoggerFactory.getLogger(ControlledGcpResourceApiControllerBqDatasetTest.class);
 
