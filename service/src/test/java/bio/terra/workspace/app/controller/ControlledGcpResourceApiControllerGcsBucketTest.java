@@ -144,9 +144,9 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
                 LIFECYCLE_API)
             .getGcpBucket();
     GcpCloudUtils.runWithRetryOnException(
-            () ->
-                    cloudUtils.addFileToBucket(
-                            userAccessUtils.defaultUser().getGoogleCredentials(), projectId, sourceBucketName));
+        () ->
+            cloudUtils.addFileToBucket(
+                userAccessUtils.defaultUser().getGoogleCredentials(), projectId, sourceBucketName));
   }
 
   /**
