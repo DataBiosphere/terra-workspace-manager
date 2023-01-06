@@ -7,6 +7,7 @@ import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
@@ -23,8 +24,7 @@ import javax.servlet.http.HttpServletRequest;
  * Super class for controllers containing common code. The code in here requires the @Autowired
  * beans from the @Controller classes, so it is better as a superclass rather than static methods.
  */
-public class ControlledResourceControllerBase extends ControllerBase {
-  private final ControlledResourceService controlledResourceService;
+public abstract class ControlledResourceControllerBase extends ControllerBase {
 
   /**
    * The region field of these wsm resource type are filled during the creation flight because the
@@ -36,14 +36,25 @@ public class ControlledResourceControllerBase extends ControllerBase {
           WsmResourceType.CONTROLLED_AZURE_VM,
           WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
 
+  private final ControlledResourceService controlledResourceService;
+  private final ResourceValidationUtils resourceValidationUtils;
+
   public ControlledResourceControllerBase(
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request,
       ControlledResourceService controlledResourceService,
-      SamService samService) {
+      SamService samService,
+      ResourceValidationUtils resourceValidationUtils) {
     super(authenticatedUserRequestFactory, request, samService);
     this.controlledResourceService = controlledResourceService;
+    this.resourceValidationUtils = resourceValidationUtils;
   }
+
+  /**
+   * Return the cloud platform of the controlled resources in the respective controller (azure, gcp,
+   * etc);
+   */
+  public abstract String getCloudPlatform();
 
   public ControlledResourceFields toCommonFields(
       UUID workspaceUuid,
@@ -63,6 +74,7 @@ public class ControlledResourceControllerBase extends ControllerBase {
           region != null,
           "Controlled resource must have an associated region specified"
               + "on creation except for azure storage container and azure VM");
+      resourceValidationUtils.validateControlledResourceRegion(region, getCloudPlatform());
     }
 
     return ControlledResourceFields.builder()

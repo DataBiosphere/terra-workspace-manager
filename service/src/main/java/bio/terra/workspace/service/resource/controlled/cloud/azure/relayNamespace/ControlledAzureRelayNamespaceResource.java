@@ -201,7 +201,7 @@ public class ControlledAzureRelayNamespaceResource extends ControlledResource {
       throw new MissingRequiredFieldException(
           "Missing required region field for ControlledAzureRelayNamespace.");
     }
-    ResourceValidationUtils.validateRegion(getRegion());
+    ResourceValidationUtils.validateAzureRegion(getRegion());
     ResourceValidationUtils.validateAzureNamespace(getNamespaceName());
   }
 

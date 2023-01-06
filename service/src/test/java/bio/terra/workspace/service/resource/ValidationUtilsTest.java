@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.defaultNotebookCreationParameters;
 import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties.FOLDER_ID_KEY;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.when;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
@@ -13,11 +14,14 @@ import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmImage;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceContainerImage;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
+import bio.terra.workspace.service.resource.controlled.exception.InvalidControlledResourceException;
 import bio.terra.workspace.service.resource.exception.InvalidNameException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
+import com.azure.core.management.Region;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -46,7 +50,8 @@ public class ValidationUtilsTest extends BaseUnitTest {
   public void setup() {
     gitRepoReferencedResourceConfiguration.setAllowListedGitRepoHostNames(
         List.of("github.com", "gitlab.com", "bitbucket.org", "dev.azure.com", "ssh.dev.azure.com"));
-    validationUtils = new ResourceValidationUtils(gitRepoReferencedResourceConfiguration);
+    validationUtils =
+        new ResourceValidationUtils(gitRepoReferencedResourceConfiguration, mockTpsApiDispatch());
   }
 
   @Test
@@ -451,5 +456,37 @@ public class ValidationUtilsTest extends BaseUnitTest {
   @Test
   public void validateProperties_folderIdIsUuid_validates() {
     ResourceValidationUtils.validateProperties(Map.of(FOLDER_ID_KEY, UUID.randomUUID().toString()));
+  }
+
+  @Test
+  public void validateGcpRegion() {
+    var validRegions = List.of("us", "us-central1", "us-east1");
+    when(mockTpsApiDispatch().listValidDataCenters("gcp"))
+        .thenReturn(List.of("US", "us-central1", "us-east1"));
+
+    for (var region : validRegions) {
+      validationUtils.validateControlledResourceRegion(region, "gcp");
+      validationUtils.validateControlledResourceRegion(region.toUpperCase(Locale.ROOT), "gcp");
+    }
+  }
+
+  @Test
+  public void validateRegion_invalid_throws() {
+    assertThrows(
+        InvalidControlledResourceException.class,
+        () -> validationUtils.validateControlledResourceRegion("region", "gcp"));
+    assertThrows(
+        InvalidControlledResourceException.class,
+        () -> validationUtils.validateControlledResourceRegion("region", "azure"));
+  }
+
+  @Test
+  public void validateAzureRegion() {
+    for (var region : Region.values()) {
+      var regionString = region.name();
+      validationUtils.validateControlledResourceRegion(regionString, "azure");
+      validationUtils.validateControlledResourceRegion(
+          regionString.toUpperCase(Locale.ROOT), "azure");
+    }
   }
 }

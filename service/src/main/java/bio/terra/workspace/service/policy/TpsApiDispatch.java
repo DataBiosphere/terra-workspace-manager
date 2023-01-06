@@ -13,6 +13,7 @@ import bio.terra.policy.model.TpsPaoReplaceRequest;
 import bio.terra.policy.model.TpsPaoSourceRequest;
 import bio.terra.policy.model.TpsPaoUpdateRequest;
 import bio.terra.policy.model.TpsPaoUpdateResult;
+import bio.terra.policy.model.TpsPolicyInput;
 import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.policy.model.TpsUpdateMode;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
@@ -27,19 +28,30 @@ import io.opencensus.contrib.spring.aop.Traced;
 import io.opencensus.trace.Tracing;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.ws.rs.client.Client;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 @Component
 public class TpsApiDispatch {
+  public static final String POLICY_NAMESPACE = "terra";
+  public static final String POLICY_NAME = "region-constraint";
+
+  private static final Logger logger = LoggerFactory.getLogger(TpsApiDispatch.class);
   private final FeatureConfiguration features;
   private final PolicyServiceConfiguration policyServiceConfiguration;
   private final Client commonHttpClient;
@@ -191,6 +203,38 @@ public class TpsApiDispatch {
       return tpsDatacenterList.stream().toList();
     }
     return new ArrayList<>();
+  }
+
+  /** This list barely changes so cache the list of valid GCP region. */
+  @Cacheable(cacheNames = "validGcpDataCenters", sync = true)
+  public List<String> listValidDataCenters(String platform) {
+    if (!features.isTpsEnabled()) {
+      return Collections.emptyList();
+    }
+    TpsApi tpsApi = policyApi();
+    TpsDatacenterList tpsDatacenterList;
+    try {
+      tpsDatacenterList =
+          tpsApi.listValidByPolicyInput(
+              new TpsPolicyInputs()
+                  .addInputsItem(
+                      new TpsPolicyInput().namespace(POLICY_NAMESPACE).name(POLICY_NAME)),
+              platform);
+    } catch (ApiException e) {
+      throw convertApiException(e);
+    }
+    if (tpsDatacenterList != null) {
+      return tpsDatacenterList.stream().toList();
+    }
+    return new ArrayList<>();
+  }
+
+  @Scheduled(fixedRateString = "1", timeUnit = TimeUnit.DAYS)
+  @CacheEvict(
+      allEntries = true,
+      cacheNames = {"validGcpDataCenters"})
+  public void resetCache() {
+    logger.info("reset cache validGcpDataCenters");
   }
 
   private ApiClient getApiClient(String accessToken) {

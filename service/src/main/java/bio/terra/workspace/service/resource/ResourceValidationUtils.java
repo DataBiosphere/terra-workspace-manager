@@ -9,6 +9,8 @@ import bio.terra.workspace.app.configuration.external.GitRepoReferencedResourceC
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
+import bio.terra.workspace.service.policy.TpsApiDispatch;
+import bio.terra.workspace.service.resource.controlled.exception.InvalidControlledResourceException;
 import bio.terra.workspace.service.resource.exception.InvalidNameException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
@@ -20,6 +22,7 @@ import com.google.common.collect.ImmutableList;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -127,11 +130,14 @@ public class ResourceValidationUtils {
   private static final int MAX_RESOURCE_DESCRIPTION_NAME = 2048;
 
   private final GitRepoReferencedResourceConfiguration gitRepoReferencedResourceConfiguration;
+  private final TpsApiDispatch tpsApiDispatch;
 
   @Autowired
   public ResourceValidationUtils(
-      GitRepoReferencedResourceConfiguration gitRepoReferencedResourceConfiguration) {
+      GitRepoReferencedResourceConfiguration gitRepoReferencedResourceConfiguration,
+      TpsApiDispatch tpsApiDispatch) {
     this.gitRepoReferencedResourceConfiguration = gitRepoReferencedResourceConfiguration;
+    this.tpsApiDispatch = tpsApiDispatch;
   }
 
   public static void validateControlledBucketName(String name) {
@@ -421,14 +427,29 @@ public class ResourceValidationUtils {
     }
   }
 
-  public static void validateRegion(String region) {
-    if (!Region.values().stream()
-        .map(Region::toString)
-        .collect(Collectors.toList())
-        .contains(region)) {
+  public static void validateAzureRegion(String region) {
+    if (Region.values().stream().map(Region::toString).toList().stream()
+        .noneMatch(region::equalsIgnoreCase)) {
       logger.warn("Invalid Azure region {}", region);
-      throw new InvalidReferenceException(
+      throw new InvalidControlledResourceException(
           "Invalid Azure Region specified. See the class `com.azure.core.management.Region`");
+    }
+  }
+
+  private void validateGcpControlledResourceRegion(String region) {
+    List<String> validRegions = tpsApiDispatch.listValidDataCenters("gcp");
+    if (validRegions.stream().noneMatch(region::equalsIgnoreCase)) {
+      throw new InvalidControlledResourceException(
+          String.format("Invalid GCP region %s specified.", region));
+    }
+  }
+
+  public void validateControlledResourceRegion(String region, String platform) {
+    switch (platform) {
+      case "gcp" -> validateGcpControlledResourceRegion(region);
+      case "azure" -> validateAzureRegion(region);
+      default -> throw new InvalidControlledResourceException(
+          String.format("Invalid resource region %s specified", region));
     }
   }
 

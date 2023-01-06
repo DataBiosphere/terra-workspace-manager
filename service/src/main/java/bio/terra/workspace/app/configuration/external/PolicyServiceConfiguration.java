@@ -8,12 +8,14 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Configuration;
 
 /** Configuration for managing connection to Terra Policy Service. * */
 @Configuration
 @EnableConfigurationProperties
 @ConfigurationProperties(prefix = "workspace.policy")
+@EnableCaching
 public class PolicyServiceConfiguration {
 
   private String basePath;

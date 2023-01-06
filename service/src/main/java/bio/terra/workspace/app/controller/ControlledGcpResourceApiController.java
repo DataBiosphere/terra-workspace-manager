@@ -12,6 +12,7 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant;
@@ -66,8 +67,14 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
       JobApiUtils jobApiUtils,
       GcpCloudContextService gcpCloudContextService,
       ControlledResourceMetadataManager controlledResourceMetadataManager,
-      CrlService crlService) {
-    super(authenticatedUserRequestFactory, request, controlledResourceService, samService);
+      CrlService crlService,
+      ResourceValidationUtils resourceValidationUtils) {
+    super(
+        authenticatedUserRequestFactory,
+        request,
+        controlledResourceService,
+        samService,
+        resourceValidationUtils);
     this.controlledResourceService = controlledResourceService;
     this.workspaceService = workspaceService;
     this.jobService = jobService;
@@ -600,5 +607,10 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
                 userRequest, workspaceUuid, resourceId, SamControlledResourceActions.READ_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
+  }
+
+  @Override
+  public String getCloudPlatform() {
+    return "gcp";
   }
 }

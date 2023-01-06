@@ -97,8 +97,14 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       FeatureConfiguration features,
       AzureConfiguration azureConfiguration,
       WorkspaceService workspaceService,
-      ControlledResourceMetadataManager controlledResourceMetadataManager) {
-    super(authenticatedUserRequestFactory, request, controlledResourceService, samService);
+      ControlledResourceMetadataManager controlledResourceMetadataManager,
+      ResourceValidationUtils resourceValidationUtils) {
+    super(
+        authenticatedUserRequestFactory,
+        request,
+        controlledResourceService,
+        samService,
+        resourceValidationUtils);
     this.controlledResourceService = controlledResourceService;
     this.azureControlledStorageResourceService = azureControlledStorageResourceService;
     this.jobService = jobService;
@@ -715,5 +721,10 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getApiErrorReport())
         .container(containerResult);
+  }
+
+  @Override
+  public String getCloudPlatform() {
+    return "azure";
   }
 }
