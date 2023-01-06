@@ -11,7 +11,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
-import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.BaseFooTest;
 import bio.terra.workspace.common.GcpCloudUtils;
 import bio.terra.workspace.common.StairwayTestUtils;
@@ -19,7 +18,6 @@ import bio.terra.workspace.common.fixtures.PolicyFixtures;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
-import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
@@ -126,6 +124,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseFooTest
                 DEFAULT_TABLE_LIFETIME,
                 DEFAULT_PARTITION_LIFETIME)
             .getBigQueryDataset();
+
     cloudUtils.populateBqTable(
         userAccessUtils.defaultUser().getGoogleCredentials(),
         sourceResource.getAttributes().getProjectId(),
@@ -146,12 +145,8 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseFooTest
 
   @AfterAll
   public void cleanup() throws Exception {
-    try {
-      mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
-      mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
-    } catch (WorkspaceNotFoundException e) {
-      logger.warn("Workspace not found for deletion during test cleanup", e);
-    }
+    mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+    mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
   }
 
   @Test

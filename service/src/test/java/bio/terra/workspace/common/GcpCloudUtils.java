@@ -75,7 +75,10 @@ public class GcpCloudUtils {
     final TableId employeeTableId = TableId.of(projectId, datasetId, BQ_EMPLOYEE_TABLE_NAME);
     final TableInfo employeeTableInfo =
         TableInfo.newBuilder(employeeTableId, StandardTableDefinition.of(employeeSchema)).build();
-    final Table createdEmployeeTable = bigQueryClient.create(employeeTableInfo);
+
+    Table createdEmployeeTable =
+        getWithRetryOnException(() -> bigQueryClient.create(employeeTableInfo));
+
     logger.debug("Employee Table: {}", createdEmployeeTable);
 
     // Add row to table
@@ -209,7 +212,7 @@ public class GcpCloudUtils {
   public static @Nullable <T> T getWithRetryOnException(SupplierWithException<T> supplier)
       throws Exception {
     T result = null;
-    int numTries = 90;
+    int numTries = 60;
     Duration sleepDuration = Duration.ofSeconds(15);
     while (numTries > 0) {
       try {
