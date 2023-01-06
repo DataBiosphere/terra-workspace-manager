@@ -100,6 +100,7 @@ public class GcpCloudUtils {
         if (e.getCode() == HttpStatus.FORBIDDEN.value()) {
           continue;
         }
+        logger.error("Exception populating bq dataset", e);
         throw e;
       }
       // Insert succeeded
