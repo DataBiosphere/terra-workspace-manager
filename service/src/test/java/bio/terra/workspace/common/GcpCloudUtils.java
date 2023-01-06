@@ -81,7 +81,7 @@ public class GcpCloudUtils {
     // Add row to table
     // Retry because if project was created recently, it may take time for bigquery.jobs.create to
     // propagate
-    int retryCount = 10;
+    int retryCount = 60;
     int retryWaitSeconds = 5;
     for (int i = 0; i < retryCount; i++) {
       TimeUnit.SECONDS.sleep(retryWaitSeconds);
