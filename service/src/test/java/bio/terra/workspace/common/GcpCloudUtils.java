@@ -195,7 +195,7 @@ public class GcpCloudUtils {
   }
   /**
    * Get a result from a call that might throw an exception. Treat the exception as retryable, sleep
-   * for 15 seconds, and retry up to 40 times. This structure is useful for situations where we are
+   * for 15 seconds, and retry up to 60 times. This structure is useful for situations where we are
    * waiting on a cloud IAM permission change to take effect.
    *
    * @param supplier - code returning the result or throwing an exception
@@ -207,7 +207,7 @@ public class GcpCloudUtils {
   public static @Nullable <T> T getWithRetryOnException(SupplierWithException<T> supplier)
       throws Exception {
     T result = null;
-    int numTries = 40;
+    int numTries = 60;
     Duration sleepDuration = Duration.ofSeconds(15);
     while (numTries > 0) {
       try {
