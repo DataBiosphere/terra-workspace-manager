@@ -17,6 +17,7 @@ import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesList;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesPurposeGroup;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
@@ -42,6 +43,7 @@ public class CreateAzureNetworkInterfaceStepTest extends BaseAzureUnitTest {
   @Mock private AzureConfiguration azureConfiguration;
   @Mock private CrlService crlService;
   @Mock private ControlledAzureVmResource resource;
+  @Mock private SamService samService;
 
   @Mock private ResourceDao resourceDao;
 
@@ -75,7 +77,7 @@ public class CreateAzureNetworkInterfaceStepTest extends BaseAzureUnitTest {
             resource,
             resourceDao,
             landingZoneApiDispatch,
-            USER_REQUEST);
+            samService);
     when(networkManager.networks()).thenReturn(networks);
     var subnets = new HashMap<String, Subnet>();
     subnets.put(STUB_SUBNET, armSubnet);
