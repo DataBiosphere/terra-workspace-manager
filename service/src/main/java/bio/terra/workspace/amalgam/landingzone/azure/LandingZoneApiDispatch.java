@@ -288,7 +288,7 @@ public class LandingZoneApiDispatch {
                     String.format(
                         "Could not find a landing zone for the given billing profile: '%s'. Please"
                             + " check that the landing zone deployment is complete"
-                            + " and that the caller has to the landing zone resource.",
+                            + " and that the caller has access to the landing zone resource.",
                         profileId.get())));
   }
 
