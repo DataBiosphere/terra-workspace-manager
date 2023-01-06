@@ -17,6 +17,7 @@ import bio.terra.workspace.common.fixtures.PolicyFixtures;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
@@ -142,8 +143,10 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
                 STORAGE_CLASS,
                 LIFECYCLE_API)
             .getGcpBucket();
-    cloudUtils.addFileToBucket(
-        userAccessUtils.defaultUser().getGoogleCredentials(), projectId, sourceBucketName);
+    GcpCloudUtils.runWithRetryOnException(
+            () ->
+                    cloudUtils.addFileToBucket(
+                            userAccessUtils.defaultUser().getGoogleCredentials(), projectId, sourceBucketName));
   }
 
   /**
@@ -160,8 +163,12 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
 
   @AfterAll
   public void cleanup() throws Exception {
-    mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
-    mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
+    try {
+      mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+      mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
+    } catch (WorkspaceNotFoundException e) {
+      logger.warn("Workspace not found for deletion during test cleanup", e);
+    }
   }
 
   public void create() throws Exception {
