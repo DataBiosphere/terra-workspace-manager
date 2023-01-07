@@ -128,7 +128,7 @@ public class CreateAzureNetworkInterfaceStepTest extends BaseAzureUnitTest {
   private void setUpNetworkInLZInteractionChain(UUID networkId, UUID workspaceId) {
     var lzId = UUID.randomUUID();
     var response = new ApiAzureLandingZoneResourcesList();
-    var bearerToken = new BearerToken(USER_REQUEST.getRequiredToken());
+    var bearerToken = new BearerToken("wsm-token");
     response.addResourcesItem(
         new ApiAzureLandingZoneResourcesPurposeGroup()
             .purpose(SubnetResourcePurpose.WORKSPACE_COMPUTE_SUBNET.toString())
@@ -146,5 +146,6 @@ public class CreateAzureNetworkInterfaceStepTest extends BaseAzureUnitTest {
             any(), eq(lzId), eq(SubnetResourcePurpose.WORKSPACE_COMPUTE_SUBNET)))
         .thenReturn(response);
     when(networks.getById(networkId.toString())).thenReturn(armNetwork);
+    when(samService.getWsmServiceAccountToken()).thenReturn(bearerToken.getToken());
   }
 }

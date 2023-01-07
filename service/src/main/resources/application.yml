@@ -175,7 +175,7 @@ landingzone:
   sam:
     base-path: ${env.urls.sam}
     landing-zone-resource-users:
-      - leonardo-prod@broad-dsde-prod.iam.gserviceaccount.com
+      - workspace-dev@broad-dsde-dev.iam.gserviceaccount.com
   bpm.base-path: ${env.urls.bpm}
 
 # Feature flags

@@ -66,6 +66,7 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
   public void setup() {
     super.setup();
     when(mockStorageManager.blobContainers()).thenReturn(mockBlobContainers);
+    when(mockSamSerivce.getWsmServiceAccountToken()).thenReturn("wsm-token");
   }
 
   private void initValidationStep(Optional<UUID> storageAccountId) {
