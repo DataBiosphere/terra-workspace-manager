@@ -40,7 +40,7 @@ public class UpdateAiNotebookCpuGpuStep implements Step {
   private final CrlService crlService;
   private final GcpCloudContextService cloudContextService;
 
-  private final Logger logger = LoggerFactory.getLogger(UpdateAiNotebookCpuGpuStep.class);
+  private static final Logger logger = LoggerFactory.getLogger(UpdateAiNotebookCpuGpuStep.class);
 
   UpdateAiNotebookCpuGpuStep(
       ControlledAiNotebookInstanceResource resource,

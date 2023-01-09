@@ -184,13 +184,13 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
 
     String actualMachineType = creationResult.getAiNotebookInstance().getMachineType();
     actualMachineType = actualMachineType.substring(actualMachineType.lastIndexOf("/") + 1);
-    assertEquals(NotebookUtils.machineType, actualMachineType);
+    assertEquals(NotebookUtils.MACHINE_TYPE, actualMachineType);
 
     String actualGpuType = creationResult.getAiNotebookInstance().getAcceleratorConfig().getType();
     actualGpuType = actualGpuType.substring(actualGpuType.lastIndexOf("/") + 1);
-    assertEquals(NotebookUtils.gpuType, actualGpuType);
+    assertEquals(NotebookUtils.GPU_TYPE, actualGpuType);
     assertEquals(
-        NotebookUtils.gpuCount,
+        NotebookUtils.GPU_COUNT,
         creationResult.getAiNotebookInstance().getAcceleratorConfig().getCoreCount());
 
     // Update the AI Notebook through WSM.

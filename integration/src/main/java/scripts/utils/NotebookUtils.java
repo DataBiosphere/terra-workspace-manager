@@ -39,9 +39,9 @@ import org.slf4j.LoggerFactory;
 
 public class NotebookUtils {
   private static final Logger logger = LoggerFactory.getLogger(NotebookUtils.class);
-  public static final String machineType = "n1-standard-2";
-  public static final String gpuType = "NVIDIA_TESLA_T4";
-  public static final long gpuCount = 1;
+  public static final String MACHINE_TYPE = "n1-standard-2";
+  public static final String GPU_TYPE = "NVIDIA_TESLA_T4";
+  public static final long GPU_COUNT = 1;
   private static final int ASSERT_PROXY_URL_RETRY_MAX = 40;
   private static final int ASSERT_PROXY_URL_RETRY_SECONDS = 15;
 
@@ -61,14 +61,14 @@ public class NotebookUtils {
 
     GcpAiNotebookInstanceAcceleratorConfig acceleratorConfig =
         new GcpAiNotebookInstanceAcceleratorConfig();
-    acceleratorConfig.setType(gpuType);
-    acceleratorConfig.setCoreCount(gpuCount);
+    acceleratorConfig.setType(GPU_TYPE);
+    acceleratorConfig.setCoreCount(GPU_COUNT);
     // Fill out the minimum required fields to arbitrary values.
     var creationParameters =
         new GcpAiNotebookInstanceCreationParameters()
             .instanceId(instanceId)
             .location(location)
-            .machineType(machineType)
+            .machineType(MACHINE_TYPE)
             .acceleratorConfig(acceleratorConfig)
             .vmImage(
                 new GcpAiNotebookInstanceVmImage()

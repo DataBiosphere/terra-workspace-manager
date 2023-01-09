@@ -738,7 +738,16 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         instanceFromCloud
             .getMachineType()
             .substring(instanceFromCloud.getMachineType().lastIndexOf("/") + 1));
-    assertNull(instanceFromCloud.getAcceleratorConfig());
+    assertEquals(
+        ControlledResourceFixtures.defaultNotebookCreationParameters()
+            .getAcceleratorConfig()
+            .getType(),
+        instanceFromCloud.getAcceleratorConfig().getType());
+    assertEquals(
+        ControlledResourceFixtures.defaultNotebookCreationParameters()
+            .getAcceleratorConfig()
+            .getCoreCount(),
+        instanceFromCloud.getAcceleratorConfig().getCoreCount());
   }
 
   @Test

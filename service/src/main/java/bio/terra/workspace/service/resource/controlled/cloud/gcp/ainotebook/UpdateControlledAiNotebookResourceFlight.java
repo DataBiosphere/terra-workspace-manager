@@ -11,7 +11,6 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
-import com.google.api.services.compute.model.AcceleratorConfig;
 
 /** {@link Flight} to update {@link ControlledAiNotebookInstanceResource}. */
 public class UpdateControlledAiNotebookResourceFlight extends Flight {
@@ -62,15 +61,9 @@ public class UpdateControlledAiNotebookResourceFlight extends Flight {
             flightBeanBag.getGcpCloudContextService()),
         gcpRetry);
 
-    // check the cpu and gpu change or not
-    final String machineType =
-        inputParameters.get(
-            WorkspaceFlightMapKeys.ControlledResourceKeys.MACHINE_TYPE, String.class);
-    final AcceleratorConfig acceleratorConfig =
-        inputParameters.get(
-            WorkspaceFlightMapKeys.ControlledResourceKeys.ACCELERATOR_CONFIG,
-            AcceleratorConfig.class);
-    if (machineType != null || acceleratorConfig != null) {
+    if (inputParameters.containsKey(WorkspaceFlightMapKeys.ControlledResourceKeys.MACHINE_TYPE)
+        || inputParameters.containsKey(
+            WorkspaceFlightMapKeys.ControlledResourceKeys.ACCELERATOR_CONFIG)) {
       addStep(
           new CheckAiNotebookIsReadyToUpdateCpuGpuStep(
               aiNotebookResource,

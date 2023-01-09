@@ -46,8 +46,8 @@ public class CheckAiNotebookIsReadyToUpdateCpuGpuStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    final FlightMap inputMap = context.getInputParameters();
-    final FlightMap workingMap = context.getWorkingMap();
+    FlightMap inputMap = context.getInputParameters();
+    FlightMap workingMap = context.getWorkingMap();
     String machineType = inputMap.get(MACHINE_TYPE, String.class);
     AcceleratorConfig acceleratorConfig = inputMap.get(ACCELERATOR_CONFIG, AcceleratorConfig.class);
     var projectId = cloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
@@ -70,7 +70,9 @@ public class CheckAiNotebookIsReadyToUpdateCpuGpuStep implements Step {
       }
       if ((machineType != null || acceleratorConfig != null)
           && !instance.getState().equals("STOPPED")) {
-        throw new IllegalStateException("Notebook instance has to be stopped before updating.");
+        return new StepResult(
+            StepStatus.STEP_RESULT_FAILURE_FATAL,
+            new IllegalStateException("Notebook instance has to be stopped before updating."));
       }
       // The machine doesn't need to be updated if the requested machine configuration
       // is identical with the existing machine configuration. we only update the machine
