@@ -9,7 +9,9 @@ import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveCon
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceMetadataStep;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
+import com.google.api.services.compute.model.AcceleratorConfig;
 
 /** {@link Flight} to update {@link ControlledAiNotebookInstanceResource}. */
 public class UpdateControlledAiNotebookResourceFlight extends Flight {
@@ -59,5 +61,26 @@ public class UpdateControlledAiNotebookResourceFlight extends Flight {
             flightBeanBag.getCrlService(),
             flightBeanBag.getGcpCloudContextService()),
         gcpRetry);
+
+    // check the cpu and gpu change or not
+    final String machineType =
+        inputParameters.get(
+            WorkspaceFlightMapKeys.ControlledResourceKeys.MACHINE_TYPE, String.class);
+    final AcceleratorConfig acceleratorConfig =
+        inputParameters.get(
+            WorkspaceFlightMapKeys.ControlledResourceKeys.ACCELERATOR_CONFIG,
+            AcceleratorConfig.class);
+    if (machineType != null || acceleratorConfig != null) {
+      addStep(
+          new CheckAiNotebookIsReadyToUpdateCpuGpuStep(
+              aiNotebookResource,
+              flightBeanBag.getCrlService(),
+              flightBeanBag.getGcpCloudContextService()));
+      addStep(
+          new UpdateAiNotebookCpuGpuStep(
+              aiNotebookResource,
+              flightBeanBag.getCrlService(),
+              flightBeanBag.getGcpCloudContextService()));
+    }
   }
 }

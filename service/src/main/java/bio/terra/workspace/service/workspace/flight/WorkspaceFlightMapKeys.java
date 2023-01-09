@@ -38,7 +38,8 @@ public final class WorkspaceFlightMapKeys {
     public static final String CREATE_RESOURCE_REGION = "createResourceRegion";
     public static final String PREVIOUS_MACHINE_TYPE = "previousMachineType";
     public static final String PREVIOUS_ACCELERATOR_CONFIG = "previousAcceleratorConfig";
-    public static final String UPDATED_MACHINE_CONFIG = "updatedMachineConfig";
+    public static final String UPDATE_TO_MACHINE_TYPE = "updateToMachineType";
+    public static final String UPDATE_TO_ACCELERATOR_CONFIG = "updateToAcceleratorConfig";
 
     public static final String RESOURCE_ROLES_TO_REMOVE = "resourceRolesToRemove";
     public static final String REMOVED_USER_IS_WORKSPACE_MEMBER = "removedUserIsWorkspaceMember";

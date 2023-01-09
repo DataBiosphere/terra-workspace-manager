@@ -1,11 +1,8 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.ACCELERATOR_CONFIG;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.MACHINE_TYPE;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.PREVIOUS_UPDATE_PARAMETERS;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_PARAMETERS;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_TO_ACCELERATOR_CONFIG;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_TO_MACHINE_TYPE;
 
-import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
 import bio.terra.cloudres.google.notebooks.InstanceName;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
@@ -13,9 +10,7 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.generated.model.ApiGcpAiNotebookUpdateParameters;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.resource.controlled.exception.ReservedMetadataKeyException;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
@@ -33,24 +28,21 @@ import com.google.api.services.compute.model.Scheduling;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
-/** {@link Step} to update cloud attributes (e.g. metadata) for a ai notebook instance. */
-public class UpdateAiNotebookAttributesStep implements Step {
+/** {@link Step} to update machine type(cpu) or accelerator config(gpu) for ai notebook instance. */
+public class UpdateAiNotebookCpuGpuStep implements Step {
   private final ControlledAiNotebookInstanceResource resource;
   private final CrlService crlService;
   private final GcpCloudContextService cloudContextService;
 
-  private final Logger logger = LoggerFactory.getLogger(UpdateAiNotebookAttributesStep.class);
+  private final Logger logger = LoggerFactory.getLogger(UpdateAiNotebookCpuGpuStep.class);
 
-  UpdateAiNotebookAttributesStep(
+  UpdateAiNotebookCpuGpuStep(
       ControlledAiNotebookInstanceResource resource,
       CrlService crlService,
       GcpCloudContextService gcpCloudContextService) {
@@ -61,37 +53,36 @@ public class UpdateAiNotebookAttributesStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    final FlightMap inputMap = context.getInputParameters();
     final FlightMap workingMap = context.getWorkingMap();
-    final ApiGcpAiNotebookUpdateParameters updateParameters =
-        inputMap.get(UPDATE_PARAMETERS, ApiGcpAiNotebookUpdateParameters.class);
-    if (updateParameters == null) {
-      return StepResult.getStepResultSuccess();
-    }
-    Map<String, String> sanitizedMetadata = new HashMap<>();
-    for (var entrySet : updateParameters.getMetadata().entrySet()) {
-      if (ControlledAiNotebookInstanceResource.RESERVED_METADATA_KEYS.contains(entrySet.getKey())) {
-        logger.error(String.format("Cannot modify terra reserved keys %s", entrySet.getKey()));
-        throw new ReservedMetadataKeyException(
-            String.format("Cannot modify terra reserved keys %s", entrySet.getKey()));
+    String machineType = workingMap.get(UPDATE_TO_MACHINE_TYPE, String.class);
+    AcceleratorConfig acceleratorConfig =
+        workingMap.get(UPDATE_TO_ACCELERATOR_CONFIG, AcceleratorConfig.class);
+    String projectId = cloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
+    InstanceName instanceName = resource.toInstanceName(projectId);
+    try {
+      updateAiNotebookCpuGpu(
+          projectId,
+          instanceName.location(),
+          instanceName.instanceId(),
+          machineType,
+          acceleratorConfig);
+    } catch (GoogleJsonResponseException e) {
+      if (HttpStatus.BAD_REQUEST.value() == e.getStatusCode()
+          || HttpStatus.NOT_FOUND.value() == e.getStatusCode()) {
+        return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
       }
-      sanitizedMetadata.put(entrySet.getKey(), entrySet.getValue());
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+    } catch (GeneralSecurityException e) {
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
+    } catch (IOException e) {
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
-    String machineType = inputMap.get(MACHINE_TYPE, String.class);
-    AcceleratorConfig acceleratorConfig = inputMap.get(ACCELERATOR_CONFIG, AcceleratorConfig.class);
-    return updateAiNotebook(
-        workingMap,
-        sanitizedMetadata,
-        cloudContextService.getRequiredGcpProject(resource.getWorkspaceId()),
-        machineType,
-        acceleratorConfig);
+    return StepResult.getStepResultSuccess();
   }
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
     final FlightMap workingMap = context.getWorkingMap();
-    final ApiGcpAiNotebookUpdateParameters prevParameters =
-        workingMap.get(PREVIOUS_UPDATE_PARAMETERS, ApiGcpAiNotebookUpdateParameters.class);
     String machineType =
         workingMap.get(
             WorkspaceFlightMapKeys.ControlledResourceKeys.PREVIOUS_MACHINE_TYPE, String.class);
@@ -99,50 +90,23 @@ public class UpdateAiNotebookAttributesStep implements Step {
         workingMap.get(
             WorkspaceFlightMapKeys.ControlledResourceKeys.PREVIOUS_ACCELERATOR_CONFIG,
             AcceleratorConfig.class);
-    var projectId = cloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
-    try {
-      var currentMetadata =
-          crlService
-              .getAIPlatformNotebooksCow()
-              .instances()
-              .get(resource.toInstanceName(projectId))
-              .execute()
-              .getMetadata();
-      for (var entry : currentMetadata.entrySet()) {
-        // reset the new key entry to "" value because the gcp api does not allow deleting
-        // metadata item so we can't simply undo the add.
-        currentMetadata.put(
-            entry.getKey(), prevParameters.getMetadata().getOrDefault(entry.getKey(), ""));
-      }
-      return updateAiNotebook(
-          workingMap, currentMetadata, projectId, machineType, acceleratorConfig);
-    } catch (GoogleJsonResponseException e) {
-      if (HttpStatus.BAD_REQUEST.value() == e.getStatusCode()
-          || HttpStatus.NOT_FOUND.value() == e.getStatusCode()) {
-        return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
-      }
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
-    } catch (IOException e) {
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
-    }
-  }
-
-  private StepResult updateAiNotebook(
-      FlightMap workingMap,
-      Map<String, String> metadataToUpdate,
-      String projectId,
-      @Nullable String machineType,
-      @Nullable AcceleratorConfig acceleratorConfig) {
+    String projectId = cloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
     InstanceName instanceName = resource.toInstanceName(projectId);
-    AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
     try {
-      notebooks.instances().updateMetadataItems(instanceName, metadataToUpdate).execute();
+      updateAiNotebookCpuGpu(
+          projectId,
+          instanceName.location(),
+          instanceName.instanceId(),
+          machineType,
+          acceleratorConfig);
     } catch (GoogleJsonResponseException e) {
       if (HttpStatus.BAD_REQUEST.value() == e.getStatusCode()
           || HttpStatus.NOT_FOUND.value() == e.getStatusCode()) {
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
       }
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+    } catch (GeneralSecurityException e) {
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
     } catch (IOException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
@@ -156,19 +120,6 @@ public class UpdateAiNotebookAttributesStep implements Step {
       String machineType,
       AcceleratorConfig acceleratorConfig)
       throws GeneralSecurityException, IOException, IllegalStateException {
-    if (machineType != null
-        || (acceleratorConfig != null && acceleratorConfig.getAcceleratorType() != null)) {
-      InstanceName instanceName =
-          InstanceName.builder()
-              .projectId(projectId)
-              .location(location)
-              .instanceId(instanceId)
-              .build();
-      var instance = crlService.getAIPlatformNotebooksCow().instances().get(instanceName).execute();
-      if (!instance.getState().equals("STOPPED")) {
-        throw new IllegalStateException("Notebook instance has to be stopped before updating.");
-      }
-    }
 
     Compute computeService = createComputeService();
     String machineTypeUrl = null, gpuTypeUrl = null;
@@ -218,7 +169,6 @@ public class UpdateAiNotebookAttributesStep implements Step {
     for (int i = 0; i < retryCount; i++) {
       Instance instanceInfo =
           computeService.instances().get(projectId, location, instanceId).execute();
-
       if ((machineType == null || instanceInfo.getMachineType().equals(machineTypeUrl))
           && (acceleratorConfig == null
               || acceleratorConfig.getAcceleratorType() == null
@@ -227,6 +177,11 @@ public class UpdateAiNotebookAttributesStep implements Step {
                   .get(0)
                   .getAcceleratorType()
                   .equals(gpuTypeUrl))) {
+        logger.info(
+            "Updated: "
+                + instanceInfo.getMachineType()
+                + " "
+                + instanceInfo.getGuestAccelerators().get(0).getAcceleratorType());
         break;
       }
       try {

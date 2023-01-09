@@ -508,7 +508,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().lastStepFailure(true).build());
     assertThrows(
-        InvalidResultStateException.class,
+        IllegalStateException.class,
         () ->
             controlledResourceService.updateAiNotebookInstance(
                 fetchedInstance,
