@@ -313,3 +313,10 @@ components:
           $ref: '#/components/schemas/JobReport'
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
+
+    DataCenterList:
+      type: array
+      description: List of data centers
+      items:
+        uniqueItems: true
+        type: string

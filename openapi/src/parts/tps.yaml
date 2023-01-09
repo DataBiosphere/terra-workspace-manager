@@ -1,3 +1,25 @@
+paths:
+  /api/policies/v1/listRegionDataCenters:
+    parameters:
+    - $ref: '#/components/parameters/Platform'
+    - $ref: '#/components/parameters/Region'
+    get:
+      summary: Get the cloud data centers in a given region.
+      operationId: getRegionDataCenters
+      tags: [policy]
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataCenterList'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
 # Policy schemas
 #
 # The TPS schema entries here are problematic. Right now, they match the definitions

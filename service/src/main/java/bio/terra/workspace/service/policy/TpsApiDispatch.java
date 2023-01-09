@@ -193,6 +193,22 @@ public class TpsApiDispatch {
     return new ArrayList<>();
   }
 
+  @Traced
+  public List<String> listRegionDataCenters(String platform, String region) {
+    features.tpsEnabledCheck();
+    TpsApi tpsApi = policyApi();
+    TpsDatacenterList tpsDatacenterList;
+    try {
+      tpsDatacenterList = tpsApi.getRegionDatacenters(platform, region);
+    } catch (ApiException e) {
+      throw convertApiException(e);
+    }
+    if (tpsDatacenterList != null) {
+      return tpsDatacenterList.stream().toList();
+    }
+    return new ArrayList<>();
+  }
+
   private ApiClient getApiClient(String accessToken) {
     ApiClient client =
         new ApiClient()
@@ -222,7 +238,7 @@ public class TpsApiDispatch {
       return new PolicyServiceAuthorizationException(
           "Not authorized to access Terra Policy Service", ex.getCause());
     } else if (ex.getCode() == HttpStatus.NOT_FOUND.value()) {
-      return new PolicyServiceNotFoundException("Policy service not found", ex);
+      return new PolicyServiceNotFoundException("Policy service throws Not found exception", ex);
     } else if (ex.getCode() == HttpStatus.BAD_REQUEST.value()
         && StringUtils.containsIgnoreCase(ex.getMessage(), "duplicate")) {
       return new PolicyServiceDuplicateException("Policy service duplicate", ex);

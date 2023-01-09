@@ -269,6 +269,8 @@ public class MockMvcUtils {
   public static final String DELETE_FOLDER_JOB_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/folders/%s/result/%s";
   public static final String UPDATE_POLICIES_PATH_FORMAT = "/api/workspaces/v1/%s/policies";
+  public static final String POLICY_V1_GET_REGION_DATA_CENTERS =
+      "/api/policies/v1/listRegionDataCenters";
 
   public static final String DEFAULT_USER_EMAIL = "fake@gmail.com";
   // Only use this if you are mocking SAM. If you're using real SAM,
