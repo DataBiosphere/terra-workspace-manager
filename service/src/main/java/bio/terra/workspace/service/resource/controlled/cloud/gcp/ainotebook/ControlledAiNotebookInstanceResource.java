@@ -312,8 +312,6 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
     checkFieldNonNull(getInstanceId(), "instanceId");
     checkFieldNonNull(getLocation(), "location");
     checkFieldNonNull(getProjectId(), "projectId");
-    //    checkFieldNonNull(getMachineType(), "machineType");
-    //    checkFieldNonNull(getAcceleratorConfig(), "acceleratorConfig");
     ResourceValidationUtils.validateAiNotebookInstanceId(getInstanceId());
   }
 

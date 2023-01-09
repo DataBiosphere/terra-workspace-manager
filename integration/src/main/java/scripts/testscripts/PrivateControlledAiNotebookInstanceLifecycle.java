@@ -102,11 +102,6 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
             /*testValue=*/ null,
             /*postStartupScript=*/ null);
 
-    System.out.println(
-        "Instance Id: " + creationResult.getAiNotebookInstance().getAttributes().getInstanceId());
-    System.out.println("Attributes: " + creationResult.getAiNotebookInstance().getAttributes());
-    System.out.println("Metadata: " + creationResult.getAiNotebookInstance().getMetadata());
-
     UUID resourceId = creationResult.getAiNotebookInstance().getMetadata().getResourceId();
     assertEquals(
         CommonResourceFieldsUtil.getResourceDefaultProperties(),
@@ -206,10 +201,6 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
     var newGpuType = "NVIDIA_TESLA_V100";
     long newGpuCount = 2;
 
-    //    Compute computeService = createComputeService();
-    //    computeService.instances().stop(resource.getAttributes().getProjectId(),
-    // resource.getAttributes().getLocation(),
-    //            resource.getAttributes().getInstanceId()).execute();
     userNotebooks
         .projects()
         .locations()
@@ -221,10 +212,6 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
     int retryWaitSeconds = 30;
     int retryCount = 30;
     for (int i = 0; i < retryCount; i++) {
-      //      var instance =
-      // computeService.instances().get(resource.getAttributes().getProjectId(),
-      // resource.getAttributes().getLocation(),
-      //              resource.getAttributes().getInstanceId()).execute();
       var instance = userNotebooks.projects().locations().instances().get(instanceName).execute();
       var actualState = instance.getState();
 
@@ -270,8 +257,6 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
         actualUpdatedGpuType.substring(actualUpdatedGpuType.lastIndexOf("/") + 1);
     assertEquals(newGpuType, actualUpdatedGpuType);
     assertEquals(newGpuCount, updatedResource.getAcceleratorConfig().getCoreCount());
-
-    System.out.println("Deleting instance: " + instanceName);
 
     // Delete the AI Notebook through WSM.
     DeleteControlledGcpAiNotebookInstanceResult deleteResult =

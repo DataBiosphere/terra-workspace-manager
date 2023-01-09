@@ -77,10 +77,6 @@ public class ControlledAiNotebookHandler implements WsmResourceHandler {
     try {
       Instance instance =
           crlService.getAIPlatformNotebooksCow().instances().get(instanceName).execute();
-      //      Compute computeService = createComputeService();
-      //      Instance instance =
-      //              computeService.instances().get(projectId, attributes.getLocation(),
-      // attributes.getInstanceId()).execute();
       machineType = instance.getMachineType();
       if (instance.getAcceleratorConfig() != null) {
         AcceleratorConfig accelerator = instance.getAcceleratorConfig();

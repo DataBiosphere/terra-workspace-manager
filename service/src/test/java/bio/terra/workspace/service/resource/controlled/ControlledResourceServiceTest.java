@@ -578,8 +578,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
           entrySet.getValue(), updatedInstanceFromCloud.getMetadata().get(entrySet.getKey()));
     }
 
-    System.out.println("updatedInstance is here" + updatedInstance);
-
     // Machine type and accelerator type response obtained from GCP is in URL format, and need a
     // conversion to compare
     String actualMachineType = updatedInstance.getMachineType();
@@ -708,7 +706,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().undoStepFailures(retrySteps).lastStepFailure(true).build());
     assertThrows(
-        InvalidResultStateException.class,
+        IllegalStateException.class,
         () ->
             controlledResourceService.updateAiNotebookInstance(
                 fetchedInstance,
