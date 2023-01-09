@@ -59,7 +59,7 @@ public class DeleteAzureStorageContainerStepTest extends BaseStorageStepTest {
   public void setup() {
     super.setup();
     when(mockStorageManager.blobContainers()).thenReturn(mockBlobContainers);
-    when(mockSamService.getWsmServiceAccountToken()).then("wsm-token");
+    when(mockSamService.getWsmServiceAccountToken()).thenReturn("wsm-token");
     setupFlightContext();
   }
 
