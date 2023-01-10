@@ -31,16 +31,23 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.ws.rs.client.Client;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 @Component
 public class TpsApiDispatch {
+  private static final Logger logger = LoggerFactory.getLogger(TpsApiDispatch.class);
   private final FeatureConfiguration features;
   private final PolicyServiceConfiguration policyServiceConfiguration;
   private final Client commonHttpClient;
@@ -195,6 +202,7 @@ public class TpsApiDispatch {
   }
 
   @Traced
+  @Cacheable(cacheNames = "regionInfo", sync = true)
   public TpsRegion getRegionInfo(String platform, String location) {
     features.tpsEnabledCheck();
     TpsApi tpsApi = policyApi();
@@ -203,6 +211,14 @@ public class TpsApiDispatch {
     } catch (ApiException e) {
       throw convertApiException(e);
     }
+  }
+
+  @Scheduled(fixedRateString = "1", timeUnit = TimeUnit.DAYS)
+  @CacheEvict(
+      allEntries = true,
+      cacheNames = {"regionInfo"})
+  public void resetCache() {
+    logger.info("reset cache regionInfo");
   }
 
   private ApiClient getApiClient(String accessToken) {
