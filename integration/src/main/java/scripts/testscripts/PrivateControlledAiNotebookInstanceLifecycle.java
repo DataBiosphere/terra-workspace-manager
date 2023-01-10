@@ -189,9 +189,7 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
     String actualGpuType = creationResult.getAiNotebookInstance().getAcceleratorConfig().getType();
     actualGpuType = actualGpuType.substring(actualGpuType.lastIndexOf("/") + 1);
     assertEquals("NVIDIA_TESLA_T4", actualGpuType);
-    assertEquals(
-        1L,
-        creationResult.getAiNotebookInstance().getAcceleratorConfig().getCoreCount());
+    assertEquals(1L, creationResult.getAiNotebookInstance().getAcceleratorConfig().getCoreCount());
 
     // Update the AI Notebook through WSM.
     var newName = "new-instance-notebook-name";
