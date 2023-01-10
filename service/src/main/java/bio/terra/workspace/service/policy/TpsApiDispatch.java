@@ -14,6 +14,7 @@ import bio.terra.policy.model.TpsPaoSourceRequest;
 import bio.terra.policy.model.TpsPaoUpdateRequest;
 import bio.terra.policy.model.TpsPaoUpdateResult;
 import bio.terra.policy.model.TpsPolicyInputs;
+import bio.terra.policy.model.TpsRegion;
 import bio.terra.policy.model.TpsUpdateMode;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.configuration.external.PolicyServiceConfiguration;
@@ -194,19 +195,14 @@ public class TpsApiDispatch {
   }
 
   @Traced
-  public List<String> listRegionDataCenters(String platform, String region) {
+  public TpsRegion getRegionInfo(String platform, String location) {
     features.tpsEnabledCheck();
     TpsApi tpsApi = policyApi();
-    TpsDatacenterList tpsDatacenterList;
     try {
-      tpsDatacenterList = tpsApi.getRegionDatacenters(platform, region);
+      return tpsApi.getRegionInfo(platform, location);
     } catch (ApiException e) {
       throw convertApiException(e);
     }
-    if (tpsDatacenterList != null) {
-      return tpsDatacenterList.stream().toList();
-    }
-    return new ArrayList<>();
   }
 
   private ApiClient getApiClient(String accessToken) {

@@ -1,11 +1,11 @@
 paths:
-  /api/policies/v1/listRegionDataCenters:
+  /api/policies/v1/getRegionInfo:
     parameters:
     - $ref: '#/components/parameters/Platform'
-    - $ref: '#/components/parameters/Region'
+    - $ref: '#/components/parameters/WsmPolicyLocation'
     get:
-      summary: Get the cloud data centers in a given region.
-      operationId: getRegionDataCenters
+      summary: Get the cloud region info.
+      operationId: getRegionInfo
       tags: [policy]
       responses:
         '200':
@@ -13,7 +13,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DataCenterList'
+                $ref: '#/components/schemas/WsmPolicyRegion'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '404':
@@ -175,3 +175,22 @@ components:
         ENFORCE_CONFLICT - updates are made and conflicts are propagated
           to policy dependents. (Only valid on policy update.)
       enum: [ 'DRY_RUN', 'FAIL_ON_CONFLICT', 'ENFORCE_CONFLICT' ]
+
+    WsmPolicyRegion:
+      description: Region object description.
+      type: object
+      required: [name, description]
+      properties:
+        name:
+          description: The region name
+          type: string
+        description:
+          description: The region description
+          type: string
+        regions:
+          description: Subregions contained within this region.
+          type: array
+          items:
+            $ref: '#/components/schemas/WsmPolicyRegion'
+        datacenters:
+          $ref: '#/components/schemas/DataCenterList'
