@@ -12,11 +12,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
-import bio.terra.cloudres.google.notebooks.InstanceName;
 import bio.terra.stairway.Direction;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
@@ -35,9 +32,13 @@ import bio.terra.workspace.db.RawDaoTestFixture;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.db.model.DbResource;
+import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAcceleratorConfig;
 import bio.terra.workspace.service.folder.flights.DeleteFolderFlight;
 import bio.terra.workspace.service.folder.model.Folder;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookHandler;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.workspace.flight.DeleteGcpContextFlight;
@@ -47,9 +48,6 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
-import com.google.api.services.notebooks.v1.model.AcceleratorConfig;
-import com.google.api.services.notebooks.v1.model.Instance;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -58,7 +56,10 @@ import java.util.UUID;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
 
 public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   private static final UserStatusInfo USER_STATUS_INFO =
@@ -71,25 +72,32 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   @Autowired private WorkspaceActivityLogHook hook;
   @Autowired private FolderDao folderDao;
   @Autowired private RawDaoTestFixture rawDaoTestFixture;
+  @MockBean private ControlledAiNotebookHandler mockControlledAiNotebookHandler;
+
+  public ControlledAiNotebookInstanceResource controlledAiNotebookInstanceResource;
+  public UUID workspaceId;
 
   @BeforeEach
-  void setUpOnce() throws InterruptedException, IOException {
+  void setUpOnce() throws InterruptedException {
     when(mockSamService().getUserStatusInfo(any())).thenReturn(USER_STATUS_INFO);
 
-    Instance returnInstance = new Instance();
-    returnInstance.setMachineType("n2-standard-1");
-    AcceleratorConfig acceleratorConfig = new AcceleratorConfig();
+    workspaceId = WorkspaceUnitTestUtils.createWorkspaceWithGcpContext(workspaceDao);
+    Optional<ActivityLogChangeDetails> emptyChangeDetails =
+        activityLogDao.getLastUpdatedDetails(workspaceId);
+    assertTrue(emptyChangeDetails.isEmpty());
+
+    ApiGcpAiNotebookInstanceAcceleratorConfig acceleratorConfig =
+        new ApiGcpAiNotebookInstanceAcceleratorConfig();
     acceleratorConfig.setType("NVIDIA_TESLA_V100");
     acceleratorConfig.setCoreCount(1L);
-    returnInstance.setAcceleratorConfig(acceleratorConfig);
+    controlledAiNotebookInstanceResource =
+        ControlledResourceFixtures.makeDefaultAiNotebookInstance(workspaceId)
+            .machineType("n2-standard-1")
+            .acceleratorConfig(acceleratorConfig)
+            .build();
 
-    AIPlatformNotebooksCow mockAIPlatformNotebooksCow = mock(AIPlatformNotebooksCow.class);
-    AIPlatformNotebooksCow.Instances mockInstances = mock(AIPlatformNotebooksCow.Instances.class);
-    AIPlatformNotebooksCow.Instances.Get mockGet = mock(AIPlatformNotebooksCow.Instances.Get.class);
-    when(mockCrlService().getAIPlatformNotebooksCow()).thenReturn(mockAIPlatformNotebooksCow);
-    when(mockAIPlatformNotebooksCow.instances()).thenReturn(mockInstances);
-    when(mockInstances.get(any(InstanceName.class))).thenReturn(mockGet);
-    when(mockGet.execute()).thenReturn(returnInstance);
+    when(mockControlledAiNotebookHandler.makeResourceFromDb(any(DbResource.class)))
+        .thenReturn(controlledAiNotebookInstanceResource);
   }
 
   @Test
@@ -299,23 +307,26 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   @Test
   void deleteResourceFlightFails_resourceStillExist_notLogChangeDetails()
       throws InterruptedException {
-    UUID workspaceId = WorkspaceUnitTestUtils.createWorkspaceWithGcpContext(workspaceDao);
-    Optional<ActivityLogChangeDetails> emptyChangeDetails =
-        activityLogDao.getLastUpdatedDetails(workspaceId);
-    assertTrue(emptyChangeDetails.isEmpty());
     List<WsmResource> resourcesToDelete = new ArrayList<>();
     // an AI notebook that is not "deleted" as it is put into the resource DAO.
-    var resource = ControlledResourceFixtures.makeDefaultAiNotebookInstance(workspaceId).build();
+    var resource = controlledAiNotebookInstanceResource;
     resourceDao.createControlledResource(resource);
     resourcesToDelete.add(resource);
 
     FlightMap inputParams = buildInputParams(workspaceId, OperationType.DELETE);
     inputParams.put(CONTROLLED_RESOURCES_TO_DELETE, resourcesToDelete);
-    hook.endFlight(
-        new FakeFlightContext(
-            DeleteControlledResourcesFlight.class.getName(), inputParams, FlightStatus.ERROR));
 
-    assertNotNull(resourceDao.getResource(workspaceId, resource.getResourceId()));
+    try (MockedStatic<ControlledAiNotebookHandler> utilities =
+        Mockito.mockStatic(ControlledAiNotebookHandler.class)) {
+      utilities
+          .when(ControlledAiNotebookHandler::getHandler)
+          .thenReturn(mockControlledAiNotebookHandler);
+      hook.endFlight(
+          new FakeFlightContext(
+              DeleteControlledResourcesFlight.class.getName(), inputParams, FlightStatus.ERROR));
+      assertNotNull(resourceDao.getResource(workspaceId, resource.getResourceId()));
+    }
+
     var changeDetailsAfterFailedFlight = activityLogDao.getLastUpdatedDetails(workspaceId);
     assertTrue(changeDetailsAfterFailedFlight.isEmpty());
   }
@@ -323,13 +334,9 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   @Test
   void deleteResourceFlightFails_resourcesPartialDelete_logChangeDetails()
       throws InterruptedException {
-    UUID workspaceId = WorkspaceUnitTestUtils.createWorkspaceWithGcpContext(workspaceDao);
-    Optional<ActivityLogChangeDetails> emptyChangeDetails =
-        activityLogDao.getLastUpdatedDetails(workspaceId);
-    assertTrue(emptyChangeDetails.isEmpty());
     List<WsmResource> resourcesToDelete = new ArrayList<>();
     // an AI notebook that is not "deleted" as it is put into the resource DAO.
-    var aiNotebook = ControlledResourceFixtures.makeDefaultAiNotebookInstance(workspaceId).build();
+    var aiNotebook = controlledAiNotebookInstanceResource;
     resourceDao.createControlledResource(aiNotebook);
     resourcesToDelete.add(aiNotebook);
     // a dataset that is "deleted" as it is never put into the resource DAO.
@@ -339,14 +346,16 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
 
     FlightMap inputParams = buildInputParams(workspaceId, OperationType.DELETE);
     inputParams.put(CONTROLLED_RESOURCES_TO_DELETE, resourcesToDelete);
-    System.out.println(
-        "mockCrlService().getAIPlatformNotebooksCow(): "
-            + mockCrlService().getAIPlatformNotebooksCow());
-    hook.endFlight(
-        new FakeFlightContext(
-            DeleteControlledResourcesFlight.class.getName(), inputParams, FlightStatus.ERROR));
-
-    assertNotNull(resourceDao.getResource(workspaceId, aiNotebook.getResourceId()));
+    try (MockedStatic<ControlledAiNotebookHandler> utilities =
+        Mockito.mockStatic(ControlledAiNotebookHandler.class)) {
+      utilities
+          .when(ControlledAiNotebookHandler::getHandler)
+          .thenReturn(mockControlledAiNotebookHandler);
+      hook.endFlight(
+          new FakeFlightContext(
+              DeleteControlledResourcesFlight.class.getName(), inputParams, FlightStatus.ERROR));
+      assertNotNull(resourceDao.getResource(workspaceId, aiNotebook.getResourceId()));
+    }
     List<ActivityLogChangeDetails> changeDetails =
         rawDaoTestFixture.readActivityLogs(
             workspaceId,

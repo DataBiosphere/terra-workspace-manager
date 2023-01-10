@@ -75,6 +75,7 @@ public class CheckAiNotebookIsReadyToUpdateCpuGpuStep implements Step {
             StepStatus.STEP_RESULT_FAILURE_FATAL,
             new IllegalStateException("Notebook instance has to be stopped before updating."));
       }
+
       // The machine doesn't need to be updated if the requested machine configuration
       // is identical with the existing machine configuration. we only update the machine
       // when there is a change
