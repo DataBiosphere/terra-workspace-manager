@@ -519,7 +519,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 newAcceleratorConfig,
                 user.getAuthenticatedRequest()));
 
-    Compute computeService = GcpCloudUtils.createComputeService();
+    Compute computeService = crlService.createComputeService();
     computeService.instances().stop(projectId, resource.getLocation(), instanceId).execute();
 
     // Wait for the instance to finish stopping

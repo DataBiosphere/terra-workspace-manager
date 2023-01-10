@@ -10,18 +10,10 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResourceF
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
-import com.google.api.client.http.HttpTransport;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.api.services.compute.Compute;
 import com.google.api.services.notebooks.v1.model.AcceleratorConfig;
 import com.google.api.services.notebooks.v1.model.Instance;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.IOException;
-import java.security.GeneralSecurityException;
-import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.PostConstruct;
@@ -102,25 +94,6 @@ public class ControlledAiNotebookHandler implements WsmResourceHandler {
             .acceleratorConfig(acceleratorConfig)
             .build();
     return resource;
-  }
-
-  /**
-   * Directly calling the gcp api to get/update instance, requires the createComputeService, see the
-   * example in https://cloud.google.com/compute/docs/reference/rest/v1/instances/get
-   */
-  public static Compute createComputeService() throws IOException, GeneralSecurityException {
-    HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
-    JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
-
-    GoogleCredential credential = GoogleCredential.getApplicationDefault();
-    if (credential.createScopedRequired()) {
-      credential =
-          credential.createScoped(Arrays.asList("https://www.googleapis.com/auth/cloud-platform"));
-    }
-
-    return new Compute.Builder(httpTransport, jsonFactory, credential)
-        .setApplicationName("Google-ComputeSample/0.1")
-        .build();
   }
 
   /**

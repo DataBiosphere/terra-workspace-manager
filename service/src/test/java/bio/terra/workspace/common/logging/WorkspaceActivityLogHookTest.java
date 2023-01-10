@@ -73,7 +73,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   @Autowired private RawDaoTestFixture rawDaoTestFixture;
 
   @BeforeEach
-  public void setUpMocks() throws InterruptedException, IOException {
+  void setUpOnce() throws InterruptedException, IOException {
     when(mockSamService().getUserStatusInfo(any())).thenReturn(USER_STATUS_INFO);
 
     Instance returnInstance = new Instance();
@@ -339,6 +339,9 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
 
     FlightMap inputParams = buildInputParams(workspaceId, OperationType.DELETE);
     inputParams.put(CONTROLLED_RESOURCES_TO_DELETE, resourcesToDelete);
+    System.out.println(
+        "mockCrlService().getAIPlatformNotebooksCow(): "
+            + mockCrlService().getAIPlatformNotebooksCow());
     hook.endFlight(
         new FakeFlightContext(
             DeleteControlledResourcesFlight.class.getName(), inputParams, FlightStatus.ERROR));

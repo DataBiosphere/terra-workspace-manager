@@ -30,10 +30,16 @@ import com.azure.resourcemanager.msi.MsiManager;
 import com.azure.resourcemanager.relay.RelayManager;
 import com.azure.resourcemanager.resources.ResourceManager;
 import com.azure.resourcemanager.storage.StorageManager;
+import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.bigquery.Bigquery;
 import com.google.api.services.bigquery.BigqueryScopes;
 import com.google.api.services.bigquery.model.Dataset;
+import com.google.api.services.compute.Compute;
 import com.google.api.services.storage.Storage;
 import com.google.api.services.storage.StorageScopes;
 import com.google.auth.http.HttpCredentialsAdapter;
@@ -49,6 +55,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.List;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
@@ -525,5 +532,24 @@ public class CrlService {
 
   public boolean canCreateAzureIp(String ipName, AuthenticatedUserRequest userRequest) {
     return true; // TODO: check azure acls?
+  }
+
+  /**
+   * Directly calling the gcp api to get/update instance, requires the createComputeService, see the
+   * example in https://cloud.google.com/compute/docs/reference/rest/v1/instances/get
+   */
+  public Compute createComputeService() throws IOException, GeneralSecurityException {
+    HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
+    JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
+
+    GoogleCredential credential = GoogleCredential.getApplicationDefault();
+    if (credential.createScopedRequired()) {
+      credential =
+          credential.createScoped(Arrays.asList("https://www.googleapis.com/auth/cloud-platform"));
+    }
+
+    return new Compute.Builder(httpTransport, jsonFactory, credential)
+        .setApplicationName("Google-ComputeSample/0.1")
+        .build();
   }
 }

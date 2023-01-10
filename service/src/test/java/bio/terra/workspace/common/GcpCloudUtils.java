@@ -12,13 +12,7 @@ import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketDefaultStorageClass;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
-import com.google.api.client.http.HttpTransport;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.gax.paging.Page;
-import com.google.api.services.compute.Compute;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.bigquery.BigQueryException;
@@ -38,11 +32,8 @@ import com.google.cloud.storage.BucketInfo;
 import com.google.cloud.storage.BucketInfo.LifecycleRule;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.security.GeneralSecurityException;
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
@@ -201,25 +192,6 @@ public class GcpCloudUtils {
         .setProjectId(projectId)
         .build()
         .getService();
-  }
-
-  /**
-   * Directly calling the gcp api to get/update instance, requires the createComputeService, see the
-   * example in https://cloud.google.com/compute/docs/reference/rest/v1/instances/get
-   */
-  public static Compute createComputeService() throws IOException, GeneralSecurityException {
-    HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
-    JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
-
-    GoogleCredential credential = GoogleCredential.getApplicationDefault();
-    if (credential.createScopedRequired()) {
-      credential =
-          credential.createScoped(Arrays.asList("https://www.googleapis.com/auth/cloud-platform"));
-    }
-
-    return new Compute.Builder(httpTransport, jsonFactory, credential)
-        .setApplicationName("Google-ComputeSample/0.1")
-        .build();
   }
 
   /**
