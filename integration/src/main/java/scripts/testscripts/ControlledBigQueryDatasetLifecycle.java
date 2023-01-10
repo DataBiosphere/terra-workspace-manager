@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static scripts.utils.BqDatasetUtils.assertDatasetsAreEqualIgnoringLastUpdatedDate;
 import static scripts.utils.CommonResourceFieldsUtil.getResourceDefaultProperties;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
@@ -284,20 +285,6 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
 
     ownerResourceApi.deleteBigQueryDataset(
         getWorkspaceId(), createdDatasetWithDifferentDatasetId.getMetadata().getResourceId());
-  }
-
-  /**
-   * The dataset at creation can have an earlier LastUpdatedDate than the current dataset. So do not
-   * compare the lastUpdatedDate.
-   */
-  private void assertDatasetsAreEqualIgnoringLastUpdatedDate(
-      GcpBigQueryDatasetResource createdDataset, GcpBigQueryDatasetResource fetchedDataset) {
-    assertEquals(
-        createdDataset.metadata(
-            createdDataset
-                .getMetadata()
-                .lastUpdatedDate(fetchedDataset.getMetadata().getLastUpdatedDate())),
-        fetchedDataset);
   }
 
   /**
