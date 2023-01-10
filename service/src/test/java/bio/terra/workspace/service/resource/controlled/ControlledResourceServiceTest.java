@@ -28,6 +28,7 @@ import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.GcpCloudUtils;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
@@ -523,17 +524,24 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     computeService.instances().stop(projectId, resource.getLocation(), instanceId).execute();
 
     // Wait for the instance to finish stopping
-    for (int i = 0; i < retryCount; i++) {
-      var instance = crlGetInstance(fetchedInstance.toInstanceName(projectId));
-      var actualState = instance.getState();
+    GcpUtils.retryCondition(
+        () -> {
+          try {
+            var instance = crlGetInstance(fetchedInstance.toInstanceName(projectId));
+            var actualState = instance.getState();
 
-      if (actualState.equals("STOPPED")) {
-        break;
-      }
-      logger.warn(
-          "Instance state is not ready yet: {}. Retry {} of {}", actualState, i + 1, retryCount);
-      TimeUnit.SECONDS.sleep(retryWaitSeconds);
-    }
+            if (actualState.equals("STOPPED")) {
+              return true;
+            } else {
+              logger.warn("Instance state is not ready yet: {}.", actualState);
+              return false;
+            }
+          } catch (IOException e) {
+            return false;
+          }
+        },
+        retryCount,
+        retryWaitSeconds);
 
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(

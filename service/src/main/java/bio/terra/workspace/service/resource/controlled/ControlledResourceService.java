@@ -462,8 +462,8 @@ public class ControlledResourceService {
             .addParameter(ControlledResourceKeys.UPDATE_PARAMETERS, updateParameters)
             .addParameter(ResourceKeys.RESOURCE_NAME, newName)
             .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, newDescription)
-            .addParameter(ControlledResourceKeys.MACHINE_TYPE, machineType)
-            .addParameter(ControlledResourceKeys.ACCELERATOR_CONFIG, acceleratorConfig);
+            .addParameter(ControlledResourceKeys.UPDATE_MACHINE_TYPE, machineType)
+            .addParameter(ControlledResourceKeys.UPDATE_ACCELERATOR_CONFIG, acceleratorConfig);
     return jobBuilder.submitAndWait(ControlledAiNotebookInstanceResource.class);
   }
 

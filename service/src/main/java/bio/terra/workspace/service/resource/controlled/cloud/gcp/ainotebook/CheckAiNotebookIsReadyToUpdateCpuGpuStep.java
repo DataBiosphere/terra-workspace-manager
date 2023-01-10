@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.ACCELERATOR_CONFIG;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.MACHINE_TYPE;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_ACCELERATOR_CONFIG;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_MACHINE_TYPE;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_TO_ACCELERATOR_CONFIG;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_TO_MACHINE_TYPE;
 
@@ -48,8 +48,9 @@ public class CheckAiNotebookIsReadyToUpdateCpuGpuStep implements Step {
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     FlightMap inputMap = context.getInputParameters();
     FlightMap workingMap = context.getWorkingMap();
-    String machineType = inputMap.get(MACHINE_TYPE, String.class);
-    AcceleratorConfig acceleratorConfig = inputMap.get(ACCELERATOR_CONFIG, AcceleratorConfig.class);
+    String machineType = inputMap.get(UPDATE_MACHINE_TYPE, String.class);
+    AcceleratorConfig acceleratorConfig =
+        inputMap.get(UPDATE_ACCELERATOR_CONFIG, AcceleratorConfig.class);
     var projectId = cloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
     InstanceName instanceName = resource.toInstanceName(projectId);
 

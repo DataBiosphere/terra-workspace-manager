@@ -10,6 +10,7 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
@@ -23,7 +24,6 @@ import com.google.api.services.compute.model.Scheduling;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -158,32 +158,28 @@ public class UpdateAiNotebookCpuGpuStep implements Step {
     }
 
     // Wait for the instance to finish updating
-    int retryCount = 5, retryWaitSeconds = 2;
-
-    for (int i = 0; i < retryCount; i++) {
-      Instance instanceInfo =
-          computeService.instances().get(projectId, location, instanceId).execute();
-      if ((machineType == null || instanceInfo.getMachineType().equals(machineTypeUrl))
-          && (acceleratorConfig == null
-              || acceleratorConfig.getAcceleratorType() == null
-              || instanceInfo
-                  .getGuestAccelerators()
-                  .get(0)
-                  .getAcceleratorType()
-                  .equals(gpuTypeUrl))) {
-        logger.info(
-            "Updated: "
-                + instanceInfo.getMachineType()
-                + " "
-                + instanceInfo.getGuestAccelerators().get(0).getAcceleratorType());
-        break;
-      }
-      try {
-        TimeUnit.SECONDS.sleep(retryWaitSeconds);
-      } catch (InterruptedException e) {
-
-      }
-    }
+    final String machineTypeUrlFinal = machineTypeUrl;
+    final String gpuTypeUrlFinal = gpuTypeUrl;
+    GcpUtils.retryCondition(
+        () -> {
+          try {
+            Instance instanceInfo =
+                computeService.instances().get(projectId, location, instanceId).execute();
+            return (machineType == null
+                    || instanceInfo.getMachineType().equals(machineTypeUrlFinal))
+                && (acceleratorConfig == null
+                    || acceleratorConfig.getAcceleratorType() == null
+                    || instanceInfo
+                        .getGuestAccelerators()
+                        .get(0)
+                        .getAcceleratorType()
+                        .equals(gpuTypeUrlFinal));
+          } catch (IOException e) {
+            return false;
+          }
+        },
+        5,
+        2);
   }
 
   private String createBaseUrl(String projectId, String location) {

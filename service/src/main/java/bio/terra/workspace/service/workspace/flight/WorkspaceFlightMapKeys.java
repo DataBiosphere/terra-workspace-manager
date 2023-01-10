@@ -32,8 +32,8 @@ public final class WorkspaceFlightMapKeys {
     public static final String GCP_CLOUD_CONTEXT = "gcpCloudContext";
     public static final String AZURE_CLOUD_CONTEXT = "azureCloudContext";
     public static final String UPDATE_PARAMETERS = "updateParameters";
-    public static final String MACHINE_TYPE = "machineType";
-    public static final String ACCELERATOR_CONFIG = "acceleratorConfig";
+    public static final String UPDATE_MACHINE_TYPE = "updateMachineType";
+    public static final String UPDATE_ACCELERATOR_CONFIG = "updateAcceleratorConfig";
     public static final String PREVIOUS_UPDATE_PARAMETERS = "previousUpdateParameters";
     public static final String CREATE_RESOURCE_REGION = "createResourceRegion";
     public static final String PREVIOUS_MACHINE_TYPE = "previousMachineType";

@@ -16,6 +16,8 @@ import io.grpc.Status.Code;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import java.util.function.BooleanSupplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -86,6 +88,18 @@ public class GcpUtils {
                 "Error polling operation. name [%s] message [%s]",
                 operation.getOperationAdapter().getName(),
                 operation.getOperationAdapter().getError().getMessage()));
+      }
+    }
+  }
+
+  public static void retryCondition(BooleanSupplier lambda, int retryCount, int retryDuration) {
+    for (int i = 0; i < retryCount; i++) {
+      if (lambda.getAsBoolean()) {
+        break;
+      }
+      try {
+        TimeUnit.SECONDS.sleep(retryDuration);
+      } catch (InterruptedException e) {
       }
     }
   }

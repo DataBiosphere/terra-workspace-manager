@@ -1,8 +1,8 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.ACCELERATOR_CONFIG;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.MACHINE_TYPE;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.PREVIOUS_UPDATE_PARAMETERS;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_ACCELERATOR_CONFIG;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_MACHINE_TYPE;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_PARAMETERS;
 
 import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
@@ -62,8 +62,9 @@ public class UpdateAiNotebookAttributesStep implements Step {
       }
       sanitizedMetadata.put(entrySet.getKey(), entrySet.getValue());
     }
-    String machineType = inputMap.get(MACHINE_TYPE, String.class);
-    AcceleratorConfig acceleratorConfig = inputMap.get(ACCELERATOR_CONFIG, AcceleratorConfig.class);
+    String machineType = inputMap.get(UPDATE_MACHINE_TYPE, String.class);
+    AcceleratorConfig acceleratorConfig =
+        inputMap.get(UPDATE_ACCELERATOR_CONFIG, AcceleratorConfig.class);
     return updateAiNotebook(
         sanitizedMetadata, cloudContextService.getRequiredGcpProject(resource.getWorkspaceId()));
   }

@@ -61,9 +61,10 @@ public class UpdateControlledAiNotebookResourceFlight extends Flight {
             flightBeanBag.getGcpCloudContextService()),
         gcpRetry);
 
-    if (inputParameters.containsKey(WorkspaceFlightMapKeys.ControlledResourceKeys.MACHINE_TYPE)
+    if (inputParameters.containsKey(
+            WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_MACHINE_TYPE)
         || inputParameters.containsKey(
-            WorkspaceFlightMapKeys.ControlledResourceKeys.ACCELERATOR_CONFIG)) {
+            WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_ACCELERATOR_CONFIG)) {
       addStep(
           new CheckAiNotebookIsReadyToUpdateCpuGpuStep(
               aiNotebookResource,
