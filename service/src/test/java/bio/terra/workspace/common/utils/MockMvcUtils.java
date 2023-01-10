@@ -187,7 +187,9 @@ public class MockMvcUtils {
   public static final String UPDATE_WORKSPACES_V1_PROPERTIES_PATH_FORMAT =
       "/api/workspaces/v1/%s/properties";
   public static final String UPDATE_WORKSPACES_V1_POLICIES_PATH_FORMAT =
-      "/api/workspaces/v1/%S/policies";
+      "/api/workspaces/v1/%s/policies";
+  public static final String WORKSPACES_V1_LIST_VALID_DATA_CENTER_PATH_FORMAT =
+      "/api/workspaces/v1/%s/listValidDataCenters";
   public static final String GRANT_ROLE_PATH_FORMAT = "/api/workspaces/v1/%s/roles/%s/members";
   public static final String REMOVE_ROLE_PATH_FORMAT = "/api/workspaces/v1/%s/roles/%s/members/%s";
   public static final String RESOURCES_PATH_FORMAT = "/api/workspaces/v1/%s/resources";
