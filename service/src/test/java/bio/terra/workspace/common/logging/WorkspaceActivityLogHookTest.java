@@ -73,7 +73,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   @Autowired private RawDaoTestFixture rawDaoTestFixture;
 
   @BeforeEach
-  void setUpOnce() throws InterruptedException, IOException {
+  public void setUpMocks() throws InterruptedException, IOException {
     when(mockSamService().getUserStatusInfo(any())).thenReturn(USER_STATUS_INFO);
 
     Instance returnInstance = new Instance();
