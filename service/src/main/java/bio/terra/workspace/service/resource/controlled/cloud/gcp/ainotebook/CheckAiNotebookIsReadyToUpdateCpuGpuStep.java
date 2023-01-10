@@ -54,13 +54,17 @@ public class CheckAiNotebookIsReadyToUpdateCpuGpuStep implements Step {
     var projectId = cloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
     InstanceName instanceName = resource.toInstanceName(projectId);
 
+    // The machine doesn't need to be updated if the requested machine configuration
+    // is identical with the existing machine configuration. we only update the machine
+    // when there is a change. We clean up the machine configuration and update it in the next step
     try {
       var instance = crlService.getAIPlatformNotebooksCow().instances().get(instanceName).execute();
-      if (instance.getMachineType().equals(machineType)) { // If updating cpu
+      // If cpu is updated
+      if (instance.getMachineType().equals(machineType)) {
         machineType = null;
       }
-      if (acceleratorConfig != null
-          && acceleratorConfig.getAcceleratorType() != null) { // If updating gpu
+      // If gpu is updated
+      if (acceleratorConfig != null && acceleratorConfig.getAcceleratorType() != null) {
         if (instance.getAcceleratorConfig().getType().equals(acceleratorConfig.getAcceleratorType())
             && instance
                 .getAcceleratorConfig()
@@ -76,9 +80,6 @@ public class CheckAiNotebookIsReadyToUpdateCpuGpuStep implements Step {
             new IllegalStateException("Notebook instance has to be stopped before updating."));
       }
 
-      // The machine doesn't need to be updated if the requested machine configuration
-      // is identical with the existing machine configuration. we only update the machine
-      // when there is a change
       workingMap.put(UPDATE_TO_MACHINE_TYPE, machineType);
       workingMap.put(UPDATE_TO_ACCELERATOR_CONFIG, acceleratorConfig);
     } catch (GoogleJsonResponseException e) {

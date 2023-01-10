@@ -74,30 +74,9 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   @Autowired private RawDaoTestFixture rawDaoTestFixture;
   @MockBean private ControlledAiNotebookHandler mockControlledAiNotebookHandler;
 
-  public ControlledAiNotebookInstanceResource controlledAiNotebookInstanceResource;
-  public UUID workspaceId;
-
   @BeforeEach
   void setUpOnce() throws InterruptedException {
     when(mockSamService().getUserStatusInfo(any())).thenReturn(USER_STATUS_INFO);
-
-    workspaceId = WorkspaceUnitTestUtils.createWorkspaceWithGcpContext(workspaceDao);
-    Optional<ActivityLogChangeDetails> emptyChangeDetails =
-        activityLogDao.getLastUpdatedDetails(workspaceId);
-    assertTrue(emptyChangeDetails.isEmpty());
-
-    ApiGcpAiNotebookInstanceAcceleratorConfig acceleratorConfig =
-        new ApiGcpAiNotebookInstanceAcceleratorConfig();
-    acceleratorConfig.setType("NVIDIA_TESLA_V100");
-    acceleratorConfig.setCoreCount(1L);
-    controlledAiNotebookInstanceResource =
-        ControlledResourceFixtures.makeDefaultAiNotebookInstance(workspaceId)
-            .machineType("n2-standard-1")
-            .acceleratorConfig(acceleratorConfig)
-            .build();
-
-    when(mockControlledAiNotebookHandler.makeResourceFromDb(any(DbResource.class)))
-        .thenReturn(controlledAiNotebookInstanceResource);
   }
 
   @Test
@@ -307,11 +286,28 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   @Test
   void deleteResourceFlightFails_resourceStillExist_notLogChangeDetails()
       throws InterruptedException {
+    UUID workspaceId = WorkspaceUnitTestUtils.createWorkspaceWithGcpContext(workspaceDao);
+    Optional<ActivityLogChangeDetails> emptyChangeDetails =
+        activityLogDao.getLastUpdatedDetails(workspaceId);
+    assertTrue(emptyChangeDetails.isEmpty());
+
+    ApiGcpAiNotebookInstanceAcceleratorConfig acceleratorConfig =
+        new ApiGcpAiNotebookInstanceAcceleratorConfig();
+    acceleratorConfig.setType("NVIDIA_TESLA_V100");
+    acceleratorConfig.setCoreCount(1L);
+    ControlledAiNotebookInstanceResource aiNotebook =
+        ControlledResourceFixtures.makeDefaultAiNotebookInstance(workspaceId)
+            .machineType("n2-standard-1")
+            .acceleratorConfig(acceleratorConfig)
+            .build();
+
+    when(mockControlledAiNotebookHandler.makeResourceFromDb(any(DbResource.class)))
+        .thenReturn(aiNotebook);
+
     List<WsmResource> resourcesToDelete = new ArrayList<>();
     // an AI notebook that is not "deleted" as it is put into the resource DAO.
-    var resource = controlledAiNotebookInstanceResource;
-    resourceDao.createControlledResource(resource);
-    resourcesToDelete.add(resource);
+    resourceDao.createControlledResource(aiNotebook);
+    resourcesToDelete.add(aiNotebook);
 
     FlightMap inputParams = buildInputParams(workspaceId, OperationType.DELETE);
     inputParams.put(CONTROLLED_RESOURCES_TO_DELETE, resourcesToDelete);
@@ -324,7 +320,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
       hook.endFlight(
           new FakeFlightContext(
               DeleteControlledResourcesFlight.class.getName(), inputParams, FlightStatus.ERROR));
-      assertNotNull(resourceDao.getResource(workspaceId, resource.getResourceId()));
+      assertNotNull(resourceDao.getResource(workspaceId, aiNotebook.getResourceId()));
     }
 
     var changeDetailsAfterFailedFlight = activityLogDao.getLastUpdatedDetails(workspaceId);
@@ -334,9 +330,27 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   @Test
   void deleteResourceFlightFails_resourcesPartialDelete_logChangeDetails()
       throws InterruptedException {
+
+    UUID workspaceId = WorkspaceUnitTestUtils.createWorkspaceWithGcpContext(workspaceDao);
+    Optional<ActivityLogChangeDetails> emptyChangeDetails =
+        activityLogDao.getLastUpdatedDetails(workspaceId);
+    assertTrue(emptyChangeDetails.isEmpty());
+
+    ApiGcpAiNotebookInstanceAcceleratorConfig acceleratorConfig =
+        new ApiGcpAiNotebookInstanceAcceleratorConfig();
+    acceleratorConfig.setType("NVIDIA_TESLA_V100");
+    acceleratorConfig.setCoreCount(1L);
+    ControlledAiNotebookInstanceResource aiNotebook =
+        ControlledResourceFixtures.makeDefaultAiNotebookInstance(workspaceId)
+            .machineType("n2-standard-1")
+            .acceleratorConfig(acceleratorConfig)
+            .build();
+
+    when(mockControlledAiNotebookHandler.makeResourceFromDb(any(DbResource.class)))
+        .thenReturn(aiNotebook);
+
     List<WsmResource> resourcesToDelete = new ArrayList<>();
     // an AI notebook that is not "deleted" as it is put into the resource DAO.
-    var aiNotebook = controlledAiNotebookInstanceResource;
     resourceDao.createControlledResource(aiNotebook);
     resourcesToDelete.add(aiNotebook);
     // a dataset that is "deleted" as it is never put into the resource DAO.
