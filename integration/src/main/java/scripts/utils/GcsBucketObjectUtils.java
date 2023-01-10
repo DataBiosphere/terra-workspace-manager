@@ -12,7 +12,6 @@ import bio.terra.workspace.model.GcpGcsObjectResource;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.Storage;
-import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -27,13 +26,13 @@ public class GcsBucketObjectUtils {
   private static final Pattern GCS_OBJECT_PATTERN = Pattern.compile("^gs://([^/]+)/(.+)$");
 
   public static Blob retrieveBucketFile(
-      String bucketName, String gcpProjectId, TestUserSpecification bucketReader)
-      throws IOException {
+      String bucketName, String gcpProjectId, TestUserSpecification bucketReader) throws Exception {
     Storage cloningUserStorageClient =
         ClientTestUtils.getGcpStorageClient(bucketReader, gcpProjectId);
     BlobId blobId = BlobId.of(bucketName, GcsBucketUtils.GCS_BLOB_NAME);
 
-    final Blob retrievedFile = cloningUserStorageClient.get(blobId);
+    final Blob retrievedFile =
+        ClientTestUtils.getWithRetryOnException(() -> cloningUserStorageClient.get(blobId));
     logger.info("Retrieved file {} from bucket {}", GcsBucketUtils.GCS_BLOB_NAME, bucketName);
     assertNotNull(retrievedFile);
     assertEquals(blobId.getName(), retrievedFile.getBlobId().getName());

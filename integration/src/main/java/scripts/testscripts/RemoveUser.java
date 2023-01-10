@@ -203,8 +203,7 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
     } catch (StorageException googleError) {
       // If this is a 403 error, the user was successfully removed from the bucket.
       assertEquals(SC_FORBIDDEN, googleError.getCode());
-    } catch (IOException e) {
-      // Unexpected error, rethrow
+    } catch (Exception e) {
       throw new RuntimeException("Error checking user is removed from bucket", e);
     }
   }
