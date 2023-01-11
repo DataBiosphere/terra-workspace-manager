@@ -99,7 +99,12 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       WorkspaceService workspaceService,
       ControlledResourceMetadataManager controlledResourceMetadataManager,
       ResourceValidationUtils resourceValidationUtils) {
-    super(authenticatedUserRequestFactory, request, controlledResourceService, samService, resourceValidationUtils);
+    super(
+        authenticatedUserRequestFactory,
+        request,
+        controlledResourceService,
+        samService,
+        resourceValidationUtils);
     this.controlledResourceService = controlledResourceService;
     this.azureControlledStorageResourceService = azureControlledStorageResourceService;
     this.jobService = jobService;

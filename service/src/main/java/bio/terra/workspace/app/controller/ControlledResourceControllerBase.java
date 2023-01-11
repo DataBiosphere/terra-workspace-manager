@@ -54,8 +54,8 @@ public abstract class ControlledResourceControllerBase extends ControllerBase {
   }
 
   /**
-   *
-   * Return the cloud platform of the controlled resources in the respective controller (azure, gcp, etc.);
+   * Return the cloud platform of the controlled resources in the respective controller (azure, gcp,
+   * etc.);
    */
   public abstract String getCloudPlatform();
 
@@ -79,7 +79,8 @@ public abstract class ControlledResourceControllerBase extends ControllerBase {
               + "on creation except for azure storage container and azure VM");
     }
 
-    resourceValidationUtils.validateControlledResourceRegionAgainstPolicy(workspaceUuid, region, getCloudPlatform());
+    resourceValidationUtils.validateControlledResourceRegionAgainstPolicy(
+        workspaceUuid, region, getCloudPlatform());
 
     return ControlledResourceFields.builder()
         .workspaceUuid(workspaceUuid)

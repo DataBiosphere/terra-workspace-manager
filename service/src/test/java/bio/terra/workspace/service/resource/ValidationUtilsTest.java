@@ -50,7 +50,8 @@ public class ValidationUtilsTest extends BaseUnitTest {
   public void setup() {
     gitRepoReferencedResourceConfiguration.setAllowListedGitRepoHostNames(
         List.of("github.com", "gitlab.com", "bitbucket.org", "dev.azure.com", "ssh.dev.azure.com"));
-    validationUtils = new ResourceValidationUtils(gitRepoReferencedResourceConfiguration, mockTpsApiDispatch());
+    validationUtils =
+        new ResourceValidationUtils(gitRepoReferencedResourceConfiguration, mockTpsApiDispatch());
   }
 
   @Test
@@ -469,8 +470,8 @@ public class ValidationUtilsTest extends BaseUnitTest {
     for (var region : testRegions) {
       // these validations should not throw an exception
       validationUtils.validateControlledResourceRegionAgainstPolicy(workspaceId, region, platform);
-      validationUtils.validateControlledResourceRegionAgainstPolicy(workspaceId,region.toUpperCase(
-          Locale.ROOT), platform);
+      validationUtils.validateControlledResourceRegionAgainstPolicy(
+          workspaceId, region.toUpperCase(Locale.ROOT), platform);
     }
   }
 
@@ -484,12 +485,14 @@ public class ValidationUtilsTest extends BaseUnitTest {
     assertThrows(
         InvalidControlledResourceException.class,
         () ->
-            validationUtils.validateControlledResourceRegionAgainstPolicy(workspaceId, "badregion", platform));
+            validationUtils.validateControlledResourceRegionAgainstPolicy(
+                workspaceId, "badregion", platform));
 
     assertThrows(
         InvalidControlledResourceException.class,
         () ->
-            validationUtils.validateControlledResourceRegionAgainstPolicy(workspaceId, "badregion", "azure"));
+            validationUtils.validateControlledResourceRegionAgainstPolicy(
+                workspaceId, "badregion", "azure"));
   }
 
   @Test
@@ -498,7 +501,8 @@ public class ValidationUtilsTest extends BaseUnitTest {
 
     for (var region : Region.values()) {
       var regionName = region.name();
-      validationUtils.validateControlledResourceRegionAgainstPolicy(workspaceId, region.name(), "azure");
+      validationUtils.validateControlledResourceRegionAgainstPolicy(
+          workspaceId, region.name(), "azure");
     }
   }
 
@@ -507,6 +511,7 @@ public class ValidationUtilsTest extends BaseUnitTest {
     assertThrows(
         InvalidControlledResourceException.class,
         () ->
-            validationUtils.validateControlledResourceRegionAgainstPolicy(UUID.randomUUID(), "badlocation", "azure"));
+            validationUtils.validateControlledResourceRegionAgainstPolicy(
+                UUID.randomUUID(), "badlocation", "azure"));
   }
 }

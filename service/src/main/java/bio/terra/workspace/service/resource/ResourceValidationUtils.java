@@ -193,8 +193,10 @@ public class ResourceValidationUtils {
     }
   }
 
-  public void validateControlledResourceRegionAgainstPolicy(UUID workspaceUuid, String location, String platform) {
-    // TODO: [PF-2409] - We should be able to remove this check When we have Azure regions in the ontology.
+  public void validateControlledResourceRegionAgainstPolicy(
+      UUID workspaceUuid, String location, String platform) {
+    // TODO: [PF-2409] - We should be able to remove this check When we have Azure regions in the
+    // ontology.
     if (platform.equals("azure")) {
       validateAzureRegion(location);
       return;
@@ -203,7 +205,8 @@ public class ResourceValidationUtils {
     List<String> validLocations = tpsApiDispatch.listValidDataCenter(workspaceUuid, platform);
 
     if (validLocations.stream().noneMatch(location::equalsIgnoreCase)) {
-      throw new InvalidControlledResourceException(String.format("Specified location %s is not allowed by effective policy.", location));
+      throw new InvalidControlledResourceException(
+          String.format("Specified location %s is not allowed by effective policy.", location));
     }
   }
 

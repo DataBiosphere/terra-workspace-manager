@@ -68,7 +68,12 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
       ControlledResourceMetadataManager controlledResourceMetadataManager,
       CrlService crlService,
       ResourceValidationUtils resourceValidationUtils) {
-    super(authenticatedUserRequestFactory, request, controlledResourceService, samService, resourceValidationUtils);
+    super(
+        authenticatedUserRequestFactory,
+        request,
+        controlledResourceService,
+        samService,
+        resourceValidationUtils);
     this.controlledResourceService = controlledResourceService;
     this.workspaceService = workspaceService;
     this.jobService = jobService;
