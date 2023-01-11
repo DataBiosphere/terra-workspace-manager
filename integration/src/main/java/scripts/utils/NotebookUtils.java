@@ -42,6 +42,10 @@ public class NotebookUtils {
   private static final int ASSERT_PROXY_URL_RETRY_MAX = 40;
   private static final int ASSERT_PROXY_URL_RETRY_SECONDS = 15;
 
+  public static final String MACHINE_TYPE = "n1-standard-2";
+  public static final String GPU_TYPE = "NVIDIA_TESLA_T4";
+  public static final long GPU_COUNT = 1L;
+
   /**
    * Create and return a private AI Platform Notebook controlled resource with constant values. This
    * method calls the asynchronous creation endpoint and polls until the creation job completes.
@@ -58,15 +62,15 @@ public class NotebookUtils {
 
     GcpAiNotebookInstanceAcceleratorConfig acceleratorConfig =
         new GcpAiNotebookInstanceAcceleratorConfig();
-    acceleratorConfig.setType("NVIDIA_TESLA_T4");
-    acceleratorConfig.setCoreCount(1L);
+    acceleratorConfig.setType(GPU_TYPE);
+    acceleratorConfig.setCoreCount(GPU_COUNT);
 
     // Fill out the minimum required fields to arbitrary values.
     var creationParameters =
         new GcpAiNotebookInstanceCreationParameters()
             .instanceId(instanceId)
             .location(location)
-            .machineType("n1-standard-2")
+            .machineType(MACHINE_TYPE)
             .acceleratorConfig(acceleratorConfig)
             .vmImage(
                 new GcpAiNotebookInstanceVmImage()
