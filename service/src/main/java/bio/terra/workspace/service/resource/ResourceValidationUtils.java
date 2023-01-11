@@ -9,6 +9,8 @@ import bio.terra.workspace.app.configuration.external.GitRepoReferencedResourceC
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
+import bio.terra.workspace.service.policy.TpsApiDispatch;
+import bio.terra.workspace.service.resource.controlled.exception.InvalidControlledResourceException;
 import bio.terra.workspace.service.resource.exception.InvalidNameException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
@@ -20,6 +22,7 @@ import com.google.common.collect.ImmutableList;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -127,11 +130,14 @@ public class ResourceValidationUtils {
   private static final int MAX_RESOURCE_DESCRIPTION_NAME = 2048;
 
   private final GitRepoReferencedResourceConfiguration gitRepoReferencedResourceConfiguration;
+  private final TpsApiDispatch tpsApiDispatch;
 
   @Autowired
   public ResourceValidationUtils(
-      GitRepoReferencedResourceConfiguration gitRepoReferencedResourceConfiguration) {
+      GitRepoReferencedResourceConfiguration gitRepoReferencedResourceConfiguration,
+      TpsApiDispatch tpsApiDispatch) {
     this.gitRepoReferencedResourceConfiguration = gitRepoReferencedResourceConfiguration;
+    this.tpsApiDispatch = tpsApiDispatch;
   }
 
   public static void validateBucketNameDisallowUnderscore(String name) {
@@ -184,6 +190,20 @@ public class ResourceValidationUtils {
         throw new InvalidNameException(
             "Invalid GCS bucket name specified. Bucket names cannot contains google or mis-spelled google. See Google documentation https://cloud.google.com/storage/docs/naming-buckets#requirements for the full specification.");
       }
+    }
+  }
+
+  public void validateControlledResourceRegionAgainstPolicy(UUID workspaceUuid, String location, String platform) {
+    // TODO: [PF-2409] - We should be able to remove this check When we have Azure regions in the ontology.
+    if (platform.equals("azure")) {
+      validateAzureRegion(location);
+      return;
+    }
+
+    List<String> validLocations = tpsApiDispatch.listValidDataCenter(workspaceUuid, platform);
+
+    if (validLocations.stream().noneMatch(location::equalsIgnoreCase)) {
+      throw new InvalidControlledResourceException(String.format("Specified location %s is not allowed by effective policy.", location));
     }
   }
 
@@ -421,13 +441,13 @@ public class ResourceValidationUtils {
     }
   }
 
-  public static void validateRegion(String region) {
+  public static void validateAzureRegion(String region) {
     if (!Region.values().stream()
         .map(Region::toString)
         .collect(Collectors.toList())
         .contains(region)) {
       logger.warn("Invalid Azure region {}", region);
-      throw new InvalidReferenceException(
+      throw new InvalidControlledResourceException(
           "Invalid Azure Region specified. See the class `com.azure.core.management.Region`");
     }
   }

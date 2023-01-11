@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.defaultNotebookCreationParameters;
 import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties.FOLDER_ID_KEY;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.when;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
@@ -13,11 +14,14 @@ import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmImage;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceContainerImage;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
+import bio.terra.workspace.service.resource.controlled.exception.InvalidControlledResourceException;
 import bio.terra.workspace.service.resource.exception.InvalidNameException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
+import com.azure.core.management.Region;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -46,7 +50,7 @@ public class ValidationUtilsTest extends BaseUnitTest {
   public void setup() {
     gitRepoReferencedResourceConfiguration.setAllowListedGitRepoHostNames(
         List.of("github.com", "gitlab.com", "bitbucket.org", "dev.azure.com", "ssh.dev.azure.com"));
-    validationUtils = new ResourceValidationUtils(gitRepoReferencedResourceConfiguration);
+    validationUtils = new ResourceValidationUtils(gitRepoReferencedResourceConfiguration, mockTpsApiDispatch());
   }
 
   @Test
@@ -451,5 +455,58 @@ public class ValidationUtilsTest extends BaseUnitTest {
   @Test
   public void validateProperties_folderIdIsUuid_validates() {
     ResourceValidationUtils.validateProperties(Map.of(FOLDER_ID_KEY, UUID.randomUUID().toString()));
+  }
+
+  @Test
+  public void validateControlledResourceRegion() {
+    var testRegions = List.of("us", "us-central1", "us-east1");
+    UUID workspaceId = UUID.randomUUID();
+    String platform = "gcp";
+
+    when(mockTpsApiDispatch().listValidDataCenter(workspaceId, platform))
+        .thenReturn(List.of("US", "us-central1", "us-east1"));
+
+    for (var region : testRegions) {
+      // these validations should not throw an exception
+      validationUtils.validateControlledResourceRegionAgainstPolicy(workspaceId, region, platform);
+      validationUtils.validateControlledResourceRegionAgainstPolicy(workspaceId,region.toUpperCase(
+          Locale.ROOT), platform);
+    }
+  }
+
+  @Test
+  public void validateControlledResourceRegion_invalid_throws() {
+    UUID workspaceId = UUID.randomUUID();
+    String platform = "gcp";
+    when(mockTpsApiDispatch().listValidDataCenter(workspaceId, platform))
+        .thenReturn(List.of("us-central1", "us-east1"));
+
+    assertThrows(
+        InvalidControlledResourceException.class,
+        () ->
+            validationUtils.validateControlledResourceRegionAgainstPolicy(workspaceId, "badregion", platform));
+
+    assertThrows(
+        InvalidControlledResourceException.class,
+        () ->
+            validationUtils.validateControlledResourceRegionAgainstPolicy(workspaceId, "badregion", "azure"));
+  }
+
+  @Test
+  public void validateAzureRegion() {
+    UUID workspaceId = UUID.randomUUID();
+
+    for (var region : Region.values()) {
+      var regionName = region.name();
+      validationUtils.validateControlledResourceRegionAgainstPolicy(workspaceId, region.name(), "azure");
+    }
+  }
+
+  @Test
+  public void validateAzureRegion_invalid_throws() {
+    assertThrows(
+        InvalidControlledResourceException.class,
+        () ->
+            validationUtils.validateControlledResourceRegionAgainstPolicy(UUID.randomUUID(), "badlocation", "azure"));
   }
 }
