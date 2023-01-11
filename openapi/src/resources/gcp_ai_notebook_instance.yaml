@@ -20,7 +20,7 @@ components:
     GcpAiNotebookInstanceResource:
       type: object
       description: Description of a AI Notebook Instance resource.
-      required: [metadata, attributes]
+      required: [metadata, attributes, machineType]
       properties:
         metadata:
           description: the resource metadata common to all resources
