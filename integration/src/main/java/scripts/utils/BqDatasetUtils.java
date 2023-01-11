@@ -292,12 +292,10 @@ public class BqDatasetUtils {
 
     // Stream insert one row to check the error handling/warning. This row may not be copied. (If
     // the stream happens after the DDL insert, sometimes it gets copied).
-    ClientTestUtils.getWithRetryOnException(
-        () ->
-            bigQueryClient.insertAll(
-                InsertAllRequest.newBuilder(employeeTableInfo)
-                    .addRow(ImmutableMap.of("employee_id", 103, "name", "Batman"))
-                    .build()));
+    bigQueryClient.insertAll(
+        InsertAllRequest.newBuilder(employeeTableInfo)
+            .addRow(ImmutableMap.of("employee_id", 103, "name", "Batman"))
+            .build());
 
     // Use DDL to insert rows instead of InsertAllRequest so that data won't
     // be in the streaming buffer where it's un-copyable for up to 90 minutes.
