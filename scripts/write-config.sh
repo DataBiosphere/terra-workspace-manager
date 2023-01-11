@@ -218,7 +218,7 @@ vaultgetb64 "secret/dsde/terra/kernel/${k8senv}/${namespace}/workspace/app-sa" "
 
 # Janitor SA is only available in integration
 if [ "${k8senv}" = "integration" ]; then
-    vaultgetb64 "secret/dsde/terra/kernel/integration/tools/crl_janitor/client-sa" "${outputdir}/janitor-client-sa.json"
+    vaultget "secret/dsde/terra/kernel/integration/tools/crl_janitor/client-sa" "${outputdir}/janitor-client-sa.json"
 else
     echo "No janitor credentials for target ${target}"
 fi
