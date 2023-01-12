@@ -1,39 +1,12 @@
 plugins {
-    id 'maven-publish'
-    id 'com.jfrog.artifactory' version '4.28.1'
-
     // For JShell support
     // https://gitlab.com/barfuin/gradle-taskinfo
     id 'org.barfuin.gradle.taskinfo' version '1.1.1'
     id "com.github.mrsarm.jshell.plugin" version "1.1.0"
 }
 
-def artifactory_repo_key = System.getenv("ARTIFACTORY_REPO_KEY") != null ? System.getenv("ARTIFACTORY_REPO_KEY") : 'libs-snapshot-local'
-def artifactory_username = System.getenv('ARTIFACTORY_USERNAME')
-def artifactory_password = System.getenv('ARTIFACTORY_PASSWORD')
-
-gradle.taskGraph.whenReady { taskGraph ->
-    if (taskGraph.hasTask(artifactoryPublish) &&
-            (artifactory_username == null || artifactory_password == null)) {
-        throw new GradleException("Set env vars ARTIFACTORY_USERNAME and ARTIFACTORY_PASSWORD to publish")
-    }
-}
-
-artifactory {
-    publish {
-        contextUrl = "https://broadinstitute.jfrog.io/broadinstitute/"
-        repository {
-            repoKey = "${artifactory_repo_key}"
-            // The Artifactory repository key to publish to
-            username = "${artifactory_username}" // The publisher user name
-            password = "${artifactory_password}" // The publisher password
-        }
-        defaults {
-            // This is how we tell the Artifactory Plugin which artifacts should be published to Artifactory.
-            // Reference to Gradle publications defined in the build script.
-            publications("workspaceManagerClientLibrary")
-            publishArtifacts = true
-            publishPom = true
-        }
-    }
+tasks.named('dependencies') {
+    dependsOn(':service:dependencies')
+    dependsOn(':client:dependencies')
+    dependsOn(':integration:dependencies')
 }

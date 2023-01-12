@@ -1,17 +1,24 @@
+// Project Plugins
 plugins {
-    id 'terra-workspace-manager.library-conventions'
+    id 'terra-workspace-manager.java-conventions'
 
-    id "org.hidetake.swagger.generator" version "2.19.2"
+    id 'java-library'
+    id 'maven-publish'
+
+    id 'com.jfrog.artifactory' version '4.31.0'
+    id 'org.hidetake.swagger.generator' version '2.19.2'
 }
-def includeDir = "$projectDir/gradle"
+
+// constants visible to all .gradle files in this project
+project.ext {
+    artifactGroup = "${group}.workspace"
+    includeDir = "$projectDir/gradle"
+    openapiOutputDir = "${buildDir}/openapi"
+}
+
 apply(from: "$includeDir/dependencies.gradle")
+apply(from: "$includeDir/javadoc.gradle")
 apply(from: "$includeDir/openapi.gradle")
+apply(from: "$includeDir/publishing.gradle")
 apply(from: "$includeDir/taskDependencies.gradle")
-
-// Keep the client library at Java 11 for now
-// TODO: remove this as part PF-1540
-sourceCompatibility = JavaVersion.VERSION_11
-targetCompatibility = JavaVersion.VERSION_11
-
-
-
+apply(from: "$includeDir/testing.gradle")

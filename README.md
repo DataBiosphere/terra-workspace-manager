@@ -393,7 +393,6 @@ terra-workspace-manager
   +-- buildSrc/src/main/groovy (convention plugins)
   |    |
   |    + terra-workspace-manager.java-conventions.gradle
-  |    + terra-workspace-manager.library-conventions.gradle
   |
   +-- service
   |    |

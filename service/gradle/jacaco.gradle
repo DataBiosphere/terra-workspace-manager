@@ -1,0 +1,14 @@
+// A small wrapper around bootRun to run the server instrumented with Jacoco
+// code coverage tracking. This is useful for running a local server for
+// integration tests, but live environments should use `bootRun` instead and
+// should not be instrumented.
+// This must live in the same file that the Spring Boot plugin is applied in or
+// else it can't find the task type.
+task jacocoBootRun(type: org.springframework.boot.gradle.tasks.run.BootRun) {
+    environment.put("GOOGLE_APPLICATION_CREDENTIALS", "${googleCredentialsFile}")
+    classpath = sourceSets.main.runtimeClasspath
+    main("bio.terra.workspace.app.Main")
+}
+jacoco {
+    applyTo jacocoBootRun
+}
