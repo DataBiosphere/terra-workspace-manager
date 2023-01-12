@@ -32,7 +32,4 @@ task copyOpenApiToResources(type: Copy) {
   rename { String filename -> "service_openapi.yaml" }
 }
 
-// We depend on the copy to make sure the copy happens. The real dependency is
-// on the open api source generation
-generateSwaggerCodeServer.dependsOn(copyOpenApiToResources)
 sourceSets.main.java.srcDir "${openapiOutputDir}/src/main/java"

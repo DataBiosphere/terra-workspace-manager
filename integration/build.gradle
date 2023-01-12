@@ -1,3 +1,4 @@
+// Project Plugins
 plugins {
     id 'terra-workspace-manager.java-conventions'
 
@@ -8,76 +9,8 @@ plugins {
     id 'bio.terra.test-runner-plugin' version '0.1.7-SNAPSHOT'
 }
 
-dependencies {
-    ext {
-        apacheMath = '3.6.1'
-        findbugsAnnotations = "3.0.1"
-        guava = "29.0-jre"
-        jackson = "2.10.2"
-        jersey = "2.32"
-        kubernetesClient = "10.0.0"
-        logback = "1.2.3"
-        slf4j = "1.7.25"
-        hamcrest = "2.2"
-        jUnit = "5.7.0"
-
-        googleApi = "1.23.0"
-        googleCloud = "1.108.0"
-        googleOauth2 = "0.20.0"
-        googleContainer = "v1-rev93-1.25.0"
-        googleIam = "v1-rev20201112-1.30.10"
-        googleNotebook = "v1-rev20201110-1.30.10"
-
-        datarepoClient = "1.0.155-SNAPSHOT"
-        testRunnerVersion = "0.1.7-SNAPSHOT"
-        samClient = "0.1-41409f6"
-        tclClient = "0.0.66-SNAPSHOT"
-    }
-    implementation group: 'org.apache.commons', name: 'commons-math3', version: "${apacheMath}"
-    implementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: "${jUnit}"
-    compileOnly "com.google.code.findbugs:annotations:${findbugsAnnotations}"
-    implementation group: 'com.google.guava', name: 'guava', version: "${guava}"
-    implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jackson}"
-    implementation "org.glassfish.jersey.inject:jersey-hk2:${jersey}"
-    implementation "io.kubernetes:client-java:${kubernetesClient}"
-    implementation "ch.qos.logback:logback-classic:${logback}"
-    implementation "org.slf4j:slf4j-api:${slf4j}"
-    implementation "org.hamcrest:hamcrest:${hamcrest}"
-
-    // Google dependencies
-    constraints {
-        implementation 'com.google.guava:guava:30.1.1-jre'
-    }
-    implementation platform('com.google.cloud:libraries-bom:20.2.0')
-    implementation "com.google.api-client:google-api-client"
-    implementation "com.google.apis:google-api-services-container:${googleContainer}"
-    implementation "com.google.apis:google-api-services-iam:${googleIam}"
-    implementation "com.google.apis:google-api-services-notebooks:${googleNotebook}"
-    implementation "com.google.auth:google-auth-library-oauth2-http"
-    implementation "com.google.cloud:google-cloud-bigquery"
-    implementation "com.google.cloud:google-cloud-storage"
-
-    // Data Repo client library
-    implementation "bio.terra:datarepo-client:${datarepoClient}"
-    implementation gradle.librarySwaggerAnnotations
-
-    // Workspace Manager client library
-    implementation project(":client")
-
-    // Sam client library
-    implementation "org.broadinstitute.dsde.workbench:sam-client_2.13:${samClient}"
-
-    // Terra Test Runner Library
-    implementation "bio.terra:terra-test-runner:${testRunnerVersion}"
-
-    // Use Terra Common Library on client side to retry direct Sam calls
-    implementation("bio.terra:terra-common-lib:${tclClient}") {
-        exclude group: "org.broadinstitute.dsde.workbench", module: "sam-client_2.12"
-    }
-
-
-    // Spotbugs dependency
-    // For SpotBugs annotations (still FindBugs annotations)
-    compileOnly "com.github.spotbugs:spotbugs-annotations:${spotbugs.toolVersion.get()}"
-    spotbugs "com.github.spotbugs:spotbugs:${spotbugs.toolVersion.get()}"
+project.ext {
+    includeDir = "$projectDir/gradle"
 }
+
+apply(from: "$includeDir/dependencies.gradle")

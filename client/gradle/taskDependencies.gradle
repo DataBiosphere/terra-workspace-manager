@@ -1,3 +1,12 @@
+tasks.compileJava.dependsOn(swaggerSources.client.code)
+tasks.generateSwaggerCodeClient.dependsOn(':openapi:buildOpenApi')
+// This should not be dependency on client code for spotless, but there's an accidental implicit one.
+// Setting an explicit dependency here squashes deprecation warnings for Gradle 8.0, but masks the
+// root problem. Remove this once we find a way to get spotless out of the client project altogether
+// (PF-1396).
+tasks.spotlessJava.dependsOn(generateSwaggerCodeClient)
+tasks.sourcesJar.dependsOn(generateSwaggerCodeClient)
+
 // These tasks are not useful for the client, as we don't care what generated code looks like. More
 // importantly, they can also cause false negatives in the up-to-date checking.
 final TASKS_TO_SKIP = [

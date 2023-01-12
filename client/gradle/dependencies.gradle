@@ -1,15 +1,15 @@
 dependencies {
   ext {
-    jerseyVersion = "2.32"
-    jacksonDatatypeVersion = "2.11.3"
+    jacksonDatatypeVersion = '2.14.1'
+    jerseyVersion = '3.1.0'
   }
 
   // Swagger deps, versions controlled by dependencyManagement in root project
-  implementation group: "com.fasterxml.jackson.datatype", name: "jackson-datatype-jsr310", version: jacksonDatatypeVersion
-  implementation group: "org.glassfish.jersey.core", name: "jersey-client", version: jerseyVersion
-  implementation group: "org.glassfish.jersey.media", name: "jersey-media-json-jackson", version: jerseyVersion
-  implementation group: "org.glassfish.jersey.media", name: "jersey-media-multipart", version: jerseyVersion
-  implementation group: "org.glassfish.jersey.connectors", name: "jersey-jdk-connector", version:jerseyVersion
+  implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310', version: jacksonDatatypeVersion
+  implementation group: 'org.glassfish.jersey.core', name: 'jersey-client', version: jerseyVersion
+  implementation group: 'org.glassfish.jersey.media', name: 'jersey-media-json-jackson', version: jerseyVersion
+  implementation group: 'org.glassfish.jersey.media', name: 'jersey-media-multipart', version: jerseyVersion
+  implementation group: 'org.glassfish.jersey.connectors', name: 'jersey-jdk-connector', version:jerseyVersion
   implementation gradle.librarySwaggerAnnotations
   swaggerCodegen gradle.librarySwaggerCli
 }

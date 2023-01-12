@@ -1,7 +1,4 @@
 // OpenAPI/Swagger Client Generation
-def artifactGroup = "${group}.workspace"
-def openapiOutputDir = "${buildDir}/openapi"
-
 swaggerSources {
   client {
     inputFile = file(tasks.getByPath(':openapi:buildOpenApi').openApiSource)
@@ -28,13 +25,4 @@ swaggerSources {
   }
 }
 
-// Internal dependencies
-generateSwaggerCodeClient.dependsOn(':openapi:buildOpenApi')
 sourceSets.main.java.srcDir "${openapiOutputDir}/src/main/java"
-compileJava.dependsOn swaggerSources.client.code
-// This should not be dependency on client code for spotless, but there's an accidental implicit one.
-// Setting an explicit dependency here squashes deprecation warnings for Gradle 8.0, but masks the
-// root problem. Remove this once we find a way to get spotless out of the client project altogether
-// (PF-1396).
-spotlessJava.dependsOn(generateSwaggerCodeClient)
-sourcesJar.dependsOn(generateSwaggerCodeClient)

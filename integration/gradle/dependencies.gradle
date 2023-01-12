@@ -1,0 +1,74 @@
+dependencies {
+    ext {
+        apacheMath = '3.6.1'
+        guava = '31.1-jre'
+        hamcrest = '2.2'
+        jackson = '2.14.1'
+        jersey = '3.1.0'
+        jUnit = '5.9.2'
+        kubernetesClient = '17.0.0'
+        logback = '1.4.5'
+        slf4j = '2.0.6'
+        spotbugsAnnotations = '4.7.3'
+
+
+        googleApi = "1.23.0"
+        googleCloud = "1.108.0"
+        googleOauth2 = "0.20.0"
+        googleContainer = "v1-rev93-1.25.0"
+        googleIam = "v1-rev20201112-1.30.10"
+        googleNotebook = "v1-rev20201110-1.30.10"
+
+        datarepoClient = "1.0.155-SNAPSHOT"
+        testRunnerVersion = "0.1.7-SNAPSHOT"
+        samClient = "0.1-41409f6"
+        tclClient = "0.0.66-SNAPSHOT"
+    }
+
+    compileOnly group: 'com.github.spotbugs', name: 'spotbugs-annotations', version: "${spotbugsAnnotations}"
+    implementation group: 'ch.qos.logback', name: 'logback-classic', version: "${logback}"
+    implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: "${jackson}"
+    implementation group: 'com.google.guava', name: 'guava', version: "${guava}"
+    implementation group: 'io.kubernetes', name: 'client-java', version: "${kubernetesClient}"
+    implementation group: 'org.apache.commons', name: 'commons-math3', version: "${apacheMath}"
+    implementation group: 'org.glassfish.jersey.inject', name: 'jersey-hk2', version: "${jersey}"
+    implementation group: 'org.hamcrest', name: 'hamcrest', version: "${hamcrest}"
+    implementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: "${jUnit}"
+    implementation group: 'org.slf4j', name: 'slf4j-api', version: "${slf4j}"
+
+    // Google dependencies
+    constraints {
+        implementation 'com.google.guava:guava:30.1.1-jre'
+    }
+    implementation platform('com.google.cloud:libraries-bom:20.2.0')
+    implementation "com.google.api-client:google-api-client"
+    implementation "com.google.apis:google-api-services-container:${googleContainer}"
+    implementation "com.google.apis:google-api-services-iam:${googleIam}"
+    implementation "com.google.apis:google-api-services-notebooks:${googleNotebook}"
+    implementation "com.google.auth:google-auth-library-oauth2-http"
+    implementation "com.google.cloud:google-cloud-bigquery"
+    implementation "com.google.cloud:google-cloud-storage"
+
+    // Workspace Manager client library
+    implementation project(":client")
+
+    // Sam client library
+    implementation "org.broadinstitute.dsde.workbench:sam-client_2.13:${samClient}"
+
+    // Data Repo client library
+    implementation "bio.terra:datarepo-client:${datarepoClient}"
+    implementation gradle.librarySwaggerAnnotations
+
+    // Use Terra Common Library on client side to retry direct Sam calls
+    implementation("bio.terra:terra-common-lib:${tclClient}") {
+        exclude group: "org.broadinstitute.dsde.workbench", module: "sam-client_2.12"
+    }
+
+    // Terra Test Runner Library
+    implementation "bio.terra:terra-test-runner:${testRunnerVersion}"
+
+    // Spotbugs dependency
+    // For SpotBugs annotations (still FindBugs annotations)
+    compileOnly "com.github.spotbugs:spotbugs-annotations:${spotbugs.toolVersion.get()}"
+    spotbugs "com.github.spotbugs:spotbugs:${spotbugs.toolVersion.get()}"
+}
