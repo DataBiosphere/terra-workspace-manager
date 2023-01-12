@@ -1,30 +1,22 @@
 package bio.terra.workspace.common.utils;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nullable;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /** RetryUtils provides static methods for waiting and retrying. */
 public class RetryUtils {
   // Retry duration defaults - defaults are set for IAM propagation
   public static final Duration DEFAULT_RETRY_TOTAL_DURATION = Duration.ofMinutes(7);
-  public static final Duration DEFAULT_SLEEP_DURATION = Duration.ofSeconds(15);
-
+  public static final Duration DEFAULT_RETRY_SLEEP_DURATION = Duration.ofSeconds(15);
+  public static final double DEFAULT_RETRY_FACTOR_INCREASE = 0.0;
+  public static final Duration DEFAULT_RETRY_SLEEP_DURATION_MAX = Duration.ofMinutes(3);
   private static final Logger logger = LoggerFactory.getLogger(RetryUtils.class);
-
-  /**
-   * Supplier that can throw
-   *
-   * @param <T> return type for the non-throw case
-   */
-  @FunctionalInterface
-  public interface SupplierWithException<T> {
-    T get() throws Exception;
-  }
 
   /**
    * Get a result from a call that might throw an exception. If the supplier finishes, the result is
@@ -33,7 +25,11 @@ public class RetryUtils {
    *
    * @param supplier - code returning the result or throwing an exception
    * @param totalDuration - total amount of time to retry
-   * @param sleepDuration - amount of time to sleep between retries
+   * @param initialSleepDuration - initial amount of time to sleep between retries
+   * @param factorIncrease - factor to increase the sleep time. The formula is: newSleepDuration =
+   *     sleepDuration + (factorIncrease * sleepDuration) The default of 0.0 results in a fixed
+   *     wait.
+   * @param sleepDurationMax = the maximum duration to expand the sleep time.
    * @param retryExceptionList - nullable; a list of exception classes. If null, any exception is
    *     retried
    * @param <T> - type of result
@@ -43,12 +39,15 @@ public class RetryUtils {
   public static <T> T getWithRetryOnException(
       SupplierWithException<T> supplier,
       Duration totalDuration,
-      Duration sleepDuration,
+      Duration initialSleepDuration,
+      double factorIncrease,
+      Duration sleepDurationMax,
       @Nullable List<Class<? extends Exception>> retryExceptionList)
       throws Exception {
 
     T result;
     Instant endTime = Instant.now().plus(totalDuration);
+    Duration sleepDuration = initialSleepDuration;
 
     while (true) {
       try {
@@ -65,6 +64,11 @@ public class RetryUtils {
             sleepDuration.toSeconds(),
             endTime);
         TimeUnit.MILLISECONDS.sleep(sleepDuration.toMillis());
+        long increaseMillis = Double.valueOf(factorIncrease * sleepDuration.toMillis()).longValue();
+        sleepDuration = sleepDuration.plusMillis(increaseMillis);
+        if (sleepDuration.compareTo(sleepDurationMax) > 0) {
+          sleepDuration = sleepDurationMax;
+        }
       }
     }
     return result;
@@ -81,7 +85,12 @@ public class RetryUtils {
    */
   public static <T> T getWithRetryOnException(SupplierWithException<T> supplier) throws Exception {
     return getWithRetryOnException(
-        supplier, DEFAULT_RETRY_TOTAL_DURATION, DEFAULT_SLEEP_DURATION, null);
+        supplier,
+        DEFAULT_RETRY_TOTAL_DURATION,
+        DEFAULT_RETRY_SLEEP_DURATION,
+        DEFAULT_RETRY_FACTOR_INCREASE,
+        DEFAULT_RETRY_SLEEP_DURATION_MAX,
+        null);
   }
 
   private static boolean isRetryable(
@@ -96,5 +105,15 @@ public class RetryUtils {
       }
     }
     return false;
+  }
+
+  /**
+   * Supplier that can throw
+   *
+   * @param <T> return type for the non-throw case
+   */
+  @FunctionalInterface
+  public interface SupplierWithException<T> {
+    T get() throws Exception;
   }
 }

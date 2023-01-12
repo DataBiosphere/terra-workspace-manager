@@ -16,5 +16,6 @@
       }
     }
   ],
-  "testUserFiles": ["bella.json", "elijah.json", "liam.json", "wsmapp.json"]
+  "testUserFiles": ["bella.json", "elijah.json", "liam.json", "wsmapp.json"],
+  "maxRetries" : 0
 }

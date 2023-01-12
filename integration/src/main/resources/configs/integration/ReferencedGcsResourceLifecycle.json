@@ -20,5 +20,6 @@
       }
     }
   ],
-  "testUserFiles": ["bella.json", "liam.json", "elijah.json"]
+  "testUserFiles": ["bella.json", "liam.json", "elijah.json"],
+  "maxRetries" : 0
 }

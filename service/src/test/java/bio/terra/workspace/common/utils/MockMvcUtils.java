@@ -186,8 +186,10 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/referenced/datarepo/snapshots";
   public static final String CREATE_CLOUD_CONTEXT_PATH_FORMAT =
       "/api/workspaces/v1/%s/cloudcontexts";
+  public static final String DELETE_GCP_CLOUD_CONTEXT_PATH_FORMAT =
+    "/api/workspaces/v1/%s/cloudcontexts/gcp";
   public static final String GET_CLOUD_CONTEXT_PATH_FORMAT =
-      "/api/workspaces/v1/%s/cloudcontexts/result/%s";
+    "/api/workspaces/v1/%s/cloudcontexts/result/%s";
   public static final String CREATE_AZURE_IP_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/azure/ip";
   public static final String CREATE_AZURE_DISK_PATH_FORMAT =
@@ -438,6 +440,13 @@ public class MockMvcUtils {
         getSerializedResponseForGetJobResult(
             userRequest, GET_CLOUD_CONTEXT_PATH_FORMAT, workspaceId, jobId);
     return objectMapper.readValue(serializedResponse, ApiCreateCloudContextResult.class);
+  }
+
+  public void deleteGcpCloudContext(
+    AuthenticatedUserRequest userRequest, UUID workspaceId) throws Exception {
+    mockMvc
+      .perform(addAuth(delete(DELETE_GCP_CLOUD_CONTEXT_PATH_FORMAT.formatted(workspaceId)), userRequest))
+      .andExpect(status().isNoContent());
   }
 
   public ApiCloneWorkspaceResult getCloneWorkspaceResult(

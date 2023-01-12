@@ -13,5 +13,6 @@
       "expectedTimeForEachUnit": "SECONDS"
     }
   ],
-  "testUserFiles": ["liam.json"]
+  "testUserFiles": ["liam.json"],
+  "maxRetries" : 0
 }

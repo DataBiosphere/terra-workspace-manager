@@ -17,5 +17,6 @@
       }
     }
   ],
-  "testUserFiles": ["bella.json"]
+  "testUserFiles": ["bella.json"],
+  "maxRetries" : 0
 }
