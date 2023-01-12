@@ -81,6 +81,10 @@ public class CreateGcpContextFlightV2 extends Flight {
     addStep(new GcpCloudSyncStep(crl.getCloudResourceManagerCow()), bufferRetry);
     addStep(new CreatePetSaStep(appContext.getSamService(), userRequest), shortRetry);
 
+    // Wait for the project permissions to propagate.
+    // The SLA is 99.5% of the time it finishes in under 7 minutes.
+    addStep(new WaitForProjectPermissionsStep(userRequest));
+
     // Store the cloud context data and unlock the database row
     // This must be the last step, since it clears the lock. So this step also
     // sets the flight response.
