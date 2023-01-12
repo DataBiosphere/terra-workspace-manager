@@ -8,6 +8,7 @@ import bio.terra.policy.model.TpsComponent;
 import bio.terra.policy.model.TpsDatacenterList;
 import bio.terra.policy.model.TpsObjectType;
 import bio.terra.policy.model.TpsPaoCreateRequest;
+import bio.terra.policy.model.TpsPaoExplainResult;
 import bio.terra.policy.model.TpsPaoGetResult;
 import bio.terra.policy.model.TpsPaoReplaceRequest;
 import bio.terra.policy.model.TpsPaoSourceRequest;
@@ -191,6 +192,16 @@ public class TpsApiDispatch {
       return tpsDatacenterList.stream().toList();
     }
     return new ArrayList<>();
+  }
+
+  public TpsPaoExplainResult explain(UUID workspaceId, int depth) {
+    features.tpsEnabledCheck();
+    TpsApi tpsApi = policyApi();
+    try {
+      return tpsApi.explainPao(workspaceId, depth);
+    } catch (ApiException e) {
+      throw convertApiException(e);
+    }
   }
 
   private ApiClient getApiClient(String accessToken) {

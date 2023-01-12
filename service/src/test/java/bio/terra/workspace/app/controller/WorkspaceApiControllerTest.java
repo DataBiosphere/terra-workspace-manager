@@ -7,6 +7,7 @@ import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.WORKSPACE_NA
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.getUserFacingId;
 import static bio.terra.workspace.common.utils.MockMvcUtils.UPDATE_WORKSPACES_V1_POLICIES_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
+import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_EXPLAIN_POLICIES_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_LIST_VALID_DATA_CENTER_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_PATH;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
@@ -19,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -27,8 +29,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import bio.terra.policy.model.TpsComponent;
 import bio.terra.policy.model.TpsObjectType;
+import bio.terra.policy.model.TpsPaoExplainResult;
 import bio.terra.policy.model.TpsPaoGetResult;
 import bio.terra.policy.model.TpsPaoUpdateResult;
+import bio.terra.policy.model.TpsPolicyExplainSource;
+import bio.terra.policy.model.TpsPolicyExplanation;
 import bio.terra.policy.model.TpsPolicyInput;
 import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.policy.model.TpsPolicyPair;
@@ -49,11 +54,14 @@ import bio.terra.workspace.generated.model.ApiResourceCloneDetails;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
+import bio.terra.workspace.generated.model.ApiWsmPolicyExplainResult;
+import bio.terra.workspace.generated.model.ApiWsmPolicyExplanation;
 import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
 import bio.terra.workspace.generated.model.ApiWsmPolicyInputs;
 import bio.terra.workspace.generated.model.ApiWsmPolicyPair;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateMode;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateRequest;
+import bio.terra.workspace.generated.model.ApiWsmPolicyWorkspace;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
 import bio.terra.workspace.service.iam.model.SamConstants.SamSpendProfileAction;
@@ -537,6 +545,64 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
     assertTrue(empty.isEmpty());
   }
 
+  @Test
+  public void explainPolicies() throws Exception {
+    ApiCreatedWorkspace workspace = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
+    UUID sourceWorkspaceId = UUID.randomUUID();
+    TpsPolicyExplainSource explainSource =
+        new TpsPolicyExplainSource()
+            .objectId(sourceWorkspaceId)
+            .objectType(TpsObjectType.WORKSPACE)
+            .component(TpsComponent.WSM)
+            .deleted(false);
+    TpsPolicyExplanation tpsExplanation =
+        new TpsPolicyExplanation()
+            .objectId(sourceWorkspaceId)
+            .addPolicyExplanationsItem(
+                new TpsPolicyExplanation()
+                    .objectId(sourceWorkspaceId)
+                    .policyInput(
+                        new TpsPolicyInput()
+                            .namespace("terra")
+                            .name("region-constraint")
+                            .addAdditionalDataItem(
+                                new TpsPolicyPair().key("region-name").value("gcp.usa"))))
+            .policyInput(
+                new TpsPolicyInput()
+                    .namespace("terra")
+                    .name("region-constraint")
+                    .addAdditionalDataItem(
+                        new TpsPolicyPair().key("region-name").value("gcp.usa")));
+    TpsPaoExplainResult explainResult =
+        new TpsPaoExplainResult()
+            .objectId(workspace.getId())
+            .depth(0)
+            .addExplanationItem(tpsExplanation)
+            .addExplanationItem(tpsExplanation)
+            .addExplainObjectsItem(explainSource)
+            .addExplainObjectsItem(explainSource);
+    when(mockTpsApiDispatch().explain(eq(workspace.getId()), anyInt())).thenReturn(explainResult);
+
+    ApiWsmPolicyExplainResult result = explainPolicies(workspace.getId(), 0);
+    List<ApiWsmPolicyWorkspace> sources = result.getExplainWorkspaces();
+    List<ApiWsmPolicyExplanation> explanations = result.getExplanation();
+    assertEquals(2, sources.size());
+    ApiWsmPolicyWorkspace firstSource = sources.get(0);
+    assertEquals(sourceWorkspaceId, firstSource.getWorkspaceId());
+    assertFalse(firstSource.isDeleted());
+    assertEquals(sources.get(0), sources.get(1));
+
+    assertEquals(2, explanations.size());
+    ApiWsmPolicyExplanation firstExplanation = explanations.get(0);
+    assertEquals(sourceWorkspaceId, firstExplanation.getWorkspaceId());
+    assertNotNull(firstExplanation.getPolicyInput());
+    List<ApiWsmPolicyExplanation> nestedExplanations = firstExplanation.getPolicyExplanations();
+    assertEquals(1, nestedExplanations.size());
+    assertNull(nestedExplanations.get(0).getPolicyExplanations());
+    assertNotNull(nestedExplanations.get(0).getPolicyInput());
+    assertEquals(explanations.get(0), explanations.get(1));
+  }
+
   private ApiErrorReport createRawlsWorkspaceWithPolicyExpectError(int expectedCode)
       throws Exception {
     // Note: this is the WSM REST API form of the policy inputs
@@ -624,5 +690,20 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
             .getResponse()
             .getContentAsString();
     return objectMapper.readValue(serializedResponse, ApiDataCenterList.class);
+  }
+
+  private ApiWsmPolicyExplainResult explainPolicies(UUID workspaceId, int depth) throws Exception {
+    var serializedResponse =
+        mockMvc
+            .perform(
+                addAuth(
+                    get(String.format(WORKSPACES_V1_EXPLAIN_POLICIES_PATH_FORMAT, workspaceId))
+                        .queryParam("depth", String.valueOf(depth)),
+                    USER_REQUEST))
+            .andExpect(status().is(HttpStatus.SC_OK))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    return objectMapper.readValue(serializedResponse, ApiWsmPolicyExplainResult.class);
   }
 }

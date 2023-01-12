@@ -335,6 +335,27 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
+  /api/workspaces/v1/{workspaceId}/explainPolicies:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/WsmPolicyDepth'
+    get:
+      summary: Get an explanation of the workspace policies
+      operationId: explainPolicies
+      tags: [ Workspace ]
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WsmPolicyExplainResult'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
 components:
   responses:
     CloneWorkspaceResponse:
@@ -352,6 +373,13 @@ components:
       schema:
         type: string
         enum: [ "gcp", "azure" ]
+    WsmPolicyDepth:
+      name: depth
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/WsmPolicyDepth'
+      description: Workspace policy explain depth.
   schemas:
     ClonedWorkspace:
       description: >-
@@ -619,3 +647,52 @@ components:
       items:
         uniqueItems: true
         type: string
+
+    WsmPolicyDepth:
+      type: integer
+      description: Explain source depth.
+      minimum: 0
+      default: 1
+
+    WsmPolicyExplanation:
+      description: |
+        Explanation of one policy input, providing the input and the sources
+        that were combined to result in the policy. One of the sources can be the
+        requested object itself. The policyExplanations may be empty/not present if
+        this is a leaf in the explain graph.
+      type: object
+      required: [workspaceId, policyInput]
+      properties:
+        workspaceId:
+          type: string
+          format: uuid
+        policyInput:
+          $ref: '#/components/schemas/WsmPolicyInput'
+        policyExplanations:
+          type: array
+          items:
+            $ref: '#/components/schemas/WsmPolicyExplanation'
+
+    WsmPolicyWorkspace:
+      type: object
+      properties:
+        workspaceId:
+          type: string
+          format: uuid
+        deleted:
+          description: Policy source has been deleted. Policies from the source still apply.
+          type: boolean
+    WsmPolicyExplainResult:
+      type: object
+      properties:
+        explainWorkspaces:
+          description: List of workspace policies referenced in the explanation
+          type: array
+          items:
+            $ref: '#/components/schemas/WsmPolicyWorkspace'
+        explanation:
+          description: One explanation for each policy in the effective policies array
+          type: array
+          items:
+            $ref: '#/components/schemas/WsmPolicyExplanation'
+

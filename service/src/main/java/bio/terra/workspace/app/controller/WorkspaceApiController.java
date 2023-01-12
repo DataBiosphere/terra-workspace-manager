@@ -5,8 +5,11 @@ import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertM
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesDeleteRequestBody;
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesUpdateRequestBody;
 
+import bio.terra.policy.model.TpsPaoExplainResult;
 import bio.terra.policy.model.TpsPaoGetResult;
 import bio.terra.policy.model.TpsPaoUpdateResult;
+import bio.terra.policy.model.TpsPolicyExplanation;
+import bio.terra.policy.model.TpsPolicyInput;
 import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.policy.model.TpsUpdateMode;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
@@ -40,9 +43,13 @@ import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
+import bio.terra.workspace.generated.model.ApiWsmPolicyExplainResult;
+import bio.terra.workspace.generated.model.ApiWsmPolicyExplanation;
 import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
+import bio.terra.workspace.generated.model.ApiWsmPolicyPair;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateRequest;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateResult;
+import bio.terra.workspace.generated.model.ApiWsmPolicyWorkspace;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamRethrow;
@@ -692,6 +699,59 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     ApiDataCenterList apiDataCenterList = new ApiDataCenterList();
     apiDataCenterList.addAll(datacenters);
     return new ResponseEntity<>(apiDataCenterList, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiWsmPolicyExplainResult> explainPolicies(
+      UUID workspaceId, Integer depth) {
+    TpsPaoExplainResult explainResult = tpsApiDispatch.explain(workspaceId, depth);
+    var result = new ApiWsmPolicyExplainResult();
+    if (explainResult.getExplainObjects() != null) {
+      result.explainWorkspaces(
+          explainResult.getExplainObjects().stream()
+              .map(
+                  source ->
+                      new ApiWsmPolicyWorkspace()
+                          .workspaceId(source.getObjectId())
+                          .deleted(source.isDeleted()))
+              .toList());
+    }
+
+    if (explainResult.getExplanation() != null) {
+      result.explanation(
+          explainResult.getExplanation().stream()
+              .map(WorkspaceApiController::convertExplanation)
+              .toList());
+    }
+
+    return new ResponseEntity<>(result, HttpStatus.OK);
+  }
+
+  private static ApiWsmPolicyExplanation convertExplanation(TpsPolicyExplanation explanation) {
+    var wsmPolicyExplanation =
+        new ApiWsmPolicyExplanation()
+            .workspaceId(explanation.getObjectId())
+            .policyInput(policyInputToApi(explanation.getPolicyInput()));
+    if (explanation.getPolicyExplanations() != null) {
+      wsmPolicyExplanation.policyExplanations(
+          explanation.getPolicyExplanations().stream()
+              .map(WorkspaceApiController::convertExplanation)
+              .toList());
+    }
+    return wsmPolicyExplanation;
+  }
+
+  private static ApiWsmPolicyInput policyInputToApi(TpsPolicyInput input) {
+    var wsmInput = new ApiWsmPolicyInput();
+    if (input.getAdditionalData() != null) {
+      input
+          .getAdditionalData()
+          .forEach(
+              data ->
+                  wsmInput.addAdditionalDataItem(
+                      new ApiWsmPolicyPair().key(data.getKey()).value(data.getValue())));
+    }
+    return wsmInput.namespace(input.getNamespace()).name(input.getName());
   }
 
   // Retrieve the async result or progress for clone workspace.
