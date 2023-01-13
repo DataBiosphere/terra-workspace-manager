@@ -187,7 +187,10 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
 
     // Workspace reader can now read the row inserted above
     // retry to make sure the destination table IAM has propagated
-    var destinationValue = ClientTestUtils.getWithRetryOnException(() -> readValueFromTable(readerBqClient, resultTableId));;
+    var destinationValue =
+        ClientTestUtils.getWithRetryOnException(
+            () -> readValueFromTable(readerBqClient, resultTableId));
+
     assertEquals(columnValue, destinationValue);
     logger.info("Workspace reader read that row from table {}", tableName);
 
