@@ -8,7 +8,6 @@ import static org.mockito.ArgumentMatchers.any;
 
 import bio.terra.landingzone.db.LandingZoneDao;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
-import bio.terra.workspace.app.configuration.external.AzureTestConfiguration;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
@@ -16,7 +15,6 @@ import bio.terra.workspace.common.utils.AzureTestUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.LandingZoneTestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
-import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.ApiAzureStorageContainerCreationParameters;
 import bio.terra.workspace.service.crl.CrlService;
@@ -36,7 +34,6 @@ import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
-import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.Optional;
@@ -49,11 +46,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 public class AzureWorkspaceTest extends BaseAzureConnectedTest {
-
-  @Autowired private AzureTestConfiguration azureTestConfiguration;
   @Autowired private JobService jobService;
   @Autowired private SpendConnectedTestUtils spendUtils;
-  @Autowired private WorkspaceConnectedTestUtils testUtils;
   @Autowired private WorkspaceService workspaceService;
   @Autowired private AzureCloudContextService azureCloudContextService;
   @Autowired private AzureTestUtils azureTestUtils;
@@ -83,8 +77,7 @@ public class AzureWorkspaceTest extends BaseAzureConnectedTest {
     workspaceService.createWorkspace(workspace, null, null, userRequest);
 
     String jobId = UUID.randomUUID().toString();
-    workspaceService.createAzureCloudContext(
-        workspace, jobId, userRequest, "/fake/value");
+    workspaceService.createAzureCloudContext(workspace, jobId, userRequest, "/fake/value");
     jobService.waitForJob(jobId);
 
     assertNull(jobService.retrieveJobResult(jobId, Object.class).getException());
@@ -118,8 +111,7 @@ public class AzureWorkspaceTest extends BaseAzureConnectedTest {
 
     String jobId = UUID.randomUUID().toString();
 
-    workspaceService.createAzureCloudContext(
-        sourceWorkspace, jobId, userRequest, "/fake/value");
+    workspaceService.createAzureCloudContext(sourceWorkspace, jobId, userRequest, "/fake/value");
     jobService.waitForJob(jobId);
 
     assertTrue(

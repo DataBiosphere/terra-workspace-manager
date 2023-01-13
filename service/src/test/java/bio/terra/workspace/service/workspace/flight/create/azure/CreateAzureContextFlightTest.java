@@ -40,11 +40,7 @@ class CreateAzureContextFlightTest extends BaseAzureConnectedTest {
     assertTrue(azureCloudContextService.getAzureCloudContext(workspace.getWorkspaceId()).isEmpty());
 
     String jobId = UUID.randomUUID().toString();
-    workspaceService.createAzureCloudContext(
-        workspace,
-        jobId,
-        userRequest,
-        /* resultPath */ null);
+    workspaceService.createAzureCloudContext(workspace, jobId, userRequest, /* resultPath */ null);
 
     // Wait for the job to complete
     FlightState flightState =
