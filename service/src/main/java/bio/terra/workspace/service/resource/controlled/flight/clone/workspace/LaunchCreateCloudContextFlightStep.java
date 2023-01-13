@@ -64,10 +64,7 @@ public class LaunchCreateCloudContextFlightStep implements Step {
             destinationWorkspace,
             cloudContextJobId,
             userRequest,
-            null,
-            context
-                .getInputParameters()
-                .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class));
+            null);
       } else {
         workspaceService.createGcpCloudContext(
             destinationWorkspace, cloudContextJobId, userRequest);

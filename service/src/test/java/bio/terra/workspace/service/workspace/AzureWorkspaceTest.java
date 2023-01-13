@@ -83,13 +83,8 @@ public class AzureWorkspaceTest extends BaseAzureConnectedTest {
     workspaceService.createWorkspace(workspace, null, null, userRequest);
 
     String jobId = UUID.randomUUID().toString();
-    AzureCloudContext azureCloudContext =
-        new AzureCloudContext(
-            azureTestConfiguration.getTenantId(),
-            azureTestConfiguration.getSubscriptionId(),
-            azureTestConfiguration.getManagedResourceGroupId());
     workspaceService.createAzureCloudContext(
-        workspace, jobId, userRequest, "/fake/value", azureCloudContext);
+        workspace, jobId, userRequest, "/fake/value");
     jobService.waitForJob(jobId);
 
     assertNull(jobService.retrieveJobResult(jobId, Object.class).getException());
@@ -124,7 +119,7 @@ public class AzureWorkspaceTest extends BaseAzureConnectedTest {
     String jobId = UUID.randomUUID().toString();
 
     workspaceService.createAzureCloudContext(
-        sourceWorkspace, jobId, userRequest, "/fake/value", azureTestUtils.getAzureCloudContext());
+        sourceWorkspace, jobId, userRequest, "/fake/value");
     jobService.waitForJob(jobId);
 
     assertTrue(
