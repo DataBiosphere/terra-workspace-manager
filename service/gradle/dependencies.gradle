@@ -1,85 +1,103 @@
 // Library Dependencies, Versions, etc.
 dependencies {
+  ext {
+    googleAnnotations = '1.10.1'
+    googleAuth = '1.14.0'
+    googleBom = '26.3.0'
+    googleStorage = 'v1-rev20221201-2.0.0'
+    guava = '31.1-jre'
 
+    azureBlob = '12.20.2'
+    azureMonitor = '2.22.0'
 
+    bpmClient = '0.1.84-SNAPSHOT'
+    cloudResourceLib = '1.2.5-SNAPSHOT'
+    commonLib = '0.0.77-SNAPSHOT'
+    datarepoClient = '1.437.0-SNAPSHOT'
+    landingZone = '0.0.28-SNAPSHOT'
+    policyClient = '0.2.29-SNAPSHOT'
+    rbsClient = '0.4.3-SNAPSHOT'
+    samClient = '0.1-f554115'
 
+    jersey = '3.1.0'
+    okHttp3 = '4.10.0'
 
+    swagger = '4.15.5'
+    spotbugsVersion = '4.7.3'
 
+    //--
+
+    apacheMath = '3.6.1'
+
+    hamcrest = '2.2'
+    jackson = '2.14.1'
+
+    jUnit = '5.9.2'
+    kubernetesClient = '17.0.0'
+    logback = '1.4.5'
+    slf4j = '2.0.6'
+  }
+
+  // Misc. versioned direct dependencies -- Dex
+  implementation group: "com.fasterxml.jackson.core", name: "jackson-core", version: "2.13.2"
+  implementation group: 'commons-validator', name: 'commons-validator', version: "1.7"
+  implementation group: "org.hashids", name: "hashids", version: "1.0.3"
+  implementation group: "org.liquibase", name: "liquibase-core", version: "4.8.0"
+  implementation group: "org.webjars", name: "webjars-locator-core", version: "0.46"
+  implementation group: "io.opencensus", name: "opencensus-contrib-http-jaxrs", version: "0.28.3"
+  runtimeOnly group: "org.postgresql", name: "postgresql", version: "42.3.3"
 
   // Google dependencies
   constraints {
-    implementation 'com.google.guava:guava:31.1-jre' // "-jre" for Java 8 or higher
+    implementation group: 'com.google.guava', name: 'guava', version: "${guava}"
   }
-  implementation platform('com.google.cloud:libraries-bom:25.1.0')
-  implementation group: "com.google.auto.value", name: "auto-value-annotations"
-  implementation group: "com.google.guava", name:"guava"
+  implementation platform("com.google.cloud:libraries-bom:${googleBom}")
+  implementation group: 'com.google.apis', name: 'google-api-services-storagetransfer', version: "${googleStorage}"
+  implementation group: 'com.google.auth', name: 'google-auth-library-oauth2-http', version: "${googleAuth}"
+  runtimeOnly group: 'com.google.auto.value', name: 'auto-value-annotations', version: "${googleAnnotations}"
 
   // Azure dependencies
-  implementation 'com.azure:azure-storage-blob:12.17.1'
-  implementation group: 'com.azure.resourcemanager', name: 'azure-resourcemanager-monitor', version: '2.18.0'
+  implementation group: 'com.azure', name: 'azure-storage-blob', version: "${azureBlob}"
+  implementation group: 'com.azure.resourcemanager', name: 'azure-resourcemanager-monitor', version: "${azureMonitor}"
 
-  // Terra deps
-  implementation group: "bio.terra", name: "datarepo-client", version: "1.41.0-SNAPSHOT"
-  implementation group: "bio.terra", name:"billing-profile-manager-client", version: "0.1.29-SNAPSHOT"
-  implementation group: "bio.terra", name:"terra-policy-client", version:"0.2.27-SNAPSHOT"
+  // Terra dependencies
+  implementation group: 'bio.terra', name: 'billing-profile-manager-client', version: "${bpmClient}"
+  implementation group: 'bio.terra', name: 'terra-cloud-resource-lib', version: "${cloudResourceLib}"
+  implementation group: 'bio.terra', name: 'datarepo-client', version: "${datarepoClient}"
+  implementation group: 'bio.terra', name: 'terra-common-lib', version: "${commonLib}" // includes stairway
+  implementation group: 'bio.terra', name: 'terra-landing-zone-service', version: "${landingZone}"
+  implementation group: 'bio.terra', name: 'terra-policy-client', version: "${policyClient}"
+  implementation group: 'bio.terra', name: 'terra-resource-buffer-client', version: "${rbsClient}"
+  implementation group: 'org.broadinstitute.dsde.workbench', name: 'sam-client_2.13', version: "${samClient}"
 
   // hk2 is required to use datarepo client, but not correctly exposed by the client
-  implementation group: "org.glassfish.jersey.inject", name: "jersey-hk2", version: "2.32"
+  implementation group: 'org.glassfish.jersey.inject', name: 'jersey-hk2', version: "${jersey}"
 
-  // Opencensus utilities for various HTTP clients
-  implementation group: "io.opencensus", name: "opencensus-contrib-http-jaxrs", version: "0.28.3"
+  // Required by samClient
+  implementation group: 'com.squareup.okhttp3', name: 'okhttp', version: "${okHttp3}"
+  implementation group: 'com.squareup.okhttp3', name: 'logging-interceptor', version: "${okHttp3}"
 
-  // Get stairway via TCL
-  implementation("bio.terra:terra-common-lib:0.0.69-SNAPSHOT") {
-    exclude group: "org.broadinstitute.dsde.workbench", module: "sam-client_2.12"
-  }
-  implementation group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.13", version: "0.1-41409f6"
-  implementation group: "bio.terra", name: "terra-resource-buffer-client", version: "0.4.3-SNAPSHOT"
-  // Required by Sam client
-  implementation group: "com.squareup.okhttp3", name: "okhttp", version: "4.9.1"
-  implementation group: "com.squareup.okhttp3", name: "logging-interceptor", version: "4.9.1"
-
-  // Cloud Resource Library
-  implementation group: 'bio.terra', name: 'terra-cloud-resource-lib', version: "1.2.5-SNAPSHOT"
-
-  // Terra Landing Zone Service
-  implementation ('bio.terra:terra-landing-zone-service:0.0.28-SNAPSHOT') {
-    exclude group: "org.broadinstitute.dsde.workbench", module: "sam-client_2.12"
-  }
-
-  // Storage transfer service
-  implementation group: 'com.google.apis', name: 'google-api-services-storagetransfer', version: 'v1-rev20220324-1.32.1'
-  implementation group: "com.google.auth", name: "google-auth-library-oauth2-http", version: "1.6.0"
-
-  // Versioned direct deps
-  implementation group: "org.hashids", name: "hashids", version: "1.0.3"
-  implementation group: "com.fasterxml.jackson.core", name: "jackson-core", version: "2.13.2"
-  implementation group: "org.liquibase", name: "liquibase-core", version: "4.8.0"
-  implementation group: "org.webjars", name: "webjars-locator-core", version: "0.46"
-  runtimeOnly group: "org.postgresql", name: "postgresql", version: "42.3.3"
-
-  // Deps whose versions are controlled by Spring
-  implementation group: "javax.validation", name: "validation-api"
-  implementation group: "org.apache.commons", name: "commons-dbcp2"
-  implementation group: "org.apache.commons", name: "commons-lang3"
-  implementation group: "org.apache.commons", name: "commons-pool2"
-  implementation group: "org.apache.logging.log4j", name: "log4j-api"
-  implementation group: "org.apache.logging.log4j", name: "log4j-to-slf4j"
-  implementation group: "commons-validator", name: "commons-validator", version: "1.7"
-  implementation group: "org.springframework.boot", name: "spring-boot-starter-data-jdbc"
-  implementation group: "org.springframework.boot", name: "spring-boot-starter-web"
-  implementation group: "org.springframework.boot", name: "spring-boot-starter-validation"
-  implementation group: "org.springframework.retry", name: "spring-retry"
+  // Spring dependencies (versions controlled by Spring)
+  implementation group: 'javax.validation', name: 'validation-api'
+  implementation group: 'org.apache.commons', name: 'commons-dbcp2'
+  implementation group: 'org.apache.commons', name: 'commons-lang3'
+  implementation group: 'org.apache.commons', name: 'commons-pool2'
+  implementation group: 'org.apache.logging.log4j', name: 'log4j-api'
+  implementation group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j'
+  implementation group: 'org.springframework.boot', name: 'spring-boot-starter-data-jdbc'
+  implementation group: 'org.springframework.boot', name: 'spring-boot-starter-web'
+  implementation group: 'org.springframework.boot', name: 'spring-boot-starter-validation'
+  implementation group: 'org.springframework.retry', name: 'spring-retry'
 
   // OpenAPI (swagger) deps
   implementation gradle.librarySwaggerAnnotations
   swaggerCodegen gradle.librarySwaggerCli
-  runtimeOnly group: "org.webjars.npm", name: "swagger-ui-dist", version: "3.37.2"
+  runtimeOnly group: 'org.webjars.npm', name: 'swagger-ui-dist', version: "${swagger}"
 
   // Spotbugs dependency
-  // For SpotBugs annotations
-  compileOnly "com.github.spotbugs:spotbugs-annotations:${spotbugs.toolVersion.get()}"
-  spotbugs "com.github.spotbugs:spotbugs:${spotbugs.toolVersion.get()}"
+  compileOnly group: 'com.github.spotbugs', name: 'spotbugs-annotations', version: "${spotbugsVersion}"
+  spotbugs group: 'com.github.spotbugs', name: 'spotbugs', version: "${spotbugsVersion}"
+//--
 
   // Test deps
   testImplementation group: "io.vavr", name: "vavr", version: "0.10.3"
@@ -96,5 +114,5 @@ dependencies {
   testImplementation "org.testcontainers:postgresql:1.17.5"
 
   annotationProcessor group: "com.google.auto.value", name: "auto-value", version: "1.7.4"
-  annotationProcessor group: "org.springframework.boot", name: "spring-boot-configuration-processor", version: "2.6.6"
+  annotationProcessor group: 'org.springframework.boot', name: "spring-boot-configuration-processor", version: "2.6.6"
 }
