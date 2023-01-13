@@ -17,7 +17,6 @@ public class FeatureConfiguration {
   private boolean alpha1Enabled;
   private boolean tpsEnabled;
   private boolean bpmGcpEnabled;
-  private boolean bpmAzureEnabled;
 
   public boolean isAzureEnabled() {
     return azureEnabled;
