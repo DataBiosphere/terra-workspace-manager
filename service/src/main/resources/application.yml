@@ -203,8 +203,6 @@ feature:
   tps-enabled: false
   # bpm-enabled-gcp - Controls whether spend profile checks are made for GCP workspaces
   bpm-gcp-enabled: false
-  # bpm-enabled-azure - Controls whether spend profile checks are made for Azure workspaces
-  bpm-azure-enabled: false
 
 reference:
   gitrepos:

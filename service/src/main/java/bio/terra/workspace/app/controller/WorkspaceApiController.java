@@ -509,9 +509,9 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         workspaceService.validateMcWorkspaceAndAction(userRequest, uuid, SamWorkspaceAction.WRITE);
 
     if (body.getCloudPlatform() == ApiCloudPlatform.AZURE) {
+      // If not present in the request, BPM is used.
       AzureCloudContext azureCloudContext =
-          ControllerValidationUtils.validateAzureContextRequestBody(
-              body.getAzureContext(), featureConfiguration.isBpmAzureEnabled());
+          Optional.ofNullable(body.getAzureContext()).map(AzureCloudContext::fromApi).orElse(null);
       workspaceService.createAzureCloudContext(
           workspace, jobId, userRequest, resultPath, azureCloudContext);
     } else {
@@ -631,8 +631,9 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     String generatedDisplayName =
         sourceWorkspace.getDisplayName().orElse(sourceWorkspace.getUserFacingId()) + " (Copy)";
 
+    // If not present in the request, BPM is used.
     AzureCloudContext azureCloudContext =
-        ControllerValidationUtils.validateAzureContextRequestBody(body.getAzureContext(), true);
+        Optional.ofNullable(body.getAzureContext()).map(AzureCloudContext::fromApi).orElse(null);
 
     // Construct the target workspace object from the inputs
     // Policies are cloned in the flight instead of here so that they get cleaned appropriately if

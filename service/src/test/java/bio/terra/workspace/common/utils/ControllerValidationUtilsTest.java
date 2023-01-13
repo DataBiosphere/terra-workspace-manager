@@ -4,8 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.generated.model.ApiAzureContext;
-import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import org.junit.jupiter.api.Test;
 
 public class ControllerValidationUtilsTest extends BaseUnitTest {
@@ -96,16 +94,5 @@ public class ControllerValidationUtilsTest extends BaseUnitTest {
     assertThrows(
         ValidationException.class,
         () -> ControllerValidationUtils.validateSasBlobName(largeString));
-  }
-
-  @Test
-  void validateAzureContextRequestBody() {
-    ApiAzureContext apiAzureContext = new ApiAzureContext();
-    ControllerValidationUtils.validateAzureContextRequestBody(apiAzureContext, true);
-    ControllerValidationUtils.validateAzureContextRequestBody(apiAzureContext, false);
-    ControllerValidationUtils.validateAzureContextRequestBody(null, true);
-    assertThrows(
-        CloudContextRequiredException.class,
-        () -> ControllerValidationUtils.validateAzureContextRequestBody(null, false));
   }
 }

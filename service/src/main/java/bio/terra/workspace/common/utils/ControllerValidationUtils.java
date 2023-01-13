@@ -1,19 +1,15 @@
 package bio.terra.workspace.common.utils;
 
 import bio.terra.common.exception.ValidationException;
-import bio.terra.workspace.generated.model.ApiAzureContext;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceCategory;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
-import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.exceptions.CloudPlatformNotImplementedException;
-import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import org.apache.commons.validator.routines.InetAddressValidator;
@@ -191,29 +187,6 @@ public final class ControllerValidationUtils {
     }
     if (blobName.length() > 1024) {
       throw new ValidationException("Blob name must be <= 1024 chars");
-    }
-  }
-
-  /**
-   * Validate that a user has provided an Azure cloud context if one cannot be fetched from BPM
-   *
-   * @param apiAzureContext Azure cloud context included as request body parameter
-   * @param isContextNullable whether a null cloud context is acceptable
-   * @return AzureCloudContext to use for request
-   */
-  public static AzureCloudContext validateAzureContextRequestBody(
-      @Nullable ApiAzureContext apiAzureContext, boolean isContextNullable) {
-    Optional<AzureCloudContext> optionalAzureCloudContext =
-        Optional.ofNullable(apiAzureContext).map(AzureCloudContext::fromApi);
-    // if BPM is enabled for Azure, then the coordinates are not required in the request body as
-    // we can fetch them from BPM
-    if (isContextNullable) {
-      return optionalAzureCloudContext.orElse(null);
-    } else {
-      return optionalAzureCloudContext.orElseThrow(
-          () ->
-              new CloudContextRequiredException(
-                  "AzureContext is required when creating an azure cloud context for a workspace"));
     }
   }
 
