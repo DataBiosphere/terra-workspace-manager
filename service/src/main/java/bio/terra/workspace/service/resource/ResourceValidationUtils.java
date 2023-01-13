@@ -196,7 +196,7 @@ public class ResourceValidationUtils {
 
   public void validateControlledResourceRegionAgainstPolicy(
       UUID workspaceUuid, String location, String platform) {
-    switch(platform) {
+    switch (platform) {
       case "azure" -> validateAzureRegion(location);
       case "gcp" -> validateGcpRegion(workspaceUuid, location);
       default -> throw new InvalidControlledResourceException("Unrecognized platform");

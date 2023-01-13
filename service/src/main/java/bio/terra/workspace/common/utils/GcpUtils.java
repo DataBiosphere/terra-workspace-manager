@@ -157,7 +157,9 @@ public class GcpUtils {
    * If the string looks like a zone, return just the region part.
    */
   public static String parseRegion(String location) {
-    if (location.length() <= 2) { return location; }
+    if (location.length() <= 2) {
+      return location;
+    }
 
     Pattern pattern = Pattern.compile("-[a-z]$", Pattern.CASE_INSENSITIVE);
     Matcher matcher = pattern.matcher(location);

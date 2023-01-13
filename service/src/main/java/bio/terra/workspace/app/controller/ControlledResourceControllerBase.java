@@ -80,7 +80,7 @@ public abstract class ControlledResourceControllerBase extends ControllerBase {
     }
 
     resourceValidationUtils.validateControlledResourceRegionAgainstPolicy(
-       workspaceUuid, region, getCloudPlatform());
+        workspaceUuid, region, getCloudPlatform());
 
     return ControlledResourceFields.builder()
         .workspaceUuid(workspaceUuid)
