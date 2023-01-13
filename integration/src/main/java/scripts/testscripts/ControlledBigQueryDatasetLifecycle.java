@@ -95,6 +95,18 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
 
     SamClientUtils.dumpResourcePolicy(testUser, server, "workspace", getWorkspaceId().toString());
 
+    // Create a dataset to hold query results in the destination project.
+    // will use this later but create it up front to give IAM time to propagate
+    ControlledGcpResourceApi readerResourceApi =
+        ClientTestUtils.getControlledGcpResourceClient(getWorkspaceReader(), server);
+    String resultDatasetId = "temporary_result_dataset";
+    BqDatasetUtils.makeControlledBigQueryDatasetUserShared(
+        readerResourceApi,
+        getDestinationWorkspaceId(),
+        "temporary_result_resource",
+        resultDatasetId,
+        CloningInstructionsEnum.NOTHING);
+
     // Create a shared BigQuery dataset
     GcpBigQueryDatasetResource createdDataset =
         BqDatasetUtils.makeControlledBigQueryDatasetUserShared(
@@ -169,21 +181,14 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
     insertValueIntoTable(writerBqClient, columnValue);
     logger.info("Workspace writer wrote a row to table {}", tableName);
 
-    // Create a dataset to hold query results in the destination project.
-    ControlledGcpResourceApi readerResourceApi =
-        ClientTestUtils.getControlledGcpResourceClient(getWorkspaceReader(), server);
-    String resultDatasetId = "temporary_result_dataset";
-    BqDatasetUtils.makeControlledBigQueryDatasetUserShared(
-        readerResourceApi,
-        getDestinationWorkspaceId(),
-        "temporary_result_resource",
-        resultDatasetId,
-        CloningInstructionsEnum.NOTHING);
     // The table does not exist yet, but will be created to hold query results.
     TableId resultTableId =
         TableId.of(getDestinationProjectId(), resultDatasetId, BqDatasetUtils.BQ_RESULT_TABLE_NAME);
+
     // Workspace reader can now read the row inserted above
-    assertEquals(columnValue, readValueFromTable(readerBqClient, resultTableId));
+    // retry to make sure the destination table IAM has propagated
+    var destinationValue = ClientTestUtils.getWithRetryOnException(() -> readValueFromTable(readerBqClient, resultTableId));;
+    assertEquals(columnValue, destinationValue);
     logger.info("Workspace reader read that row from table {}", tableName);
 
     // Workspace writer can update the table metadata
