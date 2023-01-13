@@ -64,7 +64,6 @@ build.dependsOn spotlessApply
 
 // Spotbugs configuration
 spotbugs {
-    toolVersion = '4.7.3'
     effort = 'max'
     excludeFilter = file("$rootDir/gradle/config/spotbugs/exclude.xml")
 }
@@ -85,10 +84,6 @@ spotbugsTest {
             stylesheet = 'fancy.xsl'
         }
     }
-}
-
-jacoco {
-    toolVersion = '0.8.8'
 }
 
 // The default jacocoTestReport step cannot handle inputs from multiple gradle
