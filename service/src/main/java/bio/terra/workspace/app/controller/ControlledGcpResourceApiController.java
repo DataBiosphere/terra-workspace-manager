@@ -470,8 +470,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             body.getCommon(),
             // AI notebook is a zonal resource. It's set here so that we can validate it against
             // policy. However, the notebook creation flight will compute a final location, which
-            // could be a zone instead of the region passed here. The assumption for policy is
-            // that if it is a zone, then it would be a sub location of this region.
+            // could be a zone if a region is passed here. The assumption for policy is that a zone
+            // is included inside of a region. The db entry is updated as part of the flight.
             resourceLocation,
             userRequest,
             WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);

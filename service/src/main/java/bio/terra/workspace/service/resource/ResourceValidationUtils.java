@@ -6,6 +6,7 @@ import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.app.configuration.external.GitRepoReferencedResourceConfiguration;
+import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
@@ -195,20 +196,10 @@ public class ResourceValidationUtils {
 
   public void validateControlledResourceRegionAgainstPolicy(
       UUID workspaceUuid, String location, String platform) {
-    // TODO: [PF-2409] - We should be able to remove this check When we have Azure regions in the
-    // ontology.
-    if (platform.equals("azure")) {
-      validateAzureRegion(location);
-      return;
-    }
-
-    // Get the list of valid location for this workspace from TPS. If there are no regional
-    // constraints, the list should include all available regions.
-    List<String> validLocations = tpsApiDispatch.listValidDataCenter(workspaceUuid, platform);
-
-    if (validLocations.stream().noneMatch(location::equalsIgnoreCase)) {
-      throw new InvalidControlledResourceException(
-          String.format("Specified location %s is not allowed by effective policy.", location));
+    switch(platform) {
+      case "azure" -> validateAzureRegion(location);
+      case "gcp" -> validateGcpRegion(workspaceUuid, location);
+      default -> throw new InvalidControlledResourceException("Unrecognized platform");
     }
   }
 
@@ -454,6 +445,19 @@ public class ResourceValidationUtils {
       logger.warn("Invalid Azure region {}", region);
       throw new InvalidControlledResourceException(
           "Invalid Azure Region specified. See the class `com.azure.core.management.Region`");
+    }
+  }
+
+  public void validateGcpRegion(UUID workspaceId, String region) {
+    region = GcpUtils.parseRegion(region);
+
+    // Get the list of valid locations for this workspace from TPS. If there are no regional
+    // constraints applied to the workspace, TPS should return all available regions.
+    List<String> validLocations = tpsApiDispatch.listValidDataCenter(workspaceId, "gcp");
+
+    if (validLocations.stream().noneMatch(region::equalsIgnoreCase)) {
+      throw new InvalidControlledResourceException(
+          String.format("Specified location %s is not allowed by effective policy.", region));
     }
   }
 
