@@ -9,7 +9,7 @@
       "name": "ReferencedDataRepoSnapshotLifecycle",
       "numberOfUserJourneyThreadsToRun": 1,
       "userJourneyThreadPoolSize": 1,
-      "expectedTimeForEach": 5,
+      "expectedTimeForEach": 30,
       "expectedTimeForEachUnit": "MINUTES",
       "parametersMap": {
         "spend-profile-id": "wm-default-spend-profile",
@@ -19,6 +19,6 @@
       }
     }
   ],
-  "testUserFiles": ["bella.json", "elijah.json"],
+  "testUserFiles": ["bella.json", "levi.json"],
   "maxRetries" : 0
 }

@@ -9,7 +9,7 @@
       "name": "WorkspaceLifecycle",
       "numberOfUserJourneyThreadsToRun": 1,
       "userJourneyThreadPoolSize": 1,
-      "expectedTimeForEach": 10,
+      "expectedTimeForEach": 30,
       "expectedTimeForEachUnit": "SECONDS"
     }
   ],

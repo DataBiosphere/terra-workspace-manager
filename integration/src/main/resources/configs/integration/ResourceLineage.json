@@ -9,7 +9,7 @@
       "name": "ResourceLineage",
       "numberOfUserJourneyThreadsToRun": 1,
       "userJourneyThreadPoolSize": 1,
-      "expectedTimeForEach": 15,
+      "expectedTimeForEach": 30,
       "expectedTimeForEachUnit": "MINUTES",
       "parametersMap": {
         "spend-profile-id": "wm-default-spend-profile"

@@ -9,13 +9,13 @@
       "name": "ControlledApplicationSharedGcsBucketLifecycle",
       "numberOfUserJourneyThreadsToRun": 1,
       "userJourneyThreadPoolSize": 1,
-      "expectedTimeForEach": 10,
+      "expectedTimeForEach": 30,
       "expectedTimeForEachUnit": "MINUTES",
       "parametersMap": {
         "spend-profile-id": "wm-default-spend-profile"
       }
     }
   ],
-  "testUserFiles": ["bella.json", "elijah.json", "liam.json", "wsmapp.json"],
+  "testUserFiles": ["bella.json", "levi.json", "liam.json", "wsmapp.json"],
   "maxRetries" : 0
 }

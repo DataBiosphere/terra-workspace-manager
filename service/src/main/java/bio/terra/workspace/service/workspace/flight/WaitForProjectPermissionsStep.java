@@ -12,10 +12,10 @@ import bio.terra.workspace.common.utils.RetryUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
+import java.time.Duration;
+import java.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.time.Duration;
 
 /** Do not complete the cloud context creation until the project permissions have propagated. */
 public class WaitForProjectPermissionsStep implements Step {
@@ -58,17 +58,27 @@ public class WaitForProjectPermissionsStep implements Step {
     String gcpProjectId = flightContext.getWorkingMap().get(GCP_PROJECT_ID, String.class);
     Storage storage = getStorage(userRequest, gcpProjectId);
 
+    var startTime = Instant.now();
     try {
-      RetryUtils.getWithRetryOnException(() -> testIam(storage),
-        Duration.ofMinutes(15), /* total allowed duration */
-        RetryUtils.DEFAULT_RETRY_SLEEP_DURATION,
-        0.5, /* increase wait by half again as much */
-        RetryUtils.DEFAULT_RETRY_SLEEP_DURATION_MAX,
-        null /* all exceptions are retried */);
+      RetryUtils.getWithRetryOnException(
+          () -> testIam(storage),
+          Duration.ofMinutes(15), /* total allowed duration */
+          RetryUtils.DEFAULT_RETRY_SLEEP_DURATION,
+          0.5, /* increase wait by half again as much */
+          RetryUtils.DEFAULT_RETRY_SLEEP_DURATION_MAX,
+          null /* all exceptions are retried */);
     } catch (Exception e) {
+      logWaitDuration(startTime);
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
     }
+    logWaitDuration(startTime);
     return StepResult.getStepResultSuccess();
+  }
+
+  private void logWaitDuration(Instant startTime) {
+    logger.info(
+        "#=#=#=# GCP cloud context wait time in seconds: {} #=#=#=#",
+        Duration.between(startTime, Instant.now()).toSeconds());
   }
 
   /** This is a read-only step, so nothing to undo */

@@ -1,5 +1,26 @@
 package bio.terra.workspace.service.workspace;
 
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.defaultWorkspaceBuilder;
+import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_CLOUD_CONTEXT_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
+import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UFID_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UUID_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
+import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
+import static org.hibernate.validator.internal.util.Contracts.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import bio.terra.common.exception.ErrorReportException;
 import bio.terra.common.exception.ForbiddenException;
 import bio.terra.common.exception.MissingRequiredFieldException;
@@ -41,6 +62,13 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.dsde.workbench.client.sam.ApiException;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
@@ -51,35 +79,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-
-import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.defaultWorkspaceBuilder;
-import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_CLOUD_CONTEXT_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
-import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UFID_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UUID_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
-import static org.hibernate.validator.internal.util.Contracts.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.when;
-import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 // Use application configuration profile in addition to the standard connected test profile
 // inherited from the base class.
@@ -651,28 +650,26 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     // RAWLS_WORKSPACE stage workspaces use existing Sam resources instead of owning them, so the
     // mock pretends our user has access to any workspace we ask about.
     when(mockSamService.isAuthorized(
-      any(), eq(SamResource.WORKSPACE), any(), eq(SamConstants.SamWorkspaceAction.READ)))
-      .thenReturn(true);
+            any(), eq(SamResource.WORKSPACE), any(), eq(SamConstants.SamWorkspaceAction.READ)))
+        .thenReturn(true);
     UUID workspaceId = UUID.randomUUID();
     Workspace request =
-      defaultWorkspaceBuilder(workspaceId).workspaceStage(WorkspaceStage.RAWLS_WORKSPACE).build();
+        defaultWorkspaceBuilder(workspaceId).workspaceStage(WorkspaceStage.RAWLS_WORKSPACE).build();
     workspaceService.createWorkspace(request, null, null, USER_REQUEST);
     String jobId = UUID.randomUUID().toString();
     ApiCreateCloudContextRequest contextRequest =
-      new ApiCreateCloudContextRequest()
-        .cloudPlatform(ApiCloudPlatform.GCP)
-        .jobControl(new ApiJobControl().id(jobId));
+        new ApiCreateCloudContextRequest()
+            .cloudPlatform(ApiCloudPlatform.GCP)
+            .jobControl(new ApiJobControl().id(jobId));
     // Validation happens in the controller, so make this request through the mock MVC object rather
     // than calling the service directly.
     mockMvc
-      .perform(
-        addJsonContentType(
-          addAuth(
-            post(String.format(CREATE_CLOUD_CONTEXT_PATH_FORMAT, workspaceId)),
-            USER_REQUEST))
-          .content(objectMapper.writeValueAsString(contextRequest)))
-      .andExpect(status().is(HttpStatus.SC_BAD_REQUEST));
+        .perform(
+            addJsonContentType(
+                    addAuth(
+                        post(String.format(CREATE_CLOUD_CONTEXT_PATH_FORMAT, workspaceId)),
+                        USER_REQUEST))
+                .content(objectMapper.writeValueAsString(contextRequest)))
+        .andExpect(status().is(HttpStatus.SC_BAD_REQUEST));
   }
-
-
 }

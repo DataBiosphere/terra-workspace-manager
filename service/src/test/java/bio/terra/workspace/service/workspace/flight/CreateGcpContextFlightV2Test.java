@@ -64,9 +64,8 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 class CreateGcpContextFlightV2Test extends BaseConnectedTest {
 
   /**
-   * How long to wait for a Stairway flight to complete before timing out the test.
-   * This is set to 20 minutes to allow tests to ride through service outages,
-   * cloud retries, and IAM propagation.
+   * How long to wait for a Stairway flight to complete before timing out the test. This is set to
+   * 20 minutes to allow tests to ride through service outages, cloud retries, and IAM propagation.
    */
   private static final Duration STAIRWAY_FLIGHT_TIMEOUT = Duration.ofMinutes(20);
 
