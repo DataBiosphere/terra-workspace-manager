@@ -1,31 +1,31 @@
 // Testing config
 bootRun {
-  environment.put("GOOGLE_APPLICATION_CREDENTIALS", "${googleCredentialsFile}")
+  environment.put('GOOGLE_APPLICATION_CREDENTIALS', "${googleCredentialsFile}")
 }
 
 tasks.withType(Test).configureEach {
-  environment.put("GOOGLE_APPLICATION_CREDENTIALS", "${googleCredentialsFile}")
+  environment.put('GOOGLE_APPLICATION_CREDENTIALS', "${googleCredentialsFile}")
   systemProperty 'spring.profiles.include', 'human-readable-logging'
   testLogging {
     if (System.getenv('PRINT_STANDARD_STREAMS') == null) {
-      events = ["passed", "failed", "skipped", "started"]
+      events = ['passed', 'failed', 'skipped', 'started']
     } else {
-      events = ["passed", "failed", "skipped", "started", "standard_out", "standard_error"]
+      events = ['passed', 'failed', 'skipped', 'started', 'standard_out', 'standard_error']
     }
   }
 }
 
 // We don't want to use up all the cores on a developer's machine because it locks them out of doing other
 // work, but that's not a concern for dedicated CI machines.
-def runnerThreads = System.getenv().containsKey("CI") ? Runtime.runtime.availableProcessors() : Runtime.runtime.availableProcessors().intdiv(2)
+def runnerThreads = System.getenv().containsKey('CI') ? Runtime.runtime.availableProcessors() : Runtime.runtime.availableProcessors().intdiv(2)
 // Alternatively, if a user specifies the TEST_SINGLE_THREAD env var, we will always restrict tests to a
 // single thread. This can be helpful when using a local database.
-def singleThread = System.getenv().containsKey("TEST_SINGLE_THREAD")
+def singleThread = System.getenv().containsKey('TEST_SINGLE_THREAD')
 runnerThreads = singleThread ? 1 : runnerThreads
 
 test {
   useJUnitPlatform {
-    includeTags "unit"
+    includeTags 'unit'
   }
   outputs.upToDateWhen { false }
   finalizedBy tasks.combinedJaCoCoReport
@@ -36,7 +36,7 @@ test {
   retry {
     // This is set automatically on Github Actions runners, and never set
     // otherwise.
-    if (System.getenv().containsKey("CI")) {
+    if (System.getenv().containsKey('CI')) {
       // Max retries per test.
       maxRetries = 1
       // Max total test failures.
@@ -52,7 +52,7 @@ test {
 
 task gcpUnitTest(type: Test) {
   useJUnitPlatform {
-    includeTags "unit"
+    includeTags 'unit'
   }
   outputs.upToDateWhen { false }
   maxParallelForks = runnerThreads
@@ -60,9 +60,9 @@ task gcpUnitTest(type: Test) {
 }
 
 task gcpConnectedTest(type: Test) {
-  environment.put('TEST_ENV', System.getenv("TEST_ENV"))
+  environment.put('TEST_ENV', System.getenv('TEST_ENV'))
   useJUnitPlatform {
-    includeTags "connected"
+    includeTags 'connected'
   }
   outputs.upToDateWhen { false }
   finalizedBy tasks.combinedJaCoCoReport
@@ -73,7 +73,7 @@ task gcpConnectedTest(type: Test) {
   retry {
     // This is set automatically on Github Actions runners, and never set
     // otherwise.
-    if (System.getenv().containsKey("CI")) {
+    if (System.getenv().containsKey('CI')) {
       // Max retries per test.
       maxRetries = 1
       // Max total test failures.
@@ -89,7 +89,7 @@ task gcpConnectedTest(type: Test) {
 
 task azureUnitTest(type: Test) {
   useJUnitPlatform {
-    includeTags "azure-unit"
+    includeTags 'azure-unit'
   }
   outputs.upToDateWhen { false }
   finalizedBy tasks.combinedJaCoCoReport
@@ -98,7 +98,7 @@ task azureUnitTest(type: Test) {
 
 task azureConnectedTest(type: Test) {
   useJUnitPlatform {
-    includeTags "azure"
+    includeTags 'azure'
   }
   outputs.upToDateWhen { false }
   finalizedBy tasks.combinedJaCoCoReport
@@ -109,7 +109,7 @@ task azureConnectedTest(type: Test) {
   retry {
     // This is set automatically on Github Actions runners, and never set
     // otherwise.
-    if (System.getenv().containsKey("CI")) {
+    if (System.getenv().containsKey('CI')) {
       // Max retries per test.
       maxRetries = 1
       // Max total test failures.

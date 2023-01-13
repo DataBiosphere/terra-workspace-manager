@@ -5,7 +5,7 @@ jib {
   from {
     // see https://github.com/broadinstitute/dsp-appsec-blessed-images/tree/main/jre
     // Google's distroless images are openjdk, this is the simplest with adoptopenjdk
-    image = "us.gcr.io/broad-dsp-gcr-public/base/jre:17-debian"
+    image = 'us.gcr.io/broad-dsp-gcr-public/base/jre:17-debian'
   }
   extraDirectories {
     paths = [file(jibExtraDirectory)]
@@ -13,12 +13,12 @@ jib {
   container {
     filesModificationTime = ZonedDateTime.now().toString() // to prevent ui caching
     jvmFlags = [
-            "-agentpath:" + cloudProfilerLocation + "/profiler_java_agent.so=" +
-                    "-cprof_service=bio.terra.workspace" +
-                    ",-cprof_service_version=" + version +
-                    ",-cprof_enable_heap_sampling=true" +
-                    ",-logtostderr" +
-                    ",-minloglevel=2"
+            '-agentpath:' + cloudProfilerLocation + '/profiler_java_agent.so=' +
+                    '-cprof_service=bio.terra.workspace' +
+                    ',-cprof_service_version=' + version +
+                    ',-cprof_enable_heap_sampling=true' +
+                    ',-logtostderr' +
+                    ',-minloglevel=2'
     ]
   }
 }
