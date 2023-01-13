@@ -6,7 +6,7 @@ def generatedVersionFile = "${resourceDir}/generated/version.properties"
 
 
 task generateVersionProperties(type: Exec) {
-  description("Produce a version.properties file based on Git properties for use by the WSM server application.")
+  description('Produce a version.properties file based on Git properties for use by the WSM server application.')
   commandLine "${projectDir}/writeVersionProperties.sh", "${version}", "${generatedVersionFile}"
   // This task should run every time, as Gradle has no knowledge of when git properties such as the
   // SHA change. This also means we should not mark generatedVersionFile as output. It might be

@@ -4,22 +4,22 @@ swaggerSources {
     inputFile = file(tasks.getByPath(':openapi:buildOpenApi').openApiSource)
     code {
       jvmArgs = ['--add-opens=java.base/java.util=ALL-UNNAMED'] // for Java 16+
-      language = "java"
-      library = "jersey2"
+      language = 'java'
+      library = 'jersey2'
       templateDir = file("${projectDir}/src/main/resources/swaggercodegen")
       outputDir = file(openapiOutputDir)
       rawOptions = [
-              "--model-package", "${artifactGroup}.model",
-              "--api-package", "${artifactGroup}.api",
-              "--invoker-package", "${artifactGroup}.client",
-              "--group-id", "${artifactGroup}",
-              "--artifact-version", "${version}",
-              "--ignore-file-override", "${projectDir}/.swagger-codegen-ignore",
-              "-D", "apiTests=false," +
-                      "apiDocs=false," +
-                      "modelTests=false," +
-                      "modelDocs=false," +
-                      "dateLibrary=java8"
+              '--model-package', "${artifactGroup}.model",
+              '--api-package', "${artifactGroup}.api",
+              '--invoker-package', "${artifactGroup}.client",
+              '--group-id', "${artifactGroup}",
+              '--artifact-version', "${version}",
+              '--ignore-file-override', "${projectDir}/.swagger-codegen-ignore",
+              '-D', 'apiTests=false,' +
+                      'apiDocs=false,' +
+                      'modelTests=false,' +
+                      'modelDocs=false,' +
+                      'dateLibrary=java8'
       ]
     }
   }
