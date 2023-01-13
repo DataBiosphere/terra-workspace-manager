@@ -41,6 +41,12 @@ public class UserAccessUtils {
   @Value("${workspace.connected-test.billing-user-email}")
   private String billingUserEmail;
 
+  /**
+   * Email of user with no access to the billing profile
+   */
+  @Value("${workspace.connected-test.no-billing-access-user-email}")
+  private String noBillingAccessUserEmail;
+
   /** Creates Google credentials for the user. Relies on domain delegation. */
   public GoogleCredentials generateCredentials(String userEmail) {
     try {
@@ -80,6 +86,11 @@ public class UserAccessUtils {
     return generateAccessToken(billingUserEmail);
   }
 
+  /** Generates an OAuth access token for the billing test user. */
+  public AccessToken noBillingAccessUserAccessToken() {
+    return generateAccessToken(noBillingAccessUserEmail);
+  }
+
   /** Expose the default test user email. */
   public String getDefaultUserEmail() {
     return defaultUserEmail;
@@ -93,6 +104,11 @@ public class UserAccessUtils {
   /** Expose the billing test user email. */
   public String getBillingUserEmail() {
     return billingUserEmail;
+  }
+
+  /** Expose the no-billing-access test user email */
+  public String getNoBillingAccessUserEmail() {
+    return noBillingAccessUserEmail;
   }
 
   /** Provides an AuthenticatedUserRequest using the default user's email and access token. */
@@ -113,6 +129,12 @@ public class UserAccessUtils {
     return new AuthenticatedUserRequest()
         .email(getBillingUserEmail())
         .token(Optional.of(billingUserAccessToken().getTokenValue()));
+  }
+
+  public AuthenticatedUserRequest noBillingAccessUserAuthRequest() {
+    return new AuthenticatedUserRequest()
+      .email(getNoBillingAccessUserEmail())
+      .token(Optional.of(noBillingAccessUserAccessToken().getTokenValue()));
   }
 
   /**

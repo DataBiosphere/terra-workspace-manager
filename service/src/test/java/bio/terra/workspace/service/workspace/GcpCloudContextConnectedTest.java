@@ -19,6 +19,7 @@ import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.db.FolderDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
@@ -30,7 +31,6 @@ import bio.terra.workspace.generated.model.ApiGcpGcsBucketDefaultStorageClass;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.generated.model.ApiResourceCloneDetails;
 import bio.terra.workspace.generated.model.ApiResourceType;
-import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.folder.model.Folder;
 import bio.terra.workspace.service.iam.SamService;
@@ -72,9 +72,9 @@ import org.springframework.test.web.servlet.MockMvc;
 // Use application configuration profile in addition to the standard connected test profile
 // inherited from the base class.
 @ActiveProfiles({"app-test"})
-class GcpCloundContextConnectedTest extends BaseConnectedTest {
+class GcpCloudContextConnectedTest extends BaseConnectedTest {
   public static final String SPEND_PROFILE_ID = "wm-default-spend-profile";
-  private static final Logger logger = LoggerFactory.getLogger(GcpCloundContextConnectedTest.class);
+  private static final Logger logger = LoggerFactory.getLogger(GcpCloudContextConnectedTest.class);
   // Name of the test WSM application. This must match the identifier in the
   // application-app-test.yml file.
   private static final String TEST_WSM_APP = "TestWsmApp";
@@ -85,7 +85,6 @@ class GcpCloundContextConnectedTest extends BaseConnectedTest {
 
   @Autowired private MockMvc mockMvc;
   @Autowired private ControlledResourceService controlledResourceService;
-  @Autowired private CrlService crl;
   @Autowired private FolderDao folderDao;
   @Autowired private GcpCloudContextService gcpCloudContextService;
   @Autowired private JobService jobService;
@@ -99,6 +98,7 @@ class GcpCloundContextConnectedTest extends BaseConnectedTest {
   @Autowired private WorkspaceService workspaceService;
   @Autowired private WorkspaceActivityLogDao workspaceActivityLogDao;
   @Autowired private WsmApplicationService appService;
+  @Autowired private WorkspaceConnectedTestUtils workspaceConnectedTestUtils;
 
   private UUID workspaceId;
   private UUID workspaceId2;
@@ -138,15 +138,14 @@ class GcpCloundContextConnectedTest extends BaseConnectedTest {
     // Reach in and find the project id
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceId);
 
-    // Verify project exists by retrieving it.
-    crl.getCloudResourceManagerCow().projects().get(projectId).execute();
+    // Verify project exists
+    workspaceConnectedTestUtils.assertProjectExist(projectId);
 
     mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
     workspaceId = null;
 
     // Check that project is now being deleted.
-    Project project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
-    assertEquals("DELETE_REQUESTED", project.getState());
+    workspaceConnectedTestUtils.assertProjectIsBeingDeleted(projectId);
   }
 
   @Test

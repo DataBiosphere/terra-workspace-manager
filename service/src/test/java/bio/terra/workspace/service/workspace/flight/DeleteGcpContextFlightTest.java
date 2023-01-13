@@ -14,7 +14,7 @@ import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
-import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
@@ -23,7 +23,6 @@ import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import com.google.api.services.cloudresourcemanager.v3.model.Project;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
@@ -46,7 +45,7 @@ class DeleteGcpContextFlightTest extends BaseConnectedTest {
   private static final Duration CREATION_FLIGHT_TIMEOUT = Duration.ofMinutes(3);
 
   @Autowired private WorkspaceService workspaceService;
-  @Autowired private CrlService crl;
+  @Autowired private WorkspaceConnectedTestUtils workspaceConnectedTestUtils;
   @Autowired private JobService jobService;
   @Autowired private SpendConnectedTestUtils spendUtils;
   @Autowired private UserAccessUtils userAccessUtils;
@@ -98,8 +97,7 @@ class DeleteGcpContextFlightTest extends BaseConnectedTest {
     String projectId2 = gcpCloudContextService.getRequiredGcpProject(workspaceUuid);
     assertEquals(projectId, projectId2);
 
-    Project project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
-    assertEquals("ACTIVE", project.getState());
+    workspaceConnectedTestUtils.assertProjectIsActive(projectId);
 
     // Delete the google context.
     FlightMap deleteParameters = new FlightMap();
@@ -131,8 +129,7 @@ class DeleteGcpContextFlightTest extends BaseConnectedTest {
         CloudContextRequiredException.class,
         () -> gcpCloudContextService.getRequiredGcpProject(workspaceUuid));
 
-    project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
-    assertEquals("DELETE_REQUESTED", project.getState());
+    workspaceConnectedTestUtils.assertProjectIsBeingDeleted(projectId);
   }
 
   @Test
