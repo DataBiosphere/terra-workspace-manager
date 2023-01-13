@@ -30,7 +30,6 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.create.azure.CreateAzureContextFlight;
-import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
@@ -364,15 +363,13 @@ public class WorkspaceService {
    * @param jobId caller-supplied job id of the async job
    * @param userRequest user authentication info
    * @param resultPath optional endpoint where the result of the completed job can be retrieved
-   * @param azureContext azure context information
    */
   @Traced
   public void createAzureCloudContext(
       Workspace workspace,
       String jobId,
       AuthenticatedUserRequest userRequest,
-      @Nullable String resultPath,
-      @Nullable AzureCloudContext azureContext) {
+      @Nullable String resultPath) {
     features.azureEnabledCheck();
 
     jobService
@@ -382,7 +379,6 @@ public class WorkspaceService {
         .workspaceId(workspace.getWorkspaceId().toString())
         .operationType(OperationType.CREATE)
         .flightClass(CreateAzureContextFlight.class)
-        .request(azureContext)
         .userRequest(userRequest)
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspace.getWorkspaceId().toString())
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
@@ -435,8 +431,7 @@ public class WorkspaceService {
       Workspace sourceWorkspace,
       AuthenticatedUserRequest userRequest,
       @Nullable String location,
-      Workspace destinationWorkspace,
-      @Nullable AzureCloudContext azureCloudContext) {
+      Workspace destinationWorkspace) {
     String workspaceUuid = sourceWorkspace.getWorkspaceId().toString();
     String jobDescription =
         String.format(
@@ -464,7 +459,6 @@ public class WorkspaceService {
             ControlledResourceKeys.SOURCE_WORKSPACE_ID,
             sourceWorkspace.getWorkspaceId()) // TODO: remove this duplication
         .addParameter(ControlledResourceKeys.LOCATION, location)
-        .addParameter(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, azureCloudContext)
         .submit();
   }
 

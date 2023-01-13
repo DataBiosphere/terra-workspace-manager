@@ -92,15 +92,12 @@ components:
         Contains the CloudPlatform for the context and the JobControl object.
         For GCP, a project is created to contain the cloud resources of the context.
         For Azure, a managed resource group (MRG) is created outside of WSM within a tenant
-        and a subscription. The MRG may provide the cloud context for multiple workspaces.
-        Therefore, the location of the MRG is provided as input to the context creation.
+        and a subscription obtained from the spend profile linked to the parent workspace.
       properties:
         cloudPlatform:
           $ref: '#/components/schemas/CloudPlatform'
         jobControl:
           $ref: '#/components/schemas/JobControl'
-        azureContext:
-          $ref: '#/components/schemas/AzureContext'
 
     GcpContext:
       type: object
@@ -115,7 +112,7 @@ components:
       type: object
       description: |
         The result of a call to create a cloud context for a workspace. Contains
-        a JobReport detailing the async operation and either a GcpContext
+        a JobReport detailing the async operation, and either a GcpContext or AzureContext (if operation complete)
         or an ErrorReport detailing an error.
       required: [jobReport]
       properties:
@@ -128,7 +125,7 @@ components:
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
 
-    
+
   responses:
     CreateCloudContextResultResponse:
       description: Job is complete (succeeded or failed)
@@ -136,4 +133,4 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CreateCloudContextResult'
-    
+

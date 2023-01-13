@@ -17,7 +17,6 @@ public class FeatureConfiguration {
   private boolean alpha1Enabled;
   private boolean tpsEnabled;
   private boolean bpmGcpEnabled;
-  private boolean bpmAzureEnabled;
 
   public boolean isAzureEnabled() {
     return azureEnabled;
@@ -51,14 +50,6 @@ public class FeatureConfiguration {
     this.bpmGcpEnabled = bpmGcpEnabled;
   }
 
-  public boolean isBpmAzureEnabled() {
-    return bpmAzureEnabled;
-  }
-
-  public void setBpmAzureEnabled(boolean bpmAzureEnabled) {
-    this.bpmAzureEnabled = bpmAzureEnabled;
-  }
-
   public void azureEnabledCheck() {
     if (!isAzureEnabled()) {
       throw new FeatureNotSupportedException("Azure features are not enabled");
@@ -86,7 +77,6 @@ public class FeatureConfiguration {
     logger.info("Feature: azure-enabled: {}", isAzureEnabled());
     logger.info("Feature: alpha1-enabled: {}", isAlpha1Enabled());
     logger.info("Feature: tps-enabled: {}", isTpsEnabled());
-    logger.info("Feature: bpm-azure-enabled: {}", isBpmAzureEnabled());
     logger.info("Feature: bpm-gcp-enabled: {}", isBpmGcpEnabled());
   }
 }

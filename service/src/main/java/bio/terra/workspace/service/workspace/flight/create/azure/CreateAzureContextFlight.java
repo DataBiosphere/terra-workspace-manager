@@ -32,16 +32,14 @@ public class CreateAzureContextFlight extends Flight {
     RetryRule dbRetry = RetryRules.shortDatabase();
 
     // check that we are allowed to link to this spend profile
-    if (appContext.getFeatureConfiguration().isBpmAzureEnabled()) {
-      addStep(
-          new CheckSpendProfileStep(
-              appContext.getWorkspaceDao(),
-              appContext.getSpendProfileService(),
-              workspaceUuid,
-              userRequest,
-              CloudPlatform.AZURE,
-              featureConfiguration.isBpmAzureEnabled()));
-    }
+    addStep(
+        new CheckSpendProfileStep(
+            appContext.getWorkspaceDao(),
+            appContext.getSpendProfileService(),
+            workspaceUuid,
+            userRequest,
+            CloudPlatform.AZURE,
+            true));
 
     // write the incomplete DB row to prevent concurrent creates
     addStep(

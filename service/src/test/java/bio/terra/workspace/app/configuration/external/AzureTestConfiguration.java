@@ -16,6 +16,7 @@ public class AzureTestConfiguration {
   private String tenantId;
   private String subscriptionId;
   private String managedResourceGroupId;
+  private String spendProfileId;
 
   // -- accessors --
 
@@ -41,5 +42,13 @@ public class AzureTestConfiguration {
 
   public void setManagedResourceGroupId(String managedResourceGroupId) {
     this.managedResourceGroupId = managedResourceGroupId;
+  }
+
+  public void setSpendProfileId(String spendProfileId) {
+    this.spendProfileId = spendProfileId;
+  }
+
+  public String getSpendProfileId() {
+    return spendProfileId;
   }
 }
