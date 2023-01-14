@@ -58,7 +58,6 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
  * <p>Use this instead of WorkspaceApiControllerTest, if you want to use real
  * bio.terra.workspace.service.iam.SamService.
  */
-
 @TestInstance(Lifecycle.PER_CLASS)
 public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 

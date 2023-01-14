@@ -65,6 +65,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -123,10 +124,20 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
     jobService.setFlightDebugInfoForTest(null);
     try {
       if (workspaceId != null) {
-        mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+        int status =
+            mockMvcUtils.deleteWorkspaceNoCheck(
+                userAccessUtils.defaultUserAuthRequest(), workspaceId);
+        assertTrue(
+            status == HttpStatus.NO_CONTENT.value() || status == HttpStatus.NOT_FOUND.value());
+        workspaceId = null;
       }
       if (workspaceId2 != null) {
-        mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
+        int status =
+            mockMvcUtils.deleteWorkspaceNoCheck(
+                userAccessUtils.defaultUserAuthRequest(), workspaceId2);
+        assertTrue(
+            status == HttpStatus.NO_CONTENT.value() || status == HttpStatus.NOT_FOUND.value());
+        workspaceId2 = null;
       }
     } catch (Exception ex) {
       logger.warn("Failed to delete workspaces after test");

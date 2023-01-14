@@ -42,7 +42,6 @@ import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 /** Utils for working with cloud objects. */
@@ -131,7 +130,7 @@ public class GcpCloudUtils {
 
     // Create a blob with retry to allow permission propagation
     RetryUtils.getWithRetryOnException(
-      () -> storageClient.create(blobInfo, GCS_FILE_CONTENTS.getBytes(StandardCharsets.UTF_8)));
+        () -> storageClient.create(blobInfo, GCS_FILE_CONTENTS.getBytes(StandardCharsets.UTF_8)));
   }
 
   /** Asserts bucket has file as per addFileToBucket(). */

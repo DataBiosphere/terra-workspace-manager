@@ -18,12 +18,11 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.model.EnumeratedJob;
 import bio.terra.workspace.service.job.model.EnumeratedJobs;
 import bio.terra.workspace.service.resource.model.WsmResource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Test utilities for working with Stairway. */
 public class StairwayTestUtils {
