@@ -1,6 +1,14 @@
 // Library Dependencies, Versions, etc.
 dependencies {
   ext {
+    commonsValidator = '1.7'
+    hashids = '1.0.3'
+    jacksonCore = '2.14.1'
+    liquidBaseCore = '4.18.0'
+    opencensusJaxrs = '0.31.1'
+    postgreSql = '42.5.1'
+    webJarsCore = '0.52'
+
     googleAnnotations = '1.10.1'
     googleAuth = '1.14.0'
     googleBom = '26.3.0'
@@ -25,27 +33,22 @@ dependencies {
     swagger = '4.15.5'
     spotbugsVersion = '4.7.3'
 
-    //--
-
-    apacheMath = '3.6.1'
-
+    googleBigquery = '2.20.1'
     hamcrest = '2.2'
-    jackson = '2.14.1'
-
-    jUnit = '5.9.2'
-    kubernetesClient = '17.0.0'
-    logback = '1.4.5'
-    slf4j = '2.0.6'
+    mockito = '4.11.0'
+    springFramework = '3.0.1'
+    testContainers = '1.17.6'
+    vavr = '0.10.4'
   }
 
   // Misc. versioned direct dependencies -- Dex
-  implementation group: "com.fasterxml.jackson.core", name: "jackson-core", version: "2.13.2"
-  implementation group: 'commons-validator', name: 'commons-validator', version: "1.7"
-  implementation group: "org.hashids", name: "hashids", version: "1.0.3"
-  implementation group: "org.liquibase", name: "liquibase-core", version: "4.8.0"
-  implementation group: "org.webjars", name: "webjars-locator-core", version: "0.46"
-  implementation group: "io.opencensus", name: "opencensus-contrib-http-jaxrs", version: "0.28.3"
-  runtimeOnly group: "org.postgresql", name: "postgresql", version: "42.3.3"
+  implementation group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: "${jacksonCore}"
+  implementation group: 'commons-validator', name: 'commons-validator', version: "${jacksonCore}"
+  implementation group: 'org.hashids', name: 'hashids', version: "${hashids}"
+  implementation group: 'org.liquibase', name: 'liquibase-core', version: "${liquidBaseCore}"
+  implementation group: 'org.webjars', name: 'webjars-locator-core', version: "${webJarsCore}"
+  implementation group: 'io.opencensus', name: 'opencensus-contrib-http-jaxrs', version: "${opencensusJaxrs}"
+  runtimeOnly group: 'org.postgresql', name: 'postgresql', version: "${postgreSql}"
 
   // Google dependencies
   constraints {
@@ -94,25 +97,22 @@ dependencies {
   swaggerCodegen gradle.librarySwaggerCli
   runtimeOnly group: 'org.webjars.npm', name: 'swagger-ui-dist', version: "${swagger}"
 
-  // Spotbugs dependency
+  // Spotbugs dependencies
   compileOnly group: 'com.github.spotbugs', name: 'spotbugs-annotations', version: "${spotbugsVersion}"
   spotbugs group: 'com.github.spotbugs', name: 'spotbugs', version: "${spotbugsVersion}"
-//--
 
-  // Test deps
-  testImplementation group: "io.vavr", name: "vavr", version: "0.10.3"
+  // Test dependencies
   testImplementation('org.springframework.boot:spring-boot-starter-test') {
     exclude group: 'com.vaadin.external.google', module: 'android-json'
   }
-  testImplementation group: "org.hamcrest", name: "hamcrest", version: "2.2"
-  // Allows us to mock final classes
-  testImplementation 'org.mockito:mockito-inline:2.13.0'
-  testImplementation 'com.google.cloud:google-cloud-bigquery'
+  testImplementation group: 'com.google.cloud', name: 'google-cloud-bigquery', version: "${googleBigquery}"
+  testImplementation group: 'io.vavr', name: 'vavr', version: "${vavr}"
+  testImplementation group: 'org.hamcrest', name: 'hamcrest', version:  "${hamcrest}"
+  testImplementation group: 'org.mockito', name: 'mockito-inline', version: "${mockito}"
+  testImplementation group: 'org.testcontainers', name: 'junit-jupiter', version: "${testContainers}"
+  testImplementation group: 'org.testcontainers', name: 'postgresql', version: "${testContainers}"
+  testImplementation group: 'org.testcontainers', name: 'testcontainers', version: "${testContainers}"
 
-  testImplementation "org.testcontainers:testcontainers:1.17.5"
-  testImplementation "org.testcontainers:junit-jupiter:1.17.5"
-  testImplementation "org.testcontainers:postgresql:1.17.5"
-
-  annotationProcessor group: "com.google.auto.value", name: "auto-value", version: "1.7.4"
-  annotationProcessor group: 'org.springframework.boot', name: "spring-boot-configuration-processor", version: "2.6.6"
+  annotationProcessor group: 'com.google.auto.value', name: 'auto-value', version: "${googleAnnotations}"
+  annotationProcessor "org.springframework.boot:spring-boot-configuration-processor:${springFramework}"
 }

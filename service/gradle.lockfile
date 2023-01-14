@@ -3,7 +3,7 @@
 # This file is expected to be part of source control.
 com.github.spotbugs:spotbugs-annotations:4.7.3=spotbugs
 com.github.spotbugs:spotbugs:4.7.3=spotbugs
-com.google.auto.value:auto-value:1.7.4=annotationProcessor
+com.google.auto.value:auto-value:1.10.1=annotationProcessor
 com.google.code.findbugs:jsr305:3.0.2=spotbugs,spotless865455342
 com.google.code.gson:gson:2.9.1=spotbugs
 com.google.errorprone:error_prone_annotations:2.7.1=spotless865455342
@@ -43,7 +43,7 @@ org.ow2.asm:asm:9.1=jacocoAnt
 org.ow2.asm:asm:9.4=spotbugs
 org.slf4j:slf4j-api:2.0.6=spotbugs,spotbugsSlf4j
 org.slf4j:slf4j-simple:2.0.0=spotbugsSlf4j
-org.springframework.boot:spring-boot-configuration-processor:2.6.6=annotationProcessor
+org.springframework.boot:spring-boot-configuration-processor:3.0.1=annotationProcessor
 org.xmlresolver:xmlresolver:4.4.3=spotbugs
 xml-apis:xml-apis:1.4.01=spotbugs
 empty=developmentOnly,spotbugsPlugins,swaggerTemplate,swaggerUI,testAnnotationProcessor
