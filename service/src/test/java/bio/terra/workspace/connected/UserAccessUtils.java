@@ -41,9 +41,7 @@ public class UserAccessUtils {
   @Value("${workspace.connected-test.billing-user-email}")
   private String billingUserEmail;
 
-  /**
-   * Email of user with no access to the billing profile
-   */
+  /** Email of user with no access to the billing profile */
   @Value("${workspace.connected-test.no-billing-access-user-email}")
   private String noBillingAccessUserEmail;
 
@@ -133,8 +131,8 @@ public class UserAccessUtils {
 
   public AuthenticatedUserRequest noBillingAccessUserAuthRequest() {
     return new AuthenticatedUserRequest()
-      .email(getNoBillingAccessUserEmail())
-      .token(Optional.of(noBillingAccessUserAccessToken().getTokenValue()));
+        .email(getNoBillingAccessUserEmail())
+        .token(Optional.of(noBillingAccessUserAccessToken().getTokenValue()));
   }
 
   /**

@@ -5,7 +5,6 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
 
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.FlightMap;
@@ -21,8 +20,6 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
-import bio.terra.workspace.service.iam.model.SamConstants.SamSpendProfileAction;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
@@ -54,12 +51,9 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 
 class CreateGcpContextFlightV2Test extends BaseConnectedTest {
 
@@ -78,11 +72,6 @@ class CreateGcpContextFlightV2Test extends BaseConnectedTest {
   @Autowired private UserAccessUtils userAccessUtils;
   @Autowired private WorkspaceConnectedTestUtils testUtils;
   @Autowired private GcpCloudContextService gcpCloudContextService;
-
-  @BeforeEach
-  void setUp() throws InterruptedException {
-
-  }
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
@@ -163,7 +152,8 @@ class CreateGcpContextFlightV2Test extends BaseConnectedTest {
   void createsProjectAndContext_unauthorizedSpendProfile_flightFailsAndGcpProjectNotCreated()
       throws Exception {
     UUID workspaceUuid = createWorkspace(spendUtils.defaultSpendId());
-    AuthenticatedUserRequest unauthorizedUserRequest = userAccessUtils.noBillingAccessUserAuthRequest();
+    AuthenticatedUserRequest unauthorizedUserRequest =
+        userAccessUtils.noBillingAccessUserAuthRequest();
 
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(

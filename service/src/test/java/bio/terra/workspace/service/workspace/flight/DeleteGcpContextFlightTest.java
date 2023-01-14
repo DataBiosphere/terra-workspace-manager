@@ -42,7 +42,7 @@ class DeleteGcpContextFlightTest extends BaseConnectedTest {
   /**
    * How long to wait for a create context Stairway flight to complete before timing out the test.
    */
-  private static final Duration CREATION_FLIGHT_TIMEOUT = Duration.ofMinutes(3);
+  private static final Duration CREATION_FLIGHT_TIMEOUT = Duration.ofMinutes(20);
 
   @Autowired private WorkspaceService workspaceService;
   @Autowired private WorkspaceConnectedTestUtils workspaceConnectedTestUtils;

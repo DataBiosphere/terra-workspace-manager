@@ -151,11 +151,11 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
    */
   @AfterEach
   public void resetFlightDebugInfo() {
+    jobService.setFlightDebugInfoForTest(null);
     StairwayTestUtils.enumerateJobsDump(
         jobService, workspaceId, userAccessUtils.defaultUserAuthRequest());
     StairwayTestUtils.enumerateJobsDump(
         jobService, workspaceId2, userAccessUtils.defaultUserAuthRequest());
-    jobService.setFlightDebugInfoForTest(null);
   }
 
   @AfterAll

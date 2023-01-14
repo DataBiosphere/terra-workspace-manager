@@ -18,12 +18,17 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.model.EnumeratedJob;
 import bio.terra.workspace.service.job.model.EnumeratedJobs;
 import bio.terra.workspace.service.resource.model.WsmResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 
 /** Test utilities for working with Stairway. */
 public class StairwayTestUtils {
+  private static final Logger logger = LoggerFactory.getLogger(StairwayTestUtils.class);
+
   private StairwayTestUtils() {}
 
   /**
@@ -39,6 +44,13 @@ public class StairwayTestUtils {
       throws DatabaseOperationException, StairwayExecutionException, InterruptedException,
           DuplicateFlightIdException {
     String flightId = stairway.createFlightId();
+    // TODO(dd): Remove this before merge
+    // ^^^^^^^^^^^^^^^
+    // To see whether GCP propagation ever completes, force this timeout very high.
+    logger.warn("--> Overriding poll timeout for GCP permission propagation diagnosis <--");
+    timeout = Duration.ofMinutes(75);
+    // ^^^^^^^^^^^^^^^
+
     stairway.submitWithDebugInfo(
         flightId, flightClass, inputParameters, /* shouldQueue= */ false, debugInfo);
     return pollUntilComplete(flightId, stairway, timeout.dividedBy(20), timeout);

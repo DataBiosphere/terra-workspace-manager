@@ -54,7 +54,6 @@ import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.api.services.cloudresourcemanager.v3.model.Project;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -105,6 +104,7 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
 
   @BeforeEach
   void setup() throws Exception {
+    jobService.setFlightDebugInfoForTest(null);
     doReturn(true).when(mockDataRepoService).snapshotReadable(any(), any(), any());
     workspaceId =
         mockMvcUtils
@@ -118,6 +118,9 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
    */
   @AfterEach
   public void resetFlightDebugInfo() {
+    // Reset the debug info before trying to delete. Otherwise, the delete flight can have
+    // unexpected retry failures.
+    jobService.setFlightDebugInfoForTest(null);
     try {
       if (workspaceId != null) {
         mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
@@ -128,8 +131,6 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
     } catch (Exception ex) {
       logger.warn("Failed to delete workspaces after test");
     }
-
-    jobService.setFlightDebugInfoForTest(null);
   }
 
   @Test

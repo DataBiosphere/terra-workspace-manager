@@ -82,7 +82,7 @@ public class CreateGcpContextFlightV2 extends Flight {
     addStep(new CreatePetSaStep(appContext.getSamService(), userRequest), shortRetry);
 
     // Wait for the project permissions to propagate.
-    // The SLA is 99.5% of the time it finishes in under 7 minutes.
+    // The SLO is 99.5% of the time it finishes in under 7 minutes.
     addStep(new WaitForProjectPermissionsStep(userRequest));
 
     // Store the cloud context data and unlock the database row
