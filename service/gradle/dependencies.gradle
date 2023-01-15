@@ -36,7 +36,6 @@ dependencies {
     googleBigquery = '2.20.1'
     hamcrest = '2.2'
     mockito = '4.11.0'
-    springFramework = '3.0.1'
     testContainers = '1.17.6'
     vavr = '0.10.4'
   }
@@ -114,5 +113,5 @@ dependencies {
   testImplementation group: 'org.testcontainers', name: 'testcontainers', version: "${testContainers}"
 
   annotationProcessor group: 'com.google.auto.value', name: 'auto-value', version: "${googleAnnotations}"
-  annotationProcessor "org.springframework.boot:spring-boot-configuration-processor:${springFramework}"
+  annotationProcessor "org.springframework.boot:spring-boot-configuration-processor:${springBootVersion}"
 }
