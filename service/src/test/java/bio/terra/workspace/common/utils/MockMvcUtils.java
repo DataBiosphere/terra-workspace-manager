@@ -188,7 +188,7 @@ public class MockMvcUtils {
   public static final String CREATE_CLOUD_CONTEXT_PATH_FORMAT =
       "/api/workspaces/v1/%s/cloudcontexts";
   public static final String DELETE_GCP_CLOUD_CONTEXT_PATH_FORMAT =
-      "/api/workspaces/v1/%s/cloudcontexts/gcp";
+      "/api/workspaces/v1/%s/cloudcontexts/GCP";
   public static final String GET_CLOUD_CONTEXT_PATH_FORMAT =
       "/api/workspaces/v1/%s/cloudcontexts/result/%s";
   public static final String CREATE_AZURE_IP_PATH_FORMAT =

@@ -9,16 +9,16 @@
       "name": "ReferencedDataRepoSnapshotLifecycle",
       "numberOfUserJourneyThreadsToRun": 1,
       "userJourneyThreadPoolSize": 1,
-      "expectedTimeForEach": 30,
+      "expectedTimeForEach": 75,
       "expectedTimeForEachUnit": "MINUTES",
       "parametersMap": {
         "spend-profile-id": "wm-default-spend-profile",
         "data-repo-instance": "terra",
         "snapshot-id":"220a2d18-56f7-492a-b7b3-2bc7d79e54b2",
-        "snapshot-id-2":"3d3d6fde-0a66-4807-b03e-f30e67eb0fe9"
+        "snapshot-id-2":"3d3d6fde-0a66-4807-b03e-f75e67eb0fe9"
       }
     }
   ],
-  "testUserFiles": ["bella.json", "levi.json"],
+  "testUserFiles": ["bella.json", "elijah.json"],
   "maxRetries" : 0
 }

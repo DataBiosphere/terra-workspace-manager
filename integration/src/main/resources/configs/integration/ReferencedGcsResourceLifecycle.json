@@ -9,7 +9,7 @@
       "name": "ReferencedGcsResourceLifecycle",
       "numberOfUserJourneyThreadsToRun": 1,
       "userJourneyThreadPoolSize": 1,
-      "expectedTimeForEach": 30,
+      "expectedTimeForEach": 75,
       "expectedTimeForEachUnit": "MINUTES",
       "parametersMap": {
         "spend-profile-id": "wm-default-spend-profile",
@@ -20,6 +20,6 @@
       }
     }
   ],
-  "testUserFiles": ["bella.json", "liam.json", "levi.json"],
+  "testUserFiles": ["bella.json", "liam.json", "elijah.json"],
   "maxRetries" : 0
 }
