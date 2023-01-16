@@ -3,6 +3,7 @@ dependencies {
         apacheMath = '3.6.1'
         hamcrest = '2.2'
         jackson = '2.14.1'
+        javaFormat = '1.15.0'
         jUnit = '5.9.2'
         kubernetesClient = '17.0.0'
         logback = '1.4.5'
@@ -31,6 +32,7 @@ dependencies {
     // Misc. versioned direct dependencies
     implementation group: 'ch.qos.logback', name: 'logback-classic', version: "${logback}"
     implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: "${jackson}"
+    implementation group: 'com.google.googlejavaformat', name: 'google-java-format', version: "${javaFormat}"
     implementation group: 'io.kubernetes', name: 'client-java', version: "${kubernetesClient}"
     implementation group: 'org.apache.commons', name: 'commons-math3', version: "${apacheMath}"
     implementation group: 'org.hamcrest', name: 'hamcrest', version: "${hamcrest}"
