@@ -18,6 +18,7 @@ import bio.terra.workspace.service.resource.referenced.flight.create.CreateRefer
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
+
 import java.util.Optional;
 import java.util.UUID;
 
@@ -123,16 +124,28 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
               userRequest,
               flightBeanBag.getGcpCloudContextService(),
               resolvedCloningInstructions));
+
       if (CloningInstructions.COPY_RESOURCE == resolvedCloningInstructions) {
-        addStep(
-            new CreateTableCopyJobsStep(
-                flightBeanBag.getCrlService(),
-                flightBeanBag.getGcpCloudContextService(),
-                sourceDataset),
-            RetryRules.cloud());
-        addStep(
-            new CompleteTableCopyJobsStep(flightBeanBag.getCrlService()),
-            RetryRules.cloudLongRunning());
+        if (!(inputParameters.get(ControlledResourceKeys.LOCATION, String.class).equals(sourceResource.getRegion()))) {
+            addStep(
+                new CopyBigQueryDatasetDifferentRegionStep(
+                    flightBeanBag.getSamService(),
+                    sourceDataset,
+                    userRequest,
+                    flightBeanBag.getGcpCloudContextService()
+                )
+            );
+        } else {
+            addStep(
+                new CreateTableCopyJobsStep(
+                    flightBeanBag.getCrlService(),
+                    flightBeanBag.getGcpCloudContextService(),
+                    sourceDataset),
+                RetryRules.cloud());
+            addStep(
+                new CompleteTableCopyJobsStep(flightBeanBag.getCrlService()),
+                RetryRules.cloudLongRunning());
+        }
       }
     } else {
       throw new IllegalArgumentException(
@@ -140,4 +153,6 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
               "Cloning Instructions %s not supported", resolvedCloningInstructions.toString()));
     }
   }
+
 }
+
