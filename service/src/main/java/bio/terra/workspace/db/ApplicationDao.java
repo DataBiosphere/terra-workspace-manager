@@ -355,7 +355,9 @@ public class ApplicationDao {
     }
   }
 
-  /** @return List of all applications in the database */
+  /**
+   * @return List of all applications in the database
+   */
   @ReadTransaction
   public List<WsmApplication> listApplications() {
     final String sql =
