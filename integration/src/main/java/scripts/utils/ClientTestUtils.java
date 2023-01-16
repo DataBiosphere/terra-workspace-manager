@@ -270,7 +270,8 @@ public class ClientTestUtils {
    */
   public static @Nullable <T> T getWithRetryOnException(SupplierWithException<T> supplier)
       throws Exception {
-    return getWithRetryOnException(supplier, DEFAULT_RETRY_TOTAL_DURATION, DEFAULT_SLEEP_DURATION, null);
+    return getWithRetryOnException(
+        supplier, DEFAULT_RETRY_TOTAL_DURATION, DEFAULT_SLEEP_DURATION, null);
   }
 
   public static void runWithRetryOnException(Runnable fn) throws Exception {
@@ -289,17 +290,18 @@ public class ClientTestUtils {
    * @param supplier - code returning the result or throwing an exception
    * @param totalDuration - total amount of time to retry
    * @param sleepDuration - amount of time to sleep between retries
-   * @param retryExceptionList - nullable; a list of exception classes. If null, any exception is retried
+   * @param retryExceptionList - nullable; a list of exception classes. If null, any exception is
+   *     retried
    * @param <T> - type of result
    * @return - result from supplier, if no exception
    * @throws InterruptedException if the sleep is interrupted
    */
   public static <T> T getWithRetryOnException(
-    SupplierWithException<T> supplier,
-    Duration totalDuration,
-    Duration sleepDuration,
-    @Nullable List<Class<? extends Exception>> retryExceptionList
-    ) throws Exception {
+      SupplierWithException<T> supplier,
+      Duration totalDuration,
+      Duration sleepDuration,
+      @Nullable List<Class<? extends Exception>> retryExceptionList)
+      throws Exception {
 
     T result = null;
     Instant endTime = Instant.now().plus(totalDuration);
@@ -314,17 +316,18 @@ public class ClientTestUtils {
           throw e;
         }
         logger.info(
-          "Exception \"{}\". Waiting {} seconds. End time is {}",
-          e.getMessage(),
-          sleepDuration.toSeconds(),
-          endTime);
+            "Exception \"{}\". Waiting {} seconds. End time is {}",
+            e.getMessage(),
+            sleepDuration.toSeconds(),
+            endTime);
         TimeUnit.MILLISECONDS.sleep(sleepDuration.toMillis());
       }
     }
     return result;
   }
 
-  private static boolean isRetryable(Exception e, @Nullable List<Class<? extends Exception>> retryExceptionList) {
+  private static boolean isRetryable(
+      Exception e, @Nullable List<Class<? extends Exception>> retryExceptionList) {
     // If we didn't get a list, then all exceptions are considered retryable
     if (retryExceptionList == null) {
       return true;

@@ -62,7 +62,7 @@ public class WaitForProjectPermissionsStep implements Step {
     try {
       RetryUtils.getWithRetryOnException(
           () -> testIam(storage),
-          Duration.ofMinutes(75), /* total allowed duration */
+          Duration.ofMinutes(30), /* total allowed duration */
           RetryUtils.DEFAULT_RETRY_SLEEP_DURATION,
           0.5, /* increase wait by half again as much */
           RetryUtils.DEFAULT_RETRY_SLEEP_DURATION_MAX,
