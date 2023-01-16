@@ -62,7 +62,7 @@ dependencies {
     // hk2 is required to use datarepo client, but not correctly exposed by the client
     implementation group: 'org.glassfish.jersey.inject', name: 'jersey-hk2', version: "${jersey}"
 
-    // OpenAPI (swagger) deps
+    // OpenAPI (swagger) dependencies
     implementation gradle.librarySwaggerAnnotations
 
     // Spotbugs dependency
