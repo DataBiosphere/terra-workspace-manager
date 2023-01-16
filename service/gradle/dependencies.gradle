@@ -4,7 +4,7 @@ dependencies {
     commonsValidator = '1.7'
     hashids = '1.0.3'
     jacksonCore = '2.14.1'
-    jakartaValidation = '3.0.2'
+//    jakartaValidation = '3.0.2'
     liquidBaseCore = '4.18.0'
     opencensusJaxrs = '0.31.1'
     postgreSql = '42.5.1'
@@ -44,7 +44,6 @@ dependencies {
   // Misc. versioned direct dependencies
   implementation group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: "${jacksonCore}"
   implementation group: 'commons-validator', name: 'commons-validator', version: "${commonsValidator}"
-  implementation group: 'jakarta.validation', name: 'jakarta.validation-api', version: "${jakartaValidation}"
   implementation group: 'org.hashids', name: 'hashids', version: "${hashids}"
   implementation group: 'org.liquibase', name: 'liquibase-core', version: "${liquidBaseCore}"
   implementation group: 'org.webjars', name: 'webjars-locator-core', version: "${webJarsCore}"
@@ -82,7 +81,7 @@ dependencies {
   implementation group: 'com.squareup.okhttp3', name: 'logging-interceptor', version: "${okHttp3}"
 
   // Spring dependencies (versions controlled by Spring)
-  //implementation group: 'javax.validation', name: 'validation-api'
+  //implementation group: 'jakarta.validation.Valid', name: 'validation-api'
   implementation group: 'org.apache.commons', name: 'commons-dbcp2'
   implementation group: 'org.apache.commons', name: 'commons-lang3'
   implementation group: 'org.apache.commons', name: 'commons-pool2'
