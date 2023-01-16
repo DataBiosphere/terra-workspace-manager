@@ -1,13 +1,12 @@
 dependencies {
   ext {
-    jacksonDatatypeVersion = '2.14.1'
-    jakartaAnnotation = '2.1.1'
+   // jakartaAnnotation = '2.1.1'
     jerseyVersion = '3.1.0'
   }
 
   // Misc. versioned direct dependencies
-  implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310', version: "${jacksonDatatypeVersion}"
-  implementation group: 'jakarta.annotation', name: 'jakarta.annotation-api', version: "${jakartaAnnotation}"
+  implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310', version: "${gradle.ext.libraryJacksonVersion}"
+  //implementation group: 'jakarta.annotation', name: 'jakarta.annotation-api', version: "${jakartaAnnotation}"
   implementation group: 'org.glassfish.jersey.core', name: 'jersey-client', version: "${jerseyVersion}"
   implementation group: 'org.glassfish.jersey.media', name: 'jersey-media-json-jackson', version: "${jerseyVersion}"
   implementation group: 'org.glassfish.jersey.media', name: 'jersey-media-multipart', version: "${jerseyVersion}"

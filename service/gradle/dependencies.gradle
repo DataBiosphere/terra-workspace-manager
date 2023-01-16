@@ -3,8 +3,8 @@ dependencies {
   ext {
     commonsValidator = '1.7'
     hashids = '1.0.3'
-    jacksonCore = '2.14.1'
     jakartaValidation = '3.0.2'
+    javaxValidation = '2.0.1.Final'
     liquidBaseCore = '4.18.0'
     opencensusJaxrs = '0.31.1'
     postgreSql = '42.5.1'
@@ -17,7 +17,7 @@ dependencies {
     guava = '31.1-jre'
 
     azureBlob = '12.20.2'
-    azureMonitor = '2.22.0'
+    azureMonitor = '2.19.0' // '2.20.0 breaks EnableVmLoggingStep.java:createDataCollectionRuleAssociation()
 
     bpmClient = '0.1.84-SNAPSHOT'
     cloudResourceLib = '1.2.5-SNAPSHOT'
@@ -42,9 +42,9 @@ dependencies {
   }
 
   // Misc. versioned direct dependencies
-  implementation group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: "${jacksonCore}"
+  implementation group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: "${gradle.ext.libraryJacksonVersion}"
   implementation group: 'commons-validator', name: 'commons-validator', version: "${commonsValidator}"
-  implementation group: 'jakarta.validation', name: 'jakarta.validation-api', version: "${jakartaValidation}"
+  implementation group: 'javax.validation', name: 'validation-api', version: "${javaxValidation}"
   implementation group: 'org.hashids', name: 'hashids', version: "${hashids}"
   implementation group: 'org.liquibase', name: 'liquibase-core', version: "${liquidBaseCore}"
   implementation group: 'org.webjars', name: 'webjars-locator-core', version: "${webJarsCore}"
