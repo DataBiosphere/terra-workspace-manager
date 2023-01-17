@@ -73,6 +73,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
 
   @BeforeAll
   public void setup() throws InterruptedException {
+    initSpendProfileMock();
     sharedWorkspace = azureTestUtils.createWorkspace(workspaceService);
     workspaceUuid = sharedWorkspace.getWorkspaceId();
 

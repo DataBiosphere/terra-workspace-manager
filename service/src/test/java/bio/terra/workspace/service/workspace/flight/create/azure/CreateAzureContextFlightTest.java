@@ -8,21 +8,17 @@ import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
-import bio.terra.workspace.common.utils.AzureTestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
-import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import java.time.Duration;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 
 class CreateAzureContextFlightTest extends BaseAzureConnectedTest {
@@ -32,25 +28,11 @@ class CreateAzureContextFlightTest extends BaseAzureConnectedTest {
   @Autowired private WorkspaceService workspaceService;
   @Autowired private AzureCloudContextService azureCloudContextService;
   @Autowired private JobService jobService;
-  @Autowired private AzureTestUtils azureTestUtils;
   @Autowired private UserAccessUtils userAccessUtils;
 
   @BeforeEach
   void setUp() {
-    Mockito.when(
-            mockSpendProfileService()
-                .authorizeLinking(
-                    Mockito.eq(azureTestUtils.getSpendProfileId()),
-                    Mockito.eq(true),
-                    Mockito.any()))
-        .thenReturn(
-            new SpendProfile(
-                azureTestUtils.getSpendProfileId(),
-                CloudPlatform.AZURE,
-                null,
-                UUID.fromString(azureTestUtils.getAzureCloudContext().getAzureTenantId()),
-                UUID.fromString(azureTestUtils.getAzureCloudContext().getAzureSubscriptionId()),
-                azureTestUtils.getAzureCloudContext().getAzureResourceGroupId()));
+    initSpendProfileMock();
   }
 
   @Test
