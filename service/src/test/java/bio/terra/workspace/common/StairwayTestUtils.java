@@ -43,9 +43,10 @@ public class StairwayTestUtils {
       throws DatabaseOperationException, StairwayExecutionException, InterruptedException,
           DuplicateFlightIdException {
     String flightId = stairway.createFlightId();
-    // TODO(dd): Remove this before merge
+    // TODO(PF-1408): Remove/adjust this when all fixes are in
     // ^^^^^^^^^^^^^^^
-    // To see whether GCP propagation ever completes, force this timeout very high.
+    // Allow for GCP propagation to complete. In the second part of the PF-1408 work, we can decide
+    // the appropriate timeout for those cases and restore timeout control to the tests.
     logger.warn("--> Overriding poll timeout for GCP permission propagation diagnosis <--");
     timeout = Duration.ofMinutes(75);
     // ^^^^^^^^^^^^^^^
