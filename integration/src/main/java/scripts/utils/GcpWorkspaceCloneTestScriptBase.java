@@ -58,6 +58,7 @@ public abstract class GcpWorkspaceCloneTestScriptBase extends WorkspaceAllocateT
     reader = testUsers.get(1);
     ClientTestUtils.grantRole(workspaceApi, getWorkspaceId(), reader, IamRole.READER);
     sourceProjectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
+    ClientTestUtils.workspaceRoleWaitForPropagation(reader, sourceProjectId);
     destinationWorkspaceId = UUID.randomUUID();
     WorkspaceApi secondUserWorkspaceApi = ClientTestUtils.getWorkspaceClient(reader, server);
     createWorkspace(destinationWorkspaceId, getSpendProfileId(), secondUserWorkspaceApi);

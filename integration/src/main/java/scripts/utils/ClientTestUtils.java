@@ -421,7 +421,6 @@ public class ClientTestUtils {
   /** An interface for an arbitrary workspace operation that throws an {@link ApiException}. */
   @FunctionalInterface
   public interface WorkspaceOperation<T> {
-
     T apply() throws ApiException;
   }
 
