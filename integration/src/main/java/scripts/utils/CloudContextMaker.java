@@ -41,14 +41,13 @@ public class CloudContextMaker {
    * string
    */
   public static String createAzureCloudContext(
-      UUID workspaceUuid, WorkspaceApi workspaceApi, AzureContext context) throws Exception {
+      UUID workspaceUuid, WorkspaceApi workspaceApi) throws Exception {
     String contextJobId = UUID.randomUUID().toString();
 
     var createContext =
         new CreateCloudContextRequest()
             .cloudPlatform(CloudPlatform.AZURE)
-            .jobControl(new JobControl().id(contextJobId))
-            .azureContext(context);
+            .jobControl(new JobControl().id(contextJobId));
 
     logger.info("Creating Azure cloud context");
     CreateCloudContextResult contextResult =
