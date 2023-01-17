@@ -192,8 +192,7 @@ components:
       description: The cloud platform (gcp, azure)
       required: true
       schema:
-        type: string
-        enum: [ "gcp", "azure" ]
+        $ref: '#/components/schemas/CloudPlatform'
 
     WsmPolicyLocation:
       name: location

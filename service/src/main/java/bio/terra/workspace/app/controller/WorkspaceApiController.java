@@ -684,11 +684,11 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   }
 
   @Override
-  public ResponseEntity<ApiRegions> listValidRegions(UUID workspaceId, String platform) {
+  public ResponseEntity<ApiRegions> listValidRegions(UUID workspaceId, ApiCloudPlatform platform) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.READ);
 
-    List<String> datacenters = tpsApiDispatch.listValidRegions(workspaceId, platform);
+    List<String> datacenters = tpsApiDispatch.listValidRegions(workspaceId, platform.name());
     ApiRegions apiDataCenterList = new ApiRegions();
     apiDataCenterList.addAll(datacenters);
     return new ResponseEntity<>(apiDataCenterList, HttpStatus.OK);

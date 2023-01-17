@@ -1,11 +1,11 @@
 paths:
-  /api/policies/v1/getRegionInfo:
+  /api/policies/v1/getLocationInfo:
     parameters:
     - $ref: '#/components/parameters/Platform'
     - $ref: '#/components/parameters/WsmPolicyLocation'
     get:
-      summary: Get the cloud region info.
-      operationId: getRegionInfo
+      summary: Get the cloud location info.
+      operationId: getLocationInfo
       tags: [policy]
       responses:
         '200':
