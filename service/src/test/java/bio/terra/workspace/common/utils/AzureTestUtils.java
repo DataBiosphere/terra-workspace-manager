@@ -47,9 +47,7 @@ public class AzureTestUtils {
 
   public Workspace createWorkspace(WorkspaceService workspaceService) {
     Workspace workspace =
-        WorkspaceFixtures.defaultWorkspaceBuilder(null)
-            .spendProfileId(new SpendProfileId(UUID.randomUUID().toString()))
-            .build();
+        WorkspaceFixtures.defaultWorkspaceBuilder(null).spendProfileId(getSpendProfileId()).build();
     workspaceService.createWorkspace(
         workspace, null, null, userAccessUtils.defaultUserAuthRequest());
     return workspace;
@@ -125,5 +123,9 @@ public class AzureTestUtils {
         azureTestConfiguration.getTenantId(),
         azureTestConfiguration.getSubscriptionId(),
         azureTestConfiguration.getManagedResourceGroupId());
+  }
+
+  public SpendProfileId getSpendProfileId() {
+    return new SpendProfileId(azureTestConfiguration.getSpendProfileId());
   }
 }

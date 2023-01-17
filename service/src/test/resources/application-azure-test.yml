@@ -13,6 +13,8 @@ workspace:
     #for user with 'default-user-email'
     default-landing-zone-id: 435afea6-63b2-4a60-8e6e-9dbf294b783a
 
+    "spend-profile-id": "wm-default-spend-profile"
+
 feature:
   # Enable azure support when running azure tests
   azure-enabled: true
