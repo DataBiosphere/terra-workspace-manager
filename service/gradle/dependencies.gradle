@@ -17,7 +17,7 @@ dependencies {
     guava = '31.1-jre'
 
     azureBlob = '12.20.2'
-    azureMonitor = '2.19.0' // '2.20.0 breaks EnableVmLoggingStep.java:createDataCollectionRuleAssociation()
+    azureMonitor = '2.18.0' // '2.19.*' breaks EnableVmLoggingStep.java:createDataCollectionRuleAssociation()
 
     bpmClient = '0.1.84-SNAPSHOT'
     cloudResourceLib = '1.2.5-SNAPSHOT'

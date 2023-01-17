@@ -23,6 +23,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -216,12 +218,12 @@ public class GcsApiConversions {
 
     resultBuilder.setAge(condition.getAge());
     // This DateTime object doesn't include a time in the BucketInfo structure
-    resultBuilder.setCreatedBefore(toGoogleDateTimeDateOnly(condition.getCreatedBefore()));
+    resultBuilder.setCreatedBeforeOffsetDateTime(toDateOnly(condition.getCreatedBefore()));
     resultBuilder.setNumberOfNewerVersions(condition.getNumNewerVersions());
     resultBuilder.setIsLive(condition.isLive());
     resultBuilder.setDaysSinceNoncurrentTime(condition.getDaysSinceNoncurrentTime());
-    resultBuilder.setNoncurrentTimeBefore(toGoogleDateTime(condition.getNoncurrentTimeBefore()));
-    resultBuilder.setCustomTimeBefore(toGoogleDateTime(condition.getCustomTimeBefore()));
+    resultBuilder.setNoncurrentTimeBeforeOffsetDateTime(toDateOnly(condition.getNoncurrentTimeBefore()));
+    resultBuilder.setCustomTimeBeforeOffsetDateTime(toDateOnly(condition.getCustomTimeBefore()));
     resultBuilder.setDaysSinceCustomTime(condition.getDaysSinceCustomTime());
 
     resultBuilder.setMatchesStorageClass(
@@ -234,7 +236,7 @@ public class GcsApiConversions {
   public static ApiGcpGcsBucketLifecycleRuleCondition toWsmApi(LifecycleCondition condition) {
     return new ApiGcpGcsBucketLifecycleRuleCondition()
         .age(condition.getAge())
-        .createdBefore(toOffsetDateTime(condition.getCreatedBefore()))
+        .createdBefore(condition.getCreatedBeforeOffsetDateTime())
         .numNewerVersions(condition.getNumberOfNewerVersions())
         .live(condition.getIsLive())
         .matchesStorageClass(
@@ -242,8 +244,8 @@ public class GcsApiConversions {
                 .map(c -> c.stream().map(GcsApiConversions::toWsmApi).collect(Collectors.toList()))
                 .orElse(null))
         .daysSinceNoncurrentTime(condition.getDaysSinceNoncurrentTime())
-        .noncurrentTimeBefore(toOffsetDateTime(condition.getNoncurrentTimeBefore()))
-        .customTimeBefore(toOffsetDateTime(condition.getCustomTimeBefore()))
+        .noncurrentTimeBefore(condition.getNoncurrentTimeBeforeOffsetDateTime())
+        .customTimeBefore(condition.getCustomTimeBeforeOffsetDateTime())
         .daysSinceCustomTime(condition.getDaysSinceCustomTime());
   }
 
@@ -268,6 +270,11 @@ public class GcsApiConversions {
         offsetDateTime.toInstant().toEpochMilli(),
         Math.toIntExact(
             Duration.ofSeconds(offsetDateTime.getOffset().getTotalSeconds()).toMinutes()));
+  }
+
+  @Nullable
+  public static OffsetDateTime toDateOnly(@Nullable OffsetDateTime offsetDateTime) {
+    return (offsetDateTime == null) ? null : offsetDateTime.truncatedTo(ChronoUnit.DAYS);
   }
 
   @Nullable
