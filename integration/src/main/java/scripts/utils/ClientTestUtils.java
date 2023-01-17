@@ -259,9 +259,9 @@ public class ClientTestUtils {
   }
 
   /**
-   * Get a result from a call that might throw an exception. Treat the exception as retry-able.
-   * This structure is useful for situations where we are
-   * waiting on a cloud IAM permission change to take effect.
+   * Get a result from a call that might throw an exception. Treat the exception as retry-able. This
+   * structure is useful for situations where we are waiting on a cloud IAM permission change to
+   * take effect.
    *
    * @param supplier - code returning the result or throwing an exception
    * @param <T> - type of result

@@ -180,7 +180,11 @@ public final class FlightUtils {
    * @param maxWait maximum time to wait
    */
   public static FlightState waitForFlightExponential(
-      Stairway stairway, String flightId, Duration initialInterval, Duration maxInterval, Duration maxWait)
+      Stairway stairway,
+      String flightId,
+      Duration initialInterval,
+      Duration maxInterval,
+      Duration maxWait)
       throws InterruptedException {
     final Instant endTime = Instant.now().plus(maxWait);
     Duration sleepInterval = initialInterval;

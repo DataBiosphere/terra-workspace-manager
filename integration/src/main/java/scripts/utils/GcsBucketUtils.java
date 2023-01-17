@@ -172,11 +172,11 @@ public class GcsBucketUtils {
                     .lifecycle(new GcpGcsBucketLifecycle().rules(BUCKET_LIFECYCLE_RULES)));
 
     logger.info(
-      "Creating {} {} bucket {} in workspace {}",
-      managedBy.name(),
-      accessScope.name(),
-      bucketName,
-      workspaceUuid);
+        "Creating {} {} bucket {} in workspace {}",
+        managedBy.name(),
+        accessScope.name(),
+        bucketName,
+        workspaceUuid);
     CreatedControlledGcpGcsBucket result = resourceApi.createBucket(body, workspaceUuid);
     logger.info(
         "Created {} {} bucket {} resource ID {} in workspace {}",

@@ -227,13 +227,14 @@ public class BqDatasetUtils {
         accessScope.name(),
         datasetId,
         workspaceUuid);
-    GcpBigQueryDatasetResource result = resourceApi.createBigQueryDataset(body, workspaceUuid).getBigQueryDataset();
+    GcpBigQueryDatasetResource result =
+        resourceApi.createBigQueryDataset(body, workspaceUuid).getBigQueryDataset();
     logger.info(
-      "Created {} {} BQ dataset {} workspace {}",
-      managedBy.name(),
-      accessScope.name(),
-      datasetId,
-      workspaceUuid);
+        "Created {} {} BQ dataset {} workspace {}",
+        managedBy.name(),
+        accessScope.name(),
+        datasetId,
+        workspaceUuid);
     return result;
   }
 
@@ -322,31 +323,33 @@ public class BqDatasetUtils {
                     .build()));
 
     ClientTestUtils.getWithRetryOnException(
-      () -> bigQueryClient.query(
-        QueryJobConfiguration.newBuilder(
-                "INSERT INTO `"
-                    + projectId
-                    + "."
-                    + dataset.getAttributes().getDatasetId()
-                    + ".department` (department_id, manager_id, name) "
-                    + "VALUES(201, 101, 'ocean'), (202, 102, 'sky');")
-            .build()));
+        () ->
+            bigQueryClient.query(
+                QueryJobConfiguration.newBuilder(
+                        "INSERT INTO `"
+                            + projectId
+                            + "."
+                            + dataset.getAttributes().getDatasetId()
+                            + ".department` (department_id, manager_id, name) "
+                            + "VALUES(201, 101, 'ocean'), (202, 102, 'sky');")
+                    .build()));
 
     // double-check the rows are there
     TableResult employeeTableResult =
-      ClientTestUtils.getWithRetryOnException(
-        () -> bigQueryClient.query(
-            QueryJobConfiguration.newBuilder(
-                    "SELECT * FROM `"
-                        + projectId
-                        + "."
-                        + dataset.getAttributes().getDatasetId()
-                        + "."
-                        + BQ_EMPLOYEE_TABLE_NAME
-                        + "`;")
-                .setDestinationTable(resultTableId)
-                .setWriteDisposition(WriteDisposition.WRITE_TRUNCATE)
-                .build()));
+        ClientTestUtils.getWithRetryOnException(
+            () ->
+                bigQueryClient.query(
+                    QueryJobConfiguration.newBuilder(
+                            "SELECT * FROM `"
+                                + projectId
+                                + "."
+                                + dataset.getAttributes().getDatasetId()
+                                + "."
+                                + BQ_EMPLOYEE_TABLE_NAME
+                                + "`;")
+                        .setDestinationTable(resultTableId)
+                        .setWriteDisposition(WriteDisposition.WRITE_TRUNCATE)
+                        .build()));
     long numRows =
         StreamSupport.stream(employeeTableResult.getValues().spliterator(), false).count();
     assertThat(numRows, is(greaterThanOrEqualTo(2L)));
