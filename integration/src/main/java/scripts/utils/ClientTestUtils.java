@@ -18,6 +18,7 @@ import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiClient;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.ErrorReport;
+import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.JobReport;
 import bio.terra.workspace.model.JobReport.StatusEnum;
@@ -50,7 +51,7 @@ import org.slf4j.LoggerFactory;
 
 public class ClientTestUtils {
   // Retry default parameters
-  public static final Duration DEFAULT_RETRY_TOTAL_DURATION = Duration.ofMinutes(7);
+  public static final Duration DEFAULT_RETRY_TOTAL_DURATION = Duration.ofMinutes(30);
   public static final Duration DEFAULT_SLEEP_DURATION = Duration.ofSeconds(15);
 
   public static final String RESOURCE_NAME_PREFIX = "terratest";
@@ -422,5 +423,42 @@ public class ClientTestUtils {
   public interface WorkspaceOperation<T> {
 
     T apply() throws ApiException;
+  }
+
+  // TEMPORARY MEASURE UNTIL WE DO THE WAITING IN WSM
+  public static void grantRoleWaitForPropagation(
+      WorkspaceApi workspaceApi,
+      UUID workspaceUuid,
+      String gcpProjectId,
+      TestUserSpecification grantee,
+      IamRole roleToGrant)
+      throws Exception {
+    // Make sure it this will work
+    assertTrue(roleToGrant != IamRole.APPLICATION && roleToGrant != IamRole.DISCOVERER);
+
+    grantRole(workspaceApi, workspaceUuid, grantee, roleToGrant);
+
+    workspaceRoleWaitForPropagation(grantee, gcpProjectId);
+  }
+
+  public static void grantRole(
+      WorkspaceApi workspaceApi,
+      UUID workspaceUuid,
+      TestUserSpecification grantee,
+      IamRole roleToGrant)
+      throws Exception {
+    // Have WSM do the grant
+    workspaceApi.grantRole(
+        new GrantRoleRequestBody().memberEmail(grantee.userEmail), workspaceUuid, roleToGrant);
+    logger.info("Added {} as {} to workspace {}", grantee.userEmail, roleToGrant, workspaceUuid);
+  }
+
+  public static void workspaceRoleWaitForPropagation(
+      TestUserSpecification grantee, String gcpProjectId) throws Exception {
+    Storage granteeStorage = getGcpStorageClient(grantee, gcpProjectId);
+
+    // Wait for the grantee to have storage.bucket.list permission,
+    // indicating that the grant has been propagated to the project.
+    getWithRetryOnException(granteeStorage::list);
   }
 }

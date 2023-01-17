@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 /** RetryUtils provides static methods for waiting and retrying. */
 public class RetryUtils {
   // Retry duration defaults - defaults are set for IAM propagation
-  public static final Duration DEFAULT_RETRY_TOTAL_DURATION = Duration.ofMinutes(7);
+  public static final Duration DEFAULT_RETRY_TOTAL_DURATION = Duration.ofMinutes(30);
   public static final Duration DEFAULT_RETRY_SLEEP_DURATION = Duration.ofSeconds(15);
   public static final double DEFAULT_RETRY_FACTOR_INCREASE = 0.0;
   public static final Duration DEFAULT_RETRY_SLEEP_DURATION_MAX = Duration.ofMinutes(3);
