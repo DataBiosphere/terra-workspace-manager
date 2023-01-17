@@ -30,7 +30,7 @@ public class PolicyApiControllerConnectedTest extends BaseConnectedTest {
   @Autowired ObjectMapper objectMapper;
 
   @Test
-  public void listRegionDataCenters_gcp() throws Exception {
+  public void getLocationInfo_gcp() throws Exception {
     ApiWsmPolicyLocation region = getLocationInfo(ApiCloudPlatform.GCP.name());
 
     assertEquals("global", region.getName());
@@ -44,7 +44,7 @@ public class PolicyApiControllerConnectedTest extends BaseConnectedTest {
   }
 
   @Test
-  public void listRegionRegions_azure() throws Exception {
+  public void getLocationInfo_azure() throws Exception {
     ApiWsmPolicyLocation region = getLocationInfo(ApiCloudPlatform.AZURE.name());
 
     assertEquals("global", region.getName());
@@ -75,7 +75,7 @@ public class PolicyApiControllerConnectedTest extends BaseConnectedTest {
   }
 
   @Test
-  public void listRegionDataCenters_invalidRegion_404() throws Exception {
+  public void getLocationInfo_invalidRegion_404() throws Exception {
     getRegionInfoExpect(
         ApiCloudPlatform.GCP.name(), /*location=*/ "invalid", HttpStatus.SC_NOT_FOUND);
   }
