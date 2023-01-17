@@ -24,7 +24,6 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -222,7 +221,8 @@ public class GcsApiConversions {
     resultBuilder.setNumberOfNewerVersions(condition.getNumNewerVersions());
     resultBuilder.setIsLive(condition.isLive());
     resultBuilder.setDaysSinceNoncurrentTime(condition.getDaysSinceNoncurrentTime());
-    resultBuilder.setNoncurrentTimeBeforeOffsetDateTime(toDateOnly(condition.getNoncurrentTimeBefore()));
+    resultBuilder.setNoncurrentTimeBeforeOffsetDateTime(
+        toDateOnly(condition.getNoncurrentTimeBefore()));
     resultBuilder.setCustomTimeBeforeOffsetDateTime(toDateOnly(condition.getCustomTimeBefore()));
     resultBuilder.setDaysSinceCustomTime(condition.getDaysSinceCustomTime());
 
