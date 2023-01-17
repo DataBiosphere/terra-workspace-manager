@@ -5,7 +5,7 @@ import bio.terra.policy.api.TpsApi;
 import bio.terra.policy.client.ApiClient;
 import bio.terra.policy.client.ApiException;
 import bio.terra.policy.model.TpsComponent;
-import bio.terra.policy.model.TpsLocation;
+import bio.terra.policy.model.TpsDatacenterList;
 import bio.terra.policy.model.TpsObjectType;
 import bio.terra.policy.model.TpsPaoCreateRequest;
 import bio.terra.policy.model.TpsPaoGetResult;
@@ -14,7 +14,6 @@ import bio.terra.policy.model.TpsPaoSourceRequest;
 import bio.terra.policy.model.TpsPaoUpdateRequest;
 import bio.terra.policy.model.TpsPaoUpdateResult;
 import bio.terra.policy.model.TpsPolicyInputs;
-import bio.terra.policy.model.TpsRegions;
 import bio.terra.policy.model.TpsUpdateMode;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.configuration.external.PolicyServiceConfiguration;
@@ -31,23 +30,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.ws.rs.client.Client;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 @Component
 public class TpsApiDispatch {
-  private static final Logger logger = LoggerFactory.getLogger(TpsApiDispatch.class);
   private final FeatureConfiguration features;
   private final PolicyServiceConfiguration policyServiceConfiguration;
   private final Client commonHttpClient;
@@ -189,9 +181,9 @@ public class TpsApiDispatch {
   public List<String> listValidDataCenter(UUID workspaceId, String platform) {
     features.tpsEnabledCheck();
     TpsApi tpsApi = policyApi();
-    TpsRegions tpsDatacenterList;
+    TpsDatacenterList tpsDatacenterList;
     try {
-      tpsDatacenterList = tpsApi.listValidRegions(workspaceId, platform);
+      tpsDatacenterList = tpsApi.listValidDatacenters(workspaceId, platform);
     } catch (ApiException e) {
       throw convertApiException(e);
     }
@@ -199,17 +191,6 @@ public class TpsApiDispatch {
       return tpsDatacenterList.stream().toList();
     }
     return new ArrayList<>();
-  }
-
-  @Traced
-  public TpsLocation getLocationInfo(String platform, String location) {
-    features.tpsEnabledCheck();
-    TpsApi tpsApi = policyApi();
-    try {
-      return tpsApi.getLocationInfo(platform, location);
-    } catch (ApiException e) {
-      throw convertApiException(e);
-    }
   }
 
   private ApiClient getApiClient(String accessToken) {
@@ -241,7 +222,7 @@ public class TpsApiDispatch {
       return new PolicyServiceAuthorizationException(
           "Not authorized to access Terra Policy Service", ex.getCause());
     } else if (ex.getCode() == HttpStatus.NOT_FOUND.value()) {
-      return new PolicyServiceNotFoundException("Policy service throws Not found exception", ex);
+      return new PolicyServiceNotFoundException("Policy service not found", ex);
     } else if (ex.getCode() == HttpStatus.BAD_REQUEST.value()
         && StringUtils.containsIgnoreCase(ex.getMessage(), "duplicate")) {
       return new PolicyServiceDuplicateException("Policy service duplicate", ex);
