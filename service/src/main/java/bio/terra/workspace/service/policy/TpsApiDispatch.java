@@ -5,7 +5,7 @@ import bio.terra.policy.api.TpsApi;
 import bio.terra.policy.client.ApiClient;
 import bio.terra.policy.client.ApiException;
 import bio.terra.policy.model.TpsComponent;
-import bio.terra.policy.model.TpsDatacenterList;
+import bio.terra.policy.model.TpsLocation;
 import bio.terra.policy.model.TpsObjectType;
 import bio.terra.policy.model.TpsPaoCreateRequest;
 import bio.terra.policy.model.TpsPaoGetResult;
@@ -14,7 +14,7 @@ import bio.terra.policy.model.TpsPaoSourceRequest;
 import bio.terra.policy.model.TpsPaoUpdateRequest;
 import bio.terra.policy.model.TpsPaoUpdateResult;
 import bio.terra.policy.model.TpsPolicyInputs;
-import bio.terra.policy.model.TpsRegion;
+import bio.terra.policy.model.TpsRegions;
 import bio.terra.policy.model.TpsUpdateMode;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.configuration.external.PolicyServiceConfiguration;
@@ -189,9 +189,9 @@ public class TpsApiDispatch {
   public List<String> listValidDataCenter(UUID workspaceId, String platform) {
     features.tpsEnabledCheck();
     TpsApi tpsApi = policyApi();
-    TpsDatacenterList tpsDatacenterList;
+    TpsRegions tpsDatacenterList;
     try {
-      tpsDatacenterList = tpsApi.listValidDatacenters(workspaceId, platform);
+      tpsDatacenterList = tpsApi.listValidRegions(workspaceId, platform);
     } catch (ApiException e) {
       throw convertApiException(e);
     }
@@ -202,23 +202,14 @@ public class TpsApiDispatch {
   }
 
   @Traced
-  @Cacheable(cacheNames = "regionInfo", sync = true)
-  public TpsRegion getRegionInfo(String platform, String location) {
+  public TpsLocation getLocationInfo(String platform, String location) {
     features.tpsEnabledCheck();
     TpsApi tpsApi = policyApi();
     try {
-      return tpsApi.getRegionInfo(platform, location);
+      return tpsApi.getLocationInfo(platform, location);
     } catch (ApiException e) {
       throw convertApiException(e);
     }
-  }
-
-  @Scheduled(fixedRateString = "1", timeUnit = TimeUnit.DAYS)
-  @CacheEvict(
-      allEntries = true,
-      cacheNames = {"regionInfo"})
-  public void resetCache() {
-    logger.info("reset cache regionInfo");
   }
 
   private ApiClient getApiClient(String accessToken) {

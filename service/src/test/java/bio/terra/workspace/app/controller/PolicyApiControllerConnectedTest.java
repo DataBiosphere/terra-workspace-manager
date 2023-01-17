@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.workspace.common.BaseConnectedTest;
+import bio.terra.workspace.generated.model.ApiWsmPolicyLocation;
 import bio.terra.workspace.generated.model.ApiWsmPolicyRegion;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.HttpStatus;
@@ -66,11 +67,11 @@ public class PolicyApiControllerConnectedTest extends BaseConnectedTest {
     getRegionInfoExpect(/*platform=*/ "gcp", /*location=*/ "invalid", HttpStatus.SC_NOT_FOUND);
   }
 
-  private ApiWsmPolicyRegion getRegionInfo(String platform) throws Exception {
+  private ApiWsmPolicyLocation getRegionInfo(String platform) throws Exception {
     return getRegionInfo(platform, /*location=*/ null);
   }
 
-  private ApiWsmPolicyRegion getRegionInfo(String platform, String location) throws Exception {
+  private ApiWsmPolicyLocation getRegionInfo(String platform, String location) throws Exception {
     var serializedResponse =
         getRegionInfoExpect(platform, location, HttpStatus.SC_OK)
             .andReturn()

@@ -1,9 +1,9 @@
 package bio.terra.workspace.app.controller;
 
-import bio.terra.policy.model.TpsRegion;
+import bio.terra.policy.model.TpsLocation;
 import bio.terra.workspace.generated.controller.PolicyApi;
-import bio.terra.workspace.generated.model.ApiDataCenterList;
-import bio.terra.workspace.generated.model.ApiWsmPolicyRegion;
+import bio.terra.workspace.generated.model.ApiRegions;
+import bio.terra.workspace.generated.model.ApiWsmPolicyLocation;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
 import javax.annotation.Nullable;
 import org.springframework.http.HttpStatus;
@@ -19,24 +19,24 @@ public class PolicyApiController implements PolicyApi {
   }
 
   @Override
-  public ResponseEntity<ApiWsmPolicyRegion> getRegionInfo(
+  public ResponseEntity<ApiWsmPolicyLocation> getRegionInfo(
       String platform, @Nullable String location) {
-    TpsRegion tpsRegion = tpsApiDispatch.getRegionInfo(platform, location);
+    TpsLocation tpsRegion = tpsApiDispatch.getLocationInfo(platform, location);
 
     return new ResponseEntity<>(convertTpsToWsmPolicyRegion(tpsRegion), HttpStatus.OK);
   }
 
-  private static ApiWsmPolicyRegion convertTpsToWsmPolicyRegion(TpsRegion tpsRegion) {
-    ApiWsmPolicyRegion wsmPolicyRegion = new ApiWsmPolicyRegion();
-    if (tpsRegion.getDatacenters() != null) {
-      ApiDataCenterList datacenterList = new ApiDataCenterList();
-      datacenterList.addAll(tpsRegion.getDatacenters().stream().toList());
-      wsmPolicyRegion.datacenters(datacenterList);
+  private static ApiWsmPolicyLocation convertTpsToWsmPolicyRegion(TpsLocation tpsLocation) {
+    ApiWsmPolicyLocation wsmPolicyRegion = new ApiWsmPolicyLocation();
+    if (tpsLocation.getRegions() != null) {
+      ApiRegions regions = new ApiRegions();
+      regions.addAll(tpsLocation.getRegions().stream().toList());
+      wsmPolicyRegion.regions(regions);
     }
-    wsmPolicyRegion.name(tpsRegion.getName()).description(tpsRegion.getDescription());
-    if (tpsRegion.getRegions() != null) {
-      for (var subRegion : tpsRegion.getRegions()) {
-        wsmPolicyRegion.addRegionsItem(convertTpsToWsmPolicyRegion(subRegion));
+    wsmPolicyRegion.name(tpsLocation.getName()).description(tpsLocation.getDescription());
+    if (tpsLocation.getLocations() != null) {
+      for (var subLocation : tpsLocation.getLocations()) {
+        wsmPolicyRegion.addSublocationsItem(convertTpsToWsmPolicyRegion(subLocation));
       }
     }
     return wsmPolicyRegion;

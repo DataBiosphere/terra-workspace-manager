@@ -328,7 +328,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DataCenterList'
+                $ref: '#/components/schemas/Regions'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '404':

@@ -13,7 +13,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WsmPolicyRegion'
+                $ref: '#/components/schemas/WsmPolicyLocation'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '404':
@@ -176,21 +176,21 @@ components:
           to policy dependents. (Only valid on policy update.)
       enum: [ 'DRY_RUN', 'FAIL_ON_CONFLICT', 'ENFORCE_CONFLICT' ]
 
-    WsmPolicyRegion:
-      description: Region object description.
+    WsmPolicyLocation:
+      description: TPS location object description.
       type: object
       required: [name, description]
       properties:
         name:
-          description: The region name
+          description: The location name
           type: string
         description:
-          description: The region description
+          description: The location description
           type: string
-        regions:
-          description: Subregions contained within this region.
+        sublocations:
+          description: Sub-locations contained within this location.
           type: array
           items:
-            $ref: '#/components/schemas/WsmPolicyRegion'
-        datacenters:
-          $ref: '#/components/schemas/DataCenterList'
+            $ref: '#/components/schemas/WsmPolicyLocation'
+        regions:
+          $ref: '#/components/schemas/Regions'

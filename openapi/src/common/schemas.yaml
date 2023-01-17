@@ -314,9 +314,9 @@ components:
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
 
-    DataCenterList:
+    Regions:
       type: array
-      description: List of data centers
+      description: List of regions (e.g. us-central1, us-west1)
       items:
         uniqueItems: true
         type: string
