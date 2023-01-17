@@ -3,9 +3,7 @@ package scripts.utils;
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledAzureResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
-import bio.terra.workspace.model.AzureContext;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,9 +32,7 @@ public abstract class ControlledAzureTestScriptBase extends WorkspaceAllocateTes
     logger.info("Azure resource suffix {}", suffix);
 
     // create Azure Cloud Context
-    CloudContextMaker.createAzureCloudContext(
-        getWorkspaceId(),
-        workspaceApi);
+    CloudContextMaker.createAzureCloudContext(getWorkspaceId(), workspaceApi);
     logger.info("Created Azure cloud context in workspace {}", getWorkspaceId());
   }
 }
