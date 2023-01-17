@@ -182,12 +182,7 @@ public class AzureWorkspaceTest extends BaseAzureConnectedTest {
             .createdByEmail(userRequest.getEmail())
             .build();
     String cloneJobId =
-        workspaceService.cloneWorkspace(
-            sourceWorkspace,
-            userRequest,
-            null,
-            destWorkspace,
-            azureTestUtils.getAzureCloudContext());
+        workspaceService.cloneWorkspace(sourceWorkspace, userRequest, null, destWorkspace);
     jobService.waitForJob(cloneJobId);
 
     assertEquals(workspaceService.getWorkspace(destUUID), destWorkspace);

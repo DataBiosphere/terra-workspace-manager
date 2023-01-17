@@ -627,10 +627,6 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     String generatedDisplayName =
         sourceWorkspace.getDisplayName().orElse(sourceWorkspace.getUserFacingId()) + " (Copy)";
 
-    // If not present in the request, BPM is used.
-    AzureCloudContext azureCloudContext =
-        Optional.ofNullable(body.getAzureContext()).map(AzureCloudContext::fromApi).orElse(null);
-
     // Construct the target workspace object from the inputs
     // Policies are cloned in the flight instead of here so that they get cleaned appropriately if
     // the flight fails.
@@ -648,11 +644,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
     final String jobId =
         workspaceService.cloneWorkspace(
-            sourceWorkspace,
-            petRequest,
-            body.getLocation(),
-            destinationWorkspace,
-            azureCloudContext);
+            sourceWorkspace, petRequest, body.getLocation(), destinationWorkspace);
 
     final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId);
     final ApiClonedWorkspace clonedWorkspaceStub =
