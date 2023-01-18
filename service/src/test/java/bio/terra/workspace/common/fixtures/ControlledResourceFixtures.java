@@ -169,6 +169,7 @@ public class ControlledResourceFixtures {
                     .offer("ubuntu-2004")
                     .sku("2004-gen2")
                     .version("latest"))
+        .vmUser(new ApiAzureVmUser().name("noname").password("StrongP@ssowrd123!!!"))
         .ipId(UUID.randomUUID())
         .diskId(UUID.randomUUID())
         .networkId(UUID.randomUUID());
