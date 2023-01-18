@@ -76,7 +76,8 @@ public class GcpCloudUtils {
     TableId employeeTableId = TableId.of(projectId, datasetId, BQ_EMPLOYEE_TABLE_NAME);
     TableInfo employeeTableInfo =
         TableInfo.newBuilder(employeeTableId, StandardTableDefinition.of(employeeSchema)).build();
-    Table createdEmployeeTable = bigQueryClient.create(employeeTableInfo);
+    Table createdEmployeeTable =
+        RetryUtils.getWithRetryOnException(() -> bigQueryClient.create(employeeTableInfo));
     logger.debug("Employee Table: {}", createdEmployeeTable);
 
     // Don't call insertAll() with InsertAllRequest. That inserts via stream. Stream buffer may
@@ -103,7 +104,8 @@ public class GcpCloudUtils {
       GoogleCredentials userCredential, String projectId, String datasetId) throws Exception {
     BigQuery bigQueryClient = getGcpBigQueryClient(userCredential, projectId);
     Page<FieldValueList> actualRows =
-        bigQueryClient.listTableData(TableId.of(datasetId, BQ_EMPLOYEE_TABLE_NAME));
+        RetryUtils.getWithRetryOnException(
+            () -> bigQueryClient.listTableData(TableId.of(datasetId, BQ_EMPLOYEE_TABLE_NAME)));
 
     int rowCount = 0;
     for (FieldValueList row : actualRows.getValues()) {
@@ -117,7 +119,8 @@ public class GcpCloudUtils {
       AuthenticatedUserRequest userRequest, String projectId, String datasetId) throws Exception {
     BigQueryCow bigQueryCow = crlService.createBigQueryCow(userRequest);
     List<com.google.api.services.bigquery.model.TableList.Tables> actualTables =
-        bigQueryCow.tables().list(projectId, datasetId).execute().getTables();
+      RetryUtils.getWithRetryOnException(() ->
+        bigQueryCow.tables().list(projectId, datasetId).execute().getTables());
     assertNull(actualTables);
   }
 

@@ -272,22 +272,25 @@ public class BqDatasetUtils {
             .setFriendlyName("Employee")
             .build();
 
-    // Wrap the first operation in a wait to allow the IAM permissions to propagate
+    // Wrap operations in a wait to allow the IAM permissions to propagate
     final Table createdEmployeeTable =
         ClientTestUtils.getWithRetryOnException(() -> bigQueryClient.create(employeeTableInfo));
     logger.info("Created Employee Table: {}", createdEmployeeTable);
 
     final Table createdDepartmentTable =
-        bigQueryClient.create(
-            TableInfo.newBuilder(
-                    TableId.of(projectId, dataset.getAttributes().getDatasetId(), "department"),
-                    StandardTableDefinition.of(
-                        Schema.of(
-                            Field.of("department_id", LegacySQLTypeName.INTEGER),
-                            Field.of("manager_id", LegacySQLTypeName.INTEGER),
-                            Field.of("name", LegacySQLTypeName.STRING))))
-                .setFriendlyName("Department")
-                .build());
+        ClientTestUtils.getWithRetryOnException(
+            () ->
+                bigQueryClient.create(
+                    TableInfo.newBuilder(
+                            TableId.of(
+                                projectId, dataset.getAttributes().getDatasetId(), "department"),
+                            StandardTableDefinition.of(
+                                Schema.of(
+                                    Field.of("department_id", LegacySQLTypeName.INTEGER),
+                                    Field.of("manager_id", LegacySQLTypeName.INTEGER),
+                                    Field.of("name", LegacySQLTypeName.STRING))))
+                        .setFriendlyName("Department")
+                        .build()));
     logger.info("Created Department Table: {}", createdDepartmentTable);
 
     // Table to hold results. Queries can create this table or clobber the existing table contents
@@ -299,10 +302,12 @@ public class BqDatasetUtils {
 
     // Stream insert one row to check the error handling/warning. This row may not be copied. (If
     // the stream happens after the DDL insert, sometimes it gets copied).
-    bigQueryClient.insertAll(
-        InsertAllRequest.newBuilder(employeeTableInfo)
-            .addRow(ImmutableMap.of("employee_id", 103, "name", "Batman"))
-            .build());
+    ClientTestUtils.getWithRetryOnException(
+        () ->
+            bigQueryClient.insertAll(
+                InsertAllRequest.newBuilder(employeeTableInfo)
+                    .addRow(ImmutableMap.of("employee_id", 103, "name", "Batman"))
+                    .build()));
 
     // Use DDL to insert rows instead of InsertAllRequest so that data won't
     // be in the streaming buffer where it's un-copyable for up to 90 minutes.
