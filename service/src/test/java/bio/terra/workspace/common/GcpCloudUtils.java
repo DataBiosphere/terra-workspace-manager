@@ -119,8 +119,8 @@ public class GcpCloudUtils {
       AuthenticatedUserRequest userRequest, String projectId, String datasetId) throws Exception {
     BigQueryCow bigQueryCow = crlService.createBigQueryCow(userRequest);
     List<com.google.api.services.bigquery.model.TableList.Tables> actualTables =
-      RetryUtils.getWithRetryOnException(() ->
-        bigQueryCow.tables().list(projectId, datasetId).execute().getTables());
+        RetryUtils.getWithRetryOnException(
+            () -> bigQueryCow.tables().list(projectId, datasetId).execute().getTables());
     assertNull(actualTables);
   }
 
