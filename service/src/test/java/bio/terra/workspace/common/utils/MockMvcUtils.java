@@ -148,6 +148,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 /**
@@ -186,6 +187,8 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/referenced/datarepo/snapshots";
   public static final String CREATE_CLOUD_CONTEXT_PATH_FORMAT =
       "/api/workspaces/v1/%s/cloudcontexts";
+  public static final String DELETE_GCP_CLOUD_CONTEXT_PATH_FORMAT =
+      "/api/workspaces/v1/%s/cloudcontexts/GCP";
   public static final String GET_CLOUD_CONTEXT_PATH_FORMAT =
       "/api/workspaces/v1/%s/cloudcontexts/result/%s";
   public static final String CREATE_AZURE_IP_PATH_FORMAT =
@@ -440,6 +443,15 @@ public class MockMvcUtils {
     return objectMapper.readValue(serializedResponse, ApiCreateCloudContextResult.class);
   }
 
+  public void deleteGcpCloudContext(AuthenticatedUserRequest userRequest, UUID workspaceId)
+      throws Exception {
+    mockMvc
+        .perform(
+            addAuth(
+                delete(DELETE_GCP_CLOUD_CONTEXT_PATH_FORMAT.formatted(workspaceId)), userRequest))
+        .andExpect(status().isNoContent());
+  }
+
   public ApiCloneWorkspaceResult getCloneWorkspaceResult(
       AuthenticatedUserRequest userRequest, UUID workspaceId, String jobId) throws Exception {
     String serializedResponse =
@@ -521,6 +533,19 @@ public class MockMvcUtils {
             addAuth(
                 get(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, workspaceId)), userRequest))
         .andExpect(status().is(HttpStatus.SC_NOT_FOUND));
+  }
+
+  // Delete Workspace variant when we don't know if workspaceId exists.
+  public int deleteWorkspaceNoCheck(AuthenticatedUserRequest userRequest, UUID workspaceId)
+      throws Exception {
+    MvcResult mvcResult =
+        mockMvc
+            .perform(
+                addAuth(
+                    delete(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, workspaceId)),
+                    userRequest))
+            .andReturn();
+    return mvcResult.getResponse().getStatus();
   }
 
   public ApiWsmPolicyUpdateResult updatePolicies(
