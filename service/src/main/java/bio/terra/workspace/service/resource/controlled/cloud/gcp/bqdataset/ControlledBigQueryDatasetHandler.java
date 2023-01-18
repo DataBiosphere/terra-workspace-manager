@@ -67,7 +67,7 @@ public class ControlledBigQueryDatasetHandler implements WsmResourceHandler {
    * https://cloud.google.com/bigquery/docs/datasets#dataset-naming.
    */
   public String generateCloudName(@Nullable UUID workspaceUuid, String bqDatasetName) {
-    String generatedName = bqDatasetName.replace("-", "_");
+    String generatedName = bqDatasetName.replace("-", "_").toLowerCase();
     generatedName =
         generatedName.length() > MAX_DATASET_NAME_LENGTH
             ? generatedName.substring(0, MAX_DATASET_NAME_LENGTH)
