@@ -58,7 +58,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
-@Disabled("Until we have a use case for using custom image and we have a custom image available for testing")
+@Disabled(
+    "Until we have a use case for using custom image and we have a custom image available for testing")
 public class CreateAzureVmStepTest extends BaseAzureConnectedTest {
 
   private static final String STUB_STRING_RETURN = "stubbed-return";
@@ -84,14 +85,7 @@ public class CreateAzureVmStepTest extends BaseAzureConnectedTest {
   @Mock private VirtualMachine.DefinitionStages.WithNetwork mockVmStage3;
   @Mock private VirtualMachine.DefinitionStages.WithProximityPlacementGroup mockVmStage7;
 
-  @Mock
-  private VirtualMachine.DefinitionStages.WithLinuxRootUsernameManagedOrUnmanaged mockVmStage7a;
-
-  @Mock
-  private VirtualMachine.DefinitionStages.WithLinuxRootPasswordOrPublicKeyManagedOrUnmanaged
-      mockVmStage7b;
-  
-  @Mock private VirtualMachine.DefinitionStages.WithLinuxCreateManagedOrUnmanaged mockVmStage10;
+  @Mock private VirtualMachine.DefinitionStages.WithLinuxCreateManaged mockVmStage10;
   @Mock private VirtualMachine.DefinitionStages.WithManagedCreate mockVmStage11;
   @Mock private VirtualMachine.DefinitionStages.WithCreate mockVmStage11a;
   @Mock private VirtualMachine.DefinitionStages.WithCreate mockVmStage12;
@@ -263,10 +257,7 @@ public class CreateAzureVmStepTest extends BaseAzureConnectedTest {
     when(mockVmStage1.withRegion(any(Region.class))).thenReturn(mockVmStage2);
     when(mockVmStage2.withExistingResourceGroup(anyString())).thenReturn(mockVmStage3);
     when(mockVmStage3.withExistingPrimaryNetworkInterface(mockNi)).thenReturn(mockVmStage7);
-    when(mockVmStage7.withSpecificLinuxImageVersion(any())).thenReturn(mockVmStage7a);
-    when(mockVmStage7a.withRootUsername(anyString())).thenReturn(mockVmStage7b);
-    when(mockVmStage7b.withRootPassword(anyString())).thenReturn(mockVmStage10);
-
+    when(mockVmStage7.withSpecializedLinuxCustomImage(anyString())).thenReturn(mockVmStage10);
     when(mockVmStage10.withExistingDataDisk(any(Disk.class))).thenReturn(mockVmStage11);
     when(mockVmStage11.withTag(anyString(), anyString())).thenReturn(mockVmStage11a);
     when(mockVmStage11a.withTag(anyString(), anyString())).thenReturn(mockVmStage12);
