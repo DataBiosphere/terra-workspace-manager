@@ -30,6 +30,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.create.azure.CreateAzureContextFlight;
+import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
@@ -363,13 +364,15 @@ public class WorkspaceService {
    * @param jobId caller-supplied job id of the async job
    * @param userRequest user authentication info
    * @param resultPath optional endpoint where the result of the completed job can be retrieved
+   * @param azureContext deprecated azure context information, only used if BPM is not enabled
    */
   @Traced
   public void createAzureCloudContext(
       Workspace workspace,
       String jobId,
       AuthenticatedUserRequest userRequest,
-      @Nullable String resultPath) {
+      @Nullable String resultPath,
+      @Nullable AzureCloudContext azureContext) {
     features.azureEnabledCheck();
 
     jobService
@@ -379,6 +382,7 @@ public class WorkspaceService {
         .workspaceId(workspace.getWorkspaceId().toString())
         .operationType(OperationType.CREATE)
         .flightClass(CreateAzureContextFlight.class)
+        .request(azureContext)
         .userRequest(userRequest)
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspace.getWorkspaceId().toString())
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)

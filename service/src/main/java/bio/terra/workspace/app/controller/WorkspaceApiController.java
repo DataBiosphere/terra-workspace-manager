@@ -509,7 +509,11 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         workspaceService.validateMcWorkspaceAndAction(userRequest, uuid, SamWorkspaceAction.WRITE);
 
     if (body.getCloudPlatform() == ApiCloudPlatform.AZURE) {
-      workspaceService.createAzureCloudContext(workspace, jobId, userRequest, resultPath);
+      AzureCloudContext azureCloudContext =
+          ControllerValidationUtils.validateAzureContextRequestBody(
+              body.getAzureContext(), featureConfiguration.isBpmAzureEnabled());
+      workspaceService.createAzureCloudContext(
+          workspace, jobId, userRequest, resultPath, azureCloudContext);
     } else {
       workspaceService.createGcpCloudContext(workspace, jobId, userRequest, resultPath);
     }

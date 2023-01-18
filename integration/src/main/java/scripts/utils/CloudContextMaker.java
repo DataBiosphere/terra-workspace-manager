@@ -1,6 +1,7 @@
 package scripts.utils;
 
 import bio.terra.workspace.api.WorkspaceApi;
+import bio.terra.workspace.model.AzureContext;
 import bio.terra.workspace.model.CloudPlatform;
 import bio.terra.workspace.model.CreateCloudContextRequest;
 import bio.terra.workspace.model.CreateCloudContextResult;
@@ -39,14 +40,15 @@ public class CloudContextMaker {
    * Creates an Azure cloud context for a given workspace. Returns the Azure resource group ID as a
    * string
    */
-  public static String createAzureCloudContext(UUID workspaceUuid, WorkspaceApi workspaceApi)
-      throws Exception {
+  public static String createAzureCloudContext(
+      UUID workspaceUuid, WorkspaceApi workspaceApi, AzureContext context) throws Exception {
     String contextJobId = UUID.randomUUID().toString();
 
     var createContext =
         new CreateCloudContextRequest()
             .cloudPlatform(CloudPlatform.AZURE)
-            .jobControl(new JobControl().id(contextJobId));
+            .jobControl(new JobControl().id(contextJobId))
+            .azureContext(context);
 
     logger.info("Creating Azure cloud context");
     CreateCloudContextResult contextResult =
