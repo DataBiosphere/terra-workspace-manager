@@ -2,6 +2,7 @@ package bio.terra.workspace.common;
 
 import bio.terra.workspace.common.utils.AzureTestUtils;
 import bio.terra.workspace.service.spendprofile.SpendProfile;
+import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.spendprofile.SpendProfileService;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import java.util.UUID;
@@ -24,7 +25,7 @@ public class BaseAzureConnectedTest extends BaseTest {
     return mockSpendProfileService;
   }
 
-  protected void initSpendProfileMock() {
+  protected SpendProfileId initSpendProfileMock() {
     Mockito.when(
             mockSpendProfileService()
                 .authorizeLinking(
@@ -39,5 +40,7 @@ public class BaseAzureConnectedTest extends BaseTest {
                 UUID.fromString(azureTestUtils.getAzureCloudContext().getAzureTenantId()),
                 UUID.fromString(azureTestUtils.getAzureCloudContext().getAzureSubscriptionId()),
                 azureTestUtils.getAzureCloudContext().getAzureResourceGroupId()));
+
+    return azureTestUtils.getSpendProfileId();
   }
 }

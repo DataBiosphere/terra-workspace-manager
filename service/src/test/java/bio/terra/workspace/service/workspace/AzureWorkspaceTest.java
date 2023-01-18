@@ -69,10 +69,10 @@ public class AzureWorkspaceTest extends BaseAzureConnectedTest {
             .email("fake@email.com")
             .subjectId("fakeID123");
 
+    SpendProfileId spendProfileId = initSpendProfileMock();
+
     Workspace workspace =
-        WorkspaceFixtures.defaultWorkspaceBuilder(null)
-            .spendProfileId(spendUtils.defaultSpendId())
-            .build();
+        WorkspaceFixtures.defaultWorkspaceBuilder(null).spendProfileId(spendProfileId).build();
 
     workspaceService.createWorkspace(workspace, null, null, userRequest);
 
