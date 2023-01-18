@@ -30,6 +30,7 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorReport'
+
     ServerError:
       description: Server error
       content:
@@ -37,18 +38,9 @@ components:
           schema:
             $ref: '#/components/schemas/ErrorReport'
 
-    # Shared Azure delete response
-    DeleteControlledAzureResourceResponse:
-      description: Response Payload for deleting an azure ip
-      content:
-        application/json:
-            schema:
-              $ref: '#/components/schemas/DeleteControlledAzureResourceResult'
-
     JobResultResponse:
       description: Result of a job (failed or succeded)
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/JobResult'
-  

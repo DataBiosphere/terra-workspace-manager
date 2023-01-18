@@ -1,0 +1,11 @@
+# Common responses
+# These responses should be referenced from the source like this:
+#  $ref: '#/components/responses/<item-you-want>
+components:
+  responses:
+    DeleteControlledAzureResourceResponse:
+      description: Response Payload for deleting an azure ip
+      content:
+        application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteControlledAzureResourceResult'

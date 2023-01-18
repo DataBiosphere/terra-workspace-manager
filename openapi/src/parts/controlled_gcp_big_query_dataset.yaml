@@ -249,7 +249,7 @@ components:
 
     GcpBigQueryDatasetUpdateParameters:
       description: >-
-        Parameters that may be changed by a user. Location and dataset id are fixed upon create.
+        Parameters that may be changed by a user. Location and dataset ID are fixed upon create.
       properties:
         defaultTableLifetime:
           description:  >-

@@ -129,7 +129,6 @@ components:
         |`d`         | Delete      |
         |`l`         | List        |
 
-
         For example:
           * To construct a SAS with permissions limited to read, write and list the caller would supply the string
         `rwl`.

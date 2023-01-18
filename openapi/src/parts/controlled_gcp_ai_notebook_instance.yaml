@@ -189,7 +189,7 @@ components:
             and the last character must not be a dash.
           type: string
         location:
-          description: The canonical GCP id for this location. For example, \'us-east1\'.
+          description: The canonical GCP ID for this location. For example, \'us-east1\'.
           type: string
         postStartupScript:
           description: >-
@@ -327,7 +327,7 @@ components:
 
     GcpAiNotebookUpdateParameters:
       description: >-
-        Parameters that may be changed by a user. Location and dataset id are fixed upon create.
+        Parameters that may be changed by a user. Location and dataset ID are fixed upon create.
       properties:
         metadata:
           description: >-

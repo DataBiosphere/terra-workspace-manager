@@ -8,13 +8,13 @@ components:
       required: [projectId, location, instanceId]
       properties:
         projectId:
-          description: The GCP project id for the project containing the notebook instance.
+          description: The GCP project ID for the project containing the notebook instance.
           type: string
         location:
           description: The GCP location containing the notebook instance, e.g. 'us-east1-b'
           type: string
         instanceId:
-          description: An instance id unique to this project and location.
+          description: An instance ID unique to this project and location.
           type: string
 
     GcpAiNotebookInstanceResource:

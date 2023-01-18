@@ -343,15 +343,17 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CloneWorkspaceResult'
+
   parameters:
     Platform:
       name: platform
       in: query
-      description: The cloud platform (gcp, azure)
+      description: The cloud platform (aws, azure, gcp)
       required: true
       schema:
         type: string
-        enum: [ "gcp", "azure" ]
+        enum: [ "aws", "azure", "gcp" ]
+
   schemas:
     ClonedWorkspace:
       description: >-
@@ -408,6 +410,8 @@ components:
             GCP Location to use for cloud-based resources. If omitted, the location of the source
             resource will be used.
           type: string
+        awsContext:
+          $ref: '#/components/schemas/AwsContext'
         azureContext:
           $ref: '#/components/schemas/AzureContext'
 
@@ -571,12 +575,15 @@ components:
           type: string
         stage:
           $ref: '#/components/schemas/WorkspaceStageModel'
-        gcpContext:
-          description: GCP context, if one exists
-          $ref: '#/components/schemas/GcpContext'
+        awsContext:
+          description: AWS context, if one exists
+          $ref: '#/components/schemas/AwsContext'
         azureContext:
           description: Azure context, if one exists
           $ref: '#/components/schemas/AzureContext'
+        gcpContext:
+          description: GCP context, if one exists
+          $ref: '#/components/schemas/GcpContext'
         properties:
           $ref: '#/components/schemas/Properties'
         createdDate:

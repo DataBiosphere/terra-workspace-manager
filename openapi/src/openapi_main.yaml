@@ -44,7 +44,7 @@ components:
         implicit:
           authorizationUrl: https://accounts.google.com/o/oauth2/auth
           scopes:
-            openid: open id authorization
+            openid: open ID authorization
             email: email authorization
             profile: profile authorization
 

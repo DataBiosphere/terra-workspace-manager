@@ -257,7 +257,7 @@ components:
           type: string
         parentFolderId:
           description: |
-            The parent folder id to update this folder to. When null and 
+            The parent folder ID to update this folder to. When null and 
             updateParent is false, do not update. When null and
             updateParent is true, move the folder to be the top-level.
           $ref: '#/components/schemas/FolderId'
