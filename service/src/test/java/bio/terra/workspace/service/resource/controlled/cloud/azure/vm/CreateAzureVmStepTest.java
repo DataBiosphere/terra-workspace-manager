@@ -58,7 +58,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
-@Disabled("Until we have a use case for using custom image and we have a custom image available for testing")
+@Disabled(
+    "Until we have a use case for using custom image and we have a custom image available for testing")
 public class CreateAzureVmStepTest extends BaseAzureConnectedTest {
 
   private static final String STUB_STRING_RETURN = "stubbed-return";
