@@ -24,7 +24,6 @@ import com.google.cloud.bigquery.datatransfer.v1.TransferState;
 import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
 import java.io.IOException;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
