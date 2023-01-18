@@ -95,6 +95,22 @@ public class ResourceApiController implements ResourceApi {
     return new ResponseEntity<>(apiResourceList, HttpStatus.OK);
   }
 
+  public ResponseEntity<ApiResourceDescription> getResource(
+      UUID workspaceUuid,
+      UUID resourceUuid) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
+
+    WsmResource wsmResource =
+        resourceService.getResource(
+            workspaceUuid,
+            resourceUuid);
+
+    ApiResourceDescription apiResourceDescription = this.makeApiResourceDescription(wsmResource);
+    return new ResponseEntity<>(apiResourceDescription, HttpStatus.OK);
+  }
+
   @Override
   public ResponseEntity<Boolean> checkReferenceAccess(UUID workspaceUuid, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
