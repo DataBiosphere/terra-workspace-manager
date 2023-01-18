@@ -1,13 +1,13 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset;
 
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetHandler.MAX_DATASET_NAME_LENGTH;
-import static liquibase.repackaged.org.apache.commons.text.CharacterPredicates.DIGITS;
-import static liquibase.repackaged.org.apache.commons.text.CharacterPredicates.LETTERS;
+import static org.apache.commons.text.CharacterPredicates.DIGITS;
+import static org.apache.commons.text.CharacterPredicates.LETTERS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.common.BaseUnitTest;
-import liquibase.repackaged.org.apache.commons.text.RandomStringGenerator;
+import org.apache.commons.text.RandomStringGenerator;
 import org.junit.jupiter.api.Test;
 
 public class ControlledBigQueryDatasetHandlerTest extends BaseUnitTest {

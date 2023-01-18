@@ -7,6 +7,10 @@ plugins {
     id 'com.github.spotbugs'
 }
 
+version = gradle.wsmVersion
+group = 'bio.terra'
+
+// If true, search local repository (~/.m2/repository/) first for dependencies.
 def useMavenLocal = false
 repositories {
     if (useMavenLocal) {
@@ -14,14 +18,28 @@ repositories {
     }
     maven {
         // Terra proxy for maven central
-        url "https://broadinstitute.jfrog.io/broadinstitute/maven-central/"
+        url 'https://broadinstitute.jfrog.io/broadinstitute/maven-central/'
     }
     mavenCentral()
     maven {
-        url "https://broadinstitute.jfrog.io/broadinstitute/libs-release/"
+        url 'https://broadinstitute.jfrog.io/broadinstitute/libs-release/'
     }
     maven {
-        url "https://broadinstitute.jfrog.io/broadinstitute/libs-snapshot-local/"
+        url 'https://broadinstitute.jfrog.io/broadinstitute/libs-snapshot-local/'
+    }
+}
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
+
+// for scans
+if (hasProperty('buildScan')) {
+    buildScan {
+        termsOfServiceUrl = 'https://gradle.com/terms-of-service'
+        termsOfServiceAgree = 'yes'
     }
 }
 
@@ -30,58 +48,22 @@ dependencyLocking {
     lockMode = LockMode.STRICT
 }
 
-jacoco {
-    toolVersion = '0.8.8'
-}
-
-// The default jacocoTestReport step cannot handle inputs from multiple gradle
-// tasks. Instead, we define our own task to generate a combined report from the
-// output of all tasks (unitTest, connectedTest, azureTest, and even bootRun for
-// integration tests) we've run.
-task combinedJaCoCoReport(type: JacocoReport) {
-    executionData fileTree("$buildDir/jacoco").include("*.exec")
-    classDirectories.setFrom(files(project.sourceSets.main.output))
-    sourceDirectories.setFrom(files(project.sourceSets.main.allSource.srcDirs))
-
-    reports {
-        xml.enabled(true)
-        xml.destination = file("$buildDir/reports/jacoco/test/jacoco.xml")
-    }
-
-    // Ignore coverage of generated code.
-    afterEvaluate {
-        classDirectories.setFrom(files(classDirectories.files.collect {
-            fileTree(dir: it, exclude: 'bio/terra/workspace/generated/**')
-        }))
-    }
-
-}
-
-version = gradle.wsmVersion
-group = 'bio.terra'
-sourceCompatibility = JavaVersion.VERSION_17
-
 // Spotless configuration
 spotless {
+    groovyGradle {
+        target "${rootDir}/**/*.gradle"
+        indentWithSpaces()
+    }
     java {
         googleJavaFormat()
-        targetExclude("${buildDir}/**", "**/generated/**")
+        removeUnusedImports()
+        targetExclude("${buildDir}/**", '**/generated/**')
     }
 }
 build.dependsOn spotlessApply
 
-
-// for scans
-if (hasProperty("buildScan")) {
-    buildScan {
-        termsOfServiceUrl = "https://gradle.com/terms-of-service"
-        termsOfServiceAgree = "yes"
-    }
-}
-
 // Spotbugs configuration
 spotbugs {
-    toolVersion = '4.7.0'
     effort = 'max'
     excludeFilter = file("$rootDir/gradle/config/spotbugs/exclude.xml")
 }

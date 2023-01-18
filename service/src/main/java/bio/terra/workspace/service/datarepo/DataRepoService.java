@@ -8,7 +8,9 @@ import bio.terra.workspace.app.configuration.external.DataRepoConfiguration;
 import bio.terra.workspace.service.datarepo.exception.DataRepoInternalServerErrorException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import io.opencensus.contrib.spring.aop.Traced;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.UUID;
 import javax.ws.rs.client.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,7 +67,7 @@ public class DataRepoService {
     RepositoryApi repositoryApi = repositoryApi(instanceName, userRequest);
 
     try {
-      repositoryApi.retrieveSnapshot(snapshotId);
+      repositoryApi.retrieveSnapshot(UUID.fromString(snapshotId), Collections.emptyList());
       logger.info("Retrieved snapshotId {} on Data Repo instance {}", snapshotId, instanceName);
       return true;
     } catch (ApiException e) {

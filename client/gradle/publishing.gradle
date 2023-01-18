@@ -1,0 +1,48 @@
+def artifactory_repo_key = System.getenv('ARTIFACTORY_REPO_KEY') != null ? System.getenv('ARTIFACTORY_REPO_KEY') : 'libs-snapshot-local'
+def artifactory_username = System.getenv('ARTIFACTORY_USERNAME')
+def artifactory_password = System.getenv('ARTIFACTORY_PASSWORD')
+
+java {
+    // Builds sources into the published package as part of the 'assemble' task.
+    withSourcesJar()
+}
+
+gradle.taskGraph.whenReady { taskGraph ->
+    if (taskGraph.hasTask(artifactoryPublish) &&
+            (artifactory_username == null || artifactory_password == null)) {
+        throw new GradleException('Set env vars ARTIFACTORY_USERNAME and ARTIFACTORY_PASSWORD to publish')
+    }
+}
+
+publishing {
+    publications {
+        workspaceManagerClientLibrary(MavenPublication) {
+            artifactId = 'workspace-manager-client'
+            from components.java
+            versionMapping {
+                usage('java-runtime') {
+                    fromResolutionResult()
+                }
+            }
+        }
+    }
+}
+
+artifactory {
+    publish {
+        contextUrl = 'https://broadinstitute.jfrog.io/broadinstitute/'
+        repository {
+            repoKey = "${artifactory_repo_key}"
+            // The Artifactory repository key to publish to
+            username = "${artifactory_username}" // The publisher user name
+            password = "${artifactory_password}" // The publisher password
+        }
+        defaults {
+            // This is how we tell the Artifactory Plugin which artifacts should be published to Artifactory.
+            // Reference to Gradle publications defined in the build script.
+            publications('workspaceManagerClientLibrary')
+            publishArtifacts = true
+            publishPom = true
+        }
+    }
+}

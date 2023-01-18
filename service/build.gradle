@@ -1,19 +1,20 @@
-// Build Script Classpath
+// Project Build Script Classpath
 buildscript {
     ext {
-        springBootVersion = '2.7.2'
+        springBootVersion = '3.0.1'
     }
 }
 
 // Project Plugins
 plugins {
     id 'terra-workspace-manager.java-conventions'
-    id "com.github.ben-manes.versions" version "0.36.0"
-    id "com.google.cloud.tools.jib" version "3.0.0"
-    id "de.undercouch.download" version "4.1.1"
-    id "org.hidetake.swagger.generator" version "2.19.2"
-    id "org.springframework.boot" version "${springBootVersion}"
-    id "io.spring.dependency-management" version "1.0.10.RELEASE"
+
+    id 'com.github.ben-manes.versions' version '0.36.0'
+    id 'com.google.cloud.tools.jib' version '3.0.0'
+    id 'de.undercouch.download' version '4.1.1'
+    id 'org.hidetake.swagger.generator' version '2.19.2'
+    id 'org.springframework.boot' version "${springBootVersion}"
+    id 'io.spring.dependency-management' version '1.0.10.RELEASE'
     id 'ru.vyarus.quality' version '4.5.0'
     id 'org.gradle.test-retry' version '1.4.0'
 }
@@ -30,6 +31,22 @@ project.ext {
 
     // location for jib extras, including the Java agent
     jibExtraDirectory = "${buildDir}/jib-agents"
+
+    // The path to the default Google service account for the Workspace Manager to run as.
+    // Created by scripts/write_config.sh
+    googleCredentialsFile = "${rootDir}/config/wsm-sa.json"
+}
+
+// A small wrapper around bootRun to run the server instrumented with Jacoco
+// code coverage tracking. This is useful for running a local server for
+// integration tests, but live environments should use `bootRun` instead and
+// should not be instrumented.
+// This must live in the same file that the Spring Boot plugin is applied in or
+// else it can't find the task type.
+task jacocoBootRun(type: org.springframework.boot.gradle.tasks.run.BootRun) {
+    environment.put('GOOGLE_APPLICATION_CREDENTIALS', "${googleCredentialsFile}")
+    classpath = sourceSets.main.runtimeClasspath
+    main('bio.terra.workspace.app.Main')
 }
 
 // include order matters, so don't alphabetize
@@ -40,20 +57,5 @@ apply(from: "$includeDir/versionProperties.gradle")
 apply(from: "$rootDir/gradle/quality.gradle")
 apply(from: "$includeDir/taskDependencies.gradle")
 apply(from: "$includeDir/dependencies.gradle")
+apply(from: "$includeDir/jacoco.gradle")
 apply(from: "$includeDir/testing.gradle")
-
-// A small wrapper around bootRun to run the server instrumented with Jacoco
-// code coverage tracking. This is useful for running a local server for
-// integration tests, but live environments should use `bootRun` instead and
-// should not be instrumented.
-// This must live in the same file that the Spring Boot plugin is applied in or
-// else it can't find the task type.
-def googleCredentialsFile = "${rootDir}/config/wsm-sa.json"
-task jacocoBootRun(type: org.springframework.boot.gradle.tasks.run.BootRun) {
-    environment.put("GOOGLE_APPLICATION_CREDENTIALS", "${googleCredentialsFile}")
-    classpath = sourceSets.main.runtimeClasspath
-    main("bio.terra.workspace.app.Main")
-}
-jacoco {
-    applyTo jacocoBootRun
-}
