@@ -88,10 +88,7 @@ public class CreateAzureVmStepTest extends BaseAzureConnectedTest {
   @Mock
   private VirtualMachine.DefinitionStages.WithLinuxRootPasswordOrPublicKeyManagedOrUnmanaged
       mockVmStage7b;
-
-  @Mock
-  private VirtualMachine.DefinitionStages.WithLinuxRootUsernameManagedOrUnmanaged mockVmStage7c;
-
+  
   @Mock private VirtualMachine.DefinitionStages.WithLinuxCreateManagedOrUnmanaged mockVmStage10;
   @Mock private VirtualMachine.DefinitionStages.WithManagedCreate mockVmStage11;
   @Mock private VirtualMachine.DefinitionStages.WithCreate mockVmStage11a;
