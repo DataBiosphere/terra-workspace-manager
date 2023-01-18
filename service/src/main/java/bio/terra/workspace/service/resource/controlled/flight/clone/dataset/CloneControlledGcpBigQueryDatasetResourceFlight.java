@@ -18,7 +18,6 @@ import bio.terra.workspace.service.resource.referenced.flight.create.CreateRefer
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
-
 import java.util.Optional;
 import java.util.UUID;
 

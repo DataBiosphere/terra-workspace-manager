@@ -21,14 +21,13 @@ import com.google.cloud.bigquery.datatransfer.v1.TransferRun;
 import com.google.cloud.bigquery.datatransfer.v1.TransferState;
 import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CopyBigQueryDatasetDifferentRegionStep implements Step {
   public static final Logger logger =
