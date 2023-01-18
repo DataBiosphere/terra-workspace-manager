@@ -16,12 +16,16 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import com.google.cloud.bigquery.datatransfer.v1.CreateTransferConfigRequest;
 import com.google.cloud.bigquery.datatransfer.v1.DataTransferServiceClient;
 import com.google.cloud.bigquery.datatransfer.v1.ProjectName;
+import com.google.cloud.bigquery.datatransfer.v1.ScheduleOptions;
+import com.google.cloud.bigquery.datatransfer.v1.StartManualTransferRunsRequest;
 import com.google.cloud.bigquery.datatransfer.v1.TransferConfig;
 import com.google.cloud.bigquery.datatransfer.v1.TransferRun;
 import com.google.cloud.bigquery.datatransfer.v1.TransferState;
 import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
 import java.io.IOException;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -75,6 +79,7 @@ public class CopyBigQueryDatasetDifferentRegionStep implements Step {
         TransferConfig.newBuilder()
             .setDestinationDatasetId(destinationDatasetId)
             .setDisplayName(destinationDatasetId)
+            .setScheduleOptions(ScheduleOptions.newBuilder().setDisableAutoScheduling(true))
             .setDataSourceId("cross_region_copy")
             .setParams(Struct.newBuilder().putAllFields(params).build())
             .build();
@@ -89,14 +94,25 @@ public class CopyBigQueryDatasetDifferentRegionStep implements Step {
                       userRequest.getRequiredToken()),
               "enablePet");
 
-      CreateTransferConfigRequest request =
-          CreateTransferConfigRequest.newBuilder()
-              .setParent(parent.toString())
-              .setTransferConfig(transferConfig)
-              .setServiceAccountName(petSaEmail)
-              .build();
+      TransferConfig config =
+          dataTransferServiceClient.createTransferConfig(
+              CreateTransferConfigRequest.newBuilder()
+                  .setParent(parent.toString())
+                  .setTransferConfig(transferConfig)
+                  .setServiceAccountName(petSaEmail)
+                  .build());
 
-      TransferConfig config = dataTransferServiceClient.createTransferConfig(request);
+      var now = Instant.now();
+
+      dataTransferServiceClient.startManualTransferRuns(
+          StartManualTransferRunsRequest.newBuilder()
+              .setParent(config.getName())
+              .setRequestedRunTime(
+                  com.google.protobuf.Timestamp.newBuilder()
+                      .setSeconds(now.getEpochSecond())
+                      .setNanos(now.getNano()))
+              .build());
+
       DataTransferServiceClient.ListTransferRunsPagedResponse runs =
           dataTransferServiceClient.listTransferRuns(config.getName());
 
