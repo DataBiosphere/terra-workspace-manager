@@ -29,10 +29,10 @@ include 'integration'
 gradle.ext.wsmVersion = "0.254.527-SNAPSHOT"
 
 // Single place to define the versions of dependencies shared between components.
-gradle.ext.librarySwaggerAnnotations = 'io.swagger.core.v3:swagger-annotations-jakarta:2.2.8'
-// TODO: upgrade librarySwaggerCli to support jakarta when available
-gradle.ext.librarySwaggerCli = 'io.swagger.codegen.v3:swagger-codegen-cli:3.0.36'
 
+// TODO: upgrade librarySwaggerAnnotations & librarySwaggerCli to support jakarta when available
+gradle.ext.librarySwaggerAnnotations = 'io.swagger.core.v3:swagger-annotations:2.2.8'
+gradle.ext.librarySwaggerCli = 'io.swagger.codegen.v3:swagger-codegen-cli:3.0.36'
 gradle.ext.guavaVersion = '31.1-jre'
 gradle.ext.jacksonVersion = '2.14.1'
 gradle.ext.javaxRsApiVersion = '2.1.1'
