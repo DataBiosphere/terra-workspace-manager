@@ -126,25 +126,25 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
               resolvedCloningInstructions));
 
       if (CloningInstructions.COPY_RESOURCE == resolvedCloningInstructions) {
-        if (!(inputParameters.get(ControlledResourceKeys.LOCATION, String.class).equals(sourceResource.getRegion()))) {
-            addStep(
-                new CopyBigQueryDatasetDifferentRegionStep(
-                    flightBeanBag.getSamService(),
-                    sourceDataset,
-                    userRequest,
-                    flightBeanBag.getGcpCloudContextService()
-                )
-            );
+        if (!(inputParameters
+            .get(ControlledResourceKeys.LOCATION, String.class)
+            .equals(sourceResource.getRegion()))) {
+          addStep(
+              new CopyBigQueryDatasetDifferentRegionStep(
+                  flightBeanBag.getSamService(),
+                  sourceDataset,
+                  userRequest,
+                  flightBeanBag.getGcpCloudContextService()));
         } else {
-            addStep(
-                new CreateTableCopyJobsStep(
-                    flightBeanBag.getCrlService(),
-                    flightBeanBag.getGcpCloudContextService(),
-                    sourceDataset),
-                RetryRules.cloud());
-            addStep(
-                new CompleteTableCopyJobsStep(flightBeanBag.getCrlService()),
-                RetryRules.cloudLongRunning());
+          addStep(
+              new CreateTableCopyJobsStep(
+                  flightBeanBag.getCrlService(),
+                  flightBeanBag.getGcpCloudContextService(),
+                  sourceDataset),
+              RetryRules.cloud());
+          addStep(
+              new CompleteTableCopyJobsStep(flightBeanBag.getCrlService()),
+              RetryRules.cloudLongRunning());
         }
       }
     } else {
@@ -153,6 +153,4 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
               "Cloning Instructions %s not supported", resolvedCloningInstructions.toString()));
     }
   }
-
 }
-

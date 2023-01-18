@@ -6,7 +6,6 @@ dependencies {
   }
   implementation platform('com.google.cloud:libraries-bom:25.1.0')
 
-//  implementation 'com.google.cloud:google-cloud-bigquery'
   implementation 'com.google.cloud:google-cloud-bigquery'
   implementation 'com.google.cloud:google-cloud-bigquerydatatransfer'
   implementation group: "com.google.auto.value", name: "auto-value-annotations"

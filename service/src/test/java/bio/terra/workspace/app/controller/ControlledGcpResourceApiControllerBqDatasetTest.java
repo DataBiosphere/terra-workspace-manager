@@ -344,8 +344,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
             ApiCloningInstructionsEnum.DEFINITION,
             destResourceName,
             /*destDatasetName=*/ null,
-            destLocation
-            );
+            destLocation);
 
     // Assert resource returned in clone flight response
     assertClonedBqDataset(
@@ -411,8 +410,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
             ApiCloningInstructionsEnum.RESOURCE,
             destResourceName,
             destDatasetName,
-            destLocation
-            );
+            destLocation);
 
     // Assert resource returned in clone flight response
     assertClonedControlledBqDataset(
