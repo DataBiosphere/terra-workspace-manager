@@ -40,9 +40,9 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
 
   @BeforeAll
   public void setup() throws InterruptedException {
-    sharedWorkspace = azureTestUtils.createWorkspace(workspaceService);
+    sharedWorkspace =
+        createWorkspaceWithCloudContext(workspaceService, userAccessUtils.defaultUserAuthRequest());
     workspaceUuid = sharedWorkspace.getWorkspaceId();
-    azureUtils.createCloudContext(workspaceUuid, userAccessUtils.defaultUserAuthRequest());
   }
 
   @AfterAll

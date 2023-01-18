@@ -5,7 +5,6 @@ import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.in;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
@@ -20,9 +19,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.Contr
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
-import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
-import bio.terra.workspace.service.workspace.flight.create.azure.CreateAzureContextFlight;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import com.azure.core.util.BinaryData;
 import com.azure.storage.blob.BlobContainerClient;
@@ -46,7 +43,6 @@ public class BlobCopierConnectedTest extends BaseAzureConnectedTest {
   @Autowired private AzureStorageAccessService azureStorageAccessService;
   @Autowired private WorkspaceService workspaceService;
   @Autowired private JobService jobService;
-  @Autowired private AzureCloudContextService azureCloudContextService;
   @Autowired private UserAccessUtils userAccessUtils;
 
   private ControlledAzureStorageContainerResource sourceContainer;
@@ -57,10 +53,9 @@ public class BlobCopierConnectedTest extends BaseAzureConnectedTest {
 
   @BeforeAll
   void setup() throws InterruptedException {
-    Workspace workspace = azureTestUtils.createWorkspace(workspaceService);
-    workspaceId = workspace.getWorkspaceId();
     userRequest = userAccessUtils.defaultUserAuthRequest();
-    createCloudContext(workspaceId, userRequest);
+    Workspace workspace = createWorkspaceWithCloudContext(workspaceService, userRequest);
+    workspaceId = workspace.getWorkspaceId();
 
     var storageAccountId = UUID.randomUUID();
     var saName = generateAzureResourceName("sa");
@@ -134,20 +129,6 @@ public class BlobCopierConnectedTest extends BaseAzureConnectedTest {
     var copiedBlobs =
         destClient.listBlobs().stream().map(BlobItem::getName).collect(Collectors.toList());
     assertThat(copiedBlobs, everyItem(in(sourceBlobs)));
-  }
-
-  private void createCloudContext(UUID workspaceUuid, AuthenticatedUserRequest userRequest)
-      throws InterruptedException {
-    FlightState createAzureContextFlightState =
-        StairwayTestUtils.blockUntilFlightCompletes(
-            jobService.getStairway(),
-            CreateAzureContextFlight.class,
-            azureTestUtils.createAzureContextInputParameters(workspaceUuid, userRequest),
-            STAIRWAY_FLIGHT_TIMEOUT,
-            null);
-
-    assertEquals(FlightStatus.SUCCESS, createAzureContextFlightState.getFlightStatus());
-    assertTrue(azureCloudContextService.getAzureCloudContext(workspaceUuid).isPresent());
   }
 
   private static String generateAzureResourceName(String tag) {
