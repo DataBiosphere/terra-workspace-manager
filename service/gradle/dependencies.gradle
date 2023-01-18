@@ -4,6 +4,7 @@ dependencies {
     commonsValidator = '1.7'
     hashids = '1.0.3'
     javaxValidation = '2.0.1.Final'
+    javaxRsApi = '2.1.1'
     liquidBaseCore = '4.18.0'
     opencensusJaxrs = '0.31.1'
     postgreSql = '42.5.1'
@@ -27,7 +28,6 @@ dependencies {
     rbsClient = '0.4.3-SNAPSHOT'
     samClient = '0.1-f554115'
 
-    jersey = '3.1.0'
     okHttp3 = '4.10.0'
 
     swagger = '4.15.5'
@@ -44,6 +44,7 @@ dependencies {
   implementation group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: "${gradle.ext.libraryJacksonVersion}"
   implementation group: 'commons-validator', name: 'commons-validator', version: "${commonsValidator}"
   implementation group: 'javax.validation', name: 'validation-api', version: "${javaxValidation}"
+  implementation group: 'javax.ws.rs', name: 'javax.ws.rs-api', version: "${javaxRsApi}"
   implementation group: 'org.hashids', name: 'hashids', version: "${hashids}"
   implementation group: 'org.liquibase', name: 'liquibase-core', version: "${liquidBaseCore}"
   implementation group: 'org.webjars', name: 'webjars-locator-core', version: "${webJarsCore}"
@@ -74,7 +75,7 @@ dependencies {
   implementation group: 'org.broadinstitute.dsde.workbench', name: 'sam-client_2.13', version: "${samClient}"
 
   // hk2 is required to use datarepo client, but not correctly exposed by the client
-  implementation group: 'org.glassfish.jersey.inject', name: 'jersey-hk2', version: "${jersey}"
+  implementation group: 'org.glassfish.jersey.inject', name: 'jersey-hk2', version: "${gradle.ext.libraryJerseyVersion}"
 
   // Required by samClient
   implementation group: 'com.squareup.okhttp3', name: 'okhttp', version: "${okHttp3}"
