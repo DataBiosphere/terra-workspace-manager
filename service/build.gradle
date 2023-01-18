@@ -1,7 +1,8 @@
 // Project Build Script Classpath
 buildscript {
     ext {
-        springBootVersion = '3.0.1'
+        // '3.*' requires javax->jakarta, currently not supported by librarySwaggerCli
+        springBootVersion = '2.7.7'
     }
 }
 

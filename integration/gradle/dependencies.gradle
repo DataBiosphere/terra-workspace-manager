@@ -16,21 +16,18 @@ dependencies {
         googleIam = 'v1-rev316-1.25.0'
         googleNotebook = 'v1-rev20221213-2.0.0'
         googleStorage = '2.16.0'
-        guava = '31.1-jre'
 
         datarepoClient = '1.437.0-SNAPSHOT'
         samClient = '0.1-f554115'
         commonLib = '0.0.77-SNAPSHOT'
         terraTestRunner = '0.1.8-SNAPSHOT'
 
-        jersey = '3.1.0'
-
         spotbugsVersion = '4.7.3'
     }
 
     // Misc. versioned direct dependencies
     implementation group: 'ch.qos.logback', name: 'logback-classic', version: "${logback}"
-    implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: "${gradle.ext.libraryJacksonVersion}"
+    implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: "${gradle.ext.jacksonVersion}"
     implementation group: 'com.google.googlejavaformat', name: 'google-java-format', version: "${javaFormat}"
     implementation group: 'io.kubernetes', name: 'client-java', version: "${kubernetesClient}"
     implementation group: 'org.apache.commons', name: 'commons-math3', version: "${apacheMath}"
@@ -40,7 +37,7 @@ dependencies {
 
     // Google dependencies
     constraints {
-        implementation group: 'com.google.guava', name: 'guava', version: "${guava}"
+        implementation group: 'com.google.guava', name: 'guava', version: "${gradle.ext.guavaVersion}"
     }
     implementation platform("com.google.cloud:libraries-bom:${googleBom}")
     implementation group: 'com.google.api-client', name: 'google-api-client', version: "${googleApi}"
@@ -59,7 +56,7 @@ dependencies {
     implementation group: 'org.broadinstitute.dsde.workbench', name: 'sam-client_2.13', version: "${samClient}"
 
     // hk2 is required to use datarepo client, but not correctly exposed by the client
-    implementation group: 'org.glassfish.jersey.inject', name: 'jersey-hk2', version: "${jersey}"
+    implementation group: 'org.glassfish.jersey.inject', name: 'jersey-hk2', version: "${gradle.ext.jerseyVersion}"
 
     // OpenAPI (swagger) dependencies
     implementation gradle.librarySwaggerAnnotations

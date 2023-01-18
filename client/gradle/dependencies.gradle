@@ -1,18 +1,16 @@
 dependencies {
   ext {
     javaxAnnotation = '1.3.2'
-    javaxRsApi = '2.1.1'
-    jerseyVersion = '3.1.0'
   }
 
   // Misc. versioned direct dependencies
-  implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310', version: "${gradle.ext.libraryJacksonVersion}"
-  //implementation group: 'javax.annotation', name: 'javax.annotation-api', version: "${javaxAnnotation}"
-  //implementation group: 'javax.ws.rs', name: 'javax.ws.rs-api', version: "${javaxRsApi}"
-  implementation group: 'org.glassfish.jersey.core', name: 'jersey-client', version: "${jerseyVersion}"
-  implementation group: 'org.glassfish.jersey.media', name: 'jersey-media-json-jackson', version: "${jerseyVersion}"
-  implementation group: 'org.glassfish.jersey.media', name: 'jersey-media-multipart', version: "${jerseyVersion}"
-  implementation group: 'org.glassfish.jersey.connectors', name: 'jersey-jdk-connector', version: "${jerseyVersion}"
+  implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310', version: "${gradle.ext.jacksonVersion}"
+  implementation group: 'javax.annotation', name: 'javax.annotation-api', version: "${javaxAnnotation}"
+  implementation group: 'javax.ws.rs', name: 'javax.ws.rs-api', version: "${gradle.ext.javaxRsApiVersion}"
+  implementation group: 'org.glassfish.jersey.core', name: 'jersey-client', version: "${gradle.ext.jerseyVersion}"
+  implementation group: 'org.glassfish.jersey.media', name: 'jersey-media-json-jackson', version: "${gradle.ext.jerseyVersion}"
+  implementation group: 'org.glassfish.jersey.media', name: 'jersey-media-multipart', version: "${gradle.ext.jerseyVersion}"
+  implementation group: 'org.glassfish.jersey.connectors', name: 'jersey-jdk-connector', version: "${gradle.ext.jerseyVersion}"
 
   // OpenAPI (swagger) dependencies
   implementation gradle.librarySwaggerAnnotations
