@@ -68,6 +68,7 @@ public class AzureControlledStorageContainerFlightTest extends BaseAzureConnecte
 
   @BeforeAll
   public void setup() throws InterruptedException {
+    initSpendProfileMock();
     sharedWorkspace = azureTestUtils.createWorkspace(workspaceService);
     workspaceUuid = sharedWorkspace.getWorkspaceId();
     azureUtils.createCloudContext(workspaceUuid, userAccessUtils.defaultUserAuthRequest());
