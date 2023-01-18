@@ -102,8 +102,6 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
             .createWorkspaceWithCloudContext(userAccessUtils.defaultUserAuthRequest())
             .getId();
 
-    System.out.print(userAccessUtils.getDefaultUserEmail());
-
     ApiWorkspaceDescription workspace =
         mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
     projectId = workspace.getGcpContext().getProjectId();
