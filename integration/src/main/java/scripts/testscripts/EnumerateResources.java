@@ -15,7 +15,6 @@ import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiClient;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.ControlledResourceMetadata;
-import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.ResourceDescription;
 import bio.terra.workspace.model.ResourceList;
@@ -75,8 +74,14 @@ public class EnumerateResources extends WorkspaceAllocateTestScriptBase {
     ApiClient readerApiClient = ClientTestUtils.getClientForTestUser(workspaceReader, server);
     readerResourceApi = new ResourceApi(readerApiClient);
 
+    // Add second user to the workspace as a reader
+    ClientTestUtils.grantRole(workspaceApi, getWorkspaceId(), workspaceReader, IamRole.READER);
+
     // Create a cloud context for the workspace
-    CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
+    String gcpProjectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
+
+    // Wait for reader permissions to propagate
+    ClientTestUtils.workspaceRoleWaitForPropagation(workspaceOwner, gcpProjectId);
 
     // create the resources for the test
     logger.info("Creating {} resources", RESOURCE_COUNT);
@@ -90,12 +95,6 @@ public class EnumerateResources extends WorkspaceAllocateTestScriptBase {
   @Override
   public void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
       throws Exception {
-
-    // Add second user to the workspace as a reader
-    workspaceApi.grantRole(
-        new GrantRoleRequestBody().memberEmail(workspaceReader.userEmail),
-        getWorkspaceId(),
-        IamRole.READER);
 
     // Case 1: fetch all
     ResourceList enumList =

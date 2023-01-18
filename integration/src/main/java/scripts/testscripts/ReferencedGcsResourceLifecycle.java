@@ -19,7 +19,6 @@ import bio.terra.workspace.model.GcpGcsBucketAttributes;
 import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.GcpGcsObjectAttributes;
 import bio.terra.workspace.model.GcpGcsObjectResource;
-import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.ResourceList;
 import bio.terra.workspace.model.ResourceType;
@@ -75,14 +74,8 @@ public class ReferencedGcsResourceLifecycle extends WorkspaceAllocateTestScriptB
     ReferencedGcpResourceApi referencedGcpResourceApi =
         ClientTestUtils.getReferencedGcpResourceClient(testUser, server);
     // Grant secondary users READER permission in the workspace.
-    workspaceApi.grantRole(
-        new GrantRoleRequestBody().memberEmail(partialAccessUser.userEmail),
-        getWorkspaceId(),
-        IamRole.READER);
-    workspaceApi.grantRole(
-        new GrantRoleRequestBody().memberEmail(noAccessUser.userEmail),
-        getWorkspaceId(),
-        IamRole.READER);
+    ClientTestUtils.grantRole(workspaceApi, getWorkspaceId(), partialAccessUser, IamRole.READER);
+    ClientTestUtils.grantRole(workspaceApi, getWorkspaceId(), noAccessUser, IamRole.READER);
 
     // Create the references
     GcpGcsBucketResource referencedBucket =
