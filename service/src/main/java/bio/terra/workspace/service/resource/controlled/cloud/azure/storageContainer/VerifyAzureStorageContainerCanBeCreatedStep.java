@@ -169,6 +169,8 @@ public class VerifyAzureStorageContainerCanBeCreatedStep implements Step {
                   "Shared storage account not found in landing zone. Landing zone ID='%s'.",
                   landingZoneId)));
     } catch (IllegalStateException illegalStateException) { // Thrown by landingZoneApiDispatch
+      logger.error(
+          "Landing zone associated with the billing profile not found.", illegalStateException);
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL,
           new LandingZoneNotFoundException(
