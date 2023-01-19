@@ -437,9 +437,12 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
         cloningUserResourceApi.getBucket(
             destinationWorkspaceId, sharedBucketCloneDetails.getDestinationResourceId());
     logger.info("Cloned Shared Bucket: {}", clonedSharedBucket);
-    ClientTestUtils.getWithRetryOnException(() ->
-      GcsBucketObjectUtils.retrieveBucketFile(
-        clonedSharedBucket.getAttributes().getBucketName(), destinationProjectId, cloningUser));
+    ClientTestUtils.getWithRetryOnException(
+        () ->
+            GcsBucketObjectUtils.retrieveBucketFile(
+                clonedSharedBucket.getAttributes().getBucketName(),
+                destinationProjectId,
+                cloningUser));
 
     // Assert the destination workspace preserves the cloned folder with the cloned controlled GCS
     // bucket resource

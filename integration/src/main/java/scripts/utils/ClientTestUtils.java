@@ -471,17 +471,17 @@ public class ClientTestUtils {
    * @param gcpProjectId project
    * @param testUser user to revoke
    * @param roleToRevoke role to revoke
-   * @return true if revoke completed; false if non-forbidden error is thrown.
-   *         Users of this method should assert the result.
+   * @return true if revoke completed; false if non-forbidden error is thrown. Users of this method
+   *     should assert the result.
    * @throws Exception general
    */
   public static boolean revokeRoleWaitForPropagation(
-    WorkspaceApi workspaceApi,
-    UUID workspaceUuid,
-    String gcpProjectId,
-    TestUserSpecification testUser,
-    IamRole roleToRevoke)
-    throws Exception {
+      WorkspaceApi workspaceApi,
+      UUID workspaceUuid,
+      String gcpProjectId,
+      TestUserSpecification testUser,
+      IamRole roleToRevoke)
+      throws Exception {
     // Make sure it this will work
     assertTrue(roleToRevoke != IamRole.APPLICATION && roleToRevoke != IamRole.DISCOVERER);
 
@@ -493,7 +493,8 @@ public class ClientTestUtils {
     return getWithRetryOnException(() -> testNoStorageList(storage, testUser));
   }
 
-  private static boolean testNoStorageList(Storage storage, TestUserSpecification testUser) throws Exception {
+  private static boolean testNoStorageList(Storage storage, TestUserSpecification testUser)
+      throws Exception {
     try {
       storage.list();
       logger.info("User {} still has access to the project", testUser.userEmail);
@@ -507,7 +508,5 @@ public class ClientTestUtils {
       logger.info("Caught unexpected exception", e);
       return false;
     }
-
   }
-
 }

@@ -164,7 +164,8 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
 
     // In contrast, a workspace writer can write data to tables
     String columnValue = "this value lives in a table";
-    ClientTestUtils.getWithRetryOnException(() -> insertValueIntoTable(writerBqClient, columnValue));
+    ClientTestUtils.getWithRetryOnException(
+        () -> insertValueIntoTable(writerBqClient, columnValue));
     logger.info("Workspace writer wrote a row to table {}", tableName);
 
     // Create a dataset to hold query results in the destination project.
@@ -188,8 +189,7 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
     String newDescription = "Another new table description";
     Table writerUpdatedTable = table.toBuilder().setDescription(newDescription).build();
     Table updatedTable =
-      ClientTestUtils.getWithRetryOnException(() ->
-        writerBqClient.update(writerUpdatedTable));
+        ClientTestUtils.getWithRetryOnException(() -> writerBqClient.update(writerUpdatedTable));
     assertEquals(newDescription, updatedTable.getDescription());
     logger.info("Workspace writer modified table {} metadata", tableName);
 
