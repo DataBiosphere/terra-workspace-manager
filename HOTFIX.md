@@ -5,12 +5,12 @@
 1) Clone the repository, if necessary
 2) Checkout the version-tagged branch of the repository you need to fix. The tags are the same
 as the software version numbers. You will typically want the version running in production.
-```shell script
+```
 git checkout <tag>
 ```
 3) Create a hotfix branch from that version. Make the name start with "hotfix", so that
 the automatic version process will make a hotfix version.
-```shell script
+```
 git checkout -b hotfix-PF-1234
 ``` 
 4) Make your fix and test it in the usual way. When it is ready, push it to the repo.
@@ -26,7 +26,7 @@ branch name for the `branch` input.
 
 3) Build and push the image that you would like to use for your hotfix:
 
-```sh
+```
 ./gradlew jib --image=gcr.io/broad-dsp-gcr-public/terra-workspace-manager:hotfix-<DATE>
 ```
 
