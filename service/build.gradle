@@ -30,6 +30,10 @@ project.ext {
 
     // location for jib extras, including the Java agent
     jibExtraDirectory = "${buildDir}/jib-agents"
+
+    // The path to the default Google service account for the Workspace Manager to run as.
+    // Created by scripts/write_config.sh
+    googleCredentialsFile = "${rootDir}/config/wsm-sa.json"
 }
 
 // include order matters, so don't alphabetize

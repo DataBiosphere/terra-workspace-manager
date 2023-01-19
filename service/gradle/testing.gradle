@@ -1,35 +1,31 @@
 // Testing config
-
-// The path to the default Google service account for the Workspace Manager to run as.
-// Created by scripts/write_config.sh
-def googleCredentialsFile = "${rootDir}/config/wsm-sa.json"
 bootRun {
-  environment.put("GOOGLE_APPLICATION_CREDENTIALS", "${googleCredentialsFile}")
+  environment.put('GOOGLE_APPLICATION_CREDENTIALS', "${googleCredentialsFile}")
 }
 
 tasks.withType(Test).configureEach {
-  environment.put("GOOGLE_APPLICATION_CREDENTIALS", "${googleCredentialsFile}")
+  environment.put('GOOGLE_APPLICATION_CREDENTIALS', "${googleCredentialsFile}")
   systemProperty 'spring.profiles.include', 'human-readable-logging'
   testLogging {
     if (System.getenv('PRINT_STANDARD_STREAMS') == null) {
-      events = ["passed", "failed", "skipped", "started"]
+      events = ['passed', 'failed', 'skipped', 'started']
     } else {
-      events = ["passed", "failed", "skipped", "started", "standard_out", "standard_error"]
+      events = ['passed', 'failed', 'skipped', 'started', 'standard_out', 'standard_error']
     }
   }
 }
 
 // We don't want to use up all the cores on a developer's machine because it locks them out of doing other
 // work, but that's not a concern for dedicated CI machines.
-def runnerThreads = System.getenv().containsKey("CI") ? Runtime.runtime.availableProcessors() : Runtime.runtime.availableProcessors().intdiv(2)
+def runnerThreads = System.getenv().containsKey('CI') ? Runtime.runtime.availableProcessors() : Runtime.runtime.availableProcessors().intdiv(2)
 // Alternatively, if a user specifies the TEST_SINGLE_THREAD env var, we will always restrict tests to a
 // single thread. This can be helpful when using a local database.
-def singleThread = System.getenv().containsKey("TEST_SINGLE_THREAD")
+def singleThread = System.getenv().containsKey('TEST_SINGLE_THREAD')
 runnerThreads = singleThread ? 1 : runnerThreads
 
 test {
   useJUnitPlatform {
-    includeTags "unit"
+    includeTags 'unit'
   }
   outputs.upToDateWhen { false }
   finalizedBy tasks.combinedJaCoCoReport
@@ -40,7 +36,7 @@ test {
   retry {
     // This is set automatically on Github Actions runners, and never set
     // otherwise.
-    if (System.getenv().containsKey("CI")) {
+    if (System.getenv().containsKey('CI')) {
       // Max retries per test.
       maxRetries = 1
       // Max total test failures.
@@ -54,19 +50,19 @@ test {
   maxParallelForks = runnerThreads
 }
 
-task unitTest(type: Test) {
+task gcpUnitTest(type: Test) {
   useJUnitPlatform {
-    includeTags "unit"
+    includeTags 'unit'
   }
   outputs.upToDateWhen { false }
   maxParallelForks = runnerThreads
   finalizedBy tasks.combinedJaCoCoReport
 }
 
-task connectedTest(type: Test) {
-  environment.put('TEST_ENV', System.getenv("TEST_ENV"))
+task gcpConnectedTest(type: Test) {
+  environment.put('TEST_ENV', System.getenv('TEST_ENV'))
   useJUnitPlatform {
-    includeTags "connected"
+    includeTags 'connected'
   }
   outputs.upToDateWhen { false }
   finalizedBy tasks.combinedJaCoCoReport
@@ -77,34 +73,7 @@ task connectedTest(type: Test) {
   retry {
     // This is set automatically on Github Actions runners, and never set
     // otherwise.
-    if (System.getenv().containsKey("CI")) {
-      // Max retries per test.
-      maxRetries = 1
-      // Max total test failures.
-      // This is an estimate based on current failure rates, but if more
-      // than 5 tests fail in a run it's likely a real source of failure
-      // and we should stop retrying.
-      maxFailures = 5
-    }
-    failOnPassedAfterRetry = true
-  }
-  maxParallelForks = runnerThreads
-}
-
-task azureConnectedTest(type: Test) {
-  useJUnitPlatform {
-    includeTags "azure"
-  }
-  outputs.upToDateWhen { false }
-  finalizedBy tasks.combinedJaCoCoReport
-
-  // For GHA runs, retry failing tests. If 2nd time passes, workflow will still
-  // fail and oncall will still be notified. This way, oncall dosen't have to
-  // rerun workflow in GHA.
-  retry {
-    // This is set automatically on Github Actions runners, and never set
-    // otherwise.
-    if (System.getenv().containsKey("CI")) {
+    if (System.getenv().containsKey('CI')) {
       // Max retries per test.
       maxRetries = 1
       // Max total test failures.
@@ -120,9 +89,36 @@ task azureConnectedTest(type: Test) {
 
 task azureUnitTest(type: Test) {
   useJUnitPlatform {
-    includeTags "azure-unit"
+    includeTags 'azure-unit'
   }
   outputs.upToDateWhen { false }
   finalizedBy tasks.combinedJaCoCoReport
+  maxParallelForks = runnerThreads
+}
+
+task azureConnectedTest(type: Test) {
+  useJUnitPlatform {
+    includeTags 'azure'
+  }
+  outputs.upToDateWhen { false }
+  finalizedBy tasks.combinedJaCoCoReport
+
+  // For GHA runs, retry failing tests. If 2nd time passes, workflow will still
+  // fail and oncall will still be notified. This way, oncall dosen't have to
+  // rerun workflow in GHA.
+  retry {
+    // This is set automatically on Github Actions runners, and never set
+    // otherwise.
+    if (System.getenv().containsKey('CI')) {
+      // Max retries per test.
+      maxRetries = 1
+      // Max total test failures.
+      // This is an estimate based on current failure rates, but if more
+      // than 5 tests fail in a run it's likely a real source of failure
+      // and we should stop retrying.
+      maxFailures = 5
+    }
+    failOnPassedAfterRetry = true
+  }
   maxParallelForks = runnerThreads
 }

@@ -8,6 +8,12 @@ plugins {
     id "com.github.mrsarm.jshell.plugin" version "1.1.0"
 }
 
+tasks.named('dependencies') {
+    dependsOn(':service:dependencies')
+    dependsOn(':client:dependencies')
+    dependsOn(':integration:dependencies')
+}
+
 def artifactory_repo_key = System.getenv("ARTIFACTORY_REPO_KEY") != null ? System.getenv("ARTIFACTORY_REPO_KEY") : 'libs-snapshot-local'
 def artifactory_username = System.getenv('ARTIFACTORY_USERNAME')
 def artifactory_password = System.getenv('ARTIFACTORY_PASSWORD')
