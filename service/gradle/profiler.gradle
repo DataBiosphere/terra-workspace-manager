@@ -1,13 +1,13 @@
 // Download and extract the Cloud Profiler Java Agent
 task downloadProfilerAgent(type: Download) {
   // where to download the Cloud Profiler agent https://cloud.google.com/profiler/docs/profiling-java
-  description('Download the Cloud Profiler Java Agent')
-  src 'https://storage.googleapis.com/cloud-profiler/java/latest/profiler_java_agent.tar.gz'
+  description("Download the Cloud Profiler Java Agent")
+  src "https://storage.googleapis.com/cloud-profiler/java/latest/profiler_java_agent.tar.gz"
   dest "${buildDir}/cprof_java_agent_gce.tar.gz"
 }
 
 task extractProfilerAgent(dependsOn: downloadProfilerAgent, type: Copy) {
-  description('Extract the Cloud Profiler Java Agent from downloaded archive file.')
+  description("Extract the Cloud Profiler Java Agent from downloaded archive file.")
   from tarTree(downloadProfilerAgent.dest)
   into "${jibExtraDirectory}/${cloudProfilerLocation}"
 }
