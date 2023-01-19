@@ -28,6 +28,9 @@ public class BaseAzureConnectedTest extends BaseTest {
     return mockSpendProfileService;
   }
 
+  /**
+   * Creates a workspace and associated cloud context, mocking the dependency on SpendProfileService.
+   */
   protected Workspace createWorkspaceWithCloudContext(
       WorkspaceService workspaceService, AuthenticatedUserRequest userRequest)
       throws InterruptedException {
@@ -37,6 +40,10 @@ public class BaseAzureConnectedTest extends BaseTest {
     return workspace;
   }
 
+  /**
+   * Mocks the dependency on SpendProfileService (BPM) required for Azure CloudContexts when
+   * BPM is enabled.
+   */
   protected SpendProfileId initSpendProfileMock() {
     Mockito.when(
             mockSpendProfileService()
