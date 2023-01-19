@@ -11,35 +11,132 @@
 name: Workflow Tester
 on:
   workflow_dispatch: {}
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'README.md'
+      - '.github/**'
+      - 'service/local-dev/**'
+  pull_request:
+    branches: [ '**' ]
+    # There is an issue with GitHub required checks and paths-ignore. We don't really need to
+    # run the tests if there are only irrelevant changes (see paths-ignore above). However,
+    # we require tests to pass by making a "required check" rule on the branch. If the action
+    # is not triggered, the required check never passes and you are stuck. Therefore, we have
+    # to run tests even when we only change a markdown file. So don't do what I did and put a
+    # paths-ignore right here!
 
 jobs:
-  workflow-test-job:
-
+  pr-integration-job:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:13.1
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - name: Get Vault token
-      id: vault-token-step
-      env:
-        VAULT_ADDR: https://clotho.broadinstitute.org:8200
-      run: |
-        VAULT_TOKEN=$(docker run --rm --cap-add IPC_LOCK \
-          -e "VAULT_ADDR=${VAULT_ADDR}" \
-          vault:1.1.0 \
-          vault write -field token \
-            auth/approle/login role_id=${{ secrets.VAULT_APPROLE_ROLE_ID }} \
-            secret_id=${{ secrets.VAULT_APPROLE_SECRET_ID }})
-        echo ::add-mask::$VAULT_TOKEN    
-        echo vault-token=$VAULT_TOKEN >> $GITHUB_OUTPUT
-        
-    - name: Write config
-      id: config
-      uses: ./.github/actions/write-config
-      with:
-        vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
-        target: dd
+      # Sparse check out terra-helmfile repo version directories
+      - uses: ./.github/actions/checkout-helm-versions
+        with:
+          repository: broadinstitute/terra-helmfile
+          ref: master
+          token: ${{ secrets.BROADBOT_TOKEN }}
+          path: integration/terra-helmfile
 
-    - name: clean databases
-      uses: ./.github/actions/clean-databases
+      - name: Initialize Postgres DB for local server test run
+        env:
+          PGPASSWORD: postgres
+        run: psql -h 127.0.0.1 -U postgres -f ./service/local-dev/local-postgres-init.sql
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: 17
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}-${{ hashFiles('**/*.gradle') }}
+          restore-keys: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Get Vault token
+        id: vault-token-step
+        env:
+          VAULT_ADDR: https://clotho.broadinstitute.org:8200
+        run: |
+          VAULT_TOKEN=$(docker run --rm --cap-add IPC_LOCK \
+            -e "VAULT_ADDR=${VAULT_ADDR}" \
+            vault:1.1.0 \
+            vault write -field token \
+              auth/approle/login role_id=${{ secrets.VAULT_APPROLE_ROLE_ID }} \
+              secret_id=${{ secrets.VAULT_APPROLE_SECRET_ID }})
+          echo ::add-mask::$VAULT_TOKEN    
+          echo vault-token=$VAULT_TOKEN >> $GITHUB_OUTPUT
+
+      - name: Write config
+        id: config
+        uses: ./.github/actions/write-config
+        with:
+          vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
+          target: local
+
+      - name: Launch local server
+        uses: ./.github/actions/start-local-server
+
+      - name: Run the integration test suite
+        id: integration-test
+        uses: ./.github/actions/integration-test
+        with:
+          test-server: workspace-local.json
+          test: suites/PRIntegration.json
+
+      - name: Skip version bump merges
+        id: bump-check
+        uses: ./.github/actions/bump-skip
+        with:
+          event-name: ${{ github.event_name }}
+
+      - name: "Notify WSM Slack"
+        # post to WSM Slack when a regular push (i.e. non-bumper push) is made to main branch
+        if: failure() && github.event_name == 'push' && steps.bump-check.outputs.is-bump == 'no'
+        uses: broadinstitute/action-slack@v3.8.0
+        # see https://github.com/broadinstitute/action-slack
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          MATRIX_CONTEXT: ${{ toJson(matrix) }}
+        with:
+          status: ${{ job.status }}
+          channel: "#terra-wsm-alerts"
+          username: "WSM push to main branch"
+          author_name: "integrationTest"
+          icon_emoji: ":triangular_ruler:"
+          fields: job, commit
+
+      - name: Archive WSM and TestRunner logs
+        id: archive_logs
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: wsm-and-testrunner-logs
+          path: |
+            wsm.log
+            ${{ steps.integration-test.outputs.results-dir }}
