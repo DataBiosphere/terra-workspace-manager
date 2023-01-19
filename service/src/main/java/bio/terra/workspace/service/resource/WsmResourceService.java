@@ -33,8 +33,7 @@ public class WsmResourceService {
   }
 
   public WsmResource getResource(
-      UUID workspaceUuid,
-      UUID resourceUuid) {
+      UUID workspaceUuid, UUID resourceUuid) {
     return resourceDao.getResource(workspaceUuid, resourceUuid);
   }
 

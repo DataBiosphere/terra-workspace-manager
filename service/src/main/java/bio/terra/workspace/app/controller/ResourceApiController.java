@@ -96,16 +96,12 @@ public class ResourceApiController implements ResourceApi {
   }
 
   public ResponseEntity<ApiResourceDescription> getResource(
-      UUID workspaceUuid,
-      UUID resourceUuid) {
+      UUID workspaceUuid, UUID resourceUuid) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
 
-    WsmResource wsmResource =
-        resourceService.getResource(
-            workspaceUuid,
-            resourceUuid);
+    WsmResource wsmResource = resourceService.getResource(workspaceUuid, resourceUuid);
 
     ApiResourceDescription apiResourceDescription = this.makeApiResourceDescription(wsmResource);
     return new ResponseEntity<>(apiResourceDescription, HttpStatus.OK);
