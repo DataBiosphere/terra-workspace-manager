@@ -26,7 +26,7 @@ include 'integration'
 
 // -- Global Variables --
 // For defining shared state and common dependencies
-gradle.ext.wsmVersion = "0.254.528-SNAPSHOT"
+gradle.ext.wsmVersion = "0.254.532-SNAPSHOT"
 
 // Single place to define the versions of dependencies shared between components.
 

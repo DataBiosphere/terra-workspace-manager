@@ -22,7 +22,7 @@ dependencies {
     commonLib = '0.0.77-SNAPSHOT'
     datarepoClient = '1.437.0-SNAPSHOT'
     landingZone = '0.0.28-SNAPSHOT'
-    policyClient = '0.2.29-SNAPSHOT'
+    policyClient = '0.2.30-SNAPSHOT'
     rbsClient = '0.4.3-SNAPSHOT'
     samClient = '0.1-f554115'
 
