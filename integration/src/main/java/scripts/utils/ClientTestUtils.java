@@ -1,5 +1,6 @@
 package scripts.utils;
 
+import static org.apache.http.HttpStatus.SC_FORBIDDEN;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -34,6 +35,7 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.bigquery.BigQueryOptions;
 import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageException;
 import com.google.cloud.storage.StorageOptions;
 import com.google.common.base.Strings;
 import java.io.IOException;
@@ -460,4 +462,52 @@ public class ClientTestUtils {
     // indicating that the grant has been propagated to the project.
     getWithRetryOnException(granteeStorage::list);
   }
+
+  /**
+   * Revoke a workspace role and wait for propagation
+   *
+   * @param workspaceApi api access
+   * @param workspaceUuid workspace
+   * @param gcpProjectId project
+   * @param testUser user to revoke
+   * @param roleToRevoke role to revoke
+   * @return true if revoke completed; false if non-forbidden error is thrown.
+   *         Users of this method should assert the result.
+   * @throws Exception general
+   */
+  public static boolean revokeRoleWaitForPropagation(
+    WorkspaceApi workspaceApi,
+    UUID workspaceUuid,
+    String gcpProjectId,
+    TestUserSpecification testUser,
+    IamRole roleToRevoke)
+    throws Exception {
+    // Make sure it this will work
+    assertTrue(roleToRevoke != IamRole.APPLICATION && roleToRevoke != IamRole.DISCOVERER);
+
+    workspaceApi.removeRole(workspaceUuid, roleToRevoke, testUser.userEmail);
+    Storage storage = getGcpStorageClient(testUser, gcpProjectId);
+
+    // Wait for the testUser to lose storage.bucket.list permission,
+    // indicating that the revoke has been propagated to the project.
+    return getWithRetryOnException(() -> testNoStorageList(storage, testUser));
+  }
+
+  private static boolean testNoStorageList(Storage storage, TestUserSpecification testUser) throws Exception {
+    try {
+      storage.list();
+      logger.info("User {} still has access to the project", testUser.userEmail);
+      throw new RuntimeException("User still has access to the project: " + testUser.userEmail);
+    } catch (StorageException e) {
+      if (e.getCode() == SC_FORBIDDEN) {
+        return true;
+      }
+      throw e;
+    } catch (Exception e) {
+      logger.info("Caught unexpected exception", e);
+      return false;
+    }
+
+  }
+
 }

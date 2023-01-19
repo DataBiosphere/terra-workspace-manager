@@ -159,9 +159,10 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
         gotBucket.getAttributes().getBucketName());
     assertEquals(bucketName, gotBucket.getAttributes().getBucketName());
 
+    // Wait for testUser to have access to the bucket
     try (GcsBucketAccessTester tester =
         new GcsBucketAccessTester(testUser, bucketName, getSourceProjectId())) {
-      tester.checkAccess(testUser, ControlledResourceIamRole.EDITOR);
+      tester.checkAccessWait(testUser, ControlledResourceIamRole.EDITOR);
       tester.checkAccessWait(getWorkspaceReader(), ControlledResourceIamRole.READER);
     }
 

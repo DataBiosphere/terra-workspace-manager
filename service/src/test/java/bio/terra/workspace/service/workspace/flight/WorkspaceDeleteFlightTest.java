@@ -26,12 +26,13 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
 
+@Tag("connected")
 public class WorkspaceDeleteFlightTest extends BaseConnectedTest {
-
   /**
    * How long to wait for a delete context Stairway flight to complete before timing out the test.
    */

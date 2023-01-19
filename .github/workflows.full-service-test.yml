@@ -1,0 +1,156 @@
+# This workflow will build a Java project with Gradle
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-gradle
+
+name: Run Full Suite of Connected Service Tests
+
+on:
+  schedule:
+    - cron: '0 6 * * *' # run at 6 AM UTC, 1 AM ET.
+  workflow_dispatch:
+    inputs:
+      testEnv:
+        description: 'Environment in which tests should be run. Regardless of how this is set, the tests run against a local Postgres and development Sam'
+        required: true
+
+jobs:
+  test-job:
+    runs-on: ubuntu-latest
+
+    # A note on our use of a matrix here:
+    # Github workflows don't really support reusing code very well. Every workflow runs on a clean
+    # instance, so we can't share a setup workflow. We could write a custom action, but you can't
+    # call an action from another action, and they also don't have access to secrets.
+    # Github also doesn't support yaml anchors (https://github.community/t/support-for-yaml-anchors/),
+    # so we're using a matrix.
+    strategy:
+      fail-fast: false
+      matrix:
+        gradleTask: [unitTest, fullConnectedTest, azureUnitTest, azureConnectedTest]
+
+    steps:
+    - name: Checkout current code
+      uses: actions/checkout@v3
+
+    - name: Skip version bump merges
+      id: skiptest
+      uses: ./.github/actions/bump-skip
+      with:
+        event-name: ${{ github.event_name }}
+
+    - name: Set env
+      if: steps.skiptest.outputs.is-bump == 'no'
+      id: set-env-step
+      run: |
+        if ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}; then
+          ENV=local
+        elif ${{ github.event_name == 'workflow_dispatch' }}; then
+          ENV=${{ github.event.inputs.testEnv }}
+        else
+          echo ::error ::${{ github.event_name }} not supported for this workflow
+          exit 1
+        fi
+        echo test-env=$ENV >> $GITHUB_OUTPUT
+
+    - name: Set up JDK
+      if: steps.skiptest.outputs.is-bump == 'no'
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: 17
+
+    - name: Cache Gradle packages
+      if: steps.skiptest.outputs.is-bump == 'no'
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}-${{ hashFiles('**/*.gradle') }}
+        restore-keys: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}
+
+    - name: Grant execute permission for gradlew
+      if: steps.skiptest.outputs.is-bump == 'no'
+      run: chmod +x gradlew
+
+    # These steps aren't needed for unit tests
+    - name: Get Vault token
+      if: matrix.gradleTask != 'unitTest' && steps.skiptest.outputs.is-bump == 'no'
+      id: vault-token-step
+      env:
+        VAULT_ADDR: https://clotho.broadinstitute.org:8200
+      run: |
+        VAULT_TOKEN=$(docker run --rm --cap-add IPC_LOCK \
+          -e "VAULT_ADDR=${VAULT_ADDR}" \
+          vault:1.1.0 \
+          vault write -field token \
+            auth/approle/login role_id=${{ secrets.VAULT_APPROLE_ROLE_ID }} \
+            secret_id=${{ secrets.VAULT_APPROLE_SECRET_ID }})
+        echo ::add-mask::$VAULT_TOKEN    
+        echo vault-token=$VAULT_TOKEN >> $GITHUB_OUTPUT
+
+    - name: Write config
+      if: matrix.gradleTask != 'unitTest' && steps.skiptest.outputs.is-bump == 'no'
+      id: config
+      uses: ./.github/actions/write-config
+      with:
+        # Note that unit and connected tests run with local configuration regardless of
+        # the test-env specified on the workflow-dispatch input.
+        target: local
+        vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
+
+      # Run tests
+    - name: Run tests
+      if: steps.skiptest.outputs.is-bump == 'no'
+      env:
+        # PRINT_STANDARD_STREAMS is temporary to let us inspect logs for a particular
+        # issue with Stairway serdes.
+        PRINT_STANDARD_STREAMS: please
+        TEST_ENV: ${{ steps.set-env-step.outputs.test-env }}
+      run: ./gradlew :service:${{ matrix.gradleTask }} --scan
+
+    - name: Codacy Coverage Reporter
+      if: steps.skiptest.outputs.is-bump == 'no'
+      uses: codacy/codacy-coverage-reporter-action@0.2.0
+      continue-on-error: true
+      env:
+        CODACY_API_BASE_URL: https://app.codacy.com/gh/DataBiosphere/terra-workspace-manager
+      with:
+        project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+        coverage-reports: service/build/reports/jacoco/test/jacoco.xml
+
+    - name: Upload Test Reports
+      if: always() && steps.skiptest.outputs.is-bump == 'no'
+      uses: actions/upload-artifact@v3
+      with:
+        name: Test Reports
+        path: service/build/reports/tests
+
+    - name: "Notify QA Slack"
+      if: always() && (steps.set-env-step.outputs.test-env == 'alpha' || steps.set-env-step.outputs.test-env == 'staging')
+      uses: broadinstitute/action-slack@v3.8.0
+      # see https://github.com/broadinstitute/action-slack
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        MATRIX_CONTEXT: ${{ toJson(matrix) }}
+      with:
+        status: ${{ job.status }}
+        channel: "#dsde-qa"
+        username: "Workspace Manager ${{ steps.set-env-step.outputs.test-env }} tests"
+        author_name: "Workspace Manager ${{ steps.set-env-step.outputs.test-env }} ${{ matrix.gradleTask }}"
+        fields: repo,job,workflow,commit,eventName,author,took
+
+    - name: "Notify WSM Slack"
+      # post to WSM Slack when a regular push (i.e. non-bumper push) is made to main branch
+      if: failure() && github.event_name == 'push' && steps.skiptest.outputs.is-bump == 'no'
+      uses: broadinstitute/action-slack@v3.8.0
+      # see https://github.com/broadinstitute/action-slack
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        MATRIX_CONTEXT: ${{ toJson(matrix) }}
+      with:
+        status: ${{ job.status }}
+        channel: "#terra-wsm-alerts"
+        username: "WSM push to main branch"
+        author_name: "${{ matrix.gradleTask }}"
+        icon_emoji: ":triangular_ruler:"
+        fields: job, commit
