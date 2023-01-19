@@ -25,17 +25,3 @@ java {
     // Builds sources into the published package as part of the 'assemble' task.
     withSourcesJar()
 }
-
-publishing {
-    publications {
-        workspaceManagerClientLibrary(MavenPublication) {
-            artifactId = "workspace-manager-client"
-            from components.java
-            versionMapping {
-                usage("java-runtime") {
-                    fromResolutionResult()
-                }
-            }
-        }
-    }
-}
