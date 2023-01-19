@@ -13,7 +13,7 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
-import bio.terra.workspace.common.BaseAzureConnectedTest;
+import bio.terra.workspace.common.BaseAzureUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.utils.AzureVmUtils;
 import bio.terra.workspace.db.ResourceDao;
@@ -60,7 +60,7 @@ import org.mockito.Mock;
 
 @Disabled(
     "Until we have a use case for using custom image and we have a custom image available for testing")
-public class CreateAzureVmStepTest extends BaseAzureConnectedTest {
+public class CreateAzureVmStepTest extends BaseAzureUnitTest {
 
   private static final String STUB_STRING_RETURN = "stubbed-return";
   private static final String STUB_DISK_NAME = "stub-disk-name";
