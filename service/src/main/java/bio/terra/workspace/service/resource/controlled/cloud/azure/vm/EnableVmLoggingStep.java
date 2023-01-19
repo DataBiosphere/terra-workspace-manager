@@ -12,7 +12,7 @@ import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.util.Context;
@@ -37,19 +37,19 @@ public class EnableVmLoggingStep implements Step {
   private final CrlService crlService;
   private final ControlledAzureVmResource resource;
   private final LandingZoneApiDispatch landingZoneApiDispatch;
-  private final AuthenticatedUserRequest userRequest;
+  private final SamService samService;
 
   public EnableVmLoggingStep(
       AzureConfiguration azureConfig,
       CrlService crlService,
       ControlledAzureVmResource resource,
       LandingZoneApiDispatch landingZoneApiDispatch,
-      AuthenticatedUserRequest userRequest) {
+      SamService samService) {
     this.azureConfig = azureConfig;
     this.crlService = crlService;
     this.resource = resource;
     this.landingZoneApiDispatch = landingZoneApiDispatch;
-    this.userRequest = userRequest;
+    this.samService = samService;
   }
 
   @Override
@@ -137,15 +137,11 @@ public class EnableVmLoggingStep implements Step {
 
   private Optional<ApiAzureLandingZoneDeployedResource> getDataCollectionRuleFromLandingZone() {
     try {
+      var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
       final UUID lzId =
-          landingZoneApiDispatch.getLandingZoneId(
-              new BearerToken(userRequest.getRequiredToken()), resource.getWorkspaceId());
+          landingZoneApiDispatch.getLandingZoneId(bearerToken, resource.getWorkspaceId());
 
-      return listLandingZoneResources(
-              new BearerToken(userRequest.getRequiredToken()),
-              lzId,
-              ResourcePurpose.SHARED_RESOURCE)
-          .stream()
+      return listLandingZoneResources(bearerToken, lzId, ResourcePurpose.SHARED_RESOURCE).stream()
           .filter(r -> DATA_COLLECTION_RULES_TYPE.equalsIgnoreCase(r.getResourceType()))
           .findFirst();
     } catch (LandingZoneNotFoundException notFound) {

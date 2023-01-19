@@ -13,7 +13,7 @@ import bio.terra.workspace.common.utils.ManagementExceptionUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
@@ -44,20 +44,20 @@ public class VerifyAzureStorageContainerCanBeCreatedStep implements Step {
   private final ResourceDao resourceDao;
   private final ControlledAzureStorageContainerResource resource;
   private final LandingZoneApiDispatch landingZoneApiDispatch;
-  private final AuthenticatedUserRequest userRequest;
+  private final SamService samService;
 
   public VerifyAzureStorageContainerCanBeCreatedStep(
       AzureConfiguration azureConfig,
       CrlService crlService,
       ResourceDao resourceDao,
       LandingZoneApiDispatch landingZoneApiDispatch,
-      AuthenticatedUserRequest userRequest,
+      SamService samService,
       ControlledAzureStorageContainerResource resource) {
     this.azureConfig = azureConfig;
     this.crlService = crlService;
     this.resourceDao = resourceDao;
     this.landingZoneApiDispatch = landingZoneApiDispatch;
-    this.userRequest = userRequest;
+    this.samService = samService;
     this.resource = resource;
   }
 
@@ -146,12 +146,11 @@ public class VerifyAzureStorageContainerCanBeCreatedStep implements Step {
   private StepResult validateLandingZoneSharedStorageAccountExist(
       FlightContext context, StorageManager storageManager) {
     try {
+      var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
       UUID landingZoneId =
-          landingZoneApiDispatch.getLandingZoneId(
-              new BearerToken(userRequest.getRequiredToken()), resource.getWorkspaceId());
+          landingZoneApiDispatch.getLandingZoneId(bearerToken, resource.getWorkspaceId());
       Optional<ApiAzureLandingZoneDeployedResource> existingSharedStorageAccount =
-          landingZoneApiDispatch.getSharedStorageAccount(
-              new BearerToken(userRequest.getRequiredToken()), landingZoneId);
+          landingZoneApiDispatch.getSharedStorageAccount(bearerToken, landingZoneId);
       if (existingSharedStorageAccount.isPresent()) {
         StorageAccount storageAccount =
             storageManager
