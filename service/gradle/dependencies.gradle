@@ -4,8 +4,8 @@ dependencies {
     commonsValidator = '1.7'
     hashids = '1.0.3'
     javaxValidation = '2.0.1.Final'
-    liquidBaseCore = '4.18.0'
-    opencensusJaxrs = '0.31.1'
+    liquiBaseCore = '4.18.0'
+    opencensus = '0.31.1'
     postgreSql = '42.5.1'
     webJarsCore = '0.52'
 
@@ -44,9 +44,9 @@ dependencies {
   implementation group: 'javax.validation', name: 'validation-api', version: "${javaxValidation}"
   implementation group: 'javax.ws.rs', name: 'javax.ws.rs-api', version: "${gradle.ext.javaxRsApiVersion}"
   implementation group: 'org.hashids', name: 'hashids', version: "${hashids}"
-  implementation group: 'org.liquibase', name: 'liquibase-core', version: "${liquidBaseCore}"
+  implementation group: 'org.liquibase', name: 'liquibase-core', version: "${liquiBaseCore}"
   implementation group: 'org.webjars', name: 'webjars-locator-core', version: "${webJarsCore}"
-  implementation group: 'io.opencensus', name: 'opencensus-contrib-http-jaxrs', version: "${opencensusJaxrs}"
+  implementation group: 'io.opencensus', name: 'opencensus-contrib-http-jaxrs', version: "${opencensus}"
   runtimeOnly group: 'org.postgresql', name: 'postgresql', version: "${postgreSql}"
 
   // Google dependencies

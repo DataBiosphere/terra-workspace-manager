@@ -160,7 +160,7 @@ By default, tests will run Postgres in a Docker container. You do not have to ru
 If you decide to install a local version, you have choices:
 - Directly from the Postgresql website: https://www.postgresql.org/download/
 - Via homebrew:
-```sh
+```
 brew install postgresql@13
 ```
 - By installing the Mac application: [Postgresql app](https://postgresapp.com/downloads.html). This
@@ -185,7 +185,7 @@ You learn about it at [Adoptium](https://adoptium.net/).
 The recommended process for installing on Mac is to first install [jEnv](https://www.jenv.be/) to
 manage the active version:
 
-```sh
+```
     brew install jenv
     # follow postinstall instructions to activate jenv...
     
@@ -205,7 +205,7 @@ You can install the JDK from IntelliJ::
 - Select Eclipse Temurin
 
 If you use homebrew, you can do this instead:
-```sh
+```
     brew tap homebrew/cask-versions
     brew install --cask temurin17
 
@@ -265,18 +265,18 @@ the Postgres server:
 #### Option A: Docker Postgres (common)
 ##### Running the Postgres Container
 To start a postgres container configured with the necessary databases:
-```sh
+```
 ./service/local-dev/run_postgres.sh start
 ```
 To stop the container:
-```sh
+```
 ./service/local-dev/run_postgres.sh stop
 ```
 Note that the contents of the database is not saved between container runs.
 
 ##### Connecting to the Postgres Container
 Use `psql` to connect to databases within the started database container. For database `wsm_db` use user `dbuser` with password `dbpwd` like this:
-```sh
+```
 PGPASSWORD=dbpwd psql postgresql://127.0.0.1:5432/wsm_db -U dbuser
 ```
 For the Stairway database `wsm_stairway` use user `stairwayuser` with password `stairwaypwd`.
@@ -286,7 +286,7 @@ For the Stairway database `wsm_stairway` use user `stairwayuser` with password `
 
 To set up Workspace Manager's required database, run the following command, which will create the DB's and users for unit tests, Stairway, and the app itself:
 
-```sh
+```
 psql -f service/local-dev/local-postgres-init.sql
 ```
 
@@ -319,7 +319,7 @@ One advantage of having the config written in gradle `${rootDir}` is that it is 
 github actions that run our CI/CD process.
 
 View current usage information for `write-config.sh` by entering
-```sh
+```
 ./scripts/write-config.sh help
 ```
 
@@ -340,7 +340,7 @@ more information.
 To run locally, you'll first need to write configs (if you haven't already)
 and then launch the application:
 
-```sh
+```
 ./scripts/write-config.sh # First time only
 ./gradlew :service:bootRun
 ```
@@ -420,7 +420,7 @@ Each WSM project has separate dependency lock state.  If you're getting errors
 that mention "dependency lock state" after changing a build file, you will need to one of
 these commands:
 
-```sh
+```
 ./gradlew :service:dependencies --write-locks
 ./gradlew :client:dependencies --write-locks
 ./gradlew :integration:dependencies --write-locks
@@ -627,7 +627,7 @@ We currently have these workflows:
 
 ### Running tests
 
-```sh
+```
 # Unit tests
 ./gradlew :service:unitTest
 
@@ -789,7 +789,7 @@ Spring profile.
 
 You can do this in any of the many ways to provide properties to Spring. A simple way is
 by setting the environment variable as:
-```sh
+```
 export spring_profiles_include=human-readable-logging
 ```
 

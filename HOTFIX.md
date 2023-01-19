@@ -26,7 +26,7 @@ branch name for the `branch` input.
 
 3) Build and push the image that you would like to use for your hotfix:
 
-```sh
+```
 ./gradlew jib --image=gcr.io/broad-dsp-gcr-public/terra-workspace-manager:hotfix-<DATE>
 ```
 
