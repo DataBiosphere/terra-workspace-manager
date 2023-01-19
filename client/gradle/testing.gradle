@@ -1,6 +1,0 @@
-// Modify the standard :test task to only include unit-tagged tests.
-test {
-    useJUnitPlatform {
-        includeTags 'unit'
-    }
-}
