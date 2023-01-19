@@ -138,8 +138,10 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
     String sharedBucketName = sharedBucket.getGcpBucket().getAttributes().getBucketName();
     String privateBucketName = privateBucket.getGcpBucket().getAttributes().getBucketName();
     // Validate that setup ran correctly and users have appropriate resource access.
-    GcsBucketObjectUtils.retrieveBucketFile(sharedBucketName, projectId, sharedResourceUser);
-    GcsBucketObjectUtils.retrieveBucketFile(privateBucketName, projectId, privateResourceUser);
+    ClientTestUtils.getWithRetryOnException(() ->
+      GcsBucketObjectUtils.retrieveBucketFile(sharedBucketName, projectId, sharedResourceUser));
+    ClientTestUtils.getWithRetryOnException(() ->
+      GcsBucketObjectUtils.retrieveBucketFile(privateBucketName, projectId, privateResourceUser));
 
     // Remove group from READER role
     try {
@@ -164,6 +166,10 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
     // access to workspace resources because of this.
     ownerWorkspaceApi.removeRole(getWorkspaceId(), IamRole.READER, privateResourceUser.userEmail);
 
+    // Is there any way to wait for propagation here?
+    // This test might artificially succeed because propagation is too slow.
+    // I have no idea how to detect that.
+
     // Validate privateResourceWriter still has access to all resources.
     GcsBucketObjectUtils.retrieveBucketFile(sharedBucketName, projectId, privateResourceUser);
     GcsBucketObjectUtils.retrieveBucketFile(privateBucketName, projectId, privateResourceUser);
@@ -172,7 +178,13 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
 
     // Remove WRITER role from privateResourceUser. This is their last role, so they are no longer
     // a member of this workspace.
-    ownerWorkspaceApi.removeRole(getWorkspaceId(), IamRole.WRITER, privateResourceUser.userEmail);
+    boolean revokeSucceeded = ClientTestUtils.revokeRoleWaitForPropagation(
+      ownerWorkspaceApi,
+      getWorkspaceId(),
+      projectId,
+      privateResourceUser,
+      IamRole.WRITER);
+    assertTrue(revokeSucceeded);
 
     // Validate privateResourceWriter no longer has access to any private resources.
     ClientTestUtils.runWithRetryOnException(

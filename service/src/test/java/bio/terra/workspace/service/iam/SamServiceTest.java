@@ -55,11 +55,13 @@ import org.apache.http.HttpStatus;
 import org.hamcrest.collection.IsMapContaining;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+@Tag("connected")
 class SamServiceTest extends BaseConnectedTest {
   @Autowired private MockMvc mockMvc;
   @Autowired private SamService samService;

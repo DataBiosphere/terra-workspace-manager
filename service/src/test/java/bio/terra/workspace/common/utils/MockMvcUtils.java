@@ -1044,7 +1044,7 @@ public class MockMvcUtils {
             /*shouldUndo=*/ false);
     String jobId = result.getJobReport().getId();
     while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
-      Thread.sleep(/*millis=*/ 5000);
+      TimeUnit.SECONDS.sleep(15);
       result = getCloneControlledGcsBucketResult(userRequest, sourceWorkspaceId, jobId);
     }
     assertEquals(StatusEnum.SUCCEEDED, result.getJobReport().getStatus());

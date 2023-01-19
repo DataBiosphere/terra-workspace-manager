@@ -74,6 +74,7 @@ import org.broadinstitute.dsde.workbench.client.sam.ApiException;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -82,6 +83,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 // Use application configuration profile in addition to the standard connected test profile
 // inherited from the base class.
+@Tag("connected")
 @ActiveProfiles({"app-test"})
 class WorkspaceServiceTest extends BaseConnectedTest {
   @MockBean private DataRepoService mockDataRepoService;

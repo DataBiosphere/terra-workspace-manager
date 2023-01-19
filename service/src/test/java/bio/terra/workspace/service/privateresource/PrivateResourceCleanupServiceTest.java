@@ -42,6 +42,7 @@ import org.broadinstitute.dsde.workbench.client.sam.ApiException;
 import org.broadinstitute.dsde.workbench.client.sam.api.GroupApi;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +50,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 // Use application configuration profile in addition to the standard connected test profile
 // inherited from the base class.
+@Tag("connectedPlus")
 @ActiveProfiles({"app-test"})
 public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
 

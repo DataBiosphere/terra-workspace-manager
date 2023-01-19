@@ -63,10 +63,11 @@ task unitTest(type: Test) {
   finalizedBy tasks.combinedJaCoCoReport
 }
 
-task connectedTest(type: Test) {
+// The fullConnectedTest runs both connected (PR tests) and connectedPlus tests
+task fullConnectedTest(type: Test) {
   environment.put('TEST_ENV', System.getenv("TEST_ENV"))
   useJUnitPlatform {
-    includeTags "connected"
+    includeTags "connected", "connectedPlus"
   }
   outputs.upToDateWhen { false }
   finalizedBy tasks.combinedJaCoCoReport
@@ -88,6 +89,17 @@ task connectedTest(type: Test) {
     }
     failOnPassedAfterRetry = true
   }
+  maxParallelForks = runnerThreads
+}
+
+// Use the connected test tag for PR runs.
+// No retries; devs can manually rerun
+task connectedTest(type: Test) {
+  environment.put('TEST_ENV', System.getenv("TEST_ENV"))
+  useJUnitPlatform {
+    includeTags "connected"
+  }
+  outputs.upToDateWhen { false }
   maxParallelForks = runnerThreads
 }
 

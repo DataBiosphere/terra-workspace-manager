@@ -10,10 +10,12 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
 
+@Tag("connected")
 class SpendProfileServiceTest extends BaseConnectedTest {
   @Autowired SamService samService;
   @Autowired SpendProfileConfiguration spendProfileConfiguration;

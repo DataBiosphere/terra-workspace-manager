@@ -1,25 +1,12 @@
-# Action for running client integration tests against PRs. This test uses local
+# Action for running client integration tests. This test uses local
 # server changes but runs a published version of the client, so it will not pick
 # up local client changes.
 
-name: PR Integration Tests
+name: Full Integration Tests
 on:
-  push:
-    branches:
-      - main
-    paths-ignore:
-      - 'README.md'
-      - '.github/**'
-      - 'service/local-dev/**'
-  pull_request:
-    branches: [ '**' ]
-    # There is an issue with GitHub required checks and paths-ignore. We don't really need to
-    # run the tests if there are only irrelevant changes (see paths-ignore above). However,
-    # we require tests to pass by making a "required check" rule on the branch. If the action
-    # is not triggered, the required check never passes and you are stuck. Therefore, we have
-    # to run tests even when we only change a markdown file. So don't do what I did and put a
-    # paths-ignore right here!
   workflow_dispatch: {}
+  schedule:
+    - cron: '0 8 * * *' # run at 8 AM UTC, 3 AM ET.
 
 jobs:
   pr-integration-job:
@@ -101,7 +88,7 @@ jobs:
       uses: ./.github/actions/integration-test
       with:
         test-server: workspace-local.json
-        test: suites/PRIntegration.json
+        test: suites/FullIntegration.json
 
     - name: Skip version bump merges
       id: bump-check
