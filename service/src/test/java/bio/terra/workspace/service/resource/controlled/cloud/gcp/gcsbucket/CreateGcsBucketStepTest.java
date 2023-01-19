@@ -2,7 +2,6 @@ package bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.getGoogleBucketCreationParameters;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant.DEFAULT_REGION;
-import static bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.GcsApiConversions.toGoogleDateTime;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
@@ -114,7 +113,7 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
             LifecycleAction.newDeleteAction(),
             LifecycleCondition.newBuilder()
                 .setAge(64)
-                .setCreatedBefore(null)
+                .setCreatedBeforeOffsetDateTime(null)
                 .setNumberOfNewerVersions(2)
                 .setIsLive(true)
                 .setMatchesStorageClass(Collections.singletonList(StorageClass.ARCHIVE))
@@ -128,8 +127,8 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
             LifecycleAction.newSetStorageClassAction(StorageClass.NEARLINE),
             LifecycleCondition.newBuilder()
                 .setAge(null)
-                .setCreatedBefore(
-                    toGoogleDateTime(OffsetDateTime.of(2007, 1, 3, 0, 0, 0, 0, ZoneOffset.UTC)))
+                .setCreatedBeforeOffsetDateTime(
+                    OffsetDateTime.of(2007, 1, 3, 0, 0, 0, 0, ZoneOffset.UTC))
                 .setNumberOfNewerVersions(null)
                 .setIsLive(null)
                 .setMatchesStorageClass(Collections.singletonList(StorageClass.STANDARD))

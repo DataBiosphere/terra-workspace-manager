@@ -1,6 +1,7 @@
 package bio.terra.workspace.common.fixtures;
 
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
+import static bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.GcsApiConversions.toOffsetDateTime;
 
 import bio.terra.stairway.ShortUUID;
 import bio.terra.workspace.common.utils.AzureVmUtils;
@@ -712,15 +713,15 @@ public class ControlledResourceFixtures {
           .setIsLive(false)
           .setNumberOfNewerVersions(2)
           .setDaysSinceNoncurrentTime(5)
-          .setNoncurrentTimeBefore(DATE_TIME_1)
-          .setCustomTimeBefore(DATE_TIME_2)
+          .setNoncurrentTimeBeforeOffsetDateTime(toOffsetDateTime(DATE_TIME_1))
+          .setCustomTimeBeforeOffsetDateTime(toOffsetDateTime(DATE_TIME_2))
           .setDaysSinceCustomTime(100)
           .build();
   public static final LifecycleCondition GCS_LIFECYCLE_CONDITION_2 =
       LifecycleCondition.newBuilder()
           .setAge(30)
           .setIsLive(true)
-          .setCreatedBefore(DATE_TIME_2)
+          .setCreatedBeforeOffsetDateTime(toOffsetDateTime(DATE_TIME_2))
           .setMatchesStorageClass(ImmutableList.of(StorageClass.ARCHIVE, StorageClass.COLDLINE))
           .build();
   public static final LifecycleAction GCS_DELETE_ACTION = LifecycleAction.newDeleteAction();

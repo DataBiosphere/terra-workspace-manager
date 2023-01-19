@@ -4,7 +4,6 @@ import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.BUC
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.BUCKET_UPDATE_PARAMETERS_2;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.OFFSET_DATE_TIME_1;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.OFFSET_DATE_TIME_2;
-import static bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.GcsApiConversions.toGoogleDateTime;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -111,10 +110,7 @@ public class UpdateGcsBucketStepTest extends BaseUnitTest {
     // to getValue().  Once PF-933 is addressed, these assertions should all revert to apply time
     // zone comparison by removing the getValue() call from both sides of the equality assertion.
 
-    assertEquals(
-        toGoogleDateTime(OFFSET_DATE_TIME_2).getValue(),
-        rule1condition.getCreatedBefore().getValue());
-
+    assertEquals(OFFSET_DATE_TIME_2, rule1condition.getCreatedBeforeOffsetDateTime());
     assertEquals(3, rule1condition.getNumberOfNewerVersions());
     assertTrue(rule1condition.getIsLive());
     assertThat(rule1condition.getMatchesStorageClass(), hasSize(2));
@@ -128,9 +124,7 @@ public class UpdateGcsBucketStepTest extends BaseUnitTest {
 
     final LifecycleCondition rule2condition = rules.get(1).getCondition();
     assertEquals(15, rule2condition.getAge());
-    assertEquals(
-        toGoogleDateTime(OFFSET_DATE_TIME_1).getValue(),
-        rule2condition.getCreatedBefore().getValue());
+    assertEquals(OFFSET_DATE_TIME_1, rule2condition.getCreatedBeforeOffsetDateTime());
     assertEquals(5, rule2condition.getNumberOfNewerVersions());
     assertTrue(rule2condition.getIsLive());
     assertThat(rule2condition.getMatchesStorageClass(), hasSize(1));
@@ -156,8 +150,7 @@ public class UpdateGcsBucketStepTest extends BaseUnitTest {
 
     final LifecycleCondition condition = rules.get(0).getCondition();
     assertEquals(45, condition.getAge());
-    assertEquals(
-        toGoogleDateTime(OFFSET_DATE_TIME_2).getValue(), condition.getCreatedBefore().getValue());
+    assertEquals(OFFSET_DATE_TIME_2, condition.getCreatedBeforeOffsetDateTime());
     assertEquals(1, condition.getNumberOfNewerVersions());
     assertTrue(condition.getIsLive());
     assertThat(condition.getMatchesStorageClass(), hasSize(1));
