@@ -95,8 +95,7 @@ public class ResourceApiController implements ResourceApi {
     return new ResponseEntity<>(apiResourceList, HttpStatus.OK);
   }
 
-  public ResponseEntity<ApiResourceDescription> getResource(
-      UUID workspaceUuid, UUID resourceUuid) {
+  public ResponseEntity<ApiResourceDescription> getResource(UUID workspaceUuid, UUID resourceUuid) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
