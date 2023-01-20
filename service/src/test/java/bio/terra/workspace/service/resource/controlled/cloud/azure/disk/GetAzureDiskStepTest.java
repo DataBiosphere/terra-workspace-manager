@@ -26,6 +26,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
+@Tag("azureConnected")
 public class GetAzureDiskStepTest extends BaseAzureConnectedTest {
 
   private static final String STUB_STRING_RETURN = "stubbed-return";

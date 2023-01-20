@@ -63,11 +63,10 @@ task unitTest(type: Test) {
   finalizedBy tasks.combinedJaCoCoReport
 }
 
-// The fullConnectedTest runs both connected (PR tests) and connectedPlus tests
-task fullConnectedTest(type: Test) {
+task connectedPlusTest(type: Test) {
   environment.put('TEST_ENV', System.getenv("TEST_ENV"))
   useJUnitPlatform {
-    includeTags "connected", "connectedPlus"
+    includeTags "connectedPlus"
   }
   outputs.upToDateWhen { false }
   finalizedBy tasks.combinedJaCoCoReport
@@ -100,12 +99,14 @@ task connectedTest(type: Test) {
     includeTags "connected"
   }
   outputs.upToDateWhen { false }
+  finalizedBy tasks.combinedJaCoCoReport
   maxParallelForks = runnerThreads
 }
 
-task azureConnectedTest(type: Test) {
+task azureConnectedPlusTest(type: Test) {
+  environment.put('TEST_ENV', System.getenv("TEST_ENV"))
   useJUnitPlatform {
-    includeTags "azure"
+    includeTags "azureConnectedPlus"
   }
   outputs.upToDateWhen { false }
   finalizedBy tasks.combinedJaCoCoReport
@@ -127,6 +128,17 @@ task azureConnectedTest(type: Test) {
     }
     failOnPassedAfterRetry = true
   }
+  maxParallelForks = runnerThreads
+}
+
+// Use the azureConnected test tag for PR runs.
+// No retries; devs can manually rerun
+task azureConnectedTest(type: Test) {
+  useJUnitPlatform {
+    includeTags "azureConnected"
+  }
+  outputs.upToDateWhen { false }
+  finalizedBy tasks.combinedJaCoCoReport
   maxParallelForks = runnerThreads
 }
 

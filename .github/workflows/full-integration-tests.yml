@@ -6,10 +6,11 @@ name: Full Integration Tests
 on:
   workflow_dispatch: {}
   schedule:
-    - cron: '0 8 * * *' # run at 8 AM UTC, 3 AM ET.
+    - cron: '0 8/4 * * 1-5' # Run every 4 hours on weekdays starting at 3AM ET (8 UTC) M-F
+    - cron: '0 8 * * 0,6' # Run nightly on weekends at 3AM ET
 
 jobs:
-  pr-integration-job:
+  full-integration-job:
     runs-on: ubuntu-latest
 
     services:
@@ -90,15 +91,9 @@ jobs:
         test-server: workspace-local.json
         test: suites/FullIntegration.json
 
-    - name: Skip version bump merges
-      id: bump-check
-      uses: ./.github/actions/bump-skip
-      with:
-        event-name: ${{ github.event_name }}
-
     - name: "Notify WSM Slack"
-      # post to WSM Slack when a regular push (i.e. non-bumper push) is made to main branch
-      if: failure() && github.event_name == 'push' && steps.bump-check.outputs.is-bump == 'no'
+      # post to WSM Slack when a run fails
+      if: failure()
       uses: broadinstitute/action-slack@v3.8.0
       # see https://github.com/broadinstitute/action-slack
       env:
@@ -107,9 +102,9 @@ jobs:
       with:
         status: ${{ job.status }}
         channel: "#terra-wsm-alerts"
-        username: "WSM push to main branch"
-        author_name: "integrationTest"
-        icon_emoji: ":triangular_ruler:"
+        username: "WSM full integration test"
+        author_name: "${{ matrix.gradleTask }}"
+        icon_emoji: ":bangbang:"
         fields: job, commit
 
     - name: Archive WSM and TestRunner logs

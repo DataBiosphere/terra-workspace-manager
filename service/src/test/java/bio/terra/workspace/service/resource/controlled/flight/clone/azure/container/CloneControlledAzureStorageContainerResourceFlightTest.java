@@ -25,6 +25,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+@Tag("azureConnected")
 public class CloneControlledAzureStorageContainerResourceFlightTest extends BaseAzureConnectedTest {
 
   @Autowired private JobService jobService;

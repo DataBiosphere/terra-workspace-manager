@@ -44,6 +44,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.springframework.beans.factory.annotation.Autowired;
 
+@Tag("azureConnectedPlus")
 @TestInstance(Lifecycle.PER_CLASS)
 public class AzureControlledStorageContainerFlightTest extends BaseAzureConnectedTest {
   private static final Duration STAIRWAY_FLIGHT_TIMEOUT = Duration.ofMinutes(15);

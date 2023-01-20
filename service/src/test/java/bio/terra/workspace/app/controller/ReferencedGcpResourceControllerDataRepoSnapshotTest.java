@@ -37,7 +37,7 @@ import org.springframework.test.web.servlet.MockMvc;
 /** Connected tests for referenced TDR snapshots. */
 // Per-class lifecycle on this test to allow a shared workspace object across tests, which saves
 // time creating and deleting GCP contexts.
-@Tag("connected")
+@Tag("connectedPlus")
 @TestInstance(Lifecycle.PER_CLASS)
 public class ReferencedGcpResourceControllerDataRepoSnapshotTest extends BaseConnectedTest {
   private static final Logger logger =

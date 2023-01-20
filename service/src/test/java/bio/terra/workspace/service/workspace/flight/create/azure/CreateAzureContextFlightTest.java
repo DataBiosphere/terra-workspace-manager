@@ -21,6 +21,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+@Tag("azureConnected")
 class CreateAzureContextFlightTest extends BaseAzureConnectedTest {
   /** How long to wait for a Stairway flight to complete before timing out the test. */
   private static final Duration STAIRWAY_FLIGHT_TIMEOUT = Duration.ofMinutes(10);

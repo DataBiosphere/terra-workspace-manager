@@ -27,6 +27,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.springframework.beans.factory.annotation.Autowired;
 
+@Tag("azureConnectedPlus")
 @TestInstance(Lifecycle.PER_CLASS)
 public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureConnectedTest {
 

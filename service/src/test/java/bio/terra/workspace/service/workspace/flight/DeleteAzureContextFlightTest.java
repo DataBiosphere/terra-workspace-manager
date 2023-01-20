@@ -39,6 +39,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+@Tag("azureConnectedPlus")
 public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
   /**
    * How long to wait for a delete context Stairway flight to complete before timing out the test.
