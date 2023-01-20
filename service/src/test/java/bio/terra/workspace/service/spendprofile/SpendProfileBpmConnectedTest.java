@@ -13,12 +13,14 @@ import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.DisabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 
+@Tag("connected")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class SpendProfileBpmConnectedTest extends BaseConnectedTest {
   @Autowired SamService samService;

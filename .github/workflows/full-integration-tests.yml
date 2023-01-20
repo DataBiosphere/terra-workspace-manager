@@ -1,28 +1,16 @@
-# Action for running client integration tests against PRs. This test uses local
+# Action for running client integration tests. This test uses local
 # server changes but runs a published version of the client, so it will not pick
 # up local client changes.
 
-name: PR Integration Tests
+name: Full Integration Tests
 on:
-  push:
-    branches:
-      - main
-    paths-ignore:
-      - 'README.md'
-      - '.github/**'
-      - 'service/local-dev/**'
-  pull_request:
-    branches: [ '**' ]
-    # There is an issue with GitHub required checks and paths-ignore. We don't really need to
-    # run the tests if there are only irrelevant changes (see paths-ignore above). However,
-    # we require tests to pass by making a "required check" rule on the branch. If the action
-    # is not triggered, the required check never passes and you are stuck. Therefore, we have
-    # to run tests even when we only change a markdown file. So don't do what I did and put a
-    # paths-ignore right here!
   workflow_dispatch: {}
+  schedule:
+    - cron: '0 8/4 * * 1-5' # Run every 4 hours on weekdays starting at 3AM ET (8 UTC) M-F
+    - cron: '0 8 * * 0,6' # Run nightly on weekends at 3AM ET
 
 jobs:
-  pr-integration-job:
+  full-integration-job:
     runs-on: ubuntu-latest
 
     services:
@@ -101,17 +89,11 @@ jobs:
       uses: ./.github/actions/integration-test
       with:
         test-server: workspace-local.json
-        test: suites/PRIntegration.json
-
-    - name: Skip version bump merges
-      id: bump-check
-      uses: ./.github/actions/bump-skip
-      with:
-        event-name: ${{ github.event_name }}
+        test: suites/FullIntegration.json
 
     - name: "Notify WSM Slack"
-      # post to WSM Slack when a regular push (i.e. non-bumper push) is made to main branch
-      if: failure() && github.event_name == 'push' && steps.bump-check.outputs.is-bump == 'no'
+      # post to WSM Slack when a run fails
+      if: failure()
       uses: broadinstitute/action-slack@v3.8.0
       # see https://github.com/broadinstitute/action-slack
       env:
@@ -120,9 +102,9 @@ jobs:
       with:
         status: ${{ job.status }}
         channel: "#terra-wsm-alerts"
-        username: "WSM push to main branch"
-        author_name: "integrationTest"
-        icon_emoji: ":triangular_ruler:"
+        username: "WSM full integration test"
+        author_name: "${{ matrix.gradleTask }}"
+        icon_emoji: ":bangbang:"
         fields: job, commit
 
     - name: Archive WSM and TestRunner logs
