@@ -59,6 +59,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.slf4j.Logger;
@@ -71,6 +72,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 // Use application configuration profile in addition to the standard connected test profile
 // inherited from the base class.
+@Tag("connectedPlus")
 @ActiveProfiles({"app-test"})
 class GcpCloudContextConnectedTest extends BaseConnectedTest {
   public static final String SPEND_PROFILE_ID = "wm-default-spend-profile";
