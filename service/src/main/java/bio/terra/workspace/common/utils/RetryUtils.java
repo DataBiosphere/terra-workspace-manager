@@ -106,8 +106,6 @@ public class RetryUtils {
    *     sleepDuration + (factorIncrease * sleepDuration) The default of 0.0 results in a fixed
    *     wait.
    * @param sleepDurationMax = the maximum duration to expand the sleep time.
-   * @param retryExceptionList - nullable; a list of exception classes. If null, any exception is
-   *     retried
    * @param <T> - type of result
    * @return - result from supplier, if no exception
    * @throws InterruptedException if the sleep is interrupted
@@ -118,8 +116,7 @@ public class RetryUtils {
       Duration totalDuration,
       Duration initialSleepDuration,
       double factorIncrease,
-      Duration sleepDurationMax,
-      @Nullable List<Class<? extends Exception>> retryExceptionList)
+      Duration sleepDurationMax)
       throws Exception {
 
     T result;
@@ -163,8 +160,7 @@ public class RetryUtils {
         DEFAULT_RETRY_TOTAL_DURATION,
         DEFAULT_RETRY_SLEEP_DURATION,
         DEFAULT_RETRY_FACTOR_INCREASE,
-        DEFAULT_RETRY_SLEEP_DURATION_MAX,
-        null);
+        DEFAULT_RETRY_SLEEP_DURATION_MAX);
   }
 
   private static boolean isRetryable(

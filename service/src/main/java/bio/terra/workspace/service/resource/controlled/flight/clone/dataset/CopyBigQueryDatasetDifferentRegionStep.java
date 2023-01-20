@@ -23,6 +23,8 @@ import com.google.cloud.bigquery.datatransfer.v1.TransferConfig;
 import com.google.cloud.bigquery.datatransfer.v1.TransferRun;
 import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
+
+import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
@@ -38,6 +40,7 @@ public class CopyBigQueryDatasetDifferentRegionStep implements Step {
   private final ControlledBigQueryDatasetResource sourceDataset;
   private final AuthenticatedUserRequest userRequest;
   private final GcpCloudContextService gcpCloudContextService;
+  public static final int DATA_TRANSFER_RUN_ENDED = 4;
 
   public CopyBigQueryDatasetDifferentRegionStep(
       SamService samService,
@@ -114,15 +117,15 @@ public class CopyBigQueryDatasetDifferentRegionStep implements Step {
           dataTransferServiceClient.listTransferRuns(config.getName());
 
       for (TransferRun run : runs.iterateAll()) {
-        final String currentRunName = run.getName();
+        String currentRunName = run.getName();
 
-        final TransferRun currentRun =
+        TransferRun currentRun =
             RetryUtils.getWithRetry(
-                (r) -> r.getStateValue() >= 4,
+                r -> r.getStateValue() >= DATA_TRANSFER_RUN_ENDED,
                 () -> dataTransferServiceClient.getTransferRun(currentRunName));
 
         if (!"SUCCEEDED".equals(currentRun.getState().toString())) {
-          final String errorMessage = currentRun.getErrorStatus().getMessage();
+          String errorMessage = currentRun.getErrorStatus().getMessage();
           logger.warn("Job {} failed: {}", currentRunName, errorMessage);
           return new StepResult(
               StepStatus.STEP_RESULT_FAILURE_FATAL, new RuntimeException(errorMessage));
