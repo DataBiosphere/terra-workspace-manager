@@ -714,6 +714,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     workspaceService.validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.READ);
     TpsPaoExplainResult explainResult = tpsApiDispatch.explain(workspaceId, depth);
     var result = new ApiWsmPolicyExplainResult();
+    result.depth(explainResult.getDepth()).objectId(explainResult.getObjectId());
     if (explainResult.getExplainObjects() != null) {
       result.explainObjects(
           explainResult.getExplainObjects().stream()

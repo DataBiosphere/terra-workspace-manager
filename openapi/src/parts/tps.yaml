@@ -203,6 +203,10 @@ components:
     WsmPolicyExplainResult:
       type: object
       properties:
+        depth:
+          $ref: '#/components/schemas/WsmPolicyDepth'
+        objectId:
+          $ref: '#/components/schemas/WsmPolicyObjectId'
         explainObjects:
           description: List of WSM policy objects referenced in the explanation
           type: array

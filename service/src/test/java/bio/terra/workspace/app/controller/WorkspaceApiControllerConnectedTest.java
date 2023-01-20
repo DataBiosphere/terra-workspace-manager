@@ -336,6 +336,8 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     ApiWsmPolicyExplainResult result =
         explainPolicies(userAccessUtils.defaultUserAuthRequest(), workspace.getId(), 0);
 
+    assertEquals(0, result.getDepth());
+    assertEquals(workspace.getId(), result.getObjectId());
     assertEquals(1, result.getExplainObjects().size());
     ApiWsmPolicyObject source = result.getExplainObjects().get(0);
     assertEquals(workspace.getId(), source.getObjectId());
