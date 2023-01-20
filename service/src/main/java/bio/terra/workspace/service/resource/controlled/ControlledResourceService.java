@@ -302,7 +302,8 @@ public class ControlledResourceService {
       ControlledBigQueryDatasetResource resource,
       @Nullable ApiGcpBigQueryDatasetUpdateParameters updateParameters,
       @Nullable String resourceName,
-      @Nullable String resourceDescription) {
+      @Nullable String resourceDescription,
+      AuthenticatedUserRequest userRequest) {
     if (null != updateParameters && null != updateParameters.getCloningInstructions()) {
       ResourceValidationUtils.validateCloningInstructions(
           StewardshipType.CONTROLLED,
@@ -321,6 +322,7 @@ public class ControlledResourceService {
             .operationType(OperationType.UPDATE)
             .resourceType(resource.getResourceType())
             .resourceName(resource.getName())
+            .userRequest(userRequest)
             .workspaceId(resource.getWorkspaceId().toString())
             .stewardshipType(resource.getStewardshipType())
             .addParameter(ControlledResourceKeys.UPDATE_PARAMETERS, updateParameters)

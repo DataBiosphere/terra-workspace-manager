@@ -76,7 +76,9 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
             /*resourceLineage=*/ null,
             Map.of(),
             DEFAULT_USER_EMAIL,
-            /*createdDate*/ null);
+            /*createdDate*/ null,
+            /*lastUpdatedByEmail=*/ null,
+            /*lastUpdatedDate=*/ null);
 
     ApiResourceDescription resourceDescription =
         resourceController.makeApiResourceDescription(resource);
@@ -107,7 +109,9 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
             /*resourceLineage=*/ null,
             /*properties=*/ Map.of(),
             DEFAULT_USER_EMAIL,
-            /*createdDate*/ null);
+            /*createdDate*/ null,
+            /*lastUpdatedByEmail=*/ null,
+            /*lastUpdatedDate*/ null);
 
     ApiResourceDescription resourceDescription =
         resourceController.makeApiResourceDescription(resource);
@@ -137,7 +141,9 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
             /*resourceLineage=*/ null,
             /*properties=*/ Map.of(),
             DEFAULT_USER_EMAIL,
-            /*createdDate*/ null);
+            /*createdDate*/ null,
+            /*lastUpdatedByEmail=*/ null,
+            /*lastUpdatedDate*/ null);
 
     ApiResourceDescription resourceDescription =
         resourceController.makeApiResourceDescription(resource);
@@ -164,7 +170,9 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
             /*resourceLineage=*/ null,
             /*properties=*/ Map.of(),
             DEFAULT_USER_EMAIL,
-            /*createdDate*/ null);
+            /*createdDate*/ null,
+            /*lastUpdatedByEmail=*/ null,
+            /*lastUpdatedDate=*/ null);
 
     ApiResourceDescription resourceDescription =
         resourceController.makeApiResourceDescription(resource);
@@ -219,6 +227,8 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
               /*properties=*/ Map.of(),
               DEFAULT_USER_EMAIL,
               /*createdDate*/ null,
+              /*lastUpdatedByEmail=*/ null,
+              /*lastUpdatedDate=*/ null,
               DEFAULT_GCP_RESOURCE_REGION);
 
       ApiResourceDescription resourceDescription =
@@ -253,6 +263,8 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
               /*properties=*/ Map.of(),
               DEFAULT_USER_EMAIL,
               /*createdDate*/ null,
+              /*lastUpdatedByEmail=*/ null,
+              /*lastUpdatedDate=*/ null,
               DEFAULT_GCP_RESOURCE_REGION);
 
       ApiResourceDescription resourceDescription =
