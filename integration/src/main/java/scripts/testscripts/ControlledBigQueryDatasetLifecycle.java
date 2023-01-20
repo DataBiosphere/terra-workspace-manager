@@ -17,7 +17,6 @@ import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
 import bio.terra.workspace.model.GcpBigQueryDatasetUpdateParameters;
 import bio.terra.workspace.model.GenerateGcpBigQueryDatasetCloudIDRequestBody;
-import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.ResourceList;
 import bio.terra.workspace.model.ResourceType;
@@ -89,9 +88,8 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
         ClientTestUtils.getControlledGcpResourceClient(testUser, server);
 
     // Add a writer the source workspace. Reader is already added by the base class
-    logger.info("Adding {} as writer to workspace {}", writer.userEmail, getWorkspaceId());
-    workspaceApi.grantRole(
-        new GrantRoleRequestBody().memberEmail(writer.userEmail), getWorkspaceId(), IamRole.WRITER);
+    ClientTestUtils.grantRoleWaitForPropagation(
+        workspaceApi, getWorkspaceId(), getSourceProjectId(), writer, IamRole.WRITER);
 
     SamClientUtils.dumpResourcePolicy(testUser, server, "workspace", getWorkspaceId().toString());
 
@@ -166,7 +164,8 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
 
     // In contrast, a workspace writer can write data to tables
     String columnValue = "this value lives in a table";
-    insertValueIntoTable(writerBqClient, columnValue);
+    ClientTestUtils.getWithRetryOnException(
+        () -> insertValueIntoTable(writerBqClient, columnValue));
     logger.info("Workspace writer wrote a row to table {}", tableName);
 
     // Create a dataset to hold query results in the destination project.
@@ -189,7 +188,8 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
     // Workspace writer can update the table metadata
     String newDescription = "Another new table description";
     Table writerUpdatedTable = table.toBuilder().setDescription(newDescription).build();
-    Table updatedTable = writerBqClient.update(writerUpdatedTable);
+    Table updatedTable =
+        ClientTestUtils.getWithRetryOnException(() -> writerBqClient.update(writerUpdatedTable));
     assertEquals(newDescription, updatedTable.getDescription());
     logger.info("Workspace writer modified table {} metadata", tableName);
 
@@ -301,7 +301,7 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
   }
 
   /** Insert a single String value into the column/table/dataset specified by constant values. */
-  private void insertValueIntoTable(BigQuery bigQueryClient, String value) throws Exception {
+  private TableResult insertValueIntoTable(BigQuery bigQueryClient, String value) throws Exception {
     String query =
         String.format(
             "INSERT %s.%s (%s) VALUES(@value)", DATASET_RESOURCE_NAME, TABLE_NAME, COLUMN_NAME);
@@ -309,7 +309,7 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
         QueryJobConfiguration.newBuilder(query)
             .addNamedParameter("value", QueryParameterValue.string(value))
             .build();
-    runBigQueryJob(bigQueryClient, queryConfig);
+    return runBigQueryJob(bigQueryClient, queryConfig);
   }
 
   /** Read a single String value from the column/table/dataset specified by constant values. */

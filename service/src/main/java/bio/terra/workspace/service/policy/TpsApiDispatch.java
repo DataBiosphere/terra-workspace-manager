@@ -13,6 +13,7 @@ import bio.terra.policy.model.TpsPaoSourceRequest;
 import bio.terra.policy.model.TpsPaoUpdateRequest;
 import bio.terra.policy.model.TpsPaoUpdateResult;
 import bio.terra.policy.model.TpsPolicyInputs;
+import bio.terra.policy.model.TpsRegions;
 import bio.terra.policy.model.TpsUpdateMode;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.configuration.external.PolicyServiceConfiguration;
@@ -25,6 +26,8 @@ import io.opencensus.contrib.http.jaxrs.JaxrsClientFilter;
 import io.opencensus.contrib.spring.aop.Traced;
 import io.opencensus.trace.Tracing;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -172,6 +175,22 @@ public class TpsApiDispatch {
     } catch (ApiException e) {
       throw convertApiException(e);
     }
+  }
+
+  @Traced
+  public List<String> listValidRegions(UUID workspaceId, String platform) {
+    features.tpsEnabledCheck();
+    TpsApi tpsApi = policyApi();
+    TpsRegions tpsRegions;
+    try {
+      tpsRegions = tpsApi.listValidRegions(workspaceId, platform);
+    } catch (ApiException e) {
+      throw convertApiException(e);
+    }
+    if (tpsRegions != null) {
+      return tpsRegions.stream().toList();
+    }
+    return new ArrayList<>();
   }
 
   private ApiClient getApiClient(String accessToken) {

@@ -5,7 +5,6 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
 
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.FlightMap;
@@ -21,8 +20,6 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
-import bio.terra.workspace.service.iam.model.SamConstants.SamSpendProfileAction;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
@@ -54,42 +51,29 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 
+@Tag("connectedPlus")
 class CreateGcpContextFlightV2Test extends BaseConnectedTest {
 
-  /** How long to wait for a Stairway flight to complete before timing out the test. */
-  private static final Duration STAIRWAY_FLIGHT_TIMEOUT = Duration.ofMinutes(3);
+  /**
+   * How long to wait for a Stairway flight to complete before timing out the test. This is set to
+   * 20 minutes to allow tests to ride through service outages, cloud retries, and IAM propagation.
+   */
+  private static final Duration STAIRWAY_FLIGHT_TIMEOUT = Duration.ofMinutes(20);
 
   @Autowired private WorkspaceService workspaceService;
+  @Autowired private WorkspaceConnectedTestUtils workspaceConnectedTestUtils;
   @Autowired private CrlService crl;
   @Autowired private JobService jobService;
   @Autowired private SpendConnectedTestUtils spendUtils;
-  @MockBean private SamService mockSamService;
+  @Autowired private SamService samService;
   @Autowired private UserAccessUtils userAccessUtils;
   @Autowired private WorkspaceConnectedTestUtils testUtils;
   @Autowired private GcpCloudContextService gcpCloudContextService;
-
-  @BeforeEach
-  void setUp() throws InterruptedException {
-    // By default, allow all spend link calls as authorized. (All other isAuthorized calls return
-    // false by Mockito default.
-    Mockito.when(
-            mockSamService.isAuthorized(
-                Mockito.any(),
-                Mockito.eq(SamResource.SPEND_PROFILE),
-                Mockito.any(),
-                Mockito.eq(SamSpendProfileAction.LINK)))
-        .thenReturn(true);
-    // Return a valid google group for cloud sync, as Google validates groups added to GCP projects.
-    Mockito.when(mockSamService.syncWorkspacePolicy(any(), any(), any()))
-        .thenReturn("terra-workspace-manager-test-group@googlegroups.com");
-  }
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
@@ -169,15 +153,9 @@ class CreateGcpContextFlightV2Test extends BaseConnectedTest {
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void createsProjectAndContext_unauthorizedSpendProfile_flightFailsAndGcpProjectNotCreated()
       throws Exception {
-    Mockito.when(
-            mockSamService.isAuthorized(
-                Mockito.any(),
-                Mockito.eq(SamResource.SPEND_PROFILE),
-                Mockito.any(),
-                Mockito.eq(SamSpendProfileAction.LINK)))
-        .thenReturn(false);
     UUID workspaceUuid = createWorkspace(spendUtils.defaultSpendId());
-    AuthenticatedUserRequest unauthorizedUserRequest = userAccessUtils.secondUserAuthRequest();
+    AuthenticatedUserRequest unauthorizedUserRequest =
+        userAccessUtils.noBillingAccessUserAuthRequest();
 
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
@@ -217,9 +195,7 @@ class CreateGcpContextFlightV2Test extends BaseConnectedTest {
     String projectId =
         flightState.getResultMap().get().get(WorkspaceFlightMapKeys.GCP_PROJECT_ID, String.class);
     // The Project should exist, but requested to be deleted.
-    Project project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
-    assertEquals(projectId, project.getProjectId());
-    assertEquals("DELETE_REQUESTED", project.getState());
+    workspaceConnectedTestUtils.assertProjectIsBeingDeleted(projectId);
   }
 
   private Map<String, StepStatus> getStepNameToStepStatusMap() {
@@ -292,7 +268,7 @@ class CreateGcpContextFlightV2Test extends BaseConnectedTest {
                         "group:"
                             + SamRethrow.onInterrupted(
                                 () ->
-                                    mockSamService.syncWorkspacePolicy(
+                                    samService.syncWorkspacePolicy(
                                         workspaceUuid,
                                         role,
                                         userAccessUtils.defaultUserAuthRequest()),

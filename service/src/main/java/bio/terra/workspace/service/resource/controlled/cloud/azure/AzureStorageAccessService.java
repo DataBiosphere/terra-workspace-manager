@@ -317,12 +317,10 @@ public class AzureStorageAccessService {
       endpoint = storageAccountResource.getStorageAccountEndpoint();
     } else {
       // get details from LZ shared storage account
-      UUID landingZoneId =
-          landingZoneApiDispatch.getLandingZoneId(
-              new BearerToken(userRequest.getRequiredToken()), workspaceUuid);
+      var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
+      UUID landingZoneId = landingZoneApiDispatch.getLandingZoneId(bearerToken, workspaceUuid);
       Optional<ApiAzureLandingZoneDeployedResource> existingSharedStorageAccount =
-          landingZoneApiDispatch.getSharedStorageAccount(
-              new BearerToken(userRequest.getRequiredToken()), landingZoneId);
+          landingZoneApiDispatch.getSharedStorageAccount(bearerToken, landingZoneId);
       if (existingSharedStorageAccount.isEmpty()) {
         // redefine exception
         throw new IllegalStateException(

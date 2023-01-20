@@ -124,7 +124,7 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
             flightBeanBag.getCrlService(),
             flightBeanBag.getResourceDao(),
             flightBeanBag.getLandingZoneApiDispatch(),
-            userRequest,
+            flightBeanBag.getSamService(),
             this),
         cloudRetry);
     flight.addStep(
@@ -146,6 +146,7 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
             flightBeanBag.getCrlService(),
             flightBeanBag.getResourceDao(),
             flightBeanBag.getLandingZoneApiDispatch(),
+            flightBeanBag.getSamService(),
             this),
         RetryRules.cloud());
   }

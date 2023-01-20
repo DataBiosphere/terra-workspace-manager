@@ -313,6 +313,28 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/workspaces/v1/{workspaceId}/listValidRegions:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/Platform'
+    get:
+      summary: |
+        list valid data centers of a given workspace on a cloud platform.
+      operationId: listValidRegions
+      tags: [ Workspace ]
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Regions'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
 components:
   responses:
     CloneWorkspaceResponse:
@@ -321,7 +343,15 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CloneWorkspaceResult'
-
+  parameters:
+    Platform:
+      name: platform
+      in: query
+      description: The cloud platform (gcp, azure)
+      required: true
+      schema:
+        type: string
+        enum: [ "gcp", "azure" ]
   schemas:
     ClonedWorkspace:
       description: >-
@@ -585,3 +615,10 @@ components:
       description: Enum for possible stages of a workspace along the Rawls migration path
       type: string
       enum: ['RAWLS_WORKSPACE', 'MC_WORKSPACE']
+
+    Regions:
+      type: array
+      description: List of regions (e.g. us-central1, us-west1)
+      items:
+        uniqueItems: true
+        type: string

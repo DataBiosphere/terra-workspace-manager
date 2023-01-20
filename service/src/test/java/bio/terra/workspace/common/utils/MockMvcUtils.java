@@ -148,6 +148,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 /**
@@ -176,7 +177,9 @@ public class MockMvcUtils {
   public static final String UPDATE_WORKSPACES_V1_PROPERTIES_PATH_FORMAT =
       "/api/workspaces/v1/%s/properties";
   public static final String UPDATE_WORKSPACES_V1_POLICIES_PATH_FORMAT =
-      "/api/workspaces/v1/%S/policies";
+      "/api/workspaces/v1/%s/policies";
+  public static final String WORKSPACES_V1_LIST_VALID_REGIONS_PATH_FORMAT =
+      "/api/workspaces/v1/%s/listValidRegions";
   public static final String GRANT_ROLE_PATH_FORMAT = "/api/workspaces/v1/%s/roles/%s/members";
   public static final String REMOVE_ROLE_PATH_FORMAT = "/api/workspaces/v1/%s/roles/%s/members/%s";
   public static final String RESOURCES_PATH_FORMAT = "/api/workspaces/v1/%s/resources";
@@ -184,6 +187,8 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/referenced/datarepo/snapshots";
   public static final String CREATE_CLOUD_CONTEXT_PATH_FORMAT =
       "/api/workspaces/v1/%s/cloudcontexts";
+  public static final String DELETE_GCP_CLOUD_CONTEXT_PATH_FORMAT =
+      "/api/workspaces/v1/%s/cloudcontexts/GCP";
   public static final String GET_CLOUD_CONTEXT_PATH_FORMAT =
       "/api/workspaces/v1/%s/cloudcontexts/result/%s";
   public static final String CREATE_AZURE_IP_PATH_FORMAT =
@@ -405,7 +410,7 @@ public class MockMvcUtils {
     ApiCreateCloudContextResult result = createGcpCloudContext(userRequest, workspaceId);
     String jobId = result.getJobReport().getId();
     while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
-      Thread.sleep(/*millis=*/ 5000);
+      TimeUnit.SECONDS.sleep(15);
       result = getCreateCloudContextResult(userRequest, workspaceId, jobId);
     }
     assertEquals(StatusEnum.SUCCEEDED, result.getJobReport().getStatus());
@@ -436,6 +441,15 @@ public class MockMvcUtils {
         getSerializedResponseForGetJobResult(
             userRequest, GET_CLOUD_CONTEXT_PATH_FORMAT, workspaceId, jobId);
     return objectMapper.readValue(serializedResponse, ApiCreateCloudContextResult.class);
+  }
+
+  public void deleteGcpCloudContext(AuthenticatedUserRequest userRequest, UUID workspaceId)
+      throws Exception {
+    mockMvc
+        .perform(
+            addAuth(
+                delete(DELETE_GCP_CLOUD_CONTEXT_PATH_FORMAT.formatted(workspaceId)), userRequest))
+        .andExpect(status().isNoContent());
   }
 
   public ApiCloneWorkspaceResult getCloneWorkspaceResult(
@@ -519,6 +533,19 @@ public class MockMvcUtils {
             addAuth(
                 get(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, workspaceId)), userRequest))
         .andExpect(status().is(HttpStatus.SC_NOT_FOUND));
+  }
+
+  // Delete Workspace variant when we don't know if workspaceId exists.
+  public int deleteWorkspaceNoCheck(AuthenticatedUserRequest userRequest, UUID workspaceId)
+      throws Exception {
+    MvcResult mvcResult =
+        mockMvc
+            .perform(
+                addAuth(
+                    delete(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, workspaceId)),
+                    userRequest))
+            .andReturn();
+    return mvcResult.getResponse().getStatus();
   }
 
   public ApiWsmPolicyUpdateResult updatePolicies(
