@@ -34,7 +34,6 @@ jacoco {
     toolVersion = '0.8.8'
 }
 
-/*
 // The default jacocoTestReport step cannot handle inputs from multiple gradle
 // tasks. Instead, we define our own task to generate a combined report from the
 // output of all tasks (unitTest, connectedTest, azureTest, and even bootRun for
@@ -57,7 +56,6 @@ task combinedJaCoCoReport(type: JacocoReport) {
     }
 
 }
-*/
 
 version = gradle.wsmVersion
 group = 'bio.terra'
