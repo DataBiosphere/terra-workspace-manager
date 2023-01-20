@@ -464,7 +464,7 @@ public class ValidationUtilsTest extends BaseUnitTest {
     UUID workspaceId = UUID.randomUUID();
     String platform = "gcp";
 
-    when(mockTpsApiDispatch().listValidDataCenter(workspaceId, platform))
+    when(mockTpsApiDispatch().listValidRegions(workspaceId, platform))
         .thenReturn(List.of("US", "us-central1", "us-east1"));
 
     for (var region : testRegions) {
@@ -479,7 +479,7 @@ public class ValidationUtilsTest extends BaseUnitTest {
   public void validateControlledResourceRegion_invalid_throws() {
     UUID workspaceId = UUID.randomUUID();
     String platform = "gcp";
-    when(mockTpsApiDispatch().listValidDataCenter(workspaceId, platform))
+    when(mockTpsApiDispatch().listValidRegions(workspaceId, platform))
         .thenReturn(List.of("us-central1", "us-east1"));
 
     assertThrows(
