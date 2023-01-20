@@ -7,6 +7,7 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
+import bio.terra.workspace.common.utils.RetryUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
@@ -20,19 +21,14 @@ import com.google.cloud.bigquery.datatransfer.v1.ScheduleOptions;
 import com.google.cloud.bigquery.datatransfer.v1.StartManualTransferRunsRequest;
 import com.google.cloud.bigquery.datatransfer.v1.TransferConfig;
 import com.google.cloud.bigquery.datatransfer.v1.TransferRun;
-import com.google.cloud.bigquery.datatransfer.v1.TransferState;
-import bio.terra.workspace.common.utils.RetryUtils;
 import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
-import java.io.IOException;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import reactor.util.retry.Retry;
 
 public class CopyBigQueryDatasetDifferentRegionStep implements Step {
   public static final Logger logger =
