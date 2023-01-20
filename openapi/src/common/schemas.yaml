@@ -313,3 +313,10 @@ components:
           $ref: '#/components/schemas/JobReport'
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
+
+    Regions:
+      type: array
+      description: List of regions (e.g. us-central1, us-west1)
+      items:
+        uniqueItems: true
+        type: string
