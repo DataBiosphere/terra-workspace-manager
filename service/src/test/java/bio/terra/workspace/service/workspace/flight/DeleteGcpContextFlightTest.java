@@ -34,7 +34,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
 
-@Tag("connected")
+@Tag("connectedPlus")
 class DeleteGcpContextFlightTest extends BaseConnectedTest {
 
   /**

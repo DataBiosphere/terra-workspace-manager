@@ -83,7 +83,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 // Use application configuration profile in addition to the standard connected test profile
 // inherited from the base class.
-@Tag("connected")
+@Tag("connectedPlus")
 @ActiveProfiles({"app-test"})
 class WorkspaceServiceTest extends BaseConnectedTest {
   @MockBean private DataRepoService mockDataRepoService;
