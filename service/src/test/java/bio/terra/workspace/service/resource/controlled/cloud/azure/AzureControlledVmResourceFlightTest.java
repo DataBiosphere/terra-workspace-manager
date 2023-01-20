@@ -49,11 +49,13 @@ import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.springframework.beans.factory.annotation.Autowired;
 
+// @Tag("azureConnected") - this test is tagged at the individual test level
 @TestInstance(Lifecycle.PER_CLASS)
 public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest {
 
@@ -97,6 +99,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
     workspaceService.deleteWorkspace(sharedWorkspace, userAccessUtils.defaultUserAuthRequest());
   }
 
+  @Tag("azureConnected")
   @Test
   public void createAndDeleteAzureVmControlledResource() throws InterruptedException {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
@@ -167,6 +170,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
         () -> computeManager.disks().getById(resolvedVm.osDiskId()));
   }
 
+  @Tag("azureConnectedPlus")
   @Test
   public void createAndDeleteAzureVmControlledResourceWithCustomScriptExtension()
       throws InterruptedException {
@@ -238,6 +242,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
         () -> computeManager.disks().getById(resolvedVm.osDiskId()));
   }
 
+  @Tag("azureConnected")
   @Test
   public void createVmWithFailureMakeSureNetworkInterfaceIsNotAbandoned()
       throws InterruptedException {
@@ -325,6 +330,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
     }
   }
 
+  @Tag("azureConnectedPlus")
   @Test
   public void createAndDeleteAzureVmControlledResourceWithCustomScriptExtensionWithNoPublicIp()
       throws InterruptedException {
@@ -396,6 +402,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
         () -> computeManager.disks().getById(resolvedVm.osDiskId()));
   }
 
+  @Tag("azureConnectedPlus")
   @Test
   public void createAndDeleteAzureVmControlledResourceWithEphemeralDiskWithNoPublicIp()
       throws InterruptedException {

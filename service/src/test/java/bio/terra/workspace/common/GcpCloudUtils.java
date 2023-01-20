@@ -165,9 +165,11 @@ public class GcpCloudUtils {
       String bucketName,
       String expectedLocation,
       ApiGcpGcsBucketDefaultStorageClass expectedStorageClass,
-      List<LifecycleRule> expectedLifecycleRules) {
+      List<LifecycleRule> expectedLifecycleRules)
+      throws Exception {
     StorageCow storageCow = crlService.createStorageCow(projectId, userRequest);
-    BucketInfo actualBucketInfo = storageCow.get(bucketName).getBucketInfo();
+    BucketInfo actualBucketInfo =
+        RetryUtils.getWithRetryOnException(() -> storageCow.get(bucketName).getBucketInfo());
 
     assertThat(expectedLocation, equalToIgnoringCase(actualBucketInfo.getLocation()));
     assertEquals(expectedStorageClass.name(), actualBucketInfo.getStorageClass().name());
