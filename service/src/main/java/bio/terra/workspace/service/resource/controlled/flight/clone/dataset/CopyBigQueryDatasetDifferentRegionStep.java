@@ -89,7 +89,7 @@ public class CopyBigQueryDatasetDifferentRegionStep implements Step {
                   samService.getOrCreatePetSaEmail(
                       gcpCloudContextService.getRequiredGcpProject(destinationWorkspaceId),
                       userRequest.getRequiredToken()),
-              "enablePet");
+              "CopyBigQueryDatasetDifferentRegionStep");
 
       TransferConfig config =
           dataTransferServiceClient.createTransferConfig(
@@ -129,7 +129,7 @@ public class CopyBigQueryDatasetDifferentRegionStep implements Step {
         }
       }
     } catch (Exception e) {
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
     }
 
     return StepResult.getStepResultSuccess();

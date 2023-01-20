@@ -126,6 +126,10 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
 
       if (CloningInstructions.COPY_RESOURCE == resolvedCloningInstructions) {
         var destLocation = inputParameters.get(ControlledResourceKeys.LOCATION, String.class);
+        // Use the BigQuery Data Transfer API for cross-region dataset copies. For table copy jobs,
+        // the destination dataset must reside in the same location as the dataset containing the
+        // table being copied.
+        // https://cloud.google.com/bigquery/docs/managing-tables#limitations_on_copying_tables
         if (destLocation != null && !(destLocation.equals(sourceResource.getRegion()))) {
           addStep(
               new CopyBigQueryDatasetDifferentRegionStep(
