@@ -584,11 +584,11 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
     when(mockTpsApiDispatch().explain(eq(workspace.getId()), anyInt())).thenReturn(explainResult);
 
     ApiWsmPolicyExplainResult result = explainPolicies(workspace.getId(), 0);
-    List<ApiWsmPolicyObject> sources = result.getExplainWorkspaces();
+    List<ApiWsmPolicyObject> sources = result.getExplainObjects();
     List<ApiWsmPolicyExplanation> explanations = result.getExplanation();
     assertEquals(2, sources.size());
     ApiWsmPolicyObject firstSource = sources.get(0);
-    assertEquals(sourceWorkspaceId, firstSource.getWorkspaceId());
+    assertEquals(sourceWorkspaceId, firstSource.getObjectId());
     assertFalse(firstSource.isDeleted());
     assertEquals(sources.get(0), sources.get(1));
 

@@ -183,11 +183,9 @@ components:
       type: object
       properties:
         objectId:
-          type:
-            $ref: '#/components/schemas/WsmPolicyObjectId'
+          $ref: '#/components/schemas/WsmPolicyObjectId'
         objectType:
-          type:
-            $ref: '#/components/schemas/WsmPolicyObjectType'
+          $ref: '#/components/schemas/WsmPolicyObjectType'
         deleted:
           description: Policy source has been deleted. Policies from the source still apply.
           type: boolean
@@ -199,14 +197,13 @@ components:
           type: string
         properties:
           description: The properties of the policy object. Empty if no access.
-          type:
-            $ref: '#/components/schemas/Properties'
+          $ref: '#/components/schemas/Properties'
 
     WsmPolicyExplainResult:
       type: object
       properties:
-        explainWorkspaces:
-          description: List of workspace policies referenced in the explanation
+        explainObjects:
+          description: List of WSM policy objects referenced in the explanation
           type: array
           items:
             $ref: '#/components/schemas/WsmPolicyObject'

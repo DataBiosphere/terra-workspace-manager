@@ -707,7 +707,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     TpsPaoExplainResult explainResult = tpsApiDispatch.explain(workspaceId, depth);
     var result = new ApiWsmPolicyExplainResult();
     if (explainResult.getExplainObjects() != null) {
-      result.explainWorkspaces(
+      result.explainObjects(
           explainResult.getExplainObjects().stream()
               .map(
                   source ->

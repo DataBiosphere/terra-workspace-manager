@@ -335,7 +335,7 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
-  /api/workspaces/v1/{workspaceId}/explainPolicies:
+  /api/workspaces/v1/{workspaceId}/policies/explain:
     parameters:
     - $ref: '#/components/parameters/WorkspaceId'
     - $ref: '#/components/parameters/WsmPolicyDepth'
@@ -640,3 +640,10 @@ components:
       description: Enum for possible stages of a workspace along the Rawls migration path
       type: string
       enum: ['RAWLS_WORKSPACE', 'MC_WORKSPACE']
+
+    Regions:
+      type: array
+      description: List of regions (e.g. us-central1, us-west1)
+      items:
+        uniqueItems: true
+        type: string
