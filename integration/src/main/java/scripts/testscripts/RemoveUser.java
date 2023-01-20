@@ -166,26 +166,27 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
     // privateResource user can still read the shared bucket.
     GcsBucketObjectUtils.retrieveBucketFile(sharedBucketName, projectId, privateResourceUser);
 
-    // Remove READER role from privateResourceUser. They are also a writer, so they should not lose
-    // access to workspace resources because of this.
-    ownerWorkspaceApi.removeRole(getWorkspaceId(), IamRole.READER, privateResourceUser.userEmail);
+    // Remove WRITER role from privateResourceUser. They are also a reader, so they should not lose
+    // access to workspace resources because of this. Note: we are assuming propagation to the
+    // bucket
+    // is the same as propagation to the project.
+    boolean revokeWriterSucceeded =
+        ClientTestUtils.revokeRoleWaitForPropagation(
+            ownerWorkspaceApi, getWorkspaceId(), projectId, privateResourceUser, IamRole.WRITER);
+    assertTrue(revokeWriterSucceeded);
 
-    // Is there any way to wait for propagation here?
-    // This test might artificially succeed because propagation is too slow.
-    // I have no idea how to detect that.
-
-    // Validate privateResourceWriter still has access to all resources.
+    // Validate privateResourceUser still has access to all resources.
     GcsBucketObjectUtils.retrieveBucketFile(sharedBucketName, projectId, privateResourceUser);
     GcsBucketObjectUtils.retrieveBucketFile(privateBucketName, projectId, privateResourceUser);
     BqDataTableUtils.readPopulatedBigQueryTable(privateDataset, privateResourceUser, projectId);
     assertTrue(NotebookUtils.userHasProxyAccess(privateNotebook, privateResourceUser, projectId));
 
-    // Remove WRITER role from privateResourceUser. This is their last role, so they are no longer
+    // Remove READER role from privateResourceUser. This is their last role, so they are no longer
     // a member of this workspace.
-    boolean revokeSucceeded =
+    boolean revokeReaderSucceeded =
         ClientTestUtils.revokeRoleWaitForPropagation(
-            ownerWorkspaceApi, getWorkspaceId(), projectId, privateResourceUser, IamRole.WRITER);
-    assertTrue(revokeSucceeded);
+            ownerWorkspaceApi, getWorkspaceId(), projectId, privateResourceUser, IamRole.READER);
+    assertTrue(revokeReaderSucceeded);
 
     // Validate privateResourceWriter no longer has access to any private resources.
     ClientTestUtils.runWithRetryOnException(
