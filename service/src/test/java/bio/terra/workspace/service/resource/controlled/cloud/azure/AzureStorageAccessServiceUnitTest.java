@@ -67,6 +67,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
     when(keyProvider.getStorageAccountKey(any(), any())).thenReturn(cred);
     when(mockSamService().getUserEmailFromSamAndRethrowOnInterrupt(eq(userRequest)))
         .thenReturn(userRequest.getEmail());
+    when(mockSamService().getWsmServiceAccountToken()).thenReturn("wsm-token");
     azureStorageAccessService =
         new AzureStorageAccessService(
             mockSamService(),

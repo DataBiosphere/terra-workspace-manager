@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import bio.terra.cloudres.google.bigquery.BigQueryCow;
 import bio.terra.cloudres.google.storage.BlobCow;
 import bio.terra.cloudres.google.storage.StorageCow;
+import bio.terra.workspace.common.utils.RetryUtils;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketDefaultStorageClass;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -34,13 +35,13 @@ import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 /** Utils for working with cloud objects. */
@@ -71,40 +72,31 @@ public class GcpCloudUtils {
       throws Exception {
     // Create employee table
     BigQuery bigQueryClient = getGcpBigQueryClient(userCredential, projectId);
-    final Schema employeeSchema = Schema.of(Field.of("employee_id", LegacySQLTypeName.INTEGER));
-    final TableId employeeTableId = TableId.of(projectId, datasetId, BQ_EMPLOYEE_TABLE_NAME);
-    final TableInfo employeeTableInfo =
+    Schema employeeSchema = Schema.of(Field.of("employee_id", LegacySQLTypeName.INTEGER));
+    TableId employeeTableId = TableId.of(projectId, datasetId, BQ_EMPLOYEE_TABLE_NAME);
+    TableInfo employeeTableInfo =
         TableInfo.newBuilder(employeeTableId, StandardTableDefinition.of(employeeSchema)).build();
-    final Table createdEmployeeTable = bigQueryClient.create(employeeTableInfo);
+    Table createdEmployeeTable =
+        RetryUtils.getWithRetryOnException(() -> bigQueryClient.create(employeeTableInfo));
     logger.debug("Employee Table: {}", createdEmployeeTable);
 
-    // Add row to table
-    // Retry because if project was created recently, it may take time for bigquery.jobs.create to
-    // propagate
-    int retryCount = 10;
-    int retryWaitSeconds = 5;
-    for (int i = 0; i < retryCount; i++) {
-      TimeUnit.SECONDS.sleep(retryWaitSeconds);
-      try {
-        // Don't call insertAll() with InsertAllRequest. That inserts via stream. Stream buffer may
-        // not be copied for up to 90 minutes:
-        // https://cloud.google.com/bigquery/docs/streaming-data-into-bigquery#dataavailability
-        // Instead, use DDL to insert rows.
-        bigQueryClient.query(
-            QueryJobConfiguration.newBuilder(
-                    "INSERT INTO `%s.%s.%s` (employee_id) VALUES(%s)"
-                        .formatted(projectId, datasetId, BQ_EMPLOYEE_TABLE_NAME, BQ_EMPLOYEE_ID))
-                .build());
-      } catch (BigQueryException e) {
-        // bigquery.jobs.create hasn't propagated yet; retry
-        if (e.getCode() == HttpStatus.FORBIDDEN.value()) {
-          continue;
-        }
-        throw e;
-      }
-      // Insert succeeded
-      break;
-    }
+    // Don't call insertAll() with InsertAllRequest. That inserts via stream. Stream buffer may
+    // not be copied for up to 90 minutes:
+    // https://cloud.google.com/bigquery/docs/streaming-data-into-bigquery#dataavailability
+    // Instead, use DDL to insert rows.
+    RetryUtils.getWithRetryOnException(
+        () ->
+            bigQueryClient.query(
+                QueryJobConfiguration.newBuilder(
+                        "INSERT INTO `%s.%s.%s` (employee_id) VALUES(%s)"
+                            .formatted(
+                                projectId, datasetId, BQ_EMPLOYEE_TABLE_NAME, BQ_EMPLOYEE_ID))
+                    .build()),
+        RetryUtils.DEFAULT_RETRY_TOTAL_DURATION,
+        Duration.ofSeconds(5),
+        0.5,
+        RetryUtils.DEFAULT_RETRY_SLEEP_DURATION_MAX,
+        Collections.singletonList(BigQueryException.class));
   }
 
   /** Asserts table is populated as per populateBqTable(). */
@@ -112,7 +104,8 @@ public class GcpCloudUtils {
       GoogleCredentials userCredential, String projectId, String datasetId) throws Exception {
     BigQuery bigQueryClient = getGcpBigQueryClient(userCredential, projectId);
     Page<FieldValueList> actualRows =
-        bigQueryClient.listTableData(TableId.of(datasetId, BQ_EMPLOYEE_TABLE_NAME));
+        RetryUtils.getWithRetryOnException(
+            () -> bigQueryClient.listTableData(TableId.of(datasetId, BQ_EMPLOYEE_TABLE_NAME)));
 
     int rowCount = 0;
     for (FieldValueList row : actualRows.getValues()) {
@@ -126,7 +119,8 @@ public class GcpCloudUtils {
       AuthenticatedUserRequest userRequest, String projectId, String datasetId) throws Exception {
     BigQueryCow bigQueryCow = crlService.createBigQueryCow(userRequest);
     List<com.google.api.services.bigquery.model.TableList.Tables> actualTables =
-        bigQueryCow.tables().list(projectId, datasetId).execute().getTables();
+        RetryUtils.getWithRetryOnException(
+            () -> bigQueryCow.tables().list(projectId, datasetId).execute().getTables());
     assertNull(actualTables);
   }
 
@@ -136,7 +130,10 @@ public class GcpCloudUtils {
     Storage storageClient = getGcpStorageClient(userCredential, projectId);
     BlobId blobId = BlobId.of(bucketName, GCS_FILE_NAME);
     BlobInfo blobInfo = BlobInfo.newBuilder(blobId).build();
-    storageClient.create(blobInfo, GCS_FILE_CONTENTS.getBytes(StandardCharsets.UTF_8));
+
+    // Create a blob with retry to allow permission propagation
+    RetryUtils.getWithRetryOnException(
+        () -> storageClient.create(blobInfo, GCS_FILE_CONTENTS.getBytes(StandardCharsets.UTF_8)));
   }
 
   /** Asserts bucket has file as per addFileToBucket(). */
