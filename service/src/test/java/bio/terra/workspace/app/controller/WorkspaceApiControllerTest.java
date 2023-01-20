@@ -54,14 +54,16 @@ import bio.terra.workspace.generated.model.ApiResourceCloneDetails;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
+import bio.terra.workspace.generated.model.ApiWsmPolicyComponent;
 import bio.terra.workspace.generated.model.ApiWsmPolicyExplainResult;
 import bio.terra.workspace.generated.model.ApiWsmPolicyExplanation;
 import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
 import bio.terra.workspace.generated.model.ApiWsmPolicyInputs;
+import bio.terra.workspace.generated.model.ApiWsmPolicyObject;
+import bio.terra.workspace.generated.model.ApiWsmPolicyObjectType;
 import bio.terra.workspace.generated.model.ApiWsmPolicyPair;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateMode;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateRequest;
-import bio.terra.workspace.generated.model.ApiWsmPolicyObject;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
 import bio.terra.workspace.service.iam.model.SamConstants.SamSpendProfileAction;
@@ -548,7 +550,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
   @Test
   public void explainPolicies() throws Exception {
     ApiCreatedWorkspace workspace = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
-    UUID sourceWorkspaceId = UUID.randomUUID();
+    UUID sourceWorkspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     TpsPolicyExplainSource explainSource =
         new TpsPolicyExplainSource()
             .objectId(sourceWorkspaceId)
@@ -589,12 +591,14 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
     assertEquals(2, sources.size());
     ApiWsmPolicyObject firstSource = sources.get(0);
     assertEquals(sourceWorkspaceId, firstSource.getObjectId());
+    assertEquals(ApiWsmPolicyObjectType.WORKSPACE, firstSource.getObjectType());
+    assertEquals(ApiWsmPolicyComponent.WSM, firstSource.getComponent());
     assertFalse(firstSource.isDeleted());
     assertEquals(sources.get(0), sources.get(1));
 
     assertEquals(2, explanations.size());
     ApiWsmPolicyExplanation firstExplanation = explanations.get(0);
-    assertEquals(sourceWorkspaceId, firstExplanation.getWorkspaceId());
+    assertEquals(sourceWorkspaceId, firstExplanation.getObjectId());
     assertNotNull(firstExplanation.getPolicyInput());
     List<ApiWsmPolicyExplanation> nestedExplanations = firstExplanation.getPolicyExplanations();
     assertEquals(1, nestedExplanations.size());

@@ -31,7 +31,7 @@ import bio.terra.workspace.generated.model.ApiIamRole;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
 import bio.terra.workspace.generated.model.ApiWsmPolicyExplainResult;
-import bio.terra.workspace.generated.model.ApiWsmPolicyWorkspace;
+import bio.terra.workspace.generated.model.ApiWsmPolicyObject;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
@@ -336,9 +336,9 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     ApiWsmPolicyExplainResult result =
         explainPolicies(userAccessUtils.defaultUserAuthRequest(), workspace.getId(), 0);
 
-    assertEquals(1, result.getExplainWorkspaces().size());
-    ApiWsmPolicyWorkspace source = result.getExplainWorkspaces().get(0);
-    assertEquals(workspace.getId(), source.getWorkspaceId());
+    assertEquals(1, result.getExplainObjects().size());
+    ApiWsmPolicyObject source = result.getExplainObjects().get(0);
+    assertEquals(workspace.getId(), source.getObjectId());
     assertFalse(source.isDeleted());
     assertEquals(0, result.getExplanation().size());
   }

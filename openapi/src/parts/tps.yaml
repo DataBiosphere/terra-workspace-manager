@@ -167,11 +167,10 @@ components:
           requested object itself. The policyExplanations may be empty/not present if
           this is a leaf in the explain graph.
       type: object
-      required: [ workspaceId, policyInput ]
+      required: [ objectId, policyInput ]
       properties:
-        workspaceId:
-          type: string
-          format: uuid
+        objectId:
+          $ref: '#/components/schemas/WsmPolicyObjectId'
         policyInput:
           $ref: '#/components/schemas/WsmPolicyInput'
         policyExplanations:
@@ -186,6 +185,8 @@ components:
           $ref: '#/components/schemas/WsmPolicyObjectId'
         objectType:
           $ref: '#/components/schemas/WsmPolicyObjectType'
+        component:
+          $ref: '#/components/schemas/WsmPolicyComponent'
         deleted:
           description: Policy source has been deleted. Policies from the source still apply.
           type: boolean

@@ -5,9 +5,12 @@ import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertM
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesDeleteRequestBody;
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesUpdateRequestBody;
 
+import bio.terra.common.exception.ForbiddenException;
+import bio.terra.policy.model.TpsObjectType;
 import bio.terra.policy.model.TpsPaoExplainResult;
 import bio.terra.policy.model.TpsPaoGetResult;
 import bio.terra.policy.model.TpsPaoUpdateResult;
+import bio.terra.policy.model.TpsPolicyExplainSource;
 import bio.terra.policy.model.TpsPolicyExplanation;
 import bio.terra.policy.model.TpsPolicyInput;
 import bio.terra.policy.model.TpsPolicyInputs;
@@ -43,13 +46,15 @@ import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
+import bio.terra.workspace.generated.model.ApiWsmPolicyComponent;
 import bio.terra.workspace.generated.model.ApiWsmPolicyExplainResult;
 import bio.terra.workspace.generated.model.ApiWsmPolicyExplanation;
 import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
+import bio.terra.workspace.generated.model.ApiWsmPolicyObject;
+import bio.terra.workspace.generated.model.ApiWsmPolicyObjectType;
 import bio.terra.workspace.generated.model.ApiWsmPolicyPair;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateRequest;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateResult;
-import bio.terra.workspace.generated.model.ApiWsmPolicyObject;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamRethrow;
@@ -75,6 +80,7 @@ import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import com.google.common.base.Preconditions;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.time.OffsetDateTime;
 import java.util.Collections;
@@ -704,16 +710,14 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   @Override
   public ResponseEntity<ApiWsmPolicyExplainResult> explainPolicies(
       UUID workspaceId, Integer depth) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    workspaceService.validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.READ);
     TpsPaoExplainResult explainResult = tpsApiDispatch.explain(workspaceId, depth);
     var result = new ApiWsmPolicyExplainResult();
     if (explainResult.getExplainObjects() != null) {
       result.explainObjects(
           explainResult.getExplainObjects().stream()
-              .map(
-                  source ->
-                      new ApiWsmPolicyObject()
-                          .objectId(source.getObjectId())
-                          .deleted(source.isDeleted()))
+              .map(source -> buildWsmPolicyObject(source, userRequest))
               .toList());
     }
 
@@ -727,10 +731,34 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
 
+  private ApiWsmPolicyObject buildWsmPolicyObject(
+      TpsPolicyExplainSource source, AuthenticatedUserRequest userRequest) {
+    var wsmPolicyObject =
+        new ApiWsmPolicyObject()
+            .objectId(source.getObjectId())
+            .deleted(source.isDeleted())
+            .component(ApiWsmPolicyComponent.WSM);
+    // When there are more type of policy object, we may need to change this to a switch case.
+    Preconditions.checkState(TpsObjectType.WORKSPACE == source.getObjectType());
+    try {
+      var workspace =
+          workspaceService.validateWorkspaceAndAction(
+              userRequest, source.getObjectId(), SamWorkspaceAction.READ);
+      wsmPolicyObject
+          .objectType(ApiWsmPolicyObjectType.WORKSPACE)
+          .name(workspace.displayName())
+          .properties(convertMapToApiProperties(workspace.getProperties()));
+    } catch (ForbiddenException e) {
+      logger.info("Not authorized to read workspace {}.", source.getObjectId());
+    }
+
+    return wsmPolicyObject;
+  }
+
   private static ApiWsmPolicyExplanation convertExplanation(TpsPolicyExplanation explanation) {
     var wsmPolicyExplanation =
         new ApiWsmPolicyExplanation()
-            .workspaceId(explanation.getObjectId())
+            .objectId(explanation.getObjectId())
             .policyInput(policyInputToApi(explanation.getPolicyInput()));
     if (explanation.getPolicyExplanations() != null) {
       wsmPolicyExplanation.policyExplanations(
