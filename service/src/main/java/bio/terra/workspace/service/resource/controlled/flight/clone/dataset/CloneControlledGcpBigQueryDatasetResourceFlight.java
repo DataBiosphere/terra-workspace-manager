@@ -108,7 +108,8 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
               userRequest, flightBeanBag.getReferencedResourceService()),
           RetryRules.shortDatabase());
       addStep(
-          new SetReferencedDestinationBigQueryDatasetResponseStep(flightBeanBag.getResourceDao()),
+          new SetReferencedDestinationBigQueryDatasetResponseStep(
+              flightBeanBag.getResourceDao(), flightBeanBag.getWorkspaceActivityLogService()),
           RetryRules.shortExponential());
       return;
     }
@@ -122,8 +123,8 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
               flightBeanBag.getControlledResourceService(),
               userRequest,
               flightBeanBag.getGcpCloudContextService(),
-              resolvedCloningInstructions));
-
+              resolvedCloningInstructions,
+              flightBeanBag.getWorkspaceActivityLogService()));
       if (CloningInstructions.COPY_RESOURCE == resolvedCloningInstructions) {
         var destLocation = inputParameters.get(ControlledResourceKeys.LOCATION, String.class);
         // Use the BigQuery Data Transfer API for cross-region dataset copies. For table copy jobs,

@@ -97,7 +97,9 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
         /*resourceLineage=*/ null,
         /*properties*/ Map.of(),
         "foo@gmail.com",
-        /*createdDate*/ null);
+        /*createdDate*/ null,
+        /*lastUpdatedByEmail=*/ null,
+        /*lastUpdatedDate=*/ null);
   }
 
   private ControlledAzureStorageContainerResource buildStorageContainerResource(

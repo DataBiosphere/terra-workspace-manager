@@ -43,11 +43,13 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
+@Tag("azureConnected")
 public class AzureWorkspaceTest extends BaseAzureConnectedTest {
 
   @Autowired private AzureTestConfiguration azureTestConfiguration;

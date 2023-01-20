@@ -102,6 +102,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
@@ -113,6 +114,7 @@ import org.springframework.http.HttpStatus;
 
 // Per-class lifecycle on this test to allow a shared workspace object across tests, which saves
 // time creating and deleting GCP contexts.
+@Tag("connected")
 @TestInstance(Lifecycle.PER_CLASS)
 public class ControlledResourceServiceTest extends BaseConnectedTest {
   private static final Logger logger = LoggerFactory.getLogger(ControlledResourceServiceTest.class);
@@ -898,7 +900,11 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .defaultTableLifetime(newDefaultTableLifetime)
             .defaultPartitionLifetime(newDefaultPartitionLifetime);
     controlledResourceService.updateBqDataset(
-        fetchedDataset, updateParameters, newName, newDescription);
+        fetchedDataset,
+        updateParameters,
+        newName,
+        newDescription,
+        userAccessUtils.defaultUserAuthRequest());
 
     ControlledBigQueryDatasetResource updatedResource =
         controlledResourceService
@@ -1143,7 +1149,12 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         new ApiGcpBigQueryDatasetUpdateParameters()
             .defaultTableLifetime(newDefaultTableLifetime)
             .defaultPartitionLifetime(newDefaultPartitionLifetime);
-    controlledResourceService.updateBqDataset(resource, updateParameters, newName, newDescription);
+    controlledResourceService.updateBqDataset(
+        resource,
+        updateParameters,
+        newName,
+        newDescription,
+        userAccessUtils.defaultUserAuthRequest());
 
     // check the properties stored on the cloud were updated
     validateBigQueryDatasetCloudMetadata(
@@ -1213,7 +1224,11 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         InvalidResultStateException.class,
         () ->
             controlledResourceService.updateBqDataset(
-                resource, updateParameters, "NEW_updateBqDatasetUndo", "new resource description"));
+                resource,
+                updateParameters,
+                "NEW_updateBqDatasetUndo",
+                "new resource description",
+                userAccessUtils.defaultUserAuthRequest()));
 
     // check the properties stored on the cloud were not updated
     validateBigQueryDatasetCloudMetadata(
@@ -1269,7 +1284,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         new ApiGcpBigQueryDatasetUpdateParameters()
             .defaultTableLifetime(0L)
             .defaultPartitionLifetime(0L);
-    controlledResourceService.updateBqDataset(resource, updateParameters, null, null);
+    controlledResourceService.updateBqDataset(
+        resource, updateParameters, null, null, userAccessUtils.defaultUserAuthRequest());
 
     // check the expiration times stored on the cloud are now undefined
     validateBigQueryDatasetCloudMetadata(
@@ -1279,7 +1295,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     Long newDefaultTableLifetime = 3600L;
     updateParameters =
         new ApiGcpBigQueryDatasetUpdateParameters().defaultTableLifetime(newDefaultTableLifetime);
-    controlledResourceService.updateBqDataset(resource, updateParameters, null, null);
+    controlledResourceService.updateBqDataset(
+        resource, updateParameters, null, null, userAccessUtils.defaultUserAuthRequest());
 
     // check there is one defined and one undefined expiration value
     validateBigQueryDatasetCloudMetadata(
@@ -1290,7 +1307,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     updateParameters =
         new ApiGcpBigQueryDatasetUpdateParameters()
             .defaultPartitionLifetime(newDefaultPartitionLifetime);
-    controlledResourceService.updateBqDataset(resource, updateParameters, null, null);
+    controlledResourceService.updateBqDataset(
+        resource, updateParameters, null, null, userAccessUtils.defaultUserAuthRequest());
 
     // check the expiration times stored on the cloud are both defined again
     validateBigQueryDatasetCloudMetadata(
@@ -1327,7 +1345,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .defaultPartitionLifetime(3601L);
     assertThrows(
         BadRequestException.class,
-        () -> controlledResourceService.updateBqDataset(resource, updateParameters, null, null));
+        () ->
+            controlledResourceService.updateBqDataset(
+                resource, updateParameters, null, null, userAccessUtils.defaultUserAuthRequest()));
 
     // check the expiration times stored on the cloud are still undefined, because the update above
     // failed
@@ -1341,7 +1361,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .defaultPartitionLifetime(-2L);
     assertThrows(
         BadRequestException.class,
-        () -> controlledResourceService.updateBqDataset(resource, updateParameters2, null, null));
+        () ->
+            controlledResourceService.updateBqDataset(
+                resource, updateParameters2, null, null, userAccessUtils.defaultUserAuthRequest()));
 
     // check the expiration times stored on the cloud are still undefined, because the update above
     // failed

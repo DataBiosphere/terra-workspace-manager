@@ -3,6 +3,7 @@ package scripts.utils;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static scripts.utils.CommonResourceFieldsUtil.makeControlledResourceCommonFields;
 import static scripts.utils.CommonResourceFieldsUtil.makeReferencedResourceCommonFields;
 
@@ -378,5 +379,21 @@ public class BqDatasetUtils {
     return new GcpBigQueryDatasetAttributes()
         .projectId(matcher.group(1))
         .datasetId(matcher.group(2));
+  }
+
+  /**
+   * The dataset at creation can have an earlier LastUpdatedDate than the current dataset. So do not
+   * compare the lastUpdatedDate.
+   */
+  public static void assertDatasetsAreEqualIgnoringLastUpdatedDate(
+      GcpBigQueryDatasetResource createdDataset, GcpBigQueryDatasetResource fetchedDataset) {
+    GcpBigQueryDatasetResource copy =
+        new GcpBigQueryDatasetResource()
+            .attributes(createdDataset.getAttributes())
+            .metadata(
+                createdDataset
+                    .getMetadata()
+                    .lastUpdatedDate(fetchedDataset.getMetadata().getLastUpdatedDate()));
+    assertEquals(copy, fetchedDataset);
   }
 }

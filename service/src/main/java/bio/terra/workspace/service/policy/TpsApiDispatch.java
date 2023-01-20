@@ -5,6 +5,7 @@ import bio.terra.policy.api.TpsApi;
 import bio.terra.policy.client.ApiClient;
 import bio.terra.policy.client.ApiException;
 import bio.terra.policy.model.TpsComponent;
+import bio.terra.policy.model.TpsLocation;
 import bio.terra.policy.model.TpsObjectType;
 import bio.terra.policy.model.TpsPaoCreateRequest;
 import bio.terra.policy.model.TpsPaoGetResult;
@@ -191,6 +192,16 @@ public class TpsApiDispatch {
       return tpsRegions.stream().toList();
     }
     return new ArrayList<>();
+  }
+
+  public TpsLocation getLocationInfo(String platform, String location) {
+    features.tpsEnabledCheck();
+    TpsApi tpsApi = policyApi();
+    try {
+      return tpsApi.getLocationInfo(platform, location);
+    } catch (ApiException e) {
+      throw convertApiException(e);
+    }
   }
 
   private ApiClient getApiClient(String accessToken) {
