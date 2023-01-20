@@ -490,10 +490,10 @@ public class ClientTestUtils {
 
     // Wait for the testUser to lose storage.bucket.list permission,
     // indicating that the revoke has been propagated to the project.
-    return getWithRetryOnException(() -> testNoStorageList(storage, testUser));
+    return getWithRetryOnException(() -> testForbiddenStorageList(storage, testUser));
   }
 
-  private static boolean testNoStorageList(Storage storage, TestUserSpecification testUser)
+  private static boolean testForbiddenStorageList(Storage storage, TestUserSpecification testUser)
       throws Exception {
     try {
       storage.list();
