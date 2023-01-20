@@ -33,6 +33,7 @@ import bio.terra.workspace.generated.model.ApiIamRole;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
 import bio.terra.workspace.generated.model.ApiProperties;
 import bio.terra.workspace.generated.model.ApiProperty;
+import bio.terra.workspace.generated.model.ApiRegions;
 import bio.terra.workspace.generated.model.ApiRoleBinding;
 import bio.terra.workspace.generated.model.ApiRoleBindingList;
 import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
@@ -365,8 +366,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     logger.info("Updating workspace policies {} for {}", workspaceId, userRequest.getEmail());
 
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceId, SamConstants.SamWorkspaceAction.WRITE);
+    workspaceService.validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.WRITE);
 
     featureConfiguration.tpsEnabledCheck();
     TpsPolicyInputs adds = TpsApiConversionUtils.tpsFromApiTpsPolicyInputs(body.getAddAttributes());
@@ -413,7 +413,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       @PathVariable("workspaceId") UUID workspaceUuid, @RequestBody List<String> propertyKeys) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.DELETE);
+        userRequest, workspaceUuid, SamWorkspaceAction.DELETE);
     validatePropertiesDeleteRequestBody(propertyKeys);
     logger.info(
         "Deleting the properties with the key {} in workspace {}", propertyKeys, workspaceUuid);
@@ -478,8 +478,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     }
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     Workspace workspace =
-        workspaceService.validateMcWorkspaceAndAction(
-            userRequest, uuid, SamConstants.SamWorkspaceAction.OWN);
+        workspaceService.validateMcWorkspaceAndAction(userRequest, uuid, SamWorkspaceAction.OWN);
     workspaceService.removeWorkspaceRoleFromUser(
         workspace, WsmIamRole.fromApiModel(role), memberEmail, userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -584,7 +583,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     // Validate that the user is a workspace member, as enablePetServiceAccountImpersonation does
     // not authenticate.
     workspaceService.validateMcWorkspaceAndAction(
-        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
+        userRequest, workspaceUuid, SamWorkspaceAction.READ);
     petSaService.enablePetServiceAccountImpersonation(
         workspaceUuid,
         getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
@@ -610,7 +609,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     // create a new workspace.
     final Workspace sourceWorkspace =
         workspaceService.validateWorkspaceAndAction(
-            petRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
+            petRequest, workspaceUuid, SamWorkspaceAction.READ);
 
     Optional<SpendProfileId> spendProfileId =
         Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::new);
@@ -682,6 +681,17 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
     final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId);
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
+  }
+
+  @Override
+  public ResponseEntity<ApiRegions> listValidRegions(UUID workspaceId, String platform) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    workspaceService.validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.READ);
+
+    List<String> datacenters = tpsApiDispatch.listValidRegions(workspaceId, platform);
+    ApiRegions apiDataCenterList = new ApiRegions();
+    apiDataCenterList.addAll(datacenters);
+    return new ResponseEntity<>(apiDataCenterList, HttpStatus.OK);
   }
 
   // Retrieve the async result or progress for clone workspace.

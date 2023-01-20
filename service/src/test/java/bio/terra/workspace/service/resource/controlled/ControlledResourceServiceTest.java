@@ -207,8 +207,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
    */
   @AfterEach
   public void resetFlightDebugInfo() {
-    StairwayTestUtils.enumerateJobsDump(jobService, workspaceId, user.getAuthenticatedRequest());
     jobService.setFlightDebugInfoForTest(null);
+    StairwayTestUtils.enumerateJobsDump(jobService, workspaceId, user.getAuthenticatedRequest());
   }
 
   /** After running all tests, delete the shared workspace. */

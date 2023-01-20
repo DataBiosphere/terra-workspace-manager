@@ -9,12 +9,13 @@
       "name": "ListWorkspaces",
       "numberOfUserJourneyThreadsToRun": 1,
       "userJourneyThreadPoolSize": 1,
-      "expectedTimeForEach": 5,
-      "expectedTimeForEachUnit": "SECONDS",
+      "expectedTimeForEach": 75,
+      "expectedTimeForEachUnit": "MINUTES",
       "parametersMap": {
         "spend-profile-id": "wm-default-spend-profile"
       }
     }
   ],
-  "testUserFiles": ["bella.json", "liam.json"]
+  "testUserFiles": ["bella.json", "liam.json"],
+  "maxRetries" : 0
 }

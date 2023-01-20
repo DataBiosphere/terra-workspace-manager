@@ -22,7 +22,6 @@ import bio.terra.workspace.model.DeleteControlledGcpAiNotebookInstanceResult;
 import bio.terra.workspace.model.GcpAiNotebookInstanceResource;
 import bio.terra.workspace.model.GcpAiNotebookUpdateParameters;
 import bio.terra.workspace.model.GenerateGcpAiNotebookCloudIdRequestBody;
-import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.JobControl;
 import bio.terra.workspace.model.ResourceList;
@@ -78,16 +77,13 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
   @SuppressFBWarnings(value = "DLS_DEAD_LOCAL_STORE")
   protected void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
       throws Exception {
-    CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
+    ClientTestUtils.grantRole(workspaceApi, getWorkspaceId(), resourceUser, IamRole.WRITER);
+    ClientTestUtils.grantRole(workspaceApi, getWorkspaceId(), otherWorkspaceUser, IamRole.WRITER);
 
-    workspaceApi.grantRole(
-        new GrantRoleRequestBody().memberEmail(resourceUser.userEmail),
-        getWorkspaceId(),
-        IamRole.WRITER);
-    workspaceApi.grantRole(
-        new GrantRoleRequestBody().memberEmail(otherWorkspaceUser.userEmail),
-        getWorkspaceId(),
-        IamRole.WRITER);
+    String gcpProjectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
+
+    ClientTestUtils.workspaceRoleWaitForPropagation(resourceUser, gcpProjectId);
+    ClientTestUtils.workspaceRoleWaitForPropagation(otherWorkspaceUser, gcpProjectId);
 
     ControlledGcpResourceApi resourceUserApi =
         ClientTestUtils.getControlledGcpResourceClient(resourceUser, server);

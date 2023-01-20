@@ -153,7 +153,7 @@ public class ControlledAzureVmResource extends ControlledResource {
             this,
             flightBeanBag.getResourceDao(),
             flightBeanBag.getLandingZoneApiDispatch(),
-            userRequest),
+            flightBeanBag.getSamService()),
         cloudRetry);
     flight.addStep(
         new CreateAzureVmStep(
@@ -178,7 +178,7 @@ public class ControlledAzureVmResource extends ControlledResource {
             flightBeanBag.getCrlService(),
             this,
             flightBeanBag.getLandingZoneApiDispatch(),
-            userRequest),
+            flightBeanBag.getSamService()),
         cloudRetry);
   }
 

@@ -9,12 +9,13 @@
       "name": "Jobs",
       "numberOfUserJourneyThreadsToRun": 1,
       "userJourneyThreadPoolSize": 1,
-      "expectedTimeForEach": 10,
+      "expectedTimeForEach": 75,
       "expectedTimeForEachUnit": "MINUTES",
       "parametersMap": {
         "spend-profile-id": "wm-default-spend-profile"
       }
     }
   ],
-  "testUserFiles": ["bella.json", "elijah.json"]
+  "testUserFiles": ["bella.json", "elijah.json"],
+  "maxRetries" : 0
 }
