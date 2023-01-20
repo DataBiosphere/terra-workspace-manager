@@ -640,13 +640,3 @@ components:
       description: Enum for possible stages of a workspace along the Rawls migration path
       type: string
       enum: ['RAWLS_WORKSPACE', 'MC_WORKSPACE']
-
-<<<<<<< HEAD
-=======
-    Regions:
-      type: array
-      description: List of regions (e.g. us-central1, us-west1)
-      items:
-        uniqueItems: true
-        type: string
->>>>>>> main
