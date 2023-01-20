@@ -453,7 +453,7 @@ public class ResourceValidationUtils {
 
     // Get the list of valid locations for this workspace from TPS. If there are no regional
     // constraints applied to the workspace, TPS should return all available regions.
-    List<String> validLocations = tpsApiDispatch.listValidDataCenter(workspaceId, "gcp");
+    List<String> validLocations = tpsApiDispatch.listValidRegions(workspaceId, "gcp");
 
     if (validLocations.stream().noneMatch(region::equalsIgnoreCase)) {
       throw new InvalidControlledResourceException(
