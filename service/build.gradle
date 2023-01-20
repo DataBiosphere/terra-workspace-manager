@@ -37,17 +37,6 @@ project.ext {
     googleCredentialsFile = "${rootDir}/config/wsm-sa.json"
 }
 
-// include order matters, so don't alphabetize
-apply(from: "$includeDir/profiler.gradle")
-apply(from: "$includeDir/deploy.gradle")
-apply(from: "$includeDir/openapi.gradle")
-apply(from: "$includeDir/versionProperties.gradle")
-apply(from: "$rootDir/gradle/quality.gradle")
-apply(from: "$includeDir/taskDependencies.gradle")
-apply(from: "$includeDir/dependencies.gradle")
-apply(from: "$includeDir/jacoco.gradle")
-apply(from: "$includeDir/testing.gradle")
-
 // A small wrapper around bootRun to run the server instrumented with Jacoco
 // code coverage tracking. This is useful for running a local server for
 // integration tests, but live environments should use `bootRun` instead and
@@ -63,3 +52,14 @@ task jacocoBootRun(type: org.springframework.boot.gradle.tasks.run.BootRun) {
 jacoco {
     applyTo jacocoBootRun
 }
+
+// include order matters, so don't alphabetize
+apply(from: "$includeDir/profiler.gradle")
+apply(from: "$includeDir/deploy.gradle")
+apply(from: "$includeDir/openapi.gradle")
+apply(from: "$includeDir/versionProperties.gradle")
+apply(from: "$rootDir/gradle/quality.gradle")
+apply(from: "$includeDir/taskDependencies.gradle")
+apply(from: "$includeDir/dependencies.gradle")
+apply(from: "$includeDir/jacoco.gradle")
+apply(from: "$includeDir/testing.gradle")
