@@ -144,7 +144,6 @@ public class GcpUtils {
     }
   }
 
-
   public static GoogleCredentials getGoogleCredentialsFromUserRequest(
       AuthenticatedUserRequest userRequest) {
     // The expirationTime argument is only used for refresh tokens, not access tokens.
