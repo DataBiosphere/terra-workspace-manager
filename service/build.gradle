@@ -52,12 +52,12 @@ apply(from: "$includeDir/testing.gradle")
 // should not be instrumented.
 // This must live in the same file that the Spring Boot plugin is applied in or
 // else it can't find the task type.
-def googleCredentialsFile = "${rootDir}/config/wsm-sa.json"
 task jacocoBootRun(type: org.springframework.boot.gradle.tasks.run.BootRun) {
     environment.put("GOOGLE_APPLICATION_CREDENTIALS", "${googleCredentialsFile}")
     classpath = sourceSets.main.runtimeClasspath
     main("bio.terra.workspace.app.Main")
 }
+
 jacoco {
     applyTo jacocoBootRun
 }
