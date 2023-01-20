@@ -269,7 +269,7 @@ public class ControlledResourceService {
             .flightClass(CloneControlledAzureStorageContainerResourceFlight.class)
             .resource(sourceContainer)
             .userRequest(userRequest)
-            .workspaceId(sourceWorkspaceId.toString())
+            .workspaceId(destinationWorkspaceId.toString())
             .operationType(OperationType.CLONE)
             .addParameter(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId)
             .addParameter(ControlledResourceKeys.DESTINATION_RESOURCE_ID, destinationResourceId)
