@@ -313,14 +313,14 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{workspaceId}/listValidDataCenters:
+  /api/workspaces/v1/{workspaceId}/listValidRegions:
     parameters:
     - $ref: '#/components/parameters/WorkspaceId'
     - $ref: '#/components/parameters/Platform'
     get:
       summary: |
         list valid data centers of a given workspace on a cloud platform.
-      operationId: listValidDataCenters
+      operationId: listValidRegions
       tags: [ Workspace ]
       responses:
         '200':
@@ -328,7 +328,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DataCenterList'
+                $ref: '#/components/schemas/Regions'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '404':
@@ -641,9 +641,9 @@ components:
       type: string
       enum: ['RAWLS_WORKSPACE', 'MC_WORKSPACE']
 
-    DataCenterList:
+    Regions:
       type: array
-      description: List of data centers
+      description: List of regions (e.g. us-central1, us-west1)
       items:
         uniqueItems: true
         type: string

@@ -21,9 +21,13 @@ import bio.terra.workspace.service.resource.model.WsmResource;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Test utilities for working with Stairway. */
 public class StairwayTestUtils {
+  private static final Logger logger = LoggerFactory.getLogger(StairwayTestUtils.class);
+
   private StairwayTestUtils() {}
 
   /**
@@ -39,6 +43,14 @@ public class StairwayTestUtils {
       throws DatabaseOperationException, StairwayExecutionException, InterruptedException,
           DuplicateFlightIdException {
     String flightId = stairway.createFlightId();
+    // TODO(PF-1408): Remove/adjust this when all fixes are in
+    // ^^^^^^^^^^^^^^^
+    // Allow for GCP propagation to complete. In the second part of the PF-1408 work, we can decide
+    // the appropriate timeout for those cases and restore timeout control to the tests.
+    logger.warn("--> Overriding poll timeout for GCP permission propagation diagnosis <--");
+    timeout = Duration.ofMinutes(75);
+    // ^^^^^^^^^^^^^^^
+
     stairway.submitWithDebugInfo(
         flightId, flightClass, inputParameters, /* shouldQueue= */ false, debugInfo);
     return pollUntilComplete(flightId, stairway, timeout.dividedBy(20), timeout);

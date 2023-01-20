@@ -5,7 +5,6 @@ import bio.terra.policy.api.TpsApi;
 import bio.terra.policy.client.ApiClient;
 import bio.terra.policy.client.ApiException;
 import bio.terra.policy.model.TpsComponent;
-import bio.terra.policy.model.TpsDatacenterList;
 import bio.terra.policy.model.TpsObjectType;
 import bio.terra.policy.model.TpsPaoCreateRequest;
 import bio.terra.policy.model.TpsPaoExplainResult;
@@ -15,6 +14,7 @@ import bio.terra.policy.model.TpsPaoSourceRequest;
 import bio.terra.policy.model.TpsPaoUpdateRequest;
 import bio.terra.policy.model.TpsPaoUpdateResult;
 import bio.terra.policy.model.TpsPolicyInputs;
+import bio.terra.policy.model.TpsRegions;
 import bio.terra.policy.model.TpsUpdateMode;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.configuration.external.PolicyServiceConfiguration;
@@ -179,17 +179,17 @@ public class TpsApiDispatch {
   }
 
   @Traced
-  public List<String> listValidDataCenter(UUID workspaceId, String platform) {
+  public List<String> listValidRegions(UUID workspaceId, String platform) {
     features.tpsEnabledCheck();
     TpsApi tpsApi = policyApi();
-    TpsDatacenterList tpsDatacenterList;
+    TpsRegions tpsRegions;
     try {
-      tpsDatacenterList = tpsApi.listValidDatacenters(workspaceId, platform);
+      tpsRegions = tpsApi.listValidRegions(workspaceId, platform);
     } catch (ApiException e) {
       throw convertApiException(e);
     }
-    if (tpsDatacenterList != null) {
-      return tpsDatacenterList.stream().toList();
+    if (tpsRegions != null) {
+      return tpsRegions.stream().toList();
     }
     return new ArrayList<>();
   }

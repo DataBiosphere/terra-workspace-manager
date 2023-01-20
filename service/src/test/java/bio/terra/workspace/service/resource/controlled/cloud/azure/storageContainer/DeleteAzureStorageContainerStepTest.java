@@ -21,6 +21,7 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.generated.model.ApiAzureStorageContainerCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.BaseStorageStepTest;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
@@ -40,6 +41,7 @@ public class DeleteAzureStorageContainerStepTest extends BaseStorageStepTest {
   @Mock private LandingZoneApiDispatch mockLandingZoneApiDispatch;
   @Mock private FlightMap mockFlightMap;
   @Mock private AuthenticatedUserRequest mockAuthenticatedUserRequest;
+  @Mock private SamService mockSamService;
 
   @Captor ArgumentCaptor<String> resourceGroupNameCaptor;
   @Captor ArgumentCaptor<String> accountNameCaptor;
@@ -57,6 +59,7 @@ public class DeleteAzureStorageContainerStepTest extends BaseStorageStepTest {
   public void setup() {
     super.setup();
     when(mockStorageManager.blobContainers()).thenReturn(mockBlobContainers);
+    when(mockSamService.getWsmServiceAccountToken()).thenReturn("wsm-token");
     setupFlightContext();
   }
 
@@ -71,6 +74,7 @@ public class DeleteAzureStorageContainerStepTest extends BaseStorageStepTest {
             mockCrlService,
             mockResourceDao,
             mockLandingZoneApiDispatch,
+            mockSamService,
             storageContainerResource);
   }
 

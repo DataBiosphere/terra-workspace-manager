@@ -8,7 +8,7 @@ import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.getUserFacin
 import static bio.terra.workspace.common.utils.MockMvcUtils.UPDATE_WORKSPACES_V1_POLICIES_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_EXPLAIN_POLICIES_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_LIST_VALID_DATA_CENTER_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_LIST_VALID_REGIONS_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_PATH;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
@@ -46,10 +46,10 @@ import bio.terra.workspace.generated.model.ApiCloneResourceResult;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceResult;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
-import bio.terra.workspace.generated.model.ApiDataCenterList;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiProperty;
+import bio.terra.workspace.generated.model.ApiRegions;
 import bio.terra.workspace.generated.model.ApiResourceCloneDetails;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
@@ -530,16 +530,16 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
   }
 
   @Test
-  public void listValidDataCenter_tpsEnabled() throws Exception {
+  public void listValidRegions_tpsEnabled() throws Exception {
     ApiCreatedWorkspace workspace = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
     List<String> availableRegions = List.of("US", "EU", "asia-northeast3");
-    when(mockTpsApiDispatch().listValidDataCenter(eq(workspace.getId()), eq("gcp")))
+    when(mockTpsApiDispatch().listValidRegions(eq(workspace.getId()), eq("gcp")))
         .thenReturn(availableRegions);
-    when(mockTpsApiDispatch().listValidDataCenter(eq(workspace.getId()), eq("azure")))
+    when(mockTpsApiDispatch().listValidRegions(eq(workspace.getId()), eq("azure")))
         .thenReturn(Collections.emptyList());
 
-    ApiDataCenterList result = listValid(workspace.getId(), "gcp");
-    ApiDataCenterList empty = listValid(workspace.getId(), "azure");
+    ApiRegions result = listValid(workspace.getId(), "gcp");
+    ApiRegions empty = listValid(workspace.getId(), "azure");
 
     assertTrue(result.containsAll(availableRegions));
     assertTrue(empty.isEmpty());
@@ -676,20 +676,19 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
         .andExpect(status().is(code));
   }
 
-  private ApiDataCenterList listValid(UUID workspaceId, String platform) throws Exception {
+  private ApiRegions listValid(UUID workspaceId, String platform) throws Exception {
     var serializedResponse =
         mockMvc
             .perform(
                 addAuth(
-                    get(String.format(
-                            WORKSPACES_V1_LIST_VALID_DATA_CENTER_PATH_FORMAT, workspaceId))
+                    get(String.format(WORKSPACES_V1_LIST_VALID_REGIONS_PATH_FORMAT, workspaceId))
                         .queryParam("platform", platform),
                     USER_REQUEST))
             .andExpect(status().is(HttpStatus.SC_OK))
             .andReturn()
             .getResponse()
             .getContentAsString();
-    return objectMapper.readValue(serializedResponse, ApiDataCenterList.class);
+    return objectMapper.readValue(serializedResponse, ApiRegions.class);
   }
 
   private ApiWsmPolicyExplainResult explainPolicies(UUID workspaceId, int depth) throws Exception {

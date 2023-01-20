@@ -43,6 +43,7 @@ import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
@@ -220,6 +221,8 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     assertStrippedWorkspace(gotWorkspace);
   }
 
+  @Disabled("Assert by list size is not reliable if other tests have failed")
+  // TODO: PF-2413 Assert by list size is not reliable if other tests have failed
   @Test
   public void listWorkspaces_requesterIsOwner_returnsFullWorkspace() throws Exception {
     List<ApiWorkspaceDescription> listedWorkspaces =
@@ -233,6 +236,8 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     assertFullWorkspace(listedWorkspaces.get(0));
   }
 
+  @Disabled("Assert by list size is not reliable if other tests have failed")
+  // TODO: PF-2413 Assert by list size is not reliable if other tests have failed
   @Test
   public void listWorkspaces_requesterIsDiscoverer_requestMinHighestRoleNotSet_returnsNoWorkspaces()
       throws Exception {
@@ -247,6 +252,8 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     assertTrue(listedWorkspaces.isEmpty());
   }
 
+  @Disabled("Assert by list size is not reliable if other tests have failed")
+  // TODO: PF-2413 Assert by list size is not reliable if other tests have failed
   @Test
   public void
       listWorkspaces_requesterIsDiscoverer_requestMinHighestRoleSetToReader_returnsNoWorkspaces()

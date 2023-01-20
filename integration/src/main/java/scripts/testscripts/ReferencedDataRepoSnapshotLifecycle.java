@@ -16,7 +16,6 @@ import bio.terra.workspace.model.CloneReferencedGcpDataRepoSnapshotResourceResul
 import bio.terra.workspace.model.CloneReferencedResourceRequestBody;
 import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.DataRepoSnapshotResource;
-import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.ResourceList;
 import bio.terra.workspace.model.ResourceType;
@@ -67,10 +66,7 @@ public class ReferencedDataRepoSnapshotLifecycle extends WorkspaceAllocateTestSc
         ClientTestUtils.getReferencedGcpResourceClient(testUser, server);
     // Add the "partial access" user as a workspace reader. This does not give them access to any
     // underlying referenced resources.
-    workspaceApi.grantRole(
-        new GrantRoleRequestBody().memberEmail(partialAccessUser.userEmail),
-        getWorkspaceId(),
-        IamRole.READER);
+    ClientTestUtils.grantRole(workspaceApi, getWorkspaceId(), partialAccessUser, IamRole.READER);
 
     // Create the reference
     DataRepoSnapshotResource snapshotResource =
