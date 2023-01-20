@@ -13,10 +13,13 @@ import com.google.api.services.cloudresourcemanager.v3.model.Project;
 import com.google.auth.ServiceAccountSigner;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.auth.oauth2.IdTokenCredentials;
+import com.google.auth.oauth2.IdTokenProvider;
 import com.google.cloud.ServiceOptions;
 import io.grpc.Status.Code;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -147,5 +150,25 @@ public class GcpUtils {
     // The expirationTime argument is only used for refresh tokens, not access tokens.
     AccessToken accessToken = new AccessToken(userRequest.getRequiredToken(), null);
     return GoogleCredentials.create(accessToken);
+  }
+
+  public static String getWsmSaJwt(String audience) {
+    try {
+      GoogleCredentials googleCredentials = GoogleCredentials.getApplicationDefault();
+
+      IdTokenCredentials idTokenCredentials =
+          IdTokenCredentials.newBuilder()
+              .setIdTokenProvider((IdTokenProvider) googleCredentials)
+              .setTargetAudience(audience)
+              .setOptions(
+                  Arrays.asList(
+                      IdTokenProvider.Option.FORMAT_FULL, IdTokenProvider.Option.LICENSES_TRUE))
+              .build();
+
+      return idTokenCredentials.refreshAccessToken().getTokenValue();
+    } catch (IOException e) {
+      throw new SaCredentialsMissingException(
+          "Unable to get WSM service account JWT. Ensure WSM is actually running as a service account");
+    }
   }
 }
