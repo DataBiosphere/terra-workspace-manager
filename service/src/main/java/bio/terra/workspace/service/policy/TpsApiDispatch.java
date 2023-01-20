@@ -182,14 +182,14 @@ public class TpsApiDispatch {
   public List<String> listValidRegions(UUID workspaceId, String platform) {
     features.tpsEnabledCheck();
     TpsApi tpsApi = policyApi();
-    TpsRegions tpsDatacenterList;
+    TpsRegions tpsRegions;
     try {
-      tpsDatacenterList = tpsApi.listValidRegions(workspaceId, platform);
+      tpsRegions = tpsApi.listValidRegions(workspaceId, platform);
     } catch (ApiException e) {
       throw convertApiException(e);
     }
-    if (tpsDatacenterList != null) {
-      return tpsDatacenterList.stream().toList();
+    if (tpsRegions != null) {
+      return tpsRegions.stream().toList();
     }
     return new ArrayList<>();
   }

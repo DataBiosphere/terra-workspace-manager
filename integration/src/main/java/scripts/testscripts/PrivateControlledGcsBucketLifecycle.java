@@ -19,7 +19,6 @@ import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
 import bio.terra.workspace.model.DeleteControlledGcpGcsBucketRequest;
 import bio.terra.workspace.model.DeleteControlledGcpGcsBucketResult;
 import bio.terra.workspace.model.GcpGcsBucketResource;
-import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.JobControl;
 import bio.terra.workspace.model.ManagedBy;
@@ -75,25 +74,16 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
   public void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
       throws Exception {
 
-    String projectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
-
     ControlledGcpResourceApi workspaceOwnerResourceApi =
         ClientTestUtils.getControlledGcpResourceClient(testUser, server);
     ControlledGcpResourceApi privateUserResourceApi =
         ClientTestUtils.getControlledGcpResourceClient(privateResourceUser, server);
 
-    workspaceApi.grantRole(
-        new GrantRoleRequestBody().memberEmail(workspaceReader.userEmail),
-        getWorkspaceId(),
-        IamRole.READER);
-    logger.info(
-        "Added {} as a reader to workspace {}", workspaceReader.userEmail, getWorkspaceId());
-    workspaceApi.grantRole(
-        new GrantRoleRequestBody().memberEmail(privateResourceUser.userEmail),
-        getWorkspaceId(),
-        IamRole.WRITER);
-    logger.info(
-        "Added {} as a writer to workspace {}", privateResourceUser.userEmail, getWorkspaceId());
+    ClientTestUtils.grantRole(workspaceApi, getWorkspaceId(), workspaceReader, IamRole.READER);
+    ClientTestUtils.grantRole(workspaceApi, getWorkspaceId(), privateResourceUser, IamRole.WRITER);
+    String projectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
+    ClientTestUtils.workspaceRoleWaitForPropagation(workspaceReader, projectId);
+    ClientTestUtils.workspaceRoleWaitForPropagation(privateResourceUser, projectId);
 
     // Create a private bucket, which privateResourceUser assigns to themselves.
     // Cloud IAM permissions may take several minutes to sync, so we retry this operation until

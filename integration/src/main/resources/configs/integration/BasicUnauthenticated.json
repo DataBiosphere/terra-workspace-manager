@@ -16,5 +16,6 @@
       }
     }
   ],
-  "testUserFiles": []
+  "testUserFiles": [],
+  "maxRetries" : 0
 }
