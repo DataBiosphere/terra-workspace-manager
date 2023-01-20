@@ -70,6 +70,15 @@ paths:
 
 components:
   schemas:
+    GcpContext:
+      type: object
+      description: The GCP cloud context associated with a workspace.
+      required: [projectId]
+      properties:
+        projectId:
+          description: The ID of Gcp Project associated with the workspace.
+          type: string
+
     AzureContext:
       type: object
       description: The azure cloud context associated with a workspace.
@@ -82,6 +91,18 @@ components:
           type: string
         resourceGroupId:
           description: The ID of Azure resource group associated with the workspace.
+          type: string
+
+    AwsContext:
+      type: object
+      description: The AWS cloud context associated with a workspace.
+      required: [accountNumber, landingZoneId]
+      properties:
+        accountNumber:
+          description: The id of the AWS account associated with the workspace.
+          type: string
+        landingZoneId:
+          description: The id of the AWS landing zone associated with the workspace.
           type: string
 
     CreateCloudContextRequest:
@@ -102,15 +123,6 @@ components:
         azureContext:
           $ref: '#/components/schemas/AzureContext'
 
-    GcpContext:
-      type: object
-      description: The GCP cloud context associated with a workspace.
-      required: [projectId]
-      properties:
-        projectId:
-          description: The ID of Gcp Project associated with the workspace.
-          type: string
-
     CreateCloudContextResult:
       type: object
       description: |
@@ -125,9 +137,10 @@ components:
           $ref: '#/components/schemas/GcpContext'
         azureContext:
           $ref: '#/components/schemas/AzureContext'
+        awsContext:
+          $ref: '#/components/schemas/AwsContext'
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
-
 
   responses:
     CreateCloudContextResultResponse:
@@ -136,4 +149,3 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CreateCloudContextResult'
-
