@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import bio.terra.common.sam.SamRetry;
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.WorkspaceApi;
-import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import com.google.api.services.iam.v1.Iam;
 import com.google.api.services.iam.v1.model.TestIamPermissionsRequest;
@@ -64,10 +63,9 @@ public class EnablePet extends WorkspaceAllocateTestScriptBase {
     petSaWorkspaceApi.enablePet(getWorkspaceId());
 
     // Add second user to the workspace as a reader.
-    userWorkspaceApi.grantRole(
-        new GrantRoleRequestBody().memberEmail(secondUser.userEmail),
-        getWorkspaceId(),
-        IamRole.READER);
+    ClientTestUtils.grantRoleWaitForPropagation(
+        userWorkspaceApi, getWorkspaceId(), projectId, secondUser, IamRole.READER);
+
     // Validate the second user cannot impersonate either user's pet.
     GoogleApi secondUserSamGoogleApi = SamClientUtils.samGoogleApi(secondUser, server);
     String secondUserPetSaEmail =

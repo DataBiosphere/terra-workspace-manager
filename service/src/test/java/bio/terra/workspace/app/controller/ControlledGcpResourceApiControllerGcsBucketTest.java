@@ -142,8 +142,11 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
                 STORAGE_CLASS,
                 LIFECYCLE_API)
             .getGcpBucket();
-    cloudUtils.addFileToBucket(
-        userAccessUtils.defaultUser().getGoogleCredentials(), projectId, sourceBucketName);
+
+    GcpCloudUtils.runWithRetryOnException(
+        () ->
+            cloudUtils.addFileToBucket(
+                userAccessUtils.defaultUser().getGoogleCredentials(), projectId, sourceBucketName));
   }
 
   /**
@@ -151,11 +154,11 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
    */
   @AfterEach
   public void resetFlightDebugInfo() {
+    jobService.setFlightDebugInfoForTest(null);
     StairwayTestUtils.enumerateJobsDump(
         jobService, workspaceId, userAccessUtils.defaultUserAuthRequest());
     StairwayTestUtils.enumerateJobsDump(
         jobService, workspaceId2, userAccessUtils.defaultUserAuthRequest());
-    jobService.setFlightDebugInfoForTest(null);
   }
 
   @AfterAll

@@ -19,6 +19,7 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.generated.model.ApiAzureStorageContainerCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.BaseStorageStepTest;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
@@ -41,6 +42,7 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
   @Mock private ResourceDao mockResourceDao;
   @Mock private LandingZoneApiDispatch mockLandingZoneApiDispatch;
   @Mock private AuthenticatedUserRequest mockUserRequest;
+  @Mock private SamService mockSamSerivce;
 
   private static final UUID LANDING_ZONE_ID =
       UUID.fromString("b2db9b47-fd0f-4ae9-b9b4-f675550b0291");
@@ -64,6 +66,7 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
   public void setup() {
     super.setup();
     when(mockStorageManager.blobContainers()).thenReturn(mockBlobContainers);
+    when(mockSamSerivce.getWsmServiceAccountToken()).thenReturn("wsm-token");
   }
 
   private void initValidationStep(Optional<UUID> storageAccountId) {
@@ -77,7 +80,7 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
             mockCrlService,
             mockResourceDao,
             mockLandingZoneApiDispatch,
-            mockUserRequest,
+            mockSamSerivce,
             storageContainerResource);
   }
 

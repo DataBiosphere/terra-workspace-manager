@@ -30,13 +30,13 @@ import bio.terra.workspace.generated.model.ApiCreateCloudContextRequest;
 import bio.terra.workspace.generated.model.ApiCreateCloudContextResult;
 import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
-import bio.terra.workspace.generated.model.ApiDataCenterList;
 import bio.terra.workspace.generated.model.ApiGcpContext;
 import bio.terra.workspace.generated.model.ApiGrantRoleRequestBody;
 import bio.terra.workspace.generated.model.ApiIamRole;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
 import bio.terra.workspace.generated.model.ApiProperties;
 import bio.terra.workspace.generated.model.ApiProperty;
+import bio.terra.workspace.generated.model.ApiRegions;
 import bio.terra.workspace.generated.model.ApiRoleBinding;
 import bio.terra.workspace.generated.model.ApiRoleBindingList;
 import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
@@ -49,7 +49,7 @@ import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
 import bio.terra.workspace.generated.model.ApiWsmPolicyPair;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateRequest;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateResult;
-import bio.terra.workspace.generated.model.ApiWsmPolicyWorkspace;
+import bio.terra.workspace.generated.model.ApiWsmPolicyObject;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamRethrow;
@@ -691,12 +691,12 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   }
 
   @Override
-  public ResponseEntity<ApiDataCenterList> listValidDataCenters(UUID workspaceId, String platform) {
+  public ResponseEntity<ApiRegions> listValidRegions(UUID workspaceId, String platform) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.READ);
 
-    List<String> datacenters = tpsApiDispatch.listValidDataCenter(workspaceId, platform);
-    ApiDataCenterList apiDataCenterList = new ApiDataCenterList();
+    List<String> datacenters = tpsApiDispatch.listValidRegions(workspaceId, platform);
+    ApiRegions apiDataCenterList = new ApiRegions();
     apiDataCenterList.addAll(datacenters);
     return new ResponseEntity<>(apiDataCenterList, HttpStatus.OK);
   }
@@ -711,8 +711,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
           explainResult.getExplainObjects().stream()
               .map(
                   source ->
-                      new ApiWsmPolicyWorkspace()
-                          .workspaceId(source.getObjectId())
+                      new ApiWsmPolicyObject()
+                          .objectId(source.getObjectId())
                           .deleted(source.isDeleted()))
               .toList());
     }

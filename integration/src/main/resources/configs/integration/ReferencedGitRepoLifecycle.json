@@ -9,7 +9,7 @@
       "name": "ReferencedGitRepoLifecycle",
       "numberOfUserJourneyThreadsToRun": 1,
       "userJourneyThreadPoolSize": 1,
-      "expectedTimeForEach": 5,
+      "expectedTimeForEach": 75,
       "expectedTimeForEachUnit": "MINUTES",
       "parametersMap": {
         "spend-profile-id": "wm-default-spend-profile",
@@ -17,5 +17,6 @@
       }
     }
   ],
-  "testUserFiles": ["bella.json"]
+  "testUserFiles": ["bella.json"],
+  "maxRetries" : 0
 }

@@ -17,7 +17,6 @@ import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
 import bio.terra.workspace.model.GcpBigQueryDatasetUpdateParameters;
 import bio.terra.workspace.model.GenerateGcpBigQueryDatasetCloudIDRequestBody;
-import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.ResourceList;
 import bio.terra.workspace.model.ResourceType;
@@ -89,9 +88,8 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
         ClientTestUtils.getControlledGcpResourceClient(testUser, server);
 
     // Add a writer the source workspace. Reader is already added by the base class
-    logger.info("Adding {} as writer to workspace {}", writer.userEmail, getWorkspaceId());
-    workspaceApi.grantRole(
-        new GrantRoleRequestBody().memberEmail(writer.userEmail), getWorkspaceId(), IamRole.WRITER);
+    ClientTestUtils.grantRoleWaitForPropagation(
+        workspaceApi, getWorkspaceId(), getSourceProjectId(), writer, IamRole.WRITER);
 
     SamClientUtils.dumpResourcePolicy(testUser, server, "workspace", getWorkspaceId().toString());
 

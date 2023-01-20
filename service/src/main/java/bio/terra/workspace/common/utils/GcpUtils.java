@@ -6,10 +6,12 @@ import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.workspace.exceptions.SaCredentialsMissingException;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
 import com.google.auth.ServiceAccountSigner;
+import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.ServiceOptions;
 import io.grpc.Status.Code;
@@ -138,5 +140,12 @@ public class GcpUtils {
       throw new SaCredentialsMissingException(
           "Unable to find WSM service account credentials. Ensure WSM is actually running as a service account");
     }
+  }
+
+  public static GoogleCredentials getGoogleCredentialsFromUserRequest(
+      AuthenticatedUserRequest userRequest) {
+    // The expirationTime argument is only used for refresh tokens, not access tokens.
+    AccessToken accessToken = new AccessToken(userRequest.getRequiredToken(), null);
+    return GoogleCredentials.create(accessToken);
   }
 }
