@@ -412,7 +412,7 @@ public class MockMvcUtils {
     ApiCreateCloudContextResult result = createGcpCloudContext(userRequest, workspaceId);
     String jobId = result.getJobReport().getId();
     while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
-      Thread.sleep(/*millis=*/ 5000);
+      TimeUnit.SECONDS.sleep(15);
       result = getCreateCloudContextResult(userRequest, workspaceId, jobId);
     }
     assertEquals(StatusEnum.SUCCEEDED, result.getJobReport().getStatus());
