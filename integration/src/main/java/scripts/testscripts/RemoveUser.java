@@ -77,21 +77,17 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
         new GrantRoleRequestBody().memberEmail(groupEmail), getWorkspaceId(), IamRole.READER);
 
     // Add one user as a reader, and one as both a reader and writer.
-    ownerWorkspaceApi.grantRole(
-        new GrantRoleRequestBody().memberEmail(privateResourceUser.userEmail),
-        getWorkspaceId(),
-        IamRole.READER);
-    ownerWorkspaceApi.grantRole(
-        new GrantRoleRequestBody().memberEmail(privateResourceUser.userEmail),
-        getWorkspaceId(),
-        IamRole.WRITER);
-    ownerWorkspaceApi.grantRole(
-        new GrantRoleRequestBody().memberEmail(sharedResourceUser.userEmail),
-        getWorkspaceId(),
-        IamRole.WRITER);
+    ClientTestUtils.grantRole(
+        ownerWorkspaceApi, getWorkspaceId(), privateResourceUser, IamRole.READER);
+    ClientTestUtils.grantRole(
+        ownerWorkspaceApi, getWorkspaceId(), privateResourceUser, IamRole.WRITER);
+    ClientTestUtils.grantRole(
+        ownerWorkspaceApi, getWorkspaceId(), sharedResourceUser, IamRole.WRITER);
 
     // Create a GCP cloud context.
     projectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), ownerWorkspaceApi);
+    ClientTestUtils.workspaceRoleWaitForPropagation(privateResourceUser, projectId);
+    ClientTestUtils.workspaceRoleWaitForPropagation(sharedResourceUser, projectId);
 
     // Create a shared GCS bucket with one object inside.
     ControlledGcpResourceApi ownerResourceApi =
@@ -203,7 +199,7 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
     } catch (StorageException googleError) {
       // If this is a 403 error, the user was successfully removed from the bucket.
       assertEquals(SC_FORBIDDEN, googleError.getCode());
-    } catch (IOException e) {
+    } catch (Exception e) {
       // Unexpected error, rethrow
       throw new RuntimeException("Error checking user is removed from bucket", e);
     }

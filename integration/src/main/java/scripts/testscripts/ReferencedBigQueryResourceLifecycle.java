@@ -19,7 +19,6 @@ import bio.terra.workspace.model.GcpBigQueryDataTableAttributes;
 import bio.terra.workspace.model.GcpBigQueryDataTableResource;
 import bio.terra.workspace.model.GcpBigQueryDatasetAttributes;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
-import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.ResourceList;
 import bio.terra.workspace.model.ResourceType;
@@ -71,14 +70,8 @@ public class ReferencedBigQueryResourceLifecycle extends WorkspaceAllocateTestSc
     ReferencedGcpResourceApi referencedGcpResourceApi =
         ClientTestUtils.getReferencedGcpResourceClient(testUser, server);
     // Grant secondary users READER permission in the workspace.
-    workspaceApi.grantRole(
-        new GrantRoleRequestBody().memberEmail(partialAccessUser.userEmail),
-        getWorkspaceId(),
-        IamRole.READER);
-    workspaceApi.grantRole(
-        new GrantRoleRequestBody().memberEmail(noAccessUser.userEmail),
-        getWorkspaceId(),
-        IamRole.READER);
+    ClientTestUtils.grantRole(workspaceApi, getWorkspaceId(), partialAccessUser, IamRole.READER);
+    ClientTestUtils.grantRole(workspaceApi, getWorkspaceId(), noAccessUser, IamRole.READER);
 
     // Create the references
     GcpBigQueryDatasetResource referencedDataset =

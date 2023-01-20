@@ -97,13 +97,15 @@ public class CopyAzureStorageContainerDefinitionStep implements Step {
     ApiAzureLandingZoneDeployedResource sharedAccount =
         getRequired(
             workingMap,
-            ControlledResourceKeys.STORAGE_ACCOUNT,
+            ControlledResourceKeys.SHARED_STORAGE_ACCOUNT,
             ApiAzureLandingZoneDeployedResource.class);
 
+    // we omit the storage account ID since we only support cloning to a landing zone backed storage
+    // account
     ApiAzureStorageContainerCreationParameters destinationCreationParameters =
         new ApiAzureStorageContainerCreationParameters()
-            .storageContainerName(destinationContainerName)
-            .storageAccountId(UUID.fromString(sharedAccount.getResourceId()));
+            .storageContainerName(destinationContainerName);
+
     ControlledAzureStorageContainerResource destinationContainerResource =
         buildDestinationControlledAzureContainer(
             sourceContainer,
@@ -112,7 +114,6 @@ public class CopyAzureStorageContainerDefinitionStep implements Step {
             destinationResourceName,
             description,
             destinationCreationParameters.getStorageContainerName(),
-            destinationCreationParameters.getStorageAccountId(),
             samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
             sharedAccount.getRegion());
     ControlledResourceIamRole iamRole =

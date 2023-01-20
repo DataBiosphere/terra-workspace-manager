@@ -21,6 +21,7 @@ import com.google.cloud.bigquery.datatransfer.v1.StartManualTransferRunsRequest;
 import com.google.cloud.bigquery.datatransfer.v1.TransferConfig;
 import com.google.cloud.bigquery.datatransfer.v1.TransferRun;
 import com.google.cloud.bigquery.datatransfer.v1.TransferState;
+import bio.terra.workspace.common.utils.RetryUtils;
 import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
 import java.io.IOException;
@@ -31,6 +32,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.util.retry.Retry;
 
 public class CopyBigQueryDatasetDifferentRegionStep implements Step {
   public static final Logger logger =
@@ -117,29 +119,20 @@ public class CopyBigQueryDatasetDifferentRegionStep implements Step {
 
       for (TransferRun run : runs.iterateAll()) {
         final String currentRunName = run.getName();
-        // Wait for job to complete
-        int sleepTimeSeconds = 1;
-        while (true) {
-          final TransferRun currentRun = dataTransferServiceClient.getTransferRun(currentRunName);
-          final TransferState runState = currentRun.getState();
 
-          logger.debug("Run {} is {}", currentRunName, runState);
-          // Data transfer run has finished. It is either SUCCEEDED (4), FAILED (5), or CANCELLED
-          // (6)
-          if (currentRun.getStateValue() >= 4) {
-            if (!"SUCCEEDED".equals(runState.toString())) {
-              final String errorMessage = currentRun.getErrorStatus().getMessage();
-              logger.warn("Job {} failed: {}", currentRunName, errorMessage);
-              return new StepResult(
-                  StepStatus.STEP_RESULT_FAILURE_FATAL, new RuntimeException(errorMessage));
-            }
-            break;
-          }
-          TimeUnit.SECONDS.sleep(sleepTimeSeconds);
-          sleepTimeSeconds = Math.min(2 * sleepTimeSeconds, 60);
+        final TransferRun currentRun =
+            RetryUtils.getWithRetry(
+                (r) -> r.getStateValue() >= 4,
+                () -> dataTransferServiceClient.getTransferRun(currentRunName));
+
+        if (!"SUCCEEDED".equals(currentRun.getState().toString())) {
+          final String errorMessage = currentRun.getErrorStatus().getMessage();
+          logger.warn("Job {} failed: {}", currentRunName, errorMessage);
+          return new StepResult(
+              StepStatus.STEP_RESULT_FAILURE_FATAL, new RuntimeException(errorMessage));
         }
       }
-    } catch (IOException e) {
+    } catch (Exception e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
 

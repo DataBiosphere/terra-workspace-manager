@@ -125,9 +125,8 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
               resolvedCloningInstructions));
 
       if (CloningInstructions.COPY_RESOURCE == resolvedCloningInstructions) {
-        if (!(inputParameters
-            .get(ControlledResourceKeys.LOCATION, String.class)
-            .equals(sourceResource.getRegion()))) {
+        var destLocation = inputParameters.get(ControlledResourceKeys.LOCATION, String.class);
+        if (destLocation != null && !(destLocation.equals(sourceResource.getRegion()))) {
           addStep(
               new CopyBigQueryDatasetDifferentRegionStep(
                   flightBeanBag.getSamService(),

@@ -136,11 +136,11 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
    */
   @AfterEach
   public void resetFlightDebugInfo() {
+    jobService.setFlightDebugInfoForTest(null);
     StairwayTestUtils.enumerateJobsDump(
         jobService, workspaceId, userAccessUtils.defaultUserAuthRequest());
     StairwayTestUtils.enumerateJobsDump(
         jobService, workspaceId2, userAccessUtils.defaultUserAuthRequest());
-    jobService.setFlightDebugInfoForTest(null);
   }
 
   @AfterAll
@@ -332,7 +332,6 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
 
     // Clone resource to europe-west1
     // Note to resource authors: Set all request fields, eg BQ dataset location.
-    // TODO(PF-2184): Set location to europe-west1 after PF-2184 is fixed.
     String destLocation = "europe-west1";
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
     ApiGcpBigQueryDatasetResource clonedResource =
@@ -397,7 +396,6 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
 
     // Clone resource to europe-west1
     // Note to resource authors: Set all request fields, eg BQ dataset location.
-    // TODO(PF-2184): Set location to europe-west1 after PF-2184 is fixed.
     String destLocation = "europe-west1";
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
     String destDatasetName = TestUtils.appendRandomNumber("dest-dataset-name");
@@ -459,7 +457,6 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
 
     // Clone resource to europe-west1
     // Note to resource authors: Set all request fields, eg BQ dataset location.
-    // TODO(PF-2184): Set location to europe-west1 after PF-2184 is fixed.
     String destLocation = "europe-west1";
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
     String destDatasetName = TestUtils.appendRandomNumber("dest-dataset-name");
