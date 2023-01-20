@@ -2,6 +2,7 @@ package scripts.testscripts;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static scripts.utils.BqDatasetUtils.assertDatasetsAreEqualIgnoringLastUpdatedDate;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
@@ -44,7 +45,7 @@ public class DeleteWorkspaceWithControlledResource extends WorkspaceAllocateTest
     // Confirm the dataset was created in WSM
     GcpBigQueryDatasetResource fetchedDataset =
         resourceApi.getBigQueryDataset(getWorkspaceId(), resourceId);
-    assertEquals(createdDataset, fetchedDataset);
+    assertDatasetsAreEqualIgnoringLastUpdatedDate(createdDataset, fetchedDataset);
 
     // Delete the workspace, which should delete the included context and resource
     workspaceApi.deleteWorkspace(getWorkspaceId());

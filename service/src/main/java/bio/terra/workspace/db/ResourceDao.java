@@ -8,6 +8,7 @@ import static java.util.stream.Collectors.toList;
 import bio.terra.common.db.ReadTransaction;
 import bio.terra.common.db.WriteTransaction;
 import bio.terra.workspace.common.exception.InternalLogicException;
+import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
@@ -116,12 +117,15 @@ public class ResourceDao {
               .region(rs.getString("region"));
 
   private final NamedParameterJdbcTemplate jdbcTemplate;
+  private final WorkspaceActivityLogDao workspaceActivityLogDao;
 
   // -- Common Resource Methods -- //
 
   @Autowired
-  public ResourceDao(NamedParameterJdbcTemplate jdbcTemplate) {
+  public ResourceDao(
+      NamedParameterJdbcTemplate jdbcTemplate, WorkspaceActivityLogDao workspaceActivityLogDao) {
     this.jdbcTemplate = jdbcTemplate;
+    this.workspaceActivityLogDao = workspaceActivityLogDao;
   }
 
   @WriteTransaction
@@ -889,6 +893,16 @@ public class ResourceDao {
    * @return WsmResource
    */
   private WsmResource constructResource(DbResource dbResource) {
+    Optional<ActivityLogChangeDetails> details =
+        workspaceActivityLogDao.getLastUpdatedDetails(
+            dbResource.getWorkspaceId(), dbResource.getResourceId().toString());
+    dbResource
+        .lastUpdatedByEmail(
+            details
+                .map(ActivityLogChangeDetails::actorEmail)
+                .orElse(dbResource.getCreatedByEmail()))
+        .lastUpdatedDate(
+            details.map(ActivityLogChangeDetails::changeDate).orElse(dbResource.getCreatedDate()));
     WsmResourceHandler handler = dbResource.getResourceType().getResourceHandler();
     return handler.makeResourceFromDb(dbResource);
   }

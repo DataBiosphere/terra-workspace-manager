@@ -7,7 +7,6 @@ import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
-import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.generated.model.ApiTerraWorkspaceAttributes;
 import bio.terra.workspace.generated.model.ApiTerraWorkspaceResource;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -52,7 +51,9 @@ public class ReferencedTerraWorkspaceResource extends ReferencedResource {
       @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
       @JsonProperty("properties") Map<String, String> properties,
       @JsonProperty("createdByEmail") String createdByEmail,
-      @JsonProperty("createdDate") OffsetDateTime createdDate) {
+      @JsonProperty("createdDate") OffsetDateTime createdDate,
+      @JsonProperty("lastUpdatedByEmail") String lastUpdatedByEmail,
+      @JsonProperty("lastUpdatedDate") OffsetDateTime lastUpdatedDate) {
     super(
         workspaceId,
         resourceId,
@@ -62,7 +63,9 @@ public class ReferencedTerraWorkspaceResource extends ReferencedResource {
         resourceLineage,
         properties,
         createdByEmail,
-        createdDate);
+        createdDate,
+        lastUpdatedByEmail,
+        lastUpdatedDate);
     this.referencedWorkspaceId = referencedWorkspaceId;
     validate();
   }
@@ -136,11 +139,6 @@ public class ReferencedTerraWorkspaceResource extends ReferencedResource {
   @Override
   public ApiResourceAttributesUnion toApiAttributesUnion() {
     return new ApiResourceAttributesUnion().terraWorkspace(toApiAttributes());
-  }
-
-  @Override
-  public ApiResourceUnion toApiResourceUnion() {
-    return new ApiResourceUnion().terraWorkspace(toApiResource());
   }
 
   @Override

@@ -14,6 +14,7 @@ import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParamete
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
+import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -42,6 +43,7 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
   private final AuthenticatedUserRequest userRequest;
   private final GcpCloudContextService gcpCloudContextService;
   private final CloningInstructions resolvedCloningInstructions;
+  private final WorkspaceActivityLogService workspaceActivityLogService;
 
   public CopyBigQueryDatasetDefinitionStep(
       SamService samService,
@@ -49,13 +51,15 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
       ControlledResourceService controlledResourceService,
       AuthenticatedUserRequest userRequest,
       GcpCloudContextService gcpCloudContextService,
-      CloningInstructions resolvedCloningInstructions) {
+      CloningInstructions resolvedCloningInstructions,
+      WorkspaceActivityLogService workspaceActivityLogService) {
     this.samService = samService;
     this.sourceDataset = sourceDataset;
     this.controlledResourceService = controlledResourceService;
     this.userRequest = userRequest;
     this.gcpCloudContextService = gcpCloudContextService;
     this.resolvedCloningInstructions = resolvedCloningInstructions;
+    this.workspaceActivityLogService = workspaceActivityLogService;
   }
 
   @Override

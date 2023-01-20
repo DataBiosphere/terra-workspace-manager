@@ -684,14 +684,15 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   }
 
   @Override
-  public ResponseEntity<ApiRegions> listValidRegions(UUID workspaceId, String platform) {
+  public ResponseEntity<ApiRegions> listValidRegions(UUID workspaceId, ApiCloudPlatform platform) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.READ);
 
-    List<String> datacenters = tpsApiDispatch.listValidRegions(workspaceId, platform);
-    ApiRegions apiDataCenterList = new ApiRegions();
-    apiDataCenterList.addAll(datacenters);
-    return new ResponseEntity<>(apiDataCenterList, HttpStatus.OK);
+    List<String> regions = tpsApiDispatch.listValidRegions(workspaceId, platform.name());
+
+    ApiRegions apiRegions = new ApiRegions();
+    apiRegions.addAll(regions);
+    return new ResponseEntity<>(apiRegions, HttpStatus.OK);
   }
 
   // Retrieve the async result or progress for clone workspace.
