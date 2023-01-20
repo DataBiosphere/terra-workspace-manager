@@ -153,3 +153,65 @@ components:
         ENFORCE_CONFLICT - updates are made and conflicts are propagated
           to policy dependents. (Only valid on policy update.)
       enum: [ 'DRY_RUN', 'FAIL_ON_CONFLICT', 'ENFORCE_CONFLICT' ]
+
+    WsmPolicyDepth:
+      type: integer
+      description: Explain source depth.
+      minimum: 0
+      default: 1
+
+    WsmPolicyExplanation:
+      description: |
+          Explanation of one policy input, providing the input and the sources
+          that were combined to result in the policy. One of the sources can be the
+          requested object itself. The policyExplanations may be empty/not present if
+          this is a leaf in the explain graph.
+      type: object
+      required: [ workspaceId, policyInput ]
+      properties:
+        workspaceId:
+          type: string
+          format: uuid
+        policyInput:
+          $ref: '#/components/schemas/WsmPolicyInput'
+        policyExplanations:
+          type: array
+          items:
+            $ref: '#/components/schemas/WsmPolicyExplanation'
+
+    WsmPolicyObject:
+      type: object
+      properties:
+        objectId:
+          type:
+            $ref: '#/components/schemas/WsmPolicyObjectId'
+        objectType:
+          type:
+            $ref: '#/components/schemas/WsmPolicyObjectType'
+        deleted:
+          description: Policy source has been deleted. Policies from the source still apply.
+          type: boolean
+        access:
+          description: No access to the policy object. Policies from the source still apply.
+          type: boolean
+        name:
+          description: Name of the policy object. Null if no access.
+          type: string
+        properties:
+          description: The properties of the policy object. Empty if no access.
+          type:
+            $ref: '#/components/schemas/Properties'
+
+    WsmPolicyExplainResult:
+      type: object
+      properties:
+        explainWorkspaces:
+          description: List of workspace policies referenced in the explanation
+          type: array
+          items:
+            $ref: '#/components/schemas/WsmPolicyObject'
+        explanation:
+          description: One explanation for each policy in the effective policies array
+          type: array
+          items:
+            $ref: '#/components/schemas/WsmPolicyExplanation'
