@@ -3,6 +3,7 @@ package bio.terra.workspace.service.workspace.flight;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.GCP_PROJECT_ID;
 
 import bio.terra.stairway.FlightContext;
+import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
@@ -27,8 +28,11 @@ public class CreatePetSaStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
+    FlightMap workingMap = context.getWorkingMap();
     String projectId = context.getWorkingMap().get(GCP_PROJECT_ID, String.class);
-    samService.getOrCreatePetSaEmail(projectId, userRequest.getRequiredToken());
+    AuthenticatedUserRequest petSaCredentials =
+        samService.getOrCreatePetSaCredentials(projectId, userRequest);
+    workingMap.put(WorkspaceFlightMapKeys.PET_SA_CREDENTIALS, petSaCredentials);
     return StepResult.getStepResultSuccess();
   }
 
