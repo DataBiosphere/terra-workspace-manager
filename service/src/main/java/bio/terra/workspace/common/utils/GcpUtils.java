@@ -153,19 +153,9 @@ public class GcpUtils {
 
   /**
    * Extract the region part from the given location string. If the string is a region, return that.
-   * If the string looks like a zone, return just the region part.
+   * If the string looks like a zone, return just the region part. Basically, remove any trailing "-[a-z]".
    */
   public static String parseRegion(String location) {
-    if (location.length() <= 2) {
-      return location;
-    }
-
-    Pattern pattern = Pattern.compile("-[a-z]$", Pattern.CASE_INSENSITIVE);
-    Matcher matcher = pattern.matcher(location);
-    if (matcher.find()) {
-      return location.substring(0, location.length() - 2);
-    }
-
-    return location;
+    return location.replaceAll("(?!^)-[a-z]$", "");
   }
 }
