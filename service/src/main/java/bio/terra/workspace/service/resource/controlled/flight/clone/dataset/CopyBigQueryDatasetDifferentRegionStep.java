@@ -21,6 +21,7 @@ import com.google.cloud.bigquery.datatransfer.v1.ScheduleOptions;
 import com.google.cloud.bigquery.datatransfer.v1.StartManualTransferRunsRequest;
 import com.google.cloud.bigquery.datatransfer.v1.TransferConfig;
 import com.google.cloud.bigquery.datatransfer.v1.TransferRun;
+import com.google.cloud.bigquery.datatransfer.v1.TransferState;
 import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
 import java.time.Instant;
@@ -122,7 +123,7 @@ public class CopyBigQueryDatasetDifferentRegionStep implements Step {
                 r -> r.getStateValue() >= DATA_TRANSFER_RUN_ENDED,
                 () -> dataTransferServiceClient.getTransferRun(currentRunName));
 
-        if (!"SUCCEEDED".equals(currentRun.getState().toString())) {
+        if (!currentRun.getState().equals(TransferState.SUCCEEDED)) {
           String errorMessage = currentRun.getErrorStatus().getMessage();
           logger.warn("Job {} failed: {}", currentRunName, errorMessage);
           return new StepResult(
