@@ -34,6 +34,7 @@ import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
+import bio.terra.workspace.common.utils.RetryUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
@@ -1642,8 +1643,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void updateGcpControlledResourcesRegion_onlyUpdateWhenRegionIsEmpty()
-      throws InterruptedException {
+  public void updateGcpControlledResourcesRegion_onlyUpdateWhenRegionIsEmpty() throws Exception {
     // create bucket
     ApiGcpGcsBucketCreationParameters bucketCreationParameters =
         ControlledResourceFixtures.getGoogleBucketCreationParameters();
@@ -1721,7 +1721,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   }
 
   private void assertResourceRegionIsUpdatedAndActivityIsLogged(
-      List<ControlledResource> updatedResource, UUID resourceId, String expectedResourceRegion) {
+      List<ControlledResource> updatedResource, UUID resourceId, String expectedResourceRegion)
+      throws Exception {
     ControlledResource dataset =
         updatedResource.stream()
             .filter(resource -> resourceId.equals(resource.getResourceId()))
@@ -1731,9 +1732,16 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertActivityLogForResourceUpdate(resourceId.toString());
   }
 
-  private void assertActivityLogForResourceUpdate(String changeSubjectId) {
+  private void assertActivityLogForResourceUpdate(String changeSubjectId) throws Exception {
+    // There can be delay between the log is written and the flight completed. Wait till the log is
+    // updated. The previous log has OperationType CREATE.
     ActivityLogChangeDetails latestLog =
-        workspaceActivityLogService.getLastUpdatedDetails(workspaceId, changeSubjectId).get();
+        RetryUtils.getWithRetry(
+            log -> OperationType.UPDATE.equals(log.operationType()),
+            () ->
+                workspaceActivityLogService
+                    .getLastUpdatedDetails(workspaceId, changeSubjectId)
+                    .get());
     assertEquals(
         new ActivityLogChangeDetails(
             latestLog.changeDate(),
