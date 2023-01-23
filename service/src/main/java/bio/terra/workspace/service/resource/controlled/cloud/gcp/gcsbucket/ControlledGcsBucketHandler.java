@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket;
 
+import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
@@ -7,6 +8,7 @@ import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import com.google.common.base.Preconditions;
 import java.util.UUID;
 import javax.annotation.PostConstruct;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -33,7 +35,13 @@ public class ControlledGcsBucketHandler implements WsmResourceHandler {
   /** {@inheritDoc} */
   @Override
   public WsmResource makeResourceFromDb(DbResource dbResource) {
-    return new ControlledGcsBucketResource(dbResource);
+    ControlledGcsBucketAttributes attributes =
+        DbSerDes.fromJson(dbResource.getAttributes(), ControlledGcsBucketAttributes.class);
+    var bucketName =
+        StringUtils.isEmpty(attributes.getBucketName())
+            ? generateCloudName(dbResource.getWorkspaceId(), dbResource.getName())
+            : attributes.getBucketName();
+    return new ControlledGcsBucketResource(dbResource, bucketName);
   }
 
   /**

@@ -37,7 +37,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
 public class ControlledGcsBucketResource extends ControlledResource {
@@ -93,15 +92,9 @@ public class ControlledGcsBucketResource extends ControlledResource {
     validate();
   }
 
-  public ControlledGcsBucketResource(DbResource dbResource) {
+  public ControlledGcsBucketResource(DbResource dbResource, String bucketName) {
     super(dbResource);
-    ControlledGcsBucketAttributes attributes =
-        DbSerDes.fromJson(dbResource.getAttributes(), ControlledGcsBucketAttributes.class);
-    this.bucketName =
-        StringUtils.isEmpty(attributes.getBucketName())
-            ? ControlledGcsBucketHandler.getHandler()
-                .generateCloudName(dbResource.getWorkspaceId(), dbResource.getName())
-            : attributes.getBucketName();
+    this.bucketName = bucketName;
   }
 
   public static ControlledGcsBucketResource.Builder builder() {
