@@ -216,11 +216,11 @@ public class ResourceDaoTest extends BaseUnitTest {
     createControlledResourceAndLog(dataset);
 
     List<ControlledResource> gcpList =
-        resourceDao.listControlledResourcesWithMissingRegion(workspaceUuid, CloudPlatform.GCP);
+        resourceDao.listControlledResources(workspaceUuid, CloudPlatform.GCP);
     List<ControlledResource> azureList =
-        resourceDao.listControlledResourcesWithMissingRegion(workspaceUuid, CloudPlatform.AZURE);
+        resourceDao.listControlledResources(workspaceUuid, CloudPlatform.AZURE);
     List<ControlledResource> allCloudList =
-        resourceDao.listControlledResourcesWithMissingRegion(workspaceUuid, null);
+        resourceDao.listControlledResources(workspaceUuid, null);
 
     assertTrue(azureList.isEmpty());
     assertThat(gcpList, containsInAnyOrder(bucket, dataset));
@@ -229,7 +229,7 @@ public class ResourceDaoTest extends BaseUnitTest {
     assertTrue(resourceDao.deleteAllControlledResources(workspaceUuid, CloudPlatform.GCP));
     assertFalse(resourceDao.deleteAllControlledResources(workspaceUuid, CloudPlatform.AZURE));
     List<ControlledResource> listAfterDeletion =
-        resourceDao.listControlledResourcesWithMissingRegion(workspaceUuid, CloudPlatform.GCP);
+        resourceDao.listControlledResources(workspaceUuid, CloudPlatform.GCP);
     assertTrue(listAfterDeletion.isEmpty());
     workspaceDao.deleteCloudContext(workspaceUuid, CloudPlatform.GCP);
     workspaceDao.deleteWorkspace(workspaceUuid);

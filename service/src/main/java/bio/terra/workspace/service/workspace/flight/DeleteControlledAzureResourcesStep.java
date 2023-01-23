@@ -60,7 +60,7 @@ public class DeleteControlledAzureResourcesStep implements Step {
       throws InterruptedException, RetryException {
 
     List<ControlledResource> controlledResourceList =
-        resourceDao.listControlledResourcesWithMissingRegion(workspaceUuid, CloudPlatform.AZURE);
+        resourceDao.listControlledResources(workspaceUuid, CloudPlatform.AZURE);
 
     // Delete VMs first because they use other resources like disks, networks, etc.
     controlledResourceList =

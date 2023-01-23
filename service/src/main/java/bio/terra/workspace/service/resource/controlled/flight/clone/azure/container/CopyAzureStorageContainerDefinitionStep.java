@@ -114,7 +114,6 @@ public class CopyAzureStorageContainerDefinitionStep implements Step {
             destinationResourceName,
             description,
             destinationCreationParameters.getStorageContainerName(),
-            destinationCreationParameters.getStorageAccountId(),
             samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
             sharedAccount.getRegion());
     ControlledResourceIamRole iamRole =

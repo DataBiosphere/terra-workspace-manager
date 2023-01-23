@@ -710,9 +710,9 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
       ApiGcpBigQueryDatasetResource actualDataset,
       UUID expectedWorkspaceId,
       String expectedResourceName,
+      String expectedResourceDescription,
       String expectedProjectId,
       String expectedDatasetName,
-      String expectedResourceDescription,
       String expectedRegion,
       String expectedCreatedBy,
       String expectedLastUpdatedBy) {

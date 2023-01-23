@@ -45,7 +45,7 @@ public class DeleteControlledSamResourcesStep implements Step {
       throws InterruptedException, RetryException {
 
     List<ControlledResource> controlledResourceList =
-        resourceDao.listControlledResourcesWithMissingRegion(workspaceUuid, cloudPlatform);
+        resourceDao.listControlledResources(workspaceUuid, cloudPlatform);
 
     for (ControlledResource resource : controlledResourceList) {
       samService.deleteControlledResource(resource, samService.getWsmServiceAccountToken());

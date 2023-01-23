@@ -723,8 +723,8 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
       ApiGcpGcsBucketResource actualBucket,
       UUID expectedWorkspaceId,
       String expectedResourceName,
-      String expectedBucketName,
       String expectedResourceDescription,
+      String expectedBucketName,
       String expectedRegion,
       String expectedCreatedBy,
       String expectedLastUpdatedBy) {

@@ -282,7 +282,7 @@ public class ResourceDao {
    *     cloud platform. If null, this will return resources from all cloud platforms.
    */
   @ReadTransaction
-  public List<ControlledResource> listControlledResourcesWithMissingRegion(
+  public List<ControlledResource> listControlledResources(
       UUID workspaceUuid, @Nullable CloudPlatform cloudPlatform) {
     String sql = RESOURCE_SELECT_SQL + " AND stewardship_type = :controlled_resource ";
     MapSqlParameterSource params =
@@ -303,12 +303,7 @@ public class ResourceDao {
   }
 
   /**
-   * <<<<<<< HEAD Returns a list of all controlled resources in a workspace, optionally filtering by
-   * cloud platform. ======= Returns a list of all controlled resources without region field.
-   * >>>>>>> main
-   *
-   * @param cloudPlatform Optional. If present, this will only return resources from the specified
-   *     cloud platform. If null, this will return resources from all cloud platforms.
+   * Returns a list of all controlled resources without region field.
    */
   @ReadTransaction
   public List<ControlledResource> listControlledResourcesWithMissingRegion(
