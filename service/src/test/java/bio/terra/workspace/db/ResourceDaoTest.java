@@ -169,9 +169,7 @@ public class ResourceDaoTest extends BaseUnitTest {
 
     var newRegion = "great-new-world";
 
-    assertTrue(
-        resourceDao.updateControlledResourceRegion(
-            workspaceUuid, resource.getResourceId(), newRegion));
+    assertTrue(resourceDao.updateControlledResourceRegion(resource.getResourceId(), newRegion));
     var newUserEmail = "foo";
     activityLogDao.writeActivity(
         workspaceUuid,
@@ -547,9 +545,8 @@ public class ResourceDaoTest extends BaseUnitTest {
     assertEquals(
         15, resourceDao.listControlledResourcesWithMissingRegion(CloudPlatform.GCP).size());
     assertTrue(resourceDao.listControlledResourcesWithMissingRegion(CloudPlatform.AZURE).isEmpty());
-
   }
-  
+
   private void createControlledResourceAndLog(ControlledResource resource) {
     resourceDao.createControlledResource(resource);
     activityLogDao.writeActivity(
