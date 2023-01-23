@@ -7,6 +7,7 @@ import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.db.DbSerDes;
+import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketAttributes;
@@ -36,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
 public class ControlledGcsBucketResource extends ControlledResource {
@@ -89,6 +91,16 @@ public class ControlledGcsBucketResource extends ControlledResource {
     super(common);
     this.bucketName = bucketName;
     validate();
+  }
+
+  public ControlledGcsBucketResource(DbResource dbResource) {
+    super(dbResource);
+    ControlledGcsBucketAttributes attributes =
+        DbSerDes.fromJson(dbResource.getAttributes(), ControlledGcsBucketAttributes.class);
+    this.bucketName = StringUtils.isEmpty(attributes.getBucketName())
+        ? ControlledGcsBucketHandler.getHandler()
+        .generateCloudName(dbResource.getWorkspaceId(), dbResource.getName())
+        : attributes.getBucketName();
   }
 
   public static ControlledGcsBucketResource.Builder builder() {
@@ -211,7 +223,7 @@ public class ControlledGcsBucketResource extends ControlledResource {
     if (getBucketName() == null) {
       throw new MissingRequiredFieldException("Missing required field for ControlledGcsBucket.");
     }
-    ResourceValidationUtils.validateControlledBucketName(getBucketName());
+    ResourceValidationUtils.validateBucketNameDisallowUnderscore(bucketName);
   }
 
   @Override

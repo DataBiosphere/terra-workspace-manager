@@ -36,19 +36,7 @@ public class ControlledGcsBucketHandler implements WsmResourceHandler {
   /** {@inheritDoc} */
   @Override
   public WsmResource makeResourceFromDb(DbResource dbResource) {
-    ControlledGcsBucketAttributes attributes =
-        DbSerDes.fromJson(dbResource.getAttributes(), ControlledGcsBucketAttributes.class);
-    ControlledResourceFields commonFields = new ControlledResourceFields(dbResource);
-    var resource =
-        ControlledGcsBucketResource.builder()
-            .bucketName(
-                StringUtils.isEmpty(attributes.getBucketName())
-                    ? ControlledGcsBucketHandler.getHandler()
-                        .generateCloudName(commonFields.getWorkspaceId(), commonFields.getName())
-                    : attributes.getBucketName())
-            .common(commonFields)
-            .build();
-    return resource;
+    return new ControlledGcsBucketResource(dbResource);
   }
 
   /**
