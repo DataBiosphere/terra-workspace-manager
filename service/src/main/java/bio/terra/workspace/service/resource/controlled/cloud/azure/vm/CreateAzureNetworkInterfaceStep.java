@@ -16,7 +16,7 @@ import bio.terra.workspace.common.utils.ManagementExceptionUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
@@ -44,7 +44,7 @@ public class CreateAzureNetworkInterfaceStep implements Step {
   private final ControlledAzureVmResource resource;
   private final ResourceDao resourceDao;
   private final LandingZoneApiDispatch landingZoneApiDispatch;
-  private final AuthenticatedUserRequest userRequest;
+  private final SamService samService;
 
   public CreateAzureNetworkInterfaceStep(
       AzureConfiguration azureConfig,
@@ -52,13 +52,13 @@ public class CreateAzureNetworkInterfaceStep implements Step {
       ControlledAzureVmResource resource,
       ResourceDao resourceDao,
       LandingZoneApiDispatch landingZoneApiDispatch,
-      AuthenticatedUserRequest userRequest) {
+      SamService samService) {
     this.azureConfig = azureConfig;
     this.crlService = crlService;
     this.resource = resource;
     this.resourceDao = resourceDao;
     this.landingZoneApiDispatch = landingZoneApiDispatch;
-    this.userRequest = userRequest;
+    this.samService = samService;
   }
 
   @Override
@@ -133,7 +133,7 @@ public class CreateAzureNetworkInterfaceStep implements Step {
 
     // we are considering the network id to be optional
     if (resource.getNetworkId() == null) {
-      return getNetworkResourcesFromLandingZone(azureCloudContext, networkManager);
+      return getNetworkResourcesFromLandingZone(networkManager);
     }
 
     final ControlledAzureNetworkResource networkResource =
@@ -148,18 +148,14 @@ public class CreateAzureNetworkInterfaceStep implements Step {
         networkResource.getSubnetName());
   }
 
-  private NetworkSubnetPair getNetworkResourcesFromLandingZone(
-      AzureCloudContext azureCloudContext, NetworkManager networkManager) {
-
+  private NetworkSubnetPair getNetworkResourcesFromLandingZone(NetworkManager networkManager) {
+    var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
     final UUID lzId =
-        landingZoneApiDispatch.getLandingZoneId(
-            new BearerToken(userRequest.getRequiredToken()), resource.getWorkspaceId());
+        landingZoneApiDispatch.getLandingZoneId(bearerToken, resource.getWorkspaceId());
 
     ApiAzureLandingZoneDeployedResource lzResource =
         listSubnetsWithParentVNetByPurpose(
-                new BearerToken(userRequest.getRequiredToken()),
-                lzId,
-                SubnetResourcePurpose.WORKSPACE_COMPUTE_SUBNET)
+                bearerToken, lzId, SubnetResourcePurpose.WORKSPACE_COMPUTE_SUBNET)
             .stream()
             .findFirst()
             .orElseThrow(
@@ -173,7 +169,6 @@ public class CreateAzureNetworkInterfaceStep implements Step {
 
   private List<ApiAzureLandingZoneDeployedResource> listSubnetsWithParentVNetByPurpose(
       BearerToken bearerToken, UUID landingZoneId, LandingZonePurpose purpose) {
-
     return landingZoneApiDispatch
         .listAzureLandingZoneResourcesByPurpose(bearerToken, landingZoneId, purpose)
         .getResources()
