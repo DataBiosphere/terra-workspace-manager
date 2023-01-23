@@ -13,6 +13,7 @@ import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.exception.InternalStairwayException;
 import bio.terra.workspace.service.job.exception.InvalidResultStateException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import java.nio.file.Path;
 import java.time.Instant;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +34,16 @@ public class JobApiUtils {
     this.ingressConfig = ingressConfig;
   }
 
+  /** Retrieves the result of an asynchronous job. */
+  public <T> AsyncJobResult<T> retrieveAsyncJobResult(String jobId, Class<T> resultClass) {
+    return retrieveAsyncJobResult(jobId, resultClass, /*typeReference=*/ null);
+  }
+
+  /** Retrieves the result of an asynchronous job. */
+  public <T> AsyncJobResult<T> retrieveAsyncJobResult(
+      String jobId, TypeReference<T> typeReference) {
+    return retrieveAsyncJobResult(jobId, /*resultClass=*/ null, typeReference);
+  }
   /**
    * Retrieves the result of an asynchronous job.
    *
@@ -44,7 +55,8 @@ public class JobApiUtils {
    * <p>Unlike retrieveJobResult, this will not throw for a flight in progress. Instead, it will
    * return a ApiJobReport without a result or error.
    */
-  public <T> AsyncJobResult<T> retrieveAsyncJobResult(String jobId, Class<T> resultClass) {
+  public <T> AsyncJobResult<T> retrieveAsyncJobResult(
+      String jobId, Class<T> resultClass, TypeReference<T> typeReference) {
     try {
       FlightState flightState = jobService.retrieveJob(jobId);
       ApiJobReport jobReport = mapFlightStateToApiJobReport(flightState);
@@ -54,7 +66,7 @@ public class JobApiUtils {
 
       // Job is complete, get the result
       JobService.JobResultOrException<T> resultOrException =
-          jobService.retrieveJobResult(jobId, resultClass);
+          jobService.retrieveJobResult(jobId, resultClass, typeReference);
       final ApiErrorReport errorReport;
       if (jobReport.getStatus().equals(ApiJobReport.StatusEnum.FAILED)) {
         errorReport = ErrorReportUtils.buildApiErrorReport(resultOrException.getException());
@@ -132,7 +144,8 @@ public class JobApiUtils {
   }
 
   public ApiJobResult fetchJobResult(String jobId) {
-    AsyncJobResult<Void> jobResult = retrieveAsyncJobResult(jobId, null);
+    AsyncJobResult<Void> jobResult =
+        retrieveAsyncJobResult(jobId, /*resultClass=*/ null, /*typeReference=*/ null);
     return new ApiJobResult()
         .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getApiErrorReport());

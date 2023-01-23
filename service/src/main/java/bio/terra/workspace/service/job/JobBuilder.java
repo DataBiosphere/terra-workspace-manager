@@ -15,6 +15,7 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import bio.terra.workspace.service.workspace.model.OperationType;
+import com.fasterxml.jackson.core.type.TypeReference;
 import io.opencensus.contrib.spring.aop.Traced;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
@@ -132,7 +133,33 @@ public class JobBuilder {
   @Traced
   public <T> T submitAndWait(Class<T> resultClass) {
     populateInputParams();
-    return jobService.submitAndWait(flightClass, jobParameterMap, resultClass, jobId);
+    return jobService.submitAndWait(
+        flightClass, jobParameterMap, resultClass, /*typeReference=*/ null, jobId);
+  }
+
+  /**
+   * Submit a job to stairway, wait until it's complete, and return the job result.
+   *
+   * @param typeReference Class of the job's result
+   * @return Result of the finished job.
+   */
+  @Traced
+  public <T> T submitAndWait(TypeReference<T> typeReference) {
+    populateInputParams();
+    return jobService.submitAndWait(
+        flightClass, jobParameterMap, /*resultClass=*/ null, typeReference, jobId);
+  }
+
+  /**
+   * Submit a job to stairway, wait until it's complete, and return the job result.
+   *
+   * @return Result of the finished job.
+   */
+  @Traced
+  public <T> T submitAndWait() {
+    populateInputParams();
+    return jobService.submitAndWait(
+        flightClass, jobParameterMap, /*resultClass=*/ null, /*typeReference=*/ null, jobId);
   }
 
   // Check the inputs, supply defaults and finalize the input parameter map
