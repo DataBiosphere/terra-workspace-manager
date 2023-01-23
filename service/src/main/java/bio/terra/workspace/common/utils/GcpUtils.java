@@ -18,8 +18,6 @@ import io.grpc.Status.Code;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -153,7 +151,8 @@ public class GcpUtils {
 
   /**
    * Extract the region part from the given location string. If the string is a region, return that.
-   * If the string looks like a zone, return just the region part. Basically, remove any trailing "-[a-z]".
+   * If the string looks like a zone, return just the region part. Basically, remove any trailing
+   * "-[a-z]".
    */
   public static String parseRegion(String location) {
     return location.replaceAll("(?!^)-[a-z]$", "");
