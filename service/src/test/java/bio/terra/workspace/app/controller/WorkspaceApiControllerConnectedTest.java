@@ -49,6 +49,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.test.context.junit.jupiter.EnabledIf;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
@@ -331,6 +332,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   }
 
   @Test
+  @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
   public void listValidRegions() throws Exception {
     ApiRegions gcps =
         listValid(
