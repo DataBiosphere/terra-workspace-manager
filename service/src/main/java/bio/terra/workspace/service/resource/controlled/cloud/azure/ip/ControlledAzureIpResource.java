@@ -12,7 +12,6 @@ import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
 import bio.terra.workspace.generated.model.ApiAzureIpAttributes;
 import bio.terra.workspace.generated.model.ApiAzureIpResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
-import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
@@ -56,7 +55,9 @@ public class ControlledAzureIpResource extends ControlledResource {
       @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
       @JsonProperty("properties") Map<String, String> properties,
       @JsonProperty("createdByEmail") String createdByEmail,
-      @JsonProperty("createdDate") OffsetDateTime createdDate) {
+      @JsonProperty("createdDate") OffsetDateTime createdDate,
+      @JsonProperty("lastUpdatedByEmail") String lastUpdatedByEmail,
+      @JsonProperty("lastUpdatedDate") OffsetDateTime lastUpdatedDate) {
 
     super(
         workspaceId,
@@ -73,6 +74,8 @@ public class ControlledAzureIpResource extends ControlledResource {
         properties,
         createdByEmail,
         createdDate,
+        lastUpdatedByEmail,
+        lastUpdatedDate,
         region);
     this.ipName = ipName;
     this.region = region;
@@ -169,13 +172,6 @@ public class ControlledAzureIpResource extends ControlledResource {
   public ApiResourceAttributesUnion toApiAttributesUnion() {
     ApiResourceAttributesUnion union = new ApiResourceAttributesUnion();
     union.azureIp(toApiAttributes());
-    return union;
-  }
-
-  @Override
-  public ApiResourceUnion toApiResourceUnion() {
-    ApiResourceUnion union = new ApiResourceUnion();
-    union.azureIp(toApiResource());
     return union;
   }
 

@@ -16,7 +16,6 @@ import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAttributes;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
-import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
@@ -88,6 +87,8 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
       @JsonProperty("properties") Map<String, String> properties,
       @JsonProperty("createdByEmail") String createdByEmail,
       @JsonProperty("createdDate") OffsetDateTime createdDate,
+      @JsonProperty("lastUpdatedByEmail") String lastUpdatedByEmail,
+      @JsonProperty("lastUpdatedDate") OffsetDateTime lastUpdatedDate,
       @JsonProperty("region") String region) {
     super(
         workspaceId,
@@ -104,6 +105,8 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
         properties,
         createdByEmail,
         createdDate,
+        lastUpdatedByEmail,
+        lastUpdatedDate,
         region);
     this.instanceId = instanceId;
     this.location = location;
@@ -259,13 +262,6 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
   public ApiResourceAttributesUnion toApiAttributesUnion() {
     ApiResourceAttributesUnion union = new ApiResourceAttributesUnion();
     union.gcpAiNotebookInstance(toApiAttributes());
-    return union;
-  }
-
-  @Override
-  public ApiResourceUnion toApiResourceUnion() {
-    ApiResourceUnion union = new ApiResourceUnion();
-    union.gcpAiNotebookInstance(toApiResource());
     return union;
   }
 

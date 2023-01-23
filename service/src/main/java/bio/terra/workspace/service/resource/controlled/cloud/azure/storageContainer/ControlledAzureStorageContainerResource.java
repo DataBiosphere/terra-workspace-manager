@@ -12,7 +12,6 @@ import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
 import bio.terra.workspace.generated.model.ApiAzureStorageContainerAttributes;
 import bio.terra.workspace.generated.model.ApiAzureStorageContainerResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
-import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
@@ -54,6 +53,8 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
       @JsonProperty("properties") Map<String, String> properties,
       @JsonProperty("createdByEmail") String createdByEmail,
       @JsonProperty("createdDate") OffsetDateTime createdDate,
+      @JsonProperty("lastUpdatedByEmail") String lastUpdatedByEmail,
+      @JsonProperty("lastUpdatedDate") OffsetDateTime lastUpdatedDate,
       @JsonProperty("region") String region) {
     super(
         workspaceId,
@@ -70,6 +71,8 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
         properties,
         createdByEmail,
         createdDate,
+        lastUpdatedByEmail,
+        lastUpdatedDate,
         region);
     this.storageAccountId = storageAccountId;
     this.storageContainerName = storageContainerName;
@@ -124,7 +127,7 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
             flightBeanBag.getCrlService(),
             flightBeanBag.getResourceDao(),
             flightBeanBag.getLandingZoneApiDispatch(),
-            userRequest,
+            flightBeanBag.getSamService(),
             this),
         cloudRetry);
     flight.addStep(
@@ -145,6 +148,7 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
             flightBeanBag.getCrlService(),
             flightBeanBag.getResourceDao(),
             flightBeanBag.getLandingZoneApiDispatch(),
+            flightBeanBag.getSamService(),
             this),
         RetryRules.cloud());
   }
@@ -190,13 +194,6 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
   public ApiResourceAttributesUnion toApiAttributesUnion() {
     ApiResourceAttributesUnion union = new ApiResourceAttributesUnion();
     union.azureStorageContainer(toApiAttributes());
-    return union;
-  }
-
-  @Override
-  public ApiResourceUnion toApiResourceUnion() {
-    ApiResourceUnion union = new ApiResourceUnion();
-    union.azureStorageContainer(toApiResource());
     return union;
   }
 

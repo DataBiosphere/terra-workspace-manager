@@ -115,11 +115,19 @@ public class RetrieveGcpResourcesRegionStep implements Step {
     }
   }
 
+  @Nullable
   private String getGcsBucketRegion(ControlledGcsBucketResource resource) {
     String projectId = cloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
     StorageCow storageCow = crlService.createStorageCow(projectId);
 
     BucketCow existingBucketCow = storageCow.get(resource.getBucketName());
+    if (existingBucketCow == null) {
+      logger.error(
+          "Failed to get gcs bucket {} in workspace {}",
+          resource.getResourceId(),
+          resource.getWorkspaceId());
+      return null;
+    }
     return existingBucketCow.getBucketInfo().getLocation();
   }
 

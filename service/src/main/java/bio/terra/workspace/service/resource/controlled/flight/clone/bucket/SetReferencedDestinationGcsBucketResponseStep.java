@@ -9,6 +9,7 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpGcsBucket;
+import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.ReferencedGcsBucketResource;
@@ -26,9 +27,12 @@ import org.springframework.http.HttpStatus;
  */
 public class SetReferencedDestinationGcsBucketResponseStep implements Step {
   private final ResourceDao resourceDao;
+  private final WorkspaceActivityLogService workspaceActivityLogService;
 
-  public SetReferencedDestinationGcsBucketResponseStep(ResourceDao resourceDao) {
+  public SetReferencedDestinationGcsBucketResponseStep(
+      ResourceDao resourceDao, WorkspaceActivityLogService workspaceActivityLogService) {
     this.resourceDao = resourceDao;
+    this.workspaceActivityLogService = workspaceActivityLogService;
   }
 
   @Override

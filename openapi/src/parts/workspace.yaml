@@ -183,14 +183,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TpsPaoUpdateRequest'
+              $ref: '#/components/schemas/WsmPolicyUpdateRequest'
       responses:
         '200':
           description: Update successfully processed. The update itself may or may not have succeeded.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TpsPaoUpdateResult'
+                $ref: '#/components/schemas/WsmPolicyUpdateResult'
         '400':
           $ref: '#/components/responses/BadRequest'
         '403':
@@ -313,6 +313,28 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/workspaces/v1/{workspaceId}/listValidRegions:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/Platform'
+    get:
+      summary: |
+        list valid data centers of a given workspace on a cloud platform.
+      operationId: listValidRegions
+      tags: [ Workspace ]
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Regions'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
 components:
   responses:
     CloneWorkspaceResponse:
@@ -321,7 +343,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CloneWorkspaceResult'
-
   schemas:
     ClonedWorkspace:
       description: >-
@@ -454,7 +475,7 @@ components:
           description: ID of provided spend profile
           type: string
         policies:
-          $ref: '#/components/schemas/TpsPolicyInputs'
+          $ref: '#/components/schemas/WsmPolicyInputs'
         stage:
           $ref: '#/components/schemas/WorkspaceStageModel'
         properties:
@@ -566,7 +587,7 @@ components:
         policies:
           type: array
           items:
-            $ref: '#/components/schemas/TpsPolicyInput'
+            $ref: '#/components/schemas/WsmPolicyInput'
 
     WorkspaceDescriptionList:
       type: object
@@ -582,3 +603,4 @@ components:
       description: Enum for possible stages of a workspace along the Rawls migration path
       type: string
       enum: ['RAWLS_WORKSPACE', 'MC_WORKSPACE']
+

@@ -5,8 +5,10 @@ import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertM
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesDeleteRequestBody;
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesUpdateRequestBody;
 
-import bio.terra.common.iam.BearerToken;
-import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
+import bio.terra.policy.model.TpsPaoGetResult;
+import bio.terra.policy.model.TpsPaoUpdateResult;
+import bio.terra.policy.model.TpsPolicyInputs;
+import bio.terra.policy.model.TpsUpdateMode;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.exception.FeatureNotSupportedException;
@@ -31,17 +33,16 @@ import bio.terra.workspace.generated.model.ApiIamRole;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
 import bio.terra.workspace.generated.model.ApiProperties;
 import bio.terra.workspace.generated.model.ApiProperty;
+import bio.terra.workspace.generated.model.ApiRegions;
 import bio.terra.workspace.generated.model.ApiRoleBinding;
 import bio.terra.workspace.generated.model.ApiRoleBindingList;
-import bio.terra.workspace.generated.model.ApiTpsPaoGetResult;
-import bio.terra.workspace.generated.model.ApiTpsPaoUpdateRequest;
-import bio.terra.workspace.generated.model.ApiTpsPaoUpdateResult;
-import bio.terra.workspace.generated.model.ApiTpsPolicyInput;
-import bio.terra.workspace.generated.model.ApiTpsPolicyInputs;
 import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
+import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
+import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateRequest;
+import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateResult;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamRethrow;
@@ -53,6 +54,8 @@ import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
+import bio.terra.workspace.service.policy.TpsApiConversionUtils;
+import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
@@ -162,7 +165,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     ControllerValidationUtils.validateUserFacingId(userFacingId);
 
     // Validate that this workspace can have policies attached, if necessary.
-    ApiTpsPolicyInputs policies = null;
+    TpsPolicyInputs policies = null;
     if (body.getPolicies() != null) {
       if (!featureConfiguration.isTpsEnabled()) {
         throw new FeatureNotSupportedException(
@@ -172,7 +175,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         throw new StageDisabledException(
             "Cannot apply policies to a RAWLS_WORKSPACE stage workspace");
       }
-      policies = body.getPolicies();
+      policies = TpsApiConversionUtils.tpsFromApiTpsPolicyInputs(body.getPolicies());
     }
 
     Workspace workspace =
@@ -243,17 +246,15 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .map(AzureCloudContext::toApi)
             .orElse(null);
 
-    List<ApiTpsPolicyInput> workspacePolicies = null;
+    List<ApiWsmPolicyInput> workspacePolicies = null;
     if (featureConfiguration.isTpsEnabled()) {
       // New workspaces will always be created with empty policies, but some workspaces predate
       // policy and so will not have associated PAOs.
-      Optional<ApiTpsPaoGetResult> workspacePao =
-          tpsApiDispatch.getPaoIfExists(
-              new BearerToken(userRequest.getRequiredToken()), workspaceUuid);
+      Optional<TpsPaoGetResult> workspacePao = tpsApiDispatch.getPaoIfExists(workspaceUuid);
+
       workspacePolicies =
           workspacePao
-              .map(ApiTpsPaoGetResult::getEffectiveAttributes)
-              .map(ApiTpsPolicyInputs::getInputs)
+              .map(TpsApiConversionUtils::apiEffectivePolicyListFromTpsPao)
               .orElse(Collections.emptyList());
     }
 
@@ -360,22 +361,21 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   }
 
   @Override
-  public ResponseEntity<ApiTpsPaoUpdateResult> updatePolicies(
-      @PathVariable("workspaceId") UUID workspaceId, @RequestBody ApiTpsPaoUpdateRequest body) {
+  public ResponseEntity<ApiWsmPolicyUpdateResult> updatePolicies(
+      @PathVariable("workspaceId") UUID workspaceId, @RequestBody ApiWsmPolicyUpdateRequest body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     logger.info("Updating workspace policies {} for {}", workspaceId, userRequest.getEmail());
 
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceId, SamConstants.SamWorkspaceAction.WRITE);
+    workspaceService.validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.WRITE);
 
-    if (!featureConfiguration.isTpsEnabled()) {
-      throw new FeatureNotSupportedException(
-          "TPS is not enabled on this instance of Workspace Manager, cannot update policies for workspace.");
-    }
+    featureConfiguration.tpsEnabledCheck();
+    TpsPolicyInputs adds = TpsApiConversionUtils.tpsFromApiTpsPolicyInputs(body.getAddAttributes());
+    TpsPolicyInputs removes =
+        TpsApiConversionUtils.tpsFromApiTpsPolicyInputs(body.getRemoveAttributes());
+    TpsUpdateMode updateMode = TpsApiConversionUtils.tpsFromApiTpsUpdateMode(body.getUpdateMode());
 
-    ApiTpsPaoUpdateResult result =
-        tpsApiDispatch.updatePao(
-            new BearerToken(userRequest.getRequiredToken()), workspaceId, body);
+    TpsPaoUpdateResult result = tpsApiDispatch.updatePao(workspaceId, adds, removes, updateMode);
+
     if (Boolean.TRUE.equals(result.isUpdateApplied())) {
       workspaceActivityLogService.writeActivity(
           userRequest,
@@ -391,7 +391,9 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
           workspaceId,
           userRequest.getEmail());
     }
-    return new ResponseEntity<>(result, HttpStatus.OK);
+
+    ApiWsmPolicyUpdateResult apiResult = TpsApiConversionUtils.apiFromTpsUpdateResult(result);
+    return new ResponseEntity<>(apiResult, HttpStatus.OK);
   }
 
   @Override
@@ -411,7 +413,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       @PathVariable("workspaceId") UUID workspaceUuid, @RequestBody List<String> propertyKeys) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.DELETE);
+        userRequest, workspaceUuid, SamWorkspaceAction.DELETE);
     validatePropertiesDeleteRequestBody(propertyKeys);
     logger.info(
         "Deleting the properties with the key {} in workspace {}", propertyKeys, workspaceUuid);
@@ -476,8 +478,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     }
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     Workspace workspace =
-        workspaceService.validateMcWorkspaceAndAction(
-            userRequest, uuid, SamConstants.SamWorkspaceAction.OWN);
+        workspaceService.validateMcWorkspaceAndAction(userRequest, uuid, SamWorkspaceAction.OWN);
     workspaceService.removeWorkspaceRoleFromUser(
         workspace, WsmIamRole.fromApiModel(role), memberEmail, userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -582,7 +583,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     // Validate that the user is a workspace member, as enablePetServiceAccountImpersonation does
     // not authenticate.
     workspaceService.validateMcWorkspaceAndAction(
-        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
+        userRequest, workspaceUuid, SamWorkspaceAction.READ);
     petSaService.enablePetServiceAccountImpersonation(
         workspaceUuid,
         getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
@@ -608,7 +609,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     // create a new workspace.
     final Workspace sourceWorkspace =
         workspaceService.validateWorkspaceAndAction(
-            petRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
+            petRequest, workspaceUuid, SamWorkspaceAction.READ);
 
     Optional<SpendProfileId> spendProfileId =
         Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::new);
@@ -680,6 +681,18 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
     final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId);
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
+  }
+
+  @Override
+  public ResponseEntity<ApiRegions> listValidRegions(UUID workspaceId, ApiCloudPlatform platform) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    workspaceService.validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.READ);
+
+    List<String> regions = tpsApiDispatch.listValidRegions(workspaceId, platform.name());
+
+    ApiRegions apiRegions = new ApiRegions();
+    apiRegions.addAll(regions);
+    return new ResponseEntity<>(apiRegions, HttpStatus.OK);
   }
 
   // Retrieve the async result or progress for clone workspace.

@@ -57,7 +57,9 @@ public class ReferenceResourceFixtures {
         /*resourceLineage=*/ null,
         /*properties*/ DEFAULT_RESOURCE_PROPERTIES,
         DEFAULT_USER_EMAIL,
-        /*createdDate*/ null);
+        /*createdDate*/ null,
+        /*lastUpdatedByEmail=*/ null,
+        /*lastUpdatedDate=*/ null);
   }
 
   public static ReferencedBigQueryDatasetResource makeReferencedBqDatasetResource(
@@ -75,7 +77,9 @@ public class ReferenceResourceFixtures {
         /*resourceLineage=*/ null,
         /*properties*/ DEFAULT_RESOURCE_PROPERTIES,
         DEFAULT_USER_EMAIL,
-        /*createdDate*/ null);
+        /*createdDate*/ null,
+        /*lastUpdatedByEmail=*/ null,
+        /*lastUpdatedDate=*/ null);
   }
 
   public static ApiCreateDataRepoSnapshotReferenceRequestBody

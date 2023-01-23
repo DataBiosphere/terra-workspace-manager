@@ -165,7 +165,7 @@ public final class FlightUtils {
   public static <T> T getRequired(FlightMap flightMap, String key, Class<T> tClass) {
     var value = flightMap.get(key, tClass);
     if (value == null) {
-      throw new IllegalArgumentException("Missing required flight map key: " + key);
+      throw new MissingRequiredFieldsException("Missing required flight map key: " + key);
     }
     return value;
   }
@@ -174,12 +174,17 @@ public final class FlightUtils {
    * Wait with an exponential backoff. Useful for referenced resource creation/clone polling, as
    * that happens too quickly for even a 1-second fixed poll interval.
    *
-   * @param stairway
-   * @param initialInterval
-   * @param maxWait
+   * @param stairway Stairway instance to probe
+   * @param initialInterval initial interval to wait; doubled each wait
+   * @param maxInterval maximum interval to wait
+   * @param maxWait maximum time to wait
    */
   public static FlightState waitForFlightExponential(
-      Stairway stairway, String flightId, Duration initialInterval, Duration maxWait)
+      Stairway stairway,
+      String flightId,
+      Duration initialInterval,
+      Duration maxInterval,
+      Duration maxWait)
       throws InterruptedException {
     final Instant endTime = Instant.now().plus(maxWait);
     Duration sleepInterval = initialInterval;
@@ -191,6 +196,9 @@ public final class FlightUtils {
       TimeUnit.MILLISECONDS.sleep(sleepInterval.toMillis());
       // double the interval
       sleepInterval = sleepInterval.plus(sleepInterval);
+      if (sleepInterval.compareTo(maxInterval) > 0) {
+        sleepInterval = maxInterval;
+      }
     } while (Instant.now().isBefore(endTime));
     throw new FlightWaitTimedOutException("Timed out waiting for flight to complete.");
   }

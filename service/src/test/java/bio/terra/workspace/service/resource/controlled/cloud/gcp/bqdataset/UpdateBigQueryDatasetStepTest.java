@@ -9,6 +9,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import bio.terra.cloudres.google.bigquery.BigQueryCow;
 import bio.terra.stairway.FlightContext;
@@ -29,6 +30,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
 public class UpdateBigQueryDatasetStepTest extends BaseUnitTest {
   private static final String PROJECT_ID = "my-gcp-project";
@@ -58,12 +61,8 @@ public class UpdateBigQueryDatasetStepTest extends BaseUnitTest {
     final FlightMap workingMap = new FlightMap();
     workingMap.put(
         ControlledResourceKeys.PREVIOUS_UPDATE_PARAMETERS, BQ_DATASET_UPDATE_PARAMETERS_PREV);
-    doReturn(workingMap).when(mockFlightContext).getWorkingMap();
-
-    doReturn(mockBigQueryCow).when(mockCrlService).createWsmSaBigQueryCow();
-    doReturn(mockExistingDataset)
-        .when(mockCrlService)
-        .getBigQueryDataset(eq(mockBigQueryCow), eq(PROJECT_ID), any(String.class));
+    when(mockFlightContext.getWorkingMap()).thenReturn(workingMap);
+    when(mockCrlService.createWsmSaBigQueryCow()).thenReturn(mockBigQueryCow);
     doNothing()
         .when(mockCrlService)
         .updateBigQueryDataset(
@@ -72,9 +71,8 @@ public class UpdateBigQueryDatasetStepTest extends BaseUnitTest {
     final ControlledBigQueryDatasetResource datasetResource =
         ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(null).build();
 
-    doReturn(PROJECT_ID)
-        .when(mockGcpCloudContextService)
-        .getRequiredGcpProject(datasetResource.getWorkspaceId());
+    when(mockGcpCloudContextService.getRequiredGcpProject(datasetResource.getWorkspaceId()))
+        .thenReturn(PROJECT_ID);
 
     updateBigQueryDatasetStep =
         new UpdateBigQueryDatasetStep(datasetResource, mockCrlService, mockGcpCloudContextService);
@@ -86,11 +84,23 @@ public class UpdateBigQueryDatasetStepTest extends BaseUnitTest {
     mockExistingDatasetExpirationTimes(BQ_DATASET_UPDATE_PARAMETERS_PREV);
 
     // run the doStep and make sure it succeeds
-    final StepResult result = updateBigQueryDatasetStep.doStep(mockFlightContext);
-    assertEquals(StepResult.getStepResultSuccess(), result);
+    try (MockedStatic<CrlService> crlServiceMockedStatic = Mockito.mockStatic(CrlService.class)) {
+      crlServiceMockedStatic
+          .when(
+              () ->
+                  CrlService.getBigQueryDataset(
+                      eq(mockBigQueryCow), eq(PROJECT_ID), any(String.class)))
+          .thenReturn(mockExistingDataset);
+      StepResult result = updateBigQueryDatasetStep.doStep(mockFlightContext);
+      assertEquals(StepResult.getStepResultSuccess(), result);
+      crlServiceMockedStatic.verify(
+          () ->
+              CrlService.getBigQueryDataset(eq(mockBigQueryCow), eq(PROJECT_ID), any(String.class)),
+          times(1));
+    }
 
-    // get() and update() should each have been called once
-    verifyGetUpdateCalled(1, 1);
+    // update() should each have been called once
+    verifyUpdateCalled(1);
 
     // the Dataset argument to update() should match the NEW expiration times
     checkUpdateArgProperties(3600, 3601);
@@ -102,11 +112,23 @@ public class UpdateBigQueryDatasetStepTest extends BaseUnitTest {
     mockExistingDatasetExpirationTimes(BQ_DATASET_UPDATE_PARAMETERS_NEW);
 
     // run the undoStep and make sure it succeeds
-    final StepResult result = updateBigQueryDatasetStep.undoStep(mockFlightContext);
-    assertEquals(StepResult.getStepResultSuccess(), result);
+    try (MockedStatic<CrlService> crlServiceMockedStatic = Mockito.mockStatic(CrlService.class)) {
+      crlServiceMockedStatic
+          .when(
+              () ->
+                  CrlService.getBigQueryDataset(
+                      eq(mockBigQueryCow), eq(PROJECT_ID), any(String.class)))
+          .thenReturn(mockExistingDataset);
+      StepResult result = updateBigQueryDatasetStep.undoStep(mockFlightContext);
+      assertEquals(StepResult.getStepResultSuccess(), result);
+      crlServiceMockedStatic.verify(
+          () ->
+              CrlService.getBigQueryDataset(eq(mockBigQueryCow), eq(PROJECT_ID), any(String.class)),
+          times(1));
+    }
 
     // get() and update() should each have been called once
-    verifyGetUpdateCalled(1, 1);
+    verifyUpdateCalled(1);
 
     // the Dataset argument to update() should match the PREV expiration times
     checkUpdateArgProperties(4800, 4801);
@@ -118,11 +140,23 @@ public class UpdateBigQueryDatasetStepTest extends BaseUnitTest {
     mockExistingDatasetExpirationTimes(BQ_DATASET_UPDATE_PARAMETERS_NEW);
 
     // run the doStep and make sure it succeeds
-    final StepResult result = updateBigQueryDatasetStep.doStep(mockFlightContext);
-    assertEquals(StepResult.getStepResultSuccess(), result);
+    try (MockedStatic<CrlService> crlServiceMockedStatic = Mockito.mockStatic(CrlService.class)) {
+      crlServiceMockedStatic
+          .when(
+              () ->
+                  CrlService.getBigQueryDataset(
+                      eq(mockBigQueryCow), eq(PROJECT_ID), any(String.class)))
+          .thenReturn(mockExistingDataset);
+      final StepResult result = updateBigQueryDatasetStep.doStep(mockFlightContext);
+      assertEquals(StepResult.getStepResultSuccess(), result);
+      crlServiceMockedStatic.verify(
+          () ->
+              CrlService.getBigQueryDataset(eq(mockBigQueryCow), eq(PROJECT_ID), any(String.class)),
+          times(1));
+    }
 
     // get() should have been called once, update() not at all (because there was no change)
-    verifyGetUpdateCalled(1, 0);
+    verifyUpdateCalled(0);
   }
 
   @Test
@@ -131,11 +165,23 @@ public class UpdateBigQueryDatasetStepTest extends BaseUnitTest {
     mockExistingDatasetExpirationTimes(BQ_DATASET_UPDATE_PARAMETERS_PREV);
 
     // run the undoStep and make sure it succeeds
-    final StepResult result = updateBigQueryDatasetStep.undoStep(mockFlightContext);
-    assertEquals(StepResult.getStepResultSuccess(), result);
+    try (MockedStatic<CrlService> crlServiceMockedStatic = Mockito.mockStatic(CrlService.class)) {
+      crlServiceMockedStatic
+          .when(
+              () ->
+                  CrlService.getBigQueryDataset(
+                      eq(mockBigQueryCow), eq(PROJECT_ID), any(String.class)))
+          .thenReturn(mockExistingDataset);
+      StepResult result = updateBigQueryDatasetStep.undoStep(mockFlightContext);
+      assertEquals(StepResult.getStepResultSuccess(), result);
+      crlServiceMockedStatic.verify(
+          () ->
+              CrlService.getBigQueryDataset(eq(mockBigQueryCow), eq(PROJECT_ID), any(String.class)),
+          times(1));
+    }
 
     // get() should have been called once, update() not at all (because there was no change)
-    verifyGetUpdateCalled(1, 0);
+    verifyUpdateCalled(0);
   }
 
   /**
@@ -151,10 +197,7 @@ public class UpdateBigQueryDatasetStepTest extends BaseUnitTest {
   }
 
   /** Assert that the step called BigQuery get() and update() the specified number of times. */
-  private void verifyGetUpdateCalled(int numTimesGetCalled, int numTimesUpdateCalled)
-      throws IOException {
-    verify(mockCrlService, times(numTimesGetCalled))
-        .getBigQueryDataset(eq(mockBigQueryCow), eq(PROJECT_ID), any(String.class));
+  private void verifyUpdateCalled(int numTimesUpdateCalled) throws IOException {
     verify(mockCrlService, times(numTimesUpdateCalled))
         .updateBigQueryDataset(eq(mockBigQueryCow), eq(PROJECT_ID), any(String.class), any());
   }

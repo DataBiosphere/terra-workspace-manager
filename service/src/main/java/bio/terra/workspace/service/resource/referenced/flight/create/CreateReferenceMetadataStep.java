@@ -4,29 +4,42 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
+import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
-import bio.terra.workspace.db.ResourceDao;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
 /** Stairway step to persist a data reference in WSM's database. */
 public class CreateReferenceMetadataStep implements Step {
+  private static final Logger logger = LoggerFactory.getLogger(CreateReferenceMetadataStep.class);
 
-  private final ResourceDao resourceDao;
+  private final AuthenticatedUserRequest userRequest;
+  private final ReferencedResourceService referencedResourceService;
 
-  public CreateReferenceMetadataStep(ResourceDao resourceDao) {
-    this.resourceDao = resourceDao;
+  public CreateReferenceMetadataStep(
+      AuthenticatedUserRequest userRequest, ReferencedResourceService referencedResourceService) {
+    this.userRequest = userRequest;
+    this.referencedResourceService = referencedResourceService;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws RetryException, InterruptedException {
     WsmResource referencedResource = getReferencedResource(flightContext);
-    resourceDao.createReferencedResource(referencedResource);
+    if (referencedResource == null) {
+      logger.warn("Fails to get referenced resource to create");
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL);
+    }
+    referencedResourceService.createReferenceResource(
+        referencedResource.castToReferencedResource(), userRequest);
     FlightUtils.setResponse(flightContext, referencedResource.getResourceId(), HttpStatus.OK);
     return StepResult.getStepResultSuccess();
   }
@@ -34,9 +47,12 @@ public class CreateReferenceMetadataStep implements Step {
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     WsmResource referencedResource = getReferencedResource(flightContext);
-    // Ignore return value, as we don't care whether a reference was deleted or just not found.
-    resourceDao.deleteResource(
-        referencedResource.getWorkspaceId(), referencedResource.getResourceId());
+
+    referencedResourceService.deleteReferenceResourceForResourceType(
+        referencedResource.getWorkspaceId(),
+        referencedResource.getResourceId(),
+        referencedResource.getResourceType(),
+        userRequest);
 
     return StepResult.getStepResultSuccess();
   }

@@ -10,13 +10,14 @@ import bio.terra.workspace.model.JobControl;
 import bio.terra.workspace.model.JobReport.StatusEnum;
 import java.time.Duration;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Utilities for creating/deleting cloud contexts for client tests */
 public class CloudContextMaker {
   private static final Logger logger = LoggerFactory.getLogger(CloudContextMaker.class);
-  private static final Duration CREATE_CONTEXT_POLL_INTERVAL = Duration.ofSeconds(10);
+  private static final Duration CREATE_CONTEXT_POLL_INTERVAL = Duration.ofSeconds(60);
 
   private CloudContextMaker() {}
 
@@ -64,7 +65,7 @@ public class CloudContextMaker {
     CreateCloudContextResult contextResult =
         workspaceApi.createCloudContext(createContext, workspaceUuid);
     while (ClientTestUtils.jobIsRunning(contextResult.getJobReport())) {
-      Thread.sleep(CREATE_CONTEXT_POLL_INTERVAL.toMillis());
+      TimeUnit.SECONDS.sleep(CREATE_CONTEXT_POLL_INTERVAL.toSeconds());
       contextResult = workspaceApi.getCreateCloudContextResult(workspaceUuid, contextJobId);
     }
     logger.info(

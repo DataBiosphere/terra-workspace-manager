@@ -7,6 +7,7 @@ import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.WORKSPACE_NA
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.getUserFacingId;
 import static bio.terra.workspace.common.utils.MockMvcUtils.UPDATE_WORKSPACES_V1_POLICIES_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
+import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_LIST_VALID_REGIONS_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_PATH;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
@@ -24,6 +25,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import bio.terra.policy.model.TpsComponent;
+import bio.terra.policy.model.TpsObjectType;
+import bio.terra.policy.model.TpsPaoGetResult;
+import bio.terra.policy.model.TpsPaoUpdateResult;
+import bio.terra.policy.model.TpsPolicyInput;
+import bio.terra.policy.model.TpsPolicyInputs;
+import bio.terra.policy.model.TpsPolicyPair;
 import bio.terra.workspace.common.BaseUnitTestMockDataRepoService;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
@@ -32,29 +40,28 @@ import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.generated.model.ApiCloneResourceResult;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceResult;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
+import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiProperty;
+import bio.terra.workspace.generated.model.ApiRegions;
 import bio.terra.workspace.generated.model.ApiResourceCloneDetails;
-import bio.terra.workspace.generated.model.ApiTpsComponent;
-import bio.terra.workspace.generated.model.ApiTpsObjectType;
-import bio.terra.workspace.generated.model.ApiTpsPaoGetResult;
-import bio.terra.workspace.generated.model.ApiTpsPaoUpdateRequest;
-import bio.terra.workspace.generated.model.ApiTpsPaoUpdateResult;
-import bio.terra.workspace.generated.model.ApiTpsPolicyInput;
-import bio.terra.workspace.generated.model.ApiTpsPolicyInputs;
-import bio.terra.workspace.generated.model.ApiTpsPolicyPair;
-import bio.terra.workspace.generated.model.ApiTpsUpdateMode;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
+import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
+import bio.terra.workspace.generated.model.ApiWsmPolicyInputs;
+import bio.terra.workspace.generated.model.ApiWsmPolicyPair;
+import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateMode;
+import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateRequest;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
 import bio.terra.workspace.service.iam.model.SamConstants.SamSpendProfileAction;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
+import bio.terra.workspace.service.policy.TpsApiConversionUtils;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants.Properties;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -80,14 +87,21 @@ import org.springframework.test.web.servlet.ResultActions;
  * calling services directly like we have in the past. Although this test duplicates coverage
  * currently in WorkspaceServiceTest, it's intended as a proof-of-concept for future mockMvc-based
  * tests.
+ *
+ * <p>It can be confusing looking at the Tps types. The "Tps*" types are returned from the Terra
+ * Policy Service through the TPS REST API and are mocked in this test. The "ApiTps*" types are part
+ * of the WSM REST API and are created and passed as input via MockMvc to the WSM controller. We use
+ * that naming on statics to make it clear which is which. This naming is an unfortunate side-effect
+ * of supporting the TPS REST API from within the WSM REST API and allowing the TPS objects to be
+ * used in the WSM API.
  */
 public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService {
   /** A fake group-constraint policy for a workspace. */
-  private static final ApiTpsPolicyInput GROUP_POLICY =
-      new ApiTpsPolicyInput()
+  private static final TpsPolicyInput TPS_GROUP_POLICY =
+      new TpsPolicyInput()
           .namespace("terra")
           .name("group-constraint")
-          .addAdditionalDataItem(new ApiTpsPolicyPair().key("group").value("my_fake_group"));
+          .addAdditionalDataItem(new TpsPolicyPair().key("group").value("my_fake_group"));
 
   private static final String FAKE_SPEND_PROFILE = "fake-spend-profile";
 
@@ -97,14 +111,14 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
   @Autowired WorkspaceActivityLogService workspaceActivityLogService;
   @Autowired JobService jobService;
 
-  private static ApiTpsPaoGetResult emptyWorkspacePao() {
-    return new ApiTpsPaoGetResult()
-        .component(ApiTpsComponent.WSM)
-        .objectType(ApiTpsObjectType.WORKSPACE)
+  private static TpsPaoGetResult emptyWorkspacePao() {
+    return new TpsPaoGetResult()
+        .component(TpsComponent.WSM)
+        .objectType(TpsObjectType.WORKSPACE)
         .objectId(UUID.randomUUID())
         .sourcesObjectIds(Collections.emptyList())
-        .attributes(new ApiTpsPolicyInputs())
-        .effectiveAttributes(new ApiTpsPolicyInputs());
+        .attributes(new TpsPolicyInputs())
+        .effectiveAttributes(new TpsPolicyInputs());
   }
 
   @BeforeEach
@@ -130,8 +144,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
 
     // Pretend every workspace has an empty policy. The ID on the PAO will not match the workspace
     // ID, but that doesn't matter for tests which don't care about policy.
-    when(mockTpsApiDispatch().getPaoIfExists(any(), any()))
-        .thenReturn(Optional.of(emptyWorkspacePao()));
+    when(mockTpsApiDispatch().getPaoIfExists(any())).thenReturn(Optional.of(emptyWorkspacePao()));
   }
 
   @Test
@@ -387,18 +400,22 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
     // No need to actually pass policy inputs because TPS is mocked.
     ApiCreatedWorkspace workspace = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
 
-    ApiTpsPaoGetResult getPolicyResult =
+    TpsPaoGetResult getPolicyResult =
         emptyWorkspacePao()
             .objectId(workspace.getId())
-            .attributes(new ApiTpsPolicyInputs().addInputsItem(GROUP_POLICY))
-            .effectiveAttributes(new ApiTpsPolicyInputs().addInputsItem(GROUP_POLICY));
-    when(mockTpsApiDispatch().getPaoIfExists(any(), eq(workspace.getId())))
+            .attributes(new TpsPolicyInputs().addInputsItem(TPS_GROUP_POLICY))
+            .effectiveAttributes(new TpsPolicyInputs().addInputsItem(TPS_GROUP_POLICY));
+    when(mockTpsApiDispatch().getPaoIfExists(eq(workspace.getId())))
         .thenReturn(Optional.of(getPolicyResult));
 
     ApiWorkspaceDescription gotWorkspace =
         mockMvcUtils.getWorkspace(USER_REQUEST, workspace.getId());
     assertEquals(1, gotWorkspace.getPolicies().size());
-    assertEquals(GROUP_POLICY, gotWorkspace.getPolicies().get(0));
+    // The workspace polices from the REST API are in "ApiTps*" form.
+    // So we have to convert from TPS form to API form to compare.
+    assertEquals(
+        TpsApiConversionUtils.apiFromTpsPolicyInput(TPS_GROUP_POLICY),
+        gotWorkspace.getPolicies().get(0));
   }
 
   @Test
@@ -422,26 +439,30 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
             ImmutableMap.of(
                 workspace.getId(), WsmIamRole.OWNER, noPolicyWorkspace.getId(), WsmIamRole.OWNER));
 
-    ApiTpsPaoGetResult getPolicyResult =
-        new ApiTpsPaoGetResult()
-            .attributes(new ApiTpsPolicyInputs().addInputsItem(GROUP_POLICY))
-            .effectiveAttributes(new ApiTpsPolicyInputs().addInputsItem(GROUP_POLICY))
-            .component(ApiTpsComponent.WSM)
-            .objectType(ApiTpsObjectType.WORKSPACE)
+    TpsPaoGetResult getPolicyResult =
+        new TpsPaoGetResult()
+            .attributes(new TpsPolicyInputs().addInputsItem(TPS_GROUP_POLICY))
+            .effectiveAttributes(new TpsPolicyInputs().addInputsItem(TPS_GROUP_POLICY))
+            .component(TpsComponent.WSM)
+            .objectType(TpsObjectType.WORKSPACE)
             .objectId(workspace.getId())
             .sourcesObjectIds(Collections.emptyList());
 
     // Return a policy object for the first workspace
-    when(mockTpsApiDispatch().getPaoIfExists(any(), eq(workspace.getId())))
+    when(mockTpsApiDispatch().getPaoIfExists(eq(workspace.getId())))
         .thenReturn(Optional.of(getPolicyResult));
     // Treat the second workspace like it was created before policy existed and doesn't have a PAO
-    when(mockTpsApiDispatch().getPaoIfExists(any(), eq(noPolicyWorkspace.getId())))
+    when(mockTpsApiDispatch().getPaoIfExists(eq(noPolicyWorkspace.getId())))
         .thenReturn(Optional.empty());
 
     ApiWorkspaceDescription gotWorkspace =
         mockMvcUtils.getWorkspace(USER_REQUEST, workspace.getId());
     assertEquals(1, gotWorkspace.getPolicies().size());
-    assertEquals(GROUP_POLICY, gotWorkspace.getPolicies().get(0));
+    // The workspace polices from the REST API are in "ApiTps*" form.
+    // So we have to convert from TPS form to API form to compare.
+    assertEquals(
+        TpsApiConversionUtils.apiFromTpsPolicyInput(TPS_GROUP_POLICY),
+        gotWorkspace.getPolicies().get(0));
     ApiWorkspaceDescription gotNoPolicyWorkspace =
         getWorkspaceDescriptionFromList(noPolicyWorkspace.getId());
     assertTrue(gotNoPolicyWorkspace.getPolicies().isEmpty());
@@ -460,24 +481,16 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
   }
 
   @Test
-  public void updatePolicies_tpsDisabled_throws501() throws Exception {
-    when(mockFeatureConfiguration().isTpsEnabled()).thenReturn(false);
-    ApiCreatedWorkspace workspace = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
-
-    updatePoliciesExpect(workspace.getId(), HttpStatus.SC_NOT_IMPLEMENTED);
-  }
-
-  @Test
   public void updatePolicies_tpsEnabledAndPolicyUpdated_log() throws Exception {
     ApiCreatedWorkspace workspace = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
-    when(mockTpsApiDispatch().updatePao(any(), eq(workspace.getId()), any()))
-        .thenReturn(new ApiTpsPaoUpdateResult().updateApplied(true));
+    when(mockTpsApiDispatch().updatePao(eq(workspace.getId()), any(), any(), any()))
+        .thenReturn(new TpsPaoUpdateResult().updateApplied(true));
     ActivityLogChangeDetails lastChangeDetails =
         workspaceActivityLogService.getLastUpdatedDetails(workspace.getId()).get();
     OffsetDateTime lastChangedDate = lastChangeDetails.changeDate();
     assertEquals(OperationType.CREATE, lastChangeDetails.operationType());
 
-    ApiTpsPaoUpdateResult result = updatePolicies(workspace.getId());
+    TpsPaoUpdateResult result = updatePolicies(workspace.getId());
     assertTrue(result.isUpdateApplied());
     ActivityLogChangeDetails secondChangeDetails =
         workspaceActivityLogService.getLastUpdatedDetails(workspace.getId()).get();
@@ -496,24 +509,47 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
   @Test
   public void updatePolicies_tpsEnabledAndPolicyNotUpdated_notLog() throws Exception {
     ApiCreatedWorkspace workspace = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
-    when(mockTpsApiDispatch().updatePao(any(), eq(workspace.getId()), any()))
-        .thenReturn(new ApiTpsPaoUpdateResult().updateApplied(false));
+    when(mockTpsApiDispatch().updatePao(eq(workspace.getId()), any(), any(), any()))
+        .thenReturn(new TpsPaoUpdateResult().updateApplied(false));
     ActivityLogChangeDetails lastChangeDetails =
         workspaceActivityLogService.getLastUpdatedDetails(workspace.getId()).get();
     assertEquals(OperationType.CREATE, lastChangeDetails.operationType());
 
-    ApiTpsPaoUpdateResult result = updatePolicies(workspace.getId());
+    TpsPaoUpdateResult result = updatePolicies(workspace.getId());
     assertFalse(result.isUpdateApplied());
     assertEquals(
         lastChangeDetails,
         workspaceActivityLogService.getLastUpdatedDetails(workspace.getId()).get());
   }
 
+  @Test
+  public void listValidRegions_tpsEnabled() throws Exception {
+    ApiCreatedWorkspace workspace = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
+    List<String> availableRegions = List.of("US", "EU", "asia-northeast3");
+    when(mockTpsApiDispatch().listValidRegions(eq(workspace.getId()), eq("GCP")))
+        .thenReturn(availableRegions);
+    when(mockTpsApiDispatch().listValidRegions(eq(workspace.getId()), eq("AZURE")))
+        .thenReturn(Collections.emptyList());
+
+    ApiRegions result = listValid(workspace.getId(), ApiCloudPlatform.GCP.name());
+    ApiRegions empty = listValid(workspace.getId(), ApiCloudPlatform.AZURE.name());
+
+    assertTrue(result.containsAll(availableRegions));
+    assertTrue(empty.isEmpty());
+  }
+
   private ApiErrorReport createRawlsWorkspaceWithPolicyExpectError(int expectedCode)
       throws Exception {
-    ApiTpsPolicyInputs policyInputs =
-        new ApiTpsPolicyInputs()
-            .addInputsItem(new ApiTpsPolicyInput().namespace("terra").name("group-constraint"));
+    // Note: this is the WSM REST API form of the policy inputs
+    ApiWsmPolicyInputs policyInputs =
+        new ApiWsmPolicyInputs()
+            .addInputsItem(
+                new ApiWsmPolicyInput()
+                    .namespace("terra")
+                    .name("group-constraint")
+                    .addAdditionalDataItem(
+                        new ApiWsmPolicyPair().key("group").value("my_fake_group")));
+
     return mockMvcUtils.createWorkspaceWithoutCloudContextExpectError(
         USER_REQUEST,
         /*workspaceId=*/ UUID.randomUUID(),
@@ -542,27 +578,27 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
         .orElseThrow(() -> new RuntimeException("workspace " + id + "not found in list!"));
   }
 
-  private ApiTpsPaoUpdateResult updatePolicies(UUID workspaceId) throws Exception {
+  private TpsPaoUpdateResult updatePolicies(UUID workspaceId) throws Exception {
     var serializedResponse =
         updatePoliciesExpect(workspaceId, HttpStatus.SC_OK)
             .andReturn()
             .getResponse()
             .getContentAsString();
-    return objectMapper.readValue(serializedResponse, ApiTpsPaoUpdateResult.class);
+    return objectMapper.readValue(serializedResponse, TpsPaoUpdateResult.class);
   }
 
   private ResultActions updatePoliciesExpect(UUID workspaceId, int code) throws Exception {
-    ApiTpsPaoUpdateRequest updateRequest =
-        new ApiTpsPaoUpdateRequest()
-            .updateMode(ApiTpsUpdateMode.ENFORCE_CONFLICT)
+    ApiWsmPolicyUpdateRequest updateRequest =
+        new ApiWsmPolicyUpdateRequest()
+            .updateMode(ApiWsmPolicyUpdateMode.ENFORCE_CONFLICT)
             .addAttributes(
-                new ApiTpsPolicyInputs()
+                new ApiWsmPolicyInputs()
                     .addInputsItem(
-                        new ApiTpsPolicyInput()
+                        new ApiWsmPolicyInput()
                             .namespace("terra")
                             .name("region-constraint")
                             .addAdditionalDataItem(
-                                new ApiTpsPolicyPair().key("foo").value("bar"))));
+                                new ApiWsmPolicyPair().key("foo").value("bar"))));
     return mockMvc
         .perform(
             addAuth(
@@ -573,5 +609,20 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
                     .content(objectMapper.writeValueAsString(updateRequest)),
                 USER_REQUEST))
         .andExpect(status().is(code));
+  }
+
+  private ApiRegions listValid(UUID workspaceId, String platform) throws Exception {
+    var serializedResponse =
+        mockMvc
+            .perform(
+                addAuth(
+                    get(String.format(WORKSPACES_V1_LIST_VALID_REGIONS_PATH_FORMAT, workspaceId))
+                        .queryParam("platform", platform),
+                    USER_REQUEST))
+            .andExpect(status().is(HttpStatus.SC_OK))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    return objectMapper.readValue(serializedResponse, ApiRegions.class);
   }
 }

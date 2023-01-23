@@ -5,6 +5,7 @@ import static bio.terra.workspace.db.WorkspaceActivityLogDao.ACTIVITY_LOG_CHANGE
 import bio.terra.common.db.ReadTransaction;
 import bio.terra.common.db.WriteTransaction;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
+import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
@@ -116,17 +117,26 @@ public class RawDaoTestFixture {
 
   @WriteTransaction
   public void writeActivityLogWithTimestamp(
-      UUID workspaceId, String actorEmail, OffsetDateTime timestamp) {
+      UUID workspaceId,
+      String actorEmail,
+      OffsetDateTime timestamp,
+      String changeSubjectId,
+      ActivityLogChangedTarget changedTarget) {
     final String sql =
-        "INSERT INTO workspace_activity_log (workspace_id, change_date, change_type, actor_email, actor_subject_id)"
-            + " VALUES (:workspace_id, :change_date, :change_type, :actor_email, :actor_subject_id)";
+        """
+            INSERT INTO workspace_activity_log (workspace_id, change_date, change_type, actor_email, actor_subject_id,
+            change_subject_id, change_subject_type)
+            VALUES (:workspace_id, :change_date, :change_type, :actor_email, :actor_subject_id, :change_subject_id, :change_subject_type)
+        """;
     final var params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
             .addValue("change_date", timestamp)
             .addValue("change_type", OperationType.CREATE.name())
             .addValue("actor_email", actorEmail)
-            .addValue("actor_subject_id", RandomStringUtils.randomAlphabetic(5));
+            .addValue("actor_subject_id", RandomStringUtils.randomAlphabetic(5))
+            .addValue("change_subject_id", changeSubjectId)
+            .addValue("change_subject_type", changedTarget.name());
     jdbcTemplate.update(sql, params);
   }
 

@@ -51,6 +51,8 @@ public abstract class ControlledResource extends WsmResource {
       Map<String, String> properties,
       String createdByEmail,
       OffsetDateTime createdDate,
+      String lastUpdatedByEmail,
+      OffsetDateTime lastUpdatedDate,
       String region) {
     super(
         workspaceUuid,
@@ -61,7 +63,9 @@ public abstract class ControlledResource extends WsmResource {
         resourceLineage,
         properties,
         createdByEmail,
-        createdDate);
+        createdDate,
+        lastUpdatedByEmail,
+        lastUpdatedDate);
     this.assignedUser = assignedUser;
     this.accessScope = accessScope;
     this.managedBy = managedBy;
@@ -95,7 +99,9 @@ public abstract class ControlledResource extends WsmResource {
         builder.getResourceLineage(),
         builder.getProperties(),
         builder.getCreatedByEmail(),
-        builder.getCreatedDate());
+        builder.getCreatedDate(),
+        builder.getLastUpdatedByEmail(),
+        builder.getLastUpdatedDate());
     this.assignedUser = builder.getAssignedUser();
     this.accessScope = builder.getAccessScope();
     this.managedBy = builder.getManagedBy();

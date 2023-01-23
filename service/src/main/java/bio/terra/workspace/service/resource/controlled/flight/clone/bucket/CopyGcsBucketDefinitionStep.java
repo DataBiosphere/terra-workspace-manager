@@ -15,6 +15,7 @@ import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
+import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
@@ -48,18 +49,21 @@ public class CopyGcsBucketDefinitionStep implements Step {
   private final ControlledGcsBucketResource sourceBucket;
   private final ControlledResourceService controlledResourceService;
   private final CloningInstructions resolvedCloningInstructions;
+  private final WorkspaceActivityLogService workspaceActivityLogService;
 
   public CopyGcsBucketDefinitionStep(
       SamService samService,
       AuthenticatedUserRequest userRequest,
       ControlledGcsBucketResource sourceBucket,
       ControlledResourceService controlledResourceService,
-      CloningInstructions resolvedCloningInstructions) {
+      CloningInstructions resolvedCloningInstructions,
+      WorkspaceActivityLogService workspaceActivityLogService) {
     this.samService = samService;
     this.userRequest = userRequest;
     this.sourceBucket = sourceBucket;
     this.controlledResourceService = controlledResourceService;
     this.resolvedCloningInstructions = resolvedCloningInstructions;
+    this.workspaceActivityLogService = workspaceActivityLogService;
   }
 
   @Override

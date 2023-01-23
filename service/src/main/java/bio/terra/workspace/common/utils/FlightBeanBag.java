@@ -1,7 +1,6 @@
 package bio.terra.workspace.common.utils;
 
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
-import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.CliConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
@@ -14,7 +13,9 @@ import bio.terra.workspace.service.buffer.BufferService;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
+import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.StorageAccountKeyProvider;
@@ -63,6 +64,7 @@ public class FlightBeanBag {
   private final VersionConfiguration versionConfiguration;
   private final StorageAccountKeyProvider storageAccountKeyProvider;
   private final LandingZoneApiDispatch landingZoneApiDispatch;
+  private final WorkspaceActivityLogService workspaceActivityLogService;
 
   @Lazy
   @Autowired
@@ -91,7 +93,8 @@ public class FlightBeanBag {
       WorkspaceService workspaceService,
       VersionConfiguration versionConfiguration,
       StorageAccountKeyProvider storageAccountKeyProvider,
-      LandingZoneApiDispatch landingZoneApiDispatch) {
+      LandingZoneApiDispatch landingZoneApiDispatch,
+      WorkspaceActivityLogService workspaceActivityLogService) {
     this.applicationDao = applicationDao;
     this.azureCloudContextService = azureCloudContextService;
     this.azureConfig = azureConfig;
@@ -117,6 +120,7 @@ public class FlightBeanBag {
     this.versionConfiguration = versionConfiguration;
     this.storageAccountKeyProvider = storageAccountKeyProvider;
     this.landingZoneApiDispatch = landingZoneApiDispatch;
+    this.workspaceActivityLogService = workspaceActivityLogService;
   }
 
   public static FlightBeanBag getFromObject(Object object) {
@@ -221,5 +225,9 @@ public class FlightBeanBag {
 
   public FolderDao getFolderDao() {
     return folderDao;
+  }
+
+  public WorkspaceActivityLogService getWorkspaceActivityLogService() {
+    return workspaceActivityLogService;
   }
 }

@@ -38,7 +38,6 @@ import bio.terra.workspace.model.GcpBigQueryDatasetResource;
 import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.GcpGcsObjectAttributes;
 import bio.terra.workspace.model.GcpGcsObjectResource;
-import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.Property;
 import bio.terra.workspace.model.ResourceCloneDetails;
@@ -68,10 +67,13 @@ import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
 import scripts.utils.GcsBucketObjectUtils;
 import scripts.utils.GcsBucketUtils;
-import scripts.utils.WorkspaceAllocateWithPolicyTestScriptBase;
+import scripts.utils.WorkspaceAllocateTestScriptBase;
 
-public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
+public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
   private static final Logger logger = LoggerFactory.getLogger(CloneWorkspace.class);
+  private static final int EXPECTED_NUM_CLONED_RESOURCES = 11;
+  private static final String TERRA_FOLDER_ID = "terra-folder-id";
+  private static final String FOLDER_DISPLAY_NAME = "folderDisplayName";
   private ControlledGcpResourceApi cloningUserResourceApi;
   private FolderApi cloningUserFolderApi;
   private FolderApi ownerFolderApi;
@@ -98,9 +100,33 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
   private String controlledBucketFolderName;
   private String referenceBucketFolderName;
 
-  private static final int EXPECTED_NUM_CLONED_RESOURCES = 11;
-  private static final String TERRA_FOLDER_ID = "terra-folder-id";
-  private static final String FOLDER_DISPLAY_NAME = "folderDisplayName";
+  private static void assertDatasetHasNoTables(
+      String destinationProjectId, BigQuery bigQueryClient, String datasetName) throws Exception {
+    // The result table will not be created if there are no results.
+    TableId resultTableId = TableId.of(destinationProjectId, datasetName, "FAKE TABLE NAME");
+    final QueryJobConfiguration listTablesQuery =
+        QueryJobConfiguration.newBuilder(
+                "SELECT * FROM `"
+                    + destinationProjectId
+                    + "."
+                    + datasetName
+                    + ".INFORMATION_SCHEMA.TABLES`;")
+            .setDestinationTable(resultTableId)
+            .setWriteDisposition(WriteDisposition.WRITE_TRUNCATE)
+            .build();
+    // Will throw not found if the dataset doesn't exist
+    // Retry because in rare cases, it can take a while for bigquery.jobs.create to propagate
+    // TODO(PF-2335): Delete retry after PF-2335 is fixed
+    final TableResult listTablesResult =
+        ClientTestUtils.getWithRetryOnException(() -> bigQueryClient.query(listTablesQuery));
+    final long numRows =
+        StreamSupport.stream(listTablesResult.getValues().spliterator(), false).count();
+    assertEquals(0, numRows, "Expected zero tables for COPY_DEFINITION dataset");
+    logger.info(
+        "BQ Dataset {} in project {} has no tables, as expected.",
+        datasetName,
+        destinationProjectId);
+  }
 
   @Override
   protected void doSetup(
@@ -116,21 +142,23 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
     cloningUser = testUsers.get(1);
     logger.info(
         "Owning user: {}, Cloning user: {}", sourceOwnerUser.userEmail, cloningUser.userEmail);
-    // Build source GCP project in main test workspace
-    sourceProjectId =
-        CloudContextMaker.createGcpCloudContext(getWorkspaceId(), sourceOwnerWorkspaceApi);
-    logger.info("Created source project {} in workspace {}", sourceProjectId, getWorkspaceId());
 
     // Add cloning user as reader on the workspace
-    sourceOwnerWorkspaceApi.grantRole(
-        new GrantRoleRequestBody().memberEmail(cloningUser.userEmail),
-        getWorkspaceId(),
-        IamRole.READER);
+    ClientTestUtils.grantRole(
+        sourceOwnerWorkspaceApi, getWorkspaceId(), cloningUser, IamRole.READER);
     logger.info(
         "Granted role {} for user {} on workspace {}",
         IamRole.READER,
         cloningUser.userEmail,
         getWorkspaceId());
+
+    // Build source GCP project in main test workspace
+    sourceProjectId =
+        CloudContextMaker.createGcpCloudContext(getWorkspaceId(), sourceOwnerWorkspaceApi);
+    logger.info("Created source project {} in workspace {}", sourceProjectId, getWorkspaceId());
+
+    // Wait for reader to have permissions on the project
+    ClientTestUtils.workspaceRoleWaitForPropagation(cloningUser, sourceProjectId);
 
     // Give users resource APIs
     final ControlledGcpResourceApi sourceOwnerResourceApi =
@@ -409,8 +437,12 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
         cloningUserResourceApi.getBucket(
             destinationWorkspaceId, sharedBucketCloneDetails.getDestinationResourceId());
     logger.info("Cloned Shared Bucket: {}", clonedSharedBucket);
-    GcsBucketObjectUtils.retrieveBucketFile(
-        clonedSharedBucket.getAttributes().getBucketName(), destinationProjectId, cloningUser);
+    ClientTestUtils.getWithRetryOnException(
+        () ->
+            GcsBucketObjectUtils.retrieveBucketFile(
+                clonedSharedBucket.getAttributes().getBucketName(),
+                destinationProjectId,
+                cloningUser));
 
     // Assert the destination workspace preserves the cloned folder with the cloned controlled GCS
     // bucket resource
@@ -931,34 +963,6 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
             .filter(x -> x.getId().equals(folderId))
             .collect(onlyElement());
     assertNotNull(actualFolder);
-  }
-
-  private static void assertDatasetHasNoTables(
-      String destinationProjectId, BigQuery bigQueryClient, String datasetName) throws Exception {
-    // The result table will not be created if there are no results.
-    TableId resultTableId = TableId.of(destinationProjectId, datasetName, "FAKE TABLE NAME");
-    final QueryJobConfiguration listTablesQuery =
-        QueryJobConfiguration.newBuilder(
-                "SELECT * FROM `"
-                    + destinationProjectId
-                    + "."
-                    + datasetName
-                    + ".INFORMATION_SCHEMA.TABLES`;")
-            .setDestinationTable(resultTableId)
-            .setWriteDisposition(WriteDisposition.WRITE_TRUNCATE)
-            .build();
-    // Will throw not found if the dataset doesn't exist
-    // Retry because in rare cases, it can take a while for bigquery.jobs.create to propagate
-    // TODO(PF-2335): Delete retry after PF-2335 is fixed
-    final TableResult listTablesResult =
-        ClientTestUtils.getWithRetryOnException(() -> bigQueryClient.query(listTablesQuery));
-    final long numRows =
-        StreamSupport.stream(listTablesResult.getValues().spliterator(), false).count();
-    assertEquals(0, numRows, "Expected zero tables for COPY_DEFINITION dataset");
-    logger.info(
-        "BQ Dataset {} in project {} has no tables, as expected.",
-        datasetName,
-        destinationProjectId);
   }
 
   private void assertEmptyBucket(String bucketName, String destinationProjectId)

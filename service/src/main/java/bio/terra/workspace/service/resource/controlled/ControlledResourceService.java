@@ -56,6 +56,7 @@ import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.WsmApplication;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.cloud.Policy;
+import io.opencensus.contrib.spring.aop.Traced;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -80,6 +81,8 @@ public class ControlledResourceService {
   // network timeout.
   private static final int RESOURCE_ROW_WAIT_SECONDS = 1;
   private static final Duration RESOURCE_ROW_MAX_WAIT_TIME = Duration.ofSeconds(28);
+  private static final Supplier<InternalLogicException> BAD_STATE =
+      () -> new InternalLogicException("Invalid sync mapping or bad context");
 
   private final JobService jobService;
   private final ResourceDao resourceDao;
@@ -309,7 +312,8 @@ public class ControlledResourceService {
       ControlledBigQueryDatasetResource resource,
       @Nullable ApiGcpBigQueryDatasetUpdateParameters updateParameters,
       @Nullable String resourceName,
-      @Nullable String resourceDescription) {
+      @Nullable String resourceDescription,
+      AuthenticatedUserRequest userRequest) {
     if (null != updateParameters && null != updateParameters.getCloningInstructions()) {
       ResourceValidationUtils.validateCloningInstructions(
           StewardshipType.CONTROLLED,
@@ -328,6 +332,7 @@ public class ControlledResourceService {
             .operationType(OperationType.UPDATE)
             .resourceType(resource.getResourceType())
             .resourceName(resource.getName())
+            .userRequest(userRequest)
             .workspaceId(resource.getWorkspaceId().toString())
             .stewardshipType(resource.getStewardshipType())
             .addParameter(ControlledResourceKeys.UPDATE_PARAMETERS, updateParameters)
@@ -577,22 +582,22 @@ public class ControlledResourceService {
         case RESOURCE:
           policyGroup =
               samService.syncResourcePolicy(
-                  resource, syncMapping.getResourceRole().orElseThrow(badState), userRequest);
+                  resource, syncMapping.getResourceRole().orElseThrow(BAD_STATE), userRequest);
           break;
 
         case WORKSPACE:
-          switch (syncMapping.getWorkspaceRole().orElseThrow(badState)) {
+          switch (syncMapping.getWorkspaceRole().orElseThrow(BAD_STATE)) {
             case OWNER:
-              policyGroup = cloudContext.getSamPolicyOwner().orElseThrow(badState);
+              policyGroup = cloudContext.getSamPolicyOwner().orElseThrow(BAD_STATE);
               break;
             case WRITER:
-              policyGroup = cloudContext.getSamPolicyWriter().orElseThrow(badState);
+              policyGroup = cloudContext.getSamPolicyWriter().orElseThrow(BAD_STATE);
               break;
             case READER:
-              policyGroup = cloudContext.getSamPolicyReader().orElseThrow(badState);
+              policyGroup = cloudContext.getSamPolicyReader().orElseThrow(BAD_STATE);
               break;
             case APPLICATION:
-              policyGroup = cloudContext.getSamPolicyApplication().orElseThrow(badState);
+              policyGroup = cloudContext.getSamPolicyApplication().orElseThrow(BAD_STATE);
               break;
             default:
               break;
@@ -607,27 +612,6 @@ public class ControlledResourceService {
     }
 
     return gcpPolicyBuilder.build();
-  }
-
-  public List<ControlledResource> updateGcpControlledResourcesRegion() {
-    String wsmSaToken = samService.getWsmServiceAccountToken();
-    AuthenticatedUserRequest wsmSaRequest =
-        new AuthenticatedUserRequest().token(Optional.of(wsmSaToken));
-    JobBuilder job =
-        jobService
-            .newJob()
-            .description("sync custom iam roles in all gcp projects")
-            .jobId(UUID.randomUUID().toString())
-            .flightClass(UpdateGcpControlledResourceRegionFlight.class)
-            .userRequest(wsmSaRequest)
-            .operationType(OperationType.UPDATE);
-    try {
-      List<ControlledResource> updatedResource = job.submitAndWait(new TypeReference<>() {});
-      return updatedResource;
-    } catch (RuntimeException e) {
-      logger.error("Failed to update controlled gcp resource region");
-    }
-    return Collections.emptyList();
   }
 
   public List<ControlledResource> updateAzureControlledResourcesRegion() {
@@ -651,8 +635,30 @@ public class ControlledResourceService {
     return Collections.emptyList();
   }
 
-  private final Supplier<InternalLogicException> badState =
-      () -> new InternalLogicException("Invalid sync mapping or bad context");
+  // TODO (PF-2368): clean this up once back-fill is done in all Terra environment.
+  @Traced
+  @Nullable
+  public String updateGcpControlledResourcesRegionAsync() {
+    String wsmSaToken = samService.getWsmServiceAccountToken();
+    // wsmSaToken is null for unit test when samService is mocked out.
+    if (wsmSaToken == null) {
+      logger.warn(
+          "#updateGcpControlledResourcesRegionAsync: workspace manager service account token is null");
+      return null;
+    }
+    AuthenticatedUserRequest wsmSaRequest =
+        new AuthenticatedUserRequest().token(Optional.of(wsmSaToken));
+    return jobService
+        .newJob()
+        .description(
+            "A flight to update controlled resource's missing region in all the existing"
+                + "terra managed gcp projects")
+        .jobId(UUID.randomUUID().toString())
+        .flightClass(UpdateGcpControlledResourceRegionFlight.class)
+        .userRequest(wsmSaRequest)
+        .operationType(OperationType.UPDATE)
+        .submit();
+  }
 
   /**
    * Creates and returns a JobBuilder object for deleting a controlled resource. Depending on the

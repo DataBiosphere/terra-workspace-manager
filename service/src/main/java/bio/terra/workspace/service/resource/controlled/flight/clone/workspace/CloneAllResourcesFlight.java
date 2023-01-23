@@ -3,7 +3,10 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.utils.FlightBeanBag;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -27,22 +30,30 @@ public class CloneAllResourcesFlight extends Flight {
     List<ResourceCloneInputs> resourceCloneInputsList =
         inputParameters.get(ControlledResourceKeys.RESOURCES_TO_CLONE, new TypeReference<>() {});
 
+    AuthenticatedUserRequest userRequest =
+        FlightUtils.getRequired(
+            inputParameters,
+            JobMapKeys.AUTH_USER_INFO.getKeyName(),
+            AuthenticatedUserRequest.class);
     // Each entry in the list corresponds to a new step in this flight
     for (ResourceCloneInputs resourceCloneInputs : resourceCloneInputsList) {
-      addFlightLaunchStepsForResource(resourceCloneInputs, flightBeanBag);
+      addFlightLaunchStepsForResource(resourceCloneInputs, flightBeanBag, userRequest);
     }
   }
 
   private void addFlightLaunchStepsForResource(
-      ResourceCloneInputs resourceCloneInputs, FlightBeanBag flightBeanBag) {
+      ResourceCloneInputs resourceCloneInputs,
+      FlightBeanBag flightBeanBag,
+      AuthenticatedUserRequest userRequest) {
     WsmResource resource = resourceCloneInputs.getResource();
 
     switch (resource.getStewardshipType()) {
       case REFERENCED:
         addStep(
             new CloneReferencedResourceStep(
+                userRequest,
                 flightBeanBag.getSamService(),
-                flightBeanBag.getResourceDao(),
+                flightBeanBag.getReferencedResourceService(),
                 resourceCloneInputs.getResource().castToReferencedResource(),
                 resourceCloneInputs.getDestinationResourceId(),
                 resourceCloneInputs.getDestinationFolderId()),
@@ -50,7 +61,7 @@ public class CloneAllResourcesFlight extends Flight {
         break;
       case CONTROLLED:
         switch (resourceCloneInputs.getResource().getResourceType()) {
-          case CONTROLLED_GCP_GCS_BUCKET:
+          case CONTROLLED_GCP_GCS_BUCKET -> {
             addStep(
                 new LaunchCloneGcsBucketResourceFlightStep(
                     resource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET),
@@ -62,8 +73,8 @@ public class CloneAllResourcesFlight extends Flight {
                     resource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET),
                     resourceCloneInputs.getFlightId()),
                 RetryRules.cloudLongRunning());
-            break;
-          case CONTROLLED_GCP_BIG_QUERY_DATASET:
+          }
+          case CONTROLLED_GCP_BIG_QUERY_DATASET -> {
             addStep(
                 new LaunchCloneControlledGcpBigQueryDatasetResourceFlightStep(
                     resource.castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET),
@@ -75,8 +86,8 @@ public class CloneAllResourcesFlight extends Flight {
                     resource.castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET),
                     resourceCloneInputs.getFlightId()),
                 RetryRules.cloudLongRunning());
-            break;
-          case CONTROLLED_AZURE_STORAGE_CONTAINER:
+          }
+          case CONTROLLED_AZURE_STORAGE_CONTAINER -> {
             addStep(
                 new LaunchCloneControlledAzureStorageContainerResourceFlightStep(
                     resource.castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER),
@@ -88,14 +99,12 @@ public class CloneAllResourcesFlight extends Flight {
                     resource.castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER),
                     resourceCloneInputs.getFlightId()),
                 RetryRules.cloudLongRunning());
-            break;
-          case CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE:
-          default:
-            // Can't throw in a flight constructor
-            logger.error(
-                "Unsupported controlled resource type {}",
-                resourceCloneInputs.getResource().getResourceType());
-            break;
+          }
+          case CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE ->
+          // Can't throw in a flight constructor
+          logger.error(
+              "Unsupported controlled resource type {}",
+              resourceCloneInputs.getResource().getResourceType());
         }
         break;
       default:

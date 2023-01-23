@@ -67,6 +67,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
     when(keyProvider.getStorageAccountKey(any(), any())).thenReturn(cred);
     when(mockSamService().getUserEmailFromSamAndRethrowOnInterrupt(eq(userRequest)))
         .thenReturn(userRequest.getEmail());
+    when(mockSamService().getWsmServiceAccountToken()).thenReturn("wsm-token");
     azureStorageAccessService =
         new AzureStorageAccessService(
             mockSamService(),
@@ -96,7 +97,9 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
         /*resourceLineage=*/ null,
         /*properties*/ Map.of(),
         "foo@gmail.com",
-        /*createdDate*/ null);
+        /*createdDate*/ null,
+        /*lastUpdatedByEmail=*/ null,
+        /*lastUpdatedDate=*/ null);
   }
 
   private ControlledAzureStorageContainerResource buildStorageContainerResource(

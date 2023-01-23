@@ -5,7 +5,7 @@
   "testConfigurationFiles": [
     "integration/BasicAuthenticated.json",
     "integration/BasicUnauthenticated.json",
-    "integration/CloneWorkspace.json",
+    "integration/CloneWorkspace.Json",
     "integration/ControlledBigQueryDatasetLifecycle.json",
     "integration/ControlledGcsBucketLifecycle.json",
     "integration/DeleteWorkspaceWithControlledResource.json",
@@ -20,7 +20,6 @@
     "integration/ReferencedDataRepoSnapshotLifecycle.json",
     "integration/ReferencedGcsResourceLifecycle.json",
     "integration/ReferencedGitRepoLifecycle.json",
-    "integration/ReferencedTerraWorkspaceLifecycle.json",
     "integration/RemoveUser.json",
     "integration/ResourceLineage.json",
     "integration/WorkspaceLifecycle.json"
