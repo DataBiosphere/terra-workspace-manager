@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -90,6 +91,76 @@ public class RetryUtils {
         DEFAULT_RETRY_FACTOR_INCREASE,
         DEFAULT_RETRY_SLEEP_DURATION_MAX,
         null);
+  }
+
+  /**
+   * Get a result from a call that might throw an exception. If the supplier finishes, the result is
+   * returned. If the supplier continues to throw, when totalDuration has elapsed, this method will
+   * throw that exception.
+   *
+   * @param predicate - if evaluated true, then get the result; Otherwise, retry.
+   * @param supplier - code returning the result or throwing an exception
+   * @param totalDuration - total amount of time to retry
+   * @param initialSleepDuration - initial amount of time to sleep between retries
+   * @param factorIncrease - factor to increase the sleep time. The formula is: newSleepDuration =
+   *     sleepDuration + (factorIncrease * sleepDuration) The default of 0.0 results in a fixed
+   *     wait.
+   * @param sleepDurationMax = the maximum duration to expand the sleep time.
+   * @param <T> - type of result
+   * @return - result from supplier, if no exception
+   * @throws InterruptedException if the sleep is interrupted
+   */
+  public static <T> T getWithRetry(
+      Predicate<T> predicate,
+      SupplierWithException<T> supplier,
+      Duration totalDuration,
+      Duration initialSleepDuration,
+      double factorIncrease,
+      Duration sleepDurationMax)
+      throws Exception {
+
+    T result;
+    Instant endTime = Instant.now().plus(totalDuration);
+    Duration sleepDuration = initialSleepDuration;
+
+    while (true) {
+      result = supplier.get();
+      if (predicate.test(result)) {
+        break;
+      } else {
+        // If we are out of time
+        if (Instant.now().isAfter(endTime)) {
+          throw new Exception();
+        }
+        TimeUnit.MILLISECONDS.sleep(sleepDuration.toMillis());
+        long increaseMillis = Double.valueOf(factorIncrease * sleepDuration.toMillis()).longValue();
+        sleepDuration = sleepDuration.plusMillis(increaseMillis);
+        if (sleepDuration.compareTo(sleepDurationMax) > 0) {
+          sleepDuration = sleepDurationMax;
+        }
+      }
+    }
+    return result;
+  }
+  /**
+   * Default version of getWithRetry. It retries all evaluated predicate failures and uses the
+   * default total duration and sleep duration.
+   *
+   * @param predicate - if evaluated true, then get the result; Otherwise, retry.
+   * @param supplier - code returning the result or throwing an exception
+   * @param <T> - type of result
+   * @return - result from supplier
+   * @throws InterruptedException if the sleep is interrupted
+   */
+  public static <T> T getWithRetry(Predicate<T> predicate, SupplierWithException<T> supplier)
+      throws Exception {
+    return getWithRetry(
+        predicate,
+        supplier,
+        DEFAULT_RETRY_TOTAL_DURATION,
+        DEFAULT_RETRY_SLEEP_DURATION,
+        DEFAULT_RETRY_FACTOR_INCREASE,
+        DEFAULT_RETRY_SLEEP_DURATION_MAX);
   }
 
   private static boolean isRetryable(
