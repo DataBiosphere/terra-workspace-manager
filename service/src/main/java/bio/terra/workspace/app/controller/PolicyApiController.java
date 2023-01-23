@@ -24,7 +24,7 @@ public class PolicyApiController implements PolicyApi {
   public ResponseEntity<ApiWsmPolicyLocation> getLocationInfo(
       ApiCloudPlatform platform, @Nullable String location) {
     TpsLocation tpsLocation =
-        tpsApiDispatch.getLocationInfo(platform.name().toLowerCase(Locale.ROOT), location);
+        tpsApiDispatch.getLocationInfo(platform, location);
 
     return new ResponseEntity<>(convertTpsToWsmPolicyLocation(tpsLocation), HttpStatus.OK);
   }

@@ -688,7 +688,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.READ);
 
-    List<String> regions = tpsApiDispatch.listValidRegions(workspaceId, platform.name());
+    List<String> regions = tpsApiDispatch.listValidRegions(workspaceId, platform);
 
     ApiRegions apiRegions = new ApiRegions();
     apiRegions.addAll(regions);

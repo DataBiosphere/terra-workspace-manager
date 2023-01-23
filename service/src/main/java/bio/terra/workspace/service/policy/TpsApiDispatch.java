@@ -18,6 +18,7 @@ import bio.terra.policy.model.TpsRegions;
 import bio.terra.policy.model.TpsUpdateMode;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.configuration.external.PolicyServiceConfiguration;
+import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.service.policy.exception.PolicyServiceAPIException;
 import bio.terra.workspace.service.policy.exception.PolicyServiceAuthorizationException;
 import bio.terra.workspace.service.policy.exception.PolicyServiceDuplicateException;
@@ -29,11 +30,13 @@ import io.opencensus.trace.Tracing;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import javax.ws.rs.client.Client;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -179,12 +182,13 @@ public class TpsApiDispatch {
   }
 
   @Traced
-  public List<String> listValidRegions(UUID workspaceId, String platform) {
+  public List<String> listValidRegions(UUID workspaceId, ApiCloudPlatform platform) {
     features.tpsEnabledCheck();
     TpsApi tpsApi = policyApi();
     TpsRegions tpsRegions;
     try {
-      tpsRegions = tpsApi.listValidRegions(workspaceId, platform);
+      tpsRegions = tpsApi.listValidRegions(workspaceId,
+          convertApiCloudPlatformToTpsCloudPlatform(platform));
     } catch (ApiException e) {
       throw convertApiException(e);
     }
@@ -194,14 +198,18 @@ public class TpsApiDispatch {
     return new ArrayList<>();
   }
 
-  public TpsLocation getLocationInfo(String platform, String location) {
+  public TpsLocation getLocationInfo(ApiCloudPlatform platform, String location) {
     features.tpsEnabledCheck();
     TpsApi tpsApi = policyApi();
     try {
-      return tpsApi.getLocationInfo(platform, location);
+      return tpsApi.getLocationInfo(convertApiCloudPlatformToTpsCloudPlatform(platform), location);
     } catch (ApiException e) {
       throw convertApiException(e);
     }
+  }
+
+  private static String convertApiCloudPlatformToTpsCloudPlatform(ApiCloudPlatform platform) {
+    return platform.name().toLowerCase(Locale.ROOT);
   }
 
   private ApiClient getApiClient(String accessToken) {
