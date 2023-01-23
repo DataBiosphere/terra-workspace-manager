@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.workspace.model;
 
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import org.apache.commons.lang3.SerializationException;
 import org.apache.commons.lang3.StringUtils;
@@ -24,6 +25,16 @@ public enum CloudPlatform {
 
   public ApiCloudPlatform toApiModel() {
     return apiCloudPlatform;
+  }
+
+  public static CloudPlatform fromApiCloudPlatform(ApiCloudPlatform apiCloudPlatform) {
+    for (CloudPlatform value : values()) {
+      if (StringUtils.equals(value.dbString, apiCloudPlatform.name())) {
+        return value;
+      }
+    }
+    throw new BadRequestException(
+        String.format("Unknown Api cloud platform %s", apiCloudPlatform.name()));
   }
 
   public static CloudPlatform fromSql(String dbString) {

@@ -6,7 +6,7 @@ import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiRegions;
 import bio.terra.workspace.generated.model.ApiWsmPolicyLocation;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
-import java.util.Locale;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import javax.annotation.Nullable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +24,7 @@ public class PolicyApiController implements PolicyApi {
   public ResponseEntity<ApiWsmPolicyLocation> getLocationInfo(
       ApiCloudPlatform platform, @Nullable String location) {
     TpsLocation tpsLocation =
-        tpsApiDispatch.getLocationInfo(platform, location);
+        tpsApiDispatch.getLocationInfo(CloudPlatform.fromApiCloudPlatform(platform), location);
 
     return new ResponseEntity<>(convertTpsToWsmPolicyLocation(tpsLocation), HttpStatus.OK);
   }

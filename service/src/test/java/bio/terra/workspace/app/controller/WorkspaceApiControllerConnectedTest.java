@@ -4,7 +4,6 @@ import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.SHORT_DESCRI
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.TYPE_PROPERTY;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.USER_SET_PROPERTY;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.VERSION_PROPERTY;
-import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UFID_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UUID_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_LIST_VALID_REGIONS_PATH_FORMAT;
@@ -19,8 +18,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -39,7 +36,6 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -335,16 +331,25 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   }
 
   @Test
-  public void listValidRegions_tpsEnabled() throws Exception {
-    ApiRegions gcps = listValid(workspace.getId(), ApiCloudPlatform.GCP.name(), userAccessUtils.defaultUserAuthRequest());
-    ApiRegions azures = listValid(workspace.getId(), ApiCloudPlatform.AZURE.name(), userAccessUtils.defaultUserAuthRequest());
+  public void listValidRegions() throws Exception {
+    ApiRegions gcps =
+        listValid(
+            workspace.getId(),
+            ApiCloudPlatform.GCP.name(),
+            userAccessUtils.defaultUserAuthRequest());
+    ApiRegions azures =
+        listValid(
+            workspace.getId(),
+            ApiCloudPlatform.AZURE.name(),
+            userAccessUtils.defaultUserAuthRequest());
 
     assertFalse(gcps.isEmpty());
     // Not an azure workspace so not valid azure regions.
     assertTrue(azures.isEmpty());
   }
 
-  private ApiRegions listValid(UUID workspaceId, String platform, AuthenticatedUserRequest userRequest) throws Exception {
+  private ApiRegions listValid(
+      UUID workspaceId, String platform, AuthenticatedUserRequest userRequest) throws Exception {
     var serializedResponse =
         mockMvc
             .perform(
