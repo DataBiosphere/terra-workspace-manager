@@ -5,18 +5,15 @@ import static bio.terra.workspace.connected.AzureConnectedTestUtils.getAzureName
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import bio.terra.landingzone.db.LandingZoneDao;
-import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
+import bio.terra.workspace.app.controller.shared.JobApiUtils.AsyncJobResult;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.utils.AzureTestUtils;
 import bio.terra.workspace.connected.AzureConnectedTestUtils;
-import bio.terra.workspace.connected.LandingZoneTestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.db.ResourceDao;
-import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.ApiAzureDiskCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureIpCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureNetworkCreationParameters;
@@ -26,12 +23,10 @@ import bio.terra.workspace.generated.model.ApiAzureStorageCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiJobReport;
-import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.TestLandingZoneManager;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
@@ -40,44 +35,37 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.Contr
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
-import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
+import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.springframework.beans.factory.annotation.Autowired;
 
+@Tag("azureConnected")
 @TestInstance(Lifecycle.PER_CLASS)
 public class UpdateAzureControlledResourceRegionFlightTest extends BaseAzureConnectedTest {
 
   private static final String STORAGE_ACCOUNT_REGION = "eastus";
-  private static final String LANDING_ZONE_REGION = "centralus";
   @Autowired private ControlledResourceService controlledResourceService;
   @Autowired private ResourceDao resourceDao;
   @Autowired private WorkspaceConnectedTestUtils workspaceUtils;
-  @Autowired private AzureConfiguration azureConfig;
   @Autowired private UserAccessUtils userAccessUtils;
   @Autowired private AzureTestUtils azureTestUtils;
   @Autowired private AzureConnectedTestUtils azureUtils;
   @Autowired private WorkspaceService workspaceService;
   @Autowired private JobApiUtils jobApiUtils;
   @Autowired private JobService jobService;
-  @Autowired private WorkspaceDao workspaceDao;
-  @Autowired private AzureCloudContextService azureCloudContextService;
-  @Autowired private LandingZoneTestUtils landingZoneTestUtils;
-  @Autowired private LandingZoneDao landingZoneDao;
-  @Autowired private CrlService crlService;
 
   private Workspace workspace;
   private UUID workspaceId;
-  private String storageAccountName;
-  private TestLandingZoneManager testLandingZoneManager;
 
   @BeforeAll
   public void setUp() throws InterruptedException {
@@ -106,8 +94,7 @@ public class UpdateAzureControlledResourceRegionFlightTest extends BaseAzureConn
     ControlledResource storage = createStorageAccount();
     ControlledResource storageContainer = createStorageContainer(storage.getResourceId());
 
-    List<ControlledResource> emptyList =
-        controlledResourceService.updateAzureControlledResourcesRegion();
+    List<ControlledResource> emptyList = updateControlledResourcesRegionAndWait();
     assertTrue(emptyList.isEmpty());
 
     resourceDao.updateControlledResourceRegion(ip.getResourceId(), /*region=*/ null);
@@ -118,54 +105,62 @@ public class UpdateAzureControlledResourceRegionFlightTest extends BaseAzureConn
     resourceDao.updateControlledResourceRegion(storage.getResourceId(), /*region=*/ null);
     resourceDao.updateControlledResourceRegion(storageContainer.getResourceId(), /*region=*/ null);
 
-    List<ControlledResource> updatedResource =
-        controlledResourceService.updateAzureControlledResourcesRegion();
-    assertEquals(7, updatedResource.size());
+    List<ControlledResource> updatedResources = updateControlledResourcesRegionAndWait();
+    assertEquals(7, updatedResources.size());
     ControlledResource updatedIp =
-        updatedResource.stream()
+        updatedResources.stream()
             .filter(resource -> ip.getResourceId().equals(resource.getResourceId()))
             .findAny()
             .get();
     assertEquals(DEFAULT_AZURE_RESOURCE_REGION, updatedIp.getRegion().toLowerCase(Locale.ROOT));
     ControlledResource updatedNetwork =
-        updatedResource.stream()
+        updatedResources.stream()
             .filter(resource -> network.getResourceId().equals(resource.getResourceId()))
             .findAny()
             .get();
     assertEquals(
         DEFAULT_AZURE_RESOURCE_REGION, updatedNetwork.getRegion().toLowerCase(Locale.ROOT));
     ControlledResource updatedDisk =
-        updatedResource.stream()
+        updatedResources.stream()
             .filter(resource -> disk.getResourceId().equals(resource.getResourceId()))
             .findAny()
             .get();
     assertEquals(DEFAULT_AZURE_RESOURCE_REGION, updatedDisk.getRegion().toLowerCase(Locale.ROOT));
     ControlledResource updatedVm =
-        updatedResource.stream()
+        updatedResources.stream()
             .filter(resource -> vm.getResourceId().equals(resource.getResourceId()))
             .findAny()
             .get();
     assertEquals(DEFAULT_AZURE_RESOURCE_REGION, updatedVm.getRegion().toLowerCase(Locale.ROOT));
     ControlledResource updatedRelayNamespace =
-        updatedResource.stream()
+        updatedResources.stream()
             .filter(resource -> relayNamespace.getResourceId().equals(resource.getResourceId()))
             .findAny()
             .get();
     assertEquals(
         DEFAULT_AZURE_RESOURCE_REGION, updatedRelayNamespace.getRegion().toLowerCase(Locale.ROOT));
     ControlledResource updatedStorage =
-        updatedResource.stream()
+        updatedResources.stream()
             .filter(resource -> storage.getResourceId().equals(resource.getResourceId()))
             .findAny()
             .get();
     assertEquals(STORAGE_ACCOUNT_REGION, updatedStorage.getRegion().toLowerCase(Locale.ROOT));
     ControlledResource updatedStorageContainer =
-        updatedResource.stream()
+        updatedResources.stream()
             .filter(resource -> storageContainer.getResourceId().equals(resource.getResourceId()))
             .findAny()
             .get();
     assertEquals(
         STORAGE_ACCOUNT_REGION, updatedStorageContainer.getRegion().toLowerCase(Locale.ROOT));
+  }
+
+  private List<ControlledResource> updateControlledResourcesRegionAndWait() {
+    String jobId = controlledResourceService.updateAzureControlledResourcesRegionAsync();
+    jobService.waitForJob(jobId);
+
+    AsyncJobResult<List<ControlledResource>> jobResult =
+        jobApiUtils.retrieveAsyncJobResult(jobId, new TypeReference<>() {});
+    return jobResult.getResult();
   }
 
   private ControlledResource createIp() {

@@ -54,13 +54,11 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Resou
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.WsmApplication;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.cloud.Policy;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -614,25 +612,29 @@ public class ControlledResourceService {
     return gcpPolicyBuilder.build();
   }
 
-  public List<ControlledResource> updateAzureControlledResourcesRegion() {
+  // TODO (PF-2368): clean this up once back-fill is done in all Terra environment.
+  @Traced
+  @Nullable
+  public String updateAzureControlledResourcesRegionAsync() {
     String wsmSaToken = samService.getWsmServiceAccountToken();
+    // wsmSaToken is null for unit test when samService is mocked out.
+    if (wsmSaToken == null) {
+      logger.warn(
+          "#updateAzureControlledResourcesRegionAsync: workspace manager service account token is null");
+      return null;
+    }
     AuthenticatedUserRequest wsmSaRequest =
         new AuthenticatedUserRequest().token(Optional.of(wsmSaToken));
-    JobBuilder job =
-        jobService
-            .newJob()
-            .description("sync custom iam roles in all gcp projects")
-            .jobId(UUID.randomUUID().toString())
-            .flightClass(UpdateAzureControlledResourceRegionFlight.class)
-            .userRequest(wsmSaRequest)
-            .operationType(OperationType.UPDATE);
-    try {
-      List<ControlledResource> updatedResource = job.submitAndWait(new TypeReference<>() {});
-      return updatedResource;
-    } catch (RuntimeException e) {
-      logger.error("Failed to update controlled gcp resource region");
-    }
-    return Collections.emptyList();
+    return jobService
+        .newJob()
+        .description(
+            "A flight to update controlled resource's missing region in all the existing"
+                + "terra managed azure projects")
+        .jobId(UUID.randomUUID().toString())
+        .flightClass(UpdateAzureControlledResourceRegionFlight.class)
+        .userRequest(wsmSaRequest)
+        .operationType(OperationType.UPDATE)
+        .submit();
   }
 
   // TODO (PF-2368): clean this up once back-fill is done in all Terra environment.

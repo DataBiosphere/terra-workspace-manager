@@ -52,7 +52,7 @@ public final class StartupInitializer {
     // TODO (PF-2368): clean this up once back-fill is done in all Terra environment.
     ControlledResourceService controlledResourceService =
         applicationContext.getBean(ControlledResourceService.class);
-    controlledResourceService.updateGcpControlledResourcesRegion();
-    controlledResourceService.updateAzureControlledResourcesRegion();
+    controlledResourceService.updateGcpControlledResourcesRegionAsync();
+    controlledResourceService.updateAzureControlledResourcesRegionAsync();
   }
 }
