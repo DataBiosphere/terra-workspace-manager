@@ -1,3 +1,25 @@
+paths:
+  /api/policies/v1/getLocationInfo:
+    parameters:
+    - $ref: '#/components/parameters/Platform'
+    - $ref: '#/components/parameters/WsmPolicyLocation'
+    get:
+      summary: Get the cloud location info.
+      operationId: getLocationInfo
+      tags: [policy]
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WsmPolicyLocation'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
 # Policy schemas
 #
 # The TPS schema entries here are problematic. Right now, they match the definitions
@@ -217,3 +239,23 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/WsmPolicyExplanation'
+    
+    WsmPolicyLocation:
+      description: TPS location object description.
+      type: object
+      required: [name, description]
+      properties:
+        name:
+          description: The location name
+          type: string
+        description:
+          description: The location description
+          type: string
+        sublocations:
+          description: Sub-locations contained within this location.
+          type: array
+          items:
+            $ref: '#/components/schemas/WsmPolicyLocation'
+        regions:
+          $ref: '#/components/schemas/Regions'
+ 

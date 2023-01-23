@@ -1,5 +1,7 @@
 package bio.terra.workspace.app.controller;
 
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
+import static bio.terra.workspace.common.utils.MockMvcUtils.assertApiBqDatasetEquals;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertClonedResourceMetadata;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertControlledResourceMetadata;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertResourceMetadata;
@@ -162,17 +164,18 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         ApiCloningInstructionsEnum.DEFINITION,
         workspaceId,
         sourceResourceName,
+        RESOURCE_DESCRIPTION,
         projectId,
         sourceDatasetName,
-        userAccessUtils.getDefaultUserEmail());
-
+        /*expectedCreatedBy=*/ userAccessUtils.getDefaultUserEmail(),
+        /*expectedLastUpdatedBy=*/ userAccessUtils.getDefaultUserEmail());
     // Assert resource returned by get
     ApiGcpBigQueryDatasetResource gotResource =
         mockMvcUtils.getControlledBqDataset(
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId,
             sourceResource.getMetadata().getResourceId());
-    assertEquals(sourceResource, gotResource);
+    assertApiBqDatasetEquals(sourceResource, gotResource);
 
     // Call GCP directly
     cloudUtils.assertBqTableContents(
@@ -185,6 +188,58 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         LOCATION,
         DEFAULT_TABLE_LIFETIME,
         DEFAULT_PARTITION_LIFETIME);
+  }
+
+  @Test
+  public void update() throws Exception {
+    mockMvcUtils.grantRole(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId,
+        WsmIamRole.WRITER,
+        userAccessUtils.getSecondUserEmail());
+
+    var newName = TestUtils.appendRandomNumber("newdatatableresourcename");
+    var newDescription = "This is an updated description";
+    var newCloningInstruction = ApiCloningInstructionsEnum.REFERENCE;
+    ApiGcpBigQueryDatasetResource updatedResource =
+        mockMvcUtils.updateControlledBqDataset(
+            userAccessUtils.secondUserAuthRequest(),
+            workspaceId,
+            sourceResource.getMetadata().getResourceId(),
+            newName,
+            newDescription,
+            newCloningInstruction);
+
+    ApiGcpBigQueryDatasetResource gotResource =
+        mockMvcUtils.getControlledBqDataset(
+            userAccessUtils.defaultUserAuthRequest(),
+            workspaceId,
+            sourceResource.getMetadata().getResourceId());
+    assertEquals(updatedResource, gotResource);
+    assertBqDataset(
+        gotResource,
+        ApiStewardshipType.CONTROLLED,
+        newCloningInstruction,
+        workspaceId,
+        newName,
+        newDescription,
+        projectId,
+        sourceDatasetName,
+        userAccessUtils.getDefaultUserEmail(),
+        userAccessUtils.getSecondUserEmail());
+
+    mockMvcUtils.removeRole(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId,
+        WsmIamRole.WRITER,
+        userAccessUtils.getSecondUserEmail());
+    mockMvcUtils.updateControlledBqDataset(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId,
+        sourceResource.getMetadata().getResourceId(),
+        sourceResourceName,
+        RESOURCE_DESCRIPTION,
+        ApiCloningInstructionsEnum.DEFINITION);
   }
 
   @Test
@@ -263,15 +318,16 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
             /*destDatasetName=*/ null,
             /*destLocation=*/ null);
 
-    assertClonedBqDataset(
+    assertClonedControlledBqDataset(
         clonedBqDataset,
-        ApiStewardshipType.CONTROLLED,
-        ApiCloningInstructionsEnum.DEFINITION,
         workspaceId2,
         sourceResourceName,
+        sourceResource.getMetadata().getDescription(),
         projectId2,
         sourceDatasetName,
-        userAccessUtils.getSecondUserEmail());
+        LOCATION,
+        /*expectedCreatedBy=*/ userAccessUtils.getSecondUserEmail(),
+        /*expectedLastUpdatedBy=*/ userAccessUtils.getSecondUserEmail());
 
     mockMvcUtils.removeRole(
         userAccessUtils.defaultUserAuthRequest(),
@@ -347,15 +403,16 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
             /*destDatasetName=*/ null);
 
     // Assert resource returned in clone flight response
-    assertClonedBqDataset(
+    assertClonedControlledBqDataset(
         clonedResource,
-        ApiStewardshipType.CONTROLLED,
-        ApiCloningInstructionsEnum.DEFINITION,
         /*expectedDestWorkspaceId=*/ workspaceId2,
         destResourceName,
+        sourceResource.getMetadata().getDescription(),
         /*expectedProjectId=*/ projectId2,
         /*expectedDatasetName=*/ sourceDatasetName,
-        userAccessUtils.getDefaultUserEmail());
+        LOCATION,
+        /*expectedCreatedBy=*/ userAccessUtils.getDefaultUserEmail(),
+        /*expectedLastUpdatedBy=*/ userAccessUtils.getDefaultUserEmail());
 
     // Assert resource returned by get
     final ApiGcpBigQueryDatasetResource gotResource =
@@ -363,7 +420,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId2,
             clonedResource.getMetadata().getResourceId());
-    assertEquals(clonedResource, gotResource);
+    assertApiBqDatasetEquals(clonedResource, gotResource);
 
     // Call GCP directly
     cloudUtils.assertDatasetHasNoTables(
@@ -378,12 +435,6 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         /*defaultTableLifetime*/ null,
         // TODO(PF-2269): Change to DEFAULT_PARTITION_LIFETIME after PF-2269 is fixed
         /*defaultPartitionLifetime*/ null);
-    mockMvcUtils.assertCloneActivityIsLogged(
-        workspaceId,
-        sourceResource.getMetadata().getResourceId(),
-        workspaceId2,
-        clonedResource.getMetadata().getResourceId(),
-        userAccessUtils.defaultUserAuthRequest());
     mockMvcUtils.deleteBqDataset(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId2,
@@ -416,14 +467,14 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
     // Assert resource returned in clone flight response
     assertClonedControlledBqDataset(
         clonedResource,
-        ApiStewardshipType.CONTROLLED,
-        ApiCloningInstructionsEnum.DEFINITION,
         /*expectedDestWorkspaceId=*/ workspaceId,
         destResourceName,
+        sourceResource.getMetadata().getDescription(),
         /*expectedProjectId=*/ projectId,
         /*expectedDatasetName=*/ destDatasetName,
         LOCATION,
-        userAccessUtils.getDefaultUserEmail());
+        /*expectedCreatedBy=*/ userAccessUtils.getDefaultUserEmail(),
+        /*expectedLastUpdatedBy=*/ userAccessUtils.getDefaultUserEmail());
 
     // Assert resource returned by get
     final ApiGcpBigQueryDatasetResource gotResource =
@@ -431,7 +482,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId,
             clonedResource.getMetadata().getResourceId());
-    assertEquals(clonedResource, gotResource);
+    assertApiBqDatasetEquals(clonedResource, gotResource);
 
     // Call GCP directly
     cloudUtils.assertBqTableContents(
@@ -446,12 +497,6 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         /*defaultTableLifetime*/ null,
         // TODO(PF-2269): Change to DEFAULT_PARTITION_LIFETIME after PF-2269 is fixed
         /*defaultPartitionLifetime*/ null);
-    mockMvcUtils.assertCloneActivityIsLogged(
-        workspaceId,
-        sourceResource.getMetadata().getResourceId(),
-        workspaceId,
-        clonedResource.getMetadata().getResourceId(),
-        userAccessUtils.defaultUserAuthRequest());
   }
 
   @Test
@@ -479,14 +524,14 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
     // Assert resource returned in clone flight response
     assertClonedControlledBqDataset(
         clonedResource,
-        ApiStewardshipType.CONTROLLED,
-        ApiCloningInstructionsEnum.DEFINITION,
         /*expectedDestWorkspaceId=*/ workspaceId2,
         destResourceName,
+        sourceResource.getMetadata().getDescription(),
         /*expectedProjectId=*/ projectId2,
         /*expectedDatasetName=*/ destDatasetName,
         LOCATION,
-        userAccessUtils.getDefaultUserEmail());
+        userAccessUtils.getDefaultUserEmail(),
+        /*expectedLastUpdatedBy=*/ userAccessUtils.getDefaultUserEmail());
 
     // Assert resource returned by get
     final ApiGcpBigQueryDatasetResource gotResource =
@@ -494,7 +539,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId2,
             clonedResource.getMetadata().getResourceId());
-    assertEquals(clonedResource, gotResource);
+    assertApiBqDatasetEquals(clonedResource, gotResource);
 
     // Call GCP directly
     cloudUtils.assertBqTableContents(
@@ -509,12 +554,6 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         /*defaultTableLifetime*/ null,
         // TODO(PF-2269): Change to DEFAULT_PARTITION_LIFETIME after PF-2269 is fixed
         /*defaultPartitionLifetime*/ null);
-    mockMvcUtils.assertCloneActivityIsLogged(
-        workspaceId,
-        sourceResource.getMetadata().getResourceId(),
-        workspaceId2,
-        clonedResource.getMetadata().getResourceId(),
-        userAccessUtils.defaultUserAuthRequest());
   }
 
   @Test
@@ -542,9 +581,11 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         ApiCloningInstructionsEnum.REFERENCE,
         /*expectedDestWorkspaceId=*/ workspaceId,
         destResourceName,
+        sourceResource.getMetadata().getDescription(),
         /*expectedProjectId=*/ projectId,
         /*expectedDatasetName=*/ sourceDatasetName,
-        userAccessUtils.getDefaultUserEmail());
+        /*expectedCreatedBy=*/ userAccessUtils.getDefaultUserEmail(),
+        /*expectedLastUpdatedBy=*/ userAccessUtils.getDefaultUserEmail());
 
     // Assert resource returned by get
     final ApiGcpBigQueryDatasetResource gotResource =
@@ -552,13 +593,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId,
             clonedResource.getMetadata().getResourceId());
-    assertEquals(clonedResource, gotResource);
-    mockMvcUtils.assertCloneActivityIsLogged(
-        workspaceId,
-        sourceResource.getMetadata().getResourceId(),
-        workspaceId,
-        clonedResource.getMetadata().getResourceId(),
-        userAccessUtils.defaultUserAuthRequest());
+    assertApiBqDatasetEquals(clonedResource, gotResource);
   }
 
   // Destination workspace policy is the merge of source workspace policy and pre-clone destination
@@ -649,9 +684,11 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
       ApiCloningInstructionsEnum expectedCloningInstructions,
       UUID expectedWorkspaceId,
       String expectedResourceName,
+      String expectedResourceDescription,
       String expectedProjectId,
       String expectedDatasetName,
-      String expectedCreatedBy) {
+      String expectedCreatedBy,
+      String expectedLastUpdatedBy) {
     assertResourceMetadata(
         actualDataset.getMetadata(),
         ApiCloudPlatform.GCP,
@@ -660,8 +697,10 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         expectedCloningInstructions,
         expectedWorkspaceId,
         expectedResourceName,
+        expectedResourceDescription,
         /*expectedResourceLineage=*/ new ApiResourceLineage(),
-        expectedCreatedBy);
+        expectedCreatedBy,
+        expectedLastUpdatedBy);
 
     assertEquals(expectedProjectId, actualDataset.getAttributes().getProjectId());
     assertEquals(expectedDatasetName, actualDataset.getAttributes().getDatasetId());
@@ -669,23 +708,25 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
 
   private void assertClonedControlledBqDataset(
       ApiGcpBigQueryDatasetResource actualDataset,
-      ApiStewardshipType expectedStewardshipType,
-      ApiCloningInstructionsEnum expectedCloningInstructions,
       UUID expectedWorkspaceId,
       String expectedResourceName,
+      String expectedResourceDescription,
       String expectedProjectId,
       String expectedDatasetName,
       String expectedRegion,
-      String expectedCreatedBy) {
+      String expectedCreatedBy,
+      String expectedLastUpdatedBy) {
     assertClonedBqDataset(
         actualDataset,
-        expectedStewardshipType,
-        expectedCloningInstructions,
+        ApiStewardshipType.CONTROLLED,
+        ApiCloningInstructionsEnum.DEFINITION,
         expectedWorkspaceId,
         expectedResourceName,
+        expectedResourceDescription,
         expectedProjectId,
         expectedDatasetName,
-        expectedCreatedBy);
+        expectedCreatedBy,
+        expectedLastUpdatedBy);
 
     assertControlledResourceMetadata(
         actualDataset.getMetadata().getControlledResourceMetadata(),
@@ -702,9 +743,11 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
       ApiCloningInstructionsEnum expectedCloningInstructions,
       UUID expectedWorkspaceId,
       String expectedResourceName,
+      String expectedResourceDescription,
       String expectedProjectId,
       String expectedDatasetName,
-      String expectedCreatedBy) {
+      String expectedCreatedBy,
+      String expectedLastUpdatedBy) {
     assertClonedResourceMetadata(
         actualDataset.getMetadata(),
         ApiCloudPlatform.GCP,
@@ -713,9 +756,11 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         expectedCloningInstructions,
         expectedWorkspaceId,
         expectedResourceName,
+        expectedResourceDescription,
         /*sourceWorkspaceId=*/ workspaceId,
         /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
-        expectedCreatedBy);
+        expectedCreatedBy,
+        expectedLastUpdatedBy);
 
     assertEquals(expectedProjectId, actualDataset.getAttributes().getProjectId());
     assertEquals(expectedDatasetName, actualDataset.getAttributes().getDatasetId());

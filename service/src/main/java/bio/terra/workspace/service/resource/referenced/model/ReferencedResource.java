@@ -25,7 +25,9 @@ public abstract class ReferencedResource extends WsmResource {
       @Nullable List<ResourceLineageEntry> resourceLineage,
       Map<String, String> properties,
       String createdByEmail,
-      OffsetDateTime createdDate) {
+      OffsetDateTime createdDate,
+      String lastUpdatedByEmail,
+      OffsetDateTime lastUpdatedDate) {
     super(
         workspaceUuid,
         resourceId,
@@ -35,7 +37,9 @@ public abstract class ReferencedResource extends WsmResource {
         resourceLineage,
         properties,
         createdByEmail,
-        createdDate);
+        createdDate,
+        lastUpdatedByEmail,
+        lastUpdatedDate);
   }
 
   public ReferencedResource(WsmResourceFields resourceFields) {

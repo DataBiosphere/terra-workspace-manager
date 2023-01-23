@@ -176,10 +176,9 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
                 resource, commonFields.getIamRole(), userRequest, body.getAzureIp())
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_IP);
 
+    UUID resourceId = createdIp.getResourceId();
     var response =
-        new ApiCreatedControlledAzureIp()
-            .resourceId(createdIp.getResourceId())
-            .azureIp(createdIp.toApiResource());
+        new ApiCreatedControlledAzureIp().resourceId(resourceId).azureIp(createdIp.toApiResource());
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
@@ -299,9 +298,10 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .createControlledResourceSync(
                 resource, commonFields.getIamRole(), userRequest, body.getAzureStorage())
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT);
+    UUID resourceId = createdStorage.getResourceId();
     var response =
         new ApiCreatedControlledAzureStorage()
-            .resourceId(createdStorage.getResourceId())
+            .resourceId(resourceId)
             .azureStorage(createdStorage.toApiResource());
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
@@ -338,9 +338,10 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .createControlledResourceSync(
                 resource, commonFields.getIamRole(), userRequest, body.getAzureStorageContainer())
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
+    UUID resourceId = createdStorageContainer.getResourceId();
     var response =
         new ApiCreatedControlledAzureStorageContainer()
-            .resourceId(createdStorageContainer.getResourceId())
+            .resourceId(resourceId)
             .azureStorageContainer(createdStorageContainer.toApiResource());
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
@@ -436,9 +437,10 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .createControlledResourceSync(
                 resource, commonFields.getIamRole(), userRequest, body.getAzureNetwork())
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_NETWORK);
+    UUID resourceId = createdNetwork.getResourceId();
     var response =
         new ApiCreatedControlledAzureNetwork()
-            .resourceId(createdNetwork.getResourceId())
+            .resourceId(resourceId)
             .azureNetwork(createdNetwork.toApiResource());
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
@@ -700,9 +702,11 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
     ApiClonedControlledAzureStorageContainer containerResult = null;
     if (jobResult.getResult() != null) {
+      ControlledAzureStorageContainerResource containerResource =
+          jobResult.getResult().storageContainer();
       var container =
           new ApiCreatedControlledAzureStorageContainer()
-              .azureStorageContainer(jobResult.getResult().storageContainer().toApiResource());
+              .azureStorageContainer(containerResource.toApiResource());
       containerResult =
           new ApiClonedControlledAzureStorageContainer()
               .effectiveCloningInstructions(

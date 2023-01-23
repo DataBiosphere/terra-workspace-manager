@@ -30,8 +30,6 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -42,9 +40,6 @@ import org.springframework.test.web.servlet.MockMvc;
 @Tag("connected")
 @TestInstance(Lifecycle.PER_CLASS)
 public class ControlledGcpResourceApiControllerAiNotebookTest extends BaseConnectedTest {
-  private static final Logger logger =
-      LoggerFactory.getLogger(ControlledGcpResourceApiControllerAiNotebookTest.class);
-
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
   @Autowired UserAccessUtils userAccessUtils;
@@ -92,7 +87,12 @@ public class ControlledGcpResourceApiControllerAiNotebookTest extends BaseConnec
 
     assertEquals("asia-east1-a", notebook.getAttributes().getLocation());
     assertAiNotebook(
-        notebook, workspaceId, "asia-east1-a", "asia-east1", userAccessUtils.getDefaultUserEmail());
+        notebook,
+        workspaceId,
+        "asia-east1-a",
+        "asia-east1",
+        userAccessUtils.getDefaultUserEmail(),
+        userAccessUtils.getDefaultUserEmail());
 
     notebook =
         mockMvcUtils
@@ -105,6 +105,7 @@ public class ControlledGcpResourceApiControllerAiNotebookTest extends BaseConnec
         workspaceId,
         "europe-west1-b",
         "europe-west1",
+        userAccessUtils.getDefaultUserEmail(),
         userAccessUtils.getDefaultUserEmail());
 
     mockMvcUtils.deleteWorkspaceProperties(
@@ -118,7 +119,8 @@ public class ControlledGcpResourceApiControllerAiNotebookTest extends BaseConnec
       UUID expectedWorkspaceId,
       String expectedLocation,
       String expectedRegion,
-      String expectedCreatedBy) {
+      String expectedCreatedBy,
+      String expectedLastUpdatedBy) {
     assertResourceMetadata(
         actualResource.getMetadata(),
         ApiCloudPlatform.GCP,
@@ -127,8 +129,10 @@ public class ControlledGcpResourceApiControllerAiNotebookTest extends BaseConnec
         actualResource.getMetadata().getCloningInstructions(),
         expectedWorkspaceId,
         actualResource.getMetadata().getName(),
+        actualResource.getMetadata().getDescription(),
         /*expectedResourceLineage=*/ new ApiResourceLineage(),
-        expectedCreatedBy);
+        expectedCreatedBy,
+        expectedLastUpdatedBy);
 
     assertEquals(expectedLocation, actualResource.getAttributes().getLocation());
 

@@ -364,22 +364,7 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CloneWorkspaceResult'
-  parameters:
-    Platform:
-      name: platform
-      in: query
-      description: The cloud platform (gcp, azure)
-      required: true
-      schema:
-        type: string
-        enum: [ "gcp", "azure" ]
-    WsmPolicyDepth:
-      name: depth
-      in: query
-      required: false
-      schema:
-        $ref: '#/components/schemas/WsmPolicyDepth'
-      description: Workspace policy explain depth.
+
   schemas:
     ClonedWorkspace:
       description: >-
@@ -641,9 +626,3 @@ components:
       type: string
       enum: ['RAWLS_WORKSPACE', 'MC_WORKSPACE']
 
-    Regions:
-      type: array
-      description: List of regions (e.g. us-central1, us-west1)
-      items:
-        uniqueItems: true
-        type: string

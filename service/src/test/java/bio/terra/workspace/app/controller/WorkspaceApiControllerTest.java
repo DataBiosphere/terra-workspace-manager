@@ -45,6 +45,7 @@ import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.generated.model.ApiCloneResourceResult;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceResult;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
+import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
 import bio.terra.workspace.generated.model.ApiErrorReport;
@@ -535,13 +536,13 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
   public void listValidRegions_tpsEnabled() throws Exception {
     ApiCreatedWorkspace workspace = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
     List<String> availableRegions = List.of("US", "EU", "asia-northeast3");
-    when(mockTpsApiDispatch().listValidRegions(eq(workspace.getId()), eq("gcp")))
+    when(mockTpsApiDispatch().listValidRegions(eq(workspace.getId()), eq("GCP")))
         .thenReturn(availableRegions);
-    when(mockTpsApiDispatch().listValidRegions(eq(workspace.getId()), eq("azure")))
+    when(mockTpsApiDispatch().listValidRegions(eq(workspace.getId()), eq("AZURE")))
         .thenReturn(Collections.emptyList());
 
-    ApiRegions result = listValid(workspace.getId(), "gcp");
-    ApiRegions empty = listValid(workspace.getId(), "azure");
+    ApiRegions result = listValid(workspace.getId(), ApiCloudPlatform.GCP.name());
+    ApiRegions empty = listValid(workspace.getId(), ApiCloudPlatform.AZURE.name());
 
     assertTrue(result.containsAll(availableRegions));
     assertTrue(empty.isEmpty());
