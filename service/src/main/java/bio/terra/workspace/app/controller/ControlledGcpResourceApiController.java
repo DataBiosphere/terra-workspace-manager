@@ -74,7 +74,6 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
         controlledResourceService,
         samService,
         resourceValidationUtils);
-    this.controlledResourceService = controlledResourceService;
     this.workspaceService = workspaceService;
     this.jobService = jobService;
     this.jobApiUtils = jobApiUtils;
