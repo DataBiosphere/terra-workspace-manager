@@ -357,6 +357,15 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 components:
+  parameters:
+    WsmPolicyDepth:
+      in: query
+      name: depth
+      required: false
+      schema:
+        $ref: '#/components/schemas/WsmPolicyDepth'
+      description: The depth of policy explain on a workspace's policy sources.
+
   responses:
     CloneWorkspaceResponse:
       description: Response to clone workspace request
