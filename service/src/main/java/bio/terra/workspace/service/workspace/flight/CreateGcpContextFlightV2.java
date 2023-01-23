@@ -85,7 +85,7 @@ public class CreateGcpContextFlightV2 extends Flight {
 
     // Wait for the project permissions to propagate.
     // The SLO is 99.5% of the time it finishes in under 7 minutes.
-    addStep(new WaitForProjectPermissionsStep(userRequest));
+    addStep(new WaitForProjectPermissionsStep());
 
     // Store the cloud context data and unlock the database row
     // This must be the last step, since it clears the lock. So this step also

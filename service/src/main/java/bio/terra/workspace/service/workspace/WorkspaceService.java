@@ -337,7 +337,7 @@ public class WorkspaceService {
             .userRequest(userRequest)
             .addParameter(
                 WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name());
-    deleteJob.submitAndWait(null);
+    deleteJob.submitAndWait();
   }
 
   /**
@@ -483,7 +483,7 @@ public class WorkspaceService {
         .userRequest(userRequest)
         .operationType(OperationType.DELETE)
         .workspaceId(workspace.getWorkspaceId().toString())
-        .submitAndWait(null);
+        .submitAndWait();
   }
 
   public void deleteAzureCloudContext(Workspace workspace, AuthenticatedUserRequest userRequest) {
@@ -498,7 +498,7 @@ public class WorkspaceService {
         .userRequest(userRequest)
         .operationType(OperationType.DELETE)
         .workspaceId(workspace.getWorkspaceId().toString())
-        .submitAndWait(null);
+        .submitAndWait();
   }
 
   /**
@@ -544,6 +544,6 @@ public class WorkspaceService {
         .operationType(OperationType.REMOVE_WORKSPACE_ROLE)
         .addParameter(WorkspaceFlightMapKeys.USER_TO_REMOVE, targetUserEmail)
         .addParameter(WorkspaceFlightMapKeys.ROLE_TO_REMOVE, role.name())
-        .submitAndWait(null);
+        .submitAndWait();
   }
 }

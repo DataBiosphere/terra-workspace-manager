@@ -163,7 +163,7 @@ public class PrivateResourceCleanupService {
             // workspace.
             .addParameter(WorkspaceFlightMapKeys.ROLE_TO_REMOVE, null);
     try {
-      userCleanupJob.submitAndWait(null);
+      userCleanupJob.submitAndWait();
     } catch (RuntimeException e) {
       // Log the error, but don't kill this thread as it still needs to clean up other users.
       logger.error(

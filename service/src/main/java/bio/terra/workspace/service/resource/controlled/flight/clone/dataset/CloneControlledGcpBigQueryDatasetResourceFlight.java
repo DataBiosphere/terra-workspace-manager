@@ -126,15 +126,29 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
               resolvedCloningInstructions,
               flightBeanBag.getWorkspaceActivityLogService()));
       if (CloningInstructions.COPY_RESOURCE == resolvedCloningInstructions) {
-        addStep(
-            new CreateTableCopyJobsStep(
-                flightBeanBag.getCrlService(),
-                flightBeanBag.getGcpCloudContextService(),
-                sourceDataset),
-            RetryRules.cloud());
-        addStep(
-            new CompleteTableCopyJobsStep(flightBeanBag.getCrlService()),
-            RetryRules.cloudLongRunning());
+        var destLocation = inputParameters.get(ControlledResourceKeys.LOCATION, String.class);
+        // Use the BigQuery Data Transfer API for cross-region dataset copies. For table copy jobs,
+        // the destination dataset must reside in the same location as the dataset containing the
+        // table being copied.
+        // https://cloud.google.com/bigquery/docs/managing-tables#limitations_on_copying_tables
+        if (destLocation != null && !(destLocation.equals(sourceResource.getRegion()))) {
+          addStep(
+              new CopyBigQueryDatasetDifferentRegionStep(
+                  flightBeanBag.getSamService(),
+                  sourceDataset,
+                  userRequest,
+                  flightBeanBag.getGcpCloudContextService()));
+        } else {
+          addStep(
+              new CreateTableCopyJobsStep(
+                  flightBeanBag.getCrlService(),
+                  flightBeanBag.getGcpCloudContextService(),
+                  sourceDataset),
+              RetryRules.cloud());
+          addStep(
+              new CompleteTableCopyJobsStep(flightBeanBag.getCrlService()),
+              RetryRules.cloudLongRunning());
+        }
       }
     } else {
       throw new IllegalArgumentException(

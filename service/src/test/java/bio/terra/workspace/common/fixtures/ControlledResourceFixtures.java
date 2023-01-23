@@ -106,7 +106,7 @@ public class ControlledResourceFixtures {
         .datasetId(uniqueDatasetId())
         .defaultPartitionLifetime(5901L)
         .defaultTableLifetime(5900L)
-        .location("us-central1");
+        .location(DEFAULT_RESOURCE_REGION);
   }
 
   /** Construct a parameter object with a unique ip name to avoid unintended clashes. */
@@ -276,7 +276,7 @@ public class ControlledResourceFixtures {
 
   public static ApiGcpAiNotebookInstanceCreationParameters defaultNotebookCreationParameters() {
     return new ApiGcpAiNotebookInstanceCreationParameters()
-        .instanceId("default-instance-id")
+        .instanceId(TestUtils.appendRandomNumber("default-instance-id"))
         .location("us-east1-b")
         .machineType("e2-standard-2")
         .vmImage(
