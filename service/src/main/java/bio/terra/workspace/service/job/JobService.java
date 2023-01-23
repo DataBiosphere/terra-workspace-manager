@@ -309,8 +309,8 @@ public class JobService {
    * @param jobId to process
    * @param resultClass nullable resultClass. When not null, cast the JobResult to the given class.
    * @param typeReference nullable typeReference. When not null, cast the JobResult to generic type.
-   *    When the Job does not have a result (a.k.a. null), both resultClass and typeReference are
-   *    set to null.
+   *     When the Job does not have a result (a.k.a. null), both resultClass and typeReference are
+   *     set to null.
    * @return object of the result class pulled from the result map
    */
   @Traced

@@ -302,9 +302,7 @@ public class ResourceDao {
         .collect(Collectors.toList());
   }
 
-  /**
-   * Returns a list of all controlled resources without region field.
-   */
+  /** Returns a list of all controlled resources without region field. */
   @ReadTransaction
   public List<ControlledResource> listControlledResourcesWithMissingRegion(
       @Nullable CloudPlatform cloudPlatform) {
