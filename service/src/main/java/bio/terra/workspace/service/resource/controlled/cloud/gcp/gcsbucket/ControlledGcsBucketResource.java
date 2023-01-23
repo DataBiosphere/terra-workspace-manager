@@ -97,10 +97,11 @@ public class ControlledGcsBucketResource extends ControlledResource {
     super(dbResource);
     ControlledGcsBucketAttributes attributes =
         DbSerDes.fromJson(dbResource.getAttributes(), ControlledGcsBucketAttributes.class);
-    this.bucketName = StringUtils.isEmpty(attributes.getBucketName())
-        ? ControlledGcsBucketHandler.getHandler()
-        .generateCloudName(dbResource.getWorkspaceId(), dbResource.getName())
-        : attributes.getBucketName();
+    this.bucketName =
+        StringUtils.isEmpty(attributes.getBucketName())
+            ? ControlledGcsBucketHandler.getHandler()
+                .generateCloudName(dbResource.getWorkspaceId(), dbResource.getName())
+            : attributes.getBucketName();
   }
 
   public static ControlledGcsBucketResource.Builder builder() {
