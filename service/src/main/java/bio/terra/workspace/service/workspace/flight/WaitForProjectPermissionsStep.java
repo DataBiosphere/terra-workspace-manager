@@ -51,8 +51,7 @@ public class WaitForProjectPermissionsStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     // Test permissions using the user's pet SA instead of their actual account as their access
-    // token
-    // may not have the cloud-platform scope required to access cloud resources.
+    // token may not have the cloud-platform scope required to access cloud resources.
     AuthenticatedUserRequest petSaCredentials =
         flightContext
             .getWorkingMap()
