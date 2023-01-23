@@ -16,6 +16,7 @@ import java.util.ArrayDeque;
 import java.util.Queue;
 import javax.annotation.Nullable;
 import org.apache.http.HttpStatus;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
@@ -23,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
+@Tag("connected")
 @TestInstance(Lifecycle.PER_CLASS)
 public class PolicyApiControllerConnectedTest extends BaseConnectedTest {
 
