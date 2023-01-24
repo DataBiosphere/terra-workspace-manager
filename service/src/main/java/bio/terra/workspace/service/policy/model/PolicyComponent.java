@@ -10,7 +10,10 @@ public enum PolicyComponent {
   private ApiWsmPolicyComponent apiWsmPolicyComponent;
   private TpsComponent tpsComponent;
 
-  PolicyComponent(ApiWsmPolicyComponent wsmPolicyComponent, TpsComponent tpsComponent) {}
+  PolicyComponent(ApiWsmPolicyComponent wsmPolicyComponent, TpsComponent tpsComponent) {
+    this.apiWsmPolicyComponent = wsmPolicyComponent;
+    this.tpsComponent = tpsComponent;
+  }
 
   public ApiWsmPolicyComponent toApi() {
     return apiWsmPolicyComponent;
