@@ -6,6 +6,7 @@ import bio.terra.policy.model.TpsPaoConflict;
 import bio.terra.policy.model.TpsPaoDescription;
 import bio.terra.policy.model.TpsPaoGetResult;
 import bio.terra.policy.model.TpsPaoUpdateResult;
+import bio.terra.policy.model.TpsPolicyExplanation;
 import bio.terra.policy.model.TpsPolicyInput;
 import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.policy.model.TpsPolicyPair;
@@ -15,6 +16,7 @@ import bio.terra.workspace.generated.model.ApiWsmPolicy;
 import bio.terra.workspace.generated.model.ApiWsmPolicyComponent;
 import bio.terra.workspace.generated.model.ApiWsmPolicyConflict;
 import bio.terra.workspace.generated.model.ApiWsmPolicyDescription;
+import bio.terra.workspace.generated.model.ApiWsmPolicyExplanation;
 import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
 import bio.terra.workspace.generated.model.ApiWsmPolicyInputs;
 import bio.terra.workspace.generated.model.ApiWsmPolicyObjectType;
@@ -140,5 +142,32 @@ public class TpsApiConversionUtils {
       throw new EnumNotRecognizedException("No mapping for update mode");
     }
     return mode;
+  }
+
+  public static ApiWsmPolicyExplanation convertExplanation(TpsPolicyExplanation explanation) {
+    var wsmPolicyExplanation =
+        new ApiWsmPolicyExplanation()
+            .objectId(explanation.getObjectId())
+            .policyInput(policyInputToApi(explanation.getPolicyInput()));
+    if (explanation.getPolicyExplanations() != null) {
+      wsmPolicyExplanation.policyExplanations(
+          explanation.getPolicyExplanations().stream()
+              .map(TpsApiConversionUtils::convertExplanation)
+              .toList());
+    }
+    return wsmPolicyExplanation;
+  }
+
+  public static ApiWsmPolicyInput policyInputToApi(TpsPolicyInput input) {
+    var wsmInput = new ApiWsmPolicyInput();
+    if (input.getAdditionalData() != null) {
+      input
+          .getAdditionalData()
+          .forEach(
+              data ->
+                  wsmInput.addAdditionalDataItem(
+                      new ApiWsmPolicyPair().key(data.getKey()).value(data.getValue())));
+    }
+    return wsmInput.namespace(input.getNamespace()).name(input.getName());
   }
 }

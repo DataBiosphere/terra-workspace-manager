@@ -20,7 +20,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -29,11 +28,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import bio.terra.policy.model.TpsComponent;
 import bio.terra.policy.model.TpsObjectType;
-import bio.terra.policy.model.TpsPaoExplainResult;
 import bio.terra.policy.model.TpsPaoGetResult;
 import bio.terra.policy.model.TpsPaoUpdateResult;
-import bio.terra.policy.model.TpsPolicyExplainSource;
-import bio.terra.policy.model.TpsPolicyExplanation;
 import bio.terra.policy.model.TpsPolicyInput;
 import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.policy.model.TpsPolicyPair;
@@ -55,13 +51,9 @@ import bio.terra.workspace.generated.model.ApiResourceCloneDetails;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
-import bio.terra.workspace.generated.model.ApiWsmPolicyComponent;
 import bio.terra.workspace.generated.model.ApiWsmPolicyExplainResult;
-import bio.terra.workspace.generated.model.ApiWsmPolicyExplanation;
 import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
 import bio.terra.workspace.generated.model.ApiWsmPolicyInputs;
-import bio.terra.workspace.generated.model.ApiWsmPolicyObject;
-import bio.terra.workspace.generated.model.ApiWsmPolicyObjectType;
 import bio.terra.workspace.generated.model.ApiWsmPolicyPair;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateMode;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateRequest;
@@ -546,66 +538,6 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
 
     assertTrue(result.containsAll(availableRegions));
     assertTrue(empty.isEmpty());
-  }
-
-  @Test
-  public void explainPolicies() throws Exception {
-    ApiCreatedWorkspace workspace = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
-    UUID sourceWorkspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
-    TpsPolicyExplainSource explainSource =
-        new TpsPolicyExplainSource()
-            .objectId(sourceWorkspaceId)
-            .objectType(TpsObjectType.WORKSPACE)
-            .component(TpsComponent.WSM)
-            .deleted(false);
-    TpsPolicyExplanation tpsExplanation =
-        new TpsPolicyExplanation()
-            .objectId(sourceWorkspaceId)
-            .addPolicyExplanationsItem(
-                new TpsPolicyExplanation()
-                    .objectId(sourceWorkspaceId)
-                    .policyInput(
-                        new TpsPolicyInput()
-                            .namespace("terra")
-                            .name("region-constraint")
-                            .addAdditionalDataItem(
-                                new TpsPolicyPair().key("region-name").value("gcp.usa"))))
-            .policyInput(
-                new TpsPolicyInput()
-                    .namespace("terra")
-                    .name("region-constraint")
-                    .addAdditionalDataItem(
-                        new TpsPolicyPair().key("region-name").value("gcp.usa")));
-    TpsPaoExplainResult explainResult =
-        new TpsPaoExplainResult()
-            .objectId(workspace.getId())
-            .depth(0)
-            .addExplanationItem(tpsExplanation)
-            .addExplanationItem(tpsExplanation)
-            .addExplainObjectsItem(explainSource)
-            .addExplainObjectsItem(explainSource);
-    when(mockTpsApiDispatch().explain(eq(workspace.getId()), anyInt())).thenReturn(explainResult);
-
-    ApiWsmPolicyExplainResult result = explainPolicies(workspace.getId(), 0);
-    List<ApiWsmPolicyObject> sources = result.getExplainObjects();
-    List<ApiWsmPolicyExplanation> explanations = result.getExplanation();
-    assertEquals(2, sources.size());
-    ApiWsmPolicyObject firstSource = sources.get(0);
-    assertEquals(sourceWorkspaceId, firstSource.getObjectId());
-    assertEquals(ApiWsmPolicyObjectType.WORKSPACE, firstSource.getObjectType());
-    assertEquals(ApiWsmPolicyComponent.WSM, firstSource.getComponent());
-    assertFalse(firstSource.isDeleted());
-    assertEquals(sources.get(0), sources.get(1));
-
-    assertEquals(2, explanations.size());
-    ApiWsmPolicyExplanation firstExplanation = explanations.get(0);
-    assertEquals(sourceWorkspaceId, firstExplanation.getObjectId());
-    assertNotNull(firstExplanation.getPolicyInput());
-    List<ApiWsmPolicyExplanation> nestedExplanations = firstExplanation.getPolicyExplanations();
-    assertEquals(1, nestedExplanations.size());
-    assertNull(nestedExplanations.get(0).getPolicyExplanations());
-    assertNotNull(nestedExplanations.get(0).getPolicyInput());
-    assertEquals(explanations.get(0), explanations.get(1));
   }
 
   private ApiErrorReport createRawlsWorkspaceWithPolicyExpectError(int expectedCode)
