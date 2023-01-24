@@ -74,11 +74,13 @@ public class GcsBucketAccessTester implements AutoCloseable {
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() throws Exception {
     // Clean up any created blob so that delete happens quickly, lest the test timeout waiting.
     Storage creatorClient = ClientTestUtils.getGcpStorageClient(creatorTestUser, projectId);
+    // Blob deletion permission can be different for individual blobs, so use retries here.
+    needToWait = true;
     for (BlobId blobId : createdBlobs) {
-      boolean found = creatorClient.delete(blobId);
+      boolean found = doWithOptionalWait(() -> creatorClient.delete(blobId));
       logger.info("Blob {} was {}", blobId.getName(), (found ? "found and deleted" : "not found"));
     }
   }
@@ -104,6 +106,8 @@ public class GcsBucketAccessTester implements AutoCloseable {
 
     testClient = ClientTestUtils.getGcpStorageClient(testUser, projectId);
     if (role == null) {
+      // Do not wait for permissions which won't appear
+      needToWait = false;
       assertFalse(doWithOptionalWait(() -> blobCreate(testClient)), "no role cannot create");
       assertFalse(doWithOptionalWait(this::blobRead), "no role cannot read");
       assertFalse(doWithOptionalWait(this::blobUpdate), "no role cannot update");
@@ -116,6 +120,8 @@ public class GcsBucketAccessTester implements AutoCloseable {
     switch (role) {
       case READER:
         assertTrue(doWithOptionalWait(this::blobRead), "reader can read");
+        // Do not wait for permissions which won't appear
+        needToWait = false;
         assertFalse(doWithOptionalWait(() -> blobCreate(testClient)), "reader cannot create");
         assertFalse(doWithOptionalWait(this::blobUpdate), "reader cannot update");
         assertFalse(doWithOptionalWait(this::blobDelete), "reader cannot delete");
@@ -128,6 +134,8 @@ public class GcsBucketAccessTester implements AutoCloseable {
         assertTrue(doWithOptionalWait(this::blobRead), "writer can read");
         assertTrue(doWithOptionalWait(this::blobUpdate), "writer can update");
         assertTrue(doWithOptionalWait(this::blobDelete), "writer can delete");
+        // Do not wait for permissions which won't appear
+        needToWait = false;
         assertFalse(doWithOptionalWait(this::bucketGet), "writer cannot bucket get");
         assertFalse(doWithOptionalWait(this::bucketDelete), "writer cannot bucket delete");
         return;
@@ -138,6 +146,8 @@ public class GcsBucketAccessTester implements AutoCloseable {
         assertTrue(doWithOptionalWait(this::blobUpdate), "editor can update");
         assertTrue(doWithOptionalWait(this::blobDelete), "editor can delete");
         assertTrue(doWithOptionalWait(this::bucketGet), "editor can bucket get");
+        // Do not wait for permissions which won't appear
+        needToWait = false;
         assertFalse(doWithOptionalWait(this::bucketDelete), "editor cannot bucket delete");
         return;
 
@@ -157,7 +167,6 @@ public class GcsBucketAccessTester implements AutoCloseable {
     try {
       if (needToWait) {
         ClientTestUtils.getWithRetryOnException(function::apply);
-        needToWait = false;
       } else {
         function.apply();
       }
