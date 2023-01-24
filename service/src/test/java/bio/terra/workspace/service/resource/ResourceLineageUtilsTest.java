@@ -41,7 +41,9 @@ public class ResourceLineageUtilsTest extends BaseUnitTest {
             /*resourceLineage=*/ null,
             propertyMap,
             DEFAULT_USER_EMAIL,
-            /*createdDate*/ null);
+            /*createdDate*/ null,
+            /*lastUpdatedByEmail=*/ null,
+            /*lastUpdatedDate=*/ null);
 
     assertEquals(new ArrayList<>(), resource.getResourceLineage());
   }
@@ -97,7 +99,9 @@ public class ResourceLineageUtilsTest extends BaseUnitTest {
             lineage,
             propertyMap,
             DEFAULT_USER_EMAIL,
-            /*createdDate*/ null);
+            /*createdDate*/ null,
+            /*lastUpdatedByEmail=*/ null,
+            /*lastUpdatedDate=*/ null);
 
     assertEquals(lineage, resource.getResourceLineage());
   }

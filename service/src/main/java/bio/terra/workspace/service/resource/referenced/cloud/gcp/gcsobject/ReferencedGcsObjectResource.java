@@ -9,7 +9,6 @@ import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsObjectAttributes;
 import bio.terra.workspace.generated.model.ApiGcpGcsObjectResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
-import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
@@ -59,7 +58,9 @@ public class ReferencedGcsObjectResource extends ReferencedResource {
       @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
       @JsonProperty("properties") Map<String, String> properties,
       @JsonProperty("createdByEmail") String createdByEmail,
-      @JsonProperty("createdDate") OffsetDateTime createdDate) {
+      @JsonProperty("createdDate") OffsetDateTime createdDate,
+      @JsonProperty("lastUpdatedByEmail") String lastUpdatedByEmail,
+      @JsonProperty("lastUpdatedDate") OffsetDateTime lastUpdatedDate) {
     super(
         workspaceId,
         resourceId,
@@ -69,7 +70,9 @@ public class ReferencedGcsObjectResource extends ReferencedResource {
         resourceLineage,
         properties,
         createdByEmail,
-        createdDate);
+        createdDate,
+        lastUpdatedByEmail,
+        lastUpdatedDate);
     this.bucketName = bucketName;
     this.objectName = objectName;
     validate();
@@ -142,11 +145,6 @@ public class ReferencedGcsObjectResource extends ReferencedResource {
   @Override
   public ApiResourceAttributesUnion toApiAttributesUnion() {
     return new ApiResourceAttributesUnion().gcpGcsObject(toApiAttributes());
-  }
-
-  @Override
-  public ApiResourceUnion toApiResourceUnion() {
-    return new ApiResourceUnion().gcpGcsObject(toApiResource());
   }
 
   @Override

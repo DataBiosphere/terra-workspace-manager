@@ -5,6 +5,7 @@ import bio.terra.workspace.service.admin.flights.cloudcontexts.gcp.SyncGcpIamRol
 import bio.terra.workspace.service.folder.flights.DeleteFolderFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.UpdateControlledAiNotebookResourceFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.UpdateControlledBigQueryDatasetResourceFlight;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.flight.UpdateGcpControlledResourceRegionFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.UpdateControlledGcsBucketResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.CloneControlledAzureStorageContainerResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CloneControlledGcsBucketResourceFlight;
@@ -72,7 +73,9 @@ public enum ActivityFlight {
       SyncGcpIamRolesFlight.class.getName(), ActivityLogChangedTarget.GCP_CLOUD_CONTEXT),
   CONTROLLED_AZURE_STORAGE_CONTAINER_CLONE_FLIGHT(
       CloneControlledAzureStorageContainerResourceFlight.class.getName(),
-      ActivityLogChangedTarget.RESOURCE);
+      ActivityLogChangedTarget.RESOURCE),
+  UPDATE_GCP_CONTROLLED_RESOURCES_REGION_FLIGHT(
+      UpdateGcpControlledResourceRegionFlight.class.getName(), ActivityLogChangedTarget.RESOURCE);
 
   private final String flightClassName;
   private final ActivityLogChangedTarget changedTarget;

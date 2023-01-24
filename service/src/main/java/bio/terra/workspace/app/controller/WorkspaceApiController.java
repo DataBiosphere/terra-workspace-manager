@@ -27,13 +27,13 @@ import bio.terra.workspace.generated.model.ApiCreateCloudContextRequest;
 import bio.terra.workspace.generated.model.ApiCreateCloudContextResult;
 import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
-import bio.terra.workspace.generated.model.ApiDataCenterList;
 import bio.terra.workspace.generated.model.ApiGcpContext;
 import bio.terra.workspace.generated.model.ApiGrantRoleRequestBody;
 import bio.terra.workspace.generated.model.ApiIamRole;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
 import bio.terra.workspace.generated.model.ApiProperties;
 import bio.terra.workspace.generated.model.ApiProperty;
+import bio.terra.workspace.generated.model.ApiRegions;
 import bio.terra.workspace.generated.model.ApiRoleBinding;
 import bio.terra.workspace.generated.model.ApiRoleBindingList;
 import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
@@ -631,9 +631,6 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     String generatedDisplayName =
         sourceWorkspace.getDisplayName().orElse(sourceWorkspace.getUserFacingId()) + " (Copy)";
 
-    AzureCloudContext azureCloudContext =
-        ControllerValidationUtils.validateAzureContextRequestBody(body.getAzureContext(), true);
-
     // Construct the target workspace object from the inputs
     // Policies are cloned in the flight instead of here so that they get cleaned appropriately if
     // the flight fails.
@@ -651,11 +648,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
     final String jobId =
         workspaceService.cloneWorkspace(
-            sourceWorkspace,
-            petRequest,
-            body.getLocation(),
-            destinationWorkspace,
-            azureCloudContext);
+            sourceWorkspace, petRequest, body.getLocation(), destinationWorkspace);
 
     final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId);
     final ApiClonedWorkspace clonedWorkspaceStub =
@@ -684,14 +677,15 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   }
 
   @Override
-  public ResponseEntity<ApiDataCenterList> listValidDataCenters(UUID workspaceId, String platform) {
+  public ResponseEntity<ApiRegions> listValidRegions(UUID workspaceId, ApiCloudPlatform platform) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.READ);
 
-    List<String> datacenters = tpsApiDispatch.listValidDataCenter(workspaceId, platform);
-    ApiDataCenterList apiDataCenterList = new ApiDataCenterList();
-    apiDataCenterList.addAll(datacenters);
-    return new ResponseEntity<>(apiDataCenterList, HttpStatus.OK);
+    List<String> regions = tpsApiDispatch.listValidRegions(workspaceId, platform.name());
+
+    ApiRegions apiRegions = new ApiRegions();
+    apiRegions.addAll(regions);
+    return new ResponseEntity<>(apiRegions, HttpStatus.OK);
   }
 
   // Retrieve the async result or progress for clone workspace.

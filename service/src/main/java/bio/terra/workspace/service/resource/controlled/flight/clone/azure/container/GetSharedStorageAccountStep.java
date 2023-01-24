@@ -9,7 +9,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import java.util.Optional;
@@ -18,30 +18,26 @@ import java.util.UUID;
 public class GetSharedStorageAccountStep implements Step {
   private final UUID workspaceId;
   private final LandingZoneApiDispatch landingZoneApiDispatch;
-  private final AuthenticatedUserRequest userRequest;
+  private final SamService samService;
 
   public GetSharedStorageAccountStep(
-      UUID workspaceId,
-      LandingZoneApiDispatch landingZoneApiDispatch,
-      AuthenticatedUserRequest userRequest) {
+      UUID workspaceId, LandingZoneApiDispatch landingZoneApiDispatch, SamService samService) {
     this.workspaceId = workspaceId;
     this.landingZoneApiDispatch = landingZoneApiDispatch;
-    this.userRequest = userRequest;
+    this.samService = samService;
   }
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     try {
-      UUID landingZoneId =
-          landingZoneApiDispatch.getLandingZoneId(
-              new BearerToken(userRequest.getRequiredToken()), workspaceId);
+      var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
+      UUID landingZoneId = landingZoneApiDispatch.getLandingZoneId(bearerToken, workspaceId);
       Optional<ApiAzureLandingZoneDeployedResource> existingSharedStorageAccount =
-          landingZoneApiDispatch.getSharedStorageAccount(
-              new BearerToken(userRequest.getRequiredToken()), landingZoneId);
+          landingZoneApiDispatch.getSharedStorageAccount(bearerToken, landingZoneId);
       if (existingSharedStorageAccount.isPresent()) {
         context
             .getWorkingMap()
-            .put(ControlledResourceKeys.STORAGE_ACCOUNT, existingSharedStorageAccount.get());
+            .put(ControlledResourceKeys.SHARED_STORAGE_ACCOUNT, existingSharedStorageAccount.get());
         return StepResult.getStepResultSuccess();
       }
 

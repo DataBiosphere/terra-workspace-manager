@@ -12,7 +12,6 @@ import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
 import bio.terra.workspace.generated.model.ApiAzureVmAttributes;
 import bio.terra.workspace.generated.model.ApiAzureVmResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
-import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
@@ -68,7 +67,9 @@ public class ControlledAzureVmResource extends ControlledResource {
       @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
       @JsonProperty("properties") Map<String, String> properties,
       @JsonProperty("createdByEmail") String createdByEmail,
-      @JsonProperty("createdDate") OffsetDateTime createdDate) {
+      @JsonProperty("createdDate") OffsetDateTime createdDate,
+      @JsonProperty("lastUpdatedByEmail") String lastUpdatedByEmail,
+      @JsonProperty("lastUpdatedDate") OffsetDateTime lastUpdatedDate) {
 
     super(
         workspaceId,
@@ -85,6 +86,8 @@ public class ControlledAzureVmResource extends ControlledResource {
         properties,
         createdByEmail,
         createdDate,
+        lastUpdatedByEmail,
+        lastUpdatedDate,
         region);
     this.vmName = vmName;
     this.region = region;
@@ -153,7 +156,7 @@ public class ControlledAzureVmResource extends ControlledResource {
             this,
             flightBeanBag.getResourceDao(),
             flightBeanBag.getLandingZoneApiDispatch(),
-            userRequest),
+            flightBeanBag.getSamService()),
         cloudRetry);
     flight.addStep(
         new CreateAzureVmStep(
@@ -163,8 +166,7 @@ public class ControlledAzureVmResource extends ControlledResource {
             flightBeanBag.getResourceDao()),
         cloudRetry);
     flight.addStep(
-        new UpdateControlledResourceRegionStep(
-            flightBeanBag.getResourceDao(), getWorkspaceId(), getResourceId()),
+        new UpdateControlledResourceRegionStep(flightBeanBag.getResourceDao(), getResourceId()),
         RetryRules.shortDatabase());
     flight.addStep(
         new AssignManagedIdentityAzureVmStep(
@@ -179,7 +181,7 @@ public class ControlledAzureVmResource extends ControlledResource {
             flightBeanBag.getCrlService(),
             this,
             flightBeanBag.getLandingZoneApiDispatch(),
-            userRequest),
+            flightBeanBag.getSamService()),
         cloudRetry);
   }
 
@@ -246,13 +248,6 @@ public class ControlledAzureVmResource extends ControlledResource {
   public ApiResourceAttributesUnion toApiAttributesUnion() {
     ApiResourceAttributesUnion union = new ApiResourceAttributesUnion();
     union.azureVm(toApiAttributes());
-    return union;
-  }
-
-  @Override
-  public ApiResourceUnion toApiResourceUnion() {
-    ApiResourceUnion union = new ApiResourceUnion();
-    union.azureVm(toApiResource());
     return union;
   }
 

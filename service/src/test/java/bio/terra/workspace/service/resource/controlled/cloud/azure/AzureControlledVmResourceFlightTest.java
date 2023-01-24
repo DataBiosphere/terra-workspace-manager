@@ -12,9 +12,7 @@ import bio.terra.stairway.FlightStatus;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
-import bio.terra.workspace.common.utils.AzureTestUtils;
 import bio.terra.workspace.common.utils.AzureVmUtils;
-import bio.terra.workspace.connected.AzureConnectedTestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiAzureDiskCreationParameters;
@@ -49,22 +47,21 @@ import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.springframework.beans.factory.annotation.Autowired;
 
+// @Tag("azureConnected") - this test is tagged at the individual test level
 @TestInstance(Lifecycle.PER_CLASS)
 public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest {
 
   @Autowired private WorkspaceService workspaceService;
   @Autowired private JobService jobService;
-  @Autowired private AzureTestUtils azureTestUtils;
   @Autowired private UserAccessUtils userAccessUtils;
   @Autowired private ControlledResourceService controlledResourceService;
   @Autowired private WsmResourceService wsmResourceService;
-  @Autowired private AzureConnectedTestUtils azureUtils;
-
   private Workspace sharedWorkspace;
   private UUID workspaceUuid;
   private ControlledAzureIpResource ipResource;
@@ -73,12 +70,9 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
 
   @BeforeAll
   public void setup() throws InterruptedException {
-    sharedWorkspace = azureTestUtils.createWorkspace(workspaceService);
-    workspaceUuid = sharedWorkspace.getWorkspaceId();
-
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
-    // Create cloud context
-    azureUtils.createCloudContext(workspaceUuid, userRequest);
+    sharedWorkspace = createWorkspaceWithCloudContext(workspaceService, userRequest);
+    workspaceUuid = sharedWorkspace.getWorkspaceId();
 
     // Create ip
     ipResource = createIp(workspaceUuid, userRequest);
@@ -97,6 +91,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
     workspaceService.deleteWorkspace(sharedWorkspace, userAccessUtils.defaultUserAuthRequest());
   }
 
+  @Tag("azureConnected")
   @Test
   public void createAndDeleteAzureVmControlledResource() throws InterruptedException {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
@@ -167,6 +162,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
         () -> computeManager.disks().getById(resolvedVm.osDiskId()));
   }
 
+  @Tag("azureConnectedPlus")
   @Test
   public void createAndDeleteAzureVmControlledResourceWithCustomScriptExtension()
       throws InterruptedException {
@@ -238,6 +234,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
         () -> computeManager.disks().getById(resolvedVm.osDiskId()));
   }
 
+  @Tag("azureConnected")
   @Test
   public void createVmWithFailureMakeSureNetworkInterfaceIsNotAbandoned()
       throws InterruptedException {
@@ -325,6 +322,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
     }
   }
 
+  @Tag("azureConnectedPlus")
   @Test
   public void createAndDeleteAzureVmControlledResourceWithCustomScriptExtensionWithNoPublicIp()
       throws InterruptedException {
@@ -396,6 +394,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
         () -> computeManager.disks().getById(resolvedVm.osDiskId()));
   }
 
+  @Tag("azureConnectedPlus")
   @Test
   public void createAndDeleteAzureVmControlledResourceWithEphemeralDiskWithNoPublicIp()
       throws InterruptedException {

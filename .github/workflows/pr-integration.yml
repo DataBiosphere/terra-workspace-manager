@@ -101,7 +101,7 @@ jobs:
       uses: ./.github/actions/integration-test
       with:
         test-server: workspace-local.json
-        test: suites/FullIntegration.json
+        test: suites/PRIntegration.json
 
     - name: Skip version bump merges
       id: bump-check

@@ -46,6 +46,8 @@ public class DbResource {
   private String createdByEmail;
   @Nullable private OffsetDateTime createdDate;
   @Nullable private String region;
+  @Nullable private String lastUpdatedByEmail;
+  @Nullable private OffsetDateTime lastUpdatedDate;
 
   private static final Supplier<RuntimeException> MISSING_REQUIRED_FIELD =
       () -> new MissingRequiredFieldsException("Missing required field");
@@ -224,5 +226,23 @@ public class DbResource {
 
   public String getRegion() {
     return region;
+  }
+
+  public DbResource lastUpdatedByEmail(String email) {
+    this.lastUpdatedByEmail = email;
+    return this;
+  }
+
+  public String getLastUpdatedByEmail() {
+    return lastUpdatedByEmail;
+  }
+
+  public DbResource lastUpdatedDate(OffsetDateTime date) {
+    this.lastUpdatedDate = date;
+    return this;
+  }
+
+  public OffsetDateTime getLastUpdatedDate() {
+    return lastUpdatedDate;
   }
 }

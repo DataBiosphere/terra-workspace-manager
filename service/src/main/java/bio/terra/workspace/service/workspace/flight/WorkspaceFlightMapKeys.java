@@ -19,6 +19,7 @@ public final class WorkspaceFlightMapKeys {
   public static final String IS_WET_RUN = "isWetRun";
   public static final String UPDATED_WORKSPACES = "updatedWorkspaces";
   public static final String SPEND_PROFILE = "spendProfile";
+  public static final String PET_SA_CREDENTIALS = "petSaCredentials";
 
   private WorkspaceFlightMapKeys() {}
 
@@ -38,6 +39,12 @@ public final class WorkspaceFlightMapKeys {
     public static final String RESOURCE_ROLES_TO_REMOVE = "resourceRolesToRemove";
     public static final String REMOVED_USER_IS_WORKSPACE_MEMBER = "removedUserIsWorkspaceMember";
 
+    public static final String CONTROLLED_RESOURCES_WITHOUT_REGION =
+        "controlledResourcesWithoutRegion";
+    public static final String CONTROLLED_RESOURCE_ID_TO_REGION_MAP =
+        "controlledResourceToRegionMap";
+    public static final String CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP =
+        "controlledReourceIdToWorkspaceIdMap";
     // Notebooks keys
     public static final String CREATE_NOTEBOOK_NETWORK_NAME = "createNotebookNetworkName";
     public static final String CREATE_NOTEBOOK_PARAMETERS = "createNotebookParameters";
@@ -69,7 +76,7 @@ public final class WorkspaceFlightMapKeys {
     public static final String STORAGE_TRANSFER_SERVICE_SA_EMAIL = "storageTransferServiceSAEmail";
     public static final String TABLE_TO_JOB_ID_MAP = "tableToJobIdMap";
     public static final String WORKSPACE_CREATE_FLIGHT_ID = "workspaceCreateFlightId";
-    public static final String STORAGE_ACCOUNT = "storageAccount";
+    public static final String SHARED_STORAGE_ACCOUNT = "sharedStorageAccount";
     public static final String STORAGE_ACCOUNT_NAME = "storageAccountName";
     public static final String DESTINATION_RESOURCE_ID = "destinationResourceId";
     public static final String DESTINATION_FOLDER_ID = "destinationFolderId";

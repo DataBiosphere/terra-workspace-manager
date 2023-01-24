@@ -1,0 +1,118 @@
+# Action for running client integration tests. This test uses local
+# server changes but runs a published version of the client, so it will not pick
+# up local client changes.
+
+name: Full Integration Tests
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: '0 8/4 * * 1-5' # Run every 4 hours on weekdays starting at 3AM ET (8 UTC) M-F
+    - cron: '0 8 * * 0,6' # Run nightly on weekends at 3AM ET
+
+jobs:
+  full-integration-job:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:13.1
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+        - 5432:5432
+
+    steps:
+    - uses: actions/checkout@v3
+
+    # Sparse check out terra-helmfile repo version directories
+    - uses: ./.github/actions/checkout-helm-versions
+      with:
+        repository: broadinstitute/terra-helmfile
+        ref: master
+        token: ${{ secrets.BROADBOT_TOKEN }}
+        path: integration/terra-helmfile
+
+    - name: Initialize Postgres DB for local server test run
+      env:
+        PGPASSWORD: postgres
+      run: psql -h 127.0.0.1 -U postgres -f ./service/local-dev/local-postgres-init.sql
+
+    - name: Set up JDK
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: 17
+
+    - name: Cache Gradle packages
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}-${{ hashFiles('**/*.gradle') }}
+        restore-keys: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+
+    - name: Get Vault token
+      id: vault-token-step
+      env:
+        VAULT_ADDR: https://clotho.broadinstitute.org:8200
+      run: |
+        VAULT_TOKEN=$(docker run --rm --cap-add IPC_LOCK \
+          -e "VAULT_ADDR=${VAULT_ADDR}" \
+          vault:1.1.0 \
+          vault write -field token \
+            auth/approle/login role_id=${{ secrets.VAULT_APPROLE_ROLE_ID }} \
+            secret_id=${{ secrets.VAULT_APPROLE_SECRET_ID }})
+        echo ::add-mask::$VAULT_TOKEN    
+        echo vault-token=$VAULT_TOKEN >> $GITHUB_OUTPUT
+
+    - name: Write config
+      id: config
+      uses: ./.github/actions/write-config
+      with:
+        vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
+        target: local
+
+    - name: Launch local server
+      uses: ./.github/actions/start-local-server
+
+    - name: Run the integration test suite
+      id: integration-test
+      uses: ./.github/actions/integration-test
+      with:
+        test-server: workspace-local.json
+        test: suites/FullIntegration.json
+
+    - name: "Notify WSM Slack"
+      # post to WSM Slack when a run fails
+      if: failure()
+      uses: broadinstitute/action-slack@v3.8.0
+      # see https://github.com/broadinstitute/action-slack
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        MATRIX_CONTEXT: ${{ toJson(matrix) }}
+      with:
+        status: ${{ job.status }}
+        channel: "#terra-wsm-alerts"
+        username: "WSM full integration test"
+        author_name: "${{ matrix.gradleTask }}"
+        icon_emoji: ":bangbang:"
+        fields: job, commit
+
+    - name: Archive WSM and TestRunner logs
+      id: archive_logs
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: wsm-and-testrunner-logs
+        path: |
+          wsm.log
+          ${{ steps.integration-test.outputs.results-dir }}

@@ -47,7 +47,6 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     implements ControlledGcpResourceApi {
   private final Logger logger = LoggerFactory.getLogger(ControlledGcpResourceApiController.class);
 
-  private final ControlledResourceService controlledResourceService;
   private final WorkspaceService workspaceService;
   private final JobService jobService;
   private final JobApiUtils jobApiUtils;
@@ -68,7 +67,6 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
       ControlledResourceMetadataManager controlledResourceMetadataManager,
       CrlService crlService) {
     super(authenticatedUserRequestFactory, request, controlledResourceService, samService);
-    this.controlledResourceService = controlledResourceService;
     this.workspaceService = workspaceService;
     this.jobService = jobService;
     this.jobApiUtils = jobApiUtils;
@@ -105,7 +103,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     body.getGcsBucket().location(resourceLocation);
 
     final ControlledGcsBucketResource createdBucket =
-        controlledResourceService
+        getControlledResourceService()
             .createControlledResourceSync(
                 resource, commonFields.getIamRole(), userRequest, body.getGcsBucket())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
@@ -137,12 +135,13 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     logger.info(
         "deleteBucket workspace {} resource {}", workspaceUuid.toString(), resourceId.toString());
     final String jobId =
-        controlledResourceService.deleteControlledResourceAsync(
-            jobControl,
-            workspaceUuid,
-            resourceId,
-            getAsyncResultEndpoint(jobControl.getId(), "delete-result"),
-            userRequest);
+        getControlledResourceService()
+            .deleteControlledResourceAsync(
+                jobControl,
+                workspaceUuid,
+                resourceId,
+                getAsyncResultEndpoint(jobControl.getId(), "delete-result"),
+                userRequest);
     return getDeleteResult(jobId);
   }
 
@@ -198,16 +197,17 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .validateControlledResourceAndAction(
                 userRequest, workspaceUuid, resourceId, SamControlledResourceActions.EDIT_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
-    controlledResourceService.updateGcsBucket(
-        bucketResource,
-        body.getUpdateParameters(),
-        body.getName(),
-        body.getDescription(),
-        userRequest);
+    getControlledResourceService()
+        .updateGcsBucket(
+            bucketResource,
+            body.getUpdateParameters(),
+            body.getName(),
+            body.getDescription(),
+            userRequest);
 
     // Retrieve and cast response to ApiGcpGcsBucketResource
     final ControlledGcsBucketResource updatedResource =
-        controlledResourceService
+        getControlledResourceService()
             .getControlledResource(workspaceUuid, resourceId)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
     return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
@@ -234,18 +234,19 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
         userRequest, workspaceUuid, body.getDestinationWorkspaceId(), resourceId);
 
     final String jobId =
-        controlledResourceService.cloneGcsBucket(
-            workspaceUuid,
-            resourceId,
-            body.getDestinationWorkspaceId(),
-            UUID.randomUUID(), // resourceId is not pre-allocated for individual clone endpoints
-            body.getJobControl(),
-            userRequest,
-            body.getName(),
-            body.getDescription(),
-            body.getBucketName(),
-            body.getLocation(),
-            body.getCloningInstructions());
+        getControlledResourceService()
+            .cloneGcsBucket(
+                workspaceUuid,
+                resourceId,
+                body.getDestinationWorkspaceId(),
+                UUID.randomUUID(), // resourceId is not pre-allocated for individual clone endpoints
+                body.getJobControl(),
+                userRequest,
+                body.getName(),
+                body.getDescription(),
+                body.getBucketName(),
+                body.getLocation(),
+                body.getCloningInstructions());
     final ApiCloneControlledGcpGcsBucketResult result = fetchCloneGcsBucketResult(jobId);
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
   }
@@ -303,11 +304,16 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .validateControlledResourceAndAction(
                 userRequest, workspaceUuid, resourceId, SamControlledResourceActions.EDIT_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
-    controlledResourceService.updateBqDataset(
-        resource, body.getUpdateParameters(), body.getName(), body.getDescription());
+    getControlledResourceService()
+        .updateBqDataset(
+            resource,
+            body.getUpdateParameters(),
+            body.getName(),
+            body.getDescription(),
+            userRequest);
 
     final ControlledBigQueryDatasetResource updatedResource =
-        controlledResourceService
+        getControlledResourceService()
             .getControlledResource(workspaceUuid, resourceId)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
     return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
@@ -345,14 +351,15 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     body.getDataset().location(resourceLocation);
 
     final ControlledBigQueryDatasetResource createdDataset =
-        controlledResourceService
+        getControlledResourceService()
             .createControlledResourceSync(
                 resource, commonFields.getIamRole(), userRequest, body.getDataset())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
 
+    UUID resourceId = createdDataset.getResourceId();
     var response =
         new ApiCreatedControlledGcpBigQueryDataset()
-            .resourceId(createdDataset.getResourceId())
+            .resourceId(resourceId)
             .bigQueryDataset(createdDataset.toApiResource());
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
@@ -372,7 +379,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
         "Deleting controlled BQ dataset resource {} in workspace {}",
         resourceId.toString(),
         workspaceUuid.toString());
-    controlledResourceService.deleteControlledResourceSync(workspaceUuid, resourceId, userRequest);
+    getControlledResourceService()
+        .deleteControlledResourceSync(workspaceUuid, resourceId, userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -397,18 +405,19 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
         userRequest, workspaceUuid, body.getDestinationWorkspaceId(), resourceId);
 
     final String jobId =
-        controlledResourceService.cloneBigQueryDataset(
-            workspaceUuid,
-            resourceId,
-            body.getDestinationWorkspaceId(),
-            UUID.randomUUID(), // resourceId is not pre-allocated for individual clone endpoints
-            body.getJobControl(),
-            userRequest,
-            body.getName(),
-            body.getDescription(),
-            body.getDestinationDatasetName(),
-            body.getLocation(),
-            body.getCloningInstructions());
+        getControlledResourceService()
+            .cloneBigQueryDataset(
+                workspaceUuid,
+                resourceId,
+                body.getDestinationWorkspaceId(),
+                UUID.randomUUID(), // resourceId is not pre-allocated for individual clone endpoints
+                body.getJobControl(),
+                userRequest,
+                body.getName(),
+                body.getDescription(),
+                body.getDestinationDatasetName(),
+                body.getLocation(),
+                body.getCloningInstructions());
     final ApiCloneControlledGcpBigQueryDatasetResult result =
         fetchCloneBigQueryDatasetResult(jobId);
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
@@ -466,13 +475,14 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .build();
 
     String jobId =
-        controlledResourceService.createAiNotebookInstance(
-            resource,
-            body.getAiNotebookInstance(),
-            commonFields.getIamRole(),
-            body.getJobControl(),
-            getAsyncResultEndpoint(body.getJobControl().getId(), "create-result"),
-            userRequest);
+        getControlledResourceService()
+            .createAiNotebookInstance(
+                resource,
+                body.getAiNotebookInstance(),
+                commonFields.getIamRole(),
+                body.getJobControl(),
+                getAsyncResultEndpoint(body.getJobControl().getId(), "create-result"),
+                userRequest);
 
     ApiCreatedControlledGcpAiNotebookInstanceResult result =
         fetchNotebookInstanceCreateResult(jobId);
@@ -505,15 +515,16 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
                 userRequest, workspaceUuid, resourceId, SamControlledResourceActions.EDIT_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
 
-    controlledResourceService.updateAiNotebookInstance(
-        resource,
-        requestBody.getUpdateParameters(),
-        requestBody.getName(),
-        requestBody.getDescription(),
-        userRequest);
+    getControlledResourceService()
+        .updateAiNotebookInstance(
+            resource,
+            requestBody.getUpdateParameters(),
+            requestBody.getName(),
+            requestBody.getDescription(),
+            userRequest);
 
     final ControlledAiNotebookInstanceResource updatedResource =
-        controlledResourceService
+        getControlledResourceService()
             .getControlledResource(workspaceUuid, resourceId)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
 
@@ -560,12 +571,13 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
         workspaceUuid.toString(),
         resourceId.toString());
     String jobId =
-        controlledResourceService.deleteControlledResourceAsync(
-            jobControl,
-            workspaceUuid,
-            resourceId,
-            getAsyncResultEndpoint(jobControl.getId(), "delete-result"),
-            userRequest);
+        getControlledResourceService()
+            .deleteControlledResourceAsync(
+                jobControl,
+                workspaceUuid,
+                resourceId,
+                getAsyncResultEndpoint(jobControl.getId(), "delete-result"),
+                userRequest);
     ApiDeleteControlledGcpAiNotebookInstanceResult result =
         fetchNotebookInstanceDeleteResult(jobId);
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));

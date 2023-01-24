@@ -6,7 +6,6 @@ import static org.hamcrest.Matchers.equalTo;
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
-import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.RoleBindingList;
 import bio.terra.workspace.model.WorkspaceStageModel;
@@ -26,14 +25,7 @@ public class GetRoles extends WorkspaceAllocateTestScriptBase {
     super.doSetup(testUsers, workspaceApi);
 
     for (TestUserSpecification testUser : testUsers) {
-      logger.info(
-          "Granting role {} for user {} on workspace id {}",
-          IAM_ROLE.toString(),
-          testUser.userEmail,
-          getWorkspaceId().toString());
-      final var body = new GrantRoleRequestBody().memberEmail(testUser.userEmail);
-      // grant the role
-      workspaceApi.grantRole(body, getWorkspaceId(), IAM_ROLE);
+      ClientTestUtils.grantRole(workspaceApi, getWorkspaceId(), testUser, IAM_ROLE);
     }
   }
 

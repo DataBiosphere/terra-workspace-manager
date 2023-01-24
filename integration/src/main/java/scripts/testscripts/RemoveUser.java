@@ -77,21 +77,17 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
         new GrantRoleRequestBody().memberEmail(groupEmail), getWorkspaceId(), IamRole.READER);
 
     // Add one user as a reader, and one as both a reader and writer.
-    ownerWorkspaceApi.grantRole(
-        new GrantRoleRequestBody().memberEmail(privateResourceUser.userEmail),
-        getWorkspaceId(),
-        IamRole.READER);
-    ownerWorkspaceApi.grantRole(
-        new GrantRoleRequestBody().memberEmail(privateResourceUser.userEmail),
-        getWorkspaceId(),
-        IamRole.WRITER);
-    ownerWorkspaceApi.grantRole(
-        new GrantRoleRequestBody().memberEmail(sharedResourceUser.userEmail),
-        getWorkspaceId(),
-        IamRole.WRITER);
+    ClientTestUtils.grantRole(
+        ownerWorkspaceApi, getWorkspaceId(), privateResourceUser, IamRole.READER);
+    ClientTestUtils.grantRole(
+        ownerWorkspaceApi, getWorkspaceId(), privateResourceUser, IamRole.WRITER);
+    ClientTestUtils.grantRole(
+        ownerWorkspaceApi, getWorkspaceId(), sharedResourceUser, IamRole.WRITER);
 
     // Create a GCP cloud context.
     projectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), ownerWorkspaceApi);
+    ClientTestUtils.workspaceRoleWaitForPropagation(privateResourceUser, projectId);
+    ClientTestUtils.workspaceRoleWaitForPropagation(sharedResourceUser, projectId);
 
     // Create a shared GCS bucket with one object inside.
     ControlledGcpResourceApi ownerResourceApi =
@@ -142,8 +138,14 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
     String sharedBucketName = sharedBucket.getGcpBucket().getAttributes().getBucketName();
     String privateBucketName = privateBucket.getGcpBucket().getAttributes().getBucketName();
     // Validate that setup ran correctly and users have appropriate resource access.
-    GcsBucketObjectUtils.retrieveBucketFile(sharedBucketName, projectId, sharedResourceUser);
-    GcsBucketObjectUtils.retrieveBucketFile(privateBucketName, projectId, privateResourceUser);
+    ClientTestUtils.getWithRetryOnException(
+        () ->
+            GcsBucketObjectUtils.retrieveBucketFile(
+                sharedBucketName, projectId, sharedResourceUser));
+    ClientTestUtils.getWithRetryOnException(
+        () ->
+            GcsBucketObjectUtils.retrieveBucketFile(
+                privateBucketName, projectId, privateResourceUser));
 
     // Remove group from READER role
     try {
@@ -164,19 +166,27 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
     // privateResource user can still read the shared bucket.
     GcsBucketObjectUtils.retrieveBucketFile(sharedBucketName, projectId, privateResourceUser);
 
-    // Remove READER role from privateResourceUser. They are also a writer, so they should not lose
-    // access to workspace resources because of this.
-    ownerWorkspaceApi.removeRole(getWorkspaceId(), IamRole.READER, privateResourceUser.userEmail);
+    // Remove WRITER role from privateResourceUser. They are also a reader, so they should not lose
+    // access to workspace resources because of this. Note: we are assuming propagation to the
+    // bucket
+    // is the same as propagation to the project.
+    boolean revokeWriterSucceeded =
+        ClientTestUtils.revokeRoleWaitForPropagation(
+            ownerWorkspaceApi, getWorkspaceId(), projectId, privateResourceUser, IamRole.WRITER);
+    assertTrue(revokeWriterSucceeded);
 
-    // Validate privateResourceWriter still has access to all resources.
+    // Validate privateResourceUser still has access to all resources.
     GcsBucketObjectUtils.retrieveBucketFile(sharedBucketName, projectId, privateResourceUser);
     GcsBucketObjectUtils.retrieveBucketFile(privateBucketName, projectId, privateResourceUser);
     BqDataTableUtils.readPopulatedBigQueryTable(privateDataset, privateResourceUser, projectId);
     assertTrue(NotebookUtils.userHasProxyAccess(privateNotebook, privateResourceUser, projectId));
 
-    // Remove WRITER role from privateResourceUser. This is their last role, so they are no longer
+    // Remove READER role from privateResourceUser. This is their last role, so they are no longer
     // a member of this workspace.
-    ownerWorkspaceApi.removeRole(getWorkspaceId(), IamRole.WRITER, privateResourceUser.userEmail);
+    boolean revokeReaderSucceeded =
+        ClientTestUtils.revokeRoleWaitForPropagation(
+            ownerWorkspaceApi, getWorkspaceId(), projectId, privateResourceUser, IamRole.READER);
+    assertTrue(revokeReaderSucceeded);
 
     // Validate privateResourceWriter no longer has access to any private resources.
     ClientTestUtils.runWithRetryOnException(
@@ -203,7 +213,7 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
     } catch (StorageException googleError) {
       // If this is a 403 error, the user was successfully removed from the bucket.
       assertEquals(SC_FORBIDDEN, googleError.getCode());
-    } catch (IOException e) {
+    } catch (Exception e) {
       // Unexpected error, rethrow
       throw new RuntimeException("Error checking user is removed from bucket", e);
     }

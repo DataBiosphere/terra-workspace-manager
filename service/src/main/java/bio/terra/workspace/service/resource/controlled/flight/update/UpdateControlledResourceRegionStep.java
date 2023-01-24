@@ -18,27 +18,24 @@ import java.util.UUID;
 public class UpdateControlledResourceRegionStep implements Step {
 
   private final ResourceDao resourceDao;
-  private final UUID workspaceId;
   private final UUID resourceId;
 
-  public UpdateControlledResourceRegionStep(
-      ResourceDao resourceDao, UUID workspaceId, UUID resourceId) {
+  public UpdateControlledResourceRegionStep(ResourceDao resourceDao, UUID resourceId) {
     this.resourceDao = resourceDao;
-    this.workspaceId = workspaceId;
     this.resourceId = resourceId;
   }
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     String region = getRequired(context.getWorkingMap(), CREATE_RESOURCE_REGION, String.class);
-    resourceDao.updateControlledResourceRegion(workspaceId, resourceId, region);
+    resourceDao.updateControlledResourceRegion(resourceId, region);
     return StepResult.getStepResultSuccess();
   }
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
     // The resource should get deleted eventually as the step is undone.
-    resourceDao.updateControlledResourceRegion(workspaceId, resourceId, /*region=*/ null);
+    resourceDao.updateControlledResourceRegion(resourceId, /*region=*/ null);
     return StepResult.getStepResultSuccess();
   }
 }

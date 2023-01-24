@@ -18,7 +18,6 @@ import bio.terra.workspace.model.ApplicationState;
 import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.ControlledResourceIamRole;
 import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
-import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.ResourceList;
 import bio.terra.workspace.model.ResourceType;
@@ -73,17 +72,17 @@ public class ControlledApplicationSharedGcsBucketLifecycle extends WorkspaceAllo
     ControlledGcpResourceApi wsmappResourceApi = new ControlledGcpResourceApi(wsmappApiClient);
 
     // Owner adds a reader and a writer to the workspace
-    workspaceApi.grantRole(
-        new GrantRoleRequestBody().memberEmail(reader.userEmail), getWorkspaceId(), IamRole.READER);
-    logger.info("Added {} as a reader to workspace {}", reader.userEmail, getWorkspaceId());
-    workspaceApi.grantRole(
-        new GrantRoleRequestBody().memberEmail(writer.userEmail), getWorkspaceId(), IamRole.WRITER);
-    logger.info("Added {} as a writer to workspace {}", writer.userEmail, getWorkspaceId());
+    ClientTestUtils.grantRole(workspaceApi, getWorkspaceId(), reader, IamRole.READER);
+    ClientTestUtils.grantRole(workspaceApi, getWorkspaceId(), writer, IamRole.WRITER);
 
     // Create the cloud context
     String projectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
     assertNotNull(projectId);
     logger.info("Created project {}", projectId);
+
+    // Wait for grantees to get permission
+    ClientTestUtils.workspaceRoleWaitForPropagation(reader, projectId);
+    ClientTestUtils.workspaceRoleWaitForPropagation(writer, projectId);
 
     // Create the bucket - should fail because application is not enabled
     String bucketResourceName = RandomStringUtils.random(6, true, false);

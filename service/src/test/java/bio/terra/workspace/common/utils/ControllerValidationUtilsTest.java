@@ -101,9 +101,11 @@ public class ControllerValidationUtilsTest extends BaseUnitTest {
   @Test
   void validateAzureContextRequestBody() {
     ApiAzureContext apiAzureContext = new ApiAzureContext();
-    ControllerValidationUtils.validateAzureContextRequestBody(apiAzureContext, true);
     ControllerValidationUtils.validateAzureContextRequestBody(apiAzureContext, false);
     ControllerValidationUtils.validateAzureContextRequestBody(null, true);
+    assertThrows(
+        CloudContextRequiredException.class,
+        () -> ControllerValidationUtils.validateAzureContextRequestBody(apiAzureContext, true));
     assertThrows(
         CloudContextRequiredException.class,
         () -> ControllerValidationUtils.validateAzureContextRequestBody(null, false));

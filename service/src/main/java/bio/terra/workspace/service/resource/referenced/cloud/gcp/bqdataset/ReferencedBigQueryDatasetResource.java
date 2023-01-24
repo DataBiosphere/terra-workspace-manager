@@ -9,7 +9,6 @@ import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetAttributes;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
-import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
@@ -58,7 +57,9 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
       @JsonProperty("resourceLineage") @Nullable List<ResourceLineageEntry> resourceLineage,
       @JsonProperty("properties") Map<String, String> properties,
       @JsonProperty("createdByEmail") String createdByEmail,
-      @JsonProperty("createdDate") OffsetDateTime createdDate) {
+      @JsonProperty("createdDate") OffsetDateTime createdDate,
+      @JsonProperty("lastUpdatedByEmail") String lastUpdatedByEmail,
+      @JsonProperty("lastUpdatedDate") OffsetDateTime lastUpdatedDate) {
     super(
         workspaceId,
         resourceId,
@@ -68,7 +69,9 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
         resourceLineage,
         properties,
         createdByEmail,
-        createdDate);
+        createdDate,
+        lastUpdatedByEmail,
+        lastUpdatedDate);
     this.projectId = projectId;
     this.datasetName = datasetName;
     validate();
@@ -152,11 +155,6 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
   @Override
   public ApiResourceAttributesUnion toApiAttributesUnion() {
     return new ApiResourceAttributesUnion().gcpBqDataset(toApiAttributes());
-  }
-
-  @Override
-  public ApiResourceUnion toApiResourceUnion() {
-    return new ApiResourceUnion().gcpBqDataset(toApiResource());
   }
 
   @Override

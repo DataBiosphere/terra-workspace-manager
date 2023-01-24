@@ -19,7 +19,6 @@ import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
 import bio.terra.workspace.model.Folder;
 import bio.terra.workspace.model.GcpBigQueryDatasetAttributes;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
-import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.JobReport;
 import bio.terra.workspace.model.JobReport.StatusEnum;
@@ -59,11 +58,7 @@ public class FolderLifecycle extends WorkspaceAllocateTestScriptBase {
 
     ApiClient ownerApiClient = ClientTestUtils.getClientForTestUser(workspaceOwner, server);
     ApiClient writerApiClient = ClientTestUtils.getClientForTestUser(secondUser, server);
-
-    workspaceApi.grantRole(
-        new GrantRoleRequestBody().memberEmail(secondUser.userEmail),
-        getWorkspaceId(),
-        IamRole.WRITER);
+    ClientTestUtils.grantRole(workspaceApi, getWorkspaceId(), secondUser, IamRole.WRITER);
 
     folderOwnerApi = new FolderApi(ownerApiClient);
     folderWriterApi = new FolderApi(writerApiClient);
@@ -85,6 +80,10 @@ public class FolderLifecycle extends WorkspaceAllocateTestScriptBase {
     assertEquals(displayName, folderFoo.getDisplayName());
     assertEquals(description, folderFoo.getDescription());
     assertNull(folderFoo.getParentFolderId());
+
+    // THIS TEST IS BROKEN AND NOT RUN: YOU NEED TO MAKE A CLOUD CONTEXT TO
+    // BE ABLE TO MAKE CONTROLLED RESOURCES. AND NEED TO WAIT FOR PERMISSIONS
+    // TO BE GRANTED AFTER THE CLOUD CONTEXT IS CREATED
 
     // Add a bucket to foo.
     CreatedControlledGcpGcsBucket controlledGcsBucketInFoo =

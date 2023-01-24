@@ -118,11 +118,13 @@ public class JobService {
       Class<? extends Flight> flightClass,
       FlightMap parameterMap,
       Class<T> resultClass,
+      TypeReference<T> typeReference,
       String jobId) {
     submit(flightClass, parameterMap, jobId);
     waitForJob(jobId);
 
-    JobResultOrException<T> resultOrException = retrieveJobResult(jobId, resultClass);
+    JobResultOrException<T> resultOrException =
+        retrieveJobResult(jobId, resultClass, typeReference);
     if (resultOrException.getException() != null) {
       throw resultOrException.getException();
     }
@@ -281,6 +283,12 @@ public class JobService {
     }
   }
 
+  /** Retrieves Job Result specifying the result class type. */
+  @Traced
+  public <T> JobResultOrException<T> retrieveJobResult(String jobId, Class<T> resultClass) {
+    return retrieveJobResult(jobId, resultClass, /*typeReference=*/ null);
+  }
+
   /**
    * There are four cases to handle here:
    *
@@ -299,10 +307,15 @@ public class JobService {
    * </ol>
    *
    * @param jobId to process
+   * @param resultClass nullable resultClass. When not null, cast the JobResult to the given class.
+   * @param typeReference nullable typeReference. When not null, cast the JobResult to generic type.
+   *     When the Job does not have a result (a.k.a. null), both resultClass and typeReference are
+   *     set to null.
    * @return object of the result class pulled from the result map
    */
   @Traced
-  public <T> JobResultOrException<T> retrieveJobResult(String jobId, Class<T> resultClass) {
+  public <T> JobResultOrException<T> retrieveJobResult(
+      String jobId, @Nullable Class<T> resultClass, @Nullable TypeReference<T> typeReference) {
     try {
       FlightState flightState = stairwayComponent.get().getFlightState(jobId);
       FlightMap resultMap =
@@ -315,8 +328,16 @@ public class JobService {
         case ERROR:
           return handleFailedFlight(flightState);
         case SUCCESS:
+          if (resultClass != null) {
+            return new JobResultOrException<T>()
+                .result(resultMap.get(JobMapKeys.RESPONSE.getKeyName(), resultClass));
+          }
+          if (typeReference != null) {
+            return new JobResultOrException<T>()
+                .result(resultMap.get(JobMapKeys.RESPONSE.getKeyName(), typeReference));
+          }
           return new JobResultOrException<T>()
-              .result(resultMap.get(JobMapKeys.RESPONSE.getKeyName(), resultClass));
+              .result(resultMap.get(JobMapKeys.RESPONSE.getKeyName(), (Class<T>) null));
         case RUNNING:
           throw new JobNotCompleteException(
               "Attempt to retrieve job result before job is complete; job id: "

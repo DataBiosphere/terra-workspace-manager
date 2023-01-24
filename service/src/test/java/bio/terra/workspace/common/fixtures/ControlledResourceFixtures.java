@@ -106,7 +106,7 @@ public class ControlledResourceFixtures {
         .datasetId(uniqueDatasetId())
         .defaultPartitionLifetime(5901L)
         .defaultTableLifetime(5900L)
-        .location("us-central1");
+        .location(DEFAULT_RESOURCE_REGION);
   }
 
   /** Construct a parameter object with a unique ip name to avoid unintended clashes. */
@@ -163,12 +163,13 @@ public class ControlledResourceFixtures {
         .name(uniqueAzureName(AZURE_VM_NAME_PREFIX))
         .vmSize(VirtualMachineSizeTypes.STANDARD_D2S_V3.toString())
         .region("westcentralus")
-        // TODO: it'd be nice to support standard Linux OSes in addition to custom image URIs.
-        // The below image is a Jupyter image and should be stable.
         .vmImage(
             new ApiAzureVmImage()
-                .uri(
-                    "/subscriptions/3efc5bdf-be0e-44e7-b1d7-c08931e3c16c/resourceGroups/mrg-qi-1-preview-20210517084351/providers/Microsoft.Compute/galleries/msdsvm/images/customized_ms_dsvm/versions/0.1.0"))
+                .publisher("microsoft-dsvm")
+                .offer("ubuntu-2004")
+                .sku("2004-gen2")
+                .version("22.04.27"))
+        .vmUser(new ApiAzureVmUser().name("noname").password("StrongP@ssowrd123!!!"))
         .ipId(UUID.randomUUID())
         .diskId(UUID.randomUUID())
         .networkId(UUID.randomUUID());
@@ -183,9 +184,9 @@ public class ControlledResourceFixtures {
         .vmImage(
             new ApiAzureVmImage()
                 .publisher("microsoft-dsvm")
-                .offer("ubuntu-1804")
-                .sku("1804-gen2")
-                .version("latest"))
+                .offer("ubuntu-2004")
+                .sku("2004-gen2")
+                .version("22.04.27"))
         .vmUser(new ApiAzureVmUser().name("noname").password("StrongP@ssowrd123!!!"))
         .ipId(UUID.randomUUID())
         .diskId(UUID.randomUUID())
@@ -202,9 +203,9 @@ public class ControlledResourceFixtures {
         .vmImage(
             new ApiAzureVmImage()
                 .publisher("microsoft-dsvm")
-                .offer("ubuntu-1804")
-                .sku("1804-gen2")
-                .version("latest"))
+                .offer("ubuntu-2004")
+                .sku("2004-gen2")
+                .version("22.04.27"))
         .vmUser(new ApiAzureVmUser().name("noname").password("StrongP@ssowrd123!!!"))
         .ipId(UUID.randomUUID())
         .networkId(UUID.randomUUID())
@@ -223,9 +224,9 @@ public class ControlledResourceFixtures {
         .vmImage(
             new ApiAzureVmImage()
                 .publisher("microsoft-dsvm")
-                .offer("ubuntu-1804")
-                .sku("1804-gen2")
-                .version("latest"))
+                .offer("ubuntu-2004")
+                .sku("2004-gen2")
+                .version("22.04.27"))
         .vmUser(new ApiAzureVmUser().name("noname").password("noname"))
         .ipId(UUID.randomUUID())
         .diskId(UUID.randomUUID())
@@ -275,7 +276,7 @@ public class ControlledResourceFixtures {
 
   public static ApiGcpAiNotebookInstanceCreationParameters defaultNotebookCreationParameters() {
     return new ApiGcpAiNotebookInstanceCreationParameters()
-        .instanceId("default-instance-id")
+        .instanceId(TestUtils.appendRandomNumber("default-instance-id"))
         .location("us-east1-b")
         .machineType("e2-standard-2")
         .vmImage(
@@ -316,6 +317,8 @@ public class ControlledResourceFixtures {
         Map.of(),
         MockMvcUtils.DEFAULT_USER_EMAIL,
         /*createdDate=*/ null,
+        /*lastUpdatedByEmail=*/ null,
+        /*lastUpdatedDate=*/ null,
         DEFAULT_RESOURCE_REGION);
   }
 
@@ -337,7 +340,9 @@ public class ControlledResourceFixtures {
         /*resourceLineage=*/ null,
         /*properties=*/ Map.of(),
         MockMvcUtils.DEFAULT_USER_EMAIL,
-        /*createdDate*/ null);
+        /*createdDate*/ null,
+        MockMvcUtils.DEFAULT_USER_EMAIL,
+        /*lastUpdatedDate=*/ null);
   }
 
   public static ControlledAzureRelayNamespaceResource getAzureRelayNamespace(
@@ -358,7 +363,9 @@ public class ControlledResourceFixtures {
         /*resourceLineage=*/ null,
         /*properties=*/ Map.of(),
         MockMvcUtils.DEFAULT_USER_EMAIL,
-        /*createdDate*/ null);
+        /*createdDate*/ null,
+        MockMvcUtils.DEFAULT_USER_EMAIL,
+        /*lastUpdatedDate=*/ null);
   }
 
   public static ControlledAzureDiskResource getAzureDisk(String diskName, String region, int size) {
@@ -380,7 +387,9 @@ public class ControlledResourceFixtures {
         /*resourceLineage=*/ null,
         /*properties=*/ Map.of(),
         MockMvcUtils.DEFAULT_USER_EMAIL,
-        /*createdDate*/ null);
+        /*createdDate*/ null,
+        MockMvcUtils.DEFAULT_USER_EMAIL,
+        /*lastUpdatedDate=*/ null);
   }
 
   public static ControlledAzureNetworkResource getAzureNetwork(
@@ -405,7 +414,9 @@ public class ControlledResourceFixtures {
         /*resourceLineage=*/ null,
         /*properties=*/ Map.of(),
         MockMvcUtils.DEFAULT_USER_EMAIL,
-        /*createdDate*/ null);
+        /*createdDate*/ null,
+        MockMvcUtils.DEFAULT_USER_EMAIL,
+        /*lastUpdatedDate=*/ null);
   }
 
   public static ControlledAzureStorageResource getAzureStorage(
@@ -427,7 +438,9 @@ public class ControlledResourceFixtures {
         /*resourceLineage=*/ null,
         /*properties=*/ Map.of(),
         MockMvcUtils.DEFAULT_USER_EMAIL,
-        /*createdDate*/ null);
+        /*createdDate*/ null,
+        /*lastUpdatedByEmail=*/ null,
+        /*lastUpdatedDate=*/ null);
   }
 
   public static ControlledAzureStorageResource getAzureStorage(
@@ -471,6 +484,8 @@ public class ControlledResourceFixtures {
         /*properties=*/ Map.of(),
         MockMvcUtils.DEFAULT_USER_EMAIL,
         /*createdDate*/ null,
+        /*lastUpdatedByEmail=*/ null,
+        /*lastUpdatedDate=*/ null,
         DEFAULT_RESOURCE_REGION);
   }
 
@@ -521,7 +536,9 @@ public class ControlledResourceFixtures {
         /*resourceLineage=*/ null,
         /*properties=*/ Map.of(),
         MockMvcUtils.DEFAULT_USER_EMAIL,
-        /*createdDate*/ null);
+        /*createdDate*/ null,
+        /*lastUpdatedByEmail=*/ null,
+        /*lastUpdatedDate=*/ null);
   }
 
   private ControlledResourceFixtures() {}

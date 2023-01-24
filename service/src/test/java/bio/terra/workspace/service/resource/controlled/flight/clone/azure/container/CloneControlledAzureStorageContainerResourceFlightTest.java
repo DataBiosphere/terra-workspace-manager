@@ -22,9 +22,11 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+@Tag("azureConnected")
 public class CloneControlledAzureStorageContainerResourceFlightTest extends BaseAzureConnectedTest {
 
   @Autowired private JobService jobService;
@@ -55,6 +57,8 @@ public class CloneControlledAzureStorageContainerResourceFlightTest extends Base
             Map.of(),
             DEFAULT_USER_EMAIL,
             /*createdDate*/ null,
+            /*lastUpdatedByEmail=*/ null,
+            /*lastUpdatedDate=*/ null,
             DEFAULT_GCP_RESOURCE_REGION);
     FlightMap inputs = new FlightMap();
     inputs.put(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE, resource);

@@ -3,6 +3,7 @@ package scripts.utils;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static scripts.utils.CommonResourceFieldsUtil.makeControlledResourceCommonFields;
 import static scripts.utils.CommonResourceFieldsUtil.makeReferencedResourceCommonFields;
 
@@ -222,12 +223,20 @@ public class BqDatasetUtils {
             .dataset(new GcpBigQueryDatasetCreationParameters().datasetId(datasetId));
 
     logger.info(
-        "Creating {} {} dataset {} workspace {}",
+        "Creating {} {} BQ dataset {} workspace {}",
         managedBy.name(),
         accessScope.name(),
         datasetId,
         workspaceUuid);
-    return resourceApi.createBigQueryDataset(body, workspaceUuid).getBigQueryDataset();
+    GcpBigQueryDatasetResource result =
+        resourceApi.createBigQueryDataset(body, workspaceUuid).getBigQueryDataset();
+    logger.info(
+        "Created {} {} BQ dataset {} workspace {}",
+        managedBy.name(),
+        accessScope.name(),
+        datasetId,
+        workspaceUuid);
+    return result;
   }
 
   /**
@@ -264,23 +273,26 @@ public class BqDatasetUtils {
             .setFriendlyName("Employee")
             .build();
 
-    // Wrap the first operation in a wait to allow the IAM permissions to propagate
+    // Wrap operations in a wait to allow the IAM permissions to propagate
     final Table createdEmployeeTable =
         ClientTestUtils.getWithRetryOnException(() -> bigQueryClient.create(employeeTableInfo));
-    logger.debug("Employee Table: {}", createdEmployeeTable);
+    logger.info("Created Employee Table: {}", createdEmployeeTable);
 
     final Table createdDepartmentTable =
-        bigQueryClient.create(
-            TableInfo.newBuilder(
-                    TableId.of(projectId, dataset.getAttributes().getDatasetId(), "department"),
-                    StandardTableDefinition.of(
-                        Schema.of(
-                            Field.of("department_id", LegacySQLTypeName.INTEGER),
-                            Field.of("manager_id", LegacySQLTypeName.INTEGER),
-                            Field.of("name", LegacySQLTypeName.STRING))))
-                .setFriendlyName("Department")
-                .build());
-    logger.debug("Department Table: {}", createdDepartmentTable);
+        ClientTestUtils.getWithRetryOnException(
+            () ->
+                bigQueryClient.create(
+                    TableInfo.newBuilder(
+                            TableId.of(
+                                projectId, dataset.getAttributes().getDatasetId(), "department"),
+                            StandardTableDefinition.of(
+                                Schema.of(
+                                    Field.of("department_id", LegacySQLTypeName.INTEGER),
+                                    Field.of("manager_id", LegacySQLTypeName.INTEGER),
+                                    Field.of("name", LegacySQLTypeName.STRING))))
+                        .setFriendlyName("Department")
+                        .build()));
+    logger.info("Created Department Table: {}", createdDepartmentTable);
 
     // Table to hold results. Queries can create this table or clobber the existing table contents
     // as needed.
@@ -291,10 +303,12 @@ public class BqDatasetUtils {
 
     // Stream insert one row to check the error handling/warning. This row may not be copied. (If
     // the stream happens after the DDL insert, sometimes it gets copied).
-    bigQueryClient.insertAll(
-        InsertAllRequest.newBuilder(employeeTableInfo)
-            .addRow(ImmutableMap.of("employee_id", 103, "name", "Batman"))
-            .build());
+    ClientTestUtils.getWithRetryOnException(
+        () ->
+            bigQueryClient.insertAll(
+                InsertAllRequest.newBuilder(employeeTableInfo)
+                    .addRow(ImmutableMap.of("employee_id", 103, "name", "Batman"))
+                    .build()));
 
     // Use DDL to insert rows instead of InsertAllRequest so that data won't
     // be in the streaming buffer where it's un-copyable for up to 90 minutes.
@@ -314,31 +328,35 @@ public class BqDatasetUtils {
                             + "101, 'Aquaman'), (102, 'Superman');")
                     .build()));
 
-    bigQueryClient.query(
-        QueryJobConfiguration.newBuilder(
-                "INSERT INTO `"
-                    + projectId
-                    + "."
-                    + dataset.getAttributes().getDatasetId()
-                    + ".department` (department_id, manager_id, name) "
-                    + "VALUES(201, 101, 'ocean'), (202, 102, 'sky');")
-            .build());
+    ClientTestUtils.getWithRetryOnException(
+        () ->
+            bigQueryClient.query(
+                QueryJobConfiguration.newBuilder(
+                        "INSERT INTO `"
+                            + projectId
+                            + "."
+                            + dataset.getAttributes().getDatasetId()
+                            + ".department` (department_id, manager_id, name) "
+                            + "VALUES(201, 101, 'ocean'), (202, 102, 'sky');")
+                    .build()));
 
     // double-check the rows are there
-    final TableResult employeeTableResult =
-        bigQueryClient.query(
-            QueryJobConfiguration.newBuilder(
-                    "SELECT * FROM `"
-                        + projectId
-                        + "."
-                        + dataset.getAttributes().getDatasetId()
-                        + "."
-                        + BQ_EMPLOYEE_TABLE_NAME
-                        + "`;")
-                .setDestinationTable(resultTableId)
-                .setWriteDisposition(WriteDisposition.WRITE_TRUNCATE)
-                .build());
-    final long numRows =
+    TableResult employeeTableResult =
+        ClientTestUtils.getWithRetryOnException(
+            () ->
+                bigQueryClient.query(
+                    QueryJobConfiguration.newBuilder(
+                            "SELECT * FROM `"
+                                + projectId
+                                + "."
+                                + dataset.getAttributes().getDatasetId()
+                                + "."
+                                + BQ_EMPLOYEE_TABLE_NAME
+                                + "`;")
+                        .setDestinationTable(resultTableId)
+                        .setWriteDisposition(WriteDisposition.WRITE_TRUNCATE)
+                        .build()));
+    long numRows =
         StreamSupport.stream(employeeTableResult.getValues().spliterator(), false).count();
     assertThat(numRows, is(greaterThanOrEqualTo(2L)));
   }
@@ -361,5 +379,21 @@ public class BqDatasetUtils {
     return new GcpBigQueryDatasetAttributes()
         .projectId(matcher.group(1))
         .datasetId(matcher.group(2));
+  }
+
+  /**
+   * The dataset at creation can have an earlier LastUpdatedDate than the current dataset. So do not
+   * compare the lastUpdatedDate.
+   */
+  public static void assertDatasetsAreEqualIgnoringLastUpdatedDate(
+      GcpBigQueryDatasetResource createdDataset, GcpBigQueryDatasetResource fetchedDataset) {
+    GcpBigQueryDatasetResource copy =
+        new GcpBigQueryDatasetResource()
+            .attributes(createdDataset.getAttributes())
+            .metadata(
+                createdDataset
+                    .getMetadata()
+                    .lastUpdatedDate(fetchedDataset.getMetadata().getLastUpdatedDate()));
+    assertEquals(copy, fetchedDataset);
   }
 }
