@@ -50,6 +50,7 @@ reference:
     - github.com
 feature:
   tps-enabled: true
+  bpm-azure-enabled: true
 
 policy:
   policy-database:

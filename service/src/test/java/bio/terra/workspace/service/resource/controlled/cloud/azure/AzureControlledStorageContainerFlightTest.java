@@ -14,9 +14,7 @@ import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
-import bio.terra.workspace.common.utils.AzureTestUtils;
 import bio.terra.workspace.common.utils.TestUtils;
-import bio.terra.workspace.connected.AzureConnectedTestUtils;
 import bio.terra.workspace.connected.LandingZoneTestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -39,18 +37,19 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.springframework.beans.factory.annotation.Autowired;
 
+@Tag("azureConnectedPlus")
 @TestInstance(Lifecycle.PER_CLASS)
 public class AzureControlledStorageContainerFlightTest extends BaseAzureConnectedTest {
   private static final Duration STAIRWAY_FLIGHT_TIMEOUT = Duration.ofMinutes(15);
 
   @Autowired private WorkspaceService workspaceService;
   @Autowired private JobService jobService;
-  @Autowired private AzureTestUtils azureTestUtils;
   @Autowired private LandingZoneTestUtils landingZoneTestUtils;
   @Autowired private UserAccessUtils userAccessUtils;
   @Autowired private AzureCloudContextService azureCloudContextService;
@@ -58,7 +57,6 @@ public class AzureControlledStorageContainerFlightTest extends BaseAzureConnecte
   @Autowired private WorkspaceDao workspaceDao;
   @Autowired private CrlService crlService;
   @Autowired private AzureConfiguration azureConfig;
-  @Autowired private AzureConnectedTestUtils azureUtils;
   @Autowired private AzureStorageAccessService azureStorageAccessService;
 
   private Workspace sharedWorkspace;
@@ -68,9 +66,9 @@ public class AzureControlledStorageContainerFlightTest extends BaseAzureConnecte
 
   @BeforeAll
   public void setup() throws InterruptedException {
-    sharedWorkspace = azureTestUtils.createWorkspace(workspaceService);
+    sharedWorkspace =
+        createWorkspaceWithCloudContext(workspaceService, userAccessUtils.defaultUserAuthRequest());
     workspaceUuid = sharedWorkspace.getWorkspaceId();
-    azureUtils.createCloudContext(workspaceUuid, userAccessUtils.defaultUserAuthRequest());
   }
 
   @AfterAll

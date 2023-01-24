@@ -29,8 +29,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -38,7 +36,6 @@ import org.springframework.stereotype.Controller;
 
 @Controller
 public class Alpha1ApiController implements Alpha1Api {
-  private final Logger logger = LoggerFactory.getLogger(Alpha1ApiController.class);
 
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final WorkspaceService workspaceService;

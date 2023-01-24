@@ -5,6 +5,7 @@ import bio.terra.policy.api.TpsApi;
 import bio.terra.policy.client.ApiClient;
 import bio.terra.policy.client.ApiException;
 import bio.terra.policy.model.TpsComponent;
+import bio.terra.policy.model.TpsLocation;
 import bio.terra.policy.model.TpsObjectType;
 import bio.terra.policy.model.TpsPaoCreateRequest;
 import bio.terra.policy.model.TpsPaoGetResult;
@@ -21,6 +22,7 @@ import bio.terra.workspace.service.policy.exception.PolicyServiceAPIException;
 import bio.terra.workspace.service.policy.exception.PolicyServiceAuthorizationException;
 import bio.terra.workspace.service.policy.exception.PolicyServiceDuplicateException;
 import bio.terra.workspace.service.policy.exception.PolicyServiceNotFoundException;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import io.opencensus.contrib.http.jaxrs.JaxrsClientExtractor;
 import io.opencensus.contrib.http.jaxrs.JaxrsClientFilter;
 import io.opencensus.contrib.spring.aop.Traced;
@@ -178,12 +180,12 @@ public class TpsApiDispatch {
   }
 
   @Traced
-  public List<String> listValidRegions(UUID workspaceId, String platform) {
+  public List<String> listValidRegions(UUID workspaceId, CloudPlatform platform) {
     features.tpsEnabledCheck();
     TpsApi tpsApi = policyApi();
     TpsRegions tpsRegions;
     try {
-      tpsRegions = tpsApi.listValidRegions(workspaceId, platform);
+      tpsRegions = tpsApi.listValidRegions(workspaceId, platform.toTps());
     } catch (ApiException e) {
       throw convertApiException(e);
     }
@@ -191,6 +193,16 @@ public class TpsApiDispatch {
       return tpsRegions.stream().toList();
     }
     return new ArrayList<>();
+  }
+
+  public TpsLocation getLocationInfo(CloudPlatform platform, String location) {
+    features.tpsEnabledCheck();
+    TpsApi tpsApi = policyApi();
+    try {
+      return tpsApi.getLocationInfo(platform.toTps(), location);
+    } catch (ApiException e) {
+      throw convertApiException(e);
+    }
   }
 
   private ApiClient getApiClient(String accessToken) {

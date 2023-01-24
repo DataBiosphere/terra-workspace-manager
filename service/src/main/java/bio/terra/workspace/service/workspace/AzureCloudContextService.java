@@ -25,9 +25,8 @@ public class AzureCloudContextService {
   }
 
   /**
-   * Create an empty GCP cloud context in the database for a workspace. Supports {@link
-   * bio.terra.workspace.service.workspace.flight.CreateGcpContextFlightV2} This is designed for use
-   * in the createGcpContext flight and assumes that a later step will call {@link
+   * Create an empty Azure cloud context in the database for a workspace. This is designed for use
+   * in the CreateDbAzureCloudContextStartStep flight and assumes that a later step will call {@link
    * #createAzureCloudContextFinish}.
    *
    * @param workspaceUuid workspace id where the context is being created
@@ -75,10 +74,10 @@ public class AzureCloudContextService {
   }
 
   /**
-   * Retrieve the optional GCP cloud context
+   * Retrieve the optional Azure cloud context
    *
    * @param workspaceUuid workspace identifier of the cloud context
-   * @return optional GCP cloud context
+   * @return optional Azure cloud context
    */
   @Traced
   public Optional<AzureCloudContext> getAzureCloudContext(UUID workspaceUuid) {

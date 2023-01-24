@@ -59,10 +59,10 @@ task gcpUnitTest(type: Test) {
   finalizedBy tasks.combinedJaCoCoReport
 }
 
-task gcpConnectedTest(type: Test) {
+task gcpConnectedPlusTest(type: Test) {
   environment.put('TEST_ENV', System.getenv('TEST_ENV'))
   useJUnitPlatform {
-    includeTags 'connected'
+    includeTags 'connectedPlus'
   }
   outputs.upToDateWhen { false }
   finalizedBy tasks.combinedJaCoCoReport
@@ -84,6 +84,18 @@ task gcpConnectedTest(type: Test) {
     }
     failOnPassedAfterRetry = true
   }
+  maxParallelForks = runnerThreads
+}
+
+// Use the connected test tag for PR runs.
+// No retries; devs can manually rerun
+task gcpConnectedTest(type: Test) {
+  environment.put('TEST_ENV', System.getenv('TEST_ENV'))
+  useJUnitPlatform {
+    includeTags 'connected'
+  }
+  outputs.upToDateWhen { false }
+  finalizedBy tasks.combinedJaCoCoReport
   maxParallelForks = runnerThreads
 }
 
@@ -96,9 +108,10 @@ task azureUnitTest(type: Test) {
   maxParallelForks = runnerThreads
 }
 
-task azureConnectedTest(type: Test) {
+task azureConnectedPlusTest(type: Test) {
+  environment.put('TEST_ENV', System.getenv("TEST_ENV"))
   useJUnitPlatform {
-    includeTags 'azure'
+    includeTags "azureConnectedPlus"
   }
   outputs.upToDateWhen { false }
   finalizedBy tasks.combinedJaCoCoReport
@@ -120,5 +133,16 @@ task azureConnectedTest(type: Test) {
     }
     failOnPassedAfterRetry = true
   }
+  maxParallelForks = runnerThreads
+}
+
+// Use the azureConnected test tag for PR runs.
+// No retries; devs can manually rerun
+task azureConnectedTest(type: Test) {
+  useJUnitPlatform {
+    includeTags 'azureConnected'
+  }
+  outputs.upToDateWhen { false }
+  finalizedBy tasks.combinedJaCoCoReport
   maxParallelForks = runnerThreads
 }

@@ -337,7 +337,7 @@ public class WorkspaceService {
             .userRequest(userRequest)
             .addParameter(
                 WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name());
-    deleteJob.submitAndWait(null);
+    deleteJob.submitAndWait();
   }
 
   /**
@@ -364,7 +364,7 @@ public class WorkspaceService {
    * @param jobId caller-supplied job id of the async job
    * @param userRequest user authentication info
    * @param resultPath optional endpoint where the result of the completed job can be retrieved
-   * @param azureContext azure context information
+   * @param azureContext deprecated azure context information, only used if BPM is not enabled
    */
   @Traced
   public void createAzureCloudContext(
@@ -435,8 +435,7 @@ public class WorkspaceService {
       Workspace sourceWorkspace,
       AuthenticatedUserRequest userRequest,
       @Nullable String location,
-      Workspace destinationWorkspace,
-      @Nullable AzureCloudContext azureCloudContext) {
+      Workspace destinationWorkspace) {
     String workspaceUuid = sourceWorkspace.getWorkspaceId().toString();
     String jobDescription =
         String.format(
@@ -464,7 +463,6 @@ public class WorkspaceService {
             ControlledResourceKeys.SOURCE_WORKSPACE_ID,
             sourceWorkspace.getWorkspaceId()) // TODO: remove this duplication
         .addParameter(ControlledResourceKeys.LOCATION, location)
-        .addParameter(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, azureCloudContext)
         .submit();
   }
 
@@ -483,7 +481,7 @@ public class WorkspaceService {
         .userRequest(userRequest)
         .operationType(OperationType.DELETE)
         .workspaceId(workspace.getWorkspaceId().toString())
-        .submitAndWait(null);
+        .submitAndWait();
   }
 
   public void deleteAzureCloudContext(Workspace workspace, AuthenticatedUserRequest userRequest) {
@@ -498,7 +496,7 @@ public class WorkspaceService {
         .userRequest(userRequest)
         .operationType(OperationType.DELETE)
         .workspaceId(workspace.getWorkspaceId().toString())
-        .submitAndWait(null);
+        .submitAndWait();
   }
 
   /**
@@ -544,6 +542,6 @@ public class WorkspaceService {
         .operationType(OperationType.REMOVE_WORKSPACE_ROLE)
         .addParameter(WorkspaceFlightMapKeys.USER_TO_REMOVE, targetUserEmail)
         .addParameter(WorkspaceFlightMapKeys.ROLE_TO_REMOVE, role.name())
-        .submitAndWait(null);
+        .submitAndWait();
   }
 }

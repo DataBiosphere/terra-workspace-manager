@@ -35,6 +35,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
+import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
@@ -70,6 +71,7 @@ public class ReferencedGcpResourceController extends ControllerBase
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final ResourceValidationUtils validationUtils;
   private final HttpServletRequest request;
+  private final WorkspaceActivityLogService workspaceActivityLogService;
 
   @Autowired
   public ReferencedGcpResourceController(
@@ -79,7 +81,8 @@ public class ReferencedGcpResourceController extends ControllerBase
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       ResourceValidationUtils validationUtils,
       HttpServletRequest request,
-      SamService samService) {
+      SamService samService,
+      WorkspaceActivityLogService workspaceActivityLogService) {
     super(authenticatedUserRequestFactory, request, samService);
     this.referenceResourceService = referenceResourceService;
     this.workspaceDao = workspaceDao;
@@ -87,6 +90,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.validationUtils = validationUtils;
     this.request = request;
+    this.workspaceActivityLogService = workspaceActivityLogService;
   }
 
   // -- GCS Bucket object -- //
@@ -398,6 +402,12 @@ public class ReferencedGcpResourceController extends ControllerBase
       if (!StringUtils.isEmpty(updatedDataTableId)) {
         updateBqTableResource.dataTableId(updatedDataTableId);
       }
+      if (cloningInstructions != null) {
+        updateBqTableResource.wsmResourceFields(
+            referencedResource.getWsmResourceFields().toBuilder()
+                .cloningInstructions(cloningInstructions)
+                .build());
+      }
       referenceResourceService.updateReferenceResource(
           workspaceUuid,
           referenceId,
@@ -515,6 +525,12 @@ public class ReferencedGcpResourceController extends ControllerBase
       if (!StringUtils.isEmpty(updatedDatasetId)) {
         updatedBqDatasetResourceBuilder.datasetName(updatedDatasetId);
       }
+      if (cloningInstructions != null) {
+        updatedBqDatasetResourceBuilder.wsmResourceFields(
+            referenceResource.getWsmResourceFields().toBuilder()
+                .cloningInstructions(cloningInstructions)
+                .build());
+      }
       referenceResourceService.updateReferenceResource(
           workspaceUuid,
           resourceId,
@@ -601,6 +617,8 @@ public class ReferencedGcpResourceController extends ControllerBase
         userRequest, workspaceUuid, SamWorkspaceAction.UPDATE_REFERENCE);
     String updatedSnapshot = body.getSnapshot();
     String updatedInstanceName = body.getInstanceName();
+    CloningInstructions cloningInstructions =
+        CloningInstructions.fromApiModel(body.getCloningInstructions());
     if (StringUtils.isEmpty(updatedSnapshot) && StringUtils.isEmpty(updatedInstanceName)) {
       referenceResourceService.updateReferenceResource(
           workspaceUuid,
@@ -608,7 +626,7 @@ public class ReferencedGcpResourceController extends ControllerBase
           body.getName(),
           body.getDescription(),
           null,
-          CloningInstructions.fromApiModel(body.getCloningInstructions()),
+          cloningInstructions,
           userRequest);
     } else {
       ReferencedDataRepoSnapshotResource referencedResource =
@@ -623,13 +641,19 @@ public class ReferencedGcpResourceController extends ControllerBase
       if (!StringUtils.isEmpty(updatedInstanceName)) {
         updatedResourceBuilder.instanceName(updatedInstanceName);
       }
+      if (cloningInstructions != null) {
+        updatedResourceBuilder.wsmResourceFields(
+            referencedResource.getWsmResourceFields().toBuilder()
+                .cloningInstructions(cloningInstructions)
+                .build());
+      }
       referenceResourceService.updateReferenceResource(
           workspaceUuid,
           resourceId,
           body.getName(),
           body.getDescription(),
           updatedResourceBuilder.build(),
-          CloningInstructions.fromApiModel(body.getCloningInstructions()),
+          cloningInstructions,
           userRequest);
     }
     final ReferencedDataRepoSnapshotResource updatedResource =
@@ -1009,6 +1033,8 @@ public class ReferencedGcpResourceController extends ControllerBase
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamWorkspaceAction.UPDATE_REFERENCE);
     String gitRepoUrl = body.getGitRepoUrl();
+    CloningInstructions cloningInstructions =
+        CloningInstructions.fromApiModel(body.getCloningInstructions());
     if (StringUtils.isEmpty(gitRepoUrl)) {
       referenceResourceService.updateReferenceResource(
           workspaceUuid,
@@ -1016,7 +1042,7 @@ public class ReferencedGcpResourceController extends ControllerBase
           body.getName(),
           body.getDescription(),
           null,
-          CloningInstructions.fromApiModel(body.getCloningInstructions()),
+          cloningInstructions,
           userRequest);
     } else {
       ReferencedGitRepoResource referencedResource =
@@ -1027,6 +1053,12 @@ public class ReferencedGcpResourceController extends ControllerBase
       ReferencedGitRepoResource.Builder updateGitRepoResource = referencedResource.toBuilder();
       validationUtils.validateGitRepoUri(gitRepoUrl);
       updateGitRepoResource.gitRepoUrl(gitRepoUrl);
+      if (body.getCloningInstructions() != null) {
+        updateGitRepoResource.wsmResourceFields(
+            referencedResource.getWsmResourceFields().toBuilder()
+                .cloningInstructions(cloningInstructions)
+                .build());
+      }
 
       referenceResourceService.updateReferenceResource(
           workspaceUuid,
@@ -1034,7 +1066,7 @@ public class ReferencedGcpResourceController extends ControllerBase
           body.getName(),
           body.getDescription(),
           updateGitRepoResource.build(),
-          CloningInstructions.fromApiModel(body.getCloningInstructions()),
+          cloningInstructions,
           userRequest);
     }
 

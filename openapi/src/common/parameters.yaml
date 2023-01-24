@@ -185,3 +185,19 @@ components:
       schema:
         type: string
         format: uuid
+
+    Platform:
+      name: platform
+      in: query
+      description: The cloud platform (gcp, azure)
+      required: true
+      schema:
+        $ref: '#/components/schemas/CloudPlatform'
+
+    WsmPolicyLocation:
+      name: location
+      in: query
+      description: The geographic location of a data center (e.g. iowa, Illinois)
+      required: false
+      schema:
+        type: string

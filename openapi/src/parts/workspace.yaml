@@ -133,7 +133,7 @@ paths:
       operationId: cloneWorkspace
       tags: [Workspace]
       requestBody:
-        description: Details of workspce clone operation
+        description: Details of workspace clone operation
         required: true
         content:
           application/json:
@@ -343,15 +343,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CloneWorkspaceResult'
-  parameters:
-    Platform:
-      name: platform
-      in: query
-      description: The cloud platform (gcp, azure)
-      required: true
-      schema:
-        type: string
-        enum: [ "gcp", "azure" ]
   schemas:
     ClonedWorkspace:
       description: >-
@@ -408,8 +399,6 @@ components:
             GCP Location to use for cloud-based resources. If omitted, the location of the source
             resource will be used.
           type: string
-        azureContext:
-          $ref: '#/components/schemas/AzureContext'
 
     ResourceCloneDetails:
       description: >-
@@ -613,9 +602,3 @@ components:
       type: string
       enum: ['RAWLS_WORKSPACE', 'MC_WORKSPACE']
 
-    Regions:
-      type: array
-      description: List of regions (e.g. us-central1, us-west1)
-      items:
-        uniqueItems: true
-        type: string

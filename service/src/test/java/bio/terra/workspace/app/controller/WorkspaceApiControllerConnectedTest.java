@@ -6,6 +6,7 @@ import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.USER_SET_PRO
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.VERSION_PROPERTY;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UFID_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UUID_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_LIST_VALID_REGIONS_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_PATH;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -13,6 +14,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -23,8 +25,10 @@ import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
 import bio.terra.workspace.generated.model.ApiIamRole;
+import bio.terra.workspace.generated.model.ApiRegions;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -39,11 +43,13 @@ import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.test.context.junit.jupiter.EnabledIf;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
@@ -58,6 +64,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
  * <p>Use this instead of WorkspaceApiControllerTest, if you want to use real
  * bio.terra.workspace.service.iam.SamService.
  */
+@Tag("connected")
 @TestInstance(Lifecycle.PER_CLASS)
 public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
@@ -322,6 +329,41 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
     assertThat(listedWorkspaces, hasSize(1));
     assertStrippedWorkspace(listedWorkspaces.get(0));
+  }
+
+  @Test
+  @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
+  public void listValidRegions() throws Exception {
+    ApiRegions gcps =
+        listValid(
+            workspace.getId(),
+            ApiCloudPlatform.GCP.name(),
+            userAccessUtils.defaultUserAuthRequest());
+    ApiRegions azures =
+        listValid(
+            workspace.getId(),
+            ApiCloudPlatform.AZURE.name(),
+            userAccessUtils.defaultUserAuthRequest());
+
+    assertFalse(gcps.isEmpty());
+    // Not an azure workspace so not valid azure regions.
+    assertTrue(azures.isEmpty());
+  }
+
+  private ApiRegions listValid(
+      UUID workspaceId, String platform, AuthenticatedUserRequest userRequest) throws Exception {
+    var serializedResponse =
+        mockMvc
+            .perform(
+                addAuth(
+                    get(String.format(WORKSPACES_V1_LIST_VALID_REGIONS_PATH_FORMAT, workspaceId))
+                        .queryParam("platform", platform),
+                    userRequest))
+            .andExpect(status().is(HttpStatus.SC_OK))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    return objectMapper.readValue(serializedResponse, ApiRegions.class);
   }
 
   private ApiWorkspaceDescription getWorkspace(AuthenticatedUserRequest request, UUID id)

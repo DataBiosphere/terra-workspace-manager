@@ -20,11 +20,6 @@ import org.slf4j.LoggerFactory;
 /** Do not complete the cloud context creation until the project permissions have propagated. */
 public class WaitForProjectPermissionsStep implements Step {
   private final Logger logger = LoggerFactory.getLogger(WaitForProjectPermissionsStep.class);
-  private final AuthenticatedUserRequest userRequest;
-
-  public WaitForProjectPermissionsStep(AuthenticatedUserRequest userRequest) {
-    this.userRequest = userRequest;
-  }
 
   /**
    * CRL doesn't support list-bucket. For now we call GCP directly.
@@ -55,8 +50,14 @@ public class WaitForProjectPermissionsStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
+    // Test permissions using the user's pet SA instead of their actual account as their access
+    // token may not have the cloud-platform scope required to access cloud resources.
+    AuthenticatedUserRequest petSaCredentials =
+        flightContext
+            .getWorkingMap()
+            .get(WorkspaceFlightMapKeys.PET_SA_CREDENTIALS, AuthenticatedUserRequest.class);
     String gcpProjectId = flightContext.getWorkingMap().get(GCP_PROJECT_ID, String.class);
-    Storage storage = getStorage(userRequest, gcpProjectId);
+    Storage storage = getStorage(petSaCredentials, gcpProjectId);
 
     var startTime = Instant.now();
     try {

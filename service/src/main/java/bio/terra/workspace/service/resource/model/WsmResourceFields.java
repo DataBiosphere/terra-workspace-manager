@@ -30,6 +30,8 @@ public class WsmResourceFields {
   private final ImmutableMap<String, String> properties;
   private final String createdByEmail;
   @Nullable private final OffsetDateTime createdDate;
+  private final String lastUpdatedByEmail;
+  @Nullable private final OffsetDateTime lastUpdatedDate;
 
   /** construct from database resource */
   public WsmResourceFields(DbResource dbResource) {
@@ -42,6 +44,8 @@ public class WsmResourceFields {
     properties = dbResource.getProperties();
     createdByEmail = dbResource.getCreatedByEmail();
     createdDate = dbResource.getCreatedDate();
+    lastUpdatedByEmail = dbResource.getLastUpdatedByEmail();
+    lastUpdatedDate = dbResource.getLastUpdatedDate();
   }
 
   protected WsmResourceFields(Builder<?> builder) {
@@ -54,6 +58,8 @@ public class WsmResourceFields {
     this.properties = builder.properties;
     this.createdByEmail = builder.createdByEmail;
     this.createdDate = builder.createdDate;
+    this.lastUpdatedByEmail = builder.lastUpdatedByEmail;
+    this.lastUpdatedDate = builder.lastUpdatedDate;
   }
 
   public static WsmResourceFields.Builder<?> builder() {
@@ -110,6 +116,14 @@ public class WsmResourceFields {
     return createdDate;
   }
 
+  public String getLastUpdatedByEmail() {
+    return lastUpdatedByEmail;
+  }
+
+  public OffsetDateTime getLastUpdatedDate() {
+    return lastUpdatedDate;
+  }
+
   public static class Builder<T extends Builder<T>> {
     private UUID workspaceUuid;
     private UUID resourceId;
@@ -120,6 +134,8 @@ public class WsmResourceFields {
     private ImmutableMap<String, String> properties = ImmutableMap.of();
     private String createdByEmail;
     private OffsetDateTime createdDate;
+    private String lastUpdatedByEmail;
+    private OffsetDateTime lastUpdatedDate;
 
     public Builder() {}
 
@@ -188,6 +204,18 @@ public class WsmResourceFields {
     @SuppressWarnings("unchecked")
     public T createdDate(OffsetDateTime createdDate) {
       this.createdDate = createdDate;
+      return (T) this;
+    }
+
+    @SuppressWarnings("unchecked")
+    public T lastUpdatedByEmail(String lastUpdatedByEmail) {
+      this.lastUpdatedByEmail = lastUpdatedByEmail;
+      return (T) this;
+    }
+
+    @SuppressWarnings("unchecked")
+    public T lastUpdatedDate(OffsetDateTime lastUpdatedDate) {
+      this.lastUpdatedDate = lastUpdatedDate;
       return (T) this;
     }
   }

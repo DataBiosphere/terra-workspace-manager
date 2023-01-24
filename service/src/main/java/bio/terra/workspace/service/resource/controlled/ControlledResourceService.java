@@ -33,6 +33,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.Cont
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.UpdateControlledAiNotebookResourceFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.UpdateControlledBigQueryDatasetResourceFlight;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.flight.UpdateGcpControlledResourceRegionFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.UpdateControlledGcsBucketResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.CloneControlledAzureStorageContainerResourceFlight;
@@ -53,6 +54,7 @@ import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.WsmApplication;
 import com.google.cloud.Policy;
+import io.opencensus.contrib.spring.aop.Traced;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -62,12 +64,15 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /** CRUD methods for controlled objects. */
 @Component
 public class ControlledResourceService {
+  private static final Logger logger = LoggerFactory.getLogger(ControlledResourceService.class);
 
   // These are chosen to retry a maximum wait time so we return under a 30 second
   // network timeout.
@@ -302,7 +307,8 @@ public class ControlledResourceService {
       ControlledBigQueryDatasetResource resource,
       @Nullable ApiGcpBigQueryDatasetUpdateParameters updateParameters,
       @Nullable String resourceName,
-      @Nullable String resourceDescription) {
+      @Nullable String resourceDescription,
+      AuthenticatedUserRequest userRequest) {
     if (null != updateParameters && null != updateParameters.getCloningInstructions()) {
       ResourceValidationUtils.validateCloningInstructions(
           StewardshipType.CONTROLLED,
@@ -321,6 +327,7 @@ public class ControlledResourceService {
             .operationType(OperationType.UPDATE)
             .resourceType(resource.getResourceType())
             .resourceName(resource.getName())
+            .userRequest(userRequest)
             .workspaceId(resource.getWorkspaceId().toString())
             .stewardshipType(resource.getStewardshipType())
             .addParameter(ControlledResourceKeys.UPDATE_PARAMETERS, updateParameters)
@@ -600,6 +607,31 @@ public class ControlledResourceService {
     }
 
     return gcpPolicyBuilder.build();
+  }
+
+  // TODO (PF-2368): clean this up once back-fill is done in all Terra environment.
+  @Traced
+  @Nullable
+  public String updateGcpControlledResourcesRegionAsync() {
+    String wsmSaToken = samService.getWsmServiceAccountToken();
+    // wsmSaToken is null for unit test when samService is mocked out.
+    if (wsmSaToken == null) {
+      logger.warn(
+          "#updateGcpControlledResourcesRegionAsync: workspace manager service account token is null");
+      return null;
+    }
+    AuthenticatedUserRequest wsmSaRequest =
+        new AuthenticatedUserRequest().token(Optional.of(wsmSaToken));
+    return jobService
+        .newJob()
+        .description(
+            "A flight to update controlled resource's missing region in all the existing"
+                + "terra managed gcp projects")
+        .jobId(UUID.randomUUID().toString())
+        .flightClass(UpdateGcpControlledResourceRegionFlight.class)
+        .userRequest(wsmSaRequest)
+        .operationType(OperationType.UPDATE)
+        .submit();
   }
 
   private final Supplier<InternalLogicException> badState =

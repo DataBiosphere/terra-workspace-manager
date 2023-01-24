@@ -45,6 +45,10 @@ public class ControlledResourceControllerBase extends ControllerBase {
     this.controlledResourceService = controlledResourceService;
   }
 
+  public ControlledResourceService getControlledResourceService() {
+    return controlledResourceService;
+  }
+
   public ControlledResourceFields toCommonFields(
       UUID workspaceUuid,
       ApiControlledResourceCommonFields apiCommonFields,
