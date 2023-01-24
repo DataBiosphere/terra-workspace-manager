@@ -219,8 +219,7 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
             sourceWorkspace,
             userAccessUtils.defaultUserAuthRequest(),
             destinationLocation,
-            destinationWorkspace,
-            null);
+            destinationWorkspace);
     jobService.waitForJob(cloneJobId);
     final JobResultOrException<ApiClonedWorkspace> cloneResultOrException =
         jobService.retrieveJobResult(cloneJobId, ApiClonedWorkspace.class);
@@ -341,8 +340,7 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
                 sourceWorkspace,
                 userAccessUtils.defaultUserAuthRequest(),
                 destinationLocation,
-                destinationWorkspace,
-                null));
+                destinationWorkspace));
     assertThrows(
         WorkspaceNotFoundException.class,
         () -> workspaceService.getWorkspace(destinationWorkspace.getWorkspaceId()));

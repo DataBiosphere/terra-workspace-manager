@@ -7,9 +7,7 @@ import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
-import bio.terra.workspace.common.utils.AzureTestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
-import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiAzureIpCreationParameters;
@@ -24,7 +22,7 @@ import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
+import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.create.azure.CreateAzureContextFlight;
@@ -53,11 +51,8 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
 
   @Autowired private WorkspaceService workspaceService;
   @Autowired private ControlledResourceService controlledResourceService;
-  @Autowired private SpendConnectedTestUtils spendUtils;
   @Autowired private UserAccessUtils userAccessUtils;
   @Autowired private JobService jobService;
-  @Autowired private WorkspaceConnectedTestUtils testUtils;
-  @Autowired private AzureTestUtils azureTestUtils;
   @Autowired private AzureCloudContextService azureCloudContextService;
 
   private Workspace workspace;
@@ -67,9 +62,10 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
   public void setup() {
     // Create a new workspace at the start of each test.
     workspaceUuid = UUID.randomUUID();
+    SpendProfileId spendProfileId = initSpendProfileMock();
     workspace =
         WorkspaceFixtures.defaultWorkspaceBuilder(workspaceUuid)
-            .spendProfileId(spendUtils.defaultSpendId())
+            .spendProfileId(spendProfileId)
             .build();
     workspaceService.createWorkspace(
         workspace, null, null, userAccessUtils.defaultUserAuthRequest());
@@ -245,10 +241,9 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
 
     // create new workspace so delete at end of test won't interfere with @AfterEach teardown
     UUID uuid = UUID.randomUUID();
+    SpendProfileId spendProfileId = initSpendProfileMock();
     Workspace request =
-        WorkspaceFixtures.defaultWorkspaceBuilder(uuid)
-            .spendProfileId(spendUtils.defaultSpendId())
-            .build();
+        WorkspaceFixtures.defaultWorkspaceBuilder(uuid).spendProfileId(spendProfileId).build();
     UUID mcWorkspaceUuid = workspaceService.createWorkspace(request, null, null, userRequest);
 
     createAzureContext(mcWorkspaceUuid, userRequest);

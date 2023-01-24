@@ -4,8 +4,6 @@ import static bio.terra.workspace.connected.AzureConnectedTestUtils.getAzureName
 
 import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
-import bio.terra.workspace.common.utils.AzureTestUtils;
-import bio.terra.workspace.connected.AzureConnectedTestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -33,18 +31,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureConnectedTest {
 
   @Autowired private WorkspaceService workspaceService;
-  @Autowired private AzureTestUtils azureTestUtils;
   @Autowired private UserAccessUtils userAccessUtils;
-  @Autowired private AzureConnectedTestUtils azureUtils;
 
   private Workspace sharedWorkspace;
   private UUID workspaceUuid;
 
   @BeforeAll
   public void setup() throws InterruptedException {
-    sharedWorkspace = azureTestUtils.createWorkspace(workspaceService);
+    sharedWorkspace =
+        createWorkspaceWithCloudContext(workspaceService, userAccessUtils.defaultUserAuthRequest());
     workspaceUuid = sharedWorkspace.getWorkspaceId();
-    azureUtils.createCloudContext(workspaceUuid, userAccessUtils.defaultUserAuthRequest());
   }
 
   @AfterAll

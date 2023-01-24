@@ -10,7 +10,13 @@ public class SpendConnectedTestUtils {
 
   @Autowired private SpendProfileConfiguration spendConfig;
 
-  /** Returns a {@link SpendProfileId} that can be used to link to spend on workspaces. */
+  /**
+   * Returns a {@link SpendProfileId} that can be used to link to spend on workspaces.
+   *
+   * <p>Note though that this SpendProfileId will not work with an Azure CloudContext unless the
+   * call to BPM to obtain the spend profile is mocked. For an example, see
+   * BaseAzureConnectedTest.initSpendProfileMock.
+   */
   public SpendProfileId defaultSpendId() {
     return new SpendProfileId(spendConfig.getSpendProfiles().get(0).getId());
   }
