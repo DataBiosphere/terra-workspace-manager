@@ -702,7 +702,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       UUID workspaceId, Integer depth) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.READ);
-    PolicyExplainResult explainResult = tpsApiDispatch.explain(workspaceId, depth, userRequest);
+    PolicyExplainResult explainResult =
+        tpsApiDispatch.explain(workspaceId, depth, workspaceService, userRequest);
 
     return new ResponseEntity<>(explainResult.toApi(), HttpStatus.OK);
   }

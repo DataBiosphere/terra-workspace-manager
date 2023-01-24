@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.policy;
 
-import bio.terra.common.exception.ForbiddenException;
 import bio.terra.common.logging.RequestIdFilter;
 import bio.terra.policy.api.TpsApi;
 import bio.terra.policy.client.ApiClient;
@@ -15,24 +14,18 @@ import bio.terra.policy.model.TpsPaoReplaceRequest;
 import bio.terra.policy.model.TpsPaoSourceRequest;
 import bio.terra.policy.model.TpsPaoUpdateRequest;
 import bio.terra.policy.model.TpsPaoUpdateResult;
-import bio.terra.policy.model.TpsPolicyExplainSource;
 import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.policy.model.TpsRegions;
 import bio.terra.policy.model.TpsUpdateMode;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.configuration.external.PolicyServiceConfiguration;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.policy.exception.PolicyServiceAPIException;
 import bio.terra.workspace.service.policy.exception.PolicyServiceAuthorizationException;
 import bio.terra.workspace.service.policy.exception.PolicyServiceDuplicateException;
 import bio.terra.workspace.service.policy.exception.PolicyServiceNotFoundException;
-import bio.terra.workspace.service.policy.model.PolicyComponent;
 import bio.terra.workspace.service.policy.model.PolicyExplainResult;
-import bio.terra.workspace.service.policy.model.PolicyObject;
-import bio.terra.workspace.service.policy.model.PolicyObjectType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
-import com.google.common.base.Preconditions;
 import io.opencensus.contrib.http.jaxrs.JaxrsClientExtractor;
 import io.opencensus.contrib.http.jaxrs.JaxrsClientFilter;
 import io.opencensus.contrib.spring.aop.Traced;
@@ -41,7 +34,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -60,13 +52,10 @@ public class TpsApiDispatch {
   private final FeatureConfiguration features;
   private final PolicyServiceConfiguration policyServiceConfiguration;
   private final Client commonHttpClient;
-  private final WorkspaceService workspaceService;
 
   @Autowired
   public TpsApiDispatch(
-      FeatureConfiguration features,
-      PolicyServiceConfiguration policyServiceConfiguration,
-      WorkspaceService workspaceService) {
+      FeatureConfiguration features, PolicyServiceConfiguration policyServiceConfiguration) {
     this.features = features;
     this.policyServiceConfiguration = policyServiceConfiguration;
     this.commonHttpClient =
@@ -75,7 +64,6 @@ public class TpsApiDispatch {
             .register(
                 new JaxrsClientFilter(
                     new JaxrsClientExtractor(), Tracing.getPropagationComponent().getB3Format()));
-    this.workspaceService = workspaceService;
   }
 
   // -- Policy Attribute Object Interface --
@@ -215,7 +203,10 @@ public class TpsApiDispatch {
   }
 
   public PolicyExplainResult explain(
-      UUID workspaceId, int depth, AuthenticatedUserRequest userRequest) {
+      UUID workspaceId,
+      int depth,
+      WorkspaceService workspaceService,
+      AuthenticatedUserRequest userRequest) {
     features.tpsEnabledCheck();
     TpsApi tpsApi = policyApi();
     try {
@@ -228,40 +219,15 @@ public class TpsApiDispatch {
           Optional.ofNullable(tpsResult.getExplainObjects())
               .orElse(Collections.emptyList())
               .stream()
-              .map(source -> buildWsmPolicyObject(source, userRequest))
+              .map(
+                  source ->
+                      TpsApiConversionUtils.buildWsmPolicyObject(
+                          source, workspaceService, userRequest))
               .toList(),
           Optional.ofNullable(tpsResult.getExplanation()).orElse(Collections.emptyList()));
     } catch (ApiException e) {
       throw convertApiException(e);
     }
-  }
-
-  public PolicyObject buildWsmPolicyObject(
-      TpsPolicyExplainSource source, AuthenticatedUserRequest userRequest) {
-    boolean access = false;
-    String name = null;
-    Map<String, String> properties = Collections.emptyMap();
-    // When there are more type of policy object, we may need to change this to a switch case.
-    Preconditions.checkState(TpsObjectType.WORKSPACE == source.getObjectType());
-    try {
-      var workspace =
-          workspaceService.validateWorkspaceAndAction(
-              userRequest, source.getObjectId(), SamWorkspaceAction.READ);
-      access = true;
-      name = workspace.displayName();
-      properties = workspace.properties();
-    } catch (ForbiddenException e) {
-      logger.info("Not authorized to read workspace {}.", source.getObjectId());
-    }
-
-    return new PolicyObject(
-        source.getObjectId(),
-        PolicyObjectType.fromTpsObjectType(source.getObjectType()),
-        PolicyComponent.fromTpsComponent(source.getComponent()),
-        source.isDeleted(),
-        access,
-        name,
-        properties);
   }
 
   public TpsLocation getLocationInfo(String platform, String location) {
