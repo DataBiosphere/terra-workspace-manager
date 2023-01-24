@@ -136,6 +136,19 @@ public class TpsApiConversionUtils {
                 .toList());
   }
 
+  public static ApiWsmPolicyInput policyInputToApi(TpsPolicyInput input) {
+    var wsmInput = new ApiWsmPolicyInput();
+    if (input.getAdditionalData() != null) {
+      input
+          .getAdditionalData()
+          .forEach(
+              data ->
+                  wsmInput.addAdditionalDataItem(
+                      new ApiWsmPolicyPair().key(data.getKey()).value(data.getValue())));
+    }
+    return wsmInput.namespace(input.getNamespace()).name(input.getName());
+  }
+
   public static TpsUpdateMode tpsFromApiTpsUpdateMode(ApiWsmPolicyUpdateMode apiUpdateMode) {
     TpsUpdateMode mode = TpsUpdateMode.fromValue(apiUpdateMode.name());
     if (mode == null) {
@@ -156,18 +169,5 @@ public class TpsApiConversionUtils {
               .toList());
     }
     return wsmPolicyExplanation;
-  }
-
-  public static ApiWsmPolicyInput policyInputToApi(TpsPolicyInput input) {
-    var wsmInput = new ApiWsmPolicyInput();
-    if (input.getAdditionalData() != null) {
-      input
-          .getAdditionalData()
-          .forEach(
-              data ->
-                  wsmInput.addAdditionalDataItem(
-                      new ApiWsmPolicyPair().key(data.getKey()).value(data.getValue())));
-    }
-    return wsmInput.namespace(input.getNamespace()).name(input.getName());
   }
 }
