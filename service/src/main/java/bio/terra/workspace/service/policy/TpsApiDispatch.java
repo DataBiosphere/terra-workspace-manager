@@ -30,7 +30,6 @@ import io.opencensus.trace.Tracing;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -186,8 +185,7 @@ public class TpsApiDispatch {
     TpsApi tpsApi = policyApi();
     TpsRegions tpsRegions;
     try {
-      tpsRegions =
-          tpsApi.listValidRegions(workspaceId, convertCloudPlatformToTpsCloudPlatform(platform));
+      tpsRegions = tpsApi.listValidRegions(workspaceId, platform.toTps());
     } catch (ApiException e) {
       throw convertApiException(e);
     }
@@ -201,14 +199,10 @@ public class TpsApiDispatch {
     features.tpsEnabledCheck();
     TpsApi tpsApi = policyApi();
     try {
-      return tpsApi.getLocationInfo(convertCloudPlatformToTpsCloudPlatform(platform), location);
+      return tpsApi.getLocationInfo(platform.toTps(), location);
     } catch (ApiException e) {
       throw convertApiException(e);
     }
-  }
-
-  private static String convertCloudPlatformToTpsCloudPlatform(CloudPlatform platform) {
-    return platform.toSql().toLowerCase(Locale.ROOT);
   }
 
   private ApiClient getApiClient(String accessToken) {
