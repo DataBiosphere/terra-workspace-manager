@@ -25,7 +25,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -452,9 +451,8 @@ public class ResourceValidationUtils {
 
     // Get the list of valid locations for this workspace from TPS. If there are no regional
     // constraints applied to the workspace, TPS should return all available regions.
-    List<String> validLocations =
-        tpsApiDispatch.listValidRegions(
-            workspaceId, CloudPlatform.GCP.toString().toLowerCase());
+    String platform = CloudPlatform.GCP.toString().toLowerCase();
+    List<String> validLocations = tpsApiDispatch.listValidRegions(workspaceId, platform);
 
     if (validLocations.stream().noneMatch(region::equalsIgnoreCase)) {
       throw new InvalidControlledResourceException(
