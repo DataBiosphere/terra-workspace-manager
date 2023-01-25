@@ -7,7 +7,6 @@ import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
@@ -26,7 +25,6 @@ import javax.servlet.http.HttpServletRequest;
  */
 public abstract class ControlledResourceControllerBase extends ControllerBase {
   private final ControlledResourceService controlledResourceService;
-  private final ResourceValidationUtils resourceValidationUtils;
 
   /**
    * The region field of these wsm resource type are filled during the creation flight because the
@@ -42,22 +40,14 @@ public abstract class ControlledResourceControllerBase extends ControllerBase {
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request,
       ControlledResourceService controlledResourceService,
-      SamService samService,
-      ResourceValidationUtils resourceValidationUtils) {
+      SamService samService) {
     super(authenticatedUserRequestFactory, request, samService);
     this.controlledResourceService = controlledResourceService;
-    this.resourceValidationUtils = resourceValidationUtils;
   }
 
   public ControlledResourceService getControlledResourceService() {
     return controlledResourceService;
   }
-
-  /**
-   * Return the cloud platform of the controlled resources in the respective controller (azure, gcp,
-   * etc.);
-   */
-  public abstract String getCloudPlatform();
 
   public ControlledResourceFields toCommonFields(
       UUID workspaceUuid,
@@ -78,9 +68,6 @@ public abstract class ControlledResourceControllerBase extends ControllerBase {
           "Controlled resource must have an associated region specified"
               + "on creation except for azure storage container and azure VM");
     }
-
-    resourceValidationUtils.validateControlledResourceRegionAgainstPolicy(
-        workspaceUuid, region, getCloudPlatform());
 
     return ControlledResourceFields.builder()
         .workspaceUuid(workspaceUuid)

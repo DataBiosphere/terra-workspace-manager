@@ -12,7 +12,6 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant;
@@ -66,14 +65,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
       JobApiUtils jobApiUtils,
       GcpCloudContextService gcpCloudContextService,
       ControlledResourceMetadataManager controlledResourceMetadataManager,
-      CrlService crlService,
-      ResourceValidationUtils resourceValidationUtils) {
-    super(
-        authenticatedUserRequestFactory,
-        request,
-        controlledResourceService,
-        samService,
-        resourceValidationUtils);
+      CrlService crlService) {
+    super(authenticatedUserRequestFactory, request, controlledResourceService, samService);
     this.workspaceService = workspaceService;
     this.jobService = jobService;
     this.jobApiUtils = jobApiUtils;
@@ -90,7 +83,6 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
         workspaceService.validateMcWorkspaceAndAction(
             userRequest, workspaceUuid, getSamAction(body.getCommon()));
     String resourceLocation = getResourceLocation(workspace, body.getGcsBucket().getLocation());
-
     ControlledResourceFields commonFields =
         toCommonFields(
             workspaceUuid,
@@ -121,11 +113,6 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .resourceId(createdBucket.getResourceId())
             .gcpBucket(createdBucket.toApiResource());
     return new ResponseEntity<>(response, HttpStatus.OK);
-  }
-
-  @Override
-  public String getCloudPlatform() {
-    return "gcp";
   }
 
   private String getResourceLocation(Workspace workspace, String requestedLocation) {

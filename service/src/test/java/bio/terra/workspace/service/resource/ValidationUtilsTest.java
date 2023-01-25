@@ -19,6 +19,7 @@ import bio.terra.workspace.service.resource.exception.InvalidNameException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import com.azure.core.management.Region;
 import java.util.List;
 import java.util.Locale;
@@ -50,8 +51,7 @@ public class ValidationUtilsTest extends BaseUnitTest {
   public void setup() {
     gitRepoReferencedResourceConfiguration.setAllowListedGitRepoHostNames(
         List.of("github.com", "gitlab.com", "bitbucket.org", "dev.azure.com", "ssh.dev.azure.com"));
-    validationUtils =
-        new ResourceValidationUtils(gitRepoReferencedResourceConfiguration, mockTpsApiDispatch());
+    validationUtils = new ResourceValidationUtils(gitRepoReferencedResourceConfiguration);
   }
 
   @Test
@@ -469,9 +469,10 @@ public class ValidationUtilsTest extends BaseUnitTest {
 
     for (var region : testRegions) {
       // these validations should not throw an exception
-      validationUtils.validateControlledResourceRegionAgainstPolicy(workspaceId, region, platform);
       validationUtils.validateControlledResourceRegionAgainstPolicy(
-          workspaceId, region.toUpperCase(Locale.ROOT), platform);
+          mockTpsApiDispatch(), workspaceId, region, CloudPlatform.GCP);
+      validationUtils.validateControlledResourceRegionAgainstPolicy(
+          mockTpsApiDispatch(), workspaceId, region.toUpperCase(Locale.ROOT), CloudPlatform.GCP);
     }
   }
 
@@ -486,13 +487,13 @@ public class ValidationUtilsTest extends BaseUnitTest {
         InvalidControlledResourceException.class,
         () ->
             validationUtils.validateControlledResourceRegionAgainstPolicy(
-                workspaceId, "badregion", platform));
+                mockTpsApiDispatch(), workspaceId, "badregion", CloudPlatform.GCP));
 
     assertThrows(
         InvalidControlledResourceException.class,
         () ->
             validationUtils.validateControlledResourceRegionAgainstPolicy(
-                workspaceId, "badregion", "azure"));
+                mockTpsApiDispatch(), workspaceId, "badregion", CloudPlatform.AZURE));
   }
 
   @Test
@@ -502,7 +503,7 @@ public class ValidationUtilsTest extends BaseUnitTest {
     for (var region : Region.values()) {
       var regionName = region.name();
       validationUtils.validateControlledResourceRegionAgainstPolicy(
-          workspaceId, region.name(), "azure");
+          mockTpsApiDispatch(), workspaceId, region.name(), CloudPlatform.AZURE);
     }
   }
 
@@ -512,6 +513,6 @@ public class ValidationUtilsTest extends BaseUnitTest {
         InvalidControlledResourceException.class,
         () ->
             validationUtils.validateControlledResourceRegionAgainstPolicy(
-                UUID.randomUUID(), "badlocation", "azure"));
+                mockTpsApiDispatch(), UUID.randomUUID(), "badlocation", CloudPlatform.AZURE));
   }
 }

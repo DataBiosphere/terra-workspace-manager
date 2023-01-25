@@ -16,6 +16,7 @@ import bio.terra.workspace.service.resource.exception.InvalidNameException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import com.azure.core.management.Region;
 import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.google.common.annotations.VisibleForTesting;
@@ -24,6 +25,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -131,14 +133,11 @@ public class ResourceValidationUtils {
   private static final int MAX_RESOURCE_DESCRIPTION_NAME = 2048;
 
   private final GitRepoReferencedResourceConfiguration gitRepoReferencedResourceConfiguration;
-  private final TpsApiDispatch tpsApiDispatch;
 
   @Autowired
   public ResourceValidationUtils(
-      GitRepoReferencedResourceConfiguration gitRepoReferencedResourceConfiguration,
-      TpsApiDispatch tpsApiDispatch) {
+      GitRepoReferencedResourceConfiguration gitRepoReferencedResourceConfiguration) {
     this.gitRepoReferencedResourceConfiguration = gitRepoReferencedResourceConfiguration;
-    this.tpsApiDispatch = tpsApiDispatch;
   }
 
   public static void validateBucketNameDisallowUnderscore(String name) {
@@ -159,7 +158,7 @@ public class ResourceValidationUtils {
    * Validates gcs-bucket name following Google documentation
    * https://cloud.google.com/storage/docs/naming-buckets#requirements on a best-effort base.
    *
-   * <p>This method DOES NOT guarentee that the bucket name is valid.
+   * <p>This method DOES NOT guarantee that the bucket name is valid.
    *
    * @param name gcs-bucket name
    * @param validationFailureError
@@ -194,11 +193,11 @@ public class ResourceValidationUtils {
     }
   }
 
-  public void validateControlledResourceRegionAgainstPolicy(
-      UUID workspaceUuid, String location, String platform) {
+  public static void validateControlledResourceRegionAgainstPolicy(
+      TpsApiDispatch tpsApiDispatch, UUID workspaceUuid, String location, CloudPlatform platform) {
     switch (platform) {
-      case "azure" -> validateAzureRegion(location);
-      case "gcp" -> validateGcpRegion(workspaceUuid, location);
+      case AZURE -> validateAzureRegion(location);
+      case GCP -> validateGcpRegion(tpsApiDispatch, workspaceUuid, location);
       default -> throw new InvalidControlledResourceException("Unrecognized platform");
     }
   }
@@ -443,17 +442,19 @@ public class ResourceValidationUtils {
         .collect(Collectors.toList())
         .contains(region)) {
       logger.warn("Invalid Azure region {}", region);
-      throw new InvalidControlledResourceException(
-          "Invalid Azure Region specified. See the class `com.azure.core.management.Region`");
+      throw new InvalidControlledResourceException("Invalid Azure Region specified.");
     }
   }
 
-  public void validateGcpRegion(UUID workspaceId, String region) {
+  public static void validateGcpRegion(
+      TpsApiDispatch tpsApiDispatch, UUID workspaceId, String region) {
     region = GcpUtils.parseRegion(region);
 
     // Get the list of valid locations for this workspace from TPS. If there are no regional
     // constraints applied to the workspace, TPS should return all available regions.
-    List<String> validLocations = tpsApiDispatch.listValidRegions(workspaceId, "gcp");
+    List<String> validLocations =
+        tpsApiDispatch.listValidRegions(
+            workspaceId, CloudPlatform.GCP.name().toLowerCase(Locale.ROOT));
 
     if (validLocations.stream().noneMatch(region::equalsIgnoreCase)) {
       throw new InvalidControlledResourceException(
