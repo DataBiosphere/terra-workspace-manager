@@ -7,6 +7,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.Contr
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.workspace.model.WsmCloneResourceResult;
+import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
@@ -82,10 +83,18 @@ public class WorkspaceCloneUtils {
       String cloudInstanceName,
       String destinationProjectId,
       String createdByEmail,
-      String region) {
+      String region,
+      @Nullable Long defaultTableLifetime,
+      @Nullable Long defaultPartitionLifeTime) {
     return ControlledBigQueryDatasetResource.builder()
         .projectId(destinationProjectId)
         .datasetName(cloudInstanceName)
+        .defaultTableLifetime(
+            Optional.ofNullable(defaultTableLifetime)
+                .orElse(sourceDataset.getDefaultTableLifetime()))
+        .defaultPartitionLifeTime(
+            Optional.ofNullable(defaultPartitionLifeTime)
+                .orElse(sourceDataset.getDefaultPartitionLifeTime()))
         .common(
             sourceDataset.buildControlledCloneResourceCommonFields(
                 destinationWorkspaceId,

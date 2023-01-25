@@ -74,6 +74,8 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTestMockGcpC
         /*destResourceName=*/ null,
         "datasetName",
         /*destLocation=*/ null,
+        /*defaultTableLifetime=*/ null,
+        /*defaultPartitionLifeTime=*/ null,
         List.of(HttpStatus.SC_BAD_REQUEST),
         /*shouldUndo=*/ false);
   }

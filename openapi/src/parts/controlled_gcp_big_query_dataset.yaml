@@ -187,6 +187,14 @@ components:
             Name for destination dataset. Must not be set if cloningInstructions
             is COPY_REFERENCE. Letters, numbers and underscores only.
           type: string
+        defaultTableLifetime:
+          description: Optional. Default lifetime (in seconds) for newly created tables.
+          type: integer
+          format: int64
+        defaultPartitionLifetime:
+          description: Optional. Default lifetime (in seconds) for partitions in newly created partitioned tables.
+          type: integer
+          format: int64
         cloningInstructions:
           $ref: "#/components/schemas/CloningInstructionsEnum"
         name:
