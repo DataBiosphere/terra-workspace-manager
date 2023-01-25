@@ -32,6 +32,10 @@ public class WsmResourceService {
         workspaceUuid, cloudResourceType, stewardshipType, offset, limit);
   }
 
+  public WsmResource getResource(UUID workspaceUuid, UUID resourceUuid) {
+    return resourceDao.getResource(workspaceUuid, resourceUuid);
+  }
+
   public void updateResourceProperties(
       UUID workspaceUuid, UUID resourceUuid, Map<String, String> properties) {
     resourceDao.updateResourceProperties(workspaceUuid, resourceUuid, properties);

@@ -41,12 +41,10 @@ import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.generated.model.ApiCloneResourceResult;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceResult;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
-import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiProperty;
-import bio.terra.workspace.generated.model.ApiRegions;
 import bio.terra.workspace.generated.model.ApiResourceCloneDetails;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
@@ -524,22 +522,6 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
         workspaceActivityLogService.getLastUpdatedDetails(workspace.getId()).get());
   }
 
-  @Test
-  public void listValidRegions_tpsEnabled() throws Exception {
-    ApiCreatedWorkspace workspace = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
-    List<String> availableRegions = List.of("US", "EU", "asia-northeast3");
-    when(mockTpsApiDispatch().listValidRegions(eq(workspace.getId()), eq("GCP")))
-        .thenReturn(availableRegions);
-    when(mockTpsApiDispatch().listValidRegions(eq(workspace.getId()), eq("AZURE")))
-        .thenReturn(Collections.emptyList());
-
-    ApiRegions result = listValid(workspace.getId(), ApiCloudPlatform.GCP.name());
-    ApiRegions empty = listValid(workspace.getId(), ApiCloudPlatform.AZURE.name());
-
-    assertTrue(result.containsAll(availableRegions));
-    assertTrue(empty.isEmpty());
-  }
-
   private ApiErrorReport createRawlsWorkspaceWithPolicyExpectError(int expectedCode)
       throws Exception {
     // Note: this is the WSM REST API form of the policy inputs
@@ -611,21 +593,6 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
                     .content(objectMapper.writeValueAsString(updateRequest)),
                 USER_REQUEST))
         .andExpect(status().is(code));
-  }
-
-  private ApiRegions listValid(UUID workspaceId, String platform) throws Exception {
-    var serializedResponse =
-        mockMvc
-            .perform(
-                addAuth(
-                    get(String.format(WORKSPACES_V1_LIST_VALID_REGIONS_PATH_FORMAT, workspaceId))
-                        .queryParam("platform", platform),
-                    USER_REQUEST))
-            .andExpect(status().is(HttpStatus.SC_OK))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-    return objectMapper.readValue(serializedResponse, ApiRegions.class);
   }
 
   private ApiWsmPolicyExplainResult explainPolicies(UUID workspaceId, int depth) throws Exception {

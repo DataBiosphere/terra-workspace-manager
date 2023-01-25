@@ -8,15 +8,12 @@ import static org.mockito.ArgumentMatchers.any;
 
 import bio.terra.landingzone.db.LandingZoneDao;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
-import bio.terra.workspace.app.configuration.external.AzureTestConfiguration;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
-import bio.terra.workspace.common.utils.AzureTestUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.LandingZoneTestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
-import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.ApiAzureStorageContainerCreationParameters;
 import bio.terra.workspace.service.crl.CrlService;
@@ -34,9 +31,7 @@ import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
-import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
-import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.Optional;
@@ -51,14 +46,9 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 
 @Tag("azureConnected")
 public class AzureWorkspaceTest extends BaseAzureConnectedTest {
-
-  @Autowired private AzureTestConfiguration azureTestConfiguration;
   @Autowired private JobService jobService;
-  @Autowired private SpendConnectedTestUtils spendUtils;
-  @Autowired private WorkspaceConnectedTestUtils testUtils;
   @Autowired private WorkspaceService workspaceService;
   @Autowired private AzureCloudContextService azureCloudContextService;
-  @Autowired private AzureTestUtils azureTestUtils;
   @Autowired private LandingZoneTestUtils landingZoneTestUtils;
   @Autowired private LandingZoneDao landingZoneDao;
   @Autowired private WorkspaceDao workspaceDao;
@@ -77,21 +67,15 @@ public class AzureWorkspaceTest extends BaseAzureConnectedTest {
             .email("fake@email.com")
             .subjectId("fakeID123");
 
+    SpendProfileId spendProfileId = initSpendProfileMock();
+
     Workspace workspace =
-        WorkspaceFixtures.defaultWorkspaceBuilder(null)
-            .spendProfileId(spendUtils.defaultSpendId())
-            .build();
+        WorkspaceFixtures.defaultWorkspaceBuilder(null).spendProfileId(spendProfileId).build();
 
     workspaceService.createWorkspace(workspace, null, null, userRequest);
 
     String jobId = UUID.randomUUID().toString();
-    AzureCloudContext azureCloudContext =
-        new AzureCloudContext(
-            azureTestConfiguration.getTenantId(),
-            azureTestConfiguration.getSubscriptionId(),
-            azureTestConfiguration.getManagedResourceGroupId());
-    workspaceService.createAzureCloudContext(
-        workspace, jobId, userRequest, "/fake/value", azureCloudContext);
+    workspaceService.createAzureCloudContext(workspace, jobId, userRequest, "/fake/value", null);
     jobService.waitForJob(jobId);
 
     assertNull(jobService.retrieveJobResult(jobId, Object.class).getException());
@@ -126,7 +110,7 @@ public class AzureWorkspaceTest extends BaseAzureConnectedTest {
     String jobId = UUID.randomUUID().toString();
 
     workspaceService.createAzureCloudContext(
-        sourceWorkspace, jobId, userRequest, "/fake/value", azureTestUtils.getAzureCloudContext());
+        sourceWorkspace, jobId, userRequest, "/fake/value", null);
     jobService.waitForJob(jobId);
 
     assertTrue(
@@ -197,12 +181,7 @@ public class AzureWorkspaceTest extends BaseAzureConnectedTest {
             .createdByEmail(userRequest.getEmail())
             .build();
     String cloneJobId =
-        workspaceService.cloneWorkspace(
-            sourceWorkspace,
-            userRequest,
-            null,
-            destWorkspace,
-            azureTestUtils.getAzureCloudContext());
+        workspaceService.cloneWorkspace(sourceWorkspace, userRequest, null, destWorkspace);
     jobService.waitForJob(cloneJobId);
 
     assertEquals(workspaceService.getWorkspace(destUUID), destWorkspace);

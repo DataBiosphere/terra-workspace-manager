@@ -16,13 +16,16 @@ import java.util.ArrayDeque;
 import java.util.Queue;
 import javax.annotation.Nullable;
 import org.apache.http.HttpStatus;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.junit.jupiter.EnabledIf;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
+@Tag("connected")
 @TestInstance(Lifecycle.PER_CLASS)
 public class PolicyApiControllerConnectedTest extends BaseConnectedTest {
 
@@ -30,6 +33,7 @@ public class PolicyApiControllerConnectedTest extends BaseConnectedTest {
   @Autowired ObjectMapper objectMapper;
 
   @Test
+  @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
   public void getLocationInfo_gcp() throws Exception {
     ApiWsmPolicyLocation region = getLocationInfo(ApiCloudPlatform.GCP.name());
 
@@ -44,6 +48,7 @@ public class PolicyApiControllerConnectedTest extends BaseConnectedTest {
   }
 
   @Test
+  @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
   public void getLocationInfo_azure() throws Exception {
     ApiWsmPolicyLocation region = getLocationInfo(ApiCloudPlatform.AZURE.name());
 
@@ -75,6 +80,7 @@ public class PolicyApiControllerConnectedTest extends BaseConnectedTest {
   }
 
   @Test
+  @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
   public void getLocationInfo_invalidRegion_404() throws Exception {
     getRegionInfoExpect(
         ApiCloudPlatform.GCP.name(), /*location=*/ "invalid", HttpStatus.SC_NOT_FOUND);

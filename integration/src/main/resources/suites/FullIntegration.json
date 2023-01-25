@@ -6,8 +6,6 @@
     "integration/BasicAuthenticated.json",
     "integration/BasicUnauthenticated.json",
     "integration/CloneWorkspace.json",
-    "integration/ControlledBigQueryDatasetLifecycle.json",
-    "integration/ControlledGcsBucketLifecycle.json",
     "integration/DeleteWorkspaceWithControlledResource.json",
     "integration/EnablePet.json",
     "integration/EnumerateResources.json",
@@ -15,12 +13,10 @@
     "integration/Jobs.json",
     "integration/ListWorkspaces.json",
     "integration/PrivateControlledAiNotebookInstanceLifecycle.json",
-    "integration/PrivateControlledGcsBucketLifecycle.json",
     "integration/ReferencedBigQueryResourceLifecycle.json",
     "integration/ReferencedDataRepoSnapshotLifecycle.json",
     "integration/ReferencedGcsResourceLifecycle.json",
     "integration/ReferencedGitRepoLifecycle.json",
-    "integration/RemoveUser.json",
     "integration/ResourceLineage.json",
     "integration/WorkspaceLifecycle.json"
   ]

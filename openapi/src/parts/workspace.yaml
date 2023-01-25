@@ -133,7 +133,7 @@ paths:
       operationId: cloneWorkspace
       tags: [Workspace]
       requestBody:
-        description: Details of workspce clone operation
+        description: Details of workspace clone operation
         required: true
         content:
           application/json:
@@ -430,8 +430,6 @@ components:
             GCP Location to use for cloud-based resources. If omitted, the location of the source
             resource will be used.
           type: string
-        azureContext:
-          $ref: '#/components/schemas/AzureContext'
 
     ResourceCloneDetails:
       description: >-

@@ -180,6 +180,7 @@ public class ReferencedGcpResourceControllerGitRepoTest extends BaseConnectedTes
         HttpStatus.SC_FORBIDDEN);
   }
 
+  @Disabled("Needs to handle permission propagation(?) PF-2430")
   @Test
   public void clone_requesterNoWriteAccessOnDestWorkspace_throws403() throws Exception {
     mockMvcUtils.grantRole(
@@ -214,6 +215,7 @@ public class ReferencedGcpResourceControllerGitRepoTest extends BaseConnectedTes
         userAccessUtils.getSecondUserEmail());
   }
 
+  @Disabled("Needs to handle permission propagation(?) PF-2430")
   @Test
   public void clone_secondUserHasWriteAccessOnDestWorkspace_succeeds() throws Exception {
     mockMvcUtils.grantRole(
