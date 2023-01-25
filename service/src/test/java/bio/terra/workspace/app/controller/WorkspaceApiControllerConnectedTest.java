@@ -349,7 +349,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     assertFalse(source.isDeleted());
     assertEquals(0, result.getExplanation().size());
   }
-  
+
   @Test
   @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
   public void listValidRegions() throws Exception {
