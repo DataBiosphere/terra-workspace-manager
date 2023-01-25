@@ -329,6 +329,19 @@ public class ClientTestUtils {
     return result;
   }
 
+  public static void getWithRetryOnFalse(SupplierWithException<Boolean> function) throws Exception {
+    getWithRetryOnException(function);
+  }
+
+  private static Boolean tryBooleanFunction(SupplierWithException<Boolean> function)
+      throws Exception {
+    Boolean result = function.get();
+    if (!result) {
+      throw new RuntimeException("Function " + function.getClass().getName() + " returned false");
+    }
+    return true;
+  }
+
   private static boolean isRetryable(
       Exception e, @Nullable List<Class<? extends Exception>> retryExceptionList) {
     // If we didn't get a list, then all exceptions are considered retryable

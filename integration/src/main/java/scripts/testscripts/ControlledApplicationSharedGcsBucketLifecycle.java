@@ -133,11 +133,11 @@ public class ControlledApplicationSharedGcsBucketLifecycle extends WorkspaceAllo
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, disableAppFails.getCode());
     logger.info("Failed to disable app, as expected");
 
+    // Creation of the tester will wait for wsmapp to get EDITOR permissions
     try (GcsBucketAccessTester tester = new GcsBucketAccessTester(wsmapp, bucketName, projectId)) {
-      tester.checkAccess(wsmapp, ControlledResourceIamRole.EDITOR);
-      tester.checkAccess(owner, ControlledResourceIamRole.WRITER);
-      tester.checkAccess(writer, ControlledResourceIamRole.WRITER);
-      tester.checkAccess(reader, ControlledResourceIamRole.READER);
+      tester.assertAccessWait(owner, ControlledResourceIamRole.WRITER);
+      tester.assertAccessWait(writer, ControlledResourceIamRole.WRITER);
+      tester.assertAccessWait(reader, ControlledResourceIamRole.READER);
     }
 
     // The reader should be able to enumerate the bucket.

@@ -1,8 +1,8 @@
 package scripts.utils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 import static scripts.utils.GcsBucketUtils.GCS_BLOB_CONTENT;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
@@ -50,8 +50,7 @@ import org.slf4j.LoggerFactory;
  * </ul>
  *
  * <p>When an access change is made, we need to wait for the change to propagate, but since we also
- * expect many failures, we do not want to wait every time. If requested, using checkAccessWait, we
- * will wait on the first operation. Otherwise, we do not wait on any operations.
+ * expect many failures, we do not want to wait every time.
  */
 public class GcsBucketAccessTester implements AutoCloseable {
   private static final Logger logger = LoggerFactory.getLogger(GcsBucketAccessTester.class);
@@ -60,8 +59,8 @@ public class GcsBucketAccessTester implements AutoCloseable {
   private final String projectId;
   private BlobId testBlobId;
   private final List<BlobId> createdBlobs;
-  private boolean needToWait;
   private Storage testClient;
+  private boolean needToWait;
 
   public GcsBucketAccessTester(
       TestUserSpecification creatorTestUser, String bucketName, String projectId) throws Exception {
@@ -71,6 +70,11 @@ public class GcsBucketAccessTester implements AutoCloseable {
     this.testBlobId = null;
     this.needToWait = false;
     this.createdBlobs = new ArrayList<>();
+
+    // The creator user must be an EDITOR in order to configure this access tester
+    // for testing another user's access. Ensure that the creator has valid access
+    // before continuing.
+    checkAccessWorker(creatorTestUser, ControlledResourceIamRole.EDITOR, true);
   }
 
   @Override
@@ -83,19 +87,74 @@ public class GcsBucketAccessTester implements AutoCloseable {
     }
   }
 
-  public void checkAccessWait(
-      TestUserSpecification testUser, @Nullable ControlledResourceIamRole role) throws Exception {
-    needToWait = true;
-    checkAccess(testUser, role);
-  }
-
   /**
+   * Check for access and wait for expected access to be allowed. We do not wait for access that is
+   * expected to be denied, so this method cannot be used to wait for a user to lose access.
+   *
    * @param testUser user to check
    * @param role the IamRole to test for; null to test the "user has no role" case
    * @throws Exception from asserts if the user has unexpected access
    */
-  public void checkAccess(TestUserSpecification testUser, @Nullable ControlledResourceIamRole role)
+  public void assertAccessWait(
+      TestUserSpecification testUser, @Nullable ControlledResourceIamRole role) throws Exception {
+    assertNotEquals(creatorTestUser, testUser);
+    String result = checkAccessWorker(testUser, role, true);
+    if (result != null) {
+      fail("Access check failed: " + result);
+    }
+  }
+
+  /**
+   * Check for access; do not wait for expected access to be allowed. Assert on unexpected access.
+   *
+   * @param testUser user to check
+   * @param role the IamRole to test for; null to test the "user has no role" case
+   * @throws Exception from asserts if the user has unexpected access
+   */
+  public void assertAccess(TestUserSpecification testUser, @Nullable ControlledResourceIamRole role)
       throws Exception {
+    assertNotEquals(creatorTestUser, testUser);
+    String result = checkAccessWorker(testUser, role, false);
+    if (result != null) {
+      fail("Access check failed: " + result);
+    }
+  }
+
+  /**
+   * This method is intended for the negative check - waiting for a user to lose access to a role.
+   * If a user has lost ANY of the permissions of a role, then we decide the user has lost the role.
+   *
+   * @param testUser user to check
+   * @param role the IamRole to test for; null to test the "user has no role" case
+   * @throws Exception from tests on an unexpected error
+   */
+  public void assertRemovedAccessWait(
+      TestUserSpecification testUser, @Nullable ControlledResourceIamRole role) throws Exception {
+    assertNotEquals(creatorTestUser, testUser);
+    ClientTestUtils.getWithRetryOnFalse(() -> testRemovedAccess(testUser, role));
+  }
+
+  private Boolean testRemovedAccess(
+      TestUserSpecification testUser, @Nullable ControlledResourceIamRole role) throws Exception {
+    String result = checkAccessWorker(testUser, role, false);
+    logger.info("User {} has permissions for role {}", testUser.userEmail, role);
+    return (result == null);
+  }
+
+  /**
+   * Worker method to test user access
+   *
+   * @param testUser user to check
+   * @param role the IamRole to test for; null to test the "user has no role" case
+   * @throws Exception from asserts if the user has unexpected access
+   * @return On error, string describing the failed check. On success, null
+   * @throws Exception unhandled failure of the operation (e.g., not a StorageException for
+   *     permission failure)
+   */
+  private String checkAccessWorker(
+      TestUserSpecification testUser, @Nullable ControlledResourceIamRole role, boolean wait)
+      throws Exception {
+    needToWait = wait;
     logger.info(
         "Checking access of {} for role {} with wait {}",
         testUser.userEmail,
@@ -104,45 +163,95 @@ public class GcsBucketAccessTester implements AutoCloseable {
 
     testClient = ClientTestUtils.getGcpStorageClient(testUser, projectId);
     if (role == null) {
-      assertFalse(doWithOptionalWait(() -> blobCreate(testClient)), "no role cannot create");
-      assertFalse(doWithOptionalWait(this::blobRead), "no role cannot read");
-      assertFalse(doWithOptionalWait(this::blobUpdate), "no role cannot update");
-      assertFalse(doWithOptionalWait(this::blobDelete), "no role cannot delete");
-      assertFalse(doWithOptionalWait(this::bucketGet), "no role cannot bucket get");
-      assertFalse(doWithOptionalWait(this::bucketDelete), "no role cannot bucket delete");
-      return;
+      if (doNoWait(() -> blobCreate(testClient))) {
+        return "no role cannot create";
+      }
+      if (doNoWait(this::blobRead)) {
+        return "no role cannot read";
+      }
+      if (doNoWait(this::blobUpdate)) {
+        return "no role cannot update";
+      }
+      if (doNoWait(this::blobDelete)) {
+        return "no role cannot delete";
+      }
+      if (doNoWait(this::bucketGet)) {
+        return "no role cannot bucket get";
+      }
+      if (doNoWait(this::bucketDelete)) {
+        return "no role cannot bucket delete";
+      }
+      return null; // Success
     }
 
     switch (role) {
-      case READER:
-        assertTrue(doWithOptionalWait(this::blobRead), "reader can read");
-        assertFalse(doWithOptionalWait(() -> blobCreate(testClient)), "reader cannot create");
-        assertFalse(doWithOptionalWait(this::blobUpdate), "reader cannot update");
-        assertFalse(doWithOptionalWait(this::blobDelete), "reader cannot delete");
-        assertFalse(doWithOptionalWait(this::bucketGet), "reader cannot bucket get");
-        assertFalse(doWithOptionalWait(this::bucketDelete), "reader cannot bucket delete");
-        return;
+      case READER -> {
+        if (!doWithOptionalWait(this::blobRead)) {
+          return "reader can read";
+        }
+        if (doNoWait(() -> blobCreate(testClient))) {
+          return "reader cannot create";
+        }
+        if (doNoWait(this::blobUpdate)) {
+          return "reader cannot update";
+        }
+        if (doWithOptionalWait(this::blobDelete)) {
+          return "reader cannot delete";
+        }
+        if (doWithOptionalWait(this::bucketGet)) {
+          return "reader cannot bucket get";
+        }
+        if (doWithOptionalWait(this::bucketDelete)) {
+          return "reader cannot bucket delete";
+        }
+        return null; // Success
+      }
 
-      case WRITER:
-        assertTrue(doWithOptionalWait(() -> blobCreate(testClient)), "writer can create");
-        assertTrue(doWithOptionalWait(this::blobRead), "writer can read");
-        assertTrue(doWithOptionalWait(this::blobUpdate), "writer can update");
-        assertTrue(doWithOptionalWait(this::blobDelete), "writer can delete");
-        assertFalse(doWithOptionalWait(this::bucketGet), "writer cannot bucket get");
-        assertFalse(doWithOptionalWait(this::bucketDelete), "writer cannot bucket delete");
-        return;
+      case WRITER -> {
+        if (!doWithOptionalWait(() -> blobCreate(testClient))) {
+          return "writer can create";
+        }
+        if (!doWithOptionalWait(this::blobRead)) {
+          return "writer can read";
+        }
+        if (!doWithOptionalWait(this::blobUpdate)) {
+          return "writer can update";
+        }
+        if (!doWithOptionalWait(this::blobDelete)) {
+          return "writer can delete";
+        }
 
-      case EDITOR:
-        assertTrue(doWithOptionalWait(() -> blobCreate(testClient)), "editor can create");
-        assertTrue(doWithOptionalWait(this::blobRead), "editor can read");
-        assertTrue(doWithOptionalWait(this::blobUpdate), "editor can update");
-        assertTrue(doWithOptionalWait(this::blobDelete), "editor can delete");
-        assertTrue(doWithOptionalWait(this::bucketGet), "editor can bucket get");
-        assertFalse(doWithOptionalWait(this::bucketDelete), "editor cannot bucket delete");
-        return;
+        if (doNoWait(this::bucketGet)) {
+          return "writer cannot bucket get";
+        }
+        if (doNoWait(this::bucketDelete)) {
+          return "writer cannot bucket delete";
+        }
+        return null; // Success
+      }
 
-      default:
-        throw new IllegalArgumentException("Invalid IAM role: " + role);
+      case EDITOR -> {
+        if (!doWithOptionalWait(() -> blobCreate(testClient))) {
+          return "editor can create";
+        }
+        if (!doWithOptionalWait(this::blobRead)) {
+          return "editor can read";
+        }
+        if (!doWithOptionalWait(this::blobUpdate)) {
+          return "editor can update";
+        }
+        if (!doWithOptionalWait(this::blobDelete)) {
+          return "editor can delete";
+        }
+        if (!doWithOptionalWait(this::bucketGet)) {
+          return "editor can bucket get";
+        }
+        if (doNoWait(this::bucketDelete)) {
+          return "editor cannot bucket delete";
+        }
+        return null; // Success
+      }
+      default -> throw new IllegalArgumentException("Invalid IAM role: " + role);
     }
   }
 
@@ -154,17 +263,34 @@ public class GcsBucketAccessTester implements AutoCloseable {
   }
 
   private boolean doWithOptionalWait(TestFunction function) throws Exception {
+    if (needToWait) {
+      return doWait(function);
+    }
+    return doNoWait(function);
+  }
+
+  private boolean doWait(TestFunction function) throws Exception {
     try {
-      if (needToWait) {
-        ClientTestUtils.getWithRetryOnException(function::apply);
-        needToWait = false;
-      } else {
-        function.apply();
-      }
+      ClientTestUtils.getWithRetryOnException(function::apply);
       return true;
     } catch (StorageException e) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, e.getCode());
-      return false;
+      if (e.getCode() == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
+        assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, e.getCode());
+        return false;
+      }
+      throw e;
+    }
+  }
+
+  private boolean doNoWait(TestFunction function) throws Exception {
+    try {
+      function.apply();
+      return true;
+    } catch (StorageException e) {
+      if (e.getCode() == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
+        return false;
+      }
+      throw e;
     }
   }
 

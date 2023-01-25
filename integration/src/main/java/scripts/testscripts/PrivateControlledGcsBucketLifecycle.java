@@ -121,12 +121,13 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
             .getPrivateResourceUser()
             .getUserName());
 
+    // Creation of the tester will test that privateResourceUser
+    // has ControlledResourceIamRole.EDITOR permissions on the bucket
     try (GcsBucketAccessTester tester =
         new GcsBucketAccessTester(privateResourceUser, bucketName, projectId)) {
-      tester.checkAccessWait(privateResourceUser, ControlledResourceIamRole.EDITOR);
-      // workspace owner can do nothing
-      tester.checkAccess(testUser, null);
-      tester.checkAccess(workspaceReader, null);
+      // workspace owner and workspace reader can do nothing
+      tester.assertAccess(testUser, null);
+      tester.assertAccess(workspaceReader, null);
     }
 
     // Any workspace user should be able to enumerate all buckets, even though they can't access

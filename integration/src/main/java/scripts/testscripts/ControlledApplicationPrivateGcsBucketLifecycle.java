@@ -133,9 +133,9 @@ public class ControlledApplicationPrivateGcsBucketLifecycle
     assertNotNull(bucketName);
     logger.info("Created no-assigned-user bucket {}", bucketName);
 
+    // Creating the tester will wait for wsmapp to have EDITOR permission
     try (GcsBucketAccessTester tester = new GcsBucketAccessTester(wsmapp, bucketName, projectId)) {
-      tester.checkAccess(wsmapp, ControlledResourceIamRole.EDITOR);
-      tester.checkAccess(owner, null);
+      tester.assertAccess(owner, null);
       // Don't bother testing reader and writer here.
     }
     deleteBucket(resourceApi, createdBucket);
@@ -159,10 +159,10 @@ public class ControlledApplicationPrivateGcsBucketLifecycle
     assertNotNull(bucketName);
     logger.info("Created assigned-reader bucket {}", bucketName);
 
+    // Creating tester waits for wsmapp to have EDITOR permissions
     try (GcsBucketAccessTester tester = new GcsBucketAccessTester(wsmapp, bucketName, projectId)) {
-      tester.checkAccess(wsmapp, ControlledResourceIamRole.EDITOR);
-      tester.checkAccess(reader, null);
-      tester.checkAccess(writer, ControlledResourceIamRole.READER);
+      tester.assertAccess(reader, null);
+      tester.assertAccessWait(writer, ControlledResourceIamRole.READER);
     }
     deleteBucket(resourceApi, createdBucket);
   }
@@ -185,10 +185,10 @@ public class ControlledApplicationPrivateGcsBucketLifecycle
     assertNotNull(bucketName);
     logger.info("Created assigned-writer bucket {}", bucketName);
 
+    // Creating the tester wiat for wsmapp to have EDITOR permissions
     try (GcsBucketAccessTester tester = new GcsBucketAccessTester(wsmapp, bucketName, projectId)) {
-      tester.checkAccess(wsmapp, ControlledResourceIamRole.EDITOR);
-      tester.checkAccess(writer, null);
-      tester.checkAccess(reader, ControlledResourceIamRole.WRITER);
+      tester.assertAccess(writer, null);
+      tester.assertAccessWait(reader, ControlledResourceIamRole.WRITER);
     }
     deleteBucket(resourceApi, createdBucket);
   }
