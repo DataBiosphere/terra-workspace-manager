@@ -244,14 +244,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
     ApiFolder secondFolder =
         createFolder(workspaceId, displayName, /*parentFolderId=*/ firstFolder.getId());
 
-    List<ApiFolder> retrievedFolders =
-        listFolders(workspaceId).getFolders().stream()
-            .filter(folder -> folder.getCreatedDate() != null)
-            .map(
-                // Only the retrivedFolders will have created date set. To assert equals, remove the
-                // created date.
-                folder -> folder.createdDate(null))
-            .toList();
+    List<ApiFolder> retrievedFolders = listFolders(workspaceId).getFolders().stream().toList();
 
     assertThat(retrievedFolders, containsInAnyOrder(firstFolder, secondFolder));
   }
