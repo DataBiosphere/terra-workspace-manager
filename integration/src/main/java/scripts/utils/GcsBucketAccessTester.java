@@ -102,6 +102,7 @@ public class GcsBucketAccessTester implements AutoCloseable {
     if (result != null) {
       fail("Access check failed: " + result);
     }
+    logger.info("Access check of {} for role {} succeeded", testUser.userEmail, role);
   }
 
   /**
@@ -118,6 +119,7 @@ public class GcsBucketAccessTester implements AutoCloseable {
     if (result != null) {
       fail("Access check failed: " + result);
     }
+    logger.info("Access check of {} for role {} succeeded", testUser.userEmail, role);
   }
 
   /**
@@ -195,13 +197,13 @@ public class GcsBucketAccessTester implements AutoCloseable {
         if (doNoWait(this::blobUpdate)) {
           return "reader cannot update";
         }
-        if (doWithOptionalWait(this::blobDelete)) {
+        if (doNoWait(this::blobDelete)) {
           return "reader cannot delete";
         }
-        if (doWithOptionalWait(this::bucketGet)) {
+        if (doNoWait(this::bucketGet)) {
           return "reader cannot bucket get";
         }
-        if (doWithOptionalWait(this::bucketDelete)) {
+        if (doNoWait(this::bucketDelete)) {
           return "reader cannot bucket delete";
         }
         return null; // Success
