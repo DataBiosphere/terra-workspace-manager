@@ -22,7 +22,6 @@ import bio.terra.workspace.model.ResourceList;
 import bio.terra.workspace.model.ResourceType;
 import bio.terra.workspace.model.StewardshipType;
 import bio.terra.workspace.model.WorkspaceApplicationDescription;
-
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -77,12 +76,13 @@ public class ControlledApplicationPrivateGcsBucketLifecycle
     this.wsmapp = testUsers.get(3);
 
     this.bucketList = new ArrayList<>();
-    this.wsmappResourceApi = new ControlledGcpResourceApi(ClientTestUtils.getClientForTestUser(wsmapp, server));
+    this.wsmappResourceApi =
+        new ControlledGcpResourceApi(ClientTestUtils.getClientForTestUser(wsmapp, server));
   }
 
   @Override
   protected void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
-    throws Exception {
+      throws Exception {
     try {
       // Clean any buckets on the list. There might be some in a failure case
       deleteBucketList();
@@ -212,12 +212,12 @@ public class ControlledApplicationPrivateGcsBucketLifecycle
   }
 
   private void deleteBucketList() throws Exception {
-    for(CreatedControlledGcpGcsBucket bucket : bucketList) {
+    for (CreatedControlledGcpGcsBucket bucket : bucketList) {
       GcsBucketUtils.deleteControlledGcsBucket(
-        bucket.getResourceId(), getWorkspaceId(), wsmappResourceApi);
-      logger.info("Application deleted bucket {}", bucket.getGcpBucket().getAttributes().getBucketName());
+          bucket.getResourceId(), getWorkspaceId(), wsmappResourceApi);
+      logger.info(
+          "Application deleted bucket {}", bucket.getGcpBucket().getAttributes().getBucketName());
     }
     bucketList.clear();
   }
-
 }
