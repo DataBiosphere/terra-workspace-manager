@@ -101,6 +101,21 @@ public class FolderApiControllerTest extends BaseUnitTest {
   }
 
   @Test
+  public void createFolder_dateAndActorFieldsSet() throws Exception {
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+
+    ApiFolder folder =
+        createFolder(workspaceId, "foo", "This is folder foo", null, Map.of("foo", "bar"));
+
+    assertNotNull(folder.getId());
+    assertNull(folder.getParentFolderId());
+    assertEquals(USER_REQUEST.getEmail(), folder.getCreatedBy());
+    assertNotNull(folder.getCreatedDate());
+    assertEquals(USER_REQUEST.getEmail(), folder.getLastUpdatedBy());
+    assertNotNull(folder.getLastUpdatedDate());
+  }
+
+  @Test
   public void createFolder_doesNotHaveWriteAccess_throws403() throws Exception {
     UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     doThrow(new ForbiddenException("User has no write access"))
