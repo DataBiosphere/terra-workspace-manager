@@ -136,29 +136,29 @@ public class ValidationUtilsTest extends BaseUnitTest {
   public void validateReferencedBucketName_nameHas64Character_throwsException() {
     assertThrows(
         InvalidNameException.class,
-        () -> ResourceValidationUtils.validateReferencedBucketName(INVALID_STRING));
+        () -> ResourceValidationUtils.validateBucketNameAllowsUnderscore(INVALID_STRING));
   }
 
   @Test
   public void validateReferencedBucketName_nameHas63Character_OK() {
-    ResourceValidationUtils.validateReferencedBucketName(MAX_VALID_STRING);
+    ResourceValidationUtils.validateBucketNameAllowsUnderscore(MAX_VALID_STRING);
   }
 
   @Test
   public void validateReferencedBucketName_nameHas2Character_throwsException() {
     assertThrows(
         InvalidNameException.class,
-        () -> ResourceValidationUtils.validateReferencedBucketName("aa"));
+        () -> ResourceValidationUtils.validateBucketNameAllowsUnderscore("aa"));
   }
 
   @Test
   public void validateReferencedBucketName_nameHas3Character_OK() {
-    ResourceValidationUtils.validateReferencedBucketName("123");
+    ResourceValidationUtils.validateBucketNameAllowsUnderscore("123");
   }
 
   @Test
   public void validateReferencedBucketName_nameHas222CharacterWithDotSeparator_OK() {
-    ResourceValidationUtils.validateReferencedBucketName(MAX_VALID_STRING_WITH_DOTS);
+    ResourceValidationUtils.validateBucketNameAllowsUnderscore(MAX_VALID_STRING_WITH_DOTS);
   }
 
   @Test
@@ -167,53 +167,53 @@ public class ValidationUtilsTest extends BaseUnitTest {
     assertThrows(
         InvalidNameException.class,
         () ->
-            ResourceValidationUtils.validateReferencedBucketName(
+            ResourceValidationUtils.validateBucketNameAllowsUnderscore(
                 INVALID_STRING + "." + MAX_VALID_STRING));
   }
 
   @Test
   public void validateReferencedBucketName_nameStartAndEndWithNumber_OK() {
-    ResourceValidationUtils.validateReferencedBucketName("1-bucket-1");
+    ResourceValidationUtils.validateBucketNameAllowsUnderscore("1-bucket-1");
   }
 
   @Test
   public void validateReferencedBucketName_nameStartAndEndWithDot_throwsException() {
     assertThrows(
         InvalidNameException.class,
-        () -> ResourceValidationUtils.validateReferencedBucketName(".bucket-name."));
+        () -> ResourceValidationUtils.validateBucketNameAllowsUnderscore(".bucket-name."));
   }
 
   @Test
   public void validateReferencedBucketName_nameWithGoogPrefix_throwsException() {
     assertThrows(
         InvalidNameException.class,
-        () -> ResourceValidationUtils.validateReferencedBucketName("goog-bucket-name1"));
+        () -> ResourceValidationUtils.validateBucketNameAllowsUnderscore("goog-bucket-name1"));
   }
 
   @Test
   public void validateReferencedBucketName_nameContainsGoogle_throwsException() {
     assertThrows(
         InvalidNameException.class,
-        () -> ResourceValidationUtils.validateReferencedBucketName("bucket-google-name"));
+        () -> ResourceValidationUtils.validateBucketNameAllowsUnderscore("bucket-google-name"));
   }
 
   @Test
   public void validateReferencedBucketName_nameContainsG00gle_throwsException() {
     assertThrows(
         InvalidNameException.class,
-        () -> ResourceValidationUtils.validateReferencedBucketName("bucket-g00gle-name"));
+        () -> ResourceValidationUtils.validateBucketNameAllowsUnderscore("bucket-g00gle-name"));
   }
 
   @Test
   public void validateReferencedBucketName_nameContainsUnderscore_OK() {
-    ResourceValidationUtils.validateReferencedBucketName("bucket_name");
+    ResourceValidationUtils.validateBucketNameAllowsUnderscore("bucket_name");
   }
 
   @Test
   public void validateControlledBucketName_nameContainsUnderscore_throwsException() {
     assertThrows(
         InvalidNameException.class,
-        () -> ResourceValidationUtils.validateControlledBucketName("bucket_name"));
+        () -> ResourceValidationUtils.validateBucketNameDisallowUnderscore("bucket_name"));
   }
 
   @Test

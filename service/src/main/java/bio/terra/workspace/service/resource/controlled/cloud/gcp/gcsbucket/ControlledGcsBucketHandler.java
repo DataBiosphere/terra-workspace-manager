@@ -2,7 +2,6 @@ package bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket;
 
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
-import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
@@ -38,17 +37,11 @@ public class ControlledGcsBucketHandler implements WsmResourceHandler {
   public WsmResource makeResourceFromDb(DbResource dbResource) {
     ControlledGcsBucketAttributes attributes =
         DbSerDes.fromJson(dbResource.getAttributes(), ControlledGcsBucketAttributes.class);
-    ControlledResourceFields commonFields = new ControlledResourceFields(dbResource);
-    var resource =
-        ControlledGcsBucketResource.builder()
-            .bucketName(
-                StringUtils.isEmpty(attributes.getBucketName())
-                    ? ControlledGcsBucketHandler.getHandler()
-                        .generateCloudName(commonFields.getWorkspaceId(), commonFields.getName())
-                    : attributes.getBucketName())
-            .common(commonFields)
-            .build();
-    return resource;
+    var bucketName =
+        StringUtils.isEmpty(attributes.getBucketName())
+            ? generateCloudName(dbResource.getWorkspaceId(), dbResource.getName())
+            : attributes.getBucketName();
+    return new ControlledGcsBucketResource(dbResource, bucketName);
   }
 
   /**

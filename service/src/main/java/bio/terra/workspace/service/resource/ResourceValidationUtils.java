@@ -134,14 +134,14 @@ public class ResourceValidationUtils {
     this.gitRepoReferencedResourceConfiguration = gitRepoReferencedResourceConfiguration;
   }
 
-  public static void validateControlledBucketName(String name) {
+  public static void validateBucketNameDisallowUnderscore(String name) {
     validateBucketName(
         name,
         CONTROLLED_BUCKET_NAME_VALIDATION_PATTERN,
         CONTROLLED_BUCKET_NAME_VALIDATION_FAILURE_ERROR);
   }
 
-  public static void validateReferencedBucketName(String name) {
+  public static void validateBucketNameAllowsUnderscore(String name) {
     validateBucketName(
         name,
         REFERENCED_BUCKET_NAME_VALIDATION_PATTERN,
