@@ -8,6 +8,7 @@ import bio.terra.policy.model.TpsComponent;
 import bio.terra.policy.model.TpsLocation;
 import bio.terra.policy.model.TpsObjectType;
 import bio.terra.policy.model.TpsPaoCreateRequest;
+import bio.terra.policy.model.TpsPaoExplainResult;
 import bio.terra.policy.model.TpsPaoGetResult;
 import bio.terra.policy.model.TpsPaoReplaceRequest;
 import bio.terra.policy.model.TpsPaoSourceRequest;
@@ -18,10 +19,13 @@ import bio.terra.policy.model.TpsRegions;
 import bio.terra.policy.model.TpsUpdateMode;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.configuration.external.PolicyServiceConfiguration;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.policy.exception.PolicyServiceAPIException;
 import bio.terra.workspace.service.policy.exception.PolicyServiceAuthorizationException;
 import bio.terra.workspace.service.policy.exception.PolicyServiceDuplicateException;
 import bio.terra.workspace.service.policy.exception.PolicyServiceNotFoundException;
+import bio.terra.workspace.service.policy.model.PolicyExplainResult;
+import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import io.opencensus.contrib.http.jaxrs.JaxrsClientExtractor;
 import io.opencensus.contrib.http.jaxrs.JaxrsClientFilter;
@@ -29,12 +33,15 @@ import io.opencensus.contrib.spring.aop.Traced;
 import io.opencensus.trace.Tracing;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import javax.ws.rs.client.Client;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -42,6 +49,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class TpsApiDispatch {
+  private static final Logger logger = LoggerFactory.getLogger(TpsApiDispatch.class);
   private final FeatureConfiguration features;
   private final PolicyServiceConfiguration policyServiceConfiguration;
   private final Client commonHttpClient;
@@ -193,6 +201,34 @@ public class TpsApiDispatch {
       return tpsRegions.stream().toList();
     }
     return new ArrayList<>();
+  }
+
+  public PolicyExplainResult explain(
+      UUID workspaceId,
+      int depth,
+      WorkspaceService workspaceService,
+      AuthenticatedUserRequest userRequest) {
+    features.tpsEnabledCheck();
+    TpsApi tpsApi = policyApi();
+    try {
+      TpsPaoExplainResult tpsResult = tpsApi.explainPao(workspaceId, depth);
+      return new PolicyExplainResult(
+          tpsResult.getObjectId(),
+          tpsResult.getDepth(),
+          // Fetches WSM object specific information (access, name, properties of a WSM object
+          // i.e. workspace and put it in the wsm policy object.
+          Optional.ofNullable(tpsResult.getExplainObjects())
+              .orElse(Collections.emptyList())
+              .stream()
+              .map(
+                  source ->
+                      TpsApiConversionUtils.buildWsmPolicyObject(
+                          source, workspaceService, userRequest))
+              .toList(),
+          Optional.ofNullable(tpsResult.getExplanation()).orElse(Collections.emptyList()));
+    } catch (ApiException e) {
+      throw convertApiException(e);
+    }
   }
 
   public TpsLocation getLocationInfo(CloudPlatform platform, String location) {

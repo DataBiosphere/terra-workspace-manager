@@ -335,7 +335,37 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
+  /api/workspaces/v1/{workspaceId}/policies/explain:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/WsmPolicyDepth'
+    get:
+      summary: Get an explanation of the workspace policies
+      operationId: explainPolicies
+      tags: [ Workspace ]
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WsmPolicyExplainResult'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
 components:
+  parameters:
+    WsmPolicyDepth:
+      in: query
+      name: depth
+      required: false
+      schema:
+        $ref: '#/components/schemas/WsmPolicyDepth'
+      description: The depth of policy explain on a workspace's policy sources.
+
   responses:
     CloneWorkspaceResponse:
       description: Response to clone workspace request
@@ -343,6 +373,7 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CloneWorkspaceResult'
+
   schemas:
     ClonedWorkspace:
       description: >-

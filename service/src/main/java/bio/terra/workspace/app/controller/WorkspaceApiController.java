@@ -40,6 +40,7 @@ import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
+import bio.terra.workspace.generated.model.ApiWsmPolicyExplainResult;
 import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateRequest;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateResult;
@@ -56,6 +57,7 @@ import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.policy.TpsApiConversionUtils;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
+import bio.terra.workspace.service.policy.model.PolicyExplainResult;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
@@ -688,6 +690,17 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     ApiRegions apiRegions = new ApiRegions();
     apiRegions.addAll(regions);
     return new ResponseEntity<>(apiRegions, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiWsmPolicyExplainResult> explainPolicies(
+      UUID workspaceId, Integer depth) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    workspaceService.validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.READ);
+    PolicyExplainResult explainResult =
+        tpsApiDispatch.explain(workspaceId, depth, workspaceService, userRequest);
+
+    return new ResponseEntity<>(explainResult.toApi(), HttpStatus.OK);
   }
 
   // Retrieve the async result or progress for clone workspace.
