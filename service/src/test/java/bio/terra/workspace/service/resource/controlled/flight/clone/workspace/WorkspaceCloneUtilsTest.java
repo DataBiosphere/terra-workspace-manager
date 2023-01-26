@@ -59,7 +59,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             DEFAULT_USER_EMAIL,
             DEFAULT_GCP_RESOURCE_REGION,
             /*defaultTableLifetime=*/ null,
-            /*defaultPartitionLifeTime=*/ null);
+            /*defaultPartitionLifetime=*/ null);
 
     assertResourceCommonFields(sourceDataset, cloneResourceName, cloneDescription, datasetToClone);
     assertControlledResourceCommonField(sourceDataset, datasetToClone);
@@ -89,7 +89,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             DEFAULT_USER_EMAIL,
             DEFAULT_GCP_RESOURCE_REGION,
             /*defaultTableLifetime=*/ null,
-            /*defaultPartitionLifeTime=*/ null);
+            /*defaultPartitionLifetime=*/ null);
 
     assertResourceCommonFields(
         sourceDataset, sourceDataset.getName(), sourceDataset.getDescription(), datasetToClone);
@@ -125,7 +125,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             DEFAULT_USER_EMAIL,
             DEFAULT_GCP_RESOURCE_REGION,
             /*defaultTableLifetime=*/ null,
-            /*defaultPartitionLifeTime=*/ null);
+            /*defaultPartitionLifetime=*/ null);
 
     assertEquals(PrivateResourceState.INITIALIZING, datasetToClone.getPrivateResourceState().get());
     assertControlledResourceCommonField(sourceDataset, datasetToClone);
@@ -153,7 +153,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             DEFAULT_USER_EMAIL,
             DEFAULT_GCP_RESOURCE_REGION,
             /*defaultTableLifetime=*/ null,
-            /*defaultPartitionLifeTime=*/ null);
+            /*defaultPartitionLifetime=*/ null);
 
     ImmutableMap<String, String> properties = datasetToClone.getProperties();
     assertFalse(properties.containsKey(FOLDER_ID_KEY));
@@ -182,7 +182,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             DEFAULT_USER_EMAIL,
             DEFAULT_GCP_RESOURCE_REGION,
             /*defaultTableLifetime=*/ null,
-            /*defaultPartitionLifeTime=*/ null);
+            /*defaultPartitionLifetime=*/ null);
 
     assertTrue(datasetToClone.getProperties().containsKey(FOLDER_ID_KEY));
   }

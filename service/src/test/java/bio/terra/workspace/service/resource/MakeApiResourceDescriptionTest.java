@@ -267,7 +267,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
               /*lastUpdatedDate=*/ null,
               DEFAULT_GCP_RESOURCE_REGION,
               /*defaultTableLifetime=*/ null,
-              /*defaultPartitionLifeTime=*/ null);
+              /*defaultPartitionLifetime=*/ null);
 
       ApiResourceDescription resourceDescription =
           resourceController.makeApiResourceDescription(resource);

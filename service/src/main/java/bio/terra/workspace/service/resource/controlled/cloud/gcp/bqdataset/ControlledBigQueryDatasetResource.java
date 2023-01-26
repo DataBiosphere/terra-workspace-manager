@@ -44,7 +44,7 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
   private final String datasetName;
   private final String projectId;
   private final Long defaultTableLifetime;
-  private final Long defaultPartitionLifeTime;
+  private final Long defaultPartitionLifetime;
 
   @JsonCreator
   public ControlledBigQueryDatasetResource(
@@ -68,7 +68,7 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
       @JsonProperty("lastUpdatedDate") OffsetDateTime lastUpdatedDate,
       @JsonProperty("region") String region,
       @JsonProperty("defaultTableLifetime") Long defaultTableLifetime,
-      @JsonProperty("defaultPartitionLifeTime") Long defaultPartitionLifeTime) {
+      @JsonProperty("defaultPartitionLifetime") Long defaultPartitionLifetime) {
     super(
         workspaceId,
         resourceId,
@@ -90,7 +90,7 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
     this.datasetName = datasetName;
     this.projectId = projectId;
     this.defaultTableLifetime = defaultTableLifetime;
-    this.defaultPartitionLifeTime = defaultPartitionLifeTime;
+    this.defaultPartitionLifetime = defaultPartitionLifetime;
     validate();
   }
 
@@ -100,12 +100,12 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
       String datasetName,
       String projectId,
       Long defaultTableLifetime,
-      Long defaultPartitionLifeTime) {
+      Long defaultPartitionLifetime) {
     super(common);
     this.datasetName = datasetName;
     this.projectId = projectId;
     this.defaultTableLifetime = defaultTableLifetime;
-    this.defaultPartitionLifeTime = defaultPartitionLifeTime;
+    this.defaultPartitionLifetime = defaultPartitionLifetime;
     validate();
   }
 
@@ -172,7 +172,7 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
   }
 
   public Long getDefaultPartitionLifeTime() {
-    return defaultPartitionLifeTime;
+    return defaultPartitionLifetime;
   }
 
   public ApiGcpBigQueryDatasetAttributes toApiAttributes() {
@@ -291,7 +291,7 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
     private String projectId;
     private Long defaultTableLifetime;
 
-    private Long defaultPartitionLifeTime;
+    private Long defaultPartitionLifetime;
 
     public ControlledBigQueryDatasetResource.Builder common(ControlledResourceFields common) {
       this.common = common;
@@ -314,15 +314,15 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
       return this;
     }
 
-    public ControlledBigQueryDatasetResource.Builder defaultPartitionLifeTime(
-        Long defaultPartitionLifeTime) {
-      this.defaultPartitionLifeTime = defaultPartitionLifeTime;
+    public ControlledBigQueryDatasetResource.Builder defaultPartitionLifetime(
+        Long defaultPartitionLifetime) {
+      this.defaultPartitionLifetime = defaultPartitionLifetime;
       return this;
     }
 
     public ControlledBigQueryDatasetResource build() {
       return new ControlledBigQueryDatasetResource(
-          common, datasetName, projectId, defaultTableLifetime, defaultPartitionLifeTime);
+          common, datasetName, projectId, defaultTableLifetime, defaultPartitionLifetime);
     }
   }
 }

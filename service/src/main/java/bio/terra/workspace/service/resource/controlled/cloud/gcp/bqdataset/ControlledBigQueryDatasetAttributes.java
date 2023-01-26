@@ -7,19 +7,19 @@ public class ControlledBigQueryDatasetAttributes {
   private final String datasetName;
   private final String projectId;
   private final Long defaultTableLifetime;
-  private final Long defaultPartitionLifeTime;
+  private final Long defaultPartitionLifetime;
 
   @JsonCreator
   public ControlledBigQueryDatasetAttributes(
       @JsonProperty("datasetName") String datasetName,
       @JsonProperty("projectId") String projectId,
       @JsonProperty("defaultTableLifetime") Long defaultTableLifetime,
-      @JsonProperty("defaultPartitionLifeTime") Long defaultPartitionLifeTime) {
+      @JsonProperty("defaultPartitionLifetime") Long defaultPartitionLifetime) {
 
     this.datasetName = datasetName;
     this.projectId = projectId;
     this.defaultTableLifetime = defaultTableLifetime;
-    this.defaultPartitionLifeTime = defaultPartitionLifeTime;
+    this.defaultPartitionLifetime = defaultPartitionLifetime;
   }
 
   public String getDatasetName() {
@@ -35,6 +35,6 @@ public class ControlledBigQueryDatasetAttributes {
   }
 
   public Long getDefaultPartitionLifeTime() {
-    return defaultPartitionLifeTime;
+    return defaultPartitionLifetime;
   }
 }

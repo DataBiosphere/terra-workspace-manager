@@ -85,15 +85,15 @@ public class WorkspaceCloneUtils {
       String createdByEmail,
       String region,
       @Nullable Long defaultTableLifetime,
-      @Nullable Long defaultPartitionLifeTime) {
+      @Nullable Long defaultPartitionLifetime) {
     return ControlledBigQueryDatasetResource.builder()
         .projectId(destinationProjectId)
         .datasetName(cloudInstanceName)
         .defaultTableLifetime(
             Optional.ofNullable(defaultTableLifetime)
                 .orElse(sourceDataset.getDefaultTableLifetime()))
-        .defaultPartitionLifeTime(
-            Optional.ofNullable(defaultPartitionLifeTime)
+        .defaultPartitionLifetime(
+            Optional.ofNullable(defaultPartitionLifetime)
                 .orElse(sourceDataset.getDefaultPartitionLifeTime()))
         .common(
             sourceDataset.buildControlledCloneResourceCommonFields(

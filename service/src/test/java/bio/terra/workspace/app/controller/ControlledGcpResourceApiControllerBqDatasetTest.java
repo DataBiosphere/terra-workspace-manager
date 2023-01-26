@@ -255,7 +255,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         /*destDatasetName=*/ null,
         /*destLocation=*/ null,
         /*defaultTableLifetime=*/ null,
-        /*defaultPartitionLifeTime=*/ null,
+        /*defaultPartitionLifetime=*/ null,
         List.of(HttpStatus.SC_FORBIDDEN),
         /*shouldUndo=*/ false);
   }
@@ -283,7 +283,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         /*destDatasetName=*/ null,
         /*destLocation=*/ null,
         /*defaultTableLifetime=*/ null,
-        /*defaultPartitionLifeTime=*/ null,
+        /*defaultPartitionLifetime=*/ null,
         List.of(HttpStatus.SC_FORBIDDEN),
         /*shouldUndo=*/ false);
 
@@ -323,7 +323,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
             /*destDatasetName=*/ null,
             /*destLocation=*/ null,
             /*defaultTableLifetime=*/ null,
-            /*defaultPartitionLifeTime=*/ null);
+            /*defaultPartitionLifetime=*/ null);
 
     assertClonedControlledBqDataset(
         clonedBqDataset,
@@ -399,7 +399,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
     // Note to resource authors: Set all request fields, eg BQ dataset location.
     String destLocation = "europe-west1";
     Long defaultTableLifetime = 6200L;
-    Long defaultPartitionLifeTime = 6201L;
+    Long defaultPartitionLifetime = 6201L;
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
     ApiGcpBigQueryDatasetResource clonedResource =
         mockMvcUtils.cloneControlledBqDataset(
@@ -412,7 +412,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
             /*destDatasetName=*/ null,
             destLocation,
             defaultTableLifetime,
-            defaultPartitionLifeTime);
+            defaultPartitionLifetime);
 
     // Assert resource returned in clone flight response
     assertClonedControlledBqDataset(
@@ -462,7 +462,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
     // Note to resource authors: Set all request fields, eg BQ dataset location.
     String destLocation = "europe-west1";
     Long defaultTableLifetime = 6200L;
-    Long defaultPartitionLifeTime = 6201L;
+    Long defaultPartitionLifetime = 6201L;
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
     String destDatasetName = TestUtils.appendRandomNumber("dest-dataset-name");
     ApiGcpBigQueryDatasetResource clonedResource =
@@ -476,7 +476,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
             destDatasetName,
             destLocation,
             defaultTableLifetime,
-            defaultPartitionLifeTime);
+            defaultPartitionLifetime);
 
     // Assert resource returned in clone flight response
     assertClonedControlledBqDataset(
@@ -521,7 +521,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
     // Note to resource authors: Set all request fields, eg BQ dataset location.
     String destLocation = "europe-west1";
     Long defaultTableLifetime = 6200L;
-    Long defaultPartitionLifeTime = 6201L;
+    Long defaultPartitionLifetime = 6201L;
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
     String destDatasetName = TestUtils.appendRandomNumber("dest-dataset-name");
 
@@ -536,7 +536,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
             destDatasetName,
             destLocation,
             defaultTableLifetime,
-            defaultPartitionLifeTime);
+            defaultPartitionLifetime);
 
     // Assert resource returned in clone flight response
     assertClonedControlledBqDataset(
