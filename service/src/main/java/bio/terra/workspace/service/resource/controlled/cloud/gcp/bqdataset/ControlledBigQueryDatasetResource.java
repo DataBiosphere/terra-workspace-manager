@@ -171,7 +171,7 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
     return defaultTableLifetime;
   }
 
-  public Long getDefaultPartitionLifeTime() {
+  public Long getDefaultPartitionLifetime() {
     return defaultPartitionLifetime;
   }
 
@@ -230,7 +230,7 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
             getDatasetName(),
             getProjectId(),
             getDefaultTableLifetime(),
-            getDefaultPartitionLifeTime()));
+            getDefaultPartitionLifetime()));
   }
 
   @Override

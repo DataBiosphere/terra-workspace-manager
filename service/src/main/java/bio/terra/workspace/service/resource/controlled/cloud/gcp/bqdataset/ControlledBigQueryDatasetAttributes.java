@@ -34,7 +34,7 @@ public class ControlledBigQueryDatasetAttributes {
     return defaultTableLifetime;
   }
 
-  public Long getDefaultPartitionLifeTime() {
+  public Long getDefaultPartitionLifetime() {
     return defaultPartitionLifetime;
   }
 }

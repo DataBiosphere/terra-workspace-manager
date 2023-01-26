@@ -94,7 +94,7 @@ public class WorkspaceCloneUtils {
                 .orElse(sourceDataset.getDefaultTableLifetime()))
         .defaultPartitionLifetime(
             Optional.ofNullable(defaultPartitionLifetime)
-                .orElse(sourceDataset.getDefaultPartitionLifeTime()))
+                .orElse(sourceDataset.getDefaultPartitionLifetime()))
         .common(
             sourceDataset.buildControlledCloneResourceCommonFields(
                 destinationWorkspaceId,
