@@ -1,6 +1,5 @@
 package scripts.utils;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 import static scripts.utils.GcsBucketUtils.GCS_BLOB_CONTENT;
@@ -60,7 +59,6 @@ public class GcsBucketAccessTester implements AutoCloseable {
   private BlobId testBlobId;
   private final List<BlobId> createdBlobs;
   private Storage testClient;
-  private boolean needToWait;
 
   public GcsBucketAccessTester(
       TestUserSpecification creatorTestUser, String bucketName, String projectId) throws Exception {
@@ -68,13 +66,12 @@ public class GcsBucketAccessTester implements AutoCloseable {
     this.bucketName = bucketName;
     this.projectId = projectId;
     this.testBlobId = null;
-    this.needToWait = false;
     this.createdBlobs = new ArrayList<>();
 
     // The creator user must be an EDITOR in order to configure this access tester
     // for testing another user's access. Ensure that the creator has valid access
     // before continuing.
-    checkAccessWorker(creatorTestUser, ControlledResourceIamRole.EDITOR, true);
+    checkAccessWorker(creatorTestUser, ControlledResourceIamRole.EDITOR, /* needToWait= */ true);
     logger.info(
         "User {} has permissions for role {}",
         creatorTestUser.userEmail,
@@ -102,7 +99,7 @@ public class GcsBucketAccessTester implements AutoCloseable {
   public void assertAccessWait(
       TestUserSpecification testUser, @Nullable ControlledResourceIamRole role) throws Exception {
     assertNotEquals(creatorTestUser, testUser);
-    String result = checkAccessWorker(testUser, role, true);
+    String result = checkAccessWorker(testUser, role, /* needToWait= */ true);
     if (result != null) {
       fail("Access check failed: " + result);
     }
@@ -119,32 +116,11 @@ public class GcsBucketAccessTester implements AutoCloseable {
   public void assertAccess(TestUserSpecification testUser, @Nullable ControlledResourceIamRole role)
       throws Exception {
     assertNotEquals(creatorTestUser, testUser);
-    String result = checkAccessWorker(testUser, role, false);
+    String result = checkAccessWorker(testUser, role, /* needToWait= */ false);
     if (result != null) {
       fail("Access check failed: " + result);
     }
     logger.info("Access check of {} for role {} succeeded", testUser.userEmail, role);
-  }
-
-  /**
-   * This method is intended for the negative check - waiting for a user to lose access to a role.
-   * If a user has lost ANY of the permissions of a role, then we decide the user has lost the role.
-   *
-   * @param testUser user to check
-   * @param role the IamRole to test for; null to test the "user has no role" case
-   * @throws Exception from tests on an unexpected error
-   */
-  public void assertRemovedAccessWait(
-      TestUserSpecification testUser, @Nullable ControlledResourceIamRole role) throws Exception {
-    assertNotEquals(creatorTestUser, testUser);
-    ClientTestUtils.getWithRetryOnFalse(() -> testRemovedAccess(testUser, role));
-  }
-
-  private Boolean testRemovedAccess(
-      TestUserSpecification testUser, @Nullable ControlledResourceIamRole role) throws Exception {
-    String result = checkAccessWorker(testUser, role, false);
-    logger.info("User {} has permissions for role {}", testUser.userEmail, role);
-    return (result == null);
   }
 
   /**
@@ -155,15 +131,15 @@ public class GcsBucketAccessTester implements AutoCloseable {
    *
    * @param testUser user to check
    * @param role the IamRole to test for; null to test the "user has no role" case
+   * @param needToWait should we wait as we test for access or not
    * @throws Exception from asserts if the user has unexpected access
    * @return On error, string describing the failed check. On success, null
    * @throws Exception unhandled failure of the operation (e.g., not a StorageException for
    *     permission failure)
    */
   private String checkAccessWorker(
-      TestUserSpecification testUser, @Nullable ControlledResourceIamRole role, boolean wait)
+      TestUserSpecification testUser, @Nullable ControlledResourceIamRole role, boolean needToWait)
       throws Exception {
-    needToWait = wait;
     logger.info(
         "Checking access of {} for role {} with wait {}",
         testUser.userEmail,
@@ -195,7 +171,7 @@ public class GcsBucketAccessTester implements AutoCloseable {
 
     switch (role) {
       case READER -> {
-        if (!doWithOptionalWait(this::blobRead)) {
+        if (!doWithOptionalWait(this::blobRead, needToWait)) {
           return "reader can read";
         }
         if (doNoWait(() -> blobCreate(testClient))) {
@@ -217,16 +193,16 @@ public class GcsBucketAccessTester implements AutoCloseable {
       }
 
       case WRITER -> {
-        if (!doWithOptionalWait(() -> blobCreate(testClient))) {
+        if (!doWithOptionalWait(() -> blobCreate(testClient), needToWait)) {
           return "writer can create";
         }
-        if (!doWithOptionalWait(this::blobRead)) {
+        if (!doWithOptionalWait(this::blobRead, needToWait)) {
           return "writer can read";
         }
-        if (!doWithOptionalWait(this::blobUpdate)) {
+        if (!doWithOptionalWait(this::blobUpdate, needToWait)) {
           return "writer can update";
         }
-        if (!doWithOptionalWait(this::blobDelete)) {
+        if (!doWithOptionalWait(this::blobDelete, needToWait)) {
           return "writer can delete";
         }
         if (doNoWait(this::bucketGet)) {
@@ -239,19 +215,19 @@ public class GcsBucketAccessTester implements AutoCloseable {
       }
 
       case EDITOR -> {
-        if (!doWithOptionalWait(() -> blobCreate(testClient))) {
+        if (!doWithOptionalWait(() -> blobCreate(testClient), needToWait)) {
           return "editor can create";
         }
-        if (!doWithOptionalWait(this::blobRead)) {
+        if (!doWithOptionalWait(this::blobRead, needToWait)) {
           return "editor can read";
         }
-        if (!doWithOptionalWait(this::blobUpdate)) {
+        if (!doWithOptionalWait(this::blobUpdate, needToWait)) {
           return "editor can update";
         }
-        if (!doWithOptionalWait(this::blobDelete)) {
+        if (!doWithOptionalWait(this::blobDelete, needToWait)) {
           return "editor can delete";
         }
-        if (!doWithOptionalWait(this::bucketGet)) {
+        if (!doWithOptionalWait(this::bucketGet, needToWait)) {
           return "editor can bucket get";
         }
         if (doNoWait(this::bucketDelete)) {
@@ -270,7 +246,7 @@ public class GcsBucketAccessTester implements AutoCloseable {
     Object apply() throws Exception;
   }
 
-  private boolean doWithOptionalWait(TestFunction function) throws Exception {
+  private boolean doWithOptionalWait(TestFunction function, boolean needToWait) throws Exception {
     if (needToWait) {
       return doWait(function);
     }
@@ -283,7 +259,6 @@ public class GcsBucketAccessTester implements AutoCloseable {
       return true;
     } catch (StorageException e) {
       if (e.getCode() == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
-        assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, e.getCode());
         return false;
       }
       throw e;

@@ -156,8 +156,7 @@ public class ControlledApplicationSharedGcsBucketLifecycle extends WorkspaceAllo
             () ->
                 GcsBucketUtils.deleteControlledGcsBucket(
                     createdBucket.getResourceId(), getWorkspaceId(), ownerResourceApi));
-    // TODO: [PF-1208] this should be FORBIDDEN (403), but we are throwing the wrong thing
-    assertEquals(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED, cannotDelete.getCode());
+    assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, cannotDelete.getCode());
     logger.info("Owner delete failed as expected");
 
     // Application can delete the bucket through WSM

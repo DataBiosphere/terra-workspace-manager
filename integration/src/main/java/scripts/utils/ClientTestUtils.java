@@ -56,7 +56,7 @@ public class ClientTestUtils {
   // The total allowed duration is a guess. It may be too long, but we have no guidance.
   // The sleep duration is based on guidance for the fastest we should consider polling.
   public static final Duration DEFAULT_RETRY_TOTAL_DURATION = Duration.ofMinutes(20);
-  public static final Duration DEFAULT_SLEEP_DURATION = Duration.ofSeconds(60);
+  public static final Duration DEFAULT_SLEEP_DURATION = Duration.ofSeconds(30);
 
   public static final String RESOURCE_NAME_PREFIX = "terratest";
   // We may want this to be a test parameter. It has to match what is in the config or in the helm
@@ -329,19 +329,6 @@ public class ClientTestUtils {
       }
     }
     return result;
-  }
-
-  public static void getWithRetryOnFalse(SupplierWithException<Boolean> function) throws Exception {
-    getWithRetryOnException(function);
-  }
-
-  private static Boolean tryBooleanFunction(SupplierWithException<Boolean> function)
-      throws Exception {
-    Boolean result = function.get();
-    if (!result) {
-      throw new RuntimeException("Function " + function.getClass().getName() + " returned false");
-    }
-    return true;
   }
 
   private static boolean isRetryable(
