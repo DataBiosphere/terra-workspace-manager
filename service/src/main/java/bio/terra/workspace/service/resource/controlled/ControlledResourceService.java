@@ -34,6 +34,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.Cont
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.UpdateControlledAiNotebookResourceFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.UpdateControlledBigQueryDatasetResourceFlight;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.flight.UpdateGcpControlledBigQueryDatasetsLifetimeFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.flight.UpdateGcpControlledResourceRegionFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.UpdateControlledGcsBucketResourceFlight;
@@ -639,6 +640,31 @@ public class ControlledResourceService {
                 + "terra managed gcp projects")
         .jobId(UUID.randomUUID().toString())
         .flightClass(UpdateGcpControlledResourceRegionFlight.class)
+        .userRequest(wsmSaRequest)
+        .operationType(OperationType.UPDATE)
+        .submit();
+  }
+  // TODO (PF-2269): Clean this up once the back-fill is done in all Terra environments.
+  @Traced
+  @Nullable
+  public String updateGcpControlledBigQueryDatasetsLifetimeAsync() {
+    String wsmSaToken = samService.getWsmServiceAccountToken();
+    // wsmSaToken is null for unit test when samService is mocked out.
+    if (wsmSaToken == null) {
+      logger.warn(
+          "#updateGcpControlledBigQueryDatasetsLifetimeAsync: workspace manager service account token is null");
+      return null;
+    }
+    AuthenticatedUserRequest wsmSaRequest =
+        new AuthenticatedUserRequest().token(Optional.of(wsmSaToken));
+    return jobService
+        .newJob()
+        .description(
+            "A flight to update controlled BigQuery datasets' missing "
+                + "default table lifetime and default partition lifetime "
+                + "in all the existing terra managed gcp projects")
+        .jobId(UUID.randomUUID().toString())
+        .flightClass(UpdateGcpControlledBigQueryDatasetsLifetimeFlight.class)
         .userRequest(wsmSaRequest)
         .operationType(OperationType.UPDATE)
         .submit();

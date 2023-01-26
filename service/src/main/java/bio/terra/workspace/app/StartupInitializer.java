@@ -53,5 +53,7 @@ public final class StartupInitializer {
     ControlledResourceService controlledResourceService =
         applicationContext.getBean(ControlledResourceService.class);
     controlledResourceService.updateGcpControlledResourcesRegionAsync();
+    // TODO (PF-2269): Clean this up once the back-fill is done in all Terra environments.
+    controlledResourceService.updateGcpControlledBigQueryDatasetsLifetimeAsync();
   }
 }
