@@ -75,6 +75,10 @@ public class GcsBucketAccessTester implements AutoCloseable {
     // for testing another user's access. Ensure that the creator has valid access
     // before continuing.
     checkAccessWorker(creatorTestUser, ControlledResourceIamRole.EDITOR, true);
+    logger.info(
+        "User {} has permissions for role {}",
+        creatorTestUser.userEmail,
+        ControlledResourceIamRole.EDITOR);
   }
 
   @Override
@@ -145,6 +149,10 @@ public class GcsBucketAccessTester implements AutoCloseable {
 
   /**
    * Worker method to test user access
+   *
+   * NOTE: we never wait for a negative. If we are testing that user does not
+   * have a permission, then we call the operation with doNoWait, regardless of
+   * the needToWait state.
    *
    * @param testUser user to check
    * @param role the IamRole to test for; null to test the "user has no role" case
@@ -222,7 +230,6 @@ public class GcsBucketAccessTester implements AutoCloseable {
         if (!doWithOptionalWait(this::blobDelete)) {
           return "writer can delete";
         }
-
         if (doNoWait(this::bucketGet)) {
           return "writer cannot bucket get";
         }

@@ -56,7 +56,7 @@ public class ClientTestUtils {
   // The total allowed duration is a guess. It may be too long, but we have no guidance.
   // The sleep duration is based on guidance for the fastest we should consider polling.
   public static final Duration DEFAULT_RETRY_TOTAL_DURATION = Duration.ofMinutes(20);
-  public static final Duration DEFAULT_SLEEP_DURATION = Duration.ofSeconds(30);
+  public static final Duration DEFAULT_SLEEP_DURATION = Duration.ofSeconds(60);
 
   public static final String RESOURCE_NAME_PREFIX = "terratest";
   // We may want this to be a test parameter. It has to match what is in the config or in the helm

@@ -150,7 +150,6 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
     // - test that reader has access to the bucket
     // - testUser puts files into the bucket
     // - reader clones the bucket to destination workspace
-    // -
     CreatedControlledGcpGcsBucket bucket = createBucketAttempt(resourceApi, bucketName);
     UUID resourceId = bucket.getResourceId();
 
