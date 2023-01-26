@@ -226,8 +226,6 @@ public class FolderApiController extends ControllerBase implements FolderApi {
             lastUpdatedDetail
                 .map(ActivityLogChangeDetails::actorEmail)
                 .orElse(folder.createdByEmail()))
-        // should only return MIN if the log doesn't exist which means the folder was last updated
-        // before the implementation of change subject id logging.
         .lastUpdatedDate(
             lastUpdatedDetail
                 .map(ActivityLogChangeDetails::changeDate)
