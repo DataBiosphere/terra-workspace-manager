@@ -290,7 +290,6 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
     private String datasetName;
     private String projectId;
     private Long defaultTableLifetime;
-
     private Long defaultPartitionLifetime;
 
     public ControlledBigQueryDatasetResource.Builder common(ControlledResourceFields common) {
