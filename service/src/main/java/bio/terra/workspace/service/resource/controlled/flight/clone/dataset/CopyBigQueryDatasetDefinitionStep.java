@@ -115,8 +115,8 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
             destinationProjectId,
             samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
             creationParameters.getLocation(),
-            /*defaultTableLifetime=*/ null,
-            /*defaultPartitionLifetime=*/ null);
+            creationParameters.getDefaultTableLifetime(),
+            creationParameters.getDefaultPartitionLifetime());
 
     ControlledResourceIamRole iamRole =
         IamRoleUtils.getIamRoleForAccessScope(destinationResource.getAccessScope());
