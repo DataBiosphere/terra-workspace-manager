@@ -150,9 +150,8 @@ public class GcsBucketAccessTester implements AutoCloseable {
   /**
    * Worker method to test user access
    *
-   * NOTE: we never wait for a negative. If we are testing that user does not
-   * have a permission, then we call the operation with doNoWait, regardless of
-   * the needToWait state.
+   * <p>NOTE: we never wait for a negative. If we are testing that user does not have a permission,
+   * then we call the operation with doNoWait, regardless of the needToWait state.
    *
    * @param testUser user to check
    * @param role the IamRole to test for; null to test the "user has no role" case
