@@ -49,7 +49,7 @@ public class GcsBucketCloudSyncStep implements Step {
 
     // Users do not have read or write access to IAM policies, so requests are executed via
     // WSM's service account.
-    StorageCow wsmSaStorageCow = crlService.createStorageCow(cloudContext.getGcpProjectId());
+    StorageCow wsmSaStorageCow = crlService.createWsmSaStorageCow(cloudContext.getGcpProjectId());
     Policy currentPolicy = wsmSaStorageCow.getIamPolicy(resource.getBucketName());
     Policy newPolicy =
         controlledResourceService.configureGcpPolicyForResource(

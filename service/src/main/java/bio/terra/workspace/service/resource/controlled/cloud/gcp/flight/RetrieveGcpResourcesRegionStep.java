@@ -118,7 +118,7 @@ public class RetrieveGcpResourcesRegionStep implements Step {
   @Nullable
   private String getGcsBucketRegion(ControlledGcsBucketResource resource) {
     String projectId = cloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
-    StorageCow storageCow = crlService.createStorageCow(projectId);
+    StorageCow storageCow = crlService.createWsmSaStorageCow(projectId);
 
     BucketCow existingBucketCow = storageCow.get(resource.getBucketName());
     if (existingBucketCow == null) {

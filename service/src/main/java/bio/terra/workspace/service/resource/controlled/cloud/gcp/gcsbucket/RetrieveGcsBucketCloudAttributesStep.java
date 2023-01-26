@@ -59,7 +59,7 @@ public class RetrieveGcsBucketCloudAttributesStep implements Step {
     final String projectId =
         gcpCloudContextService.getRequiredGcpProject(bucketResource.getWorkspaceId());
     // get the storage cow
-    final StorageCow storageCow = crlService.createStorageCow(projectId);
+    final StorageCow storageCow = crlService.createWsmSaStorageCow(projectId);
 
     // get the existing bucket cow
     final BucketCow existingBucketCow = storageCow.get(bucketResource.getBucketName());

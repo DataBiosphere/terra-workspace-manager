@@ -76,7 +76,7 @@ public class CreateGcsBucketStep implements Step {
     try {
       Optional<Bucket> existingBucket = getBucket(resource.getBucketName());
       if (existingBucket.isEmpty()) {
-        StorageCow storageCow = crlService.createStorageCow(projectId);
+        StorageCow storageCow = crlService.createWsmSaStorageCow(projectId);
         storageCow.create(bucketInfoBuilder.build());
       } else if (bucketInProject(existingBucket.get(), projectId)) {
         logger.info(
@@ -166,7 +166,7 @@ public class CreateGcsBucketStep implements Step {
     // flight.
     Optional<Bucket> existingBucket = getBucket(resource.getBucketName());
     if (existingBucket.isPresent() && bucketInProject(existingBucket.get(), projectId)) {
-      final StorageCow storageCow = crlService.createStorageCow(projectId);
+      final StorageCow storageCow = crlService.createWsmSaStorageCow(projectId);
       storageCow.delete(resource.getBucketName());
     }
     return StepResult.getStepResultSuccess();

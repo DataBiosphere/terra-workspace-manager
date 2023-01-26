@@ -48,7 +48,8 @@ public class DeleteGcsBucketStep implements Step {
             flightContext.getWorkingMap(),
             ControlledResourceKeys.GCP_CLOUD_CONTEXT,
             GcpCloudContext.class);
-    final StorageCow storageCow = crlService.createStorageCow(gcpCloudContext.getGcpProjectId());
+    final StorageCow storageCow =
+        crlService.createWsmSaStorageCow(gcpCloudContext.getGcpProjectId());
 
     // If the bucket is already deleted (e.g. this step is being retried), storageCow.get() will
     // return null.

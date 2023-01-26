@@ -69,7 +69,7 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
 
   @BeforeEach
   public void setup() throws IOException {
-    doReturn(mockStorageCow).when(mockCrlService).createStorageCow(any(String.class));
+    doReturn(mockStorageCow).when(mockCrlService).createWsmSaStorageCow(any(String.class));
     doReturn(mockStorageClient).when(mockCrlService).createWsmSaNakedStorageClient();
     when(mockGcpCloudContextService.getRequiredGcpProject(any())).thenReturn(FAKE_PROJECT_ID);
     when(mockStorageCow.create(bucketInfoCaptor.capture())).thenReturn(mockBucketCow);

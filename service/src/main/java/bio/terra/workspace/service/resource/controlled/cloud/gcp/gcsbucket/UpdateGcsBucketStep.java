@@ -70,7 +70,7 @@ public class UpdateGcsBucketStep implements Step {
     }
     final String projectId =
         gcpCloudContextService.getRequiredGcpProject(bucketResource.getWorkspaceId());
-    final StorageCow storageCow = crlService.createStorageCow(projectId);
+    final StorageCow storageCow = crlService.createWsmSaStorageCow(projectId);
 
     final BucketCow existingBucketCow = storageCow.get(bucketResource.getBucketName());
     if (existingBucketCow == null) {

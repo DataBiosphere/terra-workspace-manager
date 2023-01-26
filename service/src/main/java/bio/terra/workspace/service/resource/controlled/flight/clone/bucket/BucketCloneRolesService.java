@@ -89,7 +89,7 @@ public class BucketCloneRolesService {
       // No-op
       return;
     }
-    final StorageCow storageCow = crlService.createStorageCow(inputs.getProjectId());
+    final StorageCow storageCow = crlService.createWsmSaStorageCow(inputs.getProjectId());
     final Identity saIdentity = Identity.serviceAccount(transferServiceSAEmail);
 
     final Policy.Builder policyBuilder =

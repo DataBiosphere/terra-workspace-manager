@@ -1424,7 +1424,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 ControlledResourceFixtures.getGoogleBucketCreationParameters()));
 
     // Validate the bucket does not exist.
-    StorageCow storageCow = crlService.createStorageCow(projectId);
+    StorageCow storageCow = crlService.createWsmSaStorageCow(projectId);
     assertNull(storageCow.get(resource.getBucketName()));
 
     assertThrows(
@@ -1537,7 +1537,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         FlightStatus.SUCCESS, stairwayComponent.get().getFlightState(jobId).getFlightStatus());
 
     // Validate the bucket does not exist.
-    StorageCow storageCow = crlService.createStorageCow(projectId);
+    StorageCow storageCow = crlService.createWsmSaStorageCow(projectId);
     assertNull(storageCow.get(createdBucket.getBucketName()));
 
     assertThrows(
@@ -1621,7 +1621,10 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     // check the properties stored on the cloud were not updated
     BucketInfo updatedBucket =
-        crlService.createStorageCow(projectId).get(createdBucket.getBucketName()).getBucketInfo();
+        crlService
+            .createWsmSaStorageCow(projectId)
+            .get(createdBucket.getBucketName())
+            .getBucketInfo();
     ApiGcpGcsBucketUpdateParameters cloudParameters =
         GcsApiConversions.toUpdateParameters(updatedBucket);
     assertNotEquals(ControlledResourceFixtures.BUCKET_UPDATE_PARAMETERS_2, cloudParameters);

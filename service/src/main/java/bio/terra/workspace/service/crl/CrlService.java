@@ -363,7 +363,7 @@ public class CrlService {
    * @param projectId optional GCP project
    * @return CRL {@link StorageCow} which wraps Google Cloud Storage API
    */
-  public StorageCow createStorageCow(@Nullable String projectId) {
+  public StorageCow createWsmSaStorageCow(@Nullable String projectId) {
     return createStorageCowWorker(projectId, null);
   }
 
@@ -406,6 +406,8 @@ public class CrlService {
     StorageOptions.Builder optionsBuilder = StorageOptions.newBuilder();
     if (userRequest != null) {
       optionsBuilder.setCredentials(GcpUtils.getGoogleCredentialsFromUserRequest(userRequest));
+    } else {
+      optionsBuilder.setCredentials(getApplicationCredentials());
     }
     if (!StringUtils.isEmpty(projectId)) {
       optionsBuilder.setProjectId(projectId);
