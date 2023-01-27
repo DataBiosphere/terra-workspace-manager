@@ -72,7 +72,6 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import io.opencensus.contrib.spring.aop.Traced;
-import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -288,9 +287,11 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         .lastUpdatedDate(
             lastChangeDetailsOptional
                 .map(ActivityLogChangeDetails::changeDate)
-                .orElse(OffsetDateTime.MIN))
+                .orElse(workspace.createdDate()))
         .lastUpdatedBy(
-            lastChangeDetailsOptional.map(ActivityLogChangeDetails::actorEmail).orElse("unknown"))
+            lastChangeDetailsOptional
+                .map(ActivityLogChangeDetails::actorEmail)
+                .orElse(workspace.createdByEmail()))
         .policies(workspacePolicies);
   }
 

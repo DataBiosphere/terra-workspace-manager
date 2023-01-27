@@ -26,7 +26,6 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.OperationType;
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -86,7 +85,8 @@ public class FolderApiController extends ControllerBase implements FolderApi {
         OperationType.CREATE,
         folderId.toString(),
         ActivityLogChangedTarget.FOLDER);
-    return new ResponseEntity<>(buildFolder(folder, workspaceId), HttpStatus.OK);
+    return new ResponseEntity<>(
+        buildFolder(folderService.getFolder(workspaceId, folderId), workspaceId), HttpStatus.OK);
   }
 
   @Override
@@ -222,10 +222,13 @@ public class FolderApiController extends ControllerBase implements FolderApi {
         .properties(convertMapToApiProperties(folder.properties()))
         .createdBy(folder.createdByEmail())
         .createdDate(folder.createdDate())
-        .lastUpdatedBy(lastUpdatedDetail.map(detail -> detail.actorEmail()).orElse("unknown"))
-        // should only return MIN if the log doesn't exist which means the folder was last updated
-        // before the implementation of change subject id logging.
+        .lastUpdatedBy(
+            lastUpdatedDetail
+                .map(ActivityLogChangeDetails::actorEmail)
+                .orElse(folder.createdByEmail()))
         .lastUpdatedDate(
-            lastUpdatedDetail.map(detail -> detail.changeDate()).orElse(OffsetDateTime.MIN));
+            lastUpdatedDetail
+                .map(ActivityLogChangeDetails::changeDate)
+                .orElse(folder.createdDate()));
   }
 }
