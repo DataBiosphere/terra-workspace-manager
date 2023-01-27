@@ -34,7 +34,8 @@ public class ControlledResourceControllerBase extends ControllerBase {
       List.of(
           WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER,
           WsmResourceType.CONTROLLED_AZURE_VM,
-          WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
+          WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE,
+          WsmResourceType.CONTROLLED_AZURE_BATCH_POOL);
 
   public ControlledResourceControllerBase(
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,

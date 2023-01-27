@@ -1,5 +1,9 @@
 package bio.terra.workspace.app.controller;
 
+import static bio.terra.workspace.common.utils.MapperUtils.BatchPoolMapper.mapFrom;
+import static bio.terra.workspace.common.utils.MapperUtils.BatchPoolMapper.mapListOfApplicationPackageReferences;
+import static bio.terra.workspace.common.utils.MapperUtils.BatchPoolMapper.mapListOfUserAssignedIdentities;
+
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
@@ -18,6 +22,7 @@ import bio.terra.workspace.generated.model.ApiCloneControlledAzureStorageContain
 import bio.terra.workspace.generated.model.ApiCloneControlledAzureStorageContainerResult;
 import bio.terra.workspace.generated.model.ApiClonedControlledAzureStorageContainer;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
+import bio.terra.workspace.generated.model.ApiCreateControlledAzureBatchPoolRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureDiskRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureIpRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureNetworkRequestBody;
@@ -27,6 +32,7 @@ import bio.terra.workspace.generated.model.ApiCreateControlledAzureStorageContai
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureStorageRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureVmRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedAzureStorageContainerSasToken;
+import bio.terra.workspace.generated.model.ApiCreatedControlledAzureBatchPool;
 import bio.terra.workspace.generated.model.ApiCreatedControlledAzureDisk;
 import bio.terra.workspace.generated.model.ApiCreatedControlledAzureIp;
 import bio.terra.workspace.generated.model.ApiCreatedControlledAzureNetwork;
@@ -48,6 +54,7 @@ import bio.terra.workspace.service.resource.controlled.ControlledResourceService
 import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureStorageAccessService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.SasPermissionsHelper;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.SasTokenOptions;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.ControlledAzureBatchPoolResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
@@ -442,6 +449,54 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         new ApiCreatedControlledAzureNetwork()
             .resourceId(resourceId)
             .azureNetwork(createdNetwork.toApiResource());
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiCreatedControlledAzureBatchPool> createAzureBatchPool(
+      UUID workspaceUuid, ApiCreateControlledAzureBatchPoolRequestBody body) {
+    features.azureEnabledCheck();
+
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final ControlledResourceFields commonFields =
+        toCommonFields(
+            workspaceUuid,
+            body.getCommon(),
+            /* azure batch pool's region is determined by the batch pool account associated with it. */
+            /*region=*/ null,
+            userRequest,
+            WsmResourceType.CONTROLLED_AZURE_BATCH_POOL);
+    workspaceService.validateMcWorkspaceAndAction(
+        userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
+
+    ControlledAzureBatchPoolResource resource =
+        ControlledAzureBatchPoolResource.builder()
+            .common(commonFields)
+            .id(body.getAzureBatchPool().getId())
+            .vmSize(body.getAzureBatchPool().getVmSize())
+            .displayName(body.getAzureBatchPool().getDisplayName())
+            .deploymentConfiguration(mapFrom(body.getAzureBatchPool().getDeploymentConfiguration()))
+            .userAssignedIdentities(
+                mapListOfUserAssignedIdentities(
+                    body.getAzureBatchPool().getUserAssignedIdentities()))
+            .scaleSettings(mapFrom(body.getAzureBatchPool().getScaleSettings()))
+            .startTask(mapFrom(body.getAzureBatchPool().getStartTask()))
+            .applicationPackages(
+                mapListOfApplicationPackageReferences(
+                    body.getAzureBatchPool().getApplicationPackages()))
+            .networkConfiguration(mapFrom(body.getAzureBatchPool().getNetworkConfiguration()))
+            .build();
+
+    final ControlledAzureBatchPoolResource createdBatchPool =
+        controlledResourceService
+            .createControlledResourceSync(
+                resource, commonFields.getIamRole(), userRequest, body.getAzureBatchPool())
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_BATCH_POOL);
+
+    var response =
+        new ApiCreatedControlledAzureBatchPool()
+            .resourceId(createdBatchPool.getResourceId())
+            .azureBatchPool(createdBatchPool.toApiResource());
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 

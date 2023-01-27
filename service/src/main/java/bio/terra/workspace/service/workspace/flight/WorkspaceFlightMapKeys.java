@@ -78,6 +78,7 @@ public final class WorkspaceFlightMapKeys {
     public static final String WORKSPACE_CREATE_FLIGHT_ID = "workspaceCreateFlightId";
     public static final String SHARED_STORAGE_ACCOUNT = "sharedStorageAccount";
     public static final String STORAGE_ACCOUNT_NAME = "storageAccountName";
+    public static final String BATCH_ACCOUNT_NAME = "batchAccountName";
     public static final String DESTINATION_RESOURCE_ID = "destinationResourceId";
     public static final String DESTINATION_FOLDER_ID = "destinationFolderId";
     public static final String DESTINATION_CONTAINER_NAME = "destinationContainerName";

@@ -17,8 +17,8 @@ import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneRequest;
 import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneResource;
 import bio.terra.landingzone.service.landingzone.azure.model.StartLandingZoneCreation;
 import bio.terra.landingzone.service.landingzone.azure.model.StartLandingZoneDeletion;
-import bio.terra.workspace.amalgam.landingzone.azure.utils.MapperUtils;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
+import bio.terra.workspace.common.utils.MapperUtils;
 import bio.terra.workspace.generated.model.ApiAzureLandingZone;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDefinition;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDefinitionList;
@@ -51,6 +51,7 @@ public class LandingZoneApiDispatch {
 
   private static final String AZURE_STORAGE_ACCOUNT_RESOURCE_TYPE =
       "Microsoft.Storage/storageAccounts";
+  private static final String AZURE_BATCH_ACCOUNT_RESOURCE_TYPE = "Microsoft.Batch/batchAccounts";
 
   private final LandingZoneService landingZoneService;
   private final WorkspaceService workspaceService;
@@ -190,16 +191,12 @@ public class LandingZoneApiDispatch {
 
   public Optional<ApiAzureLandingZoneDeployedResource> getSharedStorageAccount(
       BearerToken bearerToken, UUID landingZoneId) {
-    return listAzureLandingZoneResourcesByPurpose(
-            bearerToken, landingZoneId, ResourcePurpose.SHARED_RESOURCE)
-        .getResources()
-        .stream()
-        .flatMap(r -> r.getDeployedResources().stream())
-        .filter(
-            r ->
-                StringUtils.equalsIgnoreCase(
-                    r.getResourceType(), AZURE_STORAGE_ACCOUNT_RESOURCE_TYPE))
-        .findFirst();
+    return getSharedResourceByType(bearerToken, landingZoneId, AZURE_STORAGE_ACCOUNT_RESOURCE_TYPE);
+  }
+
+  public Optional<ApiAzureLandingZoneDeployedResource> getSharedBatchAccount(
+      BearerToken bearerToken, UUID landingZoneId) {
+    return getSharedResourceByType(bearerToken, landingZoneId, AZURE_BATCH_ACCOUNT_RESOURCE_TYPE);
   }
 
   public ApiAzureLandingZoneResourcesList listAzureLandingZoneResourcesByPurpose(
@@ -375,5 +372,16 @@ public class LandingZoneApiDispatch {
         .azureResourceId(resourceQuota.resourceId())
         .resourceType(resourceQuota.resourceType())
         .quotaValues(resourceQuota.quota());
+  }
+
+  private Optional<ApiAzureLandingZoneDeployedResource> getSharedResourceByType(
+      BearerToken bearerToken, UUID landingZoneId, String resourceType) {
+    return listAzureLandingZoneResourcesByPurpose(
+            bearerToken, landingZoneId, ResourcePurpose.SHARED_RESOURCE)
+        .getResources()
+        .stream()
+        .flatMap(r -> r.getDeployedResources().stream())
+        .filter(r -> StringUtils.equalsIgnoreCase(r.getResourceType(), resourceType))
+        .findFirst();
   }
 }
