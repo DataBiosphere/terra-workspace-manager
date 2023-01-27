@@ -934,7 +934,7 @@ public class SamService {
   public void deleteControlledResource(ControlledResource resource, String token)
       throws InterruptedException {
 
-    ResourcesApi resourceApi = samResourcesApi(token);
+    ResourcesApi resourceApi = samResourcesApi(getWsmServiceAccountToken());
     try {
       SamRetry.retry(
           () ->
