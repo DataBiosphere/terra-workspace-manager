@@ -366,7 +366,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     ControlledAzureVmResource resource =
         buildControlledAzureVmResource(body.getAzureVm(), commonFields);
 
-    logger.info("****** IAM ROLE = "+commonFields.getIamRole());
     final String jobId =
         controlledResourceService.createAzureVm(
             resource,

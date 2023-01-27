@@ -357,7 +357,7 @@ class SamServiceTest extends BaseConnectedTest {
             bucketResource.getResourceId().toString(),
             SamWorkspaceAction.READ));
 
-    samService.deleteControlledResource(bucketResource, defaultUserRequest());
+    samService.deleteControlledResource(bucketResource);
   }
 
   @Test
@@ -405,7 +405,7 @@ class SamServiceTest extends BaseConnectedTest {
             bucketResource.getResourceId().toString(),
             SamConstants.SamWorkspaceAction.READ));
 
-    samService.deleteControlledResource(bucketResource, defaultUserRequest());
+    samService.deleteControlledResource(bucketResource);
   }
 
   @Test
@@ -416,7 +416,7 @@ class SamServiceTest extends BaseConnectedTest {
     // This duplicate call should complete without throwing.
     samService.createControlledResource(bucketResource, null, null, defaultUserRequest());
     // Delete the bucket so we can clean up the workspace.
-    samService.deleteControlledResource(bucketResource, defaultUserRequest());
+    samService.deleteControlledResource(bucketResource);
   }
 
   @Test
@@ -425,8 +425,8 @@ class SamServiceTest extends BaseConnectedTest {
         ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
     samService.createControlledResource(bucketResource, null, null, defaultUserRequest());
 
-    samService.deleteControlledResource(bucketResource, defaultUserRequest());
-    samService.deleteControlledResource(bucketResource, defaultUserRequest());
+    samService.deleteControlledResource(bucketResource);
+    samService.deleteControlledResource(bucketResource);
   }
 
   @Test

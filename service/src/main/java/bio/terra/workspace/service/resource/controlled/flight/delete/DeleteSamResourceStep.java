@@ -45,7 +45,7 @@ public class DeleteSamResourceStep implements Step {
             flightContext.getInputParameters(),
             JobMapKeys.AUTH_USER_INFO.getKeyName(),
             AuthenticatedUserRequest.class);
-    samService.deleteControlledResource(resource, userRequest);
+    samService.deleteControlledResource(resource);
     return StepResult.getStepResultSuccess();
   }
 

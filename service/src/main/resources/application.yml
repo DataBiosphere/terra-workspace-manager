@@ -5,28 +5,28 @@ env:
     host: jdbc:postgresql://${DATABASE_HOSTNAME:127.0.0.1}:5432
     init: ${INIT_DB:false}
     stairway:
-      name: ${STAIRWAY_DATABASE_NAME:workspace-stairway}
-      pass: ${STAIRWAY_DATABASE_USER_PASSWORD:451d697940569b86ffd35c0dd8224aa7}
-      user: ${STAIRWAY_DATABASE_USER:workspace-stairway}
+      name: ${STAIRWAY_DATABASE_NAME:wsm_stairway}
+      pass: ${STAIRWAY_DATABASE_USER_PASSWORD:stairwaypwd}
+      user: ${STAIRWAY_DATABASE_USER:stairwayuser}
     ws:
-      name: ${DATABASE_NAME:workspace}
-      pass: ${DATABASE_USER_PASSWORD:6706d5b9fb5b43dadfbaecb253fb4887}
-      user: ${DATABASE_USER:workspace}
+      name: ${DATABASE_NAME:wsm_db}
+      pass: ${DATABASE_USER_PASSWORD:dbpwd}
+      user: ${DATABASE_USER:dbuser}
     landingzone:
-      name: ${LANDINGZONE_DATABASE_NAME:workspace-landingzone}
-      pass: ${LANDINGZONE_DATABASE_USER_PASSWORD:0f6b52694e961d094959b88f64372c4e}
-      user: ${LANDINGZONE_DATABASE_USER:workspace-landingzone}
+      name: ${LANDINGZONE_DATABASE_NAME:landingzone_db}
+      pass: ${LANDINGZONE_DATABASE_USER_PASSWORD:landingzonepwd}
+      user: ${LANDINGZONE_DATABASE_USER:landingzoneuser}
     landingzonestairway:
-      name: ${LANDINGZONE_STAIRWAY_DATABASE_NAME:workspace-landingzone-stairway}
-      pass: ${LANDINGZONE_STAIRWAY_DATABASE_USER_PASSWORD:c8f0a8ef84cd35765e88ff70c3aad358}
-      user: ${LANDINGZONE_STAIRWAY_DATABASE_USER:workspace-landingzone-stairway}
+      name: ${LANDINGZONE_STAIRWAY_DATABASE_NAME:landingzone_stairway_db}
+      pass: ${LANDINGZONE_STAIRWAY_DATABASE_USER_PASSWORD:landingzonestairwaypwd}
+      user: ${LANDINGZONE_STAIRWAY_DATABASE_USER:landingzonestairwayuser}
   tracing:
     exportEnabled: ${CLOUD_TRACE_ENABLED:false}
     samplingRate: ${SAMPLING_PROBABILITY:0}
   urls: # While we've traditionally thought of these as env specific and ok to hardcode, with kubernetes they may change
     sam: ${SAM_ADDRESS:https://sam.dsde-dev.broadinstitute.org/}
     terra-datarepo: ${TERRA_DATAREPO_URL:https://jade.datarepo-dev.broadinstitute.org}
-    bpm: https://bpm.dsde-dev.broadinstitute.org
+    bpm: ${BPM_ADDRESS:https://bpm.dsde-dev.broadinstitute.org/}
     tps: ${TPS_ADDRESS:https://tps.dsde-dev.broadinstitute.org/}
 
 # Below here is non-deployment-specific
@@ -110,10 +110,10 @@ workspace:
   spend:
     base-path: ${env.urls.bpm}
     spend-profiles:
-    - # A default spend profile available in dev Sam.
-      id: wm-default-spend-profile
-      # The billing account workspace-dev has access to.
-      billing-account-id: 01A82E-CA8A14-367457
+      - # A default spend profile available in dev Sam.
+        id: wm-default-spend-profile
+        # The billing account workspace-dev has access to.
+        billing-account-id: 01A82E-CA8A14-367457
 
   application:
     configurations:
@@ -205,7 +205,7 @@ feature:
   # bpm-enabled-gcp - Controls whether spend profile checks are made for GCP workspaces
   bpm-gcp-enabled: false
   # bpm-enabled-azure - Controls whether spend profile checks are made for Azure workspaces
-  bpm-azure-enabled: true
+  bpm-azure-enabled: false
 
 reference:
   gitrepos:
@@ -215,4 +215,3 @@ reference:
       - bitbucket.org
       - dev.azure.com
       - ssh.dev.azure.com
-

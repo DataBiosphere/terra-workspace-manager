@@ -48,7 +48,7 @@ public class DeleteControlledSamResourcesStep implements Step {
         resourceDao.listControlledResources(workspaceUuid, cloudPlatform);
 
     for (ControlledResource resource : controlledResourceList) {
-      samService.deleteControlledResource(resource, samService.getWsmServiceAccountToken());
+      samService.deleteControlledResource(resource);
     }
     return StepResult.getStepResultSuccess();
   }

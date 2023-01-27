@@ -926,13 +926,13 @@ public class SamService {
   /**
    * Delete controlled resource with an access token
    *
+   * <p>This call is made to Sam using the WSM SA
+   *
    * @param resource the controlled resource whose Sam resource to delete
-   * @param token access token
    * @throws InterruptedException on thread interrupt
    */
   @Traced
-  public void deleteControlledResource(ControlledResource resource, String token)
-      throws InterruptedException {
+  public void deleteControlledResource(ControlledResource resource) throws InterruptedException {
 
     ResourcesApi resourceApi = samResourcesApi(getWsmServiceAccountToken());
     try {
@@ -955,20 +955,6 @@ public class SamService {
       }
       throw SamExceptionFactory.create("Error deleting controlled resource in Sam", apiException);
     }
-  }
-
-  /**
-   * Delete controlled resource with the user request
-   *
-   * @param resource the controlled resource whose Sam resource to delete
-   * @param userRequest user performing the delete
-   * @throws InterruptedException on thread interrupt
-   */
-  @Traced
-  public void deleteControlledResource(
-      ControlledResource resource, AuthenticatedUserRequest userRequest)
-      throws InterruptedException {
-    deleteControlledResource(resource, userRequest.getRequiredToken());
   }
 
   /**

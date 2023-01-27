@@ -45,7 +45,7 @@ public class CreateSamResourceStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    samService.deleteControlledResource(resource, userRequest);
+    samService.deleteControlledResource(resource);
     return StepResult.getStepResultSuccess();
   }
 }
