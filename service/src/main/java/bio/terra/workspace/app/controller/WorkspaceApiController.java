@@ -132,6 +132,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     this.workspaceActivityLogService = workspaceActivityLogService;
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiCreatedWorkspace> createWorkspace(
       @RequestBody ApiCreateWorkspaceRequestBody body) {
@@ -201,6 +202,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     return new ResponseEntity<>(responseWorkspace, HttpStatus.OK);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiWorkspaceDescriptionList> listWorkspaces(
       Integer offset, Integer limit, ApiIamRole minimumHighestRole) {
@@ -295,6 +297,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         .policies(workspacePolicies);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiWorkspaceDescription> getWorkspace(
       @PathVariable("workspaceId") UUID uuid, ApiIamRole minimumHighestRole) {
@@ -314,6 +317,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     return new ResponseEntity<>(desc, HttpStatus.OK);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiWorkspaceDescription> getWorkspaceByUserFacingId(
       @PathVariable("workspaceUserFacingId") String userFacingId, ApiIamRole minimumHighestRole) {
@@ -337,6 +341,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     return new ResponseEntity<>(desc, HttpStatus.OK);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiWorkspaceDescription> updateWorkspace(
       @PathVariable("workspaceId") UUID workspaceUuid,
@@ -364,6 +369,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     return new ResponseEntity<>(desc, HttpStatus.OK);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiWsmPolicyUpdateResult> updatePolicies(
       @PathVariable("workspaceId") UUID workspaceId, @RequestBody ApiWsmPolicyUpdateRequest body) {
@@ -400,6 +406,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     return new ResponseEntity<>(apiResult, HttpStatus.OK);
   }
 
+  @Traced
   @Override
   public ResponseEntity<Void> deleteWorkspace(@PathVariable("workspaceId") UUID uuid) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -412,6 +419,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
+  @Traced
   @Override
   public ResponseEntity<Void> deleteWorkspaceProperties(
       @PathVariable("workspaceId") UUID workspaceUuid, @RequestBody List<String> propertyKeys) {
@@ -430,6 +438,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
+  @Traced
   @Override
   public ResponseEntity<Void> updateWorkspaceProperties(
       @PathVariable("workspaceId") UUID workspaceUuid, @RequestBody List<ApiProperty> properties) {
@@ -445,6 +454,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
+  @Traced
   @Override
   public ResponseEntity<Void> grantRole(
       @PathVariable("workspaceId") UUID uuid,
@@ -470,6 +480,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
+  @Traced
   @Override
   public ResponseEntity<Void> removeRole(
       @PathVariable("workspaceId") UUID uuid,
@@ -488,6 +499,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiRoleBindingList> getRoles(@PathVariable("workspaceId") UUID uuid) {
     // No additional authz check as this is just a wrapper around a Sam endpoint.
@@ -502,6 +514,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     return new ResponseEntity<>(responseList, HttpStatus.OK);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiCreateCloudContextResult> createCloudContext(
       UUID uuid, @Valid ApiCreateCloudContextRequest body) {
@@ -526,6 +539,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiCreateCloudContextResult> getCreateCloudContextResult(
       UUID uuid, String jobId) {
@@ -566,6 +580,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         .azureContext(azureContext);
   }
 
+  @Traced
   @Override
   public ResponseEntity<Void> deleteCloudContext(UUID uuid, ApiCloudPlatform cloudPlatform) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -580,6 +595,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
+  @Traced
   @Override
   public ResponseEntity<Void> enablePet(UUID workspaceUuid) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -603,6 +619,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
    * @param body - request body
    * @return - result structure for the overall clone operation with details for each resource
    */
+  @Traced
   @Override
   public ResponseEntity<ApiCloneWorkspaceResult> cloneWorkspace(
       UUID workspaceUuid, @Valid ApiCloneWorkspaceRequest body) {
@@ -671,6 +688,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
    * @param jobId - ID of flight
    * @return - response with result
    */
+  @Traced
   @Override
   public ResponseEntity<ApiCloneWorkspaceResult> getCloneWorkspaceResult(
       UUID workspaceUuid, String jobId) {
@@ -680,6 +698,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiRegions> listValidRegions(UUID workspaceId, ApiCloudPlatform platform) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -693,6 +712,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     return new ResponseEntity<>(apiRegions, HttpStatus.OK);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiWsmPolicyExplainResult> explainPolicies(
       UUID workspaceId, Integer depth) {

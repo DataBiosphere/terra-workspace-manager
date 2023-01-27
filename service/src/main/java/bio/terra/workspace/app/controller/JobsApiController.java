@@ -7,6 +7,7 @@ import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.job.JobService;
+import io.opencensus.contrib.spring.aop.Traced;
 import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -38,6 +39,7 @@ public class JobsApiController implements JobsApi {
     return authenticatedUserRequestFactory.from(request);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiJobReport> retrieveJob(@PathVariable("jobId") String jobId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
