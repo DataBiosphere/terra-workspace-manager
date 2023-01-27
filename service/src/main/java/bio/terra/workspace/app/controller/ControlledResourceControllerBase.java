@@ -23,7 +23,7 @@ import javax.servlet.http.HttpServletRequest;
  * Super class for controllers containing common code. The code in here requires the @Autowired
  * beans from the @Controller classes, so it is better as a superclass rather than static methods.
  */
-public abstract class ControlledResourceControllerBase extends ControllerBase {
+public class ControlledResourceControllerBase extends ControllerBase {
   private final ControlledResourceService controlledResourceService;
 
   /**
