@@ -16,7 +16,6 @@ import org.springframework.stereotype.Component;
 /** This component is a service for logging workspace activities. */
 @Component
 public class WorkspaceActivityLogService {
-
   private final SamService samService;
   private final WorkspaceActivityLogDao workspaceActivityLogDao;
 
