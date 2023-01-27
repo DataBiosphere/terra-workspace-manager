@@ -62,9 +62,8 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
     // Flight Plan
     // 1. Validate user has read access to the source object
     // 2. Gather controlled resource metadata for source object
-    // 3. Gather cloud attributes from existing object
-    // 4. If cloning to referenced resource, do the clone and finish flight
-    // 5. Launch sub-flight to create destination controlled resource
+    // 3. If cloning to referenced resource, do the clone and finish flight
+    // 4. Launch sub-flight to create destination controlled resource
     addStep(
         new CheckControlledResourceAuthStep(
             sourceResource, flightBeanBag.getControlledResourceMetadataManager(), userRequest),
@@ -85,13 +84,6 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
 
     final ControlledBigQueryDatasetResource sourceDataset =
         sourceResource.castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
-
-    addStep(
-        new RetrieveBigQueryDatasetCloudAttributesStep(
-            sourceDataset,
-            flightBeanBag.getCrlService(),
-            flightBeanBag.getGcpCloudContextService()),
-        RetryRules.cloud());
 
     if (CloningInstructions.COPY_REFERENCE == resolvedCloningInstructions) {
       // Destination dataset is referenced resource

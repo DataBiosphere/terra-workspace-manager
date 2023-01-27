@@ -89,11 +89,8 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
     UUID destinationWorkspaceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
     String location =
-        FlightUtils.getInputParameterOrWorkingValue(
-            flightContext,
-            ControlledResourceKeys.LOCATION,
-            ControlledResourceKeys.LOCATION,
-            String.class);
+        Optional.ofNullable(inputParameters.get(ControlledResourceKeys.LOCATION, String.class))
+            .orElse(sourceDataset.getRegion());
     String destinationProjectId =
         gcpCloudContextService.getRequiredGcpProject(destinationWorkspaceId);
     UUID destinationResourceId =
