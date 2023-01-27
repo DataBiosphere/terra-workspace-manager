@@ -148,4 +148,13 @@ public class GcpUtils {
     AccessToken accessToken = new AccessToken(userRequest.getRequiredToken(), null);
     return GoogleCredentials.create(accessToken);
   }
+
+  /**
+   * Extract the region part from the given location string. If the string is a region, return that.
+   * If the string looks like a zone, return just the region part. Basically, remove any trailing
+   * "-[a-z]".
+   */
+  public static String parseRegion(String location) {
+    return location.replaceAll("(?!^)-[a-z]$", "");
+  }
 }
