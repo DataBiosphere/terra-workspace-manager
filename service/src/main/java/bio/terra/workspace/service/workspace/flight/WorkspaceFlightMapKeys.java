@@ -41,6 +41,14 @@ public final class WorkspaceFlightMapKeys {
 
     public static final String CONTROLLED_RESOURCES_WITHOUT_REGION =
         "controlledResourcesWithoutRegion";
+    // BEGIN > TODO (PF-2269): Clean this up once the back-fill is done in all Terra environments.
+    public static final String CONTROLLED_BIG_QUERY_DATASETS_WITHOUT_LIFETIME =
+        "controlledBigQueryDatasetsWithoutLifetime";
+    public static final String CONTROLLED_BIG_QUERY_DATASET_RESOURCE_ID_TO_TABLE_LIFETIME_MAP =
+        "controlledBigqueryDatasetToTableLifetimeMap";
+    public static final String CONTROLLED_BIG_QUERY_DATASET_RESOURCE_ID_TO_PARTITION_LIFETIME_MAP =
+        "controlledBigqueryDatasetToPartitionLifetimeMap";
+    // END > TODO (PF-2269)
     public static final String CONTROLLED_RESOURCE_ID_TO_REGION_MAP =
         "controlledResourceToRegionMap";
     public static final String CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP =

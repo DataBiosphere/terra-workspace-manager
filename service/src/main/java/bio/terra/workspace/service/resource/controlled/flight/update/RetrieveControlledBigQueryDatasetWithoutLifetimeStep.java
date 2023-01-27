@@ -1,7 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.flight.update;
 
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCES_WITHOUT_REGION;
-
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
@@ -9,14 +7,17 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
+
 import java.util.List;
+import java.util.stream.Collectors;
 
-public class RetrieveControlledResourceWithoutRegionStep implements Step {
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_BIG_QUERY_DATASETS_WITHOUT_LIFETIME;
 
+public class RetrieveControlledBigQueryDatasetWithoutLifetimeStep implements Step {
   private final CloudPlatform cloudPlatform;
   private final ResourceDao resourceDao;
 
-  public RetrieveControlledResourceWithoutRegionStep(
+  public RetrieveControlledBigQueryDatasetWithoutLifetimeStep(
       CloudPlatform cloudPlatform, ResourceDao resourceDao) {
     this.cloudPlatform = cloudPlatform;
     this.resourceDao = resourceDao;
@@ -24,9 +25,17 @@ public class RetrieveControlledResourceWithoutRegionStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    List<ControlledResource> controlledResources =
-        resourceDao.listControlledBigQueryDatasets(cloudPlatform);
-    context.getWorkingMap().put(CONTROLLED_RESOURCES_WITHOUT_REGION, controlledResources);
+    List<ControlledResource> controlledBigQueryDatasets =
+        resourceDao.listControlledBigQueryDatasets(cloudPlatform).stream()
+            .filter(
+                bq ->
+                    bq.getProperties().get("defaultTableLifetime") == null
+                        || bq.getProperties().get("defaultPartitionLifetime") == null)
+            .collect(Collectors.toList());
+
+    context
+        .getWorkingMap()
+        .put(CONTROLLED_BIG_QUERY_DATASETS_WITHOUT_LIFETIME, controlledBigQueryDatasets);
     return StepResult.getStepResultSuccess();
   }
 

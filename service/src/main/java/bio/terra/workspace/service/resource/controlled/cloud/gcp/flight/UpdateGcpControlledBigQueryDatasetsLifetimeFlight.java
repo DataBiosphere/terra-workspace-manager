@@ -4,7 +4,8 @@ import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
-import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceWithoutRegionStep;
+import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledBigQueryDatasetWithoutLifetimeStep;
+import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledBigQueryDatasetsLifetimeStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateResourcesRegionStep;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 
@@ -20,14 +21,17 @@ public class UpdateGcpControlledBigQueryDatasetsLifetimeFlight extends Flight {
       FlightMap inputParameters, Object beanBag) {
     super(inputParameters, beanBag);
     FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
+    // Get BQ datasets without lifetime.
     addStep(
-        new RetrieveControlledResourceWithoutRegionStep(
+        new RetrieveControlledBigQueryDatasetWithoutLifetimeStep(
             CloudPlatform.GCP, flightBeanBag.getResourceDao()),
         RetryRules.shortDatabase());
+    // Then retrieve the BQ datasets lifetime.
     addStep(
-        new RetrieveGcpResourcesRegionStep(
+        new RetrieveGcpControlledBigQueryDatasetLifetimeStep(
             flightBeanBag.getCrlService(), flightBeanBag.getGcpCloudContextService()),
         RetryRules.shortExponential());
-    addStep(new UpdateResourcesRegionStep(flightBeanBag.getResourceDao()));
+
+    addStep(new UpdateControlledBigQueryDatasetsLifetimeStep(flightBeanBag.getResourceDao()));
   }
 }

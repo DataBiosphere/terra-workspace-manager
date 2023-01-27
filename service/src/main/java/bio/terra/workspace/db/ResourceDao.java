@@ -3,6 +3,7 @@ package bio.terra.workspace.db;
 import static bio.terra.workspace.service.resource.model.StewardshipType.CONTROLLED;
 import static bio.terra.workspace.service.resource.model.StewardshipType.REFERENCED;
 import static bio.terra.workspace.service.resource.model.StewardshipType.fromSql;
+import static bio.terra.workspace.service.resource.model.WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET;
 import static java.util.stream.Collectors.toList;
 
 import bio.terra.common.db.ReadTransaction;
@@ -328,6 +329,38 @@ public class ResourceDao {
         .map(WsmResource::castToControlledResource)
         .collect(Collectors.toList());
   }
+
+  /**
+   * Returns a list of all controlled BigQuery Datasets.
+   *
+   * @param cloudPlatform Optional. If present, this will only return resources from the specified
+   *     cloud platform. If null, this will return resources from all cloud platforms.
+   */
+  @ReadTransaction
+  public List<ControlledResource> listControlledBigQueryDatasets(
+      @Nullable CloudPlatform cloudPlatform) {
+
+    String sql =
+        RESOURCE_SELECT_SQL_WITHOUT_WORKSPACE_ID
+            + " WHERE stewardship_type = :controlled_resource"
+            + " AND exact_resource_type is :controlled_gcp_big_query_dataset";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("controlled_resource", CONTROLLED.toSql())
+            .addValue("controlled_gcp_big_query_dataset",CONTROLLED_GCP_BIG_QUERY_DATASET.toSql());
+
+    if (cloudPlatform != null) {
+      sql += " AND cloud_platform = :cloud_platform";
+      params.addValue("cloud_platform", cloudPlatform.toSql());
+    }
+
+    List<DbResource> dbResources = jdbcTemplate.query(sql, params, DB_RESOURCE_ROW_MAPPER);
+    return dbResources.stream()
+        .map(this::constructResource)
+        .map(WsmResource::castToControlledResource)
+        .collect(Collectors.toList());
+  }
+
 
   /**
    * Reads all private controlled resources assigned to a given user in a given workspace which are
