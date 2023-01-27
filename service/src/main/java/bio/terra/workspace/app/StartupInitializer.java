@@ -53,6 +53,7 @@ public final class StartupInitializer {
     ControlledResourceService controlledResourceService =
         applicationContext.getBean(ControlledResourceService.class);
     controlledResourceService.updateGcpControlledResourcesRegionAsync();
+    // Backfill the region column of existing azure resource rows one time during app startup.
     controlledResourceService.updateAzureControlledResourcesRegionAsync();
   }
 }

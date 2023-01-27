@@ -630,7 +630,6 @@ public class ControlledResourceService {
         .description(
             "A flight to update controlled resource's missing region in all the existing"
                 + "terra managed azure projects")
-        .jobId(UUID.randomUUID().toString())
         .flightClass(UpdateAzureControlledResourceRegionFlight.class)
         .userRequest(wsmSaRequest)
         .operationType(OperationType.UPDATE)
