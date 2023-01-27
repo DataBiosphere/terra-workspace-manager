@@ -110,10 +110,10 @@ workspace:
   spend:
     base-path: ${env.urls.bpm}
     spend-profiles:
-      - # A default spend profile available in dev Sam.
-        id: wm-default-spend-profile
-        # The billing account workspace-dev has access to.
-        billing-account-id: 01A82E-CA8A14-367457
+    - # A default spend profile available in dev Sam.
+      id: wm-default-spend-profile
+      # The billing account workspace-dev has access to.
+      billing-account-id: 01A82E-CA8A14-367457
 
   application:
     configurations:
