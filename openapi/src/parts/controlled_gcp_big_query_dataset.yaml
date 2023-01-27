@@ -187,6 +187,10 @@ components:
             Name for destination dataset. Must not be set if cloningInstructions
             is COPY_REFERENCE. Letters, numbers and underscores only.
           type: string
+        defaultTableLifetime:
+          $ref: '#/components/schemas/DefaultTableLifetime'
+        defaultPartitionLifetime:
+          $ref: '#/components/schemas/DefaultPartitionLifetime'
         cloningInstructions:
           $ref: "#/components/schemas/CloningInstructionsEnum"
         name:
@@ -239,13 +243,9 @@ components:
           description: A valid dataset location per https://cloud.google.com/bigquery/docs/locations.
           type: string
         defaultTableLifetime:
-          description: Optional. Default lifetime (in seconds) for newly created tables.
-          type: integer
-          format: int64
+          $ref: '#/components/schemas/DefaultTableLifetime'
         defaultPartitionLifetime:
-          description: Optional. Default lifetime (in seconds) for partitions in newly created partitioned tables.
-          type: integer
-          format: int64
+          $ref: '#/components/schemas/DefaultPartitionLifetime'
 
     GcpBigQueryDatasetUpdateParameters:
       description: >-

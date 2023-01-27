@@ -817,7 +817,9 @@ public class MockMvcUtils {
         cloningInstructions,
         destResourceName,
         destDatasetName,
-        /*location=*/ null);
+        /*location=*/ null,
+        /*defaultTableLifetime=*/ null,
+        /*defaultPartitionLifetime=*/ null);
   }
 
   /** Call cloneBigQueryDataset() and wait for flight to finish. */
@@ -829,7 +831,9 @@ public class MockMvcUtils {
       ApiCloningInstructionsEnum cloningInstructions,
       @Nullable String destResourceName,
       @Nullable String destDatasetName,
-      @Nullable String destLocation)
+      @Nullable String destLocation,
+      @Nullable Long defaultTableLifetime,
+      @Nullable Long defaultPartitionLifetime)
       throws Exception {
     ApiCloneControlledGcpBigQueryDatasetResult result =
         cloneControlledBqDatasetAsync(
@@ -841,6 +845,8 @@ public class MockMvcUtils {
             destResourceName,
             destDatasetName,
             destLocation,
+            defaultTableLifetime,
+            defaultPartitionLifetime,
             // clone_copyNothing sometimes returns SC_OK, even for the initial call. So accept both
             // to avoid flakes.
             JOB_SUCCESS_CODES,
@@ -877,6 +883,8 @@ public class MockMvcUtils {
             destResourceName,
             destDatasetName,
             /*destLocation=*/ null,
+            /*defaultTableLifetime=*/ null,
+            /*defaultPartitionLifetime=*/ null,
             List.of(HttpStatus.SC_ACCEPTED),
             /*shouldUndo=*/ false);
     return cloneControlledBqDataset_waitForJobError(
@@ -901,6 +909,8 @@ public class MockMvcUtils {
             destResourceName,
             /*destDatasetName=*/ null,
             /*destLocation=*/ null,
+            /*defaultTableLifetime=*/ null,
+            /*defaultPartitionLifetime=*/ null,
             List.of(HttpStatus.SC_ACCEPTED),
             /*shouldUndo=*/ true);
     cloneControlledBqDataset_waitForJobError(
@@ -920,6 +930,8 @@ public class MockMvcUtils {
       @Nullable String destResourceName,
       @Nullable String destDatasetName,
       @Nullable String destLocation,
+      @Nullable Long defaultTableLifetime,
+      @Nullable Long defaultPartitionLifetime,
       List<Integer> expectedCodes,
       boolean shouldUndo)
       throws Exception {
@@ -947,6 +959,8 @@ public class MockMvcUtils {
             .destinationWorkspaceId(destWorkspaceId)
             .cloningInstructions(cloningInstructions)
             .location(destLocation)
+            .defaultTableLifetime(defaultTableLifetime)
+            .defaultPartitionLifetime(defaultPartitionLifetime)
             .jobControl(new ApiJobControl().id(UUID.randomUUID().toString()));
     if (!StringUtils.isEmpty(destResourceName)) {
       request.name(destResourceName);

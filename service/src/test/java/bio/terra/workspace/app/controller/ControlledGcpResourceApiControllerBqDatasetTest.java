@@ -254,6 +254,8 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         /*destResourceName=*/ null,
         /*destDatasetName=*/ null,
         /*destLocation=*/ null,
+        /*defaultTableLifetime=*/ null,
+        /*defaultPartitionLifetime=*/ null,
         List.of(HttpStatus.SC_FORBIDDEN),
         /*shouldUndo=*/ false);
   }
@@ -280,6 +282,8 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         /*destResourceName=*/ null,
         /*destDatasetName=*/ null,
         /*destLocation=*/ null,
+        /*defaultTableLifetime=*/ null,
+        /*defaultPartitionLifetime=*/ null,
         List.of(HttpStatus.SC_FORBIDDEN),
         /*shouldUndo=*/ false);
 
@@ -317,7 +321,9 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
             ApiCloningInstructionsEnum.RESOURCE,
             /*destResourceName=*/ null,
             /*destDatasetName=*/ null,
-            /*destLocation=*/ null);
+            /*destLocation=*/ null,
+            /*defaultTableLifetime=*/ null,
+            /*defaultPartitionLifetime=*/ null);
 
     assertClonedControlledBqDataset(
         clonedBqDataset,
@@ -392,6 +398,8 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
     // Clone resource to europe-west1
     // Note to resource authors: Set all request fields, eg BQ dataset location.
     String destLocation = "europe-west1";
+    Long defaultTableLifetime = 6200L;
+    Long defaultPartitionLifetime = 6201L;
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
     ApiGcpBigQueryDatasetResource clonedResource =
         mockMvcUtils.cloneControlledBqDataset(
@@ -402,7 +410,9 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
             ApiCloningInstructionsEnum.DEFINITION,
             destResourceName,
             /*destDatasetName=*/ null,
-            destLocation);
+            destLocation,
+            defaultTableLifetime,
+            defaultPartitionLifetime);
 
     // Assert resource returned in clone flight response
     assertClonedControlledBqDataset(
@@ -451,6 +461,8 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
     // Clone resource to europe-west1
     // Note to resource authors: Set all request fields, eg BQ dataset location.
     String destLocation = "europe-west1";
+    Long defaultTableLifetime = 6200L;
+    Long defaultPartitionLifetime = 6201L;
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
     String destDatasetName = TestUtils.appendRandomNumber("dest-dataset-name");
     ApiGcpBigQueryDatasetResource clonedResource =
@@ -462,7 +474,9 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
             ApiCloningInstructionsEnum.RESOURCE,
             destResourceName,
             destDatasetName,
-            destLocation);
+            destLocation,
+            defaultTableLifetime,
+            defaultPartitionLifetime);
 
     // Assert resource returned in clone flight response
     assertClonedControlledBqDataset(
@@ -506,6 +520,8 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
     // Clone resource to europe-west1
     // Note to resource authors: Set all request fields, eg BQ dataset location.
     String destLocation = "europe-west1";
+    Long defaultTableLifetime = 6200L;
+    Long defaultPartitionLifetime = 6201L;
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
     String destDatasetName = TestUtils.appendRandomNumber("dest-dataset-name");
 
@@ -518,7 +534,9 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
             ApiCloningInstructionsEnum.RESOURCE,
             destResourceName,
             destDatasetName,
-            destLocation);
+            destLocation,
+            defaultTableLifetime,
+            defaultPartitionLifetime);
 
     // Assert resource returned in clone flight response
     assertClonedControlledBqDataset(
