@@ -45,12 +45,12 @@ public class ReferencedResourceService {
 
   @Autowired
   public ReferencedResourceService(
-    JobService jobService,
-    ResourceDao resourceDao,
-    WorkspaceService workspaceService,
-    FlightBeanBag beanBag,
-    WorkspaceActivityLogService workspaceActivityLogService,
-    TpsApiDispatch tpsApiDispatch) {
+      JobService jobService,
+      ResourceDao resourceDao,
+      WorkspaceService workspaceService,
+      FlightBeanBag beanBag,
+      WorkspaceActivityLogService workspaceActivityLogService,
+      TpsApiDispatch tpsApiDispatch) {
     this.jobService = jobService;
     this.resourceDao = resourceDao;
     this.workspaceService = workspaceService;
@@ -77,8 +77,17 @@ public class ReferencedResourceService {
       ReferencedResource resourceToClone,
       ReferencedResource sourceReferencedResource,
       AuthenticatedUserRequest userRequest) {
+
+    validateDestinationWorkspacePolicies(
+        sourceReferencedResource.getWorkspaceId(),
+        resourceToClone.getWorkspaceId(),
+        sourceReferencedResource.getResourceType().getCloudPlatform());
     resourceDao.createReferencedResource(resourceToClone);
-    tpsApiDispatch.mergePao(resourceToClone.getWorkspaceId(), sourceReferencedResource.getWorkspaceId(), TpsUpdateMode.FAIL_ON_CONFLICT);
+    var result =
+        tpsApiDispatch.mergePao(
+            sourceReferencedResource.getWorkspaceId(),
+            resourceToClone.getWorkspaceId(),
+            TpsUpdateMode.FAIL_ON_CONFLICT);
 
     // Logs CLONE in the source workspace for the source resource that is cloned.
     workspaceActivityLogService.writeActivity(
@@ -244,9 +253,6 @@ public class ReferencedResourceService {
       @Nullable String description,
       String createdByEmail,
       AuthenticatedUserRequest userRequest) {
-
-    validateDestinationWorkspacePolicies(sourceReferencedResource.getWorkspaceId(), destinationWorkspaceId, sourceReferencedResource.getResourceType().getCloudPlatform());
-
     ReferencedResource destinationResource =
         sourceReferencedResource
             .buildReferencedClone(
@@ -262,19 +268,24 @@ public class ReferencedResourceService {
         destinationResource, sourceReferencedResource, userRequest);
   }
 
-  private void validateDestinationWorkspacePolicies(UUID sourceWorkspaceId, UUID destinationWorkspaceId, CloudPlatform platform) {
-    TpsPaoUpdateResult dryRunResults = tpsApiDispatch.mergePao(destinationWorkspaceId, sourceWorkspaceId, TpsUpdateMode.DRY_RUN);
+  private void validateDestinationWorkspacePolicies(
+      UUID sourceWorkspaceId, UUID destinationWorkspaceId, CloudPlatform platform) {
+    TpsPaoUpdateResult dryRunResults =
+        tpsApiDispatch.mergePao(sourceWorkspaceId, destinationWorkspaceId, TpsUpdateMode.DRY_RUN);
 
     if (!dryRunResults.getConflicts().isEmpty()) {
       throw new ConflictException("Policy merge has conflicts");
     }
 
-    List<String> validRegions = tpsApiDispatch.listValidRegionsForPao(dryRunResults.getResultingPao(), platform);
-    List<ControlledResource> existingResources = resourceDao.listControlledResources(destinationWorkspaceId, platform);
+    List<String> validRegions =
+        tpsApiDispatch.listValidRegionsForPao(dryRunResults.getResultingPao(), platform);
+    List<ControlledResource> existingResources =
+        resourceDao.listControlledResources(destinationWorkspaceId, platform);
 
     for (var existingResource : existingResources) {
       if (!validRegions.stream().anyMatch(existingResource.getRegion()::equalsIgnoreCase)) {
-        throw new ConflictException("Workspace contains resources that would be outside of the merged policy.");
+        throw new ConflictException(
+            "Workspace contains resources that would be outside of the merged policy.");
       }
     }
   }
