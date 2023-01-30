@@ -126,7 +126,6 @@ import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.SetRe
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.SetReferencedDestinationGcsBucketResponseStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.CompleteTableCopyJobsStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.CreateTableCopyJobsStep;
-import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.RetrieveBigQueryDatasetCloudAttributesStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.SetReferencedDestinationBigQueryDatasetInWorkingMapStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.SetReferencedDestinationBigQueryDatasetResponseStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
@@ -944,7 +943,6 @@ public class MockMvcUtils {
     List<Class> retryableSteps =
         ImmutableList.of(
             CheckControlledResourceAuthStep.class,
-            RetrieveBigQueryDatasetCloudAttributesStep.class,
             SetReferencedDestinationBigQueryDatasetInWorkingMapStep.class,
             CreateReferenceMetadataStep.class,
             SetReferencedDestinationBigQueryDatasetResponseStep.class,
