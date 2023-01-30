@@ -456,6 +456,11 @@ public class ResourceValidationUtils {
   }
 
   public static void validateAzureRegion(String region) {
+    if (StringUtils.isEmpty(region)) {
+      // Azure resources like workspaces may not have a region.
+      logger.warn("Cannot validate empty Azure region.");
+      return;
+    }
     if (!Region.values().stream()
         .map(Region::toString)
         .collect(Collectors.toList())
@@ -469,13 +474,16 @@ public class ResourceValidationUtils {
       TpsApiDispatch tpsApiDispatch, UUID workspaceId, String region) {
     region = GcpUtils.parseRegion(region);
 
-    // Get the list of valid locations for this workspace from TPS. If there are no regional
-    // constraints applied to the workspace, TPS should return all available regions.
-    List<String> validLocations = tpsApiDispatch.listValidRegions(workspaceId, CloudPlatform.GCP);
+    // Old workspaces may not have a policy. We can only validate against policy if one exists.
+    if (tpsApiDispatch.getPaoIfExists(workspaceId).isPresent()) {
+      // Get the list of valid locations for this workspace from TPS. If there are no regional
+      // constraints applied to the workspace, TPS should return all available regions.
+      List<String> validLocations = tpsApiDispatch.listValidRegions(workspaceId, CloudPlatform.GCP);
 
-    if (validLocations.stream().noneMatch(region::equalsIgnoreCase)) {
-      throw new InvalidControlledResourceException(
-          String.format("Specified location %s is not allowed by effective policy.", region));
+      if (validLocations.stream().noneMatch(region::equalsIgnoreCase)) {
+        throw new InvalidControlledResourceException(
+            String.format("Specified location %s is not allowed by effective policy.", region));
+      }
     }
   }
 

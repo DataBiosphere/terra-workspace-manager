@@ -8,12 +8,14 @@ import static org.mockito.Mockito.when;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
+import bio.terra.policy.model.TpsPaoGetResult;
 import bio.terra.workspace.app.configuration.external.GitRepoReferencedResourceConfiguration;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmImage;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceContainerImage;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
+import bio.terra.workspace.service.policy.exception.PolicyServiceNotFoundException;
 import bio.terra.workspace.service.resource.controlled.exception.InvalidControlledResourceException;
 import bio.terra.workspace.service.resource.exception.InvalidNameException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -24,6 +26,7 @@ import com.azure.core.management.Region;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -462,7 +465,6 @@ public class ValidationUtilsTest extends BaseUnitTest {
   public void validateControlledResourceRegion() {
     var testRegions = List.of("us", "us-central1", "us-east1");
     UUID workspaceId = UUID.randomUUID();
-    String platform = "gcp";
 
     when(mockTpsApiDispatch().listValidRegions(workspaceId, CloudPlatform.GCP))
         .thenReturn(List.of("US", "us-central1", "us-east1"));
@@ -479,9 +481,10 @@ public class ValidationUtilsTest extends BaseUnitTest {
   @Test
   public void validateControlledResourceRegion_invalid_throws() {
     UUID workspaceId = UUID.randomUUID();
-    String platform = "gcp";
+    TpsPaoGetResult pao = new TpsPaoGetResult().objectId(workspaceId);
     when(mockTpsApiDispatch().listValidRegions(workspaceId, CloudPlatform.GCP))
         .thenReturn(List.of("us-central1", "us-east1"));
+    when(mockTpsApiDispatch().getPaoIfExists(workspaceId)).thenReturn(Optional.of(pao));
 
     assertThrows(
         InvalidControlledResourceException.class,
@@ -497,6 +500,16 @@ public class ValidationUtilsTest extends BaseUnitTest {
   }
 
   @Test
+  public void validateControlledResourceRegion_workspaceWithoutPolicy() {
+    UUID workspaceId = UUID.randomUUID();
+    when(mockTpsApiDispatch().getPao(workspaceId))
+        .thenThrow(new PolicyServiceNotFoundException("Workspace doesn't have a policy."));
+
+    validationUtils.validateControlledResourceRegionAgainstPolicy(
+        mockTpsApiDispatch(), workspaceId, "anyregion", CloudPlatform.GCP);
+  }
+
+  @Test
   public void validateAzureRegion() {
     UUID workspaceId = UUID.randomUUID();
 
@@ -505,6 +518,14 @@ public class ValidationUtilsTest extends BaseUnitTest {
       validationUtils.validateControlledResourceRegionAgainstPolicy(
           mockTpsApiDispatch(), workspaceId, region.name(), CloudPlatform.AZURE);
     }
+  }
+
+  @Test
+  public void validateAzureRegion_nullRegion() {
+    UUID workspaceId = UUID.randomUUID();
+
+    validationUtils.validateControlledResourceRegionAgainstPolicy(
+        mockTpsApiDispatch(), workspaceId, null, CloudPlatform.AZURE);
   }
 
   @Test
