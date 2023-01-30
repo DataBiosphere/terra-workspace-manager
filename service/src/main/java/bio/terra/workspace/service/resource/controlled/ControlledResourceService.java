@@ -24,7 +24,6 @@ import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceSyncMapping.SyncMapping;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespace.ControlledAzureRelayNamespaceResource;
@@ -86,7 +85,6 @@ public class ControlledResourceService {
   private final SamService samService;
   private final GcpCloudContextService gcpCloudContextService;
   private final FeatureConfiguration features;
-  private final TpsApiDispatch tpsApiDispatch;
 
   @Autowired
   public ControlledResourceService(
@@ -95,15 +93,13 @@ public class ControlledResourceService {
       ApplicationDao applicationDao,
       SamService samService,
       GcpCloudContextService gcpCloudContextService,
-      FeatureConfiguration features,
-      TpsApiDispatch tpsApiDispatch) {
+      FeatureConfiguration features) {
     this.jobService = jobService;
     this.resourceDao = resourceDao;
     this.applicationDao = applicationDao;
     this.samService = samService;
     this.gcpCloudContextService = gcpCloudContextService;
     this.features = features;
-    this.tpsApiDispatch = tpsApiDispatch;
   }
 
   public String createAzureRelayNamespace(
@@ -493,12 +489,6 @@ public class ControlledResourceService {
         String.format(
             "Create controlled resource %s; id %s; name %s",
             resource.getResourceType(), resource.getResourceId(), resource.getName());
-
-    ResourceValidationUtils.validateControlledResourceRegionAgainstPolicy(
-        tpsApiDispatch,
-        resource.getWorkspaceId(),
-        resource.getRegion(),
-        resource.getResourceType().getCloudPlatform());
 
     return jobService
         .newJob()

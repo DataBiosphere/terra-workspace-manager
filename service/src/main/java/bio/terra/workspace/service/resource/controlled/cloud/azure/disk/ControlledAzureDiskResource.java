@@ -204,7 +204,7 @@ public class ControlledAzureDiskResource extends ControlledResource {
       throw new MissingRequiredFieldException(
           "Missing required region field for ControlledAzureDisk.");
     }
-    ResourceValidationUtils.validateAzureRegion(getRegion());
+    ResourceValidationUtils.validateRegion(getRegion());
     ResourceValidationUtils.validateAzureDiskName(getDiskName());
   }
 
