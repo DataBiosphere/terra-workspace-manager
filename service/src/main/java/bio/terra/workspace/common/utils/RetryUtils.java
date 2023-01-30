@@ -64,7 +64,7 @@ public class RetryUtils {
             sleepDuration.toSeconds(),
             endTime);
         TimeUnit.MILLISECONDS.sleep(sleepDuration.toMillis());
-        long increaseMillis = Double.valueOf(factorIncrease * sleepDuration.toMillis()).longValue();
+        long increaseMillis = (long) (factorIncrease * sleepDuration.toMillis());
         sleepDuration = sleepDuration.plusMillis(increaseMillis);
         if (sleepDuration.compareTo(sleepDurationMax) > 0) {
           sleepDuration = sleepDurationMax;
@@ -133,7 +133,7 @@ public class RetryUtils {
           throw new Exception();
         }
         TimeUnit.MILLISECONDS.sleep(sleepDuration.toMillis());
-        long increaseMillis = Double.valueOf(factorIncrease * sleepDuration.toMillis()).longValue();
+        long increaseMillis = (long) (factorIncrease * sleepDuration.toMillis());
         sleepDuration = sleepDuration.plusMillis(increaseMillis);
         if (sleepDuration.compareTo(sleepDurationMax) > 0) {
           sleepDuration = sleepDurationMax;
