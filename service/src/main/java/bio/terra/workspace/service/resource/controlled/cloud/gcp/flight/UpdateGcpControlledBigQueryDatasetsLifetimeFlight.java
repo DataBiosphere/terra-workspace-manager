@@ -6,7 +6,6 @@ import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledBigQueryDatasetWithoutLifetimeStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledBigQueryDatasetsLifetimeStep;
-import bio.terra.workspace.service.resource.controlled.flight.update.UpdateResourcesRegionStep;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 
 // TODO (PF-2269): Clean this up once the back-fill is done in all Terra environments.

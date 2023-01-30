@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.flight.update;
 
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_BIG_QUERY_DATASETS_WITHOUT_LIFETIME;
+
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
@@ -7,11 +9,8 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
-
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_BIG_QUERY_DATASETS_WITHOUT_LIFETIME;
 
 public class RetrieveControlledBigQueryDatasetWithoutLifetimeStep implements Step {
   private final CloudPlatform cloudPlatform;

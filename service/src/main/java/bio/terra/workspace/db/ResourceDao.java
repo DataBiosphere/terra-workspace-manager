@@ -347,7 +347,7 @@ public class ResourceDao {
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("controlled_resource", CONTROLLED.toSql())
-            .addValue("controlled_gcp_big_query_dataset",CONTROLLED_GCP_BIG_QUERY_DATASET.toSql());
+            .addValue("controlled_gcp_big_query_dataset", CONTROLLED_GCP_BIG_QUERY_DATASET.toSql());
 
     if (cloudPlatform != null) {
       sql += " AND cloud_platform = :cloud_platform";
@@ -360,7 +360,6 @@ public class ResourceDao {
         .map(WsmResource::castToControlledResource)
         .collect(Collectors.toList());
   }
-
 
   /**
    * Reads all private controlled resources assigned to a given user in a given workspace which are
