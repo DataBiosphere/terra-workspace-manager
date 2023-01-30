@@ -25,7 +25,7 @@ public class RetrieveControlledResourceWithoutRegionStep implements Step {
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     List<ControlledResource> controlledResources =
-        resourceDao.listControlledBigQueryDatasets(cloudPlatform);
+        resourceDao.listControlledResourcesWithMissingRegion(cloudPlatform);
     context.getWorkingMap().put(CONTROLLED_RESOURCES_WITHOUT_REGION, controlledResources);
     return StepResult.getStepResultSuccess();
   }
