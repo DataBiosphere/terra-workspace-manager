@@ -550,22 +550,19 @@ public class ResourceDaoTest extends BaseUnitTest {
   @Test
   public void listControlledBigQueryDatasetsWithoutLifetime() {
     UUID workspaceUuid = createWorkspaceWithGcpContext(workspaceDao);
-    for (int i = 0; i < 6; i++) {
+    for (int i = 1; i <= 6; i++) {
       ControlledBigQueryDatasetResource dataset =
           ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid)
               .common(
                   makeDefaultControlledResourceFieldsBuilder().workspaceUuid(workspaceUuid).build())
-              .defaultTableLifetime(null)
-              .defaultPartitionLifetime(null)
+              .defaultTableLifetime(i >= 6 ? 5900L : null)
+              .defaultPartitionLifetime(i >= 6 ? 5901L : null)
               .build();
       resourceDao.createControlledResource(dataset);
     }
 
-    // TODO (PF-2269): Update BQ dataset listing.
-    System.out.println(
-        "NUMBER OF BQ: " + resourceDao.listControlledBigQueryDatasets(CloudPlatform.GCP).size());
-
-    assertEquals(6, resourceDao.listControlledBigQueryDatasets(CloudPlatform.GCP).size());
+    assertEquals(
+        5, resourceDao.listControlledBigQueryDatasetsWithoutLifetime(CloudPlatform.GCP).size());
   }
 
   private void createControlledResourceAndLog(ControlledResource resource) {

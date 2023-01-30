@@ -25,12 +25,7 @@ public class RetrieveControlledBigQueryDatasetWithoutLifetimeStep implements Ste
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     List<ControlledResource> controlledBigQueryDatasets =
-        resourceDao.listControlledBigQueryDatasets(cloudPlatform).stream()
-            .filter(
-                bq ->
-                    bq.getProperties().get("defaultTableLifetime") == null
-                        || bq.getProperties().get("defaultPartitionLifetime") == null)
-            .collect(Collectors.toList());
+        resourceDao.listControlledBigQueryDatasetsWithoutLifetime(cloudPlatform);
 
     context
         .getWorkingMap()

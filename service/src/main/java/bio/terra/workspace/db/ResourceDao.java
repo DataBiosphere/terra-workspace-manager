@@ -338,13 +338,16 @@ public class ResourceDao {
    *     cloud platform. If null, this will return resources from all cloud platforms.
    */
   @ReadTransaction
-  public List<ControlledResource> listControlledBigQueryDatasets(
+  public List<ControlledResource> listControlledBigQueryDatasetsWithoutLifetime(
       @Nullable CloudPlatform cloudPlatform) {
 
     String sql =
         RESOURCE_SELECT_SQL_WITHOUT_WORKSPACE_ID
             + " WHERE stewardship_type = :controlled_resource"
-            + " AND exact_resource_type = :controlled_gcp_big_query_dataset";
+            + " AND exact_resource_type = :controlled_gcp_big_query_dataset"
+            + " AND (((attributes -> 'defaultTableLifetime') IS NULL)"
+            + " OR ((attributes -> 'defaultPartitionLifetime') IS NULL))"
+        ;
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("controlled_resource", CONTROLLED.toSql())
