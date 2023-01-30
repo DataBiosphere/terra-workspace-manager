@@ -547,6 +547,25 @@ public class ResourceDaoTest extends BaseUnitTest {
     assertTrue(resourceDao.listControlledResourcesWithMissingRegion(CloudPlatform.AZURE).isEmpty());
   }
 
+  @Test
+  public void listControlledBigQueryDatasetsWithoutLifetime() {
+    UUID workspaceUuid = createWorkspaceWithGcpContext(workspaceDao);
+    for (int i = 0; i < 6; i++) {
+      ControlledBigQueryDatasetResource dataset =
+          ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid)
+              .common(
+                  makeDefaultControlledResourceFieldsBuilder().workspaceUuid(workspaceUuid).build())
+              .defaultTableLifetime(null)
+              .defaultPartitionLifetime(null)
+              .build();
+      resourceDao.createControlledResource(dataset);
+    }
+
+    // TODO (temp): make it only gets BQ without lifetime.
+
+    assertEquals(6, resourceDao.listControlledBigQueryDatasets(CloudPlatform.GCP).size());
+  }
+
   private void createControlledResourceAndLog(ControlledResource resource) {
     resourceDao.createControlledResource(resource);
     activityLogDao.writeActivity(

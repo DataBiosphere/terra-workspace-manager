@@ -1795,6 +1795,74 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     return jobResult.getResult();
   }
 
+  private List<ControlledResource> updateControlledBigQueryDatasetsLifetimeAndWait() {
+    String jobId = controlledResourceService.updateGcpControlledBigQueryDatasetsLifetimeAsync();
+    jobService.waitForJob(jobId);
+
+    AsyncJobResult<List<ControlledResource>> jobResult =
+        jobApiUtils.retrieveAsyncJobResult(jobId, new TypeReference<>() {});
+    return jobResult.getResult();
+  }
+
+  @Test
+  public void updateControlledBigQueryDatasetLifetime_nothingToUpdate() {
+    List<ControlledResource> emptyList = updateControlledBigQueryDatasetsLifetimeAndWait();
+
+    assertTrue(emptyList.isEmpty());
+  }
+
+  @Test
+  public void updateControlledBigQueryDatasetLifetime_onlyUpdateWhenLifetimesAreEmpty() {
+    // create dataset.
+    ApiGcpBigQueryDatasetCreationParameters creationParameters =
+        ControlledResourceFixtures.getGcpBigQueryDatasetCreationParameters();
+    ControlledBigQueryDatasetResource createdDataset =
+        controlledResourceService
+            .createControlledResourceSync(
+                ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
+                    .datasetName(creationParameters.getDatasetId())
+                    .projectId(projectId)
+                    .build(),
+                null,
+                user.getAuthenticatedRequest(),
+                creationParameters)
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
+    assertEquals(5900L, createdDataset.getDefaultTableLifetime());
+    assertEquals(5901L, createdDataset.getDefaultPartitionLifetime());
+
+    // check BQ dataset lifetime and update lifetime.
+    List<ControlledResource> emptyList = updateControlledBigQueryDatasetsLifetimeAndWait();
+
+    // Update nothing because all the lifetimes are populated.
+    assertTrue(emptyList.isEmpty());
+
+    // Artificially set regions to null in the database.
+    // TODO: update the lifetime.
+    resourceDao.updateControlledResourceRegion(createdDataset.getResourceId(), /*region=*/ null);
+
+    List<ControlledResource> updatedResource = updateControlledResourcesRegionAndWait();
+
+    // The three controlled resources are updated as the regions are null.
+    assertEquals(1, updatedResource.size());
+    assertControlledBigQueryDatasetLifetimeIsUpdatedAndActivityIsLogged(
+        updatedResource, createdDataset.getResourceId(), 5900L, 5901L);
+  }
+
+  private void assertControlledBigQueryDatasetLifetimeIsUpdatedAndActivityIsLogged(
+      List<ControlledResource> updatedResource,
+      UUID resourceId,
+      long expectedTableLifetime,
+      long expectedPartitionLifetime) {
+    ControlledResource dataset =
+        updatedResource.stream()
+            .filter(resource -> resourceId.equals(resource.getResourceId()))
+            .findAny()
+            .get();
+
+    //    assertEquals(expectedTableLifetime, //get the dataset table lifetime
+    //    assertActivityLogForResourceUpdate(resourceId.toString());
+  }
+
   /**
    * Creates a user-shared controlled GCS bucket in the provided workspace, using the credentials of
    * the provided user. This uses the default bucket creation parameters from {@code
