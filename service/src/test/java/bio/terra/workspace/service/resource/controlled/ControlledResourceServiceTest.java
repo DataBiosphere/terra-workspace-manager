@@ -2,6 +2,8 @@ package bio.terra.workspace.service.resource.controlled;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.AI_NOTEBOOK_PREV_PARAMETERS;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.AI_NOTEBOOK_UPDATE_PARAMETERS;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_CREATED_BIG_QUERY_PARTITION_LIFETIME;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_CREATED_BIG_QUERY_TABLE_LIFETIME;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_RESOURCE_REGION;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -1828,10 +1830,12 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 user.getAuthenticatedRequest(),
                 creationParameters)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
-    assertEquals(5900L, createdDataset.getDefaultTableLifetime());
-    assertEquals(5901L, createdDataset.getDefaultPartitionLifetime());
+    assertEquals(
+        DEFAULT_CREATED_BIG_QUERY_TABLE_LIFETIME, createdDataset.getDefaultTableLifetime());
+    assertEquals(
+        DEFAULT_CREATED_BIG_QUERY_PARTITION_LIFETIME, createdDataset.getDefaultPartitionLifetime());
 
-    // check BQ dataset lifetime and update lifetime.
+    // Check which BQ datasets' lifetime to update.
     List<ControlledResource> emptyList = updateControlledBigQueryDatasetsLifetimeAndWait();
 
     // Update nothing because all the lifetimes are populated.
@@ -1845,10 +1849,13 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     List<ControlledResource> updatedResource = updateControlledBigQueryDatasetsLifetimeAndWait();
 
-    // The controlled datset is updated as the lifetime is null.
+    // The controlled dataset is updated since the lifetime is null.
     assertEquals(1, updatedResource.size());
     assertControlledBigQueryDatasetLifetimeIsUpdatedAndActivityIsLogged(
-        updatedResource, createdDataset.getResourceId(), 5900L, 5901L);
+        updatedResource,
+        createdDataset.getResourceId(),
+        DEFAULT_CREATED_BIG_QUERY_TABLE_LIFETIME,
+        DEFAULT_CREATED_BIG_QUERY_PARTITION_LIFETIME);
   }
 
   private void assertControlledBigQueryDatasetLifetimeIsUpdatedAndActivityIsLogged(

@@ -27,8 +27,7 @@ public class UpdateGcpControlledBigQueryDatasetsLifetimeFlight extends Flight {
         RetryRules.shortDatabase());
 
     addStep(
-        new RetrieveGcpControlledBigQueryDatasetLifetimeStep(
-            flightBeanBag.getCrlService(), flightBeanBag.getGcpCloudContextService()),
+        new RetrieveGcpControlledBigQueryDatasetLifetimeStep(flightBeanBag.getCrlService()),
         RetryRules.shortExponential());
 
     addStep(new UpdateControlledBigQueryDatasetsLifetimeStep(flightBeanBag.getResourceDao()));

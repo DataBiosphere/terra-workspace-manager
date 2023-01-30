@@ -106,8 +106,8 @@ public class ControlledResourceFixtures {
   public static ApiGcpBigQueryDatasetCreationParameters getGcpBigQueryDatasetCreationParameters() {
     return new ApiGcpBigQueryDatasetCreationParameters()
         .datasetId(uniqueDatasetId())
-        .defaultPartitionLifetime(5901L)
-        .defaultTableLifetime(5900L)
+        .defaultTableLifetime(DEFAULT_CREATED_BIG_QUERY_TABLE_LIFETIME)
+        .defaultPartitionLifetime(DEFAULT_CREATED_BIG_QUERY_PARTITION_LIFETIME)
         .location(DEFAULT_RESOURCE_REGION);
   }
 
@@ -301,6 +301,9 @@ public class ControlledResourceFixtures {
       "A bucket that had beer in it, briefly. \uD83C\uDF7B";
   public static final CloningInstructions CLONING_INSTRUCTIONS = CloningInstructions.COPY_RESOURCE;
   public static final String DEFAULT_RESOURCE_REGION = "us-central1";
+
+  public static final Long DEFAULT_CREATED_BIG_QUERY_TABLE_LIFETIME = 5900L;
+  public static final Long DEFAULT_CREATED_BIG_QUERY_PARTITION_LIFETIME = 5901L;
 
   public static ControlledGcsBucketResource getBucketResource(String bucketName) {
     return new ControlledGcsBucketResource(
@@ -661,7 +664,9 @@ public class ControlledResourceFixtures {
           .defaultTableLifetime(4800L)
           .defaultPartitionLifetime(4801L);
   public static final Dataset BQ_DATASET_WITH_EXPIRATION =
-      new Dataset().setDefaultTableExpirationMs(5900000L).setDefaultPartitionExpirationMs(5901000L);
+      new Dataset()
+          .setDefaultTableExpirationMs(DEFAULT_CREATED_BIG_QUERY_TABLE_LIFETIME * 1000)
+          .setDefaultPartitionExpirationMs(DEFAULT_CREATED_BIG_QUERY_PARTITION_LIFETIME * 1000);
   public static final Dataset BQ_DATASET_WITHOUT_EXPIRATION = new Dataset();
 
   public static String uniqueDatasetId() {

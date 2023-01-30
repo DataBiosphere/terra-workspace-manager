@@ -331,8 +331,8 @@ public class ResourceDao {
   }
 
   /**
-   * Returns a list of all controlled BigQuery datasets without table lifetime or partition lifetime
-   * set.
+   * Returns a list of all controlled BigQuery datasets without default table lifetime or default
+   * partition lifetime set.
    *
    * @param cloudPlatform Optional. If present, this will only return resources from the specified
    *     cloud platform. If null, this will return resources from all cloud platforms.

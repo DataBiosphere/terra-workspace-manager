@@ -16,7 +16,6 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
-import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.api.services.bigquery.model.Dataset;
@@ -33,13 +32,9 @@ public class RetrieveGcpControlledBigQueryDatasetLifetimeStep implements Step {
   private static final Logger logger =
       LoggerFactory.getLogger(RetrieveGcpResourcesRegionStep.class);
   private final CrlService crlService;
-  private final GcpCloudContextService cloudContextService;
-  private static final String REGIONS_PATH = "regions";
 
-  public RetrieveGcpControlledBigQueryDatasetLifetimeStep(
-      CrlService crlService, GcpCloudContextService cloudContextService) {
+  public RetrieveGcpControlledBigQueryDatasetLifetimeStep(CrlService crlService) {
     this.crlService = crlService;
-    this.cloudContextService = cloudContextService;
   }
 
   @Override
@@ -53,6 +48,7 @@ public class RetrieveGcpControlledBigQueryDatasetLifetimeStep implements Step {
     Map<UUID, Long> resourceIdToDefaultTableLifetimeMap = new HashMap<>();
     Map<UUID, Long> resourceIdToDefaultPartitionLifetimeMap = new HashMap<>();
     Map<UUID, String> resourceIdToWorkspaceIdMap = new HashMap<>();
+
     for (var resource : controlledBigQueryDatasets) {
       WsmResourceType resourceType = resource.getResourceType();
       String previousAttributes = resource.attributesToJson();
@@ -74,8 +70,7 @@ public class RetrieveGcpControlledBigQueryDatasetLifetimeStep implements Step {
       } else {
         throw new UnsupportedOperationException(
             String.format(
-                "resource of type %s is not a GCP resource or is a referenced resource",
-                resourceType));
+                "resource of type %s is not a controlled GCP BigQuery dataset", resourceType));
       }
     }
     context
@@ -101,7 +96,7 @@ public class RetrieveGcpControlledBigQueryDatasetLifetimeStep implements Step {
       ControlledResource resource,
       @Nullable Long defaultTableLifetime,
       @Nullable Long defaultPartitionLifetime) {
-    if (defaultTableLifetime != null && defaultPartitionLifetime != null) {
+    if (defaultTableLifetime != null || defaultPartitionLifetime != null) {
       UUID resourceId = resource.getResourceId();
       resourceIdToDefaultTableLifetimeMap.put(resourceId, defaultTableLifetime);
       resourceIdToDefaultPartitionLifetimeMap.put(resourceId, defaultPartitionLifetime);
