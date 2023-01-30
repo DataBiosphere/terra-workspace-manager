@@ -2,6 +2,8 @@ package bio.terra.workspace.common.logging;
 
 import static bio.terra.workspace.common.utils.FlightUtils.getRequired;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.APPLICATION_IDS;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_BIG_QUERY_DATASET_RESOURCE_ID_TO_PARTITION_LIFETIME_MAP;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_BIG_QUERY_DATASET_RESOURCE_ID_TO_TABLE_LIFETIME_MAP;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCE_ID_TO_REGION_MAP;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP;
@@ -11,6 +13,7 @@ import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKey
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import bio.terra.stairway.FlightContext;
+import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.HookAction;
 import bio.terra.stairway.StairwayHook;
@@ -29,6 +32,7 @@ import bio.terra.workspace.service.admin.flights.cloudcontexts.gcp.SyncGcpIamRol
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.flight.UpdateGcpControlledBigQueryDatasetsLifetimeFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.flight.UpdateGcpControlledResourceRegionFlight;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
@@ -109,7 +113,10 @@ public class WorkspaceActivityLogHook implements StairwayHook {
         maybeLogForSyncGcpIamRolesFlight(context, operationType, userEmail, subjectId);
       } else if (UpdateGcpControlledResourceRegionFlight.class.getName().equals(flightClassName)) {
         maybeLogUpdateControlledResourceRegionFlight(context, operationType, userEmail, subjectId);
-      } else {
+      } else if (UpdateGcpControlledBigQueryDatasetsLifetimeFlight.class.getName().equals(flightClassName)) {
+        maybeLogUpdateControlledBigQueryDatasetLifetimeFlight(context,operationType,userEmail,subjectId);
+      }
+      else {
         throw new UnhandledActivityLogException(
             String.format(
                 "workspace id is missing from the flight %s, add special log handling",
@@ -318,6 +325,41 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     for (var resourceId : resourceIdToRegionMap.keySet()) {
       activityLogDao.writeActivity(
           UUID.fromString(resourceIdToWorkspaceIdMap.get(resourceId)),
+          new DbWorkspaceActivityLog(
+              userEmail,
+              subjectId,
+              operationType,
+              resourceId.toString(),
+              ActivityLogChangedTarget.RESOURCE));
+    }
+  }
+
+  private void maybeLogUpdateControlledBigQueryDatasetLifetimeFlight(
+      FlightContext context, OperationType operationType, String userEmail, String subjectId) {
+    if (!context.getFlightStatus().equals(FlightStatus.SUCCESS)) {
+      return;
+    }
+    FlightMap workingMap = context.getWorkingMap();
+    FlightUtils.validateRequiredEntries(
+        workingMap,
+//        CONTROLLED_BIG_QUERY_DATASET_RESOURCE_ID_TO_TABLE_LIFETIME_MAP,
+//        CONTROLLED_BIG_QUERY_DATASET_RESOURCE_ID_TO_PARTITION_LIFETIME_MAP,
+        CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP);
+//    Map<UUID, String> resourceIdToDefaultTableLifetimeMap =
+//        workingMap.get(
+//            CONTROLLED_BIG_QUERY_DATASET_RESOURCE_ID_TO_TABLE_LIFETIME_MAP,
+//            new TypeReference<>() {});
+//    Map<UUID, String> resourceIdToDefaultPartitionLifetimeMap =
+//        workingMap.get(
+//            CONTROLLED_BIG_QUERY_DATASET_RESOURCE_ID_TO_PARTITION_LIFETIME_MAP,
+//            new TypeReference<>() {});
+
+    Map<UUID, String> resourceIdsToWorkspaceIdMap =
+        workingMap.get(CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP, new TypeReference<>() {});
+
+    for (var resourceId : resourceIdsToWorkspaceIdMap.keySet()) {
+      activityLogDao.writeActivity(
+          UUID.fromString(resourceIdsToWorkspaceIdMap.get(resourceId)),
           new DbWorkspaceActivityLog(
               userEmail,
               subjectId,

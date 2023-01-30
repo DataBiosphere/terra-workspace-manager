@@ -53,6 +53,7 @@ public class UpdateControlledBigQueryDatasetsLifetimeStep implements Step {
     List<ControlledResource> updatedResources = new ArrayList<>();
 
     for (var id : resourceIdsToWorkspaceIdMap.keySet()) {
+      // TODO: replace with updateBQLifetime write transaction
       boolean updated =
           resourceDao.updateControlledResourceRegion(
                   id, resourceIdToDefaultTableLifetimeMap.get(id))
