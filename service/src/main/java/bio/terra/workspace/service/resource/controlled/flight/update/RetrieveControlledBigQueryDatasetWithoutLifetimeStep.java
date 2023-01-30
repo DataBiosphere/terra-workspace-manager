@@ -10,7 +10,6 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class RetrieveControlledBigQueryDatasetWithoutLifetimeStep implements Step {
   private final CloudPlatform cloudPlatform;

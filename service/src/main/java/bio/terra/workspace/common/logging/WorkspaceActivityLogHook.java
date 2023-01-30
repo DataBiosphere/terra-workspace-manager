@@ -340,19 +340,7 @@ public class WorkspaceActivityLogHook implements StairwayHook {
       return;
     }
     FlightMap workingMap = context.getWorkingMap();
-    FlightUtils.validateRequiredEntries(
-        workingMap,
-        //        CONTROLLED_BIG_QUERY_DATASET_RESOURCE_ID_TO_TABLE_LIFETIME_MAP,
-        //        CONTROLLED_BIG_QUERY_DATASET_RESOURCE_ID_TO_PARTITION_LIFETIME_MAP,
-        CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP);
-    //    Map<UUID, String> resourceIdToDefaultTableLifetimeMap =
-    //        workingMap.get(
-    //            CONTROLLED_BIG_QUERY_DATASET_RESOURCE_ID_TO_TABLE_LIFETIME_MAP,
-    //            new TypeReference<>() {});
-    //    Map<UUID, String> resourceIdToDefaultPartitionLifetimeMap =
-    //        workingMap.get(
-    //            CONTROLLED_BIG_QUERY_DATASET_RESOURCE_ID_TO_PARTITION_LIFETIME_MAP,
-    //            new TypeReference<>() {});
+    FlightUtils.validateRequiredEntries(workingMap, CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP);
 
     Map<UUID, String> resourceIdsToWorkspaceIdMap =
         workingMap.get(CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP, new TypeReference<>() {});

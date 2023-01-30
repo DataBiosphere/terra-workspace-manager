@@ -1845,7 +1845,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     List<ControlledResource> updatedResource = updateControlledBigQueryDatasetsLifetimeAndWait();
 
-    // The three controlled resources are updated as the regions are null.
+    // The controlled datset is updated as the lifetime is null.
     assertEquals(1, updatedResource.size());
     assertControlledBigQueryDatasetLifetimeIsUpdatedAndActivityIsLogged(
         updatedResource, createdDataset.getResourceId(), 5900L, 5901L);

@@ -331,8 +331,8 @@ public class ResourceDao {
   }
 
   /**
-   * TODO (PF-2269): Refine to only BQ with missing lifetime.
-   * Returns a list of all controlled BigQuery Datasets.
+   * Returns a list of all controlled BigQuery datasets without table lifetime or partition lifetime
+   * set.
    *
    * @param cloudPlatform Optional. If present, this will only return resources from the specified
    *     cloud platform. If null, this will return resources from all cloud platforms.
@@ -346,8 +346,7 @@ public class ResourceDao {
             + " WHERE stewardship_type = :controlled_resource"
             + " AND exact_resource_type = :controlled_gcp_big_query_dataset"
             + " AND (((attributes -> 'defaultTableLifetime') IS NULL)"
-            + " OR ((attributes -> 'defaultPartitionLifetime') IS NULL))"
-        ;
+            + " OR ((attributes -> 'defaultPartitionLifetime') IS NULL))";
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("controlled_resource", CONTROLLED.toSql())
@@ -579,14 +578,17 @@ public class ResourceDao {
   }
 
   /**
-   * Update a BigQuery dataset's table lifetime
-   * @param defaultTableLifetime leave null if unchanged
+   * Update a BigQuery dataset's default table lifetime
+   *
    * @return whether the resource's region is successfully updated.
    */
   @WriteTransaction
-  public boolean updateBigQueryDatasetDefaultTableLifetime(UUID resourceId, @Nullable Long defaultTableLifetime) {
-    var sql = "UPDATE resource.attributes SET attributes = jsonb_set(attributes, '{defaultTableLifetime}', :defaultTableLifetime) "
-        + "WHERE resource_id = :resource_id";
+  public boolean updateBigQueryDatasetDefaultTableLifetime(
+      UUID resourceId, @Nullable Long defaultTableLifetime) {
+    var sql =
+        "UPDATE resource.attributes "
+            + "SET attributes = jsonb_set(attributes, '{defaultTableLifetime}', :defaultTableLifetime) "
+            + "WHERE resource_id = :resource_id";
 
     var params =
         new MapSqlParameterSource()
@@ -606,14 +608,17 @@ public class ResourceDao {
   }
 
   /**
-   * Update a BigQuery dataset's partition lifetime
-   * @param defaultPartitionLifetime leave null if unchanged
+   * Update a BigQuery dataset's default partition lifetime
+   *
    * @return whether the resource's region is successfully updated.
    */
   @WriteTransaction
-  public boolean updateBigQueryDatasetDefaultPartitionLifetime(UUID resourceId, @Nullable Long defaultPartitionLifetime) {
-    var sql= "UPDATE resource.attributes SET attributes = jsonb_set(attributes, '{defaultPartitionLifetime}', :defaultPartitionLifetime) "
-        + "WHERE resource_id = :resource_id";
+  public boolean updateBigQueryDatasetDefaultPartitionLifetime(
+      UUID resourceId, @Nullable Long defaultPartitionLifetime) {
+    var sql =
+        "UPDATE resource.attributes "
+            + "SET attributes = jsonb_set(attributes, '{defaultPartitionLifetime}', :defaultPartitionLifetime) "
+            + "WHERE resource_id = :resource_id";
 
     var params =
         new MapSqlParameterSource()
