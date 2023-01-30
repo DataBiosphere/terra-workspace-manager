@@ -343,7 +343,7 @@ public class ResourceDao {
     String sql =
         RESOURCE_SELECT_SQL_WITHOUT_WORKSPACE_ID
             + " WHERE stewardship_type = :controlled_resource"
-            + " AND exact_resource_type is :controlled_gcp_big_query_dataset";
+            + " AND exact_resource_type = :controlled_gcp_big_query_dataset";
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("controlled_resource", CONTROLLED.toSql())
