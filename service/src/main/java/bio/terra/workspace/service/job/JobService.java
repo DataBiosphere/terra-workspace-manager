@@ -236,21 +236,21 @@ public class JobService {
         WorkspaceFlightMapKeys.WORKSPACE_ID, FlightFilterOp.EQUAL, workspaceUuid.toString());
     // Add optional filters
     Optional.ofNullable(cloudResourceType)
-        .map(
+        .ifPresent(
             t ->
                 filter.addFilterInputParameter(
                     WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_TYPE, FlightFilterOp.EQUAL, t));
     Optional.ofNullable(stewardshipType)
-        .map(
+        .ifPresent(
             t ->
                 filter.addFilterInputParameter(
                     WorkspaceFlightMapKeys.ResourceKeys.STEWARDSHIP_TYPE, FlightFilterOp.EQUAL, t));
     Optional.ofNullable(resourceName)
-        .map(
+        .ifPresent(
             t ->
                 filter.addFilterInputParameter(
                     WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_NAME, FlightFilterOp.EQUAL, t));
-    Optional.ofNullable(jobStateFilter).map(t -> addStateFilter(filter, t));
+    Optional.ofNullable(jobStateFilter).ifPresent(t -> addStateFilter(filter, t));
 
     return filter;
   }
@@ -354,8 +354,9 @@ public class JobService {
   }
 
   private <T> JobResultOrException<T> handleFailedFlight(FlightState flightState) {
-    if (flightState.getException().isPresent()) {
-      Exception exception = flightState.getException().get();
+    Optional<Exception> flightException = flightState.getException();
+    if (flightException.isPresent()) {
+      Exception exception = flightException.get();
       if (exception instanceof RuntimeException) {
         return new JobResultOrException<T>().exception((RuntimeException) exception);
       } else {

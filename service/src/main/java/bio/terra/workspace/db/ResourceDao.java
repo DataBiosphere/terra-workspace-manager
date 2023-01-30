@@ -909,7 +909,11 @@ public class ResourceDao {
 
   private DbResource getDbResource(String sql, MapSqlParameterSource params) {
     try {
-      return jdbcTemplate.queryForObject(sql, params, DB_RESOURCE_ROW_MAPPER);
+      DbResource dbResource = jdbcTemplate.queryForObject(sql, params, DB_RESOURCE_ROW_MAPPER);
+      if (dbResource == null) {
+        throw new InternalLogicException("Failed to get DbResource");
+      }
+      return dbResource;
     } catch (EmptyResultDataAccessException e) {
       throw new ResourceNotFoundException("Resource not found.");
     }

@@ -98,16 +98,15 @@ public class FolderDao {
       jdbcTemplate.update(sql, params);
       return folder;
     } catch (DuplicateKeyException e) {
-      if (e.getMessage() != null
-          && e.getMessage()
-              .contains("duplicate key value violates unique constraint \"folder_pkey\"")) {
+      String message = e.getMessage();
+      if (message != null
+          && message.contains("duplicate key value violates unique constraint \"folder_pkey\"")) {
         throw new DuplicateFolderIdException(
             String.format("Folder id %s already exists", folder.id()));
       }
-      if (e.getMessage() != null
-          && e.getMessage()
-              .contains(
-                  "duplicate key value violates unique constraint \"folder_display_name_parent_folder_id_workspace_id_key\"")) {
+      if (message != null
+          && message.contains(
+              "duplicate key value violates unique constraint \"folder_display_name_parent_folder_id_workspace_id_key\"")) {
         throw new DuplicateFolderDisplayNameException(
             String.format(
                 "Folder with display name %s already exists in parent folder %s",
@@ -115,8 +114,9 @@ public class FolderDao {
       }
       throw e;
     } catch (DataIntegrityViolationException e) {
-      if (e.getMessage() != null
-          && e.getMessage().contains("violates foreign key constraint \"fk_folder_wid\"")) {
+      String message = e.getMessage();
+      if (message != null
+          && message.contains("violates foreign key constraint \"fk_folder_wid\"")) {
         throw new WorkspaceNotFoundException(
             String.format(
                 "Failed to find workspace %s in which to create the folder", folder.workspaceId()));
@@ -176,10 +176,10 @@ public class FolderDao {
       int rowsAffected = jdbcTemplate.update(sb.toString(), params);
       return rowsAffected > 0;
     } catch (DuplicateKeyException e) {
-      if (e.getMessage() != null
-          && e.getMessage()
-              .contains(
-                  "duplicate key value violates unique constraint \"folder_display_name_parent_folder_id_workspace_id_key\"")) {
+      String message = e.getMessage();
+      if (message != null
+          && message.contains(
+              "duplicate key value violates unique constraint \"folder_display_name_parent_folder_id_workspace_id_key\"")) {
         throw new DuplicateFolderDisplayNameException(
             String.format(
                 "Fails to update due to duplicate display name at the same folder level"));
