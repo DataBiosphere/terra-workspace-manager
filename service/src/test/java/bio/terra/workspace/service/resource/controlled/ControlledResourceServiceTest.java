@@ -1812,7 +1812,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void updateControlledBigQueryDatasetLifetime_onlyUpdateWhenLifetimesAreEmpty() {
+  public void updateControlledBigQueryDatasetLifetime_onlyUpdateWhenLifetimesAreEmpty()
+      throws Exception {
     // create dataset.
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
         ControlledResourceFixtures.getGcpBigQueryDatasetCreationParameters();
@@ -1836,11 +1837,13 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     // Update nothing because all the lifetimes are populated.
     assertTrue(emptyList.isEmpty());
 
-    // Artificially set regions to null in the database.
-    // TODO: update the lifetime.
-    resourceDao.updateControlledResourceRegion(createdDataset.getResourceId(), /*region=*/ null);
+    // Artificially set lifetimes to null in the database.
+    resourceDao.updateBigQueryDatasetDefaultTableLifetime(
+        createdDataset.getResourceId(), /*defaultTableLifetime=*/ null);
+    resourceDao.updateBigQueryDatasetDefaultPartitionLifetime(
+        createdDataset.getResourceId(), /*defaultPartitionLifetime=*/ null);
 
-    List<ControlledResource> updatedResource = updateControlledResourcesRegionAndWait();
+    List<ControlledResource> updatedResource = updateControlledBigQueryDatasetsLifetimeAndWait();
 
     // The three controlled resources are updated as the regions are null.
     assertEquals(1, updatedResource.size());
@@ -1852,15 +1855,17 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
       List<ControlledResource> updatedResource,
       UUID resourceId,
       long expectedTableLifetime,
-      long expectedPartitionLifetime) {
-    ControlledResource dataset =
-        updatedResource.stream()
-            .filter(resource -> resourceId.equals(resource.getResourceId()))
-            .findAny()
-            .get();
-
-    //    assertEquals(expectedTableLifetime, //get the dataset table lifetime
-    //    assertActivityLogForResourceUpdate(resourceId.toString());
+      long expectedPartitionLifetime)
+      throws Exception {
+    ControlledBigQueryDatasetResource dataset =
+        (ControlledBigQueryDatasetResource)
+            updatedResource.stream()
+                .filter(resource -> resourceId.equals(resource.getResourceId()))
+                .findAny()
+                .get();
+    assertEquals(expectedTableLifetime, dataset.getDefaultTableLifetime());
+    assertEquals(expectedPartitionLifetime, dataset.getDefaultPartitionLifetime());
+    assertActivityLogForResourceUpdate(resourceId.toString());
   }
 
   /**

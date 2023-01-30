@@ -37,11 +37,11 @@ public class UpdateControlledBigQueryDatasetsLifetimeStep implements Step {
         CONTROLLED_BIG_QUERY_DATASET_RESOURCE_ID_TO_PARTITION_LIFETIME_MAP,
         CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP);
 
-    Map<UUID, String> resourceIdToDefaultTableLifetimeMap =
+    Map<UUID, Long> resourceIdToDefaultTableLifetimeMap =
         workingMap.get(
             CONTROLLED_BIG_QUERY_DATASET_RESOURCE_ID_TO_TABLE_LIFETIME_MAP,
             new TypeReference<>() {});
-    Map<UUID, String> resourceIdToDefaultPartitionLifetimeMap =
+    Map<UUID, Long> resourceIdToDefaultPartitionLifetimeMap =
         workingMap.get(
             CONTROLLED_BIG_QUERY_DATASET_RESOURCE_ID_TO_PARTITION_LIFETIME_MAP,
             new TypeReference<>() {});
@@ -51,11 +51,10 @@ public class UpdateControlledBigQueryDatasetsLifetimeStep implements Step {
     List<ControlledResource> updatedResources = new ArrayList<>();
 
     for (var id : resourceIdsToWorkspaceIdMap.keySet()) {
-      // TODO: replace with updateBQLifetime write transaction
       boolean updated =
-          resourceDao.updateControlledResourceRegion(
+          resourceDao.updateBigQueryDatasetDefaultTableLifetime(
                   id, resourceIdToDefaultTableLifetimeMap.get(id))
-              && resourceDao.updateControlledResourceRegion(
+              && resourceDao.updateBigQueryDatasetDefaultPartitionLifetime(
                   id, resourceIdToDefaultPartitionLifetimeMap.get(id));
       if (updated) {
         updatedResources.add(

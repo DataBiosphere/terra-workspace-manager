@@ -561,7 +561,9 @@ public class ResourceDaoTest extends BaseUnitTest {
       resourceDao.createControlledResource(dataset);
     }
 
-    // TODO (temp): make it only gets BQ without lifetime.
+    // TODO (PF-2269): Update BQ dataset listing.
+    System.out.println(
+        "NUMBER OF BQ: " + resourceDao.listControlledBigQueryDatasets(CloudPlatform.GCP).size());
 
     assertEquals(6, resourceDao.listControlledBigQueryDatasets(CloudPlatform.GCP).size());
   }

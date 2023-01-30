@@ -331,6 +331,7 @@ public class ResourceDao {
   }
 
   /**
+   * TODO (PF-2269): Refine to only BQ with missing lifetime.
    * Returns a list of all controlled BigQuery Datasets.
    *
    * @param cloudPlatform Optional. If present, this will only return resources from the specified
@@ -564,6 +565,60 @@ public class ResourceDao {
             .addValue("resource_id", resourceId.toString());
 
     int rowsAffected = jdbcTemplate.update(sql, params);
+    boolean updated = rowsAffected > 0;
+
+    logger.info(
+        "{} region for resource {}",
+        (updated ? "Updated" : "No Update - did not find"),
+        resourceId);
+
+    return updated;
+  }
+
+  /**
+   * Update a BigQuery dataset's table lifetime
+   * @param defaultTableLifetime leave null if unchanged
+   * @return whether the resource's region is successfully updated.
+   */
+  @WriteTransaction
+  public boolean updateBigQueryDatasetDefaultTableLifetime(UUID resourceId, @Nullable Long defaultTableLifetime) {
+    var sql = "UPDATE resource.attributes SET attributes = jsonb_set(attributes, '{defaultTableLifetime}', :defaultTableLifetime) "
+        + "WHERE resource_id = :resource_id";
+
+    var params =
+        new MapSqlParameterSource()
+            .addValue("defaultTableLifetime", defaultTableLifetime)
+            .addValue("resource_id", resourceId.toString());
+
+    int rowsAffected = jdbcTemplate.update(sql, params);
+
+    boolean updated = rowsAffected > 0;
+
+    logger.info(
+        "{} region for resource {}",
+        (updated ? "Updated" : "No Update - did not find"),
+        resourceId);
+
+    return updated;
+  }
+
+  /**
+   * Update a BigQuery dataset's partition lifetime
+   * @param defaultPartitionLifetime leave null if unchanged
+   * @return whether the resource's region is successfully updated.
+   */
+  @WriteTransaction
+  public boolean updateBigQueryDatasetDefaultPartitionLifetime(UUID resourceId, @Nullable Long defaultPartitionLifetime) {
+    var sql= "UPDATE resource.attributes SET attributes = jsonb_set(attributes, '{defaultPartitionLifetime}', :defaultPartitionLifetime) "
+        + "WHERE resource_id = :resource_id";
+
+    var params =
+        new MapSqlParameterSource()
+            .addValue("defaultPartitionLifetime", defaultPartitionLifetime)
+            .addValue("resource_id", resourceId.toString());
+
+    var rowsAffected = jdbcTemplate.update(sql, params);
+
     boolean updated = rowsAffected > 0;
 
     logger.info(
