@@ -419,13 +419,11 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamWorkspaceAction.DELETE);
     validatePropertiesDeleteRequestBody(propertyKeys);
-    logger.info(
-        "Deleting the properties with the key {} in workspace {}", propertyKeys, workspaceUuid);
+    logger.info("Deleting the properties in workspace {}", workspaceUuid);
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamWorkspaceAction.DELETE);
     workspaceService.deleteWorkspaceProperties(workspaceUuid, propertyKeys, userRequest);
-    logger.info(
-        "Deleted the properties with the key {} in workspace {}", propertyKeys, workspaceUuid);
+    logger.info("Deleted the properties in workspace {}", workspaceUuid);
 
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
