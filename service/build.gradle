@@ -59,7 +59,7 @@ jacoco {
     applyTo jacocoBootRun
 }
 
-sonarqube {
+sonar {
     properties {
         property 'sonar.projectName', 'terra-workspace-manager'
         property 'sonar.projectKey', 'DataBiosphere_terra-workspace-manager'
