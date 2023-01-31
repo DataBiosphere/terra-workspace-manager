@@ -1,5 +1,7 @@
 package bio.terra.workspace.db;
 
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_CREATED_BIG_QUERY_PARTITION_LIFETIME;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_CREATED_BIG_QUERY_TABLE_LIFETIME;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_RESOURCE_PROPERTIES;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeNotebookCommonFieldsBuilder;
@@ -545,6 +547,10 @@ public class ResourceDaoTest extends BaseUnitTest {
     assertEquals(
         15, resourceDao.listControlledResourcesWithMissingRegion(CloudPlatform.GCP).size());
     assertTrue(resourceDao.listControlledResourcesWithMissingRegion(CloudPlatform.AZURE).isEmpty());
+
+    resourceDao.deleteAllControlledResources(workspaceUuid, CloudPlatform.GCP);
+    resourceDao.deleteAllControlledResources(workspaceUuid2, CloudPlatform.GCP);
+    resourceDao.deleteAllControlledResources(workspaceUuid3, CloudPlatform.GCP);
   }
 
   @Test
@@ -555,8 +561,9 @@ public class ResourceDaoTest extends BaseUnitTest {
           ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid)
               .common(
                   makeDefaultControlledResourceFieldsBuilder().workspaceUuid(workspaceUuid).build())
-              .defaultTableLifetime(i >= 6 ? 5900L : null)
-              .defaultPartitionLifetime(i >= 6 ? 5901L : null)
+              .defaultTableLifetime(i >= 6 ? DEFAULT_CREATED_BIG_QUERY_TABLE_LIFETIME : null)
+              .defaultPartitionLifetime(
+                  i >= 6 ? DEFAULT_CREATED_BIG_QUERY_PARTITION_LIFETIME : null)
               .build();
       resourceDao.createControlledResource(dataset);
     }

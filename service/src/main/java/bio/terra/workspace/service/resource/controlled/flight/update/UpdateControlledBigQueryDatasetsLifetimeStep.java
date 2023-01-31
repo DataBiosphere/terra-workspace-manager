@@ -54,7 +54,7 @@ public class UpdateControlledBigQueryDatasetsLifetimeStep implements Step {
       boolean updated =
           resourceDao.updateBigQueryDatasetDefaultTableLifetime(
                   id, resourceIdToDefaultTableLifetimeMap.get(id))
-              && resourceDao.updateBigQueryDatasetDefaultPartitionLifetime(
+              || resourceDao.updateBigQueryDatasetDefaultPartitionLifetime(
                   id, resourceIdToDefaultPartitionLifetimeMap.get(id));
       if (updated) {
         updatedResources.add(

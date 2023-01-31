@@ -1825,6 +1825,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
                     .datasetName(creationParameters.getDatasetId())
                     .projectId(projectId)
+                    .defaultTableLifetime(DEFAULT_CREATED_BIG_QUERY_TABLE_LIFETIME)
+                    .defaultPartitionLifetime(DEFAULT_CREATED_BIG_QUERY_PARTITION_LIFETIME)
                     .build(),
                 null,
                 user.getAuthenticatedRequest(),
