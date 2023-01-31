@@ -540,10 +540,12 @@ public class ResourceDaoTest extends BaseUnitTest {
             "foo@bar.com",
             OffsetDateTime.now(),
             "us-central1"));
+
     ControlledGcsBucketResource bucket =
         resourceDao
             .getResource(workspaceUuid, resourceId)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
+
     assertEquals(bucketName, bucket.getBucketName());
   }
 
