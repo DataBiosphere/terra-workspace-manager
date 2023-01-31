@@ -89,12 +89,13 @@ public class ControlledGcsBucketResource extends ControlledResource {
   private ControlledGcsBucketResource(ControlledResourceFields common, String bucketName) {
     super(common);
     this.bucketName = bucketName;
-    validate();
+    validateForNewBucket();
   }
 
   public ControlledGcsBucketResource(DbResource dbResource, String bucketName) {
     super(dbResource);
     this.bucketName = bucketName;
+    validate();
   }
 
   public static ControlledGcsBucketResource.Builder builder() {
@@ -217,6 +218,14 @@ public class ControlledGcsBucketResource extends ControlledResource {
     if (getBucketName() == null) {
       throw new MissingRequiredFieldException("Missing required field for ControlledGcsBucket.");
     }
+    // Allow underscore bucket name to be backward compatible. The database contains bucket with
+    // underscore bucketname.
+    ResourceValidationUtils.validateBucketNameAllowsUnderscore(bucketName);
+  }
+
+  public void validateForNewBucket() {
+    validate();
+    // Disallow underscore in new terra managed GCS bucket.
     ResourceValidationUtils.validateBucketNameDisallowUnderscore(bucketName);
   }
 
