@@ -17,14 +17,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
 public class UpdateResourcesRegionStep implements Step {
 
+  private static final Logger logger = LoggerFactory.getLogger(UpdateResourcesRegionStep.class);
   private final ResourceDao resourceDao;
+  private final boolean isWetRun;
 
-  public UpdateResourcesRegionStep(ResourceDao resourceDao) {
+  public UpdateResourcesRegionStep(ResourceDao resourceDao, boolean isWetRun) {
     this.resourceDao = resourceDao;
+    this.isWetRun = isWetRun;
   }
 
   @Override
@@ -40,13 +45,21 @@ public class UpdateResourcesRegionStep implements Step {
         workingMap.get(CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP, new TypeReference<>() {});
     List<ControlledResource> updatedResources = new ArrayList<>();
     for (var id : resourceIdsToRegionMap.keySet()) {
-      boolean updated =
-          resourceDao.updateControlledResourceRegion(id, resourceIdsToRegionMap.get(id));
-      if (updated) {
-        updatedResources.add(
-            resourceDao
-                .getResource(UUID.fromString(resourceIdsToWorkspaceIdMap.get(id)), id)
-                .castToControlledResource());
+      if (isWetRun) {
+        boolean updated =
+            resourceDao.updateControlledResourceRegion(id, resourceIdsToRegionMap.get(id));
+        if (updated) {
+          updatedResources.add(
+              resourceDao
+                  .getResource(UUID.fromString(resourceIdsToWorkspaceIdMap.get(id)), id)
+                  .castToControlledResource());
+        }
+      } else {
+        logger.info(
+            "Dry run to update resource {} in workspace {} to region {}",
+            id,
+            resourceIdsToRegionMap.get(id),
+            resourceIdsToRegionMap.get(id));
       }
     }
     setResponse(context, updatedResources, HttpStatus.OK);

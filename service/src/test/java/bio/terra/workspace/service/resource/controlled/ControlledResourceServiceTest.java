@@ -1817,7 +1817,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   }
 
   private List<ControlledResource> updateControlledResourcesRegionAndWait() {
-    String jobId = controlledResourceService.updateGcpControlledResourcesRegionAsync();
+    String jobId =
+        controlledResourceService.updateGcpControlledResourcesRegionAsync(
+            userAccessUtils.defaultUserAuthRequest(), true);
     jobService.waitForJob(jobId);
 
     AsyncJobResult<List<ControlledResource>> jobResult =
