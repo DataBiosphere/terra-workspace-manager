@@ -484,6 +484,9 @@ public class ResourceValidationUtils {
         throw new InvalidControlledResourceException(
             String.format("Specified location %s is not allowed by effective policy.", region));
       }
+    } else {
+      logger.warn(
+          "Workspace {} has no policy attached, cannot validate region constraints.", workspaceId);
     }
   }
 
