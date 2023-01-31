@@ -547,15 +547,12 @@ public class ResourceDaoTest extends BaseUnitTest {
     assertEquals(
         15, resourceDao.listControlledResourcesWithMissingRegion(CloudPlatform.GCP).size());
     assertTrue(resourceDao.listControlledResourcesWithMissingRegion(CloudPlatform.AZURE).isEmpty());
-
-    resourceDao.deleteAllControlledResources(workspaceUuid, CloudPlatform.GCP);
-    resourceDao.deleteAllControlledResources(workspaceUuid2, CloudPlatform.GCP);
-    resourceDao.deleteAllControlledResources(workspaceUuid3, CloudPlatform.GCP);
   }
 
   @Test
   public void listControlledBigQueryDatasetsWithoutLifetime() {
     UUID workspaceUuid = createWorkspaceWithGcpContext(workspaceDao);
+    resourceDao.deleteAllControlledResources(workspaceUuid, CloudPlatform.GCP);
     for (int i = 1; i <= 6; i++) {
       ControlledBigQueryDatasetResource dataset =
           ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid)
@@ -568,8 +565,11 @@ public class ResourceDaoTest extends BaseUnitTest {
       resourceDao.createControlledResource(dataset);
     }
 
-    assertEquals(
-        5, resourceDao.listControlledBigQueryDatasetsWithoutLifetime(CloudPlatform.GCP).size());
+    var ans = resourceDao.listControlledBigQueryDatasetsWithoutLifetime(CloudPlatform.GCP).size();
+
+    System.out.println("Temp aa: " + ans);
+
+    assertEquals(5, ans);
   }
 
   private void createControlledResourceAndLog(ControlledResource resource) {
