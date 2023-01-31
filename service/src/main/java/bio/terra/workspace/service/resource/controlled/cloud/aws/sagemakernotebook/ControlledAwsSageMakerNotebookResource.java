@@ -62,6 +62,8 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
       @JsonProperty("properties") Map<String, String> properties,
       @JsonProperty("createdByEmail") String createdByEmail,
       @JsonProperty("createdDate") OffsetDateTime createdDate,
+      @JsonProperty("lastUpdatedByEmail") String lastUpdatedByEmail,
+      @JsonProperty("lastUpdatedDate") OffsetDateTime lastUpdatedDate,
       @JsonProperty("region") String region) {
     super(
         workspaceId,
@@ -78,6 +80,8 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
         properties,
         createdByEmail,
         createdDate,
+        lastUpdatedByEmail,
+        lastUpdatedDate,
         region);
     this.instanceId = instanceId;
     this.instanceType = instanceType;
@@ -189,13 +193,6 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
   public ApiResourceAttributesUnion toApiAttributesUnion() {
     ApiResourceAttributesUnion union = new ApiResourceAttributesUnion();
     union.awsSagemakerNotebook(toApiAttributes());
-    return union;
-  }
-
-  @Override
-  public ApiResourceUnion toApiResourceUnion() {
-    ApiResourceUnion union = new ApiResourceUnion();
-    union.awsSageMakerNotebook(toApiResource());
     return union;
   }
 
