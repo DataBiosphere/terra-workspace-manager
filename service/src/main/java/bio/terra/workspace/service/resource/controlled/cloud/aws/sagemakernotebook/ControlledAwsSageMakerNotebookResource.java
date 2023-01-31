@@ -12,7 +12,6 @@ import bio.terra.workspace.generated.model.ApiAwsSageMakerNotebookAttributes;
 import bio.terra.workspace.generated.model.ApiAwsSageMakerNotebookResource;
 import bio.terra.workspace.generated.model.ApiAwsSagemakerNotebookDefaultBucket;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
-import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;

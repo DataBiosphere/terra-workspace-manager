@@ -13,7 +13,6 @@ import bio.terra.workspace.generated.model.ApiAwsBucketAttributes;
 import bio.terra.workspace.generated.model.ApiAwsBucketCreationParameters;
 import bio.terra.workspace.generated.model.ApiAwsBucketResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
-import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
