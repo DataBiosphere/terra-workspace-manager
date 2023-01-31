@@ -12,6 +12,7 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import io.opencensus.contrib.spring.aop.Traced;
 import javax.servlet.http.HttpServletRequest;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -56,15 +57,16 @@ public class AdminApiController extends ControllerBase implements AdminApi {
   @Traced
   @Override
   public ResponseEntity<ApiJobResult> getSyncIamRolesResult(String jobId) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    jobService.verifyUserAccess(jobId, userRequest, /*expectedWorkspaceId=*/ null);
-    ApiJobResult response = jobApiUtils.fetchJobResult(jobId);
-    return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
+    return getApiJobResult(jobId);
   }
 
   @Traced
   @Override
   public ResponseEntity<ApiJobResult> getBackfillGcpControlledResourcesRegionsResult(String jobId) {
+    return getApiJobResult(jobId);
+  }
+
+  private ResponseEntity<ApiJobResult> getApiJobResult(String jobId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     jobService.verifyUserAccess(jobId, userRequest, /*expectedWorkspaceId=*/ null);
     ApiJobResult response = jobApiUtils.fetchJobResult(jobId);
