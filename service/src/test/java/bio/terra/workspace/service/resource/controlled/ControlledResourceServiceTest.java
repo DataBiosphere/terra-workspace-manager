@@ -1820,18 +1820,14 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
         ControlledResourceFixtures.getGcpBigQueryDatasetCreationParameters();
     ControlledBigQueryDatasetResource createdDataset =
-        controlledResourceService
-            .createControlledResourceSync(
-                ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
-                    .datasetName(creationParameters.getDatasetId())
-                    .projectId(projectId)
-                    .defaultTableLifetime(DEFAULT_CREATED_BIG_QUERY_TABLE_LIFETIME)
-                    .defaultPartitionLifetime(DEFAULT_CREATED_BIG_QUERY_PARTITION_LIFETIME)
-                    .build(),
-                null,
-                user.getAuthenticatedRequest(),
-                creationParameters)
-            .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
+            .datasetName(ControlledResourceFixtures.uniqueDatasetId())
+            .projectId(projectId)
+            .defaultTableLifetime(creationParameters.getDefaultTableLifetime())
+            .defaultPartitionLifetime(creationParameters.getDefaultPartitionLifetime())
+            .build();
+    resourceDao.createControlledResource(createdDataset);
+
     assertEquals(
         DEFAULT_CREATED_BIG_QUERY_TABLE_LIFETIME, createdDataset.getDefaultTableLifetime());
     assertEquals(
@@ -1845,9 +1841,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     // Artificially set lifetimes to null in the database.
     resourceDao.updateBigQueryDatasetDefaultTableLifetime(
-        createdDataset.getResourceId(), /*defaultTableLifetime=*/ null);
+        createdDataset, /*defaultTableLifetime=*/ null);
     resourceDao.updateBigQueryDatasetDefaultPartitionLifetime(
-        createdDataset.getResourceId(), /*defaultPartitionLifetime=*/ null);
+        createdDataset, /*defaultPartitionLifetime=*/ null);
 
     List<ControlledResource> updatedResource = updateControlledBigQueryDatasetsLifetimeAndWait();
 

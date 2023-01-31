@@ -2,6 +2,8 @@ package bio.terra.workspace.service.resource.controlled.flight.update;
 
 import static bio.terra.workspace.common.utils.FlightUtils.setResponse;
 import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntries;
+import static bio.terra.workspace.service.resource.model.WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_BIG_QUERY_DATASETS_WITHOUT_LIFETIME;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_BIG_QUERY_DATASET_RESOURCE_ID_TO_PARTITION_LIFETIME_MAP;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_BIG_QUERY_DATASET_RESOURCE_ID_TO_TABLE_LIFETIME_MAP;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP;
@@ -12,7 +14,9 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.db.ResourceDao;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.ArrayList;
@@ -30,7 +34,7 @@ public class UpdateControlledBigQueryDatasetsLifetimeStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    FlightMap workingMap = context.getWorkingMap();
+    var workingMap = context.getWorkingMap();
     validateRequiredEntries(
         workingMap,
         CONTROLLED_BIG_QUERY_DATASET_RESOURCE_ID_TO_TABLE_LIFETIME_MAP,
@@ -50,12 +54,20 @@ public class UpdateControlledBigQueryDatasetsLifetimeStep implements Step {
         workingMap.get(CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP, new TypeReference<>() {});
     List<ControlledResource> updatedResources = new ArrayList<>();
 
-    for (var id : resourceIdsToWorkspaceIdMap.keySet()) {
+    List<ControlledResource> controlledBigQueryDatasets =
+        context
+            .getWorkingMap()
+            .get(CONTROLLED_BIG_QUERY_DATASETS_WITHOUT_LIFETIME, new TypeReference<>() {});
+
+    for (var resource : controlledBigQueryDatasets) {
+      var id = resource.getResourceId();
       boolean updated =
           resourceDao.updateBigQueryDatasetDefaultTableLifetime(
-                  id, resourceIdToDefaultTableLifetimeMap.get(id))
+                  resource.castByEnum(CONTROLLED_GCP_BIG_QUERY_DATASET),
+                  resourceIdToDefaultTableLifetimeMap.get(id))
               || resourceDao.updateBigQueryDatasetDefaultPartitionLifetime(
-                  id, resourceIdToDefaultPartitionLifetimeMap.get(id));
+                  resource.castByEnum(CONTROLLED_GCP_BIG_QUERY_DATASET),
+                  resourceIdToDefaultPartitionLifetimeMap.get(id));
       if (updated) {
         updatedResources.add(
             resourceDao
@@ -74,21 +86,20 @@ public class UpdateControlledBigQueryDatasetsLifetimeStep implements Step {
         context
             .getWorkingMap()
             .get(CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP, new TypeReference<>() {});
-    if (resourceIdsToWorkspaceIdMap == null) {
+
+    List<ControlledResource> controlledBigQueryDatasets =
+        context
+            .getWorkingMap()
+            .get(CONTROLLED_BIG_QUERY_DATASETS_WITHOUT_LIFETIME, new TypeReference<>() {});
+
+    if (controlledBigQueryDatasets.isEmpty()) {
       return StepResult.getStepResultSuccess();
     }
-    for (var resourceId : resourceIdsToWorkspaceIdMap.keySet()) {
-      String previousAttributes =
-          context
-              .getWorkingMap()
-              .get(WorkspaceFlightMapKeys.ResourceKeys.PREVIOUS_ATTRIBUTES, String.class);
-      resourceDao.updateResource(
-          UUID.fromString(resourceIdsToWorkspaceIdMap.get(resourceId)),
-          resourceId,
-          null,
-          null,
-          previousAttributes,
-          null);
+    for (var resource : controlledBigQueryDatasets) {
+      resourceDao.updateBigQueryDatasetDefaultTableLifetime(
+          resource.castByEnum(CONTROLLED_GCP_BIG_QUERY_DATASET), null);
+      resourceDao.updateBigQueryDatasetDefaultPartitionLifetime(
+          resource.castByEnum(CONTROLLED_GCP_BIG_QUERY_DATASET), null);
     }
     return StepResult.getStepResultSuccess();
   }

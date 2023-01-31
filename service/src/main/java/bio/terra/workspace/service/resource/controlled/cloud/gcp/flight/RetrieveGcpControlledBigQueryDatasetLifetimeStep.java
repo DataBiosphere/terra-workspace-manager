@@ -51,10 +51,6 @@ public class RetrieveGcpControlledBigQueryDatasetLifetimeStep implements Step {
 
     for (var resource : controlledBigQueryDatasets) {
       WsmResourceType resourceType = resource.getResourceType();
-      String previousAttributes = resource.attributesToJson();
-      context
-          .getWorkingMap()
-          .put(WorkspaceFlightMapKeys.ResourceKeys.PREVIOUS_ATTRIBUTES, previousAttributes);
       logger.info(
           "Getting default table lifetime and partition life for resource (BigQuery dataset) {} in workspace {}",
           resource.getResourceId(),

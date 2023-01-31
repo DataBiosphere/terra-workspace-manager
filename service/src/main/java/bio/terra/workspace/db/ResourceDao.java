@@ -13,6 +13,8 @@ import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetAttributes;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
@@ -584,25 +586,22 @@ public class ResourceDao {
    */
   @WriteTransaction
   public boolean updateBigQueryDatasetDefaultTableLifetime(
-      UUID resourceId, @Nullable Long defaultTableLifetime) {
-    var sql =
-        "UPDATE resource.attributes "
-            + "SET attributes = jsonb_set(attributes, '{defaultTableLifetime}', :defaultTableLifetime) "
-            + "WHERE resource_id = :resource_id";
-
-    var params =
-        new MapSqlParameterSource()
-            .addValue("defaultTableLifetime", defaultTableLifetime)
-            .addValue("resource_id", resourceId.toString());
-
-    int rowsAffected = jdbcTemplate.update(sql, params);
-
-    boolean updated = rowsAffected > 0;
+      ControlledBigQueryDatasetResource dataset, @Nullable Long defaultTableLifetime) {
+    String newAttributes =
+        DbSerDes.toJson(
+            new ControlledBigQueryDatasetAttributes(dataset.getDatasetName(),
+                dataset.getProjectId(),
+                defaultTableLifetime,
+                dataset.getDefaultPartitionLifetime()
+            )
+        );
+    boolean updated = updateResource(
+        dataset.getWorkspaceId(), dataset.getResourceId(), null, null, newAttributes, null);
 
     logger.info(
-        "{} region for resource {}",
+        "{} default table lifetime for resource {} to {}",
         (updated ? "Updated" : "No Update - did not find"),
-        resourceId);
+        dataset.getResourceId(), defaultTableLifetime);
 
     return updated;
   }
@@ -614,25 +613,22 @@ public class ResourceDao {
    */
   @WriteTransaction
   public boolean updateBigQueryDatasetDefaultPartitionLifetime(
-      UUID resourceId, @Nullable Long defaultPartitionLifetime) {
-    var sql =
-        "UPDATE resource.attributes "
-            + "SET attributes = jsonb_set(attributes, '{defaultPartitionLifetime}', :defaultPartitionLifetime) "
-            + "WHERE resource_id = :resource_id";
-
-    var params =
-        new MapSqlParameterSource()
-            .addValue("defaultPartitionLifetime", defaultPartitionLifetime)
-            .addValue("resource_id", resourceId.toString());
-
-    var rowsAffected = jdbcTemplate.update(sql, params);
-
-    boolean updated = rowsAffected > 0;
+      ControlledBigQueryDatasetResource dataset, @Nullable Long defaultPartitionLifetime) {
+    String newAttributes =
+        DbSerDes.toJson(
+            new ControlledBigQueryDatasetAttributes(dataset.getDatasetName(),
+                dataset.getProjectId(),
+                dataset.getDefaultTableLifetime(),
+                defaultPartitionLifetime
+            )
+        );
+    boolean updated = updateResource(
+        dataset.getWorkspaceId(), dataset.getResourceId(), null, null, newAttributes, null);
 
     logger.info(
-        "{} region for resource {}",
+        "{} default partition lifetime for resource {} to {}",
         (updated ? "Updated" : "No Update - did not find"),
-        resourceId);
+        dataset.getResourceId(), defaultPartitionLifetime);
 
     return updated;
   }
