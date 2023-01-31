@@ -515,7 +515,7 @@ public class ResourceDaoTest extends BaseUnitTest {
   }
 
   @Test
-  public void gcsBucketWithUnderscore_retrieve() {
+  void gcsBucketWithUnderscore_retrieve() {
     UUID workspaceUuid = createWorkspaceWithGcpContext(workspaceDao);
     var resourceId = UUID.randomUUID();
     var bucketName = "gcs_bucket_with_underscore_name";
