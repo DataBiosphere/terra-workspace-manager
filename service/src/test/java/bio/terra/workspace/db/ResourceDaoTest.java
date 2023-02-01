@@ -24,14 +24,20 @@ import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
+import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
+import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
+import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
+import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +56,7 @@ public class ResourceDaoTest extends BaseUnitTest {
   @Autowired WorkspaceDao workspaceDao;
   @Autowired GcpCloudContextService gcpCloudContextService;
   @Autowired WorkspaceActivityLogDao activityLogDao;
+  @Autowired RawDaoTestFixture rawDaoTestFixture;
 
   private UUID workspaceUuid;
 
@@ -505,6 +512,41 @@ public class ResourceDaoTest extends BaseUnitTest {
         () ->
             resourceDao.deleteResourceProperties(
                 workspaceUuid, resource.getResourceId(), List.of()));
+  }
+
+  @Test
+  void gcsBucketWithUnderscore_retrieve() {
+    UUID workspaceUuid = createWorkspaceWithGcpContext(workspaceDao);
+    var resourceId = UUID.randomUUID();
+    var bucketName = "gcs_bucket_with_underscore_name";
+    // This is an artificially contrived situation where we create a gcs bucket with an underscore.
+    resourceDao.createControlledResource(
+        new ControlledGcsBucketResource(
+            workspaceUuid,
+            resourceId,
+            TestUtils.appendRandomNumber("resourcename"),
+            "This is a bucket with underscore name",
+            CloningInstructions.COPY_NOTHING,
+            /*assignedUser=*/ null,
+            PrivateResourceState.NOT_APPLICABLE,
+            AccessScopeType.ACCESS_SCOPE_SHARED,
+            ManagedByType.MANAGED_BY_USER,
+            /*applicationId=*/ null,
+            bucketName,
+            List.of(),
+            Map.of(),
+            "foo@bar.com",
+            OffsetDateTime.now(),
+            "foo@bar.com",
+            OffsetDateTime.now(),
+            "us-central1"));
+
+    ControlledGcsBucketResource bucket =
+        resourceDao
+            .getResource(workspaceUuid, resourceId)
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
+
+    assertEquals(bucketName, bucket.getBucketName());
   }
 
   @Test
