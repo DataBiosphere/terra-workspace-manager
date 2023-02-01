@@ -23,6 +23,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Resou
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import io.opencensus.contrib.spring.aop.Traced;
+import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -277,13 +278,14 @@ public class ReferencedResourceService {
       throw new ConflictException("Policy merge has conflicts");
     }
 
-    List<String> validRegions =
-        tpsApiDispatch.listValidRegionsForPao(dryRunResults.getResultingPao(), platform);
+    HashSet<String> validRegions = new HashSet<>();
+    validRegions.addAll(
+        tpsApiDispatch.listValidRegionsForPao(dryRunResults.getResultingPao(), platform));
     List<ControlledResource> existingResources =
         resourceDao.listControlledResources(destinationWorkspaceId, platform);
 
     for (var existingResource : existingResources) {
-      if (!validRegions.stream().anyMatch(existingResource.getRegion()::equalsIgnoreCase)) {
+      if (!validRegions.contains(existingResource.getRegion())) {
         throw new ConflictException(
             "Workspace contains resources that would be outside of the merged policy.");
       }

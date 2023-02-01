@@ -4,6 +4,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
@@ -146,16 +147,18 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
      * Scenario 4: Workspace and data collection have incompatible region policies. Workspace
      * (policy=east) + Data Collection (policy=central). Result: Policy Exception
      */
-    assertThrows(
-        ApiException.class,
-        () ->
-            referencedGcpResourceApi.cloneGcpGcsBucketReference(
-                new CloneReferencedResourceRequestBody()
-                    .destinationWorkspaceId(eastWorkspace.getId()),
-                dataCollectionReferenceResource.getMetadata().getWorkspaceId(),
-                dataCollectionReferenceResource.getMetadata().getResourceId()),
-        "Policy merge has conflicts");
+    ApiException exception =
+        assertThrows(
+            ApiException.class,
+            () ->
+                referencedGcpResourceApi.cloneGcpGcsBucketReference(
+                    new CloneReferencedResourceRequestBody()
+                        .destinationWorkspaceId(eastWorkspace.getId()),
+                    dataCollectionReferenceResource.getMetadata().getWorkspaceId(),
+                    dataCollectionReferenceResource.getMetadata().getResourceId()));
     workspaceApi.deleteWorkspace(eastWorkspace.getId());
+    assertEquals(exception.getCode(), HttpStatus.SC_CONFLICT);
+    assertTrue(exception.getMessage().contains("Policy merge has conflicts"));
 
     /**
      * Scenario 5: Workspace has compatible policy but an incompatible resource. Workspace
@@ -183,15 +186,20 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
 
     logger.info("Created controlled bucket {}", resourceId);
 
-    assertThrows(
-        ApiException.class,
-        () ->
-            referencedGcpResourceApi.cloneGcpGcsBucketReference(
-                new CloneReferencedResourceRequestBody()
-                    .destinationWorkspaceId(scenario5Workspace.getId()),
-                dataCollectionReferenceResource.getMetadata().getWorkspaceId(),
-                dataCollectionReferenceResource.getMetadata().getResourceId()),
-        "Policy merge has conflicts");
+    exception =
+        assertThrows(
+            ApiException.class,
+            () ->
+                referencedGcpResourceApi.cloneGcpGcsBucketReference(
+                    new CloneReferencedResourceRequestBody()
+                        .destinationWorkspaceId(scenario5Workspace.getId()),
+                    dataCollectionReferenceResource.getMetadata().getWorkspaceId(),
+                    dataCollectionReferenceResource.getMetadata().getResourceId()));
+    assertEquals(exception.getCode(), HttpStatus.SC_CONFLICT);
+    assertTrue(
+        exception
+            .getMessage()
+            .contains("Workspace contains resources that would be outside of the merged policy."));
 
     workspaceApi.deleteWorkspace(scenario5Workspace.getId());
     workspaceApi.deleteWorkspace(centralDataCollection.getId());
