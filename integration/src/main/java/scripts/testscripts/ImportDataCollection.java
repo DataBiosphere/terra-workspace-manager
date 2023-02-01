@@ -11,7 +11,6 @@ import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
-import bio.terra.workspace.model.CloneReferencedGcpGcsBucketResourceResult;
 import bio.terra.workspace.model.CloneReferencedResourceRequestBody;
 import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.CreateWorkspaceRequestBody;
@@ -53,10 +52,10 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
     String gcpEastLocation = "gcp.us-east1";
     String usaLocation = "usa";
 
-    /**
-     * Create a workspace with us-central1 policy and a reference bucket. This will act as our data
-     * collection for most of the scenarios covered in this journey.
-     */
+    /*
+     Create a workspace with us-central1 policy and a reference bucket. This will act as our data
+     collection for most of the scenarios covered in this journey.
+    */
     CreatedWorkspace centralDataCollection =
         CreateWorkspaceWithRegionPolicy(workspaceApi, gcpCentralLocation);
 
@@ -85,26 +84,25 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
             "referenceBucket",
             CloningInstructionsEnum.REFERENCE);
 
-    /**
-     * Scenario 1: Workspace without region should gain region from data collection. Workspace
-     * (policy=empty) + Data Collection (policy=us-central1). Result: OK & Workspace
-     * (policy=us-central1)
-     */
+    /*
+     Scenario 1: Workspace without region should gain region from data collection. Workspace
+     (policy=empty) + Data Collection (policy=us-central1). Result: OK & Workspace
+     (policy=us-central1)
+    */
     // We'll use the workspace allocated by the Base class as the target workspace.
 
-    CloneReferencedGcpGcsBucketResourceResult bucketCloneResult =
-        referencedGcpResourceApi.cloneGcpGcsBucketReference(
-            new CloneReferencedResourceRequestBody().destinationWorkspaceId(getWorkspaceId()),
-            dataCollectionReferenceResource.getMetadata().getWorkspaceId(),
-            dataCollectionReferenceResource.getMetadata().getResourceId());
+    referencedGcpResourceApi.cloneGcpGcsBucketReference(
+        new CloneReferencedResourceRequestBody().destinationWorkspaceId(getWorkspaceId()),
+        dataCollectionReferenceResource.getMetadata().getWorkspaceId(),
+        dataCollectionReferenceResource.getMetadata().getResourceId());
 
     validateWorkspaceContainsRegionPolicy(workspaceApi, getWorkspaceId(), gcpCentralLocation);
 
-    /**
-     * Scenario 2: Workspace region should be reduced to data collection region. Workspace
-     * (policy=usa) + Data Collection (policy=us-central1). Result: OK & Workspace
-     * (policy=us-central1)
-     */
+    /*
+     Scenario 2: Workspace region should be reduced to data collection region. Workspace
+     (policy=usa) + Data Collection (policy=us-central1). Result: OK & Workspace
+     (policy=us-central1)
+    */
     CreatedWorkspace scenario2Workspace =
         CreateWorkspaceWithRegionPolicy(workspaceApi, usaLocation);
 
@@ -117,11 +115,11 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
         workspaceApi, scenario2Workspace.getId(), gcpCentralLocation);
     workspaceApi.deleteWorkspace(scenario2Workspace.getId());
 
-    /**
-     * Scenario 3: Workspace region isn't updated if data collection doesn't specify a region.
-     * Workspace (policy=east) + Data Collection (policy=empty). Result: OK & Workspace
-     * (policy=east)
-     */
+    /*
+     Scenario 3: Workspace region isn't updated if data collection doesn't specify a region.
+     Workspace (policy=east) + Data Collection (policy=empty). Result: OK & Workspace
+     (policy=east)
+    */
     CreatedWorkspace eastWorkspace = CreateWorkspaceWithRegionPolicy(workspaceApi, gcpEastLocation);
 
     CreatedWorkspace noPolicyDataCollection =
@@ -143,10 +141,10 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
     validateWorkspaceContainsRegionPolicy(workspaceApi, eastWorkspace.getId(), gcpEastLocation);
     // don't delete this workspace because we'll reuse it in the next scenario.
 
-    /**
-     * Scenario 4: Workspace and data collection have incompatible region policies. Workspace
-     * (policy=east) + Data Collection (policy=central). Result: Policy Exception
-     */
+    /*
+     Scenario 4: Workspace and data collection have incompatible region policies. Workspace
+     (policy=east) + Data Collection (policy=central). Result: Policy Exception
+    */
     ApiException exception =
         assertThrows(
             ApiException.class,
@@ -160,10 +158,10 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
     assertEquals(exception.getCode(), HttpStatus.SC_CONFLICT);
     assertTrue(exception.getMessage().contains("Policy merge has conflicts"));
 
-    /**
-     * Scenario 5: Workspace has compatible policy but an incompatible resource. Workspace
-     * (policy=usa,resource=east) + Data Collection (policy=central). Result: Policy Exception
-     */
+    /*
+     Scenario 5: Workspace has compatible policy but an incompatible resource. Workspace
+     (policy=usa,resource=east) + Data Collection (policy=central). Result: Policy Exception
+    */
     CreatedWorkspace scenario5Workspace =
         CreateWorkspaceWithRegionPolicy(workspaceApi, usaLocation);
 
@@ -216,7 +214,7 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
                     .name("region-constraint")
                     .namespace("terra")
                     .additionalData(
-                        new ArrayList<WsmPolicyPair>() {
+                        new ArrayList<>() {
                           {
                             add(new WsmPolicyPair().key("region-name").value(location));
                           }
