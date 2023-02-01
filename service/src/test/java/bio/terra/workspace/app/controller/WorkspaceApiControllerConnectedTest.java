@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.controller;
 
+import static bio.terra.policy.model.TpsUpdateMode.DRY_RUN;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.SHORT_DESCRIPTION_PROPERTY;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.TYPE_PROPERTY;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.USER_SET_PROPERTY;
@@ -8,6 +9,7 @@ import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UFI
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UUID_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_EXPLAIN_POLICIES_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_LIST_VALID_REGIONS_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_MERGE_POLICIES_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_PATH;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -23,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import bio.terra.policy.model.TpsUpdateMode;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.MockMvcUtils;
@@ -35,6 +38,8 @@ import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
 import bio.terra.workspace.generated.model.ApiWsmPolicyExplainResult;
 import bio.terra.workspace.generated.model.ApiWsmPolicyObject;
+import bio.terra.workspace.generated.model.ApiWsmPolicySourceRequestBody;
+import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateResult;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
@@ -352,6 +357,20 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
   @Test
   @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
+  public void mergePao() throws Exception {
+    ApiWsmPolicyUpdateResult result =
+        mergePao(
+            userAccessUtils.defaultUserAuthRequest(),
+            workspace.getId(),
+            workspace.getId(),
+            DRY_RUN);
+
+    assertEquals(0,result.getConflicts().size());
+//    assertEquals(result.getResultingPolicy(), workspace.);
+  }
+
+  @Test
+  @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
   public void listValidRegions() throws Exception {
     ApiRegions gcps =
         listValid(
@@ -499,6 +518,27 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
             .getResponse()
             .getContentAsString();
     return objectMapper.readValue(serializedResponse, ApiWsmPolicyExplainResult.class);
+  }
+
+  private ApiWsmPolicyUpdateResult mergePao(
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      UUID sourceObjectId,
+      TpsUpdateMode updateMode)
+      throws Exception {
+    var serializedResponse =
+        mockMvc
+            .perform(
+                addAuth(
+                    get(String.format(WORKSPACES_V1_MERGE_POLICIES_PATH_FORMAT, workspaceId))
+                        .queryParam("sourceObjectId", String.valueOf(sourceObjectId))
+                        .queryParam("updateMode", String.valueOf(updateMode)),
+                    userRequest))
+            .andExpect(status().is(HttpStatus.SC_OK))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    return objectMapper.readValue(serializedResponse, ApiWsmPolicyUpdateResult.class);
   }
 
   /** Assert all workspace fields are set, when requester has at least READER role. */
