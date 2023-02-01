@@ -372,10 +372,11 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
         cloneResult.getWorkspace().getSourceWorkspaceId(),
         "Source workspace ID reported accurately.");
     Properties sourceProperties =
-    ClientTestUtils.getWithRetryOnException(
-        () -> sourceOwnerWorkspaceApi
-            .getWorkspace(getWorkspaceId(), /*minimumHighestRole=*/ null)
-            .getProperties());
+        ClientTestUtils.getWithRetryOnException(
+            () ->
+                sourceOwnerWorkspaceApi
+                    .getWorkspace(getWorkspaceId(), /*minimumHighestRole=*/ null)
+                    .getProperties());
     assertEquals(
         destinationWorkspaceDescription.getProperties(),
         sourceProperties,
