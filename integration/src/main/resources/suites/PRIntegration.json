@@ -8,6 +8,7 @@
     "integration/DeleteWorkspaceWithControlledResource.json",
     "integration/EnumerateResources.json",
     "integration/GetRoles.json",
+    "integration/ImportDataCollection.json",
     "integration/ListWorkspaces.json",
     "integration/ReferencedBigQueryResourceLifecycle.json",
     "integration/ReferencedDataRepoSnapshotLifecycle.json",
