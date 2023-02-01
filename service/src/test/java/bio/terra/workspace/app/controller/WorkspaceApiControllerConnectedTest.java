@@ -38,7 +38,6 @@ import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
 import bio.terra.workspace.generated.model.ApiWsmPolicyExplainResult;
 import bio.terra.workspace.generated.model.ApiWsmPolicyObject;
-import bio.terra.workspace.generated.model.ApiWsmPolicySourceRequestBody;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateResult;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -365,8 +364,8 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
             workspace.getId(),
             DRY_RUN);
 
-    assertEquals(0,result.getConflicts().size());
-//    assertEquals(result.getResultingPolicy(), workspace.);
+    assertEquals(0, result.getConflicts().size());
+    //    assertEquals(result.getResultingPolicy(), workspace.);
   }
 
   @Test

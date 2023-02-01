@@ -43,7 +43,6 @@ import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
 import bio.terra.workspace.generated.model.ApiWsmPolicyExplainResult;
 import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
 import bio.terra.workspace.generated.model.ApiWsmPolicySourceRequestBody;
-import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateMode;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateRequest;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateResult;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -81,8 +80,6 @@ import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
