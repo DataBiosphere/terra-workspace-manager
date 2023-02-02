@@ -25,6 +25,7 @@ import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import com.google.common.annotations.VisibleForTesting;
+import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -63,6 +64,7 @@ public class ResourceApiController extends ControllerBase implements ResourceApi
     this.request = request;
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiResourceList> enumerateResources(
       UUID workspaceUuid,
@@ -90,6 +92,20 @@ public class ResourceApiController extends ControllerBase implements ResourceApi
     return new ResponseEntity<>(apiResourceList, HttpStatus.OK);
   }
 
+  @Traced
+  @Override
+  public ResponseEntity<ApiResourceDescription> getResource(UUID workspaceUuid, UUID resourceUuid) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
+
+    WsmResource wsmResource = resourceService.getResource(workspaceUuid, resourceUuid);
+
+    ApiResourceDescription apiResourceDescription = this.makeApiResourceDescription(wsmResource);
+    return new ResponseEntity<>(apiResourceDescription, HttpStatus.OK);
+  }
+
+  @Traced
   @Override
   public ResponseEntity<Boolean> checkReferenceAccess(UUID workspaceUuid, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -99,6 +115,7 @@ public class ResourceApiController extends ControllerBase implements ResourceApi
     return new ResponseEntity<>(isValid, HttpStatus.OK);
   }
 
+  @Traced
   @Override
   public ResponseEntity<Void> updateResourceProperties(
       UUID workspaceUuid, UUID resourceUuid, List<ApiProperty> properties) {
@@ -114,6 +131,7 @@ public class ResourceApiController extends ControllerBase implements ResourceApi
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
+  @Traced
   @Override
   public ResponseEntity<Void> deleteResourceProperties(
       UUID workspaceUuid, UUID resourceUuid, List<String> propertyKeys) {

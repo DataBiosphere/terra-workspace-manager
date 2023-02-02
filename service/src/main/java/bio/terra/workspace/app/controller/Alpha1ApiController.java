@@ -24,6 +24,7 @@ import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.JobStateFilter;
+import io.opencensus.contrib.spring.aop.Traced;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -60,6 +61,7 @@ public class Alpha1ApiController implements Alpha1Api {
     this.request = request;
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiEnumerateJobsResult> enumerateJobs(
       UUID workspaceUuid,

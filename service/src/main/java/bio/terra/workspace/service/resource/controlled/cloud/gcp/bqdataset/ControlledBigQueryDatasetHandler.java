@@ -6,11 +6,13 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResourceF
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import com.google.common.base.CharMatcher;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
+import javax.ws.rs.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -73,13 +75,23 @@ public class ControlledBigQueryDatasetHandler implements WsmResourceHandler {
             ? generatedName.substring(0, MAX_DATASET_NAME_LENGTH)
             : generatedName;
 
-    /**
-     * The regular expression only allow legal character combinations which start with alphanumeric
-     * letter, alphanumeric letter and underscore ("_") in the string, and alphanumeric letter at
-     * the end of the string. It trims any other combinations.
-     */
-    generatedName = generatedName.replaceAll("[^a-zA-Z0-9_]+|^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$", "");
-
+    // The regular expression only allow legal character combinations which start with alphanumeric
+    //  letter, alphanumeric letter and underscore ("_") in the string, and alphanumeric letter at
+    //  the end of the string. It trims any other combinations.
+    generatedName =
+        CharMatcher.inRange('0', '9')
+            .or(CharMatcher.inRange('A', 'z'))
+            .or(CharMatcher.is('_'))
+            .retainFrom(generatedName);
+    // The name cannot start or end with dash("-")
+    generatedName = CharMatcher.is('_').trimFrom(generatedName);
+    if (generatedName.length() == 0) {
+      throw new BadRequestException(
+          String.format(
+              "Cannot generate a valid big query dataset name from %s, it must contains"
+                  + " alphanumerical characters.",
+              bqDatasetName));
+    }
     return generatedName;
   }
 }

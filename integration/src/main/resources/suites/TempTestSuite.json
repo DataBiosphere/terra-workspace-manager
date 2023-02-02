@@ -1,0 +1,11 @@
+{
+  "name": "Temp Test Suite",
+  "description": "Manual test suite - see workflow/run-integration-suite.yml",
+  "serverSpecificationFile": "workspace-local.json",
+  "testConfigurationFiles": [
+    "integration/ControlledApplicationPrivateGcsBucketLifecycle.json",
+    "integration/ControlledApplicationSharedGcsBucketLifecycle.json",
+    "integration/ControlledGcsBucketLifecycle.json",
+    "integration/PrivateControlledGcsBucketLifecycle.json"
+  ]
+}

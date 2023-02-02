@@ -34,6 +34,7 @@ import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
+import bio.terra.workspace.common.utils.RetryUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
@@ -81,10 +82,14 @@ import bio.terra.workspace.service.resource.controlled.exception.ReservedMetadat
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceMetadataStep;
+import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
+import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
+import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
@@ -101,6 +106,7 @@ import com.google.api.services.notebooks.v1.model.Instance;
 import com.google.cloud.storage.BucketInfo;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -1642,8 +1648,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void updateGcpControlledResourcesRegion_onlyUpdateWhenRegionIsEmpty()
-      throws InterruptedException {
+  public void updateGcpControlledResourcesRegion_onlyUpdateWhenRegionIsEmpty() throws Exception {
     // create bucket
     ApiGcpGcsBucketCreationParameters bucketCreationParameters =
         ControlledResourceFixtures.getGoogleBucketCreationParameters();
@@ -1657,7 +1662,30 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 user.getAuthenticatedRequest(),
                 bucketCreationParameters)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
+    var bucketName = "gcs_bucket_with_underscore_name";
     assertEquals(DEFAULT_RESOURCE_REGION, createdBucket.getRegion());
+    // Create a bucket with underscores.
+    var secondBucketId = UUID.randomUUID();
+    resourceDao.createControlledResource(
+        new ControlledGcsBucketResource(
+            workspaceId,
+            secondBucketId,
+            TestUtils.appendRandomNumber("resourcename"),
+            "This is a bucket with underscore name",
+            CloningInstructions.COPY_NOTHING,
+            /*assignedUser=*/ null,
+            PrivateResourceState.NOT_APPLICABLE,
+            AccessScopeType.ACCESS_SCOPE_SHARED,
+            ManagedByType.MANAGED_BY_USER,
+            /*applicationId=*/ null,
+            bucketName,
+            List.of(),
+            Map.of(),
+            "foo@bar.com",
+            OffsetDateTime.now(),
+            "foo@bar.com",
+            OffsetDateTime.now(),
+            DEFAULT_RESOURCE_REGION));
 
     // create dataset
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
@@ -1705,12 +1733,14 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     // Artificially set regions to null in the database.
     resourceDao.updateControlledResourceRegion(createdBucket.getResourceId(), /*region=*/ null);
+    resourceDao.updateControlledResourceRegion(secondBucketId, /*region=*/ null);
     resourceDao.updateControlledResourceRegion(createdDataset.getResourceId(), /*region=*/ null);
     resourceDao.updateControlledResourceRegion(notebookResource.getResourceId(), /*region=*/ null);
 
     List<ControlledResource> updatedResource = updateControlledResourcesRegionAndWait();
 
     // The three controlled resources are updated as the regions are null.
+    // The second bucket is not updated because it doesn't have a cloud resource.
     assertEquals(3, updatedResource.size());
     assertResourceRegionIsUpdatedAndActivityIsLogged(
         updatedResource, createdBucket.getResourceId(), DEFAULT_RESOURCE_REGION);
@@ -1721,7 +1751,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   }
 
   private void assertResourceRegionIsUpdatedAndActivityIsLogged(
-      List<ControlledResource> updatedResource, UUID resourceId, String expectedResourceRegion) {
+      List<ControlledResource> updatedResource, UUID resourceId, String expectedResourceRegion)
+      throws Exception {
     ControlledResource dataset =
         updatedResource.stream()
             .filter(resource -> resourceId.equals(resource.getResourceId()))
@@ -1731,9 +1762,16 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertActivityLogForResourceUpdate(resourceId.toString());
   }
 
-  private void assertActivityLogForResourceUpdate(String changeSubjectId) {
+  private void assertActivityLogForResourceUpdate(String changeSubjectId) throws Exception {
+    // There can be delay between the log is written and the flight completed. Wait till the log is
+    // updated. The previous log has OperationType CREATE.
     ActivityLogChangeDetails latestLog =
-        workspaceActivityLogService.getLastUpdatedDetails(workspaceId, changeSubjectId).get();
+        RetryUtils.getWithRetry(
+            log -> OperationType.UPDATE.equals(log.operationType()),
+            () ->
+                workspaceActivityLogService
+                    .getLastUpdatedDetails(workspaceId, changeSubjectId)
+                    .get());
     assertEquals(
         new ActivityLogChangeDetails(
             latestLog.changeDate(),
@@ -1779,7 +1817,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   }
 
   private List<ControlledResource> updateControlledResourcesRegionAndWait() {
-    String jobId = controlledResourceService.updateGcpControlledResourcesRegionAsync();
+    String jobId =
+        controlledResourceService.updateGcpControlledResourcesRegionAsync(
+            userAccessUtils.defaultUserAuthRequest(), true);
     jobService.waitForJob(jobId);
 
     AsyncJobResult<List<ControlledResource>> jobResult =

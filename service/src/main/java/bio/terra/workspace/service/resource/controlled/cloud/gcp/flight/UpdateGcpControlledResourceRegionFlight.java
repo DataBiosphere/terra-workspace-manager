@@ -1,8 +1,11 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.flight;
 
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.IS_WET_RUN;
+
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.utils.FlightBeanBag;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceWithoutRegionStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourcesRegionStep;
@@ -20,6 +23,7 @@ public class UpdateGcpControlledResourceRegionFlight extends Flight {
   public UpdateGcpControlledResourceRegionFlight(FlightMap inputParameters, Object beanBag) {
     super(inputParameters, beanBag);
     FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
+    boolean isWetRun = FlightUtils.getRequired(inputParameters, IS_WET_RUN, Boolean.class);
     addStep(
         new RetrieveControlledResourceWithoutRegionStep(
             CloudPlatform.GCP, flightBeanBag.getResourceDao()),
@@ -28,6 +32,6 @@ public class UpdateGcpControlledResourceRegionFlight extends Flight {
         new RetrieveGcpResourcesRegionStep(
             flightBeanBag.getCrlService(), flightBeanBag.getGcpCloudContextService()),
         RetryRules.shortExponential());
-    addStep(new UpdateControlledResourcesRegionStep(flightBeanBag.getResourceDao()));
+    addStep(new UpdateControlledResourcesRegionStep(flightBeanBag.getResourceDao(), isWetRun));
   }
 }

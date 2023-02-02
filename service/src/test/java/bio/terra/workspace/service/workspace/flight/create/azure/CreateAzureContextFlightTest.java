@@ -8,7 +8,6 @@ import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
-import bio.terra.workspace.common.utils.AzureTestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobService;
@@ -18,6 +17,7 @@ import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import java.time.Duration;
 import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,8 +30,12 @@ class CreateAzureContextFlightTest extends BaseAzureConnectedTest {
   @Autowired private WorkspaceService workspaceService;
   @Autowired private AzureCloudContextService azureCloudContextService;
   @Autowired private JobService jobService;
-  @Autowired private AzureTestUtils azureTestUtils;
   @Autowired private UserAccessUtils userAccessUtils;
+
+  @BeforeEach
+  void setUp() {
+    initSpendProfileMock();
+  }
 
   @Test
   void successCreatesContext() throws Exception {
@@ -43,11 +47,7 @@ class CreateAzureContextFlightTest extends BaseAzureConnectedTest {
 
     String jobId = UUID.randomUUID().toString();
     workspaceService.createAzureCloudContext(
-        workspace,
-        jobId,
-        userRequest,
-        /* resultPath */ null,
-        azureTestUtils.getAzureCloudContext());
+        workspace, jobId, userRequest, /* resultPath */ null, null);
 
     // Wait for the job to complete
     FlightState flightState =

@@ -31,7 +31,7 @@ public class ControlledBigQueryDatasetHandlerTest extends BaseUnitTest {
 
   @Test
   public void generateDatasetName_datasetNameHasStartingDash_removeStartingDash() {
-    String datasetName = "-yu-hu-yo-yo";
+    String datasetName = "-_yu-hu-yo-yo-_";
     String generatedCloudName =
         ControlledBigQueryDatasetHandler.getHandler().generateCloudName(null, datasetName);
 

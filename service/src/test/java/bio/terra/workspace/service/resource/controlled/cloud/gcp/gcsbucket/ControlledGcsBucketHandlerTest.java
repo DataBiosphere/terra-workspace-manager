@@ -51,7 +51,7 @@ public class ControlledGcsBucketHandlerTest extends BaseUnitTestMockGcpCloudCont
     String generateCloudName =
         ControlledGcsBucketHandler.getHandler().generateCloudName(fakeWorkspaceId, bucketName);
 
-    assertEquals("yuhuyoyo-" + FAKE_PROJECT_ID, generateCloudName);
+    assertEquals("yu-hu-yo-yo-" + FAKE_PROJECT_ID, generateCloudName);
   }
 
   @Test
@@ -60,7 +60,7 @@ public class ControlledGcsBucketHandlerTest extends BaseUnitTestMockGcpCloudCont
     String generateCloudName =
         ControlledGcsBucketHandler.getHandler().generateCloudName(fakeWorkspaceId, bucketName);
 
-    assertEquals("yuhuyoyo-" + FAKE_PROJECT_ID, generateCloudName);
+    assertEquals("yu-hu-yo-yo-" + FAKE_PROJECT_ID, generateCloudName);
   }
 
   @Test
@@ -69,7 +69,7 @@ public class ControlledGcsBucketHandlerTest extends BaseUnitTestMockGcpCloudCont
     String generateCloudName =
         ControlledGcsBucketHandler.getHandler().generateCloudName(fakeWorkspaceId, bucketName);
 
-    assertEquals("gooyuhuyoyo-" + FAKE_PROJECT_ID, generateCloudName);
+    assertEquals("gooyu-hu-yo-yo-" + FAKE_PROJECT_ID, generateCloudName);
   }
 
   @Test

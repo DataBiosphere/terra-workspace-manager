@@ -155,7 +155,9 @@ public class UpdateAzureControlledResourceRegionFlightTest extends BaseAzureConn
   }
 
   private List<ControlledResource> updateControlledResourcesRegionAndWait() {
-    String jobId = controlledResourceService.updateAzureControlledResourcesRegionAsync();
+    String jobId =
+        controlledResourceService.updateAzureControlledResourcesRegionAsync(
+            userAccessUtils.defaultUserAuthRequest(), /*wetRun=*/ true);
     jobService.waitForJob(jobId);
 
     AsyncJobResult<List<ControlledResource>> jobResult =

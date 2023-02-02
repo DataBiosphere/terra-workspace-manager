@@ -6,10 +6,12 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResourceF
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import com.google.common.base.CharMatcher;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.PostConstruct;
+import javax.ws.rs.BadRequestException;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -72,12 +74,23 @@ public class ControlledAiNotebookHandler implements WsmResourceHandler {
             ? generatedName.substring(0, MAX_INSTANCE_NAME_LENGTH)
             : generatedName;
 
-    /**
-     * The regular expression only allow legal character combinations which start with lowercase
-     * letter, lowercase letter and numbers and dash("-") in the string, and lowercase letter and
-     * number at the end of the string. It trims any other combinations.
-     */
-    generatedName = generatedName.replaceAll("[^a-z0-9-]+|^[^a-z]+|[^a-z0-9]+$", "");
+    // AI notebook name only allows numbers, dash("-"), and lower case letters.
+    generatedName =
+        CharMatcher.inRange('0', '9')
+            .or(CharMatcher.inRange('a', 'z'))
+            .or(CharMatcher.is('-'))
+            .retainFrom(generatedName);
+    // The name cannot start or end with dash("-")
+    generatedName = CharMatcher.is('-').trimFrom(generatedName);
+    // The name cannot start with number.
+    generatedName = CharMatcher.inRange('0', '9').trimLeadingFrom(generatedName);
+    if (generatedName.length() == 0) {
+      throw new BadRequestException(
+          String.format(
+              "Cannot generate a valid AI notebook name from %s, it must contains"
+                  + " alphanumerical characters.",
+              aiNotebookName));
+    }
     return generatedName;
   }
 }

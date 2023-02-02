@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.resource.controlled;
 
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.IS_WET_RUN;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.ServiceUnavailableException;
@@ -615,7 +616,8 @@ public class ControlledResourceService {
   // TODO (PF-2368): clean this up once back-fill is done in all Terra environment.
   @Traced
   @Nullable
-  public String updateAzureControlledResourcesRegionAsync() {
+  public String updateAzureControlledResourcesRegionAsync(
+      AuthenticatedUserRequest userRequest, boolean wetRun) {
     String wsmSaToken = samService.getWsmServiceAccountToken();
     // wsmSaToken is null for unit test when samService is mocked out.
     if (wsmSaToken == null) {
@@ -639,16 +641,8 @@ public class ControlledResourceService {
   // TODO (PF-2368): clean this up once back-fill is done in all Terra environment.
   @Traced
   @Nullable
-  public String updateGcpControlledResourcesRegionAsync() {
-    String wsmSaToken = samService.getWsmServiceAccountToken();
-    // wsmSaToken is null for unit test when samService is mocked out.
-    if (wsmSaToken == null) {
-      logger.warn(
-          "#updateGcpControlledResourcesRegionAsync: workspace manager service account token is null");
-      return null;
-    }
-    AuthenticatedUserRequest wsmSaRequest =
-        new AuthenticatedUserRequest().token(Optional.of(wsmSaToken));
+  public String updateGcpControlledResourcesRegionAsync(
+      AuthenticatedUserRequest userRequest, boolean wetRun) {
     return jobService
         .newJob()
         .description(
@@ -656,8 +650,9 @@ public class ControlledResourceService {
                 + "terra managed gcp projects")
         .jobId(UUID.randomUUID().toString())
         .flightClass(UpdateGcpControlledResourceRegionFlight.class)
-        .userRequest(wsmSaRequest)
+        .userRequest(userRequest)
         .operationType(OperationType.UPDATE)
+        .addParameter(IS_WET_RUN, wetRun)
         .submit();
   }
 

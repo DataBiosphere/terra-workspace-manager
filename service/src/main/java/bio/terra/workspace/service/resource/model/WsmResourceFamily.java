@@ -61,6 +61,11 @@ public enum WsmResourceFamily {
       ApiResourceType.AZURE_STORAGE_CONTAINER,
       null,
       WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER),
+  AZURE_BATCH_POOL(
+      "AZURE_BATCH_POOL",
+      ApiResourceType.AZURE_BATCH_POOL,
+      null,
+      WsmResourceType.CONTROLLED_AZURE_BATCH_POOL),
   GIT_REPO("GIT_REPO", ApiResourceType.GIT_REPO, WsmResourceType.REFERENCED_ANY_GIT_REPO, null),
   TERRA_WORKSPACE(
       "TERRA_WORKSPACE",

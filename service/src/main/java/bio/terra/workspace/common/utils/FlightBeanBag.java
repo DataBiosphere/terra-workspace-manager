@@ -18,6 +18,7 @@ import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.LandingZoneBatchAccountFinder;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.StorageAccountKeyProvider;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.BucketCloneRolesService;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
@@ -65,6 +66,7 @@ public class FlightBeanBag {
   private final StorageAccountKeyProvider storageAccountKeyProvider;
   private final LandingZoneApiDispatch landingZoneApiDispatch;
   private final WorkspaceActivityLogService workspaceActivityLogService;
+  private final LandingZoneBatchAccountFinder landingZoneBatchAccountFinder;
 
   @Lazy
   @Autowired
@@ -94,7 +96,8 @@ public class FlightBeanBag {
       VersionConfiguration versionConfiguration,
       StorageAccountKeyProvider storageAccountKeyProvider,
       LandingZoneApiDispatch landingZoneApiDispatch,
-      WorkspaceActivityLogService workspaceActivityLogService) {
+      WorkspaceActivityLogService workspaceActivityLogService,
+      LandingZoneBatchAccountFinder landingZoneBatchAccountFinder) {
     this.applicationDao = applicationDao;
     this.azureCloudContextService = azureCloudContextService;
     this.azureConfig = azureConfig;
@@ -121,6 +124,7 @@ public class FlightBeanBag {
     this.storageAccountKeyProvider = storageAccountKeyProvider;
     this.landingZoneApiDispatch = landingZoneApiDispatch;
     this.workspaceActivityLogService = workspaceActivityLogService;
+    this.landingZoneBatchAccountFinder = landingZoneBatchAccountFinder;
   }
 
   public static FlightBeanBag getFromObject(Object object) {
@@ -217,6 +221,10 @@ public class FlightBeanBag {
 
   public LandingZoneApiDispatch getLandingZoneApiDispatch() {
     return landingZoneApiDispatch;
+  }
+
+  public LandingZoneBatchAccountFinder getLandingZoneBatchAccountFinder() {
+    return landingZoneBatchAccountFinder;
   }
 
   public StorageAccountKeyProvider getStorageAccountKeyProvider() {

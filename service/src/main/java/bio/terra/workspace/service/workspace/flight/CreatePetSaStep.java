@@ -28,7 +28,9 @@ public class CreatePetSaStep implements Step {
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     String projectId = context.getWorkingMap().get(GCP_PROJECT_ID, String.class);
-    samService.getOrCreatePetSaEmail(projectId, userRequest.getRequiredToken());
+    AuthenticatedUserRequest petSaCredentials =
+        samService.getOrCreatePetSaCredentials(projectId, userRequest);
+    context.getWorkingMap().put(WorkspaceFlightMapKeys.PET_SA_CREDENTIALS, petSaCredentials);
     return StepResult.getStepResultSuccess();
   }
 

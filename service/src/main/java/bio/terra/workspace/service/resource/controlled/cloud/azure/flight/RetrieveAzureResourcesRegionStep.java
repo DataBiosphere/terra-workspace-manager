@@ -4,6 +4,7 @@ import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntri
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCES_WITHOUT_REGION;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCE_ID_TO_REGION_MAP;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.WORKSPACE_ID_TO_AZURE_CLOUD_CONTEXT_MAP;
 
 import bio.terra.common.iam.BearerToken;
 import bio.terra.stairway.FlightContext;
@@ -26,7 +27,6 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.Controlled
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.relay.RelayManager;
@@ -66,15 +66,16 @@ public class RetrieveAzureResourcesRegionStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    validateRequiredEntries(context.getWorkingMap(), CONTROLLED_RESOURCES_WITHOUT_REGION);
+    validateRequiredEntries(
+        context.getWorkingMap(),
+        CONTROLLED_RESOURCES_WITHOUT_REGION,
+        WORKSPACE_ID_TO_AZURE_CLOUD_CONTEXT_MAP);
     List<ControlledResource> controlledResources =
         context.getWorkingMap().get(CONTROLLED_RESOURCES_WITHOUT_REGION, new TypeReference<>() {});
     Map<UUID, String> workspaceIdToAzureCloudContextMap =
         context
             .getWorkingMap()
-            .get(
-                ControlledResourceKeys.WORKSPACE_ID_TO_AZURE_CLOUD_CONTEXT_MAP,
-                new TypeReference<>() {});
+            .get(WORKSPACE_ID_TO_AZURE_CLOUD_CONTEXT_MAP, new TypeReference<>() {});
     Map<UUID, String> resourceIdToRegionMap = new HashMap<>();
     Map<UUID, String> resourceIdToWorkspaceIdMap = new HashMap<>();
     for (var resource : controlledResources) {
@@ -83,9 +84,17 @@ public class RetrieveAzureResourcesRegionStep implements Step {
           "Getting cloud region for resource {} in workspace {}",
           resource.getResourceId(),
           resource.getWorkspaceId());
-      AzureCloudContext azureCloudContext =
-          AzureCloudContext.deserialize(
-              workspaceIdToAzureCloudContextMap.get(resource.getWorkspaceId()));
+      AzureCloudContext azureCloudContext;
+      if (workspaceIdToAzureCloudContextMap.containsKey(resource.getWorkspaceId())) {
+        azureCloudContext =
+            AzureCloudContext.deserialize(
+                workspaceIdToAzureCloudContextMap.get(resource.getWorkspaceId()));
+      } else {
+        logger.error(
+            String.format(
+                "Missing an azure cloud context in workspace %s", resource.getWorkspaceId()));
+        continue;
+      }
       switch (resourceType) {
         case CONTROLLED_AZURE_DISK -> populateMapsWithResourceIdKey(
             resourceIdToRegionMap,
@@ -124,7 +133,7 @@ public class RetrieveAzureResourcesRegionStep implements Step {
             getAzureVmRegion(resource.castByEnum(resourceType), azureCloudContext));
         default -> throw new UnsupportedOperationException(
             String.format(
-                "resource of type %s is not a GCP resource or is a referenced resource",
+                "resource of type %s is not an azure resource or is a referenced resource",
                 resourceType));
       }
     }
@@ -201,6 +210,11 @@ public class RetrieveAzureResourcesRegionStep implements Step {
     Optional<ApiAzureLandingZoneDeployedResource> existingSharedStorageAccount =
         landingZoneApiDispatch.getSharedStorageAccount(
             new BearerToken(userRequest.getRequiredToken()), landingZoneId);
+    if (existingSharedStorageAccount.isEmpty()) {
+      logger.error(
+          String.format(
+              "Unexpected: there is no shared storage account in landing zone %s", landingZoneId));
+    }
     return existingSharedStorageAccount
         .map(
             apiAzureLandingZoneDeployedResource ->

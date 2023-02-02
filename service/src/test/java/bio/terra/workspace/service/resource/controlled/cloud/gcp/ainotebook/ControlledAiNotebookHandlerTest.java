@@ -29,7 +29,7 @@ public class ControlledAiNotebookHandlerTest extends BaseUnitTest {
 
   @Test
   public void generateInstanceId_userIdHasStartingUnderscore_removeStartingUnderscores() {
-    String instanceName = "_yu_hu_yo_yo";
+    String instanceName = "___________________yu_hu_yo_yo";
     String instanceId =
         ControlledAiNotebookHandler.getHandler().generateCloudName(null, instanceName);
 
@@ -38,7 +38,7 @@ public class ControlledAiNotebookHandlerTest extends BaseUnitTest {
 
   @Test
   public void generateInstanceId_userIdHasEndingUnderscore_removeEndingUnderscores() {
-    String instanceName = "yu_hu_yo_yo_";
+    String instanceName = "yu_hu_yo_yo__________________";
     String instanceId =
         ControlledAiNotebookHandler.getHandler().generateCloudName(null, instanceName);
 
@@ -47,7 +47,7 @@ public class ControlledAiNotebookHandlerTest extends BaseUnitTest {
 
   @Test
   public void generateInstanceId_userIdHasStartingNumbers_removeStartingNumbers() {
-    String instanceName = "1234_yuhuyoyo";
+    String instanceName = "1234_______yuhuyoyo";
     String instanceId =
         ControlledAiNotebookHandler.getHandler().generateCloudName(null, instanceName);
 

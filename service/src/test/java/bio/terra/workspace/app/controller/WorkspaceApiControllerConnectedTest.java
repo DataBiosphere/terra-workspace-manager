@@ -6,6 +6,8 @@ import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.USER_SET_PRO
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.VERSION_PROPERTY;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UFID_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UUID_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_EXPLAIN_POLICIES_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_LIST_VALID_REGIONS_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_PATH;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -13,6 +15,8 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -23,10 +27,14 @@ import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
 import bio.terra.workspace.generated.model.ApiIamRole;
+import bio.terra.workspace.generated.model.ApiRegions;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
+import bio.terra.workspace.generated.model.ApiWsmPolicyExplainResult;
+import bio.terra.workspace.generated.model.ApiWsmPolicyObject;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
@@ -45,6 +53,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.test.context.junit.jupiter.EnabledIf;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
@@ -326,6 +335,56 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     assertStrippedWorkspace(listedWorkspaces.get(0));
   }
 
+  @Test
+  @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
+  public void explainPolicies() throws Exception {
+    ApiWsmPolicyExplainResult result =
+        explainPolicies(userAccessUtils.defaultUserAuthRequest(), workspace.getId(), 0);
+
+    assertEquals(0, result.getDepth());
+    assertEquals(workspace.getId(), result.getObjectId());
+    assertEquals(1, result.getExplainObjects().size());
+    ApiWsmPolicyObject source = result.getExplainObjects().get(0);
+    assertEquals(workspace.getId(), source.getObjectId());
+    assertFalse(source.isDeleted());
+    assertEquals(0, result.getExplanation().size());
+  }
+
+  @Test
+  @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
+  public void listValidRegions() throws Exception {
+    ApiRegions gcps =
+        listValid(
+            workspace.getId(),
+            ApiCloudPlatform.GCP.name(),
+            userAccessUtils.defaultUserAuthRequest());
+    ApiRegions azures =
+        listValid(
+            workspace.getId(),
+            ApiCloudPlatform.AZURE.name(),
+            userAccessUtils.defaultUserAuthRequest());
+
+    assertFalse(gcps.isEmpty());
+    // Not an azure workspace so not valid azure regions.
+    assertTrue(azures.isEmpty());
+  }
+
+  private ApiRegions listValid(
+      UUID workspaceId, String platform, AuthenticatedUserRequest userRequest) throws Exception {
+    var serializedResponse =
+        mockMvc
+            .perform(
+                addAuth(
+                    get(String.format(WORKSPACES_V1_LIST_VALID_REGIONS_PATH_FORMAT, workspaceId))
+                        .queryParam("platform", platform),
+                    userRequest))
+            .andExpect(status().is(HttpStatus.SC_OK))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    return objectMapper.readValue(serializedResponse, ApiRegions.class);
+  }
+
   private ApiWorkspaceDescription getWorkspace(AuthenticatedUserRequest request, UUID id)
       throws Exception {
     return getWorkspace(request, id, /*minimumHighestRole=*/ Optional.empty());
@@ -424,6 +483,22 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     return objectMapper
         .readValue(serializedResponse, ApiWorkspaceDescriptionList.class)
         .getWorkspaces();
+  }
+
+  private ApiWsmPolicyExplainResult explainPolicies(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, int depth) throws Exception {
+    var serializedResponse =
+        mockMvc
+            .perform(
+                addAuth(
+                    get(String.format(WORKSPACES_V1_EXPLAIN_POLICIES_PATH_FORMAT, workspaceId))
+                        .queryParam("depth", String.valueOf(depth)),
+                    userRequest))
+            .andExpect(status().is(HttpStatus.SC_OK))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    return objectMapper.readValue(serializedResponse, ApiWsmPolicyExplainResult.class);
   }
 
   /** Assert all workspace fields are set, when requester has at least READER role. */

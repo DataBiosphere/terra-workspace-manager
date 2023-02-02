@@ -9,6 +9,7 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.CustomGcpIamRole;
 import bio.terra.workspace.service.workspace.CloudSyncRoleMapping;
@@ -108,6 +109,9 @@ public class GcpCloudSyncStep implements Step {
    */
   private Binding bindingForRole(WsmIamRole role, String email, String gcpProjectId) {
     CustomGcpIamRole customRole = CUSTOM_GCP_PROJECT_IAM_ROLES.get(role);
+    if (customRole == null) {
+      throw new InternalLogicException(String.format("Missing custom GCP project role %s", role));
+    }
     return new Binding()
         .setRole(customRole.getFullyQualifiedRoleName(gcpProjectId))
         .setMembers(Collections.singletonList(toMemberIdentifier(email)));

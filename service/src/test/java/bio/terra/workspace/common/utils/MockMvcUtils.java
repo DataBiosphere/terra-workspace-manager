@@ -126,7 +126,6 @@ import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.SetRe
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.SetReferencedDestinationGcsBucketResponseStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.CompleteTableCopyJobsStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.CreateTableCopyJobsStep;
-import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.RetrieveBigQueryDatasetCloudAttributesStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.SetReferencedDestinationBigQueryDatasetInWorkingMapStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.SetReferencedDestinationBigQueryDatasetResponseStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
@@ -189,6 +188,8 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/properties";
   public static final String UPDATE_WORKSPACES_V1_POLICIES_PATH_FORMAT =
       "/api/workspaces/v1/%s/policies";
+  public static final String WORKSPACES_V1_EXPLAIN_POLICIES_PATH_FORMAT =
+      "/api/workspaces/v1/%s/policies/explain";
   public static final String WORKSPACES_V1_LIST_VALID_REGIONS_PATH_FORMAT =
       "/api/workspaces/v1/%s/listValidRegions";
   public static final String GRANT_ROLE_PATH_FORMAT = "/api/workspaces/v1/%s/roles/%s/members";
@@ -212,6 +213,10 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/controlled/azure/vm";
   public static final String CREATE_AZURE_SAS_TOKEN_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/azure/storageContainer/%s/getSasToken";
+  public static final String CREATE_AZURE_BATCH_POOL_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/azure/batchpool";
+  public static final String GET_REFERENCED_GCP_GCS_BUCKET_FORMAT =
+      "/api/workspaces/v1/%s/resources/referenced/gcp/buckets/%s";
   public static final String CLONE_CONTROLLED_GCP_GCS_BUCKET_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/gcp/buckets/%s/clone";
   public static final String CLONE_RESULT_CONTROLLED_GCP_GCS_BUCKET_FORMAT =
@@ -815,7 +820,9 @@ public class MockMvcUtils {
         cloningInstructions,
         destResourceName,
         destDatasetName,
-        /*location=*/ null);
+        /*location=*/ null,
+        /*defaultTableLifetime=*/ null,
+        /*defaultPartitionLifetime=*/ null);
   }
 
   /** Call cloneBigQueryDataset() and wait for flight to finish. */
@@ -827,7 +834,9 @@ public class MockMvcUtils {
       ApiCloningInstructionsEnum cloningInstructions,
       @Nullable String destResourceName,
       @Nullable String destDatasetName,
-      @Nullable String destLocation)
+      @Nullable String destLocation,
+      @Nullable Long defaultTableLifetime,
+      @Nullable Long defaultPartitionLifetime)
       throws Exception {
     ApiCloneControlledGcpBigQueryDatasetResult result =
         cloneControlledBqDatasetAsync(
@@ -839,6 +848,8 @@ public class MockMvcUtils {
             destResourceName,
             destDatasetName,
             destLocation,
+            defaultTableLifetime,
+            defaultPartitionLifetime,
             // clone_copyNothing sometimes returns SC_OK, even for the initial call. So accept both
             // to avoid flakes.
             JOB_SUCCESS_CODES,
@@ -875,6 +886,8 @@ public class MockMvcUtils {
             destResourceName,
             destDatasetName,
             /*destLocation=*/ null,
+            /*defaultTableLifetime=*/ null,
+            /*defaultPartitionLifetime=*/ null,
             List.of(HttpStatus.SC_ACCEPTED),
             /*shouldUndo=*/ false);
     return cloneControlledBqDataset_waitForJobError(
@@ -899,6 +912,8 @@ public class MockMvcUtils {
             destResourceName,
             /*destDatasetName=*/ null,
             /*destLocation=*/ null,
+            /*defaultTableLifetime=*/ null,
+            /*defaultPartitionLifetime=*/ null,
             List.of(HttpStatus.SC_ACCEPTED),
             /*shouldUndo=*/ true);
     cloneControlledBqDataset_waitForJobError(
@@ -918,6 +933,8 @@ public class MockMvcUtils {
       @Nullable String destResourceName,
       @Nullable String destDatasetName,
       @Nullable String destLocation,
+      @Nullable Long defaultTableLifetime,
+      @Nullable Long defaultPartitionLifetime,
       List<Integer> expectedCodes,
       boolean shouldUndo)
       throws Exception {
@@ -926,7 +943,6 @@ public class MockMvcUtils {
     List<Class> retryableSteps =
         ImmutableList.of(
             CheckControlledResourceAuthStep.class,
-            RetrieveBigQueryDatasetCloudAttributesStep.class,
             SetReferencedDestinationBigQueryDatasetInWorkingMapStep.class,
             CreateReferenceMetadataStep.class,
             SetReferencedDestinationBigQueryDatasetResponseStep.class,
@@ -945,6 +961,8 @@ public class MockMvcUtils {
             .destinationWorkspaceId(destWorkspaceId)
             .cloningInstructions(cloningInstructions)
             .location(destLocation)
+            .defaultTableLifetime(defaultTableLifetime)
+            .defaultPartitionLifetime(defaultPartitionLifetime)
             .jobControl(new ApiJobControl().id(UUID.randomUUID().toString()));
     if (!StringUtils.isEmpty(destResourceName)) {
       request.name(destResourceName);

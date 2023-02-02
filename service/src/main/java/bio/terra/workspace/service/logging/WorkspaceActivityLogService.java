@@ -8,6 +8,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.workspace.model.OperationType;
+import io.opencensus.contrib.spring.aop.Traced;
 import java.util.Optional;
 import java.util.UUID;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
@@ -16,7 +17,6 @@ import org.springframework.stereotype.Component;
 /** This component is a service for logging workspace activities. */
 @Component
 public class WorkspaceActivityLogService {
-
   private final SamService samService;
   private final WorkspaceActivityLogDao workspaceActivityLogDao;
 
@@ -26,6 +26,7 @@ public class WorkspaceActivityLogService {
     this.workspaceActivityLogDao = workspaceActivityLogDao;
   }
 
+  @Traced
   /** Writes the change activity. */
   public void writeActivity(
       AuthenticatedUserRequest userRequest,

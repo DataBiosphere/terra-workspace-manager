@@ -12,6 +12,7 @@ import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.WsmApplicationService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WsmWorkspaceApplication;
+import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
@@ -46,6 +47,7 @@ public class WorkspaceApplicationApiController implements WorkspaceApplicationAp
     return authenticatedUserRequestFactory.from(request);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiWorkspaceApplicationDescription> disableWorkspaceApplication(
       @PathVariable("workspaceId") UUID workspaceUuid,
@@ -60,6 +62,7 @@ public class WorkspaceApplicationApiController implements WorkspaceApplicationAp
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiWorkspaceApplicationDescription> enableWorkspaceApplication(
       @PathVariable("workspaceId") UUID workspaceUuid,
@@ -74,6 +77,7 @@ public class WorkspaceApplicationApiController implements WorkspaceApplicationAp
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiWorkspaceApplicationDescription> getWorkspaceApplication(
       @PathVariable("workspaceId") UUID workspaceUuid,
@@ -87,6 +91,7 @@ public class WorkspaceApplicationApiController implements WorkspaceApplicationAp
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiWorkspaceApplicationDescriptionList> listWorkspaceApplications(
       @PathVariable("workspaceId") UUID workspaceUuid,

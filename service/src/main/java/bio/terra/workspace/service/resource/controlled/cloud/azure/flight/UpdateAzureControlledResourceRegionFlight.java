@@ -1,8 +1,11 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.flight;
 
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.IS_WET_RUN;
+
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.utils.FlightBeanBag;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
@@ -24,6 +27,7 @@ public class UpdateAzureControlledResourceRegionFlight extends Flight {
     FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
     AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
+    boolean isWetRun = FlightUtils.getRequired(inputParameters, IS_WET_RUN, Boolean.class);
     addStep(
         new RetrieveControlledResourceWithoutRegionStep(
             CloudPlatform.AZURE, flightBeanBag.getResourceDao()),
@@ -39,6 +43,6 @@ public class UpdateAzureControlledResourceRegionFlight extends Flight {
             flightBeanBag.getLandingZoneApiDispatch(),
             userRequest),
         RetryRules.shortExponential());
-    addStep(new UpdateControlledResourcesRegionStep(flightBeanBag.getResourceDao()));
+    addStep(new UpdateControlledResourcesRegionStep(flightBeanBag.getResourceDao(), isWetRun));
   }
 }

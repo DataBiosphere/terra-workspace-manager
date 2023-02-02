@@ -9,6 +9,8 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
+import io.opencensus.contrib.spring.aop.Traced;
 import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +21,7 @@ public class AdminApiController extends ControllerBase implements AdminApi {
   private final AdminService adminService;
   private final JobApiUtils jobApiUtils;
   private final JobService jobService;
+  private final ControlledResourceService controlledResourceService;
 
   @Autowired
   public AdminApiController(
@@ -27,13 +30,16 @@ public class AdminApiController extends ControllerBase implements AdminApi {
       HttpServletRequest request,
       SamService samService,
       JobApiUtils jobApiUtils,
-      JobService jobService) {
+      JobService jobService,
+      ControlledResourceService controlledResourceService) {
     super(authenticatedUserRequestFactory, request, samService);
     this.adminService = adminService;
     this.jobApiUtils = jobApiUtils;
     this.jobService = jobService;
+    this.controlledResourceService = controlledResourceService;
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiJobResult> syncIamRoles(Boolean wetRun) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -47,11 +53,59 @@ public class AdminApiController extends ControllerBase implements AdminApi {
     return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiJobResult> getSyncIamRolesResult(String jobId) {
+    return getApiJobResult(jobId);
+  }
+
+  private ResponseEntity<ApiJobResult> getApiJobResult(String jobId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     jobService.verifyUserAccess(jobId, userRequest, /*expectedWorkspaceId=*/ null);
     ApiJobResult response = jobApiUtils.fetchJobResult(jobId);
     return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiJobResult> backfillGcpControlledResourcesRegions(Boolean wetRun) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    SamRethrow.onInterrupted(
+        () -> getSamService().checkAdminAuthz(userRequest),
+        "check whether the user has admin access");
+
+    String jobId =
+        controlledResourceService.updateGcpControlledResourcesRegionAsync(
+            userRequest, Boolean.TRUE.equals(wetRun));
+    ApiJobResult response = jobApiUtils.fetchJobResult(jobId);
+    return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiJobResult> getBackfillGcpControlledResourcesRegionsResult(String jobId) {
+    return getApiJobResult(jobId);
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiJobResult> backfillAzureControlledResourcesRegions(Boolean wetRun) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    SamRethrow.onInterrupted(
+        () -> getSamService().checkAdminAuthz(userRequest),
+        "check whether the user has admin access");
+
+    String jobId =
+        controlledResourceService.updateAzureControlledResourcesRegionAsync(
+            userRequest, Boolean.TRUE.equals(wetRun));
+    ApiJobResult response = jobApiUtils.fetchJobResult(jobId);
+    return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiJobResult> getBackfillAzureControlledResourcesRegionsResult(
+      String jobId) {
+    return getApiJobResult(jobId);
   }
 }

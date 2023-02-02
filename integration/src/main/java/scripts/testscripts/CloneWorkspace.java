@@ -39,6 +39,7 @@ import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.GcpGcsObjectAttributes;
 import bio.terra.workspace.model.GcpGcsObjectResource;
 import bio.terra.workspace.model.IamRole;
+import bio.terra.workspace.model.Properties;
 import bio.terra.workspace.model.Property;
 import bio.terra.workspace.model.ResourceCloneDetails;
 import bio.terra.workspace.model.ResourceMetadata;
@@ -370,11 +371,15 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
         getWorkspaceId(),
         cloneResult.getWorkspace().getSourceWorkspaceId(),
         "Source workspace ID reported accurately.");
+    Properties sourceProperties =
+        ClientTestUtils.getWithRetryOnException(
+            () ->
+                sourceOwnerWorkspaceApi
+                    .getWorkspace(getWorkspaceId(), /*minimumHighestRole=*/ null)
+                    .getProperties());
     assertEquals(
         destinationWorkspaceDescription.getProperties(),
-        sourceOwnerWorkspaceApi
-            .getWorkspace(getWorkspaceId(), /*minimumHighestRole=*/ null)
-            .getProperties(),
+        sourceProperties,
         "Properties cloned successfully");
     assertEquals(cloningUser.userEmail, destinationWorkspaceDescription.getCreatedBy());
 

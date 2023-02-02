@@ -43,6 +43,8 @@ import org.jetbrains.annotations.Nullable;
 public class ControlledBigQueryDatasetResource extends ControlledResource {
   private final String datasetName;
   private final String projectId;
+  private final Long defaultTableLifetime;
+  private final Long defaultPartitionLifetime;
 
   @JsonCreator
   public ControlledBigQueryDatasetResource(
@@ -64,7 +66,9 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
       @JsonProperty("createdDate") OffsetDateTime createdDate,
       @JsonProperty("lastUpdatedByEmail") String lastUpdatedByEmail,
       @JsonProperty("lastUpdatedDate") OffsetDateTime lastUpdatedDate,
-      @JsonProperty("region") String region) {
+      @JsonProperty("region") String region,
+      @JsonProperty("defaultTableLifetime") Long defaultTableLifetime,
+      @JsonProperty("defaultPartitionLifetime") Long defaultPartitionLifetime) {
     super(
         workspaceId,
         resourceId,
@@ -85,15 +89,23 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
         region);
     this.datasetName = datasetName;
     this.projectId = projectId;
+    this.defaultTableLifetime = defaultTableLifetime;
+    this.defaultPartitionLifetime = defaultPartitionLifetime;
     validate();
   }
 
   // Constructor for the builder
   private ControlledBigQueryDatasetResource(
-      ControlledResourceFields common, String datasetName, String projectId) {
+      ControlledResourceFields common,
+      String datasetName,
+      String projectId,
+      Long defaultTableLifetime,
+      Long defaultPartitionLifetime) {
     super(common);
     this.datasetName = datasetName;
     this.projectId = projectId;
+    this.defaultTableLifetime = defaultTableLifetime;
+    this.defaultPartitionLifetime = defaultPartitionLifetime;
     validate();
   }
 
@@ -155,6 +167,14 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
     return projectId;
   }
 
+  public Long getDefaultTableLifetime() {
+    return defaultTableLifetime;
+  }
+
+  public Long getDefaultPartitionLifetime() {
+    return defaultPartitionLifetime;
+  }
+
   public ApiGcpBigQueryDatasetAttributes toApiAttributes() {
     return new ApiGcpBigQueryDatasetAttributes()
         .projectId(getProjectId())
@@ -206,7 +226,11 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
   @Override
   public String attributesToJson() {
     return DbSerDes.toJson(
-        new ControlledBigQueryDatasetAttributes(getDatasetName(), getProjectId()));
+        new ControlledBigQueryDatasetAttributes(
+            getDatasetName(),
+            getProjectId(),
+            getDefaultTableLifetime(),
+            getDefaultPartitionLifetime()));
   }
 
   @Override
@@ -265,6 +289,8 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
     private ControlledResourceFields common;
     private String datasetName;
     private String projectId;
+    private Long defaultTableLifetime;
+    private Long defaultPartitionLifetime;
 
     public ControlledBigQueryDatasetResource.Builder common(ControlledResourceFields common) {
       this.common = common;
@@ -281,8 +307,21 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
       return this;
     }
 
+    public ControlledBigQueryDatasetResource.Builder defaultTableLifetime(
+        Long defaultTableLifetime) {
+      this.defaultTableLifetime = defaultTableLifetime;
+      return this;
+    }
+
+    public ControlledBigQueryDatasetResource.Builder defaultPartitionLifetime(
+        Long defaultPartitionLifetime) {
+      this.defaultPartitionLifetime = defaultPartitionLifetime;
+      return this;
+    }
+
     public ControlledBigQueryDatasetResource build() {
-      return new ControlledBigQueryDatasetResource(common, datasetName, projectId);
+      return new ControlledBigQueryDatasetResource(
+          common, datasetName, projectId, defaultTableLifetime, defaultPartitionLifetime);
     }
   }
 }

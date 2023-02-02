@@ -121,22 +121,11 @@ jobs:
         TEST_ENV: ${{ steps.set-env-step.outputs.test-env }}
       run: ./gradlew :service:${{ matrix.gradleTask }} --scan
 
-    - name: Codacy Coverage Reporter
-      if: steps.skiptest.outputs.is-bump == 'no'
-      uses: codacy/codacy-coverage-reporter-action@0.2.0
-      continue-on-error: true
+    - name: SonarQube scan
+      run: ./gradlew --build-cache :service:sonarqube
       env:
-        CODACY_API_BASE_URL: https://app.codacy.com/gh/DataBiosphere/terra-workspace-manager
-      with:
-        project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-        coverage-reports: service/build/reports/jacoco/test/jacoco.xml
-
-    - name: Upload Test Reports
-      if: always() && steps.skiptest.outputs.is-bump == 'no'
-      uses: actions/upload-artifact@v3
-      with:
-        name: Test Reports
-        path: service/build/reports/tests
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: "Notify QA Slack"
       if: always() && (steps.set-env-step.outputs.test-env == 'alpha' || steps.set-env-step.outputs.test-env == 'staging')

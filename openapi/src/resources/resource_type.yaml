@@ -18,6 +18,7 @@ components:
         - AZURE_RELAY_NAMESPACE
         - AZURE_STORAGE_ACCOUNT
         - AZURE_STORAGE_CONTAINER
+        - AZURE_BATCH_POOL
         - GIT_REPO
         - TERRA_WORKSPACE
 
@@ -54,6 +55,8 @@ components:
           $ref: '#/components/schemas/AzureStorageContainerAttributes'
         azureVm:
           $ref: '#/components/schemas/AzureVmAttributes'
+        azureBatchPool:
+          $ref: '#/components/schemas/AzureBatchPoolAttributes'
         gitRepo:
           $ref: '#/components/schemas/GitRepoAttributes'
         terraWorkspace:
@@ -92,6 +95,8 @@ components:
           $ref: '#/components/schemas/AzureStorageResource'
         azureStorageContainer:
           $ref: '#/components/schemas/AzureStorageContainerResource'
+        azureBatchPool:
+          $ref: '#/components/schemas/AzureBatchPoolResource'
         gitRepo:
           $ref: '#/components/schemas/GitRepoResource'
         terraWorkspace:

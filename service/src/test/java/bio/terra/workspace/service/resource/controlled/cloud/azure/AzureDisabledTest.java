@@ -17,7 +17,6 @@ import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
-import bio.terra.workspace.generated.model.ApiAzureContext;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiCreateCloudContextRequest;
@@ -68,11 +67,6 @@ public class AzureDisabledTest extends BaseConnectedTest {
     ApiCreateCloudContextRequest request =
         new ApiCreateCloudContextRequest()
             .cloudPlatform(ApiCloudPlatform.AZURE)
-            .azureContext(
-                new ApiAzureContext()
-                    .resourceGroupId("fake")
-                    .subscriptionId("also fake")
-                    .tenantId("still fake"))
             .jobControl(new ApiJobControl().id(fakeJobId));
     mockMvc
         .perform(

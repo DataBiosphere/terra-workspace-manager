@@ -7,6 +7,7 @@ import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.db.DbSerDes;
+import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketAttributes;
@@ -87,6 +88,12 @@ public class ControlledGcsBucketResource extends ControlledResource {
   // Constructor for the builder
   private ControlledGcsBucketResource(ControlledResourceFields common, String bucketName) {
     super(common);
+    this.bucketName = bucketName;
+    validateForNewBucket();
+  }
+
+  public ControlledGcsBucketResource(DbResource dbResource, String bucketName) {
+    super(dbResource);
     this.bucketName = bucketName;
     validate();
   }
@@ -211,7 +218,15 @@ public class ControlledGcsBucketResource extends ControlledResource {
     if (getBucketName() == null) {
       throw new MissingRequiredFieldException("Missing required field for ControlledGcsBucket.");
     }
-    ResourceValidationUtils.validateControlledBucketName(getBucketName());
+    // Allow underscore bucket name to be backward compatible. The database contains bucket with
+    // underscore bucketname.
+    ResourceValidationUtils.validateBucketNameAllowsUnderscore(bucketName);
+  }
+
+  public void validateForNewBucket() {
+    validate();
+    // Disallow underscore in new terra managed GCS bucket.
+    ResourceValidationUtils.validateBucketNameDisallowUnderscore(bucketName);
   }
 
   @Override
