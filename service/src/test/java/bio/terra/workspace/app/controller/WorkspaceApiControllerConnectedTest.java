@@ -402,7 +402,6 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     // Create workspace with Europe region constraint.
     ApiCreateWorkspaceRequestBody sourceRequest =
         WorkspaceFixtures.createWorkspaceRequestBody()
-            //            .id(workspaceId2)
             .policies(
                 new ApiWsmPolicyInputs()
                     .addInputsItem(
