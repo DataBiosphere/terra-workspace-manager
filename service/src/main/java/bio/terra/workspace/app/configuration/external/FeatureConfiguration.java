@@ -18,6 +18,7 @@ public class FeatureConfiguration {
   private boolean tpsEnabled;
   private boolean bpmGcpEnabled;
   private boolean bpmAzureEnabled;
+  private boolean temporaryGrantEnabled;
 
   public boolean isAzureEnabled() {
     return azureEnabled;
@@ -77,6 +78,10 @@ public class FeatureConfiguration {
     }
   }
 
+  public boolean isTemporaryGrantEnabled() {
+    return temporaryGrantEnabled;
+  }
+
   /**
    * Write the feature settings into the log
    *
@@ -88,5 +93,6 @@ public class FeatureConfiguration {
     logger.info("Feature: tps-enabled: {}", isTpsEnabled());
     logger.info("Feature: bpm-azure-enabled: {}", isBpmAzureEnabled());
     logger.info("Feature: bpm-gcp-enabled: {}", isBpmGcpEnabled());
+    logger.info("Feature: temporary-grant-enabled: {}", isTemporaryGrantEnabled());
   }
 }

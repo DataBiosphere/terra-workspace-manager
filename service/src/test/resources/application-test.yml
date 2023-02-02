@@ -51,6 +51,7 @@ reference:
 feature:
   tps-enabled: true
   bpm-azure-enabled: true
+  temporary-grant-enabled: true
 
 policy:
   policy-database:
