@@ -109,6 +109,7 @@ import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
 import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
 import bio.terra.workspace.generated.model.ApiWsmPolicyInputs;
+import bio.terra.workspace.generated.model.ApiWsmPolicyPair;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateMode;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateRequest;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateResult;
@@ -133,6 +134,7 @@ import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.referenced.flight.create.CreateReferenceMetadataStep;
 import bio.terra.workspace.service.workspace.model.OperationType;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.google.common.collect.ImmutableList;
@@ -607,6 +609,33 @@ public class MockMvcUtils {
         workspaceId,
         /*policiesToAdd=*/ null,
         /*policiesToRemove=*/ workspace.getPolicies());
+  }
+
+  public UUID createWorkspaceWithRegionConstraint(AuthenticatedUserRequest userRequest, String regionName) throws Exception {
+    ApiCreateWorkspaceRequestBody request =
+        WorkspaceFixtures.createWorkspaceRequestBody()
+            .policies(
+                new ApiWsmPolicyInputs()
+                    .addInputsItem(
+                        new ApiWsmPolicyInput()
+                            .namespace("terra")
+                            .name("region-constraint")
+                            .addAdditionalDataItem(
+                                new ApiWsmPolicyPair().key("region-name").value(regionName))));
+    String serializedResponse =
+        mockMvc
+            .perform(
+                addJsonContentType(
+                    addAuth(
+                        post(WORKSPACES_V1_PATH)
+                            .content(objectMapper.writeValueAsString(request)),
+                        userRequest)))
+            .andExpect(status().is(HttpStatus.SC_OK))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    return objectMapper.readValue(serializedResponse, ApiCreatedWorkspace.class).getId();
   }
 
   public void assertWorkspace(

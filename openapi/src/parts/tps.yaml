@@ -260,7 +260,7 @@ components:
           $ref: '#/components/schemas/Regions'
 
     WsmPolicySourceRequestBody:
-      description: Request structure shared by merge
+      description: Request with a WSM policy object id (e.g., a workspace id)
       type: object
       required: [ sourceObjectId ]
       properties:

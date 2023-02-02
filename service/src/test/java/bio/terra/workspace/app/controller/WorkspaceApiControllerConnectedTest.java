@@ -61,6 +61,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.junit.jupiter.EnabledIf;
@@ -373,58 +374,14 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
   public void mergeCheck_differentRegion() throws Exception {
     // Create workspace with US region constraint.
-    ApiCreateWorkspaceRequestBody targetRequest =
-        WorkspaceFixtures.createWorkspaceRequestBody()
-            .policies(
-                new ApiWsmPolicyInputs()
-                    .addInputsItem(
-                        new ApiWsmPolicyInput()
-                            .namespace("terra")
-                            .name("region-constraint")
-                            .addAdditionalDataItem(
-                                new ApiWsmPolicyPair().key("region-name").value("US"))));
-    String targetSerializedResponse =
-        mockMvc
-            .perform(
-                addJsonContentType(
-                    addAuth(
-                        post(WORKSPACES_V1_PATH)
-                            .content(objectMapper.writeValueAsString(targetRequest)),
-                        userAccessUtils.defaultUserAuthRequest())))
-            .andExpect(status().is(HttpStatus.SC_OK))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-
     UUID targetWorkspaceId =
-        objectMapper.readValue(targetSerializedResponse, ApiCreatedWorkspace.class).getId();
+        mockMvcUtils.createWorkspaceWithRegionConstraint(
+            userAccessUtils.defaultUserAuthRequest(), "US");
 
     // Create workspace with Europe region constraint.
-    ApiCreateWorkspaceRequestBody sourceRequest =
-        WorkspaceFixtures.createWorkspaceRequestBody()
-            .policies(
-                new ApiWsmPolicyInputs()
-                    .addInputsItem(
-                        new ApiWsmPolicyInput()
-                            .namespace("terra")
-                            .name("region-constraint")
-                            .addAdditionalDataItem(
-                                new ApiWsmPolicyPair().key("region-name").value("EU"))));
-    String sourceSerializedResponse =
-        mockMvc
-            .perform(
-                addJsonContentType(
-                    addAuth(
-                        post(WORKSPACES_V1_PATH)
-                            .content(objectMapper.writeValueAsString(sourceRequest)),
-                        userAccessUtils.defaultUserAuthRequest())))
-            .andExpect(status().is(HttpStatus.SC_OK))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-
     UUID sourceWorkspaceId =
-        objectMapper.readValue(sourceSerializedResponse, ApiCreatedWorkspace.class).getId();
+        mockMvcUtils.createWorkspaceWithRegionConstraint(
+            userAccessUtils.defaultUserAuthRequest(), "EU");
 
     ApiWsmPolicyUpdateResult result =
         mergeCheck(userAccessUtils.defaultUserAuthRequest(), targetWorkspaceId, sourceWorkspaceId);
