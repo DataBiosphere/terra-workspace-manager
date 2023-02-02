@@ -278,6 +278,11 @@ public class ReferencedResourceService {
       throw new ConflictException("Policy merge has conflicts");
     }
 
+    if (platform == CloudPlatform.ANY) {
+      logger.warn("Cannot validate regions for CloudPlatform.ANY");
+      return;
+    }
+
     HashSet<String> validRegions = new HashSet<>();
     validRegions.addAll(
         tpsApiDispatch.listValidRegionsForPao(dryRunResults.getResultingPao(), platform));
