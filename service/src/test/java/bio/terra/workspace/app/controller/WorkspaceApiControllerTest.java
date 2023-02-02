@@ -325,7 +325,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
         USER_REQUEST.getEmail(),
         USER_REQUEST.getSubjectId(),
         OperationType.CLONE,
-        destinationWorkspaceId.toString(),
+        sourceWorkspace.getId().toString(),
         ActivityLogChangedTarget.WORKSPACE);
   }
 
