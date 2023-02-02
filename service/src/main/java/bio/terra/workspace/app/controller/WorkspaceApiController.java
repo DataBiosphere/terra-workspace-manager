@@ -725,18 +725,17 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
   @Traced
   @Override
-  public ResponseEntity<ApiWsmPolicyUpdateResult> mergePao(
-      UUID workspaceId, ApiWsmPolicySourceRequestBody requestBody) {
+  public ResponseEntity<ApiWsmPolicyUpdateResult> mergeCheck(
+      UUID targetWorkspaceId, ApiWsmPolicySourceRequestBody requestBody) {
     UUID sourceObjectId = requestBody.getSourceObjectId();
-    TpsUpdateMode updateMode =
-        TpsApiConversionUtils.tpsFromApiTpsUpdateMode(requestBody.getUpdateMode());
 
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    workspaceService.validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.READ);
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, targetWorkspaceId, SamWorkspaceAction.READ);
 
     ApiWsmPolicyUpdateResult updateResult =
         TpsApiConversionUtils.apiFromTpsUpdateResult(
-            tpsApiDispatch.mergePao(workspaceId, sourceObjectId, updateMode));
+            tpsApiDispatch.mergePao(targetWorkspaceId, sourceObjectId, TpsUpdateMode.DRY_RUN));
 
     return new ResponseEntity<>(updateResult, HttpStatus.OK);
   }

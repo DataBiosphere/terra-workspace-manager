@@ -260,12 +260,9 @@ components:
           $ref: '#/components/schemas/Regions'
 
     WsmPolicySourceRequestBody:
-      description: Request structure shared by link and merge
+      description: Request structure shared by merge
       type: object
-      required: [ sourceObjectId, updateMode ]
+      required: [ sourceObjectId ]
       properties:
         sourceObjectId:
           $ref: '#/components/schemas/WsmPolicyObjectId'
-        updateMode:
-          $ref: '#/components/schemas/WsmPolicyUpdateMode'
- 

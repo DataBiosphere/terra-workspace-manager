@@ -356,19 +356,18 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
-  /api/workspaces/v1/{workspaceId}/policies/merge:
+
+  /api/workspaces/v1/{workspaceId}/policies/mergeCheck:
     parameters:
     - $ref: '#/components/parameters/WorkspaceId'
     post:
-      summary: Merge a policy attribute object into another policy attribute object
+      summary: The result of a merge calculation between two workspaces. This does not mutate the original workspaces.
       description: |
-        The target policy attribute object (PAO) is identified by the path parameter.
-        The source PAO is provided in the source request. The policies from the source
-        PAO are merged into the target PAO.
-        If the updateMode is DRY_RUN, then the merge calculation is made, but no action
-        is taken. If the updateMode is FAIL_ON_CONFLICT, then the change is applied if there
-        are no conflicts. ENFORCE_CONFLICT is not allowed on merge.
-      operationId: mergePao
+        The target workspace is identified by the path parameter.
+        The source workspace is provided in the source request. 
+        Policies from the source workspace are merged into the target workspace.
+        The merge operation is called with DRY_RUN, so no mutations take place.
+      operationId: mergeCheck
       tags: [ Workspace ]
       requestBody:
         required: true
@@ -378,7 +377,7 @@ paths:
               $ref: '#/components/schemas/WsmPolicySourceRequestBody'
       responses:
         '200':
-          description: Merge successfully processed. The merge itself may or may not have succeeded.
+          description: Merge calculation successfully processed (no action is taken).
           content:
             application/json:
               schema:

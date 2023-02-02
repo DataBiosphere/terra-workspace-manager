@@ -190,9 +190,8 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/policies";
   public static final String WORKSPACES_V1_EXPLAIN_POLICIES_PATH_FORMAT =
       "/api/workspaces/v1/%s/policies/explain";
-
-  public static final String WORKSPACES_V1_MERGE_POLICIES_PATH_FORMAT =
-      "/api/workspaces/v1/%s/policies/merge";
+  public static final String WORKSPACES_V1_MERGE_CHECK_POLICIES_PATH_FORMAT =
+      "/api/workspaces/v1/%s/policies/mergeCheck";
   public static final String WORKSPACES_V1_LIST_VALID_REGIONS_PATH_FORMAT =
       "/api/workspaces/v1/%s/listValidRegions";
   public static final String GRANT_ROLE_PATH_FORMAT = "/api/workspaces/v1/%s/roles/%s/members";

@@ -9,7 +9,7 @@ import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UFI
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UUID_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_EXPLAIN_POLICIES_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_LIST_VALID_REGIONS_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_MERGE_POLICIES_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_MERGE_CHECK_POLICIES_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_PATH;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -356,16 +356,11 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
   @Test
   @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
-  public void mergePao() throws Exception {
+  public void mergeCheck() throws Exception {
     ApiWsmPolicyUpdateResult result =
-        mergePao(
-            userAccessUtils.defaultUserAuthRequest(),
-            workspace.getId(),
-            workspace.getId(),
-            DRY_RUN);
+        mergeCheck(userAccessUtils.defaultUserAuthRequest(), workspace.getId(), workspace.getId());
 
     assertEquals(0, result.getConflicts().size());
-    //    assertEquals(result.getResultingPolicy(), workspace.);
   }
 
   @Test
@@ -519,19 +514,15 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     return objectMapper.readValue(serializedResponse, ApiWsmPolicyExplainResult.class);
   }
 
-  private ApiWsmPolicyUpdateResult mergePao(
-      AuthenticatedUserRequest userRequest,
-      UUID workspaceId,
-      UUID sourceObjectId,
-      TpsUpdateMode updateMode)
+  private ApiWsmPolicyUpdateResult mergeCheck(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID sourceObjectId)
       throws Exception {
     var serializedResponse =
         mockMvc
             .perform(
                 addAuth(
-                    get(String.format(WORKSPACES_V1_MERGE_POLICIES_PATH_FORMAT, workspaceId))
-                        .queryParam("sourceObjectId", String.valueOf(sourceObjectId))
-                        .queryParam("updateMode", String.valueOf(updateMode)),
+                    get(String.format(WORKSPACES_V1_MERGE_CHECK_POLICIES_PATH_FORMAT, workspaceId))
+                        .queryParam("sourceObjectId", String.valueOf(sourceObjectId)),
                     userRequest))
             .andExpect(status().is(HttpStatus.SC_OK))
             .andReturn()
