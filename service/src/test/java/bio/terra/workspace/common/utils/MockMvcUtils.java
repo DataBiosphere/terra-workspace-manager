@@ -134,7 +134,6 @@ import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.referenced.flight.create.CreateReferenceMetadataStep;
 import bio.terra.workspace.service.workspace.model.OperationType;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.google.common.collect.ImmutableList;
@@ -611,7 +610,8 @@ public class MockMvcUtils {
         /*policiesToRemove=*/ workspace.getPolicies());
   }
 
-  public UUID createWorkspaceWithRegionConstraint(AuthenticatedUserRequest userRequest, String regionName) throws Exception {
+  public UUID createWorkspaceWithRegionConstraint(
+      AuthenticatedUserRequest userRequest, String regionName) throws Exception {
     ApiCreateWorkspaceRequestBody request =
         WorkspaceFixtures.createWorkspaceRequestBody()
             .policies(
@@ -627,8 +627,7 @@ public class MockMvcUtils {
             .perform(
                 addJsonContentType(
                     addAuth(
-                        post(WORKSPACES_V1_PATH)
-                            .content(objectMapper.writeValueAsString(request)),
+                        post(WORKSPACES_V1_PATH).content(objectMapper.writeValueAsString(request)),
                         userRequest)))
             .andExpect(status().is(HttpStatus.SC_OK))
             .andReturn()
