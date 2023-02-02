@@ -1,7 +1,5 @@
 package bio.terra.workspace.app.controller;
 
-import static bio.terra.policy.model.TpsUpdateMode.DRY_RUN;
-import static bio.terra.workspace.common.fixtures.PolicyFixtures.REGION_POLICY;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.SHORT_DESCRIPTION_PROPERTY;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.TYPE_PROPERTY;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.USER_SET_PROPERTY;
@@ -13,6 +11,7 @@ import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_LIST_V
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_MERGE_CHECK_POLICIES_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_PATH;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
+import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.emptyString;
@@ -25,10 +24,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import bio.terra.policy.model.TpsUpdateMode;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
@@ -46,6 +43,7 @@ import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
 import bio.terra.workspace.generated.model.ApiWsmPolicyInputs;
 import bio.terra.workspace.generated.model.ApiWsmPolicyObject;
 import bio.terra.workspace.generated.model.ApiWsmPolicyPair;
+import bio.terra.workspace.generated.model.ApiWsmPolicySourceRequestBody;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateResult;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -55,8 +53,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
-import liquibase.datatype.core.UUIDType;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -70,7 +66,6 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.junit.jupiter.EnabledIf;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
-import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
 
 /**
  * Connected tests for WorkspaceApiController.
@@ -592,14 +587,18 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   private ApiWsmPolicyUpdateResult mergeCheck(
       AuthenticatedUserRequest userRequest, UUID workspaceId, UUID sourceObjectId)
       throws Exception {
+    var request = new ApiWsmPolicySourceRequestBody().sourceObjectId(sourceObjectId);
+
+    var content = objectMapper.writeValueAsString(request);
+
     var serializedResponse =
         mockMvc
             .perform(
                 addAuth(
                     addJsonContentType(
-                        put(String.format(
+                        post(String.format(
                                 WORKSPACES_V1_MERGE_CHECK_POLICIES_PATH_FORMAT, workspaceId))
-                            .content(String.valueOf(sourceObjectId))),
+                            .content(content)),
                     userRequest))
             .andExpect(status().is(HttpStatus.SC_OK))
             .andReturn()
