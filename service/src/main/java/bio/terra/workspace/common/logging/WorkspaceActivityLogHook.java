@@ -34,6 +34,7 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
@@ -139,24 +140,50 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     // Always log when the flight succeeded.
     if (context.getFlightStatus() == FlightStatus.SUCCESS) {
       switch (af.getActivityLogChangedTarget()) {
-        case WORKSPACE, AZURE_CLOUD_CONTEXT, GCP_CLOUD_CONTEXT -> activityLogDao.writeActivity(
-            workspaceUuid,
-            new DbWorkspaceActivityLog(
-                userEmail,
-                subjectId,
-                operationType,
-                workspaceUuid.toString(),
-                af.getActivityLogChangedTarget()));
-        case RESOURCE -> activityLogDao.writeActivity(
-            workspaceUuid,
-            new DbWorkspaceActivityLog(
-                userEmail,
-                subjectId,
-                operationType,
-                getRequired(context.getInputParameters(), ResourceKeys.RESOURCE, WsmResource.class)
-                    .getResourceId()
-                    .toString(),
-                af.getActivityLogChangedTarget()));
+        case WORKSPACE, AZURE_CLOUD_CONTEXT, GCP_CLOUD_CONTEXT -> {
+          UUID subjectWorkspaceId = workspaceUuid;
+          if (OperationType.CLONE == operationType) {
+            // When the action is clone, the action clone is acted upon
+            // the source workspace.
+            subjectWorkspaceId =
+                getRequired(
+                    context.getInputParameters(),
+                    ControlledResourceKeys.SOURCE_WORKSPACE_ID,
+                    UUID.class);
+          }
+          activityLogDao.writeActivity(
+              workspaceUuid,
+              new DbWorkspaceActivityLog(
+                  userEmail,
+                  subjectId,
+                  operationType,
+                  subjectWorkspaceId.toString(),
+                  af.getActivityLogChangedTarget()));
+        }
+        case RESOURCE -> {
+          // The workspace id that a db transaction has happened. In
+          // the case of cloning, the db create a cloned resource in
+          // the destination workspace.
+          var affectedWorkspaceId = workspaceUuid;
+          if (OperationType.CLONE == operationType) {
+            affectedWorkspaceId =
+                getRequired(
+                    context.getInputParameters(),
+                    ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
+                    UUID.class);
+          }
+          activityLogDao.writeActivity(
+              affectedWorkspaceId,
+              new DbWorkspaceActivityLog(
+                  userEmail,
+                  subjectId,
+                  operationType,
+                  getRequired(
+                          context.getInputParameters(), ResourceKeys.RESOURCE, WsmResource.class)
+                      .getResourceId()
+                      .toString(),
+                  af.getActivityLogChangedTarget()));
+        }
         case FOLDER -> activityLogDao.writeActivity(
             workspaceUuid,
             new DbWorkspaceActivityLog(

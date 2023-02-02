@@ -9,12 +9,14 @@ import bio.terra.workspace.db.exception.UnknownFlightOperationTypeException;
 import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -33,6 +35,11 @@ public class WorkspaceActivityLogDao {
   private static final Logger logger = LoggerFactory.getLogger(WorkspaceActivityLogDao.class);
   // Only rows that existed before the column was added will have "unknown"
   private static final String DEFAULT_VALUE_UNKNOWN = "unknown";
+  private static final String SELECT_SQL =
+      """
+      SELECT workspace_id, change_date, actor_email, actor_subject_id, change_subject_id, change_subject_type, change_type
+            FROM workspace_activity_log
+            """;
 
   @VisibleForTesting
   public static final RowMapper<ActivityLogChangeDetails> ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER =
@@ -48,6 +55,7 @@ public class WorkspaceActivityLogDao {
                 ? OperationType.UNKNOWN
                 : OperationType.valueOf(changeTypeString);
         return new ActivityLogChangeDetails(
+            UUID.fromString(rs.getString("workspace_id")),
             OffsetDateTime.ofInstant(rs.getTimestamp("change_date").toInstant(), ZoneId.of("UTC")),
             rs.getString("actor_email"),
             rs.getString("actor_subject_id"),
@@ -115,9 +123,8 @@ public class WorkspaceActivityLogDao {
   @ReadTransaction
   public Optional<ActivityLogChangeDetails> getLastUpdatedDetails(UUID workspaceId) {
     final String sql =
-        """
-            SELECT change_date, actor_email, actor_subject_id, change_subject_id, change_subject_type, change_type
-            FROM workspace_activity_log
+        SELECT_SQL
+            + """
             WHERE workspace_id = :workspace_id AND change_type NOT IN (:change_type)
             ORDER BY change_date DESC
             LIMIT 1
@@ -138,9 +145,8 @@ public class WorkspaceActivityLogDao {
   public Optional<ActivityLogChangeDetails> getLastUpdatedDetails(
       UUID workspaceId, String changeSubjectId) {
     final String sql =
-        """
-            SELECT change_date, actor_email, actor_subject_id, change_subject_id, change_subject_type, change_type
-            FROM workspace_activity_log
+        SELECT_SQL
+            + """
             WHERE workspace_id = :workspace_id AND change_subject_id = :change_subject_id
             ORDER BY change_date DESC
             LIMIT 1
@@ -153,5 +159,34 @@ public class WorkspaceActivityLogDao {
     return Optional.ofNullable(
         DataAccessUtils.singleResult(
             jdbcTemplate.query(sql, params, ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER)));
+  }
+
+  /**
+   * List all the workspaces cloned from a given workspace. The list is retrieved recursively. If A
+   * is cloned by B and B is cloned by C, both B and C are returned.
+   *
+   * @param sourceWorkspaceId the source workspace
+   */
+  public List<ActivityLogChangeDetails> listCloneLogFromSource(UUID sourceWorkspaceId) {
+    String sql =
+        String.format(
+            """
+         WITH RECURSIVE subWorkspaceActivityLogs AS (
+                 %s
+                 WHERE change_subject_id = :source_workspace_id
+                 AND change_type = :change_type
+                 UNION
+                   SELECT e.workspace_id, e.change_date, e.actor_email, e.actor_subject_id, e.change_subject_id, e.change_subject_type, e.change_type
+                   FROM workspace_activity_log e
+                   INNER JOIN subWorkspaceActivityLogs s ON s.workspace_id = e.change_subject_id
+         ) SELECT * FROM subWorkspaceActivityLogs
+       """,
+            SELECT_SQL);
+    var params = new MapSqlParameterSource();
+    params
+        .addValue("source_workspace_id", sourceWorkspaceId.toString())
+        .addValue("change_type", OperationType.CLONE.name());
+    return ImmutableList.copyOf(
+        jdbcTemplate.query(sql, params, ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER));
   }
 }

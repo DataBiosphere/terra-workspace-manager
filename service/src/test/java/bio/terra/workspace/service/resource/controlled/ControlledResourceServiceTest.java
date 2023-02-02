@@ -1774,6 +1774,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                     .get());
     assertEquals(
         new ActivityLogChangeDetails(
+            workspaceId,
             latestLog.changeDate(),
             latestLog.actorEmail(),
             latestLog.actorSubjectId(),

@@ -1,5 +1,7 @@
 package bio.terra.workspace.db;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -15,6 +17,7 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -52,6 +55,94 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
     assertEquals(ACTOR_SUBJECT_ID, lastUpdateDetails.get().actorSubjectId());
     assertEquals(workspaceId.toString(), lastUpdateDetails.get().changeSubjectId());
     assertEquals(ActivityLogChangedTarget.WORKSPACE, lastUpdateDetails.get().changeSubjectType());
+  }
+
+  @Test
+  public void listCloneLogFromSource() {
+    var sourceWorkspace = UUID.randomUUID();
+    var workspaceA = UUID.randomUUID();
+    var workspaceB = UUID.randomUUID();
+    var workspaceC = UUID.randomUUID();
+    var workspaceD = UUID.randomUUID();
+    // [first layer] clone source workspace to workspace A
+    activityLogDao.writeActivity(
+        workspaceA,
+        new DbWorkspaceActivityLog(
+            USER_EMAIL,
+            ACTOR_SUBJECT_ID,
+            OperationType.CLONE,
+            sourceWorkspace.toString(),
+            ActivityLogChangedTarget.WORKSPACE));
+    // [second layer] clone workspace A to workspace B
+    activityLogDao.writeActivity(
+        workspaceB,
+        new DbWorkspaceActivityLog(
+            USER_EMAIL,
+            ACTOR_SUBJECT_ID,
+            OperationType.CLONE,
+            workspaceA.toString(),
+            ActivityLogChangedTarget.WORKSPACE));
+    // [second layer] clone workspace A to workspace C
+    activityLogDao.writeActivity(
+        workspaceC,
+        new DbWorkspaceActivityLog(
+            USER_EMAIL,
+            ACTOR_SUBJECT_ID,
+            OperationType.CLONE,
+            workspaceA.toString(),
+            ActivityLogChangedTarget.WORKSPACE));
+    // clone workspace C to workspace D
+    activityLogDao.writeActivity(
+        workspaceD,
+        new DbWorkspaceActivityLog(
+            USER_EMAIL,
+            ACTOR_SUBJECT_ID,
+            OperationType.CLONE,
+            workspaceC.toString(),
+            ActivityLogChangedTarget.WORKSPACE));
+
+    List<ActivityLogChangeDetails> cloneActivity =
+        activityLogDao.listCloneLogFromSource(sourceWorkspace);
+
+    assertEquals(4, cloneActivity.size());
+    assertThat(
+        cloneActivity.stream()
+            .filter(a -> a.changeDate() != null)
+            .map(a -> a.withChangeDate(null))
+            .toList(),
+        containsInAnyOrder(
+            new ActivityLogChangeDetails(
+                workspaceA,
+                /*changeDate=*/ null,
+                USER_EMAIL,
+                ACTOR_SUBJECT_ID,
+                OperationType.CLONE,
+                sourceWorkspace.toString(),
+                ActivityLogChangedTarget.WORKSPACE),
+            new ActivityLogChangeDetails(
+                workspaceB,
+                /*changeDate=*/ null,
+                USER_EMAIL,
+                ACTOR_SUBJECT_ID,
+                OperationType.CLONE,
+                workspaceA.toString(),
+                ActivityLogChangedTarget.WORKSPACE),
+            new ActivityLogChangeDetails(
+                workspaceC,
+                /*changeDate=*/ null,
+                USER_EMAIL,
+                ACTOR_SUBJECT_ID,
+                OperationType.CLONE,
+                workspaceA.toString(),
+                ActivityLogChangedTarget.WORKSPACE),
+            new ActivityLogChangeDetails(
+                workspaceD,
+                /*changeDate=*/ null,
+                USER_EMAIL,
+                ACTOR_SUBJECT_ID,
+                OperationType.CLONE,
+                workspaceC.toString(),
+                ActivityLogChangedTarget.WORKSPACE)));
   }
 
   @Test
