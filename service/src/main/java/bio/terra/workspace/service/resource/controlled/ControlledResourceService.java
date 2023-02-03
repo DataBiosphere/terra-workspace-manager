@@ -618,22 +618,14 @@ public class ControlledResourceService {
   @Nullable
   public String updateAzureControlledResourcesRegionAsync(
       AuthenticatedUserRequest userRequest, boolean wetRun) {
-    String wsmSaToken = samService.getWsmServiceAccountToken();
-    // wsmSaToken is null for unit test when samService is mocked out.
-    if (wsmSaToken == null) {
-      logger.warn(
-          "#updateAzureControlledResourcesRegionAsync: workspace manager service account token is null");
-      return null;
-    }
-    AuthenticatedUserRequest wsmSaRequest =
-        new AuthenticatedUserRequest().token(Optional.of(wsmSaToken));
     return jobService
         .newJob()
         .description(
             "A flight to update controlled resource's missing region in all the existing"
                 + "terra managed azure projects")
         .flightClass(UpdateAzureControlledResourceRegionFlight.class)
-        .userRequest(wsmSaRequest)
+        .userRequest(userRequest)
+        .addParameter(IS_WET_RUN, wetRun)
         .operationType(OperationType.UPDATE)
         .submit();
   }
@@ -648,7 +640,6 @@ public class ControlledResourceService {
         .description(
             "A flight to update controlled resource's missing region in all the existing"
                 + "terra managed gcp projects")
-        .jobId(UUID.randomUUID().toString())
         .flightClass(UpdateGcpControlledResourceRegionFlight.class)
         .userRequest(userRequest)
         .operationType(OperationType.UPDATE)

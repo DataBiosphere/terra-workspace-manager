@@ -52,7 +52,9 @@ public class UpdateControlledResourcesRegionStep implements Step {
         if (updated) {
           updatedResources.add(
               resourceDao
-                  .getResource(UUID.fromString(pair.getValue()), pair.getKey())
+                  .getResource(
+                      UUID.fromString(resourceIdsToWorkspaceIdMap.get(pair.getKey())),
+                      pair.getKey())
                   .castToControlledResource());
         }
       } else {

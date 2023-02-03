@@ -9,8 +9,6 @@ import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.app.controller.shared.JobApiUtils.AsyncJobResult;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
-import bio.terra.workspace.common.utils.AzureTestUtils;
-import bio.terra.workspace.connected.AzureConnectedTestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.db.ResourceDao;
@@ -23,7 +21,6 @@ import bio.terra.workspace.generated.model.ApiAzureStorageCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiJobReport;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
@@ -67,7 +64,8 @@ class UpdateAzureControlledResourceRegionFlightTest extends BaseAzureConnectedTe
 
   @BeforeAll
   public void setUp() throws InterruptedException {
-    workspace = createWorkspaceWithCloudContext(workspaceService, userAccessUtils.defaultUserAuthRequest());
+    workspace =
+        createWorkspaceWithCloudContext(workspaceService, userAccessUtils.defaultUserAuthRequest());
     workspaceId = workspace.getWorkspaceId();
   }
 
