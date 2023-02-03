@@ -62,7 +62,9 @@ public class AdminApiController extends ControllerBase implements AdminApi {
 
   private ResponseEntity<ApiJobResult> getApiJobResult(String jobId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    jobService.verifyUserAccess(jobId, userRequest, /*expectedWorkspaceId=*/ null);
+    SamRethrow.onInterrupted(
+        () -> getSamService().checkAdminAuthz(userRequest),
+        "check whether the user has admin access");
     ApiJobResult response = jobApiUtils.fetchJobResult(jobId);
     return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
   }
