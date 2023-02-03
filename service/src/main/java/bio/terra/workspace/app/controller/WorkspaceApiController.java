@@ -31,6 +31,7 @@ import bio.terra.workspace.generated.model.ApiGcpContext;
 import bio.terra.workspace.generated.model.ApiGrantRoleRequestBody;
 import bio.terra.workspace.generated.model.ApiIamRole;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
+import bio.terra.workspace.generated.model.ApiMergeCheckRequest;
 import bio.terra.workspace.generated.model.ApiProperties;
 import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiRegions;
@@ -42,7 +43,6 @@ import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
 import bio.terra.workspace.generated.model.ApiWsmPolicyExplainResult;
 import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
-import bio.terra.workspace.generated.model.ApiWsmPolicySourceRequestBody;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateRequest;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateResult;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -726,8 +726,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   @Traced
   @Override
   public ResponseEntity<ApiWsmPolicyUpdateResult> mergeCheck(
-      UUID targetWorkspaceId, ApiWsmPolicySourceRequestBody requestBody) {
-    UUID sourceObjectId = requestBody.getSourceObjectId();
+      UUID targetWorkspaceId, ApiMergeCheckRequest requestBody) {
+    UUID sourceObjectId = requestBody.getWorkspaceId();
 
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(

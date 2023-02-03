@@ -374,7 +374,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WsmPolicySourceRequestBody'
+              $ref: '#/components/schemas/MergeCheckRequest'
       responses:
         '200':
           description: Merge calculation successfully processed (no action is taken).
@@ -559,6 +559,14 @@ components:
       description: Enum containing all valid IAM roles on a Workspace
       type: string
       enum: ['DISCOVERER', 'READER', 'WRITER', 'APPLICATION', 'OWNER']
+
+    MergeCheckRequest:
+      description: Request with a workspace id
+      type: object
+      required: [ workspaceId ]
+      properties:
+        workspaceId:
+          $ref: '#/components/schemas/WsmPolicyObjectId'
 
     RoleBinding:
       description: A binding between an IAM role and users with that role
