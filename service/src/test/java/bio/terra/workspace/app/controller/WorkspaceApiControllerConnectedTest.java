@@ -38,7 +38,7 @@ import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
 import bio.terra.workspace.generated.model.ApiWsmPolicyExplainResult;
 import bio.terra.workspace.generated.model.ApiWsmPolicyObject;
-import bio.terra.workspace.generated.model.ApiWsmPolicySourceRequestBody;
+import bio.terra.workspace.generated.model.ApiMergeCheckRequest;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateResult;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -535,9 +535,9 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   }
 
   private ApiWsmPolicyUpdateResult mergeCheck(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID sourceObjectId)
+      AuthenticatedUserRequest userRequest, UUID targetWorkspaceId, UUID sourceWorkspaceId)
       throws Exception {
-    var request = new ApiWsmPolicySourceRequestBody().sourceObjectId(sourceObjectId);
+    var request = new ApiMergeCheckRequest().workspaceId(sourceWorkspaceId);
 
     var content = objectMapper.writeValueAsString(request);
 
@@ -547,7 +547,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
                 addAuth(
                     addJsonContentType(
                         post(String.format(
-                                WORKSPACES_V1_MERGE_CHECK_POLICIES_PATH_FORMAT, workspaceId))
+                                WORKSPACES_V1_MERGE_CHECK_POLICIES_PATH_FORMAT, targetWorkspaceId))
                             .content(content)),
                     userRequest))
             .andExpect(status().is(HttpStatus.SC_OK))
