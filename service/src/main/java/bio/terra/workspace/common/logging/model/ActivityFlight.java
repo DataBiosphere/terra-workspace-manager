@@ -81,7 +81,7 @@ public enum ActivityFlight {
   UPDATE_AZURE_CONTROLLED_RESOURCES_REGION_FLIGHT(
       UpdateAzureControlledResourceRegionFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
   REVOKE_TEMPORARY_GRANT_FLIGHT(
-    RevokeTemporaryGrantFlight.class.getName(), ActivityLogChangedTarget.WORKSPACE);
+      RevokeTemporaryGrantFlight.class.getName(), ActivityLogChangedTarget.WORKSPACE);
 
   private final String flightClassName;
   private final ActivityLogChangedTarget changedTarget;

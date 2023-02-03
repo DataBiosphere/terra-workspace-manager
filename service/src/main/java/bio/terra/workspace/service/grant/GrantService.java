@@ -1,33 +1,15 @@
 package bio.terra.workspace.service.grant;
 
 import bio.terra.common.logging.LoggingUtils;
-import bio.terra.common.sam.exception.SamNotFoundException;
-import bio.terra.workspace.app.configuration.external.PrivateResourceCleanupConfiguration;
 import bio.terra.workspace.app.configuration.external.TemporaryGrantRevokeConfiguration;
 import bio.terra.workspace.db.CronjobDao;
 import bio.terra.workspace.db.GrantDao;
-import bio.terra.workspace.db.ResourceDao;
-import bio.terra.workspace.db.WorkspaceDao;
-import bio.terra.workspace.db.WorkspaceDao.WorkspaceUserPair;
 import bio.terra.workspace.service.grant.flight.RevokeTemporaryGrantFlight;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
-import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
-import bio.terra.workspace.service.workspace.flight.RemoveUserFromWorkspaceFlight;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.OperationType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import javax.annotation.Nullable;
-import javax.annotation.PostConstruct;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -37,6 +19,12 @@ import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
+import javax.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 @Component
 public class GrantService {
@@ -82,8 +70,8 @@ public class GrantService {
   /**
    * Run {@code revokeGrants}, suppressing all thrown exceptions. This is helpful as {@code
    * ScheduledExecutorService.scheduleAtFixedRate} will stop running if any execution throws an
-   * exception. Suppressing these exceptions ensures we do not stop revoking temporary
-   * grants if a single run fails.
+   * exception. Suppressing these exceptions ensures we do not stop revoking temporary grants if a
+   * single run fails.
    */
   public void revokeGrantsSuppressExceptions() {
     try {
@@ -96,40 +84,45 @@ public class GrantService {
   }
 
   public void recordProjectGrant(
-    UUID workspaceId,
-    String userMember,
-    String petMember,
-    String role) {
-    GrantData grantData = makeGrantData(
-      workspaceId,
-      userMember,
-      petMember,
-      GrantType.PROJECT,
-      null, // resourceId
-      role);
+      UUID workspaceId, String userMember, String petMember, String role) {
+    GrantData grantData =
+        makeGrantData(
+            workspaceId,
+            userMember,
+            petMember,
+            GrantType.PROJECT,
+            null, // resourceId
+            role);
+    grantDao.insertGrant(grantData);
+  }
+
+  public void recordResourceGrant(
+      UUID workspaceId, String userMember, String petMember, String role, UUID resourceId) {
+    GrantData grantData =
+        makeGrantData(workspaceId, userMember, petMember, GrantType.RESOURCE, resourceId, role);
     grantDao.insertGrant(grantData);
   }
 
   private GrantData makeGrantData(
-    UUID workspaceId,
-    String userMember,
-    String petMember,
-    GrantType grantType,
-    @Nullable UUID resourceId,
-    @Nullable String role) {
+      UUID workspaceId,
+      String userMember,
+      String petMember,
+      GrantType grantType,
+      @Nullable UUID resourceId,
+      @Nullable String role) {
     OffsetDateTime createTime = OffsetDateTime.now(ZoneId.of("UTC"));
     OffsetDateTime expireTime = createTime.plus(configuration.getGrantHoldTime());
     UUID grantId = UUID.randomUUID();
     return new GrantData(
-      grantId,
-      workspaceId,
-      userMember,
-      petMember,
-      grantType,
-      resourceId,
-      role,
-      createTime,
-      expireTime);
+        grantId,
+        workspaceId,
+        userMember,
+        petMember,
+        grantType,
+        resourceId,
+        role,
+        createTime,
+        expireTime);
   }
 
   private void revokeGrants() {
@@ -147,15 +140,18 @@ public class GrantService {
     }
 
     // Get the list of grants to revoke and spin up a flight for each of them
-    List<UUID> revokeList = grantDao.getExpiredGrants();
+    List<GrantDao.ExpiredGrant> revokeList = grantDao.getExpiredGrants();
     logger.info("Found {} temporary grants to revoke", revokeList.size());
-    for (UUID grantId : revokeList) {
-      runRevokeFlight(grantId);
+    for (GrantDao.ExpiredGrant expiredGrant : revokeList) {
+      runRevokeFlight(expiredGrant);
     }
   }
 
-  private void runRevokeFlight(UUID grantId) {
-    String description = "Revoke temporary grant " + grantId;
+  private void runRevokeFlight(GrantDao.ExpiredGrant expiredGrant) {
+    String description =
+        String.format(
+            "revoke temporary grant %s in workspace %s",
+            expiredGrant.grantId(), expiredGrant.workspaceId());
 
     String wsmSaToken = samService.getWsmServiceAccountToken();
     AuthenticatedUserRequest wsmSaRequest =
@@ -168,14 +164,15 @@ public class GrantService {
             .flightClass(RevokeTemporaryGrantFlight.class)
             .userRequest(wsmSaRequest)
             .operationType(OperationType.SYSTEM_CLEANUP)
-            .addParameter(RevokeTemporaryGrantFlight.GRANT_ID_KEY, grantId);
+            .workspaceId(expiredGrant.workspaceId().toString())
+            .addParameter(RevokeTemporaryGrantFlight.GRANT_ID_KEY, expiredGrant.grantId());
 
     try {
       String flightId = revokeJob.submit();
-      logger.info("Launched flight {} to revoke grant {}", flightId, grantId);
+      logger.info("Launched flight {} for {}", flightId, description);
     } catch (RuntimeException e) {
       // Log the error, but don't kill this thread as it still needs to clean up other users.
-      logger.error("Flight revoking grant {} failed: ", grantId, e);
+      logger.error("Flight revoking grant {} failed: ", expiredGrant.grantId(), e);
     }
   }
 }

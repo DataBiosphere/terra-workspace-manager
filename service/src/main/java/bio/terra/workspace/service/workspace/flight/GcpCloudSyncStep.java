@@ -11,6 +11,7 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.exception.InternalLogicException;
+import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.service.grant.GrantService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -29,7 +30,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,7 +94,7 @@ public class GcpCloudSyncStep implements Step {
       workspaceRoleGroupsMap.forEach(
           (wsmRole, email) -> {
             if (CUSTOM_GCP_PROJECT_IAM_ROLES.containsKey(wsmRole)) {
-              newBindings.add(bindingForRole(wsmRole, toGroupIdentifier(email), gcpProjectId));
+              newBindings.add(bindingForRole(wsmRole, GcpUtils.toGroupMember(email), gcpProjectId));
             }
           });
 
@@ -102,20 +102,20 @@ public class GcpCloudSyncStep implements Step {
       // role on the project.
       if (features.isTemporaryGrantEnabled()) {
         // Get the user emails we are granting
-        String userMember = "user:" + samService.getUserEmailFromSam(userRequest);
+        String userMember = GcpUtils.toUserMember(samService.getUserEmailFromSam(userRequest));
         String petMember =
-          "serviceAccount:"
-            + samService.getOrCreatePetSaEmail(gcpProjectId, userRequest.getRequiredToken());
+            GcpUtils.toSaMember(
+                samService.getOrCreatePetSaEmail(gcpProjectId, userRequest.getRequiredToken()));
 
         newBindings.add(bindingForRole(WsmIamRole.OWNER, userMember, gcpProjectId));
         newBindings.add(bindingForRole(WsmIamRole.OWNER, petMember, gcpProjectId));
 
         // Store the temporary grant - it will be revoked in the background
         grantService.recordProjectGrant(
-          workspaceUuid,
-          userMember,
-          petMember,
-          getCustomRoleName(WsmIamRole.OWNER, gcpProjectId));
+            workspaceUuid,
+            userMember,
+            petMember,
+            getCustomRoleName(WsmIamRole.OWNER, gcpProjectId));
       }
 
       Policy newPolicy =
@@ -130,13 +130,6 @@ public class GcpCloudSyncStep implements Step {
       throw new RetryableCrlException("Error setting IAM permissions", e);
     }
     return StepResult.getStepResultSuccess();
-  }
-
-  /**
-   * GCP expects all groups to be prepended with the literal "group:" in IAM permissions bindings.
-   */
-  private String toGroupIdentifier(String samEmail) {
-    return "group:" + samEmail;
   }
 
   /**

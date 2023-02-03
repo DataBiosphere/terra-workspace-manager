@@ -157,4 +157,17 @@ public class GcpUtils {
   public static String parseRegion(String location) {
     return location.replaceAll("(?!^)-[a-z]$", "");
   }
+
+  // Methods for building member strings using in GCP IAM bindings
+  public static String toGroupMember(String email) {
+    return "group:" + email;
+  }
+
+  public static String toUserMember(String email) {
+    return "user:" + email;
+  }
+
+  public static String toSaMember(String email) {
+    return "serviceAccount:" + email;
+  }
 }

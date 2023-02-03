@@ -83,14 +83,14 @@ public class CreateGcpContextFlightV2 extends Flight {
         new SyncSamGroupsStep(appContext.getSamService(), workspaceUuid, userRequest), shortRetry);
 
     addStep(
-      new GcpCloudSyncStep(
-        crl.getCloudResourceManagerCow(),
-        appContext.getFeatureConfiguration(),
-        appContext.getSamService(),
-        appContext.getGrantService(),
-        userRequest,
-        workspaceUuid),
-      bufferRetry);
+        new GcpCloudSyncStep(
+            crl.getCloudResourceManagerCow(),
+            appContext.getFeatureConfiguration(),
+            appContext.getSamService(),
+            appContext.getGrantService(),
+            userRequest,
+            workspaceUuid),
+        bufferRetry);
 
     // Wait for the project permissions to propagate.
     // The SLO is 99.5% of the time it finishes in under 7 minutes.

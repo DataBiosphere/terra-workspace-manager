@@ -1,10 +1,9 @@
 package bio.terra.workspace.app.configuration.external;
 
+import java.time.Duration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
-
-import java.time.Duration;
 
 @Configuration
 @EnableConfigurationProperties

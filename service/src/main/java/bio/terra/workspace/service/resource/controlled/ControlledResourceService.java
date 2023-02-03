@@ -8,6 +8,7 @@ import bio.terra.common.exception.ServiceUnavailableException;
 import bio.terra.stairway.FlightState;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.exception.InternalLogicException;
+import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureRelayNamespaceCreationParameters;
@@ -18,6 +19,7 @@ import bio.terra.workspace.generated.model.ApiGcpAiNotebookUpdateParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
 import bio.terra.workspace.generated.model.ApiJobControl;
+import bio.terra.workspace.service.grant.GrantService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
@@ -91,6 +93,7 @@ public class ControlledResourceService {
   private final GcpCloudContextService gcpCloudContextService;
   private final FeatureConfiguration features;
   private final TpsApiDispatch tpsApiDispatch;
+  private final GrantService grantService;
 
   @Autowired
   public ControlledResourceService(
@@ -100,7 +103,8 @@ public class ControlledResourceService {
       SamService samService,
       GcpCloudContextService gcpCloudContextService,
       FeatureConfiguration features,
-      TpsApiDispatch tpsApiDispatch) {
+      TpsApiDispatch tpsApiDispatch,
+      GrantService grantService) {
     this.jobService = jobService;
     this.resourceDao = resourceDao;
     this.applicationDao = applicationDao;
@@ -108,6 +112,7 @@ public class ControlledResourceService {
     this.gcpCloudContextService = gcpCloudContextService;
     this.features = features;
     this.tpsApiDispatch = tpsApiDispatch;
+    this.grantService = grantService;
   }
 
   public String createAzureRelayNamespace(
@@ -596,20 +601,12 @@ public class ControlledResourceService {
 
         case WORKSPACE:
           switch (syncMapping.getWorkspaceRole().orElseThrow(BAD_STATE)) {
-            case OWNER:
-              policyGroup = cloudContext.getSamPolicyOwner().orElseThrow(BAD_STATE);
-              break;
-            case WRITER:
-              policyGroup = cloudContext.getSamPolicyWriter().orElseThrow(BAD_STATE);
-              break;
-            case READER:
-              policyGroup = cloudContext.getSamPolicyReader().orElseThrow(BAD_STATE);
-              break;
-            case APPLICATION:
-              policyGroup = cloudContext.getSamPolicyApplication().orElseThrow(BAD_STATE);
-              break;
-            default:
-              break;
+            case OWNER -> policyGroup = cloudContext.getSamPolicyOwner().orElseThrow(BAD_STATE);
+            case WRITER -> policyGroup = cloudContext.getSamPolicyWriter().orElseThrow(BAD_STATE);
+            case READER -> policyGroup = cloudContext.getSamPolicyReader().orElseThrow(BAD_STATE);
+            case APPLICATION -> policyGroup = cloudContext.getSamPolicyApplication().orElseThrow(BAD_STATE);
+            default -> {
+            }
           }
           break;
       }
@@ -617,7 +614,33 @@ public class ControlledResourceService {
         throw new InternalLogicException("Policy group not set");
       }
 
-      gcpPolicyBuilder.addResourceBinding(syncMapping.getTargetRole(), policyGroup);
+      gcpPolicyBuilder.addResourceBinding(
+          syncMapping.getTargetRole(), GcpUtils.toGroupMember(policyGroup));
+    }
+
+    if (features.isTemporaryGrantEnabled()) {
+      // Get the user emails we are granting
+      String userMember = GcpUtils.toUserMember(samService.getUserEmailFromSam(userRequest));
+      String petMember =
+          GcpUtils.toSaMember(
+              samService.getOrCreatePetSaEmail(
+                  gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId()),
+                  userRequest.getRequiredToken()));
+
+      // NOTE: We take advantage of the ordering of the sync mapping lists. The 0th index is always
+      // the role we want. Since this is a temporary measure, I don't think it is worth
+      // restructuring.
+      ControlledResourceIamRole role = syncMappings.get(0).getTargetRole();
+      gcpPolicyBuilder.addResourceBinding(role, userMember);
+      gcpPolicyBuilder.addResourceBinding(role, petMember);
+
+      // Store the temporary grant - it will be revoked in the background
+      grantService.recordResourceGrant(
+          resource.getWorkspaceId(),
+          userMember,
+          petMember,
+          gcpPolicyBuilder.getCustomRole(role),
+          resource.getResourceId());
     }
 
     return gcpPolicyBuilder.build();
