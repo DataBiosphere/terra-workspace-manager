@@ -51,7 +51,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 @Tag("azureConnected")
 @TestInstance(Lifecycle.PER_CLASS)
-public class UpdateAzureControlledResourceRegionFlightTest extends BaseAzureConnectedTest {
+class UpdateAzureControlledResourceRegionFlightTest extends BaseAzureConnectedTest {
 
   private static final String STORAGE_ACCOUNT_REGION = "eastus";
   @Autowired private ControlledResourceService controlledResourceService;
@@ -84,7 +84,7 @@ public class UpdateAzureControlledResourceRegionFlightTest extends BaseAzureConn
   }
 
   @Test
-  public void updateResourceWithoutRegionOnly() {
+  void updateResourceWithoutRegionOnly() {
     ControlledResource ip = createIp();
     ControlledResource disk = createDisk();
     ControlledResource network = createNetwork();

@@ -32,6 +32,7 @@ import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.relay.RelayManager;
 import com.azure.resourcemanager.storage.StorageManager;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.common.base.Preconditions;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -85,16 +86,14 @@ public class RetrieveAzureResourcesRegionStep implements Step {
           resource.getResourceId(),
           resource.getWorkspaceId());
       AzureCloudContext azureCloudContext;
-      if (workspaceIdToAzureCloudContextMap.containsKey(resource.getWorkspaceId())) {
-        azureCloudContext =
-            AzureCloudContext.deserialize(
-                workspaceIdToAzureCloudContextMap.get(resource.getWorkspaceId()));
-      } else {
-        logger.error(
-            String.format(
-                "Missing an azure cloud context in workspace %s", resource.getWorkspaceId()));
-        continue;
-      }
+      Preconditions.checkState(
+          workspaceIdToAzureCloudContextMap.containsKey(resource.getWorkspaceId()),
+          "Azure workspace %s must have an azure cloud context",
+          resource.getWorkspaceId());
+      azureCloudContext =
+          AzureCloudContext.deserialize(
+              workspaceIdToAzureCloudContextMap.get(resource.getWorkspaceId()));
+
       switch (resourceType) {
         case CONTROLLED_AZURE_DISK -> populateMapsWithResourceIdKey(
             resourceIdToRegionMap,
@@ -210,19 +209,14 @@ public class RetrieveAzureResourcesRegionStep implements Step {
     Optional<ApiAzureLandingZoneDeployedResource> existingSharedStorageAccount =
         landingZoneApiDispatch.getSharedStorageAccount(
             new BearerToken(userRequest.getRequiredToken()), landingZoneId);
-    if (existingSharedStorageAccount.isEmpty()) {
-      logger.error(
-          String.format(
-              "Unexpected: there is no shared storage account in landing zone %s", landingZoneId));
-    }
-    return existingSharedStorageAccount
-        .map(
-            apiAzureLandingZoneDeployedResource ->
-                storageManager
-                    .storageAccounts()
-                    .getById(apiAzureLandingZoneDeployedResource.getResourceId())
-                    .regionName())
-        .orElse(null);
+    Preconditions.checkState(
+        existingSharedStorageAccount.isPresent(),
+        "Unexpected: there is no shared storage account in landing zone %s",
+        landingZoneId);
+    return storageManager
+        .storageAccounts()
+        .getById(existingSharedStorageAccount.get().getResourceId())
+        .regionName();
   }
 
   private String getAzureVmRegion(

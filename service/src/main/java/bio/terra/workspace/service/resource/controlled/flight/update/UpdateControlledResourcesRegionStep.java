@@ -45,22 +45,22 @@ public class UpdateControlledResourcesRegionStep implements Step {
     Map<UUID, String> resourceIdsToWorkspaceIdMap =
         workingMap.get(CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP, new TypeReference<>() {});
     List<ControlledResource> updatedResources = new ArrayList<>();
-    for (var id : resourceIdsToRegionMap.keySet()) {
+    for (var pair : resourceIdsToRegionMap.entrySet()) {
       if (isWetRun) {
         boolean updated =
-            resourceDao.updateControlledResourceRegion(id, resourceIdsToRegionMap.get(id));
+            resourceDao.updateControlledResourceRegion(pair.getKey(), pair.getValue());
         if (updated) {
           updatedResources.add(
               resourceDao
-                  .getResource(UUID.fromString(resourceIdsToWorkspaceIdMap.get(id)), id)
+                  .getResource(UUID.fromString(pair.getValue()), pair.getKey())
                   .castToControlledResource());
         }
       } else {
         logger.info(
             "Dry run to update resource {} in workspace {} to region {}",
-            id,
-            resourceIdsToRegionMap.get(id),
-            resourceIdsToRegionMap.get(id));
+            pair.getKey(),
+            pair.getValue(),
+            resourceIdsToRegionMap.get(pair.getKey()));
       }
     }
     setResponse(context, updatedResources, HttpStatus.OK);
