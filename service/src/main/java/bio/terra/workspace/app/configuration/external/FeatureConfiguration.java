@@ -60,6 +60,14 @@ public class FeatureConfiguration {
     this.bpmAzureEnabled = bpmAzureEnabled;
   }
 
+  public boolean isTemporaryGrantEnabled() {
+    return temporaryGrantEnabled;
+  }
+
+  public void setTemporaryGrantEnabled(boolean temporaryGrantEnabled) {
+    this.temporaryGrantEnabled = temporaryGrantEnabled;
+  }
+
   public void azureEnabledCheck() {
     if (!isAzureEnabled()) {
       throw new FeatureNotSupportedException("Azure features are not enabled");
@@ -76,10 +84,6 @@ public class FeatureConfiguration {
     if (!isTpsEnabled()) {
       throw new FeatureNotSupportedException("Terra Policy Service is not enabled");
     }
-  }
-
-  public boolean isTemporaryGrantEnabled() {
-    return temporaryGrantEnabled;
   }
 
   /**

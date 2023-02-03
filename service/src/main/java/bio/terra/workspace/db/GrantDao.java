@@ -2,39 +2,21 @@ package bio.terra.workspace.db;
 
 import bio.terra.common.db.ReadTransaction;
 import bio.terra.common.db.WriteTransaction;
-import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.common.exception.InternalLogicException;
-import bio.terra.workspace.db.exception.DuplicateFolderDisplayNameException;
-import bio.terra.workspace.db.exception.DuplicateFolderIdException;
-import bio.terra.workspace.db.exception.FolderNotFoundException;
-import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
-import bio.terra.workspace.service.folder.model.Folder;
 import bio.terra.workspace.service.grant.GrantData;
 import bio.terra.workspace.service.grant.GrantType;
-import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.dao.DuplicateKeyException;
-import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.dao.support.DataAccessUtils;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Nullable;
-import javax.ws.rs.GET;
 import java.sql.Timestamp;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -48,7 +30,7 @@ public class GrantDao {
    */
   private static final String EXPIRED_GRANTS_SQL =
     """
-    SELECT grant_id FROM grant WHERE expire_time < now() AND revoke_flight_id IS NULL
+    SELECT grant_id FROM temporary_grant WHERE expire_time < :current_time AND revoke_flight_id IS NULL
     """;
 
   private static final RowMapper<UUID> GRANT_ID_ROW_MAPPER =
@@ -59,7 +41,7 @@ public class GrantDao {
    */
   private static final String LOCK_GRANT_SQL =
     """
-    UPDATE grant SET revoke_flight_id = :flight_id
+    UPDATE temporary_grant SET revoke_flight_id = :flight_id
     WHERE grant_id = :grant_id and revoke_flight_id IS NULL
     """;
 
@@ -68,7 +50,7 @@ public class GrantDao {
    */
   private static final String UNLOCK_GRANT_SQL =
     """
-    UPDATE grant SET revoke_flight_id = NULL
+    UPDATE temporary_grant SET revoke_flight_id = NULL
     WHERE grant_id = :grant_id and revoke_flight_id = :flight_id
     """;
 
@@ -77,15 +59,15 @@ public class GrantDao {
    */
   private static final String DELETE_GRANT_SQL =
     """
-    DELETE FROM grant WHERE grant_id = :grant_id and revoke_flight_id = :flight_id
+    DELETE FROM temporary_grant WHERE grant_id = :grant_id and revoke_flight_id = :flight_id
     """;
   /**
    * Query and mapper to retrieve a grant into GrantData
    */
   private static final String GET_GRANT_SQL =
   """
-  SELECT grant_id, workspace_id, user_email, petsa_email, grant_type, resource_id, create_time, expire_time
-  FROM grant
+  SELECT grant_id, workspace_id, user_member, petsa_member, grant_type, resource_id, role, create_time, expire_time
+  FROM temporary_grant
   WHERE grant_id = :grant_id 
   """;
 
@@ -94,8 +76,8 @@ public class GrantDao {
       new GrantData(
         UUID.fromString(rs.getString("grant_id")),
         UUID.fromString(rs.getString("workspace_id")),
-        rs.getString("user_email"),
-        rs.getString("petsa_email"),
+        rs.getString("user_member"),
+        rs.getString("petsa_member"),
         GrantType.fromDb(rs.getString("grant_type")),
         Optional.ofNullable(rs.getString("resource_id")).map(UUID::fromString).orElse(null),
         rs.getString("role"),
@@ -106,11 +88,11 @@ public class GrantDao {
 
   private static final String INSERT_GRANT_SQL =
     """
-    INSERT INTO grant 
-    (grant_id, workspace_id, user_email, petsa_email, grant_type, 
+    INSERT INTO temporary_grant 
+    (grant_id, workspace_id, user_member, petsa_member, grant_type, 
      resource_id, role, create_time, expire_time)
     VALUES
-    (:grant_id, :workspace_id, :user_email, :petsa_email, :grant_type,
+    (:grant_id, :workspace_id, :user_member, :petsa_member, :grant_type,
      :resource_id, :role, :create_time, :expire_time)
     """;
 
@@ -125,28 +107,41 @@ public class GrantDao {
    */
   @ReadTransaction
   public List<UUID> getExpiredGrants() {
-    var params = new MapSqlParameterSource();
+    var params = new MapSqlParameterSource()
+      .addValue("current_time",
+        Timestamp.valueOf(
+          OffsetDateTime.now(ZoneId.of("UTC")).atZoneSameInstant(ZoneOffset.UTC).toLocalDateTime()));
     return jdbcTemplate.query(EXPIRED_GRANTS_SQL, params, GRANT_ID_ROW_MAPPER);
   }
 
   /**
-   * Lock a grant and return its data
+   * Lock a grant
    * @param grantId the grant to get
-   * @return optional grantData - it is theoretically possible for the grant to be gone
+   * @return true if we locked the grant; false otherwise (grant no longer exists, already locked)
    */
   @WriteTransaction
-  public Optional<GrantData> lockAndGetGrant(UUID grantId) {
+  public boolean lockGrant(UUID grantId, String flightId) {
+    var params = new MapSqlParameterSource()
+      .addValue("grant_id", grantId.toString())
+      .addValue("flight_id", flightId);
+    int rowsUpdated = jdbcTemplate.update(LOCK_GRANT_SQL, params);
+    return (rowsUpdated == 1);
+  }
+
+  /**
+   * Get a grant
+   * @param grantId grant to retrieve
+   * @return GrantData or null, if not found
+   */
+  @ReadTransaction
+  public GrantData getGrant(UUID grantId) {
     var params = new MapSqlParameterSource()
       .addValue("grant_id", grantId.toString());
-    int rowsUpdated = jdbcTemplate.update(LOCK_GRANT_SQL, params);
-    if (rowsUpdated != 1) {
-      return Optional.empty(); // That grant is gone or locked by another flight
-    }
-
-    // Since the update returned a row and we are in a serializable transaction,
-    // we are guaranteed that the row still exists when we queury it.
     List<GrantData> grantList = jdbcTemplate.query(GET_GRANT_SQL, params, GRANT_DATA_ROW_MAPPER);
-    return Optional.of(grantList.get(0));
+    if (grantList.size() != 1) {
+      return null;
+    }
+    return grantList.get(0);
   }
 
   /**
@@ -177,6 +172,7 @@ public class GrantDao {
     if (deletedRowCount != 1) {
       throw new InternalLogicException("Grant " + grantId + " locked by flight " + flightId + "is missing or corrupt");
     }
+    logger.info("Deleted record for grant {}", grantId);
   }
 
   @WriteTransaction
@@ -192,16 +188,22 @@ public class GrantDao {
     var params = new MapSqlParameterSource()
       .addValue("grant_id", grantData.grantId().toString())
       .addValue("workspace_id", grantData.workspaceId().toString())
-      .addValue("user_email", grantData.userEmail())
-      .addValue("petsa_email", grantData.petSaEmail())
+      .addValue("user_member", grantData.userMember())
+      .addValue("petsa_member", grantData.petSaMember())
       .addValue("grant_type", grantData.grantType().toDb())
+      .addValue("resource_id", grantData.resourceId())
+      .addValue("role", grantData.role())
       .addValue("create_time", createTimestamp)
-      .addValue("expireTime", expireTimestamp);
+      .addValue("expire_time", expireTimestamp);
 
     jdbcTemplate.update(INSERT_GRANT_SQL, params);
     logger.info(
-      "Inserted record for grant {} for workspace {}",
+      "Inserted record for {} grant {} role {} for workspace {} for {} and {}",
+      grantData.grantType(),
       grantData.grantId(),
-      grantData.workspaceId());
+      grantData.role(),
+      grantData.workspaceId(),
+      grantData.userMember(),
+      grantData.petSaMember());
   }
 }

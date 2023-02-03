@@ -4,7 +4,7 @@ databaseChangeLog:
       author: dd
       changes:
         - createTable:
-            tableName: grant
+            tableName: temporary_grant
             remarks: |
               A table for temporary grants
             columns:
@@ -21,14 +21,15 @@ databaseChangeLog:
                     nullable: false
                   remarks: The UUID of the workspace; we do not cascade delete to avoid a race with revoke flights
               - column:
-                  name: user_email
+                  name: user_member
                   type: text
-                  remarks: May be null if we do not make temporary grants to the user
+                  remarks: Policy member of the user; "user:userEmail". May be null if we do not make temporary grants to the user
               - column:
-                  name: petsa_email
+                  name: petsa_member
                   type: text
                   constraints:
                     nullable: false
+                  remarks: Policy member of the petSa; "serviceAccount:petsaEmail"
               - column:
                   name: grant_type
                   type: text

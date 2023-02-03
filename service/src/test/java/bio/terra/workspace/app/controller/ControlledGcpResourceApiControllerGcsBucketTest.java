@@ -69,7 +69,7 @@ import org.springframework.test.web.servlet.MockMvc;
 /** Connected tests for controlled GCS buckets. */
 // Per-class lifecycle on this test to allow a shared workspace object across tests, which saves
 // time creating and deleting GCP contexts.
-@Disabled("With the permission propagation delay, this test is just too unstable.")
+//@Disabled("With the permission propagation delay, this test is just too unstable.")
 @Tag("connected")
 @TestInstance(Lifecycle.PER_CLASS)
 public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnectedTest {

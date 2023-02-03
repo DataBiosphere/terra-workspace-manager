@@ -1,6 +1,11 @@
 package bio.terra.workspace.service.grant;
 
 import bio.terra.workspace.common.exception.InternalLogicException;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 
 public enum GrantType {
   RESOURCE("RESOURCE"),
@@ -25,4 +30,5 @@ public enum GrantType {
     }
     throw new InternalLogicException("Database value not a valid GrantType");
   }
+
 }

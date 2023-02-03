@@ -7,8 +7,8 @@ import java.util.UUID;
 public record GrantData(
   UUID grantId,
   UUID workspaceId,
-  String userEmail,
-  String petSaEmail,
+  String userMember,
+  String petSaMember,
   GrantType grantType,
   @Nullable UUID resourceId,
   @Nullable String role,

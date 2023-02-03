@@ -75,11 +75,12 @@ workspace:
     polling-interval: "15m"
     startup-wait: "5s"
 
+    ### TODO: Testing only - Set for actual time
   temporary-grant-revoke:
     revokeEnabled: true
-    polling-interval: "15m"
+    polling-interval: "2m"
     startup-wait: "5s"
-    grant-hold-time: "30m"
+    grant-hold-time: "3m"
 
   sam.base-path: ${env.urls.sam}
 

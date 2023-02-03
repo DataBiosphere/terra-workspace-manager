@@ -26,8 +26,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import java.time.Duration;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -92,6 +95,43 @@ public class GrantService {
     }
   }
 
+  public void recordProjectGrant(
+    UUID workspaceId,
+    String userMember,
+    String petMember,
+    String role) {
+    GrantData grantData = makeGrantData(
+      workspaceId,
+      userMember,
+      petMember,
+      GrantType.PROJECT,
+      null, // resourceId
+      role);
+    grantDao.insertGrant(grantData);
+  }
+
+  private GrantData makeGrantData(
+    UUID workspaceId,
+    String userMember,
+    String petMember,
+    GrantType grantType,
+    @Nullable UUID resourceId,
+    @Nullable String role) {
+    OffsetDateTime createTime = OffsetDateTime.now(ZoneId.of("UTC"));
+    OffsetDateTime expireTime = createTime.plus(configuration.getGrantHoldTime());
+    UUID grantId = UUID.randomUUID();
+    return new GrantData(
+      grantId,
+      workspaceId,
+      userMember,
+      petMember,
+      grantType,
+      resourceId,
+      role,
+      createTime,
+      expireTime);
+  }
+
   private void revokeGrants() {
     if (!configuration.isRevokeEnabled()) {
       return;
@@ -108,6 +148,7 @@ public class GrantService {
 
     // Get the list of grants to revoke and spin up a flight for each of them
     List<UUID> revokeList = grantDao.getExpiredGrants();
+    logger.info("Found {} temporary grants to revoke", revokeList.size());
     for (UUID grantId : revokeList) {
       runRevokeFlight(grantId);
     }
@@ -130,7 +171,8 @@ public class GrantService {
             .addParameter(RevokeTemporaryGrantFlight.GRANT_ID_KEY, grantId);
 
     try {
-      revokeJob.submit();
+      String flightId = revokeJob.submit();
+      logger.info("Launched flight {} to revoke grant {}", flightId, grantId);
     } catch (RuntimeException e) {
       // Log the error, but don't kill this thread as it still needs to clean up other users.
       logger.error("Flight revoking grant {} failed: ", grantId, e);

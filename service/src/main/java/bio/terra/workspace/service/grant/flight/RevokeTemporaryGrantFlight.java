@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.grant.flight;
 
-import bio.terra.common.exception.NotImplementedException;
+import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
@@ -10,24 +10,23 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.FlightBeanBag;
-import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.db.GrantDao;
+import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.grant.GrantData;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.flight.RetrieveGcpResourcesRegionStep;
-import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceWithoutRegionStep;
-import bio.terra.workspace.service.resource.controlled.flight.update.UpdateResourcesRegionStep;
-import bio.terra.workspace.service.workspace.model.CloudPlatform;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import com.google.api.services.cloudresourcemanager.v3.model.Binding;
+import com.google.api.services.cloudresourcemanager.v3.model.GetIamPolicyRequest;
+import com.google.api.services.cloudresourcemanager.v3.model.Policy;
+import com.google.api.services.cloudresourcemanager.v3.model.SetIamPolicyRequest;
 
+import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
 
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.IS_WET_RUN;
-import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 
 public class RevokeTemporaryGrantFlight extends Flight {
-  public static final String GRANT_DATA_KEY = "grantData";
   public static final String SKIP = "skip";
 
   public static final String GRANT_ID_KEY = "grantId";
@@ -41,14 +40,16 @@ public class RevokeTemporaryGrantFlight extends Flight {
 
     addStep(new LockGrantStep(flightBeanBag.getGrantDao(), grantId), dbRetry);
     // output of the step in the working map is:
-    //  grantData - if locked and retrieved, the grant data object
-    //  skip - if the lock/retrieve failed, skip Boolean is set true and the steps do nothing.
+    //  skip - if the lock failed, skip Boolean is set true and the steps do nothing.
 
-    addStep(new RevokeStep());
+    addStep(new RevokeStep(
+      flightBeanBag.getGcpCloudContextService(),
+      flightBeanBag.getCrlService(),
+      flightBeanBag.getGrantDao(),
+      grantId));
 
-    addStep(new DeleteGrantStep(flightBeanBag.getGrantDao(), grantId), dbRetry)
+    addStep(new DeleteGrantStep(flightBeanBag.getGrantDao(), grantId), dbRetry);
   }
-
 
   /**
    * Step 1: lock the grant row and return the grant data
@@ -65,13 +66,11 @@ public class RevokeTemporaryGrantFlight extends Flight {
 
     @Override
     public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-      Optional<GrantData> grantData = grantDao.lockAndGetGrant(grantId);
-      if (grantData.isEmpty()) {
-        context.getWorkingMap().put(SKIP, TRUE);
-      } else {
-        context.getWorkingMap().put(SKIP, FALSE);
-        context.getWorkingMap().put(GRANT_DATA_KEY, grantData);
-      }
+      // Try to lock. If we fail, we skip the rest of the flight.
+      // Failing would indicate either the grant is gone (revoked by another flight)
+      // or it is locked by another flight.
+      boolean gotLock = grantDao.lockGrant(grantId, context.getFlightId());
+      context.getWorkingMap().put(SKIP, gotLock);
       return StepResult.getStepResultSuccess();
     }
 
@@ -86,6 +85,21 @@ public class RevokeTemporaryGrantFlight extends Flight {
    * Step 2: revoke the permission
    */
   public static class RevokeStep implements Step {
+    private final GcpCloudContextService gcpCloudContextService;
+    private final CrlService crlService;
+    private final GrantDao grantDao;
+    private final UUID grantId;
+    public RevokeStep(
+      GcpCloudContextService gcpCloudContextService,
+      CrlService crlService,
+      GrantDao grantDao,
+      UUID grantId) {
+      this.gcpCloudContextService = gcpCloudContextService;
+      this.crlService = crlService;
+      this.grantDao = grantDao;
+      this.grantId = grantId;
+    }
+
     @Override
     public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
       Boolean skip = context.getWorkingMap().get(SKIP, Boolean.class);
@@ -93,14 +107,49 @@ public class RevokeTemporaryGrantFlight extends Flight {
         return StepResult.getStepResultSuccess();
       }
 
-      GrantData grantData = context.getWorkingMap().get(GRANT_DATA_KEY, GrantData.class);
+      // Get the grant data - we locked it, so if it is not there something is wrong
+      GrantData grantData = grantDao.getGrant(grantId);
+      if (grantData == null) {
+        throw new InternalLogicException("Locked grant not found: " + grantId);
+      }
 
       switch (grantData.grantType()) {
         case RESOURCE -> {
+          // TODO
         }
         case PROJECT -> {
+          try {
+            CloudResourceManagerCow resourceManagerCow = crlService.getCloudResourceManagerCow();
+
+            Optional<String> gcpProjectId = gcpCloudContextService.getGcpProject(grantData.workspaceId());
+            // Tolerate the workspace or cloud context being gone
+            if (gcpProjectId.isPresent()) {
+              Policy policy =
+                resourceManagerCow
+                  .projects()
+                  .getIamPolicy(gcpProjectId.get(), new GetIamPolicyRequest())
+                  .execute();
+              // Tolerate no bindings
+              if (policy.getBindings() != null) {
+                for (Binding binding : policy.getBindings()) {
+                  if (binding.getRole().equals(grantData.role())) {
+                    binding.getMembers().remove(grantData.userMember());
+                    binding.getMembers().remove(grantData.petSaMember());
+                  }
+                }
+                SetIamPolicyRequest request = new SetIamPolicyRequest().setPolicy(policy);
+                resourceManagerCow
+                  .projects()
+                  .setIamPolicy(gcpProjectId.get(), request)
+                  .execute();
+              }
+            }
+          } catch (IOException e) {
+            throw new RetryException("Retry get policy", e);
+          }
         }
         case ACT_AS -> {
+          // TODO
         }
       }
 
