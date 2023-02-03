@@ -39,12 +39,13 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/admin/v1/resources/controlled/gcp/backfillRegions:
+  /api/admin/v1/resources/controlled/backfillRegions:
     patch:
       parameters:
       - $ref: '#/components/parameters/WetRun'
-      summary: Backfill controlled gcp resources that is missing a region field.
-      operationId: backfillGcpControlledResourcesRegions
+      - $ref: '#/components/parameters/Platform'
+      summary: Backfill controlled resources that is missing a region field.
+      operationId: backfillControlledResourcesRegions
       tags: [Admin]
       responses:
         '200':
@@ -55,51 +56,12 @@ paths:
           $ref: '#/components/responses/PermissionDenied'
         '500':
           $ref: '#/components/responses/ServerError'
-  /api/admin/v1/resources/controlled/gcp/backfillRegions/result/{jobId}:
+  /api/admin/v1/resources/controlled/backfillRegions/result/{jobId}:
     parameters:
     - $ref: '#/components/parameters/JobId'
     get:
       summary: Get the result of a async job to sync IAM roles.
-      operationId: getBackfillGcpControlledResourcesRegionsResult
-      tags: [ Admin ]
-      responses:
-        '200':
-          $ref: '#/components/responses/JobResultResponse'
-        '202':
-          $ref: '#/components/responses/JobResultResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '403':
-          $ref: '#/components/responses/PermissionDenied'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          $ref: '#/components/responses/Conflict'
-        '500':
-          $ref: '#/components/responses/ServerError'
-
-/api/admin/v1/resources/controlled/azure/backfillRegions:
-  patch:
-    parameters:
-    - $ref: '#/components/parameters/WetRun'
-    summary: Backfill controlled azure resources that is missing a region field.
-    operationId: backfillGcpControlledResourcesRegions
-    tags: [Admin]
-    responses:
-      '200':
-        $ref: '#/components/responses/JobResultResponse'
-      '202':
-        $ref: '#/components/responses/JobResultResponse'
-      '403':
-        $ref: '#/components/responses/PermissionDenied'
-      '500':
-        $ref: '#/components/responses/ServerError'
-  /api/admin/v1/resources/controlled/azure/backfillRegions/result/{jobId}:
-    parameters:
-    - $ref: '#/components/parameters/JobId'
-    get:
-      summary: Get the result of a async job to sync IAM roles.
-      operationId: getBackfillAzureControlledResourcesRegionsResult
+      operationId: getBackfillControlledResourcesRegionsResult
       tags: [ Admin ]
       responses:
         '200':

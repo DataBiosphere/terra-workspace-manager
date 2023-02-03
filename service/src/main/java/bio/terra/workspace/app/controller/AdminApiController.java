@@ -2,6 +2,7 @@ package bio.terra.workspace.app.controller;
 
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.generated.controller.AdminApi;
+import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiJobResult;
 import bio.terra.workspace.service.admin.AdminService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -68,44 +69,27 @@ public class AdminApiController extends ControllerBase implements AdminApi {
 
   @Traced
   @Override
-  public ResponseEntity<ApiJobResult> backfillGcpControlledResourcesRegions(Boolean wetRun) {
+  public ResponseEntity<ApiJobResult> backfillControlledResourcesRegions(
+      ApiCloudPlatform cloudPlatform, Boolean wetRun) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     SamRethrow.onInterrupted(
         () -> getSamService().checkAdminAuthz(userRequest),
         "check whether the user has admin access");
 
     String jobId =
-        controlledResourceService.updateGcpControlledResourcesRegionAsync(
-            userRequest, Boolean.TRUE.equals(wetRun));
+        switch (cloudPlatform) {
+          case GCP -> controlledResourceService.updateGcpControlledResourcesRegionAsync(
+              userRequest, Boolean.TRUE.equals(wetRun));
+          case AZURE -> controlledResourceService.updateAzureControlledResourcesRegionAsync(
+              userRequest, Boolean.TRUE.equals(wetRun));
+        };
     ApiJobResult response = jobApiUtils.fetchJobResult(jobId);
     return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
   }
 
   @Traced
   @Override
-  public ResponseEntity<ApiJobResult> getBackfillGcpControlledResourcesRegionsResult(String jobId) {
-    return getApiJobResult(jobId);
-  }
-
-  @Traced
-  @Override
-  public ResponseEntity<ApiJobResult> backfillAzureControlledResourcesRegions(Boolean wetRun) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    SamRethrow.onInterrupted(
-        () -> getSamService().checkAdminAuthz(userRequest),
-        "check whether the user has admin access");
-
-    String jobId =
-        controlledResourceService.updateAzureControlledResourcesRegionAsync(
-            userRequest, Boolean.TRUE.equals(wetRun));
-    ApiJobResult response = jobApiUtils.fetchJobResult(jobId);
-    return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
-  }
-
-  @Traced
-  @Override
-  public ResponseEntity<ApiJobResult> getBackfillAzureControlledResourcesRegionsResult(
-      String jobId) {
+  public ResponseEntity<ApiJobResult> getBackfillControlledResourcesRegionsResult(String jobId) {
     return getApiJobResult(jobId);
   }
 }
