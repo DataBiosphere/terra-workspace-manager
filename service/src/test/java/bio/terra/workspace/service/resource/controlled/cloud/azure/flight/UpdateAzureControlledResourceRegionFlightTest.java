@@ -58,8 +58,6 @@ class UpdateAzureControlledResourceRegionFlightTest extends BaseAzureConnectedTe
   @Autowired private ResourceDao resourceDao;
   @Autowired private WorkspaceConnectedTestUtils workspaceUtils;
   @Autowired private UserAccessUtils userAccessUtils;
-  @Autowired private AzureTestUtils azureTestUtils;
-  @Autowired private AzureConnectedTestUtils azureUtils;
   @Autowired private WorkspaceService workspaceService;
   @Autowired private JobApiUtils jobApiUtils;
   @Autowired private JobService jobService;
@@ -69,12 +67,8 @@ class UpdateAzureControlledResourceRegionFlightTest extends BaseAzureConnectedTe
 
   @BeforeAll
   public void setUp() throws InterruptedException {
-    workspace = azureTestUtils.createWorkspace(workspaceService);
+    workspace = createWorkspaceWithCloudContext(workspaceService, userAccessUtils.defaultUserAuthRequest());
     workspaceId = workspace.getWorkspaceId();
-
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
-    // Create cloud context
-    azureUtils.createCloudContext(workspaceId, userRequest);
   }
 
   @AfterAll
