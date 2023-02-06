@@ -80,7 +80,7 @@ public enum ActivityFlight {
       UpdateGcpControlledResourceRegionFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
   UPDATE_GCP_CONTROLLED_BQ_DATASETS_LIFETIME_FLIGHT(
       UpdateGcpControlledBigQueryDatasetsLifetimeFlight.class.getName(),
-      ActivityLogChangedTarget.RESOURCE);
+      ActivityLogChangedTarget.RESOURCE),
   UPDATE_AZURE_CONTROLLED_RESOURCES_REGION_FLIGHT(
       UpdateAzureControlledResourceRegionFlight.class.getName(), ActivityLogChangedTarget.RESOURCE);
 
