@@ -39,7 +39,6 @@ import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
 import bio.terra.workspace.generated.model.ApiWsmPolicyExplainResult;
 import bio.terra.workspace.generated.model.ApiWsmPolicyObject;
-import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateResult;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
@@ -60,6 +59,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.junit.jupiter.EnabledIf;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 /**
@@ -358,29 +358,60 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @Test
   @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
   public void mergeCheck_sameWorkspace() throws Exception {
-    ApiWsmPolicyUpdateResult result =
-        mergeCheck(userAccessUtils.defaultUserAuthRequest(), workspace.getId(), workspace.getId());
-
-    assertEquals(0, result.getConflicts().size());
+    mergeCheck(userAccessUtils.defaultUserAuthRequest(), workspace.getId(), workspace.getId());
   }
 
   @Test
   @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
-  public void mergeCheck_differentRegion() throws Exception {
+  public void mergeCheck_workspaceWithDifferentRegion() throws Exception {
     // Create workspace with US region constraint.
     UUID targetWorkspaceId =
         mockMvcUtils.createWorkspaceWithRegionConstraint(
-            userAccessUtils.defaultUserAuthRequest(), "US");
+            userAccessUtils.defaultUserAuthRequest(), "usa");
 
     // Create workspace with Europe region constraint.
     UUID sourceWorkspaceId =
         mockMvcUtils.createWorkspaceWithRegionConstraint(
-            userAccessUtils.defaultUserAuthRequest(), "EU");
+            userAccessUtils.defaultUserAuthRequest(), "eu");
 
-    ApiWsmPolicyUpdateResult result =
-        mergeCheck(userAccessUtils.defaultUserAuthRequest(), targetWorkspaceId, sourceWorkspaceId);
+    // Both workspaces have conflicting policy.
+    mergeCheck(userAccessUtils.defaultUserAuthRequest(), targetWorkspaceId, sourceWorkspaceId)
+        .andExpect(status().is(HttpStatus.SC_CONFLICT));
+  }
 
-    assertEquals(1, result.getConflicts().size());
+  @Test
+  @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
+  public void mergeCheck_resourceWithDifferentRegion() throws Exception {
+    var userRequest = userAccessUtils.defaultUserAuthRequest();
+    UUID targetWorkspaceId = null;
+    UUID sourceWorkspaceId = null;
+    try {
+      //  Create target workspace with US region constraint.
+      targetWorkspaceId =
+          mockMvcUtils.createWorkspaceWithRegionConstraintAndCloudContext(userRequest, "usa");
+
+      // Then add a resource with US east region to the target.
+      mockMvcUtils.createControlledGcsBucket(
+          userRequest,
+          targetWorkspaceId,
+          "resource-name",
+          String.valueOf(UUID.randomUUID()),
+          "US-EAST1",
+          null,
+          null);
+
+      // Create source workspace with US central region constraint.
+      sourceWorkspaceId =
+          mockMvcUtils.createWorkspaceWithRegionConstraint(userRequest, "gcp.us-central1");
+
+      // Target workspace has compatible policy (usa) with source.
+      // However, target has resource (us-east1) that will conflict with the policy (us-central1) in source workspace.
+      mergeCheck(userRequest, targetWorkspaceId, sourceWorkspaceId)
+          .andExpect(status().is(HttpStatus.SC_CONFLICT));
+    } finally {
+      mockMvcUtils.deleteWorkspace(userRequest, targetWorkspaceId);
+      mockMvcUtils.deleteWorkspace(userRequest, sourceWorkspaceId);
+    }
   }
 
   @Test
@@ -534,27 +565,20 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     return objectMapper.readValue(serializedResponse, ApiWsmPolicyExplainResult.class);
   }
 
-  private ApiWsmPolicyUpdateResult mergeCheck(
+  private ResultActions mergeCheck(
       AuthenticatedUserRequest userRequest, UUID targetWorkspaceId, UUID sourceWorkspaceId)
       throws Exception {
     var request = new ApiMergeCheckRequest().workspaceId(sourceWorkspaceId);
 
     var content = objectMapper.writeValueAsString(request);
 
-    var serializedResponse =
-        mockMvc
-            .perform(
-                addAuth(
-                    addJsonContentType(
-                        post(String.format(
-                                WORKSPACES_V1_MERGE_CHECK_POLICIES_PATH_FORMAT, targetWorkspaceId))
-                            .content(content)),
-                    userRequest))
-            .andExpect(status().is(HttpStatus.SC_OK))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-    return objectMapper.readValue(serializedResponse, ApiWsmPolicyUpdateResult.class);
+    return mockMvc.perform(
+        addAuth(
+            addJsonContentType(
+                post(String.format(
+                        WORKSPACES_V1_MERGE_CHECK_POLICIES_PATH_FORMAT, targetWorkspaceId))
+                    .content(content)),
+            userRequest));
   }
 
   /** Assert all workspace fields are set, when requester has at least READER role. */

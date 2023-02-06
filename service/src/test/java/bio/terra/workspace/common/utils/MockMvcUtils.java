@@ -637,6 +637,14 @@ public class MockMvcUtils {
     return objectMapper.readValue(serializedResponse, ApiCreatedWorkspace.class).getId();
   }
 
+  public UUID createWorkspaceWithRegionConstraintAndCloudContext(
+      AuthenticatedUserRequest userRequest, String regionName) throws Exception {
+    UUID resultWorkspaceId = createWorkspaceWithRegionConstraint(userRequest, regionName);
+    createGcpCloudContextAndWait(userRequest, resultWorkspaceId);
+
+    return resultWorkspaceId;
+  }
+
   public void assertWorkspace(
       ApiWorkspaceDescription actualWorkspace,
       String expectedUserFacingId,
