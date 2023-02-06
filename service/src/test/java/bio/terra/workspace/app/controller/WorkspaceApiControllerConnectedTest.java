@@ -405,7 +405,8 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
           mockMvcUtils.createWorkspaceWithRegionConstraint(userRequest, "gcp.us-central1");
 
       // Target workspace has compatible policy (usa) with source.
-      // However, target has resource (us-east1) that will conflict with the policy (us-central1) in source workspace.
+      // However, target has resource (us-east1) that will conflict with the policy (us-central1) in
+      // source workspace.
       mergeCheck(userRequest, targetWorkspaceId, sourceWorkspaceId)
           .andExpect(status().is(HttpStatus.SC_CONFLICT));
     } finally {
