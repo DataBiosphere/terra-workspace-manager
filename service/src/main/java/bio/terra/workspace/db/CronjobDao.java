@@ -54,7 +54,8 @@ public class CronjobDao {
     } catch (EmptyResultDataAccessException e) {
       lastJobRun = Timestamp.from(Instant.EPOCH);
     }
-    if (lastJobRun.toInstant().plus(timeSinceLastRun).isAfter(Instant.now())) {
+    if (lastJobRun != null
+        && lastJobRun.toInstant().plus(timeSinceLastRun).isAfter(Instant.now())) {
       // Job has been run more recently, do nothing.
       return false;
     }

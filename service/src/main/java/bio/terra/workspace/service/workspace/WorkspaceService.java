@@ -18,6 +18,7 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneWorkspaceFlight;
+import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.exceptions.BufferServiceDisabledException;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceException;
@@ -126,9 +127,9 @@ public class WorkspaceService {
             .addParameter(WorkspaceFlightMapKeys.POLICIES, policies)
             .addParameter(WorkspaceFlightMapKeys.APPLICATION_IDS, applications);
 
-    if (workspace.getSpendProfileId().isPresent()) {
-      createJob.addParameter(
-          WorkspaceFlightMapKeys.SPEND_PROFILE_ID, workspace.getSpendProfileId().get().getId());
+    Optional<SpendProfileId> spendProfile = workspace.getSpendProfileId();
+    if (spendProfile.isPresent()) {
+      createJob.addParameter(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, spendProfile.get().getId());
     }
     return createJob.submitAndWait(UUID.class);
   }

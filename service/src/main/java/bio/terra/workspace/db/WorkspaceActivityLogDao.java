@@ -71,6 +71,7 @@ public class WorkspaceActivityLogDao {
     this.jdbcTemplate = jdbcTemplate;
   }
 
+  @Traced
   @WriteTransaction
   public void writeActivity(UUID workspaceId, DbWorkspaceActivityLog dbWorkspaceActivityLog) {
     logger.info(

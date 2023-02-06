@@ -84,10 +84,14 @@ import bio.terra.workspace.service.resource.controlled.exception.ReservedMetadat
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceMetadataStep;
+import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
+import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
+import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
@@ -104,6 +108,7 @@ import com.google.api.services.notebooks.v1.model.Instance;
 import com.google.cloud.storage.BucketInfo;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -1659,7 +1664,30 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 user.getAuthenticatedRequest(),
                 bucketCreationParameters)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
+    var bucketName = "gcs_bucket_with_underscore_name";
     assertEquals(DEFAULT_RESOURCE_REGION, createdBucket.getRegion());
+    // Create a bucket with underscores.
+    var secondBucketId = UUID.randomUUID();
+    resourceDao.createControlledResource(
+        new ControlledGcsBucketResource(
+            workspaceId,
+            secondBucketId,
+            TestUtils.appendRandomNumber("resourcename"),
+            "This is a bucket with underscore name",
+            CloningInstructions.COPY_NOTHING,
+            /*assignedUser=*/ null,
+            PrivateResourceState.NOT_APPLICABLE,
+            AccessScopeType.ACCESS_SCOPE_SHARED,
+            ManagedByType.MANAGED_BY_USER,
+            /*applicationId=*/ null,
+            bucketName,
+            List.of(),
+            Map.of(),
+            "foo@bar.com",
+            OffsetDateTime.now(),
+            "foo@bar.com",
+            OffsetDateTime.now(),
+            DEFAULT_RESOURCE_REGION));
 
     // create dataset
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
@@ -1707,12 +1735,14 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     // Artificially set regions to null in the database.
     resourceDao.updateControlledResourceRegion(createdBucket.getResourceId(), /*region=*/ null);
+    resourceDao.updateControlledResourceRegion(secondBucketId, /*region=*/ null);
     resourceDao.updateControlledResourceRegion(createdDataset.getResourceId(), /*region=*/ null);
     resourceDao.updateControlledResourceRegion(notebookResource.getResourceId(), /*region=*/ null);
 
     List<ControlledResource> updatedResource = updateControlledResourcesRegionAndWait();
 
     // The three controlled resources are updated as the regions are null.
+    // The second bucket is not updated because it doesn't have a cloud resource.
     assertEquals(3, updatedResource.size());
     assertResourceRegionIsUpdatedAndActivityIsLogged(
         updatedResource, createdBucket.getResourceId(), DEFAULT_RESOURCE_REGION);
@@ -1789,7 +1819,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   }
 
   private List<ControlledResource> updateControlledResourcesRegionAndWait() {
-    String jobId = controlledResourceService.updateGcpControlledResourcesRegionAsync();
+    String jobId =
+        controlledResourceService.updateGcpControlledResourcesRegionAsync(
+            userAccessUtils.defaultUserAuthRequest(), true);
     jobService.waitForJob(jobId);
 
     AsyncJobResult<List<ControlledResource>> jobResult =

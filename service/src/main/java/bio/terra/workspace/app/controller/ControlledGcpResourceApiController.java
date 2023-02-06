@@ -30,6 +30,7 @@ import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants;
 import com.google.common.base.Strings;
+import io.opencensus.contrib.spring.aop.Traced;
 import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
@@ -75,6 +76,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     this.crlService = crlService;
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiCreatedControlledGcpGcsBucket> createBucket(
       UUID workspaceUuid, @Valid ApiCreateControlledGcpGcsBucketRequestBody body) {
@@ -125,6 +127,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
         : requestedLocation;
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiDeleteControlledGcpGcsBucketResult> deleteBucket(
       UUID workspaceUuid, UUID resourceId, @Valid ApiDeleteControlledGcpGcsBucketRequest body) {
@@ -145,6 +148,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     return getDeleteResult(jobId);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiDeleteControlledGcpGcsBucketResult> getDeleteBucketResult(
       UUID workspaceUuid, String jobId) {
@@ -163,6 +167,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiGcpGcsBucketResource> getBucket(UUID workspaceUuid, UUID resourceId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -174,6 +179,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiGcsBucketCloudName> generateGcpGcsBucketCloudName(
       UUID workspaceUuid, ApiGenerateGcpGcsBucketCloudNameRequestBody name) {
@@ -187,6 +193,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiGcpGcsBucketResource> updateGcsBucket(
       UUID workspaceUuid, UUID resourceId, @Valid ApiUpdateControlledGcpGcsBucketRequestBody body) {
@@ -213,6 +220,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiCloneControlledGcpGcsBucketResult> cloneGcsBucket(
       UUID workspaceUuid, UUID resourceId, @Valid ApiCloneControlledGcpGcsBucketRequest body) {
@@ -260,6 +268,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
         .bucket(jobResult.getResult());
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiCloneControlledGcpGcsBucketResult> getCloneGcsBucketResult(
       UUID workspaceUuid, String jobId) {
@@ -269,6 +278,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiGcpBigQueryDatasetResource> getBigQueryDataset(
       UUID workspaceUuid, UUID resourceId) {
@@ -281,6 +291,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiBqDatasetCloudId> generateBigQueryDatasetCloudId(
       UUID workspaceUuid, ApiGenerateGcpBigQueryDatasetCloudIDRequestBody name) {
@@ -294,6 +305,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiGcpBigQueryDatasetResource> updateBigQueryDataset(
       UUID workspaceUuid, UUID resourceId, ApiUpdateControlledGcpBigQueryDatasetRequestBody body) {
@@ -319,6 +331,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiCreatedControlledGcpBigQueryDataset> createBigQueryDataset(
       UUID workspaceUuid, ApiCreateControlledGcpBigQueryDatasetRequestBody body) {
@@ -454,11 +467,10 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
         toCommonFields(
             workspaceUuid,
             body.getCommon(),
-            // AI notebook is a zonal resource. It's set here so that we can validate it against
-            // policy. However, the notebook creation flight will compute a final location, which
-            // could be a zone if a region is passed here. The assumption for policy is that a zone
-            // is included inside of a region. The db entry is updated as part of the flight.
-            resourceLocation,
+            // AI notebook is a zonal resource. The resource location might be a zone instead of
+            // a region so we do not set this field in the wsm db yet. The region will be computed
+            // as part of the AI notebook creation flight.
+            /*region=*/ null,
             userRequest,
             WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceUuid);
@@ -558,6 +570,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
         .aiNotebookInstance(apiResource);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiDeleteControlledGcpAiNotebookInstanceResult> deleteAiNotebookInstance(
       UUID workspaceUuid,
@@ -584,6 +597,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiDeleteControlledGcpAiNotebookInstanceResult>
       getDeleteAiNotebookInstanceResult(UUID workspaceUuid, String jobId) {
@@ -603,6 +617,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
         .errorReport(jobResult.getApiErrorReport());
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiGcpAiNotebookInstanceResource> getAiNotebookInstance(
       UUID workspaceUuid, UUID resourceId) {

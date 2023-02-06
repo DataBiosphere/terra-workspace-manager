@@ -305,12 +305,7 @@ public class ResourceDao {
         .collect(Collectors.toList());
   }
 
-  /**
-   * Returns a list of all controlled resources without region field.
-   *
-   * @param cloudPlatform Optional. If present, this will only return resources from the specified
-   *     cloud platform. If null, this will return resources from all cloud platforms.
-   */
+  /** Returns a list of all controlled resources without region field. */
   @ReadTransaction
   public List<ControlledResource> listControlledResourcesWithMissingRegion(
       @Nullable CloudPlatform cloudPlatform) {
@@ -1002,7 +997,11 @@ public class ResourceDao {
 
   private DbResource getDbResource(String sql, MapSqlParameterSource params) {
     try {
-      return jdbcTemplate.queryForObject(sql, params, DB_RESOURCE_ROW_MAPPER);
+      DbResource dbResource = jdbcTemplate.queryForObject(sql, params, DB_RESOURCE_ROW_MAPPER);
+      if (dbResource == null) {
+        throw new InternalLogicException("Failed to get DbResource");
+      }
+      return dbResource;
     } catch (EmptyResultDataAccessException e) {
       throw new ResourceNotFoundException("Resource not found.");
     }

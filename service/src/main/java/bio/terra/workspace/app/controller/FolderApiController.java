@@ -26,6 +26,7 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.OperationType;
+import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -62,6 +63,7 @@ public class FolderApiController extends ControllerBase implements FolderApi {
     this.workspaceActivityLogService = workspaceActivityLogService;
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiFolder> createFolder(UUID workspaceId, ApiCreateFolderRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -89,6 +91,7 @@ public class FolderApiController extends ControllerBase implements FolderApi {
         buildFolder(folderService.getFolder(workspaceId, folderId), workspaceId), HttpStatus.OK);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiFolder> updateFolder(
       UUID workspaceId, UUID folderId, ApiUpdateFolderRequestBody body) {
@@ -112,6 +115,7 @@ public class FolderApiController extends ControllerBase implements FolderApi {
     return new ResponseEntity<>(buildFolder(folder, workspaceId), HttpStatus.OK);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiFolder> getFolder(UUID workspaceId, UUID folderId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -122,6 +126,7 @@ public class FolderApiController extends ControllerBase implements FolderApi {
     return new ResponseEntity<>(buildFolder(folder, workspaceId), HttpStatus.OK);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiFolderList> listFolders(UUID workspaceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -136,21 +141,7 @@ public class FolderApiController extends ControllerBase implements FolderApi {
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
-  @Override
-  // TODO (PF-2159): Delete this endpoint once UI has switched over to use deleteFolderAsync.
-  public ResponseEntity<ApiJobResult> deleteFolder(UUID workspaceId, UUID folderId) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-
-    // If requester is writer and folder has private resources (not owned by requester), requester
-    // won't have permission to delete private resources. That access control check is done in
-    // folderService#deleteFolder.
-    workspaceService.validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.WRITE);
-
-    String jobId = folderService.deleteFolder(workspaceId, folderId, userRequest);
-    ApiJobResult response = jobApiUtils.fetchJobResult(jobId);
-    return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
-  }
-
+  @Traced
   @Override
   public ResponseEntity<ApiJobResult> deleteFolderAsync(UUID workspaceId, UUID folderId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -165,6 +156,7 @@ public class FolderApiController extends ControllerBase implements FolderApi {
     return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiJobResult> getDeleteFolderResult(
       UUID workspaceId, UUID folderId, String jobId) {
@@ -174,6 +166,7 @@ public class FolderApiController extends ControllerBase implements FolderApi {
     return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
   }
 
+  @Traced
   @Override
   public ResponseEntity<Void> updateFolderProperties(
       UUID workspaceUuid, UUID folderUuid, List<ApiProperty> properties) {
@@ -194,6 +187,7 @@ public class FolderApiController extends ControllerBase implements FolderApi {
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
+  @Traced
   @Override
   public ResponseEntity<Void> deleteFolderProperties(
       UUID workspaceUuid, UUID folderUuid, List<String> propertyKeys) {

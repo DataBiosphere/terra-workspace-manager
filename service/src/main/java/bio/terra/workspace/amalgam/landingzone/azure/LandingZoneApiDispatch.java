@@ -226,8 +226,8 @@ public class LandingZoneApiDispatch {
     }
     if (purpose.getClass().equals(SubnetResourcePurpose.class)) {
       return new ApiAzureLandingZoneDeployedResource()
-          .resourceParentId(resource.resourceParentId().get()) // Only available for subnets
-          .resourceName(resource.resourceName().get()) // Only available for subnets
+          .resourceParentId(resource.resourceParentId().orElse(null)) // Only available for subnets
+          .resourceName(resource.resourceName().orElse(null)) // Only available for subnets
           .resourceType(resource.resourceType())
           .region(resource.region());
     }

@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp;
 
+import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import com.google.cloud.Binding;
@@ -60,6 +61,10 @@ public class GcpPolicyBuilder {
     CustomGcpIamRole customRole =
         CustomGcpIamRoleMapping.CUSTOM_GCP_RESOURCE_IAM_ROLES.get(
             resource.getResourceType(), resourceRole);
+    if (customRole == null) {
+      throw new InternalLogicException(
+          String.format("Missing custom GCP resource role %s", resourceRole));
+    }
     return Binding.newBuilder()
         .setRole(customRole.getFullyQualifiedRoleName(projectId))
         .setMembers(Collections.singletonList(memberIdentifier))
