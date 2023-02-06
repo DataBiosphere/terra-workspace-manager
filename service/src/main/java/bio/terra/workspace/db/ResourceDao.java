@@ -589,19 +589,20 @@ public class ResourceDao {
       ControlledBigQueryDatasetResource dataset, @Nullable Long defaultTableLifetime) {
     String newAttributes =
         DbSerDes.toJson(
-            new ControlledBigQueryDatasetAttributes(dataset.getDatasetName(),
+            new ControlledBigQueryDatasetAttributes(
+                dataset.getDatasetName(),
                 dataset.getProjectId(),
                 defaultTableLifetime,
-                dataset.getDefaultPartitionLifetime()
-            )
-        );
-    boolean updated = updateResource(
-        dataset.getWorkspaceId(), dataset.getResourceId(), null, null, newAttributes, null);
+                dataset.getDefaultPartitionLifetime()));
+    boolean updated =
+        updateResource(
+            dataset.getWorkspaceId(), dataset.getResourceId(), null, null, newAttributes, null);
 
     logger.info(
         "{} default table lifetime for resource {} to {}",
         (updated ? "Updated" : "No Update - did not find"),
-        dataset.getResourceId(), defaultTableLifetime);
+        dataset.getResourceId(),
+        defaultTableLifetime);
 
     return updated;
   }
@@ -616,19 +617,20 @@ public class ResourceDao {
       ControlledBigQueryDatasetResource dataset, @Nullable Long defaultPartitionLifetime) {
     String newAttributes =
         DbSerDes.toJson(
-            new ControlledBigQueryDatasetAttributes(dataset.getDatasetName(),
+            new ControlledBigQueryDatasetAttributes(
+                dataset.getDatasetName(),
                 dataset.getProjectId(),
                 dataset.getDefaultTableLifetime(),
-                defaultPartitionLifetime
-            )
-        );
-    boolean updated = updateResource(
-        dataset.getWorkspaceId(), dataset.getResourceId(), null, null, newAttributes, null);
+                defaultPartitionLifetime));
+    boolean updated =
+        updateResource(
+            dataset.getWorkspaceId(), dataset.getResourceId(), null, null, newAttributes, null);
 
     logger.info(
         "{} default partition lifetime for resource {} to {}",
         (updated ? "Updated" : "No Update - did not find"),
-        dataset.getResourceId(), defaultPartitionLifetime);
+        dataset.getResourceId(),
+        defaultPartitionLifetime);
 
     return updated;
   }

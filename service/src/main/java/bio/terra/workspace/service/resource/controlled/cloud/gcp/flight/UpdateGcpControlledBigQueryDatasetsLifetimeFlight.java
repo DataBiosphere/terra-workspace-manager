@@ -4,7 +4,6 @@ import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
-import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledBigQueryDatasetWithoutLifetimeStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledBigQueryDatasetsLifetimeStep;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
