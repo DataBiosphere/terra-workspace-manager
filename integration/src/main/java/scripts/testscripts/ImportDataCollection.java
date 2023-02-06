@@ -11,12 +11,14 @@ import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
+import bio.terra.workspace.model.CloneControlledGcpGcsBucketRequest;
 import bio.terra.workspace.model.CloneReferencedResourceRequestBody;
 import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.CreateWorkspaceRequestBody;
 import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
 import bio.terra.workspace.model.CreatedWorkspace;
 import bio.terra.workspace.model.GcpGcsBucketResource;
+import bio.terra.workspace.model.JobControl;
 import bio.terra.workspace.model.Properties;
 import bio.terra.workspace.model.Property;
 import bio.terra.workspace.model.WorkspaceDescription;
@@ -47,6 +49,8 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
         ClientTestUtils.getControlledGcpResourceClient(testUser, server);
     ReferencedGcpResourceApi referencedGcpResourceApi =
         ClientTestUtils.getReferencedGcpResourceClient(testUser, server);
+    ControlledGcpResourceApi controlledGcpResourceApi =
+        ClientTestUtils.getControlledGcpResourceClient(testUser, server);
 
     String gcpCentralLocation = "gcp.us-central1";
     String gcpEastLocation = "gcp.us-east1";
@@ -200,6 +204,26 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
             .contains("Workspace contains resources that would be outside of the merged policy."));
 
     workspaceApi.deleteWorkspace(scenario5Workspace.getId());
+
+    /*
+     Scenario 6: Same as Scenario1 with a controlled resource. Workspace without region should gain region from data collection.
+     Workspace (policy=empty) + Data Collection (policy=us-central1). Result: OK & Workspace (policy=us-central1)
+    */
+    CreatedWorkspace noPolicyWorkspace =
+        createWorkspace(UUID.randomUUID(), getSpendProfileId(), workspaceApi);
+
+    controlledGcpResourceApi.cloneGcsBucket(
+        new CloneControlledGcpGcsBucketRequest()
+            .destinationWorkspaceId(noPolicyWorkspace.getId())
+            .cloningInstructions(CloningInstructionsEnum.REFERENCE)
+            .jobControl(new JobControl().id(UUID.randomUUID().toString())),
+        dataCollectionReferenceResource.getMetadata().getWorkspaceId(),
+        controlledBucketResource.getMetadata().getResourceId());
+
+    validateWorkspaceContainsRegionPolicy(
+        workspaceApi, noPolicyWorkspace.getId(), gcpCentralLocation);
+    workspaceApi.deleteWorkspace(noPolicyWorkspace.getId());
+
     workspaceApi.deleteWorkspace(centralDataCollection.getId());
   }
 
