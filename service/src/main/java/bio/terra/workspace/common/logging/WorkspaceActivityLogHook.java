@@ -35,6 +35,7 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
@@ -106,18 +107,8 @@ public class WorkspaceActivityLogHook implements StairwayHook {
 
     ActivityFlight af = ActivityFlight.fromFlightClassName(flightClassName);
     if (workspaceId == null) {
-      if (SyncGcpIamRolesFlight.class.getName().equals(flightClassName)) {
-        maybeLogForSyncGcpIamRolesFlight(context, operationType, userEmail, subjectId);
-      } else if (UpdateGcpControlledResourceRegionFlight.class.getName().equals(flightClassName)
-          || UpdateAzureControlledResourceRegionFlight.class.getName().equals(flightClassName)) {
-        maybeLogUpdateControlledResourceRegionFlight(context, operationType, userEmail, subjectId);
-      } else {
-        throw new UnhandledActivityLogException(
-            String.format(
-                "workspace id is missing from the flight %s, add special log handling",
-                flightClassName));
-      }
-      return HookAction.CONTINUE;
+      return maybeLogFlightWithoutWorkspaceId(
+          context, flightClassName, operationType, userEmail, subjectId);
     }
     UUID workspaceUuid = UUID.fromString(workspaceId);
     // If DELETE flight failed, cloud resource may or may not have been deleted. Check if cloud
@@ -147,10 +138,10 @@ public class WorkspaceActivityLogHook implements StairwayHook {
                 userEmail,
                 subjectId,
                 operationType,
-                workspaceUuid.toString(),
+                getClonedWorkspaceId(context, operationType, workspaceUuid).toString(),
                 af.getActivityLogChangedTarget()));
         case RESOURCE -> activityLogDao.writeActivity(
-            workspaceUuid,
+            getAffectedWorkspaceId(context, operationType, workspaceUuid),
             new DbWorkspaceActivityLog(
                 userEmail,
                 subjectId,
@@ -180,6 +171,67 @@ public class WorkspaceActivityLogHook implements StairwayHook {
       }
     }
     return HookAction.CONTINUE;
+  }
+
+  /**
+   * For rare cases when a flight is missing workspace id, we should handle the logging on a
+   * case-by-case basis.
+   */
+  private HookAction maybeLogFlightWithoutWorkspaceId(
+      FlightContext context,
+      String flightClassName,
+      OperationType operationType,
+      String userEmail,
+      String subjectId) {
+    if (SyncGcpIamRolesFlight.class.getName().equals(flightClassName)) {
+      maybeLogForSyncGcpIamRolesFlight(context, operationType, userEmail, subjectId);
+    } else if (UpdateGcpControlledResourceRegionFlight.class.getName().equals(flightClassName)
+          || UpdateAzureControlledResourceRegionFlight.class.getName().equals(flightClassName)) {
+      maybeLogUpdateControlledResourceRegionFlight(context, operationType, userEmail, subjectId);
+    } else {
+      throw new UnhandledActivityLogException(
+          String.format(
+              "workspace id is missing from the flight %s, add special log handling",
+              flightClassName));
+    }
+    return HookAction.CONTINUE;
+  }
+
+  /**
+   * Get the workspace where the activity operation is acted upon. For cloning a workspace, it
+   * should be the source workspace.
+   */
+  private UUID getClonedWorkspaceId(
+      FlightContext context, OperationType operationType, UUID workspaceUuid) {
+    UUID subjectWorkspaceId = workspaceUuid;
+    if (OperationType.CLONE == operationType) {
+      // When the action is clone, the action clone is acted upon
+      // the source workspace.
+      subjectWorkspaceId =
+          getRequired(
+              context.getInputParameters(), ControlledResourceKeys.SOURCE_WORKSPACE_ID, UUID.class);
+    }
+    return subjectWorkspaceId;
+  }
+
+  /**
+   * Get the workspace where the activity happened. For cloning, it should be the destination
+   * workspace.
+   */
+  private UUID getAffectedWorkspaceId(
+      FlightContext context, OperationType operationType, UUID workspaceUuid) {
+    // The workspace id that a db transaction has happened. In
+    // the case of cloning, the db create a cloned resource in
+    // the destination workspace.
+    var affectedWorkspaceId = workspaceUuid;
+    if (OperationType.CLONE == operationType) {
+      affectedWorkspaceId =
+          getRequired(
+              context.getInputParameters(),
+              ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
+              UUID.class);
+    }
+    return affectedWorkspaceId;
   }
 
   private void logApplicationAbleFlight(
