@@ -46,6 +46,15 @@ public class LandingZoneApiController implements LandingZonesApi {
   }
 
   @Override
+  public ResponseEntity<ApiCreateLandingZoneResult> attachAzureLandingZone(
+      UUID landingZoneId, ApiCreateAzureLandingZoneRequestBody body) {
+    ApiCreateLandingZoneResult result =
+        landingZoneApiDispatch.attachAzureLandingZone(
+            bearerTokenFactory.from(request), body, landingZoneId);
+    return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
+  }
+
+  @Override
   public ResponseEntity<ApiCreateLandingZoneResult> createAzureLandingZone(
       @RequestBody ApiCreateAzureLandingZoneRequestBody body) {
     String resultEndpoint =

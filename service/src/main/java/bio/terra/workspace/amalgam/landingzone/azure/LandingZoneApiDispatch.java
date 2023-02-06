@@ -66,6 +66,27 @@ public class LandingZoneApiDispatch {
     this.features = features;
   }
 
+  public ApiCreateLandingZoneResult attachAzureLandingZone(
+      BearerToken bearerToken, ApiCreateAzureLandingZoneRequestBody body, UUID landingZoneId) {
+    features.azureEnabledCheck();
+
+    logger.info("Attaching landing zone [id={}]", body);
+    LandingZoneRequest landingZoneRequest =
+        LandingZoneRequest.builder()
+            .definition(body.getDefinition())
+            .version(body.getVersion())
+            .parameters(
+                MapperUtils.LandingZoneMapper.landingZoneParametersFrom(body.getParameters()))
+            .billingProfileId(body.getBillingProfileId())
+            .landingZoneId(landingZoneId)
+            .build();
+
+    var result =
+        landingZoneService.attachLandingZone(
+            bearerToken, landingZoneRequest, body.getJobControl().getId(), "foo");
+    return new ApiCreateLandingZoneResult().landingZoneId(result.id());
+  }
+
   public ApiCreateLandingZoneResult createAzureLandingZone(
       BearerToken bearerToken,
       ApiCreateAzureLandingZoneRequestBody body,

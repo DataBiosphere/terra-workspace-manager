@@ -1,5 +1,23 @@
 # Azure Landing Zones paths
 paths:
+  /api/landingzones/v1/azure/{landingZoneId}/attach:
+    post:
+      operationId: attachAzureLandingZone
+      tags: [ LandingZones ]
+      parameters:
+        - $ref: '#/components/parameters/LandingZoneId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAzureLandingZoneRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CreateLandingZoneResponse'
+        '202':
+          $ref: '#/components/responses/CreateLandingZoneResponse'
+
   /api/landingzones/v1/azure:
     post:
       summary: Starts an async job to create an Azure landing zone
@@ -187,7 +205,7 @@ components:
     CreateAzureLandingZoneRequestBody:
       description: Payload for requesting a new Azure landing zone.
       type: object
-      required: [definition, billingProfileId]
+      required: [ definition, billingProfileId ]
       properties:
         definition:
           description: A definition to create an Azure landing zone from
@@ -234,7 +252,7 @@ components:
           type: string
           format: uuid
         azureResourceId:
-          description:  The fully qualified ID of the Azure resource.
+          description: The fully qualified ID of the Azure resource.
           type: string
         resourceType:
           description: Azure resource type.
@@ -330,7 +348,7 @@ components:
 
     AzureLandingZoneDefinitionList:
       type: object
-      required: [landingzones]
+      required: [ landingzones ]
       properties:
         landingzones:
           description: A list of Azure landing zones definitions
@@ -340,7 +358,7 @@ components:
 
     AzureLandingZoneDefinition:
       type: object
-      required: [definition, name, description, version]
+      required: [ definition, name, description, version ]
       properties:
         definition:
           description: The name of the corresponding landing zone definition
@@ -369,7 +387,7 @@ components:
 
     AzureLandingZoneResourcesList:
       type: object
-      required: [resources]
+      required: [ resources ]
       properties:
         id:
           description: An identifier of a Azure landing zone.
@@ -386,7 +404,7 @@ components:
         The structure contains one landing zone purpose and a list of Azure deployed resources that
         are tagged with this purpose.
       type: object
-      required: [purpose,deployedResources]
+      required: [ purpose,deployedResources ]
       properties:
         purpose:
           description: Purpose tag value string.
@@ -401,7 +419,7 @@ components:
       description: |
         The landing zone identification information.
       type: object
-      required: [landingZoneId,billingProfileId]
+      required: [ landingZoneId,billingProfileId ]
       properties:
         landingZoneId:
           description: An identifier of a Azure landing zone.
@@ -485,8 +503,8 @@ components:
     AzureResourceId:
       name: azureResourceId
       in: query
-      description: The fully qualified ID of the Azure resource, including the resource name and resource type. 
-                   Use the format, /subscriptions/{guid}/resourceGroups/{resource-group-name}/{resource-provider-namespace}/{resource-type}/{resource-name}.
+      description: The fully qualified ID of the Azure resource, including the resource name and resource type.
+        Use the format, /subscriptions/{guid}/resourceGroups/{resource-group-name}/{resource-provider-namespace}/{resource-type}/{resource-name}.
       required: true
       schema:
         type: string
