@@ -492,11 +492,9 @@ public class ValidationUtilsTest extends BaseUnitTest {
             validationUtils.validateControlledResourceRegionAgainstPolicy(
                 mockTpsApiDispatch(), workspaceId, "badregion", CloudPlatform.GCP));
 
-    assertThrows(
-        InvalidControlledResourceException.class,
-        () ->
-            validationUtils.validateControlledResourceRegionAgainstPolicy(
-                mockTpsApiDispatch(), workspaceId, "badregion", CloudPlatform.AZURE));
+    // shouldn't throw until we start validating Azure regions against TPS
+    validationUtils.validateControlledResourceRegionAgainstPolicy(
+        mockTpsApiDispatch(), workspaceId, "badregion", CloudPlatform.AZURE);
   }
 
   @Test
@@ -515,25 +513,28 @@ public class ValidationUtilsTest extends BaseUnitTest {
 
     for (var region : Region.values()) {
       var regionName = region.name();
+      validationUtils.validateAzureRegion(regionName);
+
       validationUtils.validateControlledResourceRegionAgainstPolicy(
           mockTpsApiDispatch(), workspaceId, region.name(), CloudPlatform.AZURE);
     }
+
   }
 
   @Test
   public void validateAzureRegion_nullRegion() {
     UUID workspaceId = UUID.randomUUID();
 
-    validationUtils.validateControlledResourceRegionAgainstPolicy(
-        mockTpsApiDispatch(), workspaceId, null, CloudPlatform.AZURE);
+    // null region shouldn't throw.
+    validationUtils.validateAzureRegion(null);
   }
 
   @Test
   public void validateAzureRegion_invalid_throws() {
+
     assertThrows(
         InvalidControlledResourceException.class,
         () ->
-            validationUtils.validateControlledResourceRegionAgainstPolicy(
-                mockTpsApiDispatch(), UUID.randomUUID(), "badlocation", CloudPlatform.AZURE));
+            validationUtils.validateAzureRegion("badlocation"));
   }
 }

@@ -200,7 +200,11 @@ public class ResourceValidationUtils {
   public static void validateControlledResourceRegionAgainstPolicy(
       TpsApiDispatch tpsApiDispatch, UUID workspaceUuid, String location, CloudPlatform platform) {
     switch (platform) {
-      case AZURE -> validateAzureRegion(location);
+      case AZURE -> {
+        // TODO: enable policy check in Azure when we support Azure regions in the TPS ontology.
+        // validateAzureRegion(location);
+        return;
+      }
       case GCP -> validateGcpRegion(tpsApiDispatch, workspaceUuid, location);
       default -> throw new InvalidControlledResourceException("Unrecognized platform");
     }
