@@ -1,8 +1,12 @@
 package bio.terra.workspace.service.grant.flight;
 
+import static bio.terra.workspace.service.crl.CrlService.getBigQueryDataset;
 import static java.lang.Boolean.TRUE;
 
+import bio.terra.cloudres.google.bigquery.BigQueryCow;
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
+import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
+import bio.terra.cloudres.google.notebooks.InstanceName;
 import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightContext;
@@ -24,6 +28,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.Contr
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import com.google.api.services.bigquery.model.Dataset;
 import com.google.api.services.cloudresourcemanager.v3.model.Binding;
 import com.google.api.services.cloudresourcemanager.v3.model.GetIamPolicyRequest;
 import com.google.api.services.cloudresourcemanager.v3.model.Policy;
@@ -33,6 +38,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -175,13 +182,16 @@ public class RevokeTemporaryGrantFlight extends Flight {
         throw new InternalLogicException("Locked grant not found: " + grantId);
       }
 
-      logger.info("Revoking grant {} type {}", grantData.grantId(), grantData.grantType());
-      switch (grantData.grantType()) {
-        case RESOURCE -> revokeResource(grantData);
-        case PROJECT -> revokeProject(grantData);
-        case ACT_AS -> revokeActAs(grantData);
+      try {
+        logger.info("Revoking grant {} type {}", grantData.grantId(), grantData.grantType());
+        switch (grantData.grantType()) {
+          case RESOURCE -> revokeResource(grantData);
+          case PROJECT -> revokeProject(grantData);
+          case ACT_AS -> revokeActAs(grantData);
+        }
+      } catch (IOException e) {
+        return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
       }
-
       return StepResult.getStepResultSuccess();
     }
 
@@ -190,37 +200,33 @@ public class RevokeTemporaryGrantFlight extends Flight {
       return StepResult.getStepResultSuccess();
     }
 
-    private void revokeProject(GrantData grantData) {
-      try {
-        CloudResourceManagerCow resourceManagerCow = crlService.getCloudResourceManagerCow();
+    private void revokeProject(GrantData grantData) throws IOException {
+      CloudResourceManagerCow resourceManagerCow = crlService.getCloudResourceManagerCow();
 
-        Optional<String> gcpProjectId =
-            gcpCloudContextService.getGcpProject(grantData.workspaceId());
-        // Tolerate the workspace or cloud context being gone
-        if (gcpProjectId.isPresent()) {
-          Policy policy =
-              resourceManagerCow
-                  .projects()
-                  .getIamPolicy(gcpProjectId.get(), new GetIamPolicyRequest())
-                  .execute();
-          // Tolerate no bindings
-          if (policy.getBindings() != null) {
-            for (Binding binding : policy.getBindings()) {
-              if (binding.getRole().equals(grantData.role())) {
-                binding.getMembers().remove(grantData.userMember());
-                binding.getMembers().remove(grantData.petSaMember());
-              }
+      Optional<String> gcpProjectId =
+        gcpCloudContextService.getGcpProject(grantData.workspaceId());
+      // Tolerate the workspace or cloud context being gone
+      if (gcpProjectId.isPresent()) {
+        Policy policy =
+          resourceManagerCow
+            .projects()
+            .getIamPolicy(gcpProjectId.get(), new GetIamPolicyRequest())
+            .execute();
+        // Tolerate no bindings
+        if (policy.getBindings() != null) {
+          for (Binding binding : policy.getBindings()) {
+            if (binding.getRole().equals(grantData.role())) {
+              binding.getMembers().remove(grantData.userMember());
+              binding.getMembers().remove(grantData.petSaMember());
             }
-            SetIamPolicyRequest request = new SetIamPolicyRequest().setPolicy(policy);
-            resourceManagerCow.projects().setIamPolicy(gcpProjectId.get(), request).execute();
           }
+          SetIamPolicyRequest request = new SetIamPolicyRequest().setPolicy(policy);
+          resourceManagerCow.projects().setIamPolicy(gcpProjectId.get(), request).execute();
         }
-      } catch (IOException e) {
-        throw new RetryException("Retry get policy", e);
       }
     }
 
-    private void revokeResource(GrantData grantData) {
+    private void revokeResource(GrantData grantData) throws IOException {
       ControlledResource controlledResource =
           controlledResourceService.getControlledResource(
               grantData.workspaceId(), grantData.resourceId());
@@ -253,19 +259,54 @@ public class RevokeTemporaryGrantFlight extends Flight {
       }
     }
 
+    // Of course BigQuery has to be different :(
+    // Strip the member prefix.
+    private String stripPrefix(String member, String prefix) {
+      int prefixLength = prefix.length();
+      if (member != null && member.startsWith(prefix)) {
+        return member.substring(prefixLength);
+      }
+      return member;
+    }
+
     private void revokeResourceBq(
-        ControlledBigQueryDatasetResource bqResource, GrantData grantData) {
-      // Not implemented yet - just let it go through
+        ControlledBigQueryDatasetResource bqResource, GrantData grantData) throws IOException {
+      BigQueryCow bqCow = crlService.createWsmSaBigQueryCow();
+      String gcpProjectId = bqResource.getProjectId();
+      String datasetName = bqResource.getDatasetName();
+      String userEmail = stripPrefix(grantData.userMember(), "user:");
+      String petSaEmail = stripPrefix(grantData.petSaMember(), "serviceAccount:");
+
+      bqCow.datasets().get(gcpProjectId, datasetName);
+      logger.info("Revoke bqDataset {} in project {}", bqResource.getName(), gcpProjectId);
+
+      Dataset dataset = getBigQueryDataset(bqCow, gcpProjectId, datasetName);
+      List<Dataset.Access> currentAccessList = dataset.getAccess();
+      List<Dataset.Access> accessList = new ArrayList<>();
+      for (Dataset.Access access : currentAccessList) {
+        logger.info("Current access: {}", access);
+        if (StringUtils.equals(access.getRole(), grantData.role()) && access.getUserByEmail() != null) {
+          logger.info("Matched role {}; has user {}", access.getRole(), access.getUserByEmail());
+          if (StringUtils.equals(access.getUserByEmail(), petSaEmail)
+            || StringUtils.equals(access.getUserByEmail(), userEmail)) {
+            continue;
+          }
+        }
+        accessList.add(access);
+      }
+
+      dataset.setAccess(accessList);
+      crlService.updateBigQueryDataset(bqCow, gcpProjectId, datasetName, dataset);
     }
 
     private void revokeResourceBucket(
         ControlledGcsBucketResource bucketResource, GrantData grantData) {
       String gcpProjectId = gcpCloudContextService.getRequiredGcpProject(grantData.workspaceId());
-      logger.info("Revoke bucket {} in project {}", bucketResource.getBucketName(), gcpProjectId);
+      logger.info("Revoke bucket {} in project {}", bucketResource.getName(), gcpProjectId);
 
       StorageCow wsmSaStorageCow = crlService.createStorageCow(gcpProjectId);
       com.google.cloud.Policy policy = wsmSaStorageCow.getIamPolicy(bucketResource.getBucketName());
-
+      logger.info("Initial  policy is: {}", policy);
       if (policy.getBindingsList() != null) {
         // getBindingsList() returns an ImmutableList and copying over to an ArrayList so it's
         // mutable.
@@ -298,8 +339,46 @@ public class RevokeTemporaryGrantFlight extends Flight {
     }
 
     private void revokeResourceNotebook(
-        ControlledAiNotebookInstanceResource notebookResource, GrantData grantData) {
-      // Not implemented yet - just let it go through
+        ControlledAiNotebookInstanceResource notebookResource, GrantData grantData) throws IOException {
+      String gcpProjectId = gcpCloudContextService.getRequiredGcpProject(grantData.workspaceId());
+      logger.info("Revoke notebook {} in project {}", notebookResource.getName(), gcpProjectId);
+
+      AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
+      InstanceName instanceName =
+        notebookResource.toInstanceName(gcpProjectId, notebookResource.getLocation());
+
+      com.google.api.services.notebooks.v1.model.Policy policy = notebooks.instances().getIamPolicy(instanceName).execute();
+      List<com.google.api.services.notebooks.v1.model.Binding> bindings = policy.getBindings();
+
+      if (bindings != null) {
+        // Remove role-member
+        for (com.google.api.services.notebooks.v1.model.Binding binding : bindings) {
+          logger.info(
+            "Check: binding role {} == grant role {}", binding.getRole(), grantData.role());
+          if (binding.getRole().equals(grantData.role())) {
+            logger.info(
+              "MATCH: binding role {} == grant role {}", binding.getRole(), grantData.role());
+
+            List<String> currentMembers = binding.getMembers();
+            List<String> members = new ArrayList<>();
+            for (String member : currentMembers) {
+              if (member.equals(grantData.petSaMember()) || member.equals(grantData.userMember())) {
+                continue;
+              }
+              members.add(member);
+            }
+
+            binding.setMembers(members);
+          }
+        }
+
+        // Update policy to remove members
+        notebooks
+          .instances()
+          .setIamPolicy(instanceName, new com.google.api.services.notebooks.v1.model.SetIamPolicyRequest().setPolicy(policy))
+          .execute();
+        logger.info("Updated policy is: {}", policy);
+      }
     }
 
     private void revokeActAs(GrantData grantData) {

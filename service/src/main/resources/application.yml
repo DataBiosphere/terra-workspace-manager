@@ -75,12 +75,11 @@ workspace:
     polling-interval: "15m"
     startup-wait: "5s"
 
-    ### TODO: Testing only - Set for actual time
   temporary-grant-revoke:
     revokeEnabled: true
-    polling-interval: "2m"
+    polling-interval: "150s"
     startup-wait: "5s"
-    grant-hold-time: "3m"
+    grant-hold-time: "20m"
 
   sam.base-path: ${env.urls.sam}
 
@@ -214,7 +213,7 @@ feature:
   # bpm-enabled-azure - Controls whether spend profile checks are made for Azure workspaces
   bpm-azure-enabled: false
   # temporary-grant-enabled - Controls whether temporary direct ACL grants are made on creates
-  temporary-grant-enabled: false
+  temporary-grant-enabled: true
 
 reference:
   gitrepos:
