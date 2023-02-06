@@ -518,7 +518,6 @@ public class ValidationUtilsTest extends BaseUnitTest {
       validationUtils.validateControlledResourceRegionAgainstPolicy(
           mockTpsApiDispatch(), workspaceId, region.name(), CloudPlatform.AZURE);
     }
-
   }
 
   @Test
@@ -534,7 +533,6 @@ public class ValidationUtilsTest extends BaseUnitTest {
 
     assertThrows(
         InvalidControlledResourceException.class,
-        () ->
-            validationUtils.validateAzureRegion("badlocation"));
+        () -> validationUtils.validateAzureRegion("badlocation"));
   }
 }
