@@ -6,7 +6,15 @@ import bio.terra.common.db.ReadTransaction;
 import bio.terra.common.db.WriteTransaction;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
+import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
+import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
+import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.StewardshipType;
+import bio.terra.workspace.service.resource.model.WsmResourceFamily;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -29,6 +37,27 @@ public class RawDaoTestFixture {
   @Autowired
   public RawDaoTestFixture(NamedParameterJdbcTemplate jdbcTemplate) {
     this.jdbcTemplate = jdbcTemplate;
+  }
+
+  @WriteTransaction
+  public void storeControlledGcpResource(
+      UUID workspaceUuid, UUID resourceId, String resourceAttributes) {
+    storeResource(
+        workspaceUuid.toString(),
+        CloudPlatform.GCP.name(),
+        resourceId.toString(),
+        RandomStringUtils.randomAlphabetic(10),
+        RandomStringUtils.randomAlphabetic(100),
+        StewardshipType.CONTROLLED.toSql(),
+        WsmResourceType.CONTROLLED_GCP_GCS_BUCKET.toSql(),
+        WsmResourceFamily.GCS_BUCKET.toSql(),
+        CloningInstructions.COPY_NOTHING.toSql(),
+        resourceAttributes,
+        AccessScopeType.ACCESS_SCOPE_SHARED.toSql(),
+        ManagedByType.MANAGED_BY_APPLICATION.toSql(),
+        null,
+        null,
+        PrivateResourceState.NOT_APPLICABLE.toSql());
   }
 
   // Write a resource into the database from bare parts

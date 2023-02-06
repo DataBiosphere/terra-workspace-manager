@@ -27,6 +27,7 @@ import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceSyncMapping.SyncMapping;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.flight.UpdateAzureControlledResourceRegionFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespace.ControlledAzureRelayNamespaceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpPolicyBuilder;
@@ -79,6 +80,8 @@ public class ControlledResourceService {
   // network timeout.
   private static final int RESOURCE_ROW_WAIT_SECONDS = 1;
   private static final Duration RESOURCE_ROW_MAX_WAIT_TIME = Duration.ofSeconds(28);
+  private static final Supplier<InternalLogicException> BAD_STATE =
+      () -> new InternalLogicException("Invalid sync mapping or bad context");
 
   private final JobService jobService;
   private final ResourceDao resourceDao;
@@ -578,22 +581,22 @@ public class ControlledResourceService {
         case RESOURCE:
           policyGroup =
               samService.syncResourcePolicy(
-                  resource, syncMapping.getResourceRole().orElseThrow(badState), userRequest);
+                  resource, syncMapping.getResourceRole().orElseThrow(BAD_STATE), userRequest);
           break;
 
         case WORKSPACE:
-          switch (syncMapping.getWorkspaceRole().orElseThrow(badState)) {
+          switch (syncMapping.getWorkspaceRole().orElseThrow(BAD_STATE)) {
             case OWNER:
-              policyGroup = cloudContext.getSamPolicyOwner().orElseThrow(badState);
+              policyGroup = cloudContext.getSamPolicyOwner().orElseThrow(BAD_STATE);
               break;
             case WRITER:
-              policyGroup = cloudContext.getSamPolicyWriter().orElseThrow(badState);
+              policyGroup = cloudContext.getSamPolicyWriter().orElseThrow(BAD_STATE);
               break;
             case READER:
-              policyGroup = cloudContext.getSamPolicyReader().orElseThrow(badState);
+              policyGroup = cloudContext.getSamPolicyReader().orElseThrow(BAD_STATE);
               break;
             case APPLICATION:
-              policyGroup = cloudContext.getSamPolicyApplication().orElseThrow(badState);
+              policyGroup = cloudContext.getSamPolicyApplication().orElseThrow(BAD_STATE);
               break;
             default:
               break;
@@ -613,6 +616,23 @@ public class ControlledResourceService {
   // TODO (PF-2368): clean this up once back-fill is done in all Terra environment.
   @Traced
   @Nullable
+  public String updateAzureControlledResourcesRegionAsync(
+      AuthenticatedUserRequest userRequest, boolean wetRun) {
+    return jobService
+        .newJob()
+        .description(
+            "A flight to update controlled resource's missing region in all the existing"
+                + "terra managed azure projects")
+        .flightClass(UpdateAzureControlledResourceRegionFlight.class)
+        .userRequest(userRequest)
+        .addParameter(IS_WET_RUN, wetRun)
+        .operationType(OperationType.UPDATE)
+        .submit();
+  }
+
+  // TODO (PF-2368): clean this up once back-fill is done in all Terra environment.
+  @Traced
+  @Nullable
   public String updateGcpControlledResourcesRegionAsync(
       AuthenticatedUserRequest userRequest, boolean wetRun) {
     return jobService
@@ -620,16 +640,12 @@ public class ControlledResourceService {
         .description(
             "A flight to update controlled resource's missing region in all the existing"
                 + "terra managed gcp projects")
-        .jobId(UUID.randomUUID().toString())
         .flightClass(UpdateGcpControlledResourceRegionFlight.class)
         .userRequest(userRequest)
         .operationType(OperationType.UPDATE)
         .addParameter(IS_WET_RUN, wetRun)
         .submit();
   }
-
-  private final Supplier<InternalLogicException> badState =
-      () -> new InternalLogicException("Invalid sync mapping or bad context");
 
   /**
    * Creates and returns a JobBuilder object for deleting a controlled resource. Depending on the

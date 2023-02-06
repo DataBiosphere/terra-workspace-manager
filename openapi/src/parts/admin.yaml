@@ -4,7 +4,7 @@ paths:
     patch:
       parameters:
       - $ref: '#/components/parameters/WetRun'
-      summary: Sync custom IAM roles for all GCP workspaces.
+      summary: Sync custom IAM roles for all workspaces.
       operationId: syncIamRoles
       tags: [Admin]
       responses:
@@ -39,12 +39,13 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/admin/v1/resources/controlled/gcp/backfillRegions:
+  /api/admin/v1/resources/controlled/backfillRegions:
     patch:
       parameters:
       - $ref: '#/components/parameters/WetRun'
-      summary: Backfill controlled gcp resources that is missing a region field.
-      operationId: backfillGcpControlledResourcesRegions
+      - $ref: '#/components/parameters/Platform'
+      summary: Backfill controlled resources that is missing a region field.
+      operationId: backfillControlledResourcesRegions
       tags: [Admin]
       responses:
         '200':
@@ -55,12 +56,12 @@ paths:
           $ref: '#/components/responses/PermissionDenied'
         '500':
           $ref: '#/components/responses/ServerError'
-  /api/admin/v1/resources/controlled/gcp/backfillRegions/result/{jobId}:
+  /api/admin/v1/resources/controlled/backfillRegions/result/{jobId}:
     parameters:
     - $ref: '#/components/parameters/JobId'
     get:
       summary: Get the result of a async job to sync IAM roles.
-      operationId: getBackfillGcpControlledResourcesRegionsResult
+      operationId: getBackfillControlledResourcesRegionsResult
       tags: [ Admin ]
       responses:
         '200':

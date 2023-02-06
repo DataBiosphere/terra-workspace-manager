@@ -21,13 +21,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
-public class UpdateResourcesRegionStep implements Step {
+public class UpdateControlledResourcesRegionStep implements Step {
 
-  private static final Logger logger = LoggerFactory.getLogger(UpdateResourcesRegionStep.class);
+  private static final Logger logger =
+      LoggerFactory.getLogger(UpdateControlledResourcesRegionStep.class);
   private final ResourceDao resourceDao;
   private final boolean isWetRun;
 
-  public UpdateResourcesRegionStep(ResourceDao resourceDao, boolean isWetRun) {
+  public UpdateControlledResourcesRegionStep(ResourceDao resourceDao, boolean isWetRun) {
     this.resourceDao = resourceDao;
     this.isWetRun = isWetRun;
   }
@@ -44,22 +45,24 @@ public class UpdateResourcesRegionStep implements Step {
     Map<UUID, String> resourceIdsToWorkspaceIdMap =
         workingMap.get(CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP, new TypeReference<>() {});
     List<ControlledResource> updatedResources = new ArrayList<>();
-    for (var id : resourceIdsToRegionMap.keySet()) {
+    for (var pair : resourceIdsToRegionMap.entrySet()) {
       if (isWetRun) {
         boolean updated =
-            resourceDao.updateControlledResourceRegion(id, resourceIdsToRegionMap.get(id));
+            resourceDao.updateControlledResourceRegion(pair.getKey(), pair.getValue());
         if (updated) {
           updatedResources.add(
               resourceDao
-                  .getResource(UUID.fromString(resourceIdsToWorkspaceIdMap.get(id)), id)
+                  .getResource(
+                      UUID.fromString(resourceIdsToWorkspaceIdMap.get(pair.getKey())),
+                      pair.getKey())
                   .castToControlledResource());
         }
       } else {
         logger.info(
             "Dry run to update resource {} in workspace {} to region {}",
-            id,
-            resourceIdsToRegionMap.get(id),
-            resourceIdsToRegionMap.get(id));
+            pair.getKey(),
+            pair.getValue(),
+            resourceIdsToRegionMap.get(pair.getKey()));
       }
     }
     setResponse(context, updatedResources, HttpStatus.OK);

@@ -100,26 +100,13 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
         ControlledResourceFixtures.getAzureVmCreationParameters();
 
     // TODO: make this application-private resource once the POC supports it
-    final UUID resourceId = UUID.randomUUID();
     ControlledAzureVmResource resource =
-        ControlledAzureVmResource.builder()
-            .common(
-                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
-                    .workspaceUuid(workspaceUuid)
-                    .resourceId(resourceId)
-                    .name(getAzureName("vm"))
-                    .description(getAzureName("vm-desc"))
-                    .cloningInstructions(CloningInstructions.COPY_RESOURCE)
-                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
-                    .build())
-            .vmName(creationParameters.getName())
-            .vmSize(creationParameters.getVmSize())
-            .vmImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
-            .region(creationParameters.getRegion())
-            .ipId(ipResource.getResourceId())
-            .diskId(diskResource.getResourceId())
-            .networkId(networkResource.getResourceId())
+        ControlledResourceFixtures.makeDefaultControlledAzureVmResourceBuilder(
+                creationParameters,
+                workspaceUuid,
+                ipResource.getResourceId(),
+                networkResource.getResourceId(),
+                diskResource.getResourceId())
             .build();
 
     // Submit a VM creation flight and verify the resource exists in the workspace.
@@ -144,7 +131,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
             jobService.getStairway(),
             DeleteControlledResourcesFlight.class,
             azureTestUtils.deleteControlledResourceInputParameters(
-                workspaceUuid, resourceId, userRequest, resource),
+                workspaceUuid, resource.getResourceId(), userRequest, resource),
             STAIRWAY_FLIGHT_TIMEOUT,
             null);
     assertEquals(FlightStatus.SUCCESS, deleteFlightState.getFlightStatus());
@@ -525,22 +512,8 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
         ControlledResourceFixtures.getAzureDiskCreationParameters();
 
     // TODO: make this application-private resource once the POC supports it
-    final UUID resourceId = UUID.randomUUID();
     ControlledAzureDiskResource resource =
-        ControlledAzureDiskResource.builder()
-            .common(
-                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
-                    .workspaceUuid(workspaceUuid)
-                    .resourceId(resourceId)
-                    .name(getAzureName("disk"))
-                    .description(getAzureName("disk-desc"))
-                    .cloningInstructions(CloningInstructions.COPY_RESOURCE)
-                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
-                    .build())
-            .diskName(creationParameters.getName())
-            .region(creationParameters.getRegion())
-            .size(creationParameters.getSize())
+        ControlledResourceFixtures.makeDefaultAzureDiskBuilder(creationParameters, workspaceUuid)
             .build();
 
     // Submit a Disk creation flight.
@@ -563,21 +536,8 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
         ControlledResourceFixtures.getAzureIpCreationParameters();
 
     // TODO: make this application-private resource once the POC supports it
-    final UUID resourceId = UUID.randomUUID();
     ControlledAzureIpResource resource =
-        ControlledAzureIpResource.builder()
-            .common(
-                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
-                    .workspaceUuid(workspaceUuid)
-                    .resourceId(resourceId)
-                    .name(getAzureName("ip"))
-                    .description(getAzureName("ip-desc"))
-                    .cloningInstructions(CloningInstructions.COPY_RESOURCE)
-                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
-                    .build())
-            .ipName(ipCreationParameters.getName())
-            .region(ipCreationParameters.getRegion())
+        ControlledResourceFixtures.makeDefaultAzureIpResource(ipCreationParameters, workspaceUuid)
             .build();
 
     // Submit an IP creation flight.
@@ -601,24 +561,9 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
         ControlledResourceFixtures.getAzureNetworkCreationParameters();
 
     // TODO: make this application-private resource once the POC supports it
-    final UUID resourceId = UUID.randomUUID();
     ControlledAzureNetworkResource resource =
-        ControlledAzureNetworkResource.builder()
-            .common(
-                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
-                    .workspaceUuid(workspaceUuid)
-                    .resourceId(resourceId)
-                    .name(getAzureName("network"))
-                    .description(getAzureName("network-desc"))
-                    .cloningInstructions(CloningInstructions.COPY_RESOURCE)
-                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
-                    .build())
-            .networkName(creationParameters.getName())
-            .region(creationParameters.getRegion())
-            .subnetName(creationParameters.getSubnetName())
-            .addressSpaceCidr(creationParameters.getAddressSpaceCidr())
-            .subnetAddressCidr(creationParameters.getSubnetAddressCidr())
+        ControlledResourceFixtures.makeDefaultAzureNetworkResourceBuilder(
+                creationParameters, workspaceUuid)
             .build();
 
     // Submit a Disk creation flight.
