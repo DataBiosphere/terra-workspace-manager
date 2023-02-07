@@ -21,6 +21,9 @@ public class TemporaryGrantRevokeConfiguration {
   /** How long to hold a temporary grant before revoking */
   private Duration grantHoldTime;
 
+  /** Only make temporary grants to users in the domain */
+  private String restrictUserDomain;
+
   public boolean isRevokeEnabled() {
     return revokeEnabled;
   }
@@ -51,5 +54,13 @@ public class TemporaryGrantRevokeConfiguration {
 
   public void setGrantHoldTime(Duration grantHoldTime) {
     this.grantHoldTime = grantHoldTime;
+  }
+
+  public String getRestrictUserDomain() {
+    return restrictUserDomain;
+  }
+
+  public void setRestrictUserDomain(String restrictUserDomain) {
+    this.restrictUserDomain = restrictUserDomain;
   }
 }

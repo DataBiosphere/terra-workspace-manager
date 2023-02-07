@@ -620,7 +620,9 @@ public class ControlledResourceService {
 
     if (features.isTemporaryGrantEnabled()) {
       // Get the user emails we are granting
-      String userMember = GcpUtils.toUserMember(samService.getUserEmailFromSam(userRequest));
+      String userEmail = samService.getUserEmailFromSam(userRequest);
+      String userMember =
+          (grantService.isUserGrantAllowed(userEmail)) ? GcpUtils.toUserMember(userEmail) : null;
       String petMember =
           GcpUtils.toSaMember(
               samService.getOrCreatePetSaEmail(
@@ -631,8 +633,10 @@ public class ControlledResourceService {
       // the role we want. Since this is a temporary measure, I don't think it is worth
       // restructuring.
       ControlledResourceIamRole role = syncMappings.get(0).getTargetRole();
-      gcpPolicyBuilder.addResourceBinding(role, userMember);
       gcpPolicyBuilder.addResourceBinding(role, petMember);
+      if (userMember != null) {
+        gcpPolicyBuilder.addResourceBinding(role, userMember);
+      }
 
       // Store the temporary grant - it will be revoked in the background
       grantService.recordResourceGrant(

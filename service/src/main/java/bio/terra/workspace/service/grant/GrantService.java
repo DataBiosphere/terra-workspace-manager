@@ -21,6 +21,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -83,8 +84,25 @@ public class GrantService {
     }
   }
 
+  /**
+   * Only allows users from a specific domain to have temporary grants. Pets are always give
+   * temporary grants.
+   *
+   * @param userEmail email to check
+   * @return true if the user can have a temporary grant
+   */
+  public boolean isUserGrantAllowed(String userEmail) {
+    if (StringUtils.isBlank(configuration.getRestrictUserDomain())) {
+      logger.info("User grant allowed: {}", userEmail);
+      return true;
+    }
+    boolean endsWithDomain = userEmail.endsWith(configuration.getRestrictUserDomain());
+    logger.info("User grant {}allowed: {}", endsWithDomain ? "" : "not ", userEmail);
+    return endsWithDomain;
+  }
+
   public void recordProjectGrant(
-      UUID workspaceId, String userMember, String petMember, String role) {
+      UUID workspaceId, @Nullable String userMember, String petMember, String role) {
     GrantData grantData =
         makeGrantData(
             workspaceId,
@@ -97,13 +115,17 @@ public class GrantService {
   }
 
   public void recordResourceGrant(
-      UUID workspaceId, String userMember, String petMember, String role, UUID resourceId) {
+      UUID workspaceId,
+      @Nullable String userMember,
+      String petMember,
+      String role,
+      UUID resourceId) {
     GrantData grantData =
         makeGrantData(workspaceId, userMember, petMember, GrantType.RESOURCE, resourceId, role);
     grantDao.insertGrant(grantData);
   }
 
-  public void recordActAsGrant(UUID workspaceId, String userMember, String petMember) {
+  public void recordActAsGrant(UUID workspaceId, @Nullable String userMember, String petMember) {
     GrantData grantData =
         makeGrantData(workspaceId, userMember, petMember, GrantType.ACT_AS, null, null);
     grantDao.insertGrant(grantData);
@@ -111,7 +133,7 @@ public class GrantService {
 
   private GrantData makeGrantData(
       UUID workspaceId,
-      String userMember,
+      @Nullable String userMember,
       String petMember,
       GrantType grantType,
       @Nullable UUID resourceId,

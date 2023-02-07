@@ -145,10 +145,15 @@ public class PetSaService {
       }
 
       // Temporary grant of user and pet to act as pet.
-      String userMember = GcpUtils.toUserMember(userToEnableEmail);
       String petSaMember = GcpUtils.toSaMember(petSaName.email());
-      PetSaUtils.addSaMember(saPolicy, userMember);
       PetSaUtils.addSaMember(saPolicy, petSaMember);
+
+      String userMember = null;
+      if (grantService.isUserGrantAllowed(userToEnableEmail)) {
+        userMember = GcpUtils.toUserMember(userToEnableEmail);
+        PetSaUtils.addSaMember(saPolicy, userMember);
+      }
+
       grantService.recordActAsGrant(workspaceUuid, userMember, petSaMember);
 
       SetIamPolicyRequest request = new SetIamPolicyRequest().setPolicy(saPolicy);

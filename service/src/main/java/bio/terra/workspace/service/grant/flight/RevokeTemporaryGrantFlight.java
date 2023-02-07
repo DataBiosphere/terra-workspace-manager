@@ -221,7 +221,9 @@ public class RevokeTemporaryGrantFlight extends Flight {
         if (policy.getBindings() != null) {
           for (Binding binding : policy.getBindings()) {
             if (binding.getRole().equals(grantData.role())) {
-              binding.getMembers().remove(grantData.userMember());
+              if (grantData.userMember() != null) {
+                binding.getMembers().remove(grantData.userMember());
+              }
               binding.getMembers().remove(grantData.petSaMember());
             }
           }
@@ -279,8 +281,9 @@ public class RevokeTemporaryGrantFlight extends Flight {
       BigQueryCow bqCow = crlService.createWsmSaBigQueryCow();
       String gcpProjectId = bqResource.getProjectId();
       String datasetName = bqResource.getDatasetName();
-      String userEmail = GcpUtils.fromUserMember(grantData.userMember());
       String petSaEmail = GcpUtils.fromSaMember(grantData.petSaMember());
+      String userEmail =
+          grantData.userMember() != null ? GcpUtils.fromUserMember(grantData.userMember()) : null;
 
       bqCow.datasets().get(gcpProjectId, datasetName);
       logger.info("Revoke bqDataset {} in project {}", bqResource.getName(), gcpProjectId);
@@ -325,11 +328,12 @@ public class RevokeTemporaryGrantFlight extends Flight {
           if (binding.getRole().equals(grantData.role())) {
             logger.info(
                 "MATCH: binding role {} == grant role {}", binding.getRole(), grantData.role());
-            bindings.set(
-                index,
-                binding.toBuilder()
-                    .removeMembers(grantData.petSaMember(), grantData.userMember())
-                    .build());
+            com.google.cloud.Binding.Builder builder = binding.toBuilder();
+            builder.removeMembers(grantData.petSaMember());
+            if (grantData.userMember() != null) {
+              builder.removeMembers(grantData.userMember());
+            }
+            bindings.set(index, builder.build());
             break;
           }
         }
@@ -370,7 +374,8 @@ public class RevokeTemporaryGrantFlight extends Flight {
             List<String> currentMembers = binding.getMembers();
             List<String> members = new ArrayList<>();
             for (String member : currentMembers) {
-              if (member.equals(grantData.petSaMember()) || member.equals(grantData.userMember())) {
+              if (StringUtils.equals(member, grantData.petSaMember())
+                  || StringUtils.equals(member, grantData.userMember())) {
                 continue;
               }
               members.add(member);
@@ -406,7 +411,9 @@ public class RevokeTemporaryGrantFlight extends Flight {
         // This handles the case where there are no bindings at all, so we don't
         // need to worry about null binding later in the logic.
         boolean removedPet = PetSaUtils.removeSaMember(saPolicy, grantData.petSaMember());
-        boolean removedUser = PetSaUtils.removeSaMember(saPolicy, grantData.userMember());
+        boolean removedUser =
+            grantData.userMember() != null
+                && PetSaUtils.removeSaMember(saPolicy, grantData.userMember());
 
         // If there was anything to remove, update the policy
         if (removedPet || removedUser) {

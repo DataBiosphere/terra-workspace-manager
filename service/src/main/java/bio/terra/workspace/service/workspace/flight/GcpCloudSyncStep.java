@@ -102,13 +102,17 @@ public class GcpCloudSyncStep implements Step {
       // role on the project.
       if (features.isTemporaryGrantEnabled()) {
         // Get the user emails we are granting
-        String userMember = GcpUtils.toUserMember(samService.getUserEmailFromSam(userRequest));
         String petMember =
             GcpUtils.toSaMember(
                 samService.getOrCreatePetSaEmail(gcpProjectId, userRequest.getRequiredToken()));
-
-        newBindings.add(bindingForRole(WsmIamRole.OWNER, userMember, gcpProjectId));
         newBindings.add(bindingForRole(WsmIamRole.OWNER, petMember, gcpProjectId));
+
+        String userEmail = samService.getUserEmailFromSam(userRequest);
+        String userMember = null;
+        if (grantService.isUserGrantAllowed(userEmail)) {
+          userMember = GcpUtils.toUserMember(userEmail);
+          newBindings.add(bindingForRole(WsmIamRole.OWNER, userMember, gcpProjectId));
+        }
 
         // Store the temporary grant - it will be revoked in the background
         grantService.recordProjectGrant(

@@ -7,7 +7,7 @@ import javax.annotation.Nullable;
 public record GrantData(
     UUID grantId,
     UUID workspaceId,
-    String userMember,
+    @Nullable String userMember,
     String petSaMember,
     GrantType grantType,
     @Nullable UUID resourceId,

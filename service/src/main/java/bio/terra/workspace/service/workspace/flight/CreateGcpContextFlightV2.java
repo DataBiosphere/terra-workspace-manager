@@ -76,7 +76,7 @@ public class CreateGcpContextFlightV2 extends Flight {
     addStep(new GrantWsmRoleAdminStep(crl), shortRetry);
     addStep(new CreateCustomGcpRolesStep(crl.getIamCow()), shortRetry);
     // Create the pet before sync'ing, so the proxy group is configured before we
-    // make do the Sam sync and create the role-based Google groups. That eliminates
+    // do the Sam sync and create the role-based Google groups. That eliminates
     // one propagation case
     addStep(new CreatePetSaStep(appContext.getSamService(), userRequest), shortRetry);
     addStep(

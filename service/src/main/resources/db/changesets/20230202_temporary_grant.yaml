@@ -23,7 +23,7 @@ databaseChangeLog:
               - column:
                   name: user_member
                   type: text
-                  remarks: Policy member of the user; "user:userEmail". May be null if we do not make temporary grants to the user
+                  remarks: Policy member of the user; "user:userEmail". Null is user fails domain restriction
               - column:
                   name: petsa_member
                   type: text
