@@ -6,13 +6,17 @@ import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.app.configuration.external.GitRepoReferencedResourceConfiguration;
+import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
+import bio.terra.workspace.service.policy.TpsApiDispatch;
+import bio.terra.workspace.service.resource.controlled.exception.InvalidControlledResourceException;
 import bio.terra.workspace.service.resource.exception.InvalidNameException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import com.azure.core.management.Region;
 import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.google.common.annotations.VisibleForTesting;
@@ -20,6 +24,7 @@ import com.google.common.collect.ImmutableList;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -157,7 +162,7 @@ public class ResourceValidationUtils {
    * Validates gcs-bucket name following Google documentation
    * https://cloud.google.com/storage/docs/naming-buckets#requirements on a best-effort base.
    *
-   * <p>This method DOES NOT guarentee that the bucket name is valid.
+   * <p>This method DOES NOT guarantee that the bucket name is valid.
    *
    * @param name gcs-bucket name
    * @param validationFailureError
@@ -189,6 +194,19 @@ public class ResourceValidationUtils {
         throw new InvalidNameException(
             "Invalid GCS bucket name specified. Bucket names cannot contains google or mis-spelled google. See Google documentation https://cloud.google.com/storage/docs/naming-buckets#requirements for the full specification.");
       }
+    }
+  }
+
+  public static void validateControlledResourceRegionAgainstPolicy(
+      TpsApiDispatch tpsApiDispatch, UUID workspaceUuid, String location, CloudPlatform platform) {
+    switch (platform) {
+      case AZURE -> {
+        // TODO: enable policy check in Azure when we support Azure regions in the TPS ontology.
+        // validateAzureRegion(location);
+        return;
+      }
+      case GCP -> validateGcpRegion(tpsApiDispatch, workspaceUuid, location);
+      default -> throw new InvalidControlledResourceException("Unrecognized platform");
     }
   }
 
@@ -441,14 +459,38 @@ public class ResourceValidationUtils {
     }
   }
 
-  public static void validateRegion(String region) {
+  public static void validateAzureRegion(String region) {
+    if (StringUtils.isEmpty(region)) {
+      // Azure resources like workspaces may not have a region.
+      logger.warn("Cannot validate empty Azure region.");
+      return;
+    }
     if (!Region.values().stream()
         .map(Region::toString)
         .collect(Collectors.toList())
         .contains(region)) {
       logger.warn("Invalid Azure region {}", region);
-      throw new InvalidReferenceException(
-          "Invalid Azure Region specified. See the class `com.azure.core.management.Region`");
+      throw new InvalidControlledResourceException("Invalid Azure Region specified.");
+    }
+  }
+
+  public static void validateGcpRegion(
+      TpsApiDispatch tpsApiDispatch, UUID workspaceId, String region) {
+    region = GcpUtils.parseRegion(region);
+
+    // Old workspaces may not have a policy. We can only validate against policy if one exists.
+    if (tpsApiDispatch.getPaoIfExists(workspaceId).isPresent()) {
+      // Get the list of valid locations for this workspace from TPS. If there are no regional
+      // constraints applied to the workspace, TPS should return all available regions.
+      List<String> validLocations = tpsApiDispatch.listValidRegions(workspaceId, CloudPlatform.GCP);
+
+      if (validLocations.stream().noneMatch(region::equalsIgnoreCase)) {
+        throw new InvalidControlledResourceException(
+            String.format("Specified location %s is not allowed by effective policy.", region));
+      }
+    } else {
+      logger.warn(
+          "Workspace {} has no policy attached, cannot validate region constraints.", workspaceId);
     }
   }
 
