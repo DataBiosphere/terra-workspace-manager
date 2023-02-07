@@ -133,6 +133,21 @@ components:
           description: The policy object attempting to combine the conflicting policy
           $ref: '#/components/schemas/WsmPolicyDescription'
 
+    WsmPolicyMergeCheckResult:
+      type: object
+      required: [ conflicts, resourcesHasConflict ]
+      properties:
+        conflicts:
+          description: |
+            List of conflicts; may be present on success or failure, depending on the updateMode setting
+          type: array
+          items:
+            $ref: '#/components/schemas/WsmPolicyConflict'
+        resourcesHasConflict:
+          description: |
+            True if there are any resources in the target with conflicting policy.
+          type: boolean
+
     WsmPolicyUpdateRequest:
       description: Update request body
       type: object

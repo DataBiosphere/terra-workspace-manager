@@ -38,6 +38,7 @@ import bio.terra.workspace.generated.model.ApiRegions;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
 import bio.terra.workspace.generated.model.ApiWsmPolicyExplainResult;
+import bio.terra.workspace.generated.model.ApiWsmPolicyMergeCheckResult;
 import bio.terra.workspace.generated.model.ApiWsmPolicyObject;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -59,7 +60,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.junit.jupiter.EnabledIf;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 /**
@@ -358,8 +358,10 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @Test
   @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
   public void mergeCheck_sameWorkspace() throws Exception {
-    mergeCheck(userAccessUtils.defaultUserAuthRequest(), workspace.getId(), workspace.getId())
-        .andExpect(status().is(HttpStatus.SC_NO_CONTENT));
+    ApiWsmPolicyMergeCheckResult result =
+        mergeCheck(userAccessUtils.defaultUserAuthRequest(), workspace.getId(), workspace.getId());
+    assertEquals(0, result.getConflicts().size());
+    assertFalse(result.isResourcesHasConflict());
   }
 
   @Test
@@ -376,8 +378,11 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
             userAccessUtils.defaultUserAuthRequest(), "eu");
 
     // Both workspaces have conflicting policy.
-    mergeCheck(userAccessUtils.defaultUserAuthRequest(), targetWorkspaceId, sourceWorkspaceId)
-        .andExpect(status().is(HttpStatus.SC_CONFLICT));
+    ApiWsmPolicyMergeCheckResult result =
+        mergeCheck(userAccessUtils.defaultUserAuthRequest(), targetWorkspaceId, sourceWorkspaceId);
+
+    assertTrue(result.getConflicts().size() > 0);
+    assertFalse(result.isResourcesHasConflict());
   }
 
   @Test
@@ -408,8 +413,11 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
       // Target workspace has compatible policy (usa) with source.
       // However, target has resource (us-east1) that will conflict with the policy (us-central1) in
       // source workspace.
-      mergeCheck(userRequest, targetWorkspaceId, sourceWorkspaceId)
-          .andExpect(status().is(HttpStatus.SC_CONFLICT));
+      ApiWsmPolicyMergeCheckResult result =
+          mergeCheck(userRequest, targetWorkspaceId, sourceWorkspaceId);
+
+      assertEquals(0, result.getConflicts().size());
+      assertTrue(result.isResourcesHasConflict());
     } finally {
       mockMvcUtils.deleteWorkspace(userRequest, targetWorkspaceId);
       mockMvcUtils.deleteWorkspace(userRequest, sourceWorkspaceId);
@@ -567,20 +575,28 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     return objectMapper.readValue(serializedResponse, ApiWsmPolicyExplainResult.class);
   }
 
-  private ResultActions mergeCheck(
+  private ApiWsmPolicyMergeCheckResult mergeCheck(
       AuthenticatedUserRequest userRequest, UUID targetWorkspaceId, UUID sourceWorkspaceId)
       throws Exception {
     var request = new ApiMergeCheckRequest().workspaceId(sourceWorkspaceId);
 
     var content = objectMapper.writeValueAsString(request);
 
-    return mockMvc.perform(
-        addAuth(
-            addJsonContentType(
-                post(String.format(
-                        WORKSPACES_V1_MERGE_CHECK_POLICIES_PATH_FORMAT, targetWorkspaceId))
-                    .content(content)),
-            userRequest));
+    var serializedResponse =
+        mockMvc
+            .perform(
+                addAuth(
+                    addJsonContentType(
+                        post(String.format(
+                                WORKSPACES_V1_MERGE_CHECK_POLICIES_PATH_FORMAT, targetWorkspaceId))
+                            .content(content)),
+                    userRequest))
+            .andExpect(status().is(HttpStatus.SC_ACCEPTED))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    return objectMapper.readValue(serializedResponse, ApiWsmPolicyMergeCheckResult.class);
   }
 
   /** Assert all workspace fields are set, when requester has at least READER role. */

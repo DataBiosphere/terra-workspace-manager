@@ -376,8 +376,12 @@ paths:
             schema:
               $ref: '#/components/schemas/MergeCheckRequest'
       responses:
-        '204':
+        '202':
           description: Merge calculation successfully processed (no action is taken).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WsmPolicyMergeCheckResult'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '404':

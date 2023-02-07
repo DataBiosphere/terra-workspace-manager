@@ -5,7 +5,6 @@ import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertM
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesDeleteRequestBody;
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesUpdateRequestBody;
 
-import bio.terra.common.exception.ConflictException;
 import bio.terra.policy.model.TpsPaoGetResult;
 import bio.terra.policy.model.TpsPaoUpdateResult;
 import bio.terra.policy.model.TpsPolicyInputs;
@@ -45,6 +44,7 @@ import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
 import bio.terra.workspace.generated.model.ApiWsmPolicyExplainResult;
 import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
+import bio.terra.workspace.generated.model.ApiWsmPolicyMergeCheckResult;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateRequest;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateResult;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -732,19 +732,17 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
   @Traced
   @Override
-  public ResponseEntity<Void> mergeCheck(UUID targetWorkspaceId, ApiMergeCheckRequest requestBody) {
+  public ResponseEntity<ApiWsmPolicyMergeCheckResult> mergeCheck(
+      UUID targetWorkspaceId, ApiMergeCheckRequest requestBody) {
     UUID sourceWorkspaceId = requestBody.getWorkspaceId();
 
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, targetWorkspaceId, SamWorkspaceAction.READ);
-
     TpsPaoUpdateResult dryRunResults =
         tpsApiDispatch.mergePao(targetWorkspaceId, sourceWorkspaceId, TpsUpdateMode.DRY_RUN);
 
-    if (!dryRunResults.getConflicts().isEmpty()) {
-      throw new ConflictException("Workspace conflict: Policy merge has conflicts.");
-    }
+    var hasResourceConflict = false;
 
     for (var platform : ApiCloudPlatform.values()) {
       HashSet<String> validRegions = new HashSet<>();
@@ -758,13 +756,21 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
       for (var existingResource : existingResources) {
         if (!validRegions.contains(existingResource.getRegion())) {
-          throw new ConflictException(
-              "Resource conflict: Target workspace contains resources that would be outside of the merged policy.");
+          hasResourceConflict = true;
+          break;
         }
       }
+      if (hasResourceConflict) {
+        break;
+      }
     }
+    ApiWsmPolicyMergeCheckResult updateResult =
+        new ApiWsmPolicyMergeCheckResult()
+            .conflicts(
+                TpsApiConversionUtils.apiFromTpsPaoConflictList(dryRunResults.getConflicts()))
+            .resourcesHasConflict(hasResourceConflict);
 
-    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    return new ResponseEntity<>(updateResult, HttpStatus.ACCEPTED);
   }
 
   // Retrieve the async result or progress for clone workspace.
