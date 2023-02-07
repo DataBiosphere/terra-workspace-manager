@@ -358,7 +358,8 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @Test
   @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
   public void mergeCheck_sameWorkspace() throws Exception {
-    mergeCheck(userAccessUtils.defaultUserAuthRequest(), workspace.getId(), workspace.getId());
+    mergeCheck(userAccessUtils.defaultUserAuthRequest(), workspace.getId(), workspace.getId())
+        .andExpect(status().is(HttpStatus.SC_NO_CONTENT));
   }
 
   @Test

@@ -764,7 +764,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       }
     }
 
-    return new ResponseEntity<>(HttpStatus.OK);
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   // Retrieve the async result or progress for clone workspace.
