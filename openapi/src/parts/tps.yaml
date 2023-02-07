@@ -139,13 +139,13 @@ components:
       properties:
         conflicts:
           description: |
-            List of conflicts; may be present on success or failure, depending on the updateMode setting
+            List of workspace conflicts.
           type: array
           items:
             $ref: '#/components/schemas/WsmPolicyConflict'
         resourcesWithConflict:
           description: |
-            List of resources (by ID) in the target with conflicting policy.
+            List of resources (by ID) in the target workspace with conflicting policy.
           type: array
           items:
             type: string
