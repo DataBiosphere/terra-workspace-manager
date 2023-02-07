@@ -92,19 +92,19 @@ public class TempGrantTest extends BaseConnectedTest {
   @Test
   public void setupAndWaitNotebook() throws Exception {
     workspaceId =
-      mockMvcUtils
-        .createWorkspaceWithCloudContext(userAccessUtils.defaultUserAuthRequest())
-        .getId();
+        mockMvcUtils
+            .createWorkspaceWithCloudContext(userAccessUtils.defaultUserAuthRequest())
+            .getId();
     ApiWorkspaceDescription workspace =
-      mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
     String projectId = workspace.getGcpContext().getProjectId();
 
     logger.info("Created workspace {} with project {}", workspaceId, projectId);
 
     ApiGcpAiNotebookInstanceResource notebook =
-      mockMvcUtils
-        .createAiNotebookInstance(userAccessUtils.defaultUserAuthRequest(), workspaceId, null)
-        .getAiNotebookInstance();
+        mockMvcUtils
+            .createAiNotebookInstance(userAccessUtils.defaultUserAuthRequest(), workspaceId, null)
+            .getAiNotebookInstance();
 
     // So I can end the test and run cleanup when I'm done debugging
     while (!timeToFinish) {
@@ -115,11 +115,11 @@ public class TempGrantTest extends BaseConnectedTest {
   @Test
   public void setupAndWaitBigQuery() throws Exception {
     workspaceId =
-      mockMvcUtils
-        .createWorkspaceWithCloudContext(userAccessUtils.defaultUserAuthRequest())
-        .getId();
+        mockMvcUtils
+            .createWorkspaceWithCloudContext(userAccessUtils.defaultUserAuthRequest())
+            .getId();
     ApiWorkspaceDescription workspace =
-      mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
     String projectId = workspace.getGcpContext().getProjectId();
 
     logger.info("Created workspace {} with project {}", workspaceId, projectId);
@@ -128,26 +128,24 @@ public class TempGrantTest extends BaseConnectedTest {
     String sourceDatasetName = TestUtils.appendRandomNumber("sourcedatasetname");
 
     ApiGcpBigQueryDatasetResource resource =
-      mockMvcUtils
-        .createControlledBqDataset(
-          userAccessUtils.defaultUserAuthRequest(),
-          workspaceId,
-          sourceResourceName,
-          sourceDatasetName,
-          null,
-          null,
-          null)
-        .getBigQueryDataset();
+        mockMvcUtils
+            .createControlledBqDataset(
+                userAccessUtils.defaultUserAuthRequest(),
+                workspaceId,
+                sourceResourceName,
+                sourceDatasetName,
+                null,
+                null,
+                null)
+            .getBigQueryDataset();
     cloudUtils.populateBqTable(
-      userAccessUtils.defaultUser().getGoogleCredentials(),
-      resource.getAttributes().getProjectId(),
-      sourceDatasetName);
+        userAccessUtils.defaultUser().getGoogleCredentials(),
+        resource.getAttributes().getProjectId(),
+        sourceDatasetName);
 
     // So I can end the test and run cleanup when I'm done debugging
     while (!timeToFinish) {
       TimeUnit.MINUTES.sleep(1);
     }
   }
-
-
 }

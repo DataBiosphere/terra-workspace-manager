@@ -5,9 +5,11 @@ import static java.lang.Boolean.TRUE;
 
 import bio.terra.cloudres.google.bigquery.BigQueryCow;
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
+import bio.terra.cloudres.google.iam.ServiceAccountName;
 import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
 import bio.terra.cloudres.google.notebooks.InstanceName;
 import bio.terra.cloudres.google.storage.StorageCow;
+import bio.terra.common.exception.ConflictException;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
@@ -17,17 +19,21 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.FlightBeanBag;
+import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.db.GrantDao;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.grant.GrantData;
+import bio.terra.workspace.service.petserviceaccount.PetSaUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.bigquery.model.Dataset;
 import com.google.api.services.cloudresourcemanager.v3.model.Binding;
 import com.google.api.services.cloudresourcemanager.v3.model.GetIamPolicyRequest;
@@ -38,8 +44,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -189,7 +195,7 @@ public class RevokeTemporaryGrantFlight extends Flight {
           case PROJECT -> revokeProject(grantData);
           case ACT_AS -> revokeActAs(grantData);
         }
-      } catch (IOException e) {
+      } catch (ConflictException | IOException e) {
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
       }
       return StepResult.getStepResultSuccess();
@@ -203,15 +209,14 @@ public class RevokeTemporaryGrantFlight extends Flight {
     private void revokeProject(GrantData grantData) throws IOException {
       CloudResourceManagerCow resourceManagerCow = crlService.getCloudResourceManagerCow();
 
-      Optional<String> gcpProjectId =
-        gcpCloudContextService.getGcpProject(grantData.workspaceId());
+      Optional<String> gcpProjectId = gcpCloudContextService.getGcpProject(grantData.workspaceId());
       // Tolerate the workspace or cloud context being gone
       if (gcpProjectId.isPresent()) {
         Policy policy =
-          resourceManagerCow
-            .projects()
-            .getIamPolicy(gcpProjectId.get(), new GetIamPolicyRequest())
-            .execute();
+            resourceManagerCow
+                .projects()
+                .getIamPolicy(gcpProjectId.get(), new GetIamPolicyRequest())
+                .execute();
         // Tolerate no bindings
         if (policy.getBindings() != null) {
           for (Binding binding : policy.getBindings()) {
@@ -227,9 +232,16 @@ public class RevokeTemporaryGrantFlight extends Flight {
     }
 
     private void revokeResource(GrantData grantData) throws IOException {
-      ControlledResource controlledResource =
-          controlledResourceService.getControlledResource(
-              grantData.workspaceId(), grantData.resourceId());
+      ControlledResource controlledResource;
+      try {
+        controlledResource =
+            controlledResourceService.getControlledResource(
+                grantData.workspaceId(), grantData.resourceId());
+      } catch (ResourceNotFoundException e) {
+        logger.info("Resource {} not found; forgetting temporary grant", grantData.resourceId());
+        return;
+      }
+
       logger.info(
           "Found resource {} of type {}",
           controlledResource.getResourceId(),
@@ -261,21 +273,14 @@ public class RevokeTemporaryGrantFlight extends Flight {
 
     // Of course BigQuery has to be different :(
     // Strip the member prefix.
-    private String stripPrefix(String member, String prefix) {
-      int prefixLength = prefix.length();
-      if (member != null && member.startsWith(prefix)) {
-        return member.substring(prefixLength);
-      }
-      return member;
-    }
 
-    private void revokeResourceBq(
-        ControlledBigQueryDatasetResource bqResource, GrantData grantData) throws IOException {
+    private void revokeResourceBq(ControlledBigQueryDatasetResource bqResource, GrantData grantData)
+        throws IOException {
       BigQueryCow bqCow = crlService.createWsmSaBigQueryCow();
       String gcpProjectId = bqResource.getProjectId();
       String datasetName = bqResource.getDatasetName();
-      String userEmail = stripPrefix(grantData.userMember(), "user:");
-      String petSaEmail = stripPrefix(grantData.petSaMember(), "serviceAccount:");
+      String userEmail = GcpUtils.fromUserMember(grantData.userMember());
+      String petSaEmail = GcpUtils.fromSaMember(grantData.petSaMember());
 
       bqCow.datasets().get(gcpProjectId, datasetName);
       logger.info("Revoke bqDataset {} in project {}", bqResource.getName(), gcpProjectId);
@@ -285,10 +290,11 @@ public class RevokeTemporaryGrantFlight extends Flight {
       List<Dataset.Access> accessList = new ArrayList<>();
       for (Dataset.Access access : currentAccessList) {
         logger.info("Current access: {}", access);
-        if (StringUtils.equals(access.getRole(), grantData.role()) && access.getUserByEmail() != null) {
+        if (StringUtils.equals(access.getRole(), grantData.role())
+            && access.getUserByEmail() != null) {
           logger.info("Matched role {}; has user {}", access.getRole(), access.getUserByEmail());
           if (StringUtils.equals(access.getUserByEmail(), petSaEmail)
-            || StringUtils.equals(access.getUserByEmail(), userEmail)) {
+              || StringUtils.equals(access.getUserByEmail(), userEmail)) {
             continue;
           }
         }
@@ -339,25 +345,27 @@ public class RevokeTemporaryGrantFlight extends Flight {
     }
 
     private void revokeResourceNotebook(
-        ControlledAiNotebookInstanceResource notebookResource, GrantData grantData) throws IOException {
+        ControlledAiNotebookInstanceResource notebookResource, GrantData grantData)
+        throws IOException {
       String gcpProjectId = gcpCloudContextService.getRequiredGcpProject(grantData.workspaceId());
       logger.info("Revoke notebook {} in project {}", notebookResource.getName(), gcpProjectId);
 
       AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
       InstanceName instanceName =
-        notebookResource.toInstanceName(gcpProjectId, notebookResource.getLocation());
+          notebookResource.toInstanceName(gcpProjectId, notebookResource.getLocation());
 
-      com.google.api.services.notebooks.v1.model.Policy policy = notebooks.instances().getIamPolicy(instanceName).execute();
+      com.google.api.services.notebooks.v1.model.Policy policy =
+          notebooks.instances().getIamPolicy(instanceName).execute();
       List<com.google.api.services.notebooks.v1.model.Binding> bindings = policy.getBindings();
 
       if (bindings != null) {
         // Remove role-member
         for (com.google.api.services.notebooks.v1.model.Binding binding : bindings) {
           logger.info(
-            "Check: binding role {} == grant role {}", binding.getRole(), grantData.role());
+              "Check: binding role {} == grant role {}", binding.getRole(), grantData.role());
           if (binding.getRole().equals(grantData.role())) {
             logger.info(
-              "MATCH: binding role {} == grant role {}", binding.getRole(), grantData.role());
+                "MATCH: binding role {} == grant role {}", binding.getRole(), grantData.role());
 
             List<String> currentMembers = binding.getMembers();
             List<String> members = new ArrayList<>();
@@ -374,15 +382,51 @@ public class RevokeTemporaryGrantFlight extends Flight {
 
         // Update policy to remove members
         notebooks
-          .instances()
-          .setIamPolicy(instanceName, new com.google.api.services.notebooks.v1.model.SetIamPolicyRequest().setPolicy(policy))
-          .execute();
+            .instances()
+            .setIamPolicy(
+                instanceName,
+                new com.google.api.services.notebooks.v1.model.SetIamPolicyRequest()
+                    .setPolicy(policy))
+            .execute();
         logger.info("Updated policy is: {}", policy);
       }
     }
 
-    private void revokeActAs(GrantData grantData) {
-      // Not implemented yet - just let it go through
+    private void revokeActAs(GrantData grantData) throws IOException {
+      String projectId = gcpCloudContextService.getRequiredGcpProject(grantData.workspaceId());
+      try {
+        String petSaEmail = GcpUtils.fromSaMember(grantData.petSaMember());
+        ServiceAccountName saName =
+            ServiceAccountName.builder().email(petSaEmail).projectId(projectId).build();
+
+        com.google.api.services.iam.v1.model.Policy saPolicy =
+            crlService.getIamCow().projects().serviceAccounts().getIamPolicy(saName).execute();
+
+        // If the member is already not on the policy, we are done
+        // This handles the case where there are no bindings at all, so we don't
+        // need to worry about null binding later in the logic.
+        boolean removedPet = PetSaUtils.removeSaMember(saPolicy, grantData.petSaMember());
+        boolean removedUser = PetSaUtils.removeSaMember(saPolicy, grantData.userMember());
+
+        // If there was anything to remove, update the policy
+        if (removedPet || removedUser) {
+          com.google.api.services.iam.v1.model.SetIamPolicyRequest request =
+              new com.google.api.services.iam.v1.model.SetIamPolicyRequest().setPolicy(saPolicy);
+          crlService
+              .getIamCow()
+              .projects()
+              .serviceAccounts()
+              .setIamPolicy(saName, request)
+              .execute();
+        }
+      } catch (IOException e) {
+        if (e instanceof GoogleJsonResponseException g) {
+          if (g.getStatusCode() == HttpStatus.SC_CONFLICT) {
+            throw new ConflictException("Conflict revoking pet SA", e);
+          }
+        }
+        throw e;
+      }
     }
   }
 }

@@ -78,7 +78,7 @@ workspace:
   temporary-grant-revoke:
     revokeEnabled: true
     polling-interval: "150s"
-    startup-wait: "5s"
+    startup-wait: "1m"
     grant-hold-time: "20m"
 
   sam.base-path: ${env.urls.sam}

@@ -159,15 +159,36 @@ public class GcpUtils {
   }
 
   // Methods for building member strings using in GCP IAM bindings
+  // and pulling the email from IAM member strings
+  private static final String GROUP_PREFIX = "group:";
+  private static final String USER_PREFIX = "user:";
+  private static final String SA_PREFIX = "serviceAccount:";
+
+  private static String stripPrefix(String member, String prefix) {
+    int prefixLength = prefix.length();
+    if (member != null && member.startsWith(prefix)) {
+      return member.substring(prefixLength);
+    }
+    return member;
+  }
+
   public static String toGroupMember(String email) {
-    return "group:" + email;
+    return GROUP_PREFIX + email;
   }
 
   public static String toUserMember(String email) {
-    return "user:" + email;
+    return USER_PREFIX + email;
   }
 
   public static String toSaMember(String email) {
-    return "serviceAccount:" + email;
+    return SA_PREFIX + email;
+  }
+
+  public static String fromUserMember(String member) {
+    return stripPrefix(member, USER_PREFIX);
+  }
+
+  public static String fromSaMember(String member) {
+    return stripPrefix(member, SA_PREFIX);
   }
 }

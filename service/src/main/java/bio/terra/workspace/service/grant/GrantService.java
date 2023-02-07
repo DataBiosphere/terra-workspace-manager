@@ -103,6 +103,12 @@ public class GrantService {
     grantDao.insertGrant(grantData);
   }
 
+  public void recordActAsGrant(UUID workspaceId, String userMember, String petMember) {
+    GrantData grantData =
+        makeGrantData(workspaceId, userMember, petMember, GrantType.ACT_AS, null, null);
+    grantDao.insertGrant(grantData);
+  }
+
   private GrantData makeGrantData(
       UUID workspaceId,
       String userMember,
@@ -130,9 +136,9 @@ public class GrantService {
       return;
     }
     logger.info("Beginning revoke grants cronjob");
-    // Use a one-second shorter duration here to ensure we don't skip a run by moving slightly too
+    // Use shorter duration here to ensure we don't skip a run by moving slightly too
     // quickly.
-    Duration claimTime = configuration.getPollingInterval().minus(Duration.ofSeconds(1));
+    Duration claimTime = configuration.getPollingInterval().minus(Duration.ofSeconds(10));
     // Attempt to claim the latest run of this job to ensure only one pod runs the cleanup job.
     if (!cronjobDao.claimJob(REVOKE_GRANTS_JOB_NAME, claimTime)) {
       logger.info("Another pod has executed this job more recently. Ending resource cleanup.");
