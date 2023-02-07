@@ -14,6 +14,7 @@ import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.exception.PolicyConflictException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.flight.update.UpdateReferenceResourceFlight;
@@ -275,11 +276,12 @@ public class ReferencedResourceService {
         tpsApiDispatch.mergePao(sourceWorkspaceId, destinationWorkspaceId, TpsUpdateMode.DRY_RUN);
 
     if (!dryRunResults.getConflicts().isEmpty()) {
-      throw new ConflictException("Policy merge has conflicts");
+      List<String> conflictList =
+          dryRunResults.getConflicts().stream().map(c -> c.getNamespace() + ':' + c.getName()).toList();
+      throw new PolicyConflictException("Policy merge has conflicts", conflictList);
     }
 
     if (platform == CloudPlatform.ANY) {
-      logger.warn("Cannot validate regions for CloudPlatform.ANY");
       return;
     }
 
@@ -291,7 +293,7 @@ public class ReferencedResourceService {
 
     for (var existingResource : existingResources) {
       if (!validRegions.contains(existingResource.getRegion())) {
-        throw new ConflictException(
+        throw new PolicyConflictException(
             "Workspace contains resources that would be outside of the merged policy.");
       }
     }
