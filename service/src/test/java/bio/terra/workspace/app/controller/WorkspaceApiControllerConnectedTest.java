@@ -361,7 +361,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     ApiWsmPolicyMergeCheckResult result =
         mergeCheck(userAccessUtils.defaultUserAuthRequest(), workspace.getId(), workspace.getId());
     assertEquals(0, result.getConflicts().size());
-    assertFalse(result.isResourcesHasConflict());
+    assertEquals(0, result.getResourcesWithConflict().size());
   }
 
   @Test
@@ -382,7 +382,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
         mergeCheck(userAccessUtils.defaultUserAuthRequest(), targetWorkspaceId, sourceWorkspaceId);
 
     assertTrue(result.getConflicts().size() > 0);
-    assertFalse(result.isResourcesHasConflict());
+    assertEquals(0, result.getResourcesWithConflict().size());
   }
 
   @Test
@@ -417,7 +417,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
           mergeCheck(userRequest, targetWorkspaceId, sourceWorkspaceId);
 
       assertEquals(0, result.getConflicts().size());
-      assertTrue(result.isResourcesHasConflict());
+      assertEquals(1, result.getResourcesWithConflict().size());
     } finally {
       mockMvcUtils.deleteWorkspace(userRequest, targetWorkspaceId);
       mockMvcUtils.deleteWorkspace(userRequest, sourceWorkspaceId);

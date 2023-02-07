@@ -135,7 +135,7 @@ components:
 
     WsmPolicyMergeCheckResult:
       type: object
-      required: [ conflicts, resourcesHasConflict ]
+      required: [ conflicts, resourcesWithConflict ]
       properties:
         conflicts:
           description: |
@@ -143,10 +143,13 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/WsmPolicyConflict'
-        resourcesHasConflict:
+        resourcesWithConflict:
           description: |
-            True if there are any resources in the target with conflicting policy.
-          type: boolean
+            List of resources (by ID) in the target with conflicting policy.
+          type: array
+          items:
+            type: string
+            format: uuid
 
     WsmPolicyUpdateRequest:
       description: Update request body

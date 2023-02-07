@@ -76,6 +76,7 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import io.opencensus.contrib.spring.aop.Traced;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -742,7 +743,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     TpsPaoUpdateResult dryRunResults =
         tpsApiDispatch.mergePao(targetWorkspaceId, sourceWorkspaceId, TpsUpdateMode.DRY_RUN);
 
-    var hasResourceConflict = false;
+    List<UUID> resourceWithConflicts = new ArrayList<>();
 
     for (var platform : ApiCloudPlatform.values()) {
       HashSet<String> validRegions = new HashSet<>();
@@ -756,19 +757,15 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
       for (var existingResource : existingResources) {
         if (!validRegions.contains(existingResource.getRegion())) {
-          hasResourceConflict = true;
-          break;
+          resourceWithConflicts.add(existingResource.getResourceId());
         }
-      }
-      if (hasResourceConflict) {
-        break;
       }
     }
     ApiWsmPolicyMergeCheckResult updateResult =
         new ApiWsmPolicyMergeCheckResult()
             .conflicts(
                 TpsApiConversionUtils.apiFromTpsPaoConflictList(dryRunResults.getConflicts()))
-            .resourcesHasConflict(hasResourceConflict);
+            .resourcesWithConflict(resourceWithConflicts);
 
     return new ResponseEntity<>(updateResult, HttpStatus.ACCEPTED);
   }
