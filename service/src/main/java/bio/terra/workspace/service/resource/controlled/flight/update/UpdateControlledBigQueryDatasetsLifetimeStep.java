@@ -16,6 +16,7 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -37,14 +38,16 @@ public class UpdateControlledBigQueryDatasetsLifetimeStep implements Step {
         CONTROLLED_BIG_QUERY_DATASET_RESOURCE_ID_TO_PARTITION_LIFETIME_MAP,
         CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP);
 
+    System.out.println("WORKING MAP: " + workingMap);
+
     Map<UUID, Long> resourceIdToDefaultTableLifetimeMap =
         workingMap.get(
             CONTROLLED_BIG_QUERY_DATASET_RESOURCE_ID_TO_TABLE_LIFETIME_MAP,
-            new TypeReference<>() {});
+            new TypeReference<HashMap<UUID, Long>>() {});
     Map<UUID, Long> resourceIdToDefaultPartitionLifetimeMap =
         workingMap.get(
             CONTROLLED_BIG_QUERY_DATASET_RESOURCE_ID_TO_PARTITION_LIFETIME_MAP,
-            new TypeReference<>() {});
+            new TypeReference<HashMap<UUID, Long>>() {});
 
     Map<UUID, String> resourceIdsToWorkspaceIdMap =
         workingMap.get(CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP, new TypeReference<>() {});
@@ -55,8 +58,15 @@ public class UpdateControlledBigQueryDatasetsLifetimeStep implements Step {
             .getWorkingMap()
             .get(CONTROLLED_BIG_QUERY_DATASETS_WITHOUT_LIFETIME, new TypeReference<>() {});
 
+    System.out.println("LIST OF BQ datasets " + controlledBigQueryDatasets);
+
+    System.out.println("id to part lifetime " + resourceIdToDefaultPartitionLifetimeMap);
+
+    System.out.println("id to table lifetime " + resourceIdToDefaultTableLifetimeMap);
+
     for (var resource : controlledBigQueryDatasets) {
       var id = resource.getResourceId();
+      System.out.println("BQ dataset without lifetime " + id);
       boolean updated =
           resourceDao.updateBigQueryDatasetDefaultTableLifetime(
                   resource.castByEnum(CONTROLLED_GCP_BIG_QUERY_DATASET),

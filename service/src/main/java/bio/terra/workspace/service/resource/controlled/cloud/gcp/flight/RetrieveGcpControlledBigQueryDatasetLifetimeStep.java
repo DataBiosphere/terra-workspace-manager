@@ -91,11 +91,11 @@ public class RetrieveGcpControlledBigQueryDatasetLifetimeStep implements Step {
       ControlledResource resource,
       @Nullable Long defaultTableLifetime,
       @Nullable Long defaultPartitionLifetime) {
+    UUID resourceId = resource.getResourceId();
+    resourceIdToWorkspaceIdMap.put(resourceId, resource.getWorkspaceId().toString());
     if (defaultTableLifetime != null || defaultPartitionLifetime != null) {
-      UUID resourceId = resource.getResourceId();
       resourceIdToDefaultTableLifetimeMap.put(resourceId, defaultTableLifetime);
       resourceIdToDefaultPartitionLifetimeMap.put(resourceId, defaultPartitionLifetime);
-      resourceIdToWorkspaceIdMap.put(resourceId, resource.getWorkspaceId().toString());
     }
   }
 
@@ -110,9 +110,10 @@ public class RetrieveGcpControlledBigQueryDatasetLifetimeStep implements Step {
       return dataset.getDefaultTableExpirationMs() / 1000;
     } catch (IOException e) {
       logger.error(
-          "Failed to get the dataset default table lifetime for resource {} in workspace {}",
+          "Failed to get the dataset default table lifetime for resource {} in workspace {}: {}",
           resource.getResourceId(),
-          resource.getWorkspaceId());
+          resource.getWorkspaceId(),
+          e.getMessage());
       return null;
     }
   }
@@ -128,9 +129,10 @@ public class RetrieveGcpControlledBigQueryDatasetLifetimeStep implements Step {
       return dataset.getDefaultPartitionExpirationMs() / 1000;
     } catch (IOException e) {
       logger.error(
-          "Failed to get the dataset default partition lifetime for resource {} in workspace {}",
+          "Failed to get the dataset default partition lifetime for resource {} in workspace {}: {}",
           resource.getResourceId(),
-          resource.getWorkspaceId());
+          resource.getWorkspaceId(),
+          e.getMessage());
       return null;
     }
   }

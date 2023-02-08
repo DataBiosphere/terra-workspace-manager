@@ -1848,44 +1848,109 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @Test
   public void updateControlledBigQueryDatasetLifetime_onlyUpdateWhenLifetimesAreEmpty()
       throws Exception {
-    // create dataset.
-    ApiGcpBigQueryDatasetCreationParameters creationParameters =
-        ControlledResourceFixtures.getGcpBigQueryDatasetCreationParameters();
-    ControlledBigQueryDatasetResource createdDataset =
-        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
-            .datasetName(ControlledResourceFixtures.uniqueDatasetId())
-            .projectId(projectId)
-            .defaultTableLifetime(creationParameters.getDefaultTableLifetime())
-            .defaultPartitionLifetime(creationParameters.getDefaultPartitionLifetime())
-            .build();
-    resourceDao.createControlledResource(createdDataset);
+    try {
+      //      workspaceService.createGcpCloudContext(
+      //          workspaceService.getWorkspace(workspaceId),
+      //          String.valueOf(UUID.randomUUID()),
+      //          userAccessUtils.defaultUserAuthRequest());
 
-    assertEquals(
-        DEFAULT_CREATED_BIG_QUERY_TABLE_LIFETIME, createdDataset.getDefaultTableLifetime());
-    assertEquals(
-        DEFAULT_CREATED_BIG_QUERY_PARTITION_LIFETIME, createdDataset.getDefaultPartitionLifetime());
+      //        mockMvcUtils.createWorkspaceWithRegionConstraint(
+      //            userAccessUtils.defaultUserAuthRequest(), "usa");
+      // create dataset.
 
-    // Check which BQ datasets' lifetime to update.
-    List<ControlledResource> emptyList = updateControlledBigQueryDatasetsLifetimeAndWait();
+      //      ApiGcpBigQueryDatasetCreationParameters creationParameters =
+      //          ControlledResourceFixtures.getGcpBigQueryDatasetCreationParameters();
+      //
+      //      ControlledBigQueryDatasetResource createdDatasetB =
+      //          ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
+      //              .datasetName(ControlledResourceFixtures.uniqueDatasetId())
+      //              .projectId(projectId)
+      //              .defaultTableLifetime(creationParameters.getDefaultTableLifetime())
+      //              .defaultPartitionLifetime(creationParameters.getDefaultPartitionLifetime())
+      //              .build();
 
-    // Update nothing because all the lifetimes are populated.
-    assertTrue(emptyList.isEmpty());
+      var datasetId = ControlledResourceFixtures.uniqueDatasetId();
 
-    // Artificially set lifetimes to null in the database.
-    resourceDao.updateBigQueryDatasetDefaultTableLifetime(
-        createdDataset, /*defaultTableLifetime=*/ null);
-    resourceDao.updateBigQueryDatasetDefaultPartitionLifetime(
-        createdDataset, /*defaultPartitionLifetime=*/ null);
+      ApiGcpBigQueryDatasetCreationParameters creationParameters =
+          new ApiGcpBigQueryDatasetCreationParameters()
+              .datasetId(datasetId)
+              .defaultTableLifetime(
+                  ControlledResourceFixtures.getGcpBigQueryDatasetCreationParameters()
+                      .getDefaultTableLifetime())
+              .defaultPartitionLifetime(
+                  ControlledResourceFixtures.getGcpBigQueryDatasetCreationParameters()
+                      .getDefaultPartitionLifetime());
+      ControlledBigQueryDatasetResource resource =
+          ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
+              .datasetName(datasetId)
+              .projectId(projectId)
+              .build();
+      ControlledBigQueryDatasetResource createdDataset =
+          controlledResourceService
+              .createControlledResourceSync(
+                  resource, null, user.getAuthenticatedRequest(), creationParameters)
+              .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
 
-    List<ControlledResource> updatedResource = updateControlledBigQueryDatasetsLifetimeAndWait();
+      //      ControlledBigQueryDatasetResource createdDataset =
+      //          controlledResourceService
+      //              .createControlledResourceSync(
+      //                  createdDatasetB, null, user.getAuthenticatedRequest(), creationParameters)
+      //              .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
 
-    // The controlled dataset is updated since the lifetime is null.
-    assertEquals(1, updatedResource.size());
-    assertControlledBigQueryDatasetLifetimeIsUpdatedAndActivityIsLogged(
-        updatedResource,
-        createdDataset.getResourceId(),
-        DEFAULT_CREATED_BIG_QUERY_TABLE_LIFETIME,
-        DEFAULT_CREATED_BIG_QUERY_PARTITION_LIFETIME);
+      //      resourceDao.createControlledResource(createdDataset);
+
+      //      resourceDao.updateBigQueryDatasetDefaultTableLifetime(
+      //          createdDataset, /*defaultTableLifetime=*/ null);
+      //      resourceDao.updateBigQueryDatasetDefaultPartitionLifetime(
+      //          createdDataset, /*defaultPartitionLifetime=*/ null);
+
+      System.out.println("aaronwa@: BQ DATASET DONE CREATING: ");
+
+      // Check which BQ datasets' lifetime to update.
+      List<ControlledResource> emptyList = updateControlledBigQueryDatasetsLifetimeAndWait();
+
+      // Update nothing because all the lifetimes are populated.
+      assertTrue(emptyList.isEmpty());
+
+      //      ControlledBigQueryDatasetResource x =
+      //          controlledResourceService
+      //              .getControlledResource(workspaceId, createdDataset.getResourceId())
+      //              .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
+
+      ControlledBigQueryDatasetResource updatedResource =
+          controlledResourceService
+              .getControlledResource(workspaceId, resource.getResourceId())
+              .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
+
+      assertEquals(
+          DEFAULT_CREATED_BIG_QUERY_TABLE_LIFETIME, updatedResource.getDefaultTableLifetime());
+      assertEquals(
+          DEFAULT_CREATED_BIG_QUERY_PARTITION_LIFETIME,
+          updatedResource.getDefaultPartitionLifetime());
+
+      // Artificially set lifetimes to null in the database.
+      resourceDao.updateBigQueryDatasetDefaultTableLifetime(
+          createdDataset, /*defaultTableLifetime=*/ null);
+      resourceDao.updateBigQueryDatasetDefaultPartitionLifetime(
+          createdDataset, /*defaultPartitionLifetime=*/ null);
+
+      System.out.println("Aaron: Now trying to update the BQ datasets");
+
+      List<ControlledResource> updatedResourceList =
+          updateControlledBigQueryDatasetsLifetimeAndWait();
+
+      // The controlled dataset is updated since the lifetime is null.
+      assertEquals(1, updatedResourceList.size());
+      assertControlledBigQueryDatasetLifetimeIsUpdatedAndActivityIsLogged(
+          updatedResourceList,
+          createdDataset.getResourceId(),
+          DEFAULT_CREATED_BIG_QUERY_TABLE_LIFETIME,
+          DEFAULT_CREATED_BIG_QUERY_PARTITION_LIFETIME);
+    } finally {
+      //      workspaceService.deleteGcpCloudContext(
+      //          workspaceService.getWorkspace(workspaceId),
+      // userAccessUtils.defaultUserAuthRequest());
+    }
   }
 
   private void assertControlledBigQueryDatasetLifetimeIsUpdatedAndActivityIsLogged(

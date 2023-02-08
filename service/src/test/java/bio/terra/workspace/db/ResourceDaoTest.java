@@ -46,6 +46,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -71,6 +72,11 @@ public class ResourceDaoTest extends BaseUnitTest {
   public void cleanUp() {
     workspaceDao.deleteCloudContext(workspaceUuid, CloudPlatform.GCP);
     workspaceDao.deleteWorkspace(workspaceUuid);
+  }
+
+  @AfterEach
+  public void cleanUp_GcpResources() {
+    resourceDao.deleteAllControlledResources(workspaceUuid, CloudPlatform.GCP);
   }
 
   @Test

@@ -594,9 +594,10 @@ public class ResourceDao {
             dataset.getWorkspaceId(), dataset.getResourceId(), null, null, newAttributes, null);
 
     logger.info(
-        "{} default table lifetime for resource {} to {}",
+        "{} default table lifetime for resource {} to {} (expected: {})",
         (updated ? "Updated" : "No Update - did not find"),
         dataset.getResourceId(),
+        dataset.getDefaultTableLifetime(),
         defaultTableLifetime);
 
     return updated;
@@ -622,9 +623,10 @@ public class ResourceDao {
             dataset.getWorkspaceId(), dataset.getResourceId(), null, null, newAttributes, null);
 
     logger.info(
-        "{} default partition lifetime for resource {} to {}",
+        "{} default partition lifetime for resource {} to {} (expected: {})",
         (updated ? "Updated" : "No Update - did not find"),
         dataset.getResourceId(),
+        dataset.getDefaultPartitionLifetime(),
         defaultPartitionLifetime);
 
     return updated;

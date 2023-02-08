@@ -190,7 +190,10 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     } else if (UpdateGcpControlledResourceRegionFlight.class.getName().equals(flightClassName)
         || UpdateAzureControlledResourceRegionFlight.class.getName().equals(flightClassName)) {
       maybeLogUpdateControlledResourceRegionFlight(context, operationType, userEmail, subjectId);
-    } else {
+    } else if (UpdateGcpControlledBigQueryDatasetsLifetimeFlight.class.getName().equals(flightClassName)) {
+      maybeLogUpdateControlledBigQueryDatasetLifetimeFlight(context,operationType,userEmail,subjectId);
+    }
+    else {
       throw new UnhandledActivityLogException(
           String.format(
               "workspace id is missing from the flight %s, add special log handling",
