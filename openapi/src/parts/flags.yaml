@@ -1,0 +1,39 @@
+# Workspace paths
+paths:
+  /api/features/v1/feature/{featureName}:
+    parameters:
+    - $ref: '#/components/parameters/FeatureName'
+    get:
+      summary: get feature state.
+      operationId: getFeature
+      tags: [ Flags ]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeatureState'
+        '500':
+          $ref: '#/components/responses/ServerError'
+components:
+  parameters:
+    FeatureName:
+      name: featureName
+      in: path
+      description: The name of a feature
+      required: true
+      schema:
+        type: string
+  schemas:
+    FeatureState:
+      type: object
+      required: [ featureName, isEnabled ]
+      properties:
+        featureName:
+          type: string
+        isEnabled:
+          type: boolean
+        stringValue:
+          type: string
+

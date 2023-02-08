@@ -18,6 +18,7 @@ import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.service.crl.exception.CrlInternalException;
 import bio.terra.workspace.service.crl.exception.CrlNotInUseException;
 import bio.terra.workspace.service.crl.exception.CrlSecurityException;
+import bio.terra.workspace.service.flagsmith.FlagsmithService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
@@ -75,10 +76,10 @@ public class CrlService {
   private final ServiceUsageCow crlServiceUsageCow;
 
   @Autowired
-  public CrlService(CrlConfiguration crlConfig) {
+  public CrlService(CrlConfiguration crlConfig, FlagsmithService flagsmithService) {
     this.crlConfig = crlConfig;
 
-    if (crlConfig.getUseCrl()) {
+    if (flagsmithService.isFeatureEnabled("terra__crl_enabled")) {
       GoogleCredentials creds = getApplicationCredentials();
       clientConfig = buildClientConfig();
       try {

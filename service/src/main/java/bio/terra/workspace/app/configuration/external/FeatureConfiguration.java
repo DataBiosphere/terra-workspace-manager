@@ -19,6 +19,11 @@ public class FeatureConfiguration {
   private boolean bpmGcpEnabled;
   private boolean bpmAzureEnabled;
 
+  private boolean flagsmithEnabled;
+  private String flagsmithApiPath;
+
+  private String flagsmithApiKey;
+
   public boolean isAzureEnabled() {
     return azureEnabled;
   }
@@ -57,6 +62,30 @@ public class FeatureConfiguration {
 
   public void setBpmAzureEnabled(boolean bpmAzureEnabled) {
     this.bpmAzureEnabled = bpmAzureEnabled;
+  }
+
+  public boolean getFlagsmithEnabled() {
+    return flagsmithEnabled;
+  }
+
+  public void setFlagsmithEnabled(boolean flagsmithEnabled) {
+    this.flagsmithEnabled = flagsmithEnabled;
+  }
+
+  public String getFlagsmithApiPath() {
+    return flagsmithApiPath;
+  }
+
+  public void setFlagsmithApiPath(String flagsmithApiPath) {
+    this.flagsmithApiPath = flagsmithApiPath;
+  }
+
+  public String getFlagsmithApiKey() {
+    return flagsmithApiKey;
+  }
+
+  public void setFlagsmithApiKey(String flagsmithApiKey) {
+    this.flagsmithApiKey = flagsmithApiKey;
   }
 
   public void azureEnabledCheck() {

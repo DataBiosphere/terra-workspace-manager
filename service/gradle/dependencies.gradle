@@ -68,6 +68,8 @@ dependencies {
   implementation group: "org.springframework.boot", name: "spring-boot-starter-validation"
   implementation group: "org.springframework.retry", name: "spring-retry"
 
+  implementation 'com.flagsmith:flagsmith-java-client:5.1.2'
+
   // OpenAPI (swagger) deps
   implementation gradle.librarySwaggerAnnotations
   swaggerCodegen gradle.librarySwaggerCli
