@@ -356,6 +356,40 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/policies/mergeCheck:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: The result of a merge calculation between two workspaces. This does not mutate the original workspaces.
+      description: |
+        The target workspace is identified by the path parameter.
+        The source workspace is provided in the source request. 
+        Policies from the source workspace are merged into the target workspace.
+        The merge operation is called with DRY_RUN, so no mutations take place.
+      operationId: mergeCheck
+      tags: [ Workspace ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MergeCheckRequest'
+      responses:
+        '202':
+          description: Merge calculation successfully processed (no action is taken).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WsmPolicyMergeCheckResult'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/ServerError'
 components:
   parameters:
     WsmPolicyDepth:
@@ -527,6 +561,14 @@ components:
       description: Enum containing all valid IAM roles on a Workspace
       type: string
       enum: ['DISCOVERER', 'READER', 'WRITER', 'APPLICATION', 'OWNER']
+
+    MergeCheckRequest:
+      description: Request with a workspace id
+      type: object
+      required: [ workspaceId ]
+      properties:
+        workspaceId:
+          $ref: '#/components/schemas/WsmPolicyObjectId'
 
     RoleBinding:
       description: A binding between an IAM role and users with that role

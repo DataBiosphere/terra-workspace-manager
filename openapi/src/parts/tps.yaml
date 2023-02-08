@@ -133,6 +133,24 @@ components:
           description: The policy object attempting to combine the conflicting policy
           $ref: '#/components/schemas/WsmPolicyDescription'
 
+    WsmPolicyMergeCheckResult:
+      type: object
+      required: [ conflicts, resourcesWithConflict ]
+      properties:
+        conflicts:
+          description: |
+            List of workspace conflicts.
+          type: array
+          items:
+            $ref: '#/components/schemas/WsmPolicyConflict'
+        resourcesWithConflict:
+          description: |
+            List of resources (by ID) in the target workspace with conflicting policy.
+          type: array
+          items:
+            type: string
+            format: uuid
+
     WsmPolicyUpdateRequest:
       description: Update request body
       type: object
@@ -258,4 +276,3 @@ components:
             $ref: '#/components/schemas/WsmPolicyLocation'
         regions:
           $ref: '#/components/schemas/Regions'
- 

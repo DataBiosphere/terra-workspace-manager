@@ -15,6 +15,7 @@ import bio.terra.workspace.common.exception.FeatureNotSupportedException;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
+import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
@@ -31,6 +32,7 @@ import bio.terra.workspace.generated.model.ApiGcpContext;
 import bio.terra.workspace.generated.model.ApiGrantRoleRequestBody;
 import bio.terra.workspace.generated.model.ApiIamRole;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
+import bio.terra.workspace.generated.model.ApiMergeCheckRequest;
 import bio.terra.workspace.generated.model.ApiProperties;
 import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiRegions;
@@ -42,6 +44,7 @@ import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
 import bio.terra.workspace.generated.model.ApiWsmPolicyExplainResult;
 import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
+import bio.terra.workspace.generated.model.ApiWsmPolicyMergeCheckResult;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateRequest;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateResult;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -58,6 +61,7 @@ import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.policy.TpsApiConversionUtils;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.policy.model.PolicyExplainResult;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
@@ -72,7 +76,9 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import io.opencensus.contrib.spring.aop.Traced;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -102,6 +108,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   private final WorkspaceActivityLogDao workspaceActivityLogDao;
   private final FeatureConfiguration featureConfiguration;
   private final WorkspaceActivityLogService workspaceActivityLogService;
+  private final ResourceDao resourceDao;
 
   @Autowired
   public WorkspaceApiController(
@@ -117,7 +124,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       TpsApiDispatch tpsApiDispatch,
       WorkspaceActivityLogDao workspaceActivityLogDao,
       FeatureConfiguration featureConfiguration,
-      WorkspaceActivityLogService workspaceActivityLogService) {
+      WorkspaceActivityLogService workspaceActivityLogService,
+      ResourceDao resourceDao) {
     super(authenticatedUserRequestFactory, request, samService);
     this.workspaceService = workspaceService;
     this.jobService = jobService;
@@ -130,6 +138,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     this.workspaceActivityLogDao = workspaceActivityLogDao;
     this.featureConfiguration = featureConfiguration;
     this.workspaceActivityLogService = workspaceActivityLogService;
+    this.resourceDao = resourceDao;
   }
 
   @Traced
@@ -720,6 +729,45 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         tpsApiDispatch.explain(workspaceId, depth, workspaceService, userRequest);
 
     return new ResponseEntity<>(explainResult.toApi(), HttpStatus.OK);
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiWsmPolicyMergeCheckResult> mergeCheck(
+      UUID targetWorkspaceId, ApiMergeCheckRequest requestBody) {
+    UUID sourceWorkspaceId = requestBody.getWorkspaceId();
+
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, targetWorkspaceId, SamWorkspaceAction.READ);
+    TpsPaoUpdateResult dryRunResults =
+        tpsApiDispatch.mergePao(targetWorkspaceId, sourceWorkspaceId, TpsUpdateMode.DRY_RUN);
+
+    List<UUID> resourceWithConflicts = new ArrayList<>();
+
+    for (var platform : ApiCloudPlatform.values()) {
+      HashSet<String> validRegions = new HashSet<>();
+      validRegions.addAll(
+          tpsApiDispatch.listValidRegions(
+              sourceWorkspaceId, CloudPlatform.fromApiCloudPlatform(platform)));
+
+      List<ControlledResource> existingResources =
+          resourceDao.listControlledResources(
+              targetWorkspaceId, CloudPlatform.fromApiCloudPlatform(platform));
+
+      for (var existingResource : existingResources) {
+        if (!validRegions.contains(existingResource.getRegion())) {
+          resourceWithConflicts.add(existingResource.getResourceId());
+        }
+      }
+    }
+    ApiWsmPolicyMergeCheckResult updateResult =
+        new ApiWsmPolicyMergeCheckResult()
+            .conflicts(
+                TpsApiConversionUtils.apiFromTpsPaoConflictList(dryRunResults.getConflicts()))
+            .resourcesWithConflict(resourceWithConflicts);
+
+    return new ResponseEntity<>(updateResult, HttpStatus.ACCEPTED);
   }
 
   // Retrieve the async result or progress for clone workspace.
