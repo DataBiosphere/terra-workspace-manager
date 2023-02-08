@@ -604,7 +604,8 @@ public class ControlledResourceService {
             case OWNER -> policyGroup = cloudContext.getSamPolicyOwner().orElseThrow(BAD_STATE);
             case WRITER -> policyGroup = cloudContext.getSamPolicyWriter().orElseThrow(BAD_STATE);
             case READER -> policyGroup = cloudContext.getSamPolicyReader().orElseThrow(BAD_STATE);
-            case APPLICATION -> policyGroup = cloudContext.getSamPolicyApplication().orElseThrow(BAD_STATE);
+            case APPLICATION -> policyGroup =
+                cloudContext.getSamPolicyApplication().orElseThrow(BAD_STATE);
             default -> {
             }
           }

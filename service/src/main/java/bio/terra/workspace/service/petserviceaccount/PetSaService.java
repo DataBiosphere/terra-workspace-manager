@@ -3,6 +3,7 @@ package bio.terra.workspace.service.petserviceaccount;
 import bio.terra.cloudres.google.iam.ServiceAccountName;
 import bio.terra.common.exception.ConflictException;
 import bio.terra.common.exception.InternalServerErrorException;
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.grant.GrantService;
@@ -38,17 +39,20 @@ public class PetSaService {
   private final GcpCloudContextService gcpCloudContextService;
   private final CrlService crlService;
   private final GrantService grantService;
+  private final FeatureConfiguration features;
 
   @Autowired
   public PetSaService(
       SamService samService,
       GcpCloudContextService gcpCloudContextService,
       CrlService crlService,
-      GrantService grantService) {
+      GrantService grantService,
+      FeatureConfiguration features) {
     this.samService = samService;
     this.gcpCloudContextService = gcpCloudContextService;
     this.crlService = crlService;
     this.grantService = grantService;
+    this.features = features;
   }
 
   /**
@@ -145,16 +149,18 @@ public class PetSaService {
       }
 
       // Temporary grant of user and pet to act as pet.
-      String petSaMember = GcpUtils.toSaMember(petSaName.email());
-      PetSaUtils.addSaMember(saPolicy, petSaMember);
+      if (features.isTemporaryGrantEnabled()) {
+        String petSaMember = GcpUtils.toSaMember(petSaName.email());
+        PetSaUtils.addSaMember(saPolicy, petSaMember);
 
-      String userMember = null;
-      if (grantService.isUserGrantAllowed(userToEnableEmail)) {
-        userMember = GcpUtils.toUserMember(userToEnableEmail);
-        PetSaUtils.addSaMember(saPolicy, userMember);
+        String userMember = null;
+        if (grantService.isUserGrantAllowed(userToEnableEmail)) {
+          userMember = GcpUtils.toUserMember(userToEnableEmail);
+          PetSaUtils.addSaMember(saPolicy, userMember);
+        }
+
+        grantService.recordActAsGrant(workspaceUuid, userMember, petSaMember);
       }
-
-      grantService.recordActAsGrant(workspaceUuid, userMember, petSaMember);
 
       SetIamPolicyRequest request = new SetIamPolicyRequest().setPolicy(saPolicy);
       return Optional.of(
@@ -237,6 +243,15 @@ public class PetSaService {
       if (!PetSaUtils.removeSaMember(saPolicy, GcpUtils.toGroupMember(proxyGroupEmail))) {
         return Optional.empty();
       }
+
+      // We try to remove the pet and user as well. We do not test the features or
+      // configuration. Those might have changed since we made the grants, so rather
+      // than risk leaving a grant too long, we attempt to remove them. The remove member
+      // code doesn't complain if the grant is not there.
+      String petSaMember = GcpUtils.toSaMember(userToDisablePetSA.get().email());
+      PetSaUtils.removeSaMember(saPolicy, petSaMember);
+      String userMember = GcpUtils.toUserMember(userToDisableEmail);
+      PetSaUtils.removeSaMember(saPolicy, userMember);
 
       SetIamPolicyRequest request = new SetIamPolicyRequest().setPolicy(saPolicy);
       return Optional.of(
