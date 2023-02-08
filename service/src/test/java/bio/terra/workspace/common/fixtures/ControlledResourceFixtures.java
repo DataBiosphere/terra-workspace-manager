@@ -654,6 +654,8 @@ public class ControlledResourceFixtures {
     return new Builder()
         .common(makeDefaultControlledResourceFields(workspaceUuid))
         .projectId("my_project")
+        .defaultTableLifetime(DEFAULT_CREATED_BIG_QUERY_TABLE_LIFETIME)
+        .defaultPartitionLifetime(DEFAULT_CREATED_BIG_QUERY_PARTITION_LIFETIME)
         .datasetName(uniqueDatasetId());
   }
 

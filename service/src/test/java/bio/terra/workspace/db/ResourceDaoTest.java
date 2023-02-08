@@ -619,6 +619,33 @@ public class ResourceDaoTest extends BaseUnitTest {
     assertEquals(5, ans);
   }
 
+  @Test
+  //  public void updateBigQueryDatasetDefaultTableLifetime() {
+  //    ControlledBigQueryDatasetResource resource =
+  //        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid).build();
+  //
+  //    resourceDao.createControlledResource(resource);
+  //
+  //    var resourceBeforeUpdate =
+  //        resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId());
+  //
+  //    resourceDao.updateBigQueryDatasetDefaultTableLifetime(resource, 6000L);
+  //
+  //    var resourceAfterUpdate =
+  //        resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId());
+  //    ControlledBigQueryDatasetResource aaron =
+  //        resourceAfterUpdate
+  //            .castToControlledResource()
+  //            .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
+  //
+  //    assertEquals(6000L, aaron.getDefaultTableLifetime());
+  //
+  //    assertTrue(
+  //        resourceAfterUpdate
+  //            .getLastUpdatedDate()
+  //            .isAfter(resourceBeforeUpdate.getLastUpdatedDate()));
+  //  }
+
   private void createControlledResourceAndLog(ControlledResource resource) {
     resourceDao.createControlledResource(resource);
     activityLogDao.writeActivity(

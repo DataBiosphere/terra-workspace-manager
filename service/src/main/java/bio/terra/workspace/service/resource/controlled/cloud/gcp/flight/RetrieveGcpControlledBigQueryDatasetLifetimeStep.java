@@ -44,8 +44,8 @@ public class RetrieveGcpControlledBigQueryDatasetLifetimeStep implements Step {
         context
             .getWorkingMap()
             .get(CONTROLLED_BIG_QUERY_DATASETS_WITHOUT_LIFETIME, new TypeReference<>() {});
-    Map<UUID, Long> resourceIdToDefaultTableLifetimeMap = new HashMap<>();
-    Map<UUID, Long> resourceIdToDefaultPartitionLifetimeMap = new HashMap<>();
+    Map<UUID, String> resourceIdToDefaultTableLifetimeMap = new HashMap<>();
+    Map<UUID, String> resourceIdToDefaultPartitionLifetimeMap = new HashMap<>();
     Map<UUID, String> resourceIdToWorkspaceIdMap = new HashMap<>();
 
     for (var resource : controlledBigQueryDatasets) {
@@ -85,8 +85,8 @@ public class RetrieveGcpControlledBigQueryDatasetLifetimeStep implements Step {
   }
 
   private void populateMapsWithResourceIdKey(
-      Map<UUID, Long> resourceIdToDefaultTableLifetimeMap,
-      Map<UUID, Long> resourceIdToDefaultPartitionLifetimeMap,
+      Map<UUID, String> resourceIdToDefaultTableLifetimeMap,
+      Map<UUID, String> resourceIdToDefaultPartitionLifetimeMap,
       Map<UUID, String> resourceIdToWorkspaceIdMap,
       ControlledResource resource,
       @Nullable Long defaultTableLifetime,
@@ -94,8 +94,8 @@ public class RetrieveGcpControlledBigQueryDatasetLifetimeStep implements Step {
     UUID resourceId = resource.getResourceId();
     resourceIdToWorkspaceIdMap.put(resourceId, resource.getWorkspaceId().toString());
     if (defaultTableLifetime != null || defaultPartitionLifetime != null) {
-      resourceIdToDefaultTableLifetimeMap.put(resourceId, defaultTableLifetime);
-      resourceIdToDefaultPartitionLifetimeMap.put(resourceId, defaultPartitionLifetime);
+      resourceIdToDefaultTableLifetimeMap.put(resourceId, defaultTableLifetime.toString());
+      resourceIdToDefaultPartitionLifetimeMap.put(resourceId, defaultPartitionLifetime.toString());
     }
   }
 

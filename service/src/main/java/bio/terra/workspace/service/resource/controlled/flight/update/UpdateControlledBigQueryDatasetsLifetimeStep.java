@@ -13,7 +13,9 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.db.ResourceDao;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,18 +42,18 @@ public class UpdateControlledBigQueryDatasetsLifetimeStep implements Step {
 
     System.out.println("WORKING MAP: " + workingMap);
 
-    Map<UUID, Long> resourceIdToDefaultTableLifetimeMap =
+    Map<UUID, String> resourceIdToDefaultTableLifetimeMap =
         workingMap.get(
             CONTROLLED_BIG_QUERY_DATASET_RESOURCE_ID_TO_TABLE_LIFETIME_MAP,
-            new TypeReference<HashMap<UUID, Long>>() {});
-    Map<UUID, Long> resourceIdToDefaultPartitionLifetimeMap =
+            new TypeReference<HashMap<UUID, String>>() {});
+    Map<UUID, String> resourceIdToDefaultPartitionLifetimeMap =
         workingMap.get(
             CONTROLLED_BIG_QUERY_DATASET_RESOURCE_ID_TO_PARTITION_LIFETIME_MAP,
-            new TypeReference<HashMap<UUID, Long>>() {});
+            new TypeReference<HashMap<UUID, String>>() {});
 
     Map<UUID, String> resourceIdsToWorkspaceIdMap =
         workingMap.get(CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP, new TypeReference<>() {});
-    List<ControlledResource> updatedResources = new ArrayList<>();
+    List<ControlledBigQueryDatasetResource> updatedResources = new ArrayList<>();
 
     List<ControlledResource> controlledBigQueryDatasets =
         context
@@ -70,15 +72,15 @@ public class UpdateControlledBigQueryDatasetsLifetimeStep implements Step {
       boolean updated =
           resourceDao.updateBigQueryDatasetDefaultTableLifetime(
                   resource.castByEnum(CONTROLLED_GCP_BIG_QUERY_DATASET),
-                  resourceIdToDefaultTableLifetimeMap.get(id))
+                  Long.valueOf(resourceIdToDefaultTableLifetimeMap.get(id)))
               || resourceDao.updateBigQueryDatasetDefaultPartitionLifetime(
                   resource.castByEnum(CONTROLLED_GCP_BIG_QUERY_DATASET),
-                  resourceIdToDefaultPartitionLifetimeMap.get(id));
+                  Long.valueOf(resourceIdToDefaultPartitionLifetimeMap.get(id)));
       if (updated) {
         updatedResources.add(
             resourceDao
                 .getResource(UUID.fromString(resourceIdsToWorkspaceIdMap.get(id)), id)
-                .castToControlledResource());
+                .castByEnum(CONTROLLED_GCP_BIG_QUERY_DATASET));
       }
     }
 
