@@ -122,7 +122,10 @@ public class MapperUtils {
       }
 
       return userAssignedManagedIdentities.stream()
-          .map(i -> new BatchPoolUserAssignedManagedIdentity(i.getResourceGroupName(), i.getName()))
+          .map(
+              i ->
+                  new BatchPoolUserAssignedManagedIdentity(
+                      i.getResourceGroupName(), i.getName(), i.getClientId()))
           .collect(Collectors.toList());
     }
 

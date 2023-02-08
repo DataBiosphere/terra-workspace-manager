@@ -272,11 +272,13 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
       }
     }
     if (userAssignedIdentities != null) {
-      var inconsistentUamiCount = userAssignedIdentities.stream()
+      var inconsistentUamiCount =
+          userAssignedIdentities.stream()
               .filter(uami -> uami.name() != null && uami.clientId() != null)
               .count();
       if (inconsistentUamiCount > 0) {
-        throw new InconsistentFieldsException("User assigned managed identity name and clientId are mutually exclusive.");
+        throw new InconsistentFieldsException(
+            "User assigned managed identity name and clientId are mutually exclusive.");
       }
     }
   }

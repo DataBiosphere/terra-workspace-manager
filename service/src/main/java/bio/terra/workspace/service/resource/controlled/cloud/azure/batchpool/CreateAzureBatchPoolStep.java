@@ -10,6 +10,7 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.utils.ManagementExceptionUtils;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.resource.controlled.exception.UserAssignedManagedIdentityNotFoundException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementException;
@@ -18,9 +19,12 @@ import com.azure.resourcemanager.batch.models.BatchPoolIdentity;
 import com.azure.resourcemanager.batch.models.Pool;
 import com.azure.resourcemanager.batch.models.PoolIdentityType;
 import com.azure.resourcemanager.batch.models.UserAssignedIdentities;
+import com.azure.resourcemanager.msi.MsiManager;
+import com.azure.resourcemanager.msi.models.Identity;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,6 +56,7 @@ public class CreateAzureBatchPoolStep implements Step {
                 WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_CLOUD_CONTEXT,
                 AzureCloudContext.class);
     BatchManager batchManager = crlService.getBatchManager(azureCloudContext, azureConfig);
+    MsiManager msiManager = crlService.getMsiManager(azureCloudContext, azureConfig);
 
     // The batch account name is stored by VerifyAzureBatchPoolCanBeCreated.
     // It can be landing zone shared batch account only
@@ -77,8 +82,7 @@ public class CreateAzureBatchPoolStep implements Step {
               .withDeploymentConfiguration(resource.getDeploymentConfiguration());
 
       batchPoolDefinition =
-          configureBatchPool(
-              batchPoolDefinition, resource, azureCloudContext.getAzureSubscriptionId());
+          configureBatchPool(msiManager, batchPoolDefinition, resource, azureCloudContext);
       batchPoolDefinition.create(
           Defaults.buildContext(
               CreateBatchPoolRequestData.builder()
@@ -100,6 +104,9 @@ public class CreateAzureBatchPoolStep implements Step {
           batchAccountName,
           e.getValue().getCode(),
           e);
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
+    } catch (UserAssignedManagedIdentityNotFoundException e) {
+      logger.error(e.getMessage());
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
     }
     return StepResult.getStepResultSuccess();
@@ -149,38 +156,14 @@ public class CreateAzureBatchPoolStep implements Step {
   }
 
   private Pool.DefinitionStages.WithCreate configureBatchPool(
+      MsiManager msiManager,
       Pool.DefinitionStages.WithCreate batchPoolConfigurable,
       ControlledAzureBatchPoolResource resource,
-      String subscriptionId) {
+      AzureCloudContext azureCloudContext)
+      throws UserAssignedManagedIdentityNotFoundException {
 
     Optional.ofNullable(resource.getDisplayName())
         .ifPresent(batchPoolConfigurable::withDisplayName);
-
-    if (resource.getUserAssignedIdentities() != null
-        && !resource.getUserAssignedIdentities().isEmpty()) {
-      // see examples
-      // https://github.com/Azure/azure-sdk-for-java/blob/main/sdk/batch/azure-resourcemanager-batch/SAMPLE.md#batchaccount_create
-
-      Map<String, UserAssignedIdentities> userAssignedIdentitiesMap =
-          resource.getUserAssignedIdentities().stream()
-              .map(
-                  i ->
-                      Map.entry(
-                          String.format(
-                              USER_ASSIGNED_MANAGED_IDENTITY_REFERENCE_TEMPLATE,
-                              subscriptionId,
-                              i.resourceGroupName(),
-                              i.name()),
-                          new UserAssignedIdentities()))
-              .collect(
-                  Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (prev, next) -> prev));
-
-      batchPoolConfigurable.withIdentity(
-          new BatchPoolIdentity()
-              .withType(PoolIdentityType.USER_ASSIGNED)
-              .withUserAssignedIdentities(userAssignedIdentitiesMap));
-    }
-
     Optional.ofNullable(resource.getScaleSettings())
         .ifPresent(batchPoolConfigurable::withScaleSettings);
     Optional.ofNullable(resource.getStartTask()).ifPresent(batchPoolConfigurable::withStartTask);
@@ -188,6 +171,63 @@ public class CreateAzureBatchPoolStep implements Step {
         .ifPresent(batchPoolConfigurable::withApplicationPackages);
     Optional.ofNullable(resource.getNetworkConfiguration())
         .ifPresent(batchPoolConfigurable::withNetworkConfiguration);
+
+    batchPoolConfigurable =
+        configurePoolIdentities(msiManager, batchPoolConfigurable, resource, azureCloudContext);
     return batchPoolConfigurable;
+  }
+
+  private Pool.DefinitionStages.WithCreate configurePoolIdentities(
+      MsiManager msiManager,
+      Pool.DefinitionStages.WithCreate batchPoolConfigurable,
+      ControlledAzureBatchPoolResource resource,
+      AzureCloudContext azureCloudContext)
+      throws UserAssignedManagedIdentityNotFoundException {
+    if (resource.getUserAssignedIdentities() != null
+        && !resource.getUserAssignedIdentities().isEmpty()) {
+
+      Map<String, UserAssignedIdentities> userAssignedIdentitiesMap = new HashMap<>();
+      for (var i : resource.getUserAssignedIdentities()) {
+        String resourceGroupName =
+            i.resourceGroupName() == null
+                ? azureCloudContext.getAzureResourceGroupId()
+                : i.resourceGroupName();
+        String identityName =
+            i.name() == null
+                ? getIdentityName(i.clientId(), resourceGroupName, msiManager)
+                : i.name();
+
+        // see examples
+        // https://github.com/Azure/azure-sdk-for-java/blob/main/sdk/batch/azure-resourcemanager-batch/SAMPLE.md#batchaccount_create
+        userAssignedIdentitiesMap.put(
+            String.format(
+                USER_ASSIGNED_MANAGED_IDENTITY_REFERENCE_TEMPLATE,
+                azureCloudContext.getAzureSubscriptionId(),
+                resourceGroupName,
+                identityName),
+            new UserAssignedIdentities());
+      }
+
+      batchPoolConfigurable.withIdentity(
+          new BatchPoolIdentity()
+              .withType(PoolIdentityType.USER_ASSIGNED)
+              .withUserAssignedIdentities(userAssignedIdentitiesMap));
+    }
+    return batchPoolConfigurable;
+  }
+
+  private String getIdentityName(UUID clientId, String resourceGroupName, MsiManager msiManager)
+      throws UserAssignedManagedIdentityNotFoundException {
+    Optional<Identity> identity =
+        msiManager.identities().listByResourceGroup(resourceGroupName).stream()
+            .filter(i -> i.clientId().equals(clientId.toString()))
+            .findFirst();
+    if (identity.isEmpty()) {
+      throw new UserAssignedManagedIdentityNotFoundException(
+          String.format(
+              "Managed user assigned identity with clientId='%s' not found in the resource group with name='%s'",
+              clientId.toString(), resourceGroupName));
+    }
+    return identity.get().name();
   }
 }
