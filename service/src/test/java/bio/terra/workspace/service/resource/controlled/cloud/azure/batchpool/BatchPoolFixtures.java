@@ -22,6 +22,7 @@ import com.azure.resourcemanager.batch.models.TaskContainerSettings;
 import com.azure.resourcemanager.batch.models.UserIdentity;
 import java.time.Duration;
 import java.util.List;
+import java.util.UUID;
 
 public class BatchPoolFixtures {
   public static String START_TASK_COMMAND_LINE = "/bin/sh";
@@ -29,6 +30,7 @@ public class BatchPoolFixtures {
   public static Boolean WAIT_FOR_SUCCESS = Boolean.TRUE;
   public static String RESOURCE_GROUP = "resourceGroup";
   public static String IDENTITY_NAME = "identity1";
+  public static UUID IDENTITY_CLIENT_ID = UUID.randomUUID();
   public static String RESOURCE_FILE_PATH = "/opt";
   public static String RESOURCE_FILE_MODE = "wxr";
   public static String ENVIRONMENT_SETTINGS_NAME = "varName";
@@ -64,8 +66,12 @@ public class BatchPoolFixtures {
 
   private BatchPoolFixtures() {}
 
-  public static BatchPoolUserAssignedManagedIdentity createUami() {
-    return new BatchPoolUserAssignedManagedIdentity(RESOURCE_GROUP, IDENTITY_NAME);
+  public static BatchPoolUserAssignedManagedIdentity createUamiWithName() {
+    return new BatchPoolUserAssignedManagedIdentity(RESOURCE_GROUP, IDENTITY_NAME, null);
+  }
+
+  public static BatchPoolUserAssignedManagedIdentity createUamiWithClientId() {
+    return new BatchPoolUserAssignedManagedIdentity(RESOURCE_GROUP, null, IDENTITY_CLIENT_ID);
   }
 
   public static StartTask createStartTask() {

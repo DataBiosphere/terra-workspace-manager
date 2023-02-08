@@ -154,14 +154,21 @@ components:
 
     AzureBatchPoolUserAssignedIdentity:
       type: object
-      description: User assigned identity associated with a batch pool
-      required: [ name, resourceGroupName ]
+      description: User assigned identity associated with a batch pool.
       properties:
         name:
-          description: The name of user assigned identity.
+          description: |
+            The name of the user assigned identity. This parameter is mutually exclusive with clientId.
           type: string
+        clientId:
+          description: |
+            The client id of the UAMI. This parameter is mutually exclusive with name. If this parameter 
+            is set instead of the name WSM will try to locate specific UAMI based on it.
+          type: string
+          format: uuid
         resourceGroupName:
-          description: The resource group name where identity resides.
+          description: |
+            The resource group name where identity resides. Default value is MRG where Azure Batch account exists.
           type: string
 
     AzureBatchPoolScaleSettings:

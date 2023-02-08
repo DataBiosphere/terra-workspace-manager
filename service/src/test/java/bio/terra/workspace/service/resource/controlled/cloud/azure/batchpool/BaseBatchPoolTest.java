@@ -6,7 +6,7 @@ import static org.mockito.Mockito.when;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
-import bio.terra.workspace.common.BaseAzureConnectedTest;
+import bio.terra.workspace.common.BaseAzureUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -20,10 +20,11 @@ import com.azure.resourcemanager.batch.models.DeploymentConfiguration;
 import com.azure.resourcemanager.batch.models.ImageReference;
 import com.azure.resourcemanager.batch.models.Pools;
 import com.azure.resourcemanager.batch.models.VirtualMachineConfiguration;
+import com.azure.resourcemanager.msi.MsiManager;
 import java.util.UUID;
 import org.mockito.Mock;
 
-public class BaseBatchPoolTest extends BaseAzureConnectedTest {
+public class BaseBatchPoolTest extends BaseAzureUnitTest {
   public static final UUID BATCH_POOL_ID = UUID.randomUUID();
   public static final String BATCH_POOL_VM_SIZE = "Standard_D2s_v3";
   public static final String BATCH_POOL_DISPLAY_NAME = "batchPoolDisplayName";
@@ -50,6 +51,7 @@ public class BaseBatchPoolTest extends BaseAzureConnectedTest {
   @Mock public FlightMap mockFlightMap;
   @Mock public FlightMap mockWorkingMap;
   @Mock public BatchManager mockBatchManager;
+  @Mock public MsiManager mockMsiManager;
   @Mock public BatchAccounts mockBatchAccounts;
   @Mock public BatchAccount mockBatchAccount;
   @Mock public Pools mockPools;

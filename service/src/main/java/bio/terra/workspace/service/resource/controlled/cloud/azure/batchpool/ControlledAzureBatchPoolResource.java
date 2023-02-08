@@ -271,6 +271,16 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
             "Fixed scale settings and auto scale settings are mutually exclusive.");
       }
     }
+    if (userAssignedIdentities != null) {
+      var inconsistentUamiCount =
+          userAssignedIdentities.stream()
+              .filter(uami -> uami.name() != null && uami.clientId() != null)
+              .count();
+      if (inconsistentUamiCount > 0) {
+        throw new InconsistentFieldsException(
+            "User assigned managed identity name and clientId are mutually exclusive.");
+      }
+    }
   }
 
   public static ControlledAzureBatchPoolResource.Builder builder() {
