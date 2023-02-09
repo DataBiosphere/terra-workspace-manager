@@ -2,7 +2,6 @@ package bio.terra.workspace.service.policy.flight;
 
 import bio.terra.policy.model.TpsPaoGetResult;
 import bio.terra.stairway.FlightContext;
-import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
