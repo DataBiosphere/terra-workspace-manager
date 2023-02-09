@@ -6,9 +6,7 @@ import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.service.grant.GrantData;
 import bio.terra.workspace.service.grant.GrantType;
 import java.sql.Timestamp;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -18,6 +16,8 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.Nullable;
 
 @Component
 public class GrantDao {
@@ -83,10 +83,8 @@ public class GrantDao {
               GrantType.fromDb(rs.getString("grant_type")),
               Optional.ofNullable(rs.getString("resource_id")).map(UUID::fromString).orElse(null),
               rs.getString("role"),
-              OffsetDateTime.ofInstant(
-                  rs.getTimestamp("create_time").toInstant(), ZoneId.of("UTC")),
-              OffsetDateTime.ofInstant(
-                  rs.getTimestamp("expire_time").toInstant(), ZoneId.of("UTC")));
+              rs.getTimestamp("create_time").toInstant(),
+              rs.getTimestamp("expire_time").toInstant());
 
   private static final String INSERT_GRANT_SQL =
       """
@@ -108,13 +106,8 @@ public class GrantDao {
   @ReadTransaction
   public List<ExpiredGrant> getExpiredGrants() {
     var params =
-        new MapSqlParameterSource()
-            .addValue(
-                "current_time",
-                Timestamp.valueOf(
-                    OffsetDateTime.now(ZoneId.of("UTC"))
-                        .atZoneSameInstant(ZoneOffset.UTC)
-                        .toLocalDateTime()));
+        new MapSqlParameterSource().addValue("current_time", Timestamp.from(Instant.now()));
+
     return jdbcTemplate.query(EXPIRED_GRANTS_SQL, params, GRANT_ID_ROW_MAPPER);
   }
 
@@ -141,7 +134,7 @@ public class GrantDao {
    * @return GrantData or null, if not found
    */
   @ReadTransaction
-  public GrantData getGrant(UUID grantId) {
+  public @Nullable GrantData getGrant(UUID grantId) {
     var params = new MapSqlParameterSource().addValue("grant_id", grantId.toString());
     List<GrantData> grantList = jdbcTemplate.query(GET_GRANT_SQL, params, GRANT_DATA_ROW_MAPPER);
     if (grantList.size() != 1) {
@@ -188,17 +181,6 @@ public class GrantDao {
 
   @WriteTransaction
   public void insertGrant(GrantData grantData) {
-    // This is a bit of a pain, but here is what is happening:
-    // atZoneSameInstant converts the OffsetDateTime to UTC;
-    // then we convert to "local time", which loses the zone info, but gives the result
-    // in "local UTC" time; then we convert that to timestamp. Gah!
-    Timestamp createTimestamp =
-        Timestamp.valueOf(
-            grantData.createTime().atZoneSameInstant(ZoneOffset.UTC).toLocalDateTime());
-    Timestamp expireTimestamp =
-        Timestamp.valueOf(
-            grantData.expireTime().atZoneSameInstant(ZoneOffset.UTC).toLocalDateTime());
-
     var params =
         new MapSqlParameterSource()
             .addValue("grant_id", grantData.grantId().toString())
@@ -208,8 +190,8 @@ public class GrantDao {
             .addValue("grant_type", grantData.grantType().toDb())
             .addValue("resource_id", grantData.resourceId())
             .addValue("role", grantData.role())
-            .addValue("create_time", createTimestamp)
-            .addValue("expire_time", expireTimestamp);
+            .addValue("create_time", Timestamp.from(grantData.createTime()))
+            .addValue("expire_time", Timestamp.from(grantData.expireTime()));
 
     jdbcTemplate.update(INSERT_GRANT_SQL, params);
     logger.info(

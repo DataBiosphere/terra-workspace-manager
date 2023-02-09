@@ -11,8 +11,7 @@ import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import java.time.Duration;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -138,8 +137,8 @@ public class GrantService {
       GrantType grantType,
       @Nullable UUID resourceId,
       @Nullable String role) {
-    OffsetDateTime createTime = OffsetDateTime.now(ZoneId.of("UTC"));
-    OffsetDateTime expireTime = createTime.plus(configuration.getGrantHoldTime());
+    Instant createTime = Instant.now();
+    Instant expireTime = createTime.plus(configuration.getGrantHoldTime());
     UUID grantId = UUID.randomUUID();
     return new GrantData(
         grantId,

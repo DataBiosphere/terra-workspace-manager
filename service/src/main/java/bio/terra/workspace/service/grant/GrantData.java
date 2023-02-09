@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.grant;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
@@ -12,5 +12,5 @@ public record GrantData(
     GrantType grantType,
     @Nullable UUID resourceId,
     @Nullable String role,
-    OffsetDateTime createTime,
-    OffsetDateTime expireTime) {}
+    Instant createTime,
+    Instant expireTime) {}
