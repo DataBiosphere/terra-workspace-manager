@@ -12,7 +12,8 @@ on:
       - '.github/**'
       - 'service/local-dev/**'
   pull_request:
-    branches: [ '**' ]
+    branches:
+      - main
     # There is an issue with GitHub required checks and paths-ignore. We don't really need to
     # run the tests if there are only irrelevant changes (see paths-ignore above). However,
     # we require tests to pass by making a "required check" rule on the branch. If the action
