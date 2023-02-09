@@ -17,7 +17,6 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.Contr
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -42,11 +41,11 @@ public class UpdateControlledBigQueryDatasetsLifetimeStep implements Step {
     Map<UUID, String> resourceIdToDefaultTableLifetimeMap =
         workingMap.get(
             CONTROLLED_BIG_QUERY_DATASET_RESOURCE_ID_TO_TABLE_LIFETIME_MAP,
-            new TypeReference<HashMap<UUID, String>>() {});
+            new TypeReference<>() {});
     Map<UUID, String> resourceIdToDefaultPartitionLifetimeMap =
         workingMap.get(
             CONTROLLED_BIG_QUERY_DATASET_RESOURCE_ID_TO_PARTITION_LIFETIME_MAP,
-            new TypeReference<HashMap<UUID, String>>() {});
+            new TypeReference<>() {});
 
     Map<UUID, String> resourceIdsToWorkspaceIdMap =
         workingMap.get(CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP, new TypeReference<>() {});
@@ -57,6 +56,11 @@ public class UpdateControlledBigQueryDatasetsLifetimeStep implements Step {
             .getWorkingMap()
             .get(CONTROLLED_BIG_QUERY_DATASETS_WITHOUT_LIFETIME, new TypeReference<>() {});
 
+    assert controlledBigQueryDatasets != null;
+    assert resourceIdToDefaultPartitionLifetimeMap != null;
+    assert resourceIdToDefaultTableLifetimeMap != null;
+    assert resourceIdsToWorkspaceIdMap != null;
+
     for (var resource : controlledBigQueryDatasets) {
       var id = resource.getResourceId();
       boolean updated =
@@ -65,7 +69,7 @@ public class UpdateControlledBigQueryDatasetsLifetimeStep implements Step {
               Long.valueOf(resourceIdToDefaultTableLifetimeMap.get(id)),
               Long.valueOf(resourceIdToDefaultPartitionLifetimeMap.get(id)));
 
-      if (updated) {
+      if (updated && resourceIdsToWorkspaceIdMap.containsKey(id)) {
         updatedResources.add(
             resourceDao
                 .getResource(UUID.fromString(resourceIdsToWorkspaceIdMap.get(id)), id)

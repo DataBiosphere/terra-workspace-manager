@@ -48,6 +48,7 @@ public class RetrieveGcpControlledBigQueryDatasetLifetimeStep implements Step {
     Map<UUID, String> resourceIdToDefaultPartitionLifetimeMap = new HashMap<>();
     Map<UUID, String> resourceIdToWorkspaceIdMap = new HashMap<>();
 
+    assert controlledBigQueryDatasets != null;
     for (var resource : controlledBigQueryDatasets) {
       WsmResourceType resourceType = resource.getResourceType();
       logger.info(
@@ -93,8 +94,10 @@ public class RetrieveGcpControlledBigQueryDatasetLifetimeStep implements Step {
       @Nullable Long defaultPartitionLifetime) {
     UUID resourceId = resource.getResourceId();
     resourceIdToWorkspaceIdMap.put(resourceId, resource.getWorkspaceId().toString());
-    if (defaultTableLifetime != null || defaultPartitionLifetime != null) {
+    if (defaultTableLifetime != null) {
       resourceIdToDefaultTableLifetimeMap.put(resourceId, defaultTableLifetime.toString());
+    }
+    if (defaultPartitionLifetime != null) {
       resourceIdToDefaultPartitionLifetimeMap.put(resourceId, defaultPartitionLifetime.toString());
     }
   }
