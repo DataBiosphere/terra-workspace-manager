@@ -620,31 +620,33 @@ public class ResourceDaoTest extends BaseUnitTest {
   }
 
   @Test
-  //  public void updateBigQueryDatasetDefaultTableLifetime() {
-  //    ControlledBigQueryDatasetResource resource =
-  //        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid).build();
-  //
-  //    resourceDao.createControlledResource(resource);
-  //
-  //    var resourceBeforeUpdate =
-  //        resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId());
-  //
-  //    resourceDao.updateBigQueryDatasetDefaultTableLifetime(resource, 6000L);
-  //
-  //    var resourceAfterUpdate =
-  //        resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId());
-  //    ControlledBigQueryDatasetResource aaron =
-  //        resourceAfterUpdate
-  //            .castToControlledResource()
-  //            .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
-  //
-  //    assertEquals(6000L, aaron.getDefaultTableLifetime());
-  //
-  //    assertTrue(
-  //        resourceAfterUpdate
-  //            .getLastUpdatedDate()
-  //            .isAfter(resourceBeforeUpdate.getLastUpdatedDate()));
-  //  }
+  public void updateBigQueryDatasetDefaultTableAndPartitionLifetime() {
+    ControlledBigQueryDatasetResource resource =
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid).build();
+
+    resourceDao.createControlledResource(resource);
+
+    ControlledBigQueryDatasetResource resourceBeforeUpdate =
+        resourceDao
+            .getResource(resource.getWorkspaceId(), resource.getResourceId())
+            .castToControlledResource()
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
+
+    assertNull(resourceBeforeUpdate.getDefaultTableLifetime());
+    assertNull(resourceBeforeUpdate.getDefaultPartitionLifetime());
+
+    resourceDao.updateBigQueryDatasetDefaultTableAndPartitionLifetime(
+        resourceBeforeUpdate, 6000L, 6001L);
+
+    ControlledBigQueryDatasetResource resourceAfterUpdate =
+        resourceDao
+            .getResource(resource.getWorkspaceId(), resource.getResourceId())
+            .castToControlledResource()
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
+
+    assertEquals(6000L, resourceAfterUpdate.getDefaultTableLifetime());
+    assertEquals(6001L, resourceAfterUpdate.getDefaultPartitionLifetime());
+  }
 
   private void createControlledResourceAndLog(ControlledResource resource) {
     resourceDao.createControlledResource(resource);

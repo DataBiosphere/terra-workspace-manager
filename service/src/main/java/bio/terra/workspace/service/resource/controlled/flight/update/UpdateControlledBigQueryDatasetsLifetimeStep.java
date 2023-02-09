@@ -15,7 +15,6 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
-import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,8 +39,6 @@ public class UpdateControlledBigQueryDatasetsLifetimeStep implements Step {
         CONTROLLED_BIG_QUERY_DATASET_RESOURCE_ID_TO_PARTITION_LIFETIME_MAP,
         CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP);
 
-    System.out.println("WORKING MAP: " + workingMap);
-
     Map<UUID, String> resourceIdToDefaultTableLifetimeMap =
         workingMap.get(
             CONTROLLED_BIG_QUERY_DATASET_RESOURCE_ID_TO_TABLE_LIFETIME_MAP,
@@ -60,26 +57,19 @@ public class UpdateControlledBigQueryDatasetsLifetimeStep implements Step {
             .getWorkingMap()
             .get(CONTROLLED_BIG_QUERY_DATASETS_WITHOUT_LIFETIME, new TypeReference<>() {});
 
-    System.out.println("LIST OF BQ datasets " + controlledBigQueryDatasets);
-
-    System.out.println("id to part lifetime " + resourceIdToDefaultPartitionLifetimeMap);
-
-    System.out.println("id to table lifetime " + resourceIdToDefaultTableLifetimeMap);
-
     for (var resource : controlledBigQueryDatasets) {
       var id = resource.getResourceId();
-      System.out.println("BQ dataset without lifetime " + id);
       boolean updated =
-          resourceDao.updateBigQueryDatasetDefaultTableLifetime(
-                  resource.castByEnum(CONTROLLED_GCP_BIG_QUERY_DATASET),
-                  Long.valueOf(resourceIdToDefaultTableLifetimeMap.get(id)))
-              || resourceDao.updateBigQueryDatasetDefaultPartitionLifetime(
-                  resource.castByEnum(CONTROLLED_GCP_BIG_QUERY_DATASET),
-                  Long.valueOf(resourceIdToDefaultPartitionLifetimeMap.get(id)));
+          resourceDao.updateBigQueryDatasetDefaultTableAndPartitionLifetime(
+              resource.castByEnum(CONTROLLED_GCP_BIG_QUERY_DATASET),
+              Long.valueOf(resourceIdToDefaultTableLifetimeMap.get(id)),
+              Long.valueOf(resourceIdToDefaultPartitionLifetimeMap.get(id)));
+
       if (updated) {
         updatedResources.add(
             resourceDao
                 .getResource(UUID.fromString(resourceIdsToWorkspaceIdMap.get(id)), id)
+                .castToControlledResource()
                 .castByEnum(CONTROLLED_GCP_BIG_QUERY_DATASET));
       }
     }
@@ -100,14 +90,12 @@ public class UpdateControlledBigQueryDatasetsLifetimeStep implements Step {
             .getWorkingMap()
             .get(CONTROLLED_BIG_QUERY_DATASETS_WITHOUT_LIFETIME, new TypeReference<>() {});
 
-    if (controlledBigQueryDatasets.isEmpty()) {
+    if (controlledBigQueryDatasets == null || controlledBigQueryDatasets.isEmpty()) {
       return StepResult.getStepResultSuccess();
     }
     for (var resource : controlledBigQueryDatasets) {
-      resourceDao.updateBigQueryDatasetDefaultTableLifetime(
-          resource.castByEnum(CONTROLLED_GCP_BIG_QUERY_DATASET), null);
-      resourceDao.updateBigQueryDatasetDefaultPartitionLifetime(
-          resource.castByEnum(CONTROLLED_GCP_BIG_QUERY_DATASET), null);
+      resourceDao.updateBigQueryDatasetDefaultTableAndPartitionLifetime(
+          resource.castByEnum(CONTROLLED_GCP_BIG_QUERY_DATASET), null, null);
     }
     return StepResult.getStepResultSuccess();
   }
