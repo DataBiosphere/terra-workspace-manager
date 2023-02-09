@@ -75,13 +75,22 @@ public class CreateGcpContextFlightV2 extends Flight {
     addStep(new SetProjectBillingStep(crl.getCloudBillingClientCow()), cloudRetry);
     addStep(new GrantWsmRoleAdminStep(crl), shortRetry);
     addStep(new CreateCustomGcpRolesStep(crl.getIamCow()), shortRetry);
-    // Try creating the pet before sync'ing, so the proxy group is configured before we
-    // make do the Sam sync and create the role-based Google groups.
+    // Create the pet before sync'ing, so the proxy group is configured before we
+    // do the Sam sync and create the role-based Google groups. That eliminates
+    // one propagation case
     addStep(new CreatePetSaStep(appContext.getSamService(), userRequest), shortRetry);
     addStep(
         new SyncSamGroupsStep(appContext.getSamService(), workspaceUuid, userRequest), shortRetry);
-    // TODO(PF-1227): When IAM performance issue is fixed, change back to cloudRetry.
-    addStep(new GcpCloudSyncStep(crl.getCloudResourceManagerCow()), bufferRetry);
+
+    addStep(
+        new GcpCloudSyncStep(
+            crl.getCloudResourceManagerCow(),
+            appContext.getFeatureConfiguration(),
+            appContext.getSamService(),
+            appContext.getGrantService(),
+            userRequest,
+            workspaceUuid),
+        bufferRetry);
 
     // Wait for the project permissions to propagate.
     // The SLO is 99.5% of the time it finishes in under 7 minutes.

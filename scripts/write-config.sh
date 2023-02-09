@@ -313,6 +313,7 @@ workspace:
     base-path: https://tps.wsmtest-eng.bee.envs-terra.bio/
 feature:
   tps-enabled: true
+  temporary-grant-enabled: true
 EOF
 else
   cat /dev/null > "${outputdir}/local-properties.yml"
