@@ -31,7 +31,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.flight.UpdateAzureControlledResourceRegionFlight;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.flight.UpdateGcpControlledBigQueryDatasetsLifetimeFlight;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.flight.UpdateControlledBigQueryDatasetsLifetimeFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.flight.UpdateGcpControlledResourceRegionFlight;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
@@ -190,7 +190,7 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     } else if (UpdateGcpControlledResourceRegionFlight.class.getName().equals(flightClassName)
         || UpdateAzureControlledResourceRegionFlight.class.getName().equals(flightClassName)) {
       maybeLogUpdateControlledResourceRegionFlight(context, operationType, userEmail, subjectId);
-    } else if (UpdateGcpControlledBigQueryDatasetsLifetimeFlight.class
+    } else if (UpdateControlledBigQueryDatasetsLifetimeFlight.class
         .getName()
         .equals(flightClassName)) {
       maybeLogUpdateControlledBigQueryDatasetLifetimeFlight(

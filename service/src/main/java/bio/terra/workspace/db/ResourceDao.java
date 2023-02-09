@@ -330,7 +330,6 @@ public class ResourceDao {
   /**
    * Returns a list of all controlled BigQuery datasets without default table lifetime or default
    * partition lifetime set.
-   *
    */
   @ReadTransaction
   public List<ControlledResource> listControlledBigQueryDatasetsWithoutLifetime() {

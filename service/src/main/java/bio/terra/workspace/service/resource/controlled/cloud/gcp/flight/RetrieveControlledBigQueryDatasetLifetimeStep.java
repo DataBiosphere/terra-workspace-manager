@@ -2,7 +2,6 @@ package bio.terra.workspace.service.resource.controlled.cloud.gcp.flight;
 
 import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntries;
 import static bio.terra.workspace.service.crl.CrlService.getBigQueryDataset;
-import static bio.terra.workspace.service.resource.model.WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_BIG_QUERY_DATASETS_WITHOUT_LIFETIME;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_BIG_QUERY_DATASET_RESOURCE_ID_TO_PARTITION_LIFETIME_MAP;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_BIG_QUERY_DATASET_RESOURCE_ID_TO_TABLE_LIFETIME_MAP;
@@ -15,7 +14,6 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
-import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.api.services.bigquery.model.Dataset;
 import java.io.IOException;
@@ -27,12 +25,12 @@ import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RetrieveGcpControlledBigQueryDatasetLifetimeStep implements Step {
+public class RetrieveControlledBigQueryDatasetLifetimeStep implements Step {
   private static final Logger logger =
-      LoggerFactory.getLogger(RetrieveGcpControlledBigQueryDatasetLifetimeStep.class);
+      LoggerFactory.getLogger(RetrieveControlledBigQueryDatasetLifetimeStep.class);
   private final CrlService crlService;
 
-  public RetrieveGcpControlledBigQueryDatasetLifetimeStep(CrlService crlService) {
+  public RetrieveControlledBigQueryDatasetLifetimeStep(CrlService crlService) {
     this.crlService = crlService;
   }
 
