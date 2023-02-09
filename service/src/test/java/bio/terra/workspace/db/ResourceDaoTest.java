@@ -630,7 +630,7 @@ public class ResourceDaoTest extends BaseUnitTest {
 
       resourceDao.createControlledResource(datasetWithLifetime);
 
-      var ans = resourceDao.listControlledBigQueryDatasetsWithoutLifetime(CloudPlatform.GCP).size();
+      var ans = resourceDao.listControlledBigQueryDatasetsWithoutLifetime().size();
       assertEquals(5, ans);
     } finally {
       resourceDao.deleteAllControlledResources(workspaceWithGcpContext, CloudPlatform.GCP);

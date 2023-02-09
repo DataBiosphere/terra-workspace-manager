@@ -22,8 +22,7 @@ public class UpdateGcpControlledBigQueryDatasetsLifetimeFlight extends Flight {
     FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
 
     addStep(
-        new RetrieveControlledBigQueryDatasetWithoutLifetimeStep(
-            CloudPlatform.GCP, flightBeanBag.getResourceDao()),
+        new RetrieveControlledBigQueryDatasetWithoutLifetimeStep(flightBeanBag.getResourceDao()),
         RetryRules.shortDatabase());
 
     addStep(

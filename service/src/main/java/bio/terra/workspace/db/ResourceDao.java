@@ -331,12 +331,9 @@ public class ResourceDao {
    * Returns a list of all controlled BigQuery datasets without default table lifetime or default
    * partition lifetime set.
    *
-   * @param cloudPlatform Optional. If present, this will only return resources from the specified
-   *     cloud platform. If null, this will return resources from all cloud platforms.
    */
   @ReadTransaction
-  public List<ControlledResource> listControlledBigQueryDatasetsWithoutLifetime(
-      @Nullable CloudPlatform cloudPlatform) {
+  public List<ControlledResource> listControlledBigQueryDatasetsWithoutLifetime() {
 
     String sql =
         RESOURCE_SELECT_SQL_WITHOUT_WORKSPACE_ID
@@ -348,11 +345,6 @@ public class ResourceDao {
         new MapSqlParameterSource()
             .addValue("controlled_resource", CONTROLLED.toSql())
             .addValue("controlled_gcp_big_query_dataset", CONTROLLED_GCP_BIG_QUERY_DATASET.toSql());
-
-    if (cloudPlatform != null) {
-      sql += " AND cloud_platform = :cloud_platform";
-      params.addValue("cloud_platform", cloudPlatform.toSql());
-    }
 
     List<DbResource> dbResources = jdbcTemplate.query(sql, params, DB_RESOURCE_ROW_MAPPER);
     return dbResources.stream()
@@ -577,7 +569,7 @@ public class ResourceDao {
   /**
    * Update a BigQuery dataset's default table lifetime and default partition lifetime.
    *
-   * @return whether the resource's region is successfully updated.
+   * @return whether the dataset's lifetimes are successfully updated.
    */
   @WriteTransaction
   public boolean updateBigQueryDatasetDefaultTableAndPartitionLifetime(

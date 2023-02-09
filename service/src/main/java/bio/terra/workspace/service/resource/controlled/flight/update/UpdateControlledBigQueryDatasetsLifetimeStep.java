@@ -84,12 +84,7 @@ public class UpdateControlledBigQueryDatasetsLifetimeStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    Map<UUID, String> resourceIdsToWorkspaceIdMap =
-        context
-            .getWorkingMap()
-            .get(CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP, new TypeReference<>() {});
-
-    List<ControlledResource> controlledBigQueryDatasets =
+    List<ControlledBigQueryDatasetResource> controlledBigQueryDatasets =
         context
             .getWorkingMap()
             .get(CONTROLLED_BIG_QUERY_DATASETS_WITHOUT_LIFETIME, new TypeReference<>() {});
@@ -98,8 +93,7 @@ public class UpdateControlledBigQueryDatasetsLifetimeStep implements Step {
       return StepResult.getStepResultSuccess();
     }
     for (var resource : controlledBigQueryDatasets) {
-      resourceDao.updateBigQueryDatasetDefaultTableAndPartitionLifetime(
-          resource.castByEnum(CONTROLLED_GCP_BIG_QUERY_DATASET), null, null);
+      resourceDao.updateBigQueryDatasetDefaultTableAndPartitionLifetime(resource, null, null);
     }
     return StepResult.getStepResultSuccess();
   }

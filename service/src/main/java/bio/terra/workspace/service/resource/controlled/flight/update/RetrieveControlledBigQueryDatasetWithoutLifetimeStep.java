@@ -14,20 +14,16 @@ import java.util.List;
 import java.util.Optional;
 
 public class RetrieveControlledBigQueryDatasetWithoutLifetimeStep implements Step {
-  private final CloudPlatform cloudPlatform;
   private final ResourceDao resourceDao;
 
-  public RetrieveControlledBigQueryDatasetWithoutLifetimeStep(
-      CloudPlatform cloudPlatform, ResourceDao resourceDao) {
-    this.cloudPlatform = cloudPlatform;
+  public RetrieveControlledBigQueryDatasetWithoutLifetimeStep(ResourceDao resourceDao) {
     this.resourceDao = resourceDao;
   }
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     List<ControlledResource> controlledBigQueryDatasets =
-        Optional.ofNullable(
-                resourceDao.listControlledBigQueryDatasetsWithoutLifetime(cloudPlatform))
+        Optional.ofNullable(resourceDao.listControlledBigQueryDatasetsWithoutLifetime())
             .orElse(Collections.emptyList());
 
     context
