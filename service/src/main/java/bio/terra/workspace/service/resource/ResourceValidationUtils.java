@@ -18,7 +18,6 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
-import com.azure.core.management.Region;
 import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -208,10 +207,13 @@ public class ResourceValidationUtils {
   public static void validateControlledResourceRegionAgainstPolicy(
       TpsApiDispatch tpsApiDispatch, UUID workspaceUuid, String location, CloudPlatform platform) {
     switch (platform) {
+      case AWS -> {
+        // TODO: enable policy check in AWS when we support AWS regions in the TPS ontology.
+        validateAwsRegion(location);
+      }
       case AZURE -> {
         // TODO: enable policy check in Azure when we support Azure regions in the TPS ontology.
         // validateAzureRegion(location);
-        return;
       }
       case GCP -> validateGcpRegion(tpsApiDispatch, workspaceUuid, location);
       default -> throw new InvalidControlledResourceException("Unrecognized platform");
@@ -479,16 +481,30 @@ public class ResourceValidationUtils {
     }
   }
 
+  public static void validateAwsRegion(String region) {
+    if (StringUtils.isEmpty(region)) {
+      logger.warn("Cannot validate empty AWS region.");
+      return;
+    }
+    if (software.amazon.awssdk.regions.Region.regions().stream()
+        .filter(r -> r.toString().equalsIgnoreCase(region))
+        .findFirst()
+        .isEmpty()) {
+      logger.warn("Invalid AWS region {}", region);
+      throw new InvalidControlledResourceException("Invalid AWS Region specified.");
+    }
+  }
+
   public static void validateAzureRegion(String region) {
     if (StringUtils.isEmpty(region)) {
       // Azure resources like workspaces may not have a region.
       logger.warn("Cannot validate empty Azure region.");
       return;
     }
-    if (!Region.values().stream()
-        .map(Region::toString)
-        .collect(Collectors.toList())
-        .contains(region)) {
+    if (com.azure.core.management.Region.values().stream()
+        .filter(r -> r.toString().equalsIgnoreCase(region))
+        .findFirst()
+        .isEmpty()) {
       logger.warn("Invalid Azure region {}", region);
       throw new InvalidControlledResourceException("Invalid Azure Region specified.");
     }
