@@ -1,30 +1,27 @@
 package bio.terra.workspace.service.resource.referenced;
 
-import bio.terra.common.exception.ConflictException;
-import bio.terra.policy.model.TpsPaoUpdateResult;
-import bio.terra.policy.model.TpsUpdateMode;
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobBuilder;
+import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
-import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
-import bio.terra.workspace.service.resource.exception.PolicyConflictException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.resource.referenced.flight.clone.CloneReferenceResourceFlight;
 import bio.terra.workspace.service.resource.referenced.flight.update.UpdateReferenceResourceFlight;
 import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
-import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import io.opencensus.contrib.spring.aop.Traced;
-import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -42,6 +39,7 @@ public class ReferencedResourceService {
   private final ResourceDao resourceDao;
   private final WorkspaceService workspaceService;
   private final FlightBeanBag beanBag;
+  private final FeatureConfiguration features;
   private final TpsApiDispatch tpsApiDispatch;
   private final WorkspaceActivityLogService workspaceActivityLogService;
 
@@ -52,11 +50,13 @@ public class ReferencedResourceService {
       WorkspaceService workspaceService,
       FlightBeanBag beanBag,
       WorkspaceActivityLogService workspaceActivityLogService,
+      FeatureConfiguration features,
       TpsApiDispatch tpsApiDispatch) {
     this.jobService = jobService;
     this.resourceDao = resourceDao;
     this.workspaceService = workspaceService;
     this.beanBag = beanBag;
+    this.features = features;
     this.tpsApiDispatch = tpsApiDispatch;
     this.workspaceActivityLogService = workspaceActivityLogService;
   }
@@ -79,17 +79,7 @@ public class ReferencedResourceService {
       ReferencedResource resourceToClone,
       ReferencedResource sourceReferencedResource,
       AuthenticatedUserRequest userRequest) {
-
-    validateDestinationWorkspacePolicies(
-        sourceReferencedResource.getWorkspaceId(),
-        resourceToClone.getWorkspaceId(),
-        sourceReferencedResource.getResourceType().getCloudPlatform());
     resourceDao.createReferencedResource(resourceToClone);
-    var result =
-        tpsApiDispatch.mergePao(
-            sourceReferencedResource.getWorkspaceId(),
-            resourceToClone.getWorkspaceId(),
-            TpsUpdateMode.FAIL_ON_CONFLICT);
 
     // Logs CLONE in the source workspace for the source resource that is cloned.
     workspaceActivityLogService.writeActivity(
@@ -255,6 +245,8 @@ public class ReferencedResourceService {
       @Nullable String description,
       String createdByEmail,
       AuthenticatedUserRequest userRequest) {
+    /*
+    WHAT TO DO ABOUT THIS?
     ReferencedResource destinationResource =
         sourceReferencedResource
             .buildReferencedClone(
@@ -265,37 +257,38 @@ public class ReferencedResourceService {
                 description,
                 createdByEmail)
             .castToReferencedResource();
+     */
 
-    return createReferenceResourceForClone(
-        destinationResource, sourceReferencedResource, userRequest);
-  }
+    final String jobDescription =
+        String.format(
+            "Clone referenced resource %s; id %s; name %s",
+            sourceReferencedResource.getResourceType(), destinationResourceId, name);
 
-  private void validateDestinationWorkspacePolicies(
-      UUID sourceWorkspaceId, UUID destinationWorkspaceId, CloudPlatform platform) {
-    TpsPaoUpdateResult dryRunResults =
-        tpsApiDispatch.mergePao(sourceWorkspaceId, destinationWorkspaceId, TpsUpdateMode.DRY_RUN);
+    // If TPS is enabled, then we want to merge policies when cloning a bucket
+    boolean mergePolicies = features.isTpsEnabled();
 
-    if (!dryRunResults.getConflicts().isEmpty()) {
-      List<String> conflictList =
-          dryRunResults.getConflicts().stream().map(c -> c.getNamespace() + ':' + c.getName()).toList();
-      throw new PolicyConflictException("Policy merge has conflicts", conflictList);
-    }
+    final JobBuilder jobBuilder =
+        jobService
+            .newJob()
+            .description(jobDescription)
+            .flightClass(CloneReferenceResourceFlight.class)
+            .resource(sourceReferencedResource)
+            .workspaceId(destinationWorkspaceId.toString())
+            .operationType(OperationType.CLONE)
+            .addParameter(
+                WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
+                destinationWorkspaceId)
+            .addParameter(
+                WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_ID,
+                destinationResourceId)
+            .addParameter(
+                WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_FOLDER_ID,
+                destinationFolderId)
+            .addParameter(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE, sourceReferencedResource)
+            .addParameter(WorkspaceFlightMapKeys.MERGE_POLICIES, mergePolicies)
+            .addParameter(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
 
-    if (platform == CloudPlatform.ANY) {
-      return;
-    }
-
-    HashSet<String> validRegions = new HashSet<>();
-    validRegions.addAll(
-        tpsApiDispatch.listValidRegionsForPao(dryRunResults.getResultingPao(), platform));
-    List<ControlledResource> existingResources =
-        resourceDao.listControlledResources(destinationWorkspaceId, platform);
-
-    for (var existingResource : existingResources) {
-      if (!validRegions.contains(existingResource.getRegion())) {
-        throw new PolicyConflictException(
-            "Workspace contains resources that would be outside of the merged policy.");
-      }
-    }
+    var result = jobBuilder.submitAndWait(ReferencedResource.class);
+    return result;
   }
 }

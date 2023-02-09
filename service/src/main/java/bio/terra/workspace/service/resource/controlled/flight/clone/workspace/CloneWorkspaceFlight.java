@@ -6,7 +6,7 @@ import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.resource.controlled.flight.clone.ClonePolicyAttributesStep;
+import bio.terra.workspace.service.policy.flight.MergePolicyAttributesStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
@@ -88,7 +88,7 @@ public class CloneWorkspaceFlight extends Flight {
           inputParameters.get(
               JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
       addStep(
-          new ClonePolicyAttributesStep(
+          new MergePolicyAttributesStep(
               sourceWorkspaceId,
               destinationWorkspace.getWorkspaceId(),
               userRequest,

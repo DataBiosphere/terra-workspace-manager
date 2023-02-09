@@ -201,7 +201,7 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
     assertTrue(
         exception
             .getMessage()
-            .contains("Workspace contains resources that would be outside of the merged policy."));
+            .contains("Workspace contains resources in violation of policy."));
 
     workspaceApi.deleteWorkspace(scenario5Workspace.getId());
 
