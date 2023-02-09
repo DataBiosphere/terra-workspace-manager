@@ -51,7 +51,7 @@ public class CreateAzureContextFlight extends Flight {
 
     // validate the MRG
     // TODO: retry?
-    addStep(new ValidateMRGStep(appContext.getCrlService(), appContext.getAzureConfig()));
+    addStep(new ValidateMRGStep(appContext.getCrlService(), appContext.getAzureConfiguration()));
 
     // update the DB row filling in the cloud context
     addStep(

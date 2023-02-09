@@ -147,11 +147,11 @@ public class ControlledAzureVmResource extends ControlledResource {
       FlightBeanBag flightBeanBag) {
     RetryRule cloudRetry = RetryRules.cloud();
     flight.addStep(
-        new GetAzureVmStep(flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+        new GetAzureVmStep(flightBeanBag.getAzureConfiguration(), flightBeanBag.getCrlService(), this),
         cloudRetry);
     flight.addStep(
         new CreateAzureNetworkInterfaceStep(
-            flightBeanBag.getAzureConfig(),
+            flightBeanBag.getAzureConfiguration(),
             flightBeanBag.getCrlService(),
             this,
             flightBeanBag.getResourceDao(),
@@ -160,7 +160,7 @@ public class ControlledAzureVmResource extends ControlledResource {
         cloudRetry);
     flight.addStep(
         new CreateAzureVmStep(
-            flightBeanBag.getAzureConfig(),
+            flightBeanBag.getAzureConfiguration(),
             flightBeanBag.getCrlService(),
             this,
             flightBeanBag.getResourceDao()),
@@ -170,14 +170,14 @@ public class ControlledAzureVmResource extends ControlledResource {
         RetryRules.shortDatabase());
     flight.addStep(
         new AssignManagedIdentityAzureVmStep(
-            flightBeanBag.getAzureConfig(),
+            flightBeanBag.getAzureConfiguration(),
             flightBeanBag.getCrlService(),
             flightBeanBag.getSamService(),
             this),
         cloudRetry);
     flight.addStep(
         new EnableVmLoggingStep(
-            flightBeanBag.getAzureConfig(),
+            flightBeanBag.getAzureConfiguration(),
             flightBeanBag.getCrlService(),
             this,
             flightBeanBag.getLandingZoneApiDispatch(),
@@ -190,14 +190,14 @@ public class ControlledAzureVmResource extends ControlledResource {
   public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
     flight.addStep(
         new RemoveManagedIdentitiesAzureVmStep(
-            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+            flightBeanBag.getAzureConfiguration(), flightBeanBag.getCrlService(), this),
         RetryRules.cloud());
     flight.addStep(
-        new DeleteAzureVmStep(flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+        new DeleteAzureVmStep(flightBeanBag.getAzureConfiguration(), flightBeanBag.getCrlService(), this),
         RetryRules.cloud());
     flight.addStep(
         new DeleteAzureNetworkInterfaceStep(
-            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+            flightBeanBag.getAzureConfiguration(), flightBeanBag.getCrlService(), this),
         RetryRules.cloud());
   }
 

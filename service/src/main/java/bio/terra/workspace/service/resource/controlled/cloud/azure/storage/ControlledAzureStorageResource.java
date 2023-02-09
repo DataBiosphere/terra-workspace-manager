@@ -120,11 +120,11 @@ public class ControlledAzureStorageResource extends ControlledResource {
     RetryRule cloudRetry = RetryRules.cloud();
     flight.addStep(
         new GetAzureStorageStep(
-            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+            flightBeanBag.getAzureConfiguration(), flightBeanBag.getCrlService(), this),
         cloudRetry);
     flight.addStep(
         new CreateAzureStorageStep(
-            flightBeanBag.getAzureConfig(),
+            flightBeanBag.getAzureConfiguration(),
             flightBeanBag.getCrlService(),
             this,
             flightBeanBag.getStorageAccountKeyProvider()),
@@ -136,7 +136,7 @@ public class ControlledAzureStorageResource extends ControlledResource {
   public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
     flight.addStep(
         new DeleteAzureStorageStep(
-            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+            flightBeanBag.getAzureConfiguration(), flightBeanBag.getCrlService(), this),
         RetryRules.cloud());
   }
 

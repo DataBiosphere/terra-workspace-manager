@@ -123,11 +123,11 @@ public class ControlledAzureRelayNamespaceResource extends ControlledResource {
     RetryRule cloudRetry = RetryRules.cloud();
     flight.addStep(
         new GetAzureRelayNamespaceStep(
-            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+            flightBeanBag.getAzureConfiguration(), flightBeanBag.getCrlService(), this),
         cloudRetry);
     flight.addStep(
         new CreateAzureRelayNamespaceStep(
-            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+            flightBeanBag.getAzureConfiguration(), flightBeanBag.getCrlService(), this),
         cloudRetry);
   }
 
@@ -136,7 +136,7 @@ public class ControlledAzureRelayNamespaceResource extends ControlledResource {
   public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
     flight.addStep(
         new DeleteAzureRelayNamespaceStep(
-            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+            flightBeanBag.getAzureConfiguration(), flightBeanBag.getCrlService(), this),
         RetryRules.cloud());
   }
 

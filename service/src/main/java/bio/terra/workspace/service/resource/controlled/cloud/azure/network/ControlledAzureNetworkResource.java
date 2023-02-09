@@ -140,11 +140,11 @@ public class ControlledAzureNetworkResource extends ControlledResource {
     RetryRule cloudRetry = RetryRules.cloud();
     flight.addStep(
         new GetAzureNetworkStep(
-            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+            flightBeanBag.getAzureConfiguration(), flightBeanBag.getCrlService(), this),
         cloudRetry);
     flight.addStep(
         new CreateAzureNetworkStep(
-            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+            flightBeanBag.getAzureConfiguration(), flightBeanBag.getCrlService(), this),
         cloudRetry);
   }
 
@@ -153,7 +153,7 @@ public class ControlledAzureNetworkResource extends ControlledResource {
   public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
     flight.addStep(
         new DeleteAzureNetworkStep(
-            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+            flightBeanBag.getAzureConfiguration(), flightBeanBag.getCrlService(), this),
         RetryRules.cloud());
   }
 

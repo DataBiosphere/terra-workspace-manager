@@ -122,10 +122,10 @@ public class ControlledAzureIpResource extends ControlledResource {
       FlightBeanBag flightBeanBag) {
     RetryRule cloudRetry = RetryRules.cloud();
     flight.addStep(
-        new GetAzureIpStep(flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+        new GetAzureIpStep(flightBeanBag.getAzureConfiguration(), flightBeanBag.getCrlService(), this),
         cloudRetry);
     flight.addStep(
-        new CreateAzureIpStep(flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+        new CreateAzureIpStep(flightBeanBag.getAzureConfiguration(), flightBeanBag.getCrlService(), this),
         cloudRetry);
   }
 
@@ -133,7 +133,7 @@ public class ControlledAzureIpResource extends ControlledResource {
   @Override
   public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
     flight.addStep(
-        new DeleteAzureIpStep(flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+        new DeleteAzureIpStep(flightBeanBag.getAzureConfiguration(), flightBeanBag.getCrlService(), this),
         RetryRules.cloud());
   }
 
