@@ -37,7 +37,7 @@ public class UpdateAzureControlledResourceRegionFlight extends Flight {
         RetryRules.shortDatabase());
     addStep(
         new RetrieveAzureResourcesRegionStep(
-            flightBeanBag.getAzureConfiguration(),
+            flightBeanBag.getAzureConfig(),
             flightBeanBag.getCrlService(),
             flightBeanBag.getResourceDao(),
             flightBeanBag.getLandingZoneApiDispatch(),

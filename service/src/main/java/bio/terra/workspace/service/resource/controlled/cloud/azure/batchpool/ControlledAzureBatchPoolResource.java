@@ -183,7 +183,7 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
 
     flight.addStep(
         new VerifyAzureBatchPoolCanBeCreatedStep(
-            flightBeanBag.getAzureConfiguration(),
+            flightBeanBag.getAzureConfig(),
             flightBeanBag.getCrlService(),
             userRequest,
             flightBeanBag.getLandingZoneBatchAccountFinder(),
@@ -191,7 +191,7 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
         RetryRules.cloud());
     flight.addStep(
         new CreateAzureBatchPoolStep(
-            flightBeanBag.getAzureConfiguration(), flightBeanBag.getCrlService(), this),
+            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
         RetryRules.cloud());
   }
 
@@ -199,7 +199,7 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
   public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
     flight.addStep(
         new DeleteAzureBatchPoolStep(
-            flightBeanBag.getAzureConfiguration(),
+            flightBeanBag.getAzureConfig(),
             flightBeanBag.getCrlService(),
             flightBeanBag.getLandingZoneBatchAccountFinder(),
             this),

@@ -46,7 +46,7 @@ public class FlightBeanBag {
   private final AwsCloudContextService awsCloudContextService;
   private final AwsConfiguration awsConfiguration;
   private final AzureCloudContextService azureCloudContextService;
-  private final AzureConfiguration azureConfiguration;
+  private final AzureConfiguration azureConfig;
   private final BucketCloneRolesService bucketCloneRolesService;
   private final BufferService bufferService;
   private final CliConfiguration cliConfiguration;
@@ -79,7 +79,7 @@ public class FlightBeanBag {
       AwsCloudContextService awsCloudContextService,
       AwsConfiguration awsConfiguration,
       AzureCloudContextService azureCloudContextService,
-      AzureConfiguration azureConfiguration,
+      AzureConfiguration azureConfig,
       BucketCloneRolesService bucketCloneRolesService,
       BufferService bufferService,
       CliConfiguration cliConfiguration,
@@ -108,7 +108,7 @@ public class FlightBeanBag {
     this.awsCloudContextService = awsCloudContextService;
     this.awsConfiguration = awsConfiguration;
     this.azureCloudContextService = azureCloudContextService;
-    this.azureConfiguration = azureConfiguration;
+    this.azureConfig = azureConfig;
     this.bucketCloneRolesService = bucketCloneRolesService;
     this.bufferService = bufferService;
     this.cliConfiguration = cliConfiguration;
@@ -223,8 +223,8 @@ public class FlightBeanBag {
     return spendProfileService;
   }
 
-  public AzureConfiguration getAzureConfiguration() {
-    return azureConfiguration;
+  public AzureConfiguration getAzureConfig() {
+    return azureConfig;
   }
 
   public CliConfiguration getCliConfiguration() {

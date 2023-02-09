@@ -120,11 +120,11 @@ public class ControlledAzureStorageResource extends ControlledResource {
     RetryRule cloudRetry = RetryRules.cloud();
     flight.addStep(
         new GetAzureStorageStep(
-            flightBeanBag.getAzureConfiguration(), flightBeanBag.getCrlService(), this),
+            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
         cloudRetry);
     flight.addStep(
         new CreateAzureStorageStep(
-            flightBeanBag.getAzureConfiguration(),
+            flightBeanBag.getAzureConfig(),
             flightBeanBag.getCrlService(),
             this,
             flightBeanBag.getStorageAccountKeyProvider()),
@@ -136,7 +136,7 @@ public class ControlledAzureStorageResource extends ControlledResource {
   public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
     flight.addStep(
         new DeleteAzureStorageStep(
-            flightBeanBag.getAzureConfiguration(), flightBeanBag.getCrlService(), this),
+            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
         RetryRules.cloud());
   }
 
@@ -161,9 +161,7 @@ public class ControlledAzureStorageResource extends ControlledResource {
   }
 
   public String getStorageAccountEndpoint() {
-    String endpoint =
-        String.format(Locale.ROOT, "https://%s.blob.core.windows.net", storageAccountName);
-    return endpoint;
+    return String.format(Locale.ROOT, "https://%s.blob.core.windows.net", storageAccountName);
   }
 
   @Override

@@ -123,7 +123,7 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
     RetryRule cloudRetry = RetryRules.cloud();
     flight.addStep(
         new VerifyAzureStorageContainerCanBeCreatedStep(
-            flightBeanBag.getAzureConfiguration(),
+            flightBeanBag.getAzureConfig(),
             flightBeanBag.getCrlService(),
             flightBeanBag.getResourceDao(),
             flightBeanBag.getLandingZoneApiDispatch(),
@@ -132,7 +132,7 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
         cloudRetry);
     flight.addStep(
         new CreateAzureStorageContainerStep(
-            flightBeanBag.getAzureConfiguration(), flightBeanBag.getCrlService(), this),
+            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
         cloudRetry);
     flight.addStep(
         new UpdateControlledResourceRegionStep(flightBeanBag.getResourceDao(), getResourceId()),
@@ -144,7 +144,7 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
   public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
     flight.addStep(
         new DeleteAzureStorageContainerStep(
-            flightBeanBag.getAzureConfiguration(),
+            flightBeanBag.getAzureConfig(),
             flightBeanBag.getCrlService(),
             flightBeanBag.getResourceDao(),
             flightBeanBag.getLandingZoneApiDispatch(),

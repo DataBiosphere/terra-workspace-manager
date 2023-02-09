@@ -128,11 +128,11 @@ public class ControlledAzureDiskResource extends ControlledResource {
       FlightBeanBag flightBeanBag) {
     RetryRule cloudRetry = RetryRules.cloud();
     flight.addStep(
-        new GetAzureDiskStep(flightBeanBag.getAzureConfiguration(), flightBeanBag.getCrlService(), this),
+        new GetAzureDiskStep(flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
         cloudRetry);
     flight.addStep(
         new CreateAzureDiskStep(
-            flightBeanBag.getAzureConfiguration(), flightBeanBag.getCrlService(), this),
+            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
         cloudRetry);
   }
 
@@ -141,7 +141,7 @@ public class ControlledAzureDiskResource extends ControlledResource {
   public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
     flight.addStep(
         new DeleteAzureDiskStep(
-            flightBeanBag.getAzureConfiguration(), flightBeanBag.getCrlService(), this),
+            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
         RetryRules.cloud());
   }
 
