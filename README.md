@@ -1,4 +1,4 @@
-# terra-workspace-manager
+# terra-workspace-manager-test
 
 This repository holds the MC Terra Workspace Manager (WSM) service, client, and
 integration test projects.
