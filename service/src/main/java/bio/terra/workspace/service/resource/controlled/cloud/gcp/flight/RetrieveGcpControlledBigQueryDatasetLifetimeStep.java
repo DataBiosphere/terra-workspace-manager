@@ -40,7 +40,7 @@ public class RetrieveGcpControlledBigQueryDatasetLifetimeStep implements Step {
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     validateRequiredEntries(
         context.getWorkingMap(), CONTROLLED_BIG_QUERY_DATASETS_WITHOUT_LIFETIME);
-    List<ControlledResource> controlledBigQueryDatasets =
+    List<ControlledBigQueryDatasetResource> controlledBigQueryDatasets =
         context
             .getWorkingMap()
             .get(CONTROLLED_BIG_QUERY_DATASETS_WITHOUT_LIFETIME, new TypeReference<>() {});
@@ -50,24 +50,17 @@ public class RetrieveGcpControlledBigQueryDatasetLifetimeStep implements Step {
 
     assert controlledBigQueryDatasets != null;
     for (var resource : controlledBigQueryDatasets) {
-      WsmResourceType resourceType = resource.getResourceType();
       logger.info(
           "Getting default table lifetime and partition life for resource (BigQuery dataset) {} in workspace {}",
           resource.getResourceId(),
           resource.getWorkspaceId());
-      if (resourceType == CONTROLLED_GCP_BIG_QUERY_DATASET) {
-        populateMapsWithResourceIdKey(
-            resourceIdToDefaultTableLifetimeMap,
-            resourceIdToDefaultPartitionLifetimeMap,
-            resourceIdToWorkspaceIdMap,
-            resource,
-            getBqDatasetDefaultTableLifetime(resource.castByEnum(resourceType)),
-            getBqDatasetDefaultPartitionLifetime(resource.castByEnum(resourceType)));
-      } else {
-        throw new UnsupportedOperationException(
-            String.format(
-                "resource of type %s is not a controlled GCP BigQuery dataset", resourceType));
-      }
+      populateMapsWithResourceIdKey(
+          resourceIdToDefaultTableLifetimeMap,
+          resourceIdToDefaultPartitionLifetimeMap,
+          resourceIdToWorkspaceIdMap,
+          resource,
+          getBqDatasetDefaultTableLifetime(resource),
+          getBqDatasetDefaultPartitionLifetime(resource));
     }
     context
         .getWorkingMap()
