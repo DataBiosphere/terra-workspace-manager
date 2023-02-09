@@ -161,7 +161,9 @@ public class ControlledAzureStorageResource extends ControlledResource {
   }
 
   public String getStorageAccountEndpoint() {
-    return String.format(Locale.ROOT, "https://%s.blob.core.windows.net", storageAccountName);
+    String endpoint =
+        String.format(Locale.ROOT, "https://%s.blob.core.windows.net", storageAccountName);
+    return endpoint;
   }
 
   @Override

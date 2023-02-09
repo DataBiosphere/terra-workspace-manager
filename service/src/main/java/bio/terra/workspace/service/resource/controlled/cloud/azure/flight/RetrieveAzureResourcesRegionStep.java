@@ -28,6 +28,9 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
+import com.azure.resourcemanager.compute.ComputeManager;
+import com.azure.resourcemanager.relay.RelayManager;
+import com.azure.resourcemanager.storage.StorageManager;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Preconditions;
 import java.util.HashMap;
@@ -43,19 +46,19 @@ import org.slf4j.LoggerFactory;
 public class RetrieveAzureResourcesRegionStep implements Step {
   private final Logger logger = LoggerFactory.getLogger(RetrieveAzureResourcesRegionStep.class);
 
-  private final AzureConfiguration azureConfiguration;
+  private final AzureConfiguration azureConfig;
   private final CrlService crlService;
   private final ResourceDao resourceDao;
   private final LandingZoneApiDispatch landingZoneApiDispatch;
   private final AuthenticatedUserRequest userRequest;
 
   public RetrieveAzureResourcesRegionStep(
-      AzureConfiguration azureConfiguration,
+      AzureConfiguration azureConfig,
       CrlService crlService,
       ResourceDao resourceDao,
       LandingZoneApiDispatch landingZoneApiDispatch,
       AuthenticatedUserRequest userRequest) {
-    this.azureConfiguration = azureConfiguration;
+    this.azureConfig = azureConfig;
     this.crlService = crlService;
     this.resourceDao = resourceDao;
     this.landingZoneApiDispatch = landingZoneApiDispatch;
@@ -82,11 +85,12 @@ public class RetrieveAzureResourcesRegionStep implements Step {
           "Getting cloud region for resource {} in workspace {}",
           resource.getResourceId(),
           resource.getWorkspaceId());
+      AzureCloudContext azureCloudContext;
       Preconditions.checkState(
           workspaceIdToAzureCloudContextMap.containsKey(resource.getWorkspaceId()),
           "Azure workspace %s must have an azure cloud context",
           resource.getWorkspaceId());
-      AzureCloudContext azureCloudContext =
+      azureCloudContext =
           AzureCloudContext.deserialize(
               workspaceIdToAzureCloudContextMap.get(resource.getWorkspaceId()));
 
@@ -159,8 +163,8 @@ public class RetrieveAzureResourcesRegionStep implements Step {
 
   private String getAzureDiskRegion(
       ControlledAzureDiskResource resource, AzureCloudContext azureCloudContext) {
-    return crlService
-        .getComputeManager(azureCloudContext, azureConfiguration)
+    ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
+    return computeManager
         .disks()
         .getByResourceGroup(azureCloudContext.getAzureResourceGroupId(), resource.getDiskName())
         .regionName();
@@ -168,8 +172,9 @@ public class RetrieveAzureResourcesRegionStep implements Step {
 
   private String getAzureStorageAccountRegion(
       ControlledAzureStorageResource resource, AzureCloudContext azureCloudContext) {
-    return crlService
-        .getStorageManager(azureCloudContext, azureConfiguration)
+    StorageManager storageManager = crlService.getStorageManager(azureCloudContext, azureConfig);
+
+    return storageManager
         .storageAccounts()
         .getByResourceGroup(
             azureCloudContext.getAzureResourceGroupId(), resource.getStorageAccountName())
@@ -178,8 +183,8 @@ public class RetrieveAzureResourcesRegionStep implements Step {
 
   private String getAzureRelayNameSpaceRegion(
       ControlledAzureRelayNamespaceResource resource, AzureCloudContext azureCloudContext) {
-    return crlService
-        .getRelayManager(azureCloudContext, azureConfiguration)
+    RelayManager manager = crlService.getRelayManager(azureCloudContext, azureConfig);
+    return manager
         .namespaces()
         .getByResourceGroup(
             azureCloudContext.getAzureResourceGroupId(), resource.getNamespaceName())
@@ -188,6 +193,7 @@ public class RetrieveAzureResourcesRegionStep implements Step {
 
   private String getAzureStorageContainerRegion(
       ControlledAzureStorageContainerResource resource, AzureCloudContext azureCloudContext) {
+    StorageManager storageManager = crlService.getStorageManager(azureCloudContext, azureConfig);
     if (resource.getStorageAccountId() != null) {
       WsmResource wsmResource =
           resourceDao.getResource(resource.getWorkspaceId(), resource.getStorageAccountId());
@@ -197,7 +203,6 @@ public class RetrieveAzureResourcesRegionStep implements Step {
               .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT);
       return getAzureStorageAccountRegion(storageAccount, azureCloudContext);
     }
-
     UUID landingZoneId =
         landingZoneApiDispatch.getLandingZoneId(
             new BearerToken(userRequest.getRequiredToken()), resource.getWorkspaceId());
@@ -208,9 +213,7 @@ public class RetrieveAzureResourcesRegionStep implements Step {
         existingSharedStorageAccount.isPresent(),
         "Unexpected: there is no shared storage account in landing zone %s",
         landingZoneId);
-
-    return crlService
-        .getStorageManager(azureCloudContext, azureConfiguration)
+    return storageManager
         .storageAccounts()
         .getById(existingSharedStorageAccount.get().getResourceId())
         .regionName();
@@ -218,8 +221,8 @@ public class RetrieveAzureResourcesRegionStep implements Step {
 
   private String getAzureVmRegion(
       ControlledAzureVmResource resource, AzureCloudContext azureCloudContext) {
-    return crlService
-        .getComputeManager(azureCloudContext, azureConfiguration)
+    ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
+    return computeManager
         .virtualMachines()
         .getByResourceGroup(azureCloudContext.getAzureResourceGroupId(), resource.getVmName())
         .regionName();
@@ -227,8 +230,8 @@ public class RetrieveAzureResourcesRegionStep implements Step {
 
   private String getAzureIpRegion(
       ControlledAzureIpResource resource, AzureCloudContext azureCloudContext) {
-    return crlService
-        .getComputeManager(azureCloudContext, azureConfiguration)
+    ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
+    return computeManager
         .networkManager()
         .publicIpAddresses()
         .getByResourceGroup(azureCloudContext.getAzureResourceGroupId(), resource.getIpName())
@@ -237,8 +240,8 @@ public class RetrieveAzureResourcesRegionStep implements Step {
 
   private String getAzureNetworkRegion(
       ControlledAzureNetworkResource resource, AzureCloudContext azureCloudContext) {
-    return crlService
-        .getComputeManager(azureCloudContext, azureConfiguration)
+    ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
+    return computeManager
         .networkManager()
         .networks()
         .getByResourceGroup(azureCloudContext.getAzureResourceGroupId(), resource.getNetworkName())

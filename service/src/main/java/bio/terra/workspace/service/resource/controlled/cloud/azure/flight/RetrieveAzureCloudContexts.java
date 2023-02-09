@@ -12,7 +12,11 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import com.fasterxml.jackson.core.type.TypeReference;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -34,11 +38,7 @@ public class RetrieveAzureCloudContexts implements Step {
     List<ControlledResource> controlledResources =
         context.getWorkingMap().get(CONTROLLED_RESOURCES_WITHOUT_REGION, new TypeReference<>() {});
     Set<UUID> workspaceIds =
-        controlledResources != null
-            ? controlledResources.stream()
-                .map(WsmResource::getWorkspaceId)
-                .collect(Collectors.toSet())
-            : Collections.emptySet();
+        controlledResources.stream().map(WsmResource::getWorkspaceId).collect(Collectors.toSet());
     Map<UUID, String> workspaceIdToAzureCloudContext = new HashMap<>();
     for (var workspaceId : workspaceIds) {
       String serializedCloudContext =
