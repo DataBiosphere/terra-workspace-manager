@@ -63,18 +63,20 @@ public class UpdateControlledBigQueryDatasetsLifetimeStep implements Step {
 
     for (var resource : controlledBigQueryDatasets) {
       var id = resource.getResourceId();
-      boolean updated =
-          resourceDao.updateBigQueryDatasetDefaultTableAndPartitionLifetime(
-              resource.castByEnum(CONTROLLED_GCP_BIG_QUERY_DATASET),
-              Long.valueOf(resourceIdToDefaultTableLifetimeMap.get(id)),
-              Long.valueOf(resourceIdToDefaultPartitionLifetimeMap.get(id)));
+      if (resourceIdsToWorkspaceIdMap.containsKey(id)) {
+        boolean updated =
+            resourceDao.updateBigQueryDatasetDefaultTableAndPartitionLifetime(
+                resource.castByEnum(CONTROLLED_GCP_BIG_QUERY_DATASET),
+                Long.valueOf(resourceIdToDefaultTableLifetimeMap.get(id)),
+                Long.valueOf(resourceIdToDefaultPartitionLifetimeMap.get(id)));
 
-      if (updated && resourceIdsToWorkspaceIdMap.containsKey(id)) {
-        updatedResources.add(
-            resourceDao
-                .getResource(UUID.fromString(resourceIdsToWorkspaceIdMap.get(id)), id)
-                .castToControlledResource()
-                .castByEnum(CONTROLLED_GCP_BIG_QUERY_DATASET));
+        if (updated) {
+          updatedResources.add(
+              resourceDao
+                  .getResource(UUID.fromString(resourceIdsToWorkspaceIdMap.get(id)), id)
+                  .castToControlledResource()
+                  .castByEnum(CONTROLLED_GCP_BIG_QUERY_DATASET));
+        }
       }
     }
 

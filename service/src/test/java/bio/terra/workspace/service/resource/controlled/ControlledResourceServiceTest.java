@@ -1268,9 +1268,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
     assertEquals(resource.getName(), fetchedResource.getName());
     assertEquals(resource.getDescription(), fetchedResource.getDescription());
-
-    controlledResourceService.deleteControlledResourceSync(
-        resource.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest());
   }
 
   @Test
@@ -1862,7 +1859,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Test
   public void updateControlledBigQueryDatasetLifetime_nothingToUpdate() {
-    resourceDao.deleteAllControlledResources(workspaceId, CloudPlatform.GCP);
+    //    resourceDao.deleteAllControlledResources(workspaceId, CloudPlatform.GCP);
     List<ControlledBigQueryDatasetResource> emptyList =
         updateControlledBigQueryDatasetsLifetimeAndWait();
 
@@ -1872,7 +1869,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @Test
   public void updateControlledBigQueryDatasetLifetime_onlyUpdateWhenLifetimesAreEmpty()
       throws Exception {
-    resourceDao.deleteAllControlledResources(workspaceId, CloudPlatform.GCP);
     var datasetId = ControlledResourceFixtures.uniqueDatasetId();
 
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
@@ -1926,8 +1922,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   private void assertControlledBigQueryDatasetLifetimeIsUpdatedAndActivityIsLogged(
       List<ControlledBigQueryDatasetResource> updatedResource,
       UUID resourceId,
-      long expectedTableLifetime,
-      long expectedPartitionLifetime)
+      Long expectedTableLifetime,
+      Long expectedPartitionLifetime)
       throws Exception {
     ControlledBigQueryDatasetResource dataset =
         updatedResource.stream()
