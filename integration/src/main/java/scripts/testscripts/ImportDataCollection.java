@@ -199,9 +199,7 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
                     dataCollectionReferenceResource.getMetadata().getResourceId()));
     assertEquals(exception.getCode(), HttpStatus.SC_CONFLICT);
     assertTrue(
-        exception
-            .getMessage()
-            .contains("Workspace contains resources in violation of policy."));
+        exception.getMessage().contains("Workspace contains resources in violation of policy."));
 
     workspaceApi.deleteWorkspace(scenario5Workspace.getId());
 
