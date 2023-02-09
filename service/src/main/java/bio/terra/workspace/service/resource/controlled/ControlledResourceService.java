@@ -630,13 +630,13 @@ public class ControlledResourceService {
                   gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId()),
                   userRequest.getRequiredToken()));
 
-      // NOTE: We take advantage of the ordering of the sync mapping lists. The 0th index is always
-      // the role we want. Since this is a temporary measure, I don't think it is worth
-      // restructuring.
-      ControlledResourceIamRole role = syncMappings.get(0).getTargetRole();
-      gcpPolicyBuilder.addResourceBinding(role, petMember);
+      // NOTE: We always set the role to EDITOR and that is currently always the right
+      // role from the sync mappings. If we change the mappings, we may need to change
+      // this code. Since this is a temporary measure, I don't think it is worth
+      // restructuring at this time.
+      gcpPolicyBuilder.addResourceBinding(ControlledResourceIamRole.EDITOR, petMember);
       if (userMember != null) {
-        gcpPolicyBuilder.addResourceBinding(role, userMember);
+        gcpPolicyBuilder.addResourceBinding(ControlledResourceIamRole.EDITOR, userMember);
       }
 
       // Store the temporary grant - it will be revoked in the background
@@ -644,7 +644,7 @@ public class ControlledResourceService {
           resource.getWorkspaceId(),
           userMember,
           petMember,
-          gcpPolicyBuilder.getCustomRole(role),
+          gcpPolicyBuilder.getCustomRole(ControlledResourceIamRole.EDITOR),
           resource.getResourceId());
     }
 

@@ -142,7 +142,8 @@ public class PetSaService {
         return Optional.empty();
       }
 
-      // Add the proxy group member to the policy. If it is already there (false), return the poliy.
+      // Add the proxy group member to the policy. If it is already there (false), return the
+      // policy.
       // This avoids calls to set the IAM policy that have a rate limit.
       if (!PetSaUtils.addSaMember(saPolicy, proxyGroupMember)) {
         return Optional.of(saPolicy);

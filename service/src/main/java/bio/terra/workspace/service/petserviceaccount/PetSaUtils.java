@@ -36,6 +36,7 @@ public class PetSaUtils {
     Binding binding = getOrCreateBinding(saPolicy);
     if (binding.getMembers() == null) {
       binding.setMembers(new ArrayList<>());
+      return false;
     }
 
     if (binding.getMembers().contains(member)) {

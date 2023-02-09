@@ -102,9 +102,11 @@ public class GcpCloudSyncStep implements Step {
       // role on the project.
       if (features.isTemporaryGrantEnabled()) {
         // Get the user emails we are granting
-        String petMember =
-            GcpUtils.toSaMember(
-                samService.getOrCreatePetSaEmail(gcpProjectId, userRequest.getRequiredToken()));
+        AuthenticatedUserRequest petSaCredentials =
+            flightContext
+                .getWorkingMap()
+                .get(WorkspaceFlightMapKeys.PET_SA_CREDENTIALS, AuthenticatedUserRequest.class);
+        String petMember = GcpUtils.toSaMember(petSaCredentials.getEmail());
         newBindings.add(bindingForRole(WsmIamRole.OWNER, petMember, gcpProjectId));
 
         String userEmail = samService.getUserEmailFromSam(userRequest);

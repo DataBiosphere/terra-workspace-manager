@@ -190,10 +190,8 @@ public class GrantDao {
   public void insertGrant(GrantData grantData) {
     // This is a bit of a pain, but here is what is happening:
     // atZoneSameInstant converts the OffsetDateTime to UTC;
-    // then we convert to "local time", which loses the zone info, but gives the result in "local
-    // UTC" time
-    // then we convert that to timestamp.
-    // Gah!
+    // then we convert to "local time", which loses the zone info, but gives the result
+    // in "local UTC" time; then we convert that to timestamp. Gah!
     Timestamp createTimestamp =
         Timestamp.valueOf(
             grantData.createTime().atZoneSameInstant(ZoneOffset.UTC).toLocalDateTime());
