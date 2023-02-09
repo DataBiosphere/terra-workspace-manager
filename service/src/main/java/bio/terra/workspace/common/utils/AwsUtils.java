@@ -1,6 +1,7 @@
 package bio.terra.workspace.common.utils;
 
 import bio.terra.common.exception.ApiException;
+import bio.terra.common.exception.ValidationException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.stairway.ShortUUID;
 import bio.terra.workspace.service.workspace.exceptions.SaCredentialsMissingException;
@@ -389,7 +390,7 @@ public class AwsUtils {
                     .build())
             .notebookInstanceStatus();
     if (notebookStatus != NotebookInstanceStatus.IN_SERVICE) {
-      throw new ApiException(
+      throw new ValidationException(
           String.format(
               "ProxyUrl only available for %s notebooks, current status is %s",
               NotebookInstanceStatus.IN_SERVICE, notebookStatus.toString()));
