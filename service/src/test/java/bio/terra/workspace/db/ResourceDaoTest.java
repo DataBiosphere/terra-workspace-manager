@@ -46,7 +46,6 @@ import java.util.Map;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -94,7 +93,6 @@ public class ResourceDaoTest extends BaseUnitTest {
     createControlledResourceAndLog(resource);
 
     var getResource = resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId());
-    assertEquals(resource, getResource);
     assertEquals(resource, getResource);
     assertEquals(DEFAULT_USER_EMAIL, getResource.getLastUpdatedByEmail());
     assertNotNull(getResource.getLastUpdatedDate());
@@ -614,27 +612,29 @@ public class ResourceDaoTest extends BaseUnitTest {
     resourceDao.deleteAllControlledResources(workspaceUuid, CloudPlatform.GCP);
 
     UUID workspaceWithGcpContext = createWorkspaceWithGcpContext(workspaceDao);
-    for (int i = 1; i <= 6; i++) {
-      ControlledBigQueryDatasetResource dataset =
-          ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceWithGcpContext)
-              .common(
-                  makeDefaultControlledResourceFieldsBuilder()
-                      .workspaceUuid(workspaceWithGcpContext)
-                      .build())
-              .defaultTableLifetime(i >= 6 ? DEFAULT_CREATED_BIG_QUERY_TABLE_LIFETIME : null)
-              .defaultPartitionLifetime(
-                  i >= 6 ? DEFAULT_CREATED_BIG_QUERY_PARTITION_LIFETIME : null)
+    try {
+      for (int i = 0; i < 5; i++) {
+        ControlledBigQueryDatasetResource dataset =
+            ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid)
+                .defaultTableLifetime(null)
+                .defaultPartitionLifetime(null)
+                .build();
+        resourceDao.createControlledResource(dataset);
+      }
+
+      ControlledBigQueryDatasetResource datasetWithLifetime =
+          ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid)
+              .defaultTableLifetime(DEFAULT_CREATED_BIG_QUERY_TABLE_LIFETIME)
+              .defaultPartitionLifetime(DEFAULT_CREATED_BIG_QUERY_PARTITION_LIFETIME)
               .build();
-      resourceDao.createControlledResource(dataset);
+
+      resourceDao.createControlledResource(datasetWithLifetime);
+
+      var ans = resourceDao.listControlledBigQueryDatasetsWithoutLifetime(CloudPlatform.GCP).size();
+      assertEquals(5, ans);
+    } finally {
+      resourceDao.deleteAllControlledResources(workspaceWithGcpContext, CloudPlatform.GCP);
     }
-
-    var aaron = resourceDao.listControlledBigQueryDatasetsWithoutLifetime(CloudPlatform.GCP);
-
-    System.out.println(aaron);
-    var ans = resourceDao.listControlledBigQueryDatasetsWithoutLifetime(CloudPlatform.GCP).size();
-    assertEquals(5, ans);
-
-    resourceDao.deleteAllControlledResources(workspaceWithGcpContext, CloudPlatform.GCP);
   }
 
   @Test

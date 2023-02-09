@@ -991,6 +991,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertEquals(
         resource,
         controlledResourceService.getControlledResource(workspaceId, resource.getResourceId()));
+
+    controlledResourceService.deleteControlledResourceSync(
+        resource.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest());
   }
 
   @Test
@@ -1188,6 +1191,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
     assertEquals(newName, fetchedResource.getName());
     assertEquals(newDescription, fetchedResource.getDescription());
+
+    controlledResourceService.deleteControlledResourceSync(
+        resource.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest());
   }
 
   @Test
@@ -1262,6 +1268,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
     assertEquals(resource.getName(), fetchedResource.getName());
     assertEquals(resource.getDescription(), fetchedResource.getDescription());
+
+    controlledResourceService.deleteControlledResourceSync(
+        resource.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest());
   }
 
   @Test
@@ -1334,6 +1343,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         location,
         newDefaultTableLifetime,
         newDefaultPartitionLifetime);
+
+    controlledResourceService.deleteControlledResourceSync(
+        resource.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest());
   }
 
   @Test
@@ -1386,6 +1398,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     // failed
     validateBigQueryDatasetCloudMetadata(
         projectId, createdDataset.getDatasetName(), location, null, null);
+
+    controlledResourceService.deleteControlledResourceSync(
+        resource.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest());
   }
 
   @Test
@@ -1751,6 +1766,11 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         updatedResource, createdDataset.getResourceId(), DEFAULT_RESOURCE_REGION);
     assertResourceRegionIsUpdatedAndActivityIsLogged(
         updatedResource, notebookResource.getResourceId(), "us-east1");
+
+    controlledResourceService.deleteControlledResourceSync(
+        createdDataset.getWorkspaceId(),
+        createdDataset.getResourceId(),
+        user.getAuthenticatedRequest());
   }
 
   private void assertResourceRegionIsUpdatedAndActivityIsLogged(
