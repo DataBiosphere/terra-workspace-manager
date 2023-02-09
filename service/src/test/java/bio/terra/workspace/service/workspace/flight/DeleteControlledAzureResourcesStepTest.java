@@ -1,5 +1,12 @@
 package bio.terra.workspace.service.workspace.flight;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
@@ -17,19 +24,11 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResourceF
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 
 public class DeleteControlledAzureResourcesStepTest extends BaseAzureUnitTest {
   @Mock private ControlledResourceService mockControlledResourceService;
@@ -91,12 +90,12 @@ public class DeleteControlledAzureResourcesStepTest extends BaseAzureUnitTest {
             SamConstants.SamControlledResourceActions.DELETE_ACTION);
 
     DeleteControlledAzureResourcesStep deleteControlledAzureResourcesStep =
-            new DeleteControlledAzureResourcesStep(
-                    mockResourceDao,
-                    mockControlledResourceService,
-                    mockSamService,
-                    workspaceId,
-                    userRequest);
+        new DeleteControlledAzureResourcesStep(
+            mockResourceDao,
+            mockControlledResourceService,
+            mockSamService,
+            workspaceId,
+            userRequest);
 
     final StepResult result = deleteControlledAzureResourcesStep.doStep(mockFlightContext);
 
