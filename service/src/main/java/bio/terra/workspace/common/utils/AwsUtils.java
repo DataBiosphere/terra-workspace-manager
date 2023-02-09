@@ -351,12 +351,11 @@ public class AwsUtils {
   public static void waitForSageMakerNotebookInService(
       Credentials credentials, Region region, String notebookName) {
     SageMakerClient sageMaker = getSagemakerSession(credentials, region);
-    DescribeNotebookInstanceRequest describeNotebookInstanceRequest =
+    DescribeNotebookInstanceRequest request =
         DescribeNotebookInstanceRequest.builder().notebookInstanceName(notebookName).build();
 
     while (true) {
-      DescribeNotebookInstanceResponse result =
-          sageMaker.describeNotebookInstance(describeNotebookInstanceRequest);
+      DescribeNotebookInstanceResponse result = sageMaker.describeNotebookInstance(request);
       NotebookInstanceStatus status = result.notebookInstanceStatus();
 
       if (status.equals(NotebookInstanceStatus.IN_SERVICE)) {
@@ -381,6 +380,20 @@ public class AwsUtils {
   public static URL getSageMakerNotebookProxyUrl(
       Credentials credentials, Region region, String notebookName, Integer duration, String view) {
     SageMakerClient sageMaker = getSagemakerSession(credentials, region);
+
+    NotebookInstanceStatus notebookStatus =
+        sageMaker
+            .describeNotebookInstance(
+                DescribeNotebookInstanceRequest.builder()
+                    .notebookInstanceName(notebookName)
+                    .build())
+            .notebookInstanceStatus();
+    if (notebookStatus != NotebookInstanceStatus.IN_SERVICE) {
+      throw new ApiException(
+          String.format(
+              "ProxyUrl only available for %s notebooks, current status is %s",
+              NotebookInstanceStatus.IN_SERVICE, notebookStatus.toString()));
+    }
 
     CreatePresignedNotebookInstanceUrlRequest request =
         CreatePresignedNotebookInstanceUrlRequest.builder()

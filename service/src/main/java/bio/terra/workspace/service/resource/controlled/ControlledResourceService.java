@@ -30,6 +30,7 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceSyncMapping.SyncMapping;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.flight.UpdateAwsControlledResourceRegionFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakernotebook.ControlledAwsSageMakerNotebookResource;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.storagebucket.ControlledAwsBucketResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.flight.UpdateAzureControlledResourceRegionFlight;
@@ -658,6 +659,23 @@ public class ControlledResourceService {
     }
 
     return gcpPolicyBuilder.build();
+  }
+
+  // TODO (PF-2368): clean this up once back-fill is done in all Terra environment.
+  @Traced
+  @Nullable
+  public String updateAwsControlledResourcesRegionAsync(
+      AuthenticatedUserRequest userRequest, boolean wetRun) {
+    return jobService
+        .newJob()
+        .description(
+            "A flight to update controlled resource's missing region in all the existing"
+                + "terra managed aws projects")
+        .flightClass(UpdateAwsControlledResourceRegionFlight.class)
+        .userRequest(userRequest)
+        .addParameter(IS_WET_RUN, wetRun)
+        .operationType(OperationType.UPDATE)
+        .submit();
   }
 
   // TODO (PF-2368): clean this up once back-fill is done in all Terra environment.

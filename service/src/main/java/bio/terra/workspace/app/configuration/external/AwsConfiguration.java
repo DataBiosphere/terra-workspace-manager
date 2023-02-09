@@ -1,6 +1,7 @@
 package bio.terra.workspace.app.configuration.external;
 
 import java.util.List;
+import javax.annotation.Nullable;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
@@ -39,6 +40,15 @@ public class AwsConfiguration {
 
   public void setLandingZones(List<AwsLandingZoneConfiguration> landingZones) {
     this.landingZones = landingZones;
+  }
+
+  public @Nullable AwsLandingZoneConfiguration getLandingZoneByName(String landingZoneName) {
+    return this.landingZones.stream()
+        .filter(
+            landingZoneConfiguration ->
+                landingZoneConfiguration.getName().equalsIgnoreCase(landingZoneName))
+        .findAny()
+        .orElseGet(null);
   }
 
   public List<AwsBucketSeedFile> getBucketSeedFiles() {
