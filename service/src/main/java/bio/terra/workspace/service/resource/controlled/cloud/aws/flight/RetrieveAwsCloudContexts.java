@@ -1,8 +1,8 @@
-package bio.terra.workspace.service.resource.controlled.cloud.azure.flight;
+package bio.terra.workspace.service.resource.controlled.cloud.aws.flight;
 
 import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntries;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCES_WITHOUT_REGION;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.WORKSPACE_ID_TO_AZURE_CLOUD_CONTEXT_MAP;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.WORKSPACE_ID_TO_AWS_CLOUD_CONTEXT_MAP;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
@@ -10,22 +10,22 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.WsmResource;
-import bio.terra.workspace.service.workspace.AzureCloudContextService;
+import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Retrieves the azure cloud context of the Terra workspace where the resources with missing regions
- * are in. The azure cloud context are deserialized and used in {@link
- * RetrieveAzureResourcesRegionStep}.
+ * Retrieves the aws cloud context of the Terra workspace where the resources with missing regions
+ * are in. The aws cloud context are deserialized and used in {@link
+ * RetrieveAwsResourcesRegionStep}.
  */
-public class RetrieveAzureCloudContexts implements Step {
+public class RetrieveAwsCloudContexts implements Step {
 
-  final AzureCloudContextService azureCloudContextService;
+  final AwsCloudContextService awsCloudContextService;
 
-  public RetrieveAzureCloudContexts(AzureCloudContextService azureCloudContextService) {
-    this.azureCloudContextService = azureCloudContextService;
+  public RetrieveAwsCloudContexts(AwsCloudContextService awsCloudContextService) {
+    this.awsCloudContextService = awsCloudContextService;
   }
 
   @Override
@@ -39,15 +39,15 @@ public class RetrieveAzureCloudContexts implements Step {
                 .map(WsmResource::getWorkspaceId)
                 .collect(Collectors.toSet())
             : Collections.emptySet();
-    Map<UUID, String> workspaceIdToAzureCloudContext = new HashMap<>();
+    Map<UUID, String> workspaceIdToAwsCloudContext = new HashMap<>();
     for (var workspaceId : workspaceIds) {
       String serializedCloudContext =
-          azureCloudContextService.getRequiredAzureCloudContext(workspaceId).serialize();
-      workspaceIdToAzureCloudContext.put(workspaceId, serializedCloudContext);
+          awsCloudContextService.getRequiredAwsCloudContext(workspaceId).serialize();
+      workspaceIdToAwsCloudContext.put(workspaceId, serializedCloudContext);
     }
     context
         .getWorkingMap()
-        .put(WORKSPACE_ID_TO_AZURE_CLOUD_CONTEXT_MAP, workspaceIdToAzureCloudContext);
+        .put(WORKSPACE_ID_TO_AWS_CLOUD_CONTEXT_MAP, workspaceIdToAwsCloudContext);
     return StepResult.getStepResultSuccess();
   }
 

@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.controlled.cloud.azure.flight;
+package bio.terra.workspace.service.resource.controlled.cloud.aws.flight;
 
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.IS_WET_RUN;
 
@@ -13,8 +13,8 @@ import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveCon
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourcesRegionStep;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 
-/** A flight to back-fill azure controlled resources that are missing the region fields. */
-public class UpdateAzureControlledResourceRegionFlight extends Flight {
+/** A flight to back-fill aws controlled resources that are missing the region fields. */
+public class UpdateAwsControlledResourceRegionFlight extends Flight {
 
   /**
    * All subclasses must provide a constructor with this signature.
@@ -22,7 +22,7 @@ public class UpdateAzureControlledResourceRegionFlight extends Flight {
    * @param inputParameters FlightMap of the inputs for the flight
    * @param beanBag Anonymous context meaningful to the application using Stairway
    */
-  public UpdateAzureControlledResourceRegionFlight(FlightMap inputParameters, Object beanBag) {
+  public UpdateAwsControlledResourceRegionFlight(FlightMap inputParameters, Object beanBag) {
     super(inputParameters, beanBag);
     FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
     AuthenticatedUserRequest userRequest =
@@ -30,18 +30,13 @@ public class UpdateAzureControlledResourceRegionFlight extends Flight {
     boolean isWetRun = FlightUtils.getRequired(inputParameters, IS_WET_RUN, Boolean.class);
     addStep(
         new RetrieveControlledResourceWithoutRegionStep(
-            CloudPlatform.AZURE, flightBeanBag.getResourceDao()),
+            CloudPlatform.AWS, flightBeanBag.getResourceDao()),
         RetryRules.shortDatabase());
     addStep(
-        new RetrieveAzureCloudContexts(flightBeanBag.getAzureCloudContextService()),
+        new RetrieveAwsCloudContexts(flightBeanBag.getAwsCloudContextService()),
         RetryRules.shortDatabase());
     addStep(
-        new RetrieveAzureResourcesRegionStep(
-            flightBeanBag.getAzureConfiguration(),
-            flightBeanBag.getCrlService(),
-            flightBeanBag.getResourceDao(),
-            flightBeanBag.getLandingZoneApiDispatch(),
-            userRequest),
+        new RetrieveAwsResourcesRegionStep(flightBeanBag.getAwsConfiguration()),
         RetryRules.shortExponential());
     addStep(new UpdateControlledResourcesRegionStep(flightBeanBag.getResourceDao(), isWetRun));
   }
