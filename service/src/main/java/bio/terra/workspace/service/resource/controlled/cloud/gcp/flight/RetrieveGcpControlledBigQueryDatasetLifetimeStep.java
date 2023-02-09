@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
 
 public class RetrieveGcpControlledBigQueryDatasetLifetimeStep implements Step {
   private static final Logger logger =
-      LoggerFactory.getLogger(RetrieveGcpResourcesRegionStep.class);
+      LoggerFactory.getLogger(RetrieveGcpControlledBigQueryDatasetLifetimeStep.class);
   private final CrlService crlService;
 
   public RetrieveGcpControlledBigQueryDatasetLifetimeStep(CrlService crlService) {

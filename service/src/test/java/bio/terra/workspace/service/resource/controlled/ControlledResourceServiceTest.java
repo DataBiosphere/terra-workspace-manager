@@ -97,6 +97,7 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -1841,6 +1842,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Test
   public void updateControlledBigQueryDatasetLifetime_nothingToUpdate() {
+    resourceDao.deleteAllControlledResources(workspaceId, CloudPlatform.GCP);
     List<ControlledBigQueryDatasetResource> emptyList =
         updateControlledBigQueryDatasetsLifetimeAndWait();
 
@@ -1850,6 +1852,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @Test
   public void updateControlledBigQueryDatasetLifetime_onlyUpdateWhenLifetimesAreEmpty()
       throws Exception {
+    resourceDao.deleteAllControlledResources(workspaceId, CloudPlatform.GCP);
     var datasetId = ControlledResourceFixtures.uniqueDatasetId();
 
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
