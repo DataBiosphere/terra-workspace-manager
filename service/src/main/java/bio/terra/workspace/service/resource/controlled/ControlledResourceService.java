@@ -666,7 +666,6 @@ public class ControlledResourceService {
             "A flight to update controlled BigQuery datasets' missing "
                 + "default table lifetime and default partition lifetime "
                 + "in all the existing terra managed gcp projects")
-        .jobId(UUID.randomUUID().toString())
         .flightClass(UpdateGcpControlledBigQueryDatasetsLifetimeFlight.class)
         .userRequest(wsmSaRequest)
         .operationType(OperationType.UPDATE)

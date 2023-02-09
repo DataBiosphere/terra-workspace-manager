@@ -74,11 +74,6 @@ public class ResourceDaoTest extends BaseUnitTest {
     workspaceDao.deleteWorkspace(workspaceUuid);
   }
 
-  @AfterEach
-  public void cleanUp_GcpResources() {
-    resourceDao.deleteAllControlledResources(workspaceUuid, CloudPlatform.GCP);
-  }
-
   @Test
   public void createGetControlledGcsBucket_beforeLogIsWrite_lastUpdatedDateEqualsCreatedDate() {
     ControlledGcsBucketResource resource =
@@ -99,6 +94,7 @@ public class ResourceDaoTest extends BaseUnitTest {
     createControlledResourceAndLog(resource);
 
     var getResource = resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId());
+    assertEquals(resource, getResource);
     assertEquals(resource, getResource);
     assertEquals(DEFAULT_USER_EMAIL, getResource.getLastUpdatedByEmail());
     assertNotNull(getResource.getLastUpdatedDate());
@@ -381,28 +377,33 @@ public class ResourceDaoTest extends BaseUnitTest {
             .build();
     createControlledResourceAndLog(initialResource);
 
-    final UUID workspaceId2 = createWorkspaceWithGcpContext(workspaceDao);
-    // This is in a different workspace (and so a different cloud context), so it is not a conflict
-    // even with the same Dataset ID.
-    final ControlledBigQueryDatasetResource uniqueResource =
-        ControlledBigQueryDatasetResource.builder()
-            .common(ControlledResourceFixtures.makeDefaultControlledResourceFields(workspaceId2))
-            .datasetName(datasetName1)
-            .projectId(projectId2)
-            .build();
-    createControlledResourceAndLog(uniqueResource);
+    UUID workspaceId2 = createWorkspaceWithGcpContext(workspaceDao);
+    try {
+      // This is in a different workspace (and so a different cloud context), so it is not a
+      // conflict
+      // even with the same Dataset ID.
+      final ControlledBigQueryDatasetResource uniqueResource =
+          ControlledBigQueryDatasetResource.builder()
+              .common(ControlledResourceFixtures.makeDefaultControlledResourceFields(workspaceId2))
+              .datasetName(datasetName1)
+              .projectId(projectId2)
+              .build();
+      createControlledResourceAndLog(uniqueResource);
 
-    // This is in the same workspace as initialResource, so it should be a conflict.
-    final ControlledBigQueryDatasetResource duplicatingResource =
-        ControlledBigQueryDatasetResource.builder()
-            .common(ControlledResourceFixtures.makeDefaultControlledResourceFields(workspaceUuid))
-            .projectId(projectId1)
-            .datasetName(datasetName1)
-            .build();
+      // This is in the same workspace as initialResource, so it should be a conflict.
+      final ControlledBigQueryDatasetResource duplicatingResource =
+          ControlledBigQueryDatasetResource.builder()
+              .common(ControlledResourceFixtures.makeDefaultControlledResourceFields(workspaceUuid))
+              .projectId(projectId1)
+              .datasetName(datasetName1)
+              .build();
 
-    assertThrows(
-        DuplicateResourceException.class,
-        () -> createControlledResourceAndLog(duplicatingResource));
+      assertThrows(
+          DuplicateResourceException.class,
+          () -> createControlledResourceAndLog(duplicatingResource));
+    } finally {
+      resourceDao.deleteAllControlledResources(workspaceId2, CloudPlatform.GCP);
+    }
   }
 
   @Test
@@ -496,30 +497,38 @@ public class ResourceDaoTest extends BaseUnitTest {
   @Test
   public void deleteResourceProperties_nonExistingKeys_nothingIsDeleted() {
     UUID workspaceUuid = createWorkspaceWithGcpContext(workspaceDao);
-    ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid).build();
-    createControlledResourceAndLog(resource);
+    try {
+      ControlledBigQueryDatasetResource resource =
+          ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid).build();
+      createControlledResourceAndLog(resource);
 
-    resourceDao.deleteResourceProperties(
-        workspaceUuid, resource.getResourceId(), List.of(RandomStringUtils.randomAlphabetic(3)));
+      resourceDao.deleteResourceProperties(
+          workspaceUuid, resource.getResourceId(), List.of(RandomStringUtils.randomAlphabetic(3)));
 
-    assertEquals(
-        resource.getProperties(),
-        resourceDao.getResource(workspaceUuid, resource.getResourceId()).getProperties());
+      assertEquals(
+          resource.getProperties(),
+          resourceDao.getResource(workspaceUuid, resource.getResourceId()).getProperties());
+    } finally {
+      resourceDao.deleteAllControlledResources(workspaceUuid, CloudPlatform.GCP);
+    }
   }
 
   @Test
   public void deleteResourceProperties_noKeySpecified_throwsMissingRequiredFieldsException() {
     UUID workspaceUuid = createWorkspaceWithGcpContext(workspaceDao);
-    ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid).build();
-    createControlledResourceAndLog(resource);
+    try {
+      ControlledBigQueryDatasetResource resource =
+          ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid).build();
+      createControlledResourceAndLog(resource);
 
-    assertThrows(
-        MissingRequiredFieldsException.class,
-        () ->
-            resourceDao.deleteResourceProperties(
-                workspaceUuid, resource.getResourceId(), List.of()));
+      assertThrows(
+          MissingRequiredFieldsException.class,
+          () ->
+              resourceDao.deleteResourceProperties(
+                  workspaceUuid, resource.getResourceId(), List.of()));
+    } finally {
+      resourceDao.deleteAllControlledResources(workspaceUuid, CloudPlatform.GCP);
+    }
   }
 
   @Test
@@ -602,12 +611,16 @@ public class ResourceDaoTest extends BaseUnitTest {
 
   @Test
   public void listControlledBigQueryDatasetsWithoutLifetime() {
-    UUID workspaceUuid = createWorkspaceWithGcpContext(workspaceDao);
+    resourceDao.deleteAllControlledResources(workspaceUuid, CloudPlatform.GCP);
+
+    UUID workspaceWithGcpContext = createWorkspaceWithGcpContext(workspaceDao);
     for (int i = 1; i <= 6; i++) {
       ControlledBigQueryDatasetResource dataset =
-          ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid)
+          ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceWithGcpContext)
               .common(
-                  makeDefaultControlledResourceFieldsBuilder().workspaceUuid(workspaceUuid).build())
+                  makeDefaultControlledResourceFieldsBuilder()
+                      .workspaceUuid(workspaceWithGcpContext)
+                      .build())
               .defaultTableLifetime(i >= 6 ? DEFAULT_CREATED_BIG_QUERY_TABLE_LIFETIME : null)
               .defaultPartitionLifetime(
                   i >= 6 ? DEFAULT_CREATED_BIG_QUERY_PARTITION_LIFETIME : null)
@@ -615,8 +628,13 @@ public class ResourceDaoTest extends BaseUnitTest {
       resourceDao.createControlledResource(dataset);
     }
 
+    var aaron = resourceDao.listControlledBigQueryDatasetsWithoutLifetime(CloudPlatform.GCP);
+
+    System.out.println(aaron);
     var ans = resourceDao.listControlledBigQueryDatasetsWithoutLifetime(CloudPlatform.GCP).size();
     assertEquals(5, ans);
+
+    resourceDao.deleteAllControlledResources(workspaceWithGcpContext, CloudPlatform.GCP);
   }
 
   @Test
