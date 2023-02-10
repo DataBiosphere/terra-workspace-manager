@@ -1347,6 +1347,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     ControlledBigQueryDatasetResource resource =
         ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
             .datasetName(datasetId)
+            .defaultTableLifetime(null)
+            .defaultPartitionLifetime(null)
             .build();
 
     ControlledBigQueryDatasetResource createdDataset =
@@ -1386,6 +1388,15 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     // failed
     validateBigQueryDatasetCloudMetadata(
         projectId, createdDataset.getDatasetName(), location, null, null);
+
+    // Set the expiration times to be defined, so the dataset is not picked up in future tests
+    // querying datasets with undefined expiration times.
+    final ApiGcpBigQueryDatasetUpdateParameters updateParametersCleanup =
+        new ApiGcpBigQueryDatasetUpdateParameters()
+            .defaultTableLifetime(DEFAULT_CREATED_BIG_QUERY_TABLE_LIFETIME)
+            .defaultPartitionLifetime(DEFAULT_CREATED_BIG_QUERY_PARTITION_LIFETIME);
+    controlledResourceService.updateBqDataset(
+        resource, updateParametersCleanup, null, null, userAccessUtils.defaultUserAuthRequest());
   }
 
   @Test
@@ -1899,9 +1910,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         createdDataset.getResourceId(),
         DEFAULT_CREATED_BIG_QUERY_TABLE_LIFETIME,
         DEFAULT_CREATED_BIG_QUERY_PARTITION_LIFETIME);
-
-    controlledResourceService.deleteControlledResourceSync(
-        resource.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest());
   }
 
   private void assertControlledBigQueryDatasetLifetimeIsUpdatedAndActivityIsLogged(
