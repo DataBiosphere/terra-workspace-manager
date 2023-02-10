@@ -204,7 +204,7 @@ components:
     AzureBatchPoolComputeNodeDeallocationOption:
       description: |
         Determines what to do with a node and its running task(s) after it has been selected for deallocation.
-      type: object
+      type: string
       enum: ['Requeue', 'Terminate', 'TaskCompletion', 'RetainedData']
 
     AzureBatchPoolAutoScaleSettings:
@@ -291,7 +291,7 @@ components:
 
     DynamicVNetAssignmentScope:
       description: Defines values for AutoUserScope.
-      type: object
+      type: string
       enum: [ 'none', 'job' ]
 
     PoolEndpointConfiguration:
@@ -362,12 +362,12 @@ components:
     NetworkSecurityGroupRuleAccess:
       description: |
         The action that should be taken for a specified IP address, subnet range or tag.
-      type: object
+      type: string
       enum: ['Allow', 'Deny']
 
     InboundEndpointProtocol:
       description: The protocol of the endpoint.
-      type: object
+      type: string
       enum: [ 'TCP', 'UDP' ]
 
     PublicIpAddressConfiguration:
@@ -389,7 +389,7 @@ components:
     IpAddressProvisioningType:
       description: |
         Defines values for IpAddressProvisioningType.
-      type: object
+      type: string
       enum: ['BatchManaged', 'UserManaged', 'NoPublicIPAddresses']
 
     AzureBatchPoolResourceFile:
@@ -460,12 +460,12 @@ components:
 
     AzureBatchPoolAutoUserScope:
       description: Defines values for AutoUserScope.
-      type: object
+      type: string
       enum: [ 'Task', 'Pool' ]
 
     AzureBatchPoolElevationLevel:
       description: Defines values for ElevationLevel.
-      type: object
+      type: string
       enum: [ 'NonAdmin', 'Admin' ]
 
     AzureBatchPoolTaskContainerSettings:
@@ -515,7 +515,7 @@ components:
 
     AzureBatchPoolContainerWorkingDirectory:
       description: Defines values for ContainerWorkingDirectory.
-      type: object
+      type: string
       enum: [ 'TaskWorkingDirectory', 'ContainerImageDefault']
 
     CreatedControlledAzureBatchPool:
