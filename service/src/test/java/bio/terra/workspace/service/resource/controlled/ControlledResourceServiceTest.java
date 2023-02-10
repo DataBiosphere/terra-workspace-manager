@@ -1268,6 +1268,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
     assertEquals(resource.getName(), fetchedResource.getName());
     assertEquals(resource.getDescription(), fetchedResource.getDescription());
+
+    controlledResourceService.deleteControlledResourceSync(
+        resource.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest());
   }
 
   @Test
@@ -1834,6 +1837,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     // The three controlled resources are not updated as the cloud resource does not exist.
     assertTrue(updatedResource.isEmpty());
+
+    resourceDao.deleteAllControlledResources(workspaceId, CloudPlatform.GCP);
   }
 
   private List<ControlledResource> updateControlledResourcesRegionAndWait() {
@@ -1859,7 +1864,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Test
   public void updateControlledBigQueryDatasetLifetime_nothingToUpdate() {
-    //    resourceDao.deleteAllControlledResources(workspaceId, CloudPlatform.GCP);
     List<ControlledBigQueryDatasetResource> emptyList =
         updateControlledBigQueryDatasetsLifetimeAndWait();
 
@@ -1917,6 +1921,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         createdDataset.getResourceId(),
         DEFAULT_CREATED_BIG_QUERY_TABLE_LIFETIME,
         DEFAULT_CREATED_BIG_QUERY_PARTITION_LIFETIME);
+
+    controlledResourceService.deleteControlledResourceSync(
+        resource.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest());
   }
 
   private void assertControlledBigQueryDatasetLifetimeIsUpdatedAndActivityIsLogged(
