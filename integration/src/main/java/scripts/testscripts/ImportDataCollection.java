@@ -3,6 +3,8 @@ package scripts.testscripts;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.*;
+import static scripts.utils.BqDatasetUtils.makeControlledBigQueryDatasetUserShared;
+import static scripts.utils.TestUtils.appendRandomNumber;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
@@ -64,6 +66,15 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
     UUID resourceId = controlledBucket.getResourceId();
     GcpGcsBucketResource controlledBucketResource = controlledBucket.getGcpBucket();
     logger.info("Created controlled bucket {}", resourceId);
+
+    // Create a shared BigQuery Dataset
+    GcpBigQueryDatasetResource controlledBqDataset =
+        makeControlledBigQueryDatasetUserShared(
+            controlledGcpResourceApi,
+            centralDataCollection.getId(),
+            appendRandomNumber("import_data_collection_bq_dataset"),
+            null,
+            CloningInstructionsEnum.DEFINITION);
 
     // make a reference to the shared Bucket
     GcpGcsBucketResource dataCollectionReferenceResource =
@@ -299,6 +310,86 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
             .contains("The specified destination location violates region policies"));
 
     workspaceApi.deleteWorkspace(scenario7Workspace.getId());
+
+    /*
+     Scenario 8: Cloning BigQuery Datasets. Workspace without region should
+     gain region from data collection. Workspace (policy=empty) + Data Collection (policy=us-central1).
+     Result: OK & Workspace (policy=us-central1)
+    */
+    CreatedWorkspace scenario8Workspace =
+        createWorkspace(UUID.randomUUID(), getSpendProfileId(), workspaceApi);
+
+    // Need to have a cloud context in order to clone a resource.
+    projectId = CloudContextMaker.createGcpCloudContext(scenario8Workspace.getId(), workspaceApi);
+    logger.info("Created project {}", projectId);
+
+    var cloneBqRequest =
+        new CloneControlledGcpBigQueryDatasetRequest()
+            .name("importDataCollection8")
+            .jobControl(new JobControl().id(UUID.randomUUID().toString()))
+            .destinationDatasetName("cloned_dataset8")
+            .cloningInstructions(CloningInstructionsEnum.DEFINITION)
+            .destinationWorkspaceId(scenario8Workspace.getId());
+    CloneControlledGcpBigQueryDatasetResult cloneBqResult =
+        controlledGcpResourceApi.cloneBigQueryDataset(
+            cloneBqRequest,
+            controlledBqDataset.getMetadata().getWorkspaceId(),
+            controlledBqDataset.getMetadata().getResourceId());
+
+    CloneControlledGcpBigQueryDatasetRequest finalCloneBqRequest1 = cloneBqRequest;
+    cloneBqResult =
+        ClientTestUtils.pollWhileRunning(
+            cloneBqResult,
+            () ->
+                resourceApi.getCloneBigQueryDatasetResult(
+                    controlledBqDataset.getMetadata().getWorkspaceId(),
+                    finalCloneBqRequest1.getJobControl().getId()),
+            CloneControlledGcpBigQueryDatasetResult::getJobReport,
+            Duration.ofSeconds(5));
+
+    ClientTestUtils.assertJobSuccess(
+        "clone controlled BigQuery dataset 8",
+        cloneBqResult.getJobReport(),
+        cloneBqResult.getErrorReport());
+
+    validateWorkspaceContainsRegionPolicy(
+        workspaceApi, scenario8Workspace.getId(), gcpCentralLocation);
+
+    // try to clone the resource to a different location - one outside of policy.
+    cloneBqRequest =
+        new CloneControlledGcpBigQueryDatasetRequest()
+            .name("importDataCollection8b")
+            .jobControl(new JobControl().id(UUID.randomUUID().toString()))
+            .destinationDatasetName("cloned_dataset8b")
+            .location("us-east1")
+            .cloningInstructions(CloningInstructionsEnum.DEFINITION)
+            .destinationWorkspaceId(scenario8Workspace.getId());
+    cloneBqResult =
+        controlledGcpResourceApi.cloneBigQueryDataset(
+            cloneBqRequest,
+            controlledBqDataset.getMetadata().getWorkspaceId(),
+            controlledBqDataset.getMetadata().getResourceId());
+
+    CloneControlledGcpBigQueryDatasetRequest finalCloneBqRequest = cloneBqRequest;
+    cloneBqResult =
+        ClientTestUtils.pollWhileRunning(
+            cloneBqResult,
+            () ->
+                resourceApi.getCloneBigQueryDatasetResult(
+                    controlledBqDataset.getMetadata().getWorkspaceId(),
+                    finalCloneBqRequest.getJobControl().getId()),
+            CloneControlledGcpBigQueryDatasetResult::getJobReport,
+            Duration.ofSeconds(5));
+
+    assertEquals(JobReport.StatusEnum.FAILED, cloneBqResult.getJobReport().getStatus());
+    assertEquals(HttpStatus.SC_CONFLICT, cloneBqResult.getJobReport().getStatusCode());
+    assertTrue(
+        cloneBqResult
+            .getErrorReport()
+            .getMessage()
+            .contains("The specified destination location violates region policies"));
+
+    workspaceApi.deleteWorkspace(scenario8Workspace.getId());
 
     // Clean up the data collection used in most of the scenarios.
     workspaceApi.deleteWorkspace(centralDataCollection.getId());
