@@ -1268,6 +1268,10 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
     assertEquals(resource.getName(), fetchedResource.getName());
     assertEquals(resource.getDescription(), fetchedResource.getDescription());
+
+    jobService.setFlightDebugInfoForTest(null);
+    controlledResourceService.deleteControlledResourceSync(
+        workspaceId, resource.getResourceId(), user.getAuthenticatedRequest());
   }
 
   @Test
