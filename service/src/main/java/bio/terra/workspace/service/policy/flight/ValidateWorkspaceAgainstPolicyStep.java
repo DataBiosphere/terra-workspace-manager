@@ -52,12 +52,14 @@ public class ValidateWorkspaceAgainstPolicyStep implements Step {
 
     // Validate the workspace controlled resources against any region policies.
     HashSet<String> validRegions = new HashSet<>();
-    validRegions.addAll(tpsApiDispatch.listValidRegionsForPao(effectivePolicies, cloudPlatform));
+    for (String validRegion : tpsApiDispatch.listValidRegionsForPao(effectivePolicies, cloudPlatform)) {
+      validRegions.add(validRegion.toLowerCase());
+    }
     List<ControlledResource> existingResources =
         resourceDao.listControlledResources(workspaceId, cloudPlatform);
 
     for (var existingResource : existingResources) {
-      if (!validRegions.contains(existingResource.getRegion())) {
+      if (!validRegions.contains(existingResource.getRegion().toLowerCase())) {
         throw new PolicyConflictException("Workspace contains resources in violation of policy.");
       }
     }

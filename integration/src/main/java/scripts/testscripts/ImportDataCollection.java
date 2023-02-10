@@ -11,20 +11,8 @@ import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
-import bio.terra.workspace.model.CloneControlledGcpGcsBucketRequest;
-import bio.terra.workspace.model.CloneReferencedResourceRequestBody;
-import bio.terra.workspace.model.CloningInstructionsEnum;
-import bio.terra.workspace.model.CreateWorkspaceRequestBody;
-import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
-import bio.terra.workspace.model.CreatedWorkspace;
-import bio.terra.workspace.model.GcpGcsBucketResource;
-import bio.terra.workspace.model.JobControl;
-import bio.terra.workspace.model.Properties;
-import bio.terra.workspace.model.Property;
-import bio.terra.workspace.model.WorkspaceDescription;
-import bio.terra.workspace.model.WsmPolicyInput;
-import bio.terra.workspace.model.WsmPolicyInputs;
-import bio.terra.workspace.model.WsmPolicyPair;
+import bio.terra.workspace.model.*;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -204,24 +192,84 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
     workspaceApi.deleteWorkspace(scenario5Workspace.getId());
 
     /*
-     Scenario 6: Same as Scenario1 with a controlled resource. Workspace without region should gain region from data collection.
-     Workspace (policy=empty) + Data Collection (policy=us-central1). Result: OK & Workspace (policy=us-central1)
+     Scenario 6: Same as Scenario1 but cloning a controlled resource to a reference. Workspace without region should
+     gain region from data collection. Workspace (policy=empty) + Data Collection (policy=us-central1).
+     Result: OK & Workspace (policy=us-central1)
     */
     CreatedWorkspace noPolicyWorkspace =
         createWorkspace(UUID.randomUUID(), getSpendProfileId(), workspaceApi);
 
-    controlledGcpResourceApi.cloneGcsBucket(
+    final CloneControlledGcpGcsBucketRequest cloneRequest =
         new CloneControlledGcpGcsBucketRequest()
             .destinationWorkspaceId(noPolicyWorkspace.getId())
             .cloningInstructions(CloningInstructionsEnum.REFERENCE)
-            .jobControl(new JobControl().id(UUID.randomUUID().toString())),
-        dataCollectionReferenceResource.getMetadata().getWorkspaceId(),
-        controlledBucketResource.getMetadata().getResourceId());
+            .jobControl(new JobControl().id(UUID.randomUUID().toString()));
+
+    CloneControlledGcpGcsBucketResult cloneResult =
+        controlledGcpResourceApi.cloneGcsBucket(
+            cloneRequest,
+            controlledBucketResource.getMetadata().getWorkspaceId(),
+            controlledBucketResource.getMetadata().getResourceId());
+
+    cloneResult =
+        ClientTestUtils.pollWhileRunning(
+            cloneResult,
+            () ->
+                resourceApi.getCloneGcsBucketResult(
+                    controlledBucketResource.getMetadata().getWorkspaceId(),
+                    cloneRequest.getJobControl().getId()),
+            CloneControlledGcpGcsBucketResult::getJobReport,
+            Duration.ofSeconds(5));
+
+    ClientTestUtils.assertJobSuccess(
+        "clone bucket", cloneResult.getJobReport(), cloneResult.getErrorReport());
 
     validateWorkspaceContainsRegionPolicy(
         workspaceApi, noPolicyWorkspace.getId(), gcpCentralLocation);
     workspaceApi.deleteWorkspace(noPolicyWorkspace.getId());
 
+    /*
+     Scenario 7: Same as Scenario6 but cloning a controlled resource to a resource. Workspace without region should
+     gain region from data collection. Workspace (policy=empty) + Data Collection (policy=us-central1).
+     Result: OK & Workspace (policy=us-central1)
+    */
+    CreatedWorkspace scenario7Workspace =
+        createWorkspace(UUID.randomUUID(), getSpendProfileId(), workspaceApi);
+
+    // Need to have a cloud context in order to clone a resource.
+    projectId = CloudContextMaker.createGcpCloudContext(scenario7Workspace.getId(), workspaceApi);
+    logger.info("Created project {}", projectId);
+
+    final CloneControlledGcpGcsBucketRequest cloneResourceRequest =
+        new CloneControlledGcpGcsBucketRequest()
+            .destinationWorkspaceId(scenario7Workspace.getId())
+            .cloningInstructions(CloningInstructionsEnum.RESOURCE)
+            .jobControl(new JobControl().id(UUID.randomUUID().toString()));
+
+    cloneResult =
+        controlledGcpResourceApi.cloneGcsBucket(
+            cloneResourceRequest,
+            controlledBucketResource.getMetadata().getWorkspaceId(),
+            controlledBucketResource.getMetadata().getResourceId());
+
+    cloneResult =
+        ClientTestUtils.pollWhileRunning(
+            cloneResult,
+            () ->
+                resourceApi.getCloneGcsBucketResult(
+                    controlledBucketResource.getMetadata().getWorkspaceId(),
+                    cloneResourceRequest.getJobControl().getId()),
+            CloneControlledGcpGcsBucketResult::getJobReport,
+            Duration.ofSeconds(5));
+
+    ClientTestUtils.assertJobSuccess(
+        "clone bucket", cloneResult.getJobReport(), cloneResult.getErrorReport());
+
+    validateWorkspaceContainsRegionPolicy(
+        workspaceApi, scenario7Workspace.getId(), gcpCentralLocation);
+    workspaceApi.deleteWorkspace(scenario7Workspace.getId());
+
+    // Clean up the data collection used in most of the scenarios.
     workspaceApi.deleteWorkspace(centralDataCollection.getId());
   }
 
@@ -243,10 +291,8 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
                         }));
 
     Properties properties = new Properties();
-    Property property1 = new Property().key("foo").value("bar");
-    Property property2 = new Property().key("xyzzy").value("plohg");
-    properties.add(property1);
-    properties.add(property2);
+    properties.add(
+        new Property().key("terra-default-location").value(location.replace("gcp.", "")));
 
     final var requestBody =
         new CreateWorkspaceRequestBody()

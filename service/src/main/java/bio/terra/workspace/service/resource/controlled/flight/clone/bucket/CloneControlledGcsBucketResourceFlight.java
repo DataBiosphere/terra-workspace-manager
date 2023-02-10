@@ -8,7 +8,9 @@ import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.policy.flight.MergePolicyAttributesDryRunStep;
 import bio.terra.workspace.service.policy.flight.MergePolicyAttributesStep;
+import bio.terra.workspace.service.policy.flight.ValidateWorkspaceAgainstPolicyStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.RetrieveGcsBucketCloudAttributesStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.RetrieveGcsBucketCloudAttributesStep.RetrievalMode;
@@ -81,9 +83,24 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
         RetryRules.shortExponential());
     if (mergePolicies) {
       addStep(
-          new MergePolicyAttributesStep(
-              sourceResource.getWorkspaceId(),
+          new MergePolicyAttributesDryRunStep(
               destinationWorkspaceId,
+              sourceResource.getWorkspaceId(),
+              userRequest,
+              flightBeanBag.getTpsApiDispatch()));
+
+      addStep(
+          new ValidateWorkspaceAgainstPolicyStep(
+              destinationWorkspaceId,
+              sourceResource.getResourceType().getCloudPlatform(),
+              userRequest,
+              flightBeanBag.getResourceDao(),
+              flightBeanBag.getTpsApiDispatch()));
+
+      addStep(
+          new MergePolicyAttributesStep(
+              destinationWorkspaceId,
+              sourceResource.getWorkspaceId(),
               userRequest,
               flightBeanBag.getTpsApiDispatch()));
     }
@@ -130,6 +147,17 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
             flightBeanBag.getControlledResourceService(),
             resolvedCloningInstructions,
             flightBeanBag.getWorkspaceActivityLogService()));
+
+    if (mergePolicies) {
+      // validate again after the clone in case other resources were added elsewhere.
+      addStep(
+          new ValidateWorkspaceAgainstPolicyStep(
+              destinationWorkspaceId,
+              sourceResource.getResourceType().getCloudPlatform(),
+              userRequest,
+              flightBeanBag.getResourceDao(),
+              flightBeanBag.getTpsApiDispatch()));
+    }
 
     if (CloningInstructions.COPY_RESOURCE == resolvedCloningInstructions) {
       addStep(
