@@ -9,7 +9,12 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.exception.InternalLogicException;
+import bio.terra.workspace.common.utils.GcpUtils;
+import bio.terra.workspace.service.grant.GrantService;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.CustomGcpIamRole;
 import bio.terra.workspace.service.workspace.CloudSyncRoleMapping;
@@ -24,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,13 +49,27 @@ import org.slf4j.LoggerFactory;
  * transition to fully using resource-level permissions, this step can be deleted.
  */
 public class GcpCloudSyncStep implements Step {
-
-  private final CloudResourceManagerCow resourceManagerCow;
-
   private final Logger logger = LoggerFactory.getLogger(GcpCloudSyncStep.class);
+  private final CloudResourceManagerCow resourceManagerCow;
+  private final FeatureConfiguration features;
+  private final SamService samService;
+  private final GrantService grantService;
+  private final AuthenticatedUserRequest userRequest;
+  private final UUID workspaceUuid;
 
-  public GcpCloudSyncStep(CloudResourceManagerCow resourceManagerCow) {
+  public GcpCloudSyncStep(
+      CloudResourceManagerCow resourceManagerCow,
+      FeatureConfiguration features,
+      SamService samService,
+      GrantService grantService,
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceUuid) {
     this.resourceManagerCow = resourceManagerCow;
+    this.features = features;
+    this.samService = samService;
+    this.grantService = grantService;
+    this.userRequest = userRequest;
+    this.workspaceUuid = workspaceUuid;
   }
 
   @Override
@@ -68,16 +88,41 @@ public class GcpCloudSyncStep implements Step {
               .getIamPolicy(gcpProjectId, new GetIamPolicyRequest())
               .execute();
 
-      List<Binding> newBindings = new ArrayList<>();
-      // Add all existing bindings to ensure we don't accidentally clobber existing permissions.
-      newBindings.addAll(currentPolicy.getBindings());
+      List<Binding> newBindings = new ArrayList<>(currentPolicy.getBindings());
+
       // Add appropriate project-level roles for each WSM IAM role.
       workspaceRoleGroupsMap.forEach(
           (wsmRole, email) -> {
             if (CUSTOM_GCP_PROJECT_IAM_ROLES.containsKey(wsmRole)) {
-              newBindings.add(bindingForRole(wsmRole, email, gcpProjectId));
+              newBindings.add(bindingForRole(wsmRole, GcpUtils.toGroupMember(email), gcpProjectId));
             }
           });
+
+      // Workaround for permission propagation delays: directly grant user and pet the owner
+      // role on the project.
+      if (features.isTemporaryGrantEnabled()) {
+        // Get the user emails we are granting
+        AuthenticatedUserRequest petSaCredentials =
+            flightContext
+                .getWorkingMap()
+                .get(WorkspaceFlightMapKeys.PET_SA_CREDENTIALS, AuthenticatedUserRequest.class);
+        String petMember = GcpUtils.toSaMember(petSaCredentials.getEmail());
+        newBindings.add(bindingForRole(WsmIamRole.OWNER, petMember, gcpProjectId));
+
+        String userEmail = samService.getUserEmailFromSam(userRequest);
+        String userMember = null;
+        if (grantService.isUserGrantAllowed(userEmail)) {
+          userMember = GcpUtils.toUserMember(userEmail);
+          newBindings.add(bindingForRole(WsmIamRole.OWNER, userMember, gcpProjectId));
+        }
+
+        // Store the temporary grant - it will be revoked in the background
+        grantService.recordProjectGrant(
+            workspaceUuid,
+            userMember,
+            petMember,
+            getCustomRoleName(WsmIamRole.OWNER, gcpProjectId));
+      }
 
       Policy newPolicy =
           new Policy()
@@ -94,27 +139,24 @@ public class GcpCloudSyncStep implements Step {
   }
 
   /**
-   * GCP expects all groups to be prepended with the literal "group:" in IAM permissions bindings.
-   */
-  private String toMemberIdentifier(String samEmail) {
-    return "group:" + samEmail;
-  }
-
-  /**
    * Build the project-level role binding for a given group, using CloudSyncRoleMapping.
    *
    * @param role The role granted to this user. Translated to GCP roles using CloudSyncRoleMapping.
-   * @param email The email of the Google group being granted a role.
+   * @param member The member being granted; group:email, member:email, serviceAccount:email
    * @param gcpProjectId The ID of the project the custom role is defined in.
    */
-  private Binding bindingForRole(WsmIamRole role, String email, String gcpProjectId) {
+  private Binding bindingForRole(WsmIamRole role, String member, String gcpProjectId) {
+    return new Binding()
+        .setRole(getCustomRoleName(role, gcpProjectId))
+        .setMembers(Collections.singletonList(member));
+  }
+
+  private String getCustomRoleName(WsmIamRole role, String gcpProjectId) {
     CustomGcpIamRole customRole = CUSTOM_GCP_PROJECT_IAM_ROLES.get(role);
     if (customRole == null) {
       throw new InternalLogicException(String.format("Missing custom GCP project role %s", role));
     }
-    return new Binding()
-        .setRole(customRole.getFullyQualifiedRoleName(gcpProjectId))
-        .setMembers(Collections.singletonList(toMemberIdentifier(email)));
+    return customRole.getFullyQualifiedRoleName(gcpProjectId);
   }
 
   /**

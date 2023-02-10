@@ -13,6 +13,10 @@ import javax.annotation.Nullable;
  *
  * <p>This class provides the recipe for how to map some source role (either workspace or resource)
  * into a target role.
+ *
+ * <p>NOTE: when setting temporary grants, the ControlledResourceService uses the
+ * ControlledResourceIamRole.EDITOR in all cases. If that changes for some reason, reflected in this
+ * module, we will need to make a compensating change in ControlledResourceService.
  */
 public class ControlledResourceSyncMapping {
 

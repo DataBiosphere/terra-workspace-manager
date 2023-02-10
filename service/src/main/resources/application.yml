@@ -75,6 +75,13 @@ workspace:
     polling-interval: "15m"
     startup-wait: "5s"
 
+  temporary-grant-revoke:
+    revokeEnabled: true
+    polling-interval: "150s"
+    startup-wait: "1m"
+    grant-hold-time: "15m"
+    restrict-user-domain: ""
+
   sam.base-path: ${env.urls.sam}
 
   stairway-database:
@@ -206,6 +213,8 @@ feature:
   bpm-gcp-enabled: false
   # bpm-enabled-azure - Controls whether spend profile checks are made for Azure workspaces
   bpm-azure-enabled: false
+  # temporary-grant-enabled - Controls whether temporary direct ACL grants are made on creates
+  temporary-grant-enabled: false
 
 reference:
   gitrepos:

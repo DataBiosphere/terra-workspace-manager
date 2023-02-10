@@ -8,11 +8,13 @@ import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.configuration.external.VersionConfiguration;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.FolderDao;
+import bio.terra.workspace.db.GrantDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.buffer.BufferService;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.datarepo.DataRepoService;
+import bio.terra.workspace.service.grant.GrantService;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
@@ -57,6 +59,8 @@ public class FlightBeanBag {
   private final FeatureConfiguration featureConfiguration;
   private final FolderDao folderDao;
   private final GcpCloudContextService gcpCloudContextService;
+  private final GrantDao grantDao;
+  private final GrantService grantService;
   private final PetSaService petSaService;
   private final ReferencedResourceService referencedResourceService;
   private final ResourceDao resourceDao;
@@ -90,6 +94,8 @@ public class FlightBeanBag {
       FeatureConfiguration featureConfiguration,
       FolderDao folderDao,
       GcpCloudContextService gcpCloudContextService,
+      GrantDao grantDao,
+      GrantService grantService,
       PetSaService petSaService,
       TpsApiDispatch tpsApiDispatch,
       ReferencedResourceService referencedResourceService,
@@ -119,6 +125,8 @@ public class FlightBeanBag {
     this.featureConfiguration = featureConfiguration;
     this.folderDao = folderDao;
     this.gcpCloudContextService = gcpCloudContextService;
+    this.grantDao = grantDao;
+    this.grantService = grantService;
     this.petSaService = petSaService;
     this.referencedResourceService = referencedResourceService;
     this.resourceDao = resourceDao;
@@ -185,6 +193,14 @@ public class FlightBeanBag {
 
   public GcpCloudContextService getGcpCloudContextService() {
     return gcpCloudContextService;
+  }
+
+  public GrantDao getGrantDao() {
+    return grantDao;
+  }
+
+  public GrantService getGrantService() {
+    return grantService;
   }
 
   public PetSaService getPetSaService() {
