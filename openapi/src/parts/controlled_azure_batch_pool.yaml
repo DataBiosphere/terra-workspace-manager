@@ -205,7 +205,7 @@ components:
       description: |
         Determines what to do with a node and its running task(s) after it has been selected for deallocation.
       type: string
-      enum: ['Requeue', 'Terminate', 'TaskCompletion', 'RetainedData']
+      enum: ['REQUEUE', 'TERMINATE', 'TASKCOMPLETION', 'RETAINEDDATA']
 
     AzureBatchPoolAutoScaleSettings:
       description: AutoScale settings for the pool.
@@ -292,7 +292,7 @@ components:
     DynamicVNetAssignmentScope:
       description: Defines values for AutoUserScope.
       type: string
-      enum: [ 'none', 'job' ]
+      enum: [ 'NONE', 'JOB' ]
 
     PoolEndpointConfiguration:
       description: The endpoint configuration for a pool.
@@ -363,7 +363,7 @@ components:
       description: |
         The action that should be taken for a specified IP address, subnet range or tag.
       type: string
-      enum: ['Allow', 'Deny']
+      enum: ['ALLOW', 'DENY']
 
     InboundEndpointProtocol:
       description: The protocol of the endpoint.
@@ -390,7 +390,7 @@ components:
       description: |
         Defines values for IpAddressProvisioningType.
       type: string
-      enum: ['BatchManaged', 'UserManaged', 'NoPublicIPAddresses']
+      enum: ['BATCHMANAGED', 'USERMANAGED', 'NOPUBLICIPADDRESSES']
 
     AzureBatchPoolResourceFile:
       description: |
@@ -461,12 +461,12 @@ components:
     AzureBatchPoolAutoUserScope:
       description: Defines values for AutoUserScope.
       type: string
-      enum: [ 'Task', 'Pool' ]
+      enum: [ 'TASK', 'POOL' ]
 
     AzureBatchPoolElevationLevel:
       description: Defines values for ElevationLevel.
       type: string
-      enum: [ 'NonAdmin', 'Admin' ]
+      enum: [ 'NONADMIN', 'ADMIN' ]
 
     AzureBatchPoolTaskContainerSettings:
       description: The container settings for a task.
@@ -516,7 +516,7 @@ components:
     AzureBatchPoolContainerWorkingDirectory:
       description: Defines values for ContainerWorkingDirectory.
       type: string
-      enum: [ 'TaskWorkingDirectory', 'ContainerImageDefault']
+      enum: [ 'TASKWORKINGDIRECTORY', 'CONTAINERIMAGEDEFAULT']
 
     CreatedControlledAzureBatchPool:
       description: Response payload for requesting a new Azure Batch Pool

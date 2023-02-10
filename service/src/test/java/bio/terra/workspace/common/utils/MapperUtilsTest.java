@@ -2,6 +2,7 @@ package bio.terra.workspace.common.utils;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.equalToIgnoringCase;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -126,7 +127,7 @@ public class MapperUtilsTest extends BaseUnitTest {
     assertNotNull(result);
     assertThat(
         result.fixedScale().nodeDeallocationOption().toString(),
-        equalTo(scaleSettings.getFixedScale().getNodeDeallocationOption().toString()));
+        equalToIgnoringCase(scaleSettings.getFixedScale().getNodeDeallocationOption().toString()));
     assertThat(
         result.fixedScale().resizeTimeout().toMinutes(),
         equalTo(scaleSettings.getFixedScale().getResizeTimeout().longValue()));
@@ -169,7 +170,7 @@ public class MapperUtilsTest extends BaseUnitTest {
     assertThat(result.subnetId(), equalTo(networkConfiguration.getSubnetId()));
     assertThat(
         result.dynamicVNetAssignmentScope().toString(),
-        equalTo(networkConfiguration.getDynamicVNetAssignmentScope().toString()));
+        equalToIgnoringCase(networkConfiguration.getDynamicVNetAssignmentScope().toString()));
     var endpointConfigurationResult = result.endpointConfiguration();
     assertNotNull(endpointConfigurationResult);
     assertThat(
@@ -225,7 +226,7 @@ public class MapperUtilsTest extends BaseUnitTest {
     var securityRuleResult = natPoolResult.networkSecurityGroupRules().get(0);
     assertThat(
         securityRuleResult.access().toString(),
-        equalTo(
+        equalToIgnoringCase(
             networkConfiguration
                 .getEndpointConfiguration()
                 .getInboundNatPools()
@@ -260,7 +261,8 @@ public class MapperUtilsTest extends BaseUnitTest {
     assertNotNull(publicIpAddressConfigurationResult);
     assertThat(
         publicIpAddressConfigurationResult.provision().toString(),
-        equalTo(networkConfiguration.getPublicIpAddressConfiguration().getProvision().toString()));
+        equalToIgnoringCase(
+            networkConfiguration.getPublicIpAddressConfiguration().getProvision().toString()));
     assertThat(
         publicIpAddressConfigurationResult.ipAddressIds().size(),
         equalTo(networkConfiguration.getPublicIpAddressConfiguration().getIpAddressIds().size()));
@@ -293,10 +295,11 @@ public class MapperUtilsTest extends BaseUnitTest {
     var autoUserResult = userIdentityResult.autoUser();
     assertThat(
         autoUserResult.scope().toString(),
-        equalTo(startTask.getUserIdentity().getAutoUser().getScope().toString()));
+        equalToIgnoringCase(startTask.getUserIdentity().getAutoUser().getScope().toString()));
     assertThat(
         autoUserResult.elevationLevel().toString(),
-        equalTo(startTask.getUserIdentity().getAutoUser().getElevationLevel().toString()));
+        equalToIgnoringCase(
+            startTask.getUserIdentity().getAutoUser().getElevationLevel().toString()));
     var resourceFilesResult = startTaskResult.resourceFiles();
     assertNotNull(resourceFilesResult);
     assertThat(resourceFilesResult.size(), equalTo(startTask.getResourceFiles().size()));
@@ -343,7 +346,7 @@ public class MapperUtilsTest extends BaseUnitTest {
         equalTo(startTask.getContainerSettings().getImageName()));
     assertThat(
         containerSettingsResult.workingDirectory().toString(),
-        equalTo(startTask.getContainerSettings().getWorkingDirectory().toString()));
+        equalToIgnoringCase(startTask.getContainerSettings().getWorkingDirectory().toString()));
     var containerRegistryResult = containerSettingsResult.registry();
     assertNotNull(containerRegistryResult);
     assertThat(
