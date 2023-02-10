@@ -63,6 +63,9 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
             .orElse(false);
     ControlledGcsBucketResource sourceBucket =
         sourceResource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
+    String location =
+        Optional.ofNullable(inputParameters.get(ControlledResourceKeys.LOCATION, String.class))
+            .orElse(sourceBucket.getRegion());
     CloningInstructions resolvedCloningInstructions =
         Optional.ofNullable(
                 inputParameters.get(
@@ -93,6 +96,7 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
           new ValidateWorkspaceAgainstPolicyStep(
               destinationWorkspaceId,
               sourceResource.getResourceType().getCloudPlatform(),
+              location,
               userRequest,
               flightBeanBag.getResourceDao(),
               flightBeanBag.getTpsApiDispatch()));
@@ -154,6 +158,7 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
           new ValidateWorkspaceAgainstPolicyStep(
               destinationWorkspaceId,
               sourceResource.getResourceType().getCloudPlatform(),
+              location,
               userRequest,
               flightBeanBag.getResourceDao(),
               flightBeanBag.getTpsApiDispatch()));

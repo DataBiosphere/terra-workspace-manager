@@ -72,6 +72,7 @@ public class CloneReferenceResourceFlight extends Flight {
           new ValidateWorkspaceAgainstPolicyStep(
               destinationWorkspaceId,
               sourceResource.getResourceType().getCloudPlatform(),
+              null, // referenced resources don't have a location.
               userRequest,
               appContext.getResourceDao(),
               appContext.getTpsApiDispatch()));
@@ -100,6 +101,7 @@ public class CloneReferenceResourceFlight extends Flight {
           new ValidateWorkspaceAgainstPolicyStep(
               destinationWorkspaceId,
               sourceResource.getResourceType().getCloudPlatform(),
+              null, // referenced resources don't have a location.
               userRequest,
               appContext.getResourceDao(),
               appContext.getTpsApiDispatch()));

@@ -2,9 +2,7 @@ package scripts.testscripts;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
@@ -267,6 +265,39 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
 
     validateWorkspaceContainsRegionPolicy(
         workspaceApi, scenario7Workspace.getId(), gcpCentralLocation);
+
+    // try to clone the resource to a different location - one outside of policy.
+    final CloneControlledGcpGcsBucketRequest cloneToAltLocationRequest =
+        new CloneControlledGcpGcsBucketRequest()
+            .destinationWorkspaceId(scenario7Workspace.getId())
+            .cloningInstructions(CloningInstructionsEnum.RESOURCE)
+            .location("us-east1")
+            .jobControl(new JobControl().id(UUID.randomUUID().toString()));
+
+    CloneControlledGcpGcsBucketResult cloneToAltLocationResult =
+        controlledGcpResourceApi.cloneGcsBucket(
+            cloneToAltLocationRequest,
+            controlledBucketResource.getMetadata().getWorkspaceId(),
+            controlledBucketResource.getMetadata().getResourceId());
+
+    cloneToAltLocationResult =
+        ClientTestUtils.pollWhileRunning(
+            cloneToAltLocationResult,
+            () ->
+                resourceApi.getCloneGcsBucketResult(
+                    controlledBucketResource.getMetadata().getWorkspaceId(),
+                    cloneToAltLocationRequest.getJobControl().getId()),
+            CloneControlledGcpGcsBucketResult::getJobReport,
+            Duration.ofSeconds(5));
+
+    assertEquals(JobReport.StatusEnum.FAILED, cloneToAltLocationResult.getJobReport().getStatus());
+    assertEquals(HttpStatus.SC_CONFLICT, cloneToAltLocationResult.getJobReport().getStatusCode());
+    assertTrue(
+        cloneToAltLocationResult
+            .getErrorReport()
+            .getMessage()
+            .contains("The specified destination location violates region policies"));
+
     workspaceApi.deleteWorkspace(scenario7Workspace.getId());
 
     // Clean up the data collection used in most of the scenarios.
