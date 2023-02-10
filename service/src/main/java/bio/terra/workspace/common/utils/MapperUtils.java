@@ -9,6 +9,7 @@ import bio.terra.workspace.generated.model.ApiAzureBatchPoolContainerRegistry;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolDeploymentConfiguration;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolEnvironmentSetting;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolFixedScaleSettings;
+import bio.terra.workspace.generated.model.ApiAzureBatchPoolMetadataItem;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolNetworkConfiguration;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolResourceFile;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolScaleSettings;
@@ -44,6 +45,7 @@ import com.azure.resourcemanager.batch.models.ImageReference;
 import com.azure.resourcemanager.batch.models.InboundEndpointProtocol;
 import com.azure.resourcemanager.batch.models.InboundNatPool;
 import com.azure.resourcemanager.batch.models.IpAddressProvisioningType;
+import com.azure.resourcemanager.batch.models.MetadataItem;
 import com.azure.resourcemanager.batch.models.NetworkConfiguration;
 import com.azure.resourcemanager.batch.models.NetworkSecurityGroupRule;
 import com.azure.resourcemanager.batch.models.NetworkSecurityGroupRuleAccess;
@@ -167,6 +169,21 @@ public class MapperUtils {
                       .withPublicIpAddressConfiguration(
                           mapFrom(c.getPublicIpAddressConfiguration())))
           .orElse(null);
+    }
+
+    public static List<MetadataItem> mapListOfMetadataItems(
+        List<ApiAzureBatchPoolMetadataItem> metadata) {
+      if (metadata == null || metadata.isEmpty()) {
+        return null;
+      }
+
+      return metadata.stream()
+          .map(
+              apiMetadata ->
+                  new MetadataItem()
+                      .withName(apiMetadata.getName())
+                      .withValue(apiMetadata.getValue()))
+          .collect(Collectors.toList());
     }
 
     public static StartTask mapFrom(ApiAzureBatchPoolStartTask startTask) {

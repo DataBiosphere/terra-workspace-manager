@@ -5,6 +5,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolApplicationPackageReference;
@@ -19,6 +20,7 @@ import bio.terra.workspace.generated.model.ApiAzureBatchPoolDeploymentConfigurat
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolElevationLevel;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolEnvironmentSetting;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolFixedScaleSettings;
+import bio.terra.workspace.generated.model.ApiAzureBatchPoolMetadataItem;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolNetworkConfiguration;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolResourceFile;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolScaleSettings;
@@ -385,6 +387,34 @@ public class MapperUtilsTest extends BaseUnitTest {
     var packageReference = result.get(0);
     assertThat(packageReference.id(), equalTo(listOfPackageReferences.get(0).getId()));
     assertThat(packageReference.version(), equalTo(listOfPackageReferences.get(0).getVersion()));
+  }
+
+  @Test
+  public void testNullableListOfMetadataItems() {
+    assertNull(MapperUtils.BatchPoolMapper.mapListOfMetadataItems(null));
+  }
+
+  @Test
+  public void testEmptyListOfMetadataItems() {
+    assertNull(MapperUtils.BatchPoolMapper.mapListOfMetadataItems(new ArrayList<>()));
+  }
+
+  @Test
+  public void testListOfMetadataItems() {
+    var metadataItemList =
+        List.of(
+            new ApiAzureBatchPoolMetadataItem().name("name1").value("value1"),
+            new ApiAzureBatchPoolMetadataItem().name("name2").value("value2"));
+
+    var result = MapperUtils.BatchPoolMapper.mapListOfMetadataItems(metadataItemList);
+    assertNotNull(result);
+    assertEquals(metadataItemList.size(), result.size());
+    var item1 = result.stream().filter(m -> m.name().equals("name1")).findFirst();
+    assertTrue(item1.isPresent());
+    assertEquals("value1", item1.get().value());
+    var item2 = result.stream().filter(m -> m.name().equals("name2")).findFirst();
+    assertTrue(item2.isPresent());
+    assertEquals("value2", item2.get().value());
   }
 
   private static ApiAzureBatchPoolApplicationPackageReference

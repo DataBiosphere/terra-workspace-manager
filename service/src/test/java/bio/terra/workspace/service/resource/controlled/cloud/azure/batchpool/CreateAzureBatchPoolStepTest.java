@@ -22,6 +22,7 @@ import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.http.rest.PagedIterable;
 import com.azure.resourcemanager.batch.models.ApplicationPackageReference;
 import com.azure.resourcemanager.batch.models.BatchPoolIdentity;
+import com.azure.resourcemanager.batch.models.MetadataItem;
 import com.azure.resourcemanager.batch.models.NetworkConfiguration;
 import com.azure.resourcemanager.batch.models.Pool;
 import com.azure.resourcemanager.batch.models.PoolIdentityType;
@@ -47,6 +48,7 @@ public class CreateAzureBatchPoolStepTest extends BaseBatchPoolTest {
   @Captor ArgumentCaptor<ScaleSettings> scaleSettingsArgumentCaptor;
   @Captor ArgumentCaptor<List<ApplicationPackageReference>> applicationPackagesArgumentCaptor;
   @Captor ArgumentCaptor<NetworkConfiguration> networkConfigurationArgumentCaptor;
+  @Captor ArgumentCaptor<List<MetadataItem>> metadataArgumentCaptor;
 
   @BeforeEach
   public void setup() {
@@ -337,6 +339,28 @@ public class CreateAzureBatchPoolStepTest extends BaseBatchPoolTest {
 
     assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));
     verify(mockPoolDefinitionStateCreate, never()).create(any());
+  }
+
+  @Test
+  public void createBatchPoolWithMetadataSuccess() throws InterruptedException {
+    resource = buildDefaultResourceBuilder().metadata(BatchPoolFixtures.createMetadata()).build();
+    initDeleteStep(resource);
+    setupMocks(true);
+
+    when(mockPoolDefinitionStateCreate.withMetadata(any()))
+        .thenReturn(mockPoolDefinitionStateCreate);
+
+    StepResult stepResult = createAzureBatchPoolStep.doStep(mockFlightContext);
+
+    assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_SUCCESS));
+    verify(mockPoolDefinitionStateCreate, times(1)).create(any());
+    verify(mockPoolDefinitionStateCreate, times(1)).withMetadata(metadataArgumentCaptor.capture());
+
+    var metadata = metadataArgumentCaptor.getValue();
+    assertThat(metadata, notNullValue());
+    assertThat(metadata.size(), equalTo(1));
+    assertThat(metadata.get(0).name(), equalTo(BatchPoolFixtures.METADATA_NAME));
+    assertThat(metadata.get(0).value(), equalTo(BatchPoolFixtures.METADATA_VALUE));
   }
 
   private void initDeleteStep(ControlledAzureBatchPoolResource resource) {

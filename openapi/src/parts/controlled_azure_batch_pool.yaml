@@ -73,6 +73,13 @@ components:
           description: |
             The network configuration for a pool.
           $ref: '#/components/schemas/AzureBatchPoolNetworkConfiguration'
+        metadata:
+          description: |
+            A list of name-value pairs associated with the pool as metadata. The
+            Batch service does not assign any meaning to metadata; it is solely for the use of user code.
+          type: array
+          items:
+            $ref: '#/components/schemas/AzureBatchPoolMetadataItem'
 
     AzureBatchPoolDeploymentConfiguration:
       type: object
@@ -288,6 +295,20 @@ components:
             The public IP Address configuration of the networking configuration of a Pool. This property is 
             only supported on Pools with the virtualMachineConfiguration property.
           $ref: '#/components/schemas/PublicIpAddressConfiguration'
+
+    AzureBatchPoolMetadataItem:
+      description: |
+        A list of name-value pairs associated with the pool as metadata. The
+        Batch service does not assign any meaning to metadata; it is solely for the use of user code.
+      type: object
+      required: [ name, value ]
+      properties:
+        name:
+          description: The name of the metadata item.
+          type: string
+        value:
+          description: The value of the metadata item.
+          type: string
 
     DynamicVNetAssignmentScope:
       description: Defines values for AutoUserScope.
