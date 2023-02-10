@@ -650,8 +650,11 @@ public class ResourceDaoTest extends BaseUnitTest {
             .castToControlledResource()
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
 
-    assertNull(resourceBeforeUpdate.getDefaultTableLifetime());
-    assertNull(resourceBeforeUpdate.getDefaultPartitionLifetime());
+    assertEquals(
+        DEFAULT_CREATED_BIG_QUERY_TABLE_LIFETIME, resourceBeforeUpdate.getDefaultTableLifetime());
+    assertEquals(
+        DEFAULT_CREATED_BIG_QUERY_PARTITION_LIFETIME,
+        resourceBeforeUpdate.getDefaultPartitionLifetime());
 
     resourceDao.updateBigQueryDatasetDefaultTableAndPartitionLifetime(
         resourceBeforeUpdate, 6000L, 6001L);
