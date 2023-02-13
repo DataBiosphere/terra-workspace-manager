@@ -587,16 +587,12 @@ public class ResourceDao {
             dataset.getWorkspaceId(), dataset.getResourceId(), null, null, newAttributes, null);
 
     logger.info(
-        "{} default table lifetime for resource {} to {}.",
+        "{} resource {} default table lifetime to {} and default partition lifetime to {}.",
         (updated ? "Updated" : "No Update - did not find"),
         dataset.getResourceId(),
-        dataset.getDefaultTableLifetime());
-
-    logger.info(
-        "{} default partition lifetime for resource {} to {}.",
-        (updated ? "Updated" : "No Update - did not find"),
-        dataset.getResourceId(),
-        dataset.getDefaultPartitionLifetime());
+        dataset.getDefaultTableLifetime(),
+        dataset.getDefaultPartitionLifetime()
+    );
 
     return updated;
   }

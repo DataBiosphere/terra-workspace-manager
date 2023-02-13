@@ -95,35 +95,30 @@ public class RetrieveControlledBigQueryDatasetLifetimeStep implements Step {
 
   @Nullable
   private Long getBqDatasetDefaultTableLifetime(ControlledBigQueryDatasetResource resource) {
-    try {
-      Dataset dataset =
-          getBigQueryDataset(
-              crlService.createWsmSaBigQueryCow(),
-              resource.getProjectId(),
-              resource.getDatasetName());
+    Dataset dataset = getBqDataset(resource);
+    if (dataset != null) {
       return dataset.getDefaultTableExpirationMs() / 1000;
-    } catch (IOException e) {
-      logger.error(
-          "Failed to get the dataset default table lifetime for resource {} in workspace {}: {}",
-          resource.getResourceId(),
-          resource.getWorkspaceId(),
-          e.getMessage());
-      return null;
     }
+    return null;
   }
 
   @Nullable
   private Long getBqDatasetDefaultPartitionLifetime(ControlledBigQueryDatasetResource resource) {
-    try {
-      Dataset dataset =
-          getBigQueryDataset(
-              crlService.createWsmSaBigQueryCow(),
-              resource.getProjectId(),
-              resource.getDatasetName());
+    Dataset dataset = getBqDataset(resource);
+    if (dataset != null) {
       return dataset.getDefaultPartitionExpirationMs() / 1000;
+    }
+    return null;
+  }
+
+  @Nullable
+  private Dataset getBqDataset(ControlledBigQueryDatasetResource resource) {
+    try {
+      return getBigQueryDataset(
+          crlService.createWsmSaBigQueryCow(), resource.getProjectId(), resource.getDatasetName());
     } catch (IOException e) {
       logger.error(
-          "Failed to get the dataset default partition lifetime for resource {} in workspace {}: {}",
+          "Failed to get dataset with resource ID {} in workspace {}: {}",
           resource.getResourceId(),
           resource.getWorkspaceId(),
           e.getMessage());

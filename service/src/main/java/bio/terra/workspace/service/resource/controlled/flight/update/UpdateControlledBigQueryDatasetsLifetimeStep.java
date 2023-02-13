@@ -20,6 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import com.google.common.base.Preconditions;
 import org.springframework.http.HttpStatus;
 
 public class UpdateControlledBigQueryDatasetsLifetimeStep implements Step {
@@ -39,27 +41,25 @@ public class UpdateControlledBigQueryDatasetsLifetimeStep implements Step {
         CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP);
 
     Map<UUID, String> resourceIdToDefaultTableLifetimeMap =
-        workingMap.get(
-            CONTROLLED_BIG_QUERY_DATASET_RESOURCE_ID_TO_TABLE_LIFETIME_MAP,
-            new TypeReference<>() {});
+        Preconditions.checkNotNull(
+            workingMap.get(
+                CONTROLLED_BIG_QUERY_DATASET_RESOURCE_ID_TO_TABLE_LIFETIME_MAP,
+                new TypeReference<>() {}));
     Map<UUID, String> resourceIdToDefaultPartitionLifetimeMap =
-        workingMap.get(
-            CONTROLLED_BIG_QUERY_DATASET_RESOURCE_ID_TO_PARTITION_LIFETIME_MAP,
-            new TypeReference<>() {});
+        Preconditions.checkNotNull(
+            workingMap.get(
+                CONTROLLED_BIG_QUERY_DATASET_RESOURCE_ID_TO_PARTITION_LIFETIME_MAP,
+                new TypeReference<>() {}));
 
     Map<UUID, String> resourceIdsToWorkspaceIdMap =
-        workingMap.get(CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP, new TypeReference<>() {});
+        Preconditions.checkNotNull(
+            workingMap.get(CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP, new TypeReference<>() {}));
     List<ControlledBigQueryDatasetResource> updatedResources = new ArrayList<>();
 
     List<ControlledResource> controlledBigQueryDatasets =
-        context
-            .getWorkingMap()
-            .get(CONTROLLED_BIG_QUERY_DATASETS_WITHOUT_LIFETIME, new TypeReference<>() {});
-
-    assert controlledBigQueryDatasets != null;
-    assert resourceIdToDefaultPartitionLifetimeMap != null;
-    assert resourceIdToDefaultTableLifetimeMap != null;
-    assert resourceIdsToWorkspaceIdMap != null;
+        Preconditions.checkNotNull(
+            workingMap.get(
+                CONTROLLED_BIG_QUERY_DATASETS_WITHOUT_LIFETIME, new TypeReference<>() {}));
 
     for (var resource : controlledBigQueryDatasets) {
       var id = resource.getResourceId();
@@ -95,7 +95,8 @@ public class UpdateControlledBigQueryDatasetsLifetimeStep implements Step {
       return StepResult.getStepResultSuccess();
     }
     for (var resource : controlledBigQueryDatasets) {
-      resourceDao.updateBigQueryDatasetDefaultTableAndPartitionLifetime(resource, null, null);
+      resourceDao.updateBigQueryDatasetDefaultTableAndPartitionLifetime(
+          resource, resource.getDefaultTableLifetime(), resource.getDefaultPartitionLifetime());
     }
     return StepResult.getStepResultSuccess();
   }
