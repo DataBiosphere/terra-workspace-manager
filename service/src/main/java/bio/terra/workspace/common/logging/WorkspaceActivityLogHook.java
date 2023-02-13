@@ -3,7 +3,6 @@ package bio.terra.workspace.common.logging;
 import static bio.terra.workspace.common.utils.FlightUtils.getRequired;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.APPLICATION_IDS;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCE_ID_TO_REGION_MAP;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.FOLDER_ID;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.UPDATED_WORKSPACES;
@@ -11,7 +10,6 @@ import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKey
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import bio.terra.stairway.FlightContext;
-import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.HookAction;
 import bio.terra.stairway.StairwayHook;
@@ -42,6 +40,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Resou
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.common.base.Preconditions;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -188,13 +187,9 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     if (SyncGcpIamRolesFlight.class.getName().equals(flightClassName)) {
       maybeLogForSyncGcpIamRolesFlight(context, operationType, userEmail, subjectId);
     } else if (UpdateGcpControlledResourceRegionFlight.class.getName().equals(flightClassName)
-        || UpdateAzureControlledResourceRegionFlight.class.getName().equals(flightClassName)) {
-      maybeLogUpdateControlledResourceRegionFlight(context, operationType, userEmail, subjectId);
-    } else if (UpdateControlledBigQueryDatasetsLifetimeFlight.class
-        .getName()
-        .equals(flightClassName)) {
-      maybeLogUpdateControlledBigQueryDatasetLifetimeFlight(
-          context, operationType, userEmail, subjectId);
+        || UpdateAzureControlledResourceRegionFlight.class.getName().equals(flightClassName)
+        || UpdateControlledBigQueryDatasetsLifetimeFlight.class.getName().equals(flightClassName)) {
+      maybeLogUpdateControlledResourceFieldsFlight(context, operationType, userEmail, subjectId);
     } else {
       throw new UnhandledActivityLogException(
           String.format(
@@ -360,53 +355,28 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     }
   }
 
-  private void maybeLogUpdateControlledResourceRegionFlight(
+  private void maybeLogUpdateControlledResourceFieldsFlight(
       FlightContext context, OperationType operationType, String userEmail, String subjectId) {
     if (!context.getFlightStatus().equals(FlightStatus.SUCCESS)) {
       return;
     }
     FlightUtils.validateRequiredEntries(
-        context.getWorkingMap(),
-        CONTROLLED_RESOURCE_ID_TO_REGION_MAP,
-        CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP);
-    Map<UUID, String> resourceIdToRegionMap =
-        context.getWorkingMap().get(CONTROLLED_RESOURCE_ID_TO_REGION_MAP, new TypeReference<>() {});
+        context.getWorkingMap(), CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP);
+
     Map<UUID, String> resourceIdToWorkspaceIdMap =
-        context
-            .getWorkingMap()
-            .get(CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP, new TypeReference<>() {});
+        Preconditions.checkNotNull(
+            context
+                .getWorkingMap()
+                .get(CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP, new TypeReference<>() {}));
 
-    for (var resourceId : resourceIdToRegionMap.keySet()) {
+    for (var pair : resourceIdToWorkspaceIdMap.entrySet()) {
       activityLogDao.writeActivity(
-          UUID.fromString(resourceIdToWorkspaceIdMap.get(resourceId)),
+          UUID.fromString(pair.getValue()),
           new DbWorkspaceActivityLog(
               userEmail,
               subjectId,
               operationType,
-              resourceId.toString(),
-              ActivityLogChangedTarget.RESOURCE));
-    }
-  }
-
-  private void maybeLogUpdateControlledBigQueryDatasetLifetimeFlight(
-      FlightContext context, OperationType operationType, String userEmail, String subjectId) {
-    if (!context.getFlightStatus().equals(FlightStatus.SUCCESS)) {
-      return;
-    }
-    FlightMap workingMap = context.getWorkingMap();
-    FlightUtils.validateRequiredEntries(workingMap, CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP);
-
-    Map<UUID, String> resourceIdsToWorkspaceIdMap =
-        workingMap.get(CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP, new TypeReference<>() {});
-
-    for (var resourceId : resourceIdsToWorkspaceIdMap.keySet()) {
-      activityLogDao.writeActivity(
-          UUID.fromString(resourceIdsToWorkspaceIdMap.get(resourceId)),
-          new DbWorkspaceActivityLog(
-              userEmail,
-              subjectId,
-              operationType,
-              resourceId.toString(),
+              pair.getKey().toString(),
               ActivityLogChangedTarget.RESOURCE));
     }
   }
