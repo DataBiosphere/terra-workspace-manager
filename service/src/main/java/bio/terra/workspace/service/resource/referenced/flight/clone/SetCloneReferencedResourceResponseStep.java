@@ -9,7 +9,7 @@ import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import org.springframework.http.HttpStatus;
 
-public class SetCloneReferenceResourceResponseStep implements Step {
+public class SetCloneReferencedResourceResponseStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
 

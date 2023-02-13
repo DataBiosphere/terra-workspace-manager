@@ -5,6 +5,7 @@ import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
@@ -14,7 +15,7 @@ import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
-import bio.terra.workspace.service.resource.referenced.flight.clone.CloneReferenceResourceFlight;
+import bio.terra.workspace.service.resource.referenced.flight.clone.CloneReferencedResourceFlight;
 import bio.terra.workspace.service.resource.referenced.flight.update.UpdateReferenceResourceFlight;
 import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -40,6 +41,7 @@ public class ReferencedResourceService {
   private final WorkspaceService workspaceService;
   private final FlightBeanBag beanBag;
   private final FeatureConfiguration features;
+  private final SamService samService;
   private final TpsApiDispatch tpsApiDispatch;
   private final WorkspaceActivityLogService workspaceActivityLogService;
 
@@ -51,12 +53,14 @@ public class ReferencedResourceService {
       FlightBeanBag beanBag,
       WorkspaceActivityLogService workspaceActivityLogService,
       FeatureConfiguration features,
+      SamService samService,
       TpsApiDispatch tpsApiDispatch) {
     this.jobService = jobService;
     this.resourceDao = resourceDao;
     this.workspaceService = workspaceService;
     this.beanBag = beanBag;
     this.features = features;
+    this.samService = samService;
     this.tpsApiDispatch = tpsApiDispatch;
     this.workspaceActivityLogService = workspaceActivityLogService;
   }
@@ -243,10 +247,9 @@ public class ReferencedResourceService {
       @Nullable UUID destinationFolderId,
       @Nullable String name,
       @Nullable String description,
-      String createdByEmail,
+      @Nullable String email,
       AuthenticatedUserRequest userRequest) {
-    /*
-    WHAT TO DO ABOUT THIS?
+
     ReferencedResource destinationResource =
         sourceReferencedResource
             .buildReferencedClone(
@@ -255,9 +258,8 @@ public class ReferencedResourceService {
                 destinationFolderId,
                 name,
                 description,
-                createdByEmail)
+                email)
             .castToReferencedResource();
-     */
 
     final String jobDescription =
         String.format(
@@ -271,20 +273,15 @@ public class ReferencedResourceService {
         jobService
             .newJob()
             .description(jobDescription)
-            .flightClass(CloneReferenceResourceFlight.class)
+            .flightClass(CloneReferencedResourceFlight.class)
             .resource(sourceReferencedResource)
             .workspaceId(destinationWorkspaceId.toString())
             .operationType(OperationType.CLONE)
             .addParameter(
                 WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
                 destinationWorkspaceId)
-            .addParameter(
-                WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_ID,
-                destinationResourceId)
-            .addParameter(
-                WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_FOLDER_ID,
-                destinationFolderId)
-            .addParameter(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE, sourceReferencedResource)
+            .addParameter(ResourceKeys.RESOURCE, sourceReferencedResource)
+            .addParameter(ResourceKeys.DESTINATION_RESOURCE, destinationResource)
             .addParameter(WorkspaceFlightMapKeys.MERGE_POLICIES, mergePolicies)
             .addParameter(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
 

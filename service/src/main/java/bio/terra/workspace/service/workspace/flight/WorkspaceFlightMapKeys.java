@@ -116,6 +116,7 @@ public final class WorkspaceFlightMapKeys {
     // additional keys for job filtering
     public static final String STEWARDSHIP_TYPE = "stewardshipType";
     public static final String RESOURCE = "resource";
+    public static final String DESTINATION_RESOURCE = "destinationResource";
 
     private ResourceKeys() {}
   }
