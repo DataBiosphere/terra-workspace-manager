@@ -90,19 +90,5 @@ public class CloneReferencedResourceFlight extends Flight {
             sourceResource,
             destinationResource),
         shortDatabaseRetryRule);
-
-    if (mergePolicies) {
-      // validate again after the clone in case other resources were added elsewhere.
-      addStep(
-          new ValidateWorkspaceAgainstPolicyStep(
-              destinationWorkspaceId,
-              sourceResource.getResourceType().getCloudPlatform(),
-              null, // referenced resources don't have a location.
-              userRequest,
-              appContext.getResourceDao(),
-              appContext.getTpsApiDispatch()));
-    }
-
-    addStep(new SetCloneReferencedResourceResponseStep());
   }
 }

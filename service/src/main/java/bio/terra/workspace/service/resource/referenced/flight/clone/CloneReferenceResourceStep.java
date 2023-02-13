@@ -4,6 +4,7 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
@@ -12,6 +13,8 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import bio.terra.workspace.service.workspace.model.WsmCloneResourceResult;
 import bio.terra.workspace.service.workspace.model.WsmResourceCloneDetails;
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.springframework.http.HttpStatus;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -51,15 +54,10 @@ public class CloneReferenceResourceStep implements Step {
         .setCloningInstructions(destinationResource.getCloningInstructions())
         .setDestinationResourceId(destinationResource.getResourceId());
 
-    // put the destination resource in the map, because it's not communicated
-    // from the flight as the response.
-    context
-        .getWorkingMap()
-        .put(ControlledResourceKeys.DESTINATION_REFERENCED_RESOURCE, destinationResource);
-
     try {
-      referencedResourceService.createReferenceResourceForClone(
+      var createdResource = referencedResourceService.createReferenceResourceForClone(
           destinationResource, sourceResource, userRequest);
+      FlightUtils.setResponse(context, createdResource, HttpStatus.OK);
       cloneDetails.setResult(WsmCloneResourceResult.SUCCEEDED);
     } catch (Exception e) {
       cloneDetails.setResult(WsmCloneResourceResult.FAILED).setErrorMessage(e.getMessage());
