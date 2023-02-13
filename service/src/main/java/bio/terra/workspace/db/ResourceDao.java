@@ -332,7 +332,7 @@ public class ResourceDao {
    * partition lifetime set.
    */
   @ReadTransaction
-  public List<ControlledResource> listControlledBigQueryDatasetsWithoutLifetime() {
+  public List<ControlledBigQueryDatasetResource> listControlledBigQueryDatasetsWithoutLifetime() {
 
     String sql =
         RESOURCE_SELECT_SQL_WITHOUT_WORKSPACE_ID
@@ -349,6 +349,8 @@ public class ResourceDao {
     return dbResources.stream()
         .map(this::constructResource)
         .map(WsmResource::castToControlledResource)
+        .map(
+            r -> (ControlledBigQueryDatasetResource) r.castByEnum(CONTROLLED_GCP_BIG_QUERY_DATASET))
         .collect(Collectors.toList());
   }
 
@@ -591,8 +593,7 @@ public class ResourceDao {
         (updated ? "Updated" : "No Update - did not find"),
         dataset.getResourceId(),
         dataset.getDefaultTableLifetime(),
-        dataset.getDefaultPartitionLifetime()
-    );
+        dataset.getDefaultPartitionLifetime());
 
     return updated;
   }

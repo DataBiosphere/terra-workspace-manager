@@ -7,7 +7,7 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.db.ResourceDao;
-import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -21,7 +21,7 @@ public class RetrieveControlledBigQueryDatasetWithoutLifetimeStep implements Ste
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    List<ControlledResource> controlledBigQueryDatasets =
+    List<ControlledBigQueryDatasetResource> controlledBigQueryDatasets =
         Optional.ofNullable(resourceDao.listControlledBigQueryDatasetsWithoutLifetime())
             .orElse(Collections.emptyList());
 

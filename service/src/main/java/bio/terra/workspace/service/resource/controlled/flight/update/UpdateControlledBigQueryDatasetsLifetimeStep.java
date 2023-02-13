@@ -14,14 +14,12 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
-import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
-import com.google.common.base.Preconditions;
 import org.springframework.http.HttpStatus;
 
 public class UpdateControlledBigQueryDatasetsLifetimeStep implements Step {
@@ -56,7 +54,7 @@ public class UpdateControlledBigQueryDatasetsLifetimeStep implements Step {
             workingMap.get(CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP, new TypeReference<>() {}));
     List<ControlledBigQueryDatasetResource> updatedResources = new ArrayList<>();
 
-    List<ControlledResource> controlledBigQueryDatasets =
+    List<ControlledBigQueryDatasetResource> controlledBigQueryDatasets =
         Preconditions.checkNotNull(
             workingMap.get(
                 CONTROLLED_BIG_QUERY_DATASETS_WITHOUT_LIFETIME, new TypeReference<>() {}));
