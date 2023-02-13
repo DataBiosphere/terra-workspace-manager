@@ -13,12 +13,11 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import bio.terra.workspace.service.workspace.model.WsmCloneResourceResult;
 import bio.terra.workspace.service.workspace.model.WsmResourceCloneDetails;
 import com.fasterxml.jackson.core.type.TypeReference;
-import org.springframework.http.HttpStatus;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.http.HttpStatus;
 
 public class CloneReferenceResourceStep implements Step {
 
@@ -55,8 +54,9 @@ public class CloneReferenceResourceStep implements Step {
         .setDestinationResourceId(destinationResource.getResourceId());
 
     try {
-      var createdResource = referencedResourceService.createReferenceResourceForClone(
-          destinationResource, sourceResource, userRequest);
+      var createdResource =
+          referencedResourceService.createReferenceResourceForClone(
+              destinationResource, sourceResource, userRequest);
       FlightUtils.setResponse(context, createdResource, HttpStatus.OK);
       cloneDetails.setResult(WsmCloneResourceResult.SUCCEEDED);
     } catch (Exception e) {
