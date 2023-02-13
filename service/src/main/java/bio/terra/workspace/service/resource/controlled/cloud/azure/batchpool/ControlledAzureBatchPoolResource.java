@@ -26,6 +26,7 @@ import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.azure.resourcemanager.batch.models.ApplicationPackageReference;
 import com.azure.resourcemanager.batch.models.DeploymentConfiguration;
+import com.azure.resourcemanager.batch.models.MetadataItem;
 import com.azure.resourcemanager.batch.models.NetworkConfiguration;
 import com.azure.resourcemanager.batch.models.ScaleSettings;
 import com.azure.resourcemanager.batch.models.StartTask;
@@ -47,6 +48,7 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
   private StartTask startTask;
   private List<ApplicationPackageReference> applicationPackages;
   private NetworkConfiguration networkConfiguration;
+  private List<MetadataItem> metadata;
 
   @JsonCreator
   public ControlledAzureBatchPoolResource(
@@ -76,7 +78,8 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
       @JsonProperty("scaleSettings") ScaleSettings scaleSettings,
       @JsonProperty("startTask") StartTask startTask,
       @JsonProperty("applicationPackages") List<ApplicationPackageReference> applicationPackages,
-      @JsonProperty("networkConfiguration") NetworkConfiguration networkConfiguration) {
+      @JsonProperty("networkConfiguration") NetworkConfiguration networkConfiguration,
+      @JsonProperty("metadata") List<MetadataItem> metadata) {
     super(
         workspaceId,
         resourceId,
@@ -104,6 +107,7 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
     this.startTask = startTask;
     this.applicationPackages = applicationPackages;
     this.networkConfiguration = networkConfiguration;
+    this.metadata = metadata;
   }
 
   private ControlledAzureBatchPoolResource(
@@ -116,7 +120,8 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
       ScaleSettings scaleSettings,
       StartTask startTask,
       List<ApplicationPackageReference> applicationPackages,
-      NetworkConfiguration networkConfiguration) {
+      NetworkConfiguration networkConfiguration,
+      List<MetadataItem> metadata) {
     super(common);
     this.id = id;
     this.vmSize = vmSize;
@@ -127,6 +132,7 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
     this.startTask = startTask;
     this.applicationPackages = applicationPackages;
     this.networkConfiguration = networkConfiguration;
+    this.metadata = metadata;
     validate();
   }
 
@@ -164,6 +170,10 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
 
   public NetworkConfiguration getNetworkConfiguration() {
     return networkConfiguration;
+  }
+
+  public List<MetadataItem> getMetadata() {
+    return metadata;
   }
 
   @Override
@@ -298,6 +308,7 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
     private StartTask startTask;
     private List<ApplicationPackageReference> applicationPackages;
     private NetworkConfiguration networkConfiguration;
+    private List<MetadataItem> metadata;
 
     public ControlledAzureBatchPoolResource.Builder common(ControlledResourceFields common) {
       this.common = common;
@@ -353,6 +364,11 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
       return this;
     }
 
+    public ControlledAzureBatchPoolResource.Builder metadata(List<MetadataItem> metadata) {
+      this.metadata = metadata;
+      return this;
+    }
+
     public ControlledAzureBatchPoolResource build() {
       return new ControlledAzureBatchPoolResource(
           common,
@@ -364,7 +380,8 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
           scaleSettings,
           startTask,
           applicationPackages,
-          networkConfiguration);
+          networkConfiguration,
+          metadata);
     }
   }
 }

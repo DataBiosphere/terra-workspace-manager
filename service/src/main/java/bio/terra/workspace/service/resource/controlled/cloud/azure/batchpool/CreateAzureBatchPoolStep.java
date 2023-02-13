@@ -171,6 +171,7 @@ public class CreateAzureBatchPoolStep implements Step {
         .ifPresent(batchPoolConfigurable::withApplicationPackages);
     Optional.ofNullable(resource.getNetworkConfiguration())
         .ifPresent(batchPoolConfigurable::withNetworkConfiguration);
+    Optional.ofNullable(resource.getMetadata()).ifPresent(batchPoolConfigurable::withMetadata);
 
     batchPoolConfigurable =
         configurePoolIdentities(msiManager, batchPoolConfigurable, resource, azureCloudContext);

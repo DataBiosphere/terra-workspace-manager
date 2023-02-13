@@ -10,6 +10,7 @@ import com.azure.resourcemanager.batch.models.FixedScaleSettings;
 import com.azure.resourcemanager.batch.models.InboundEndpointProtocol;
 import com.azure.resourcemanager.batch.models.InboundNatPool;
 import com.azure.resourcemanager.batch.models.IpAddressProvisioningType;
+import com.azure.resourcemanager.batch.models.MetadataItem;
 import com.azure.resourcemanager.batch.models.NetworkConfiguration;
 import com.azure.resourcemanager.batch.models.NetworkSecurityGroupRule;
 import com.azure.resourcemanager.batch.models.NetworkSecurityGroupRuleAccess;
@@ -63,6 +64,8 @@ public class BatchPoolFixtures {
   public static IpAddressProvisioningType IP_ADDRESS_PROVISIONING_TYPE =
       IpAddressProvisioningType.NO_PUBLIC_IPADDRESSES;
   public static List<String> IP_ADDRESS_IDS = List.of("id1", "id2");
+  public static String METADATA_NAME = "metadataName";
+  public static String METADATA_VALUE = "metadataValue";
 
   private BatchPoolFixtures() {}
 
@@ -114,6 +117,10 @@ public class BatchPoolFixtures {
         .withEndpointConfiguration(createPoolEndpointConfiguration())
         .withSubnetId(SUBNET_ID)
         .withDynamicVNetAssignmentScope(DYNAMIC_VNET_ASSIGNMENT_SCOPE);
+  }
+
+  public static List<MetadataItem> createMetadata() {
+    return List.of(new MetadataItem().withName(METADATA_NAME).withValue(METADATA_VALUE));
   }
 
   private static PublicIpAddressConfiguration createPublicIpAddressConfiguration() {
