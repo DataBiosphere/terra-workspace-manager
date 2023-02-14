@@ -65,7 +65,12 @@ public class CloudSyncRoleMapping {
           "serviceusage.quotas.get",
           "serviceusage.services.get",
           "serviceusage.services.list",
-          "storage.buckets.list");
+          "storage.buckets.list",
+          "dataproc.clusters.get",
+          "dataproc.clusters.list",
+          "dataproc.jobs.get",
+          "dataproc.jobs.list"
+          );
   private static final List<String> PROJECT_WRITER_PERMISSIONS =
       new ImmutableList.Builder<String>()
           .addAll(PROJECT_READER_PERMISSIONS)
@@ -107,7 +112,33 @@ public class CloudSyncRoleMapping {
               "artifactregistry.repositories.getIamPolicy",
               "artifactregistry.repositories.setIamPolicy",
               "artifactregistry.repositories.update",
-              "cloudbuild.builds.approve")
+              "cloudbuild.builds.approve",
+              // Dataproc CRUD permissions
+              // TODO: Move read permissions to PROJECT_READER and revoke modify permissions once adding wsm managed dataproc
+              "dataproc.clusters.create",
+              "dataproc.clusters.update",
+              "dataproc.clusters.delete",
+              "dataproc.clusters.use",
+              "dataproc.clusters.start",
+              "dataproc.clusters.stop",
+              "dataproc.jobs.create",
+              "dataproc.jobs.update",
+              "dataproc.jobs.delete",
+              "dataproc.jobs.cancel",
+              "dataproc.autoscaling.list",
+              "dataproc.autoscaling.get",
+              "dataproc.autoscaling.create",
+              "dataproc.autoscaling.update",
+              "dataproc.autoscaling.delete",
+              // TODO: Remove all of the following once adding WSM managed dataproc
+              "compute.machineTypes.get",
+              "compute.networks.get",
+              "compute.networks.list",
+              "compute.projects.get",
+              "compute.regions.get",
+              "compute.regions.list",
+              "compute.zones.get",
+              "compute.zones.list")
           .build();
 
   private static final CustomGcpIamRole PROJECT_READER =
