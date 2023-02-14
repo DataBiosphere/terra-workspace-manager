@@ -63,6 +63,10 @@ public class ValidateWorkspaceAgainstPolicyStep implements Step {
         resourceDao.listControlledResources(workspaceId, cloudPlatform);
 
     for (var existingResource : existingResources) {
+      if (existingResource.getRegion() == null) {
+        // older resources may not have a region.
+        continue;
+      }
       if (!validRegions.contains(existingResource.getRegion().toLowerCase())) {
         throw new PolicyConflictException("Workspace contains resources in violation of policy.");
       }
