@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 
+// TODO (PF-2269): Clean this up once the back-fill is done in all Terra environments.
 public class UpdateControlledBigQueryDatasetsLifetimeStep implements Step {
   private final ResourceDao resourceDao;
 
@@ -93,8 +94,7 @@ public class UpdateControlledBigQueryDatasetsLifetimeStep implements Step {
       return StepResult.getStepResultSuccess();
     }
     for (var resource : controlledBigQueryDatasets) {
-      resourceDao.updateBigQueryDatasetDefaultTableAndPartitionLifetime(
-          resource, resource.getDefaultTableLifetime(), resource.getDefaultPartitionLifetime());
+      resourceDao.updateBigQueryDatasetDefaultTableAndPartitionLifetime(resource, null, null);
     }
     return StepResult.getStepResultSuccess();
   }

@@ -16,15 +16,19 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.Contr
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.api.services.bigquery.model.Dataset;
+import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
+import kotlin.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+// TODO (PF-2269): Clean this up once the back-fill is done in all Terra environments.
 public class RetrieveControlledBigQueryDatasetLifetimeStep implements Step {
   private static final Logger logger =
       LoggerFactory.getLogger(RetrieveControlledBigQueryDatasetLifetimeStep.class);
@@ -39,26 +43,30 @@ public class RetrieveControlledBigQueryDatasetLifetimeStep implements Step {
     validateRequiredEntries(
         context.getWorkingMap(), CONTROLLED_BIG_QUERY_DATASETS_WITHOUT_LIFETIME);
     List<ControlledBigQueryDatasetResource> controlledBigQueryDatasets =
-        context
-            .getWorkingMap()
-            .get(CONTROLLED_BIG_QUERY_DATASETS_WITHOUT_LIFETIME, new TypeReference<>() {});
+        Preconditions.checkNotNull(
+            context
+                .getWorkingMap()
+                .get(CONTROLLED_BIG_QUERY_DATASETS_WITHOUT_LIFETIME, new TypeReference<>() {}));
     Map<UUID, String> resourceIdToDefaultTableLifetimeMap = new HashMap<>();
     Map<UUID, String> resourceIdToDefaultPartitionLifetimeMap = new HashMap<>();
     Map<UUID, String> resourceIdToWorkspaceIdMap = new HashMap<>();
 
-    assert controlledBigQueryDatasets != null;
     for (var resource : controlledBigQueryDatasets) {
       logger.info(
           "Getting default table lifetime and partition life for resource (BigQuery dataset) {} in workspace {}",
           resource.getResourceId(),
           resource.getWorkspaceId());
+
+      Pair<Long, Long> tableAndPartitionLifetime =
+          Optional.ofNullable(getBqDatasetDefaultTableLifetimeAndPartitionLifetime(resource))
+              .orElse(new Pair<>(null, null));
+
       populateMapsWithResourceIdKey(
           resourceIdToDefaultTableLifetimeMap,
           resourceIdToDefaultPartitionLifetimeMap,
           resourceIdToWorkspaceIdMap,
           resource,
-          getBqDatasetDefaultTableLifetime(resource),
-          getBqDatasetDefaultPartitionLifetime(resource));
+          tableAndPartitionLifetime);
     }
     context
         .getWorkingMap()
@@ -76,37 +84,39 @@ public class RetrieveControlledBigQueryDatasetLifetimeStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
+  /**
+   * @param resourceIdToDefaultTableLifetimeMap: maps ids to table lifetime.
+   * @param resourceIdToDefaultPartitionLifetimeMap: maps ids to partition lifetime.
+   * @param resourceIdToWorkspaceIdMap: maps ids to workspace.
+   * @param resource: resource mapped in the previous three maps.
+   * @param tableAndPartitionLifetime: first coordinate is table lifetime; second is partition
+   *     lifetime.
+   */
   private void populateMapsWithResourceIdKey(
       Map<UUID, String> resourceIdToDefaultTableLifetimeMap,
       Map<UUID, String> resourceIdToDefaultPartitionLifetimeMap,
       Map<UUID, String> resourceIdToWorkspaceIdMap,
       ControlledResource resource,
-      @Nullable Long defaultTableLifetime,
-      @Nullable Long defaultPartitionLifetime) {
+      Pair<Long, Long> tableAndPartitionLifetime) {
     UUID resourceId = resource.getResourceId();
     resourceIdToWorkspaceIdMap.put(resourceId, resource.getWorkspaceId().toString());
-    if (defaultTableLifetime != null) {
-      resourceIdToDefaultTableLifetimeMap.put(resourceId, defaultTableLifetime.toString());
-    }
-    if (defaultPartitionLifetime != null) {
-      resourceIdToDefaultPartitionLifetimeMap.put(resourceId, defaultPartitionLifetime.toString());
-    }
+    resourceIdToDefaultTableLifetimeMap.put(
+        resourceId, tableAndPartitionLifetime.getFirst().toString());
+    resourceIdToDefaultPartitionLifetimeMap.put(
+        resourceId, tableAndPartitionLifetime.getSecond().toString());
   }
 
+  /**
+   * @return Pair with lifetimes. First coordinate is table lifetime; second is partition lifetime.
+   */
   @Nullable
-  private Long getBqDatasetDefaultTableLifetime(ControlledBigQueryDatasetResource resource) {
+  private Pair<Long, Long> getBqDatasetDefaultTableLifetimeAndPartitionLifetime(
+      ControlledBigQueryDatasetResource resource) {
     Dataset dataset = getBqDataset(resource);
     if (dataset != null) {
-      return dataset.getDefaultTableExpirationMs() / 1000;
-    }
-    return null;
-  }
-
-  @Nullable
-  private Long getBqDatasetDefaultPartitionLifetime(ControlledBigQueryDatasetResource resource) {
-    Dataset dataset = getBqDataset(resource);
-    if (dataset != null) {
-      return dataset.getDefaultPartitionExpirationMs() / 1000;
+      return new Pair<>(
+          dataset.getDefaultTableExpirationMs() / 1000,
+          dataset.getDefaultPartitionExpirationMs() / 1000);
     }
     return null;
   }

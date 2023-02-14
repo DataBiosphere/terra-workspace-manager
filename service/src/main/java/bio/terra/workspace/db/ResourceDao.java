@@ -327,6 +327,7 @@ public class ResourceDao {
         .collect(Collectors.toList());
   }
 
+  // TODO (PF-2269): Clean this up once the back-fill is done in all Terra environments.
   /**
    * Returns a list of all controlled BigQuery datasets without default table lifetime or default
    * partition lifetime set.
@@ -567,6 +568,7 @@ public class ResourceDao {
     return updated;
   }
 
+  // TODO (PF-2269): Clean this up once the back-fill is done in all Terra environments.
   /**
    * Update a BigQuery dataset's default table lifetime and default partition lifetime.
    *

@@ -648,9 +648,15 @@ public class ControlledResourceService {
         .submit();
   }
   // TODO (PF-2269): Clean this up once the back-fill is done in all Terra environments.
+
+  /**
+   * Starts a flight to update missing lifetime for controlled BigQuery datasets.
+   *
+   * @return the job ID string (to await job completion in the connected tests.)
+   */
   @Traced
   @Nullable
-  public String updateGcpControlledBigQueryDatasetsLifetimeAsync() {
+  public String updateControlledBigQueryDatasetsLifetimeAsync() {
     String wsmSaToken = samService.getWsmServiceAccountToken();
     // wsmSaToken is null for unit test when samService is mocked out.
     if (wsmSaToken == null) {

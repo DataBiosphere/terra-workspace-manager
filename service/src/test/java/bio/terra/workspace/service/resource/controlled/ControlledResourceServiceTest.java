@@ -1836,9 +1836,10 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     return jobResult.getResult();
   }
 
+  // TODO (PF-2269): Clean this up once the back-fill is done in all Terra environments.
   private List<ControlledBigQueryDatasetResource>
       updateControlledBigQueryDatasetsLifetimeAndWait() {
-    String jobId = controlledResourceService.updateGcpControlledBigQueryDatasetsLifetimeAsync();
+    String jobId = controlledResourceService.updateControlledBigQueryDatasetsLifetimeAsync();
     jobService.waitForJob(jobId);
 
     AsyncJobResult<List<ControlledBigQueryDatasetResource>> jobResult =
