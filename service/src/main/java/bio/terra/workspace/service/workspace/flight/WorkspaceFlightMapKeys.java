@@ -18,7 +18,6 @@ public final class WorkspaceFlightMapKeys {
   public static final String FOLDER_ID = "folderId";
   public static final String MERGE_POLICIES = "mergePolicies";
   public static final String IS_WET_RUN = "isWetRun";
-  public static final String CLOUD_PLATFORM = "cloudPlatform";
   public static final String UPDATED_WORKSPACES = "updatedWorkspaces";
   public static final String SPEND_PROFILE = "spendProfile";
   public static final String PET_SA_CREDENTIALS = "petSaCredentials";

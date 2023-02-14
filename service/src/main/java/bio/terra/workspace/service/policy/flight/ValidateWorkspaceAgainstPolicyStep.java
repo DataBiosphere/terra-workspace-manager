@@ -64,7 +64,7 @@ public class ValidateWorkspaceAgainstPolicyStep implements Step {
 
     for (var existingResource : existingResources) {
       if (existingResource.getRegion() == null) {
-        // older resources may not have a region.
+        // Some resources don't have regions. IE: Git repos.
         continue;
       }
       if (!validRegions.contains(existingResource.getRegion().toLowerCase())) {
