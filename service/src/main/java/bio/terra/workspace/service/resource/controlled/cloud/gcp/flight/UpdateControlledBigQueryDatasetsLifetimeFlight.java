@@ -20,8 +20,7 @@ public class UpdateControlledBigQueryDatasetsLifetimeFlight extends Flight {
     FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
 
     addStep(
-        new RetrieveControlledBigQueryDatasetWithoutLifetimeStep(flightBeanBag.getResourceDao()),
-        RetryRules.shortDatabase());
+        new RetrieveControlledBigQueryDatasetWithoutLifetimeStep(flightBeanBag.getResourceDao()));
 
     addStep(
         new RetrieveControlledBigQueryDatasetLifetimeStep(flightBeanBag.getCrlService()),
