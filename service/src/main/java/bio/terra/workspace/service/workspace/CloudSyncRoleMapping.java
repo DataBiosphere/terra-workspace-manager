@@ -1,11 +1,14 @@
 package bio.terra.workspace.service.workspace;
 
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.CustomGcpIamRole;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 /**
  * This mapping describes the project-level GCP roles granted to members of a workspace.
@@ -19,7 +22,10 @@ import java.util.List;
  * <p>!!!If you change this file, if you want to backfill the change to existing projects, contact
  * admin to run syncIamRoles endpoint.!!!
  */
+@Component
 public class CloudSyncRoleMapping {
+
+  FeatureConfiguration featureConfiguration;
 
   // Note that custom roles defined at the project level cannot contain the
   // "resourcemanager.projects.list" permission, even though it was previously included here.
@@ -65,12 +71,7 @@ public class CloudSyncRoleMapping {
           "serviceusage.quotas.get",
           "serviceusage.services.get",
           "serviceusage.services.list",
-          "storage.buckets.list",
-          "dataproc.clusters.get",
-          "dataproc.clusters.list",
-          "dataproc.jobs.get",
-          "dataproc.jobs.list"
-          );
+          "storage.buckets.list");
   private static final List<String> PROJECT_WRITER_PERMISSIONS =
       new ImmutableList.Builder<String>()
           .addAll(PROJECT_READER_PERMISSIONS)
@@ -112,9 +113,27 @@ public class CloudSyncRoleMapping {
               "artifactregistry.repositories.getIamPolicy",
               "artifactregistry.repositories.setIamPolicy",
               "artifactregistry.repositories.update",
-              "cloudbuild.builds.approve",
+              "cloudbuild.builds.approve")
+          .build();
+
+  private static final List<String> PROJECT_READER_DATAPROC_PERMISSIONS =
+      new ImmutableList.Builder<String>()
+          .addAll(PROJECT_READER_PERMISSIONS)
+          .add(
+              "dataproc.clusters.get",
+              "dataproc.clusters.list",
+              "dataproc.jobs.get",
+              "dataproc.jobs.list")
+          .build();
+
+  private static final List<String> PROJECT_OWNER_DATAPROC_PERMISSIONS =
+      new ImmutableList.Builder<String>()
+          .addAll(PROJECT_READER_DATAPROC_PERMISSIONS)
+          .addAll(PROJECT_OWNER_PERMISSIONS)
+          .add(
               // Dataproc CRUD permissions
-              // TODO: Move read permissions to PROJECT_READER and revoke modify permissions once adding wsm managed dataproc
+              // TODO: Move read permissions to PROJECT_READER and revoke modify permissions once
+              // adding wsm managed dataproc
               "dataproc.clusters.create",
               "dataproc.clusters.update",
               "dataproc.clusters.delete",
@@ -155,23 +174,34 @@ public class CloudSyncRoleMapping {
               "compute.zones.list")
           .build();
 
-  private static final CustomGcpIamRole PROJECT_READER =
-      CustomGcpIamRole.of("PROJECT_READER", PROJECT_READER_PERMISSIONS);
-  private static final CustomGcpIamRole PROJECT_WRITER =
-      CustomGcpIamRole.of("PROJECT_WRITER", PROJECT_WRITER_PERMISSIONS);
-  private static final CustomGcpIamRole PROJECT_OWNER =
-      CustomGcpIamRole.of("PROJECT_OWNER", PROJECT_OWNER_PERMISSIONS);
-  // Currently, workspace editors, applications and owners have the same cloud permissions as
-  // writers. If that changes, create a new CustomGcpIamRole and modify the map below.
-  public static final ImmutableMap<WsmIamRole, CustomGcpIamRole> CUSTOM_GCP_PROJECT_IAM_ROLES =
-      ImmutableMap.of(
-          WsmIamRole.OWNER, PROJECT_OWNER,
-          // TODO: this should map to PROJECT_APPLICATION if that's created.
-          WsmIamRole.APPLICATION, PROJECT_WRITER,
-          WsmIamRole.WRITER, PROJECT_WRITER,
-          WsmIamRole.READER, PROJECT_READER);
+  @Autowired
+  public CloudSyncRoleMapping() {
+    this.featureConfiguration = featureConfiguration;
+  }
 
-  public static final ImmutableSet<CustomGcpIamRole> CUSTOM_GCP_IAM_ROLES =
-      // convert it to a set to get rid of the duplication.
-      ImmutableSet.copyOf(CUSTOM_GCP_PROJECT_IAM_ROLES.values());
+  public ImmutableMap<WsmIamRole, CustomGcpIamRole> getCustomGcpProjectIamRoles() {
+    CustomGcpIamRole PROJECT_READER =
+        CustomGcpIamRole.of("PROJECT_READER", PROJECT_READER_PERMISSIONS);
+    CustomGcpIamRole PROJECT_WRITER =
+        CustomGcpIamRole.of("PROJECT_WRITER", PROJECT_WRITER_PERMISSIONS);
+    CustomGcpIamRole PROJECT_OWNER =
+        CustomGcpIamRole.of("PROJECT_OWNER", PROJECT_OWNER_PERMISSIONS);
+    if (featureConfiguration.isDataprocEnabled()) {
+      PROJECT_READER = CustomGcpIamRole.of("PROJECT_READER", PROJECT_READER_DATAPROC_PERMISSIONS);
+      PROJECT_OWNER = CustomGcpIamRole.of("PROJECT_OWNER", PROJECT_OWNER_DATAPROC_PERMISSIONS);
+    }
+    // Currently, workspace editors, applications and owners have the same cloud permissions as
+    // writers. If that changes, create a new CustomGcpIamRole and modify the map below.
+    return ImmutableMap.of(
+        WsmIamRole.OWNER, PROJECT_OWNER,
+        // TODO: this should map to PROJECT_APPLICATION if that's created.
+        WsmIamRole.APPLICATION, PROJECT_WRITER,
+        WsmIamRole.WRITER, PROJECT_WRITER,
+        WsmIamRole.READER, PROJECT_READER);
+  }
+
+  public ImmutableSet<CustomGcpIamRole> getCustomGcpIamRoles() {
+    // convert it to a set to get rid of the duplication.
+    return ImmutableSet.copyOf(getCustomGcpProjectIamRoles().values());
+  }
 }

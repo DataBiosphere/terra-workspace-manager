@@ -299,7 +299,8 @@ class CreateGcpContextFlightV2Test extends BaseConnectedTest {
   private void assertRoleBindingInPolicy(
       WsmIamRole role, String groupEmail, Policy gcpPolicy, String projectId) {
     String expectedGcpRoleName =
-        CloudSyncRoleMapping.CUSTOM_GCP_PROJECT_IAM_ROLES
+        new CloudSyncRoleMapping()
+            .getCustomGcpProjectIamRoles()
             .get(role)
             .getFullyQualifiedRoleName(projectId);
     List<Binding> actualGcpBindingList = gcpPolicy.getBindings();

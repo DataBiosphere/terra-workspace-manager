@@ -41,8 +41,8 @@ public class CreateCustomGcpRolesStep implements Step {
     // Multiple WSM roles may share the same GCP role. De-duping here prevents duplicate requests,
     // which would lead to unnecessary CONFLICT responses from GCP.
     ImmutableSet<CustomGcpIamRole> customProjectRoles =
-        CloudSyncRoleMapping.CUSTOM_GCP_PROJECT_IAM_ROLES.values().stream()
-            .collect(ImmutableSet.toImmutableSet());
+        new CloudSyncRoleMapping()
+            .getCustomGcpProjectIamRoles().values().stream().collect(ImmutableSet.toImmutableSet());
     for (CustomGcpIamRole customProjectRole : customProjectRoles) {
       createCustomRole(customProjectRole, projectId);
     }

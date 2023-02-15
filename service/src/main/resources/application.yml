@@ -215,6 +215,8 @@ feature:
   bpm-azure-enabled: false
   # temporary-grant-enabled - Controls whether temporary direct ACL grants are made on creates
   temporary-grant-enabled: false
+  # dataproc-enabled - Controls whether project level Dataproc permissions are enabled for owners
+  dataproc-enabled: false
 
 reference:
   gitrepos:

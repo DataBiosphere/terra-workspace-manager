@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.admin.flights.cloudcontexts.gcp;
 
-import static bio.terra.workspace.service.workspace.CloudSyncRoleMapping.CUSTOM_GCP_IAM_ROLES;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.UPDATED_WORKSPACES;
 
 import bio.terra.cloudres.google.iam.IamCow;
@@ -11,6 +10,7 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.CustomGcpIamRole;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.CustomGcpIamRoleMapping;
+import bio.terra.workspace.service.workspace.CloudSyncRoleMapping;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.iam.v1.model.CreateRoleRequest;
@@ -41,7 +41,7 @@ public class GcpIamCustomRolePatchStep implements Step {
     this.workspaceId = workspaceId;
     this.projectId = projectId;
     this.isWetRun = isWetRun;
-    customGcpIamRoles.addAll(CUSTOM_GCP_IAM_ROLES);
+    customGcpIamRoles.addAll(new CloudSyncRoleMapping().getCustomGcpIamRoles());
     customGcpIamRoles.addAll(CustomGcpIamRoleMapping.CUSTOM_GCP_RESOURCE_IAM_ROLES.values());
   }
 

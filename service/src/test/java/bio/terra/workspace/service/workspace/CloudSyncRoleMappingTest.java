@@ -16,12 +16,14 @@ public class CloudSyncRoleMappingTest extends BaseUnitTest {
   @Test
   void writerPermissionsContainReaderPermissions() {
     assertThat(
-        CloudSyncRoleMapping.CUSTOM_GCP_PROJECT_IAM_ROLES
+        new CloudSyncRoleMapping()
+            .getCustomGcpProjectIamRoles()
             .get(WsmIamRole.READER)
             .getIncludedPermissions(),
         everyItem(
             in(
-                (CloudSyncRoleMapping.CUSTOM_GCP_PROJECT_IAM_ROLES
+                (new CloudSyncRoleMapping()
+                    .getCustomGcpProjectIamRoles()
                     .get(WsmIamRole.WRITER)
                     .getIncludedPermissions()))));
   }
@@ -29,12 +31,14 @@ public class CloudSyncRoleMappingTest extends BaseUnitTest {
   @Test
   void applicationPermissionsContainWriterPermissions() {
     assertThat(
-        CloudSyncRoleMapping.CUSTOM_GCP_PROJECT_IAM_ROLES
+        new CloudSyncRoleMapping()
+            .getCustomGcpProjectIamRoles()
             .get(WsmIamRole.WRITER)
             .getIncludedPermissions(),
         everyItem(
             in(
-                (CloudSyncRoleMapping.CUSTOM_GCP_PROJECT_IAM_ROLES
+                (new CloudSyncRoleMapping()
+                    .getCustomGcpProjectIamRoles()
                     .get(WsmIamRole.APPLICATION)
                     .getIncludedPermissions()))));
   }
@@ -42,12 +46,14 @@ public class CloudSyncRoleMappingTest extends BaseUnitTest {
   @Test
   void ownerPermissionsContainWriterPermissions() {
     assertThat(
-        CloudSyncRoleMapping.CUSTOM_GCP_PROJECT_IAM_ROLES
+        new CloudSyncRoleMapping()
+            .getCustomGcpProjectIamRoles()
             .get(WsmIamRole.WRITER)
             .getIncludedPermissions(),
         everyItem(
             in(
-                (CloudSyncRoleMapping.CUSTOM_GCP_PROJECT_IAM_ROLES
+                (new CloudSyncRoleMapping()
+                    .getCustomGcpProjectIamRoles()
                     .get(WsmIamRole.OWNER)
                     .getIncludedPermissions()))));
   }

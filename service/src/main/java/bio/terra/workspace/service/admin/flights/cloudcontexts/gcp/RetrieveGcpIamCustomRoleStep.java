@@ -1,7 +1,5 @@
 package bio.terra.workspace.service.admin.flights.cloudcontexts.gcp;
 
-import static bio.terra.workspace.service.workspace.CloudSyncRoleMapping.CUSTOM_GCP_IAM_ROLES;
-
 import bio.terra.cloudres.google.iam.IamCow;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
@@ -10,6 +8,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.CustomGcpIamRole;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.CustomGcpIamRoleMapping;
+import bio.terra.workspace.service.workspace.CloudSyncRoleMapping;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.iam.v1.model.Role;
 import java.io.IOException;
@@ -33,7 +32,7 @@ public class RetrieveGcpIamCustomRoleStep implements Step {
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     Set<CustomGcpIamRole> customGcpIamRoles = new HashSet<>();
-    customGcpIamRoles.addAll(CUSTOM_GCP_IAM_ROLES);
+    customGcpIamRoles.addAll(new CloudSyncRoleMapping().getCustomGcpIamRoles());
     customGcpIamRoles.addAll(CustomGcpIamRoleMapping.CUSTOM_GCP_RESOURCE_IAM_ROLES.values());
     return retrieveCustomRoles(customGcpIamRoles, context);
   }

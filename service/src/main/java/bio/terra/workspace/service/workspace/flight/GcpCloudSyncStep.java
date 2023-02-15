@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.workspace.flight;
 
-import static bio.terra.workspace.service.workspace.CloudSyncRoleMapping.CUSTOM_GCP_PROJECT_IAM_ROLES;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.GCP_PROJECT_ID;
 
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
@@ -93,7 +92,7 @@ public class GcpCloudSyncStep implements Step {
       // Add appropriate project-level roles for each WSM IAM role.
       workspaceRoleGroupsMap.forEach(
           (wsmRole, email) -> {
-            if (CUSTOM_GCP_PROJECT_IAM_ROLES.containsKey(wsmRole)) {
+            if (new CloudSyncRoleMapping().getCustomGcpProjectIamRoles().containsKey(wsmRole)) {
               newBindings.add(bindingForRole(wsmRole, GcpUtils.toGroupMember(email), gcpProjectId));
             }
           });
@@ -152,7 +151,8 @@ public class GcpCloudSyncStep implements Step {
   }
 
   private String getCustomRoleName(WsmIamRole role, String gcpProjectId) {
-    CustomGcpIamRole customRole = CUSTOM_GCP_PROJECT_IAM_ROLES.get(role);
+    CustomGcpIamRole customRole =
+        new CloudSyncRoleMapping().getCustomGcpProjectIamRoles().get(role);
     if (customRole == null) {
       throw new InternalLogicException(String.format("Missing custom GCP project role %s", role));
     }

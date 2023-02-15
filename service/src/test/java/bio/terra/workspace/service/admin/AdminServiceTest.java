@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.admin;
 
-import static bio.terra.workspace.service.workspace.CloudSyncRoleMapping.CUSTOM_GCP_PROJECT_IAM_ROLES;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -22,6 +21,7 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.CustomGcpIamRole;
+import bio.terra.workspace.service.workspace.CloudSyncRoleMapping;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import com.google.api.services.iam.v1.model.Role;
@@ -113,7 +113,11 @@ public class AdminServiceTest extends BaseConnectedTest {
     jobService.waitForJob(jobId);
     for (String projectId : projectIds) {
       assertProjectReaderRoleMatchesExpected(
-          projectId, CUSTOM_GCP_PROJECT_IAM_ROLES.get(WsmIamRole.READER).getIncludedPermissions());
+          projectId,
+          new CloudSyncRoleMapping()
+              .getCustomGcpProjectIamRoles()
+              .get(WsmIamRole.READER)
+              .getIncludedPermissions());
     }
     OffsetDateTime newChangeTimestampOfWorkspace1 =
         workspaceActivityLogDao.getLastUpdatedDetails(workspaceIds.get(0)).get().changeDate();
@@ -146,7 +150,11 @@ public class AdminServiceTest extends BaseConnectedTest {
     jobService.waitForJob(jobId);
     for (String projectId : projectIds) {
       assertProjectReaderRoleMatchesExpected(
-          projectId, CUSTOM_GCP_PROJECT_IAM_ROLES.get(WsmIamRole.READER).getIncludedPermissions());
+          projectId,
+          new CloudSyncRoleMapping()
+              .getCustomGcpProjectIamRoles()
+              .get(WsmIamRole.READER)
+              .getIncludedPermissions());
     }
     assertTrue(
         workspaceActivityLogDao
