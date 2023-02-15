@@ -613,7 +613,7 @@ public class ResourceDaoTest extends BaseUnitTest {
 
     UUID workspaceWithGcpContext = createWorkspaceWithGcpContext(workspaceDao);
 
-    var emptyList = resourceDao.listControlledBigQueryDatasetsWithoutLifetime();
+    var emptyList = resourceDao.listControlledBigQueryDatasetsWithoutBothLifetime();
     assertEquals(0, emptyList.size());
     try {
       for (int i = 0; i < 5; i++) {
@@ -633,7 +633,7 @@ public class ResourceDaoTest extends BaseUnitTest {
 
       resourceDao.createControlledResource(datasetWithLifetime);
 
-      var ans = resourceDao.listControlledBigQueryDatasetsWithoutLifetime().size();
+      var ans = resourceDao.listControlledBigQueryDatasetsWithoutBothLifetime().size();
       assertEquals(5, ans);
     } finally {
       resourceDao.deleteAllControlledResources(workspaceWithGcpContext, CloudPlatform.GCP);

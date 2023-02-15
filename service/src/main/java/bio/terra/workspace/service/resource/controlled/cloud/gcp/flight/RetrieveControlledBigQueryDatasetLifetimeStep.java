@@ -57,16 +57,12 @@ public class RetrieveControlledBigQueryDatasetLifetimeStep implements Step {
           resource.getResourceId(),
           resource.getWorkspaceId());
 
-      Pair<Long, Long> tableAndPartitionLifetime =
-          Optional.ofNullable(getBqDatasetDefaultTableLifetimeAndPartitionLifetime(resource))
-              .orElse(new Pair<>(null, null));
-
       populateMapsWithResourceIdKey(
           resourceIdToDefaultTableLifetimeMap,
           resourceIdToDefaultPartitionLifetimeMap,
           resourceIdToWorkspaceIdMap,
           resource,
-          tableAndPartitionLifetime);
+          getBqDatasetDefaultTableLifetimeAndPartitionLifetime(resource));
     }
     context
         .getWorkingMap()
@@ -97,13 +93,15 @@ public class RetrieveControlledBigQueryDatasetLifetimeStep implements Step {
       Map<UUID, String> resourceIdToDefaultPartitionLifetimeMap,
       Map<UUID, String> resourceIdToWorkspaceIdMap,
       ControlledResource resource,
-      Pair<Long, Long> tableAndPartitionLifetime) {
+      @Nullable Pair<Long, Long> tableAndPartitionLifetime) {
     UUID resourceId = resource.getResourceId();
     resourceIdToWorkspaceIdMap.put(resourceId, resource.getWorkspaceId().toString());
-    resourceIdToDefaultTableLifetimeMap.put(
-        resourceId, tableAndPartitionLifetime.getFirst().toString());
-    resourceIdToDefaultPartitionLifetimeMap.put(
-        resourceId, tableAndPartitionLifetime.getSecond().toString());
+    if (tableAndPartitionLifetime != null) {
+      resourceIdToDefaultTableLifetimeMap.put(
+          resourceId, tableAndPartitionLifetime.getFirst().toString());
+      resourceIdToDefaultPartitionLifetimeMap.put(
+          resourceId, tableAndPartitionLifetime.getSecond().toString());
+    }
   }
 
   /**

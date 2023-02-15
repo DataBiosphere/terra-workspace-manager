@@ -329,18 +329,18 @@ public class ResourceDao {
 
   // TODO (PF-2269): Clean this up once the back-fill is done in all Terra environments.
   /**
-   * Returns a list of all controlled BigQuery datasets without default table lifetime or default
-   * partition lifetime set.
+   * Returns a list of all controlled BigQuery datasets with empty default table lifetime and default
+   * partition lifetime.
    */
   @ReadTransaction
-  public List<ControlledBigQueryDatasetResource> listControlledBigQueryDatasetsWithoutLifetime() {
+  public List<ControlledBigQueryDatasetResource> listControlledBigQueryDatasetsWithoutBothLifetime() {
 
     String sql =
         RESOURCE_SELECT_SQL_WITHOUT_WORKSPACE_ID
             + " WHERE stewardship_type = :controlled_resource"
             + " AND exact_resource_type = :controlled_gcp_big_query_dataset"
-            + " AND (((attributes -> 'defaultTableLifetime') IS NULL)"
-            + " OR ((attributes -> 'defaultPartitionLifetime') IS NULL))";
+            + " AND ((attributes -> 'defaultTableLifetime') IS NULL)"
+            + " AND ((attributes -> 'defaultPartitionLifetime') IS NULL)";
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("controlled_resource", CONTROLLED.toSql())

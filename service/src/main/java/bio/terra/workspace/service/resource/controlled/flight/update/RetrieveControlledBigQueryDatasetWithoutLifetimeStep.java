@@ -23,7 +23,7 @@ public class RetrieveControlledBigQueryDatasetWithoutLifetimeStep implements Ste
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     List<ControlledBigQueryDatasetResource> controlledBigQueryDatasets =
-        Optional.ofNullable(resourceDao.listControlledBigQueryDatasetsWithoutLifetime())
+        Optional.ofNullable(resourceDao.listControlledBigQueryDatasetsWithoutBothLifetime())
             .orElse(Collections.emptyList());
 
     context
