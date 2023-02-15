@@ -7,8 +7,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 /**
  * This mapping describes the project-level GCP roles granted to members of a workspace.
@@ -22,7 +20,6 @@ import org.springframework.stereotype.Component;
  * <p>!!!If you change this file, if you want to backfill the change to existing projects, contact
  * admin to run syncIamRoles endpoint.!!!
  */
-@Component
 public class CloudSyncRoleMapping {
 
   FeatureConfiguration featureConfiguration;
@@ -174,9 +171,8 @@ public class CloudSyncRoleMapping {
               "compute.zones.list")
           .build();
 
-  @Autowired
   public CloudSyncRoleMapping() {
-    this.featureConfiguration = featureConfiguration;
+    this.featureConfiguration = new FeatureConfiguration();
   }
 
   public ImmutableMap<WsmIamRole, CustomGcpIamRole> getCustomGcpProjectIamRoles() {
