@@ -22,6 +22,7 @@ dependencies {
 
   // hk2 is required to use datarepo client, but not correctly exposed by the client
   implementation group: "org.glassfish.jersey.inject", name: "jersey-hk2", version: "2.32"
+  implementation group: 'org.glassfish.jersey.connectors', name: 'jersey-jdk-connector', version: '2.32'
 
   // Opencensus utilities for various HTTP clients
   implementation group: "io.opencensus", name: "opencensus-contrib-http-jaxrs", version: "0.28.3"

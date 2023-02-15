@@ -39,6 +39,9 @@ import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.jdk.connector.JdkConnectorProvider;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -248,6 +251,9 @@ public class TpsApiDispatch {
             .addDefaultHeader(
                 RequestIdFilter.REQUEST_ID_HEADER, MDC.get(RequestIdFilter.REQUEST_ID_MDC_KEY));
     client.setAccessToken(accessToken);
+    ClientConfig clientConfig = new ClientConfig();
+    clientConfig.connectorProvider(new JdkConnectorProvider());
+    client.setHttpClient(ClientBuilder.newClient(clientConfig));
     return client;
   }
 
