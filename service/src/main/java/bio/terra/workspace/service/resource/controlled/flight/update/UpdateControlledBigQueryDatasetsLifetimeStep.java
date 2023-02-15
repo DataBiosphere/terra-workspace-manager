@@ -53,7 +53,7 @@ public class UpdateControlledBigQueryDatasetsLifetimeStep implements Step {
     Map<UUID, String> resourceIdsToWorkspaceIdMap =
         Preconditions.checkNotNull(
             workingMap.get(CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP, new TypeReference<>() {}));
-    List<ControlledBigQueryDatasetResource> updatedResources = new ArrayList<>();
+    //    List<ControlledBigQueryDatasetResource> updatedResources = new ArrayList<>();
 
     List<ControlledBigQueryDatasetResource> controlledBigQueryDatasets =
         Preconditions.checkNotNull(
@@ -69,17 +69,17 @@ public class UpdateControlledBigQueryDatasetsLifetimeStep implements Step {
                 Long.valueOf(resourceIdToDefaultTableLifetimeMap.get(id)),
                 Long.valueOf(resourceIdToDefaultPartitionLifetimeMap.get(id)));
 
-        if (updated) {
-          updatedResources.add(
-              resourceDao
-                  .getResource(UUID.fromString(resourceIdsToWorkspaceIdMap.get(id)), id)
-                  .castToControlledResource()
-                  .castByEnum(CONTROLLED_GCP_BIG_QUERY_DATASET));
-        }
+        //        if (updated) {
+        //          updatedResources.add(
+        //              resourceDao
+        //                  .getResource(UUID.fromString(resourceIdsToWorkspaceIdMap.get(id)), id)
+        //                  .castToControlledResource()
+        //                  .castByEnum(CONTROLLED_GCP_BIG_QUERY_DATASET));
+        //        }
       }
     }
 
-    setResponse(context, updatedResources, HttpStatus.OK);
+    //    setResponse(context, updatedResources, HttpStatus.OK);
     return StepResult.getStepResultSuccess();
   }
 

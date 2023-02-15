@@ -112,11 +112,14 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
 import org.apache.commons.lang3.RandomStringUtils;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterAll;
@@ -1837,14 +1840,39 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   }
 
   // TODO (PF-2269): Clean this up once the back-fill is done in all Terra environments.
+
+  /**
+   * @return A list of big query datasets that were updated (with lifetime set)
+   */
   private List<ControlledBigQueryDatasetResource>
       updateControlledBigQueryDatasetsLifetimeAndWait() {
+    HashSet<ControlledBigQueryDatasetResource> successfullyUpdatedDatasets =
+        new HashSet<>(resourceDao.listControlledBigQueryDatasetsWithoutBothLifetime());
+
     String jobId = controlledResourceService.updateControlledBigQueryDatasetsLifetimeAsync();
     jobService.waitForJob(jobId);
 
-    AsyncJobResult<List<ControlledBigQueryDatasetResource>> jobResult =
-        jobApiUtils.retrieveAsyncJobResult(jobId, new TypeReference<>() {});
-    return jobResult.getResult();
+    HashSet<ControlledBigQueryDatasetResource> afterDatasetsNotUpdated =
+        new HashSet<>(resourceDao.listControlledBigQueryDatasetsWithoutBothLifetime());
+
+    // Subtract the set of datasets without lifetime by the set of datasets that were not updated.
+    // The result is the set of datasets that were updated (originally having no lifetime)
+    for (var notUpdatedDataset : afterDatasetsNotUpdated) {
+      successfullyUpdatedDatasets.remove(notUpdatedDataset);
+    }
+
+    // Since the original set has datasets with no lifetime, the updated lifetimes are retrieved.
+    List<ControlledBigQueryDatasetResource> updatedDatasets = new ArrayList<>();
+
+    for (var dataset : successfullyUpdatedDatasets) {
+      updatedDatasets.add(
+          resourceDao
+              .getResource(dataset.getWorkspaceId(), dataset.getResourceId())
+              .castToControlledResource()
+              .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET));
+    }
+
+    return updatedDatasets;
   }
 
   @Test
