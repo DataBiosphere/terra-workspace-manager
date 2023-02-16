@@ -363,6 +363,20 @@ public class CreateAzureBatchPoolStepTest extends BaseBatchPoolTest {
     assertThat(metadata.get(0).value(), equalTo(BatchPoolFixtures.METADATA_VALUE));
   }
 
+  @Test
+  public void createBatchPoolWithVmSizeNotInSDKListSucceeds() throws InterruptedException{
+    resource = buildDefaultResourceBuilder()
+            .vmSize("Standard_D4ads_v5")
+            .build();
+    initDeleteStep(resource);
+    setupMocks(true);
+
+    StepResult stepResult = createAzureBatchPoolStep.doStep(mockFlightContext);
+
+    assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_SUCCESS));
+    verify(mockPoolDefinitionStateCreate, times(1)).create(any());
+  }
+
   private void initDeleteStep(ControlledAzureBatchPoolResource resource) {
     createAzureBatchPoolStep =
         new CreateAzureBatchPoolStep(mockAzureConfig, mockCrlService, resource);
