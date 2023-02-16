@@ -5,6 +5,7 @@ import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKey
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.ServiceUnavailableException;
+import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightState;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.exception.InternalLogicException;
@@ -649,6 +650,24 @@ public class ControlledResourceService {
     }
 
     return gcpPolicyBuilder.build();
+  }
+
+  // TODO (PF-2368): clean this up once back-fill is done in all Terra environment.
+  @Traced
+  @Nullable
+  public String updateAwsControlledResourcesRegionAsync(
+          AuthenticatedUserRequest userRequest, boolean wetRun) {
+    // No Operation performed - No update is required, add empty flight for compatibility
+    return jobService
+            .newJob()
+            .description(
+                    "No-Op: A flight to update controlled resource's missing region in all the existing"
+                            + "terra managed aws projects")
+            .flightClass(Flight.class)
+            .userRequest(userRequest)
+            .addParameter(IS_WET_RUN, wetRun)
+            .operationType(OperationType.UPDATE)
+            .submit();
   }
 
   // TODO (PF-2368): clean this up once back-fill is done in all Terra environment.
