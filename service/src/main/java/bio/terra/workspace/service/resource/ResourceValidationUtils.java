@@ -464,9 +464,9 @@ public class ResourceValidationUtils {
       return;
     }
     if (com.azure.core.management.Region.values().stream()
-            .filter(r -> r.toString().equalsIgnoreCase(region))
-            .findFirst()
-            .isEmpty()) {
+        .filter(r -> r.toString().equalsIgnoreCase(region))
+        .findFirst()
+        .isEmpty()) {
       logger.warn("Invalid Azure region {}", region);
       throw new InvalidControlledResourceException("Invalid Azure Region specified.");
     }
@@ -497,10 +497,11 @@ public class ResourceValidationUtils {
   }
 
   public static <T> void checkFieldNonNull(
-          @Nullable T fieldValue, String fieldName, String resourceDescriptor) {
+      @Nullable T fieldValue, String fieldName, String resourceDescriptor) {
     if (fieldValue == null) {
       throw new MissingRequiredFieldException(
-              String.format("Missing required field '%s' for %s", fieldName, resourceDescriptor));    }
+          String.format("Missing required field '%s' for %s", fieldName, resourceDescriptor));
+    }
   }
 
   public static void validateApiAzureVmCreationParameters(
