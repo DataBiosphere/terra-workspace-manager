@@ -186,7 +186,7 @@ public class CloudSyncRoleMapping {
     CustomGcpIamRole projectOwner = CustomGcpIamRole.of("PROJECT_OWNER", projectOwnerPermissions);
     if (featureConfiguration.isDataprocEnabled()) {
       projectReader = CustomGcpIamRole.of("PROJECT_READER", projectReaderDataprocPermissions);
-      projectOwner = CustomGcpIamRole.of("PROJECT_OWNER", projectOwnerPermissions);
+      projectOwner = CustomGcpIamRole.of("PROJECT_OWNER", projectOwnerDataprocPermissions);
     }
     // Currently, workspace editors, applications and owners have the same cloud permissions as
     // writers. If that changes, create a new CustomGcpIamRole and modify the map below.
