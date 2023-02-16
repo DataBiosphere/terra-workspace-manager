@@ -364,10 +364,8 @@ public class CreateAzureBatchPoolStepTest extends BaseBatchPoolTest {
   }
 
   @Test
-  public void createBatchPoolWithVmSizeNotInSDKListSucceeds() throws InterruptedException{
-    resource = buildDefaultResourceBuilder()
-            .vmSize("Standard_D4ads_v5")
-            .build();
+  public void createBatchPoolWithVmSizeNotInSDKListSucceeds() throws InterruptedException {
+    resource = buildDefaultResourceBuilder().vmSize("Standard_D4ads_v5").build();
     initDeleteStep(resource);
     setupMocks(true);
 
