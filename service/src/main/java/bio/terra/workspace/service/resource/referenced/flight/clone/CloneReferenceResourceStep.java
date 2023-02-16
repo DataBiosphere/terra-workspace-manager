@@ -13,11 +13,6 @@ import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.WsmCloneResourceResult;
 import bio.terra.workspace.service.workspace.model.WsmResourceCloneDetails;
-import com.fasterxml.jackson.core.type.TypeReference;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
 import org.springframework.http.HttpStatus;
 
 public class CloneReferenceResourceStep implements Step {
@@ -64,24 +59,7 @@ public class CloneReferenceResourceStep implements Step {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
     }
 
-    addCloneDetailsToWorkingMap(context, cloneDetails);
     return StepResult.getStepResultSuccess();
-  }
-
-  private void addCloneDetailsToWorkingMap(
-      FlightContext context, WsmResourceCloneDetails cloneDetails) {
-    var resourceIdToResult =
-        Optional.ofNullable(
-                context
-                    .getWorkingMap()
-                    .get(
-                        ControlledResourceKeys.RESOURCE_ID_TO_CLONE_RESULT,
-                        new TypeReference<Map<UUID, WsmResourceCloneDetails>>() {}))
-            .orElseGet(HashMap::new);
-    resourceIdToResult.put(sourceResource.getResourceId(), cloneDetails);
-    context
-        .getWorkingMap()
-        .put(ControlledResourceKeys.RESOURCE_ID_TO_CLONE_RESULT, resourceIdToResult);
   }
 
   @Override
