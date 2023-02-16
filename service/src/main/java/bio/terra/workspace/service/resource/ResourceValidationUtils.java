@@ -17,7 +17,6 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
-import com.azure.core.management.Region;
 import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -203,7 +202,6 @@ public class ResourceValidationUtils {
       case AZURE -> {
         // TODO: enable policy check in Azure when we support Azure regions in the TPS ontology.
         // validateAzureRegion(location);
-        return;
       }
       case GCP -> validateGcpRegion(tpsApiDispatch, workspaceUuid, location);
       default -> throw new InvalidControlledResourceException("Unrecognized platform");
@@ -465,10 +463,10 @@ public class ResourceValidationUtils {
       logger.warn("Cannot validate empty Azure region.");
       return;
     }
-    if (!Region.values().stream()
-        .map(Region::toString)
-        .collect(Collectors.toList())
-        .contains(region)) {
+    if (com.azure.core.management.Region.values().stream()
+            .filter(r -> r.toString().equalsIgnoreCase(region))
+            .findFirst()
+            .isEmpty()) {
       logger.warn("Invalid Azure region {}", region);
       throw new InvalidControlledResourceException("Invalid Azure Region specified.");
     }
@@ -495,10 +493,14 @@ public class ResourceValidationUtils {
   }
 
   public static <T> void checkFieldNonNull(@Nullable T fieldValue, String fieldName) {
+    checkFieldNonNull(fieldValue, fieldName, "Resource");
+  }
+
+  public static <T> void checkFieldNonNull(
+          @Nullable T fieldValue, String fieldName, String resourceDescriptor) {
     if (fieldValue == null) {
       throw new MissingRequiredFieldException(
-          String.format("Missing required field '%s' for resource", fieldName));
-    }
+              String.format("Missing required field '%s' for %s", fieldName, resourceDescriptor));    }
   }
 
   public static void validateApiAzureVmCreationParameters(
