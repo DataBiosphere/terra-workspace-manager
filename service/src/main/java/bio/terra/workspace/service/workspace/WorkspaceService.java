@@ -99,6 +99,7 @@ public class WorkspaceService {
       Workspace workspace,
       @Nullable TpsPolicyInputs policies,
       @Nullable List<String> applications,
+      @Nullable List<String> authDomains,
       AuthenticatedUserRequest userRequest) {
     String workspaceUuid = workspace.getWorkspaceId().toString();
     String jobDescription =
@@ -125,6 +126,7 @@ public class WorkspaceService {
             .addParameter(
                 WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name())
             .addParameter(WorkspaceFlightMapKeys.POLICIES, policies)
+            .addParameter(WorkspaceFlightMapKeys.AUTH_DOMAINS, authDomains)
             .addParameter(WorkspaceFlightMapKeys.APPLICATION_IDS, applications);
 
     Optional<SpendProfileId> spendProfile = workspace.getSpendProfileId();

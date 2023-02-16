@@ -72,7 +72,7 @@ public class AzureWorkspaceTest extends BaseAzureConnectedTest {
     Workspace workspace =
         WorkspaceFixtures.defaultWorkspaceBuilder(null).spendProfileId(spendProfileId).build();
 
-    workspaceService.createWorkspace(workspace, null, null, userRequest);
+    workspaceService.createWorkspace(workspace, null, null, null, userRequest);
 
     String jobId = UUID.randomUUID().toString();
     workspaceService.createAzureCloudContext(workspace, jobId, userRequest, "/fake/value", null);
@@ -105,7 +105,7 @@ public class AzureWorkspaceTest extends BaseAzureConnectedTest {
             .createdByEmail(userRequest.getEmail())
             .build();
 
-    workspaceService.createWorkspace(sourceWorkspace, null, null, userRequest);
+    workspaceService.createWorkspace(sourceWorkspace, null, null, null, userRequest);
 
     String jobId = UUID.randomUUID().toString();
 

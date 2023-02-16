@@ -8,6 +8,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.workspace.model.Workspace;
+import java.util.List;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,14 +22,19 @@ public class CreateWorkspaceAuthzStep implements Step {
   private final SamService samService;
   private final AuthenticatedUserRequest userRequest;
   private final Workspace workspace;
+  private final List<String> authDomains;
 
   private final Logger logger = LoggerFactory.getLogger(CreateWorkspaceAuthzStep.class);
 
   public CreateWorkspaceAuthzStep(
-      Workspace workspace, SamService samService, AuthenticatedUserRequest userRequest) {
+      Workspace workspace,
+      SamService samService,
+      AuthenticatedUserRequest userRequest,
+      List<String> authDomains) {
     this.samService = samService;
     this.userRequest = userRequest;
     this.workspace = workspace;
+    this.authDomains = authDomains;
   }
 
   @Override
@@ -39,7 +45,7 @@ public class CreateWorkspaceAuthzStep implements Step {
     // possible this step already created the resource. If WSM can either read the existing Sam
     // resource or create a new one, this is considered successful.
     if (!canReadExistingWorkspace(workspace.getWorkspaceId())) {
-      samService.createWorkspaceWithDefaults(userRequest, workspace.getWorkspaceId());
+      samService.createWorkspaceWithDefaults(userRequest, workspace.getWorkspaceId(), authDomains);
     }
     return StepResult.getStepResultSuccess();
   }

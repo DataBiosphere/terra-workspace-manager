@@ -230,7 +230,7 @@ class CreateGcpContextFlightV2Test extends BaseConnectedTest {
             .spendProfileId(spendProfileId)
             .build();
     return workspaceService.createWorkspace(
-        request, null, null, userAccessUtils.defaultUserAuthRequest());
+        request, null, null, null, userAccessUtils.defaultUserAuthRequest());
   }
 
   /** Create the FlightMap input parameters required for the {@link CreateGcpContextFlightV2}. */

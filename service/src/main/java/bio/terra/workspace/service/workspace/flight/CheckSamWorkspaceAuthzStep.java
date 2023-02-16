@@ -20,7 +20,7 @@ public class CheckSamWorkspaceAuthzStep implements Step {
   private final AuthenticatedUserRequest userRequest;
   private final Workspace workspace;
 
-  private final Logger logger = LoggerFactory.getLogger(CreateWorkspaceAuthzStep.class);
+  private final Logger logger = LoggerFactory.getLogger(CheckSamWorkspaceAuthzStep.class);
 
   public CheckSamWorkspaceAuthzStep(
       Workspace workspace, SamService samService, AuthenticatedUserRequest userRequest) {

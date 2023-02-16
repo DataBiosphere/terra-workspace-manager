@@ -11,7 +11,9 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import com.fasterxml.jackson.core.type.TypeReference;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class WorkspaceCreateFlight extends Flight {
 
@@ -26,6 +28,11 @@ public class WorkspaceCreateFlight extends Flight {
     Workspace workspace = inputParameters.get(JobMapKeys.REQUEST.getKeyName(), Workspace.class);
     TpsPolicyInputs policyInputs =
         inputParameters.get(WorkspaceFlightMapKeys.POLICIES, TpsPolicyInputs.class);
+    List<String> authDomains =
+        Optional.ofNullable(
+                inputParameters.get(
+                    WorkspaceFlightMapKeys.AUTH_DOMAINS, new TypeReference<List<String>>() {}))
+            .orElse(new ArrayList<>());
     List<String> applicationIds =
         inputParameters.get(
             WorkspaceFlightMapKeys.APPLICATION_IDS, new TypeReference<List<String>>() {});
@@ -36,7 +43,8 @@ public class WorkspaceCreateFlight extends Flight {
     switch (workspace.getWorkspaceStage()) {
       case MC_WORKSPACE -> {
         addStep(
-            new CreateWorkspaceAuthzStep(workspace, appContext.getSamService(), userRequest),
+            new CreateWorkspaceAuthzStep(
+                workspace, appContext.getSamService(), userRequest, authDomains),
             serviceRetryRule);
         if (appContext.getFeatureConfiguration().isTpsEnabled()) {
           addStep(
