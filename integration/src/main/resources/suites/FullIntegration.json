@@ -10,6 +10,7 @@
     "integration/EnablePet.json",
     "integration/EnumerateResources.json",
     "integration/GetRoles.json",
+    "integration/ImportDataCollection.json",
     "integration/Jobs.json",
     "integration/ListWorkspaces.json",
     "integration/PrivateControlledAiNotebookInstanceLifecycle.json",

@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource.referenced.flight.clone;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
+import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -60,10 +61,9 @@ public class CloneReferenceResourceStep implements Step {
       FlightUtils.setResponse(context, createdResource, HttpStatus.OK);
       cloneDetails.setResult(WsmCloneResourceResult.SUCCEEDED);
     } catch (Exception e) {
-      cloneDetails.setResult(WsmCloneResourceResult.FAILED).setErrorMessage(e.getMessage());
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
     }
 
-    // add to the map
     addCloneDetailsToWorkingMap(context, cloneDetails);
     return StepResult.getStepResultSuccess();
   }

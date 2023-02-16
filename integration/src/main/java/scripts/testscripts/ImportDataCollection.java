@@ -49,7 +49,7 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
      collection for most of the scenarios covered in this journey.
     */
     CreatedWorkspace centralDataCollection =
-        CreateWorkspaceWithRegionPolicy(workspaceApi, gcpCentralLocation);
+        createWorkspaceWithRegionPolicy(workspaceApi, gcpCentralLocation);
 
     // Create a cloud context
     String projectId =
@@ -105,7 +105,7 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
      (policy=us-central1)
     */
     CreatedWorkspace scenario2Workspace =
-        CreateWorkspaceWithRegionPolicy(workspaceApi, usaLocation);
+        createWorkspaceWithRegionPolicy(workspaceApi, usaLocation);
 
     referencedGcpResourceApi.cloneGcpGcsBucketReference(
         new CloneReferencedResourceRequestBody().destinationWorkspaceId(scenario2Workspace.getId()),
@@ -121,7 +121,7 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
      Workspace (policy=east) + Data Collection (policy=empty). Result: OK & Workspace
      (policy=east)
     */
-    CreatedWorkspace eastWorkspace = CreateWorkspaceWithRegionPolicy(workspaceApi, gcpEastLocation);
+    CreatedWorkspace eastWorkspace = createWorkspaceWithRegionPolicy(workspaceApi, gcpEastLocation);
 
     CreatedWorkspace noPolicyDataCollection =
         createWorkspace(UUID.randomUUID(), getSpendProfileId(), workspaceApi);
@@ -164,7 +164,7 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
      (policy=usa,resource=east) + Data Collection (policy=central). Result: Policy Exception
     */
     CreatedWorkspace scenario5Workspace =
-        CreateWorkspaceWithRegionPolicy(workspaceApi, usaLocation);
+        createWorkspaceWithRegionPolicy(workspaceApi, usaLocation);
 
     List<Property> properties = new ArrayList<>();
     properties.add(new Property().key("terra-default-location").value("us-east1"));
@@ -395,7 +395,7 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
     workspaceApi.deleteWorkspace(centralDataCollection.getId());
   }
 
-  private CreatedWorkspace CreateWorkspaceWithRegionPolicy(
+  private CreatedWorkspace createWorkspaceWithRegionPolicy(
       WorkspaceApi workspaceApi, String location) throws Exception {
     UUID workspaceId = UUID.randomUUID();
 

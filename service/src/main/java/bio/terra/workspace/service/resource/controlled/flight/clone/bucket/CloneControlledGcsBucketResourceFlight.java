@@ -152,18 +152,6 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
             resolvedCloningInstructions,
             flightBeanBag.getWorkspaceActivityLogService()));
 
-    if (mergePolicies) {
-      // validate again after the clone in case other resources were added elsewhere.
-      addStep(
-          new ValidateWorkspaceAgainstPolicyStep(
-              destinationWorkspaceId,
-              sourceResource.getResourceType().getCloudPlatform(),
-              location,
-              userRequest,
-              flightBeanBag.getResourceDao(),
-              flightBeanBag.getTpsApiDispatch()));
-    }
-
     if (CloningInstructions.COPY_RESOURCE == resolvedCloningInstructions) {
       addStep(
           new SetBucketRolesStep(
