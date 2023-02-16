@@ -28,12 +28,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 // TODO (PF-2269): Clean this up once the back-fill is done in all Terra environments.
-public class RetrieveControlledBigQueryDatasetLifetimeStep implements Step {
+public class RetrieveControlledBigQueryDatasetsLifetimeStep implements Step {
   private static final Logger logger =
-      LoggerFactory.getLogger(RetrieveControlledBigQueryDatasetLifetimeStep.class);
+      LoggerFactory.getLogger(RetrieveControlledBigQueryDatasetsLifetimeStep.class);
   private final CrlService crlService;
 
-  public RetrieveControlledBigQueryDatasetLifetimeStep(CrlService crlService) {
+  public RetrieveControlledBigQueryDatasetsLifetimeStep(CrlService crlService) {
     this.crlService = crlService;
   }
 

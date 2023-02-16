@@ -13,10 +13,10 @@ import java.util.List;
 import java.util.Optional;
 
 // TODO (PF-2269): Clean this up once the back-fill is done in all Terra environments.
-public class RetrieveControlledBigQueryDatasetWithoutLifetimeStep implements Step {
+public class RetrieveControlledBigQueryDatasetsWithoutLifetimeStep implements Step {
   private final ResourceDao resourceDao;
 
-  public RetrieveControlledBigQueryDatasetWithoutLifetimeStep(ResourceDao resourceDao) {
+  public RetrieveControlledBigQueryDatasetsWithoutLifetimeStep(ResourceDao resourceDao) {
     this.resourceDao = resourceDao;
   }
 

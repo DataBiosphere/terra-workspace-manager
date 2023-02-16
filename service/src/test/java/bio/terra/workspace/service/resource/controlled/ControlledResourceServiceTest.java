@@ -118,8 +118,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-
 import org.apache.commons.lang3.RandomStringUtils;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterAll;
@@ -1841,9 +1839,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   // TODO (PF-2269): Clean this up once the back-fill is done in all Terra environments.
 
-  /**
-   * @return A list of big query datasets that were updated (with lifetime set)
-   */
+  /** @return A list of big query datasets that were updated (with lifetime set) */
   private List<ControlledBigQueryDatasetResource>
       updateControlledBigQueryDatasetsLifetimeAndWait() {
     HashSet<ControlledBigQueryDatasetResource> successfullyUpdatedDatasets =
