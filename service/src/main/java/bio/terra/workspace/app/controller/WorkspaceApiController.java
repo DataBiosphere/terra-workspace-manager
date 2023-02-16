@@ -100,8 +100,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   private final WorkspaceService workspaceService;
   private final JobService jobService;
   private final JobApiUtils jobApiUtils;
-  private final GcpCloudContextService gcpCloudContextService;
   private final AzureCloudContextService azureCloudContextService;
+  private final GcpCloudContextService gcpCloudContextService;
   private final PetSaService petSaService;
   private final TpsApiDispatch tpsApiDispatch;
   private final WorkspaceActivityLogDao workspaceActivityLogDao;
@@ -117,8 +117,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       WorkspaceService workspaceService,
       JobService jobService,
       JobApiUtils jobApiUtils,
-      GcpCloudContextService gcpCloudContextService,
       AzureCloudContextService azureCloudContextService,
+      GcpCloudContextService gcpCloudContextService,
       PetSaService petSaService,
       TpsApiDispatch tpsApiDispatch,
       WorkspaceActivityLogDao workspaceActivityLogDao,
@@ -129,8 +129,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     this.workspaceService = workspaceService;
     this.jobService = jobService;
     this.jobApiUtils = jobApiUtils;
-    this.gcpCloudContextService = gcpCloudContextService;
     this.azureCloudContextService = azureCloudContextService;
+    this.gcpCloudContextService = gcpCloudContextService;
     this.petSaService = petSaService;
     this.tpsApiDispatch = tpsApiDispatch;
     this.workspaceActivityLogDao = workspaceActivityLogDao;
@@ -473,12 +473,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     // No additional authz check as this is just a wrapper around a Sam endpoint.
     SamRethrow.onInterrupted(
         () ->
-            getSamService()
-                .grantWorkspaceRole(
-                    uuid,
-                    getAuthenticatedInfo(),
-                    WsmIamRole.fromApiModel(role),
-                    body.getMemberEmail()),
+            samService.grantWorkspaceRole(
+                uuid, getAuthenticatedInfo(), WsmIamRole.fromApiModel(role), body.getMemberEmail()),
         "grantWorkspaceRole");
     workspaceActivityLogService.writeActivity(
         getAuthenticatedInfo(),
@@ -514,8 +510,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     // No additional authz check as this is just a wrapper around a Sam endpoint.
     List<bio.terra.workspace.service.iam.model.RoleBinding> bindingList =
         SamRethrow.onInterrupted(
-            () -> getSamService().listRoleBindings(uuid, getAuthenticatedInfo()),
-            "listRoleBindings");
+            () -> samService.listRoleBindings(uuid, getAuthenticatedInfo()), "listRoleBindings");
     ApiRoleBindingList responseList = new ApiRoleBindingList();
     for (bio.terra.workspace.service.iam.model.RoleBinding roleBinding : bindingList) {
       responseList.add(
