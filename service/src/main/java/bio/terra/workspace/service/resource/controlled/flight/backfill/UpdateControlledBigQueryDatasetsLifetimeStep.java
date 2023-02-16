@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.controlled.flight.update;
+package bio.terra.workspace.service.resource.controlled.flight.backfill;
 
 import static bio.terra.workspace.common.utils.FlightUtils.setResponse;
 import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntries;

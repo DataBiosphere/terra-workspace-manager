@@ -35,7 +35,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.Cont
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.UpdateControlledAiNotebookResourceFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.UpdateControlledBigQueryDatasetResourceFlight;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.flight.UpdateControlledBigQueryDatasetsLifetimeFlight;
+import bio.terra.workspace.service.resource.controlled.flight.backfill.UpdateControlledBigQueryDatasetsWithoutLifetimeFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.flight.UpdateGcpControlledResourceRegionFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.UpdateControlledGcsBucketResourceFlight;
@@ -672,7 +672,7 @@ public class ControlledResourceService {
             "A flight to update controlled BigQuery datasets' missing "
                 + "default table lifetime and default partition lifetime "
                 + "in all the existing terra managed gcp projects")
-        .flightClass(UpdateControlledBigQueryDatasetsLifetimeFlight.class)
+        .flightClass(UpdateControlledBigQueryDatasetsWithoutLifetimeFlight.class)
         .userRequest(wsmSaRequest)
         .operationType(OperationType.UPDATE)
         .submit();
