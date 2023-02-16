@@ -5,7 +5,6 @@ import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.TYPE_PROPERT
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.VERSION_PROPERTY;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.WORKSPACE_NAME;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.getUserFacingId;
-import static bio.terra.workspace.common.utils.MockMvcUtils.UPDATE_WORKSPACES_V1_POLICIES_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_PATH;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
@@ -21,7 +20,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.policy.model.TpsComponent;
@@ -50,8 +48,7 @@ import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
 import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
 import bio.terra.workspace.generated.model.ApiWsmPolicyInputs;
 import bio.terra.workspace.generated.model.ApiWsmPolicyPair;
-import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateMode;
-import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateRequest;
+import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateResult;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
 import bio.terra.workspace.service.iam.model.SamConstants.SamSpendProfileAction;
@@ -73,9 +70,7 @@ import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.ResultActions;
 
 /**
  * An example of a mockMvc-based unit test for a controller.
@@ -487,7 +482,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
     OffsetDateTime lastChangedDate = lastChangeDetails.changeDate();
     assertEquals(OperationType.CREATE, lastChangeDetails.operationType());
 
-    TpsPaoUpdateResult result = updatePolicies(workspace.getId());
+    ApiWsmPolicyUpdateResult result = mockMvcUtils.updatePolicies(USER_REQUEST, workspace.getId());
     assertTrue(result.isUpdateApplied());
     ActivityLogChangeDetails secondChangeDetails =
         workspaceActivityLogService.getLastUpdatedDetails(workspace.getId()).get();
@@ -512,7 +507,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
         workspaceActivityLogService.getLastUpdatedDetails(workspace.getId()).get();
     assertEquals(OperationType.CREATE, lastChangeDetails.operationType());
 
-    TpsPaoUpdateResult result = updatePolicies(workspace.getId());
+    ApiWsmPolicyUpdateResult result = mockMvcUtils.updatePolicies(USER_REQUEST, workspace.getId());
     assertFalse(result.isUpdateApplied());
     assertEquals(
         lastChangeDetails,
@@ -557,38 +552,5 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
         .filter(w -> w.getId().equals(id))
         .findFirst()
         .orElseThrow(() -> new RuntimeException("workspace " + id + "not found in list!"));
-  }
-
-  private TpsPaoUpdateResult updatePolicies(UUID workspaceId) throws Exception {
-    var serializedResponse =
-        updatePoliciesExpect(workspaceId, HttpStatus.SC_OK)
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-    return objectMapper.readValue(serializedResponse, TpsPaoUpdateResult.class);
-  }
-
-  private ResultActions updatePoliciesExpect(UUID workspaceId, int code) throws Exception {
-    ApiWsmPolicyUpdateRequest updateRequest =
-        new ApiWsmPolicyUpdateRequest()
-            .updateMode(ApiWsmPolicyUpdateMode.ENFORCE_CONFLICT)
-            .addAttributes(
-                new ApiWsmPolicyInputs()
-                    .addInputsItem(
-                        new ApiWsmPolicyInput()
-                            .namespace("terra")
-                            .name("region-constraint")
-                            .addAdditionalDataItem(
-                                new ApiWsmPolicyPair().key("foo").value("bar"))));
-    return mockMvc
-        .perform(
-            addAuth(
-                patch(String.format(UPDATE_WORKSPACES_V1_POLICIES_PATH_FORMAT, workspaceId))
-                    .contentType(MediaType.APPLICATION_JSON_VALUE)
-                    .accept(MediaType.APPLICATION_JSON)
-                    .characterEncoding("UTF-8")
-                    .content(objectMapper.writeValueAsString(updateRequest)),
-                USER_REQUEST))
-        .andExpect(status().is(code));
   }
 }
