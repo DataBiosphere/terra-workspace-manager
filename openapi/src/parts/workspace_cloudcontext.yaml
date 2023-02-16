@@ -93,6 +93,15 @@ components:
           description: The ID of Azure resource group associated with the workspace.
           type: string
 
+    GcpContext:
+      type: object
+      description: The GCP cloud context associated with a workspace.
+      required: [ projectId ]
+      properties:
+        projectId:
+          description: The ID of Gcp Project associated with the workspace.
+          type: string
+
     CreateCloudContextRequest:
       type: object
       required: [cloudPlatform, jobControl]
