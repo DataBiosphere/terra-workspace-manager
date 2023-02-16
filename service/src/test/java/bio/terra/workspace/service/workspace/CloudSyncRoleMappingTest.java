@@ -7,22 +7,26 @@ import static org.hamcrest.Matchers.in;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * These tests assert architectural design invariants about the workspace role hierarchy. These are
  * not expected to change.
  */
 public class CloudSyncRoleMappingTest extends BaseUnitTest {
+
+  @Autowired CloudSyncRoleMapping cloudSyncRoleMapping;
+
   @Test
   void writerPermissionsContainReaderPermissions() {
     assertThat(
-        new CloudSyncRoleMapping()
+        cloudSyncRoleMapping
             .getCustomGcpProjectIamRoles()
             .get(WsmIamRole.READER)
             .getIncludedPermissions(),
         everyItem(
             in(
-                (new CloudSyncRoleMapping()
+                (cloudSyncRoleMapping
                     .getCustomGcpProjectIamRoles()
                     .get(WsmIamRole.WRITER)
                     .getIncludedPermissions()))));
@@ -31,13 +35,13 @@ public class CloudSyncRoleMappingTest extends BaseUnitTest {
   @Test
   void applicationPermissionsContainWriterPermissions() {
     assertThat(
-        new CloudSyncRoleMapping()
+        cloudSyncRoleMapping
             .getCustomGcpProjectIamRoles()
             .get(WsmIamRole.WRITER)
             .getIncludedPermissions(),
         everyItem(
             in(
-                (new CloudSyncRoleMapping()
+                (cloudSyncRoleMapping
                     .getCustomGcpProjectIamRoles()
                     .get(WsmIamRole.APPLICATION)
                     .getIncludedPermissions()))));
@@ -46,13 +50,13 @@ public class CloudSyncRoleMappingTest extends BaseUnitTest {
   @Test
   void ownerPermissionsContainWriterPermissions() {
     assertThat(
-        new CloudSyncRoleMapping()
+        cloudSyncRoleMapping
             .getCustomGcpProjectIamRoles()
             .get(WsmIamRole.WRITER)
             .getIncludedPermissions(),
         everyItem(
             in(
-                (new CloudSyncRoleMapping()
+                (cloudSyncRoleMapping
                     .getCustomGcpProjectIamRoles()
                     .get(WsmIamRole.OWNER)
                     .getIncludedPermissions()))));

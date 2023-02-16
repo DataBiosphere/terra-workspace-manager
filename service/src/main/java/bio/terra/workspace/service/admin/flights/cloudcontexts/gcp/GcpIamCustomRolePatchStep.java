@@ -36,12 +36,16 @@ public class GcpIamCustomRolePatchStep implements Step {
   private boolean workspaceUpdated = false;
 
   public GcpIamCustomRolePatchStep(
-      IamCow iamCow, UUID workspaceId, String projectId, boolean isWetRun) {
+      CloudSyncRoleMapping cloudSyncRoleMapping,
+      IamCow iamCow,
+      UUID workspaceId,
+      String projectId,
+      boolean isWetRun) {
     this.iamCow = iamCow;
     this.workspaceId = workspaceId;
     this.projectId = projectId;
     this.isWetRun = isWetRun;
-    customGcpIamRoles.addAll(new CloudSyncRoleMapping().getCustomGcpIamRoles());
+    customGcpIamRoles.addAll(cloudSyncRoleMapping.getCustomGcpIamRoles());
     customGcpIamRoles.addAll(CustomGcpIamRoleMapping.CUSTOM_GCP_RESOURCE_IAM_ROLES.values());
   }
 

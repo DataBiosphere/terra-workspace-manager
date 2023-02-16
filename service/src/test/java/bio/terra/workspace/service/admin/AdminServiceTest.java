@@ -52,6 +52,7 @@ public class AdminServiceTest extends BaseConnectedTest {
   @Autowired WorkspaceDao workspaceDao;
   @Autowired WorkspaceConnectedTestUtils connectedTestUtils;
   @Autowired UserAccessUtils userAccessUtils;
+  @Autowired CloudSyncRoleMapping cloudSyncRoleMapping;
   @Autowired CrlService crlService;
   @Autowired WorkspaceActivityLogDao workspaceActivityLogDao;
 
@@ -114,7 +115,7 @@ public class AdminServiceTest extends BaseConnectedTest {
     for (String projectId : projectIds) {
       assertProjectReaderRoleMatchesExpected(
           projectId,
-          new CloudSyncRoleMapping()
+          cloudSyncRoleMapping
               .getCustomGcpProjectIamRoles()
               .get(WsmIamRole.READER)
               .getIncludedPermissions());
@@ -151,7 +152,7 @@ public class AdminServiceTest extends BaseConnectedTest {
     for (String projectId : projectIds) {
       assertProjectReaderRoleMatchesExpected(
           projectId,
-          new CloudSyncRoleMapping()
+          cloudSyncRoleMapping
               .getCustomGcpProjectIamRoles()
               .get(WsmIamRole.READER)
               .getIncludedPermissions());

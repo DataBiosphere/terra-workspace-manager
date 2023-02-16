@@ -11,6 +11,7 @@ import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.workspace.CloudSyncRoleMapping;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.Map;
 import java.util.UUID;
@@ -22,6 +23,7 @@ public class SyncGcpIamRolesFlight extends Flight {
   public SyncGcpIamRolesFlight(FlightMap inputParameters, Object applicationContext) {
     super(inputParameters, applicationContext);
     FlightBeanBag appContext = FlightBeanBag.getFromObject(applicationContext);
+    CloudSyncRoleMapping cloudSyncRoleMapping = appContext.getCloudSyncRoleMapping();
     CrlService crl = appContext.getCrlService();
     Map<UUID, String> projectIds =
         requireNonNull(
@@ -33,11 +35,17 @@ public class SyncGcpIamRolesFlight extends Flight {
     for (Map.Entry<UUID, String> projectId : projectIds.entrySet()) {
       // Wrap IAM with WSM service account.
       addStep(
-          new RetrieveGcpIamCustomRoleStep(crl.getIamCow(), projectId.getValue()), cloudRetryRule);
+          new RetrieveGcpIamCustomRoleStep(
+              cloudSyncRoleMapping, crl.getIamCow(), projectId.getValue()),
+          cloudRetryRule);
 
       addStep(
           new GcpIamCustomRolePatchStep(
-              crl.getIamCow(), projectId.getKey(), projectId.getValue(), isWetRun),
+              cloudSyncRoleMapping,
+              crl.getIamCow(),
+              projectId.getKey(),
+              projectId.getValue(),
+              isWetRun),
           cloudRetryRule);
     }
   }

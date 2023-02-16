@@ -26,10 +26,12 @@ import org.springframework.http.HttpStatus;
 public class CreateCustomGcpRolesStep implements Step {
 
   private final IamCow iamCow;
+  private final CloudSyncRoleMapping cloudSyncRoleMapping;
 
   private final Logger logger = LoggerFactory.getLogger(CreateCustomGcpRolesStep.class);
 
-  public CreateCustomGcpRolesStep(IamCow iamCow) {
+  public CreateCustomGcpRolesStep(CloudSyncRoleMapping cloudSyncRoleMapping, IamCow iamCow) {
+    this.cloudSyncRoleMapping = cloudSyncRoleMapping;
     this.iamCow = iamCow;
   }
 
@@ -41,8 +43,8 @@ public class CreateCustomGcpRolesStep implements Step {
     // Multiple WSM roles may share the same GCP role. De-duping here prevents duplicate requests,
     // which would lead to unnecessary CONFLICT responses from GCP.
     ImmutableSet<CustomGcpIamRole> customProjectRoles =
-        new CloudSyncRoleMapping()
-            .getCustomGcpProjectIamRoles().values().stream().collect(ImmutableSet.toImmutableSet());
+        cloudSyncRoleMapping.getCustomGcpProjectIamRoles().values().stream()
+            .collect(ImmutableSet.toImmutableSet());
     for (CustomGcpIamRole customProjectRole : customProjectRoles) {
       createCustomRole(customProjectRole, projectId);
     }

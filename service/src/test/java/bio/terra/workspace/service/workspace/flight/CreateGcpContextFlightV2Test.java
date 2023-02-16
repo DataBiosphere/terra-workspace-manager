@@ -67,6 +67,7 @@ class CreateGcpContextFlightV2Test extends BaseConnectedTest {
 
   @Autowired private WorkspaceService workspaceService;
   @Autowired private WorkspaceConnectedTestUtils workspaceConnectedTestUtils;
+  @Autowired private CloudSyncRoleMapping cloudSyncRoleMapping;
   @Autowired private CrlService crl;
   @Autowired private JobService jobService;
   @Autowired private SpendConnectedTestUtils spendUtils;
@@ -299,7 +300,7 @@ class CreateGcpContextFlightV2Test extends BaseConnectedTest {
   private void assertRoleBindingInPolicy(
       WsmIamRole role, String groupEmail, Policy gcpPolicy, String projectId) {
     String expectedGcpRoleName =
-        new CloudSyncRoleMapping()
+        cloudSyncRoleMapping
             .getCustomGcpProjectIamRoles()
             .get(role)
             .getFullyQualifiedRoleName(projectId);

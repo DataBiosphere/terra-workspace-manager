@@ -50,6 +50,7 @@ import org.slf4j.LoggerFactory;
 public class GcpCloudSyncStep implements Step {
   private final Logger logger = LoggerFactory.getLogger(GcpCloudSyncStep.class);
   private final CloudResourceManagerCow resourceManagerCow;
+  private final CloudSyncRoleMapping cloudSyncRoleMapping;
   private final FeatureConfiguration features;
   private final SamService samService;
   private final GrantService grantService;
@@ -58,11 +59,13 @@ public class GcpCloudSyncStep implements Step {
 
   public GcpCloudSyncStep(
       CloudResourceManagerCow resourceManagerCow,
+      CloudSyncRoleMapping cloudSyncRoleMapping,
       FeatureConfiguration features,
       SamService samService,
       GrantService grantService,
       AuthenticatedUserRequest userRequest,
       UUID workspaceUuid) {
+    this.cloudSyncRoleMapping = cloudSyncRoleMapping;
     this.resourceManagerCow = resourceManagerCow;
     this.features = features;
     this.samService = samService;
@@ -92,7 +95,7 @@ public class GcpCloudSyncStep implements Step {
       // Add appropriate project-level roles for each WSM IAM role.
       workspaceRoleGroupsMap.forEach(
           (wsmRole, email) -> {
-            if (new CloudSyncRoleMapping().getCustomGcpProjectIamRoles().containsKey(wsmRole)) {
+            if (cloudSyncRoleMapping.getCustomGcpProjectIamRoles().containsKey(wsmRole)) {
               newBindings.add(bindingForRole(wsmRole, GcpUtils.toGroupMember(email), gcpProjectId));
             }
           });
@@ -151,8 +154,7 @@ public class GcpCloudSyncStep implements Step {
   }
 
   private String getCustomRoleName(WsmIamRole role, String gcpProjectId) {
-    CustomGcpIamRole customRole =
-        new CloudSyncRoleMapping().getCustomGcpProjectIamRoles().get(role);
+    CustomGcpIamRole customRole = cloudSyncRoleMapping.getCustomGcpProjectIamRoles().get(role);
     if (customRole == null) {
       throw new InternalLogicException(String.format("Missing custom GCP project role %s", role));
     }

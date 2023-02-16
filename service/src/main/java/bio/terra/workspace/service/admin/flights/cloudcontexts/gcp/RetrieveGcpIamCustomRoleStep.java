@@ -21,10 +21,13 @@ import org.slf4j.LoggerFactory;
 /** Step to retrieve IAM custom project and resource roles in GCP projects. */
 public class RetrieveGcpIamCustomRoleStep implements Step {
   private final Logger logger = LoggerFactory.getLogger(RetrieveGcpIamCustomRoleStep.class);
+  private final CloudSyncRoleMapping cloudSyncRoleMapping;
   private final IamCow iamCow;
   private final String projectId;
 
-  public RetrieveGcpIamCustomRoleStep(IamCow iamCow, String projectId) {
+  public RetrieveGcpIamCustomRoleStep(
+      CloudSyncRoleMapping cloudSyncRoleMapping, IamCow iamCow, String projectId) {
+    this.cloudSyncRoleMapping = cloudSyncRoleMapping;
     this.iamCow = iamCow;
     this.projectId = projectId;
   }
@@ -32,7 +35,7 @@ public class RetrieveGcpIamCustomRoleStep implements Step {
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     Set<CustomGcpIamRole> customGcpIamRoles = new HashSet<>();
-    customGcpIamRoles.addAll(new CloudSyncRoleMapping().getCustomGcpIamRoles());
+    customGcpIamRoles.addAll(cloudSyncRoleMapping.getCustomGcpIamRoles());
     customGcpIamRoles.addAll(CustomGcpIamRoleMapping.CUSTOM_GCP_RESOURCE_IAM_ROLES.values());
     return retrieveCustomRoles(customGcpIamRoles, context);
   }

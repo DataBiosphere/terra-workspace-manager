@@ -9,6 +9,7 @@ import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.workspace.CloudSyncRoleMapping;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import java.util.UUID;
 
@@ -36,6 +37,7 @@ public class CreateGcpContextFlightV2 extends Flight {
     super(inputParameters, applicationContext);
 
     FlightBeanBag appContext = FlightBeanBag.getFromObject(applicationContext);
+    CloudSyncRoleMapping cloudSyncRoleMapping = appContext.getCloudSyncRoleMapping();
     CrlService crl = appContext.getCrlService();
     FeatureConfiguration featureConfiguration = appContext.getFeatureConfiguration();
 
@@ -74,7 +76,7 @@ public class CreateGcpContextFlightV2 extends Flight {
     // Configure the project for WSM
     addStep(new SetProjectBillingStep(crl.getCloudBillingClientCow()), cloudRetry);
     addStep(new GrantWsmRoleAdminStep(crl), shortRetry);
-    addStep(new CreateCustomGcpRolesStep(crl.getIamCow()), shortRetry);
+    addStep(new CreateCustomGcpRolesStep(cloudSyncRoleMapping, crl.getIamCow()), shortRetry);
     // Create the pet before sync'ing, so the proxy group is configured before we
     // do the Sam sync and create the role-based Google groups. That eliminates
     // one propagation case
@@ -85,6 +87,7 @@ public class CreateGcpContextFlightV2 extends Flight {
     addStep(
         new GcpCloudSyncStep(
             crl.getCloudResourceManagerCow(),
+            cloudSyncRoleMapping,
             appContext.getFeatureConfiguration(),
             appContext.getSamService(),
             appContext.getGrantService(),
