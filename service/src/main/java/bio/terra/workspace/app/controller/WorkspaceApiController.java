@@ -262,10 +262,10 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .orElse(null);
 
     ApiAwsContext awsContext =
-            awsCloudContextService
-                    .getAwsCloudContext(workspaceUuid)
-                    .map(AwsCloudContext::toApi)
-                    .orElse(null);
+        awsCloudContextService
+            .getAwsCloudContext(workspaceUuid)
+            .map(AwsCloudContext::toApi)
+            .orElse(null);
 
     List<ApiWsmPolicyInput> workspacePolicies = null;
     if (featureConfiguration.isTpsEnabled()) {

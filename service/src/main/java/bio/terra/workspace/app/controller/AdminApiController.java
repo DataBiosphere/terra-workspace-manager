@@ -85,7 +85,7 @@ public class AdminApiController extends ControllerBase implements AdminApi {
           case AZURE -> controlledResourceService.updateAzureControlledResourcesRegionAsync(
               userRequest, Boolean.TRUE.equals(wetRun));
           case AWS -> controlledResourceService.updateAwsControlledResourcesRegionAsync(
-                  userRequest, Boolean.TRUE.equals(wetRun));
+              userRequest, Boolean.TRUE.equals(wetRun));
         };
     ApiJobResult response = jobApiUtils.fetchJobResult(jobId);
     return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
