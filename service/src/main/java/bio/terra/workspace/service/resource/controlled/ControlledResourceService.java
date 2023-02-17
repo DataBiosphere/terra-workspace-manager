@@ -656,18 +656,18 @@ public class ControlledResourceService {
   @Traced
   @Nullable
   public String updateAwsControlledResourcesRegionAsync(
-          AuthenticatedUserRequest userRequest, boolean wetRun) {
+      AuthenticatedUserRequest userRequest, boolean wetRun) {
     // No Operation performed - No update is required, add empty flight for compatibility
     return jobService
-            .newJob()
-            .description(
-                    "No-Op: A flight to update controlled resource's missing region in all the existing"
-                            + "terra managed aws projects")
-            .flightClass(Flight.class)
-            .userRequest(userRequest)
-            .addParameter(IS_WET_RUN, wetRun)
-            .operationType(OperationType.UPDATE)
-            .submit();
+        .newJob()
+        .description(
+            "No-Op: A flight to update controlled resource's missing region in all the existing"
+                + "terra managed aws projects")
+        .flightClass(Flight.class)
+        .userRequest(userRequest)
+        .addParameter(IS_WET_RUN, wetRun)
+        .operationType(OperationType.UPDATE)
+        .submit();
   }
 
   // TODO (PF-2368): clean this up once back-fill is done in all Terra environment.
