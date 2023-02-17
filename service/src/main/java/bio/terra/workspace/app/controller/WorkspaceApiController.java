@@ -100,8 +100,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   private final WorkspaceService workspaceService;
   private final JobService jobService;
   private final JobApiUtils jobApiUtils;
-  private final AzureCloudContextService azureCloudContextService;
   private final GcpCloudContextService gcpCloudContextService;
+  private final AzureCloudContextService azureCloudContextService;
   private final PetSaService petSaService;
   private final TpsApiDispatch tpsApiDispatch;
   private final WorkspaceActivityLogDao workspaceActivityLogDao;
@@ -117,8 +117,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       WorkspaceService workspaceService,
       JobService jobService,
       JobApiUtils jobApiUtils,
-      AzureCloudContextService azureCloudContextService,
       GcpCloudContextService gcpCloudContextService,
+      AzureCloudContextService azureCloudContextService,
       PetSaService petSaService,
       TpsApiDispatch tpsApiDispatch,
       WorkspaceActivityLogDao workspaceActivityLogDao,
@@ -129,8 +129,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     this.workspaceService = workspaceService;
     this.jobService = jobService;
     this.jobApiUtils = jobApiUtils;
-    this.azureCloudContextService = azureCloudContextService;
     this.gcpCloudContextService = gcpCloudContextService;
+    this.azureCloudContextService = azureCloudContextService;
     this.petSaService = petSaService;
     this.tpsApiDispatch = tpsApiDispatch;
     this.workspaceActivityLogDao = workspaceActivityLogDao;
