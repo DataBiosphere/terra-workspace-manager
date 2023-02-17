@@ -1,37 +1,41 @@
-package bio.terra.workspace.service.workspace.flight.create.azure;
+package bio.terra.workspace.service.workspace.flight.gcp;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.workspace.db.WorkspaceDao;
-import bio.terra.workspace.service.workspace.AzureCloudContextService;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import bio.terra.workspace.service.workspace.exceptions.DuplicateCloudContextException;
 import java.util.UUID;
 
 /**
  * Stores the previously generated Google Project Id in the {@link WorkspaceDao} as the Google cloud
  * context for the workspace.
  */
-public class CreateDbAzureCloudContextStartStep implements Step {
+public class CreateDbGcpCloudContextStep implements Step {
   private final UUID workspaceUuid;
-  private final AzureCloudContextService azureCloudContextService;
+  private final GcpCloudContextService gcpCloudContextService;
 
-  public CreateDbAzureCloudContextStartStep(
-      UUID workspaceUuid, AzureCloudContextService azureCloudContextService) {
+  public CreateDbGcpCloudContextStep(
+      UUID workspaceUuid, GcpCloudContextService gcpCloudContextService) {
     this.workspaceUuid = workspaceUuid;
-    this.azureCloudContextService = azureCloudContextService;
+    this.gcpCloudContextService = gcpCloudContextService;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext) throws InterruptedException {
-    azureCloudContextService.createAzureCloudContextStart(
-        workspaceUuid, flightContext.getFlightId());
+    try {
+      gcpCloudContextService.createGcpCloudContextStart(workspaceUuid, flightContext.getFlightId());
+    } catch (DuplicateCloudContextException e) {
+      // On a retry or restart, we may have already started the cloud context create
+    }
     return StepResult.getStepResultSuccess();
   }
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     // Delete the cloud context, but only if it is the one we created
-    azureCloudContextService.deleteAzureCloudContextWithFlightIdValidation(
+    gcpCloudContextService.deleteGcpCloudContextWithCheck(
         workspaceUuid, flightContext.getFlightId());
     return StepResult.getStepResultSuccess();
   }

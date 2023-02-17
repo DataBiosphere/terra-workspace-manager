@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.workspace.flight;
+package bio.terra.workspace.service.workspace.flight.azure;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
@@ -14,7 +14,7 @@ public class DeleteAzureContextStep implements Step {
   private final AzureCloudContextService azureCloudContextService;
   private final UUID workspaceUuid;
 
-  protected DeleteAzureContextStep(
+  public DeleteAzureContextStep(
       AzureCloudContextService azureCloudContextService, UUID workspaceUuid) {
     this.azureCloudContextService = azureCloudContextService;
     this.workspaceUuid = workspaceUuid;

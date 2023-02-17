@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.workspace.flight.create.azure;
+package bio.terra.workspace.service.workspace.flight.azure;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;

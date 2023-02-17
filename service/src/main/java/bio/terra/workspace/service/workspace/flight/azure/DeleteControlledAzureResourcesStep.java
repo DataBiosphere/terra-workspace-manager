@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.workspace.flight;
+package bio.terra.workspace.service.workspace.flight.azure;
 
 import bio.terra.common.exception.ForbiddenException;
 import bio.terra.stairway.FlightContext;
