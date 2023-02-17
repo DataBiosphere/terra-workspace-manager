@@ -80,7 +80,7 @@ public class ControlledAzureStorageResource extends ControlledResource {
   }
 
   private ControlledAzureStorageResource(
-      ControlledResourceFields common, String storageAccountName, String region) {
+          ControlledResourceFields common, String storageAccountName, String region) {
     super(common);
     this.storageAccountName = storageAccountName;
     this.region = region;

@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.workspace.flight.create.azure;
+package bio.terra.workspace.service.workspace.flight.azure;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;

@@ -80,7 +80,7 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
   }
 
   private ControlledAzureStorageContainerResource(
-      ControlledResourceFields common, UUID storageAccountId, String storageContainerName) {
+          ControlledResourceFields common, UUID storageAccountId, String storageContainerName) {
     super(common);
     this.storageAccountId = storageAccountId;
     this.storageContainerName = storageContainerName;

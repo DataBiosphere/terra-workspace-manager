@@ -9,6 +9,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.flight.*;
+
 import java.util.UUID;
 
 public class RemoveUserFromWorkspaceFlight extends Flight {
