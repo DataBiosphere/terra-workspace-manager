@@ -28,7 +28,7 @@ import org.springframework.http.HttpStatus;
 public class ControllerBase {
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final HttpServletRequest request;
-  protected final SamService samService;
+  private final SamService samService;
 
   public ControllerBase(
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
