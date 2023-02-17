@@ -272,7 +272,7 @@ public class RetrieveAzureResourcesRegionStep implements Step {
     } catch (ApiErrorException e) {
       logger.warn(
           String.format(
-              "Cannot get resource group %s for azure VM %s",
+              "Cannot get resource group %s for azure IP %s",
               azureCloudContext.getAzureResourceGroupId(), resource.getIpName()));
       return null;
     }
@@ -291,7 +291,7 @@ public class RetrieveAzureResourcesRegionStep implements Step {
     } catch (ApiErrorException e) {
       logger.warn(
           String.format(
-              "Cannot get resource group %s for azure VM %s",
+              "Cannot get resource group %s for azure network %s",
               azureCloudContext.getAzureResourceGroupId(), resource.getNetworkName()));
       return null;
     }
