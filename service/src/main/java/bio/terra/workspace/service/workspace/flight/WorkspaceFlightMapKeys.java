@@ -20,6 +20,7 @@ public final class WorkspaceFlightMapKeys {
   public static final String UPDATED_WORKSPACES = "updatedWorkspaces";
   public static final String SPEND_PROFILE = "spendProfile";
   public static final String PET_SA_CREDENTIALS = "petSaCredentials";
+  public static final String SAM_USER = "samUser";
 
   private WorkspaceFlightMapKeys() {}
 
@@ -32,8 +33,11 @@ public final class WorkspaceFlightMapKeys {
     public static final String PRIVATE_RESOURCE_IAM_ROLE = "privateResourceIamRole";
     public static final String GCP_CLOUD_CONTEXT = "gcpCloudContext";
     public static final String AZURE_CLOUD_CONTEXT = "azureCloudContext";
+    public static final String AWS_CLOUD_CONTEXT = "awsCloudContext";
     public static final String WORKSPACE_ID_TO_AZURE_CLOUD_CONTEXT_MAP =
         "workspaceIdToAzureCloudContextMap";
+    public static final String WORKSPACE_ID_TO_AWS_CLOUD_CONTEXT_MAP =
+            "workspaceIdToAwsCloudContextMap";
     public static final String UPDATE_PARAMETERS = "updateParameters";
     public static final String PREVIOUS_UPDATE_PARAMETERS = "previousUpdateParameters";
     public static final String CREATE_RESOURCE_REGION = "createResourceRegion";
