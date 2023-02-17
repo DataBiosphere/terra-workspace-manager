@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.workspace.flight.gcp;
+package bio.terra.workspace.service.workspace.flight;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -22,12 +22,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.Contr
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
-import bio.terra.workspace.service.workspace.flight.DeleteControlledSamResourcesStep;
-import bio.terra.workspace.service.workspace.flight.DeleteWorkspaceAuthzStep;
-import bio.terra.workspace.service.workspace.flight.DeleteWorkspacePoliciesStep;
-import bio.terra.workspace.service.workspace.flight.DeleteWorkspaceStateStep;
-import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.flight.gcp.DeleteGcpProjectStep;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import java.time.Duration;
 import java.util.HashMap;
