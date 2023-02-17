@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.controlled.flight.clone;
+package bio.terra.workspace.service.policy.flight;
 
 import bio.terra.common.iam.BearerToken;
 import bio.terra.policy.model.TpsPaoGetResult;
@@ -16,20 +16,19 @@ import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.resource.exception.PolicyConflictException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ClonePolicyAttributesStep implements Step {
-  private static final Logger logger = LoggerFactory.getLogger(ClonePolicyAttributesStep.class);
+public class MergePolicyAttributesStep implements Step {
+  private static final Logger logger = LoggerFactory.getLogger(MergePolicyAttributesStep.class);
 
   private final UUID sourceWorkspaceId;
   private final UUID destinationWorkspaceId;
   private final AuthenticatedUserRequest userRequest;
   private final TpsApiDispatch tpsApiDispatch;
 
-  public ClonePolicyAttributesStep(
+  public MergePolicyAttributesStep(
       UUID sourceWorkspaceId,
       UUID destinationWorkspaceId,
       AuthenticatedUserRequest userRequest,
@@ -44,8 +43,8 @@ public class ClonePolicyAttributesStep implements Step {
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     // Create PAOs if they don't exist; catch TPS exceptions and retry
     try {
-      createPaoIfNotExist(sourceWorkspaceId);
-      createPaoIfNotExist(destinationWorkspaceId);
+      MergePolicyAttributesUtils.createPaoIfNotExist(tpsApiDispatch, sourceWorkspaceId);
+      MergePolicyAttributesUtils.createPaoIfNotExist(tpsApiDispatch, destinationWorkspaceId);
     } catch (Exception ex) {
       logger.info("Attempt to create a PAO for workspace failed", ex);
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, ex);
@@ -66,6 +65,9 @@ public class ClonePolicyAttributesStep implements Step {
           "Destination workspace policies conflict with source workspace policies", conflictList);
     }
 
+    context
+        .getWorkingMap()
+        .put(WorkspaceFlightMapKeys.EFFECTIVE_POLICIES, result.getResultingPao());
     return StepResult.getStepResultSuccess();
   }
 
@@ -94,17 +96,5 @@ public class ClonePolicyAttributesStep implements Step {
     }
 
     return StepResult.getStepResultSuccess();
-  }
-
-  // Since policy attributes were added later in development, not all existing
-  // workspaces have an associated policy attribute object. This method creates
-  // an empty one if it does not exist.
-  private void createPaoIfNotExist(UUID workspaceId) {
-    Optional<TpsPaoGetResult> pao = tpsApiDispatch.getPaoIfExists(workspaceId);
-    if (pao.isPresent()) {
-      return;
-    }
-    // Workspace doesn't have a PAO, so create an empty one for it.
-    tpsApiDispatch.createPao(workspaceId, null);
   }
 }
