@@ -5,7 +5,6 @@ import static bio.terra.workspace.connected.AzureConnectedTestUtils.getAzureName
 
 import bio.terra.stairway.ShortUUID;
 import bio.terra.workspace.common.utils.AzureVmUtils;
-import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.ControlledAzureBatchPoolResource;
