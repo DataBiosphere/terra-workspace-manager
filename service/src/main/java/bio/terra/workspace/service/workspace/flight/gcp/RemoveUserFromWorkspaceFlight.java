@@ -10,12 +10,11 @@ import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.flight.CheckUserStillInWorkspaceStep;
 import bio.terra.workspace.service.workspace.flight.ClaimUserPrivateResourcesStep;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
-import bio.terra.workspace.service.workspace.flight.RemovePrivateResourceAccessStep;
-import bio.terra.workspace.service.workspace.flight.RemoveUserFromSamStep;
 import bio.terra.workspace.service.workspace.flight.MarkPrivateResourcesAbandonedStep;
 import bio.terra.workspace.service.workspace.flight.ReleasePrivateResourceCleanupClaimsStep;
-
+import bio.terra.workspace.service.workspace.flight.RemovePrivateResourceAccessStep;
+import bio.terra.workspace.service.workspace.flight.RemoveUserFromSamStep;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import java.util.UUID;
 
 public class RemoveUserFromWorkspaceFlight extends Flight {

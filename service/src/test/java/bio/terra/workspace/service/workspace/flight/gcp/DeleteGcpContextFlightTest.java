@@ -25,10 +25,6 @@ import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredExce
 import bio.terra.workspace.service.workspace.flight.DeleteControlledDbResourcesStep;
 import bio.terra.workspace.service.workspace.flight.DeleteControlledSamResourcesStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
-import bio.terra.workspace.service.workspace.flight.gcp.CreateGcpContextFlightV2;
-import bio.terra.workspace.service.workspace.flight.gcp.DeleteGcpContextFlight;
-import bio.terra.workspace.service.workspace.flight.gcp.DeleteGcpContextStep;
-import bio.terra.workspace.service.workspace.flight.gcp.DeleteGcpProjectStep;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import java.time.Duration;
 import java.util.HashMap;
