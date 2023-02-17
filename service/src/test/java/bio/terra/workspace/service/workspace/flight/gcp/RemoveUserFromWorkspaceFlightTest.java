@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.workspace.flight.gcp;
+package bio.terra.workspace.service.workspace.flight;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -36,13 +36,8 @@ import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
-import bio.terra.workspace.service.workspace.flight.CheckUserStillInWorkspaceStep;
-import bio.terra.workspace.service.workspace.flight.ClaimUserPrivateResourcesStep;
-import bio.terra.workspace.service.workspace.flight.MarkPrivateResourcesAbandonedStep;
-import bio.terra.workspace.service.workspace.flight.ReleasePrivateResourceCleanupClaimsStep;
-import bio.terra.workspace.service.workspace.flight.RemovePrivateResourceAccessStep;
-import bio.terra.workspace.service.workspace.flight.RemoveUserFromSamStep;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.flight.gcp.RemoveUserFromWorkspaceFlight;
+import bio.terra.workspace.service.workspace.flight.gcp.RevokePetUsagePermissionStep;
 import bio.terra.workspace.service.workspace.model.CloudContextHolder;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
