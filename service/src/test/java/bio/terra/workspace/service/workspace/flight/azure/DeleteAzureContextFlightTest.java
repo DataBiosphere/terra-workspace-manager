@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.workspace.flight;
+package bio.terra.workspace.service.workspace.flight.azure;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -25,9 +25,11 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
-import bio.terra.workspace.service.workspace.flight.azure.CreateAzureContextFlight;
-import bio.terra.workspace.service.workspace.flight.azure.DeleteAzureContextFlight;
-import bio.terra.workspace.service.workspace.flight.azure.DeleteAzureContextStep;
+import bio.terra.workspace.service.workspace.flight.DeleteControlledSamResourcesStep;
+import bio.terra.workspace.service.workspace.flight.DeleteWorkspaceAuthzStep;
+import bio.terra.workspace.service.workspace.flight.DeleteWorkspaceStateStep;
+import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.gcp.DeleteGcpProjectStep;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
