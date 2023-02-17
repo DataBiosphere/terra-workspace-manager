@@ -126,13 +126,18 @@ public class CloudSyncRoleMapping {
               "dataproc.jobs.list")
           .build();
 
-  private final List<String> projectOwnerDataprocPermissions =
+  // TODO: PF-2508 Remove Dataproc writer and owner permissions after adding WSM managed dataproc
+  private final List<String> projectWriterDataprocPermissions =
       new ImmutableList.Builder<String>()
           .addAll(projectReaderDataprocPermissions)
+          .addAll(projectWriterPermissions)
+          .build();
+
+  private final List<String> projectOwnerDataprocPermissions =
+      new ImmutableList.Builder<String>()
+          .addAll(projectWriterDataprocPermissions)
           .addAll(projectOwnerPermissions)
           .add(
-              // Dataproc CRUD permissions
-              // TODO: Move read permissions to projectReader and revoke modify permissions once
               "dataproc.clusters.create",
               "dataproc.clusters.update",
               "dataproc.clusters.delete",
@@ -148,7 +153,6 @@ public class CloudSyncRoleMapping {
               "dataproc.autoscalingPolicies.create",
               "dataproc.autoscalingPolicies.update",
               "dataproc.autoscalingPolicies.delete",
-              // TODO: Remove all of the following once adding WSM managed dataproc
               "dataproc.tasks.lease",
               "dataproc.tasks.listInvalidatedLeases",
               "dataproc.tasks.reportStatus",
@@ -184,10 +188,14 @@ public class CloudSyncRoleMapping {
     CustomGcpIamRole projectWriter =
         CustomGcpIamRole.of("PROJECT_WRITER", projectWriterPermissions);
     CustomGcpIamRole projectOwner = CustomGcpIamRole.of("PROJECT_OWNER", projectOwnerPermissions);
+
+    // Add dataproc permissions if dataproc is enabled
     if (featureConfiguration.isDataprocEnabled()) {
       projectReader = CustomGcpIamRole.of("PROJECT_READER", projectReaderDataprocPermissions);
+      projectWriter = CustomGcpIamRole.of("PROJECT_WRITER", projectWriterDataprocPermissions);
       projectOwner = CustomGcpIamRole.of("PROJECT_OWNER", projectOwnerDataprocPermissions);
     }
+
     // Currently, workspace editors, applications and owners have the same cloud permissions as
     // writers. If that changes, create a new CustomGcpIamRole and modify the map below.
     return ImmutableMap.of(
