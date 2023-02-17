@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.workspace.flight;
+package bio.terra.workspace.service.workspace.flight.gcp;
 
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.GCP_PROJECT_ID;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.IAM_GROUP_EMAIL_MAP;
@@ -9,6 +9,7 @@ import bio.terra.stairway.StepResult;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.CloudContextHolder;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import com.fasterxml.jackson.core.type.TypeReference;

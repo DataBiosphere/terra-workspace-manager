@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.workspace.flight;
+package bio.terra.workspace.service.workspace.flight.gcp;
 
 import bio.terra.cloudres.google.iam.ServiceAccountName;
 import bio.terra.stairway.FlightContext;

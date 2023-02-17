@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.workspace.flight;
+package bio.terra.workspace.service.workspace.flight.gcp;
 
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
@@ -9,6 +9,7 @@ import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.workspace.flight.*;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import java.util.UUID;
 

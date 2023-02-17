@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.workspace.flight;
+package bio.terra.workspace.service.workspace.flight.gcp;
 
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.GCP_PROJECT_ID;
 
@@ -8,6 +8,7 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 
 /**
  * Step to create the caller's pet service account in a newly-created GCP context. There can be a

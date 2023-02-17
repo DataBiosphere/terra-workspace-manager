@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.workspace.flight;
+package bio.terra.workspace.service.workspace.flight.gcp;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
@@ -6,6 +6,7 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.google.api.services.cloudresourcemanager.v3.model.Binding;
 import com.google.api.services.cloudresourcemanager.v3.model.GetIamPolicyRequest;
 import com.google.api.services.cloudresourcemanager.v3.model.Policy;

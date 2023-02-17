@@ -8,6 +8,9 @@ import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.workspace.flight.azure.DeleteAzureContextStep;
+import bio.terra.workspace.service.workspace.flight.azure.DeleteControlledAzureResourcesStep;
+import bio.terra.workspace.service.workspace.flight.gcp.DeleteGcpProjectStep;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.UUID;
 

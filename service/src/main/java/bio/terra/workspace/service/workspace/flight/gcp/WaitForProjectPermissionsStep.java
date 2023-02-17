@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.workspace.flight;
+package bio.terra.workspace.service.workspace.flight.gcp;
 
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.GCP_PROJECT_ID;
 
@@ -10,6 +10,7 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.common.utils.RetryUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import java.time.Duration;

@@ -1,10 +1,11 @@
-package bio.terra.workspace.service.workspace.flight;
+package bio.terra.workspace.service.workspace.flight.gcp;
 
 import bio.terra.cloudres.google.billing.CloudBillingClientCow;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.workspace.service.spendprofile.SpendProfile;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.google.cloud.billing.v1.ProjectBillingInfo;
 
 /** A {@link Step} to set the billing account on the Google project. */

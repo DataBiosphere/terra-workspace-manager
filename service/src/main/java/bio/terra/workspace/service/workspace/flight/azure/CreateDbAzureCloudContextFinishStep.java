@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.workspace.flight.create.azure;
+package bio.terra.workspace.service.workspace.flight.azure;
 
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.SPEND_PROFILE;
 
