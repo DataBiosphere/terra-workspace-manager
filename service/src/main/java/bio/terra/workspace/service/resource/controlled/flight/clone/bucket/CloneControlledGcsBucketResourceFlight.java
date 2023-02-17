@@ -8,11 +8,13 @@ import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.policy.flight.MergePolicyAttributesDryRunStep;
+import bio.terra.workspace.service.policy.flight.MergePolicyAttributesStep;
+import bio.terra.workspace.service.policy.flight.ValidateWorkspaceAgainstPolicyStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.RetrieveGcsBucketCloudAttributesStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.RetrieveGcsBucketCloudAttributesStep.RetrievalMode;
 import bio.terra.workspace.service.resource.controlled.flight.clone.CheckControlledResourceAuthStep;
-import bio.terra.workspace.service.resource.controlled.flight.clone.ClonePolicyAttributesStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -61,6 +63,9 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
             .orElse(false);
     ControlledGcsBucketResource sourceBucket =
         sourceResource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
+    String location =
+        Optional.ofNullable(inputParameters.get(ControlledResourceKeys.LOCATION, String.class))
+            .orElse(sourceBucket.getRegion());
     CloningInstructions resolvedCloningInstructions =
         Optional.ofNullable(
                 inputParameters.get(
@@ -81,9 +86,25 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
         RetryRules.shortExponential());
     if (mergePolicies) {
       addStep(
-          new ClonePolicyAttributesStep(
-              sourceResource.getWorkspaceId(),
+          new MergePolicyAttributesDryRunStep(
               destinationWorkspaceId,
+              sourceResource.getWorkspaceId(),
+              userRequest,
+              flightBeanBag.getTpsApiDispatch()));
+
+      addStep(
+          new ValidateWorkspaceAgainstPolicyStep(
+              destinationWorkspaceId,
+              sourceResource.getResourceType().getCloudPlatform(),
+              location,
+              userRequest,
+              flightBeanBag.getResourceDao(),
+              flightBeanBag.getTpsApiDispatch()));
+
+      addStep(
+          new MergePolicyAttributesStep(
+              destinationWorkspaceId,
+              sourceResource.getWorkspaceId(),
               userRequest,
               flightBeanBag.getTpsApiDispatch()));
     }

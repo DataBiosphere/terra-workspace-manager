@@ -7,9 +7,11 @@ import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.policy.flight.MergePolicyAttributesDryRunStep;
+import bio.terra.workspace.service.policy.flight.MergePolicyAttributesStep;
+import bio.terra.workspace.service.policy.flight.ValidateWorkspaceAgainstPolicyStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.flight.clone.CheckControlledResourceAuthStep;
-import bio.terra.workspace.service.resource.controlled.flight.clone.ClonePolicyAttributesStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -41,6 +43,7 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
     var destinationWorkspaceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
+    var destLocation = inputParameters.get(ControlledResourceKeys.LOCATION, String.class);
 
     boolean mergePolicies =
         Optional.ofNullable(
@@ -70,9 +73,25 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
         RetryRules.shortExponential());
     if (mergePolicies) {
       addStep(
-          new ClonePolicyAttributesStep(
-              sourceResource.getWorkspaceId(),
+          new MergePolicyAttributesDryRunStep(
               destinationWorkspaceId,
+              sourceResource.getWorkspaceId(),
+              userRequest,
+              flightBeanBag.getTpsApiDispatch()));
+
+      addStep(
+          new ValidateWorkspaceAgainstPolicyStep(
+              destinationWorkspaceId,
+              sourceResource.getResourceType().getCloudPlatform(),
+              destLocation,
+              userRequest,
+              flightBeanBag.getResourceDao(),
+              flightBeanBag.getTpsApiDispatch()));
+
+      addStep(
+          new MergePolicyAttributesStep(
+              destinationWorkspaceId,
+              sourceResource.getWorkspaceId(),
               userRequest,
               flightBeanBag.getTpsApiDispatch()));
     }
@@ -118,7 +137,6 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
               resolvedCloningInstructions,
               flightBeanBag.getWorkspaceActivityLogService()));
       if (CloningInstructions.COPY_RESOURCE == resolvedCloningInstructions) {
-        var destLocation = inputParameters.get(ControlledResourceKeys.LOCATION, String.class);
         // Use the BigQuery Data Transfer API for cross-region dataset copies. For table copy jobs,
         // the destination dataset must reside in the same location as the dataset containing the
         // table being copied.

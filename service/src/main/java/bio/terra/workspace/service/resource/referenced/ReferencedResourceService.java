@@ -1,19 +1,25 @@
 package bio.terra.workspace.service.resource.referenced;
 
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobBuilder;
+import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
+import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.resource.referenced.flight.clone.CloneReferencedResourceFlight;
 import bio.terra.workspace.service.resource.referenced.flight.update.UpdateReferenceResourceFlight;
 import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import io.opencensus.contrib.spring.aop.Traced;
@@ -34,6 +40,9 @@ public class ReferencedResourceService {
   private final ResourceDao resourceDao;
   private final WorkspaceService workspaceService;
   private final FlightBeanBag beanBag;
+  private final FeatureConfiguration features;
+  private final SamService samService;
+  private final TpsApiDispatch tpsApiDispatch;
   private final WorkspaceActivityLogService workspaceActivityLogService;
 
   @Autowired
@@ -42,11 +51,17 @@ public class ReferencedResourceService {
       ResourceDao resourceDao,
       WorkspaceService workspaceService,
       FlightBeanBag beanBag,
-      WorkspaceActivityLogService workspaceActivityLogService) {
+      WorkspaceActivityLogService workspaceActivityLogService,
+      FeatureConfiguration features,
+      SamService samService,
+      TpsApiDispatch tpsApiDispatch) {
     this.jobService = jobService;
     this.resourceDao = resourceDao;
     this.workspaceService = workspaceService;
     this.beanBag = beanBag;
+    this.features = features;
+    this.samService = samService;
+    this.tpsApiDispatch = tpsApiDispatch;
     this.workspaceActivityLogService = workspaceActivityLogService;
   }
 
@@ -113,7 +128,7 @@ public class ReferencedResourceService {
   }
 
   /**
-   * Updates name, description and/or referencing traget of the reference resource.
+   * Updates name, description and/or referencing target of the reference resource.
    *
    * @param workspaceUuid workspace of interest
    * @param resourceId resource to update
@@ -232,8 +247,9 @@ public class ReferencedResourceService {
       @Nullable UUID destinationFolderId,
       @Nullable String name,
       @Nullable String description,
-      String createdByEmail,
+      @Nullable String email,
       AuthenticatedUserRequest userRequest) {
+
     ReferencedResource destinationResource =
         sourceReferencedResource
             .buildReferencedClone(
@@ -242,10 +258,34 @@ public class ReferencedResourceService {
                 destinationFolderId,
                 name,
                 description,
-                createdByEmail)
+                email)
             .castToReferencedResource();
 
-    return createReferenceResourceForClone(
-        destinationResource, sourceReferencedResource, userRequest);
+    final String jobDescription =
+        String.format(
+            "Clone referenced resource %s; id %s; name %s",
+            sourceReferencedResource.getResourceType(), destinationResourceId, name);
+
+    // If TPS is enabled, then we want to merge policies when cloning a bucket
+    boolean mergePolicies = features.isTpsEnabled();
+
+    final JobBuilder jobBuilder =
+        jobService
+            .newJob()
+            .description(jobDescription)
+            .flightClass(CloneReferencedResourceFlight.class)
+            .resource(sourceReferencedResource)
+            .workspaceId(destinationWorkspaceId.toString())
+            .operationType(OperationType.CLONE)
+            .addParameter(
+                WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
+                destinationWorkspaceId)
+            .addParameter(ResourceKeys.RESOURCE, sourceReferencedResource)
+            .addParameter(ResourceKeys.DESTINATION_RESOURCE, destinationResource)
+            .addParameter(WorkspaceFlightMapKeys.MERGE_POLICIES, mergePolicies)
+            .addParameter(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
+
+    var result = jobBuilder.submitAndWait(ReferencedResource.class);
+    return result;
   }
 }
