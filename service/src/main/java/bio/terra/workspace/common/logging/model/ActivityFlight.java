@@ -18,14 +18,14 @@ import bio.terra.workspace.service.resource.controlled.flight.create.CreateContr
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.referenced.flight.clone.CloneReferencedResourceFlight;
 import bio.terra.workspace.service.resource.referenced.flight.update.UpdateReferenceResourceFlight;
-import bio.terra.workspace.service.workspace.flight.CreateGcpContextFlightV2;
-import bio.terra.workspace.service.workspace.flight.DeleteAzureContextFlight;
-import bio.terra.workspace.service.workspace.flight.DeleteGcpContextFlight;
-import bio.terra.workspace.service.workspace.flight.RemoveUserFromWorkspaceFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.flight.application.able.ApplicationAbleFlight;
-import bio.terra.workspace.service.workspace.flight.create.azure.CreateAzureContextFlight;
+import bio.terra.workspace.service.workspace.flight.azure.CreateAzureContextFlight;
+import bio.terra.workspace.service.workspace.flight.azure.DeleteAzureContextFlight;
+import bio.terra.workspace.service.workspace.flight.gcp.CreateGcpContextFlightV2;
+import bio.terra.workspace.service.workspace.flight.gcp.DeleteGcpContextFlight;
+import bio.terra.workspace.service.workspace.flight.gcp.RemoveUserFromWorkspaceFlight;
 import java.util.Arrays;
 
 /**
