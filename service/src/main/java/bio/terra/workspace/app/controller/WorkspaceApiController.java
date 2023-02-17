@@ -522,21 +522,27 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   @Override
   public ResponseEntity<ApiCreateCloudContextResult> createCloudContext(
       UUID uuid, @Valid ApiCreateCloudContextRequest body) {
-    ControllerValidationUtils.validateCloudPlatform(body.getCloudPlatform());
+    ApiCloudPlatform cloudPlatform = body.getCloudPlatform();
+    ControllerValidationUtils.validateCloudPlatform(cloudPlatform);
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     String jobId = body.getJobControl().getId();
     String resultPath = getAsyncResultEndpoint(jobId);
     Workspace workspace =
         workspaceService.validateMcWorkspaceAndAction(userRequest, uuid, SamWorkspaceAction.WRITE);
 
-    if (body.getCloudPlatform() == ApiCloudPlatform.AZURE) {
+    if (cloudPlatform == ApiCloudPlatform.GCP) {
+      workspaceService.createGcpCloudContext(workspace, jobId, userRequest, resultPath);
+
+    } else if (cloudPlatform == ApiCloudPlatform.AZURE) {
       AzureCloudContext azureCloudContext =
           ControllerValidationUtils.validateAzureContextRequestBody(
               body.getAzureContext(), featureConfiguration.isBpmAzureEnabled());
       workspaceService.createAzureCloudContext(
           workspace, jobId, userRequest, resultPath, azureCloudContext);
+
     } else {
-      workspaceService.createGcpCloudContext(workspace, jobId, userRequest, resultPath);
+      throw new FeatureNotSupportedException(
+          "CreateCloudContext not supported on ApiCloudPlatform " + cloudPlatform);
     }
 
     ApiCreateCloudContextResult response = fetchCreateCloudContextResult(jobId);
@@ -591,11 +597,16 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     ControllerValidationUtils.validateCloudPlatform(cloudPlatform);
     Workspace workspace =
         workspaceService.validateMcWorkspaceAndAction(userRequest, uuid, SamWorkspaceAction.WRITE);
-    if (cloudPlatform == ApiCloudPlatform.AZURE) {
+
+    if (cloudPlatform == ApiCloudPlatform.GCP) {
+      workspaceService.deleteGcpCloudContext(workspace, userRequest);
+    } else if (cloudPlatform == ApiCloudPlatform.AZURE) {
       workspaceService.deleteAzureCloudContext(workspace, userRequest);
     } else {
-      workspaceService.deleteGcpCloudContext(workspace, userRequest);
+      throw new FeatureNotSupportedException(
+          "DeleteCloudContext not supported on ApiCloudPlatform " + cloudPlatform);
     }
+
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
