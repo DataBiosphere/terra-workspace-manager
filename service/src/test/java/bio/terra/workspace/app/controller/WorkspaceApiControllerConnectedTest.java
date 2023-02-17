@@ -497,15 +497,13 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     mockMvcUtils.updatePoliciesExpect(
         userAccessUtils.defaultUserAuthRequest(),
         workspace.getId(),
-        HttpStatus.SC_INTERNAL_SERVER_ERROR,
+        HttpStatus.SC_CONFLICT,
         buildWsmRegionPolicyInput("europe"),
         ApiWsmPolicyUpdateMode.FAIL_ON_CONFLICT);
-    // TODO(PF-2501): should not throw conflict when policy is ENFORCE_CONFLICT. change to
-    // FAIL_ON_CONFLICT instead.
     mockMvcUtils.updatePoliciesExpect(
         userAccessUtils.defaultUserAuthRequest(),
         workspace.getId(),
-        HttpStatus.SC_INTERNAL_SERVER_ERROR,
+        HttpStatus.SC_CONFLICT,
         buildWsmRegionPolicyInput("asia"),
         ApiWsmPolicyUpdateMode.ENFORCE_CONFLICT);
     updatedWorkspace =
