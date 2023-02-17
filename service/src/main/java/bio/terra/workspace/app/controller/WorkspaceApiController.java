@@ -19,34 +19,8 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
-import bio.terra.workspace.generated.model.ApiAzureContext;
-import bio.terra.workspace.generated.model.ApiCloneWorkspaceRequest;
-import bio.terra.workspace.generated.model.ApiCloneWorkspaceResult;
-import bio.terra.workspace.generated.model.ApiClonedWorkspace;
-import bio.terra.workspace.generated.model.ApiCloudPlatform;
-import bio.terra.workspace.generated.model.ApiCreateCloudContextRequest;
-import bio.terra.workspace.generated.model.ApiCreateCloudContextResult;
-import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
-import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
-import bio.terra.workspace.generated.model.ApiGcpContext;
-import bio.terra.workspace.generated.model.ApiGrantRoleRequestBody;
-import bio.terra.workspace.generated.model.ApiIamRole;
+import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
-import bio.terra.workspace.generated.model.ApiMergeCheckRequest;
-import bio.terra.workspace.generated.model.ApiProperties;
-import bio.terra.workspace.generated.model.ApiProperty;
-import bio.terra.workspace.generated.model.ApiRegions;
-import bio.terra.workspace.generated.model.ApiRoleBinding;
-import bio.terra.workspace.generated.model.ApiRoleBindingList;
-import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
-import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
-import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
-import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
-import bio.terra.workspace.generated.model.ApiWsmPolicyExplainResult;
-import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
-import bio.terra.workspace.generated.model.ApiWsmPolicyMergeCheckResult;
-import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateRequest;
-import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateResult;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamRethrow;
@@ -63,18 +37,12 @@ import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.policy.model.PolicyExplainResult;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
+import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
-import bio.terra.workspace.service.workspace.model.AzureCloudContext;
-import bio.terra.workspace.service.workspace.model.CloudContextHolder;
-import bio.terra.workspace.service.workspace.model.CloudPlatform;
-import bio.terra.workspace.service.workspace.model.GcpCloudContext;
-import bio.terra.workspace.service.workspace.model.OperationType;
-import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
-import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import bio.terra.workspace.service.workspace.model.*;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -100,8 +68,9 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   private final WorkspaceService workspaceService;
   private final JobService jobService;
   private final JobApiUtils jobApiUtils;
-  private final AzureCloudContextService azureCloudContextService;
   private final GcpCloudContextService gcpCloudContextService;
+  private final AzureCloudContextService azureCloudContextService;
+  private final AwsCloudContextService awsCloudContextService;
   private final PetSaService petSaService;
   private final TpsApiDispatch tpsApiDispatch;
   private final WorkspaceActivityLogDao workspaceActivityLogDao;
@@ -117,8 +86,9 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       WorkspaceService workspaceService,
       JobService jobService,
       JobApiUtils jobApiUtils,
-      AzureCloudContextService azureCloudContextService,
       GcpCloudContextService gcpCloudContextService,
+      AzureCloudContextService azureCloudContextService,
+      AwsCloudContextService awsCloudContextService,
       PetSaService petSaService,
       TpsApiDispatch tpsApiDispatch,
       WorkspaceActivityLogDao workspaceActivityLogDao,
@@ -129,8 +99,9 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     this.workspaceService = workspaceService;
     this.jobService = jobService;
     this.jobApiUtils = jobApiUtils;
-    this.azureCloudContextService = azureCloudContextService;
     this.gcpCloudContextService = gcpCloudContextService;
+    this.azureCloudContextService = azureCloudContextService;
+    this.awsCloudContextService = awsCloudContextService;
     this.petSaService = petSaService;
     this.tpsApiDispatch = tpsApiDispatch;
     this.workspaceActivityLogDao = workspaceActivityLogDao;
@@ -256,6 +227,12 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .getAzureCloudContext(workspaceUuid)
             .map(AzureCloudContext::toApi)
             .orElse(null);
+
+    ApiAwsContext awsContext =
+            awsCloudContextService
+                    .getAwsCloudContext(workspaceUuid)
+                    .map(AwsCloudContext::toApi)
+                    .orElse(null);
 
     List<ApiWsmPolicyInput> workspacePolicies = null;
     if (featureConfiguration.isTpsEnabled()) {
