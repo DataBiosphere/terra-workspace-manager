@@ -47,8 +47,8 @@ public class AwsCloudContextService {
 
   /**
    * Create an empty AWS cloud context in the database for a workspace. Supports {@link
-   * bio.terra.workspace.service.workspace.flight.CreateAwsContextFlightV1} This is designed for use
-   * in the createAwsContext flight and assumes that a later step will call {@link
+   * bio.terra.workspace.service.workspace.flight.aws.CreateAwsContextFlightV1} This is designed for
+   * use in the createAwsContext flight and assumes that a later step will call {@link
    * #createAwsCloudContextFinish}.
    *
    * @param workspaceUuid workspace id where the context is being created

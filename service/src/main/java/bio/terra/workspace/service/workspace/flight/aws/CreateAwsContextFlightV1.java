@@ -9,7 +9,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import java.util.UUID;
 
 public class CreateAwsContextFlightV1 extends Flight {
-
+  // TODO-Dex
   public CreateAwsContextFlightV1(FlightMap inputParameters, Object applicationContext) {
     super(inputParameters, applicationContext);
 
@@ -22,6 +22,7 @@ public class CreateAwsContextFlightV1 extends Flight {
 
     RetryRule dbRetry = RetryRules.shortDatabase();
 
+    /*
     // write the incomplete DB row to prevent concurrent creates
     addStep(
         new CreateDbAwsCloudContextStartStep(workspaceUuid, appContext.getAwsCloudContextService()),
@@ -35,5 +36,6 @@ public class CreateAwsContextFlightV1 extends Flight {
         new CreateDbAwsCloudContextFinishStep(
             workspaceUuid, appContext.getAwsCloudContextService()),
         dbRetry);
+     */
   }
 }
