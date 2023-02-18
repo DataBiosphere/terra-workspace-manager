@@ -11,7 +11,6 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
-import bio.terra.workspace.service.workspace.flight.aws.CreateAwsContextFlightV1;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobBuilder;
@@ -28,6 +27,8 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import bio.terra.workspace.service.workspace.flight.aws.CreateAwsContextFlightV1;
+import bio.terra.workspace.service.workspace.flight.aws.DeleteAwsContextFlight;
 import bio.terra.workspace.service.workspace.flight.azure.CreateAzureContextFlight;
 import bio.terra.workspace.service.workspace.flight.azure.DeleteAzureContextFlight;
 import bio.terra.workspace.service.workspace.flight.gcp.CreateGcpContextFlightV2;
@@ -479,29 +480,29 @@ public class WorkspaceService {
    */
   @Traced
   public void createAwsCloudContext(
-          Workspace workspace,
-          String jobId,
-          AuthenticatedUserRequest userRequest,
-          SamUser samUser,
-          @Nullable String resultPath) {
+      Workspace workspace,
+      String jobId,
+      AuthenticatedUserRequest userRequest,
+      SamUser samUser,
+      @Nullable String resultPath) {
     features.awsEnabledCheck();
 
     String jobDescription =
-            String.format(
-                    "Create AWS cloud context for workspace: name: '%s' id: '%s'  ",
-                    workspace.getDisplayName().orElse(""), workspace.getWorkspaceId());
+        String.format(
+            "Create AWS cloud context for workspace: name: '%s' id: '%s'  ",
+            workspace.getDisplayName().orElse(""), workspace.getWorkspaceId());
 
     jobService
-            .newJob()
-            .description(jobDescription)
-            .jobId(jobId)
-            .flightClass(CreateAwsContextFlightV1.class)
-            .userRequest(userRequest)
-            .operationType(OperationType.CREATE)
-            .workspaceId(workspace.getWorkspaceId().toString())
-            .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
-            .addParameter(WorkspaceFlightMapKeys.SAM_USER, samUser)
-            .submit();
+        .newJob()
+        .description(jobDescription)
+        .jobId(jobId)
+        .flightClass(CreateAwsContextFlightV1.class)
+        .userRequest(userRequest)
+        .operationType(OperationType.CREATE)
+        .workspaceId(workspace.getWorkspaceId().toString())
+        .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
+        .addParameter(WorkspaceFlightMapKeys.SAM_USER, samUser)
+        .submit();
   }
 
   /** Delete the GCP cloud context for the workspace. */
@@ -542,19 +543,18 @@ public class WorkspaceService {
   /** Delete the Aws cloud context for the workspace. */
   @Traced
   public void deleteAwsCloudContext(Workspace workspace, AuthenticatedUserRequest userRequest) {
-    //TODO-Dex
     String jobDescription =
-            String.format(
-                    "Delete AWS cloud context for workspace: name: '%s' id: '%s'  ",
-                    workspace.getDisplayName().orElse(""), workspace.getWorkspaceId());
+        String.format(
+            "Delete AWS cloud context for workspace: name: '%s' id: '%s'  ",
+            workspace.getDisplayName().orElse(""), workspace.getWorkspaceId());
     jobService
-            .newJob()
-            .description(jobDescription)
-            .flightClass(DeleteAwsContextFlight.class)
-            .userRequest(userRequest)
-            .operationType(OperationType.DELETE)
-            .workspaceId(workspace.getWorkspaceId().toString())
-            .submitAndWait();
+        .newJob()
+        .description(jobDescription)
+        .flightClass(DeleteAwsContextFlight.class)
+        .userRequest(userRequest)
+        .operationType(OperationType.DELETE)
+        .workspaceId(workspace.getWorkspaceId().toString())
+        .submitAndWait();
   }
 
   /**

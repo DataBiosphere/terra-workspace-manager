@@ -10,31 +10,30 @@ import java.util.UUID;
 
 public class CreateAwsContextFlightV1 extends Flight {
 
-    public CreateAwsContextFlightV1(FlightMap inputParameters, Object applicationContext) {
-        super(inputParameters, applicationContext);
+  public CreateAwsContextFlightV1(FlightMap inputParameters, Object applicationContext) {
+    super(inputParameters, applicationContext);
 
-        // Sanity check to make sure AWS is enabled before kicking off flight
-        FlightBeanBag appContext = FlightBeanBag.getFromObject(applicationContext);
-        var featureConfiguration = appContext.getFeatureConfiguration();
-        featureConfiguration.awsEnabledCheck();
+    FlightBeanBag appContext = FlightBeanBag.getFromObject(applicationContext);
+    var featureConfiguration = appContext.getFeatureConfiguration();
+    featureConfiguration.awsEnabledCheck();
 
-        UUID workspaceUuid =
-                UUID.fromString(inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
+    UUID workspaceUuid =
+        UUID.fromString(inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
 
-        RetryRule dbRetry = RetryRules.shortDatabase();
+    RetryRule dbRetry = RetryRules.shortDatabase();
 
-        // write the incomplete DB row to prevent concurrent creates
-        addStep(
-                new CreateDbAwsCloudContextStartStep(workspaceUuid, appContext.getAwsCloudContextService()),
-                dbRetry);
+    // write the incomplete DB row to prevent concurrent creates
+    addStep(
+        new CreateDbAwsCloudContextStartStep(workspaceUuid, appContext.getAwsCloudContextService()),
+        dbRetry);
 
-        // Basic WLZ sanity checks
-        addStep(new ValidateWLZStep());
+    // Basic WLZ sanity checks
+    addStep(new ValidateWLZStep());
 
-        // update the DB row filling in the cloud context
-        addStep(
-                new CreateDbAwsCloudContextFinishStep(
-                        workspaceUuid, appContext.getAwsCloudContextService()),
-                dbRetry);
-    }
+    // update the DB row filling in the cloud context
+    addStep(
+        new CreateDbAwsCloudContextFinishStep(
+            workspaceUuid, appContext.getAwsCloudContextService()),
+        dbRetry);
+  }
 }

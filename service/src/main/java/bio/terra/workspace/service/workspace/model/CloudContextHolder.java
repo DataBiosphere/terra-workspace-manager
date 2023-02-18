@@ -1,24 +1,33 @@
 package bio.terra.workspace.service.workspace.model;
 
 public class CloudContextHolder {
-  private AzureCloudContext azureCloudContext;
   private GcpCloudContext gcpCloudContext;
+  private AzureCloudContext azureCloudContext;
+  private AwsCloudContext awsCloudContext;
 
   public CloudContextHolder() {}
+
+  public GcpCloudContext getGcpCloudContext() {
+    return gcpCloudContext;
+  }
 
   public AzureCloudContext getAzureCloudContext() {
     return azureCloudContext;
   }
 
-  public GcpCloudContext getGcpCloudContext() {
-    return gcpCloudContext;
+  public AwsCloudContext getAwsCloudContext() {
+    return awsCloudContext;
+  }
+
+  public void setGcpCloudContext(GcpCloudContext gcpCloudContext) {
+    this.gcpCloudContext = gcpCloudContext;
   }
 
   public void setAzureCloudContext(AzureCloudContext azureCloudContext) {
     this.azureCloudContext = azureCloudContext;
   }
 
-  public void setGcpCloudContext(GcpCloudContext gcpCloudContext) {
-    this.gcpCloudContext = gcpCloudContext;
+  public void setAwsCloudContext(AwsCloudContext awsCloudContext) {
+    this.awsCloudContext = awsCloudContext;
   }
 }

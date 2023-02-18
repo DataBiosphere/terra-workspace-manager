@@ -23,6 +23,7 @@ public class CreateAzureContextFlight extends Flight {
 
     FlightBeanBag appContext = FlightBeanBag.getFromObject(applicationContext);
     var featureConfiguration = appContext.getFeatureConfiguration();
+    featureConfiguration.azureEnabledCheck();
 
     UUID workspaceUuid =
         UUID.fromString(inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));

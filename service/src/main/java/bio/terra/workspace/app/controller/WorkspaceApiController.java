@@ -19,8 +19,8 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
-import bio.terra.workspace.generated.model.ApiAzureContext;
 import bio.terra.workspace.generated.model.ApiAwsContext;
+import bio.terra.workspace.generated.model.ApiAzureContext;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceRequest;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceResult;
 import bio.terra.workspace.generated.model.ApiClonedWorkspace;
@@ -560,7 +560,6 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
           workspace, jobId, userRequest, resultPath, azureCloudContext);
 
     } else if (body.getCloudPlatform() == ApiCloudPlatform.AWS) {
-      // TODO-Dex
       workspaceService.createAwsCloudContext(
           workspace, jobId, userRequest, getSamUser(), resultPath);
 
@@ -607,7 +606,14 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
                           .resourceGroupId(c.getAzureResourceGroupId()))
               .orElse(null);
 
-      // TODO-Dex
+      awsContext =
+          Optional.ofNullable(jobResult.getResult().getAwsCloudContext())
+              .map(
+                  c ->
+                      new ApiAwsContext()
+                          .accountNumber(c.getAwsAccountNumber())
+                          .region(c.getAwsRegion()))
+              .orElse(null);
     }
 
     return new ApiCreateCloudContextResult()
@@ -631,8 +637,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     } else if (cloudPlatform == ApiCloudPlatform.AZURE) {
       workspaceService.deleteAzureCloudContext(workspace, userRequest);
     } else if (cloudPlatform == ApiCloudPlatform.AWS) {
-      // TODO-Dex
-      workspaceService.deleteAzureCloudContext(workspace, userRequest);
+      workspaceService.deleteAwsCloudContext(workspace, userRequest);
     } else {
       throw new FeatureNotSupportedException(
           "DeleteCloudContext not supported on ApiCloudPlatform " + cloudPlatform);
