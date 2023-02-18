@@ -204,7 +204,7 @@ class CreateGcpContextFlightV2Test extends BaseConnectedTest {
     // Retry steps once to validate idempotency.
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(
-        CreateDbGcpCloudContextStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+        CreateDbGcpCloudContextStartStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(PullProjectFromPoolStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(SetProjectBillingStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(GrantWsmRoleAdminStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
@@ -213,7 +213,7 @@ class CreateGcpContextFlightV2Test extends BaseConnectedTest {
     retrySteps.put(GcpCloudSyncStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(CreatePetSaStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
-        UpdateDbGcpCloudContextStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+        CreateDbGcpCloudContextFinishStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     return retrySteps;
   }
 
