@@ -25,6 +25,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.Stora
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.BucketCloneRolesService;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.spendprofile.SpendProfileService;
+import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -43,8 +44,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class FlightBeanBag {
   private final ApplicationDao applicationDao;
+  private final GcpCloudContextService gcpCloudContextService;
   private final AzureCloudContextService azureCloudContextService;
   private final AzureConfiguration azureConfig;
+  private final AwsCloudContextService awsCloudContextService;
   private final BucketCloneRolesService bucketCloneRolesService;
   private final BufferService bufferService;
   private final CliConfiguration cliConfiguration;
@@ -54,7 +57,6 @@ public class FlightBeanBag {
   private final DataRepoService dataRepoService;
   private final FeatureConfiguration featureConfiguration;
   private final FolderDao folderDao;
-  private final GcpCloudContextService gcpCloudContextService;
   private final GrantDao grantDao;
   private final GrantService grantService;
   private final PetSaService petSaService;
@@ -76,8 +78,10 @@ public class FlightBeanBag {
   @Autowired
   public FlightBeanBag(
       ApplicationDao applicationDao,
+      GcpCloudContextService gcpCloudContextService,
       AzureCloudContextService azureCloudContextService,
       AzureConfiguration azureConfig,
+      AwsCloudContextService awsCloudContextService,
       BucketCloneRolesService bucketCloneRolesService,
       BufferService bufferService,
       CliConfiguration cliConfiguration,
@@ -87,7 +91,6 @@ public class FlightBeanBag {
       DataRepoService dataRepoService,
       FeatureConfiguration featureConfiguration,
       FolderDao folderDao,
-      GcpCloudContextService gcpCloudContextService,
       GrantDao grantDao,
       GrantService grantService,
       PetSaService petSaService,
@@ -105,8 +108,10 @@ public class FlightBeanBag {
       WorkspaceActivityLogService workspaceActivityLogService,
       LandingZoneBatchAccountFinder landingZoneBatchAccountFinder) {
     this.applicationDao = applicationDao;
+    this.gcpCloudContextService = gcpCloudContextService;
     this.azureCloudContextService = azureCloudContextService;
     this.azureConfig = azureConfig;
+    this.awsCloudContextService = awsCloudContextService;
     this.bucketCloneRolesService = bucketCloneRolesService;
     this.bufferService = bufferService;
     this.cliConfiguration = cliConfiguration;
@@ -116,7 +121,6 @@ public class FlightBeanBag {
     this.dataRepoService = dataRepoService;
     this.featureConfiguration = featureConfiguration;
     this.folderDao = folderDao;
-    this.gcpCloudContextService = gcpCloudContextService;
     this.grantDao = grantDao;
     this.grantService = grantService;
     this.petSaService = petSaService;
@@ -143,8 +147,20 @@ public class FlightBeanBag {
     return applicationDao;
   }
 
+  public GcpCloudContextService getGcpCloudContextService() {
+    return gcpCloudContextService;
+  }
+
   public AzureCloudContextService getAzureCloudContextService() {
     return azureCloudContextService;
+  }
+
+  public AzureConfiguration getAzureConfig() {
+    return azureConfig;
+  }
+
+  public AwsCloudContextService getAwsCloudContextService() {
+    return awsCloudContextService;
   }
 
   public BucketCloneRolesService getBucketCloneRolesService() {
@@ -173,10 +189,6 @@ public class FlightBeanBag {
 
   public FeatureConfiguration getFeatureConfiguration() {
     return featureConfiguration;
-  }
-
-  public GcpCloudContextService getGcpCloudContextService() {
-    return gcpCloudContextService;
   }
 
   public GrantDao getGrantDao() {
@@ -221,10 +233,6 @@ public class FlightBeanBag {
 
   public SpendProfileService getSpendProfileService() {
     return spendProfileService;
-  }
-
-  public AzureConfiguration getAzureConfig() {
-    return azureConfig;
   }
 
   public CliConfiguration getCliConfiguration() {
