@@ -3,7 +3,6 @@ package bio.terra.workspace.service.workspace.flight.azure;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
-import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import java.util.UUID;
 
