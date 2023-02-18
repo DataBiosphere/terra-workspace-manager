@@ -7,10 +7,6 @@ import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import java.util.UUID;
 
-/**
- * Stores the previously generated Google Project Id in the {@link WorkspaceDao} as the Google cloud
- * context for the workspace.
- */
 public class CreateDbAzureCloudContextStartStep implements Step {
   private final UUID workspaceUuid;
   private final AzureCloudContextService azureCloudContextService;
