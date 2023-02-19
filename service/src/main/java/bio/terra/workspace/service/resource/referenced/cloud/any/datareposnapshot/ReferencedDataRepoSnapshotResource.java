@@ -11,19 +11,15 @@ import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
@@ -34,42 +30,16 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
   /**
    * Constructor for serialized form for Stairway use
    *
-   * @param workspaceId workspace unique identifier
-   * @param resourceId resource unique identifier
-   * @param name name - may be null
-   * @param description description - may be null
-   * @param cloningInstructions cloning instructions
+   * @param resourceFields common resource fields
    * @param instanceName name of the data repository instance (e.g., "terra")
    * @param snapshotId name of the snapshot
-   * @param resourceLineage resource lineage
    */
   @JsonCreator
   public ReferencedDataRepoSnapshotResource(
-      @JsonProperty("workspaceId") UUID workspaceId,
-      @JsonProperty("resourceId") UUID resourceId,
-      @JsonProperty("name") String name,
-      @JsonProperty("description") String description,
-      @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
+      @JsonProperty("wsmResourceFields") WsmResourceFields resourceFields,
       @JsonProperty("instanceName") String instanceName,
-      @JsonProperty("snapshotId") String snapshotId,
-      @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
-      @JsonProperty("properties") Map<String, String> properties,
-      @JsonProperty("createdByEmail") String createdByEmail,
-      @JsonProperty("createdDate") OffsetDateTime createdDate,
-      @JsonProperty("lastUpdatedByEmail") String lastUpdatedByEmail,
-      @JsonProperty("lastUpdatedDate") OffsetDateTime lastUpdatedDate) {
-    super(
-        workspaceId,
-        resourceId,
-        name,
-        description,
-        cloningInstructions,
-        resourceLineage,
-        properties,
-        createdByEmail,
-        createdDate,
-        lastUpdatedByEmail,
-        lastUpdatedDate);
+      @JsonProperty("snapshotId") String snapshotId) {
+    super(resourceFields);
     this.instanceName = instanceName;
     this.snapshotId = snapshotId;
     validate();
@@ -103,12 +73,30 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
     return new ReferencedDataRepoSnapshotResource.Builder();
   }
 
+  // -- getters used in serialization --
+  public WsmResourceFields getWsmResourceFields() {
+    return super.getWsmResourceFields();
+  }
+
   public String getInstanceName() {
     return instanceName;
   }
 
   public String getSnapshotId() {
     return snapshotId;
+  }
+
+  // -- getters not included in serialization --
+  @Override
+  @JsonIgnore
+  public WsmResourceType getResourceType() {
+    return WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT;
+  }
+
+  @Override
+  @JsonIgnore
+  public WsmResourceFamily getResourceFamily() {
+    return WsmResourceFamily.DATA_REPO_SNAPSHOT;
   }
 
   public ApiDataRepoSnapshotAttributes toApiAttributes() {
@@ -131,16 +119,6 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
       throw new BadRequestException(String.format("Resource is not a %s", expectedType));
     }
     return (T) this;
-  }
-
-  @Override
-  public WsmResourceType getResourceType() {
-    return WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT;
-  }
-
-  @Override
-  public WsmResourceFamily getResourceFamily() {
-    return WsmResourceFamily.DATA_REPO_SNAPSHOT;
   }
 
   @Override

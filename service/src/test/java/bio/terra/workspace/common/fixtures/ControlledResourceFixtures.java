@@ -307,147 +307,77 @@ public class ControlledResourceFixtures {
   public static final Long DEFAULT_CREATED_BIG_QUERY_TABLE_LIFETIME = 5900L;
   public static final Long DEFAULT_CREATED_BIG_QUERY_PARTITION_LIFETIME = 5901L;
 
+  public static final ControlledResourceFields DEFAULT_GCP_CONTROLLED_RESOURCE_FIELDS =
+      ControlledResourceFields.builder()
+          .workspaceUuid(WORKSPACE_ID)
+          .resourceId(RESOURCE_ID)
+          .name(RESOURCE_NAME)
+          .description(RESOURCE_DESCRIPTION)
+          .cloningInstructions(CloningInstructions.COPY_RESOURCE)
+          .resourceLineage(null)
+          .properties(Map.of())
+          .createdByEmail(MockMvcUtils.DEFAULT_USER_EMAIL)
+          .createdDate(null)
+          .lastUpdatedByEmail(null)
+          .lastUpdatedDate(null)
+          .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
+          .assignedUser(null)
+          .managedBy(ManagedByType.MANAGED_BY_USER)
+          .privateResourceState(PrivateResourceState.NOT_APPLICABLE)
+          .applicationId(null)
+          .region(DEFAULT_RESOURCE_REGION)
+          .build();
+
   public static ControlledGcsBucketResource getBucketResource(String bucketName) {
-    return new ControlledGcsBucketResource(
-        WORKSPACE_ID,
-        RESOURCE_ID,
-        RESOURCE_NAME,
-        RESOURCE_DESCRIPTION,
-        CloningInstructions.COPY_RESOURCE,
-        OWNER_EMAIL,
-        PrivateResourceState.ACTIVE,
-        AccessScopeType.ACCESS_SCOPE_PRIVATE,
-        ManagedByType.MANAGED_BY_USER,
-        null,
-        bucketName,
-        /*resourceLineage=*/ null,
-        Map.of(),
-        MockMvcUtils.DEFAULT_USER_EMAIL,
-        /*createdDate=*/ null,
-        /*lastUpdatedByEmail=*/ null,
-        /*lastUpdatedDate=*/ null,
-        DEFAULT_RESOURCE_REGION);
+    return ControlledGcsBucketResource.builder()
+        .common(DEFAULT_GCP_CONTROLLED_RESOURCE_FIELDS)
+        .bucketName(bucketName)
+        .build();
   }
 
   public static ControlledAzureIpResource getAzureIp(String ipName, String region) {
-    return new ControlledAzureIpResource(
-        WORKSPACE_ID,
-        RESOURCE_ID,
-        RESOURCE_NAME,
-        RESOURCE_DESCRIPTION,
-        CLONING_INSTRUCTIONS,
-        OWNER_EMAIL,
-        // TODO: these should be changed when we group the resources
-        PrivateResourceState.ACTIVE,
-        AccessScopeType.ACCESS_SCOPE_PRIVATE,
-        ManagedByType.MANAGED_BY_USER,
-        null,
-        ipName,
-        region,
-        /*resourceLineage=*/ null,
-        /*properties=*/ Map.of(),
-        MockMvcUtils.DEFAULT_USER_EMAIL,
-        /*createdDate*/ null,
-        MockMvcUtils.DEFAULT_USER_EMAIL,
-        /*lastUpdatedDate=*/ null);
+    return ControlledAzureIpResource.builder()
+        .common(makeDefaultControlledResourceFieldsBuilder().region(region).build())
+        .ipName(ipName)
+        .build();
   }
 
   public static ControlledAzureRelayNamespaceResource getAzureRelayNamespace(
       String namespaceName, String region) {
-    return new ControlledAzureRelayNamespaceResource(
-        WORKSPACE_ID,
-        RESOURCE_ID,
-        RESOURCE_NAME,
-        RESOURCE_DESCRIPTION,
-        CLONING_INSTRUCTIONS,
-        OWNER_EMAIL,
-        PrivateResourceState.ACTIVE,
-        AccessScopeType.ACCESS_SCOPE_PRIVATE,
-        ManagedByType.MANAGED_BY_APPLICATION,
-        null,
-        namespaceName,
-        region,
-        /*resourceLineage=*/ null,
-        /*properties=*/ Map.of(),
-        MockMvcUtils.DEFAULT_USER_EMAIL,
-        /*createdDate*/ null,
-        MockMvcUtils.DEFAULT_USER_EMAIL,
-        /*lastUpdatedDate=*/ null);
+    return ControlledAzureRelayNamespaceResource.builder()
+        .common(makeDefaultControlledResourceFieldsBuilder().region(region).build())
+        .namespaceName(namespaceName)
+        .build();
   }
 
   public static ControlledAzureDiskResource getAzureDisk(String diskName, String region, int size) {
-    return new ControlledAzureDiskResource(
-        WORKSPACE_ID,
-        RESOURCE_ID,
-        RESOURCE_NAME,
-        RESOURCE_DESCRIPTION,
-        CLONING_INSTRUCTIONS,
-        OWNER_EMAIL,
-        // TODO: these should be changed when we group the resources
-        PrivateResourceState.ACTIVE,
-        AccessScopeType.ACCESS_SCOPE_PRIVATE,
-        ManagedByType.MANAGED_BY_USER,
-        null,
-        diskName,
-        region,
-        size,
-        /*resourceLineage=*/ null,
-        /*properties=*/ Map.of(),
-        MockMvcUtils.DEFAULT_USER_EMAIL,
-        /*createdDate*/ null,
-        MockMvcUtils.DEFAULT_USER_EMAIL,
-        /*lastUpdatedDate=*/ null);
+    return ControlledAzureDiskResource.builder()
+        .common(makeDefaultControlledResourceFieldsBuilder().region(region).build())
+        .diskName(diskName)
+        .size(size)
+        .build();
   }
 
   public static ControlledAzureNetworkResource getAzureNetwork(
       ApiAzureNetworkCreationParameters creationParameters) {
-    return new ControlledAzureNetworkResource(
-        WORKSPACE_ID,
-        RESOURCE_ID,
-        RESOURCE_NAME,
-        RESOURCE_DESCRIPTION,
-        CLONING_INSTRUCTIONS,
-        OWNER_EMAIL,
-        // TODO: these should be changed when we group the resources
-        PrivateResourceState.ACTIVE,
-        AccessScopeType.ACCESS_SCOPE_PRIVATE,
-        ManagedByType.MANAGED_BY_USER,
-        null,
-        creationParameters.getName(),
-        creationParameters.getSubnetName(),
-        creationParameters.getAddressSpaceCidr(),
-        creationParameters.getSubnetAddressCidr(),
-        creationParameters.getRegion(),
-        /*resourceLineage=*/ null,
-        /*properties=*/ Map.of(),
-        MockMvcUtils.DEFAULT_USER_EMAIL,
-        /*createdDate*/ null,
-        MockMvcUtils.DEFAULT_USER_EMAIL,
-        /*lastUpdatedDate=*/ null);
+    return ControlledAzureNetworkResource.builder()
+        .common(
+            makeDefaultControlledResourceFieldsBuilder()
+                .region(creationParameters.getRegion())
+                .build())
+        .networkName(creationParameters.getName())
+        .subnetName(creationParameters.getSubnetName())
+        .addressSpaceCidr(creationParameters.getAddressSpaceCidr())
+        .subnetAddressCidr(creationParameters.getSubnetAddressCidr())
+        .build();
   }
 
   public static ControlledAzureStorageResource getAzureStorage(
       String storageAccountName, String region) {
-    return new ControlledAzureStorageResource(
-        WORKSPACE_ID,
-        RESOURCE_ID,
-        RESOURCE_NAME,
-        RESOURCE_DESCRIPTION,
-        CLONING_INSTRUCTIONS,
-        OWNER_EMAIL,
-        // TODO: these should be changed when we group the resources
-        PrivateResourceState.ACTIVE,
-        AccessScopeType.ACCESS_SCOPE_PRIVATE,
-        ManagedByType.MANAGED_BY_USER,
-        null,
-        storageAccountName,
-        region,
-        /*resourceLineage=*/ null,
-        /*properties=*/ Map.of(),
-        MockMvcUtils.DEFAULT_USER_EMAIL,
-        /*createdDate*/ null,
-        /*lastUpdatedByEmail=*/ null,
-        /*lastUpdatedDate=*/ null);
+    return ControlledAzureStorageResource.builder()
+        .common(makeDefaultControlledResourceFieldsBuilder().region(region).build())
+        .storageAccountName(storageAccountName)
+        .build();
   }
 
   public static ControlledAzureStorageResource getAzureStorage(
@@ -465,35 +395,19 @@ public class ControlledResourceFixtures {
                 .name(resourceName)
                 .description(resourceDescription)
                 .cloningInstructions(CloningInstructions.COPY_NOTHING)
+                .region(region)
                 .build())
         .storageAccountName(storageAccountName)
-        .region(region)
         .build();
   }
 
   public static ControlledAzureStorageContainerResource getAzureStorageContainer(
       UUID storageAccountId, String storageContainerName) {
-    return new ControlledAzureStorageContainerResource(
-        WORKSPACE_ID,
-        RESOURCE_ID,
-        RESOURCE_NAME,
-        RESOURCE_DESCRIPTION,
-        CLONING_INSTRUCTIONS,
-        OWNER_EMAIL,
-        // TODO: these should be changed when we group the resources
-        PrivateResourceState.ACTIVE,
-        AccessScopeType.ACCESS_SCOPE_PRIVATE,
-        ManagedByType.MANAGED_BY_USER,
-        null,
-        storageAccountId,
-        storageContainerName,
-        /*resourceLineage=*/ null,
-        /*properties=*/ Map.of(),
-        MockMvcUtils.DEFAULT_USER_EMAIL,
-        /*createdDate*/ null,
-        /*lastUpdatedByEmail=*/ null,
-        /*lastUpdatedDate=*/ null,
-        DEFAULT_RESOURCE_REGION);
+    return ControlledAzureStorageContainerResource.builder()
+        .common(makeDefaultControlledResourceFields(WORKSPACE_ID))
+        .storageContainerName(storageContainerName)
+        .storageAccountId(storageAccountId)
+        .build();
   }
 
   public static ControlledAzureStorageContainerResource getAzureStorageContainer(
@@ -544,31 +458,18 @@ public class ControlledResourceFixtures {
 
   public static ControlledAzureVmResource getAzureVm(
       ApiAzureVmCreationParameters creationParameters) {
-    return new ControlledAzureVmResource(
-        WORKSPACE_ID,
-        RESOURCE_ID,
-        RESOURCE_NAME,
-        RESOURCE_DESCRIPTION,
-        CLONING_INSTRUCTIONS,
-        OWNER_EMAIL,
-        // TODO: these should be changed when we group the resources
-        PrivateResourceState.ACTIVE,
-        AccessScopeType.ACCESS_SCOPE_PRIVATE,
-        ManagedByType.MANAGED_BY_USER,
-        null,
-        creationParameters.getName(),
-        creationParameters.getRegion(),
-        creationParameters.getVmSize(),
-        AzureVmUtils.getImageData(creationParameters.getVmImage()),
-        creationParameters.getIpId(),
-        creationParameters.getNetworkId(),
-        creationParameters.getDiskId(),
-        /*resourceLineage=*/ null,
-        /*properties=*/ Map.of(),
-        MockMvcUtils.DEFAULT_USER_EMAIL,
-        /*createdDate*/ null,
-        /*lastUpdatedByEmail=*/ null,
-        /*lastUpdatedDate=*/ null);
+    return ControlledAzureVmResource.builder()
+        .common(
+            makeDefaultControlledResourceFieldsBuilder()
+                .region(creationParameters.getRegion())
+                .build())
+        .vmName(creationParameters.getName())
+        .vmSize(creationParameters.getVmSize())
+        .vmImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
+        .ipId(creationParameters.getIpId())
+        .networkId(creationParameters.getNetworkId())
+        .diskId(creationParameters.getDiskId())
+        .build();
   }
 
   private ControlledResourceFixtures() {}
@@ -585,6 +486,7 @@ public class ControlledResourceFixtures {
         .assignedUser(null)
         .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
         .managedBy(ManagedByType.MANAGED_BY_USER)
+        .privateResourceState(PrivateResourceState.NOT_APPLICABLE)
         .properties(DEFAULT_RESOURCE_PROPERTIES)
         .createdByEmail(MockMvcUtils.DEFAULT_USER_EMAIL)
         .region(DEFAULT_RESOURCE_REGION);
@@ -831,8 +733,7 @@ public class ControlledResourceFixtures {
                 .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
                 .region(ipCreationParameters.getRegion())
                 .build())
-        .ipName(ipCreationParameters.getName())
-        .region(ipCreationParameters.getRegion());
+        .ipName(ipCreationParameters.getName());
   }
 
   public static ControlledAzureDiskResource.Builder makeDefaultAzureDiskBuilder(
@@ -848,7 +749,6 @@ public class ControlledResourceFixtures {
                 .region(creationParameters.getRegion())
                 .build())
         .diskName(creationParameters.getName())
-        .region(creationParameters.getRegion())
         .size(creationParameters.getSize());
   }
 
@@ -865,7 +765,6 @@ public class ControlledResourceFixtures {
                 .region(creationParameters.getRegion())
                 .build())
         .networkName(creationParameters.getName())
-        .region(creationParameters.getRegion())
         .subnetName(creationParameters.getSubnetName())
         .addressSpaceCidr(creationParameters.getAddressSpaceCidr())
         .subnetAddressCidr(creationParameters.getSubnetAddressCidr());
@@ -890,7 +789,6 @@ public class ControlledResourceFixtures {
         .vmName(creationParameters.getName())
         .vmSize(creationParameters.getVmSize())
         .vmImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
-        .region(creationParameters.getRegion())
         .ipId(ipResourceId)
         .diskId(diskResourceId)
         .networkId(networksResourceId);
@@ -908,7 +806,6 @@ public class ControlledResourceFixtures {
                 .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
                 .region(DEFAULT_AZURE_RESOURCE_REGION)
                 .build())
-        .namespaceName(TestUtils.appendRandomNumber("namespace"))
-        .region(DEFAULT_AZURE_RESOURCE_REGION);
+        .namespaceName(TestUtils.appendRandomNumber("namespace"));
   }
 }

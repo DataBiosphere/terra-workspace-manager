@@ -84,14 +84,10 @@ import bio.terra.workspace.service.resource.controlled.exception.ReservedMetadat
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceMetadataStep;
-import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
-import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
-import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
@@ -108,7 +104,6 @@ import com.google.api.services.notebooks.v1.model.Instance;
 import com.google.cloud.storage.BucketInfo;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -1677,25 +1672,14 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     // Create a bucket with underscores.
     var secondBucketId = UUID.randomUUID();
     resourceDao.createControlledResource(
-        new ControlledGcsBucketResource(
-            workspaceId,
-            secondBucketId,
-            TestUtils.appendRandomNumber("resourcename"),
-            "This is a bucket with underscore name",
-            CloningInstructions.COPY_NOTHING,
-            /*assignedUser=*/ null,
-            PrivateResourceState.NOT_APPLICABLE,
-            AccessScopeType.ACCESS_SCOPE_SHARED,
-            ManagedByType.MANAGED_BY_USER,
-            /*applicationId=*/ null,
-            bucketName,
-            List.of(),
-            Map.of(),
-            "foo@bar.com",
-            OffsetDateTime.now(),
-            "foo@bar.com",
-            OffsetDateTime.now(),
-            DEFAULT_RESOURCE_REGION));
+        ControlledGcsBucketResource.builder()
+            .common(
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+                    .workspaceUuid(workspaceId)
+                    .resourceId(secondBucketId)
+                    .build())
+            .bucketName(TestUtils.appendRandomNumber("resourcename"))
+            .build());
 
     // create dataset
     ApiGcpBigQueryDatasetCreationParameters creationParameters =

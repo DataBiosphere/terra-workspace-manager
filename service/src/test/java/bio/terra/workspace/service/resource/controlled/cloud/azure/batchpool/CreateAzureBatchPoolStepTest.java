@@ -395,6 +395,7 @@ public class CreateAzureBatchPoolStepTest extends BaseBatchPoolTest {
         .thenReturn(mockMsiManager);
   }
 
+  @SuppressWarnings("unchecked")
   private void setupMockQueryForUami(String uamiName) {
     Identities mockIdentities = mock(Identities.class);
     PagedIterable<Identity> mockPagedIterable = mock(PagedIterable.class);

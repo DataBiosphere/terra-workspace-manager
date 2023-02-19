@@ -13,19 +13,15 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -37,41 +33,16 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
   /**
    * Constructor for serialized form for Stairway use
    *
-   * @param workspaceId workspace unique identifier
-   * @param resourceId resource unique identifier
-   * @param name name - may be null
-   * @param description description - may be null
-   * @param cloningInstructions cloning instructions
-   * @param projectId google project id
+   * @param resourceFields common resource fields
+   * @param projectId project containing the dataset
    * @param datasetName BigQuery dataset name
    */
   @JsonCreator
   public ReferencedBigQueryDatasetResource(
-      @JsonProperty("workspaceId") UUID workspaceId,
-      @JsonProperty("resourceId") UUID resourceId,
-      @JsonProperty("name") String name,
-      @JsonProperty("description") @Nullable String description,
-      @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
+      @JsonProperty("wsmResourceFields") WsmResourceFields resourceFields,
       @JsonProperty("projectId") String projectId,
-      @JsonProperty("datasetName") String datasetName,
-      @JsonProperty("resourceLineage") @Nullable List<ResourceLineageEntry> resourceLineage,
-      @JsonProperty("properties") Map<String, String> properties,
-      @JsonProperty("createdByEmail") String createdByEmail,
-      @JsonProperty("createdDate") OffsetDateTime createdDate,
-      @JsonProperty("lastUpdatedByEmail") String lastUpdatedByEmail,
-      @JsonProperty("lastUpdatedDate") OffsetDateTime lastUpdatedDate) {
-    super(
-        workspaceId,
-        resourceId,
-        name,
-        description,
-        cloningInstructions,
-        resourceLineage,
-        properties,
-        createdByEmail,
-        createdDate,
-        lastUpdatedByEmail,
-        lastUpdatedDate);
+      @JsonProperty("datasetName") String datasetName) {
+    super(resourceFields);
     this.projectId = projectId;
     this.datasetName = datasetName;
     validate();
@@ -106,12 +77,30 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
     return new ReferencedBigQueryDatasetResource.Builder();
   }
 
+  // -- getters used in serialization --
+  public WsmResourceFields getWsmResourceFields() {
+    return super.getWsmResourceFields();
+  }
+
   public String getProjectId() {
     return projectId;
   }
 
   public String getDatasetName() {
     return datasetName;
+  }
+
+  // -- getters not included in serialization --
+  @Override
+  @JsonIgnore
+  public WsmResourceType getResourceType() {
+    return WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET;
+  }
+
+  @Override
+  @JsonIgnore
+  public WsmResourceFamily getResourceFamily() {
+    return WsmResourceFamily.BIG_QUERY_DATASET;
   }
 
   public ApiGcpBigQueryDatasetAttributes toApiAttributes() {
@@ -134,16 +123,6 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
       throw new BadRequestException(String.format("Resource is not a %s", expectedType));
     }
     return (T) this;
-  }
-
-  @Override
-  public WsmResourceType getResourceType() {
-    return WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET;
-  }
-
-  @Override
-  public WsmResourceFamily getResourceFamily() {
-    return WsmResourceFamily.BIG_QUERY_DATASET;
   }
 
   @Override

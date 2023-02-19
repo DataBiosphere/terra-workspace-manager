@@ -1,7 +1,5 @@
 package bio.terra.workspace.service.resource;
 
-import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_GCP_RESOURCE_REGION;
-import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -10,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import bio.terra.workspace.app.controller.ResourceApiController;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiControlledResourceMetadata;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotAttributes;
@@ -32,7 +31,6 @@ import bio.terra.workspace.service.resource.referenced.cloud.any.datareposnapsho
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdatatable.ReferencedBigQueryDataTableResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.ReferencedGcsBucketResource;
-import java.util.Map;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -65,20 +63,17 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
     String datasetName = RandomStringUtils.randomAlphabetic(12);
 
     var resource =
-        new ReferencedBigQueryDatasetResource(
-            workspaceUuid,
-            resourceId,
-            resourceName,
-            description,
-            cloning,
-            projectId,
-            datasetName,
-            /*resourceLineage=*/ null,
-            Map.of(),
-            DEFAULT_USER_EMAIL,
-            /*createdDate*/ null,
-            /*lastUpdatedByEmail=*/ null,
-            /*lastUpdatedDate=*/ null);
+        ReferencedBigQueryDatasetResource.builder()
+            .wsmResourceFields(
+                ReferenceResourceFixtures.makeDefaultWsmResourceFieldBuilder(workspaceUuid)
+                    .resourceId(resourceId)
+                    .name(resourceName)
+                    .description(description)
+                    .cloningInstructions(cloning)
+                    .build())
+            .projectId(projectId)
+            .datasetName(datasetName)
+            .build();
 
     ApiResourceDescription resourceDescription =
         resourceController.makeApiResourceDescription(resource);
@@ -97,21 +92,18 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
     String datatableName = RandomStringUtils.randomAlphabetic(12);
 
     var resource =
-        new ReferencedBigQueryDataTableResource(
-            workspaceUuid,
-            resourceId,
-            resourceName,
-            description,
-            cloning,
-            projectId,
-            datasetName,
-            datatableName,
-            /*resourceLineage=*/ null,
-            /*properties=*/ Map.of(),
-            DEFAULT_USER_EMAIL,
-            /*createdDate*/ null,
-            /*lastUpdatedByEmail=*/ null,
-            /*lastUpdatedDate*/ null);
+        ReferencedBigQueryDataTableResource.builder()
+            .wsmResourceFields(
+                ReferenceResourceFixtures.makeDefaultWsmResourceFieldBuilder(workspaceUuid)
+                    .resourceId(resourceId)
+                    .name(resourceName)
+                    .description(description)
+                    .cloningInstructions(cloning)
+                    .build())
+            .projectId(projectId)
+            .datasetId(datasetName)
+            .dataTableId(datatableName)
+            .build();
 
     ApiResourceDescription resourceDescription =
         resourceController.makeApiResourceDescription(resource);
@@ -130,20 +122,17 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
     String instanceName = RandomStringUtils.randomAlphabetic(5);
 
     var resource =
-        new ReferencedDataRepoSnapshotResource(
-            workspaceUuid,
-            resourceId,
-            resourceName,
-            description,
-            cloning,
-            instanceName,
-            snapshotId,
-            /*resourceLineage=*/ null,
-            /*properties=*/ Map.of(),
-            DEFAULT_USER_EMAIL,
-            /*createdDate*/ null,
-            /*lastUpdatedByEmail=*/ null,
-            /*lastUpdatedDate*/ null);
+        ReferencedDataRepoSnapshotResource.builder()
+            .wsmResourceFields(
+                ReferenceResourceFixtures.makeDefaultWsmResourceFieldBuilder(workspaceUuid)
+                    .resourceId(resourceId)
+                    .name(resourceName)
+                    .description(description)
+                    .cloningInstructions(cloning)
+                    .build())
+            .instanceName(instanceName)
+            .snapshotId(snapshotId)
+            .build();
 
     ApiResourceDescription resourceDescription =
         resourceController.makeApiResourceDescription(resource);
@@ -160,19 +149,16 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
     String bucketName = RandomStringUtils.randomAlphabetic(5).toLowerCase();
 
     var resource =
-        new ReferencedGcsBucketResource(
-            workspaceUuid,
-            resourceId,
-            resourceName,
-            description,
-            cloning,
-            bucketName,
-            /*resourceLineage=*/ null,
-            /*properties=*/ Map.of(),
-            DEFAULT_USER_EMAIL,
-            /*createdDate*/ null,
-            /*lastUpdatedByEmail=*/ null,
-            /*lastUpdatedDate=*/ null);
+        ReferencedGcsBucketResource.builder()
+            .wsmResourceFields(
+                ReferenceResourceFixtures.makeDefaultWsmResourceFieldBuilder(workspaceUuid)
+                    .resourceId(resourceId)
+                    .name(resourceName)
+                    .description(description)
+                    .cloningInstructions(cloning)
+                    .build())
+            .bucketName(bucketName)
+            .build();
 
     ApiResourceDescription resourceDescription =
         resourceController.makeApiResourceDescription(resource);
@@ -211,25 +197,21 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
       String bucketName = RandomStringUtils.randomAlphabetic(5).toLowerCase();
 
       var resource =
-          new ControlledGcsBucketResource(
-              workspaceUuid,
-              resourceId,
-              resourceName,
-              description,
-              CloningInstructions.COPY_RESOURCE,
-              assignedUser,
-              privateResourceState,
-              accessScopeType,
-              managedByType,
-              null,
-              bucketName,
-              /*resourceLineage=*/ null,
-              /*properties=*/ Map.of(),
-              DEFAULT_USER_EMAIL,
-              /*createdDate*/ null,
-              /*lastUpdatedByEmail=*/ null,
-              /*lastUpdatedDate=*/ null,
-              DEFAULT_GCP_RESOURCE_REGION);
+          ControlledGcsBucketResource.builder()
+              .common(
+                  ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+                      .workspaceUuid(workspaceUuid)
+                      .resourceId(resourceId)
+                      .name(resourceName)
+                      .description(description)
+                      .cloningInstructions(CloningInstructions.COPY_RESOURCE)
+                      .assignedUser(assignedUser)
+                      .privateResourceState(privateResourceState)
+                      .accessScope(accessScopeType)
+                      .managedBy(managedByType)
+                      .build())
+              .bucketName(bucketName)
+              .build();
 
       ApiResourceDescription resourceDescription =
           resourceController.makeApiResourceDescription(resource);
@@ -246,28 +228,22 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
       String projectId = "my-project-id";
 
       var resource =
-          new ControlledBigQueryDatasetResource(
-              workspaceUuid,
-              resourceId,
-              resourceName,
-              description,
-              CloningInstructions.COPY_RESOURCE,
-              assignedUser,
-              privateResourceState,
-              accessScopeType,
-              managedByType,
-              null,
-              datasetName,
-              projectId,
-              /*resourceLineage=*/ null,
-              /*properties=*/ Map.of(),
-              DEFAULT_USER_EMAIL,
-              /*createdDate*/ null,
-              /*lastUpdatedByEmail=*/ null,
-              /*lastUpdatedDate=*/ null,
-              DEFAULT_GCP_RESOURCE_REGION,
-              /*defaultTableLifetime=*/ null,
-              /*defaultPartitionLifetime=*/ null);
+          ControlledBigQueryDatasetResource.builder()
+              .common(
+                  ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+                      .workspaceUuid(workspaceUuid)
+                      .resourceId(resourceId)
+                      .name(resourceName)
+                      .description(description)
+                      .cloningInstructions(CloningInstructions.COPY_RESOURCE)
+                      .assignedUser(assignedUser)
+                      .privateResourceState(privateResourceState)
+                      .accessScope(accessScopeType)
+                      .managedBy(managedByType)
+                      .build())
+              .datasetName(datasetName)
+              .projectId(projectId)
+              .build();
 
       ApiResourceDescription resourceDescription =
           resourceController.makeApiResourceDescription(resource);

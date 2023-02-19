@@ -61,8 +61,8 @@ public class ControlledResourceControllerBase extends ControllerBase {
     AccessScopeType accessScopeType = AccessScopeType.fromApi(apiCommonFields.getAccessScope());
     PrivateUserRole privateUserRole =
         computePrivateUserRole(workspaceUuid, apiCommonFields, userRequest);
-
     String userEmail = getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest);
+
     if (!WSM_RESOURCE_WITHOUT_REGION_IN_CREATION_PARAMS.contains(wsmResourceType)) {
       checkArgument(
           region != null,
