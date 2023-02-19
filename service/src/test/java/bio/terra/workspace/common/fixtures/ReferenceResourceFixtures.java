@@ -50,9 +50,18 @@ public class ReferenceResourceFixtures {
       UUID workspaceId, String projectId, String bqDataset) {
     UUID resourceId = UUID.randomUUID();
     return new ReferencedBigQueryDatasetResource(
-        makeDefaultWsmResourceFieldBuilder(workspaceId)
+        WsmResourceFields.builder()
+            .workspaceUuid(workspaceId)
             .resourceId(resourceId)
             .name("testbq-" + resourceId)
+            .description("a description")
+            .cloningInstructions(CloningInstructions.COPY_NOTHING)
+            .resourceLineage(null)
+            .properties(DEFAULT_RESOURCE_PROPERTIES)
+            .createdByEmail(DEFAULT_USER_EMAIL)
+            .createdDate(null)
+            .lastUpdatedByEmail(null)
+            .lastUpdatedDate(null)
             .build(),
         projectId,
         bqDataset);

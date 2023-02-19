@@ -33,6 +33,20 @@ import javax.annotation.Nullable;
 public abstract class ControlledResource extends WsmResource {
   WsmControlledResourceFields wsmControlledResourceFields;
 
+  public ControlledResource(
+      WsmResourceFields wsmResourceFields,
+      @Nullable String assignedUser,
+      AccessScopeType accessScope,
+      ManagedByType managedBy,
+      String applicationId,
+      @Nullable PrivateResourceState privateResourceState,
+      String region) {
+    super(wsmResourceFields);
+    this.wsmControlledResourceFields =
+        new WsmControlledResourceFields(
+            assignedUser, privateResourceState, accessScope, managedBy, applicationId, region);
+  }
+
   /**
    * Construct the ControlledResource from database information
    *
