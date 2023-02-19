@@ -68,9 +68,9 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
                     .cloningInstructions(CloningInstructions.COPY_RESOURCE)
                     .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
                     .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                    .region(creationParameters.getRegion())
                     .build())
             .ipName(creationParameters.getName())
-            .region(creationParameters.getRegion())
             .build();
 
     // Submit an IP creation flight and verify the instance is created.
@@ -107,9 +107,9 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
                     .cloningInstructions(CloningInstructions.COPY_RESOURCE)
                     .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
                     .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                    .region(creationParameters.getRegion())
                     .build())
             .namespaceName(creationParameters.getNamespaceName())
-            .region(creationParameters.getRegion())
             .build();
 
     // Submit a relay creation flight and verify the resource exists in the workspace.
@@ -146,9 +146,9 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
                     .cloningInstructions(CloningInstructions.COPY_RESOURCE)
                     .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
                     .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                    .region(creationParameters.getRegion())
                     .build())
             .diskName(creationParameters.getName())
-            .region(creationParameters.getRegion())
             .size(creationParameters.getSize())
             .build();
 
@@ -186,9 +186,9 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
                     .cloningInstructions(CloningInstructions.COPY_RESOURCE)
                     .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
                     .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                    .region(creationParams.getRegion())
                     .build())
             .networkName(creationParams.getName())
-            .region(creationParams.getRegion())
             .subnetName(creationParams.getSubnetName())
             .addressSpaceCidr(creationParams.getAddressSpaceCidr())
             .subnetAddressCidr(creationParams.getSubnetAddressCidr())

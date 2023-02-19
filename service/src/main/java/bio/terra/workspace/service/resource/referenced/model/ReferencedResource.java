@@ -4,44 +4,11 @@ import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import javax.annotation.Nullable;
 
 public abstract class ReferencedResource extends WsmResource {
-  public ReferencedResource(
-      UUID workspaceUuid,
-      UUID resourceId,
-      String name,
-      @Nullable String description,
-      CloningInstructions cloningInstructions,
-      @Nullable List<ResourceLineageEntry> resourceLineage,
-      Map<String, String> properties,
-      String createdByEmail,
-      OffsetDateTime createdDate,
-      String lastUpdatedByEmail,
-      OffsetDateTime lastUpdatedDate) {
-    super(
-        workspaceUuid,
-        resourceId,
-        name,
-        description,
-        cloningInstructions,
-        resourceLineage,
-        properties,
-        createdByEmail,
-        createdDate,
-        lastUpdatedByEmail,
-        lastUpdatedDate);
-  }
-
   public ReferencedResource(WsmResourceFields resourceFields) {
     super(resourceFields);
   }

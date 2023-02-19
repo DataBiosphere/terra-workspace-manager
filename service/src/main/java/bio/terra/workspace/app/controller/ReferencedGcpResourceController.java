@@ -1200,7 +1200,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     // Construct a ReferencedTerraWorkspaceResource object from the API input
     ReferencedTerraWorkspaceResource resource =
         ReferencedTerraWorkspaceResource.builder()
-            .resourceCommonFields(
+            .wsmResourceFields(
                 getWsmResourceFields(
                     workspaceUuid,
                     body.getMetadata(),

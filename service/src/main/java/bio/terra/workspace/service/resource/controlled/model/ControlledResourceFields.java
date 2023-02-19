@@ -1,11 +1,15 @@
 package bio.terra.workspace.service.resource.controlled.model;
 
+import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.common.base.Objects;
 import java.util.Optional;
 import javax.annotation.Nullable;
+import liquibase.repackaged.org.apache.commons.lang3.StringUtils;
 
 /**
  * ControlledResourceFields is used as a way to collect common resources for a controlled resource.
@@ -19,85 +23,122 @@ import javax.annotation.Nullable;
  * <p>See {@link ControlledResource} for details on the meaning of the fields
  */
 public class ControlledResourceFields extends WsmResourceFields {
-  @Nullable private final String assignedUser;
+  private final WsmControlledResourceFields wsmControlledResourceFields;
   // We hold the iamRole to simplify the controller flow. It is not retained in the
   // controlled object.
   @Nullable private final ControlledResourceIamRole iamRole;
-  // Default value is NOT_APPLICABLE for shared resources and INITIALIZING for private resources.
-  @Nullable private final PrivateResourceState privateResourceState;
-  private final AccessScopeType accessScope;
-  private final ManagedByType managedBy;
-  @Nullable private final String applicationId;
-  @Nullable private final String region;
 
   /** construct from database resource */
   public ControlledResourceFields(DbResource dbResource) {
     super(dbResource);
-    assignedUser = dbResource.getAssignedUser().orElse(null);
+    this.wsmControlledResourceFields = WsmControlledResourceFields.fromDb(dbResource);
     // This field is used on create, but not stored in the database.
     iamRole = null;
-    privateResourceState = dbResource.getPrivateResourceState().orElse(null);
-    accessScope = dbResource.getAccessScope();
-    managedBy = dbResource.getManagedBy();
-    applicationId = dbResource.getApplicationId().orElse(null);
-    region = dbResource.getRegion();
+  }
+
+  /**
+   * Special constructor for controlled resources that carry their own region. That duplicates the
+   * region in the common resource field. Legal states are:
+   *
+   * <p>both are null
+   *
+   * <p>both are there and identical
+   *
+   * <p>one is null; we use the other one
+   *
+   * @param dbResource Resource as stored in the database
+   * @param resourceRegion Region from resource attributes
+   */
+  public ControlledResourceFields(DbResource dbResource, String resourceRegion) {
+    this(fixDbResourceRegion(dbResource, resourceRegion));
+  }
+
+  private static DbResource fixDbResourceRegion(DbResource dbResource, String resourceRegion) {
+    if (StringUtils.equals(dbResource.getRegion(), resourceRegion)) {
+      // Either one null or conflict
+      return dbResource;
+    }
+    if (dbResource.getRegion() != null && resourceRegion == null) {
+      return dbResource;
+    }
+    if (resourceRegion != null && dbResource.getRegion() == null) {
+      dbResource.region(resourceRegion);
+      return dbResource;
+    }
+    throw new InternalLogicException("Inconsistent region data");
   }
 
   // constructor for the builder
   private ControlledResourceFields(Builder builder) {
     super(builder);
-    this.assignedUser = builder.assignedUser;
+    this.wsmControlledResourceFields =
+        new WsmControlledResourceFields(
+            builder.assignedUser,
+            builder.privateResourceState,
+            builder.accessScope,
+            builder.managedBy,
+            builder.applicationId,
+            builder.region);
     this.iamRole = builder.iamRole;
-    this.privateResourceState = builder.privateResourceState;
-    this.accessScope = builder.accessScope;
-    this.managedBy = builder.managedBy;
-    this.applicationId = builder.applicationId;
-    this.region = builder.region;
   }
 
   public static ControlledResourceFields.Builder builder() {
     return new Builder();
   }
 
-  @Nullable
-  public ControlledResourceIamRole getIamRole() {
+  public @Nullable ControlledResourceIamRole getIamRole() {
     return iamRole;
   }
 
-  @Nullable
-  public String getAssignedUser() {
-    return assignedUser;
+  @JsonIgnore
+  public WsmControlledResourceFields getWsmControlledResourceFields() {
+    return wsmControlledResourceFields;
+  }
+
+  public @Nullable String getAssignedUser() {
+    return wsmControlledResourceFields.assignedUser();
   }
 
   public PrivateResourceState getPrivateResourceState() {
-    return Optional.ofNullable(privateResourceState)
+    return Optional.ofNullable(wsmControlledResourceFields.privateResourceState())
         .orElseGet(
             () ->
-                this.accessScope == AccessScopeType.ACCESS_SCOPE_PRIVATE
+                this.wsmControlledResourceFields.accessScope()
+                        == AccessScopeType.ACCESS_SCOPE_PRIVATE
                     ? PrivateResourceState.INITIALIZING
                     : PrivateResourceState.NOT_APPLICABLE);
   }
 
   public AccessScopeType getAccessScope() {
-    return accessScope;
+    return wsmControlledResourceFields.accessScope();
   }
 
   public ManagedByType getManagedBy() {
-    return managedBy;
+    return wsmControlledResourceFields.managedBy();
   }
 
-  @Nullable
-  public String getApplicationId() {
-    return applicationId;
+  public @Nullable String getApplicationId() {
+    return wsmControlledResourceFields.applicationId();
   }
 
-  @Nullable
-  public String getRegion() {
-    return region;
+  public @Nullable String getRegion() {
+    return wsmControlledResourceFields.region();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof ControlledResourceFields that)) return false;
+    if (!super.equals(o)) return false;
+    return Objects.equal(wsmControlledResourceFields, that.wsmControlledResourceFields);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(super.hashCode(), wsmControlledResourceFields);
   }
 
   public static class Builder extends WsmResourceFields.Builder<Builder> {
-
     @Nullable private String assignedUser;
     // We hold the iamRole to simplify the controller flow. It is not retained in the
     // controlled object.

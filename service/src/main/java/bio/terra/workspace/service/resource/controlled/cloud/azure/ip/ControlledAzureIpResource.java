@@ -21,13 +21,17 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
+import bio.terra.workspace.service.resource.controlled.model.WsmControlledResourceFields;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
+import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
@@ -36,7 +40,6 @@ import java.util.UUID;
 
 public class ControlledAzureIpResource extends ControlledResource {
   private final String ipName;
-  private final String region;
 
   @JsonCreator
   public ControlledAzureIpResource(
@@ -58,35 +61,47 @@ public class ControlledAzureIpResource extends ControlledResource {
       @JsonProperty("createdDate") OffsetDateTime createdDate,
       @JsonProperty("lastUpdatedByEmail") String lastUpdatedByEmail,
       @JsonProperty("lastUpdatedDate") OffsetDateTime lastUpdatedDate) {
-
     super(
-        workspaceId,
-        resourceId,
-        name,
-        description,
-        cloningInstructions,
-        assignedUser,
-        accessScope,
-        managedBy,
-        applicationId,
-        privateResourceState,
-        resourceLineage,
-        properties,
-        createdByEmail,
-        createdDate,
-        lastUpdatedByEmail,
-        lastUpdatedDate,
-        region);
+        ControlledResourceFields.builder()
+            .workspaceUuid(workspaceId)
+            .resourceId(resourceId)
+            .name(name)
+            .description(description)
+            .cloningInstructions(cloningInstructions)
+            .assignedUser(assignedUser)
+            .accessScope(accessScope)
+            .managedBy(managedBy)
+            .applicationId(applicationId)
+            .privateResourceState(privateResourceState)
+            .resourceLineage(resourceLineage)
+            .properties(properties)
+            .createdByEmail(createdByEmail)
+            .createdDate(createdDate)
+            .lastUpdatedByEmail(lastUpdatedByEmail)
+            .lastUpdatedDate(lastUpdatedDate)
+            .region(region)
+            .build());
     this.ipName = ipName;
-    this.region = region;
     validate();
   }
 
+  /*
+    // TODO: PF-2512 remove constructor above and enable this constructor
+    @JsonCreator
+    public ControlledAzureIpResource(
+        @JsonProperty("wsmResourceFields") WsmResourceFields resourceFields,
+        @JsonProperty("wsmControlledResourceFields")
+            WsmControlledResourceFields controlledResourceFields,
+        @JsonProperty("ipName") String ipName) {
+      super(resourceFields, controlledResourceFields);
+      this.ipName = ipName;
+      validate();
+    }
+  */
   // Constructor for the builder
-  private ControlledAzureIpResource(ControlledResourceFields common, String ipName, String region) {
+  private ControlledAzureIpResource(ControlledResourceFields common, String ipName) {
     super(common);
     this.ipName = ipName;
-    this.region = region;
     validate();
   }
 
@@ -104,8 +119,107 @@ public class ControlledAzureIpResource extends ControlledResource {
     return (T) this;
   }
 
+  // -- getters used in serialization --
+
+  public WsmResourceFields getWsmResourceFields() {
+    return super.getWsmResourceFields();
+  }
+
+  public WsmControlledResourceFields getWsmControlledResourceFields() {
+    return super.getWsmControlledResourceFields();
+  }
+
+  public String getIpName() {
+    return ipName;
+  }
+
+  // -- getters for backward compatibility --
+  // TODO: PF-2512 Remove these getters
+  public UUID getWorkspaceId() {
+    return super.getWorkspaceId();
+  }
+
+  public UUID getResourceId() {
+    return super.getResourceId();
+  }
+
+  public String getName() {
+    return super.getName();
+  }
+
+  public String getDescription() {
+    return super.getDescription();
+  }
+
+  public CloningInstructions getCloningInstructions() {
+    return super.getCloningInstructions();
+  }
+
+  public Optional<String> getAssignedUser() {
+    return super.getAssignedUser();
+  }
+
+  public Optional<PrivateResourceState> getPrivateResourceState() {
+    return super.getPrivateResourceState();
+  }
+
+  public AccessScopeType getAccessScope() {
+    return super.getAccessScope();
+  }
+
+  public ManagedByType getManagedBy() {
+    return super.getManagedBy();
+  }
+
+  public String getApplicationId() {
+    return super.getApplicationId();
+  }
+
+  public List<ResourceLineageEntry> getResourceLineage() {
+    return super.getResourceLineage();
+  }
+
+  public ImmutableMap<String, String> getProperties() {
+    return super.getProperties();
+  }
+
+  public String getCreatedByEmail() {
+    return super.getCreatedByEmail();
+  }
+
+  public OffsetDateTime getCreatedDate() {
+    return super.getCreatedDate();
+  }
+
+  public String getLastUpdatedByEmail() {
+    return super.getLastUpdatedByEmail();
+  }
+
+  public OffsetDateTime getLastUpdatedDate() {
+    return super.getLastUpdatedDate();
+  }
+
+  public String getRegion() {
+    return super.getRegion();
+  }
+
+  // -- getters not included in serialization --
+
+  @Override
+  @JsonIgnore
+  public WsmResourceType getResourceType() {
+    return WsmResourceType.CONTROLLED_AZURE_IP;
+  }
+
+  @Override
+  @JsonIgnore
+  public WsmResourceFamily getResourceFamily() {
+    return WsmResourceFamily.AZURE_IP;
+  }
+
   /** {@inheritDoc} */
   @Override
+  @JsonIgnore
   public Optional<UniquenessCheckAttributes> getUniquenessCheckAttributes() {
     return Optional.of(
         new UniquenessCheckAttributes()
@@ -137,30 +251,12 @@ public class ControlledAzureIpResource extends ControlledResource {
         RetryRules.cloud());
   }
 
-  public String getIpName() {
-    return ipName;
-  }
-
-  public String getRegion() {
-    return region;
-  }
-
   public ApiAzureIpAttributes toApiAttributes() {
-    return new ApiAzureIpAttributes().ipName(getIpName()).region(region.toString());
+    return new ApiAzureIpAttributes().ipName(getIpName()).region(getRegion());
   }
 
   public ApiAzureIpResource toApiResource() {
     return new ApiAzureIpResource().metadata(super.toApiMetadata()).attributes(toApiAttributes());
-  }
-
-  @Override
-  public WsmResourceType getResourceType() {
-    return WsmResourceType.CONTROLLED_AZURE_IP;
-  }
-
-  @Override
-  public WsmResourceFamily getResourceFamily() {
-    return WsmResourceFamily.AZURE_IP;
   }
 
   @Override
@@ -216,7 +312,6 @@ public class ControlledAzureIpResource extends ControlledResource {
   public static class Builder {
     private ControlledResourceFields common;
     private String ipName;
-    private String region;
 
     public Builder common(ControlledResourceFields common) {
       this.common = common;
@@ -228,13 +323,8 @@ public class ControlledAzureIpResource extends ControlledResource {
       return this;
     }
 
-    public ControlledAzureIpResource.Builder region(String region) {
-      this.region = region;
-      return this;
-    }
-
     public ControlledAzureIpResource build() {
-      return new ControlledAzureIpResource(common, ipName, region);
+      return new ControlledAzureIpResource(common, ipName);
     }
   }
 }

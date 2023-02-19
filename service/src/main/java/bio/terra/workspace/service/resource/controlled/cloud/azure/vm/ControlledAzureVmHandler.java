@@ -28,13 +28,12 @@ public class ControlledAzureVmHandler implements WsmResourceHandler {
     var resource =
         ControlledAzureVmResource.builder()
             .vmName(attributes.getVmName())
-            .region(attributes.getRegion())
             .vmSize(attributes.getVmSize())
             .vmImage(attributes.getVmImage())
             .ipId(attributes.getIpId())
             .networkId(attributes.getNetworkId())
             .diskId(attributes.getDiskId())
-            .common(new ControlledResourceFields(dbResource))
+            .common(new ControlledResourceFields(dbResource, attributes.getRegion()))
             .build();
     return resource;
   }

@@ -139,7 +139,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         ControlledAzureDiskResource.builder()
             .common(commonFields)
             .diskName(body.getAzureDisk().getName())
-            .region(body.getAzureDisk().getRegion())
             .size(body.getAzureDisk().getSize())
             .build();
 
@@ -178,7 +177,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         ControlledAzureIpResource.builder()
             .common(commonFields)
             .ipName(body.getAzureIp().getName())
-            .region(body.getAzureIp().getRegion())
             .build();
 
     final ControlledAzureIpResource createdIp =
@@ -214,7 +212,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         ControlledAzureRelayNamespaceResource.builder()
             .common(commonFields)
             .namespaceName(body.getAzureRelayNamespace().getNamespaceName())
-            .region(body.getAzureRelayNamespace().getRegion())
             .build();
 
     final String jobId =
@@ -305,7 +302,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         ControlledAzureStorageResource.builder()
             .common(commonFields)
             .storageAccountName(body.getAzureStorage().getStorageAccountName())
-            .region(body.getAzureStorage().getRegion())
             .build();
 
     final ControlledAzureStorageResource createdStorage =
@@ -403,7 +399,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     return ControlledAzureVmResource.builder()
         .common(commonFields)
         .vmName(creationParameters.getName())
-        .region(creationParameters.getRegion())
         .vmSize(creationParameters.getVmSize())
         .vmImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
         .ipId(creationParameters.getIpId())
@@ -448,7 +443,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .subnetName(body.getAzureNetwork().getSubnetName())
             .addressSpaceCidr(body.getAzureNetwork().getAddressSpaceCidr())
             .subnetAddressCidr(body.getAzureNetwork().getSubnetAddressCidr())
-            .region(body.getAzureNetwork().getRegion())
             .build();
 
     final ControlledAzureNetworkResource createdNetwork =

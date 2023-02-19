@@ -21,13 +21,17 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
+import bio.terra.workspace.service.resource.controlled.model.WsmControlledResourceFields;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
+import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +43,6 @@ public class ControlledAzureNetworkResource extends ControlledResource {
   private final String subnetName;
   private final String addressSpaceCidr;
   private final String subnetAddressCidr;
-  private final String region;
 
   @JsonCreator
   public ControlledAzureNetworkResource(
@@ -65,30 +68,51 @@ public class ControlledAzureNetworkResource extends ControlledResource {
       @JsonProperty("lastUpdatedByEmail") String lastUpdatedByEmail,
       @JsonProperty("lastUpdatedDate") OffsetDateTime lastUpdatedDate) {
     super(
-        workspaceId,
-        resourceId,
-        name,
-        description,
-        cloningInstructions,
-        assignedUser,
-        accessScope,
-        managedBy,
-        applicationId,
-        privateResourceState,
-        resourceLineage,
-        properties,
-        createdByEmail,
-        createdDate,
-        lastUpdatedByEmail,
-        lastUpdatedDate,
-        region);
+        ControlledResourceFields.builder()
+            .workspaceUuid(workspaceId)
+            .resourceId(resourceId)
+            .name(name)
+            .description(description)
+            .cloningInstructions(cloningInstructions)
+            .assignedUser(assignedUser)
+            .accessScope(accessScope)
+            .managedBy(managedBy)
+            .applicationId(applicationId)
+            .privateResourceState(privateResourceState)
+            .resourceLineage(resourceLineage)
+            .properties(properties)
+            .createdByEmail(createdByEmail)
+            .createdDate(createdDate)
+            .lastUpdatedByEmail(lastUpdatedByEmail)
+            .lastUpdatedDate(lastUpdatedDate)
+            .region(region)
+            .build());
     this.networkName = networkName;
     this.subnetName = subnetName;
     this.addressSpaceCidr = addressSpaceCidr;
     this.subnetAddressCidr = subnetAddressCidr;
-    this.region = region;
     validate();
   }
+
+  /*
+   // TODO: PF-2512 remove constructor above and enable this constructor
+   @JsonCreator
+   public ControlledAzureNetworkResource(
+       @JsonProperty("wsmResourceFields") WsmResourceFields resourceFields,
+       @JsonProperty("wsmControlledResourceFields")
+           WsmControlledResourceFields controlledResourceFields,
+       @JsonProperty("networkName") String networkName,
+       @JsonProperty("subnetName") String subnetName,
+       @JsonProperty("addressSpaceCidr") String addressSpaceCidr,
+       @JsonProperty("subnetAddressCidr") String subnetAddressCidr) {
+     super(resourceFields, controlledResourceFields);
+     this.networkName = networkName;
+     this.subnetName = subnetName;
+     this.addressSpaceCidr = addressSpaceCidr;
+     this.subnetAddressCidr = subnetAddressCidr;
+     validate();
+   }
+  */
 
   // Constructor for the builder
   private ControlledAzureNetworkResource(
@@ -96,14 +120,12 @@ public class ControlledAzureNetworkResource extends ControlledResource {
       String networkName,
       String subnetName,
       String addressSpaceCidr,
-      String subnetAddressCidr,
-      String region) {
+      String subnetAddressCidr) {
     super(common);
     this.networkName = networkName;
     this.subnetName = subnetName;
     this.addressSpaceCidr = addressSpaceCidr;
     this.subnetAddressCidr = subnetAddressCidr;
-    this.region = region;
     validate();
   }
 
@@ -121,8 +143,119 @@ public class ControlledAzureNetworkResource extends ControlledResource {
     return (T) this;
   }
 
+  // -- getters used in serialization --
+
+  public WsmResourceFields getWsmResourceFields() {
+    return super.getWsmResourceFields();
+  }
+
+  public WsmControlledResourceFields getWsmControlledResourceFields() {
+    return super.getWsmControlledResourceFields();
+  }
+
+  public String getNetworkName() {
+    return networkName;
+  }
+
+  public String getSubnetName() {
+    return subnetName;
+  }
+
+  public String getAddressSpaceCidr() {
+    return addressSpaceCidr;
+  }
+
+  public String getSubnetAddressCidr() {
+    return subnetAddressCidr;
+  }
+
+  // -- getters for backward compatibility --
+  // TODO: PF-2512 Remove these getters
+  public UUID getWorkspaceId() {
+    return super.getWorkspaceId();
+  }
+
+  public UUID getResourceId() {
+    return super.getResourceId();
+  }
+
+  public String getName() {
+    return super.getName();
+  }
+
+  public String getDescription() {
+    return super.getDescription();
+  }
+
+  public CloningInstructions getCloningInstructions() {
+    return super.getCloningInstructions();
+  }
+
+  public Optional<String> getAssignedUser() {
+    return super.getAssignedUser();
+  }
+
+  public Optional<PrivateResourceState> getPrivateResourceState() {
+    return super.getPrivateResourceState();
+  }
+
+  public AccessScopeType getAccessScope() {
+    return super.getAccessScope();
+  }
+
+  public ManagedByType getManagedBy() {
+    return super.getManagedBy();
+  }
+
+  public String getApplicationId() {
+    return super.getApplicationId();
+  }
+
+  public List<ResourceLineageEntry> getResourceLineage() {
+    return super.getResourceLineage();
+  }
+
+  public ImmutableMap<String, String> getProperties() {
+    return super.getProperties();
+  }
+
+  public String getCreatedByEmail() {
+    return super.getCreatedByEmail();
+  }
+
+  public OffsetDateTime getCreatedDate() {
+    return super.getCreatedDate();
+  }
+
+  public String getLastUpdatedByEmail() {
+    return super.getLastUpdatedByEmail();
+  }
+
+  public OffsetDateTime getLastUpdatedDate() {
+    return super.getLastUpdatedDate();
+  }
+
+  public String getRegion() {
+    return super.getRegion();
+  }
+
+  // -- getters not included in serialization --
+
+  @Override
+  @JsonIgnore
+  public WsmResourceType getResourceType() {
+    return WsmResourceType.CONTROLLED_AZURE_NETWORK;
+  }
+
+  @Override
+  @JsonIgnore
+  public WsmResourceFamily getResourceFamily() {
+    return WsmResourceFamily.AZURE_NETWORK;
+  }
+
   /** {@inheritDoc} */
   @Override
+  @JsonIgnore
   public Optional<UniquenessCheckAttributes> getUniquenessCheckAttributes() {
     return Optional.of(
         new UniquenessCheckAttributes()
@@ -157,49 +290,19 @@ public class ControlledAzureNetworkResource extends ControlledResource {
         RetryRules.cloud());
   }
 
-  public String getNetworkName() {
-    return networkName;
-  }
-
-  public String getSubnetName() {
-    return subnetName;
-  }
-
-  public String getAddressSpaceCidr() {
-    return addressSpaceCidr;
-  }
-
-  public String getSubnetAddressCidr() {
-    return subnetAddressCidr;
-  }
-
-  public String getRegion() {
-    return region;
-  }
-
   public ApiAzureNetworkAttributes toApiAttributes() {
     return new ApiAzureNetworkAttributes()
         .networkName(getNetworkName())
         .subnetName(getSubnetName())
         .addressSpaceCidr(getAddressSpaceCidr())
         .subnetAddressCidr(getSubnetAddressCidr())
-        .region(region);
+        .region(getRegion());
   }
 
   public ApiAzureNetworkResource toApiResource() {
     return new ApiAzureNetworkResource()
         .metadata(super.toApiMetadata())
         .attributes(toApiAttributes());
-  }
-
-  @Override
-  public WsmResourceType getResourceType() {
-    return WsmResourceType.CONTROLLED_AZURE_NETWORK;
-  }
-
-  @Override
-  public WsmResourceFamily getResourceFamily() {
-    return WsmResourceFamily.AZURE_NETWORK;
   }
 
   @Override
@@ -279,7 +382,6 @@ public class ControlledAzureNetworkResource extends ControlledResource {
     private String subnetName;
     private String addressSpaceCidr;
     private String subnetAddressCidr;
-    private String region;
 
     public Builder common(ControlledResourceFields common) {
       this.common = common;
@@ -306,14 +408,9 @@ public class ControlledAzureNetworkResource extends ControlledResource {
       return this;
     }
 
-    public ControlledAzureNetworkResource.Builder region(String region) {
-      this.region = region;
-      return this;
-    }
-
     public ControlledAzureNetworkResource build() {
       return new ControlledAzureNetworkResource(
-          common, networkName, subnetName, addressSpaceCidr, subnetAddressCidr, region);
+          common, networkName, subnetName, addressSpaceCidr, subnetAddressCidr);
     }
   }
 }

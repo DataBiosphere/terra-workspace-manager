@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.bucket;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import java.util.UUID;
 
@@ -10,8 +12,12 @@ class BucketCloneInputs {
   private final String bucketName;
   private final List<String> roleNames;
 
+  @JsonCreator
   public BucketCloneInputs(
-      UUID workspaceUuid, String projectId, String bucketName, List<String> roleNames) {
+      @JsonProperty("workspaceId") UUID workspaceUuid,
+      @JsonProperty("projectId") String projectId,
+      @JsonProperty("bucketName") String bucketName,
+      @JsonProperty("roleNames") List<String> roleNames) {
     this.workspaceUuid = workspaceUuid;
     this.projectId = projectId;
     this.bucketName = bucketName;
