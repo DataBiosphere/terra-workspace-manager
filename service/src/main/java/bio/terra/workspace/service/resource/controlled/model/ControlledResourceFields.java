@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.model;
 
-import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
@@ -9,7 +8,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Objects;
 import java.util.Optional;
 import javax.annotation.Nullable;
-import liquibase.repackaged.org.apache.commons.lang3.StringUtils;
 
 /**
  * ControlledResourceFields is used as a way to collect common resources for a controlled resource.
@@ -38,13 +36,10 @@ public class ControlledResourceFields extends WsmResourceFields {
 
   /**
    * Special constructor for controlled resources that carry their own region. That duplicates the
-   * region in the common resource field. Legal states are:
+   * region in the common resource field.
    *
-   * <p>both are null
-   *
-   * <p>both are there and identical
-   *
-   * <p>one is null; we use the other one
+   * <p>If the region is set in the database, we use that. Otherwise, the region is null in the
+   * database, we use the region from the resource parameter
    *
    * @param dbResource Resource as stored in the database
    * @param resourceRegion Region from resource attributes
@@ -54,18 +49,10 @@ public class ControlledResourceFields extends WsmResourceFields {
   }
 
   private static DbResource fixDbResourceRegion(DbResource dbResource, String resourceRegion) {
-    if (StringUtils.equals(dbResource.getRegion(), resourceRegion)) {
-      // Either one null or conflict
-      return dbResource;
-    }
-    if (dbResource.getRegion() != null && resourceRegion == null) {
-      return dbResource;
-    }
-    if (resourceRegion != null && dbResource.getRegion() == null) {
+    if (dbResource.getRegion() == null) {
       dbResource.region(resourceRegion);
-      return dbResource;
     }
-    throw new InternalLogicException("Inconsistent region data");
+    return dbResource;
   }
 
   // constructor for the builder

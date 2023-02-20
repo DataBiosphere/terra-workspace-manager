@@ -125,14 +125,14 @@ public class ControlledResourceFixtures {
       getAzureRelayNamespaceCreationParameters() {
     return new ApiAzureRelayNamespaceCreationParameters()
         .namespaceName(uniqueAzureName(AZURE_RELAY_NAMESPACE_NAME_PREFIX))
-        .region("westcentralus");
+        .region(DEFAULT_AZURE_RESOURCE_REGION);
   }
 
   /** Construct a parameter object with a unique disk name to avoid unintended clashes. */
   public static ApiAzureDiskCreationParameters getAzureDiskCreationParameters() {
     return new ApiAzureDiskCreationParameters()
         .name(uniqueAzureName(AZURE_DISK_NAME_PREFIX))
-        .region("westcentralus")
+        .region(DEFAULT_AZURE_RESOURCE_REGION)
         .size(50);
   }
 
@@ -804,7 +804,7 @@ public class ControlledResourceFixtures {
                 .cloningInstructions(CloningInstructions.COPY_RESOURCE)
                 .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
                 .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
-                .region(DEFAULT_AZURE_RESOURCE_REGION)
+                .region(creationParameters.getRegion())
                 .build())
         .namespaceName(TestUtils.appendRandomNumber("namespace"));
   }

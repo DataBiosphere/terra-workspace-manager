@@ -42,7 +42,7 @@ public class CloneControlledAzureStorageContainerResourceFlightTest extends Base
                     .cloningInstructions(CloningInstructions.COPY_RESOURCE)
                     .build())
             .storageAccountId(UUID.randomUUID())
-            .storageContainerName(null)
+            .storageContainerName(UUID.randomUUID().toString())
             .build();
 
     FlightMap inputs = new FlightMap();
