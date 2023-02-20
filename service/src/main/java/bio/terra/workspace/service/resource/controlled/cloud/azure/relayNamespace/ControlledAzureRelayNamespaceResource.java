@@ -86,13 +86,6 @@ public class ControlledAzureRelayNamespaceResource extends ControlledResource {
     validate();
   }
 
-  public ControlledAzureRelayNamespaceResource(
-      ControlledResourceFields common, String namespaceName, String region) {
-    super(common);
-    this.namespaceName = namespaceName;
-    validate();
-  }
-
   /*
    // TODO: PF-2512 remove constructor above and enable this constructor
    @JsonCreator

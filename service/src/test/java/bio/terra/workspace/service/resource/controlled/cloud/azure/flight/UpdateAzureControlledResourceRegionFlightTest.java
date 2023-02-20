@@ -98,6 +98,7 @@ class UpdateAzureControlledResourceRegionFlightTest extends BaseAzureConnectedTe
     resourceDao.updateControlledResourceRegion(storageContainer.getResourceId(), /*region=*/ null);
 
     List<ControlledResource> updatedResources = updateControlledResourcesRegionAndWait();
+
     assertEquals(7, updatedResources.size());
     ControlledResource updatedIp =
         updatedResources.stream()
