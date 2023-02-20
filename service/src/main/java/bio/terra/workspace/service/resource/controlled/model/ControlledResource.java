@@ -28,20 +28,11 @@ import javax.annotation.Nullable;
 public abstract class ControlledResource extends WsmResource {
   WsmControlledResourceFields wsmControlledResourceFields;
 
-  public ControlledResource(
-      WsmResourceFields wsmResourceFields,
-      @Nullable String assignedUser,
-      AccessScopeType accessScope,
-      ManagedByType managedBy,
-      String applicationId,
-      @Nullable PrivateResourceState privateResourceState,
-      String region) {
-    super(wsmResourceFields);
-    this.wsmControlledResourceFields =
-        new WsmControlledResourceFields(
-            assignedUser, privateResourceState, accessScope, managedBy, applicationId, region);
-  }
-
+  /**
+   * Construct the ControlledResource from database information
+   *
+   * @param dbResource POJO of the database info
+   */
   public ControlledResource(DbResource dbResource) {
     super(dbResource);
     if (dbResource.getStewardshipType() != StewardshipType.CONTROLLED) {
@@ -50,6 +41,11 @@ public abstract class ControlledResource extends WsmResource {
     this.wsmControlledResourceFields = WsmControlledResourceFields.fromDb(dbResource);
   }
 
+  /**
+   * Construct the ControlledResource from the fields builder
+   *
+   * @param fields container for building WsmResource and Controlled resource
+   */
   public ControlledResource(ControlledResourceFields fields) {
     super(
         new WsmResourceFields.Builder<>()

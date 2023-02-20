@@ -33,7 +33,7 @@ public class ControlledResourceFields extends WsmResourceFields {
     super(dbResource);
     this.wsmControlledResourceFields = WsmControlledResourceFields.fromDb(dbResource);
     // This field is used on create, but not stored in the database.
-    iamRole = null;
+    this.iamRole = null;
   }
 
   /**
@@ -153,6 +153,7 @@ public class ControlledResourceFields extends WsmResourceFields {
     public Builder() {}
 
     public ControlledResourceFields build() {
+      computePrivateResourceState();
       validate();
       return new ControlledResourceFields(this);
     }
@@ -197,6 +198,21 @@ public class ControlledResourceFields extends WsmResourceFields {
     public Builder region(@Nullable String region) {
       this.region = region;
       return this;
+    }
+
+    /**
+     * We allow privateResourceState to be left null in the builder. When we build, we compute a
+     * default value based on the accessScope.
+     */
+    private void computePrivateResourceState() {
+      if (privateResourceState != null) {
+        return;
+      }
+      ResourceValidationUtils.checkFieldNonNull(accessScope, "accessScope");
+      privateResourceState =
+          (accessScope == AccessScopeType.ACCESS_SCOPE_PRIVATE
+              ? PrivateResourceState.INITIALIZING
+              : PrivateResourceState.NOT_APPLICABLE);
     }
   }
 }
