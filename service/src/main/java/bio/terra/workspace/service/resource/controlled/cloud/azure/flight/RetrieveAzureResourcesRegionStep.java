@@ -36,6 +36,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Preconditions;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -156,8 +157,11 @@ public class RetrieveAzureResourcesRegionStep implements Step {
       ControlledResource resource,
       @Nullable String region) {
     if (region != null) {
+      // NOTE: took this fragment from the Azure code in com.azure.core.management.Region.java
+      String normalizedRegion = region.toLowerCase(Locale.ROOT).replace(" ", "");
+
       UUID resourceId = resource.getResourceId();
-      resourceIdToRegionMap.put(resourceId, region);
+      resourceIdToRegionMap.put(resourceId, normalizedRegion);
       resourceIdToWorkspaceIdMap.put(resourceId, resource.getWorkspaceId().toString());
     }
   }
