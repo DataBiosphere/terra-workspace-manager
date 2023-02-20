@@ -139,7 +139,7 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
   /** {@inheritDoc} */
   @Override
   public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
-    // TODO: Implement and add delete flight steps.
+    // TODO(TERRA-382): Implement and add delete flight steps. todo-dex
   }
 
   public String getInstanceId() {

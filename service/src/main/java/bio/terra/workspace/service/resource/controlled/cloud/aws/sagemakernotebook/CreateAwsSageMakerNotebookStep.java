@@ -64,6 +64,7 @@ public class CreateAwsSageMakerNotebookStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
+    // TODO(TERRA-382): Implement and add delete flight steps. todo-dex
     return StepResult.getStepResultSuccess();
   }
 }
