@@ -369,12 +369,12 @@ public class ReferencedGcpResourceControllerGcsObjectTest extends BaseConnectedT
     mockMvcUtils.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
 
     // Add group policy to source workspace. Add region policy to dest workspace.
-    var update1 = mockMvcUtils.updatePolicies(
+    mockMvcUtils.updatePolicies(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
         /*policiesToAdd=*/ ImmutableList.of(PolicyFixtures.GROUP_POLICY),
         /*policiesToRemove=*/ null);
-    var update2 = mockMvcUtils.updatePolicies(
+    mockMvcUtils.updatePolicies(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId2,
         /*policiesToAdd=*/ ImmutableList.of(PolicyFixtures.REGION_POLICY),
