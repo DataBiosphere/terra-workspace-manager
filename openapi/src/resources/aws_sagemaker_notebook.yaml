@@ -18,7 +18,6 @@ components:
           description: Bucket to provide access to via the default configured credential in AWS CLI/SDK.
           $ref: '#/components/schemas/AwsSagemakerNotebookDefaultBucket'
 
-
     AwsSageMakerNotebookResource:
       type: object
       description: Description of an AWS storage bucket.

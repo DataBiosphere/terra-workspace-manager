@@ -55,6 +55,51 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
+    post:
+      summary: |
+        Delete a controlled AWS SageMaker Notebook instance resource. This is async, because deleting the
+        notebook instance can take ~5 minutes. NOTE: this cannot be an HTTP DELETE, because
+        something between generated code and server behavior does not support delete operations with
+        bodies. We require the body for the async state, so this is a POST.
+      operationId: deleteAwsSageMakerNotebook
+      tags: [ ControlledAwsResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteControlledAwsSageMakerNotebookRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledAwsSageMakerNotebookResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledAwsSageMakerNotebookResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/aws/sagemaker-notebooks/delete-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about a AWS SageMaker Notebook delete instance job.
+      operationId: getDeleteAwsSageMakerNotebookResult
+      tags: [ ControlledAwsResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledAwsSageMakerNotebookResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledAwsSageMakerNotebookResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
 
   /api/workspaces/v1/{workspaceId}/resources/controlled/aws/sagemaker-notebooks/{resourceId}/consoleLink:
     parameters:
@@ -115,6 +160,7 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
+
 components:
   parameters:
     AwsSageMakerProxyUrlDurationParameter:
@@ -136,7 +182,6 @@ components:
         $ref: '#/components/schemas/AwsSageMakerProxyUrlView'
 
   schemas:
-
     CreatedControlledAwsSageMakerNotebookResult:
       type: object
       properties:
@@ -144,7 +189,7 @@ components:
           $ref: '#/components/schemas/JobReport'
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
-        aiNotebookInstance:
+        sageMakerNotebookInstance:
           $ref: '#/components/schemas/AwsSageMakerNotebookResource'
 
     CreateControlledAwsSageMakerNotebookRequestBody:
@@ -190,6 +235,21 @@ components:
           description: Bucket to provide access to via the default configured credential in AWS CLI/SDK.
           $ref: '#/components/schemas/AwsSagemakerNotebookDefaultBucket'
 
+    DeleteControlledAwsSageMakerNotebookRequest:
+      type: object
+      required: [ jobControl ]
+      properties:
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+
+    DeleteControlledAwsSageMakerNotebookResult:
+      type: object
+      properties:
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+
     AwsSageMakerProxyUrlView:
       type: string
       enum: [ 'JUPYTER', 'JUPYTERLAB' ]
@@ -209,6 +269,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/AwsSageMakerNotebookResource'
+
+    DeleteControlledAwsSageMakerNotebookResponse:
+      description: Response to delete a AWS SageMaker Notebook
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DeleteControlledAwsSageMakerNotebookResult'
 
     GetControlledAwsSageMakerNotebookConsoleLinkResponse:
       description: Response to get AWS SageMaker Notebook Console Link

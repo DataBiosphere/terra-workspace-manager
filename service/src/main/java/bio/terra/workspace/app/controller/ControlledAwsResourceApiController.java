@@ -9,19 +9,7 @@ import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.common.utils.MultiCloudUtils;
 import bio.terra.workspace.generated.controller.ControlledAwsResourceApi;
-import bio.terra.workspace.generated.model.ApiAwsBucketCreationParameters;
-import bio.terra.workspace.generated.model.ApiAwsBucketResource;
-import bio.terra.workspace.generated.model.ApiAwsConsoleLink;
-import bio.terra.workspace.generated.model.ApiAwsCredential;
-import bio.terra.workspace.generated.model.ApiAwsCredentialAccessScope;
-import bio.terra.workspace.generated.model.ApiAwsSageMakerNotebookResource;
-import bio.terra.workspace.generated.model.ApiAwsSageMakerProxyUrlView;
-import bio.terra.workspace.generated.model.ApiAwsSagemakerNotebookDefaultBucket;
-import bio.terra.workspace.generated.model.ApiCreateControlledAwsBucketRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateControlledAwsSageMakerNotebookRequestBody;
-import bio.terra.workspace.generated.model.ApiCreatedControlledAwsBucket;
-import bio.terra.workspace.generated.model.ApiCreatedControlledAwsSageMakerNotebookResult;
-import bio.terra.workspace.generated.model.ApiJobReport;
+import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
@@ -345,7 +333,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     return new ApiCreatedControlledAwsSageMakerNotebookResult()
         .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getApiErrorReport())
-        .aiNotebookInstance(apiResource);
+        .sageMakerNotebookInstance(apiResource);
   }
 
   @Override
@@ -362,6 +350,52 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
             .castByEnum(WsmResourceType.CONTROLLED_AWS_SAGEMAKER_NOTEBOOK);
 
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiDeleteControlledAwsSageMakerNotebookResult> deleteAwsSageMakerNotebook(
+      UUID workspaceUuid, UUID resourceId, ApiDeleteControlledAwsSageMakerNotebookRequest body) {
+    features.awsEnabledCheck();
+
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    controlledResourceMetadataManager.validateControlledResourceAndAction(
+        userRequest,
+        workspaceUuid,
+        resourceId,
+        SamConstants.SamControlledResourceActions.DELETE_ACTION);
+    ApiJobControl jobControl = body.getJobControl();
+    logger.info(
+        "deleteAwsSageMakerNotebook workspace {} resource {}",
+        workspaceUuid.toString(),
+        resourceId.toString());
+    String jobId =
+        getControlledResourceService()
+            .deleteControlledResourceAsync(
+                jobControl,
+                workspaceUuid,
+                resourceId,
+                getAsyncResultEndpoint(jobControl.getId(), "delete-result"),
+                userRequest);
+    ApiDeleteControlledAwsSageMakerNotebookResult result = fetchNotebookInstanceDeleteResult(jobId);
+    return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
+  }
+
+  @Override
+  public ResponseEntity<ApiDeleteControlledAwsSageMakerNotebookResult>
+      getDeleteAwsSageMakerNotebookResult(UUID workspaceUuid, String jobId) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
+    ApiDeleteControlledAwsSageMakerNotebookResult result = fetchNotebookInstanceDeleteResult(jobId);
+    return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
+  }
+
+  private ApiDeleteControlledAwsSageMakerNotebookResult fetchNotebookInstanceDeleteResult(
+      String jobId) {
+    JobApiUtils.AsyncJobResult<Void> jobResult =
+        jobApiUtils.retrieveAsyncJobResult(jobId, Void.class);
+    return new ApiDeleteControlledAwsSageMakerNotebookResult()
+        .jobReport(jobResult.getJobReport())
+        .errorReport(jobResult.getApiErrorReport());
   }
 
   @Override

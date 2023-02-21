@@ -3,7 +3,6 @@ package bio.terra.workspace.common.utils;
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.common.iam.SamUser;
-import bio.terra.stairway.ShortUUID;
 import bio.terra.workspace.service.workspace.exceptions.SaCredentialsMissingException;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import com.nimbusds.jwt.JWT;
@@ -14,13 +13,9 @@ import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
-import java.net.URLEncoder;
 import java.text.ParseException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.UUID;
+import java.time.Duration;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import org.apache.http.client.utils.URIBuilder;
 import org.json.JSONObject;
@@ -29,7 +24,12 @@ import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.exception.SdkException;
+import software.amazon.awssdk.core.internal.waiters.ResponseOrException;
 import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.core.waiters.WaiterOverrideConfiguration;
+import software.amazon.awssdk.core.waiters.WaiterResponse;
+import software.amazon.awssdk.http.SdkHttpResponse;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
@@ -37,13 +37,8 @@ import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.sagemaker.SageMakerClient;
-import software.amazon.awssdk.services.sagemaker.model.CreateNotebookInstanceRequest;
-import software.amazon.awssdk.services.sagemaker.model.CreatePresignedNotebookInstanceUrlRequest;
-import software.amazon.awssdk.services.sagemaker.model.CreatePresignedNotebookInstanceUrlResponse;
-import software.amazon.awssdk.services.sagemaker.model.DescribeNotebookInstanceRequest;
-import software.amazon.awssdk.services.sagemaker.model.DescribeNotebookInstanceResponse;
-import software.amazon.awssdk.services.sagemaker.model.InstanceType;
-import software.amazon.awssdk.services.sagemaker.model.NotebookInstanceStatus;
+import software.amazon.awssdk.services.sagemaker.model.*;
+import software.amazon.awssdk.services.sagemaker.waiters.SageMakerWaiter;
 import software.amazon.awssdk.services.sts.StsClient;
 import software.amazon.awssdk.services.sts.model.AssumeRoleRequest;
 import software.amazon.awssdk.services.sts.model.AssumeRoleWithWebIdentityRequest;
@@ -53,6 +48,17 @@ import software.amazon.awssdk.services.sts.model.Tag;
 public class AwsUtils {
   private static final Logger logger = LoggerFactory.getLogger(AwsUtils.class);
   public static final Integer MIN_TOKEN_DURATION_SECONDS = 900;
+
+  // TODO(TERRA-384) - move to COW in TCL
+  private static final int AWS_CLIENT_MAXIMUM_RETRIES = 5;
+  private static final Duration SAGEMAKER_NOTEBOOK_WAITER_TIMEOUT_DURATION =
+      Duration.ofSeconds(900);
+  private static final Set<NotebookInstanceStatus> startableStatusSet =
+      Set.of(NotebookInstanceStatus.STOPPED, NotebookInstanceStatus.FAILED);
+  private static final Set<NotebookInstanceStatus> stoppableStatusSet =
+      Set.of(NotebookInstanceStatus.IN_SERVICE);
+  private static final Set<NotebookInstanceStatus> deletableStatusSet =
+      Set.of(NotebookInstanceStatus.STOPPED, NotebookInstanceStatus.FAILED);
 
   public static Credentials assumeServiceRole(
       AwsCloudContext awsCloudContext, String idToken, String serviceEmail, Integer duration) {
@@ -90,7 +96,7 @@ public class AwsUtils {
     return securityTokenService.assumeRoleWithWebIdentity(request).credentials();
   }
 
-  public static enum RoleTag {
+  public enum RoleTag {
     READER("reader"),
     WRITER("writer");
 
@@ -128,9 +134,8 @@ public class AwsUtils {
       Collection<Tag> tags,
       Integer duration) {
 
-    HashSet<Tag> userTags = new HashSet<>();
     addUserTags(tags, user);
-    userTags.addAll(tags);
+    HashSet<Tag> userTags = new HashSet<>(tags);
 
     AssumeRoleRequest request =
         AssumeRoleRequest.builder()
@@ -184,9 +189,6 @@ public class AwsUtils {
     credentialMap.put("sessionToken", userCredentials.sessionToken());
 
     try {
-      String encodedCredential =
-          URLEncoder.encode(new JSONObject(credentialMap).toString(), "UTF-8");
-
       URI uri =
           new URIBuilder()
               .setScheme("https")
@@ -234,10 +236,6 @@ public class AwsUtils {
         .region(region)
         .credentialsProvider(StaticCredentialsProvider.create(sessionCredentials))
         .build();
-  }
-
-  public static String generateUniquePrefix() {
-    return ShortUUID.get();
   }
 
   public static boolean checkFolderExistence(
@@ -378,6 +376,148 @@ public class AwsUtils {
     }
   }
 
+  public static Optional<NotebookInstanceStatus> getSageMakerNotebookStatus(
+      Credentials credentials, Region region, String notebookName) {
+    // TODO(TERRA-384) - move to COW in TCL
+    SageMakerClient sageMaker = getSagemakerSession(credentials, region);
+
+    DescribeNotebookInstanceResponse describeResponse =
+        sageMaker.describeNotebookInstance(
+            DescribeNotebookInstanceRequest.builder().notebookInstanceName(notebookName).build());
+    return Optional.ofNullable(describeResponse.notebookInstanceStatus());
+  }
+
+  public static void stopSageMakerNotebook(
+      Credentials credentials, Region region, String notebookName) {
+    // TODO(TERRA-384) - move to COW in TCL
+    try {
+      SageMakerClient sageMaker = getSagemakerSession(credentials, region);
+      DescribeNotebookInstanceRequest describeRequest =
+          DescribeNotebookInstanceRequest.builder().notebookInstanceName(notebookName).build();
+
+      NotebookInstanceStatus notebookStatus =
+          sageMaker.describeNotebookInstance(describeRequest).notebookInstanceStatus();
+      if (startableStatusSet.contains(notebookStatus)) {
+        logger.info(
+            String.format(
+                "SageMaker notebook instance in status %s, no stop needed.", notebookStatus));
+        return;
+      }
+
+      checkNotebookStatus(notebookStatus, stoppableStatusSet);
+      logger.info(
+          String.format("Stopping SageMaker notebook instance with name '%s'.", notebookName));
+
+      SdkHttpResponse httpResponse =
+          sageMaker
+              .stopNotebookInstance(
+                  StopNotebookInstanceRequest.builder().notebookInstanceName(notebookName).build())
+              .sdkHttpResponse();
+      if (!httpResponse.isSuccessful()) {
+        throw new ApiException(
+            "Error stopping notebook instance, "
+                + httpResponse.statusText().orElse(String.valueOf(httpResponse.statusCode())));
+      }
+
+      SageMakerWaiter sageMakerWaiter =
+          SageMakerWaiter.builder()
+              .client(sageMaker)
+              .overrideConfiguration(
+                  WaiterOverrideConfiguration.builder()
+                      .maxAttempts(AWS_CLIENT_MAXIMUM_RETRIES)
+                      .waitTimeout(SAGEMAKER_NOTEBOOK_WAITER_TIMEOUT_DURATION)
+                      .build())
+              .build();
+
+      WaiterResponse<DescribeNotebookInstanceResponse> waiterResponse =
+          sageMakerWaiter.waitUntilNotebookInstanceStopped(describeRequest);
+      ResponseOrException<DescribeNotebookInstanceResponse> responseOrException =
+          waiterResponse.matched();
+      if (responseOrException.response().isPresent()) {
+        checkNotebookStatus(
+            responseOrException.response().get().notebookInstanceStatus(), startableStatusSet);
+        return;
+
+      } else if (responseOrException.exception().isPresent()) {
+        Throwable t = responseOrException.exception().get();
+        if (t instanceof Exception) {
+          checkException((Exception) t);
+        }
+        logger.error("Error polling notebook instance status: " + t);
+      }
+      throw new ApiException("Error checking notebook instance status");
+
+    } catch (SdkException e) {
+      checkException(e);
+      throw new ApiException("Error stopping notebook instance", e);
+    }
+  }
+
+  public static void deleteSageMakerNotebook(
+      Credentials credentials, Region region, String notebookName) {
+    // TODO(TERRA-384) - move to COW in TCL
+    try {
+      SageMakerClient sageMaker = getSagemakerSession(credentials, region);
+      DescribeNotebookInstanceRequest describeRequest =
+          DescribeNotebookInstanceRequest.builder().notebookInstanceName(notebookName).build();
+
+      DescribeNotebookInstanceResponse describeResponse =
+          sageMaker.describeNotebookInstance(describeRequest);
+      SdkHttpResponse describeHttpResponse = describeResponse.sdkHttpResponse();
+      if (!describeHttpResponse.isSuccessful()) {
+        throw new ApiException(
+            "Error fetching notebook instance, "
+                + describeHttpResponse
+                    .statusText()
+                    .orElse(String.valueOf(describeHttpResponse.statusCode())));
+      }
+
+      // must be stopped or failed. AWS throws error if notebook is not found
+      checkNotebookStatus(describeResponse.notebookInstanceStatus(), deletableStatusSet);
+      logger.info(
+          String.format("Deleting SageMaker notebook instance with name '%s'.", notebookName));
+
+      SdkHttpResponse httpResponse =
+          sageMaker
+              .deleteNotebookInstance(
+                  DeleteNotebookInstanceRequest.builder()
+                      .notebookInstanceName(notebookName)
+                      .build())
+              .sdkHttpResponse();
+      if (!httpResponse.isSuccessful()) {
+        throw new ApiException(
+            "Error deleting notebook instance, "
+                + httpResponse.statusText().orElse(String.valueOf(httpResponse.statusCode())));
+      }
+
+      SageMakerWaiter sageMakerWaiter =
+          SageMakerWaiter.builder()
+              .client(sageMaker)
+              .overrideConfiguration(
+                  WaiterOverrideConfiguration.builder()
+                      .maxAttempts(AWS_CLIENT_MAXIMUM_RETRIES)
+                      .waitTimeout(SAGEMAKER_NOTEBOOK_WAITER_TIMEOUT_DURATION)
+                      .build())
+              .build();
+
+      WaiterResponse<DescribeNotebookInstanceResponse> waiterResponse =
+          sageMakerWaiter.waitUntilNotebookInstanceDeleted(describeRequest);
+      ResponseOrException<DescribeNotebookInstanceResponse> responseOrException =
+          waiterResponse.matched();
+      if (responseOrException.exception().isPresent()) {
+        Throwable t = responseOrException.exception().get();
+        if (t instanceof Exception) {
+          checkException((Exception) t);
+        }
+        logger.error("Error polling notebook instance status: " + t);
+      }
+
+    } catch (SdkException e) {
+      checkException(e);
+      throw new ApiException("Error deleting notebook instance", e);
+    }
+  }
+
   public static URL getSageMakerNotebookProxyUrl(
       Credentials credentials, Region region, String notebookName, Integer duration, String view) {
     SageMakerClient sageMaker = getSagemakerSession(credentials, region);
@@ -410,6 +550,31 @@ public class AwsUtils {
 
     } catch (Exception e) {
       throw new ApiException("Failed to get URL.", e);
+    }
+  }
+
+  private static void checkNotebookStatus(
+      NotebookInstanceStatus currentStatus, Set<NotebookInstanceStatus> expectedStatusSet) {
+    // TODO(TERRA-384) - move to COW in TCL
+    if (!expectedStatusSet.contains(currentStatus)) {
+      throw new ApiException(
+          "Expected notebook instance status is "
+              + expectedStatusSet
+              + " but current status is "
+              + currentStatus);
+    }
+  }
+
+  public static void checkException(Exception ex) {
+    // TODO(TERRA-384) - move to COW in TCL
+    if (ex instanceof SdkException) {
+      String message = ex.getMessage();
+      if (message.contains("not authorized to perform")) {
+        throw new ApiException(
+            "Error performing notebook operation, check the instance name / permissions and retry");
+      } else if (message.contains("Unable to transition to")) {
+        throw new ApiException("Unable to perform notebook operation on cloud platform");
+      }
     }
   }
 }
