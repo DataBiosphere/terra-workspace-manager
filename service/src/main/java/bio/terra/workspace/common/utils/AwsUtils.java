@@ -206,8 +206,8 @@ public class AwsUtils {
 
       BufferedReader bufferReader =
           new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
-
       String urlSigninToken = new JSONObject(bufferReader.readLine()).getString("SigninToken");
+      bufferReader.close();
 
       uri =
           new URIBuilder()
