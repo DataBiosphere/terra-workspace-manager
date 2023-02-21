@@ -369,7 +369,7 @@ public class WorkspaceActivityLogHook implements StairwayHook {
                 .getWorkingMap()
                 .get(CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP, new TypeReference<>() {}));
 
-    for (var pair : resourceIdToWorkspaceIdMap.entrySet()) {
+    for (Map.Entry<UUID, String> pair : resourceIdToWorkspaceIdMap.entrySet()) {
       activityLogDao.writeActivity(
           UUID.fromString(pair.getValue()),
           new DbWorkspaceActivityLog(

@@ -1853,14 +1853,14 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     // Subtract the set of datasets without lifetime by the set of datasets that were not updated.
     // The result is the set of datasets that were updated (originally having no lifetime)
-    for (var notUpdatedDataset : afterDatasetsNotUpdated) {
+    for (ControlledBigQueryDatasetResource notUpdatedDataset : afterDatasetsNotUpdated) {
       successfullyUpdatedDatasets.remove(notUpdatedDataset);
     }
 
     // Since the original set has datasets with no lifetime, the updated lifetimes are retrieved.
     List<ControlledBigQueryDatasetResource> updatedDatasets = new ArrayList<>();
 
-    for (var dataset : successfullyUpdatedDatasets) {
+    for (ControlledBigQueryDatasetResource dataset : successfullyUpdatedDatasets) {
       updatedDatasets.add(
           resourceDao
               .getResource(dataset.getWorkspaceId(), dataset.getResourceId())

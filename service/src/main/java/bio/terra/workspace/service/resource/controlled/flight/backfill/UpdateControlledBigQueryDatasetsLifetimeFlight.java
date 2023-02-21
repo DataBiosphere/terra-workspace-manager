@@ -3,7 +3,6 @@ package bio.terra.workspace.service.resource.controlled.flight.backfill;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.utils.FlightBeanBag;
-import bio.terra.workspace.common.utils.RetryRules;
 
 // TODO (PF-2269): Clean this up once the back-fill is done in all Terra environments.
 public class UpdateControlledBigQueryDatasetsLifetimeFlight extends Flight {
@@ -20,9 +19,7 @@ public class UpdateControlledBigQueryDatasetsLifetimeFlight extends Flight {
     addStep(
         new RetrieveControlledBigQueryDatasetsWithoutLifetimeStep(flightBeanBag.getResourceDao()));
 
-    addStep(
-        new RetrieveControlledBigQueryDatasetsLifetimeStep(flightBeanBag.getCrlService()),
-        RetryRules.shortExponential());
+    addStep(new RetrieveControlledBigQueryDatasetsLifetimeStep(flightBeanBag.getCrlService()));
 
     addStep(new UpdateControlledBigQueryDatasetsLifetimeStep(flightBeanBag.getResourceDao()));
   }
