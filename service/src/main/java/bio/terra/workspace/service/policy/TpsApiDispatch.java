@@ -203,6 +203,22 @@ public class TpsApiDispatch {
     return new ArrayList<>();
   }
 
+  @Traced
+  public List<String> listValidRegionsForPao(TpsPaoGetResult tpsPao, CloudPlatform platform) {
+    features.tpsEnabledCheck();
+    TpsApi tpsApi = policyApi();
+    TpsRegions tpsRegions;
+    try {
+      tpsRegions = tpsApi.listValidByPolicyInput(tpsPao.getEffectiveAttributes(), platform.toTps());
+    } catch (ApiException e) {
+      throw convertApiException(e);
+    }
+    if (tpsRegions != null) {
+      return tpsRegions.stream().toList();
+    }
+    return new ArrayList<>();
+  }
+
   public PolicyExplainResult explain(
       UUID workspaceId,
       int depth,

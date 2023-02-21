@@ -70,6 +70,15 @@ paths:
 
 components:
   schemas:
+    GcpContext:
+      type: object
+      description: The GCP cloud context associated with a workspace.
+      required: [ projectId ]
+      properties:
+        projectId:
+          description: The ID of Gcp Project associated with the workspace.
+          type: string
+
     AzureContext:
       type: object
       description: The azure cloud context associated with a workspace.
@@ -102,15 +111,6 @@ components:
         azureContext:
           $ref: '#/components/schemas/AzureContext'
 
-    GcpContext:
-      type: object
-      description: The GCP cloud context associated with a workspace.
-      required: [projectId]
-      properties:
-        projectId:
-          description: The ID of Gcp Project associated with the workspace.
-          type: string
-
     CreateCloudContextResult:
       type: object
       description: |
@@ -128,7 +128,6 @@ components:
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
 
-
   responses:
     CreateCloudContextResultResponse:
       description: Job is complete (succeeded or failed)
@@ -136,4 +135,3 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CreateCloudContextResult'
-

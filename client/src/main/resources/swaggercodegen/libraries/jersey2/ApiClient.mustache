@@ -33,6 +33,7 @@ import org.glassfish.jersey.jackson.JacksonFeature;
 {{! Begin Terra change }}
 // Import the connector we use to workaround the JDK17 issues in Jersey
 import org.glassfish.jersey.jdk.connector.JdkConnectorProvider;
+import org.glassfish.jersey.jdk.connector.JdkConnectorProperties;
 {{! End Terra change }}
 
 {{^supportJava6}}
@@ -805,7 +806,9 @@ public class ApiClient {
     clientConfig.register(MultiPartFeature.class);
     clientConfig.register(json);
     clientConfig.register(JacksonFeature.class);
-    clientConfig.property(HttpUrlConnectorProvider.SET_METHOD_WORKAROUND, true);
+    {{! Begin Terra change }}
+    // Remove configuration properties for a connector we aren't using.
+    {{! End Terra change }}
     {{^supportJava6}}
     if (debugging) {
       clientConfig.register(new LoggingFeature(java.util.logging.Logger.getLogger(LoggingFeature.DEFAULT_LOGGER_NAME), java.util.logging.Level.INFO, LoggingFeature.Verbosity.PAYLOAD_ANY, 1024*50 /* Log payloads up to 50K */));
@@ -823,6 +826,9 @@ public class ApiClient {
     // For JDK17, we need to use this connection provider to work around the way Jersey
     // implements PATCH
     clientConfig.connectorProvider(new JdkConnectorProvider());
+    // Set idle timeout to 2m rather than the default of 30s, as clients may poll more
+    // slowly for long-running operations.
+    clientConfig.property(JdkConnectorProperties.CONTAINER_IDLE_TIMEOUT, /*120s*/ 120_000);
     {{! End Terra change }}
   }
 

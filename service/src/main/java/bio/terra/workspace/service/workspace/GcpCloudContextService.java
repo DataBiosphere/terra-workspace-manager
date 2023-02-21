@@ -5,6 +5,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
+import bio.terra.workspace.service.workspace.flight.gcp.CreateGcpContextFlightV2;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import io.opencensus.contrib.spring.aop.Traced;
@@ -32,9 +33,8 @@ public class GcpCloudContextService {
 
   /**
    * Create an empty GCP cloud context in the database for a workspace. Supports {@link
-   * bio.terra.workspace.service.workspace.flight.CreateGcpContextFlightV2} This is designed for use
-   * in the createGcpContext flight and assumes that a later step will call {@link
-   * #createGcpCloudContextFinish}.
+   * CreateGcpContextFlightV2} This is designed for use in the createGcpContext flight and assumes
+   * that a later step will call {@link #createGcpCloudContextFinish}.
    *
    * @param workspaceUuid workspace id where the context is being created
    * @param flightId flight doing the creating
