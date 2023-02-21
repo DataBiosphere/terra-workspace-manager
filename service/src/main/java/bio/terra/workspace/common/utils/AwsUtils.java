@@ -413,7 +413,6 @@ public class AwsUtils {
               .stopNotebookInstance(
                   StopNotebookInstanceRequest.builder().notebookInstanceName(notebookName).build())
               .sdkHttpResponse();
-
       if (!httpResponse.isSuccessful()) {
         throw new ApiException(
             "Error stopping notebook instance, "
@@ -462,10 +461,19 @@ public class AwsUtils {
       DescribeNotebookInstanceRequest describeRequest =
           DescribeNotebookInstanceRequest.builder().notebookInstanceName(notebookName).build();
 
+      DescribeNotebookInstanceResponse describeResponse =
+          sageMaker.describeNotebookInstance(describeRequest);
+      SdkHttpResponse describeHttpResponse = describeResponse.sdkHttpResponse();
+      if (!describeHttpResponse.isSuccessful()) {
+        throw new ApiException(
+            "Error fetching notebook instance, "
+                + describeHttpResponse
+                    .statusText()
+                    .orElse(String.valueOf(describeHttpResponse.statusCode())));
+      }
+
       // must be stopped or failed. AWS throws error if notebook is not found
-      checkNotebookStatus(
-          sageMaker.describeNotebookInstance(describeRequest).notebookInstanceStatus(),
-          deletableStatusSet);
+      checkNotebookStatus(describeResponse.notebookInstanceStatus(), deletableStatusSet);
       logger.info(
           String.format("Deleting SageMaker notebook instance with name '%s'.", notebookName));
 
@@ -476,7 +484,6 @@ public class AwsUtils {
                       .notebookInstanceName(notebookName)
                       .build())
               .sdkHttpResponse();
-
       if (!httpResponse.isSuccessful()) {
         throw new ApiException(
             "Error deleting notebook instance, "
