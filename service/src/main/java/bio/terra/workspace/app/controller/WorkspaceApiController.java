@@ -530,19 +530,14 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     Workspace workspace =
         workspaceService.validateMcWorkspaceAndAction(userRequest, uuid, SamWorkspaceAction.WRITE);
 
-    if (cloudPlatform == ApiCloudPlatform.GCP) {
-      workspaceService.createGcpCloudContext(workspace, jobId, userRequest, resultPath);
-
-    } else if (cloudPlatform == ApiCloudPlatform.AZURE) {
+    if (body.getCloudPlatform() == ApiCloudPlatform.AZURE) {
       AzureCloudContext azureCloudContext =
           ControllerValidationUtils.validateAzureContextRequestBody(
               body.getAzureContext(), featureConfiguration.isBpmAzureEnabled());
       workspaceService.createAzureCloudContext(
           workspace, jobId, userRequest, resultPath, azureCloudContext);
-
     } else {
-      throw new FeatureNotSupportedException(
-          "CreateCloudContext not supported on ApiCloudPlatform " + cloudPlatform);
+      workspaceService.createGcpCloudContext(workspace, jobId, userRequest, resultPath);
     }
 
     ApiCreateCloudContextResult response = fetchCreateCloudContextResult(jobId);
@@ -598,13 +593,10 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     Workspace workspace =
         workspaceService.validateMcWorkspaceAndAction(userRequest, uuid, SamWorkspaceAction.WRITE);
 
-    if (cloudPlatform == ApiCloudPlatform.GCP) {
-      workspaceService.deleteGcpCloudContext(workspace, userRequest);
-    } else if (cloudPlatform == ApiCloudPlatform.AZURE) {
+    if (cloudPlatform == ApiCloudPlatform.AZURE) {
       workspaceService.deleteAzureCloudContext(workspace, userRequest);
     } else {
-      throw new FeatureNotSupportedException(
-          "DeleteCloudContext not supported on ApiCloudPlatform " + cloudPlatform);
+      workspaceService.deleteGcpCloudContext(workspace, userRequest);
     }
 
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
