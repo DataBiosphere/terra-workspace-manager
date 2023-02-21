@@ -454,7 +454,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     assertTrue(workspaceWithoutPolicy.getPolicies().isEmpty());
 
     // add attributes
-    String usRegion = "US";
+    String usRegion = "usa";
     ApiWsmPolicyUpdateResult result =
         mockMvcUtils.updateRegionPolicy(
             userAccessUtils.defaultUserAuthRequest(), workspace.getId(), usRegion);
@@ -484,7 +484,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
         mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
     assertTrue(workspaceWithoutPolicy.getPolicies().isEmpty());
 
-    var usRegion = "us";
+    var usRegion = "usa";
     ApiWsmPolicyUpdateResult result =
         mockMvcUtils.updateRegionPolicy(
             userAccessUtils.defaultUserAuthRequest(), workspace.getId(), usRegion);
