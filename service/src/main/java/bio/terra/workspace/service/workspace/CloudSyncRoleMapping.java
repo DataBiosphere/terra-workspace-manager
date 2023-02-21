@@ -204,11 +204,6 @@ public class CloudSyncRoleMapping {
         CustomGcpIamRole.of("PROJECT_WRITER", projectWriterPermissions);
     CustomGcpIamRole projectOwner = CustomGcpIamRole.of("PROJECT_OWNER", projectOwnerPermissions);
 
-    // System.out.println("@@@@@@@@@@@@@@@@@@@@");
-    // System.out.println("CloudSyncRoleMapping featureConfiguration:");
-    // System.out.println(System.identityHashCode(featureConfiguration));
-    // System.out.println(featureConfiguration.isDataprocEnabled());
-    // System.out.println("@@@@@@@@@@@@@@@@@@@@");
     // Add dataproc permissions if dataproc is enabled
     if (featureConfiguration.isDataprocEnabled()) {
       projectReader = CustomGcpIamRole.of("PROJECT_READER", projectReaderWithDataprocPermissions);
