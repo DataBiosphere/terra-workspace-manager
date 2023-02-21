@@ -160,6 +160,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 /**
@@ -2359,5 +2360,88 @@ public class MockMvcUtils {
     } else {
       throw new RuntimeException("Unexpected number of expected codes");
     }
+  }
+
+  public ApiWsmPolicyUpdateResult updatePolicies(
+      AuthenticatedUserRequest userRequest, UUID workspaceId) throws Exception {
+    return updateRegionPolicy(userRequest, workspaceId, /*region=*/ "US");
+  }
+
+  public ApiWsmPolicyUpdateResult updateRegionPolicy(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, String region) throws Exception {
+    var serializedResponse =
+        updatePoliciesExpect(
+                userRequest,
+                workspaceId,
+                HttpStatus.SC_OK,
+                buildWsmRegionPolicyInput(region),
+                ApiWsmPolicyUpdateMode.ENFORCE_CONFLICT)
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    return objectMapper.readValue(serializedResponse, ApiWsmPolicyUpdateResult.class);
+  }
+
+  public ResultActions updatePoliciesExpect(
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      int code,
+      ApiWsmPolicyInput addAttribute,
+      ApiWsmPolicyUpdateMode updateMode)
+      throws Exception {
+    ApiWsmPolicyUpdateRequest updateRequest =
+        new ApiWsmPolicyUpdateRequest()
+            .updateMode(updateMode)
+            .addAttributes(new ApiWsmPolicyInputs().addInputsItem(addAttribute));
+    return mockMvc
+        .perform(
+            addAuth(
+                patch(String.format(UPDATE_WORKSPACES_V1_POLICIES_PATH_FORMAT, workspaceId))
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .characterEncoding("UTF-8")
+                    .content(objectMapper.writeValueAsString(updateRequest)),
+                userRequest))
+        .andExpect(status().is(code));
+  }
+
+  public ApiWsmPolicyUpdateResult removeRegionPolicy(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, String region) throws Exception {
+    var serializedResponse =
+        removePoliciesExpect(
+                userRequest, workspaceId, HttpStatus.SC_OK, buildWsmRegionPolicyInput(region))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    return objectMapper.readValue(serializedResponse, ApiWsmPolicyUpdateResult.class);
+  }
+
+  private ResultActions removePoliciesExpect(
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      int code,
+      ApiWsmPolicyInput addAttribute)
+      throws Exception {
+    ApiWsmPolicyUpdateRequest updateRequest =
+        new ApiWsmPolicyUpdateRequest()
+            .updateMode(ApiWsmPolicyUpdateMode.ENFORCE_CONFLICT)
+            .removeAttributes(new ApiWsmPolicyInputs().addInputsItem(addAttribute));
+    return mockMvc
+        .perform(
+            addAuth(
+                patch(String.format(UPDATE_WORKSPACES_V1_POLICIES_PATH_FORMAT, workspaceId))
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .characterEncoding("UTF-8")
+                    .content(objectMapper.writeValueAsString(updateRequest)),
+                userRequest))
+        .andExpect(status().is(code));
+  }
+
+  public static ApiWsmPolicyInput buildWsmRegionPolicyInput(String location) {
+    return new ApiWsmPolicyInput()
+        .namespace("terra")
+        .name("region-constraint")
+        .addAdditionalDataItem(new ApiWsmPolicyPair().key("region-name").value(location));
   }
 }

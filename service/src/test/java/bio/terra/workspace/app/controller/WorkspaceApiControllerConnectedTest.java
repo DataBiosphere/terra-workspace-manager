@@ -12,6 +12,7 @@ import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_MERGE_
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_PATH;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
+import static bio.terra.workspace.common.utils.MockMvcUtils.buildWsmRegionPolicyInput;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.emptyString;
@@ -40,6 +41,8 @@ import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
 import bio.terra.workspace.generated.model.ApiWsmPolicyExplainResult;
 import bio.terra.workspace.generated.model.ApiWsmPolicyMergeCheckResult;
 import bio.terra.workspace.generated.model.ApiWsmPolicyObject;
+import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateMode;
+import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateResult;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
@@ -441,6 +444,77 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     assertFalse(gcps.isEmpty());
     // Not an azure workspace so not valid azure regions.
     assertTrue(azures.isEmpty());
+  }
+
+  @Test
+  @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
+  public void updatePolicies_tpsEnabledAndPolicyUpdated() throws Exception {
+    ApiWorkspaceDescription workspaceWithoutPolicy =
+        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
+    assertTrue(workspaceWithoutPolicy.getPolicies().isEmpty());
+
+    // add attributes
+    String usRegion = "usa";
+    ApiWsmPolicyUpdateResult result =
+        mockMvcUtils.updateRegionPolicy(
+            userAccessUtils.defaultUserAuthRequest(), workspace.getId(), usRegion);
+
+    assertTrue(result.isUpdateApplied());
+    ApiWorkspaceDescription updatedWorkspace =
+        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
+    assertEquals(1, updatedWorkspace.getPolicies().size());
+    assertEquals(
+        usRegion, updatedWorkspace.getPolicies().get(0).getAdditionalData().get(0).getValue());
+
+    // remove attributes
+    ApiWsmPolicyUpdateResult removeResult =
+        mockMvcUtils.removeRegionPolicy(
+            userAccessUtils.defaultUserAuthRequest(), workspace.getId(), usRegion);
+
+    assertTrue(removeResult.isUpdateApplied());
+    workspaceWithoutPolicy =
+        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
+    assertEquals(0, workspaceWithoutPolicy.getPolicies().size());
+  }
+
+  @Test
+  @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
+  public void updatePolicies_tpsEnabledAndPolicyConflict() throws Exception {
+    ApiWorkspaceDescription workspaceWithoutPolicy =
+        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
+    assertTrue(workspaceWithoutPolicy.getPolicies().isEmpty());
+
+    var usRegion = "usa";
+    ApiWsmPolicyUpdateResult result =
+        mockMvcUtils.updateRegionPolicy(
+            userAccessUtils.defaultUserAuthRequest(), workspace.getId(), usRegion);
+
+    assertTrue(result.isUpdateApplied());
+    ApiWorkspaceDescription updatedWorkspace =
+        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
+    assertEquals(1, updatedWorkspace.getPolicies().size());
+
+    mockMvcUtils.updatePoliciesExpect(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspace.getId(),
+        HttpStatus.SC_CONFLICT,
+        buildWsmRegionPolicyInput("europe"),
+        ApiWsmPolicyUpdateMode.FAIL_ON_CONFLICT);
+    mockMvcUtils.updatePoliciesExpect(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspace.getId(),
+        HttpStatus.SC_CONFLICT,
+        buildWsmRegionPolicyInput("asia"),
+        ApiWsmPolicyUpdateMode.ENFORCE_CONFLICT);
+    updatedWorkspace =
+        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
+    assertEquals(1, updatedWorkspace.getPolicies().size());
+    assertEquals(
+        usRegion, updatedWorkspace.getPolicies().get(0).getAdditionalData().get(0).getValue());
+
+    // clean up
+    mockMvcUtils.removeRegionPolicy(
+        userAccessUtils.defaultUserAuthRequest(), workspace.getId(), usRegion);
   }
 
   private ApiRegions listValid(
