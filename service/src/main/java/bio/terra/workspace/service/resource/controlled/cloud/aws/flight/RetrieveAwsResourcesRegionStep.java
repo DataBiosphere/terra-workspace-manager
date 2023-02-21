@@ -22,8 +22,6 @@ import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-// TODO-dex
-
 /** Retrieves the Aws resource's cloud region according to the resource type. */
 public class RetrieveAwsResourcesRegionStep implements Step {
   private final Logger logger = LoggerFactory.getLogger(RetrieveAwsResourcesRegionStep.class);
