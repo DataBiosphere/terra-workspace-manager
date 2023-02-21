@@ -424,6 +424,7 @@ public class ControlledResourceFixtures {
                 .cloningInstructions(CloningInstructions.COPY_NOTHING)
                 .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
                 .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                .region("eastus") // Needs to match the AzureControlledStorageContainerFlightTest
                 .build())
         .storageAccountId(accountResourceId)
         .storageContainerName(containerName)
