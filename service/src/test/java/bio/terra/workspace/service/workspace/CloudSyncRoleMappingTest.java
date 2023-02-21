@@ -5,7 +5,6 @@ import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.in;
 import static org.hamcrest.Matchers.not;
 
-import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import org.junit.jupiter.api.Test;
@@ -18,18 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  */
 public class CloudSyncRoleMappingTest extends BaseUnitTest {
 
-<<<<<<< Updated upstream
-  private FeatureConfiguration featureConfiguration;
-  private CloudSyncRoleMapping cloudSyncRoleMapping;
-
-  @BeforeEach
-  public void setup() {
-    featureConfiguration = new FeatureConfiguration();
-    cloudSyncRoleMapping = new CloudSyncRoleMapping(featureConfiguration);
-  }
-=======
   @Autowired CloudSyncRoleMapping cloudSyncRoleMapping;
->>>>>>> Stashed changes
 
   @Test
   void writerPermissionsContainReaderPermissions() {
@@ -109,11 +97,7 @@ public class CloudSyncRoleMappingTest extends BaseUnitTest {
 
   @Test
   void getCustomGcpProjectIamRoles_dataprocEnabled() {
-<<<<<<< Updated upstream
-    featureConfiguration.setDataprocEnabled(true);
-=======
     Mockito.when(mockFeatureConfiguration().isDataprocEnabled()).thenReturn(true);
->>>>>>> Stashed changes
 
     assertThat(
         cloudSyncRoleMapping.getAdditionalDataprocReaderPermissions(),
