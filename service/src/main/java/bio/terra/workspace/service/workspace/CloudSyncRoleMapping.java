@@ -116,66 +116,81 @@ public class CloudSyncRoleMapping {
               "cloudbuild.builds.approve")
           .build();
 
-  private final List<String> projectReaderDataprocPermissions =
+  private final List<String> additionalDataprocReaderPermissions =
+      ImmutableList.of(
+          "dataproc.clusters.get",
+          "dataproc.clusters.list",
+          "dataproc.jobs.get",
+          "dataproc.jobs.list");
+
+  private final List<String> additionalDataprocOwnerPermissions =
+      ImmutableList.of(
+          "dataproc.clusters.create",
+          "dataproc.clusters.update",
+          "dataproc.clusters.delete",
+          "dataproc.clusters.use",
+          "dataproc.clusters.start",
+          "dataproc.clusters.stop",
+          "dataproc.jobs.create",
+          "dataproc.jobs.update",
+          "dataproc.jobs.delete",
+          "dataproc.jobs.cancel",
+          "dataproc.autoscalingPolicies.get",
+          "dataproc.autoscalingPolicies.list",
+          "dataproc.autoscalingPolicies.create",
+          "dataproc.autoscalingPolicies.update",
+          "dataproc.autoscalingPolicies.delete",
+          "dataproc.tasks.lease",
+          "dataproc.tasks.listInvalidatedLeases",
+          "dataproc.tasks.reportStatus",
+          "dataproc.agents.get",
+          "dataproc.agents.create",
+          "dataproc.agents.update",
+          "dataproc.agents.delete",
+          "logging.logEntries.create",
+          "monitoring.metricDescriptors.create",
+          "monitoring.metricDescriptors.get",
+          "monitoring.metricDescriptors.list",
+          "monitoring.monitoredResourceDescriptors.get",
+          "monitoring.monitoredResourceDescriptors.list",
+          "monitoring.timeSeries.create",
+          "compute.machineTypes.get",
+          "compute.networks.get",
+          "compute.networks.list",
+          "compute.projects.get",
+          "compute.regions.get",
+          "compute.regions.list",
+          "compute.zones.get",
+          "compute.zones.list");
+
+  private final List<String> projectReaderWithDataprocPermissions =
       new ImmutableList.Builder<String>()
           .addAll(projectReaderPermissions)
-          .add(
-              "dataproc.clusters.get",
-              "dataproc.clusters.list",
-              "dataproc.jobs.get",
-              "dataproc.jobs.list")
+          .addAll(additionalDataprocReaderPermissions)
           .build();
 
   // TODO: PF-2508 Remove Dataproc writer and owner permissions after adding WSM managed dataproc
-  private final List<String> projectWriterDataprocPermissions =
+  private final List<String> projectWriterWithDataprocPermissions =
       new ImmutableList.Builder<String>()
-          .addAll(projectReaderDataprocPermissions)
           .addAll(projectWriterPermissions)
+          .addAll(projectReaderWithDataprocPermissions)
           .build();
 
-  private final List<String> projectOwnerDataprocPermissions =
+  private final List<String> projectOwnerWithDataprocPermissions =
       new ImmutableList.Builder<String>()
-          .addAll(projectWriterDataprocPermissions)
           .addAll(projectOwnerPermissions)
-          .add(
-              "dataproc.clusters.create",
-              "dataproc.clusters.update",
-              "dataproc.clusters.delete",
-              "dataproc.clusters.use",
-              "dataproc.clusters.start",
-              "dataproc.clusters.stop",
-              "dataproc.jobs.create",
-              "dataproc.jobs.update",
-              "dataproc.jobs.delete",
-              "dataproc.jobs.cancel",
-              "dataproc.autoscalingPolicies.get",
-              "dataproc.autoscalingPolicies.list",
-              "dataproc.autoscalingPolicies.create",
-              "dataproc.autoscalingPolicies.update",
-              "dataproc.autoscalingPolicies.delete",
-              "dataproc.tasks.lease",
-              "dataproc.tasks.listInvalidatedLeases",
-              "dataproc.tasks.reportStatus",
-              "dataproc.agents.get",
-              "dataproc.agents.create",
-              "dataproc.agents.update",
-              "dataproc.agents.delete",
-              "logging.logEntries.create",
-              "monitoring.metricDescriptors.create",
-              "monitoring.metricDescriptors.get",
-              "monitoring.metricDescriptors.list",
-              "monitoring.monitoredResourceDescriptors.get",
-              "monitoring.monitoredResourceDescriptors.list",
-              "monitoring.timeSeries.create",
-              "compute.machineTypes.get",
-              "compute.networks.get",
-              "compute.networks.list",
-              "compute.projects.get",
-              "compute.regions.get",
-              "compute.regions.list",
-              "compute.zones.get",
-              "compute.zones.list")
+          .addAll(projectWriterWithDataprocPermissions)
+          .addAll(additionalDataprocOwnerPermissions)
           .build();
+
+  // Getters for testing permissions enabled by dataproc flag
+  public List<String> getAdditionalDataprocReaderPermissions() {
+    return additionalDataprocReaderPermissions;
+  }
+
+  public List<String> getAdditionalDataprocOwnerPermissions() {
+    return additionalDataprocOwnerPermissions;
+  }
 
   @Autowired
   public CloudSyncRoleMapping(FeatureConfiguration featureConfiguration) {
@@ -189,11 +204,16 @@ public class CloudSyncRoleMapping {
         CustomGcpIamRole.of("PROJECT_WRITER", projectWriterPermissions);
     CustomGcpIamRole projectOwner = CustomGcpIamRole.of("PROJECT_OWNER", projectOwnerPermissions);
 
+    // System.out.println("@@@@@@@@@@@@@@@@@@@@");
+    // System.out.println("CloudSyncRoleMapping featureConfiguration:");
+    // System.out.println(System.identityHashCode(featureConfiguration));
+    // System.out.println(featureConfiguration.isDataprocEnabled());
+    // System.out.println("@@@@@@@@@@@@@@@@@@@@");
     // Add dataproc permissions if dataproc is enabled
     if (featureConfiguration.isDataprocEnabled()) {
-      projectReader = CustomGcpIamRole.of("PROJECT_READER", projectReaderDataprocPermissions);
-      projectWriter = CustomGcpIamRole.of("PROJECT_WRITER", projectWriterDataprocPermissions);
-      projectOwner = CustomGcpIamRole.of("PROJECT_OWNER", projectOwnerDataprocPermissions);
+      projectReader = CustomGcpIamRole.of("PROJECT_READER", projectReaderWithDataprocPermissions);
+      projectWriter = CustomGcpIamRole.of("PROJECT_WRITER", projectWriterWithDataprocPermissions);
+      projectOwner = CustomGcpIamRole.of("PROJECT_OWNER", projectOwnerWithDataprocPermissions);
     }
 
     // Currently, workspace editors, applications and owners have the same cloud permissions as
