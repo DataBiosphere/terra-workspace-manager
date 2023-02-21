@@ -1,0 +1,16 @@
+workspace:
+  aws:
+    default-landing-zone: "test-lz"
+    google-jwt-audience: "test_jwt_audience"
+    landing-zones:
+      - name: "test-lz"
+        account-number: "123456789012"
+        service-role-arn: "arn:aws:iam::123456789012:ServiceRole"
+        user-role-arn: "arn:aws:iam::123456789012:UserRole"
+        kms-key-arn: "arn:aws:kms:us-east-1:123456789012:key/00000000-1111-2222-3333-444444444444"
+        notebook-lifecycle-config-arn: "arn:aws:sagemaker:us-east-1:123456789012:notebook-instance-lifecycle-config/terra-nb-lifecycle-config-default"
+        buckets:
+          - name: "east-region-bucket"
+            region: "us-east-1"
+          - name: "west-region-bucket"
+            region: "us-west-1"

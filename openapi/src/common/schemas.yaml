@@ -11,7 +11,7 @@ components:
     CloudPlatform:
       type: string
       description: Enum representing a cloud platform type.
-      enum: ['AZURE', 'GCP']
+      enum: ['AWS', 'AZURE', 'GCP']
 
     CloneReferencedResourceRequestBody:
       description: >-
@@ -337,3 +337,42 @@ components:
       items:
         uniqueItems: true
         type: string
+
+    AwsCredentialAccessScope:
+      type: string
+      enum: ['READ_ONLY', 'WRITE_READ']
+
+    AwsCredentialDuration:
+      type: integer
+      minimum: 900
+      maximum: 3600
+      default: 900
+
+    AwsConsoleSessionDuration:
+      type: integer
+      minimum: 900
+      maximum: 43200
+      default: 900
+
+    AwsConsoleLink:
+      description: Link to access bucket in AWS Console.
+      type: object
+      properties:
+        url:
+          type: string
+
+    AwsCredential:
+      description: AWS CLI/SDK-compatible credential to use to access a bucket
+      type: object
+      properties:
+        Version:
+          type: integer
+        AccessKeyId:
+          type: string
+        SecretAccessKey:
+          type: string
+        SessionToken:
+          type: string
+        Expiration:
+          type: string
+          format: date-time
