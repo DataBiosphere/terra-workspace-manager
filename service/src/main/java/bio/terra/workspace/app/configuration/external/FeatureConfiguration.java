@@ -19,6 +19,7 @@ public class FeatureConfiguration {
   private boolean bpmGcpEnabled;
   private boolean bpmAzureEnabled;
   private boolean temporaryGrantEnabled;
+  private boolean awsEnabled;
 
   public boolean isAzureEnabled() {
     return azureEnabled;
@@ -68,6 +69,14 @@ public class FeatureConfiguration {
     this.temporaryGrantEnabled = temporaryGrantEnabled;
   }
 
+  public boolean isAwsEnabled() {
+    return awsEnabled;
+  }
+
+  public void setAwsEnabled(boolean awsEnabled) {
+    this.awsEnabled = awsEnabled;
+  }
+
   public void azureEnabledCheck() {
     if (!isAzureEnabled()) {
       throw new FeatureNotSupportedException("Azure features are not enabled");
@@ -86,6 +95,12 @@ public class FeatureConfiguration {
     }
   }
 
+  public void awsEnabledCheck() {
+    if (!isAwsEnabled()) {
+      throw new FeatureNotSupportedException("AWS features not enabled");
+    }
+  }
+
   /**
    * Write the feature settings into the log
    *
@@ -98,5 +113,6 @@ public class FeatureConfiguration {
     logger.info("Feature: bpm-azure-enabled: {}", isBpmAzureEnabled());
     logger.info("Feature: bpm-gcp-enabled: {}", isBpmGcpEnabled());
     logger.info("Feature: temporary-grant-enabled: {}", isTemporaryGrantEnabled());
+    logger.info("Feature: aws-enabled: {}", isAwsEnabled());
   }
 }

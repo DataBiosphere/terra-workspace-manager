@@ -22,6 +22,7 @@ import bio.terra.workspace.service.resource.referenced.flight.update.UpdateRefer
 import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.flight.application.able.ApplicationAbleFlight;
+import bio.terra.workspace.service.workspace.flight.aws.CreateAwsContextFlight;
 import bio.terra.workspace.service.workspace.flight.azure.CreateAzureContextFlight;
 import bio.terra.workspace.service.workspace.flight.azure.DeleteAzureContextFlight;
 import bio.terra.workspace.service.workspace.flight.gcp.CreateGcpContextFlightV2;
@@ -64,6 +65,8 @@ public enum ActivityFlight {
       CreateGcpContextFlightV2.class.getName(), ActivityLogChangedTarget.GCP_CLOUD_CONTEXT),
   GCP_CLOUD_CONTEXT_DELETE_FLIGHT(
       DeleteGcpContextFlight.class.getName(), ActivityLogChangedTarget.GCP_CLOUD_CONTEXT),
+  AWS_CLOUD_CONTEXT_CREATE_FLIGHT(
+      CreateAwsContextFlight.class.getName(), ActivityLogChangedTarget.AWS_CLOUD_CONTEXT),
   REMOVE_USER_FROM_WORKSPACE_FLIGHT(
       RemoveUserFromWorkspaceFlight.class.getName(), ActivityLogChangedTarget.USER),
   REFERENCED_RESOURCE_UPDATE_FLIGHT(

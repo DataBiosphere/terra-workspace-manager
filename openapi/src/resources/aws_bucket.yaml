@@ -1,0 +1,27 @@
+components:
+  schemas:
+    AwsBucketAttributes:
+      description: >-
+        Storage bucket properties included in post-creation get.
+      type: object
+      properties:
+        s3BucketName:
+          description: The name of the S3 bucket in which the Terra bucket was allocated.
+          type: string
+        prefix:
+          description: The prefix within the S3 bucket.
+          type: string
+        region:
+          description: Region in which the bucket was created
+          type: string
+
+    AwsBucketResource:
+      type: object
+      description: Description of an AWS storage bucket.
+      required: [ metadata, attributes ]
+      properties:
+        metadata:
+          description: the resource metadata common to all resources
+          $ref: '#/components/schemas/ResourceMetadata'
+        attributes:
+          $ref: '#/components/schemas/AwsBucketAttributes'
