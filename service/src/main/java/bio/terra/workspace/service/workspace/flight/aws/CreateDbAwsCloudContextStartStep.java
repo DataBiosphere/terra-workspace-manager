@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.workspace.flight.create.aws;
+package bio.terra.workspace.service.workspace.flight.aws;
 
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.AWS_CLOUD_CONTEXT;
 

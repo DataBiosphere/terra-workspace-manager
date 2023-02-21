@@ -21,13 +21,12 @@ import bio.terra.workspace.service.resource.referenced.flight.update.UpdateRefer
 import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.flight.application.able.ApplicationAbleFlight;
+import bio.terra.workspace.service.workspace.flight.aws.CreateAwsContextFlight;
 import bio.terra.workspace.service.workspace.flight.azure.CreateAzureContextFlight;
 import bio.terra.workspace.service.workspace.flight.azure.DeleteAzureContextFlight;
 import bio.terra.workspace.service.workspace.flight.gcp.CreateGcpContextFlightV2;
 import bio.terra.workspace.service.workspace.flight.gcp.DeleteGcpContextFlight;
 import bio.terra.workspace.service.workspace.flight.gcp.RemoveUserFromWorkspaceFlight;
-import bio.terra.workspace.service.workspace.flight.create.aws.CreateAwsContextFlight;
-import bio.terra.workspace.service.workspace.flight.create.azure.CreateAzureContextFlight;
 import java.util.Arrays;
 
 /**

@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.workspace.flight.create.aws;
+package bio.terra.workspace.service.workspace.flight.aws;
 
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
