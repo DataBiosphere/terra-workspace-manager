@@ -2,6 +2,7 @@ package bio.terra.workspace.app.controller;
 
 import static bio.terra.workspace.common.utils.MapperUtils.BatchPoolMapper.mapFrom;
 import static bio.terra.workspace.common.utils.MapperUtils.BatchPoolMapper.mapListOfApplicationPackageReferences;
+import static bio.terra.workspace.common.utils.MapperUtils.BatchPoolMapper.mapListOfMetadataItems;
 import static bio.terra.workspace.common.utils.MapperUtils.BatchPoolMapper.mapListOfUserAssignedIdentities;
 
 import bio.terra.common.exception.ApiException;
@@ -497,6 +498,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
                 mapListOfApplicationPackageReferences(
                     body.getAzureBatchPool().getApplicationPackages()))
             .networkConfiguration(mapFrom(body.getAzureBatchPool().getNetworkConfiguration()))
+            .metadata(mapListOfMetadataItems(body.getAzureBatchPool().getMetadata()))
             .build();
 
     final ControlledAzureBatchPoolResource createdBatchPool =

@@ -14,6 +14,7 @@ public final class WorkspaceFlightMapKeys {
   public static final String APPLICATION_IDS = "applicationIds";
   public static final String OPERATION_TYPE = "operationType";
   public static final String POLICIES = "policies";
+  public static final String EFFECTIVE_POLICIES = "effectivePolicies";
   public static final String FOLDER_ID = "folderId";
   public static final String MERGE_POLICIES = "mergePolicies";
   public static final String IS_WET_RUN = "isWetRun";
@@ -119,6 +120,7 @@ public final class WorkspaceFlightMapKeys {
     // additional keys for job filtering
     public static final String STEWARDSHIP_TYPE = "stewardshipType";
     public static final String RESOURCE = "resource";
+    public static final String DESTINATION_RESOURCE = "destinationResource";
 
     private ResourceKeys() {}
   }

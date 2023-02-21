@@ -25,6 +25,7 @@ import bio.terra.workspace.service.policy.exception.PolicyServiceAuthorizationEx
 import bio.terra.workspace.service.policy.exception.PolicyServiceDuplicateException;
 import bio.terra.workspace.service.policy.exception.PolicyServiceNotFoundException;
 import bio.terra.workspace.service.policy.model.PolicyExplainResult;
+import bio.terra.workspace.service.resource.exception.PolicyConflictException;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import io.opencensus.contrib.http.jaxrs.JaxrsClientExtractor;
@@ -203,6 +204,22 @@ public class TpsApiDispatch {
     return new ArrayList<>();
   }
 
+  @Traced
+  public List<String> listValidRegionsForPao(TpsPaoGetResult tpsPao, CloudPlatform platform) {
+    features.tpsEnabledCheck();
+    TpsApi tpsApi = policyApi();
+    TpsRegions tpsRegions;
+    try {
+      tpsRegions = tpsApi.listValidByPolicyInput(tpsPao.getEffectiveAttributes(), platform.toTps());
+    } catch (ApiException e) {
+      throw convertApiException(e);
+    }
+    if (tpsRegions != null) {
+      return tpsRegions.stream().toList();
+    }
+    return new ArrayList<>();
+  }
+
   public PolicyExplainResult explain(
       UUID workspaceId,
       int depth,
@@ -270,10 +287,13 @@ public class TpsApiDispatch {
       return new PolicyServiceAuthorizationException(
           "Not authorized to access Terra Policy Service", ex.getCause());
     } else if (ex.getCode() == HttpStatus.NOT_FOUND.value()) {
-      return new PolicyServiceNotFoundException("Policy service not found", ex);
+      return new PolicyServiceNotFoundException("Policy service returns not found exception", ex);
     } else if (ex.getCode() == HttpStatus.BAD_REQUEST.value()
         && StringUtils.containsIgnoreCase(ex.getMessage(), "duplicate")) {
-      return new PolicyServiceDuplicateException("Policy service duplicate", ex);
+      return new PolicyServiceDuplicateException(
+          "Policy service throws duplicate object exception", ex);
+    } else if (ex.getCode() == HttpStatus.CONFLICT.value()) {
+      return new PolicyConflictException("Policy service throws conflict exception", ex);
     } else {
       return new PolicyServiceAPIException(ex);
     }

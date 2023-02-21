@@ -103,10 +103,9 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   private final WorkspaceService workspaceService;
   private final JobService jobService;
   private final JobApiUtils jobApiUtils;
-  private final SamService samService;
-  private final AwsCloudContextService awsCloudContextService;
-  private final AzureCloudContextService azureCloudContextService;
   private final GcpCloudContextService gcpCloudContextService;
+  private final AzureCloudContextService azureCloudContextService;
+  private final AwsCloudContextService awsCloudContextService;
   private final PetSaService petSaService;
   private final TpsApiDispatch tpsApiDispatch;
   private final WorkspaceActivityLogDao workspaceActivityLogDao;
@@ -116,16 +115,16 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
   @Autowired
   public WorkspaceApiController(
+      AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
+      HttpServletRequest request,
+      SamService samService,
       WorkspaceService workspaceService,
       JobService jobService,
       JobApiUtils jobApiUtils,
-      SamService samService,
-      AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
-      HttpServletRequest request,
-      AwsCloudContextService awsCloudContextService,
       GcpCloudContextService gcpCloudContextService,
-      PetSaService petSaService,
       AzureCloudContextService azureCloudContextService,
+      AwsCloudContextService awsCloudContextService,
+      PetSaService petSaService,
       TpsApiDispatch tpsApiDispatch,
       WorkspaceActivityLogDao workspaceActivityLogDao,
       FeatureConfiguration featureConfiguration,
@@ -135,10 +134,9 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     this.workspaceService = workspaceService;
     this.jobService = jobService;
     this.jobApiUtils = jobApiUtils;
-    this.samService = samService;
-    this.awsCloudContextService = awsCloudContextService;
-    this.azureCloudContextService = azureCloudContextService;
     this.gcpCloudContextService = gcpCloudContextService;
+    this.azureCloudContextService = azureCloudContextService;
+    this.awsCloudContextService = awsCloudContextService;
     this.petSaService = petSaService;
     this.tpsApiDispatch = tpsApiDispatch;
     this.workspaceActivityLogDao = workspaceActivityLogDao;
@@ -488,8 +486,12 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     // No additional authz check as this is just a wrapper around a Sam endpoint.
     SamRethrow.onInterrupted(
         () ->
-            samService.grantWorkspaceRole(
-                uuid, getAuthenticatedInfo(), WsmIamRole.fromApiModel(role), body.getMemberEmail()),
+            getSamService()
+                .grantWorkspaceRole(
+                    uuid,
+                    getAuthenticatedInfo(),
+                    WsmIamRole.fromApiModel(role),
+                    body.getMemberEmail()),
         "grantWorkspaceRole");
     workspaceActivityLogService.writeActivity(
         getAuthenticatedInfo(),
@@ -525,7 +527,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     // No additional authz check as this is just a wrapper around a Sam endpoint.
     List<bio.terra.workspace.service.iam.model.RoleBinding> bindingList =
         SamRethrow.onInterrupted(
-            () -> samService.listRoleBindings(uuid, getAuthenticatedInfo()), "listRoleBindings");
+            () -> getSamService().listRoleBindings(uuid, getAuthenticatedInfo()),
+            "listRoleBindings");
     ApiRoleBindingList responseList = new ApiRoleBindingList();
     for (bio.terra.workspace.service.iam.model.RoleBinding roleBinding : bindingList) {
       responseList.add(

@@ -16,14 +16,16 @@ import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.Cl
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneWorkspaceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
+import bio.terra.workspace.service.resource.referenced.flight.clone.CloneReferencedResourceFlight;
 import bio.terra.workspace.service.resource.referenced.flight.update.UpdateReferenceResourceFlight;
-import bio.terra.workspace.service.workspace.flight.CreateGcpContextFlightV2;
-import bio.terra.workspace.service.workspace.flight.DeleteAzureContextFlight;
-import bio.terra.workspace.service.workspace.flight.DeleteGcpContextFlight;
-import bio.terra.workspace.service.workspace.flight.RemoveUserFromWorkspaceFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.flight.application.able.ApplicationAbleFlight;
+import bio.terra.workspace.service.workspace.flight.azure.CreateAzureContextFlight;
+import bio.terra.workspace.service.workspace.flight.azure.DeleteAzureContextFlight;
+import bio.terra.workspace.service.workspace.flight.gcp.CreateGcpContextFlightV2;
+import bio.terra.workspace.service.workspace.flight.gcp.DeleteGcpContextFlight;
+import bio.terra.workspace.service.workspace.flight.gcp.RemoveUserFromWorkspaceFlight;
 import bio.terra.workspace.service.workspace.flight.create.aws.CreateAwsContextFlight;
 import bio.terra.workspace.service.workspace.flight.create.azure.CreateAzureContextFlight;
 import java.util.Arrays;
@@ -84,7 +86,9 @@ public enum ActivityFlight {
   UPDATE_AZURE_CONTROLLED_RESOURCES_REGION_FLIGHT(
       UpdateAzureControlledResourceRegionFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
   REVOKE_TEMPORARY_GRANT_FLIGHT(
-      RevokeTemporaryGrantFlight.class.getName(), ActivityLogChangedTarget.WORKSPACE);
+      RevokeTemporaryGrantFlight.class.getName(), ActivityLogChangedTarget.WORKSPACE),
+  CLONE_REFERENCED_RESOURCE_FLIGHT(
+      CloneReferencedResourceFlight.class.getName(), ActivityLogChangedTarget.RESOURCE);
 
   private final String flightClassName;
   private final ActivityLogChangedTarget changedTarget;

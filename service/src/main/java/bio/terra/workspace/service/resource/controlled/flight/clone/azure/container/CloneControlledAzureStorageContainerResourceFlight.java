@@ -8,11 +8,11 @@ import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.policy.flight.MergePolicyAttributesStep;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureStorageAccessService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.BlobCopier;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.flight.clone.CheckControlledResourceAuthStep;
-import bio.terra.workspace.service.resource.controlled.flight.clone.ClonePolicyAttributesStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.GetCloudContextStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
@@ -88,7 +88,7 @@ public class CloneControlledAzureStorageContainerResourceFlight extends Flight {
 
     if (mergePolicies) {
       addStep(
-          new ClonePolicyAttributesStep(
+          new MergePolicyAttributesStep(
               sourceResource.getWorkspaceId(),
               destinationWorkspaceId,
               userRequest,

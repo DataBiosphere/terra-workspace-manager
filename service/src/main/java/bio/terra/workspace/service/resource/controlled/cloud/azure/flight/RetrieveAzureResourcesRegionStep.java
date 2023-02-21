@@ -29,6 +29,7 @@ import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.resourcemanager.compute.ComputeManager;
+import com.azure.resourcemanager.compute.models.ApiErrorException;
 import com.azure.resourcemanager.relay.RelayManager;
 import com.azure.resourcemanager.storage.StorageManager;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -164,31 +165,54 @@ public class RetrieveAzureResourcesRegionStep implements Step {
   private String getAzureDiskRegion(
       ControlledAzureDiskResource resource, AzureCloudContext azureCloudContext) {
     ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
-    return computeManager
-        .disks()
-        .getByResourceGroup(azureCloudContext.getAzureResourceGroupId(), resource.getDiskName())
-        .regionName();
+    try {
+      return computeManager
+          .disks()
+          .getByResourceGroup(azureCloudContext.getAzureResourceGroupId(), resource.getDiskName())
+          .regionName();
+    } catch (ApiErrorException e) {
+      logger.warn(
+          String.format(
+              "Cannot get resource group %s for azure disk %s",
+              azureCloudContext.getAzureResourceGroupId(), resource.getDiskName()));
+      return null;
+    }
   }
 
   private String getAzureStorageAccountRegion(
       ControlledAzureStorageResource resource, AzureCloudContext azureCloudContext) {
     StorageManager storageManager = crlService.getStorageManager(azureCloudContext, azureConfig);
-
-    return storageManager
-        .storageAccounts()
-        .getByResourceGroup(
-            azureCloudContext.getAzureResourceGroupId(), resource.getStorageAccountName())
-        .regionName();
+    try {
+      return storageManager
+          .storageAccounts()
+          .getByResourceGroup(
+              azureCloudContext.getAzureResourceGroupId(), resource.getStorageAccountName())
+          .regionName();
+    } catch (ApiErrorException e) {
+      logger.warn(
+          String.format(
+              "Cannot get resource group %s for azure storage account %s",
+              azureCloudContext.getAzureResourceGroupId(), resource.getStorageAccountName()));
+      return null;
+    }
   }
 
   private String getAzureRelayNameSpaceRegion(
       ControlledAzureRelayNamespaceResource resource, AzureCloudContext azureCloudContext) {
     RelayManager manager = crlService.getRelayManager(azureCloudContext, azureConfig);
-    return manager
-        .namespaces()
-        .getByResourceGroup(
-            azureCloudContext.getAzureResourceGroupId(), resource.getNamespaceName())
-        .regionName();
+    try {
+      return manager
+          .namespaces()
+          .getByResourceGroup(
+              azureCloudContext.getAzureResourceGroupId(), resource.getNamespaceName())
+          .regionName();
+    } catch (ApiErrorException e) {
+      logger.warn(
+          String.format(
+              "Cannot get resource group %s for azure namespace %s",
+              azureCloudContext.getAzureResourceGroupId(), resource.getNamespaceName()));
+      return null;
+    }
   }
 
   private String getAzureStorageContainerRegion(
@@ -222,29 +246,54 @@ public class RetrieveAzureResourcesRegionStep implements Step {
   private String getAzureVmRegion(
       ControlledAzureVmResource resource, AzureCloudContext azureCloudContext) {
     ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
-    return computeManager
-        .virtualMachines()
-        .getByResourceGroup(azureCloudContext.getAzureResourceGroupId(), resource.getVmName())
-        .regionName();
+    try {
+      return computeManager
+          .virtualMachines()
+          .getByResourceGroup(azureCloudContext.getAzureResourceGroupId(), resource.getVmName())
+          .regionName();
+    } catch (ApiErrorException e) {
+      logger.warn(
+          String.format(
+              "Cannot get resource group %s for azure VM %s",
+              azureCloudContext.getAzureResourceGroupId(), resource.getVmName()));
+      return null;
+    }
   }
 
   private String getAzureIpRegion(
       ControlledAzureIpResource resource, AzureCloudContext azureCloudContext) {
     ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
-    return computeManager
-        .networkManager()
-        .publicIpAddresses()
-        .getByResourceGroup(azureCloudContext.getAzureResourceGroupId(), resource.getIpName())
-        .regionName();
+    try {
+      return computeManager
+          .networkManager()
+          .publicIpAddresses()
+          .getByResourceGroup(azureCloudContext.getAzureResourceGroupId(), resource.getIpName())
+          .regionName();
+    } catch (ApiErrorException e) {
+      logger.warn(
+          String.format(
+              "Cannot get resource group %s for azure IP %s",
+              azureCloudContext.getAzureResourceGroupId(), resource.getIpName()));
+      return null;
+    }
   }
 
   private String getAzureNetworkRegion(
       ControlledAzureNetworkResource resource, AzureCloudContext azureCloudContext) {
     ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
-    return computeManager
-        .networkManager()
-        .networks()
-        .getByResourceGroup(azureCloudContext.getAzureResourceGroupId(), resource.getNetworkName())
-        .regionName();
+    try {
+      return computeManager
+          .networkManager()
+          .networks()
+          .getByResourceGroup(
+              azureCloudContext.getAzureResourceGroupId(), resource.getNetworkName())
+          .regionName();
+    } catch (ApiErrorException e) {
+      logger.warn(
+          String.format(
+              "Cannot get resource group %s for azure network %s",
+              azureCloudContext.getAzureResourceGroupId(), resource.getNetworkName()));
+      return null;
+    }
   }
 }
