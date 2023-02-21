@@ -290,7 +290,12 @@ public class RevokeStep implements Step {
   }
 
   private void revokeActAs(GrantData grantData) throws IOException {
-    String projectId = gcpCloudContextService.getRequiredGcpProject(grantData.workspaceId());
+    Optional<String> maybeProjectId = gcpCloudContextService.getGcpProject(grantData.workspaceId());
+    if (maybeProjectId.isEmpty()) {
+      // This GCP context has been deleted already, so there's nothing left to revoke.
+      return;
+    }
+    String projectId = maybeProjectId.get();
     logger.info(
         "Revoking grant {} type {} workspace {} project {}",
         grantData.grantId(),
