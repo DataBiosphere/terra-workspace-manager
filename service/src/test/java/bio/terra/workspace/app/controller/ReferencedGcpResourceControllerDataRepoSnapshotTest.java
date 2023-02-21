@@ -358,7 +358,6 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotTest extends BaseCon
   // Destination workspace policy is the merge of source workspace policy and pre-clone destination
   // workspace policy
   @Test
-  @Disabled("Enable after PF-2217 is fixed")
   void clone_policiesMerged() throws Exception {
     logger.info("features.isTpsEnabled(): %s".formatted(features.isTpsEnabled()));
     // Don't run the test if TPS is disabled
