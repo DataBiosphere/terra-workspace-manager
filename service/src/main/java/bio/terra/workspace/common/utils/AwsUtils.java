@@ -1,6 +1,8 @@
 package bio.terra.workspace.common.utils;
 
 import bio.terra.common.exception.ApiException;
+import bio.terra.common.exception.BadRequestException;
+import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.workspace.service.workspace.exceptions.SaCredentialsMissingException;
@@ -376,17 +378,6 @@ public class AwsUtils {
     }
   }
 
-  public static Optional<NotebookInstanceStatus> getSageMakerNotebookStatus(
-      Credentials credentials, Region region, String notebookName) {
-    // TODO(TERRA-384) - move to COW in TCL
-    SageMakerClient sageMaker = getSagemakerSession(credentials, region);
-
-    DescribeNotebookInstanceResponse describeResponse =
-        sageMaker.describeNotebookInstance(
-            DescribeNotebookInstanceRequest.builder().notebookInstanceName(notebookName).build());
-    return Optional.ofNullable(describeResponse.notebookInstanceStatus());
-  }
-
   public static void stopSageMakerNotebook(
       Credentials credentials, Region region, String notebookName) {
     // TODO(TERRA-384) - move to COW in TCL
@@ -520,36 +511,38 @@ public class AwsUtils {
 
   public static URL getSageMakerNotebookProxyUrl(
       Credentials credentials, Region region, String notebookName, Integer duration, String view) {
-    SageMakerClient sageMaker = getSagemakerSession(credentials, region);
-
-    NotebookInstanceStatus notebookStatus =
-        sageMaker
-            .describeNotebookInstance(
-                DescribeNotebookInstanceRequest.builder()
-                    .notebookInstanceName(notebookName)
-                    .build())
-            .notebookInstanceStatus();
-    if (notebookStatus != NotebookInstanceStatus.IN_SERVICE) {
-      throw new ValidationException(
-          String.format(
-              "ProxyUrl only available for %s notebooks, current status is %s",
-              NotebookInstanceStatus.IN_SERVICE, notebookStatus.toString()));
-    }
-
-    CreatePresignedNotebookInstanceUrlRequest request =
-        CreatePresignedNotebookInstanceUrlRequest.builder()
-            .notebookInstanceName(notebookName)
-            .sessionExpirationDurationInSeconds(duration)
-            .build();
-
-    CreatePresignedNotebookInstanceUrlResponse result =
-        sageMaker.createPresignedNotebookInstanceUrl(request);
-
     try {
+
+      SageMakerClient sageMaker = getSagemakerSession(credentials, region);
+
+      NotebookInstanceStatus notebookStatus =
+          sageMaker
+              .describeNotebookInstance(
+                  DescribeNotebookInstanceRequest.builder()
+                      .notebookInstanceName(notebookName)
+                      .build())
+              .notebookInstanceStatus();
+      if (notebookStatus != NotebookInstanceStatus.IN_SERVICE) {
+        throw new ValidationException(
+            String.format(
+                "ProxyUrl only available for %s notebooks, current status is %s",
+                NotebookInstanceStatus.IN_SERVICE, notebookStatus.toString()));
+      }
+
+      CreatePresignedNotebookInstanceUrlRequest request =
+          CreatePresignedNotebookInstanceUrlRequest.builder()
+              .notebookInstanceName(notebookName)
+              .sessionExpirationDurationInSeconds(duration)
+              .build();
+
+      CreatePresignedNotebookInstanceUrlResponse result =
+          sageMaker.createPresignedNotebookInstanceUrl(request);
+
       return new URIBuilder(result.authorizedUrl()).addParameter("view", view).build().toURL();
 
     } catch (Exception e) {
-      throw new ApiException("Failed to get URL.", e);
+      checkException(e);
+      throw new ApiException("Failed to get proxy uri.", e);
     }
   }
 
@@ -565,15 +558,15 @@ public class AwsUtils {
     }
   }
 
-  public static void checkException(Exception ex) {
+  private static void checkException(Exception ex) {
     // TODO(TERRA-384) - move to COW in TCL
     if (ex instanceof SdkException) {
       String message = ex.getMessage();
       if (message.contains("not authorized to perform")) {
-        throw new ApiException(
+        throw new NotFoundException(
             "Error performing notebook operation, check the instance name / permissions and retry");
       } else if (message.contains("Unable to transition to")) {
-        throw new ApiException("Unable to perform notebook operation on cloud platform");
+        throw new BadRequestException("Unable to perform notebook operation on cloud platform");
       }
     }
   }
