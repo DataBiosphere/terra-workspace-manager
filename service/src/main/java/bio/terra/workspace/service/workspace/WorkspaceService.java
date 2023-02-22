@@ -290,6 +290,7 @@ public class WorkspaceService {
    * @param name name to change - may be null
    * @param description description to change - may be null
    */
+  @Traced
   public Workspace updateWorkspace(
       UUID workspaceUuid,
       @Nullable String userFacingId,
@@ -313,6 +314,7 @@ public class WorkspaceService {
    * @param workspaceUuid workspace of interest
    * @param properties list of keys in properties
    */
+  @Traced
   public void updateWorkspaceProperties(
       UUID workspaceUuid, Map<String, String> properties, AuthenticatedUserRequest userRequest) {
     workspaceDao.updateWorkspaceProperties(workspaceUuid, properties);
@@ -347,6 +349,7 @@ public class WorkspaceService {
    * @param workspaceUuid workspace of interest
    * @param propertyKeys list of keys in properties
    */
+  @Traced
   public void deleteWorkspaceProperties(
       UUID workspaceUuid, List<String> propertyKeys, AuthenticatedUserRequest userRequest) {
     workspaceDao.deleteWorkspaceProperties(workspaceUuid, propertyKeys);
@@ -358,6 +361,7 @@ public class WorkspaceService {
         ActivityLogChangedTarget.WORKSPACE);
   }
 
+  @Traced
   public String cloneWorkspace(
       Workspace sourceWorkspace,
       AuthenticatedUserRequest userRequest,
@@ -430,6 +434,7 @@ public class WorkspaceService {
         .submit();
   }
 
+  @Traced
   public void createGcpCloudContext(
       Workspace workspace, String jobId, AuthenticatedUserRequest userRequest) {
     createGcpCloudContext(workspace, jobId, userRequest, null);
@@ -485,6 +490,7 @@ public class WorkspaceService {
         .submitAndWait();
   }
 
+  @Traced
   public void deleteAzureCloudContext(Workspace workspace, AuthenticatedUserRequest userRequest) {
     String jobDescription =
         String.format(
@@ -510,6 +516,7 @@ public class WorkspaceService {
    * @param executingUserRequest User credentials to authenticate this removal. Must belong to a
    *     workspace owner, and likely do not belong to {@code userEmail}.
    */
+  @Traced
   public void removeWorkspaceRoleFromUser(
       Workspace workspace,
       WsmIamRole role,
