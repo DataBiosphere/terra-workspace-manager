@@ -116,9 +116,9 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
                     .cloningInstructions(CloningInstructions.COPY_RESOURCE)
                     .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
                     .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                    .region(ipCreationParameters.getRegion())
                     .build())
             .ipName(ipCreationParameters.getName())
-            .region(ipCreationParameters.getRegion())
             .build();
 
     // Submit an IP creation flight.

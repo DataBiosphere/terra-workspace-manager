@@ -27,12 +27,11 @@ public class ControlledAzureNetworkHandler implements WsmResourceHandler {
 
     var resource =
         ControlledAzureNetworkResource.builder()
-            .common(new ControlledResourceFields(dbResource))
+            .common(new ControlledResourceFields(dbResource, attributes.getRegion()))
             .networkName(attributes.getNetworkName())
             .subnetName(attributes.getSubnetName())
             .addressSpaceCidr(attributes.getAddressSpaceCidr())
             .subnetAddressCidr(attributes.getSubnetAddressCidr())
-            .region(attributes.getRegion())
             .build();
     return resource;
   }

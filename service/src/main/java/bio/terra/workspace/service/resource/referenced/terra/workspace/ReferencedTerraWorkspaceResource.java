@@ -12,18 +12,14 @@ import bio.terra.workspace.generated.model.ApiTerraWorkspaceResource;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 public class ReferencedTerraWorkspaceResource extends ReferencedResource {
@@ -32,40 +28,14 @@ public class ReferencedTerraWorkspaceResource extends ReferencedResource {
   /**
    * Constructor for serialized form for Stairway use and used by the builder
    *
-   * @param workspaceId workspace unique identifier
-   * @param resourceId resource unique identifier
-   * @param name name - may be null
-   * @param description description - may be null
-   * @param cloningInstructions cloning instructions
+   * @param resourceFields common resource fields
    * @param referencedWorkspaceId workspace uuid that this referenced resource points to
-   * @param resourceLineage resource lineage
    */
   @JsonCreator
   public ReferencedTerraWorkspaceResource(
-      @JsonProperty("workspaceId") UUID workspaceId,
-      @JsonProperty("resourceId") UUID resourceId,
-      @JsonProperty("name") String name,
-      @JsonProperty("description") String description,
-      @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
-      @JsonProperty("referencedWorkspaceId") UUID referencedWorkspaceId,
-      @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
-      @JsonProperty("properties") Map<String, String> properties,
-      @JsonProperty("createdByEmail") String createdByEmail,
-      @JsonProperty("createdDate") OffsetDateTime createdDate,
-      @JsonProperty("lastUpdatedByEmail") String lastUpdatedByEmail,
-      @JsonProperty("lastUpdatedDate") OffsetDateTime lastUpdatedDate) {
-    super(
-        workspaceId,
-        resourceId,
-        name,
-        description,
-        cloningInstructions,
-        resourceLineage,
-        properties,
-        createdByEmail,
-        createdDate,
-        lastUpdatedByEmail,
-        lastUpdatedDate);
+      @JsonProperty("wsmResourceFields") WsmResourceFields resourceFields,
+      @JsonProperty("referencedWorkspaceId") UUID referencedWorkspaceId) {
+    super(resourceFields);
     this.referencedWorkspaceId = referencedWorkspaceId;
     validate();
   }
@@ -88,7 +58,7 @@ public class ReferencedTerraWorkspaceResource extends ReferencedResource {
   }
 
   private ReferencedTerraWorkspaceResource(Builder builder) {
-    super(builder.resourceCommonFields);
+    super(builder.wsmResourceFields);
     this.referencedWorkspaceId = builder.referencedWorkspaceId;
     validate();
   }
@@ -97,8 +67,27 @@ public class ReferencedTerraWorkspaceResource extends ReferencedResource {
     return new Builder();
   }
 
+  // -- getters used in serialization --
+  public WsmResourceFields getWsmResourceFields() {
+    return super.getWsmResourceFields();
+  }
+
   public UUID getReferencedWorkspaceId() {
     return referencedWorkspaceId;
+  }
+
+  // -- getters not included in serialization --
+
+  @Override
+  @JsonIgnore
+  public WsmResourceType getResourceType() {
+    return WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE;
+  }
+
+  @Override
+  @JsonIgnore
+  public WsmResourceFamily getResourceFamily() {
+    return WsmResourceFamily.TERRA_WORKSPACE;
   }
 
   public ApiTerraWorkspaceAttributes toApiAttributes() {
@@ -119,16 +108,6 @@ public class ReferencedTerraWorkspaceResource extends ReferencedResource {
       throw new BadRequestException(String.format("Resource is not a %s", expectedType));
     }
     return (T) this;
-  }
-
-  @Override
-  public WsmResourceType getResourceType() {
-    return WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE;
-  }
-
-  @Override
-  public WsmResourceFamily getResourceFamily() {
-    return WsmResourceFamily.TERRA_WORKSPACE;
   }
 
   @Override
@@ -174,21 +153,21 @@ public class ReferencedTerraWorkspaceResource extends ReferencedResource {
    */
   public Builder toBuilder() {
     return builder()
-        .resourceCommonFields(getWsmResourceFields())
+        .wsmResourceFields(getWsmResourceFields())
         .referencedWorkspaceId(getReferencedWorkspaceId());
   }
 
   public static class Builder {
     private UUID referencedWorkspaceId;
-    private WsmResourceFields resourceCommonFields;
+    private WsmResourceFields wsmResourceFields;
 
     public Builder referencedWorkspaceId(UUID referencedWorkspaceId) {
       this.referencedWorkspaceId = referencedWorkspaceId;
       return this;
     }
 
-    public Builder resourceCommonFields(WsmResourceFields resourceFields) {
-      this.resourceCommonFields = resourceFields;
+    public Builder wsmResourceFields(WsmResourceFields resourceFields) {
+      this.wsmResourceFields = resourceFields;
       return this;
     }
 

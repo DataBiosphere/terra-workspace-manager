@@ -10,19 +10,15 @@ import bio.terra.workspace.generated.model.ApiGitRepoAttributes;
 import bio.terra.workspace.generated.model.ApiGitRepoResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
@@ -32,30 +28,9 @@ public class ReferencedGitRepoResource extends ReferencedResource {
 
   @JsonCreator
   public ReferencedGitRepoResource(
-      @JsonProperty("workspaceId") UUID workspaceId,
-      @JsonProperty("resourceId") UUID resourceId,
-      @JsonProperty("name") String name,
-      @JsonProperty("description") @Nullable String description,
-      @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
-      @JsonProperty("gitRepoUrl") String gitRepoUrl,
-      @JsonProperty("resourceLineage") @Nullable List<ResourceLineageEntry> resourceLineage,
-      @JsonProperty("properties") Map<String, String> properties,
-      @JsonProperty("createdByEmail") String createdByEmail,
-      @JsonProperty("createdDate") OffsetDateTime createdDate,
-      @JsonProperty("lastUpdatedByEmail") String lastUpdatedByEmail,
-      @JsonProperty("lastUpdatedDate") OffsetDateTime lastUpdatedDate) {
-    super(
-        workspaceId,
-        resourceId,
-        name,
-        description,
-        cloningInstructions,
-        resourceLineage,
-        properties,
-        createdByEmail,
-        createdDate,
-        lastUpdatedByEmail,
-        lastUpdatedDate);
+      @JsonProperty("wsmResourceFields") WsmResourceFields resourceFields,
+      @JsonProperty("gitRepoUrl") String gitRepoUrl) {
+    super(resourceFields);
     this.gitRepoUrl = gitRepoUrl;
     validate();
   }
@@ -89,12 +64,24 @@ public class ReferencedGitRepoResource extends ReferencedResource {
     return (T) this;
   }
 
+  // -- getters used in serialization --
+  public WsmResourceFields getWsmResourceFields() {
+    return super.getWsmResourceFields();
+  }
+
+  public String getGitRepoUrl() {
+    return gitRepoUrl;
+  }
+
+  // -- getters not included in serialization --
   @Override
+  @JsonIgnore
   public WsmResourceType getResourceType() {
     return WsmResourceType.REFERENCED_ANY_GIT_REPO;
   }
 
   @Override
+  @JsonIgnore
   public WsmResourceFamily getResourceFamily() {
     return WsmResourceFamily.GIT_REPO;
   }
@@ -144,10 +131,6 @@ public class ReferencedGitRepoResource extends ReferencedResource {
 
   public ApiGitRepoResource toApiResource() {
     return new ApiGitRepoResource().metadata(super.toApiMetadata()).attributes(toApiAttributes());
-  }
-
-  public String getGitRepoUrl() {
-    return gitRepoUrl;
   }
 
   @Override

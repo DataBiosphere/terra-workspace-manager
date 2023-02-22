@@ -16,6 +16,9 @@ import bio.terra.workspace.generated.model.ApiResourceMetadata;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Objects;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
@@ -23,159 +26,82 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
-import org.apache.commons.lang3.StringUtils;
 
 /**
  * Top-level class for a Resource. Children of this class can be controlled resources, references,
  * or (future) monitored resources.
  */
 public abstract class WsmResource {
-
-  private final UUID workspaceUuid;
-  private final UUID resourceId;
-  private final String name;
-  private final @Nullable String description;
-  private final CloningInstructions cloningInstructions;
-  private final List<ResourceLineageEntry> resourceLineage;
-  // Properties map will be empty if there's no properties set on the resource.
-  private final ImmutableMap<String, String> properties;
-  private final String createdByEmail;
-  private final @Nullable OffsetDateTime createdDate;
-  private final @Nullable String lastUpdatedByEmail;
-  private final @Nullable OffsetDateTime lastUpdatedDate;
+  private final WsmResourceFields wsmResourceFields;
 
   /**
-   * construct from individual fields
+   * Base resource constructor
    *
-   * @param workspaceUuid unique identifier of the workspace where this resource lives (or is going
-   *     to live)
-   * @param resourceId unique identifier of the resource
-   * @param name resource name; unique within a workspace
-   * @param description free-form text description of the resource
-   * @param cloningInstructions how to treat the resource when cloning the workspace
-   * @param resourceLineage resource lineage
-   * @param properties key-value pairs of the resource
-   * @param createdByEmail email of whom created the resource
-   * @param createdDate date-time when the resource is created. Null only when building the
-   *     WsmResource to create. Postgres will compute the createdDate when the resource is written
-   *     to the database.
+   * @param wsmResourceFields common resource fields
    */
-  public WsmResource(
-      UUID workspaceUuid,
-      UUID resourceId,
-      String name,
-      @Nullable String description,
-      CloningInstructions cloningInstructions,
-      @Nullable List<ResourceLineageEntry> resourceLineage,
-      Map<String, String> properties,
-      String createdByEmail,
-      @Nullable OffsetDateTime createdDate,
-      String lastUpdatedByEmail,
-      OffsetDateTime lastUpdatedDate) {
-    this.workspaceUuid = workspaceUuid;
-    this.resourceId = resourceId;
-    this.name = name;
-    this.description = description;
-    this.cloningInstructions = cloningInstructions;
-    this.resourceLineage = Optional.ofNullable(resourceLineage).orElse(new ArrayList<>());
-    this.properties = ImmutableMap.copyOf(properties);
-    this.createdByEmail = createdByEmail;
-    this.createdDate = createdDate;
-    this.lastUpdatedByEmail = lastUpdatedByEmail;
-    this.lastUpdatedDate = lastUpdatedDate;
+  @JsonCreator
+  public WsmResource(@JsonProperty("wsmResourceFields") WsmResourceFields wsmResourceFields) {
+    this.wsmResourceFields = wsmResourceFields;
   }
 
   /** construct from database data */
   public WsmResource(DbResource dbResource) {
-    this(
-        dbResource.getWorkspaceId(),
-        dbResource.getResourceId(),
-        dbResource.getName(),
-        dbResource.getDescription(),
-        dbResource.getCloningInstructions(),
-        dbResource.getResourceLineage().orElse(new ArrayList<>()),
-        dbResource.getProperties(),
-        dbResource.getCreatedByEmail(),
-        dbResource.getCreatedDate(),
-        dbResource.getLastUpdatedByEmail(),
-        dbResource.getLastUpdatedDate());
+    this(new WsmResourceFields(dbResource));
   }
 
-  public WsmResource(WsmResourceFields resourceFields) {
-    this(
-        resourceFields.getWorkspaceId(),
-        resourceFields.getResourceId(),
-        resourceFields.getName(),
-        resourceFields.getDescription(),
-        resourceFields.getCloningInstructions(),
-        resourceFields.getResourceLineage(),
-        resourceFields.getProperties(),
-        resourceFields.getCreatedByEmail(),
-        resourceFields.getCreatedDate(),
-        resourceFields.getLastUpdatedByEmail(),
-        resourceFields.getLastUpdatedDate());
+  // Getter used for serdes
+  // The rest of the getters indirect through resourceFields
+  public WsmResourceFields getWsmResourceFields() {
+    return wsmResourceFields;
   }
 
   public UUID getWorkspaceId() {
-    return workspaceUuid;
+    return wsmResourceFields.getWorkspaceId();
   }
 
   public UUID getResourceId() {
-    return resourceId;
+    return wsmResourceFields.getResourceId();
   }
 
   public String getName() {
-    return name;
+    return wsmResourceFields.getName();
   }
 
   public @Nullable String getDescription() {
-    return description;
-  }
-
-  public WsmResourceFields getWsmResourceFields() {
-    return WsmResourceFields.builder()
-        .name(name)
-        .description(description)
-        .workspaceUuid(workspaceUuid)
-        .resourceId(resourceId)
-        .cloningInstructions(cloningInstructions)
-        .resourceLineage(resourceLineage)
-        .properties(properties)
-        .createdByEmail(createdByEmail)
-        .build();
+    return wsmResourceFields.getDescription();
   }
 
   public CloningInstructions getCloningInstructions() {
-    return cloningInstructions;
+    return wsmResourceFields.getCloningInstructions();
   }
 
   public List<ResourceLineageEntry> getResourceLineage() {
-    return resourceLineage;
+    return wsmResourceFields.getResourceLineage();
   }
 
   public ImmutableMap<String, String> getProperties() {
-    return properties;
+    return wsmResourceFields.getProperties();
   }
 
   public String getCreatedByEmail() {
-    return createdByEmail;
+    return wsmResourceFields.getCreatedByEmail();
   }
 
-  public OffsetDateTime getCreatedDate() {
-    return createdDate;
+  public @Nullable OffsetDateTime getCreatedDate() {
+    return wsmResourceFields.getCreatedDate();
   }
 
-  public String getLastUpdatedByEmail() {
-    return lastUpdatedByEmail;
+  public @Nullable String getLastUpdatedByEmail() {
+    return wsmResourceFields.getLastUpdatedByEmail();
   }
 
-  public OffsetDateTime getLastUpdatedDate() {
-    return lastUpdatedDate;
+  public @Nullable OffsetDateTime getLastUpdatedDate() {
+    return wsmResourceFields.getLastUpdatedDate();
   }
+
   /**
    * Sub-classes must identify their stewardship type
    *
@@ -298,15 +224,15 @@ public abstract class WsmResource {
 
   protected List<ResourceLineageEntry> buildCloneResourceLineage() {
     List<ResourceLineageEntry> cloneResourceLineage =
-        resourceLineage != null ? resourceLineage : new ArrayList<>();
-    cloneResourceLineage.add(new ResourceLineageEntry(workspaceUuid, resourceId));
+        getResourceLineage() != null ? getResourceLineage() : new ArrayList<>();
+    cloneResourceLineage.add(new ResourceLineageEntry(getWorkspaceId(), getResourceId()));
     return cloneResourceLineage;
   }
 
   protected Map<String, String> buildCloneProperties(
       UUID destinationWorkspaceId, @Nullable UUID destinationFolderId) {
-    Map<String, String> destinationResourceProperties = new HashMap<>(properties);
-    if (!destinationWorkspaceId.equals(workspaceUuid)) {
+    Map<String, String> destinationResourceProperties = new HashMap<>(getProperties());
+    if (!destinationWorkspaceId.equals(getWorkspaceId())) {
       if (destinationFolderId != null) {
         // Cloning a work with folder ID to corresponding folder in destination workspace.
         destinationResourceProperties.put(FOLDER_ID_KEY, destinationFolderId.toString());
@@ -327,26 +253,26 @@ public abstract class WsmResource {
    * @return partially constructed Api Model common resource description
    */
   public ApiResourceMetadata toApiMetadata() {
-    ApiProperties apiProperties = convertMapToApiProperties(properties);
+    ApiProperties apiProperties = convertMapToApiProperties(getProperties());
 
     ApiResourceMetadata apiResourceMetadata =
         new ApiResourceMetadata()
-            .workspaceId(workspaceUuid)
-            .resourceId(resourceId)
-            .name(name)
-            .description(description)
+            .workspaceId(getWorkspaceId())
+            .resourceId(getResourceId())
+            .name(getName())
+            .description(getDescription())
             .resourceType(getResourceType().toApiModel())
             .stewardshipType(getStewardshipType().toApiModel())
             .cloudPlatform(getResourceType().getCloudPlatform().toApiModel())
-            .cloningInstructions(cloningInstructions.toApiModel())
+            .cloningInstructions(getCloningInstructions().toApiModel())
             .properties(apiProperties)
-            .createdBy(createdByEmail)
-            .createdDate(createdDate)
-            .lastUpdatedBy(Optional.ofNullable(lastUpdatedByEmail).orElse(createdByEmail))
-            .lastUpdatedDate(Optional.ofNullable(lastUpdatedDate).orElse(createdDate));
+            .createdBy(getCreatedByEmail())
+            .createdDate(getCreatedDate())
+            .lastUpdatedBy(Optional.ofNullable(getLastUpdatedByEmail()).orElse(getCreatedByEmail()))
+            .lastUpdatedDate(Optional.ofNullable(getLastUpdatedDate()).orElse(getCreatedDate()));
     ApiResourceLineage apiResourceLineage = new ApiResourceLineage();
     apiResourceLineage.addAll(
-        resourceLineage.stream().map(ResourceLineageEntry::toApiModel).toList());
+        getResourceLineage().stream().map(ResourceLineageEntry::toApiModel).toList());
     apiResourceMetadata.resourceLineage(apiResourceLineage);
 
     return apiResourceMetadata;
@@ -393,31 +319,12 @@ public abstract class WsmResource {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    WsmResource that = (WsmResource) o;
-
-    // Resource lineage is not compared.
-    return Objects.equals(workspaceUuid, that.workspaceUuid)
-        && Objects.equals(resourceId, that.resourceId)
-        && StringUtils.equals(name, that.name)
-        && StringUtils.equals(description, that.description)
-        && cloningInstructions == that.cloningInstructions
-        && properties.equals(that.properties)
-        && StringUtils.equals(createdByEmail, that.createdByEmail);
+    if (!(o instanceof WsmResource that)) return false;
+    return Objects.equal(wsmResourceFields, that.wsmResourceFields);
   }
 
   @Override
   public int hashCode() {
-    int result = workspaceUuid != null ? workspaceUuid.hashCode() : 0;
-    result = 31 * result + (resourceId != null ? resourceId.hashCode() : 0);
-    result = 31 * result + (name != null ? name.hashCode() : 0);
-    result = 31 * result + (description != null ? description.hashCode() : 0);
-    result = 31 * result + (cloningInstructions != null ? cloningInstructions.hashCode() : 0);
-    result = 31 * result + (resourceLineage != null ? resourceLineage.hashCode() : 0);
-    result = 31 * result + (properties.hashCode());
-    result = 31 * result + (createdByEmail != null ? createdByEmail.hashCode() : 0);
-    result = 31 * result + (createdDate != null ? createdDate.hashCode() : 0);
-    return result;
+    return Objects.hashCode(wsmResourceFields);
   }
 }

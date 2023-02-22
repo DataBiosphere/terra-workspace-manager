@@ -21,6 +21,7 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
+import bio.terra.workspace.service.resource.controlled.model.WsmControlledResourceFields;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
@@ -30,7 +31,9 @@ import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
@@ -70,29 +73,53 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
       @JsonProperty("defaultTableLifetime") Long defaultTableLifetime,
       @JsonProperty("defaultPartitionLifetime") Long defaultPartitionLifetime) {
     super(
-        workspaceId,
-        resourceId,
-        name,
-        description,
-        cloningInstructions,
-        assignedUser,
-        accessScope,
-        managedBy,
-        applicationId,
-        privateResourceState,
-        resourceLineage,
-        properties,
-        createdByEmail,
-        createdDate,
-        lastUpdatedByEmail,
-        lastUpdatedDate,
-        region);
+        ControlledResourceFields.builder()
+            .workspaceUuid(workspaceId)
+            .resourceId(resourceId)
+            .name(name)
+            .description(description)
+            .cloningInstructions(cloningInstructions)
+            .assignedUser(assignedUser)
+            .accessScope(accessScope)
+            .managedBy(managedBy)
+            .applicationId(applicationId)
+            .privateResourceState(privateResourceState)
+            .resourceLineage(resourceLineage)
+            .properties(properties)
+            .createdByEmail(createdByEmail)
+            .createdDate(createdDate)
+            .lastUpdatedByEmail(lastUpdatedByEmail)
+            .lastUpdatedDate(lastUpdatedDate)
+            .region(region)
+            .build());
     this.datasetName = datasetName;
     this.projectId = projectId;
     this.defaultTableLifetime = defaultTableLifetime;
     this.defaultPartitionLifetime = defaultPartitionLifetime;
     validate();
   }
+
+  /*
+    // TODO: PF-2512 remove constructor above and enable this constructor
+
+  @JsonCreator
+  public ControlledBigQueryDatasetResource(
+      @JsonProperty("wsmResourceFields") WsmResourceFields resourceFields,
+      @JsonProperty("wsmControlledResourceFields")
+          WsmControlledResourceFields controlledResourceFields,
+      @JsonProperty("datasetName") String datasetName,
+      @JsonProperty("defaultTableLifetime") Long defaultTableLifetime,
+      @JsonProperty("defaultPartitionLifetime") Long defaultPartitionLifetime,
+      @JsonProperty("projectId") String projectId) {
+    super(resourceFields, controlledResourceFields);
+    this.datasetName = datasetName;
+    this.defaultTableLifetime = defaultTableLifetime;
+    this.defaultPartitionLifetime = defaultPartitionLifetime;
+    this.projectId = projectId;
+    validate();
+  }
+
+   */
 
   // Constructor for the builder
   private ControlledBigQueryDatasetResource(
@@ -123,8 +150,118 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
     return (T) this;
   }
 
+  // -- getters used in serialization --
+  public WsmResourceFields getWsmResourceFields() {
+    return super.getWsmResourceFields();
+  }
+
+  public WsmControlledResourceFields getWsmControlledResourceFields() {
+    return super.getWsmControlledResourceFields();
+  }
+
+  public String getDatasetName() {
+    return datasetName;
+  }
+
+  public String getProjectId() {
+    return projectId;
+  }
+
+  public Long getDefaultTableLifetime() {
+    return defaultTableLifetime;
+  }
+
+  public Long getDefaultPartitionLifetime() {
+    return defaultPartitionLifetime;
+  }
+
+  // -- getters for backward compatibility --
+  // TODO: PF-2512 Remove these getters
+  public UUID getWorkspaceId() {
+    return super.getWorkspaceId();
+  }
+
+  public UUID getResourceId() {
+    return super.getResourceId();
+  }
+
+  public String getName() {
+    return super.getName();
+  }
+
+  public String getDescription() {
+    return super.getDescription();
+  }
+
+  public CloningInstructions getCloningInstructions() {
+    return super.getCloningInstructions();
+  }
+
+  public Optional<String> getAssignedUser() {
+    return super.getAssignedUser();
+  }
+
+  public Optional<PrivateResourceState> getPrivateResourceState() {
+    return super.getPrivateResourceState();
+  }
+
+  public AccessScopeType getAccessScope() {
+    return super.getAccessScope();
+  }
+
+  public ManagedByType getManagedBy() {
+    return super.getManagedBy();
+  }
+
+  public String getApplicationId() {
+    return super.getApplicationId();
+  }
+
+  public List<ResourceLineageEntry> getResourceLineage() {
+    return super.getResourceLineage();
+  }
+
+  public ImmutableMap<String, String> getProperties() {
+    return super.getProperties();
+  }
+
+  public String getCreatedByEmail() {
+    return super.getCreatedByEmail();
+  }
+
+  public OffsetDateTime getCreatedDate() {
+    return super.getCreatedDate();
+  }
+
+  public String getLastUpdatedByEmail() {
+    return super.getLastUpdatedByEmail();
+  }
+
+  public OffsetDateTime getLastUpdatedDate() {
+    return super.getLastUpdatedDate();
+  }
+
+  public String getRegion() {
+    return super.getRegion();
+  }
+
+  // -- getters not included in serialization --
+
+  @Override
+  @JsonIgnore
+  public WsmResourceType getResourceType() {
+    return WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET;
+  }
+
+  @Override
+  @JsonIgnore
+  public WsmResourceFamily getResourceFamily() {
+    return WsmResourceFamily.BIG_QUERY_DATASET;
+  }
+
   /** {@inheritDoc} */
   @Override
+  @JsonIgnore
   public Optional<UniquenessCheckAttributes> getUniquenessCheckAttributes() {
     return Optional.of(
         new UniquenessCheckAttributes()
@@ -157,22 +294,6 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
   public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
     flight.addStep(
         new DeleteBigQueryDatasetStep(this, flightBeanBag.getCrlService()), RetryRules.cloud());
-  }
-
-  public String getDatasetName() {
-    return datasetName;
-  }
-
-  public String getProjectId() {
-    return projectId;
-  }
-
-  public Long getDefaultTableLifetime() {
-    return defaultTableLifetime;
-  }
-
-  public Long getDefaultPartitionLifetime() {
-    return defaultPartitionLifetime;
   }
 
   public ApiGcpBigQueryDatasetAttributes toApiAttributes() {
@@ -211,16 +332,6 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
             .datasetName(getDatasetName());
 
     return resultBuilder.build();
-  }
-
-  @Override
-  public WsmResourceType getResourceType() {
-    return WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET;
-  }
-
-  @Override
-  public WsmResourceFamily getResourceFamily() {
-    return WsmResourceFamily.BIG_QUERY_DATASET;
   }
 
   @Override

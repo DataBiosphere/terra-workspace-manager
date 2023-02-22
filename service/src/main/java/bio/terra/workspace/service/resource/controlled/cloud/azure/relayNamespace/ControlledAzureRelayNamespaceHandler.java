@@ -29,8 +29,7 @@ public class ControlledAzureRelayNamespaceHandler implements WsmResourceHandler 
     var resource =
         ControlledAzureRelayNamespaceResource.builder()
             .namespaceName(attributes.getNamespaceName())
-            .region(attributes.getRegion())
-            .common(new ControlledResourceFields(dbResource))
+            .common(new ControlledResourceFields(dbResource, attributes.getRegion()))
             .build();
     return resource;
   }

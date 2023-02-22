@@ -64,9 +64,9 @@ public class BlobCopierConnectedTest extends BaseAzureConnectedTest {
                 ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                     .workspaceUuid(workspaceId)
                     .resourceId(storageAccountId)
+                    .region("eastus")
                     .build())
             .storageAccountName(saName)
-            .region("eastus")
             .build();
     createResource(workspaceId, userRequest, storageAcct);
 

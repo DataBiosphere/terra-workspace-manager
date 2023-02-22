@@ -12,14 +12,11 @@ import bio.terra.workspace.generated.model.ApiResourceMetadata;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import bio.terra.workspace.service.resource.model.WsmResourceFields;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.common.base.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -29,85 +26,56 @@ import javax.annotation.Nullable;
  * and are not specific to any particular resource type.
  */
 public abstract class ControlledResource extends WsmResource {
-  @Nullable private final String assignedUser;
-  private final AccessScopeType accessScope;
-  @Nullable private final PrivateResourceState privateResourceState;
-  private final ManagedByType managedBy;
-  private final String applicationId;
-  private final String region;
+  WsmControlledResourceFields wsmControlledResourceFields;
 
-  public ControlledResource(
-      UUID workspaceUuid,
-      UUID resourceId,
-      String name,
-      String description,
-      CloningInstructions cloningInstructions,
-      String assignedUser,
-      AccessScopeType accessScope,
-      ManagedByType managedBy,
-      String applicationId,
-      PrivateResourceState privateResourceState,
-      List<ResourceLineageEntry> resourceLineage,
-      Map<String, String> properties,
-      String createdByEmail,
-      OffsetDateTime createdDate,
-      String lastUpdatedByEmail,
-      OffsetDateTime lastUpdatedDate,
-      String region) {
-    super(
-        workspaceUuid,
-        resourceId,
-        name,
-        description,
-        cloningInstructions,
-        resourceLineage,
-        properties,
-        createdByEmail,
-        createdDate,
-        lastUpdatedByEmail,
-        lastUpdatedDate);
-    this.assignedUser = assignedUser;
-    this.accessScope = accessScope;
-    this.managedBy = managedBy;
-    this.applicationId = applicationId;
-    this.privateResourceState = privateResourceState;
-    this.region = region;
-  }
-
+  /**
+   * Construct the ControlledResource from database information
+   *
+   * @param dbResource POJO of the database info
+   */
   public ControlledResource(DbResource dbResource) {
     super(dbResource);
     if (dbResource.getStewardshipType() != StewardshipType.CONTROLLED) {
       throw new InvalidMetadataException("Expected CONTROLLED");
     }
-    // TODO(PF-2290): throws if dbResource does not have a region once we backfill the existing
-    // resource rows with regions.
-    this.assignedUser = dbResource.getAssignedUser().orElse(null);
-    this.accessScope = dbResource.getAccessScope();
-    this.managedBy = dbResource.getManagedBy();
-    this.applicationId = dbResource.getApplicationId().orElse(null);
-    this.privateResourceState = dbResource.getPrivateResourceState().orElse(null);
-    this.region = dbResource.getRegion();
+    this.wsmControlledResourceFields = WsmControlledResourceFields.fromDb(dbResource);
   }
 
-  public ControlledResource(ControlledResourceFields builder) {
+  /**
+   * Construct the ControlledResource from the fields builder
+   *
+   * @param fields container for building WsmResource and Controlled resource
+   */
+  public ControlledResource(ControlledResourceFields fields) {
     super(
-        builder.getWorkspaceId(),
-        builder.getResourceId(),
-        builder.getName(),
-        builder.getDescription(),
-        builder.getCloningInstructions(),
-        builder.getResourceLineage(),
-        builder.getProperties(),
-        builder.getCreatedByEmail(),
-        builder.getCreatedDate(),
-        builder.getLastUpdatedByEmail(),
-        builder.getLastUpdatedDate());
-    this.assignedUser = builder.getAssignedUser();
-    this.accessScope = builder.getAccessScope();
-    this.managedBy = builder.getManagedBy();
-    this.applicationId = builder.getApplicationId();
-    this.privateResourceState = builder.getPrivateResourceState();
-    this.region = builder.getRegion();
+        new WsmResourceFields.Builder<>()
+            .workspaceUuid(fields.getWorkspaceId())
+            .resourceId(fields.getResourceId())
+            .name(fields.getName())
+            .description(fields.getDescription())
+            .cloningInstructions(fields.getCloningInstructions())
+            .resourceLineage(fields.getResourceLineage())
+            .properties(fields.getProperties())
+            .createdByEmail(fields.getCreatedByEmail())
+            .createdDate(fields.getCreatedDate())
+            .lastUpdatedByEmail(fields.getLastUpdatedByEmail())
+            .lastUpdatedDate(fields.getLastUpdatedDate())
+            .build());
+    this.wsmControlledResourceFields = fields.getWsmControlledResourceFields();
+  }
+
+  public ControlledResource(
+      WsmResourceFields resourceFields, WsmControlledResourceFields controlledResourceFields) {
+    super(resourceFields);
+    this.wsmControlledResourceFields = controlledResourceFields;
+  }
+
+  public WsmResourceFields getWsmResourceFields() {
+    return super.getWsmResourceFields();
+  }
+
+  public WsmControlledResourceFields getWsmControlledResourceFields() {
+    return wsmControlledResourceFields;
   }
 
   /**
@@ -115,8 +83,11 @@ public abstract class ControlledResource extends WsmResource {
    * filtering the DAO should do to verify the uniqueness of the resource. If the return is not
    * present, then no validation check will be performed.
    *
+   * <p>JsonIgnore tells Jackson not to serialize this getter
+   *
    * @return optional uniqueness description
    */
+  @JsonIgnore
   public abstract Optional<UniquenessCheckAttributes> getUniquenessCheckAttributes();
 
   /**
@@ -150,31 +121,32 @@ public abstract class ControlledResource extends WsmResource {
    * @return user email address for assignee, if any
    */
   public Optional<String> getAssignedUser() {
-    return Optional.ofNullable(assignedUser);
+    return Optional.ofNullable(wsmControlledResourceFields.assignedUser());
   }
 
   public AccessScopeType getAccessScope() {
-    return accessScope;
+    return wsmControlledResourceFields.accessScope();
   }
 
   public ManagedByType getManagedBy() {
-    return managedBy;
+    return wsmControlledResourceFields.managedBy();
   }
 
   public String getRegion() {
-    return region;
+    return wsmControlledResourceFields.region();
   }
 
   public String getApplicationId() {
-    return applicationId;
+    return wsmControlledResourceFields.applicationId();
   }
 
   public Optional<PrivateResourceState> getPrivateResourceState() {
-    return Optional.ofNullable(privateResourceState);
+    return Optional.ofNullable(wsmControlledResourceFields.privateResourceState());
   }
 
   public ControlledResourceCategory getCategory() {
-    return ControlledResourceCategory.get(accessScope, managedBy);
+    return ControlledResourceCategory.get(
+        wsmControlledResourceFields.accessScope(), wsmControlledResourceFields.managedBy());
   }
 
   @Override
@@ -187,16 +159,29 @@ public abstract class ControlledResource extends WsmResource {
     ApiResourceMetadata metadata = super.toApiMetadata();
     var controlled =
         new ApiControlledResourceMetadata()
-            .accessScope(accessScope.toApiModel())
-            .managedBy(managedBy.toApiModel())
+            .accessScope(wsmControlledResourceFields.accessScope().toApiModel())
+            .managedBy(wsmControlledResourceFields.managedBy().toApiModel())
             .privateResourceUser(
                 // TODO: PF-616 figure out how to supply the assigned user's role
-                new ApiPrivateResourceUser().userName(assignedUser))
+                new ApiPrivateResourceUser().userName(wsmControlledResourceFields.assignedUser()))
             .privateResourceState(
                 getPrivateResourceState().map(PrivateResourceState::toApiModel).orElse(null))
             .region(getRegion());
     metadata.controlledResourceMetadata(controlled);
     return metadata;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof ControlledResource that)) return false;
+    if (!super.equals(o)) return false;
+    return Objects.equal(wsmControlledResourceFields, that.wsmControlledResourceFields);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(super.hashCode(), wsmControlledResourceFields);
   }
 
   @Override
@@ -220,7 +205,8 @@ public abstract class ControlledResource extends WsmResource {
     // Non-private resources must have NOT_APPLICABLE private resource state. Private resources can
     // have any of the private resource states, including NOT_APPLICABLE.
     if (getAccessScope() != AccessScopeType.ACCESS_SCOPE_PRIVATE
-        && privateResourceState != PrivateResourceState.NOT_APPLICABLE) {
+        && wsmControlledResourceFields.privateResourceState()
+            != PrivateResourceState.NOT_APPLICABLE) {
       throw new InconsistentFieldsException(
           "Private resource state must be NOT_APPLICABLE for all non-private resources.");
     }
@@ -256,27 +242,5 @@ public abstract class ControlledResource extends WsmResource {
     cloneResourceCommonFields.name(name == null ? getName() : name);
     cloneResourceCommonFields.description(description == null ? getDescription() : description);
     return cloneResourceCommonFields.build();
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    if (!super.equals(o)) return false;
-
-    ControlledResource that = (ControlledResource) o;
-
-    if (!Objects.equals(assignedUser, that.assignedUser)) return false;
-    if (accessScope != that.accessScope) return false;
-    return managedBy == that.managedBy;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = super.hashCode();
-    result = 31 * result + (assignedUser != null ? assignedUser.hashCode() : 0);
-    result = 31 * result + (accessScope != null ? accessScope.hashCode() : 0);
-    result = 31 * result + (managedBy != null ? managedBy.hashCode() : 0);
-    return result;
   }
 }

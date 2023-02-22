@@ -12,6 +12,7 @@ import bio.terra.stairway.FlightFilterOp;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.Stairway;
+import bio.terra.stairway.StairwayMapper;
 import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.DuplicateFlightIdException;
 import bio.terra.stairway.exception.FlightNotFoundException;
@@ -31,6 +32,7 @@ import bio.terra.workspace.service.job.exception.JobNotFoundException;
 import bio.terra.workspace.service.job.exception.JobResponseException;
 import bio.terra.workspace.service.job.model.EnumeratedJob;
 import bio.terra.workspace.service.job.model.EnumeratedJobs;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
@@ -39,6 +41,8 @@ import bio.terra.workspace.service.workspace.model.JobStateFilter;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.introspect.AnnotatedMember;
+import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 import com.google.common.annotations.VisibleForTesting;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.opencensus.contrib.spring.aop.Traced;
@@ -147,6 +151,7 @@ public class JobService {
    * encapsulates all of the Stairway interaction.
    */
   public void initialize() {
+    configureMapper();
     stairwayComponent.initialize(
         stairwayComponent
             .newStairwayOptionsBuilder()
@@ -156,6 +161,37 @@ public class JobService {
             .addHook(new TracingHook())
             .addHook(workspaceActivityLogHook)
             .exceptionSerializer(new StairwayExceptionSerializer(objectMapper)));
+  }
+
+  /**
+   * This is currently a hack, because Stairway does not provide a way to pass in the mapper. It
+   * does expose its own mapper for testing, so we use that public API to add the introspector that
+   * we need.
+   *
+   * <p>TODO: PF-2505 When that Stairway feature is done we should create and set our own object
+   * mapper in Stairway.
+   */
+  @VisibleForTesting
+  public static void configureMapper() {
+    StairwayMapper.getObjectMapper().setAnnotationIntrospector(new IgnoreInheritedIntrospector());
+  }
+
+  /**
+   * Jackson does not see @JsonIgnore annotations from super classes. That means any getter in a
+   * super class gets serialized by default. We do not want that behavior, so we add this
+   * introspector to the ObjectMapper to force ignore everything from the resource super classes.
+   *
+   * <p>We do not need to ignore ReferencedResource class because it does not add any fields to
+   * those coming from WsmResource class.
+   */
+  private static class IgnoreInheritedIntrospector extends JacksonAnnotationIntrospector {
+    @Override
+    public boolean hasIgnoreMarker(AnnotatedMember m) {
+      boolean ignore =
+          (m.getDeclaringClass() == WsmResource.class)
+              || (m.getDeclaringClass() == ControlledResource.class);
+      return ignore || super.hasIgnoreMarker(m);
+    }
   }
 
   /**

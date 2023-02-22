@@ -19,10 +19,12 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
+import bio.terra.workspace.service.resource.controlled.model.WsmControlledResourceFields;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
+import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.azure.resourcemanager.batch.models.ApplicationPackageReference;
 import com.azure.resourcemanager.batch.models.DeploymentConfiguration;
@@ -31,7 +33,9 @@ import com.azure.resourcemanager.batch.models.NetworkConfiguration;
 import com.azure.resourcemanager.batch.models.ScaleSettings;
 import com.azure.resourcemanager.batch.models.StartTask;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
@@ -81,23 +85,26 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
       @JsonProperty("networkConfiguration") NetworkConfiguration networkConfiguration,
       @JsonProperty("metadata") List<MetadataItem> metadata) {
     super(
-        workspaceId,
-        resourceId,
-        name,
-        description,
-        cloningInstructions,
-        assignedUser,
-        accessScope,
-        managedBy,
-        applicationId,
-        privateResourceState,
-        resourceLineage,
-        properties,
-        createdByEmail,
-        createdDate,
-        lastUpdatedByEmail,
-        lastUpdatedDate,
-        region);
+        ControlledResourceFields.builder()
+            .workspaceUuid(workspaceId)
+            .resourceId(resourceId)
+            .name(name)
+            .description(description)
+            .cloningInstructions(cloningInstructions)
+            .assignedUser(assignedUser)
+            .accessScope(accessScope)
+            .managedBy(managedBy)
+            .applicationId(applicationId)
+            .privateResourceState(privateResourceState)
+            .resourceLineage(resourceLineage)
+            .properties(properties)
+            .createdByEmail(createdByEmail)
+            .createdDate(createdDate)
+            .lastUpdatedByEmail(lastUpdatedByEmail)
+            .lastUpdatedDate(lastUpdatedDate)
+            .region(region)
+            .build());
+
     this.id = id;
     this.vmSize = vmSize;
     this.displayName = displayName;
@@ -109,6 +116,38 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
     this.networkConfiguration = networkConfiguration;
     this.metadata = metadata;
   }
+
+  /*
+  // TODO: PF-2512 remove constructor above and enable this constructor
+  @JsonCreator
+  public ControlledAzureBatchPoolResource(
+      @JsonProperty("wsmResourceFields") WsmResourceFields resourceFields,
+      @JsonProperty("wsmControlledResourceFields")
+          WsmControlledResourceFields controlledResourceFields,
+      @JsonProperty("id") String id,
+      @JsonProperty("vmSize") String vmSize,
+      @JsonProperty("displayName") String displayName,
+      @JsonProperty("deploymentConfiguration") DeploymentConfiguration deploymentConfiguration,
+      @JsonProperty("userAssignedIdentities")
+          List<BatchPoolUserAssignedManagedIdentity> userAssignedIdentities,
+      @JsonProperty("scaleSettings") ScaleSettings scaleSettings,
+      @JsonProperty("startTask") StartTask startTask,
+      @JsonProperty("applicationPackages") List<ApplicationPackageReference> applicationPackages,
+      @JsonProperty("networkConfiguration") NetworkConfiguration networkConfiguration,
+      @JsonProperty("metadata") List<MetadataItem> metadata) {
+    super(resourceFields, controlledResourceFields);
+    this.id = id;
+    this.vmSize = vmSize;
+    this.displayName = displayName;
+    this.deploymentConfiguration = deploymentConfiguration;
+    this.userAssignedIdentities = userAssignedIdentities;
+    this.scaleSettings = scaleSettings;
+    this.startTask = startTask;
+    this.applicationPackages = applicationPackages;
+    this.networkConfiguration = networkConfiguration;
+    this.metadata = metadata;
+  }
+   */
 
   private ControlledAzureBatchPoolResource(
       ControlledResourceFields common,
@@ -134,6 +173,15 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
     this.networkConfiguration = networkConfiguration;
     this.metadata = metadata;
     validate();
+  }
+
+  // -- getters used in serialization --
+  public WsmResourceFields getWsmResourceFields() {
+    return super.getWsmResourceFields();
+  }
+
+  public WsmControlledResourceFields getWsmControlledResourceFields() {
+    return super.getWsmControlledResourceFields();
   }
 
   public String getId() {
@@ -176,7 +224,92 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
     return metadata;
   }
 
+  // -- getters for backward compatibility --
+  // TODO: PF-2512 Remove these getters
+  public UUID getWorkspaceId() {
+    return super.getWorkspaceId();
+  }
+
+  public UUID getResourceId() {
+    return super.getResourceId();
+  }
+
+  public String getName() {
+    return super.getName();
+  }
+
+  public String getDescription() {
+    return super.getDescription();
+  }
+
+  public CloningInstructions getCloningInstructions() {
+    return super.getCloningInstructions();
+  }
+
+  public Optional<String> getAssignedUser() {
+    return super.getAssignedUser();
+  }
+
+  public Optional<PrivateResourceState> getPrivateResourceState() {
+    return super.getPrivateResourceState();
+  }
+
+  public AccessScopeType getAccessScope() {
+    return super.getAccessScope();
+  }
+
+  public ManagedByType getManagedBy() {
+    return super.getManagedBy();
+  }
+
+  public String getApplicationId() {
+    return super.getApplicationId();
+  }
+
+  public List<ResourceLineageEntry> getResourceLineage() {
+    return super.getResourceLineage();
+  }
+
+  public ImmutableMap<String, String> getProperties() {
+    return super.getProperties();
+  }
+
+  public String getCreatedByEmail() {
+    return super.getCreatedByEmail();
+  }
+
+  public OffsetDateTime getCreatedDate() {
+    return super.getCreatedDate();
+  }
+
+  public String getLastUpdatedByEmail() {
+    return super.getLastUpdatedByEmail();
+  }
+
+  public OffsetDateTime getLastUpdatedDate() {
+    return super.getLastUpdatedDate();
+  }
+
+  public String getRegion() {
+    return super.getRegion();
+  }
+
+  // -- getters not included in serialization --
+
   @Override
+  @JsonIgnore
+  public WsmResourceType getResourceType() {
+    return WsmResourceType.CONTROLLED_AZURE_BATCH_POOL;
+  }
+
+  @Override
+  @JsonIgnore
+  public WsmResourceFamily getResourceFamily() {
+    return WsmResourceFamily.AZURE_BATCH_POOL;
+  }
+
+  @Override
+  @JsonIgnore
   public Optional<UniquenessCheckAttributes> getUniquenessCheckAttributes() {
     return Optional.of(
         new UniquenessCheckAttributes()
@@ -224,16 +357,6 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
     return new ApiAzureBatchPoolResource()
         .metadata(super.toApiMetadata())
         .attributes(toApiAttributes());
-  }
-
-  @Override
-  public WsmResourceType getResourceType() {
-    return WsmResourceType.CONTROLLED_AZURE_BATCH_POOL;
-  }
-
-  @Override
-  public WsmResourceFamily getResourceFamily() {
-    return WsmResourceFamily.AZURE_BATCH_POOL;
   }
 
   @Override
