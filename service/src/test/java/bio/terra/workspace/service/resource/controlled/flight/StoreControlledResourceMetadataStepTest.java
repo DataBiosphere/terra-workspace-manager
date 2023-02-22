@@ -67,9 +67,6 @@ public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
     assertThat(daoResource.getResourceType(), equalTo(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET));
 
     ControlledGcsBucketResource daoBucket = (ControlledGcsBucketResource) daoResource;
-    if (bucketResource.equals(daoBucket)) {
-      System.out.println("equals");
-    }
     assertThat(bucketResource, equalTo(daoBucket));
   }
 }
