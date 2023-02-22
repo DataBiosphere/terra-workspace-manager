@@ -57,23 +57,25 @@ public class ControlledAwsBucketResource extends ControlledResource {
       @JsonProperty("lastUpdatedDate") OffsetDateTime lastUpdatedDate,
       @JsonProperty("region") String region) {
     super(
-        workspaceId,
-        resourceId,
-        name,
-        description,
-        cloningInstructions,
-        assignedUser,
-        accessScope,
-        managedBy,
-        applicationId,
-        privateResourceState,
-        resourceLineage,
-        properties,
-        createdByEmail,
-        createdDate,
-        lastUpdatedByEmail,
-        lastUpdatedDate,
-        region);
+        ControlledResourceFields.builder()
+            .workspaceUuid(workspaceId)
+            .resourceId(resourceId)
+            .name(name)
+            .description(description)
+            .cloningInstructions(cloningInstructions)
+            .assignedUser(assignedUser)
+            .accessScope(accessScope)
+            .managedBy(managedBy)
+            .applicationId(applicationId)
+            .privateResourceState(privateResourceState)
+            .resourceLineage(resourceLineage)
+            .properties(properties)
+            .createdByEmail(createdByEmail)
+            .createdDate(createdDate)
+            .lastUpdatedByEmail(lastUpdatedByEmail)
+            .lastUpdatedDate(lastUpdatedDate)
+            .region(region)
+            .build());
     this.s3BucketName = s3BucketName;
     this.prefix = prefix;
     validate();
@@ -130,7 +132,7 @@ public class ControlledAwsBucketResource extends ControlledResource {
                 WorkspaceFlightMapKeys.ControlledResourceKeys.CREATION_PARAMETERS,
                 ApiAwsBucketCreationParameters.class);
 
-    if (creationParameters.isSeed()) {
+    if (creationParameters != null && creationParameters.isSeed()) {
       // Check that we actually have example data to seed with.
       List<AwsConfiguration.AwsBucketSeedFile> seedFiles =
           flightBeanBag.getAwsConfiguration().getBucketSeedFiles();
