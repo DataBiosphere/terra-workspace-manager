@@ -475,20 +475,15 @@ public class ResourceValidationUtils {
   public static void validateGcpRegion(
       TpsApiDispatch tpsApiDispatch, UUID workspaceId, String region) {
     region = GcpUtils.parseRegion(region);
+    tpsApiDispatch.createPaoIfNotExist(workspaceId);
 
-    // Old workspaces may not have a policy. We can only validate against policy if one exists.
-    if (tpsApiDispatch.getPaoIfExists(workspaceId).isPresent()) {
-      // Get the list of valid locations for this workspace from TPS. If there are no regional
-      // constraints applied to the workspace, TPS should return all available regions.
-      List<String> validLocations = tpsApiDispatch.listValidRegions(workspaceId, CloudPlatform.GCP);
+    // Get the list of valid locations for this workspace from TPS. If there are no regional
+    // constraints applied to the workspace, TPS should return all available regions.
+    List<String> validLocations = tpsApiDispatch.listValidRegions(workspaceId, CloudPlatform.GCP);
 
-      if (validLocations.stream().noneMatch(region::equalsIgnoreCase)) {
-        throw new InvalidControlledResourceException(
-            String.format("Specified location %s is not allowed by effective policy.", region));
-      }
-    } else {
-      logger.warn(
-          "Workspace {} has no policy attached, cannot validate region constraints.", workspaceId);
+    if (validLocations.stream().noneMatch(region::equalsIgnoreCase)) {
+      throw new InvalidControlledResourceException(
+          String.format("Specified location %s is not allowed by effective policy.", region));
     }
   }
 

@@ -115,7 +115,7 @@ public class TpsApiDispatch {
     }
   }
 
-  public Optional<TpsPaoGetResult> getPaoIfExists(UUID workspaceUuid) {
+  private Optional<TpsPaoGetResult> getPaoIfExists(UUID workspaceUuid) {
     features.tpsEnabledCheck();
     try {
       TpsPaoGetResult pao = getPao(workspaceUuid);
