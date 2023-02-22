@@ -20,13 +20,13 @@ public class ReferenceResourceFixtures {
 
   public static WsmResourceFields.Builder<?> makeDefaultWsmResourceFieldBuilder(UUID workspaceId) {
     return WsmResourceFields.builder()
-      .workspaceUuid(workspaceId)
-      .resourceId(UUID.randomUUID())
-      .name(TestUtils.appendRandomNumber("a-referenced-resource"))
-      .description("a description")
-      .cloningInstructions(CloningInstructions.COPY_NOTHING)
-      .properties(DEFAULT_RESOURCE_PROPERTIES)
-      .createdByEmail(DEFAULT_USER_EMAIL);
+        .workspaceUuid(workspaceId)
+        .resourceId(UUID.randomUUID())
+        .name(TestUtils.appendRandomNumber("a-referenced-resource"))
+        .description("a description")
+        .cloningInstructions(CloningInstructions.COPY_NOTHING)
+        .properties(DEFAULT_RESOURCE_PROPERTIES)
+        .createdByEmail(DEFAULT_USER_EMAIL);
   }
 
   public static WsmResourceFields makeDefaultWsmResourceFields(UUID workspaceId) {
@@ -50,12 +50,12 @@ public class ReferenceResourceFixtures {
       UUID workspaceId, String projectId, String bqDataset) {
     UUID resourceId = UUID.randomUUID();
     return new ReferencedBigQueryDatasetResource(
-      makeDefaultWsmResourceFieldBuilder(workspaceId)
-        .resourceId(resourceId)
-        .name("testbq-" + resourceId)
-        .build(),
-      projectId,
-      bqDataset);
+        makeDefaultWsmResourceFieldBuilder(workspaceId)
+            .resourceId(resourceId)
+            .name("testbq-" + resourceId)
+            .build(),
+        projectId,
+        bqDataset);
   }
 
   public static ApiReferenceResourceCommonFields makeDefaultReferencedResourceFieldsApi() {

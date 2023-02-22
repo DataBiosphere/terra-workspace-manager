@@ -181,8 +181,8 @@ public class JobService {
    * super class gets serialized by default. We do not want that behavior, so we add this
    * introspector to the ObjectMapper to force ignore everything from the resource super classes.
    *
-   * <p>We do not need to ignore ReferencedResource class because it does not add any
-   * fields to those coming from WsmResource class.
+   * <p>We do not need to ignore ReferencedResource class because it does not add any fields to
+   * those coming from WsmResource class.
    */
   private static class IgnoreInheritedIntrospector extends JacksonAnnotationIntrospector {
     @Override
