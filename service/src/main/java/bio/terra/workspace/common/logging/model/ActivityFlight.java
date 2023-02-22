@@ -9,6 +9,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.Upda
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.UpdateControlledBigQueryDatasetResourceFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.flight.UpdateGcpControlledResourceRegionFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.UpdateControlledGcsBucketResourceFlight;
+import bio.terra.workspace.service.resource.controlled.flight.backfill.UpdateControlledBigQueryDatasetsLifetimeFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.CloneControlledAzureStorageContainerResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CloneControlledGcsBucketResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.CloneControlledGcpBigQueryDatasetResourceFlight;
@@ -79,6 +80,9 @@ public enum ActivityFlight {
       ActivityLogChangedTarget.RESOURCE),
   UPDATE_GCP_CONTROLLED_RESOURCES_REGION_FLIGHT(
       UpdateGcpControlledResourceRegionFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
+  UPDATE_GCP_CONTROLLED_BQ_DATASETS_LIFETIME_FLIGHT(
+      UpdateControlledBigQueryDatasetsLifetimeFlight.class.getName(),
+      ActivityLogChangedTarget.RESOURCE),
   UPDATE_AZURE_CONTROLLED_RESOURCES_REGION_FLIGHT(
       UpdateAzureControlledResourceRegionFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
   REVOKE_TEMPORARY_GRANT_FLIGHT(

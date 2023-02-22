@@ -44,10 +44,16 @@ public final class WorkspaceFlightMapKeys {
 
     public static final String CONTROLLED_RESOURCES_WITHOUT_REGION =
         "controlledResourcesWithoutRegion";
+    public static final String CONTROLLED_BIG_QUERY_DATASETS_WITHOUT_LIFETIME =
+        "controlledBigQueryDatasetsWithoutLifetime";
+    public static final String CONTROLLED_BIG_QUERY_DATASET_RESOURCE_ID_TO_TABLE_LIFETIME_MAP =
+        "controlledBigQueryDatasetToTableLifetimeMap";
+    public static final String CONTROLLED_BIG_QUERY_DATASET_RESOURCE_ID_TO_PARTITION_LIFETIME_MAP =
+        "controlledBigQueryDatasetToPartitionLifetimeMap";
     public static final String CONTROLLED_RESOURCE_ID_TO_REGION_MAP =
         "controlledResourceToRegionMap";
     public static final String CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP =
-        "controlledReourceIdToWorkspaceIdMap";
+        "controlledResourceIdToWorkspaceIdMap";
     // Notebooks keys
     public static final String CREATE_NOTEBOOK_NETWORK_NAME = "createNotebookNetworkName";
     public static final String CREATE_NOTEBOOK_PARAMETERS = "createNotebookParameters";
