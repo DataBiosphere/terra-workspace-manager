@@ -105,11 +105,13 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
   }
 
   // -- getters used in serialization --
+  @Override
   @JsonProperty("wsmResourceFields")
   public WsmResourceFields getWsmResourceFields() {
     return super.getWsmResourceFields();
   }
 
+  @Override
   @JsonProperty("wsmControlledResourceFields")
   public WsmControlledResourceFields getWsmControlledResourceFields() {
     return super.getWsmControlledResourceFields();
