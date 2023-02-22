@@ -8,9 +8,9 @@ public class PolicyFixtures {
   public static final String GROUP_CONSTRAINT = "group-constraint";
   public static final String REGION_CONSTRAINT = "region-constraint";
   public static final String GROUP = "group";
-  public static final String REGION = "region";
+  public static final String REGION = "region-name";
   public static final String DDGROUP = "ddgroup";
-  public static final String US_REGION = "US";
+  public static final String US_REGION = "usa";
 
   public static ApiWsmPolicyInput GROUP_POLICY =
       new ApiWsmPolicyInput()

@@ -29,7 +29,6 @@ import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -345,7 +344,6 @@ public class ReferencedGcpResourceControllerGcsBucketTest extends BaseConnectedT
   // Destination workspace policy is the merge of source workspace policy and pre-clone destination
   // workspace policy
   @Test
-  @Disabled("Enable after PF-2217 is fixed")
   void clone_policiesMerged() throws Exception {
     logger.info("features.isTpsEnabled(): %s".formatted(features.isTpsEnabled()));
     // Don't run the test if TPS is disabled
