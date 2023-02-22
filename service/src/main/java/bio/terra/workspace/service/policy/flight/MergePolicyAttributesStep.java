@@ -43,8 +43,8 @@ public class MergePolicyAttributesStep implements Step {
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     // Create PAOs if they don't exist; catch TPS exceptions and retry
     try {
-      MergePolicyAttributesUtils.createPaoIfNotExist(tpsApiDispatch, sourceWorkspaceId);
-      MergePolicyAttributesUtils.createPaoIfNotExist(tpsApiDispatch, destinationWorkspaceId);
+      tpsApiDispatch.createPaoIfNotExist(sourceWorkspaceId);
+      tpsApiDispatch.createPaoIfNotExist(destinationWorkspaceId);
     } catch (Exception ex) {
       logger.info("Attempt to create a PAO for workspace failed", ex);
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, ex);

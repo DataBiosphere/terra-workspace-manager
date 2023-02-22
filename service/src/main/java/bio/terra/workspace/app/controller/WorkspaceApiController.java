@@ -739,6 +739,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   public ResponseEntity<ApiWsmPolicyMergeCheckResult> mergeCheck(
       UUID targetWorkspaceId, ApiMergeCheckRequest requestBody) {
     UUID sourceWorkspaceId = requestBody.getWorkspaceId();
+    tpsApiDispatch.createPaoIfNotExist(sourceWorkspaceId);
+    tpsApiDispatch.createPaoIfNotExist(targetWorkspaceId);
 
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
