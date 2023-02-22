@@ -180,10 +180,13 @@ public class JobService {
    * Jackson does not see @JsonIgnore annotations from super classes. That means any getter in a
    * super class gets serialized by default. We do not want that behavior, so we add this
    * introspector to the ObjectMapper to force ignore everything from the resource super classes.
+   *
+   * <p>We do not need to ignore ReferencedResource class because it does not add any
+   * fields to those coming from WsmResource class.
    */
   private static class IgnoreInheritedIntrospector extends JacksonAnnotationIntrospector {
     @Override
-    public boolean hasIgnoreMarker(final AnnotatedMember m) {
+    public boolean hasIgnoreMarker(AnnotatedMember m) {
       boolean ignore =
           (m.getDeclaringClass() == WsmResource.class)
               || (m.getDeclaringClass() == ControlledResource.class);
