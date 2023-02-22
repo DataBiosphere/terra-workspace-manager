@@ -4,10 +4,12 @@ import static bio.terra.workspace.service.resource.model.StewardshipType.CONTROL
 import static bio.terra.workspace.service.resource.model.StewardshipType.REFERENCED;
 import static bio.terra.workspace.service.resource.model.StewardshipType.fromSql;
 import static bio.terra.workspace.service.resource.model.WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET;
+import static java.lang.Boolean.TRUE;
 import static java.util.stream.Collectors.toList;
 
 import bio.terra.common.db.ReadTransaction;
 import bio.terra.common.db.WriteTransaction;
+import bio.terra.common.exception.ErrorReportException;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.db.model.DbResource;
@@ -27,6 +29,7 @@ import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
+import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
@@ -66,7 +69,8 @@ public class ResourceDao {
         SELECT workspace_id, cloud_platform, resource_id, name, description, stewardship_type,
         resource_type, exact_resource_type, cloning_instructions, attributes,
         access_scope, managed_by, associated_app, assigned_user, private_resource_state,
-        resource_lineage, properties, created_date, created_by_email, region
+        resource_lineage, properties, created_date, created_by_email, region,
+        state, flight_id, error
         FROM resource
       """;
 
@@ -83,7 +87,6 @@ public class ResourceDao {
               .name(rs.getString("name"))
               .description(rs.getString("description"))
               .stewardshipType(fromSql(rs.getString("stewardship_type")))
-              .cloudResourceType(WsmResourceFamily.fromSql(rs.getString("resource_type")))
               .resourceType(WsmResourceType.fromSql(rs.getString("exact_resource_type")))
               .cloningInstructions(
                   CloningInstructions.fromSql(rs.getString("cloning_instructions")))
@@ -96,7 +99,7 @@ public class ResourceDao {
                   Optional.ofNullable(rs.getString("managed_by"))
                       .map(ManagedByType::fromSql)
                       .orElse(null))
-              .applicationId(Optional.ofNullable(rs.getString("associated_app")).orElse(null))
+              .applicationId(rs.getString("associated_app"))
               .assignedUser(rs.getString("assigned_user"))
               .privateResourceState(
                   Optional.ofNullable(rs.getString("private_resource_state"))
@@ -117,7 +120,13 @@ public class ResourceDao {
               .createdByEmail(rs.getString("created_by_email"))
               // TODO(PF-2290): throw if resource is controlled resource and the region is null once
               // we backfill the existing resource rows with regions.
-              .region(rs.getString("region"));
+              .region(rs.getString("region"))
+              .state(WsmResourceState.fromDb(rs.getString("state")))
+              .error(Optional.ofNullable(rs.getString("error"))
+                .map(errorJson ->
+                  DbSerDes.fromJson(errorJson, ErrorReportException.class))
+                .orElse(null))
+              .flightId(rs.getString("flight_id"));
 
   private final NamedParameterJdbcTemplate jdbcTemplate;
   private final WorkspaceActivityLogDao workspaceActivityLogDao;
@@ -129,6 +138,40 @@ public class ResourceDao {
       NamedParameterJdbcTemplate jdbcTemplate, WorkspaceActivityLogDao workspaceActivityLogDao) {
     this.jdbcTemplate = jdbcTemplate;
     this.workspaceActivityLogDao = workspaceActivityLogDao;
+  }
+
+  private boolean validateStateTransition(
+    UUID workspaceUuid,
+    UUID resourceId,
+    String flightId,
+    WsmResourceState targetState) {
+    final String sql =
+      """
+      SELECT state FROM resource WHERE workspace_id = :workspace_id AND resource_id = :resource_id
+      """;
+
+    MapSqlParameterSource params =
+      new MapSqlParameterSource()
+        .addValue("workspace_id", workspaceUuid.toString())
+        .addValue("resource_id", resourceId.toString());
+
+    List<Boolean> result = jdbcTemplate.query(sql, params,
+      (rs, rowNum) -> {
+        String owningFlightId = rs.getString("flightId");
+        WsmResourceState currentState = WsmResourceState.fromDb(rs.getString("state"));
+        return (owningFlightId.equals(flightId) &&
+          WsmResourceState.isValidTransition(currentState, targetState));
+      });
+
+    if (result.size() == 0) {
+      return false; // not found
+    }
+
+    if (result.size() == 1 && TRUE.equals(result.get(0))) {
+      return true;
+    }
+
+    throw new InternalLogicException("More than one row for a resource");
   }
 
   @WriteTransaction

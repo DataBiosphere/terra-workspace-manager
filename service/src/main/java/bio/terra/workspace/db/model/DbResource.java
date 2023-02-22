@@ -1,5 +1,6 @@
 package bio.terra.workspace.db.model;
 
+import bio.terra.common.exception.ErrorReportException;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
@@ -7,6 +8,7 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
+import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
@@ -31,11 +33,13 @@ public class DbResource {
   private String name;
   private String description;
   private StewardshipType stewardshipType;
-  private WsmResourceFamily cloudResourceType;
   private WsmResourceType resourceType;
   private CloningInstructions cloningInstructions;
   private String attributes;
   @Nullable List<ResourceLineageEntry> resourceLineage;
+  private WsmResourceState state;
+  private String flightId;
+  private ErrorReportException error;
   // controlled resource fields
   @Nullable private AccessScopeType accessScope;
   @Nullable private ManagedByType managedBy;
@@ -103,11 +107,6 @@ public class DbResource {
 
   public DbResource stewardshipType(StewardshipType stewardshipType) {
     this.stewardshipType = stewardshipType;
-    return this;
-  }
-
-  public DbResource cloudResourceType(WsmResourceFamily cloudResourceType) {
-    this.cloudResourceType = cloudResourceType;
     return this;
   }
 
@@ -215,7 +214,7 @@ public class DbResource {
     return this;
   }
 
-  public OffsetDateTime getCreatedDate() {
+  public @Nullable OffsetDateTime getCreatedDate() {
     return createdDate;
   }
 
@@ -224,7 +223,7 @@ public class DbResource {
     return this;
   }
 
-  public String getRegion() {
+  public @Nullable String getRegion() {
     return region;
   }
 
@@ -233,7 +232,7 @@ public class DbResource {
     return this;
   }
 
-  public String getLastUpdatedByEmail() {
+  public @Nullable String getLastUpdatedByEmail() {
     return lastUpdatedByEmail;
   }
 
@@ -242,7 +241,34 @@ public class DbResource {
     return this;
   }
 
-  public OffsetDateTime getLastUpdatedDate() {
+  public @Nullable OffsetDateTime getLastUpdatedDate() {
     return lastUpdatedDate;
+  }
+
+  public WsmResourceState getState() {
+    return state;
+  }
+
+  public DbResource state(WsmResourceState state) {
+    this.state = state;
+    return this;
+  }
+
+  public String getFlightId() {
+    return flightId;
+  }
+
+  public DbResource flightId(String flightId) {
+    this.flightId = flightId;
+    return this;
+  }
+
+  public ErrorReportException getError() {
+    return error;
+  }
+
+  public DbResource error(ErrorReportException error) {
+    this.error = error;
+    return this;
   }
 }
