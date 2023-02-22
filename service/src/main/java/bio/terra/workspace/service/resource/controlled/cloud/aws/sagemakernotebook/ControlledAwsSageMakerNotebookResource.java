@@ -65,23 +65,25 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
       @JsonProperty("lastUpdatedDate") OffsetDateTime lastUpdatedDate,
       @JsonProperty("region") String region) {
     super(
-        workspaceId,
-        resourceId,
-        name,
-        description,
-        cloningInstructions,
-        assignedUser,
-        accessScope,
-        managedBy,
-        applicationId,
-        privateResourceState,
-        resourceLineage,
-        properties,
-        createdByEmail,
-        createdDate,
-        lastUpdatedByEmail,
-        lastUpdatedDate,
-        region);
+        ControlledResourceFields.builder()
+            .workspaceUuid(workspaceId)
+            .resourceId(resourceId)
+            .name(name)
+            .description(description)
+            .cloningInstructions(cloningInstructions)
+            .assignedUser(assignedUser)
+            .accessScope(accessScope)
+            .managedBy(managedBy)
+            .applicationId(applicationId)
+            .privateResourceState(privateResourceState)
+            .resourceLineage(resourceLineage)
+            .properties(properties)
+            .createdByEmail(createdByEmail)
+            .createdDate(createdDate)
+            .lastUpdatedByEmail(lastUpdatedByEmail)
+            .lastUpdatedDate(lastUpdatedDate)
+            .region(region)
+            .build());
     this.instanceId = instanceId;
     this.instanceType = instanceType;
     this.defaultBucket = defaultBucket;
