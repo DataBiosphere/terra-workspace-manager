@@ -192,9 +192,6 @@ if [[ -n "$TERRA_SSH_KEY" ]]; then
   sudo -u "${JUPYTER_USER}" sh -c 'ssh-add .ssh/id_rsa; ssh-keyscan -H github.com >> ~/.ssh/known_hosts'
 fi
 
-# Generate cromwell.conf
-sudo -u "${JUPYTER_USER}" sh -c "terra cromwell generate-config"
-
 # Attempt to clone all the git repo references in the workspace. If the user's ssh key does not exist or doesn't have access
 # to the git references, the corresponding git repo cloning will be skipped.
 # Keep this as last thing in script. There will be integration test for git cloning (PF-1660). If this is last thing, then
