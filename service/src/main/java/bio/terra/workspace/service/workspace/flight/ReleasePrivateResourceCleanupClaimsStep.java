@@ -7,10 +7,12 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.workspace.exceptions.ConcurrentFlightModificationException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -52,14 +54,17 @@ public class ReleasePrivateResourceCleanupClaimsStep implements Step {
     List<ControlledResource> relockedResources =
         resourceDao.claimCleanupForWorkspacePrivateResources(
             workspaceUuid, userEmail, context.getFlightId());
+    Set<UUID> relockedResourceIds =
+        relockedResources.stream().map(WsmResource::getResourceId).collect(Collectors.toSet());
+
     List<ResourceRolePair> originalResourceRolePairs =
         workingMap.get(ControlledResourceKeys.RESOURCE_ROLES_TO_REMOVE, new TypeReference<>() {});
-    List<ControlledResource> originalResources =
+    Set<UUID> originalResourceIds =
         originalResourceRolePairs.stream()
-            .map(ResourceRolePair::getResource)
-            .distinct()
-            .collect(Collectors.toList());
-    if (!relockedResources.containsAll(originalResources)) {
+            .map(r -> r.getResource().getResourceId())
+            .collect(Collectors.toSet());
+
+    if (!relockedResourceIds.containsAll(originalResourceIds)) {
       logger.error(
           "Unable to re-acquire cleanup_flight_id lock on all private resources being cleaned up for flight {}.",
           context.getFlightId());
