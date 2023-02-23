@@ -87,6 +87,19 @@ public class TpsApiDispatch {
     }
   }
 
+  // Since policy attributes were added later in development, not all existing
+  // workspaces have an associated policy attribute object. This function creates
+  // an empty one if it does not exist.
+  @Traced
+  public void createPaoIfNotExist(UUID workspaceId) {
+    Optional<TpsPaoGetResult> pao = getPaoIfExists(workspaceId);
+    if (pao.isPresent()) {
+      return;
+    }
+    // Workspace doesn't have a PAO, so create an empty one for it.
+    createPao(workspaceId, null);
+  }
+
   @Traced
   public void deletePao(UUID workspaceUuid) {
     features.tpsEnabledCheck();
@@ -102,7 +115,7 @@ public class TpsApiDispatch {
     }
   }
 
-  public Optional<TpsPaoGetResult> getPaoIfExists(UUID workspaceUuid) {
+  private Optional<TpsPaoGetResult> getPaoIfExists(UUID workspaceUuid) {
     features.tpsEnabledCheck();
     try {
       TpsPaoGetResult pao = getPao(workspaceUuid);

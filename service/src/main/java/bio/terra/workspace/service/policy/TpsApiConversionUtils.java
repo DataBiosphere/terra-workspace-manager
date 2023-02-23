@@ -51,6 +51,8 @@ public class TpsApiConversionUtils {
   private TpsApiConversionUtils() {}
 
   public static List<ApiWsmPolicyInput> apiEffectivePolicyListFromTpsPao(TpsPaoGetResult tpsPao) {
+    if (tpsPao == null) return new ArrayList<>();
+
     ApiWsmPolicyInputs apiInputs = apiFromTpsPolicyInputs(tpsPao.getEffectiveAttributes());
     return apiInputs.getInputs();
   }

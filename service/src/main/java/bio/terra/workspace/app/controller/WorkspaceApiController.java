@@ -77,7 +77,6 @@ import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -259,14 +258,9 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
     List<ApiWsmPolicyInput> workspacePolicies = null;
     if (featureConfiguration.isTpsEnabled()) {
-      // New workspaces will always be created with empty policies, but some workspaces predate
-      // policy and so will not have associated PAOs.
-      Optional<TpsPaoGetResult> workspacePao = tpsApiDispatch.getPaoIfExists(workspaceUuid);
-
-      workspacePolicies =
-          workspacePao
-              .map(TpsApiConversionUtils::apiEffectivePolicyListFromTpsPao)
-              .orElse(Collections.emptyList());
+      tpsApiDispatch.createPaoIfNotExist(workspaceUuid);
+      TpsPaoGetResult workspacePao = tpsApiDispatch.getPao(workspaceUuid);
+      workspacePolicies = TpsApiConversionUtils.apiEffectivePolicyListFromTpsPao(workspacePao);
     }
 
     // When we have another cloud context, we will need to do a similar retrieval for it.
@@ -739,6 +733,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   public ResponseEntity<ApiWsmPolicyMergeCheckResult> mergeCheck(
       UUID targetWorkspaceId, ApiMergeCheckRequest requestBody) {
     UUID sourceWorkspaceId = requestBody.getWorkspaceId();
+    tpsApiDispatch.createPaoIfNotExist(sourceWorkspaceId);
+    tpsApiDispatch.createPaoIfNotExist(targetWorkspaceId);
 
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
