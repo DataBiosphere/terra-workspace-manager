@@ -2,6 +2,7 @@ package bio.terra.workspace.common.utils;
 
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.BadRequestException;
+import bio.terra.common.exception.ErrorReportException;
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.workspace.service.workspace.exceptions.SaCredentialsMissingException;
@@ -568,6 +569,8 @@ public class AwsUtils {
       } else if (message.contains("Unable to transition to")) {
         throw new BadRequestException("Unable to perform notebook operation on cloud platform", ex);
       }
+    } else if (ex instanceof ErrorReportException) {
+      throw (ErrorReportException) ex;
     }
   }
 }
