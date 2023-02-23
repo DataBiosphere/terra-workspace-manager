@@ -2091,7 +2091,7 @@ public class MockMvcUtils {
         actualMetadata.getProperties());
   }
 
-  public static void assertClonedResourceMetadata(
+  public void assertClonedResourceMetadata(
       ApiResourceMetadata actualMetadata,
       ApiCloudPlatform expectedCloudPlatform,
       ApiResourceType expectedResourceType,
@@ -2103,13 +2103,17 @@ public class MockMvcUtils {
       UUID sourceWorkspaceId,
       UUID sourceResourceId,
       String expectedCreatedBy,
-      String expectedLastUpdatedBy) {
+      AuthenticatedUserRequest userRequest)
+      throws InterruptedException {
     ApiResourceLineage expectedResourceLineage = new ApiResourceLineage();
     expectedResourceLineage.add(
         new ApiResourceLineageEntry()
             .sourceWorkspaceId(sourceWorkspaceId)
             .sourceResourceId(sourceResourceId));
 
+    String expectedLastUpdatedBy = samService.getUserStatusInfo(userRequest).getUserEmail();
+    String expectedLastUpdatedBySubjectId =
+        samService.getUserStatusInfo(userRequest).getUserSubjectId();
     assertResourceMetadata(
         actualMetadata,
         expectedCloudPlatform,
@@ -2122,6 +2126,13 @@ public class MockMvcUtils {
         expectedResourceLineage,
         expectedCreatedBy,
         expectedLastUpdatedBy);
+    assertLatestActivityLogChangeDetails(
+        expectedWorkspaceId,
+        expectedLastUpdatedBy,
+        expectedLastUpdatedBySubjectId,
+        OperationType.CLONE,
+        sourceResourceId.toString(),
+        ActivityLogChangedTarget.RESOURCE);
   }
 
   public void assertLatestActivityLogChangeDetails(

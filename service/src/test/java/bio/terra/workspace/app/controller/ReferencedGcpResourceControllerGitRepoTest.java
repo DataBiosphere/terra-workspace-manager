@@ -1,7 +1,6 @@
 package bio.terra.workspace.app.controller;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
-import static bio.terra.workspace.common.utils.MockMvcUtils.assertClonedResourceMetadata;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertResourceMetadata;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -20,6 +19,7 @@ import bio.terra.workspace.generated.model.ApiResourceLineage;
 import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
@@ -246,7 +246,7 @@ public class ReferencedGcpResourceControllerGitRepoTest extends BaseConnectedTes
         sourceResourceName,
         sourceGitRepoUrl,
         /*expectedCreatedBy=*/ userAccessUtils.getSecondUserEmail(),
-        /*expectedLastUpdatedBy=*/ userAccessUtils.getSecondUserEmail());
+        userAccessUtils.secondUserAuthRequest());
 
     mockMvcUtils.removeRole(
         userAccessUtils.defaultUserAuthRequest(),
@@ -306,7 +306,7 @@ public class ReferencedGcpResourceControllerGitRepoTest extends BaseConnectedTes
         destResourceName,
         sourceResource.getAttributes().getGitRepoUrl(),
         /*expectedCreatedBy=*/ userAccessUtils.getDefaultUserEmail(),
-        /*expectedLastUpdatedBy=*/ userAccessUtils.getDefaultUserEmail());
+        userAccessUtils.defaultUserAuthRequest());
 
     // Assert resource returned by get
     final ApiGitRepoResource gotResource =
@@ -339,7 +339,7 @@ public class ReferencedGcpResourceControllerGitRepoTest extends BaseConnectedTes
         destResourceName,
         sourceGitRepoUrl,
         /*expectedCreatedBy=*/ userAccessUtils.getDefaultUserEmail(),
-        /*expectedLastUpdatedBy=*/ userAccessUtils.getDefaultUserEmail());
+        userAccessUtils.defaultUserAuthRequest());
 
     // Assert resource returned by get
     final ApiGitRepoResource gotResource =
@@ -431,8 +431,9 @@ public class ReferencedGcpResourceControllerGitRepoTest extends BaseConnectedTes
       String expectedResourceName,
       String expectedGitRepoUrl,
       String expectedCreatedBy,
-      String expectedLastUpdatedBy) {
-    assertClonedResourceMetadata(
+      AuthenticatedUserRequest userRequest)
+      throws InterruptedException {
+    mockMvcUtils.assertClonedResourceMetadata(
         actualResource.getMetadata(),
         /*expectedCloudPlatform=*/ null,
         ApiResourceType.GIT_REPO,
@@ -444,7 +445,7 @@ public class ReferencedGcpResourceControllerGitRepoTest extends BaseConnectedTes
         /*sourceWorkspaceId=*/ workspaceId,
         /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
         expectedCreatedBy,
-        expectedLastUpdatedBy);
+        userRequest);
 
     assertEquals(expectedGitRepoUrl, actualResource.getAttributes().getGitRepoUrl());
   }

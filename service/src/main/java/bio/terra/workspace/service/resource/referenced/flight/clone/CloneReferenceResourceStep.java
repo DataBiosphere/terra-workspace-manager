@@ -51,8 +51,7 @@ public class CloneReferenceResourceStep implements Step {
 
     try {
       var createdResource =
-          referencedResourceService.createReferenceResourceForClone(
-              destinationResource, sourceResource, userRequest);
+          referencedResourceService.createReferenceResourceForClone(destinationResource);
       FlightUtils.setResponse(context, createdResource, HttpStatus.OK);
       cloneDetails.setResult(WsmCloneResourceResult.SUCCEEDED);
     } catch (Exception e) {
