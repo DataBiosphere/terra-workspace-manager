@@ -99,6 +99,24 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
 
     validateWorkspaceContainsRegionPolicy(workspaceApi, getWorkspaceId(), gcpCentralLocation);
 
+    WsmPolicyExplainResult explainResult = workspaceApi.explainPolicies(getWorkspaceId(), 0);
+    List<WsmPolicyObject> explainObjects = explainResult.getExplainObjects();
+
+    assertEquals(2, explainObjects.size());
+    WsmPolicyObject wsObject =
+        explainObjects.stream()
+            .filter(obj -> obj.getObjectId().equals(getWorkspaceId()))
+            .findAny()
+            .orElse(null);
+    WsmPolicyObject dcObject =
+        explainObjects.stream()
+            .filter(obj -> obj.getObjectId().equals(centralDataCollection.getId()))
+            .findAny()
+            .orElse(null);
+
+    assertNotNull(wsObject);
+    assertEquals(gcpCentralLocation, dcObject.getProperties().get(0).getValue());
+
     /*
      Scenario 2: Workspace region should be reduced to data collection region. Workspace
      (policy=usa) + Data Collection (policy=us-central1). Result: OK & Workspace
