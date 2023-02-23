@@ -182,7 +182,7 @@ sudo -u "${JUPYTER_USER}" sh -c "echo \"export GOOGLE_SERVICE_ACCOUNT_EMAIL='${P
 
 sudo -u "${JUPYTER_USER}" sh -c "mkdir -p /home/${JUPYTER_USER}/.ssh"
 cd "/home/${JUPYTER_USER}"
-readonly TERRA_SSH_KEY="$(sudo -u "${JUPYTER_USER}" sh -c "terra user ssh-key get --format=JSON")"
+readonly TERRA_SSH_KEY="$(sudo -u "${JUPYTER_USER}" sh -c "terra user ssh-key get --includePrivateKey --format=JSON")"
 
 # Start the ssh-agent. Set this command in bash_profile so everytime user starts a shell, we start the ssh-agent.
 sudo -u "${JUPYTER_USER}" sh -c "echo eval '\"\$(ssh-agent -s)\"' >> /home/${JUPYTER_USER}/.bash_profile"
