@@ -3,7 +3,6 @@ package bio.terra.workspace.common.utils;
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.NotFoundException;
-import bio.terra.common.exception.ValidationException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.workspace.service.workspace.exceptions.SaCredentialsMissingException;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
@@ -523,7 +522,7 @@ public class AwsUtils {
                       .build())
               .notebookInstanceStatus();
       if (notebookStatus != NotebookInstanceStatus.IN_SERVICE) {
-        throw new ValidationException(
+        throw new BadRequestException(
             String.format(
                 "ProxyUrl only available for %s notebooks, current status is %s",
                 NotebookInstanceStatus.IN_SERVICE, notebookStatus.toString()));
@@ -564,9 +563,10 @@ public class AwsUtils {
       String message = ex.getMessage();
       if (message.contains("not authorized to perform")) {
         throw new NotFoundException(
-            "Error performing notebook operation, check the instance name / permissions and retry");
+            "Error performing notebook operation, check the instance name / permissions and retry",
+            ex);
       } else if (message.contains("Unable to transition to")) {
-        throw new BadRequestException("Unable to perform notebook operation on cloud platform");
+        throw new BadRequestException("Unable to perform notebook operation on cloud platform", ex);
       }
     }
   }
