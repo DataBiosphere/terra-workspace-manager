@@ -1,7 +1,6 @@
 package bio.terra.workspace.app.controller;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
-import static bio.terra.workspace.common.utils.MockMvcUtils.assertClonedResourceMetadata;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertResourceMetadata;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -21,6 +20,7 @@ import bio.terra.workspace.generated.model.ApiResourceLineage;
 import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
@@ -249,7 +249,7 @@ public class ReferencedGcpResourceControllerGcsObjectTest extends BaseConnectedT
         sourceBucketName,
         sourceFileName,
         /*expectedCreatedBy=*/ userAccessUtils.getSecondUserEmail(),
-        /*expectedLastUpdatedBy=*/ userAccessUtils.getSecondUserEmail());
+        userAccessUtils.secondUserAuthRequest());
     mockMvcUtils.removeRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
@@ -309,7 +309,7 @@ public class ReferencedGcpResourceControllerGcsObjectTest extends BaseConnectedT
         sourceBucketName,
         sourceFileName,
         /*expectedCreatedBy=*/ userAccessUtils.getDefaultUserEmail(),
-        /*expectedLastUpdatedBy=*/ userAccessUtils.getDefaultUserEmail());
+        userAccessUtils.defaultUserAuthRequest());
 
     // Assert resource returned by get
     final ApiGcpGcsObjectResource gotResource =
@@ -343,7 +343,7 @@ public class ReferencedGcpResourceControllerGcsObjectTest extends BaseConnectedT
         sourceBucketName,
         sourceFileName,
         /*expectedCreatedBy=*/ userAccessUtils.getDefaultUserEmail(),
-        /*expectedLastUpdatedBy=*/ userAccessUtils.getDefaultUserEmail());
+        userAccessUtils.defaultUserAuthRequest());
 
     // Assert resource returned by get
     final ApiGcpGcsObjectResource gotResource =
@@ -438,8 +438,9 @@ public class ReferencedGcpResourceControllerGcsObjectTest extends BaseConnectedT
       String expectedBucketName,
       String expectedFileName,
       String expectedCreatedBy,
-      String expectedLastUpdatedBy) {
-    assertClonedResourceMetadata(
+      AuthenticatedUserRequest userRequest)
+      throws InterruptedException {
+    mockMvcUtils.assertClonedResourceMetadata(
         actualResource.getMetadata(),
         ApiCloudPlatform.GCP,
         ApiResourceType.GCS_OBJECT,
@@ -451,7 +452,7 @@ public class ReferencedGcpResourceControllerGcsObjectTest extends BaseConnectedT
         /*sourceWorkspaceId=*/ workspaceId,
         /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
         expectedCreatedBy,
-        expectedLastUpdatedBy);
+        userRequest);
 
     assertEquals(expectedBucketName, actualResource.getAttributes().getBucketName());
     assertEquals(expectedFileName, actualResource.getAttributes().getFileName());
