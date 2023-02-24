@@ -12,7 +12,8 @@ public class TpsUtilities {
     List<String> result = new ArrayList<>();
 
     for (var input : inputs.getInputs()) {
-      if (input.getNamespace() == TERRA_NAMESPACE && input.getName() == GROUP_CONSTRAINT) {
+      if (input.getNamespace().equals(TERRA_NAMESPACE)
+          && input.getName().equals(GROUP_CONSTRAINT)) {
         for (var data : input.getAdditionalData()) {
           result.add(data.getValue());
         }
