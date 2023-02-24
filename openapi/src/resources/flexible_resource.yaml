@@ -1,0 +1,28 @@
+components:
+  schemas:
+    FlexibleResourceAttributes:
+      description: Attributes of a flexible resource.
+      type: object
+      required: [ typeNamespace, type ]
+      properties:
+        typeNamespace:
+          description: Namespace of the type; e.g., 'terra'
+          type: string
+        type:
+          description: Type of the flexible resource.
+          type: string
+        data:
+          description: JSON encoded in base-64.
+          type: string
+          format: byte
+
+    FlexibleResource:
+      type: object
+      description: A flexible resource.
+      required: [ metadata, attributes ]
+      properties:
+        metadata:
+          description: the resource metadata common to all resources
+          $ref: '#/components/schemas/ResourceMetadata'
+        attributes:
+          $ref: '#/components/schemas/FlexibleResourceAttributes'
