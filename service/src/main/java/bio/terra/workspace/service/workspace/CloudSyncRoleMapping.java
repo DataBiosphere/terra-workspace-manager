@@ -13,11 +13,11 @@ import org.springframework.stereotype.Component;
 /**
  * This mapping describes the project-level GCP roles granted to members of a workspace.
  *
- * <p>Granting these roles at the project level was implemented as a temporary workaround to
- * support objects in a cloud context before controlled resources were built. As controlled
- * resources become available, roles should be granted directly on controlled resources instead (see
- * {@code CustomGcpIamRoleMapping}), and should be removed from this list. Some permissions must be
- * granted at the project level, and will continue to live here.
+ * <p>Granting these roles at the project level was implemented as a temporary workaround to support
+ * objects in a cloud context before controlled resources were built. As controlled resources become
+ * available, roles should be granted directly on controlled resources instead (see {@code
+ * CustomGcpIamRoleMapping}), and should be removed from this list. Some permissions must be granted
+ * at the project level, and will continue to live here.
  *
  * <p>!!!If you change this file, if you want to backfill the change to existing projects, contact
  * admin to run syncIamRoles endpoint.!!!
