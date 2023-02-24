@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.workspace.flight.gcp;
 
-import static bio.terra.workspace.service.workspace.CloudSyncRoleMapping.CUSTOM_GCP_PROJECT_IAM_ROLES;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.GCP_PROJECT_ID;
 
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
@@ -52,6 +51,7 @@ import org.slf4j.LoggerFactory;
 public class GcpCloudSyncStep implements Step {
   private final Logger logger = LoggerFactory.getLogger(GcpCloudSyncStep.class);
   private final CloudResourceManagerCow resourceManagerCow;
+  private final CloudSyncRoleMapping cloudSyncRoleMapping;
   private final FeatureConfiguration features;
   private final SamService samService;
   private final GrantService grantService;
@@ -60,11 +60,13 @@ public class GcpCloudSyncStep implements Step {
 
   public GcpCloudSyncStep(
       CloudResourceManagerCow resourceManagerCow,
+      CloudSyncRoleMapping cloudSyncRoleMapping,
       FeatureConfiguration features,
       SamService samService,
       GrantService grantService,
       AuthenticatedUserRequest userRequest,
       UUID workspaceUuid) {
+    this.cloudSyncRoleMapping = cloudSyncRoleMapping;
     this.resourceManagerCow = resourceManagerCow;
     this.features = features;
     this.samService = samService;
@@ -94,7 +96,7 @@ public class GcpCloudSyncStep implements Step {
       // Add appropriate project-level roles for each WSM IAM role.
       workspaceRoleGroupsMap.forEach(
           (wsmRole, email) -> {
-            if (CUSTOM_GCP_PROJECT_IAM_ROLES.containsKey(wsmRole)) {
+            if (cloudSyncRoleMapping.getCustomGcpProjectIamRoles().containsKey(wsmRole)) {
               newBindings.add(bindingForRole(wsmRole, GcpUtils.toGroupMember(email), gcpProjectId));
             }
           });
@@ -153,7 +155,7 @@ public class GcpCloudSyncStep implements Step {
   }
 
   private String getCustomRoleName(WsmIamRole role, String gcpProjectId) {
-    CustomGcpIamRole customRole = CUSTOM_GCP_PROJECT_IAM_ROLES.get(role);
+    CustomGcpIamRole customRole = cloudSyncRoleMapping.getCustomGcpProjectIamRoles().get(role);
     if (customRole == null) {
       throw new InternalLogicException(String.format("Missing custom GCP project role %s", role));
     }
