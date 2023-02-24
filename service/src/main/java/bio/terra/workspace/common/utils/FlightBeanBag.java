@@ -1,6 +1,7 @@
 package bio.terra.workspace.common.utils;
 
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
+import bio.terra.workspace.app.configuration.external.AwsConfiguration;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.CliConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
@@ -25,6 +26,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.Stora
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.BucketCloneRolesService;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.spendprofile.SpendProfileService;
+import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.CloudSyncRoleMapping;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
@@ -44,6 +46,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class FlightBeanBag {
   private final ApplicationDao applicationDao;
+  private final AwsCloudContextService awsCloudContextService;
+  private final AwsConfiguration awsConfiguration;
   private final AzureCloudContextService azureCloudContextService;
   private final AzureConfiguration azureConfig;
   private final BucketCloneRolesService bucketCloneRolesService;
@@ -78,6 +82,8 @@ public class FlightBeanBag {
   @Autowired
   public FlightBeanBag(
       ApplicationDao applicationDao,
+      AwsCloudContextService awsCloudContextService,
+      AwsConfiguration awsConfiguration,
       AzureCloudContextService azureCloudContextService,
       AzureConfiguration azureConfig,
       BucketCloneRolesService bucketCloneRolesService,
@@ -108,6 +114,8 @@ public class FlightBeanBag {
       WorkspaceActivityLogService workspaceActivityLogService,
       LandingZoneBatchAccountFinder landingZoneBatchAccountFinder) {
     this.applicationDao = applicationDao;
+    this.awsCloudContextService = awsCloudContextService;
+    this.awsConfiguration = awsConfiguration;
     this.azureCloudContextService = azureCloudContextService;
     this.azureConfig = azureConfig;
     this.bucketCloneRolesService = bucketCloneRolesService;
@@ -145,6 +153,14 @@ public class FlightBeanBag {
 
   public ApplicationDao getApplicationDao() {
     return applicationDao;
+  }
+
+  public AwsCloudContextService getAwsCloudContextService() {
+    return awsCloudContextService;
+  }
+
+  public AwsConfiguration getAwsConfiguration() {
+    return awsConfiguration;
   }
 
   public AzureCloudContextService getAzureCloudContextService() {

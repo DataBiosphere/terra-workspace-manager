@@ -1,6 +1,7 @@
 package bio.terra.workspace.app.controller;
 
 import bio.terra.common.exception.ValidationException;
+import bio.terra.common.iam.SamUser;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
@@ -45,6 +46,10 @@ public class ControllerBase {
 
   public AuthenticatedUserRequest getAuthenticatedInfo() {
     return authenticatedUserRequestFactory.from(request);
+  }
+
+  public SamUser getSamUser() {
+    return samService.getSamUser(request);
   }
 
   /**
