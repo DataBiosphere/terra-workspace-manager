@@ -397,8 +397,7 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
     /*
      Scenario 9: Group policy merging. WS(groupA) can merge DC(nogroup).
     */
-    CreatedWorkspace groupTestWorkspace =
-        createWorkspace(UUID.randomUUID(), getSpendProfileId(), workspaceApi);
+    CreatedWorkspace groupTestWorkspace = createWorkspaceWithRegionPolicy(workspaceApi, usaLocation);
     var request = new WsmPolicyUpdateRequest().addAttributes(getGroupPolicyInputs(groupNameA)).updateMode(WsmPolicyUpdateMode.ENFORCE_CONFLICT);
     workspaceApi.updatePolicies(request, groupTestWorkspace.getId());
 
@@ -457,13 +456,19 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
 
     referencedGcpResourceApi.deleteBucketReference(referenceResult.getResource().getMetadata().getWorkspaceId(), referenceResult.getResource().getMetadata().getResourceId());
 
-    referenceResult = referencedGcpResourceApi.cloneGcpGcsBucketReference(
-        new CloneReferencedResourceRequestBody().destinationWorkspaceId(groupTestWorkspace.getId()),
-        groupTestReferenceResource.getMetadata().getWorkspaceId(),
-        groupTestReferenceResource.getMetadata().getResourceId());
+    exception =
+        assertThrows(
+            ApiException.class,
+            () ->
+                referencedGcpResourceApi.cloneGcpGcsBucketReference(
+                    new CloneReferencedResourceRequestBody().destinationWorkspaceId(groupTestWorkspace.getId()),
+                    groupTestReferenceResource.getMetadata().getWorkspaceId(),
+                    groupTestReferenceResource.getMetadata().getResourceId()));
+    assertEquals(exception.getCode(), HttpStatus.SC_CONFLICT);
+    assertTrue(
+        exception.getMessage().contains("Policy merge has conflicts"));
 
-    // TODO: referenceResult should fail.
-
+    // group should still be A only
     validateWorkspaceContainsGroupPolicy(
         workspaceApi, groupTestWorkspace.getId(), groupNameA);
 
@@ -475,18 +480,43 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
         new WsmPolicyUpdateRequest()
             .removeAttributes(getGroupPolicyInputs(groupNameA))
             .updateMode(WsmPolicyUpdateMode.ENFORCE_CONFLICT), groupTestWorkspace.getId());
+    workspaceApi.updatePolicies(
+        new WsmPolicyUpdateRequest()
+            .addAttributes(getRegionPolicyInputs(usaLocation))
+            .updateMode(WsmPolicyUpdateMode.ENFORCE_CONFLICT), groupTestWorkspace.getId());
 
-    referenceResult = referencedGcpResourceApi.cloneGcpGcsBucketReference(
+    var wsPre = workspaceApi.getWorkspace(groupTestWorkspace.getId(), null);
+    var dcPre = workspaceApi.getWorkspace(groupTestDataCollection.getId(), null);
+
+    referencedGcpResourceApi.cloneGcpGcsBucketReference(
         new CloneReferencedResourceRequestBody().destinationWorkspaceId(groupTestWorkspace.getId()),
         groupTestReferenceResource.getMetadata().getWorkspaceId(),
         groupTestReferenceResource.getMetadata().getResourceId());
 
-    // TODO: the clone should fail.
+    var wsPost = workspaceApi.getWorkspace(groupTestWorkspace.getId(), null);
+    var dcPost = workspaceApi.getWorkspace(groupTestDataCollection.getId(), null);
 
-    validateWorkspaceContainsGroupPolicy(
-        workspaceApi, groupTestWorkspace.getId(), groupNameA);
+    /*
+    exception =
+        assertThrows(
+            ApiException.class,
+            () ->
+                referencedGcpResourceApi.cloneGcpGcsBucketReference(
+                    new CloneReferencedResourceRequestBody().destinationWorkspaceId(groupTestWorkspace.getId()),
+                    groupTestReferenceResource.getMetadata().getWorkspaceId(),
+                    groupTestReferenceResource.getMetadata().getResourceId()));
+    assertEquals(exception.getCode(), HttpStatus.SC_CONFLICT);
+    assertTrue(
+        exception.getMessage().contains("Policy merge has conflicts"));
 
-    // Clean up the data collection used in most of the scenarios.
+     */
+
+    WorkspaceDescription updatedWorkspace = workspaceApi.getWorkspace(groupTestWorkspace.getId(), null);
+    List<WsmPolicyInput> updatedPolicies = updatedWorkspace.getPolicies();
+
+    assertEquals(0, updatedPolicies.size());
+
+    // Clean up the data collections used in most of the scenarios.
     workspaceApi.deleteWorkspace(groupTestDataCollection.getId());
     workspaceApi.deleteWorkspace(groupTestWorkspace.getId());
     workspaceApi.deleteWorkspace(centralDataCollection.getId());
@@ -506,22 +536,24 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
                     }));
   }
 
+  private WsmPolicyInputs getRegionPolicyInputs(String location) {
+    return new WsmPolicyInputs()
+        .addInputsItem(
+            new WsmPolicyInput()
+                .name("region-constraint")
+                .namespace("terra")
+                .additionalData(
+                    new ArrayList<>() {
+                      {
+                        add(new WsmPolicyPair().key("region-name").value(location));
+                      }
+                    }));
+  }
+
   private CreatedWorkspace createWorkspaceWithRegionPolicy(
       WorkspaceApi workspaceApi, String location) throws Exception {
     UUID workspaceId = UUID.randomUUID();
-
-    WsmPolicyInputs policies =
-        new WsmPolicyInputs()
-            .addInputsItem(
-                new WsmPolicyInput()
-                    .name("region-constraint")
-                    .namespace("terra")
-                    .additionalData(
-                        new ArrayList<>() {
-                          {
-                            add(new WsmPolicyPair().key("region-name").value(location));
-                          }
-                        }));
+    WsmPolicyInputs policies = getRegionPolicyInputs(location);
 
     Properties properties = new Properties();
     properties.add(
@@ -556,12 +588,12 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
     WorkspaceDescription updatedWorkspace = workspaceApi.getWorkspace(workspaceId, null);
     List<WsmPolicyInput> updatedPolicies = updatedWorkspace.getPolicies();
 
-    assertEquals(1, updatedPolicies.size());
-    assertEquals("group-constraint", updatedPolicies.get(0).getName());
-    assertEquals(1, updatedPolicies.get(0).getAdditionalData().size());
-    WsmPolicyPair regionPolicy = updatedPolicies.get(0).getAdditionalData().get(0);
-    assertEquals("group", regionPolicy.getKey());
-    assertEquals(groupName, regionPolicy.getValue());
+    List<WsmPolicyInput> groupPolicies = updatedPolicies.stream().filter(p -> p.getName().equals("group-constraint")).toList();
+    assertEquals(1, groupPolicies.size());
+    assertEquals(1, groupPolicies.get(0).getAdditionalData().size());
+    WsmPolicyPair groupPolicy = updatedPolicies.get(0).getAdditionalData().get(0);
+    assertEquals("group", groupPolicy.getKey());
+    assertEquals(groupName, groupPolicy.getValue());
   }
 
   @Override
