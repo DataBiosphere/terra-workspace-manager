@@ -13,11 +13,11 @@ import org.springframework.stereotype.Component;
 /**
  * This mapping describes the project-level GCP roles granted to members of a workspace.
  *
- * <p>Granting these roles at the project level was implemented as a temporary workaround to support
- * objects in a cloud context before controlled resources were built. As controlled resources become
- * available, roles should be granted directly on controlled resources instead (see {@code
- * CustomGcpIamRoleMapping}), and should be removed from this list. Some permissions must be granted
- * at the project level, and will continue to live here.
+ * <p>Granting these roles at the project level was implemented as a temporary workaround to
+ * support objects in a cloud context before controlled resources were built. As controlled
+ * resources become available, roles should be granted directly on controlled resources instead (see
+ * {@code CustomGcpIamRoleMapping}), and should be removed from this list. Some permissions must be
+ * granted at the project level, and will continue to live here.
  *
  * <p>!!!If you change this file, if you want to backfill the change to existing projects, contact
  * admin to run syncIamRoles endpoint.!!!
@@ -121,7 +121,17 @@ public class CloudSyncRoleMapping {
           "dataproc.clusters.get",
           "dataproc.clusters.list",
           "dataproc.jobs.get",
-          "dataproc.jobs.list");
+          "dataproc.jobs.list",
+          "dataproc.autoscalingPolicies.get",
+          "dataproc.autoscalingPolicies.list",
+          "dataproc.batches.get",
+          "dataproc.batches.list",
+          "dataproc.workflowTemplates.get",
+          "dataproc.workflowTemplates.list",
+          "monitoring.metricDescriptors.get",
+          "monitoring.metricDescriptors.list",
+          "monitoring.monitoredResourceDescriptors.get",
+          "monitoring.monitoredResourceDescriptors.list");
 
   private final List<String> additionalDataprocOwnerPermissions =
       ImmutableList.of(
@@ -140,20 +150,27 @@ public class CloudSyncRoleMapping {
           "dataproc.autoscalingPolicies.create",
           "dataproc.autoscalingPolicies.update",
           "dataproc.autoscalingPolicies.delete",
+          "dataproc.autoscalingPolicies.use",
+          "dataproc.batches.create",
+          "dataproc.batches.delete",
+          "dataproc.batches.cancel",
+          "dataproc.workflowTemplates.update",
+          "dataproc.workflowTemplates.create",
+          "dataproc.workflowTemplates.delete",
+          "dataproc.workflowTemplates.instantiate",
+          "dataproc.workflowTemplates.instantiateInline",
+          "dataproc.operations.get",
+          "dataproc.operations.list",
+          "dataproc.operations.cancel",
+          "dataproc.operations.delete",
           "dataproc.tasks.lease",
           "dataproc.tasks.listInvalidatedLeases",
           "dataproc.tasks.reportStatus",
           "dataproc.agents.get",
+          "dataproc.agents.list",
           "dataproc.agents.create",
           "dataproc.agents.update",
           "dataproc.agents.delete",
-          "logging.logEntries.create",
-          "monitoring.metricDescriptors.create",
-          "monitoring.metricDescriptors.get",
-          "monitoring.metricDescriptors.list",
-          "monitoring.monitoredResourceDescriptors.get",
-          "monitoring.monitoredResourceDescriptors.list",
-          "monitoring.timeSeries.create",
           "compute.machineTypes.get",
           "compute.networks.get",
           "compute.networks.list",
@@ -161,7 +178,10 @@ public class CloudSyncRoleMapping {
           "compute.regions.get",
           "compute.regions.list",
           "compute.zones.get",
-          "compute.zones.list");
+          "compute.zones.list",
+          "logging.logEntries.create",
+          "monitoring.metricDescriptors.create",
+          "monitoring.timeSeries.create");
 
   private final List<String> projectReaderWithDataprocPermissions =
       new ImmutableList.Builder<String>()
