@@ -39,6 +39,7 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
 import com.google.common.base.Preconditions;
 import io.opencensus.contrib.spring.aop.Traced;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
