@@ -21,13 +21,18 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
+import bio.terra.workspace.service.resource.controlled.model.WsmControlledResourceFields;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
+import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.annotations.VisibleForTesting;
+
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
@@ -43,54 +48,22 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
 
   @JsonCreator
   public ControlledAwsSageMakerNotebookResource(
-      @JsonProperty("workspaceId") UUID workspaceId,
-      @JsonProperty("resourceId") UUID resourceId,
-      @JsonProperty("name") String name,
-      @JsonProperty("description") String description,
-      @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
-      @JsonProperty("assignedUser") String assignedUser,
-      @JsonProperty("privateResourceState") PrivateResourceState privateResourceState,
-      @JsonProperty("accessScope") AccessScopeType accessScope,
-      @JsonProperty("managedBy") ManagedByType managedBy,
-      @JsonProperty("applicationId") String applicationId,
+      @JsonProperty("wsmResourceFields") WsmResourceFields resourceFields,
+      @JsonProperty("wsmControlledResourceFields")
+          WsmControlledResourceFields controlledResourceFields,
       @JsonProperty("instanceId") String instanceId,
       @JsonProperty("instanceType") String instanceType,
       @JsonProperty("defaultBucket")
-          ControlledAwsSageMakerNotebookAttributes.DefaultBucket defaultBucket,
-      @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
-      @JsonProperty("properties") Map<String, String> properties,
-      @JsonProperty("createdByEmail") String createdByEmail,
-      @JsonProperty("createdDate") OffsetDateTime createdDate,
-      @JsonProperty("lastUpdatedByEmail") String lastUpdatedByEmail,
-      @JsonProperty("lastUpdatedDate") OffsetDateTime lastUpdatedDate,
-      @JsonProperty("region") String region) {
-    super(
-        ControlledResourceFields.builder()
-            .workspaceUuid(workspaceId)
-            .resourceId(resourceId)
-            .name(name)
-            .description(description)
-            .cloningInstructions(cloningInstructions)
-            .assignedUser(assignedUser)
-            .accessScope(accessScope)
-            .managedBy(managedBy)
-            .applicationId(applicationId)
-            .privateResourceState(privateResourceState)
-            .resourceLineage(resourceLineage)
-            .properties(properties)
-            .createdByEmail(createdByEmail)
-            .createdDate(createdDate)
-            .lastUpdatedByEmail(lastUpdatedByEmail)
-            .lastUpdatedDate(lastUpdatedDate)
-            .region(region)
-            .build());
+          ControlledAwsSageMakerNotebookAttributes.DefaultBucket defaultBucket) {
+    super(resourceFields, controlledResourceFields);
     this.instanceId = instanceId;
     this.instanceType = instanceType;
     this.defaultBucket = defaultBucket;
     validate();
   }
 
-  private ControlledAwsSageMakerNotebookResource(
+  @VisibleForTesting
+  public ControlledAwsSageMakerNotebookResource(
       ControlledResourceFields common,
       String instanceId,
       String instanceType,
@@ -116,8 +89,18 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
     return (T) this;
   }
 
+  // -- getters used in serialization --
+  public WsmResourceFields getWsmResourceFields() {
+    return super.getWsmResourceFields();
+  }
+
+  public WsmControlledResourceFields getWsmControlledResourceFields() {
+    return super.getWsmControlledResourceFields();
+  }
+
   /** {@inheritDoc} */
   @Override
+  @JsonIgnore
   public Optional<UniquenessCheckAttributes> getUniquenessCheckAttributes() {
     return Optional.of(
         new UniquenessCheckAttributes()
@@ -174,11 +157,13 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
   }
 
   @Override
+  @JsonIgnore
   public WsmResourceType getResourceType() {
     return WsmResourceType.CONTROLLED_AWS_SAGEMAKER_NOTEBOOK;
   }
 
   @Override
+  @JsonIgnore
   public WsmResourceFamily getResourceFamily() {
     return WsmResourceFamily.AWS_SAGEMAKER_NOTEBOOK;
   }
