@@ -389,7 +389,6 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
       throw new InconsistentFieldsException("Expected controlled AZURE_BATCH_POOL");
     }
     ResourceValidationUtils.validateAzureBatchPoolId(getId());
-    ResourceValidationUtils.validateAzureVmSize(getVmSize());
     ResourceValidationUtils.validateBatchPoolDisplayName(getDisplayName());
     if (deploymentConfiguration != null) {
       if (deploymentConfiguration.virtualMachineConfiguration() != null
