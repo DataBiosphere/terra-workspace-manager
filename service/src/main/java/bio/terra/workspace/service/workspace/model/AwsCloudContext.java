@@ -24,8 +24,8 @@ public class AwsCloudContext {
   private String serviceRoleAudience;
   private Arn userRoleArn;
   private Arn kmsKeyArn;
-  private Arn notebookLifecycleConfigArn;
-  private Map<Region, String> regionToBucketNameMap;
+  @Nullable private Arn notebookLifecycleConfigArn;
+  @Nullable private Map<Region, String> regionToBucketNameMap;
 
   // Constructor for Jackson
   public AwsCloudContext() {}
@@ -38,8 +38,8 @@ public class AwsCloudContext {
       String serviceRoleAudience,
       Arn userRoleArn,
       Arn kmsKeyArn,
-      Arn notebookLifecycleConfigArn,
-      Map<Region, String> regionToBucketNameMap) {
+      @Nullable Arn notebookLifecycleConfigArn,
+      @Nullable Map<Region, String> regionToBucketNameMap) {
     this.landingZoneName = landingZoneName;
     this.accountNumber = accountNumber;
     this.serviceRoleArn = serviceRoleArn;
