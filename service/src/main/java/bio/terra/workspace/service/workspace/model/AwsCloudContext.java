@@ -9,9 +9,7 @@ import bio.terra.workspace.service.workspace.exceptions.InvalidSerializedVersion
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import software.amazon.awssdk.arns.Arn;
@@ -87,9 +85,9 @@ public class AwsCloudContext {
     // Serialized context may not have a notebook lifecycle defined, so check for null before
     // attempting to construct an ARN.
     Arn notebookLifecycleConfigArn =
-        (landingZoneConfiguration.getNotebookLifecycleConfigArn() != null)
-            ? Arn.fromString(landingZoneConfiguration.getNotebookLifecycleConfigArn())
-            : null;
+        Optional.ofNullable(landingZoneConfiguration.getNotebookLifecycleConfigArn())
+            .map(str -> Arn.fromString(landingZoneConfiguration.getNotebookLifecycleConfigArn()))
+            .orElse(null);
 
     Map<Region, String> bucketMap = new HashMap<>();
     for (AwsLandingZoneBucket bucket : landingZoneConfiguration.getBuckets()) {

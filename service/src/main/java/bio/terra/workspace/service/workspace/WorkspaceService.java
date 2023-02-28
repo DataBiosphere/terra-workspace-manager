@@ -484,29 +484,29 @@ public class WorkspaceService {
    */
   @Traced
   public void createAwsCloudContext(
-          Workspace workspace,
-          String jobId,
-          AuthenticatedUserRequest userRequest,
-          SamUser samUser,
-          @Nullable String resultPath) {
+      Workspace workspace,
+      String jobId,
+      AuthenticatedUserRequest userRequest,
+      SamUser samUser,
+      @Nullable String resultPath) {
     features.awsEnabledCheck();
 
     String jobDescription =
-            String.format(
-                    "Create AWS cloud context for workspace: name: '%s' id: '%s'  ",
-                    workspace.getDisplayName().orElse(""), workspace.getWorkspaceId());
+        String.format(
+            "Create AWS cloud context for workspace: name: '%s' id: '%s'  ",
+            workspace.getDisplayName().orElse(""), workspace.getWorkspaceId());
 
     jobService
-            .newJob()
-            .description(jobDescription)
-            .jobId(jobId)
-            .flightClass(CreateAwsContextFlight.class)
-            .userRequest(userRequest)
-            .operationType(OperationType.CREATE)
-            .workspaceId(workspace.getWorkspaceId().toString())
-            .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
-            .addParameter(WorkspaceFlightMapKeys.SAM_USER, samUser)
-            .submit();
+        .newJob()
+        .description(jobDescription)
+        .jobId(jobId)
+        .flightClass(CreateAwsContextFlight.class)
+        .userRequest(userRequest)
+        .operationType(OperationType.CREATE)
+        .workspaceId(workspace.getWorkspaceId().toString())
+        .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
+        .addParameter(WorkspaceFlightMapKeys.SAM_USER, samUser)
+        .submit();
   }
 
   /** Delete the GCP cloud context for the workspace. */
