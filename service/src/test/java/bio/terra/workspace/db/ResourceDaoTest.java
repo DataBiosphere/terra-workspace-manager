@@ -77,7 +77,7 @@ public class ResourceDaoTest extends BaseUnitTest {
   public void createGetControlledGcsBucket_beforeLogIsWrite_lastUpdatedDateEqualsCreatedDate() {
     ControlledGcsBucketResource resource =
         ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
-    resourceDao.createControlledResource(resource);
+    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, resource);
 
     var getResource = resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId());
     assertTrue(resource.partialEqual(getResource));
@@ -102,8 +102,7 @@ public class ResourceDaoTest extends BaseUnitTest {
   public void createGetControlledFlexResource() {
     ControlledFlexibleResource resource =
         ControlledResourceFixtures.makeDefaultFlexResourceBuilder(workspaceUuid).build();
-    resourceDao.createControlledResource(resource);
-
+    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, resource);
     var getResource = resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId());
     assertTrue(resource.partialEqual(getResource));
     assertNotNull(getResource.getCreatedDate());
@@ -116,7 +115,7 @@ public class ResourceDaoTest extends BaseUnitTest {
       createGetDeleteControlledBigQueryDataset_beforeLogIsWrite_lastUpdatedDateEqualsCreatedDate() {
     ControlledBigQueryDatasetResource resource =
         ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid).build();
-    resourceDao.createControlledResource(resource);
+    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, resource);
 
     var getResource = resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId());
     assertTrue(resource.partialEqual(getResource));
@@ -146,7 +145,7 @@ public class ResourceDaoTest extends BaseUnitTest {
             .build();
     ControlledAiNotebookInstanceResource resource =
         ControlledResourceFixtures.makeDefaultAiNotebookInstance().common(commonFields).build();
-    resourceDao.createControlledResource(resource);
+    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, resource);
 
     var getResource = resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId());
     assertTrue(resource.partialEqual(getResource));
@@ -163,7 +162,7 @@ public class ResourceDaoTest extends BaseUnitTest {
             .build();
     ControlledAiNotebookInstanceResource resource =
         ControlledResourceFixtures.makeDefaultAiNotebookInstance().common(commonFields).build();
-    resourceDao.createControlledResource(resource);
+    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, resource);
     activityLogDao.writeActivity(
         workspaceUuid,
         new DbWorkspaceActivityLog(
@@ -187,7 +186,7 @@ public class ResourceDaoTest extends BaseUnitTest {
             .build();
     ControlledAiNotebookInstanceResource resource =
         ControlledResourceFixtures.makeDefaultAiNotebookInstance().common(commonFields).build();
-    resourceDao.createControlledResource(resource);
+    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, resource);
 
     var newRegion = "great-new-world";
 
@@ -218,7 +217,7 @@ public class ResourceDaoTest extends BaseUnitTest {
             .build();
     ControlledAiNotebookInstanceResource resource =
         ControlledResourceFixtures.makeDefaultAiNotebookInstance().common(commonFields).build();
-    resourceDao.createControlledResource(resource);
+    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, resource);
 
     assertTrue(resourceDao.updateControlledResourceRegion(resource.getResourceId(), null));
 
@@ -276,8 +275,7 @@ public class ResourceDaoTest extends BaseUnitTest {
         ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid)
             .bucketName(clashingBucketName)
             .build();
-
-    resourceDao.createControlledResource(initialResource);
+    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, initialResource);
 
     final UUID workspaceId2 = createWorkspaceWithGcpContext(workspaceDao);
     final ControlledGcsBucketResource duplicatingResource =
@@ -287,7 +285,9 @@ public class ResourceDaoTest extends BaseUnitTest {
 
     assertThrows(
         DuplicateResourceException.class,
-        () -> resourceDao.createControlledResource(duplicatingResource));
+        () ->
+            ControlledResourceFixtures.insertControlledResourceRow(
+                resourceDao, duplicatingResource));
   }
 
   // AI Notebooks are unique on the tuple {instanceId, location, projectId } in addition
@@ -306,7 +306,8 @@ public class ResourceDaoTest extends BaseUnitTest {
             .common(commonFields1)
             .instanceId(cloudInstanceId)
             .build();
-    resourceDao.createControlledResource(initialResource);
+
+    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, initialResource);
     assertTrue(
         initialResource.partialEqual(
             resourceDao.getResource(
@@ -324,7 +325,9 @@ public class ResourceDaoTest extends BaseUnitTest {
             .build();
     assertThrows(
         DuplicateResourceException.class,
-        () -> resourceDao.createControlledResource(duplicatingResource));
+        () ->
+            ControlledResourceFixtures.insertControlledResourceRow(
+                resourceDao, duplicatingResource));
 
     ControlledResourceFields commonFields3 =
         ControlledResourceFixtures.makeNotebookCommonFieldsBuilder()
@@ -582,7 +585,7 @@ public class ResourceDaoTest extends BaseUnitTest {
                 .region("us-central1"),
             bucketName);
 
-    resourceDao.createControlledResource(originalResource);
+    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, originalResource);
 
     ControlledGcsBucketResource bucket =
         resourceDao
@@ -622,9 +625,9 @@ public class ResourceDaoTest extends BaseUnitTest {
                       .region(null)
                       .build())
               .build();
-      resourceDao.createControlledResource(dataset);
-      resourceDao.createControlledResource(bucket);
-      resourceDao.createControlledResource(notebook);
+      ControlledResourceFixtures.insertControlledResourceRow(resourceDao, dataset);
+      ControlledResourceFixtures.insertControlledResourceRow(resourceDao, bucket);
+      ControlledResourceFixtures.insertControlledResourceRow(resourceDao, notebook);
     }
 
     assertEquals(
@@ -650,7 +653,7 @@ public class ResourceDaoTest extends BaseUnitTest {
                 .defaultTableLifetime(null)
                 .defaultPartitionLifetime(null)
                 .build();
-        resourceDao.createControlledResource(dataset);
+        ControlledResourceFixtures.insertControlledResourceRow(resourceDao, dataset);
       }
 
       ControlledBigQueryDatasetResource datasetWithLifetime =
@@ -658,8 +661,7 @@ public class ResourceDaoTest extends BaseUnitTest {
               .defaultTableLifetime(DEFAULT_CREATED_BIG_QUERY_TABLE_LIFETIME)
               .defaultPartitionLifetime(DEFAULT_CREATED_BIG_QUERY_PARTITION_LIFETIME)
               .build();
-
-      resourceDao.createControlledResource(datasetWithLifetime);
+      ControlledResourceFixtures.insertControlledResourceRow(resourceDao, datasetWithLifetime);
 
       var ans = resourceDao.listControlledBigQueryDatasetsWithoutBothLifetime().size();
       assertEquals(5, ans);
@@ -672,8 +674,7 @@ public class ResourceDaoTest extends BaseUnitTest {
   public void updateBigQueryDatasetDefaultTableAndPartitionLifetime() {
     ControlledBigQueryDatasetResource resource =
         ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid).build();
-
-    resourceDao.createControlledResource(resource);
+    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, resource);
 
     ControlledBigQueryDatasetResource resourceBeforeUpdate =
         resourceDao
@@ -701,7 +702,7 @@ public class ResourceDaoTest extends BaseUnitTest {
   }
 
   private void createControlledResourceAndLog(ControlledResource resource) {
-    resourceDao.createControlledResource(resource);
+    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, resource);
     activityLogDao.writeActivity(
         workspaceUuid,
         new DbWorkspaceActivityLog(

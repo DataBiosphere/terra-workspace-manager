@@ -174,7 +174,8 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
         ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid)
             .projectId(projectId)
             .build();
-    resourceDao.createControlledResource(bqDataset);
+    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, bqDataset);
+
     // Also create a reference pointing to the same "cloud" resource
     ReferencedBigQueryDatasetResource referencedDataset =
         ReferenceResourceFixtures.makeReferencedBqDatasetResource(

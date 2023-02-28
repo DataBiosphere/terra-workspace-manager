@@ -233,7 +233,7 @@ public class ApplicationServiceTest extends BaseUnitTest {
             .get(appService.getErrorList().size() - 1)
             .contains("associated resources"));
     // Delete the resource
-    resourceDao.deleteResource(workspace.getWorkspaceId(), resourceId);
+    resourceDao.deleteReferencedResource(workspace.getWorkspaceId(), resourceId);
     // try to decommission the app again, should succeed this time
     appService.processApp(decommissionApp, appService.buildAppMap());
     WsmWorkspaceApplication readApp =

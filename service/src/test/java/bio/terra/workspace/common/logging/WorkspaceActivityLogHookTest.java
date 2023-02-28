@@ -348,7 +348,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     List<WsmResource> resourcesToDelete = new ArrayList<>();
     // an AI notebook that is not "deleted" as it is put into the resource DAO.
     var resource = ControlledResourceFixtures.makeDefaultAiNotebookInstance(workspaceId).build();
-    resourceDao.createControlledResource(resource);
+    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, resource);
     resourcesToDelete.add(resource);
 
     FlightMap inputParams = buildInputParams(workspaceId, OperationType.DELETE);
@@ -372,7 +372,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     List<WsmResource> resourcesToDelete = new ArrayList<>();
     // an AI notebook that is not "deleted" as it is put into the resource DAO.
     var aiNotebook = ControlledResourceFixtures.makeDefaultAiNotebookInstance(workspaceId).build();
-    resourceDao.createControlledResource(aiNotebook);
+    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, aiNotebook);
     resourcesToDelete.add(aiNotebook);
     // a dataset that is "deleted" as it is never put into the resource DAO.
     var dataset =

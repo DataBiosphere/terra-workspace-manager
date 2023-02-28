@@ -11,6 +11,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 
@@ -33,23 +34,28 @@ public class CreateControlledResourceFlight extends Flight {
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
 
     FlightUtils.validateRequiredEntries(
-        inputParameters, ResourceKeys.RESOURCE, JobMapKeys.AUTH_USER_INFO.getKeyName());
+        inputParameters,
+        ResourceKeys.RESOURCE,
+        ResourceKeys.RESOURCE_STATE_RULE,
+        JobMapKeys.AUTH_USER_INFO.getKeyName());
 
-    final ControlledResource resource =
+    ControlledResource resource =
         inputParameters.get(ResourceKeys.RESOURCE, ControlledResource.class);
-    final AuthenticatedUserRequest userRequest =
+    var userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
     // Role is optionally populated for private resources
-    final ControlledResourceIamRole privateResourceIamRole =
+    var privateResourceIamRole =
         inputParameters.get(
             ControlledResourceKeys.PRIVATE_RESOURCE_IAM_ROLE, ControlledResourceIamRole.class);
     // PetSA is optional for some resources
-    final String petSaEmail =
+    var petSaEmail =
         inputParameters.get(ControlledResourceKeys.NOTEBOOK_PET_SERVICE_ACCOUNT, String.class);
+    var resourceStateRule =
+        inputParameters.get(ResourceKeys.RESOURCE_STATE_RULE, WsmResourceStateRule.class);
 
     // Store the resource metadata in the WSM database. Doing this first means concurrent
     // conflicting resources with the same name or resource attributes can be prevented.
-    addStep(new StoreMetadataStep(flightBeanBag.getResourceDao()), dbRetryRule);
+    addStep(new StoreMetadataStep(flightBeanBag.getResourceDao(), resourceStateRule), dbRetryRule);
 
     // create the Sam resource associated with the resource
     addStep(
@@ -77,7 +83,7 @@ public class CreateControlledResourceFlight extends Flight {
         new MarkPrivateResourceReadyStep(resource, flightBeanBag.getResourceDao()),
         RetryRules.shortDatabase());
 
-    // Populate the return response
-    addStep(new SetCreateResponseStep(resource, flightBeanBag.getResourceDao()));
+    // Complete the create and populate the return response
+    addStep(new SetCreateResponseStep(resource, flightBeanBag.getResourceDao(), resourceStateRule));
   }
 }

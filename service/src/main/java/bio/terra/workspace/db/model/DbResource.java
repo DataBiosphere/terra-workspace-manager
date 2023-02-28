@@ -7,7 +7,6 @@ import bio.terra.workspace.service.resource.controlled.model.PrivateResourceStat
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
-import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
@@ -17,6 +16,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
@@ -270,5 +270,35 @@ public class DbResource {
   public DbResource error(ErrorReportException error) {
     this.error = error;
     return this;
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", DbResource.class.getSimpleName() + "[", "]")
+        .add("workspaceUuid=" + workspaceUuid)
+        .add("cloudPlatform=" + cloudPlatform)
+        .add("resourceId=" + resourceId)
+        .add("name='" + name + "'")
+        .add("description='" + description + "'")
+        .add("stewardshipType=" + stewardshipType)
+        .add("resourceType=" + resourceType)
+        .add("cloningInstructions=" + cloningInstructions)
+        .add("attributes='" + attributes + "'")
+        .add("resourceLineage=" + resourceLineage)
+        .add("state=" + state)
+        .add("flightId='" + flightId + "'")
+        .add("error=" + error)
+        .add("accessScope=" + accessScope)
+        .add("managedBy=" + managedBy)
+        .add("applicationId='" + applicationId + "'")
+        .add("assignedUser='" + assignedUser + "'")
+        .add("privateResourceState=" + privateResourceState)
+        .add("properties=" + properties)
+        .add("createdByEmail='" + createdByEmail + "'")
+        .add("createdDate=" + createdDate)
+        .add("region='" + region + "'")
+        .add("lastUpdatedByEmail='" + lastUpdatedByEmail + "'")
+        .add("lastUpdatedDate=" + lastUpdatedDate)
+        .toString();
   }
 }

@@ -10,7 +10,6 @@ import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
-import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.any.datareposnapshot.ReferencedDataRepoSnapshotAttributes;
 import bio.terra.workspace.service.resource.referenced.cloud.any.datareposnapshot.ReferencedDataRepoSnapshotResource;

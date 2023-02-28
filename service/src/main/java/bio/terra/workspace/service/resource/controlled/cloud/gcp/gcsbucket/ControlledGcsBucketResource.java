@@ -33,6 +33,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.Optional;
 import java.util.UUID;
+
+import com.google.common.base.Objects;
 import org.jetbrains.annotations.Nullable;
 
 public class ControlledGcsBucketResource extends ControlledResource {
@@ -237,19 +239,10 @@ public class ControlledGcsBucketResource extends ControlledResource {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    if (!super.equals(o)) {
-      return false;
-    }
-
-    ControlledGcsBucketResource that = (ControlledGcsBucketResource) o;
-
-    return bucketName.equals(that.bucketName);
+    if (this == o) return true;
+    if (!(o instanceof ControlledGcsBucketResource that)) return false;
+    if (!super.equals(o)) return false;
+    return Objects.equal(bucketName, that.bucketName);
   }
 
   @Override
@@ -271,9 +264,7 @@ public class ControlledGcsBucketResource extends ControlledResource {
 
   @Override
   public int hashCode() {
-    int result = super.hashCode();
-    result = 31 * result + bucketName.hashCode();
-    return result;
+    return Objects.hashCode(super.hashCode(), bucketName);
   }
 
   public static class Builder {

@@ -3,37 +3,53 @@ package bio.terra.workspace.service.resource.model;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.generated.model.ApiState;
-import org.apache.commons.lang3.SerializationException;
-
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.lang3.SerializationException;
 
 /**
- * See design document
- * <a href="https://docs.google.com/document/d/1ply9gRK-X8luKOrCYbZAA90QGqoZwjyukCsrA5PbIyQ/edit#heading=h.ygdsvwmy6va0">here</a>
+ * See design document <a
+ * href="https://docs.google.com/document/d/1ply9gRK-X8luKOrCYbZAA90QGqoZwjyukCsrA5PbIyQ/edit#heading=h.ygdsvwmy6va0">here</a>
  */
 public enum WsmResourceState {
   BROKEN("BROKEN", ApiState.BROKEN),
+  BROKEN_DELETE("BROKEN_DELETE", ApiState.BROKEN_DELETE),
   CREATING("CREATING", ApiState.CREATING),
   DELETING("DELETING", ApiState.DELETING),
   READY("READY", ApiState.READY),
   UPDATING("UPDATING", ApiState.UPDATING),
   NOT_EXISTS("invalid not exists", null);
 
+  // -- Valid state transitions --
   private static final List<WsmResourceState> BROKEN_TRANSITIONS = List.of(DELETING);
-  private static final List<WsmResourceState> CREATING_TRANSITIONS = List.of(BROKEN, READY);
-  private static final List<WsmResourceState> DELETING_TRANSITIONS = List.of(NOT_EXISTS);
+  // BROKEN_DELETING requires manual intervention to clean up
+  private static final List<WsmResourceState> BROKEN_DELETING_TRANSITIONS = List.of();
+  // We allow the NOT_EXISTS transition for the V1 apis where we move failed resources from
+  // creating to non-existent.
+  private static final List<WsmResourceState> CREATING_TRANSITIONS =
+      List.of(BROKEN, READY, NOT_EXISTS);
+  private static final List<WsmResourceState> DELETING_TRANSITIONS =
+      List.of(BROKEN_DELETE, NOT_EXISTS);
   private static final List<WsmResourceState> READY_TRANSITIONS = List.of(UPDATING, DELETING);
   private static final List<WsmResourceState> UPDATING_TRANSITIONS = List.of(BROKEN, READY);
   private static final List<WsmResourceState> NOT_EXISTS_TRANSITIONS = List.of(CREATING);
 
   private static final Map<WsmResourceState, List<WsmResourceState>> VALID_TRANSITIONS =
-    Map.of(BROKEN, BROKEN_TRANSITIONS,
-      CREATING, CREATING_TRANSITIONS,
-      DELETING, DELETING_TRANSITIONS,
-      READY, READY_TRANSITIONS,
-      UPDATING, UPDATING_TRANSITIONS,
-      NOT_EXISTS, NOT_EXISTS_TRANSITIONS);
+      Map.of(
+          BROKEN,
+          BROKEN_TRANSITIONS,
+          BROKEN_DELETE,
+          BROKEN_DELETING_TRANSITIONS,
+          CREATING,
+          CREATING_TRANSITIONS,
+          DELETING,
+          DELETING_TRANSITIONS,
+          READY,
+          READY_TRANSITIONS,
+          UPDATING,
+          UPDATING_TRANSITIONS,
+          NOT_EXISTS,
+          NOT_EXISTS_TRANSITIONS);
 
   private final String dbString;
   private final ApiState apiState;
@@ -53,7 +69,7 @@ public enum WsmResourceState {
       }
     }
     throw new SerializationException(
-      "Deserialization failed: no matching state type for " + dbString);
+        "Deserialization failed: no matching state type for " + dbString);
   }
 
   public String toDb() {
@@ -78,6 +94,12 @@ public enum WsmResourceState {
     if (validTransitionList == null) {
       throw new InternalLogicException("Invalid state");
     }
+    // Allow self-transition for all states. This seems to be a common case for retries. We put this
+    // in the lists if we decide it shouldn't hold for all states.
+    if (startState == endState) {
+      return true;
+    }
+
     for (WsmResourceState validState : validTransitionList) {
       if (validState == endState) {
         return true;
@@ -85,6 +107,4 @@ public enum WsmResourceState {
     }
     return false;
   }
-
-
 }

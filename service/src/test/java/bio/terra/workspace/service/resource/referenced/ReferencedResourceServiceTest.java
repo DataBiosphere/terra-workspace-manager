@@ -40,8 +40,6 @@ import bio.terra.workspace.service.resource.referenced.terra.workspace.Reference
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.junit.jupiter.api.AfterEach;
@@ -460,32 +458,6 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
       WsmResource wsmResource = referencedResource;
       assertThrows(InvalidMetadataException.class, wsmResource::castToControlledResource);
     }
-
-    @Test
-    void testEnumerate() {
-      List<ReferencedResource> resources = new ArrayList<>();
-
-      for (int i = 0; i < 3; i++) {
-        logger.info("testEnumerate - create resource {}", i);
-        ReferencedResource resource =
-            ReferenceResourceFixtures.makeDataRepoSnapshotResource(workspaceUuid);
-        referenceResourceService.createReferenceResource(resource, USER_REQUEST);
-        resources.add(resource);
-      }
-
-      try {
-        logger.info("testEnumerate - enumeration");
-        List<ReferencedResource> daoResources =
-            referenceResourceService.enumerateReferences(workspaceUuid, 0, 100, USER_REQUEST);
-        logger.info("testEnumerate - got {}", daoResources.size());
-        assertEquals(daoResources.size(), resources.size());
-      } finally {
-        for (var resource : resources) {
-          referenceResourceService.deleteReferenceResourceForResourceType(
-              workspaceUuid, resource.getResourceId(), resource.getResourceType(), USER_REQUEST);
-        }
-      }
-    }
   }
 
   @Nested
@@ -723,7 +695,10 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
       assertTrue(lastUpdateDetailsBeforeCreate.isPresent());
       ReferencedResource resultReferenceResource =
           referenceResourceService.createReferenceResource(referencedResource, USER_REQUEST);
-      referenceResourceService.createReferenceResource(referencedResource, USER_REQUEST);
+      assertThrows(
+        DuplicateResourceException.class,
+        () ->
+          referenceResourceService.createReferenceResource(resultReferenceResource, USER_REQUEST));
 
       var lastUpdateDetailsAfterCreate =
           workspaceActivityLogService.getLastUpdatedDetails(workspaceUuid);

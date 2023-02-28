@@ -1,19 +1,28 @@
 package bio.terra.workspace.service.resource.controlled;
 
+import bio.terra.common.exception.ForbiddenException;
+import bio.terra.workspace.common.exception.InternalLogicException;
+import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
+import bio.terra.workspace.service.resource.controlled.exception.ResourceIsBusyException;
+import bio.terra.workspace.service.resource.controlled.exception.ResourceIsCorruptException;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.model.WsmApplication;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.UUID;
 import javax.annotation.Nullable;
+import org.apache.commons.codec.binary.StringUtils;
 import org.springframework.stereotype.Component;
 
 /**
@@ -26,16 +35,19 @@ public class ControlledResourceMetadataManager {
   private final ResourceDao resourceDao;
   private final SamService samService;
   private final WorkspaceService workspaceService;
+  private final ApplicationDao applicationDao;
 
   public ControlledResourceMetadataManager(
       StageService stageService,
       ResourceDao resourceDao,
       SamService samService,
-      WorkspaceService workspaceService) {
+      WorkspaceService workspaceService,
+      ApplicationDao applicationDao) {
     this.stageService = stageService;
     this.resourceDao = resourceDao;
     this.samService = samService;
     this.workspaceService = workspaceService;
+    this.applicationDao = applicationDao;
   }
   /**
    * Update the name and description metadata fields of a controlled resource. These are only stored
@@ -86,17 +98,66 @@ public class ControlledResourceMetadataManager {
       AuthenticatedUserRequest userRequest, UUID workspaceUuid, UUID resourceId, String action) {
     stageService.assertMcWorkspace(workspaceUuid, action);
     WsmResource resource = resourceDao.getResource(workspaceUuid, resourceId);
-
     ControlledResource controlledResource = resource.castToControlledResource();
-    SamRethrow.onInterrupted(
-        () ->
-            samService.checkAuthz(
-                userRequest,
-                controlledResource.getCategory().getSamResourceName(),
-                resourceId.toString(),
-                action),
-        "checkAuthz");
-    return controlledResource;
+    String samName = controlledResource.getCategory().getSamResourceName();
+
+    // Every case exits the validation
+    switch (controlledResource.getState()) {
+      case READY:
+        // Primary success case: check auth and return the resource
+        SamRethrow.onInterrupted(
+            () -> samService.checkAuthz(userRequest, samName, resourceId.toString(), action),
+            "checkAuthz");
+        return controlledResource;
+
+      case CREATING, DELETING, UPDATING:
+        // Check forbidden before throwing the busy resource error
+        SamRethrow.onInterrupted(
+            () -> samService.checkAuthz(userRequest, samName, resourceId.toString(), action),
+            "checkAuthz");
+        throw new ResourceIsBusyException(
+            "Another user is operating on the resource; wait and try again");
+
+      case BROKEN_DELETE:
+        // If the resource is in the BROKEN_DELETING state, then it is in an unknown broken state
+        // and cannot be deleted by a user. It has to be cleaned up manually by Terra personnel.
+        throw new ResourceIsCorruptException(
+            "Resource is in an internally corrupted state. Contact support.");
+
+      case BROKEN:
+        // If the resource is in the BROKEN state, then there may be no Sam resource. We do our
+        // best with what we know. We handle two cases:
+        //  1. If the resource is an application resource, and the application is making the
+        // request,
+        //     we go ahead.
+        //  2. If the resource is a user resource, we test that the user is a WRITER on the
+        // workspace.
+        if (controlledResource.getManagedBy() == ManagedByType.MANAGED_BY_APPLICATION) {
+          WsmApplication application =
+              applicationDao.getApplication(controlledResource.getApplicationId());
+          String callerEmail = samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest);
+          if (!StringUtils.equals(application.getServiceAccount(), callerEmail)) {
+            throw new ForbiddenException(
+                "Only the associated application "
+                    + application.getDisplayName()
+                    + "can delete a broken application resource");
+          }
+        } else {
+          // broken user resource
+          SamRethrow.onInterrupted(
+              () ->
+                  samService.checkAuthz(
+                      userRequest,
+                      SamConstants.SamResource.WORKSPACE,
+                      workspaceUuid.toString(),
+                      SamConstants.SamWorkspaceAction.DELETE),
+              "checkAuthz");
+        }
+        return controlledResource;
+
+      default:
+        throw new InternalLogicException("Unexpected case");
+    }
   }
 
   /**

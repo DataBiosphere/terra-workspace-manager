@@ -52,6 +52,7 @@ import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
+import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -315,6 +316,18 @@ public class ControlledResourceService {
     return jobBuilder.submitAndWait(ControlledResource.class);
   }
 
+  /** Create a controlled resource with V2 semantics: leave broken resources */
+  public <T> ControlledResource createControlledResourceV2(
+      ControlledResource resource,
+      ControlledResourceIamRole privateResourceIamRole,
+      AuthenticatedUserRequest userRequest,
+      T creationParameters) {
+    JobBuilder jobBuilder =
+        commonCreationJobBuilder(resource, privateResourceIamRole, userRequest)
+            .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
+    return jobBuilder.submitAndWait(ControlledResource.class);
+  }
+
   /** Starts an update controlled BigQuery dataset resource, blocking until its job is finished. */
   public ControlledBigQueryDatasetResource updateBqDataset(
       ControlledBigQueryDatasetResource resource,
@@ -551,6 +564,38 @@ public class ControlledResourceService {
       @Nullable ApiJobControl jobControl,
       @Nullable String resultPath,
       AuthenticatedUserRequest userRequest) {
+    return commonCreationJobBuilderByRule(
+        resource,
+        privateResourceIamRole,
+        jobControl,
+        resultPath,
+        WsmResourceStateRule.DELETE_ON_FAILURE,
+        userRequest);
+  }
+
+  /** Create a job builder for the V2 semantics: leave broken resources on failure */
+  private JobBuilder commonCreationJobBuilderV2(
+      ControlledResource resource,
+      @Nullable ControlledResourceIamRole privateResourceIamRole,
+      @Nullable ApiJobControl jobControl,
+      @Nullable String resultPath,
+      AuthenticatedUserRequest userRequest) {
+    return commonCreationJobBuilderByRule(
+        resource,
+        privateResourceIamRole,
+        jobControl,
+        resultPath,
+        WsmResourceStateRule.BROKEN_ON_FAILURE,
+        userRequest);
+  }
+
+  private JobBuilder commonCreationJobBuilderByRule(
+      ControlledResource resource,
+      @Nullable ControlledResourceIamRole privateResourceIamRole,
+      @Nullable ApiJobControl jobControl,
+      @Nullable String resultPath,
+      WsmResourceStateRule resourceStateRule,
+      AuthenticatedUserRequest userRequest) {
 
     final String jobDescription =
         String.format(
@@ -576,7 +621,8 @@ public class ControlledResourceService {
         .resourceType(resource.getResourceType())
         .stewardshipType(resource.getStewardshipType())
         .addParameter(ControlledResourceKeys.PRIVATE_RESOURCE_IAM_ROLE, privateResourceIamRole)
-        .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
+        .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
+        .addParameter(ResourceKeys.RESOURCE_STATE_RULE, resourceStateRule);
   }
 
   /**

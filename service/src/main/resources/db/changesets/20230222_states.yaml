@@ -23,6 +23,7 @@ databaseChangeLog:
                       Serialized exception; must be a subclass of ErrorReportException
     -addColumn:
         tableName: cloud_context
+        columns:
             - column:
                  name: state
                  type: text
