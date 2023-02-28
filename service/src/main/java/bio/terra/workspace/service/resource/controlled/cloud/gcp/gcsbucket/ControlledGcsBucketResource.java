@@ -34,6 +34,8 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import java.util.Optional;
 import java.util.UUID;
+
+import com.google.common.base.Objects;
 import org.jetbrains.annotations.Nullable;
 
 public class ControlledGcsBucketResource extends ControlledResource {
