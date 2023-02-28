@@ -196,6 +196,7 @@ fi
 # to the git references, the corresponding git repo cloning will be skipped.
 # Keep this as last thing in script. There will be integration test for git cloning (PF-1660). If this is last thing, then
 # integration test will ensure that everything in script worked.
+sudo -u "$JUPYTER_USER" sh -c "git config --global url."git@github.com:".insteadOf "https://github.com/""
 sudo -u "$JUPYTER_USER" sh -c 'terra git clone --all'
 
 # Setup gitignore to avoid accidental checkin of data. 
