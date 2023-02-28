@@ -46,7 +46,7 @@ public class WorkspaceConnectedTestUtils {
         WorkspaceFixtures.defaultWorkspaceBuilder(workspaceUuid)
             .spendProfileId(spendUtils.defaultSpendId())
             .build();
-    workspaceService.createWorkspace(workspace, null, null, null, userRequest);
+    workspaceService.createWorkspace(workspace, null, null, userRequest);
 
     return workspaceService.getWorkspace(workspaceUuid);
   }

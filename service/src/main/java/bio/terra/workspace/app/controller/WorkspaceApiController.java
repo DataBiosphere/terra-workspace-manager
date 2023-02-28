@@ -60,7 +60,6 @@ import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.policy.TpsApiConversionUtils;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
-import bio.terra.workspace.service.policy.TpsUtilities;
 import bio.terra.workspace.service.policy.model.PolicyExplainResult;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
@@ -174,8 +173,6 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         Optional.ofNullable(body.getUserFacingId()).orElse(body.getId().toString());
     ControllerValidationUtils.validateUserFacingId(userFacingId);
 
-    List<String> authDomains = new ArrayList<>();
-
     // Validate that this workspace can have policies attached, if necessary.
     TpsPolicyInputs policies = null;
     if (body.getPolicies() != null) {
@@ -188,7 +185,6 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             "Cannot apply policies to a RAWLS_WORKSPACE stage workspace");
       }
       policies = TpsApiConversionUtils.tpsFromApiTpsPolicyInputs(body.getPolicies());
-      authDomains.addAll(TpsUtilities.getGroupConstraintsFromInputs(policies));
     }
 
     Workspace workspace =
@@ -204,7 +200,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .build();
     UUID createdWorkspaceUuid =
         workspaceService.createWorkspace(
-            workspace, policies, body.getApplicationIds(), authDomains, userRequest);
+            workspace, policies, body.getApplicationIds(), userRequest);
 
     ApiCreatedWorkspace responseWorkspace = new ApiCreatedWorkspace().id(createdWorkspaceUuid);
     logger.info("Created workspace {} for {}", responseWorkspace, userRequest.getEmail());

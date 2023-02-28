@@ -39,7 +39,6 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
 import com.google.common.base.Preconditions;
 import io.opencensus.contrib.spring.aop.Traced;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -102,7 +101,6 @@ public class WorkspaceService {
       Workspace workspace,
       @Nullable TpsPolicyInputs policies,
       @Nullable List<String> applications,
-      @Nullable List<String> authDomains,
       AuthenticatedUserRequest userRequest) {
     String workspaceUuid = workspace.getWorkspaceId().toString();
     String jobDescription =
@@ -129,7 +127,9 @@ public class WorkspaceService {
             .addParameter(
                 WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name())
             .addParameter(WorkspaceFlightMapKeys.POLICIES, policies)
-            .addParameter(WorkspaceFlightMapKeys.AUTH_DOMAINS, authDomains)
+            .addParameter(
+                WorkspaceFlightMapKeys.AUTH_DOMAINS,
+                TpsUtilities.getGroupConstraintsFromInputs(policies))
             .addParameter(WorkspaceFlightMapKeys.APPLICATION_IDS, applications);
 
     Optional<SpendProfileId> spendProfile = workspace.getSpendProfileId();

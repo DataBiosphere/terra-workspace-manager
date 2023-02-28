@@ -11,6 +11,10 @@ public class TpsUtilities {
   public static List<String> getGroupConstraintsFromInputs(TpsPolicyInputs inputs) {
     List<String> result = new ArrayList<>();
 
+    if (inputs == null) {
+      return result;
+    }
+
     for (var input : inputs.getInputs()) {
       if (input.getNamespace().equals(TERRA_NAMESPACE)
           && input.getName().equals(GROUP_CONSTRAINT)) {

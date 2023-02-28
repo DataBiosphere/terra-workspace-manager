@@ -279,7 +279,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
    */
   private UUID createMcTestWorkspace() {
     Workspace request = WorkspaceFixtures.buildMcWorkspace();
-    return workspaceService.createWorkspace(request, null, null, null, USER_REQUEST);
+    return workspaceService.createWorkspace(request, null, null, USER_REQUEST);
   }
 
   @Nested

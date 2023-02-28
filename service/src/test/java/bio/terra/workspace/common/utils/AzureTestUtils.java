@@ -49,7 +49,7 @@ public class AzureTestUtils {
     Workspace workspace =
         WorkspaceFixtures.defaultWorkspaceBuilder(null).spendProfileId(getSpendProfileId()).build();
     workspaceService.createWorkspace(
-        workspace, null, null, null, userAccessUtils.defaultUserAuthRequest());
+        workspace, null, null, userAccessUtils.defaultUserAuthRequest());
     return workspace;
   }
 
