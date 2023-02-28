@@ -13,7 +13,7 @@ import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import java.util.UUID;
 
 /**
- * A {@link Flight} for creating a Google cloud context for a workspace using Buffer Service to
+ * A {@link Flight} for creating an Azure cloud context for a workspace using Buffer Service to
  * create the project.
  */
 public class CreateAzureContextFlight extends Flight {
@@ -23,6 +23,7 @@ public class CreateAzureContextFlight extends Flight {
 
     FlightBeanBag appContext = FlightBeanBag.getFromObject(applicationContext);
     var featureConfiguration = appContext.getFeatureConfiguration();
+    featureConfiguration.azureEnabledCheck();
 
     UUID workspaceUuid =
         UUID.fromString(inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));

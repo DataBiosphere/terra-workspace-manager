@@ -18,11 +18,11 @@ import java.util.UUID;
 import org.springframework.http.HttpStatus;
 
 /** Updates the previously stored cloud context row, filling in the context JSON. */
-public class UpdateDbGcpCloudContextStep implements Step {
+public class CreateDbGcpCloudContextFinishStep implements Step {
   private final UUID workspaceUuid;
   private final GcpCloudContextService gcpCloudContextService;
 
-  public UpdateDbGcpCloudContextStep(
+  public CreateDbGcpCloudContextFinishStep(
       UUID workspaceUuid, GcpCloudContextService gcpCloudContextService) {
     this.workspaceUuid = workspaceUuid;
     this.gcpCloudContextService = gcpCloudContextService;

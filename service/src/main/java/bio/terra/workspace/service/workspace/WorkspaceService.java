@@ -290,6 +290,7 @@ public class WorkspaceService {
    * @param name name to change - may be null
    * @param description description to change - may be null
    */
+  @Traced
   public Workspace updateWorkspace(
       UUID workspaceUuid,
       @Nullable String userFacingId,
@@ -313,6 +314,7 @@ public class WorkspaceService {
    * @param workspaceUuid workspace of interest
    * @param properties list of keys in properties
    */
+  @Traced
   public void updateWorkspaceProperties(
       UUID workspaceUuid, Map<String, String> properties, AuthenticatedUserRequest userRequest) {
     workspaceDao.updateWorkspaceProperties(workspaceUuid, properties);
@@ -347,6 +349,7 @@ public class WorkspaceService {
    * @param workspaceUuid workspace of interest
    * @param propertyKeys list of keys in properties
    */
+  @Traced
   public void deleteWorkspaceProperties(
       UUID workspaceUuid, List<String> propertyKeys, AuthenticatedUserRequest userRequest) {
     workspaceDao.deleteWorkspaceProperties(workspaceUuid, propertyKeys);
@@ -358,35 +361,39 @@ public class WorkspaceService {
         ActivityLogChangedTarget.WORKSPACE);
   }
 
-  /**
-   * Process the request to create a Azure cloud context
-   *
-   * @param workspace workspace in which to create the context
-   * @param jobId caller-supplied job id of the async job
-   * @param userRequest user authentication info
-   * @param resultPath optional endpoint where the result of the completed job can be retrieved
-   * @param azureContext deprecated azure context information, only used if BPM is not enabled
-   */
   @Traced
-  public void createAzureCloudContext(
-      Workspace workspace,
-      String jobId,
+  public String cloneWorkspace(
+      Workspace sourceWorkspace,
       AuthenticatedUserRequest userRequest,
-      @Nullable String resultPath,
-      @Nullable AzureCloudContext azureContext) {
-    features.azureEnabledCheck();
+      @Nullable String location,
+      Workspace destinationWorkspace) {
+    String workspaceUuid = sourceWorkspace.getWorkspaceId().toString();
+    String jobDescription =
+        String.format(
+            "Clone workspace: name: '%s' id: '%s'  ",
+            sourceWorkspace.getDisplayName().orElse(""), workspaceUuid);
 
-    jobService
+    // Get the enabled applications from the source workspace
+    List<String> applicationIds =
+        applicationDao.listWorkspaceApplicationsForClone(sourceWorkspace.getWorkspaceId());
+
+    // Create the destination workspace synchronously first.
+    createWorkspace(destinationWorkspace, null, applicationIds, userRequest);
+
+    // Remaining steps are an async flight.
+    return jobService
         .newJob()
-        .description("Create Azure Cloud Context " + workspace.getWorkspaceId())
-        .jobId(jobId)
-        .workspaceId(workspace.getWorkspaceId().toString())
-        .operationType(OperationType.CREATE)
-        .flightClass(CreateAzureContextFlight.class)
-        .request(azureContext)
+        .description(jobDescription)
+        .flightClass(CloneWorkspaceFlight.class)
         .userRequest(userRequest)
-        .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspace.getWorkspaceId().toString())
-        .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
+        .request(destinationWorkspace)
+        .operationType(OperationType.CLONE)
+        // allow UI to watch this job (and sub-flights) from dest workspace page during clone
+        .workspaceId(destinationWorkspace.getWorkspaceId().toString())
+        .addParameter(
+            ControlledResourceKeys.SOURCE_WORKSPACE_ID,
+            sourceWorkspace.getWorkspaceId()) // TODO: remove this duplication
+        .addParameter(ControlledResourceKeys.LOCATION, location)
         .submit();
   }
 
@@ -427,43 +434,41 @@ public class WorkspaceService {
         .submit();
   }
 
+  @Traced
   public void createGcpCloudContext(
       Workspace workspace, String jobId, AuthenticatedUserRequest userRequest) {
     createGcpCloudContext(workspace, jobId, userRequest, null);
   }
 
-  public String cloneWorkspace(
-      Workspace sourceWorkspace,
+  /**
+   * Process the request to create a Azure cloud context
+   *
+   * @param workspace workspace in which to create the context
+   * @param jobId caller-supplied job id of the async job
+   * @param userRequest user authentication info
+   * @param resultPath optional endpoint where the result of the completed job can be retrieved
+   * @param azureContext deprecated azure context information, only used if BPM is not enabled
+   */
+  @Traced
+  public void createAzureCloudContext(
+      Workspace workspace,
+      String jobId,
       AuthenticatedUserRequest userRequest,
-      @Nullable String location,
-      Workspace destinationWorkspace) {
-    String workspaceUuid = sourceWorkspace.getWorkspaceId().toString();
-    String jobDescription =
-        String.format(
-            "Clone workspace: name: '%s' id: '%s'  ",
-            sourceWorkspace.getDisplayName().orElse(""), workspaceUuid);
+      @Nullable String resultPath,
+      @Nullable AzureCloudContext azureContext) {
+    features.azureEnabledCheck();
 
-    // Get the enabled applications from the source workspace
-    List<String> applicationIds =
-        applicationDao.listWorkspaceApplicationsForClone(sourceWorkspace.getWorkspaceId());
-
-    // Create the destination workspace synchronously first.
-    createWorkspace(destinationWorkspace, null, applicationIds, userRequest);
-
-    // Remaining steps are an async flight.
-    return jobService
+    jobService
         .newJob()
-        .description(jobDescription)
-        .flightClass(CloneWorkspaceFlight.class)
+        .description("Create Azure Cloud Context " + workspace.getWorkspaceId())
+        .jobId(jobId)
+        .workspaceId(workspace.getWorkspaceId().toString())
+        .operationType(OperationType.CREATE)
+        .flightClass(CreateAzureContextFlight.class)
+        .request(azureContext)
         .userRequest(userRequest)
-        .request(destinationWorkspace)
-        .operationType(OperationType.CLONE)
-        // allow UI to watch this job (and sub-flights) from dest workspace page during clone
-        .workspaceId(destinationWorkspace.getWorkspaceId().toString())
-        .addParameter(
-            ControlledResourceKeys.SOURCE_WORKSPACE_ID,
-            sourceWorkspace.getWorkspaceId()) // TODO: remove this duplication
-        .addParameter(ControlledResourceKeys.LOCATION, location)
+        .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspace.getWorkspaceId().toString())
+        .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
         .submit();
   }
 
@@ -485,6 +490,7 @@ public class WorkspaceService {
         .submitAndWait();
   }
 
+  @Traced
   public void deleteAzureCloudContext(Workspace workspace, AuthenticatedUserRequest userRequest) {
     String jobDescription =
         String.format(
@@ -510,6 +516,7 @@ public class WorkspaceService {
    * @param executingUserRequest User credentials to authenticate this removal. Must belong to a
    *     workspace owner, and likely do not belong to {@code userEmail}.
    */
+  @Traced
   public void removeWorkspaceRoleFromUser(
       Workspace workspace,
       WsmIamRole role,

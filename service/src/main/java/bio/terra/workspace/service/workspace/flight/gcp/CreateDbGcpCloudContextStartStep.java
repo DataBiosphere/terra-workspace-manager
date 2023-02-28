@@ -12,11 +12,11 @@ import java.util.UUID;
  * Stores the previously generated Google Project Id in the {@link WorkspaceDao} as the Google cloud
  * context for the workspace.
  */
-public class CreateDbGcpCloudContextStep implements Step {
+public class CreateDbGcpCloudContextStartStep implements Step {
   private final UUID workspaceUuid;
   private final GcpCloudContextService gcpCloudContextService;
 
-  public CreateDbGcpCloudContextStep(
+  public CreateDbGcpCloudContextStartStep(
       UUID workspaceUuid, GcpCloudContextService gcpCloudContextService) {
     this.workspaceUuid = workspaceUuid;
     this.gcpCloudContextService = gcpCloudContextService;

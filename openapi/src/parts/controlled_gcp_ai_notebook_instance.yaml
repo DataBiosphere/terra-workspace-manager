@@ -375,7 +375,7 @@ components:
             $ref: '#/components/schemas/CreatedControlledGcpAiNotebookInstanceResult'
 
     DeleteControlledGcpAiNotebookInstanceResponse:
-      description: Response Payload for deleting a Gcs bucket
+      description: Response Payload for deleting a GCP AI Notebook
       content:
         application/json:
           schema:

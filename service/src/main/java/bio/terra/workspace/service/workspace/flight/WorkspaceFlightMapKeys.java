@@ -8,7 +8,6 @@ public final class WorkspaceFlightMapKeys {
   public static final String WORKSPACE_STAGE = "workspaceStage";
   public static final String IAM_GROUP_EMAIL_MAP = "iamGroupEmailMap";
   public static final String RBS_RESOURCE_ID = "rbsResourceId";
-  public static final String DESCRIPTION = "descriptionId";
   public static final String USER_TO_REMOVE = "userToRemove";
   public static final String ROLE_TO_REMOVE = "roleToRemove";
   public static final String APPLICATION_IDS = "applicationIds";

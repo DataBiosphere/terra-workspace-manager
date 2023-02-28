@@ -522,7 +522,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   @Override
   public ResponseEntity<ApiCreateCloudContextResult> createCloudContext(
       UUID uuid, @Valid ApiCreateCloudContextRequest body) {
-    ControllerValidationUtils.validateCloudPlatform(body.getCloudPlatform());
+    ApiCloudPlatform cloudPlatform = body.getCloudPlatform();
+    ControllerValidationUtils.validateCloudPlatform(cloudPlatform);
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     String jobId = body.getJobControl().getId();
     String resultPath = getAsyncResultEndpoint(jobId);
@@ -591,11 +592,13 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     ControllerValidationUtils.validateCloudPlatform(cloudPlatform);
     Workspace workspace =
         workspaceService.validateMcWorkspaceAndAction(userRequest, uuid, SamWorkspaceAction.WRITE);
+
     if (cloudPlatform == ApiCloudPlatform.AZURE) {
       workspaceService.deleteAzureCloudContext(workspace, userRequest);
     } else {
       workspaceService.deleteGcpCloudContext(workspace, userRequest);
     }
+
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 

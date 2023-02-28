@@ -5,7 +5,6 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.utils.FlightBeanBag;
-import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.spendprofile.SpendProfile;
@@ -14,10 +13,6 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.resourcemanager.resources.ResourceManager;
 
-/**
- * Stores the previously generated Google Project Id in the {@link WorkspaceDao} as the Google cloud
- * context for the workspace.
- */
 public class ValidateMRGStep implements Step {
   private final CrlService crlService;
   private final AzureConfiguration azureConfig;
