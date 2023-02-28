@@ -12,7 +12,7 @@ components:
           description: Type of the flexible resource.
           type: string
         data:
-          description: JSON encoded in base-64.
+          description: JSON encoded in base64.
           type: string
           format: byte
 
