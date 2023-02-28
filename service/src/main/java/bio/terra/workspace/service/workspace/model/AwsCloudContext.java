@@ -8,11 +8,11 @@ import bio.terra.workspace.generated.model.ApiAwsContext;
 import bio.terra.workspace.service.workspace.exceptions.InvalidSerializedVersionException;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.ArrayList;
+import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import software.amazon.awssdk.arns.Arn;
 import software.amazon.awssdk.regions.Region;
@@ -133,9 +133,10 @@ public class AwsCloudContext {
               : null;
 
       Map<Region, String> bucketMap = new HashMap<>();
-      for (AwsCloudContextBucketV1 bucket : dbContext.bucketList) {
-        bucket.validateVersion();
-        bucketMap.put(Region.of(bucket.regionName), bucket.bucketName);
+      if (dbContext.bucketList != null) {
+        for (AwsCloudContextBucketV1 bucketV1 : dbContext.bucketList) {
+          bucketMap.put(Region.of(bucketV1.regionName), bucketV1.bucketName);
+        }
       }
 
       return new AwsCloudContext(
@@ -216,7 +217,7 @@ public class AwsCloudContext {
         @JsonProperty("userRoleArn") String userRoleArn,
         @JsonProperty("kmsKeyArn") String kmsKeyArn,
         @JsonProperty("notebookLifecycleConfigArn") String notebookLifecycleConfigArn,
-        @JsonProperty("bucketList") List<AwsCloudContextBucketV1> bucketList) {
+        @JsonProperty("bucketList") String bucketListStr) {
       this.version = version;
       this.landingZoneName = landingZoneName;
       this.accountNumber = accountNumber;
@@ -225,7 +226,7 @@ public class AwsCloudContext {
       this.userRoleArn = userRoleArn;
       this.kmsKeyArn = kmsKeyArn;
       this.notebookLifecycleConfigArn = notebookLifecycleConfigArn;
-      this.bucketList = bucketList;
+      this.bucketList = DbSerDes.fromJson(bucketListStr, new TypeReference<>() {});
     }
 
     public AwsCloudContextV1(AwsCloudContext context) {
@@ -237,15 +238,16 @@ public class AwsCloudContext {
       this.userRoleArn = context.userRoleArn.toString();
       this.kmsKeyArn = context.kmsKeyArn.toString();
 
-      // Notebook Lifecycle Config is optional and may be null
-      this.notebookLifecycleConfigArn =
-          Optional.ofNullable(context.notebookLifecycleConfigArn).map(Arn::toString).orElse(null);
-
-      this.bucketList = new ArrayList<>();
-      for (Map.Entry<Region, String> entry : context.regionToBucketNameMap.entrySet()) {
-        Region region = entry.getKey();
-        String bucketName = entry.getValue();
-        this.bucketList.add(new AwsCloudContextBucketV1(region.toString(), bucketName));
+      if (context.notebookLifecycleConfigArn != null) { // optional and may be null
+        this.notebookLifecycleConfigArn = context.notebookLifecycleConfigArn.toString();
+      }
+      if (context.regionToBucketNameMap != null) {
+        this.bucketList =
+            context.regionToBucketNameMap.entrySet().stream()
+                .map(
+                    bucket ->
+                        new AwsCloudContextBucketV1(bucket.getKey().toString(), bucket.getValue()))
+                .collect(Collectors.toList());
       }
     }
 
