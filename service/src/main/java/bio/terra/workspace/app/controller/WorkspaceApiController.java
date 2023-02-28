@@ -596,7 +596,11 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
       awsContext =
           Optional.ofNullable(jobResult.getResult().getAwsCloudContext())
-              .map(c -> AwsCloudContext.deserialize(c).toApi())
+              .map(
+                  c ->
+                      new ApiAwsContext()
+                          .accountNumber(c.getAccountNumber())
+                          .landingZoneId(c.getLandingZoneName()))
               .orElse(null);
     }
 

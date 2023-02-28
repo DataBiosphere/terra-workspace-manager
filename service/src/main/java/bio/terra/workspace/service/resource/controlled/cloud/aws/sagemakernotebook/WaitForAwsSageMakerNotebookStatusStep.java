@@ -7,36 +7,44 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.common.utils.MultiCloudUtils;
-import bio.terra.workspace.generated.model.ApiAwsSageMakerNotebookCreationParameters;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
+import java.util.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.sagemaker.model.NotebookInstanceStatus;
 import software.amazon.awssdk.services.sts.model.Credentials;
 
-public class WaitForAwsSageMakerNotebookInService implements Step {
+public class WaitForAwsSageMakerNotebookStatusStep implements Step {
+
+  private static final Logger logger =
+      LoggerFactory.getLogger(WaitForAwsSageMakerNotebookStatusStep.class);
+
+  private final ControlledAwsSageMakerNotebookResource resource;
+  private final Optional<NotebookInstanceStatus> notebookStatus;
+
+  public WaitForAwsSageMakerNotebookStatusStep(
+      ControlledAwsSageMakerNotebookResource resource,
+      Optional<NotebookInstanceStatus> notebookStatus) {
+    this.resource = resource;
+    this.notebookStatus = notebookStatus;
+  }
+
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    FlightMap inputParameters = flightContext.getInputParameters();
     FlightMap workingMap = flightContext.getWorkingMap();
 
-    final ApiAwsSageMakerNotebookCreationParameters creationParameters =
-        inputParameters.get(
-            WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS,
-            ApiAwsSageMakerNotebookCreationParameters.class);
-
-    final String awsCloudContextString =
+    final AwsCloudContext awsCloudContext =
         workingMap.get(
-            WorkspaceFlightMapKeys.ControlledResourceKeys.AWS_CLOUD_CONTEXT, String.class);
-
-    final AwsCloudContext awsCloudContext = AwsCloudContext.deserialize(awsCloudContextString);
+            WorkspaceFlightMapKeys.ControlledResourceKeys.AWS_CLOUD_CONTEXT, AwsCloudContext.class);
     final Credentials awsCredentials = MultiCloudUtils.assumeAwsServiceRoleFromGcp(awsCloudContext);
 
-    Region region = Region.of(creationParameters.getLocation());
+    String notebookName = resource.getInstanceId();
+    Region region = Region.of(resource.getRegion());
 
-    AwsUtils.waitForSageMakerNotebookInService(
-        awsCredentials, region, creationParameters.getInstanceId());
-
+    AwsUtils.waitForSageMakerNotebookStatus(awsCredentials, region, notebookName, notebookStatus);
     return StepResult.getStepResultSuccess();
   }
 

@@ -1,29 +1,52 @@
 package bio.terra.workspace.service.workspace.model;
 
-import bio.terra.workspace.app.configuration.external.AwsConfiguration;
+import bio.terra.common.exception.SerializationException;
+import bio.terra.workspace.app.configuration.external.AwsConfiguration.AwsLandingZoneBucket;
+import bio.terra.workspace.app.configuration.external.AwsConfiguration.AwsLandingZoneConfiguration;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.generated.model.ApiAwsContext;
 import bio.terra.workspace.service.workspace.exceptions.InvalidSerializedVersionException;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import com.fasterxml.jackson.core.type.TypeReference;
+import java.util.*;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import software.amazon.awssdk.arns.Arn;
 import software.amazon.awssdk.regions.Region;
 
 public class AwsCloudContext {
-  private final String landingZoneName;
-  private final String accountNumber;
-  private final Arn serviceRoleArn;
-  private final String serviceRoleAudience;
-  private final Arn userRoleArn;
-  private final Arn kmsKeyArn;
-  private final Arn notebookLifecycleConfigArn;
-  private final Map<Region, String> regionToBucketNameMap;
+  private String landingZoneName;
+  private String accountNumber;
+  private Arn serviceRoleArn;
+  private String serviceRoleAudience;
+  private Arn userRoleArn;
+  private Arn kmsKeyArn;
+  @Nullable private Arn notebookLifecycleConfigArn;
+  @Nullable private Map<Region, String> regionToBucketNameMap;
+
+  // Constructor for Jackson
+  public AwsCloudContext() {}
+
+  // Constructor for deserializer
+  public AwsCloudContext(
+      String landingZoneName,
+      String accountNumber,
+      Arn serviceRoleArn,
+      String serviceRoleAudience,
+      Arn userRoleArn,
+      Arn kmsKeyArn,
+      @Nullable Arn notebookLifecycleConfigArn,
+      @Nullable Map<Region, String> regionToBucketNameMap) {
+    this.landingZoneName = landingZoneName;
+    this.accountNumber = accountNumber;
+    this.serviceRoleArn = serviceRoleArn;
+    this.serviceRoleAudience = serviceRoleAudience;
+    this.userRoleArn = userRoleArn;
+    this.kmsKeyArn = kmsKeyArn;
+    this.notebookLifecycleConfigArn = notebookLifecycleConfigArn;
+    this.regionToBucketNameMap = regionToBucketNameMap;
+  }
 
   public String getLandingZoneName() {
     return landingZoneName;
@@ -57,29 +80,29 @@ public class AwsCloudContext {
     return regionToBucketNameMap.get(region);
   }
 
-  public static @Nullable AwsCloudContext fromConfiguration(
-      AwsConfiguration.AwsLandingZoneConfiguration landingZoneConfiguration,
-      String serviceRoleAudience) {
+  public static AwsCloudContext fromConfiguration(
+      AwsLandingZoneConfiguration landingZoneConfiguration, String serviceRoleAudience) {
+    // Serialized context may not have a notebook lifecycle defined, so check for null before
+    // attempting to construct an ARN.
+    Arn notebookLifecycleConfigArn =
+        Optional.ofNullable(landingZoneConfiguration.getNotebookLifecycleConfigArn())
+            .map(str -> Arn.fromString(landingZoneConfiguration.getNotebookLifecycleConfigArn()))
+            .orElse(null);
 
-    AwsCloudContext.Builder builder =
-        AwsCloudContext.builder()
-            .landingZoneName(landingZoneConfiguration.getName())
-            .accountNumber(landingZoneConfiguration.getAccountNumber())
-            .serviceRoleArn(Arn.fromString(landingZoneConfiguration.getServiceRoleArn()))
-            .serviceRoleAudience(serviceRoleAudience)
-            .userRoleArn(Arn.fromString(landingZoneConfiguration.getUserRoleArn()))
-            .kmsKeyArn(Arn.fromString(landingZoneConfiguration.getKmsKeyArn()));
-
-    // Configuration Lifecycle may not be configured, so check for null before attempting to
-    // construct an ARN.
-    Optional.ofNullable(landingZoneConfiguration.getNotebookLifecycleConfigArn())
-        .map(arn -> builder.notebookLifecycleConfigArn(Arn.fromString(arn)));
-
-    for (AwsConfiguration.AwsLandingZoneBucket bucket : landingZoneConfiguration.getBuckets()) {
-      builder.addBucket(Region.of(bucket.getRegion()), bucket.getName());
+    Map<Region, String> bucketMap = new HashMap<>();
+    for (AwsLandingZoneBucket bucket : landingZoneConfiguration.getBuckets()) {
+      bucketMap.put(Region.of(bucket.getRegion()), bucket.getName());
     }
 
-    return builder.build();
+    return new AwsCloudContext(
+        landingZoneConfiguration.getName(),
+        landingZoneConfiguration.getAccountNumber(),
+        Arn.fromString(landingZoneConfiguration.getServiceRoleArn()),
+        serviceRoleAudience,
+        Arn.fromString(landingZoneConfiguration.getUserRoleArn()),
+        Arn.fromString(landingZoneConfiguration.getKmsKeyArn()),
+        notebookLifecycleConfigArn,
+        bucketMap);
   }
 
   public ApiAwsContext toApi() {
@@ -91,104 +114,43 @@ public class AwsCloudContext {
     return DbSerDes.toJson(dbContext);
   }
 
-  public static AwsCloudContext deserialize(String json) {
-    AwsCloudContextV1 dbContext = DbSerDes.fromJson(json, AwsCloudContextV1.class);
-    dbContext.validateVersion();
-
-    Builder builder =
-        builder()
-            .landingZoneName(dbContext.landingZoneName)
-            .accountNumber(dbContext.accountNumber)
-            .serviceRoleArn(Arn.fromString(dbContext.serviceRoleArn))
-            .serviceRoleAudience(dbContext.serviceRoleAudience)
-            .userRoleArn(Arn.fromString(dbContext.userRoleArn))
-            .kmsKeyArn(Arn.fromString(dbContext.kmsKeyArn));
-
-    // Serialized context may not have a notebook lifecycle defined, so check for null before
-    // attempting to construct an ARN.
-    Optional.ofNullable(dbContext.notebookLifecycleConfigArn)
-        .map(arn -> builder.notebookLifecycleConfigArn(Arn.fromString(arn)));
-
-    for (AwsCloudContextBucketV1 bucket : dbContext.bucketList) {
-      bucket.validateVersion();
-      builder.addBucket(Region.of(bucket.regionName), bucket.bucketName);
+  public static @Nullable AwsCloudContext deserialize(@Nullable String json) {
+    if (json == null) {
+      return null;
     }
 
-    return builder.build();
-  }
+    try {
+      AwsCloudContextV1 dbContext = DbSerDes.fromJson(json, AwsCloudContextV1.class);
+      dbContext.validateVersion();
 
-  public static class Builder {
-    private String landingZoneName;
-    private String accountNumber;
-    private Arn serviceRoleArn;
-    private String serviceRoleAudience;
-    private Arn userRoleArn;
-    private Arn kmsKeyArn;
-    private Arn notebookLifecycleConfigArn;
-    private Map<Region, String> bucketMap;
+      // Serialized context may not have a notebook lifecycle defined, so check for null before
+      // attempting to construct an ARN.
+      Arn notebookLifecycleConfigArn =
+          (dbContext.notebookLifecycleConfigArn != null)
+              ? Arn.fromString(dbContext.notebookLifecycleConfigArn)
+              : null;
 
-    private Builder() {
-      bucketMap = new HashMap<>();
+      Map<Region, String> bucketMap = new HashMap<>();
+      if (dbContext.bucketList != null) {
+        for (AwsCloudContextBucketV1 bucketV1 : dbContext.bucketList) {
+          bucketV1.validateVersion();
+          bucketMap.put(Region.of(bucketV1.regionName), bucketV1.bucketName);
+        }
+      }
+
+      return new AwsCloudContext(
+          dbContext.landingZoneName,
+          dbContext.accountNumber,
+          Arn.fromString(dbContext.serviceRoleArn),
+          dbContext.serviceRoleAudience,
+          Arn.fromString(dbContext.userRoleArn),
+          Arn.fromString(dbContext.kmsKeyArn),
+          notebookLifecycleConfigArn,
+          bucketMap);
+
+    } catch (SerializationException e) {
+      throw new InvalidSerializedVersionException("Invalid serialized version " + e);
     }
-
-    public AwsCloudContext build() {
-      return new AwsCloudContext(this);
-    }
-
-    public Builder landingZoneName(String landingZoneName) {
-      this.landingZoneName = landingZoneName;
-      return this;
-    }
-
-    public Builder accountNumber(String accountNumber) {
-      this.accountNumber = accountNumber;
-      return this;
-    }
-
-    public Builder serviceRoleArn(Arn serviceRoleArn) {
-      this.serviceRoleArn = serviceRoleArn;
-      return this;
-    }
-
-    public Builder serviceRoleAudience(String serviceRoleAudience) {
-      this.serviceRoleAudience = serviceRoleAudience;
-      return this;
-    }
-
-    public Builder userRoleArn(Arn userRoleArn) {
-      this.userRoleArn = userRoleArn;
-      return this;
-    }
-
-    public Builder kmsKeyArn(Arn kmsKeyArn) {
-      this.kmsKeyArn = kmsKeyArn;
-      return this;
-    }
-
-    public Builder notebookLifecycleConfigArn(Arn notebookLifecycleConfigArn) {
-      this.notebookLifecycleConfigArn = notebookLifecycleConfigArn;
-      return this;
-    }
-
-    public Builder addBucket(Region region, String bucketName) {
-      bucketMap.put(region, bucketName);
-      return this;
-    }
-  }
-
-  public static Builder builder() {
-    return new Builder();
-  }
-
-  private AwsCloudContext(Builder builder) {
-    this.landingZoneName = builder.landingZoneName;
-    this.accountNumber = builder.accountNumber;
-    this.serviceRoleArn = builder.serviceRoleArn;
-    this.serviceRoleAudience = builder.serviceRoleAudience;
-    this.userRoleArn = builder.userRoleArn;
-    this.kmsKeyArn = builder.kmsKeyArn;
-    this.notebookLifecycleConfigArn = builder.notebookLifecycleConfigArn;
-    this.regionToBucketNameMap = builder.bucketMap;
   }
 
   /** Mask AWS version numbers so as not to collide with Azure and GCP version numbers */
@@ -222,7 +184,8 @@ public class AwsCloudContext {
     public void validateVersion() {
       if (this.version
           != (AWS_CLOUD_CONTEXT_BUCKET_DB_VERSION | AWS_CLOUD_CONTEXT_DB_VERSION_MASK)) {
-        throw new InvalidSerializedVersionException("Invalid serialized version");
+        throw new InvalidSerializedVersionException(
+            "Invalid serialized version of AwsCloudContextBucketV1");
       }
     }
   }
@@ -242,6 +205,7 @@ public class AwsCloudContext {
     public String notebookLifecycleConfigArn;
     public List<AwsCloudContextBucketV1> bucketList;
 
+    @JsonCreator
     public AwsCloudContextV1(
         @JsonProperty("version") long version,
         @JsonProperty("landingZoneName") String landingZoneName,
@@ -251,7 +215,7 @@ public class AwsCloudContext {
         @JsonProperty("userRoleArn") String userRoleArn,
         @JsonProperty("kmsKeyArn") String kmsKeyArn,
         @JsonProperty("notebookLifecycleConfigArn") String notebookLifecycleConfigArn,
-        @JsonProperty("bucketList") List<AwsCloudContextBucketV1> bucketList) {
+        @JsonProperty("bucketList") String bucketListStr) {
       this.version = version;
       this.landingZoneName = landingZoneName;
       this.accountNumber = accountNumber;
@@ -260,33 +224,36 @@ public class AwsCloudContext {
       this.userRoleArn = userRoleArn;
       this.kmsKeyArn = kmsKeyArn;
       this.notebookLifecycleConfigArn = notebookLifecycleConfigArn;
-      this.bucketList = bucketList;
+      this.bucketList =
+          DbSerDes.fromJson(bucketListStr, new TypeReference<List<AwsCloudContextBucketV1>>() {});
     }
 
     public AwsCloudContextV1(AwsCloudContext context) {
       this.version = AWS_CLOUD_CONTEXT_DB_VERSION | AWS_CLOUD_CONTEXT_DB_VERSION_MASK;
-      this.landingZoneName = context.landingZoneName.toString();
+      this.landingZoneName = context.landingZoneName;
       this.accountNumber = context.accountNumber;
       this.serviceRoleArn = context.serviceRoleArn.toString();
       this.serviceRoleAudience = context.serviceRoleAudience;
       this.userRoleArn = context.userRoleArn.toString();
       this.kmsKeyArn = context.kmsKeyArn.toString();
 
-      // Notebook Lifecycle Config is optional and may be null
-      this.notebookLifecycleConfigArn =
-          Optional.ofNullable(context.notebookLifecycleConfigArn).map(Arn::toString).orElse(null);
-
-      this.bucketList = new ArrayList<>();
-      for (Map.Entry<Region, String> entry : context.regionToBucketNameMap.entrySet()) {
-        Region region = entry.getKey();
-        String bucketName = entry.getValue();
-        this.bucketList.add(new AwsCloudContextBucketV1(region.toString(), bucketName));
+      if (context.notebookLifecycleConfigArn != null) { // optional and may be null
+        this.notebookLifecycleConfigArn = context.notebookLifecycleConfigArn.toString();
+      }
+      if (context.regionToBucketNameMap != null) {
+        this.bucketList =
+            context.regionToBucketNameMap.entrySet().stream()
+                .map(
+                    bucket ->
+                        new AwsCloudContextBucketV1(bucket.getKey().toString(), bucket.getValue()))
+                .collect(Collectors.toList());
       }
     }
 
     public void validateVersion() {
       if (this.version != (AWS_CLOUD_CONTEXT_DB_VERSION | AWS_CLOUD_CONTEXT_DB_VERSION_MASK)) {
-        throw new InvalidSerializedVersionException("Invalid serialized version");
+        throw new InvalidSerializedVersionException(
+            "Invalid serialized version of AwsCloudContextV1");
       }
     }
   }

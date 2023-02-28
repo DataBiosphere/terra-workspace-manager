@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.workspace;
 
 import bio.terra.workspace.app.configuration.external.AwsConfiguration;
+import bio.terra.workspace.app.configuration.external.AwsConfiguration.AwsLandingZoneConfiguration;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
@@ -21,8 +22,7 @@ public class AwsCloudContextService {
   private final WorkspaceDao workspaceDao;
   private final String defaultLandingZone;
   private final AwsConfiguration awsConfiguration;
-  private final Map<String, AwsConfiguration.AwsLandingZoneConfiguration>
-      landingZoneConfigurationMap;
+  private final Map<String, AwsLandingZoneConfiguration> landingZoneConfigurationMap;
 
   @Autowired
   public AwsCloudContextService(WorkspaceDao workspaceDao, AwsConfiguration awsConfiguration) {
@@ -31,11 +31,11 @@ public class AwsCloudContextService {
 
     landingZoneConfigurationMap = new HashMap<>();
     this.defaultLandingZone = awsConfiguration.getDefaultLandingZone();
-    List<AwsConfiguration.AwsLandingZoneConfiguration> landingZoneConfigurationList =
+    List<AwsLandingZoneConfiguration> landingZoneConfigurationList =
         awsConfiguration.getLandingZones();
 
     if (landingZoneConfigurationList != null) {
-      for (AwsConfiguration.AwsLandingZoneConfiguration awsLandingZoneConfiguration :
+      for (AwsLandingZoneConfiguration awsLandingZoneConfiguration :
           awsConfiguration.getLandingZones()) {
         landingZoneConfigurationMap.put(
             awsLandingZoneConfiguration.getName(), awsLandingZoneConfiguration);
@@ -45,8 +45,8 @@ public class AwsCloudContextService {
 
   /**
    * Create an empty AWS cloud context in the database for a workspace. Supports {@link
-   * bio.terra.workspace.service.workspace.flight.CreateGcpContextFlightV2} This is designed for use
-   * in the createGcpContext flight and assumes that a later step will call {@link
+   * bio.terra.workspace.service.workspace.flight.aws.CreateAwsContextFlight} This is designed for
+   * use in the createGcpContext flight and assumes that a later step will call {@link
    * #createAwsCloudContextFinish}.
    *
    * @param workspaceUuid workspace id where the context is being created
@@ -117,7 +117,7 @@ public class AwsCloudContextService {
   }
 
   public @Nullable AwsCloudContext fromConfiguration(String landingZoneName) {
-    AwsConfiguration.AwsLandingZoneConfiguration landingZoneConfiguration =
+    AwsLandingZoneConfiguration landingZoneConfiguration =
         this.landingZoneConfigurationMap.get(landingZoneName);
 
     if (landingZoneConfiguration == null) {

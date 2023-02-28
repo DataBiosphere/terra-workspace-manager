@@ -124,7 +124,6 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
             .common(commonFields)
             .s3BucketName(s3BucketName)
             .prefix(commonFields.getName())
-            .region(creationParameters.getLocation())
             .build();
 
     final ControlledAwsBucketResource createdAwsBucket =
@@ -289,7 +288,6 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
         ControlledAwsSageMakerNotebookResource.builder()
             .common(commonFields)
             .instanceId(body.getAwsSageMakerNotebook().getInstanceId())
-            .region(body.getAwsSageMakerNotebook().getLocation())
             .instanceType(body.getAwsSageMakerNotebook().getInstanceType())
             .defaultBucket(body.getAwsSageMakerNotebook().getDefaultBucket())
             .build();

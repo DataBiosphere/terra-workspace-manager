@@ -14,76 +14,39 @@ import bio.terra.workspace.generated.model.ApiAwsSagemakerNotebookDefaultBucket;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakernotebook.ControlledAwsSageMakerNotebookAttributes.DefaultBucket;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
-import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
-import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
+import bio.terra.workspace.service.resource.controlled.model.WsmControlledResourceFields;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
+import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
+import software.amazon.awssdk.services.sagemaker.model.NotebookInstanceStatus;
 
 public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
   private final String instanceId;
   private final String instanceType;
-  private final ControlledAwsSageMakerNotebookAttributes.DefaultBucket defaultBucket;
+  private final DefaultBucket defaultBucket;
 
   protected static final String RESOURCE_DESCRIPTOR = "ControlledSageMakerNotebookInstance";
 
   @JsonCreator
   public ControlledAwsSageMakerNotebookResource(
-      @JsonProperty("workspaceId") UUID workspaceId,
-      @JsonProperty("resourceId") UUID resourceId,
-      @JsonProperty("name") String name,
-      @JsonProperty("description") String description,
-      @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
-      @JsonProperty("assignedUser") String assignedUser,
-      @JsonProperty("privateResourceState") PrivateResourceState privateResourceState,
-      @JsonProperty("accessScope") AccessScopeType accessScope,
-      @JsonProperty("managedBy") ManagedByType managedBy,
-      @JsonProperty("applicationId") String applicationId,
+      @JsonProperty("wsmResourceFields") WsmResourceFields resourceFields,
+      @JsonProperty("wsmControlledResourceFields")
+          WsmControlledResourceFields controlledResourceFields,
       @JsonProperty("instanceId") String instanceId,
       @JsonProperty("instanceType") String instanceType,
-      @JsonProperty("defaultBucket")
-          ControlledAwsSageMakerNotebookAttributes.DefaultBucket defaultBucket,
-      @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
-      @JsonProperty("properties") Map<String, String> properties,
-      @JsonProperty("createdByEmail") String createdByEmail,
-      @JsonProperty("createdDate") OffsetDateTime createdDate,
-      @JsonProperty("lastUpdatedByEmail") String lastUpdatedByEmail,
-      @JsonProperty("lastUpdatedDate") OffsetDateTime lastUpdatedDate,
-      @JsonProperty("region") String region) {
-    super(
-        ControlledResourceFields.builder()
-            .workspaceUuid(workspaceId)
-            .resourceId(resourceId)
-            .name(name)
-            .description(description)
-            .cloningInstructions(cloningInstructions)
-            .assignedUser(assignedUser)
-            .accessScope(accessScope)
-            .managedBy(managedBy)
-            .applicationId(applicationId)
-            .privateResourceState(privateResourceState)
-            .resourceLineage(resourceLineage)
-            .properties(properties)
-            .createdByEmail(createdByEmail)
-            .createdDate(createdDate)
-            .lastUpdatedByEmail(lastUpdatedByEmail)
-            .lastUpdatedDate(lastUpdatedDate)
-            .region(region)
-            .build());
+      @JsonProperty("defaultBucket") DefaultBucket defaultBucket) {
+    super(resourceFields, controlledResourceFields);
     this.instanceId = instanceId;
     this.instanceType = instanceType;
     this.defaultBucket = defaultBucket;
@@ -94,7 +57,7 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
       ControlledResourceFields common,
       String instanceId,
       String instanceType,
-      ControlledAwsSageMakerNotebookAttributes.DefaultBucket defaultBucket) {
+      DefaultBucket defaultBucket) {
     super(common);
     this.instanceId = instanceId;
     this.instanceType = instanceType;
@@ -116,8 +79,46 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
     return (T) this;
   }
 
+  // -- getters used in serialization --
+  @JsonProperty("wsmResourceFields")
+  public WsmResourceFields getWsmResourceFields() {
+    return super.getWsmResourceFields();
+  }
+
+  @JsonProperty("wsmControlledResourceFields")
+  public WsmControlledResourceFields getWsmControlledResourceFields() {
+    return super.getWsmControlledResourceFields();
+  }
+
+  public String getInstanceId() {
+    return instanceId;
+  }
+
+  public String getInstanceType() {
+    return instanceType;
+  }
+
+  public DefaultBucket getDefaultBucket() {
+    return defaultBucket;
+  }
+
+  // -- getters not included in serialization --
+
+  @Override
+  @JsonIgnore
+  public WsmResourceType getResourceType() {
+    return WsmResourceType.CONTROLLED_AWS_SAGEMAKER_NOTEBOOK;
+  }
+
+  @Override
+  @JsonIgnore
+  public WsmResourceFamily getResourceFamily() {
+    return WsmResourceFamily.AWS_SAGEMAKER_NOTEBOOK;
+  }
+
   /** {@inheritDoc} */
   @Override
+  @JsonIgnore
   public Optional<UniquenessCheckAttributes> getUniquenessCheckAttributes() {
     return Optional.of(
         new UniquenessCheckAttributes()
@@ -133,27 +134,20 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
       AuthenticatedUserRequest userRequest,
       FlightBeanBag flightBeanBag) {
     RetryRule cloudRetry = RetryRules.cloud();
-
     flight.addStep(new CreateAwsSageMakerNotebookStep(this), cloudRetry);
-    flight.addStep(new WaitForAwsSageMakerNotebookInService(), cloudRetry);
+    flight.addStep(
+        new WaitForAwsSageMakerNotebookStatusStep(
+            this, Optional.of(NotebookInstanceStatus.IN_SERVICE)),
+        cloudRetry);
   }
 
   /** {@inheritDoc} */
   @Override
   public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
-    flight.addStep(new DeleteAwsSageMakerNotebookStep(this), RetryRules.cloud());
-  }
-
-  public String getInstanceId() {
-    return instanceId;
-  }
-
-  public String getInstanceType() {
-    return instanceType;
-  }
-
-  public ControlledAwsSageMakerNotebookAttributes.DefaultBucket getDefaultBucket() {
-    return defaultBucket;
+    RetryRule cloudRetry = RetryRules.cloud();
+    flight.addStep(new DeleteAwsSageMakerNotebookStep(this), cloudRetry);
+    flight.addStep(
+        new WaitForAwsSageMakerNotebookStatusStep(this, Optional.ofNullable(null)), cloudRetry);
   }
 
   public ApiAwsSageMakerNotebookAttributes toApiAttributes() {
@@ -162,25 +156,13 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
         .region(getRegion())
         .instanceType(getInstanceType())
         .defaultBucket(
-            Optional.ofNullable(getDefaultBucket())
-                .map(ControlledAwsSageMakerNotebookAttributes.DefaultBucket::toApi)
-                .orElse(null));
+            Optional.ofNullable(getDefaultBucket()).map(DefaultBucket::toApi).orElse(null));
   }
 
   public ApiAwsSageMakerNotebookResource toApiResource() {
     return new ApiAwsSageMakerNotebookResource()
         .metadata(super.toApiMetadata())
         .attributes(toApiAttributes());
-  }
-
-  @Override
-  public WsmResourceType getResourceType() {
-    return WsmResourceType.CONTROLLED_AWS_SAGEMAKER_NOTEBOOK;
-  }
-
-  @Override
-  public WsmResourceFamily getResourceFamily() {
-    return WsmResourceFamily.AWS_SAGEMAKER_NOTEBOOK;
   }
 
   @Override
@@ -219,9 +201,8 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
   public static class Builder {
     private ControlledResourceFields common;
     private String instanceId;
-    private String region;
     private String instanceType;
-    private ControlledAwsSageMakerNotebookAttributes.DefaultBucket defaultBucket;
+    private DefaultBucket defaultBucket;
 
     public Builder common(ControlledResourceFields common) {
       this.common = common;
@@ -233,26 +214,19 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
       return this;
     }
 
-    public Builder region(String region) {
-      this.region = region;
-      return this;
-    }
-
     public Builder instanceType(String instanceType) {
       this.instanceType = instanceType;
       return this;
     }
 
-    public Builder defaultBucket(
-        ControlledAwsSageMakerNotebookAttributes.DefaultBucket defaultBucket) {
+    public Builder defaultBucket(DefaultBucket defaultBucket) {
       this.defaultBucket = defaultBucket;
       return this;
     }
 
     public Builder defaultBucket(ApiAwsSagemakerNotebookDefaultBucket defaultBucket) {
       if (defaultBucket != null) {
-        this.defaultBucket =
-            new ControlledAwsSageMakerNotebookAttributes.DefaultBucket(defaultBucket);
+        this.defaultBucket = new DefaultBucket(defaultBucket);
       }
       return this;
     }

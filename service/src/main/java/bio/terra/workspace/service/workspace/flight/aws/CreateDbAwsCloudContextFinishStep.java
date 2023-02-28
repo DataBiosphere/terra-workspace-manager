@@ -34,7 +34,7 @@ public class CreateDbAwsCloudContextFinishStep implements Step {
         workspaceUuid, awsCloudContext, flightContext.getFlightId());
 
     CloudContextHolder cch = new CloudContextHolder();
-    cch.setAwsCloudContext(awsCloudContext.serialize());
+    cch.setAwsCloudContext(awsCloudContext);
 
     FlightUtils.setResponse(flightContext, cch, HttpStatus.OK);
     return StepResult.getStepResultSuccess();
