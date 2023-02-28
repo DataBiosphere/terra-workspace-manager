@@ -18,7 +18,6 @@ import java.net.URLConnection;
 import java.text.ParseException;
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import org.apache.http.client.utils.URIBuilder;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -52,7 +51,6 @@ public class AwsUtils {
   public static final Integer MIN_TOKEN_DURATION_SECONDS = 900;
 
   // TODO(TERRA-384) - move to COW in TCL
-  private static final int AWS_CLIENT_MAXIMUM_RETRIES = 5;
   private static final Duration SAGEMAKER_NOTEBOOK_WAITER_TIMEOUT_DURATION =
       Duration.ofSeconds(900);
   private static final Set<NotebookInstanceStatus> startableStatusSet =
@@ -349,33 +347,50 @@ public class AwsUtils {
     sageMaker.createNotebookInstance(requestBuilder.build());
   }
 
-  public static void waitForSageMakerNotebookInService(
-      Credentials credentials, Region region, String notebookName) {
+  public static void waitForSageMakerNotebookStatus(
+      Credentials credentials,
+      Region region,
+      String notebookName,
+      Optional<NotebookInstanceStatus> desiredStatus) {
     SageMakerClient sageMaker = getSagemakerSession(credentials, region);
-    DescribeNotebookInstanceRequest request =
+    SageMakerWaiter sageMakerWaiter =
+        SageMakerWaiter.builder()
+            .client(sageMaker)
+            .overrideConfiguration(
+                WaiterOverrideConfiguration.builder()
+                    .waitTimeout(SAGEMAKER_NOTEBOOK_WAITER_TIMEOUT_DURATION)
+                    .build())
+            .build();
+
+    DescribeNotebookInstanceRequest describeRequest =
         DescribeNotebookInstanceRequest.builder().notebookInstanceName(notebookName).build();
-
-    while (true) {
-      DescribeNotebookInstanceResponse result = sageMaker.describeNotebookInstance(request);
-      NotebookInstanceStatus status = result.notebookInstanceStatus();
-
-      if (status.equals(NotebookInstanceStatus.IN_SERVICE)) {
-        return;
-      } else if (!status.equals(NotebookInstanceStatus.PENDING)) {
-        throw new ApiException(
-            String.format("Unexpected notebook state '%s' at creation time.", status));
-      }
-
-      try {
-        logger.info(
-            String.format(
-                "Creating notebook '%s' waiting for '%s' status, current status is '%s'.",
-                notebookName, NotebookInstanceStatus.IN_SERVICE, status));
-        TimeUnit.SECONDS.sleep(30);
-      } catch (InterruptedException e) {
-        // Don't care...
-      }
+    WaiterResponse<DescribeNotebookInstanceResponse> waiterResponse;
+    if (desiredStatus.isEmpty()) { // DELETED
+      waiterResponse = sageMakerWaiter.waitUntilNotebookInstanceDeleted(describeRequest);
+    } else if (desiredStatus.get() == NotebookInstanceStatus.IN_SERVICE) {
+      waiterResponse = sageMakerWaiter.waitUntilNotebookInstanceInService(describeRequest);
+    } else if (desiredStatus.get() == NotebookInstanceStatus.STOPPED) {
+      waiterResponse = sageMakerWaiter.waitUntilNotebookInstanceStopped(describeRequest);
+    } else {
+      throw new BadRequestException("Can only wait for notebook InService, Stopped or Deleted");
     }
+
+    ResponseOrException<DescribeNotebookInstanceResponse> responseOrException =
+        waiterResponse.matched();
+    if (responseOrException.response().isPresent()) {
+      checkNotebookStatus(
+          responseOrException.response().get().notebookInstanceStatus(), startableStatusSet);
+      return; // success
+
+    } else if (responseOrException.exception().isPresent()) {
+      Throwable t = responseOrException.exception().get();
+      if (t instanceof Exception) {
+        checkException((Exception) t);
+      }
+      logger.error("Error polling notebook instance status: " + t);
+    }
+
+    throw new ApiException("Error checking notebook instance status");
   }
 
   public static void stopSageMakerNotebook(
@@ -409,34 +424,6 @@ public class AwsUtils {
             "Error stopping notebook instance, "
                 + httpResponse.statusText().orElse(String.valueOf(httpResponse.statusCode())));
       }
-
-      SageMakerWaiter sageMakerWaiter =
-          SageMakerWaiter.builder()
-              .client(sageMaker)
-              .overrideConfiguration(
-                  WaiterOverrideConfiguration.builder()
-                      .maxAttempts(AWS_CLIENT_MAXIMUM_RETRIES)
-                      .waitTimeout(SAGEMAKER_NOTEBOOK_WAITER_TIMEOUT_DURATION)
-                      .build())
-              .build();
-
-      WaiterResponse<DescribeNotebookInstanceResponse> waiterResponse =
-          sageMakerWaiter.waitUntilNotebookInstanceStopped(describeRequest);
-      ResponseOrException<DescribeNotebookInstanceResponse> responseOrException =
-          waiterResponse.matched();
-      if (responseOrException.response().isPresent()) {
-        checkNotebookStatus(
-            responseOrException.response().get().notebookInstanceStatus(), startableStatusSet);
-        return;
-
-      } else if (responseOrException.exception().isPresent()) {
-        Throwable t = responseOrException.exception().get();
-        if (t instanceof Exception) {
-          checkException((Exception) t);
-        }
-        logger.error("Error polling notebook instance status: " + t);
-      }
-      throw new ApiException("Error checking notebook instance status");
 
     } catch (SdkException e) {
       checkException(e);
@@ -481,28 +468,6 @@ public class AwsUtils {
                 + httpResponse.statusText().orElse(String.valueOf(httpResponse.statusCode())));
       }
 
-      SageMakerWaiter sageMakerWaiter =
-          SageMakerWaiter.builder()
-              .client(sageMaker)
-              .overrideConfiguration(
-                  WaiterOverrideConfiguration.builder()
-                      .maxAttempts(AWS_CLIENT_MAXIMUM_RETRIES)
-                      .waitTimeout(SAGEMAKER_NOTEBOOK_WAITER_TIMEOUT_DURATION)
-                      .build())
-              .build();
-
-      WaiterResponse<DescribeNotebookInstanceResponse> waiterResponse =
-          sageMakerWaiter.waitUntilNotebookInstanceDeleted(describeRequest);
-      ResponseOrException<DescribeNotebookInstanceResponse> responseOrException =
-          waiterResponse.matched();
-      if (responseOrException.exception().isPresent()) {
-        Throwable t = responseOrException.exception().get();
-        if (t instanceof Exception) {
-          checkException((Exception) t);
-        }
-        logger.error("Error polling notebook instance status: " + t);
-      }
-
     } catch (SdkException e) {
       checkException(e);
       throw new ApiException("Error deleting notebook instance", e);
@@ -512,7 +477,6 @@ public class AwsUtils {
   public static URL getSageMakerNotebookProxyUrl(
       Credentials credentials, Region region, String notebookName, Integer duration, String view) {
     try {
-
       SageMakerClient sageMaker = getSagemakerSession(credentials, region);
 
       NotebookInstanceStatus notebookStatus =

@@ -17,19 +17,16 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.model.*;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
+import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
 public class ControlledAwsBucketResource extends ControlledResource {
   private final String s3BucketName;
@@ -37,45 +34,12 @@ public class ControlledAwsBucketResource extends ControlledResource {
 
   @JsonCreator
   public ControlledAwsBucketResource(
-      @JsonProperty("workspaceId") UUID workspaceId,
-      @JsonProperty("resourceId") UUID resourceId,
-      @JsonProperty("name") String name,
-      @JsonProperty("description") String description,
-      @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
-      @JsonProperty("assignedUser") String assignedUser,
-      @JsonProperty("privateResourceState") PrivateResourceState privateResourceState,
-      @JsonProperty("accessScope") AccessScopeType accessScope,
-      @JsonProperty("managedBy") ManagedByType managedBy,
-      @JsonProperty("applicationId") String applicationId,
+      @JsonProperty("wsmResourceFields") WsmResourceFields resourceFields,
+      @JsonProperty("wsmControlledResourceFields")
+          WsmControlledResourceFields controlledResourceFields,
       @JsonProperty("s3BucketName") String s3BucketName,
-      @JsonProperty("prefix") String prefix,
-      @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
-      @JsonProperty("properties") Map<String, String> properties,
-      @JsonProperty("createdByEmail") String createdByEmail,
-      @JsonProperty("createdDate") OffsetDateTime createdDate,
-      @JsonProperty("lastUpdatedByEmail") String lastUpdatedByEmail,
-      @JsonProperty("lastUpdatedDate") OffsetDateTime lastUpdatedDate,
-      @JsonProperty("region") String region) {
-    super(
-        ControlledResourceFields.builder()
-            .workspaceUuid(workspaceId)
-            .resourceId(resourceId)
-            .name(name)
-            .description(description)
-            .cloningInstructions(cloningInstructions)
-            .assignedUser(assignedUser)
-            .accessScope(accessScope)
-            .managedBy(managedBy)
-            .applicationId(applicationId)
-            .privateResourceState(privateResourceState)
-            .resourceLineage(resourceLineage)
-            .properties(properties)
-            .createdByEmail(createdByEmail)
-            .createdDate(createdDate)
-            .lastUpdatedByEmail(lastUpdatedByEmail)
-            .lastUpdatedDate(lastUpdatedDate)
-            .region(region)
-            .build());
+      @JsonProperty("prefix") String prefix) {
+    super(resourceFields, controlledResourceFields);
     this.s3BucketName = s3BucketName;
     this.prefix = prefix;
     validate();
@@ -103,8 +67,42 @@ public class ControlledAwsBucketResource extends ControlledResource {
     return (T) this;
   }
 
+  // -- getters used in serialization --
+  @JsonProperty("wsmResourceFields")
+  public WsmResourceFields getWsmResourceFields() {
+    return super.getWsmResourceFields();
+  }
+
+  @JsonProperty("wsmControlledResourceFields")
+  public WsmControlledResourceFields getWsmControlledResourceFields() {
+    return super.getWsmControlledResourceFields();
+  }
+
+  public String getS3BucketName() {
+    return s3BucketName;
+  }
+
+  public String getPrefix() {
+    return prefix;
+  }
+
+  // -- getters not included in serialization --
+
+  @Override
+  @JsonIgnore
+  public WsmResourceType getResourceType() {
+    return WsmResourceType.CONTROLLED_AWS_BUCKET;
+  }
+
+  @Override
+  @JsonIgnore
+  public WsmResourceFamily getResourceFamily() {
+    return WsmResourceFamily.AWS_BUCKET;
+  }
+
   /** {@inheritDoc} */
   @Override
+  @JsonIgnore
   public Optional<UniquenessCheckAttributes> getUniquenessCheckAttributes() {
     return Optional.of(
         new UniquenessCheckAttributes()
@@ -148,14 +146,6 @@ public class ControlledAwsBucketResource extends ControlledResource {
     // TODO: Implement and add delete flight steps.
   }
 
-  public String getS3BucketName() {
-    return s3BucketName;
-  }
-
-  public String getPrefix() {
-    return prefix;
-  }
-
   public ApiAwsBucketAttributes toApiAttributes() {
     return new ApiAwsBucketAttributes()
         .s3BucketName(getS3BucketName())
@@ -165,16 +155,6 @@ public class ControlledAwsBucketResource extends ControlledResource {
 
   public ApiAwsBucketResource toApiResource() {
     return new ApiAwsBucketResource().metadata(super.toApiMetadata()).attributes(toApiAttributes());
-  }
-
-  @Override
-  public WsmResourceType getResourceType() {
-    return WsmResourceType.CONTROLLED_AWS_BUCKET;
-  }
-
-  @Override
-  public WsmResourceFamily getResourceFamily() {
-    return WsmResourceFamily.AWS_BUCKET;
   }
 
   @Override
@@ -204,7 +184,6 @@ public class ControlledAwsBucketResource extends ControlledResource {
     private ControlledResourceFields common;
     private String s3BucketName;
     private String prefix;
-    private String region;
 
     public Builder common(ControlledResourceFields common) {
       this.common = common;
@@ -218,11 +197,6 @@ public class ControlledAwsBucketResource extends ControlledResource {
 
     public ControlledAwsBucketResource.Builder prefix(String prefix) {
       this.prefix = prefix;
-      return this;
-    }
-
-    public ControlledAwsBucketResource.Builder region(String region) {
-      this.region = region;
       return this;
     }
 
