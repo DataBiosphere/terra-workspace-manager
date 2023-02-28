@@ -135,6 +135,7 @@ public class AwsCloudContext {
       Map<Region, String> bucketMap = new HashMap<>();
       if (dbContext.bucketList != null) {
         for (AwsCloudContextBucketV1 bucketV1 : dbContext.bucketList) {
+          bucketV1.validateVersion();
           bucketMap.put(Region.of(bucketV1.regionName), bucketV1.bucketName);
         }
       }
@@ -150,10 +151,8 @@ public class AwsCloudContext {
           bucketMap);
 
     } catch (SerializationException e) {
-      // Deserialization of V1 failed.
+      throw new InvalidSerializedVersionException("Invalid serialized version " + e);
     }
-
-    throw new InvalidSerializedVersionException("Invalid serialized version");
   }
 
   /** Mask AWS version numbers so as not to collide with Azure and GCP version numbers */
@@ -187,7 +186,8 @@ public class AwsCloudContext {
     public void validateVersion() {
       if (this.version
           != (AWS_CLOUD_CONTEXT_BUCKET_DB_VERSION | AWS_CLOUD_CONTEXT_DB_VERSION_MASK)) {
-        throw new InvalidSerializedVersionException("Invalid serialized version");
+        throw new InvalidSerializedVersionException(
+            "Invalid serialized version of AwsCloudContextBucketV1");
       }
     }
   }
@@ -226,7 +226,8 @@ public class AwsCloudContext {
       this.userRoleArn = userRoleArn;
       this.kmsKeyArn = kmsKeyArn;
       this.notebookLifecycleConfigArn = notebookLifecycleConfigArn;
-      this.bucketList = DbSerDes.fromJson(bucketListStr, new TypeReference<>() {});
+      this.bucketList =
+          DbSerDes.fromJson(bucketListStr, new TypeReference<List<AwsCloudContextBucketV1>>() {});
     }
 
     public AwsCloudContextV1(AwsCloudContext context) {
@@ -253,7 +254,8 @@ public class AwsCloudContext {
 
     public void validateVersion() {
       if (this.version != (AWS_CLOUD_CONTEXT_DB_VERSION | AWS_CLOUD_CONTEXT_DB_VERSION_MASK)) {
-        throw new InvalidSerializedVersionException("Invalid serialized version");
+        throw new InvalidSerializedVersionException(
+            "Invalid serialized version of AwsCloudContextV1");
       }
     }
   }
