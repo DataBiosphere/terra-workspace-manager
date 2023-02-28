@@ -48,9 +48,10 @@ import software.amazon.awssdk.services.sts.model.Tag;
 
 public class AwsUtils {
   private static final Logger logger = LoggerFactory.getLogger(AwsUtils.class);
-  public static final Integer MIN_TOKEN_DURATION_SECONDS = 900;
+  public static final int MIN_TOKEN_DURATION_SECONDS = 900;
 
   // TODO(TERRA-384) - move to COW in TCL
+  private static final int MAX_ROLE_SESSION_NAME_LENGTH = 64;
   private static final Duration SAGEMAKER_NOTEBOOK_WAITER_TIMEOUT_DURATION =
       Duration.ofSeconds(900);
   private static final Set<NotebookInstanceStatus> startableStatusSet =
@@ -60,13 +61,19 @@ public class AwsUtils {
   private static final Set<NotebookInstanceStatus> deletableStatusSet =
       Set.of(NotebookInstanceStatus.STOPPED, NotebookInstanceStatus.FAILED);
 
+  private static String getRoleSessionName(String name) {
+    return (name.length() > MAX_ROLE_SESSION_NAME_LENGTH)
+        ? name.substring(0, MAX_ROLE_SESSION_NAME_LENGTH - 1)
+        : name;
+  }
+
   public static Credentials assumeServiceRole(
       AwsCloudContext awsCloudContext, String idToken, String serviceEmail, Integer duration) {
     AssumeRoleWithWebIdentityRequest request =
         AssumeRoleWithWebIdentityRequest.builder()
             .durationSeconds(duration)
             .roleArn(awsCloudContext.getServiceRoleArn().toString())
-            .roleSessionName(serviceEmail)
+            .roleSessionName(getRoleSessionName(serviceEmail))
             .webIdentityToken(idToken)
             .build();
 
@@ -141,7 +148,7 @@ public class AwsUtils {
         AssumeRoleRequest.builder()
             .durationSeconds(duration)
             .roleArn(awsCloudContext.getUserRoleArn().toString())
-            .roleSessionName(user.getEmail())
+            .roleSessionName(getRoleSessionName(user.getEmail()))
             .tags(userTags)
             .build();
 
