@@ -28,8 +28,7 @@ public class ControlledAzureIpHandler implements WsmResourceHandler {
     var resource =
         ControlledAzureIpResource.builder()
             .ipName(attributes.getIpName())
-            .region(attributes.getRegion())
-            .common(new ControlledResourceFields(dbResource))
+            .common(new ControlledResourceFields(dbResource, attributes.getRegion()))
             .build();
     return resource;
   }

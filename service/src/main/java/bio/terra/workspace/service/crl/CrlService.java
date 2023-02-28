@@ -14,6 +14,7 @@ import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.CrlConfiguration;
+import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.service.crl.exception.CrlInternalException;
 import bio.terra.workspace.service.crl.exception.CrlNotInUseException;
 import bio.terra.workspace.service.crl.exception.CrlSecurityException;
@@ -24,6 +25,7 @@ import com.azure.core.credential.TokenCredential;
 import com.azure.core.management.AzureEnvironment;
 import com.azure.core.management.profile.AzureProfile;
 import com.azure.identity.ClientSecretCredentialBuilder;
+import com.azure.resourcemanager.batch.BatchManager;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.monitor.MonitorManager;
 import com.azure.resourcemanager.msi.MsiManager;
@@ -37,7 +39,6 @@ import com.google.api.services.bigquery.model.Dataset;
 import com.google.api.services.storage.Storage;
 import com.google.api.services.storage.StorageScopes;
 import com.google.auth.http.HttpCredentialsAdapter;
-import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.storage.BlobId;
@@ -137,7 +138,7 @@ public class CrlService {
   public IamCow getIamCow(AuthenticatedUserRequest userRequest) {
     assertCrlInUse();
     try {
-      return IamCow.create(clientConfig, googleCredentialsFromUserReq(userRequest));
+      return IamCow.create(clientConfig, GcpUtils.getGoogleCredentialsFromUserRequest(userRequest));
     } catch (GeneralSecurityException | IOException e) {
       throw new CrlInternalException("Error creating IAM API wrapper", e);
     }
@@ -184,6 +185,17 @@ public class CrlService {
         .authenticate(azureCreds, azureProfile);
   }
 
+  public BatchManager getBatchManager(
+      AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
+    assertCrlInUse();
+    final var azureCreds = getManagedAppCredentials(azureConfig);
+    final var azureProfile = getAzureProfile(azureCloudContext);
+
+    return bio.terra.cloudres.azure.resourcemanager.batch.Defaults.crlConfigure(
+            clientConfig, BatchManager.configure())
+        .authenticate(azureCreds, azureProfile);
+  }
+
   /** Returns an Azure {@link ResourceManager} configured for use with CRL. */
   public ResourceManager getResourceManager(
       AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
@@ -222,7 +234,8 @@ public class CrlService {
   public BigQueryCow createBigQueryCow(AuthenticatedUserRequest userRequest) {
     assertCrlInUse();
     try {
-      return BigQueryCow.create(clientConfig, googleCredentialsFromUserReq(userRequest));
+      return BigQueryCow.create(
+          clientConfig, GcpUtils.getGoogleCredentialsFromUserRequest(userRequest));
     } catch (IOException | GeneralSecurityException e) {
       throw new CrlInternalException("Error creating BigQuery API wrapper", e);
     }
@@ -327,8 +340,8 @@ public class CrlService {
    * @param datasetName name of the dataset
    * @return the fetched Dataset object
    */
-  public Dataset getBigQueryDataset(BigQueryCow bigQueryCow, String projectId, String datasetName)
-      throws IOException {
+  public static Dataset getBigQueryDataset(
+      BigQueryCow bigQueryCow, String projectId, String datasetName) throws IOException {
     return bigQueryCow.datasets().get(projectId, datasetName).execute();
   }
 
@@ -404,7 +417,7 @@ public class CrlService {
 
     StorageOptions.Builder optionsBuilder = StorageOptions.newBuilder();
     if (userRequest != null) {
-      optionsBuilder.setCredentials(googleCredentialsFromUserReq(userRequest));
+      optionsBuilder.setCredentials(GcpUtils.getGoogleCredentialsFromUserRequest(userRequest));
     }
     if (!StringUtils.isEmpty(projectId)) {
       optionsBuilder.setProjectId(projectId);
@@ -471,12 +484,6 @@ public class CrlService {
     } catch (IOException e) {
       throw new CrlSecurityException("Failed to get credentials", e);
     }
-  }
-
-  private GoogleCredentials googleCredentialsFromUserReq(AuthenticatedUserRequest userRequest) {
-    // The expirationTime argument is only used for refresh tokens, not access tokens.
-    AccessToken accessToken = new AccessToken(userRequest.getRequiredToken(), null);
-    return GoogleCredentials.create(accessToken);
   }
 
   private ClientConfig buildClientConfig() {

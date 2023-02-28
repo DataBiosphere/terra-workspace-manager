@@ -1,7 +1,12 @@
 package bio.terra.workspace.db;
 
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_CREATED_BIG_QUERY_PARTITION_LIFETIME;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_CREATED_BIG_QUERY_TABLE_LIFETIME;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_RESOURCE_PROPERTIES;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeNotebookCommonFieldsBuilder;
 import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
+import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_SUBJECT_ID;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant.DEFAULT_ZONE;
 import static bio.terra.workspace.unit.WorkspaceUnitTestUtils.createWorkspaceWithGcpContext;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -15,17 +20,26 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.TestUtils;
+import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
+import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
+import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
+import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
+import bio.terra.workspace.service.workspace.model.OperationType;
+import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,6 +57,8 @@ public class ResourceDaoTest extends BaseUnitTest {
   @Autowired ResourceDao resourceDao;
   @Autowired WorkspaceDao workspaceDao;
   @Autowired GcpCloudContextService gcpCloudContextService;
+  @Autowired WorkspaceActivityLogDao activityLogDao;
+  @Autowired RawDaoTestFixture rawDaoTestFixture;
 
   private UUID workspaceUuid;
 
@@ -58,27 +74,72 @@ public class ResourceDaoTest extends BaseUnitTest {
   }
 
   @Test
-  public void createGetControlledGcsBucket() {
+  public void createGetControlledGcsBucket_beforeLogIsWrite_lastUpdatedDateEqualsCreatedDate() {
     ControlledGcsBucketResource resource =
         ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
     resourceDao.createControlledResource(resource);
 
     var getResource = resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId());
     assertEquals(resource, getResource);
-    assertEquals(DEFAULT_USER_EMAIL, getResource.getCreatedByEmail());
     assertNotNull(getResource.getCreatedDate());
+    assertEquals(getResource.getCreatedDate(), getResource.getLastUpdatedDate());
+    assertEquals(getResource.getCreatedByEmail(), getResource.getLastUpdatedByEmail());
   }
 
   @Test
-  public void createGetDeleteControlledBigQueryDataset() {
+  public void createGetControlledGcsBucket() {
+    ControlledGcsBucketResource resource =
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
+    createControlledResourceAndLog(resource);
+
+    var getResource = resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId());
+    assertEquals(resource, getResource);
+    assertEquals(DEFAULT_USER_EMAIL, getResource.getLastUpdatedByEmail());
+    assertNotNull(getResource.getLastUpdatedDate());
+  }
+
+  @Test
+  public void
+      createGetDeleteControlledBigQueryDataset_beforeLogIsWrite_lastUpdatedDateEqualsCreatedDate() {
     ControlledBigQueryDatasetResource resource =
         ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid).build();
     resourceDao.createControlledResource(resource);
 
     var getResource = resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId());
     assertEquals(resource, getResource);
-    assertEquals(DEFAULT_USER_EMAIL, getResource.getCreatedByEmail());
     assertNotNull(getResource.getCreatedDate());
+    assertEquals(getResource.getCreatedDate(), getResource.getLastUpdatedDate());
+    assertEquals(getResource.getCreatedByEmail(), getResource.getLastUpdatedByEmail());
+  }
+
+  @Test
+  public void createGetDeleteControlledBigQueryDataset() {
+    ControlledBigQueryDatasetResource resource =
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid).build();
+    createControlledResourceAndLog(resource);
+
+    var getResource = resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId());
+    assertEquals(resource, getResource);
+    assertEquals(DEFAULT_USER_EMAIL, getResource.getLastUpdatedByEmail());
+    assertNotNull(getResource.getLastUpdatedDate());
+  }
+
+  @Test
+  public void
+      createGetControlledAiNotebookInstance_beforeLogIsWrite_lastUpdatedDateEqualsCreatedDate() {
+    ControlledResourceFields commonFields =
+        ControlledResourceFixtures.makeNotebookCommonFieldsBuilder()
+            .workspaceUuid(workspaceUuid)
+            .build();
+    ControlledAiNotebookInstanceResource resource =
+        ControlledResourceFixtures.makeDefaultAiNotebookInstance().common(commonFields).build();
+    resourceDao.createControlledResource(resource);
+
+    var getResource = resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId());
+    assertEquals(resource, getResource);
+    assertNotNull(getResource.getCreatedDate());
+    assertEquals(getResource.getCreatedDate(), getResource.getLastUpdatedDate());
+    assertEquals(getResource.getCreatedByEmail(), getResource.getLastUpdatedByEmail());
   }
 
   @Test
@@ -90,11 +151,19 @@ public class ResourceDaoTest extends BaseUnitTest {
     ControlledAiNotebookInstanceResource resource =
         ControlledResourceFixtures.makeDefaultAiNotebookInstance().common(commonFields).build();
     resourceDao.createControlledResource(resource);
+    activityLogDao.writeActivity(
+        workspaceUuid,
+        new DbWorkspaceActivityLog(
+            DEFAULT_USER_EMAIL,
+            DEFAULT_USER_SUBJECT_ID,
+            OperationType.CREATE,
+            resource.getResourceId().toString(),
+            ActivityLogChangedTarget.RESOURCE));
 
     var getResource = resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId());
     assertEquals(resource, getResource);
-    assertEquals(DEFAULT_USER_EMAIL, getResource.getCreatedByEmail());
-    assertNotNull(getResource.getCreatedDate());
+    assertEquals(DEFAULT_USER_EMAIL, getResource.getLastUpdatedByEmail());
+    assertNotNull(getResource.getLastUpdatedDate());
   }
 
   @Test
@@ -108,13 +177,24 @@ public class ResourceDaoTest extends BaseUnitTest {
     resourceDao.createControlledResource(resource);
 
     var newRegion = "great-new-world";
-    assertTrue(
-        resourceDao.updateControlledResourceRegion(
-            workspaceUuid, resource.getResourceId(), newRegion));
+
+    assertTrue(resourceDao.updateControlledResourceRegion(resource.getResourceId(), newRegion));
+    var newUserEmail = "foo";
+    activityLogDao.writeActivity(
+        workspaceUuid,
+        new DbWorkspaceActivityLog(
+            newUserEmail,
+            UUID.randomUUID().toString(),
+            OperationType.UPDATE,
+            resource.getResourceId().toString(),
+            ActivityLogChangedTarget.RESOURCE));
 
     ControlledResource controlledResource =
         resourceDao.getResource(workspaceUuid, resource.getResourceId()).castToControlledResource();
     assertEquals(newRegion, controlledResource.getRegion());
+    assertEquals(newUserEmail, controlledResource.getLastUpdatedByEmail());
+    assertFalse(
+        controlledResource.getLastUpdatedDate().isBefore(controlledResource.getCreatedDate()));
   }
 
   @Test
@@ -127,8 +207,7 @@ public class ResourceDaoTest extends BaseUnitTest {
         ControlledResourceFixtures.makeDefaultAiNotebookInstance().common(commonFields).build();
     resourceDao.createControlledResource(resource);
 
-    assertTrue(
-        resourceDao.updateControlledResourceRegion(workspaceUuid, resource.getResourceId(), null));
+    assertTrue(resourceDao.updateControlledResourceRegion(resource.getResourceId(), null));
 
     ControlledResource controlledResource =
         resourceDao.getResource(workspaceUuid, resource.getResourceId()).castToControlledResource();
@@ -137,12 +216,13 @@ public class ResourceDaoTest extends BaseUnitTest {
 
   @Test
   public void listAndDeleteControlledResourceInContext() {
+    UUID workspaceUuid = createWorkspaceWithGcpContext(workspaceDao);
     ControlledGcsBucketResource bucket =
         ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
     ControlledBigQueryDatasetResource dataset =
         ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid).build();
-    resourceDao.createControlledResource(bucket);
-    resourceDao.createControlledResource(dataset);
+    createControlledResourceAndLog(bucket);
+    createControlledResourceAndLog(dataset);
 
     List<ControlledResource> gcpList =
         resourceDao.listControlledResources(workspaceUuid, CloudPlatform.GCP);
@@ -160,6 +240,8 @@ public class ResourceDaoTest extends BaseUnitTest {
     List<ControlledResource> listAfterDeletion =
         resourceDao.listControlledResources(workspaceUuid, CloudPlatform.GCP);
     assertTrue(listAfterDeletion.isEmpty());
+    workspaceDao.deleteCloudContext(workspaceUuid, CloudPlatform.GCP);
+    workspaceDao.deleteWorkspace(workspaceUuid);
   }
 
   @Test
@@ -230,7 +312,7 @@ public class ResourceDaoTest extends BaseUnitTest {
             .build();
 
     // should be fine: separate workspaces implies separate gcp projects
-    resourceDao.createControlledResource(resourceWithDifferentWorkspaceId);
+    createControlledResourceAndLog(resourceWithDifferentWorkspaceId);
 
     assertEquals(
         resourceWithDifferentWorkspaceId,
@@ -251,7 +333,7 @@ public class ResourceDaoTest extends BaseUnitTest {
             .build();
 
     // same project & instance ID but different location from resource1
-    resourceDao.createControlledResource(resourceWithDifferentLocation);
+    createControlledResourceAndLog(resourceWithDifferentLocation);
     assertEquals(
         resourceWithDifferentLocation,
         resourceDao.getResource(
@@ -270,7 +352,7 @@ public class ResourceDaoTest extends BaseUnitTest {
             .location(null)
             .build();
 
-    resourceDao.createControlledResource(resourceWithDefaultLocation);
+    createControlledResourceAndLog(resourceWithDefaultLocation);
     assertEquals(
         resourceWithDefaultLocation,
         resourceDao.getResource(
@@ -291,37 +373,42 @@ public class ResourceDaoTest extends BaseUnitTest {
             .projectId(projectId1)
             .datasetName(datasetName1)
             .build();
-    resourceDao.createControlledResource(initialResource);
+    createControlledResourceAndLog(initialResource);
 
-    final UUID workspaceId2 = createWorkspaceWithGcpContext(workspaceDao);
-    // This is in a different workspace (and so a different cloud context), so it is not a conflict
-    // even with the same Dataset ID.
-    final ControlledBigQueryDatasetResource uniqueResource =
-        ControlledBigQueryDatasetResource.builder()
-            .common(ControlledResourceFixtures.makeDefaultControlledResourceFields(workspaceId2))
-            .datasetName(datasetName1)
-            .projectId(projectId2)
-            .build();
-    resourceDao.createControlledResource(uniqueResource);
+    UUID workspaceId2 = createWorkspaceWithGcpContext(workspaceDao);
+    try {
+      // This is in a different workspace (and so a different cloud context), so it is not a
+      // conflict
+      // even with the same Dataset ID.
+      final ControlledBigQueryDatasetResource uniqueResource =
+          ControlledBigQueryDatasetResource.builder()
+              .common(ControlledResourceFixtures.makeDefaultControlledResourceFields(workspaceId2))
+              .datasetName(datasetName1)
+              .projectId(projectId2)
+              .build();
+      createControlledResourceAndLog(uniqueResource);
 
-    // This is in the same workspace as initialResource, so it should be a conflict.
-    final ControlledBigQueryDatasetResource duplicatingResource =
-        ControlledBigQueryDatasetResource.builder()
-            .common(ControlledResourceFixtures.makeDefaultControlledResourceFields(workspaceUuid))
-            .projectId(projectId1)
-            .datasetName(datasetName1)
-            .build();
+      // This is in the same workspace as initialResource, so it should be a conflict.
+      final ControlledBigQueryDatasetResource duplicatingResource =
+          ControlledBigQueryDatasetResource.builder()
+              .common(ControlledResourceFixtures.makeDefaultControlledResourceFields(workspaceUuid))
+              .projectId(projectId1)
+              .datasetName(datasetName1)
+              .build();
 
-    assertThrows(
-        DuplicateResourceException.class,
-        () -> resourceDao.createControlledResource(duplicatingResource));
+      assertThrows(
+          DuplicateResourceException.class,
+          () -> createControlledResourceAndLog(duplicatingResource));
+    } finally {
+      resourceDao.deleteAllControlledResources(workspaceId2, CloudPlatform.GCP);
+    }
   }
 
   @Test
   public void updateResourceProperties_propertiesUpdated() {
     ControlledBigQueryDatasetResource resource =
         ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid).build();
-    resourceDao.createControlledResource(resource);
+    createControlledResourceAndLog(resource);
     Map<String, String> properties = Map.of("foo", "bar1", "sweet", "cake");
 
     Map<String, String> expectedUpdatedProperties = new HashMap<>();
@@ -334,6 +421,38 @@ public class ResourceDaoTest extends BaseUnitTest {
         resourceDao
             .getResource(resource.getWorkspaceId(), resource.getResourceId())
             .getProperties());
+  }
+
+  @Test
+  public void updateResourceProperties_lastUpdatedBy() {
+    ControlledBigQueryDatasetResource resource =
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid).build();
+    createControlledResourceAndLog(resource);
+    Map<String, String> properties = Map.of("foo", "bar1", "sweet", "cake");
+    var resourceBeforeUpdate =
+        resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId());
+
+    Map<String, String> expectedUpdatedProperties = new HashMap<>();
+    expectedUpdatedProperties.putAll(DEFAULT_RESOURCE_PROPERTIES);
+    expectedUpdatedProperties.putAll(properties);
+    resourceDao.updateResourceProperties(workspaceUuid, resource.getResourceId(), properties);
+    var userEmail = "foo";
+    activityLogDao.writeActivity(
+        workspaceUuid,
+        new DbWorkspaceActivityLog(
+            userEmail,
+            UUID.randomUUID().toString(),
+            OperationType.UPDATE,
+            resource.getResourceId().toString(),
+            ActivityLogChangedTarget.RESOURCE));
+
+    var resourceAfterUpdate =
+        resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId());
+    assertEquals(userEmail, resourceAfterUpdate.getLastUpdatedByEmail());
+    assertTrue(
+        resourceAfterUpdate
+            .getLastUpdatedDate()
+            .isAfter(resourceBeforeUpdate.getLastUpdatedDate()));
   }
 
   @Test
@@ -350,7 +469,7 @@ public class ResourceDaoTest extends BaseUnitTest {
       updateResourceProperties_emptyUpdateProperties_throwsMissingRequiredFieldsException() {
     ControlledBigQueryDatasetResource resource =
         ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid).build();
-    resourceDao.createControlledResource(resource);
+    createControlledResourceAndLog(resource);
 
     assertThrows(
         MissingRequiredFieldsException.class,
@@ -363,7 +482,7 @@ public class ResourceDaoTest extends BaseUnitTest {
   public void deleteResourceProperties_resourcePropertiesDeleted() {
     ControlledBigQueryDatasetResource resource =
         ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid).build();
-    resourceDao.createControlledResource(resource);
+    createControlledResourceAndLog(resource);
 
     resourceDao.deleteResourceProperties(
         workspaceUuid,
@@ -376,29 +495,192 @@ public class ResourceDaoTest extends BaseUnitTest {
   @Test
   public void deleteResourceProperties_nonExistingKeys_nothingIsDeleted() {
     UUID workspaceUuid = createWorkspaceWithGcpContext(workspaceDao);
-    ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid).build();
-    resourceDao.createControlledResource(resource);
+    try {
+      ControlledBigQueryDatasetResource resource =
+          ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid).build();
+      createControlledResourceAndLog(resource);
 
-    resourceDao.deleteResourceProperties(
-        workspaceUuid, resource.getResourceId(), List.of(RandomStringUtils.randomAlphabetic(3)));
+      resourceDao.deleteResourceProperties(
+          workspaceUuid, resource.getResourceId(), List.of(RandomStringUtils.randomAlphabetic(3)));
 
-    assertEquals(
-        resource.getProperties(),
-        resourceDao.getResource(workspaceUuid, resource.getResourceId()).getProperties());
+      assertEquals(
+          resource.getProperties(),
+          resourceDao.getResource(workspaceUuid, resource.getResourceId()).getProperties());
+    } finally {
+      resourceDao.deleteAllControlledResources(workspaceUuid, CloudPlatform.GCP);
+    }
   }
 
   @Test
   public void deleteResourceProperties_noKeySpecified_throwsMissingRequiredFieldsException() {
     UUID workspaceUuid = createWorkspaceWithGcpContext(workspaceDao);
+    try {
+      ControlledBigQueryDatasetResource resource =
+          ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid).build();
+      createControlledResourceAndLog(resource);
+
+      assertThrows(
+          MissingRequiredFieldsException.class,
+          () ->
+              resourceDao.deleteResourceProperties(
+                  workspaceUuid, resource.getResourceId(), List.of()));
+    } finally {
+      resourceDao.deleteAllControlledResources(workspaceUuid, CloudPlatform.GCP);
+    }
+  }
+
+  @Test
+  void gcsBucketWithUnderscore_retrieve() {
+    UUID workspaceUuid = createWorkspaceWithGcpContext(workspaceDao);
+    var resourceId = UUID.randomUUID();
+    var bucketName = "gcs_bucket_with_underscore_name";
+    // This is an artificially contrived situation where we create a gcs bucket with an underscore.
+    resourceDao.createControlledResource(
+        new ControlledGcsBucketResource(
+            workspaceUuid,
+            resourceId,
+            TestUtils.appendRandomNumber("resourcename"),
+            "This is a bucket with underscore name",
+            CloningInstructions.COPY_NOTHING,
+            /*assignedUser=*/ null,
+            PrivateResourceState.NOT_APPLICABLE,
+            AccessScopeType.ACCESS_SCOPE_SHARED,
+            ManagedByType.MANAGED_BY_USER,
+            /*applicationId=*/ null,
+            bucketName,
+            List.of(),
+            Map.of(),
+            "foo@bar.com",
+            OffsetDateTime.now(),
+            "foo@bar.com",
+            OffsetDateTime.now(),
+            "us-central1"));
+
+    ControlledGcsBucketResource bucket =
+        resourceDao
+            .getResource(workspaceUuid, resourceId)
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
+
+    assertEquals(bucketName, bucket.getBucketName());
+  }
+
+  @Test
+  public void listControlledResourceWithoutRegion() {
+    UUID workspaceUuid = createWorkspaceWithGcpContext(workspaceDao);
+    UUID workspaceUuid2 = createWorkspaceWithGcpContext(workspaceDao);
+    UUID workspaceUuid3 = createWorkspaceWithGcpContext(workspaceDao);
+    for (int i = 0; i < 5; i++) {
+      ControlledBigQueryDatasetResource dataset =
+          ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid)
+              .common(
+                  makeDefaultControlledResourceFieldsBuilder()
+                      .workspaceUuid(workspaceUuid)
+                      .region(null)
+                      .build())
+              .build();
+      ControlledGcsBucketResource bucket =
+          ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid2)
+              .common(
+                  makeDefaultControlledResourceFieldsBuilder()
+                      .workspaceUuid(workspaceUuid2)
+                      .region(null)
+                      .build())
+              .build();
+      ControlledAiNotebookInstanceResource notebook =
+          ControlledResourceFixtures.makeDefaultAiNotebookInstance()
+              .common(
+                  makeNotebookCommonFieldsBuilder()
+                      .workspaceUuid(workspaceUuid3)
+                      .region(null)
+                      .build())
+              .build();
+      resourceDao.createControlledResource(dataset);
+      resourceDao.createControlledResource(bucket);
+      resourceDao.createControlledResource(notebook);
+    }
+
+    assertEquals(
+        15, resourceDao.listControlledResourcesWithMissingRegion(CloudPlatform.GCP).size());
+    assertTrue(resourceDao.listControlledResourcesWithMissingRegion(CloudPlatform.AZURE).isEmpty());
+    resourceDao.deleteAllControlledResources(workspaceUuid, CloudPlatform.GCP);
+    resourceDao.deleteAllControlledResources(workspaceUuid2, CloudPlatform.GCP);
+    resourceDao.deleteAllControlledResources(workspaceUuid3, CloudPlatform.GCP);
+  }
+
+  @Test
+  public void listControlledBigQueryDatasetsWithoutLifetime() {
+    resourceDao.deleteAllControlledResources(workspaceUuid, CloudPlatform.GCP);
+
+    UUID workspaceWithGcpContext = createWorkspaceWithGcpContext(workspaceDao);
+
+    var emptyList = resourceDao.listControlledBigQueryDatasetsWithoutBothLifetime();
+    assertEquals(0, emptyList.size());
+    try {
+      for (int i = 0; i < 5; i++) {
+        ControlledBigQueryDatasetResource dataset =
+            ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid)
+                .defaultTableLifetime(null)
+                .defaultPartitionLifetime(null)
+                .build();
+        resourceDao.createControlledResource(dataset);
+      }
+
+      ControlledBigQueryDatasetResource datasetWithLifetime =
+          ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid)
+              .defaultTableLifetime(DEFAULT_CREATED_BIG_QUERY_TABLE_LIFETIME)
+              .defaultPartitionLifetime(DEFAULT_CREATED_BIG_QUERY_PARTITION_LIFETIME)
+              .build();
+
+      resourceDao.createControlledResource(datasetWithLifetime);
+
+      var ans = resourceDao.listControlledBigQueryDatasetsWithoutBothLifetime().size();
+      assertEquals(5, ans);
+    } finally {
+      resourceDao.deleteAllControlledResources(workspaceWithGcpContext, CloudPlatform.GCP);
+    }
+  }
+
+  @Test
+  public void updateBigQueryDatasetDefaultTableAndPartitionLifetime() {
     ControlledBigQueryDatasetResource resource =
         ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid).build();
+
     resourceDao.createControlledResource(resource);
 
-    assertThrows(
-        MissingRequiredFieldsException.class,
-        () ->
-            resourceDao.deleteResourceProperties(
-                workspaceUuid, resource.getResourceId(), List.of()));
+    ControlledBigQueryDatasetResource resourceBeforeUpdate =
+        resourceDao
+            .getResource(resource.getWorkspaceId(), resource.getResourceId())
+            .castToControlledResource()
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
+
+    assertEquals(
+        DEFAULT_CREATED_BIG_QUERY_TABLE_LIFETIME, resourceBeforeUpdate.getDefaultTableLifetime());
+    assertEquals(
+        DEFAULT_CREATED_BIG_QUERY_PARTITION_LIFETIME,
+        resourceBeforeUpdate.getDefaultPartitionLifetime());
+
+    resourceDao.updateBigQueryDatasetDefaultTableAndPartitionLifetime(
+        resourceBeforeUpdate, 6000L, 6001L);
+
+    ControlledBigQueryDatasetResource resourceAfterUpdate =
+        resourceDao
+            .getResource(resource.getWorkspaceId(), resource.getResourceId())
+            .castToControlledResource()
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
+
+    assertEquals(6000L, resourceAfterUpdate.getDefaultTableLifetime());
+    assertEquals(6001L, resourceAfterUpdate.getDefaultPartitionLifetime());
+  }
+
+  private void createControlledResourceAndLog(ControlledResource resource) {
+    resourceDao.createControlledResource(resource);
+    activityLogDao.writeActivity(
+        workspaceUuid,
+        new DbWorkspaceActivityLog(
+            DEFAULT_USER_EMAIL,
+            DEFAULT_USER_SUBJECT_ID,
+            OperationType.CREATE,
+            resource.getResourceId().toString(),
+            ActivityLogChangedTarget.RESOURCE));
   }
 }

@@ -3,14 +3,18 @@ package bio.terra.workspace.db;
 import static bio.terra.workspace.service.resource.model.StewardshipType.CONTROLLED;
 import static bio.terra.workspace.service.resource.model.StewardshipType.REFERENCED;
 import static bio.terra.workspace.service.resource.model.StewardshipType.fromSql;
+import static bio.terra.workspace.service.resource.model.WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET;
 import static java.util.stream.Collectors.toList;
 
 import bio.terra.common.db.ReadTransaction;
 import bio.terra.common.db.WriteTransaction;
 import bio.terra.workspace.common.exception.InternalLogicException;
+import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetAttributes;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
@@ -57,15 +61,18 @@ import org.springframework.stereotype.Component;
 public class ResourceDao {
   private static final Logger logger = LoggerFactory.getLogger(ResourceDao.class);
 
-  /** SQL query for reading all columns from the resource table */
-  private static final String RESOURCE_SELECT_SQL =
+  private static final String RESOURCE_SELECT_SQL_WITHOUT_WORKSPACE_ID =
       """
-      SELECT workspace_id, cloud_platform, resource_id, name, description, stewardship_type,
+        SELECT workspace_id, cloud_platform, resource_id, name, description, stewardship_type,
         resource_type, exact_resource_type, cloning_instructions, attributes,
         access_scope, managed_by, associated_app, assigned_user, private_resource_state,
         resource_lineage, properties, created_date, created_by_email, region
-      FROM resource WHERE workspace_id = :workspace_id
+        FROM resource
       """;
+
+  /** SQL query for reading all columns from the resource table */
+  private static final String RESOURCE_SELECT_SQL =
+      RESOURCE_SELECT_SQL_WITHOUT_WORKSPACE_ID + " WHERE workspace_id = :workspace_id";
 
   private static final RowMapper<DbResource> DB_RESOURCE_ROW_MAPPER =
       (rs, rowNum) ->
@@ -113,12 +120,15 @@ public class ResourceDao {
               .region(rs.getString("region"));
 
   private final NamedParameterJdbcTemplate jdbcTemplate;
+  private final WorkspaceActivityLogDao workspaceActivityLogDao;
 
   // -- Common Resource Methods -- //
 
   @Autowired
-  public ResourceDao(NamedParameterJdbcTemplate jdbcTemplate) {
+  public ResourceDao(
+      NamedParameterJdbcTemplate jdbcTemplate, WorkspaceActivityLogDao workspaceActivityLogDao) {
     this.jdbcTemplate = jdbcTemplate;
+    this.workspaceActivityLogDao = workspaceActivityLogDao;
   }
 
   @WriteTransaction
@@ -292,6 +302,57 @@ public class ResourceDao {
     return dbResources.stream()
         .map(this::constructResource)
         .map(WsmResource::castToControlledResource)
+        .collect(Collectors.toList());
+  }
+
+  /** Returns a list of all controlled resources without region field. */
+  @ReadTransaction
+  public List<ControlledResource> listControlledResourcesWithMissingRegion(
+      @Nullable CloudPlatform cloudPlatform) {
+    String sql =
+        RESOURCE_SELECT_SQL_WITHOUT_WORKSPACE_ID
+            + " WHERE stewardship_type = :controlled_resource AND region IS NULL";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource().addValue("controlled_resource", CONTROLLED.toSql());
+
+    if (cloudPlatform != null) {
+      sql += " AND cloud_platform = :cloud_platform";
+      params.addValue("cloud_platform", cloudPlatform.toSql());
+    }
+
+    List<DbResource> dbResources = jdbcTemplate.query(sql, params, DB_RESOURCE_ROW_MAPPER);
+    return dbResources.stream()
+        .map(this::constructResource)
+        .map(WsmResource::castToControlledResource)
+        .collect(Collectors.toList());
+  }
+
+  // TODO (PF-2269): Clean this up once the back-fill is done in all Terra environments.
+  /**
+   * Returns a list of all controlled BigQuery datasets with empty default table lifetime and
+   * default partition lifetime.
+   */
+  @ReadTransaction
+  public List<ControlledBigQueryDatasetResource>
+      listControlledBigQueryDatasetsWithoutBothLifetime() {
+
+    String sql =
+        RESOURCE_SELECT_SQL_WITHOUT_WORKSPACE_ID
+            + " WHERE stewardship_type = :controlled_resource"
+            + " AND exact_resource_type = :controlled_gcp_big_query_dataset"
+            + " AND ((attributes -> 'defaultTableLifetime') IS NULL)"
+            + " AND ((attributes -> 'defaultPartitionLifetime') IS NULL)";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("controlled_resource", CONTROLLED.toSql())
+            .addValue("controlled_gcp_big_query_dataset", CONTROLLED_GCP_BIG_QUERY_DATASET.toSql());
+
+    List<DbResource> dbResources = jdbcTemplate.query(sql, params, DB_RESOURCE_ROW_MAPPER);
+    return dbResources.stream()
+        .map(this::constructResource)
+        .map(WsmResource::castToControlledResource)
+        .map(
+            r -> (ControlledBigQueryDatasetResource) r.castByEnum(CONTROLLED_GCP_BIG_QUERY_DATASET))
         .collect(Collectors.toList());
   }
 
@@ -489,28 +550,53 @@ public class ResourceDao {
    * @return whether the resource's region is successfully updated.
    */
   @WriteTransaction
-  public boolean updateControlledResourceRegion(
-      UUID workspaceUuid, UUID resourceId, @Nullable String region) {
-    var sql =
-        """
-            UPDATE resource SET region = :region
-            WHERE workspace_id = :workspace_id AND resource_id = :resource_id
-        """;
+  public boolean updateControlledResourceRegion(UUID resourceId, @Nullable String region) {
+    var sql = "UPDATE resource SET region = :region WHERE resource_id = :resource_id";
 
     var params =
         new MapSqlParameterSource()
             .addValue("region", region)
-            .addValue("workspace_id", workspaceUuid.toString())
             .addValue("resource_id", resourceId.toString());
 
     int rowsAffected = jdbcTemplate.update(sql, params);
     boolean updated = rowsAffected > 0;
 
     logger.info(
-        "{} region for resource {} in workspace {}",
+        "{} region for resource {}",
         (updated ? "Updated" : "No Update - did not find"),
-        resourceId,
-        workspaceUuid);
+        resourceId);
+
+    return updated;
+  }
+
+  // TODO (PF-2269): Clean this up once the back-fill is done in all Terra environments.
+  /**
+   * Update a BigQuery dataset's default table lifetime and default partition lifetime.
+   *
+   * @return whether the dataset's lifetimes are successfully updated.
+   */
+  @WriteTransaction
+  public boolean updateBigQueryDatasetDefaultTableAndPartitionLifetime(
+      ControlledBigQueryDatasetResource dataset,
+      @Nullable Long defaultTableLifetime,
+      @Nullable Long defaultPartitionLifetime) {
+    String newAttributes =
+        DbSerDes.toJson(
+            new ControlledBigQueryDatasetAttributes(
+                dataset.getDatasetName(),
+                dataset.getProjectId(),
+                defaultTableLifetime,
+                defaultPartitionLifetime));
+    boolean updated =
+        updateResource(
+            dataset.getWorkspaceId(), dataset.getResourceId(), null, null, newAttributes, null);
+
+    logger.info(
+        "{} resource {} default table lifetime to {} and default partition lifetime to {}.",
+        (updated ? "Updated" : "No Update - did not find"),
+        dataset.getResourceId(),
+        dataset.getDefaultTableLifetime(),
+        dataset.getDefaultPartitionLifetime());
 
     return updated;
   }
@@ -866,13 +952,27 @@ public class ResourceDao {
    * @return WsmResource
    */
   private WsmResource constructResource(DbResource dbResource) {
+    Optional<ActivityLogChangeDetails> details =
+        workspaceActivityLogDao.getLastUpdatedDetails(
+            dbResource.getWorkspaceId(), dbResource.getResourceId().toString());
+    dbResource
+        .lastUpdatedByEmail(
+            details
+                .map(ActivityLogChangeDetails::actorEmail)
+                .orElse(dbResource.getCreatedByEmail()))
+        .lastUpdatedDate(
+            details.map(ActivityLogChangeDetails::changeDate).orElse(dbResource.getCreatedDate()));
     WsmResourceHandler handler = dbResource.getResourceType().getResourceHandler();
     return handler.makeResourceFromDb(dbResource);
   }
 
   private DbResource getDbResource(String sql, MapSqlParameterSource params) {
     try {
-      return jdbcTemplate.queryForObject(sql, params, DB_RESOURCE_ROW_MAPPER);
+      DbResource dbResource = jdbcTemplate.queryForObject(sql, params, DB_RESOURCE_ROW_MAPPER);
+      if (dbResource == null) {
+        throw new InternalLogicException("Failed to get DbResource");
+      }
+      return dbResource;
     } catch (EmptyResultDataAccessException e) {
       throw new ResourceNotFoundException("Resource not found.");
     }

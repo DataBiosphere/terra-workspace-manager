@@ -18,8 +18,7 @@ import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteContr
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
-import bio.terra.workspace.service.workspace.WorkspaceService;
-import bio.terra.workspace.service.workspace.flight.create.azure.CreateAzureContextFlight;
+import bio.terra.workspace.service.workspace.flight.azure.CreateAzureContextFlight;
 import java.time.Duration;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -33,10 +32,8 @@ import org.springframework.stereotype.Component;
 public class AzureConnectedTestUtils {
   public static final Duration STAIRWAY_FLIGHT_TIMEOUT = Duration.ofMinutes(15);
 
-  @Autowired private WorkspaceService workspaceService;
   @Autowired private JobService jobService;
   @Autowired private AzureTestUtils azureTestUtils;
-  @Autowired private UserAccessUtils userAccessUtils;
   @Autowired private ControlledResourceService controlledResourceService;
   @Autowired private AzureCloudContextService azureCloudContextService;
 

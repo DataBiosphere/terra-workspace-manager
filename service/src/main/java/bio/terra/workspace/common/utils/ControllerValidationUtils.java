@@ -198,22 +198,26 @@ public final class ControllerValidationUtils {
    * Validate that a user has provided an Azure cloud context if one cannot be fetched from BPM
    *
    * @param apiAzureContext Azure cloud context included as request body parameter
-   * @param isContextNullable whether a null cloud context is acceptable
+   * @param isBpmEnabled whether BPM (SpendProfileService) is enabled, in which case
+   *     AzureCloudContext should not be present
    * @return AzureCloudContext to use for request
    */
   public static AzureCloudContext validateAzureContextRequestBody(
-      @Nullable ApiAzureContext apiAzureContext, boolean isContextNullable) {
+      @Nullable ApiAzureContext apiAzureContext, boolean isBpmEnabled) {
     Optional<AzureCloudContext> optionalAzureCloudContext =
         Optional.ofNullable(apiAzureContext).map(AzureCloudContext::fromApi);
-    // if BPM is enabled for Azure, then the coordinates are not required in the request body as
-    // we can fetch them from BPM
-    if (isContextNullable) {
-      return optionalAzureCloudContext.orElse(null);
+    // if BPM is enabled for Azure, then the coordinates should be obtained from BPM.
+    if (isBpmEnabled) {
+      if (optionalAzureCloudContext.isPresent()) {
+        throw new CloudContextRequiredException(
+            "AzureContext should not be supplied when creating an Azure cloud context for a workspace if BPM is enabled");
+      }
+      return null;
     } else {
       return optionalAzureCloudContext.orElseThrow(
           () ->
               new CloudContextRequiredException(
-                  "AzureContext is required when creating an azure cloud context for a workspace"));
+                  "AzureContext is required when creating an Azure cloud context for a workspace if BPM is disabled"));
     }
   }
 

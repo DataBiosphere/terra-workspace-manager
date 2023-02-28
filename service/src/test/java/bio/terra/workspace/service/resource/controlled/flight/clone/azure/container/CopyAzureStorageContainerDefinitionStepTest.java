@@ -1,6 +1,8 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.azure.container;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -20,6 +22,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContai
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import java.util.Map;
@@ -94,7 +97,7 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseAzureUnitTe
         destContainerName);
     inputParams.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), testUser);
     workingMap.put(
-        ControlledResourceKeys.STORAGE_ACCOUNT,
+        ControlledResourceKeys.SHARED_STORAGE_ACCOUNT,
         new ApiAzureLandingZoneDeployedResource()
             .resourceId(UUID.randomUUID().toString())
             .region(sharedAccountRegion));
@@ -131,6 +134,37 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseAzureUnitTe
     assertEquals(cloned.getName(), destResourceName);
     assertEquals(cloned.getCloningInstructions(), CloningInstructions.COPY_DEFINITION);
     assertEquals(sharedAccountRegion, cloned.getRegion());
+    assertNull(
+        cloned.getStorageAccountId(),
+        "Storage account should be null since this is a landing zone backed workspace");
+    assertEquals(sharedAccountRegion, cloned.getRegion());
+  }
+
+  @Test
+  void failsIfNoLandingZoneAccount() {
+    inputParams.put(
+        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.randomUUID());
+    inputParams.put(
+        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_CONTAINER_NAME, "fake");
+    inputParams.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), testUser);
+
+    var sourceContainer =
+        buildContainerResource(
+            "fake-source-container",
+            "fake-source-resource-name",
+            UUID.randomUUID(),
+            UUID.randomUUID());
+
+    var step =
+        new CopyAzureStorageContainerDefinitionStep(
+            mockSamService(),
+            testUser,
+            sourceContainer,
+            controlledResourceService,
+            CloningInstructions.COPY_DEFINITION);
+
+    var ex = assertThrows(MissingRequiredFieldsException.class, () -> step.doStep(flightContext));
+    assertThat(ex.getMessage(), containsString(ControlledResourceKeys.SHARED_STORAGE_ACCOUNT));
   }
 
   @Test

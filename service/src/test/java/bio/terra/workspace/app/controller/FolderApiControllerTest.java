@@ -101,6 +101,21 @@ public class FolderApiControllerTest extends BaseUnitTest {
   }
 
   @Test
+  public void createFolder_dateAndActorFieldsSet() throws Exception {
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+
+    ApiFolder folder =
+        createFolder(workspaceId, "foo", "This is folder foo", null, Map.of("foo", "bar"));
+
+    assertNotNull(folder.getId());
+    assertNull(folder.getParentFolderId());
+    assertEquals(USER_REQUEST.getEmail(), folder.getCreatedBy());
+    assertNotNull(folder.getCreatedDate());
+    assertEquals(USER_REQUEST.getEmail(), folder.getLastUpdatedBy());
+    assertNotNull(folder.getLastUpdatedDate());
+  }
+
+  @Test
   public void createFolder_doesNotHaveWriteAccess_throws403() throws Exception {
     UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     doThrow(new ForbiddenException("User has no write access"))
@@ -229,14 +244,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
     ApiFolder secondFolder =
         createFolder(workspaceId, displayName, /*parentFolderId=*/ firstFolder.getId());
 
-    List<ApiFolder> retrievedFolders =
-        listFolders(workspaceId).getFolders().stream()
-            .filter(folder -> folder.getCreatedDate() != null)
-            .map(
-                // Only the retrivedFolders will have created date set. To assert equals, remove the
-                // created date.
-                folder -> folder.createdDate(null))
-            .toList();
+    List<ApiFolder> retrievedFolders = listFolders(workspaceId).getFolders().stream().toList();
 
     assertThat(retrievedFolders, containsInAnyOrder(firstFolder, secondFolder));
   }

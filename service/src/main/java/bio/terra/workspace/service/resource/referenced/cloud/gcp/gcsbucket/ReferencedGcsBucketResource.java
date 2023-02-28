@@ -9,24 +9,19 @@ import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketAttributes;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
-import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.jetbrains.annotations.Nullable;
@@ -37,36 +32,14 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
   /**
    * Constructor for serialized form for Stairway use and used by the builder
    *
-   * @param workspaceId workspace unique identifier
-   * @param resourceId resource unique identifier
-   * @param name name - may be null
-   * @param description description - may be null
-   * @param cloningInstructions cloning instructions
+   * @param resourceFields common resource fields
    * @param bucketName bucket name
-   * @param resourceLineage resource lineage
    */
   @JsonCreator
   public ReferencedGcsBucketResource(
-      @JsonProperty("workspaceId") UUID workspaceId,
-      @JsonProperty("resourceId") UUID resourceId,
-      @JsonProperty("name") String name,
-      @JsonProperty("description") String description,
-      @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
-      @JsonProperty("bucketName") String bucketName,
-      @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
-      @JsonProperty("properties") Map<String, String> properties,
-      @JsonProperty("createdByEmail") String createdByEmail,
-      @JsonProperty("createdDate") OffsetDateTime createdDate) {
-    super(
-        workspaceId,
-        resourceId,
-        name,
-        description,
-        cloningInstructions,
-        resourceLineage,
-        properties,
-        createdByEmail,
-        createdDate);
+      @JsonProperty("wsmResourceFields") WsmResourceFields resourceFields,
+      @JsonProperty("bucketName") String bucketName) {
+    super(resourceFields);
     this.bucketName = bucketName;
     validate();
   }
@@ -90,8 +63,27 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
     validate();
   }
 
+  // -- getters used in serialization --
+  public WsmResourceFields getWsmResourceFields() {
+    return super.getWsmResourceFields();
+  }
+
   public String getBucketName() {
     return bucketName;
+  }
+
+  // -- getters not included in serialization --
+
+  @Override
+  @JsonIgnore
+  public WsmResourceType getResourceType() {
+    return WsmResourceType.REFERENCED_GCP_GCS_BUCKET;
+  }
+
+  @Override
+  @JsonIgnore
+  public WsmResourceFamily getResourceFamily() {
+    return WsmResourceFamily.GCS_BUCKET;
   }
 
   public ApiGcpGcsBucketAttributes toApiAttributes() {
@@ -115,16 +107,6 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
   }
 
   @Override
-  public WsmResourceType getResourceType() {
-    return WsmResourceType.REFERENCED_GCP_GCS_BUCKET;
-  }
-
-  @Override
-  public WsmResourceFamily getResourceFamily() {
-    return WsmResourceFamily.GCS_BUCKET;
-  }
-
-  @Override
   public String attributesToJson() {
     return DbSerDes.toJson(new ReferencedGcsBucketAttributes(bucketName));
   }
@@ -132,11 +114,6 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
   @Override
   public ApiResourceAttributesUnion toApiAttributesUnion() {
     return new ApiResourceAttributesUnion().gcpGcsBucket(toApiAttributes());
-  }
-
-  @Override
-  public ApiResourceUnion toApiResourceUnion() {
-    return new ApiResourceUnion().gcpGcsBucket(toApiResource());
   }
 
   @Override
@@ -150,7 +127,7 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
     }
     // Validate in case there's a typo and user gave wrong name. This gives a slightly more usable
     // error message than "You do not have access to bucket".
-    ResourceValidationUtils.validateReferencedBucketName(getBucketName());
+    ResourceValidationUtils.validateBucketNameAllowsUnderscore(getBucketName());
   }
 
   @Override

@@ -1,12 +1,14 @@
 package bio.terra.workspace.service.resource.controlled;
 
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.IS_WET_RUN;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.ServiceUnavailableException;
 import bio.terra.stairway.FlightState;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.exception.InternalLogicException;
+import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureRelayNamespaceCreationParameters;
@@ -17,6 +19,7 @@ import bio.terra.workspace.generated.model.ApiGcpAiNotebookUpdateParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
 import bio.terra.workspace.generated.model.ApiJobControl;
+import bio.terra.workspace.service.grant.GrantService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
@@ -24,8 +27,10 @@ import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceSyncMapping.SyncMapping;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.flight.UpdateAzureControlledResourceRegionFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespace.ControlledAzureRelayNamespaceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpPolicyBuilder;
@@ -33,8 +38,10 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.Cont
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.UpdateControlledAiNotebookResourceFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.UpdateControlledBigQueryDatasetResourceFlight;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.flight.UpdateGcpControlledResourceRegionFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.UpdateControlledGcsBucketResourceFlight;
+import bio.terra.workspace.service.resource.controlled.flight.backfill.UpdateControlledBigQueryDatasetsLifetimeFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.CloneControlledAzureStorageContainerResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CloneControlledGcsBucketResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.CloneControlledGcpBigQueryDatasetResourceFlight;
@@ -53,6 +60,7 @@ import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.WsmApplication;
 import com.google.cloud.Policy;
+import io.opencensus.contrib.spring.aop.Traced;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -62,17 +70,22 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /** CRUD methods for controlled objects. */
 @Component
 public class ControlledResourceService {
+  private static final Logger logger = LoggerFactory.getLogger(ControlledResourceService.class);
 
   // These are chosen to retry a maximum wait time so we return under a 30 second
   // network timeout.
   private static final int RESOURCE_ROW_WAIT_SECONDS = 1;
   private static final Duration RESOURCE_ROW_MAX_WAIT_TIME = Duration.ofSeconds(28);
+  private static final Supplier<InternalLogicException> BAD_STATE =
+      () -> new InternalLogicException("Invalid sync mapping or bad context");
 
   private final JobService jobService;
   private final ResourceDao resourceDao;
@@ -80,6 +93,8 @@ public class ControlledResourceService {
   private final SamService samService;
   private final GcpCloudContextService gcpCloudContextService;
   private final FeatureConfiguration features;
+  private final TpsApiDispatch tpsApiDispatch;
+  private final GrantService grantService;
 
   @Autowired
   public ControlledResourceService(
@@ -88,13 +103,17 @@ public class ControlledResourceService {
       ApplicationDao applicationDao,
       SamService samService,
       GcpCloudContextService gcpCloudContextService,
-      FeatureConfiguration features) {
+      FeatureConfiguration features,
+      TpsApiDispatch tpsApiDispatch,
+      GrantService grantService) {
     this.jobService = jobService;
     this.resourceDao = resourceDao;
     this.applicationDao = applicationDao;
     this.samService = samService;
     this.gcpCloudContextService = gcpCloudContextService;
     this.features = features;
+    this.tpsApiDispatch = tpsApiDispatch;
+    this.grantService = grantService;
   }
 
   public String createAzureRelayNamespace(
@@ -302,7 +321,8 @@ public class ControlledResourceService {
       ControlledBigQueryDatasetResource resource,
       @Nullable ApiGcpBigQueryDatasetUpdateParameters updateParameters,
       @Nullable String resourceName,
-      @Nullable String resourceDescription) {
+      @Nullable String resourceDescription,
+      AuthenticatedUserRequest userRequest) {
     if (null != updateParameters && null != updateParameters.getCloningInstructions()) {
       ResourceValidationUtils.validateCloningInstructions(
           StewardshipType.CONTROLLED,
@@ -321,6 +341,7 @@ public class ControlledResourceService {
             .operationType(OperationType.UPDATE)
             .resourceType(resource.getResourceType())
             .resourceName(resource.getName())
+            .userRequest(userRequest)
             .workspaceId(resource.getWorkspaceId().toString())
             .stewardshipType(resource.getStewardshipType())
             .addParameter(ControlledResourceKeys.UPDATE_PARAMETERS, updateParameters)
@@ -483,6 +504,12 @@ public class ControlledResourceService {
             "Create controlled resource %s; id %s; name %s",
             resource.getResourceType(), resource.getResourceId(), resource.getName());
 
+    ResourceValidationUtils.validateControlledResourceRegionAgainstPolicy(
+        tpsApiDispatch,
+        resource.getWorkspaceId(),
+        resource.getRegion(),
+        resource.getResourceType().getCloudPlatform());
+
     return jobService
         .newJob()
         .description(jobDescription)
@@ -570,25 +597,18 @@ public class ControlledResourceService {
         case RESOURCE:
           policyGroup =
               samService.syncResourcePolicy(
-                  resource, syncMapping.getResourceRole().orElseThrow(badState), userRequest);
+                  resource, syncMapping.getResourceRole().orElseThrow(BAD_STATE), userRequest);
           break;
 
         case WORKSPACE:
-          switch (syncMapping.getWorkspaceRole().orElseThrow(badState)) {
-            case OWNER:
-              policyGroup = cloudContext.getSamPolicyOwner().orElseThrow(badState);
-              break;
-            case WRITER:
-              policyGroup = cloudContext.getSamPolicyWriter().orElseThrow(badState);
-              break;
-            case READER:
-              policyGroup = cloudContext.getSamPolicyReader().orElseThrow(badState);
-              break;
-            case APPLICATION:
-              policyGroup = cloudContext.getSamPolicyApplication().orElseThrow(badState);
-              break;
-            default:
-              break;
+          switch (syncMapping.getWorkspaceRole().orElseThrow(BAD_STATE)) {
+            case OWNER -> policyGroup = cloudContext.getSamPolicyOwner().orElseThrow(BAD_STATE);
+            case WRITER -> policyGroup = cloudContext.getSamPolicyWriter().orElseThrow(BAD_STATE);
+            case READER -> policyGroup = cloudContext.getSamPolicyReader().orElseThrow(BAD_STATE);
+            case APPLICATION -> policyGroup =
+                cloudContext.getSamPolicyApplication().orElseThrow(BAD_STATE);
+            default -> {
+            }
           }
           break;
       }
@@ -596,14 +616,105 @@ public class ControlledResourceService {
         throw new InternalLogicException("Policy group not set");
       }
 
-      gcpPolicyBuilder.addResourceBinding(syncMapping.getTargetRole(), policyGroup);
+      gcpPolicyBuilder.addResourceBinding(
+          syncMapping.getTargetRole(), GcpUtils.toGroupMember(policyGroup));
+    }
+
+    if (features.isTemporaryGrantEnabled()) {
+      // Get the user emails we are granting
+      String userEmail = samService.getUserEmailFromSam(userRequest);
+      String userMember =
+          (grantService.isUserGrantAllowed(userEmail)) ? GcpUtils.toUserMember(userEmail) : null;
+      String petMember =
+          GcpUtils.toSaMember(
+              samService.getOrCreatePetSaEmail(
+                  gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId()),
+                  userRequest.getRequiredToken()));
+
+      // NOTE: We always set the role to EDITOR and that is currently always the right
+      // role from the sync mappings. If we change the mappings, we may need to change
+      // this code. Since this is a temporary measure, I don't think it is worth
+      // restructuring at this time.
+      gcpPolicyBuilder.addResourceBinding(ControlledResourceIamRole.EDITOR, petMember);
+      if (userMember != null) {
+        gcpPolicyBuilder.addResourceBinding(ControlledResourceIamRole.EDITOR, userMember);
+      }
+
+      // Store the temporary grant - it will be revoked in the background
+      grantService.recordResourceGrant(
+          resource.getWorkspaceId(),
+          userMember,
+          petMember,
+          gcpPolicyBuilder.getCustomRole(ControlledResourceIamRole.EDITOR),
+          resource.getResourceId());
     }
 
     return gcpPolicyBuilder.build();
   }
 
-  private final Supplier<InternalLogicException> badState =
-      () -> new InternalLogicException("Invalid sync mapping or bad context");
+  // TODO (PF-2368): clean this up once back-fill is done in all Terra environment.
+  @Traced
+  @Nullable
+  public String updateAzureControlledResourcesRegionAsync(
+      AuthenticatedUserRequest userRequest, boolean wetRun) {
+    return jobService
+        .newJob()
+        .description(
+            "A flight to update controlled resource's missing region in all the existing"
+                + "terra managed azure projects")
+        .flightClass(UpdateAzureControlledResourceRegionFlight.class)
+        .userRequest(userRequest)
+        .addParameter(IS_WET_RUN, wetRun)
+        .operationType(OperationType.UPDATE)
+        .submit();
+  }
+
+  // TODO (PF-2368): clean this up once back-fill is done in all Terra environment.
+  @Traced
+  @Nullable
+  public String updateGcpControlledResourcesRegionAsync(
+      AuthenticatedUserRequest userRequest, boolean wetRun) {
+    return jobService
+        .newJob()
+        .description(
+            "A flight to update controlled resource's missing region in all the existing"
+                + "terra managed gcp projects")
+        .flightClass(UpdateGcpControlledResourceRegionFlight.class)
+        .userRequest(userRequest)
+        .operationType(OperationType.UPDATE)
+        .addParameter(IS_WET_RUN, wetRun)
+        .submit();
+  }
+  // TODO (PF-2269): Clean this up once the back-fill is done in all Terra environments.
+
+  /**
+   * Starts a flight to update missing lifetime for controlled BigQuery datasets.
+   *
+   * @return the job ID string (to await job completion in the connected tests.)
+   */
+  @Traced
+  @Nullable
+  public String updateControlledBigQueryDatasetsLifetimeAsync() {
+    String wsmSaToken = samService.getWsmServiceAccountToken();
+    // wsmSaToken is null for unit test when samService is mocked out.
+    if (wsmSaToken == null) {
+      logger.warn(
+          "#updateGcpControlledBigQueryDatasetsLifetimeAsync: workspace manager service account token is null");
+      return null;
+    }
+    AuthenticatedUserRequest wsmSaRequest =
+        new AuthenticatedUserRequest().token(Optional.of(wsmSaToken));
+    return jobService
+        .newJob()
+        .description(
+            "A flight to update controlled BigQuery datasets' missing "
+                + "default table lifetime and default partition lifetime "
+                + "in all the existing terra managed gcp projects")
+        .flightClass(UpdateControlledBigQueryDatasetsLifetimeFlight.class)
+        .userRequest(wsmSaRequest)
+        .operationType(OperationType.UPDATE)
+        .submit();
+  }
 
   /**
    * Creates and returns a JobBuilder object for deleting a controlled resource. Depending on the

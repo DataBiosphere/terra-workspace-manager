@@ -17,7 +17,7 @@ import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
-import bio.terra.workspace.service.workspace.flight.create.azure.CreateAzureContextFlight;
+import bio.terra.workspace.service.workspace.flight.azure.CreateAzureContextFlight;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
@@ -47,9 +47,7 @@ public class AzureTestUtils {
 
   public Workspace createWorkspace(WorkspaceService workspaceService) {
     Workspace workspace =
-        WorkspaceFixtures.defaultWorkspaceBuilder(null)
-            .spendProfileId(new SpendProfileId(UUID.randomUUID().toString()))
-            .build();
+        WorkspaceFixtures.defaultWorkspaceBuilder(null).spendProfileId(getSpendProfileId()).build();
     workspaceService.createWorkspace(
         workspace, null, null, userAccessUtils.defaultUserAuthRequest());
     return workspace;
@@ -125,5 +123,9 @@ public class AzureTestUtils {
         azureTestConfiguration.getTenantId(),
         azureTestConfiguration.getSubscriptionId(),
         azureTestConfiguration.getManagedResourceGroupId());
+  }
+
+  public SpendProfileId getSpendProfileId() {
+    return new SpendProfileId(azureTestConfiguration.getSpendProfileId());
   }
 }

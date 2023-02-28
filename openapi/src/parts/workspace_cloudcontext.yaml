@@ -70,6 +70,15 @@ paths:
 
 components:
   schemas:
+    GcpContext:
+      type: object
+      description: The GCP cloud context associated with a workspace.
+      required: [ projectId ]
+      properties:
+        projectId:
+          description: The ID of Gcp Project associated with the workspace.
+          type: string
+
     AzureContext:
       type: object
       description: The azure cloud context associated with a workspace.
@@ -92,8 +101,8 @@ components:
         Contains the CloudPlatform for the context and the JobControl object.
         For GCP, a project is created to contain the cloud resources of the context.
         For Azure, a managed resource group (MRG) is created outside of WSM within a tenant
-        and a subscription. The MRG may provide the cloud context for multiple workspaces.
-        Therefore, the location of the MRG is provided as input to the context creation.
+        and a subscription obtained from the spend profile linked to the parent workspace, unless
+        the spend profile service is not enabled; in that case, azureContext must be provided.
       properties:
         cloudPlatform:
           $ref: '#/components/schemas/CloudPlatform'
@@ -102,20 +111,11 @@ components:
         azureContext:
           $ref: '#/components/schemas/AzureContext'
 
-    GcpContext:
-      type: object
-      description: The GCP cloud context associated with a workspace.
-      required: [projectId]
-      properties:
-        projectId:
-          description: The ID of Gcp Project associated with the workspace.
-          type: string
-
     CreateCloudContextResult:
       type: object
       description: |
         The result of a call to create a cloud context for a workspace. Contains
-        a JobReport detailing the async operation and either a GcpContext
+        a JobReport detailing the async operation, and either a GcpContext or AzureContext (if operation complete)
         or an ErrorReport detailing an error.
       required: [jobReport]
       properties:
@@ -128,7 +128,6 @@ components:
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
 
-    
   responses:
     CreateCloudContextResultResponse:
       description: Job is complete (succeeded or failed)
@@ -136,4 +135,3 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CreateCloudContextResult'
-    

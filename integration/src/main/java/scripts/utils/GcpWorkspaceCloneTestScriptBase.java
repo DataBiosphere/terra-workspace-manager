@@ -4,7 +4,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.WorkspaceApi;
-import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import java.util.List;
 import java.util.UUID;
@@ -57,9 +56,9 @@ public abstract class GcpWorkspaceCloneTestScriptBase extends WorkspaceAllocateT
         "There must be at least two test users defined for this test.",
         testUsers != null && testUsers.size() > 1);
     reader = testUsers.get(1);
-    workspaceApi.grantRole(
-        new GrantRoleRequestBody().memberEmail(reader.userEmail), getWorkspaceId(), IamRole.READER);
+    ClientTestUtils.grantRole(workspaceApi, getWorkspaceId(), reader, IamRole.READER);
     sourceProjectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
+    ClientTestUtils.workspaceRoleWaitForPropagation(reader, sourceProjectId);
     destinationWorkspaceId = UUID.randomUUID();
     WorkspaceApi secondUserWorkspaceApi = ClientTestUtils.getWorkspaceClient(reader, server);
     createWorkspace(destinationWorkspaceId, getSpendProfileId(), secondUserWorkspaceApi);

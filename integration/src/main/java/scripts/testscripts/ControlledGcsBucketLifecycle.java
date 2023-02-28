@@ -106,6 +106,7 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
     ControlledGcpResourceApi resourceApi =
         ClientTestUtils.getControlledGcpResourceClient(testUser, server);
 
+    // -- Test Case 1 --
     // Create a bucket with a name that's already taken by a publicly accessible bucket. WSM should
     // have get and read access, as the bucket is open to everyone, but this should still fail.
     // If bucket already exists, create bucket step has logic that checks if existing bucket is in
@@ -117,6 +118,7 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
     assertEquals(HttpStatus.SC_CONFLICT, publicDuplicateNameFails.getCode());
     logger.info("Failed to create bucket with duplicate name of public bucket, as expected");
 
+    // -- Test Case 2 --
     // Create the bucket without the cloud name specified. Cloud name will be auto generated.
     CreatedControlledGcpGcsBucket bucketNoCloudName = createBucketAttempt(resourceApi, null);
     GcpGcsBucketResource gotBucketNoCloudName =
@@ -141,7 +143,13 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
     GcsBucketUtils.deleteControlledGcsBucket(
         bucketNoCloudName.getResourceId(), getWorkspaceId(), resourceApi);
 
-    // Create the bucket - should work this time
+    // -- Test Case 3 --
+    // Clone bucket test
+    // - create a bucket
+    // - fail to create a duplicate named bucket (duplicate test of above, needed here?)
+    // - test that reader has access to the bucket
+    // - testUser puts files into the bucket
+    // - reader clones the bucket to destination workspace
     CreatedControlledGcpGcsBucket bucket = createBucketAttempt(resourceApi, bucketName);
     UUID resourceId = bucket.getResourceId();
 
@@ -159,10 +167,11 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
         gotBucket.getAttributes().getBucketName());
     assertEquals(bucketName, gotBucket.getAttributes().getBucketName());
 
+    // Creating the tester will ensure the testUser has complete access to the bucket.
+    // We then ensure the reader has read access.
     try (GcsBucketAccessTester tester =
         new GcsBucketAccessTester(testUser, bucketName, getSourceProjectId())) {
-      tester.checkAccess(testUser, ControlledResourceIamRole.EDITOR);
-      tester.checkAccessWait(getWorkspaceReader(), ControlledResourceIamRole.READER);
+      tester.assertAccessWait(getWorkspaceReader(), ControlledResourceIamRole.READER);
     }
 
     // Populate bucket to test that objects are cloned
@@ -181,7 +190,12 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
     // Delete file after successful clone so that source bucket deletion later is faster
     sourceOwnerStorageClient.delete(blobId);
 
-    // Update the bucket
+    // -- Test Case 4 --
+    // Update the bucket test
+    // - valid update
+    // - invalid update
+    // - test update results
+    // - make sure the actual bucket is updated
     final GcpGcsBucketResource updatedResource =
         updateBucketAttempt(
             resourceApi,
@@ -198,7 +212,8 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
         UPDATED_BUCKET_RESOURCE_DESCRIPTION, updatedResource.getMetadata().getDescription());
     assertEquals(
         CloningInstructionsEnum.DEFINITION, updatedResource.getMetadata().getCloningInstructions());
-    // However, invalid updates are rejected.
+
+    // Invalid updates are rejected.
     String invalidName = "!!!invalid_name!!!";
     ApiException invalidUpdateEx =
         assertThrows(
@@ -212,6 +227,7 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
                     /*updateParameters=*/ null));
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, invalidUpdateEx.getCode());
 
+    // Make sure the bucket parameters are updated
     Storage ownerStorageClient =
         ClientTestUtils.getGcpStorageClient(testUser, getSourceProjectId());
     final Bucket retrievedUpdatedBucket =
@@ -249,6 +265,7 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
     assertEquals(StorageClass.COLDLINE, retrievedUpdatedBucket3.getStorageClass()); // no change
     verifyUpdatedLifecycleRules(retrievedUpdatedBucket3.getLifecycleRules()); // no change
 
+    // -- Test Case 5 --
     // Enumerate the bucket
     ResourceApi readerApi = ClientTestUtils.getResourceClient(getWorkspaceReader(), server);
     ResourceList bucketList =
@@ -257,7 +274,10 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
     assertEquals(1, bucketList.getResources().size());
     MultiResourcesUtils.assertResourceType(ResourceType.GCS_BUCKET, bucketList);
 
-    // Owner can delete the bucket through WSM
+    // -- Test Case 6 --
+    // - Owner can delete the bucket through WSM
+    // - the bucket is gone in WSM
+    // - the bucket is gone in GCP
     GcsBucketUtils.deleteControlledGcsBucket(resourceId, getWorkspaceId(), resourceApi);
 
     // verify the bucket was deleted from WSM metadata

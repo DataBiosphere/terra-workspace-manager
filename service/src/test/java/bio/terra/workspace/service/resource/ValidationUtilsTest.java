@@ -3,21 +3,27 @@ package bio.terra.workspace.service.resource;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.defaultNotebookCreationParameters;
 import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties.FOLDER_ID_KEY;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.when;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
+import bio.terra.policy.model.TpsPaoGetResult;
 import bio.terra.workspace.app.configuration.external.GitRepoReferencedResourceConfiguration;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmImage;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceContainerImage;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
+import bio.terra.workspace.service.resource.controlled.exception.InvalidControlledResourceException;
 import bio.terra.workspace.service.resource.exception.InvalidNameException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
+import com.azure.core.management.Region;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -136,29 +142,29 @@ public class ValidationUtilsTest extends BaseUnitTest {
   public void validateReferencedBucketName_nameHas64Character_throwsException() {
     assertThrows(
         InvalidNameException.class,
-        () -> ResourceValidationUtils.validateReferencedBucketName(INVALID_STRING));
+        () -> ResourceValidationUtils.validateBucketNameAllowsUnderscore(INVALID_STRING));
   }
 
   @Test
   public void validateReferencedBucketName_nameHas63Character_OK() {
-    ResourceValidationUtils.validateReferencedBucketName(MAX_VALID_STRING);
+    ResourceValidationUtils.validateBucketNameAllowsUnderscore(MAX_VALID_STRING);
   }
 
   @Test
   public void validateReferencedBucketName_nameHas2Character_throwsException() {
     assertThrows(
         InvalidNameException.class,
-        () -> ResourceValidationUtils.validateReferencedBucketName("aa"));
+        () -> ResourceValidationUtils.validateBucketNameAllowsUnderscore("aa"));
   }
 
   @Test
   public void validateReferencedBucketName_nameHas3Character_OK() {
-    ResourceValidationUtils.validateReferencedBucketName("123");
+    ResourceValidationUtils.validateBucketNameAllowsUnderscore("123");
   }
 
   @Test
   public void validateReferencedBucketName_nameHas222CharacterWithDotSeparator_OK() {
-    ResourceValidationUtils.validateReferencedBucketName(MAX_VALID_STRING_WITH_DOTS);
+    ResourceValidationUtils.validateBucketNameAllowsUnderscore(MAX_VALID_STRING_WITH_DOTS);
   }
 
   @Test
@@ -167,53 +173,53 @@ public class ValidationUtilsTest extends BaseUnitTest {
     assertThrows(
         InvalidNameException.class,
         () ->
-            ResourceValidationUtils.validateReferencedBucketName(
+            ResourceValidationUtils.validateBucketNameAllowsUnderscore(
                 INVALID_STRING + "." + MAX_VALID_STRING));
   }
 
   @Test
   public void validateReferencedBucketName_nameStartAndEndWithNumber_OK() {
-    ResourceValidationUtils.validateReferencedBucketName("1-bucket-1");
+    ResourceValidationUtils.validateBucketNameAllowsUnderscore("1-bucket-1");
   }
 
   @Test
   public void validateReferencedBucketName_nameStartAndEndWithDot_throwsException() {
     assertThrows(
         InvalidNameException.class,
-        () -> ResourceValidationUtils.validateReferencedBucketName(".bucket-name."));
+        () -> ResourceValidationUtils.validateBucketNameAllowsUnderscore(".bucket-name."));
   }
 
   @Test
   public void validateReferencedBucketName_nameWithGoogPrefix_throwsException() {
     assertThrows(
         InvalidNameException.class,
-        () -> ResourceValidationUtils.validateReferencedBucketName("goog-bucket-name1"));
+        () -> ResourceValidationUtils.validateBucketNameAllowsUnderscore("goog-bucket-name1"));
   }
 
   @Test
   public void validateReferencedBucketName_nameContainsGoogle_throwsException() {
     assertThrows(
         InvalidNameException.class,
-        () -> ResourceValidationUtils.validateReferencedBucketName("bucket-google-name"));
+        () -> ResourceValidationUtils.validateBucketNameAllowsUnderscore("bucket-google-name"));
   }
 
   @Test
   public void validateReferencedBucketName_nameContainsG00gle_throwsException() {
     assertThrows(
         InvalidNameException.class,
-        () -> ResourceValidationUtils.validateReferencedBucketName("bucket-g00gle-name"));
+        () -> ResourceValidationUtils.validateBucketNameAllowsUnderscore("bucket-g00gle-name"));
   }
 
   @Test
   public void validateReferencedBucketName_nameContainsUnderscore_OK() {
-    ResourceValidationUtils.validateReferencedBucketName("bucket_name");
+    ResourceValidationUtils.validateBucketNameAllowsUnderscore("bucket_name");
   }
 
   @Test
   public void validateControlledBucketName_nameContainsUnderscore_throwsException() {
     assertThrows(
         InvalidNameException.class,
-        () -> ResourceValidationUtils.validateControlledBucketName("bucket_name"));
+        () -> ResourceValidationUtils.validateBucketNameDisallowUnderscore("bucket_name"));
   }
 
   @Test
@@ -451,5 +457,69 @@ public class ValidationUtilsTest extends BaseUnitTest {
   @Test
   public void validateProperties_folderIdIsUuid_validates() {
     ResourceValidationUtils.validateProperties(Map.of(FOLDER_ID_KEY, UUID.randomUUID().toString()));
+  }
+
+  @Test
+  public void validateControlledResourceRegion() {
+    var testRegions = List.of("us", "us-central1", "us-east1");
+    UUID workspaceId = UUID.randomUUID();
+
+    when(mockTpsApiDispatch().listValidRegions(workspaceId, CloudPlatform.GCP))
+        .thenReturn(List.of("US", "us-central1", "us-east1"));
+
+    for (var region : testRegions) {
+      // these validations should not throw an exception
+      validationUtils.validateControlledResourceRegionAgainstPolicy(
+          mockTpsApiDispatch(), workspaceId, region, CloudPlatform.GCP);
+      validationUtils.validateControlledResourceRegionAgainstPolicy(
+          mockTpsApiDispatch(), workspaceId, region.toUpperCase(Locale.ROOT), CloudPlatform.GCP);
+    }
+  }
+
+  @Test
+  public void validateControlledResourceRegion_invalid_throws() {
+    UUID workspaceId = UUID.randomUUID();
+    TpsPaoGetResult pao = new TpsPaoGetResult().objectId(workspaceId);
+    when(mockTpsApiDispatch().listValidRegions(workspaceId, CloudPlatform.GCP))
+        .thenReturn(List.of("us-central1", "us-east1"));
+
+    assertThrows(
+        InvalidControlledResourceException.class,
+        () ->
+            validationUtils.validateControlledResourceRegionAgainstPolicy(
+                mockTpsApiDispatch(), workspaceId, "badregion", CloudPlatform.GCP));
+
+    // shouldn't throw until we start validating Azure regions against TPS
+    validationUtils.validateControlledResourceRegionAgainstPolicy(
+        mockTpsApiDispatch(), workspaceId, "badregion", CloudPlatform.AZURE);
+  }
+
+  @Test
+  public void validateAzureRegion() {
+    UUID workspaceId = UUID.randomUUID();
+
+    for (var region : Region.values()) {
+      var regionName = region.name();
+      validationUtils.validateAzureRegion(regionName);
+
+      validationUtils.validateControlledResourceRegionAgainstPolicy(
+          mockTpsApiDispatch(), workspaceId, region.name(), CloudPlatform.AZURE);
+    }
+  }
+
+  @Test
+  public void validateAzureRegion_nullRegion() {
+    UUID workspaceId = UUID.randomUUID();
+
+    // null region shouldn't throw.
+    validationUtils.validateAzureRegion(null);
+  }
+
+  @Test
+  public void validateAzureRegion_invalid_throws() {
+
+    assertThrows(
+        InvalidControlledResourceException.class,
+        () -> validationUtils.validateAzureRegion("badlocation"));
   }
 }

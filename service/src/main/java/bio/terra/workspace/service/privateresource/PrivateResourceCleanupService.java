@@ -15,8 +15,8 @@ import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
-import bio.terra.workspace.service.workspace.flight.RemoveUserFromWorkspaceFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.flight.gcp.RemoveUserFromWorkspaceFlight;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import java.time.Duration;
 import java.util.List;
@@ -163,7 +163,7 @@ public class PrivateResourceCleanupService {
             // workspace.
             .addParameter(WorkspaceFlightMapKeys.ROLE_TO_REMOVE, null);
     try {
-      userCleanupJob.submitAndWait(null);
+      userCleanupJob.submitAndWait();
     } catch (RuntimeException e) {
       // Log the error, but don't kill this thread as it still needs to clean up other users.
       logger.error(

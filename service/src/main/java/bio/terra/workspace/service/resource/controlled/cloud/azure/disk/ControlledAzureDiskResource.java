@@ -12,7 +12,6 @@ import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
 import bio.terra.workspace.generated.model.ApiAzureDiskAttributes;
 import bio.terra.workspace.generated.model.ApiAzureDiskResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
-import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
@@ -22,13 +21,17 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
+import bio.terra.workspace.service.resource.controlled.model.WsmControlledResourceFields;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
+import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +40,7 @@ import java.util.UUID;
 
 public class ControlledAzureDiskResource extends ControlledResource {
   private final String diskName;
-  private final String region;
+
   /** size is in GB */
   private final int size;
 
@@ -59,36 +62,55 @@ public class ControlledAzureDiskResource extends ControlledResource {
       @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
       @JsonProperty("properties") Map<String, String> properties,
       @JsonProperty("createdByEmail") String createdByEmail,
-      @JsonProperty("createdDate") OffsetDateTime createdDate) {
-
+      @JsonProperty("createdDate") OffsetDateTime createdDate,
+      @JsonProperty("lastUpdatedByEmail") String lastUpdatedByEmail,
+      @JsonProperty("lastUpdatedDate") OffsetDateTime lastUpdatedDate) {
     super(
-        workspaceId,
-        resourceId,
-        name,
-        description,
-        cloningInstructions,
-        assignedUser,
-        accessScope,
-        managedBy,
-        applicationId,
-        privateResourceState,
-        resourceLineage,
-        properties,
-        createdByEmail,
-        createdDate,
-        region);
+        ControlledResourceFields.builder()
+            .workspaceUuid(workspaceId)
+            .resourceId(resourceId)
+            .name(name)
+            .description(description)
+            .cloningInstructions(cloningInstructions)
+            .assignedUser(assignedUser)
+            .accessScope(accessScope)
+            .managedBy(managedBy)
+            .applicationId(applicationId)
+            .privateResourceState(privateResourceState)
+            .resourceLineage(resourceLineage)
+            .properties(properties)
+            .createdByEmail(createdByEmail)
+            .createdDate(createdDate)
+            .lastUpdatedByEmail(lastUpdatedByEmail)
+            .lastUpdatedDate(lastUpdatedDate)
+            .region(region)
+            .build());
+
     this.diskName = diskName;
-    this.region = region;
     this.size = size;
     validate();
   }
 
+  /*
+    // TODO: PF-2512 remove constructor above and enable this constructor
+    @JsonCreator
+    public ControlledAzureDiskResource(
+        @JsonProperty("wsmResourceFields") WsmResourceFields resourceFields,
+        @JsonProperty("wsmControlledResourceFields")
+            WsmControlledResourceFields controlledResourceFields,
+        @JsonProperty("diskName") String diskName,
+        @JsonProperty("size") int size) {
+      super(resourceFields, controlledResourceFields);
+      this.diskName = diskName;
+      this.size = size;
+      validate();
+    }
+  */
+
   // Constructor for the builder
-  private ControlledAzureDiskResource(
-      ControlledResourceFields common, String diskName, String region, int size) {
+  private ControlledAzureDiskResource(ControlledResourceFields common, String diskName, int size) {
     super(common);
     this.diskName = diskName;
-    this.region = region;
     this.size = size;
     validate();
   }
@@ -107,8 +129,111 @@ public class ControlledAzureDiskResource extends ControlledResource {
     return (T) this;
   }
 
+  // -- getters used in serialization --
+
+  public WsmResourceFields getWsmResourceFields() {
+    return super.getWsmResourceFields();
+  }
+
+  public WsmControlledResourceFields getWsmControlledResourceFields() {
+    return super.getWsmControlledResourceFields();
+  }
+
+  public String getDiskName() {
+    return diskName;
+  }
+
+  public int getSize() {
+    return size;
+  }
+
+  // -- getters for backward compatibility --
+  // TODO: PF-2512 Remove these getters
+  public UUID getWorkspaceId() {
+    return super.getWorkspaceId();
+  }
+
+  public UUID getResourceId() {
+    return super.getResourceId();
+  }
+
+  public String getName() {
+    return super.getName();
+  }
+
+  public String getDescription() {
+    return super.getDescription();
+  }
+
+  public CloningInstructions getCloningInstructions() {
+    return super.getCloningInstructions();
+  }
+
+  public Optional<String> getAssignedUser() {
+    return super.getAssignedUser();
+  }
+
+  public Optional<PrivateResourceState> getPrivateResourceState() {
+    return super.getPrivateResourceState();
+  }
+
+  public AccessScopeType getAccessScope() {
+    return super.getAccessScope();
+  }
+
+  public ManagedByType getManagedBy() {
+    return super.getManagedBy();
+  }
+
+  public String getApplicationId() {
+    return super.getApplicationId();
+  }
+
+  public List<ResourceLineageEntry> getResourceLineage() {
+    return super.getResourceLineage();
+  }
+
+  public ImmutableMap<String, String> getProperties() {
+    return super.getProperties();
+  }
+
+  public String getCreatedByEmail() {
+    return super.getCreatedByEmail();
+  }
+
+  public OffsetDateTime getCreatedDate() {
+    return super.getCreatedDate();
+  }
+
+  public String getLastUpdatedByEmail() {
+    return super.getLastUpdatedByEmail();
+  }
+
+  public OffsetDateTime getLastUpdatedDate() {
+    return super.getLastUpdatedDate();
+  }
+
+  public String getRegion() {
+    return super.getRegion();
+  }
+
+  // -- getters not included in serialization --
+
+  @Override
+  @JsonIgnore
+  public WsmResourceType getResourceType() {
+    return WsmResourceType.CONTROLLED_AZURE_DISK;
+  }
+
+  @Override
+  @JsonIgnore
+  public WsmResourceFamily getResourceFamily() {
+    return WsmResourceFamily.AZURE_DISK;
+  }
+
   /** {@inheritDoc} */
   @Override
+  @JsonIgnore
   public Optional<UniquenessCheckAttributes> getUniquenessCheckAttributes() {
     return Optional.of(
         new UniquenessCheckAttributes()
@@ -142,34 +267,12 @@ public class ControlledAzureDiskResource extends ControlledResource {
         RetryRules.cloud());
   }
 
-  public String getDiskName() {
-    return diskName;
-  }
-
-  public String getRegion() {
-    return region;
-  }
-
-  public int getSize() {
-    return size;
-  }
-
   public ApiAzureDiskResource toApiResource() {
     return new ApiAzureDiskResource().metadata(super.toApiMetadata()).attributes(toApiAttributes());
   }
 
   private ApiAzureDiskAttributes toApiAttributes() {
-    return new ApiAzureDiskAttributes().diskName(getDiskName()).region(region);
-  }
-
-  @Override
-  public WsmResourceType getResourceType() {
-    return WsmResourceType.CONTROLLED_AZURE_DISK;
-  }
-
-  @Override
-  public WsmResourceFamily getResourceFamily() {
-    return WsmResourceFamily.AZURE_DISK;
+    return new ApiAzureDiskAttributes().diskName(getDiskName()).region(getRegion());
   }
 
   @Override
@@ -182,13 +285,6 @@ public class ControlledAzureDiskResource extends ControlledResource {
   public ApiResourceAttributesUnion toApiAttributesUnion() {
     ApiResourceAttributesUnion union = new ApiResourceAttributesUnion();
     union.azureDisk(toApiAttributes());
-    return union;
-  }
-
-  @Override
-  public ApiResourceUnion toApiResourceUnion() {
-    ApiResourceUnion union = new ApiResourceUnion();
-    union.azureDisk(toApiResource());
     return union;
   }
 
@@ -208,7 +304,7 @@ public class ControlledAzureDiskResource extends ControlledResource {
       throw new MissingRequiredFieldException(
           "Missing required region field for ControlledAzureDisk.");
     }
-    ResourceValidationUtils.validateRegion(getRegion());
+    ResourceValidationUtils.validateAzureRegion(getRegion());
     ResourceValidationUtils.validateAzureDiskName(getDiskName());
   }
 
@@ -233,7 +329,6 @@ public class ControlledAzureDiskResource extends ControlledResource {
   public static class Builder {
     private ControlledResourceFields common;
     private String diskName;
-    private String region;
     private int size;
 
     public Builder common(ControlledResourceFields common) {
@@ -246,18 +341,13 @@ public class ControlledAzureDiskResource extends ControlledResource {
       return this;
     }
 
-    public ControlledAzureDiskResource.Builder region(String region) {
-      this.region = region;
-      return this;
-    }
-
     public ControlledAzureDiskResource.Builder size(int size) {
       this.size = size;
       return this;
     }
 
     public ControlledAzureDiskResource build() {
-      return new ControlledAzureDiskResource(common, diskName, region, size);
+      return new ControlledAzureDiskResource(common, diskName, size);
     }
   }
 }

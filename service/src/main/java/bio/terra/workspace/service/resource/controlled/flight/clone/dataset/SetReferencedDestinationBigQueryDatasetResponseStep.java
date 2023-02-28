@@ -8,6 +8,7 @@ import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpBigQueryDataset;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
+import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
@@ -25,9 +26,12 @@ import org.springframework.http.HttpStatus;
  */
 public class SetReferencedDestinationBigQueryDatasetResponseStep implements Step {
   private final ResourceDao resourceDao;
+  private final WorkspaceActivityLogService workspaceActivityLogService;
 
-  public SetReferencedDestinationBigQueryDatasetResponseStep(ResourceDao resourceDao) {
+  public SetReferencedDestinationBigQueryDatasetResponseStep(
+      ResourceDao resourceDao, WorkspaceActivityLogService workspaceActivityLogService) {
     this.resourceDao = resourceDao;
+    this.workspaceActivityLogService = workspaceActivityLogService;
   }
 
   @Override

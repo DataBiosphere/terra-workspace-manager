@@ -7,21 +7,26 @@ import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.configuration.external.VersionConfiguration;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.FolderDao;
+import bio.terra.workspace.db.GrantDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.buffer.BufferService;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.datarepo.DataRepoService;
+import bio.terra.workspace.service.grant.GrantService;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.LandingZoneBatchAccountFinder;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.StorageAccountKeyProvider;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.BucketCloneRolesService;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.spendprofile.SpendProfileService;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
+import bio.terra.workspace.service.workspace.CloudSyncRoleMapping;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import com.google.api.services.storagetransfer.v1.Storagetransfer;
@@ -44,6 +49,7 @@ public class FlightBeanBag {
   private final BucketCloneRolesService bucketCloneRolesService;
   private final BufferService bufferService;
   private final CliConfiguration cliConfiguration;
+  private final CloudSyncRoleMapping cloudSyncRoleMapping;
   private final ControlledResourceMetadataManager controlledResourceMetadataManager;
   private final ControlledResourceService controlledResourceService;
   private final CrlService crlService;
@@ -51,6 +57,8 @@ public class FlightBeanBag {
   private final FeatureConfiguration featureConfiguration;
   private final FolderDao folderDao;
   private final GcpCloudContextService gcpCloudContextService;
+  private final GrantDao grantDao;
+  private final GrantService grantService;
   private final PetSaService petSaService;
   private final ReferencedResourceService referencedResourceService;
   private final ResourceDao resourceDao;
@@ -63,6 +71,8 @@ public class FlightBeanBag {
   private final VersionConfiguration versionConfiguration;
   private final StorageAccountKeyProvider storageAccountKeyProvider;
   private final LandingZoneApiDispatch landingZoneApiDispatch;
+  private final WorkspaceActivityLogService workspaceActivityLogService;
+  private final LandingZoneBatchAccountFinder landingZoneBatchAccountFinder;
 
   @Lazy
   @Autowired
@@ -73,6 +83,7 @@ public class FlightBeanBag {
       BucketCloneRolesService bucketCloneRolesService,
       BufferService bufferService,
       CliConfiguration cliConfiguration,
+      CloudSyncRoleMapping cloudSyncRoleMapping,
       ControlledResourceMetadataManager controlledResourceMetadataManager,
       ControlledResourceService controlledResourceService,
       CrlService crlService,
@@ -80,6 +91,8 @@ public class FlightBeanBag {
       FeatureConfiguration featureConfiguration,
       FolderDao folderDao,
       GcpCloudContextService gcpCloudContextService,
+      GrantDao grantDao,
+      GrantService grantService,
       PetSaService petSaService,
       TpsApiDispatch tpsApiDispatch,
       ReferencedResourceService referencedResourceService,
@@ -91,13 +104,16 @@ public class FlightBeanBag {
       WorkspaceService workspaceService,
       VersionConfiguration versionConfiguration,
       StorageAccountKeyProvider storageAccountKeyProvider,
-      LandingZoneApiDispatch landingZoneApiDispatch) {
+      LandingZoneApiDispatch landingZoneApiDispatch,
+      WorkspaceActivityLogService workspaceActivityLogService,
+      LandingZoneBatchAccountFinder landingZoneBatchAccountFinder) {
     this.applicationDao = applicationDao;
     this.azureCloudContextService = azureCloudContextService;
     this.azureConfig = azureConfig;
     this.bucketCloneRolesService = bucketCloneRolesService;
     this.bufferService = bufferService;
     this.cliConfiguration = cliConfiguration;
+    this.cloudSyncRoleMapping = cloudSyncRoleMapping;
     this.controlledResourceMetadataManager = controlledResourceMetadataManager;
     this.controlledResourceService = controlledResourceService;
     this.crlService = crlService;
@@ -105,6 +121,8 @@ public class FlightBeanBag {
     this.featureConfiguration = featureConfiguration;
     this.folderDao = folderDao;
     this.gcpCloudContextService = gcpCloudContextService;
+    this.grantDao = grantDao;
+    this.grantService = grantService;
     this.petSaService = petSaService;
     this.referencedResourceService = referencedResourceService;
     this.resourceDao = resourceDao;
@@ -117,6 +135,8 @@ public class FlightBeanBag {
     this.versionConfiguration = versionConfiguration;
     this.storageAccountKeyProvider = storageAccountKeyProvider;
     this.landingZoneApiDispatch = landingZoneApiDispatch;
+    this.workspaceActivityLogService = workspaceActivityLogService;
+    this.landingZoneBatchAccountFinder = landingZoneBatchAccountFinder;
   }
 
   public static FlightBeanBag getFromObject(Object object) {
@@ -143,6 +163,10 @@ public class FlightBeanBag {
     return controlledResourceMetadataManager;
   }
 
+  public CloudSyncRoleMapping getCloudSyncRoleMapping() {
+    return cloudSyncRoleMapping;
+  }
+
   public ControlledResourceService getControlledResourceService() {
     return controlledResourceService;
   }
@@ -161,6 +185,14 @@ public class FlightBeanBag {
 
   public GcpCloudContextService getGcpCloudContextService() {
     return gcpCloudContextService;
+  }
+
+  public GrantDao getGrantDao() {
+    return grantDao;
+  }
+
+  public GrantService getGrantService() {
+    return grantService;
   }
 
   public PetSaService getPetSaService() {
@@ -215,11 +247,19 @@ public class FlightBeanBag {
     return landingZoneApiDispatch;
   }
 
+  public LandingZoneBatchAccountFinder getLandingZoneBatchAccountFinder() {
+    return landingZoneBatchAccountFinder;
+  }
+
   public StorageAccountKeyProvider getStorageAccountKeyProvider() {
     return storageAccountKeyProvider;
   }
 
   public FolderDao getFolderDao() {
     return folderDao;
+  }
+
+  public WorkspaceActivityLogService getWorkspaceActivityLogService() {
+    return workspaceActivityLogService;
   }
 }

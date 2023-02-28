@@ -7,6 +7,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.Contr
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.workspace.model.WsmCloneResourceResult;
+import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
@@ -46,7 +47,6 @@ public class WorkspaceCloneUtils {
    * @param name WSM-internal resource name
    * @param description Human-friendly description for the container resource
    * @param cloudInstanceName storage container name
-   * @param storageAccountId the landing zone resource id of the shared storage account
    * @return An Azure storage container object
    */
   public static ControlledAzureStorageContainerResource buildDestinationControlledAzureContainer(
@@ -56,12 +56,10 @@ public class WorkspaceCloneUtils {
       String name,
       @Nullable String description,
       String cloudInstanceName,
-      UUID storageAccountId,
       String createdByEmail,
       String region) {
     return ControlledAzureStorageContainerResource.builder()
         .storageContainerName(cloudInstanceName)
-        .storageAccountId(storageAccountId)
         .common(
             sourceContainer.buildControlledCloneResourceCommonFields(
                 destinationWorkspaceId,
@@ -85,10 +83,18 @@ public class WorkspaceCloneUtils {
       String cloudInstanceName,
       String destinationProjectId,
       String createdByEmail,
-      String region) {
+      String region,
+      @Nullable Long defaultTableLifetime,
+      @Nullable Long defaultPartitionLifetime) {
     return ControlledBigQueryDatasetResource.builder()
         .projectId(destinationProjectId)
         .datasetName(cloudInstanceName)
+        .defaultTableLifetime(
+            Optional.ofNullable(defaultTableLifetime)
+                .orElse(sourceDataset.getDefaultTableLifetime()))
+        .defaultPartitionLifetime(
+            Optional.ofNullable(defaultPartitionLifetime)
+                .orElse(sourceDataset.getDefaultPartitionLifetime()))
         .common(
             sourceDataset.buildControlledCloneResourceCommonFields(
                 destinationWorkspaceId,

@@ -5,7 +5,6 @@ import static bio.terra.workspace.common.utils.ControllerValidationUtils.validat
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesUpdateRequestBody;
 
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
-import bio.terra.workspace.db.FolderDao;
 import bio.terra.workspace.generated.controller.ResourceApi;
 import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
@@ -16,6 +15,7 @@ import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceService;
@@ -25,6 +25,7 @@ import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import com.google.common.annotations.VisibleForTesting;
+import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -38,7 +39,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
-public class ResourceApiController implements ResourceApi {
+public class ResourceApiController extends ControllerBase implements ResourceApi {
 
   private final WsmResourceService resourceService;
   private final WorkspaceService workspaceService;
@@ -46,7 +47,6 @@ public class ResourceApiController implements ResourceApi {
 
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final HttpServletRequest request;
-  private final FolderDao folderDao;
 
   @Autowired
   public ResourceApiController(
@@ -55,19 +55,16 @@ public class ResourceApiController implements ResourceApi {
       ReferencedResourceService referencedResourceService,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request,
-      FolderDao folderDao) {
+      SamService samService) {
+    super(authenticatedUserRequestFactory, request, samService);
     this.resourceService = resourceService;
     this.workspaceService = workspaceService;
     this.referencedResourceService = referencedResourceService;
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.request = request;
-    this.folderDao = folderDao;
   }
 
-  private AuthenticatedUserRequest getAuthenticatedInfo() {
-    return authenticatedUserRequestFactory.from(request);
-  }
-
+  @Traced
   @Override
   public ResponseEntity<ApiResourceList> enumerateResources(
       UUID workspaceUuid,
@@ -95,6 +92,20 @@ public class ResourceApiController implements ResourceApi {
     return new ResponseEntity<>(apiResourceList, HttpStatus.OK);
   }
 
+  @Traced
+  @Override
+  public ResponseEntity<ApiResourceDescription> getResource(UUID workspaceUuid, UUID resourceUuid) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
+
+    WsmResource wsmResource = resourceService.getResource(workspaceUuid, resourceUuid);
+
+    ApiResourceDescription apiResourceDescription = this.makeApiResourceDescription(wsmResource);
+    return new ResponseEntity<>(apiResourceDescription, HttpStatus.OK);
+  }
+
+  @Traced
   @Override
   public ResponseEntity<Boolean> checkReferenceAccess(UUID workspaceUuid, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -104,6 +115,7 @@ public class ResourceApiController implements ResourceApi {
     return new ResponseEntity<>(isValid, HttpStatus.OK);
   }
 
+  @Traced
   @Override
   public ResponseEntity<Void> updateResourceProperties(
       UUID workspaceUuid, UUID resourceUuid, List<ApiProperty> properties) {
@@ -119,6 +131,7 @@ public class ResourceApiController implements ResourceApi {
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
+  @Traced
   @Override
   public ResponseEntity<Void> deleteResourceProperties(
       UUID workspaceUuid, UUID resourceUuid, List<String> propertyKeys) {

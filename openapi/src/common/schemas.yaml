@@ -91,7 +91,17 @@ components:
           format: uuid
         properties:
           $ref: '#/components/schemas/Properties'
-  
+
+    DefaultTableLifetime:
+      description: Optional. Default lifetime (in seconds) for newly created tables.
+      type: integer
+      format: int64
+
+    DefaultPartitionLifetime:
+      description: Optional. Default lifetime (in seconds) for partitions in newly created partitioned tables.
+      type: integer
+      format: int64
+
     DeleteControlledAzureResourceRequest:
       type: object
       required: [ jobControl ]
@@ -233,7 +243,7 @@ components:
     # All resource objects include this resource metadata object and call it 'metadata'
     ResourceMetadata:
       type: object
-      required: [workspaceId, resourceId, name, resourceType, stewardshipType, createdBy, createdDate]
+      required: [workspaceId, resourceId, name, resourceType, stewardshipType, createdBy, createdDate, lastUpdatedBy, lastUpdatedDate]
       properties:
         workspaceId:
           type: string
@@ -265,6 +275,13 @@ components:
           type: string
         createdDate:
           description: Timestamp when the resource is created
+          type: string
+          format: date-time
+        lastUpdatedBy:
+          description: User email of whom last updated the resource
+          type: string
+        lastUpdatedDate:
+          description: Timestamp where the resource was last updated
           type: string
           format: date-time
 
@@ -313,3 +330,10 @@ components:
           $ref: '#/components/schemas/JobReport'
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
+
+    Regions:
+      type: array
+      description: List of regions (e.g. us-central1, us-west1)
+      items:
+        uniqueItems: true
+        type: string

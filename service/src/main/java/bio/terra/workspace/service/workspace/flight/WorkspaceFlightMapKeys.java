@@ -14,11 +14,13 @@ public final class WorkspaceFlightMapKeys {
   public static final String APPLICATION_IDS = "applicationIds";
   public static final String OPERATION_TYPE = "operationType";
   public static final String POLICIES = "policies";
+  public static final String EFFECTIVE_POLICIES = "effectivePolicies";
   public static final String FOLDER_ID = "folderId";
   public static final String MERGE_POLICIES = "mergePolicies";
   public static final String IS_WET_RUN = "isWetRun";
   public static final String UPDATED_WORKSPACES = "updatedWorkspaces";
   public static final String SPEND_PROFILE = "spendProfile";
+  public static final String PET_SA_CREDENTIALS = "petSaCredentials";
 
   private WorkspaceFlightMapKeys() {}
 
@@ -31,6 +33,8 @@ public final class WorkspaceFlightMapKeys {
     public static final String PRIVATE_RESOURCE_IAM_ROLE = "privateResourceIamRole";
     public static final String GCP_CLOUD_CONTEXT = "gcpCloudContext";
     public static final String AZURE_CLOUD_CONTEXT = "azureCloudContext";
+    public static final String WORKSPACE_ID_TO_AZURE_CLOUD_CONTEXT_MAP =
+        "workspaceIdToAzureCloudContextMap";
     public static final String UPDATE_PARAMETERS = "updateParameters";
     public static final String PREVIOUS_UPDATE_PARAMETERS = "previousUpdateParameters";
     public static final String CREATE_RESOURCE_REGION = "createResourceRegion";
@@ -38,6 +42,18 @@ public final class WorkspaceFlightMapKeys {
     public static final String RESOURCE_ROLES_TO_REMOVE = "resourceRolesToRemove";
     public static final String REMOVED_USER_IS_WORKSPACE_MEMBER = "removedUserIsWorkspaceMember";
 
+    public static final String CONTROLLED_RESOURCES_WITHOUT_REGION =
+        "controlledResourcesWithoutRegion";
+    public static final String CONTROLLED_BIG_QUERY_DATASETS_WITHOUT_LIFETIME =
+        "controlledBigQueryDatasetsWithoutLifetime";
+    public static final String CONTROLLED_BIG_QUERY_DATASET_RESOURCE_ID_TO_TABLE_LIFETIME_MAP =
+        "controlledBigQueryDatasetToTableLifetimeMap";
+    public static final String CONTROLLED_BIG_QUERY_DATASET_RESOURCE_ID_TO_PARTITION_LIFETIME_MAP =
+        "controlledBigQueryDatasetToPartitionLifetimeMap";
+    public static final String CONTROLLED_RESOURCE_ID_TO_REGION_MAP =
+        "controlledResourceToRegionMap";
+    public static final String CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP =
+        "controlledResourceIdToWorkspaceIdMap";
     // Notebooks keys
     public static final String CREATE_NOTEBOOK_NETWORK_NAME = "createNotebookNetworkName";
     public static final String CREATE_NOTEBOOK_PARAMETERS = "createNotebookParameters";
@@ -69,8 +85,9 @@ public final class WorkspaceFlightMapKeys {
     public static final String STORAGE_TRANSFER_SERVICE_SA_EMAIL = "storageTransferServiceSAEmail";
     public static final String TABLE_TO_JOB_ID_MAP = "tableToJobIdMap";
     public static final String WORKSPACE_CREATE_FLIGHT_ID = "workspaceCreateFlightId";
-    public static final String STORAGE_ACCOUNT = "storageAccount";
+    public static final String SHARED_STORAGE_ACCOUNT = "sharedStorageAccount";
     public static final String STORAGE_ACCOUNT_NAME = "storageAccountName";
+    public static final String BATCH_ACCOUNT_NAME = "batchAccountName";
     public static final String DESTINATION_RESOURCE_ID = "destinationResourceId";
     public static final String DESTINATION_FOLDER_ID = "destinationFolderId";
     public static final String DESTINATION_CONTAINER_NAME = "destinationContainerName";
@@ -104,6 +121,7 @@ public final class WorkspaceFlightMapKeys {
     // additional keys for job filtering
     public static final String STEWARDSHIP_TYPE = "stewardshipType";
     public static final String RESOURCE = "resource";
+    public static final String DESTINATION_RESOURCE = "destinationResource";
 
     private ResourceKeys() {}
   }

@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp;
 
+import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import com.google.cloud.Binding;
@@ -28,8 +29,8 @@ public class GcpPolicyBuilder {
     bindings.addAll(currentPolicy.getBindingsList());
   }
 
-  public GcpPolicyBuilder addResourceBinding(ControlledResourceIamRole role, String email) {
-    bindings.add(buildBinding(role, toMemberIdentifier(email)));
+  public GcpPolicyBuilder addResourceBinding(ControlledResourceIamRole role, String member) {
+    bindings.add(buildBinding(role, member));
     return this;
   }
 
@@ -42,13 +43,6 @@ public class GcpPolicyBuilder {
   }
 
   /**
-   * GCP expects all groups to be prepended with the literal "group:" in IAM permissions bindings.
-   */
-  private static String toMemberIdentifier(String samGroupEmail) {
-    return "group:" + samGroupEmail;
-  }
-
-  /**
    * Build a Binding object granting a custom GCP role on a resource to a single member.
    *
    * @param resourceRole The role being granted on a resource
@@ -57,12 +51,21 @@ public class GcpPolicyBuilder {
    * @return Binding object granting a custom GCP role to provided user.
    */
   private Binding buildBinding(ControlledResourceIamRole resourceRole, String memberIdentifier) {
+    String customRole = getCustomRole(resourceRole);
+    return Binding.newBuilder()
+        .setRole(customRole)
+        .setMembers(Collections.singletonList(memberIdentifier))
+        .build();
+  }
+
+  public String getCustomRole(ControlledResourceIamRole resourceRole) {
     CustomGcpIamRole customRole =
         CustomGcpIamRoleMapping.CUSTOM_GCP_RESOURCE_IAM_ROLES.get(
             resource.getResourceType(), resourceRole);
-    return Binding.newBuilder()
-        .setRole(customRole.getFullyQualifiedRoleName(projectId))
-        .setMembers(Collections.singletonList(memberIdentifier))
-        .build();
+    if (customRole == null) {
+      throw new InternalLogicException(
+          String.format("Missing custom GCP resource role %s", resourceRole));
+    }
+    return customRole.getFullyQualifiedRoleName(projectId);
   }
 }

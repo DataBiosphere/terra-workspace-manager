@@ -1,12 +1,14 @@
 package bio.terra.workspace.common.fixtures;
 
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
+import static bio.terra.workspace.connected.AzureConnectedTestUtils.getAzureName;
 
 import bio.terra.stairway.ShortUUID;
 import bio.terra.workspace.common.utils.AzureVmUtils;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.generated.model.*;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.ControlledAzureBatchPoolResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
@@ -24,6 +26,7 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResourceF
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import com.azure.resourcemanager.batch.models.DeploymentConfiguration;
 import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.google.api.client.util.DateTime;
 import com.google.api.services.bigquery.model.Dataset;
@@ -90,6 +93,7 @@ public class ControlledResourceFixtures {
       new ApiGcpGcsBucketCreationParameters()
           .name(TestUtils.appendRandomNumber(BUCKET_NAME_PREFIX))
           .location(GcpResourceConstant.DEFAULT_REGION);
+  public static String DEFAULT_AZURE_RESOURCE_REGION = "westcentralus";
 
   /** Construct a parameter object with a unique bucket name to avoid unintended clashes. */
   public static ApiGcpGcsBucketCreationParameters getGoogleBucketCreationParameters() {
@@ -104,16 +108,16 @@ public class ControlledResourceFixtures {
   public static ApiGcpBigQueryDatasetCreationParameters getGcpBigQueryDatasetCreationParameters() {
     return new ApiGcpBigQueryDatasetCreationParameters()
         .datasetId(uniqueDatasetId())
-        .defaultPartitionLifetime(5901L)
-        .defaultTableLifetime(5900L)
-        .location("us-central1");
+        .defaultTableLifetime(DEFAULT_CREATED_BIG_QUERY_TABLE_LIFETIME)
+        .defaultPartitionLifetime(DEFAULT_CREATED_BIG_QUERY_PARTITION_LIFETIME)
+        .location(DEFAULT_RESOURCE_REGION);
   }
 
   /** Construct a parameter object with a unique ip name to avoid unintended clashes. */
   public static ApiAzureIpCreationParameters getAzureIpCreationParameters() {
     return new ApiAzureIpCreationParameters()
         .name(uniqueAzureName(AZURE_IP_NAME_PREFIX))
-        .region("westcentralus");
+        .region(DEFAULT_AZURE_RESOURCE_REGION);
   }
 
   /** Construct a parameter object with a unique ip name to avoid unintended clashes. */
@@ -121,14 +125,14 @@ public class ControlledResourceFixtures {
       getAzureRelayNamespaceCreationParameters() {
     return new ApiAzureRelayNamespaceCreationParameters()
         .namespaceName(uniqueAzureName(AZURE_RELAY_NAMESPACE_NAME_PREFIX))
-        .region("westcentralus");
+        .region(DEFAULT_AZURE_RESOURCE_REGION);
   }
 
   /** Construct a parameter object with a unique disk name to avoid unintended clashes. */
   public static ApiAzureDiskCreationParameters getAzureDiskCreationParameters() {
     return new ApiAzureDiskCreationParameters()
         .name(uniqueAzureName(AZURE_DISK_NAME_PREFIX))
-        .region("westcentralus")
+        .region(DEFAULT_AZURE_RESOURCE_REGION)
         .size(50);
   }
 
@@ -162,13 +166,14 @@ public class ControlledResourceFixtures {
     return new ApiAzureVmCreationParameters()
         .name(uniqueAzureName(AZURE_VM_NAME_PREFIX))
         .vmSize(VirtualMachineSizeTypes.STANDARD_D2S_V3.toString())
-        .region("westcentralus")
-        // TODO: it'd be nice to support standard Linux OSes in addition to custom image URIs.
-        // The below image is a Jupyter image and should be stable.
+        .region(DEFAULT_AZURE_RESOURCE_REGION)
         .vmImage(
             new ApiAzureVmImage()
-                .uri(
-                    "/subscriptions/3efc5bdf-be0e-44e7-b1d7-c08931e3c16c/resourceGroups/mrg-qi-1-preview-20210517084351/providers/Microsoft.Compute/galleries/msdsvm/images/customized_ms_dsvm/versions/0.1.0"))
+                .publisher("microsoft-dsvm")
+                .offer("ubuntu-2004")
+                .sku("2004-gen2")
+                .version("22.04.27"))
+        .vmUser(new ApiAzureVmUser().name("noname").password("StrongP@ssowrd123!!!"))
         .ipId(UUID.randomUUID())
         .diskId(UUID.randomUUID())
         .networkId(UUID.randomUUID());
@@ -183,9 +188,9 @@ public class ControlledResourceFixtures {
         .vmImage(
             new ApiAzureVmImage()
                 .publisher("microsoft-dsvm")
-                .offer("ubuntu-1804")
-                .sku("1804-gen2")
-                .version("latest"))
+                .offer("ubuntu-2004")
+                .sku("2004-gen2")
+                .version("22.04.27"))
         .vmUser(new ApiAzureVmUser().name("noname").password("StrongP@ssowrd123!!!"))
         .ipId(UUID.randomUUID())
         .diskId(UUID.randomUUID())
@@ -202,9 +207,9 @@ public class ControlledResourceFixtures {
         .vmImage(
             new ApiAzureVmImage()
                 .publisher("microsoft-dsvm")
-                .offer("ubuntu-1804")
-                .sku("1804-gen2")
-                .version("latest"))
+                .offer("ubuntu-2004")
+                .sku("2004-gen2")
+                .version("22.04.27"))
         .vmUser(new ApiAzureVmUser().name("noname").password("StrongP@ssowrd123!!!"))
         .ipId(UUID.randomUUID())
         .networkId(UUID.randomUUID())
@@ -223,9 +228,9 @@ public class ControlledResourceFixtures {
         .vmImage(
             new ApiAzureVmImage()
                 .publisher("microsoft-dsvm")
-                .offer("ubuntu-1804")
-                .sku("1804-gen2")
-                .version("latest"))
+                .offer("ubuntu-2004")
+                .sku("2004-gen2")
+                .version("22.04.27"))
         .vmUser(new ApiAzureVmUser().name("noname").password("noname"))
         .ipId(UUID.randomUUID())
         .diskId(UUID.randomUUID())
@@ -275,7 +280,7 @@ public class ControlledResourceFixtures {
 
   public static ApiGcpAiNotebookInstanceCreationParameters defaultNotebookCreationParameters() {
     return new ApiGcpAiNotebookInstanceCreationParameters()
-        .instanceId("default-instance-id")
+        .instanceId(TestUtils.appendRandomNumber("default-instance-id"))
         .location("us-east1-b")
         .machineType("e2-standard-2")
         .vmImage(
@@ -299,135 +304,80 @@ public class ControlledResourceFixtures {
   public static final CloningInstructions CLONING_INSTRUCTIONS = CloningInstructions.COPY_RESOURCE;
   public static final String DEFAULT_RESOURCE_REGION = "us-central1";
 
+  public static final Long DEFAULT_CREATED_BIG_QUERY_TABLE_LIFETIME = 5900L;
+  public static final Long DEFAULT_CREATED_BIG_QUERY_PARTITION_LIFETIME = 5901L;
+
+  public static final ControlledResourceFields DEFAULT_GCP_CONTROLLED_RESOURCE_FIELDS =
+      ControlledResourceFields.builder()
+          .workspaceUuid(WORKSPACE_ID)
+          .resourceId(RESOURCE_ID)
+          .name(RESOURCE_NAME)
+          .description(RESOURCE_DESCRIPTION)
+          .cloningInstructions(CloningInstructions.COPY_RESOURCE)
+          .resourceLineage(null)
+          .properties(Map.of())
+          .createdByEmail(MockMvcUtils.DEFAULT_USER_EMAIL)
+          .createdDate(null)
+          .lastUpdatedByEmail(null)
+          .lastUpdatedDate(null)
+          .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
+          .assignedUser(null)
+          .managedBy(ManagedByType.MANAGED_BY_USER)
+          .privateResourceState(PrivateResourceState.NOT_APPLICABLE)
+          .applicationId(null)
+          .region(DEFAULT_RESOURCE_REGION)
+          .build();
+
   public static ControlledGcsBucketResource getBucketResource(String bucketName) {
-    return new ControlledGcsBucketResource(
-        WORKSPACE_ID,
-        RESOURCE_ID,
-        RESOURCE_NAME,
-        RESOURCE_DESCRIPTION,
-        CloningInstructions.COPY_RESOURCE,
-        OWNER_EMAIL,
-        PrivateResourceState.ACTIVE,
-        AccessScopeType.ACCESS_SCOPE_PRIVATE,
-        ManagedByType.MANAGED_BY_USER,
-        null,
-        bucketName,
-        /*resourceLineage=*/ null,
-        Map.of(),
-        MockMvcUtils.DEFAULT_USER_EMAIL,
-        /*createdDate=*/ null,
-        DEFAULT_RESOURCE_REGION);
+    return ControlledGcsBucketResource.builder()
+        .common(DEFAULT_GCP_CONTROLLED_RESOURCE_FIELDS)
+        .bucketName(bucketName)
+        .build();
   }
 
   public static ControlledAzureIpResource getAzureIp(String ipName, String region) {
-    return new ControlledAzureIpResource(
-        WORKSPACE_ID,
-        RESOURCE_ID,
-        RESOURCE_NAME,
-        RESOURCE_DESCRIPTION,
-        CLONING_INSTRUCTIONS,
-        OWNER_EMAIL,
-        // TODO: these should be changed when we group the resources
-        PrivateResourceState.ACTIVE,
-        AccessScopeType.ACCESS_SCOPE_PRIVATE,
-        ManagedByType.MANAGED_BY_USER,
-        null,
-        ipName,
-        region,
-        /*resourceLineage=*/ null,
-        /*properties=*/ Map.of(),
-        MockMvcUtils.DEFAULT_USER_EMAIL,
-        /*createdDate*/ null);
+    return ControlledAzureIpResource.builder()
+        .common(makeDefaultControlledResourceFieldsBuilder().region(region).build())
+        .ipName(ipName)
+        .build();
   }
 
   public static ControlledAzureRelayNamespaceResource getAzureRelayNamespace(
       String namespaceName, String region) {
-    return new ControlledAzureRelayNamespaceResource(
-        WORKSPACE_ID,
-        RESOURCE_ID,
-        RESOURCE_NAME,
-        RESOURCE_DESCRIPTION,
-        CLONING_INSTRUCTIONS,
-        OWNER_EMAIL,
-        PrivateResourceState.ACTIVE,
-        AccessScopeType.ACCESS_SCOPE_PRIVATE,
-        ManagedByType.MANAGED_BY_APPLICATION,
-        null,
-        namespaceName,
-        region,
-        /*resourceLineage=*/ null,
-        /*properties=*/ Map.of(),
-        MockMvcUtils.DEFAULT_USER_EMAIL,
-        /*createdDate*/ null);
+    return ControlledAzureRelayNamespaceResource.builder()
+        .common(makeDefaultControlledResourceFieldsBuilder().region(region).build())
+        .namespaceName(namespaceName)
+        .build();
   }
 
   public static ControlledAzureDiskResource getAzureDisk(String diskName, String region, int size) {
-    return new ControlledAzureDiskResource(
-        WORKSPACE_ID,
-        RESOURCE_ID,
-        RESOURCE_NAME,
-        RESOURCE_DESCRIPTION,
-        CLONING_INSTRUCTIONS,
-        OWNER_EMAIL,
-        // TODO: these should be changed when we group the resources
-        PrivateResourceState.ACTIVE,
-        AccessScopeType.ACCESS_SCOPE_PRIVATE,
-        ManagedByType.MANAGED_BY_USER,
-        null,
-        diskName,
-        region,
-        size,
-        /*resourceLineage=*/ null,
-        /*properties=*/ Map.of(),
-        MockMvcUtils.DEFAULT_USER_EMAIL,
-        /*createdDate*/ null);
+    return ControlledAzureDiskResource.builder()
+        .common(makeDefaultControlledResourceFieldsBuilder().region(region).build())
+        .diskName(diskName)
+        .size(size)
+        .build();
   }
 
   public static ControlledAzureNetworkResource getAzureNetwork(
       ApiAzureNetworkCreationParameters creationParameters) {
-    return new ControlledAzureNetworkResource(
-        WORKSPACE_ID,
-        RESOURCE_ID,
-        RESOURCE_NAME,
-        RESOURCE_DESCRIPTION,
-        CLONING_INSTRUCTIONS,
-        OWNER_EMAIL,
-        // TODO: these should be changed when we group the resources
-        PrivateResourceState.ACTIVE,
-        AccessScopeType.ACCESS_SCOPE_PRIVATE,
-        ManagedByType.MANAGED_BY_USER,
-        null,
-        creationParameters.getName(),
-        creationParameters.getSubnetName(),
-        creationParameters.getAddressSpaceCidr(),
-        creationParameters.getSubnetAddressCidr(),
-        creationParameters.getRegion(),
-        /*resourceLineage=*/ null,
-        /*properties=*/ Map.of(),
-        MockMvcUtils.DEFAULT_USER_EMAIL,
-        /*createdDate*/ null);
+    return ControlledAzureNetworkResource.builder()
+        .common(
+            makeDefaultControlledResourceFieldsBuilder()
+                .region(creationParameters.getRegion())
+                .build())
+        .networkName(creationParameters.getName())
+        .subnetName(creationParameters.getSubnetName())
+        .addressSpaceCidr(creationParameters.getAddressSpaceCidr())
+        .subnetAddressCidr(creationParameters.getSubnetAddressCidr())
+        .build();
   }
 
   public static ControlledAzureStorageResource getAzureStorage(
       String storageAccountName, String region) {
-    return new ControlledAzureStorageResource(
-        WORKSPACE_ID,
-        RESOURCE_ID,
-        RESOURCE_NAME,
-        RESOURCE_DESCRIPTION,
-        CLONING_INSTRUCTIONS,
-        OWNER_EMAIL,
-        // TODO: these should be changed when we group the resources
-        PrivateResourceState.ACTIVE,
-        AccessScopeType.ACCESS_SCOPE_PRIVATE,
-        ManagedByType.MANAGED_BY_USER,
-        null,
-        storageAccountName,
-        region,
-        /*resourceLineage=*/ null,
-        /*properties=*/ Map.of(),
-        MockMvcUtils.DEFAULT_USER_EMAIL,
-        /*createdDate*/ null);
+    return ControlledAzureStorageResource.builder()
+        .common(makeDefaultControlledResourceFieldsBuilder().region(region).build())
+        .storageAccountName(storageAccountName)
+        .build();
   }
 
   public static ControlledAzureStorageResource getAzureStorage(
@@ -445,33 +395,19 @@ public class ControlledResourceFixtures {
                 .name(resourceName)
                 .description(resourceDescription)
                 .cloningInstructions(CloningInstructions.COPY_NOTHING)
+                .region(region)
                 .build())
         .storageAccountName(storageAccountName)
-        .region(region)
         .build();
   }
 
   public static ControlledAzureStorageContainerResource getAzureStorageContainer(
       UUID storageAccountId, String storageContainerName) {
-    return new ControlledAzureStorageContainerResource(
-        WORKSPACE_ID,
-        RESOURCE_ID,
-        RESOURCE_NAME,
-        RESOURCE_DESCRIPTION,
-        CLONING_INSTRUCTIONS,
-        OWNER_EMAIL,
-        // TODO: these should be changed when we group the resources
-        PrivateResourceState.ACTIVE,
-        AccessScopeType.ACCESS_SCOPE_PRIVATE,
-        ManagedByType.MANAGED_BY_USER,
-        null,
-        storageAccountId,
-        storageContainerName,
-        /*resourceLineage=*/ null,
-        /*properties=*/ Map.of(),
-        MockMvcUtils.DEFAULT_USER_EMAIL,
-        /*createdDate*/ null,
-        DEFAULT_RESOURCE_REGION);
+    return ControlledAzureStorageContainerResource.builder()
+        .common(makeDefaultControlledResourceFields(WORKSPACE_ID))
+        .storageContainerName(storageContainerName)
+        .storageAccountId(storageAccountId)
+        .build();
   }
 
   public static ControlledAzureStorageContainerResource getAzureStorageContainer(
@@ -491,37 +427,50 @@ public class ControlledResourceFixtures {
                 .cloningInstructions(CloningInstructions.COPY_NOTHING)
                 .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
                 .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                .region("eastus") // Needs to match the AzureControlledStorageContainerFlightTest
                 .build())
         .storageAccountId(accountResourceId)
         .storageContainerName(containerName)
         .build();
   }
 
+  public static ControlledAzureBatchPoolResource.Builder getAzureBatchPoolResourceBuilder(
+      UUID batchPoolId,
+      String batchPoolDisplayName,
+      String vmSize,
+      DeploymentConfiguration deploymentConfiguration,
+      String resourceDescription) {
+    return ControlledAzureBatchPoolResource.builder()
+        .common(
+            makeDefaultControlledResourceFieldsBuilder()
+                .workspaceUuid(WORKSPACE_ID)
+                .resourceId(batchPoolId)
+                .name(batchPoolDisplayName)
+                .description(resourceDescription)
+                .cloningInstructions(CloningInstructions.COPY_NOTHING)
+                .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                .build())
+        .id(batchPoolId.toString())
+        .displayName(batchPoolDisplayName)
+        .vmSize(vmSize)
+        .deploymentConfiguration(deploymentConfiguration);
+  }
+
   public static ControlledAzureVmResource getAzureVm(
       ApiAzureVmCreationParameters creationParameters) {
-    return new ControlledAzureVmResource(
-        WORKSPACE_ID,
-        RESOURCE_ID,
-        RESOURCE_NAME,
-        RESOURCE_DESCRIPTION,
-        CLONING_INSTRUCTIONS,
-        OWNER_EMAIL,
-        // TODO: these should be changed when we group the resources
-        PrivateResourceState.ACTIVE,
-        AccessScopeType.ACCESS_SCOPE_PRIVATE,
-        ManagedByType.MANAGED_BY_USER,
-        null,
-        creationParameters.getName(),
-        creationParameters.getRegion(),
-        creationParameters.getVmSize(),
-        AzureVmUtils.getImageData(creationParameters.getVmImage()),
-        creationParameters.getIpId(),
-        creationParameters.getNetworkId(),
-        creationParameters.getDiskId(),
-        /*resourceLineage=*/ null,
-        /*properties=*/ Map.of(),
-        MockMvcUtils.DEFAULT_USER_EMAIL,
-        /*createdDate*/ null);
+    return ControlledAzureVmResource.builder()
+        .common(
+            makeDefaultControlledResourceFieldsBuilder()
+                .region(creationParameters.getRegion())
+                .build())
+        .vmName(creationParameters.getName())
+        .vmSize(creationParameters.getVmSize())
+        .vmImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
+        .ipId(creationParameters.getIpId())
+        .networkId(creationParameters.getNetworkId())
+        .diskId(creationParameters.getDiskId())
+        .build();
   }
 
   private ControlledResourceFixtures() {}
@@ -538,6 +487,7 @@ public class ControlledResourceFixtures {
         .assignedUser(null)
         .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
         .managedBy(ManagedByType.MANAGED_BY_USER)
+        .privateResourceState(PrivateResourceState.NOT_APPLICABLE)
         .properties(DEFAULT_RESOURCE_PROPERTIES)
         .createdByEmail(MockMvcUtils.DEFAULT_USER_EMAIL)
         .region(DEFAULT_RESOURCE_REGION);
@@ -607,7 +557,9 @@ public class ControlledResourceFixtures {
     return new Builder()
         .common(makeDefaultControlledResourceFields(workspaceUuid))
         .projectId("my_project")
-        .datasetName(uniqueDatasetId());
+        .datasetName(uniqueDatasetId())
+        .defaultTableLifetime(DEFAULT_CREATED_BIG_QUERY_TABLE_LIFETIME)
+        .defaultPartitionLifetime(DEFAULT_CREATED_BIG_QUERY_PARTITION_LIFETIME);
   }
 
   public static final ApiGcpBigQueryDatasetUpdateParameters BQ_DATASET_UPDATE_PARAMETERS_NEW =
@@ -619,7 +571,9 @@ public class ControlledResourceFixtures {
           .defaultTableLifetime(4800L)
           .defaultPartitionLifetime(4801L);
   public static final Dataset BQ_DATASET_WITH_EXPIRATION =
-      new Dataset().setDefaultTableExpirationMs(5900000L).setDefaultPartitionExpirationMs(5901000L);
+      new Dataset()
+          .setDefaultTableExpirationMs(DEFAULT_CREATED_BIG_QUERY_TABLE_LIFETIME * 1000)
+          .setDefaultPartitionExpirationMs(DEFAULT_CREATED_BIG_QUERY_PARTITION_LIFETIME * 1000);
   public static final Dataset BQ_DATASET_WITHOUT_EXPIRATION = new Dataset();
 
   public static String uniqueDatasetId() {
@@ -767,4 +721,92 @@ public class ControlledResourceFixtures {
           .lifecycle(new ApiGcpGcsBucketLifecycle().rules(ImmutableList.of(WSM_LIFECYCLE_RULE_3)));
   public static final ApiGcpGcsBucketUpdateParameters BUCKET_UPDATE_PARAMETERS_EMPTY =
       new ApiGcpGcsBucketUpdateParameters();
+
+  public static ControlledAzureIpResource.Builder makeDefaultAzureIpResource(
+      ApiAzureIpCreationParameters ipCreationParameters, UUID workspaceId) {
+    return ControlledAzureIpResource.builder()
+        .common(
+            makeDefaultControlledResourceFieldsBuilder()
+                .workspaceUuid(workspaceId)
+                .name(getAzureName("ip"))
+                .cloningInstructions(CloningInstructions.COPY_RESOURCE)
+                .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                .region(ipCreationParameters.getRegion())
+                .build())
+        .ipName(ipCreationParameters.getName());
+  }
+
+  public static ControlledAzureDiskResource.Builder makeDefaultAzureDiskBuilder(
+      ApiAzureDiskCreationParameters creationParameters, UUID workspaceId) {
+    return ControlledAzureDiskResource.builder()
+        .common(
+            makeDefaultControlledResourceFieldsBuilder()
+                .workspaceUuid(workspaceId)
+                .name(getAzureName("disk"))
+                .cloningInstructions(CloningInstructions.COPY_RESOURCE)
+                .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                .region(creationParameters.getRegion())
+                .build())
+        .diskName(creationParameters.getName())
+        .size(creationParameters.getSize());
+  }
+
+  public static ControlledAzureNetworkResource.Builder makeDefaultAzureNetworkResourceBuilder(
+      ApiAzureNetworkCreationParameters creationParameters, UUID workspaceId) {
+    return ControlledAzureNetworkResource.builder()
+        .common(
+            makeDefaultControlledResourceFieldsBuilder()
+                .workspaceUuid(workspaceId)
+                .name(getAzureName("network"))
+                .cloningInstructions(CloningInstructions.COPY_RESOURCE)
+                .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                .region(creationParameters.getRegion())
+                .build())
+        .networkName(creationParameters.getName())
+        .subnetName(creationParameters.getSubnetName())
+        .addressSpaceCidr(creationParameters.getAddressSpaceCidr())
+        .subnetAddressCidr(creationParameters.getSubnetAddressCidr());
+  }
+
+  public static ControlledAzureVmResource.Builder makeDefaultControlledAzureVmResourceBuilder(
+      ApiAzureVmCreationParameters creationParameters,
+      UUID workspaceId,
+      UUID ipResourceId,
+      UUID networksResourceId,
+      UUID diskResourceId) {
+    return ControlledAzureVmResource.builder()
+        .common(
+            makeDefaultControlledResourceFieldsBuilder()
+                .workspaceUuid(workspaceId)
+                .name(getAzureName("vm"))
+                .cloningInstructions(CloningInstructions.COPY_RESOURCE)
+                .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                .region(creationParameters.getRegion())
+                .build())
+        .vmName(creationParameters.getName())
+        .vmSize(creationParameters.getVmSize())
+        .vmImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
+        .ipId(ipResourceId)
+        .diskId(diskResourceId)
+        .networkId(networksResourceId);
+  }
+
+  public static ControlledAzureRelayNamespaceResource.Builder makeDefaultRelayNamespaceBuilder(
+      ApiAzureRelayNamespaceCreationParameters creationParameters, UUID workspaceId) {
+    return ControlledAzureRelayNamespaceResource.builder()
+        .common(
+            makeDefaultControlledResourceFieldsBuilder()
+                .workspaceUuid(workspaceId)
+                .name(getAzureName("relaynamespace"))
+                .cloningInstructions(CloningInstructions.COPY_RESOURCE)
+                .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                .region(creationParameters.getRegion())
+                .build())
+        .namespaceName(TestUtils.appendRandomNumber("namespace"));
+  }
 }

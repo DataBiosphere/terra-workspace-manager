@@ -75,6 +75,13 @@ workspace:
     polling-interval: "15m"
     startup-wait: "5s"
 
+  temporary-grant-revoke:
+    revokeEnabled: true
+    polling-interval: "150s"
+    startup-wait: "1m"
+    grant-hold-time: "15m"
+    restrict-user-domain: ""
+
   sam.base-path: ${env.urls.sam}
 
   stairway-database:
@@ -175,7 +182,8 @@ landingzone:
   sam:
     base-path: ${env.urls.sam}
     landing-zone-resource-users:
-      - leonardo-prod@broad-dsde-prod.iam.gserviceaccount.com
+      - workspace-dev@broad-dsde-dev.iam.gserviceaccount.com
+      - leonardo-dev@broad-dsde-dev.iam.gserviceaccount.com
   bpm.base-path: ${env.urls.bpm}
 
 # Feature flags
@@ -205,6 +213,10 @@ feature:
   bpm-gcp-enabled: false
   # bpm-enabled-azure - Controls whether spend profile checks are made for Azure workspaces
   bpm-azure-enabled: false
+  # temporary-grant-enabled - Controls whether temporary direct ACL grants are made on creates
+  temporary-grant-enabled: false
+  # dataproc-enabled - Controls whether project level Dataproc permissions are enabled for owners
+  dataproc-enabled: false
 
 reference:
   gitrepos:

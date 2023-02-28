@@ -35,12 +35,17 @@ import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.folder.flights.DeleteFolderFlight;
 import bio.terra.workspace.service.folder.model.Folder;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
+import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CloneControlledGcsBucketResourceFlight;
+import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneWorkspaceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.model.WsmResource;
-import bio.terra.workspace.service.workspace.flight.DeleteGcpContextFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
+import bio.terra.workspace.service.workspace.flight.gcp.DeleteGcpContextFlight;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
@@ -92,6 +97,64 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
             OperationType.CREATE,
             workspaceUuid.toString(),
             ActivityLogChangedTarget.WORKSPACE));
+  }
+
+  @Test
+  void cloneWorkspaceFlightSucceeds_activityLogUpdated() throws InterruptedException {
+    var workspaceUuid = UUID.randomUUID();
+    var destinationWorkspaceId = UUID.randomUUID();
+    var emptyChangeDetails = activityLogDao.getLastUpdatedDetails(destinationWorkspaceId);
+    assertTrue(emptyChangeDetails.isEmpty());
+
+    FlightMap inputParams = buildInputParams(workspaceUuid, OperationType.CLONE);
+    inputParams.put(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId);
+    ControlledGcsBucketResource gcsBucketToClone =
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
+    inputParams.put(ResourceKeys.RESOURCE, gcsBucketToClone);
+    hook.endFlight(
+        new FakeFlightContext(
+            CloneControlledGcsBucketResourceFlight.class.getName(),
+            inputParams,
+            FlightStatus.SUCCESS));
+    ActivityLogChangeDetails changeDetails =
+        activityLogDao.getLastUpdatedDetails(destinationWorkspaceId).get();
+    assertEquals(
+        changeDetails,
+        new ActivityLogChangeDetails(
+            changeDetails.changeDate(),
+            USER_REQUEST.getEmail(),
+            USER_REQUEST.getSubjectId(),
+            OperationType.CLONE,
+            gcsBucketToClone.getResourceId().toString(),
+            ActivityLogChangedTarget.RESOURCE));
+    assertTrue(activityLogDao.getLastUpdatedDetails(workspaceUuid).isEmpty());
+  }
+
+  @Test
+  void cloneControlledResourceFlightSucceeds_activityLogUpdated() throws InterruptedException {
+    var workspaceUuid = UUID.randomUUID();
+    var destinationWorkspaceId = UUID.randomUUID();
+    var emptyChangeDetails = activityLogDao.getLastUpdatedDetails(destinationWorkspaceId);
+    assertTrue(emptyChangeDetails.isEmpty());
+
+    FlightMap inputParams = buildInputParams(workspaceUuid, OperationType.CLONE);
+    inputParams.put(WorkspaceFlightMapKeys.WORKSPACE_ID, destinationWorkspaceId.toString());
+    inputParams.put(ControlledResourceKeys.SOURCE_WORKSPACE_ID, workspaceUuid);
+    hook.endFlight(
+        new FakeFlightContext(
+            CloneWorkspaceFlight.class.getName(), inputParams, FlightStatus.SUCCESS));
+    ActivityLogChangeDetails changeDetails =
+        activityLogDao.getLastUpdatedDetails(destinationWorkspaceId).get();
+    assertEquals(
+        changeDetails,
+        new ActivityLogChangeDetails(
+            changeDetails.changeDate(),
+            USER_REQUEST.getEmail(),
+            USER_REQUEST.getSubjectId(),
+            OperationType.CLONE,
+            workspaceUuid.toString(),
+            ActivityLogChangedTarget.WORKSPACE));
+    assertTrue(activityLogDao.getLastUpdatedDetails(workspaceUuid).isEmpty());
   }
 
   @Test

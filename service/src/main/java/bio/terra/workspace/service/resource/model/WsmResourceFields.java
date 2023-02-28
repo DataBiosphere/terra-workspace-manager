@@ -2,8 +2,13 @@ package bio.terra.workspace.service.resource.model;
 
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -12,24 +17,26 @@ import javax.annotation.Nullable;
 /**
  * WsmResourceFields is used as a way to collect common resources for a controlled resource. That
  * way, we can more easily add common resource parameters to all resources without visiting each
- * implementation. Although for safe serialization, we still have to visit each @JsonCreator
- * resource constructor and add the parameters.
+ * implementation.
  *
  * <p>This allows us to make controller code that processes the common parts of the API input and
  * uses the methods in this class to populate the builder.
  *
  * <p>See {@link WsmResource} for details on the meaning of the fields
  */
+@JsonDeserialize(builder = WsmResourceFields.Builder.class)
 public class WsmResourceFields {
   private final UUID workspaceUuid;
   private final UUID resourceId;
   private final String name;
   @Nullable private final String description;
   private final CloningInstructions cloningInstructions;
-  @Nullable private final List<ResourceLineageEntry> resourceLineage;
+  private final List<ResourceLineageEntry> resourceLineage;
   private final ImmutableMap<String, String> properties;
   private final String createdByEmail;
   @Nullable private final OffsetDateTime createdDate;
+  private final String lastUpdatedByEmail;
+  @Nullable private final OffsetDateTime lastUpdatedDate;
 
   /** construct from database resource */
   public WsmResourceFields(DbResource dbResource) {
@@ -38,10 +45,12 @@ public class WsmResourceFields {
     name = dbResource.getName();
     description = dbResource.getDescription();
     cloningInstructions = dbResource.getCloningInstructions();
-    resourceLineage = dbResource.getResourceLineage().orElse(null);
+    resourceLineage = dbResource.getResourceLineage().orElse(new ArrayList<>());
     properties = dbResource.getProperties();
     createdByEmail = dbResource.getCreatedByEmail();
     createdDate = dbResource.getCreatedDate();
+    lastUpdatedByEmail = dbResource.getLastUpdatedByEmail();
+    lastUpdatedDate = dbResource.getLastUpdatedDate();
   }
 
   protected WsmResourceFields(Builder<?> builder) {
@@ -54,6 +63,8 @@ public class WsmResourceFields {
     this.properties = builder.properties;
     this.createdByEmail = builder.createdByEmail;
     this.createdDate = builder.createdDate;
+    this.lastUpdatedByEmail = builder.lastUpdatedByEmail;
+    this.lastUpdatedDate = builder.lastUpdatedDate;
   }
 
   public static WsmResourceFields.Builder<?> builder() {
@@ -93,7 +104,6 @@ public class WsmResourceFields {
     return cloningInstructions;
   }
 
-  @Nullable
   public List<ResourceLineageEntry> getResourceLineage() {
     return resourceLineage;
   }
@@ -106,20 +116,75 @@ public class WsmResourceFields {
     return createdByEmail;
   }
 
-  public OffsetDateTime getCreatedDate() {
+  public @Nullable OffsetDateTime getCreatedDate() {
     return createdDate;
   }
 
+  public String getLastUpdatedByEmail() {
+    return lastUpdatedByEmail;
+  }
+
+  public @Nullable OffsetDateTime getLastUpdatedDate() {
+    return lastUpdatedDate;
+  }
+
+  // TODO: PF-2513 We should not leave fields out of the equals method
+  //  Make a specific method for a partially equals semantic.
+  //  Missing compares:
+  //  - resourceLineage
+  //  - createdDate
+  //  - lastUpdatedByEmail
+  //  - lastUpdatedDate
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof WsmResourceFields that)) return false;
+    return Objects.equal(workspaceUuid, that.workspaceUuid)
+        && Objects.equal(resourceId, that.resourceId)
+        && Objects.equal(name, that.name)
+        && Objects.equal(description, that.description)
+        && cloningInstructions == that.cloningInstructions
+        && Objects.equal(properties, that.properties)
+        && Objects.equal(createdByEmail, that.createdByEmail);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(
+        workspaceUuid,
+        resourceId,
+        name,
+        description,
+        cloningInstructions,
+        resourceLineage,
+        properties,
+        createdByEmail,
+        createdDate,
+        lastUpdatedByEmail,
+        lastUpdatedDate);
+  }
+
+  /**
+   * WsmResourceField Builder class
+   *
+   * @param <T> allow over
+   */
+  @JsonPOJOBuilder(withPrefix = "")
   public static class Builder<T extends Builder<T>> {
+    @JsonProperty("workspaceId")
     private UUID workspaceUuid;
+
     private UUID resourceId;
     private String name;
     private String description;
     private CloningInstructions cloningInstructions;
-    private List<ResourceLineageEntry> resourceLineage;
+    private List<ResourceLineageEntry> resourceLineage = new ArrayList<>();
     private ImmutableMap<String, String> properties = ImmutableMap.of();
     private String createdByEmail;
     private OffsetDateTime createdDate;
+    private String lastUpdatedByEmail;
+    private OffsetDateTime lastUpdatedDate;
 
     public Builder() {}
 
@@ -169,7 +234,7 @@ public class WsmResourceFields {
 
     @SuppressWarnings("unchecked")
     public T resourceLineage(@Nullable List<ResourceLineageEntry> resourceLineage) {
-      this.resourceLineage = resourceLineage;
+      this.resourceLineage = (resourceLineage == null) ? new ArrayList<>() : resourceLineage;
       return (T) this;
     }
 
@@ -188,6 +253,18 @@ public class WsmResourceFields {
     @SuppressWarnings("unchecked")
     public T createdDate(OffsetDateTime createdDate) {
       this.createdDate = createdDate;
+      return (T) this;
+    }
+
+    @SuppressWarnings("unchecked")
+    public T lastUpdatedByEmail(String lastUpdatedByEmail) {
+      this.lastUpdatedByEmail = lastUpdatedByEmail;
+      return (T) this;
+    }
+
+    @SuppressWarnings("unchecked")
+    public T lastUpdatedDate(OffsetDateTime lastUpdatedDate) {
+      this.lastUpdatedDate = lastUpdatedDate;
       return (T) this;
     }
   }

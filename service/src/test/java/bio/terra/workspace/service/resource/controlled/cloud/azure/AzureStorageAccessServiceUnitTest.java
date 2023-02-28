@@ -23,7 +23,6 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContai
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import com.azure.resourcemanager.storage.StorageManager;
 import com.azure.resourcemanager.storage.models.Endpoints;
@@ -36,7 +35,6 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -67,6 +65,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
     when(keyProvider.getStorageAccountKey(any(), any())).thenReturn(cred);
     when(mockSamService().getUserEmailFromSamAndRethrowOnInterrupt(eq(userRequest)))
         .thenReturn(userRequest.getEmail());
+    when(mockSamService().getWsmServiceAccountToken()).thenReturn("wsm-token");
     azureStorageAccessService =
         new AzureStorageAccessService(
             mockSamService(),
@@ -80,23 +79,10 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
   }
 
   private ControlledAzureStorageResource buildStorageAccount() {
-    return new ControlledAzureStorageResource(
-        UUID.randomUUID(),
-        UUID.randomUUID(),
-        "fake",
-        "description",
-        CloningInstructions.COPY_NOTHING,
-        null,
-        PrivateResourceState.NOT_APPLICABLE,
-        AccessScopeType.ACCESS_SCOPE_SHARED,
-        ManagedByType.MANAGED_BY_USER,
-        null,
-        "fake",
-        "us-east1",
-        /*resourceLineage=*/ null,
-        /*properties*/ Map.of(),
-        "foo@gmail.com",
-        /*createdDate*/ null);
+    return ControlledAzureStorageResource.builder()
+        .common(ControlledResourceFixtures.makeDefaultControlledResourceFields(UUID.randomUUID()))
+        .storageAccountName("fake")
+        .build();
   }
 
   private ControlledAzureStorageContainerResource buildStorageContainerResource(

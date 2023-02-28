@@ -34,7 +34,8 @@ public class ControlledResourceControllerBase extends ControllerBase {
       List.of(
           WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER,
           WsmResourceType.CONTROLLED_AZURE_VM,
-          WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
+          WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE,
+          WsmResourceType.CONTROLLED_AZURE_BATCH_POOL);
 
   public ControlledResourceControllerBase(
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
@@ -43,6 +44,10 @@ public class ControlledResourceControllerBase extends ControllerBase {
       SamService samService) {
     super(authenticatedUserRequestFactory, request, samService);
     this.controlledResourceService = controlledResourceService;
+  }
+
+  public ControlledResourceService getControlledResourceService() {
+    return controlledResourceService;
   }
 
   public ControlledResourceFields toCommonFields(
@@ -56,8 +61,8 @@ public class ControlledResourceControllerBase extends ControllerBase {
     AccessScopeType accessScopeType = AccessScopeType.fromApi(apiCommonFields.getAccessScope());
     PrivateUserRole privateUserRole =
         computePrivateUserRole(workspaceUuid, apiCommonFields, userRequest);
-
     String userEmail = getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest);
+
     if (!WSM_RESOURCE_WITHOUT_REGION_IN_CREATION_PARAMS.contains(wsmResourceType)) {
       checkArgument(
           region != null,

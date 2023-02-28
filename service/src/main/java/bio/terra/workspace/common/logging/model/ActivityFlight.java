@@ -3,9 +3,13 @@ package bio.terra.workspace.common.logging.model;
 import bio.terra.workspace.common.exception.UnknownFlightClassNameException;
 import bio.terra.workspace.service.admin.flights.cloudcontexts.gcp.SyncGcpIamRolesFlight;
 import bio.terra.workspace.service.folder.flights.DeleteFolderFlight;
+import bio.terra.workspace.service.grant.flight.RevokeTemporaryGrantFlight;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.flight.UpdateAzureControlledResourceRegionFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.UpdateControlledAiNotebookResourceFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.UpdateControlledBigQueryDatasetResourceFlight;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.flight.UpdateGcpControlledResourceRegionFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.UpdateControlledGcsBucketResourceFlight;
+import bio.terra.workspace.service.resource.controlled.flight.backfill.UpdateControlledBigQueryDatasetsLifetimeFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.CloneControlledAzureStorageContainerResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CloneControlledGcsBucketResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.CloneControlledGcpBigQueryDatasetResourceFlight;
@@ -13,15 +17,16 @@ import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.Cl
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneWorkspaceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
+import bio.terra.workspace.service.resource.referenced.flight.clone.CloneReferencedResourceFlight;
 import bio.terra.workspace.service.resource.referenced.flight.update.UpdateReferenceResourceFlight;
-import bio.terra.workspace.service.workspace.flight.CreateGcpContextFlightV2;
-import bio.terra.workspace.service.workspace.flight.DeleteAzureContextFlight;
-import bio.terra.workspace.service.workspace.flight.DeleteGcpContextFlight;
-import bio.terra.workspace.service.workspace.flight.RemoveUserFromWorkspaceFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.flight.application.able.ApplicationAbleFlight;
-import bio.terra.workspace.service.workspace.flight.create.azure.CreateAzureContextFlight;
+import bio.terra.workspace.service.workspace.flight.azure.CreateAzureContextFlight;
+import bio.terra.workspace.service.workspace.flight.azure.DeleteAzureContextFlight;
+import bio.terra.workspace.service.workspace.flight.gcp.CreateGcpContextFlightV2;
+import bio.terra.workspace.service.workspace.flight.gcp.DeleteGcpContextFlight;
+import bio.terra.workspace.service.workspace.flight.gcp.RemoveUserFromWorkspaceFlight;
 import java.util.Arrays;
 
 /**
@@ -72,7 +77,18 @@ public enum ActivityFlight {
       SyncGcpIamRolesFlight.class.getName(), ActivityLogChangedTarget.GCP_CLOUD_CONTEXT),
   CONTROLLED_AZURE_STORAGE_CONTAINER_CLONE_FLIGHT(
       CloneControlledAzureStorageContainerResourceFlight.class.getName(),
-      ActivityLogChangedTarget.RESOURCE);
+      ActivityLogChangedTarget.RESOURCE),
+  UPDATE_GCP_CONTROLLED_RESOURCES_REGION_FLIGHT(
+      UpdateGcpControlledResourceRegionFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
+  UPDATE_GCP_CONTROLLED_BQ_DATASETS_LIFETIME_FLIGHT(
+      UpdateControlledBigQueryDatasetsLifetimeFlight.class.getName(),
+      ActivityLogChangedTarget.RESOURCE),
+  UPDATE_AZURE_CONTROLLED_RESOURCES_REGION_FLIGHT(
+      UpdateAzureControlledResourceRegionFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
+  REVOKE_TEMPORARY_GRANT_FLIGHT(
+      RevokeTemporaryGrantFlight.class.getName(), ActivityLogChangedTarget.WORKSPACE),
+  CLONE_REFERENCED_RESOURCE_FLIGHT(
+      CloneReferencedResourceFlight.class.getName(), ActivityLogChangedTarget.RESOURCE);
 
   private final String flightClassName;
   private final ActivityLogChangedTarget changedTarget;

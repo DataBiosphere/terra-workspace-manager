@@ -27,8 +27,7 @@ public class ControlledAzureStorageHandler implements WsmResourceHandler {
 
     return ControlledAzureStorageResource.builder()
         .storageAccountName(attributes.getStorageAccountName())
-        .region(attributes.getRegion())
-        .common(new ControlledResourceFields(dbResource))
+        .common(new ControlledResourceFields(dbResource, attributes.getRegion()))
         .build();
   }
 

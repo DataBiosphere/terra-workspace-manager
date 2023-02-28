@@ -9,24 +9,19 @@ import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableAttributes;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
-import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -40,40 +35,18 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
   /**
    * Constructor for serialized form for Stairway use
    *
-   * @param workspaceId workspace unique identifier
-   * @param resourceId resource unique identifier
-   * @param name name resource name; unique within a workspace
-   * @param description description - may be null
-   * @param cloningInstructions cloning instructions
+   * @param resourceFields common resource fields
    * @param projectId google project id
    * @param datasetId BigQuery dataset name
    * @param dataTableId BigQuery dataset's data table name
-   * @param resourceLineage resource lineage
    */
   @JsonCreator
   public ReferencedBigQueryDataTableResource(
-      @JsonProperty("workspaceId") UUID workspaceId,
-      @JsonProperty("resourceId") UUID resourceId,
-      @JsonProperty("name") String name,
-      @JsonProperty("description") @Nullable String description,
-      @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
+      @JsonProperty("wsmResourceFields") WsmResourceFields resourceFields,
       @JsonProperty("projectId") String projectId,
       @JsonProperty("datasetId") String datasetId,
-      @JsonProperty("dataTableId") String dataTableId,
-      @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
-      @JsonProperty("properties") Map<String, String> properties,
-      @JsonProperty("createdByEmail") String createdByEmail,
-      @JsonProperty("createdDate") OffsetDateTime createdDate) {
-    super(
-        workspaceId,
-        resourceId,
-        name,
-        description,
-        cloningInstructions,
-        resourceLineage,
-        properties,
-        createdByEmail,
-        createdDate);
+      @JsonProperty("dataTableId") String dataTableId) {
+    super(resourceFields);
     this.projectId = projectId;
     this.datasetId = datasetId;
     this.dataTableId = dataTableId;
@@ -111,6 +84,11 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
     return new ReferencedBigQueryDataTableResource.Builder();
   }
 
+  // -- getters used in serialization --
+  public WsmResourceFields getWsmResourceFields() {
+    return super.getWsmResourceFields();
+  }
+
   public String getProjectId() {
     return projectId;
   }
@@ -121,6 +99,19 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
 
   public String getDataTableId() {
     return dataTableId;
+  }
+
+  // -- getters not included in serialization --
+  @Override
+  @JsonIgnore
+  public WsmResourceType getResourceType() {
+    return WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE;
+  }
+
+  @Override
+  @JsonIgnore
+  public WsmResourceFamily getResourceFamily() {
+    return WsmResourceFamily.BIG_QUERY_DATA_TABLE;
   }
 
   public ApiGcpBigQueryDataTableAttributes toApiAttributes() {
@@ -147,16 +138,6 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
   }
 
   @Override
-  public WsmResourceType getResourceType() {
-    return WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE;
-  }
-
-  @Override
-  public WsmResourceFamily getResourceFamily() {
-    return WsmResourceFamily.BIG_QUERY_DATA_TABLE;
-  }
-
-  @Override
   public String attributesToJson() {
     return DbSerDes.toJson(
         new ReferencedBigQueryDataTableAttributes(
@@ -166,11 +147,6 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
   @Override
   public ApiResourceAttributesUnion toApiAttributesUnion() {
     return new ApiResourceAttributesUnion().gcpBqDataTable(toApiAttributes());
-  }
-
-  @Override
-  public ApiResourceUnion toApiResourceUnion() {
-    return new ApiResourceUnion().gcpBqDataTable(toApiResource());
   }
 
   @Override

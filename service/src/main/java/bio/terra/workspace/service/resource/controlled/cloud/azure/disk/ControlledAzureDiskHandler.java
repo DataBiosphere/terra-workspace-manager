@@ -28,9 +28,8 @@ public class ControlledAzureDiskHandler implements WsmResourceHandler {
     var resource =
         ControlledAzureDiskResource.builder()
             .diskName(attributes.getDiskName())
-            .region(attributes.getRegion())
             .size(attributes.getSize())
-            .common(new ControlledResourceFields(dbResource))
+            .common(new ControlledResourceFields(dbResource, attributes.getRegion()))
             .build();
     return resource;
   }

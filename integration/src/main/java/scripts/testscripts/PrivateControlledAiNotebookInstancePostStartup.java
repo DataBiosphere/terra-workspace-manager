@@ -8,7 +8,6 @@ import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.CreatedControlledGcpAiNotebookInstanceResult;
 import bio.terra.workspace.model.GcpAiNotebookInstanceResource;
-import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import com.google.api.services.notebooks.v1.AIPlatformNotebooks;
 import java.util.List;
@@ -36,11 +35,10 @@ public class PrivateControlledAiNotebookInstancePostStartup
   @Override
   protected void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
       throws Exception {
-    CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
-    workspaceApi.grantRole(
-        new GrantRoleRequestBody().memberEmail(resourceUser.userEmail),
-        getWorkspaceId(),
-        IamRole.WRITER);
+    ClientTestUtils.grantRole(workspaceApi, getWorkspaceId(), resourceUser, IamRole.WRITER);
+    String projectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
+    ClientTestUtils.workspaceRoleWaitForPropagation(resourceUser, projectId);
+
     ControlledGcpResourceApi resourceUserApi =
         ClientTestUtils.getControlledGcpResourceClient(resourceUser, server);
     String testValue = RandomStringUtils.random(5, /*letters=*/ true, /*numbers=*/ true);

@@ -12,7 +12,6 @@ import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
 import bio.terra.workspace.generated.model.ApiAzureRelayNamespaceAttributes;
 import bio.terra.workspace.generated.model.ApiAzureRelayNamespaceResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
-import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
@@ -22,13 +21,17 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
+import bio.terra.workspace.service.resource.controlled.model.WsmControlledResourceFields;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
+import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +40,6 @@ import java.util.UUID;
 
 public class ControlledAzureRelayNamespaceResource extends ControlledResource {
   private final String namespaceName;
-  private final String region;
 
   @JsonCreator
   public ControlledAzureRelayNamespaceResource(
@@ -56,34 +58,51 @@ public class ControlledAzureRelayNamespaceResource extends ControlledResource {
       @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
       @JsonProperty("properties") Map<String, String> properties,
       @JsonProperty("createdByEmail") String createdByEmail,
-      @JsonProperty("createdDate") OffsetDateTime createdDate) {
+      @JsonProperty("createdDate") OffsetDateTime createdDate,
+      @JsonProperty("lastUpdatedByEmail") String lastUpdatedByEmail,
+      @JsonProperty("lastUpdatedDate") OffsetDateTime lastUpdatedDate) {
 
     super(
-        workspaceId,
-        resourceId,
-        name,
-        description,
-        cloningInstructions,
-        assignedUser,
-        accessScope,
-        managedBy,
-        applicationId,
-        privateResourceState,
-        resourceLineage,
-        properties,
-        createdByEmail,
-        createdDate,
-        region);
+        ControlledResourceFields.builder()
+            .workspaceUuid(workspaceId)
+            .resourceId(resourceId)
+            .name(name)
+            .description(description)
+            .cloningInstructions(cloningInstructions)
+            .assignedUser(assignedUser)
+            .accessScope(accessScope)
+            .managedBy(managedBy)
+            .applicationId(applicationId)
+            .privateResourceState(privateResourceState)
+            .resourceLineage(resourceLineage)
+            .properties(properties)
+            .createdByEmail(createdByEmail)
+            .createdDate(createdDate)
+            .lastUpdatedByEmail(lastUpdatedByEmail)
+            .lastUpdatedDate(lastUpdatedDate)
+            .region(region)
+            .build());
     this.namespaceName = namespaceName;
-    this.region = region;
     validate();
   }
 
+  /*
+   // TODO: PF-2512 remove constructor above and enable this constructor
+   @JsonCreator
+   public ControlledAzureRelayNamespaceResource(
+       @JsonProperty("wsmResourceFields") WsmResourceFields resourceFields,
+       @JsonProperty("wsmControlledResourceFields")
+           WsmControlledResourceFields controlledResourceFields,
+       @JsonProperty("namespaceName") String namespaceName) {
+     super(resourceFields, controlledResourceFields);
+     this.namespaceName = namespaceName;
+     validate();
+   }
+  */
   public ControlledAzureRelayNamespaceResource(
-      ControlledResourceFields common, String namespaceName, String region) {
+      ControlledResourceFields common, String namespaceName) {
     super(common);
     this.namespaceName = namespaceName;
-    this.region = region;
     validate();
   }
 
@@ -101,8 +120,107 @@ public class ControlledAzureRelayNamespaceResource extends ControlledResource {
     return (T) this;
   }
 
+  // -- getters used in serialization --
+
+  public WsmResourceFields getWsmResourceFields() {
+    return super.getWsmResourceFields();
+  }
+
+  public WsmControlledResourceFields getWsmControlledResourceFields() {
+    return super.getWsmControlledResourceFields();
+  }
+
+  public String getNamespaceName() {
+    return namespaceName;
+  }
+
+  // -- getters for backward compatibility --
+  // TODO: PF-2512 Remove these getters
+  public UUID getWorkspaceId() {
+    return super.getWorkspaceId();
+  }
+
+  public UUID getResourceId() {
+    return super.getResourceId();
+  }
+
+  public String getName() {
+    return super.getName();
+  }
+
+  public String getDescription() {
+    return super.getDescription();
+  }
+
+  public CloningInstructions getCloningInstructions() {
+    return super.getCloningInstructions();
+  }
+
+  public Optional<String> getAssignedUser() {
+    return super.getAssignedUser();
+  }
+
+  public Optional<PrivateResourceState> getPrivateResourceState() {
+    return super.getPrivateResourceState();
+  }
+
+  public AccessScopeType getAccessScope() {
+    return super.getAccessScope();
+  }
+
+  public ManagedByType getManagedBy() {
+    return super.getManagedBy();
+  }
+
+  public String getApplicationId() {
+    return super.getApplicationId();
+  }
+
+  public List<ResourceLineageEntry> getResourceLineage() {
+    return super.getResourceLineage();
+  }
+
+  public ImmutableMap<String, String> getProperties() {
+    return super.getProperties();
+  }
+
+  public String getCreatedByEmail() {
+    return super.getCreatedByEmail();
+  }
+
+  public OffsetDateTime getCreatedDate() {
+    return super.getCreatedDate();
+  }
+
+  public String getLastUpdatedByEmail() {
+    return super.getLastUpdatedByEmail();
+  }
+
+  public OffsetDateTime getLastUpdatedDate() {
+    return super.getLastUpdatedDate();
+  }
+
+  public String getRegion() {
+    return super.getRegion();
+  }
+
+  // -- getters not included in serialization --
+
+  @Override
+  @JsonIgnore
+  public WsmResourceType getResourceType() {
+    return WsmResourceType.CONTROLLED_AZURE_RELAY_NAMESPACE;
+  }
+
+  @Override
+  @JsonIgnore
+  public WsmResourceFamily getResourceFamily() {
+    return WsmResourceFamily.AZURE_RELAY_NAMESPACE;
+  }
+
   /** {@inheritDoc} */
   @Override
+  @JsonIgnore
   public Optional<UniquenessCheckAttributes> getUniquenessCheckAttributes() {
     return Optional.of(
         new UniquenessCheckAttributes()
@@ -137,32 +255,16 @@ public class ControlledAzureRelayNamespaceResource extends ControlledResource {
         RetryRules.cloud());
   }
 
-  public String getNamespaceName() {
-    return namespaceName;
-  }
-
-  public String getRegion() {
-    return region;
-  }
-
   public ApiAzureRelayNamespaceAttributes toApiAttributes() {
-    return new ApiAzureRelayNamespaceAttributes().namespaceName(getNamespaceName()).region(region);
+    return new ApiAzureRelayNamespaceAttributes()
+        .namespaceName(getNamespaceName())
+        .region(getRegion());
   }
 
   public ApiAzureRelayNamespaceResource toApiResource() {
     return new ApiAzureRelayNamespaceResource()
         .metadata(super.toApiMetadata())
         .attributes(toApiAttributes());
-  }
-
-  @Override
-  public WsmResourceType getResourceType() {
-    return WsmResourceType.CONTROLLED_AZURE_RELAY_NAMESPACE;
-  }
-
-  @Override
-  public WsmResourceFamily getResourceFamily() {
-    return WsmResourceFamily.AZURE_RELAY_NAMESPACE;
   }
 
   @Override
@@ -175,13 +277,6 @@ public class ControlledAzureRelayNamespaceResource extends ControlledResource {
   public ApiResourceAttributesUnion toApiAttributesUnion() {
     ApiResourceAttributesUnion union = new ApiResourceAttributesUnion();
     union.azureRelayNamespace(toApiAttributes());
-    return union;
-  }
-
-  @Override
-  public ApiResourceUnion toApiResourceUnion() {
-    ApiResourceUnion union = new ApiResourceUnion();
-    union.azureRelayNamespace(toApiResource());
     return union;
   }
 
@@ -201,7 +296,7 @@ public class ControlledAzureRelayNamespaceResource extends ControlledResource {
       throw new MissingRequiredFieldException(
           "Missing required region field for ControlledAzureRelayNamespace.");
     }
-    ResourceValidationUtils.validateRegion(getRegion());
+    ResourceValidationUtils.validateAzureRegion(getRegion());
     ResourceValidationUtils.validateAzureNamespace(getNamespaceName());
   }
 
@@ -226,7 +321,6 @@ public class ControlledAzureRelayNamespaceResource extends ControlledResource {
   public static class Builder {
     private ControlledResourceFields common;
     private String namespaceName;
-    private String region;
 
     public ControlledAzureRelayNamespaceResource.Builder common(ControlledResourceFields common) {
       this.common = common;
@@ -238,13 +332,8 @@ public class ControlledAzureRelayNamespaceResource extends ControlledResource {
       return this;
     }
 
-    public Builder region(String region) {
-      this.region = region;
-      return this;
-    }
-
     public ControlledAzureRelayNamespaceResource build() {
-      return new ControlledAzureRelayNamespaceResource(common, namespaceName, region);
+      return new ControlledAzureRelayNamespaceResource(common, namespaceName);
     }
   }
 }

@@ -3,6 +3,7 @@ package bio.terra.workspace.common.logging;
 import static bio.terra.workspace.common.utils.FlightUtils.getRequired;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.APPLICATION_IDS;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.FOLDER_ID;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.UPDATED_WORKSPACES;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.USER_TO_REMOVE;
@@ -27,16 +28,22 @@ import bio.terra.workspace.service.admin.flights.cloudcontexts.gcp.SyncGcpIamRol
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.flight.UpdateAzureControlledResourceRegionFlight;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.flight.UpdateGcpControlledResourceRegionFlight;
+import bio.terra.workspace.service.resource.controlled.flight.backfill.UpdateControlledBigQueryDatasetsLifetimeFlight;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.common.base.Preconditions;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -71,8 +78,8 @@ public class WorkspaceActivityLogHook implements StairwayHook {
 
   @Override
   public HookAction endFlight(FlightContext context) throws InterruptedException {
-    logger.info(
-        String.format("endFlight %s: %s", context.getFlightClassName(), context.getFlightStatus()));
+    String flightClassName = context.getFlightClassName();
+    logger.info(String.format("endFlight %s: %s", flightClassName, context.getFlightStatus()));
     var workspaceId =
         context.getInputParameters().get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class);
     var operationType =
@@ -99,16 +106,10 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     var userEmail = userStatusInfo.getUserEmail();
     var subjectId = userStatusInfo.getUserSubjectId();
 
-    ActivityFlight af = ActivityFlight.fromFlightClassName(context.getFlightClassName());
+    ActivityFlight af = ActivityFlight.fromFlightClassName(flightClassName);
     if (workspaceId == null) {
-      if (!SyncGcpIamRolesFlight.class.getName().equals(context.getFlightClassName())) {
-        throw new UnhandledActivityLogException(
-            String.format(
-                "workspace id is missing from the flight %s, add special log handling",
-                context.getFlightClassName()));
-      }
-      maybeLogForSyncGcpIamRolesFlight(context, operationType, userEmail, subjectId);
-      return HookAction.CONTINUE;
+      return maybeLogFlightWithoutWorkspaceId(
+          context, flightClassName, operationType, userEmail, subjectId);
     }
     UUID workspaceUuid = UUID.fromString(workspaceId);
     // If DELETE flight failed, cloud resource may or may not have been deleted. Check if cloud
@@ -125,8 +126,7 @@ public class WorkspaceActivityLogHook implements StairwayHook {
         case FOLDER -> maybeLogFolderDeletionFlight(context, workspaceUuid, userEmail, subjectId);
         case APPLICATION, USER -> throw new UnhandledDeletionFlightException(
             String.format(
-                "Activity log should be updated for deletion flight %s failures",
-                context.getFlightClassName()));
+                "Activity log should be updated for deletion flight %s failures", flightClassName));
       }
       return HookAction.CONTINUE;
     }
@@ -139,10 +139,10 @@ public class WorkspaceActivityLogHook implements StairwayHook {
                 userEmail,
                 subjectId,
                 operationType,
-                workspaceUuid.toString(),
+                getClonedWorkspaceId(context, operationType, workspaceUuid).toString(),
                 af.getActivityLogChangedTarget()));
         case RESOURCE -> activityLogDao.writeActivity(
-            workspaceUuid,
+            getAffectedWorkspaceId(context, operationType, workspaceUuid),
             new DbWorkspaceActivityLog(
                 userEmail,
                 subjectId,
@@ -172,6 +172,68 @@ public class WorkspaceActivityLogHook implements StairwayHook {
       }
     }
     return HookAction.CONTINUE;
+  }
+
+  /**
+   * For rare cases when a flight is missing workspace id, we should handle the logging on a
+   * case-by-case basis.
+   */
+  private HookAction maybeLogFlightWithoutWorkspaceId(
+      FlightContext context,
+      String flightClassName,
+      OperationType operationType,
+      String userEmail,
+      String subjectId) {
+    if (SyncGcpIamRolesFlight.class.getName().equals(flightClassName)) {
+      maybeLogForSyncGcpIamRolesFlight(context, operationType, userEmail, subjectId);
+    } else if (UpdateGcpControlledResourceRegionFlight.class.getName().equals(flightClassName)
+        || UpdateAzureControlledResourceRegionFlight.class.getName().equals(flightClassName)
+        || UpdateControlledBigQueryDatasetsLifetimeFlight.class.getName().equals(flightClassName)) {
+      maybeLogUpdateControlledResourceFieldsFlight(context, operationType, userEmail, subjectId);
+    } else {
+      throw new UnhandledActivityLogException(
+          String.format(
+              "workspace id is missing from the flight %s, add special log handling",
+              flightClassName));
+    }
+    return HookAction.CONTINUE;
+  }
+
+  /**
+   * Get the workspace where the activity operation is acted upon. For cloning a workspace, it
+   * should be the source workspace.
+   */
+  private UUID getClonedWorkspaceId(
+      FlightContext context, OperationType operationType, UUID workspaceUuid) {
+    UUID subjectWorkspaceId = workspaceUuid;
+    if (OperationType.CLONE == operationType) {
+      // When the action is clone, the action clone is acted upon
+      // the source workspace.
+      subjectWorkspaceId =
+          getRequired(
+              context.getInputParameters(), ControlledResourceKeys.SOURCE_WORKSPACE_ID, UUID.class);
+    }
+    return subjectWorkspaceId;
+  }
+
+  /**
+   * Get the workspace where the activity happened. For cloning, it should be the destination
+   * workspace.
+   */
+  private UUID getAffectedWorkspaceId(
+      FlightContext context, OperationType operationType, UUID workspaceUuid) {
+    // The workspace id that a db transaction has happened. In
+    // the case of cloning, the db create a cloned resource in
+    // the destination workspace.
+    var affectedWorkspaceId = workspaceUuid;
+    if (OperationType.CLONE == operationType) {
+      affectedWorkspaceId =
+          getRequired(
+              context.getInputParameters(),
+              ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
+              UUID.class);
+    }
+    return affectedWorkspaceId;
   }
 
   private void logApplicationAbleFlight(
@@ -290,6 +352,32 @@ public class WorkspaceActivityLogHook implements StairwayHook {
           UUID.fromString(id),
           new DbWorkspaceActivityLog(
               userEmail, subjectId, operationType, id, ActivityLogChangedTarget.WORKSPACE));
+    }
+  }
+
+  private void maybeLogUpdateControlledResourceFieldsFlight(
+      FlightContext context, OperationType operationType, String userEmail, String subjectId) {
+    if (!context.getFlightStatus().equals(FlightStatus.SUCCESS)) {
+      return;
+    }
+    FlightUtils.validateRequiredEntries(
+        context.getWorkingMap(), CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP);
+
+    Map<UUID, String> resourceIdToWorkspaceIdMap =
+        Preconditions.checkNotNull(
+            context
+                .getWorkingMap()
+                .get(CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP, new TypeReference<>() {}));
+
+    for (Map.Entry<UUID, String> pair : resourceIdToWorkspaceIdMap.entrySet()) {
+      activityLogDao.writeActivity(
+          UUID.fromString(pair.getValue()),
+          new DbWorkspaceActivityLog(
+              userEmail,
+              subjectId,
+              operationType,
+              pair.getKey().toString(),
+              ActivityLogChangedTarget.RESOURCE));
     }
   }
 }

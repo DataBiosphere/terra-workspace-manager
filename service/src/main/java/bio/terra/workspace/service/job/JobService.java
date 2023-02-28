@@ -12,6 +12,7 @@ import bio.terra.stairway.FlightFilterOp;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.Stairway;
+import bio.terra.stairway.StairwayMapper;
 import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.DuplicateFlightIdException;
 import bio.terra.stairway.exception.FlightNotFoundException;
@@ -31,6 +32,7 @@ import bio.terra.workspace.service.job.exception.JobNotFoundException;
 import bio.terra.workspace.service.job.exception.JobResponseException;
 import bio.terra.workspace.service.job.model.EnumeratedJob;
 import bio.terra.workspace.service.job.model.EnumeratedJobs;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
@@ -39,6 +41,8 @@ import bio.terra.workspace.service.workspace.model.JobStateFilter;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.introspect.AnnotatedMember;
+import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 import com.google.common.annotations.VisibleForTesting;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.opencensus.contrib.spring.aop.Traced;
@@ -118,11 +122,13 @@ public class JobService {
       Class<? extends Flight> flightClass,
       FlightMap parameterMap,
       Class<T> resultClass,
+      TypeReference<T> typeReference,
       String jobId) {
     submit(flightClass, parameterMap, jobId);
     waitForJob(jobId);
 
-    JobResultOrException<T> resultOrException = retrieveJobResult(jobId, resultClass);
+    JobResultOrException<T> resultOrException =
+        retrieveJobResult(jobId, resultClass, typeReference);
     if (resultOrException.getException() != null) {
       throw resultOrException.getException();
     }
@@ -145,6 +151,7 @@ public class JobService {
    * encapsulates all of the Stairway interaction.
    */
   public void initialize() {
+    configureMapper();
     stairwayComponent.initialize(
         stairwayComponent
             .newStairwayOptionsBuilder()
@@ -154,6 +161,37 @@ public class JobService {
             .addHook(new TracingHook())
             .addHook(workspaceActivityLogHook)
             .exceptionSerializer(new StairwayExceptionSerializer(objectMapper)));
+  }
+
+  /**
+   * This is currently a hack, because Stairway does not provide a way to pass in the mapper. It
+   * does expose its own mapper for testing, so we use that public API to add the introspector that
+   * we need.
+   *
+   * <p>TODO: PF-2505 When that Stairway feature is done we should create and set our own object
+   * mapper in Stairway.
+   */
+  @VisibleForTesting
+  public static void configureMapper() {
+    StairwayMapper.getObjectMapper().setAnnotationIntrospector(new IgnoreInheritedIntrospector());
+  }
+
+  /**
+   * Jackson does not see @JsonIgnore annotations from super classes. That means any getter in a
+   * super class gets serialized by default. We do not want that behavior, so we add this
+   * introspector to the ObjectMapper to force ignore everything from the resource super classes.
+   *
+   * <p>We do not need to ignore ReferencedResource class because it does not add any fields to
+   * those coming from WsmResource class.
+   */
+  private static class IgnoreInheritedIntrospector extends JacksonAnnotationIntrospector {
+    @Override
+    public boolean hasIgnoreMarker(AnnotatedMember m) {
+      boolean ignore =
+          (m.getDeclaringClass() == WsmResource.class)
+              || (m.getDeclaringClass() == ControlledResource.class);
+      return ignore || super.hasIgnoreMarker(m);
+    }
   }
 
   /**
@@ -234,21 +272,21 @@ public class JobService {
         WorkspaceFlightMapKeys.WORKSPACE_ID, FlightFilterOp.EQUAL, workspaceUuid.toString());
     // Add optional filters
     Optional.ofNullable(cloudResourceType)
-        .map(
+        .ifPresent(
             t ->
                 filter.addFilterInputParameter(
                     WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_TYPE, FlightFilterOp.EQUAL, t));
     Optional.ofNullable(stewardshipType)
-        .map(
+        .ifPresent(
             t ->
                 filter.addFilterInputParameter(
                     WorkspaceFlightMapKeys.ResourceKeys.STEWARDSHIP_TYPE, FlightFilterOp.EQUAL, t));
     Optional.ofNullable(resourceName)
-        .map(
+        .ifPresent(
             t ->
                 filter.addFilterInputParameter(
                     WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_NAME, FlightFilterOp.EQUAL, t));
-    Optional.ofNullable(jobStateFilter).map(t -> addStateFilter(filter, t));
+    Optional.ofNullable(jobStateFilter).ifPresent(t -> addStateFilter(filter, t));
 
     return filter;
   }
@@ -281,6 +319,12 @@ public class JobService {
     }
   }
 
+  /** Retrieves Job Result specifying the result class type. */
+  @Traced
+  public <T> JobResultOrException<T> retrieveJobResult(String jobId, Class<T> resultClass) {
+    return retrieveJobResult(jobId, resultClass, /*typeReference=*/ null);
+  }
+
   /**
    * There are four cases to handle here:
    *
@@ -299,10 +343,15 @@ public class JobService {
    * </ol>
    *
    * @param jobId to process
+   * @param resultClass nullable resultClass. When not null, cast the JobResult to the given class.
+   * @param typeReference nullable typeReference. When not null, cast the JobResult to generic type.
+   *     When the Job does not have a result (a.k.a. null), both resultClass and typeReference are
+   *     set to null.
    * @return object of the result class pulled from the result map
    */
   @Traced
-  public <T> JobResultOrException<T> retrieveJobResult(String jobId, Class<T> resultClass) {
+  public <T> JobResultOrException<T> retrieveJobResult(
+      String jobId, @Nullable Class<T> resultClass, @Nullable TypeReference<T> typeReference) {
     try {
       FlightState flightState = stairwayComponent.get().getFlightState(jobId);
       FlightMap resultMap =
@@ -315,8 +364,16 @@ public class JobService {
         case ERROR:
           return handleFailedFlight(flightState);
         case SUCCESS:
+          if (resultClass != null) {
+            return new JobResultOrException<T>()
+                .result(resultMap.get(JobMapKeys.RESPONSE.getKeyName(), resultClass));
+          }
+          if (typeReference != null) {
+            return new JobResultOrException<T>()
+                .result(resultMap.get(JobMapKeys.RESPONSE.getKeyName(), typeReference));
+          }
           return new JobResultOrException<T>()
-              .result(resultMap.get(JobMapKeys.RESPONSE.getKeyName(), resultClass));
+              .result(resultMap.get(JobMapKeys.RESPONSE.getKeyName(), (Class<T>) null));
         case RUNNING:
           throw new JobNotCompleteException(
               "Attempt to retrieve job result before job is complete; job id: "
@@ -333,8 +390,9 @@ public class JobService {
   }
 
   private <T> JobResultOrException<T> handleFailedFlight(FlightState flightState) {
-    if (flightState.getException().isPresent()) {
-      Exception exception = flightState.getException().get();
+    Optional<Exception> flightException = flightState.getException();
+    if (flightException.isPresent()) {
+      Exception exception = flightException.get();
       if (exception instanceof RuntimeException) {
         return new JobResultOrException<T>().exception((RuntimeException) exception);
       } else {

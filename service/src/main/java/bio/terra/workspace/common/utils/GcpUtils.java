@@ -6,10 +6,12 @@ import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.workspace.exceptions.SaCredentialsMissingException;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
 import com.google.auth.ServiceAccountSigner;
+import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.ServiceOptions;
 import io.grpc.Status.Code;
@@ -138,5 +140,55 @@ public class GcpUtils {
       throw new SaCredentialsMissingException(
           "Unable to find WSM service account credentials. Ensure WSM is actually running as a service account");
     }
+  }
+
+  public static GoogleCredentials getGoogleCredentialsFromUserRequest(
+      AuthenticatedUserRequest userRequest) {
+    // The expirationTime argument is only used for refresh tokens, not access tokens.
+    AccessToken accessToken = new AccessToken(userRequest.getRequiredToken(), null);
+    return GoogleCredentials.create(accessToken);
+  }
+
+  /**
+   * Extract the region part from the given location string. If the string is a region, return that.
+   * If the string looks like a zone, return just the region part. Basically, remove any trailing
+   * "-[a-z]".
+   */
+  public static String parseRegion(String location) {
+    return location.replaceAll("(?!^)-[a-z]$", "");
+  }
+
+  // Methods for building member strings using in GCP IAM bindings
+  // and pulling the email from IAM member strings
+  private static final String GROUP_PREFIX = "group:";
+  private static final String USER_PREFIX = "user:";
+  private static final String SA_PREFIX = "serviceAccount:";
+
+  private static String stripPrefix(String member, String prefix) {
+    int prefixLength = prefix.length();
+    if (member != null && member.startsWith(prefix)) {
+      return member.substring(prefixLength);
+    }
+    return member;
+  }
+
+  public static String toGroupMember(String email) {
+    return GROUP_PREFIX + email;
+  }
+
+  public static String toUserMember(String email) {
+    return USER_PREFIX + email;
+  }
+
+  public static String toSaMember(String email) {
+    return SA_PREFIX + email;
+  }
+
+  public static String fromUserMember(String member) {
+    return stripPrefix(member, USER_PREFIX);
+  }
+
+  public static String fromSaMember(String member) {
+    return stripPrefix(member, SA_PREFIX);
   }
 }

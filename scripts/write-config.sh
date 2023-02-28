@@ -319,6 +319,7 @@ landingzone:
   sam:
     landing-zone-resource-users:
       - leonardo-dev@broad-dsde-dev.iam.gserviceaccount.com
+  temporary-grant-enabled: true
 EOF
 else
   cat /dev/null > "${outputdir}/local-properties.yml"

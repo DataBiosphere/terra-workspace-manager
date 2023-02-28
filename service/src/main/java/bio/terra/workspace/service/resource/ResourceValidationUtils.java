@@ -6,20 +6,24 @@ import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.app.configuration.external.GitRepoReferencedResourceConfiguration;
+import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
+import bio.terra.workspace.service.policy.TpsApiDispatch;
+import bio.terra.workspace.service.resource.controlled.exception.InvalidControlledResourceException;
 import bio.terra.workspace.service.resource.exception.InvalidNameException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
-import com.azure.core.management.Region;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -110,11 +114,15 @@ public class ResourceValidationUtils {
   public static final Pattern AZURE_RELAY_NAMESPACE_PATTERN =
       Pattern.compile("^[a-zA-Z0-9][a-zA-Z0-9-]{0,78}[a-zA-Z0-9]$");
 
+  /** Batch Pool id must be -64 characters, using letters, numbers, dashes, and underscores */
+  public static final Pattern AZURE_BATCH_POOL_ID_VALIDATION_PATTERN =
+      Pattern.compile("^[-_a-zA-Z0-9]{0,63}$");
+
   // An object named "." or ".." is nearly impossible for a user to delete.
   private static final ImmutableList<String> DISALLOWED_OBJECT_NAMES = ImmutableList.of(".", "..");
 
   // Pattern for Git SSH URL. It often but doesn't have to have the .git extension.
-  private static final Pattern GIT_SSH_URI_PATTERN = Pattern.compile("git@(.*?)\\:(.*)$");
+  private static final Pattern GIT_SSH_URI_PATTERN = Pattern.compile("git@([.a-z]{0,17}):.*$");
   /**
    * Magic prefix for ACME HTTP challenge.
    *
@@ -125,6 +133,7 @@ public class ResourceValidationUtils {
   private static final String GOOG_PREFIX = "goog";
   private static final ImmutableList<String> GOOGLE_NAMES = ImmutableList.of("google", "g00gle");
   private static final int MAX_RESOURCE_DESCRIPTION_NAME = 2048;
+  private static final int MAX_BATCH_POOL_DISPLAY_NAME = 1024;
 
   private final GitRepoReferencedResourceConfiguration gitRepoReferencedResourceConfiguration;
 
@@ -134,14 +143,14 @@ public class ResourceValidationUtils {
     this.gitRepoReferencedResourceConfiguration = gitRepoReferencedResourceConfiguration;
   }
 
-  public static void validateControlledBucketName(String name) {
+  public static void validateBucketNameDisallowUnderscore(String name) {
     validateBucketName(
         name,
         CONTROLLED_BUCKET_NAME_VALIDATION_PATTERN,
         CONTROLLED_BUCKET_NAME_VALIDATION_FAILURE_ERROR);
   }
 
-  public static void validateReferencedBucketName(String name) {
+  public static void validateBucketNameAllowsUnderscore(String name) {
     validateBucketName(
         name,
         REFERENCED_BUCKET_NAME_VALIDATION_PATTERN,
@@ -152,7 +161,7 @@ public class ResourceValidationUtils {
    * Validates gcs-bucket name following Google documentation
    * https://cloud.google.com/storage/docs/naming-buckets#requirements on a best-effort base.
    *
-   * <p>This method DOES NOT guarentee that the bucket name is valid.
+   * <p>This method DOES NOT guarantee that the bucket name is valid.
    *
    * @param name gcs-bucket name
    * @param validationFailureError
@@ -184,6 +193,18 @@ public class ResourceValidationUtils {
         throw new InvalidNameException(
             "Invalid GCS bucket name specified. Bucket names cannot contains google or mis-spelled google. See Google documentation https://cloud.google.com/storage/docs/naming-buckets#requirements for the full specification.");
       }
+    }
+  }
+
+  public static void validateControlledResourceRegionAgainstPolicy(
+      TpsApiDispatch tpsApiDispatch, UUID workspaceUuid, String location, CloudPlatform platform) {
+    switch (platform) {
+      case AZURE -> {
+        // TODO: enable policy check in Azure when we support Azure regions in the TPS ontology.
+        // validateAzureRegion(location);
+      }
+      case GCP -> validateGcpRegion(tpsApiDispatch, workspaceUuid, location);
+      default -> throw new InvalidControlledResourceException("Unrecognized platform");
     }
   }
 
@@ -310,6 +331,14 @@ public class ResourceValidationUtils {
     }
   }
 
+  public static void validateAzureBatchPoolId(String id) {
+    if (!AZURE_BATCH_POOL_ID_VALIDATION_PATTERN.matcher(id).matches()) {
+      logger.warn("Invalid Azure Batch Pool id {}", id);
+      throw new InvalidReferenceException(
+          "Invalid Azure Batch Pool id specified. Name must be 1 to 64 alphanumeric characters or underscores or dashes.");
+    }
+  }
+
   public static void validateAzureCidrBlock(String range) {
     Pattern pattern =
         Pattern.compile(
@@ -392,6 +421,13 @@ public class ResourceValidationUtils {
     }
   }
 
+  public static void validateBatchPoolDisplayName(@Nullable String displayName) {
+    if (displayName != null && displayName.length() > MAX_BATCH_POOL_DISPLAY_NAME) {
+      throw new InvalidNameException(
+          "Invalid display name specified. Display name must be under 1024 characters.");
+    }
+  }
+
   public static void validateStorageAccountName(String storageAccountName) {
     if (!AZURE_STORAGE_ACCOUNT_NAME_VALIDATION_PATTERN.matcher(storageAccountName).matches()) {
       logger.warn("Invalid Storage Account name: {}", storageAccountName);
@@ -421,21 +457,45 @@ public class ResourceValidationUtils {
     }
   }
 
-  public static void validateRegion(String region) {
-    if (!Region.values().stream()
-        .map(Region::toString)
-        .collect(Collectors.toList())
-        .contains(region)) {
+  public static void validateAzureRegion(String region) {
+    if (StringUtils.isEmpty(region)) {
+      // Azure resources like workspaces may not have a region.
+      logger.warn("Cannot validate empty Azure region.");
+      return;
+    }
+    if (com.azure.core.management.Region.values().stream()
+        .filter(r -> r.toString().equalsIgnoreCase(region))
+        .findFirst()
+        .isEmpty()) {
       logger.warn("Invalid Azure region {}", region);
-      throw new InvalidReferenceException(
-          "Invalid Azure Region specified. See the class `com.azure.core.management.Region`");
+      throw new InvalidControlledResourceException("Invalid Azure Region specified.");
+    }
+  }
+
+  public static void validateGcpRegion(
+      TpsApiDispatch tpsApiDispatch, UUID workspaceId, String region) {
+    region = GcpUtils.parseRegion(region);
+    tpsApiDispatch.createPaoIfNotExist(workspaceId);
+
+    // Get the list of valid locations for this workspace from TPS. If there are no regional
+    // constraints applied to the workspace, TPS should return all available regions.
+    List<String> validLocations = tpsApiDispatch.listValidRegions(workspaceId, CloudPlatform.GCP);
+
+    if (validLocations.stream().noneMatch(region::equalsIgnoreCase)) {
+      throw new InvalidControlledResourceException(
+          String.format("Specified location %s is not allowed by effective policy.", region));
     }
   }
 
   public static <T> void checkFieldNonNull(@Nullable T fieldValue, String fieldName) {
+    checkFieldNonNull(fieldValue, fieldName, "Resource");
+  }
+
+  public static <T> void checkFieldNonNull(
+      @Nullable T fieldValue, String fieldName, String resourceDescriptor) {
     if (fieldValue == null) {
       throw new MissingRequiredFieldException(
-          String.format("Missing required field '%s' for resource", fieldName));
+          String.format("Missing required field '%s' for %s", fieldName, resourceDescriptor));
     }
   }
 

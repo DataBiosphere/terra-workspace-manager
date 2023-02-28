@@ -4,6 +4,7 @@ import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -30,18 +31,14 @@ public class ResourceLineageUtilsTest extends BaseUnitTest {
     Map<String, String> propertyMap = new HashMap<>();
 
     var resource =
-        new ReferencedDataRepoSnapshotResource(
-            randomId,
-            randomId,
-            resourceName,
-            "description of " + resourceName,
-            CloningInstructions.COPY_NOTHING,
-            "terra",
-            "polaroid",
-            /*resourceLineage=*/ null,
-            propertyMap,
-            DEFAULT_USER_EMAIL,
-            /*createdDate*/ null);
+        ReferencedDataRepoSnapshotResource.builder()
+            .wsmResourceFields(
+                ReferenceResourceFixtures.makeDefaultWsmResourceFieldBuilder(randomId)
+                    .resourceLineage(null)
+                    .build())
+            .instanceName("terra")
+            .snapshotId("polaroid")
+            .build();
 
     assertEquals(new ArrayList<>(), resource.getResourceLineage());
   }
@@ -86,18 +83,14 @@ public class ResourceLineageUtilsTest extends BaseUnitTest {
     lineage.add(lineageEntry);
 
     var resource =
-        new ReferencedDataRepoSnapshotResource(
-            randomId,
-            randomId,
-            resourceName,
-            "description of " + resourceName,
-            CloningInstructions.COPY_NOTHING,
-            "terra",
-            "polaroid",
-            lineage,
-            propertyMap,
-            DEFAULT_USER_EMAIL,
-            /*createdDate*/ null);
+        ReferencedDataRepoSnapshotResource.builder()
+            .wsmResourceFields(
+                ReferenceResourceFixtures.makeDefaultWsmResourceFieldBuilder(randomId)
+                    .resourceLineage(lineage)
+                    .build())
+            .instanceName("terra")
+            .snapshotId("polaroid")
+            .build();
 
     assertEquals(lineage, resource.getResourceLineage());
   }

@@ -1,3 +1,25 @@
+paths:
+  /api/policies/v1/getLocationInfo:
+    parameters:
+    - $ref: '#/components/parameters/Platform'
+    - $ref: '#/components/parameters/WsmPolicyLocation'
+    get:
+      summary: Get the cloud location info.
+      operationId: getLocationInfo
+      tags: [policy]
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WsmPolicyLocation'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
 # Policy schemas
 #
 # The TPS schema entries here are problematic. Right now, they match the definitions
@@ -111,6 +133,24 @@ components:
           description: The policy object attempting to combine the conflicting policy
           $ref: '#/components/schemas/WsmPolicyDescription'
 
+    WsmPolicyMergeCheckResult:
+      type: object
+      required: [ conflicts, resourcesWithConflict ]
+      properties:
+        conflicts:
+          description: |
+            List of workspace conflicts.
+          type: array
+          items:
+            $ref: '#/components/schemas/WsmPolicyConflict'
+        resourcesWithConflict:
+          description: |
+            List of resources (by ID) in the target workspace with conflicting policy.
+          type: array
+          items:
+            type: string
+            format: uuid
+
     WsmPolicyUpdateRequest:
       description: Update request body
       type: object
@@ -153,3 +193,86 @@ components:
         ENFORCE_CONFLICT - updates are made and conflicts are propagated
           to policy dependents. (Only valid on policy update.)
       enum: [ 'DRY_RUN', 'FAIL_ON_CONFLICT', 'ENFORCE_CONFLICT' ]
+
+    WsmPolicyDepth:
+      type: integer
+      description: Explain source depth.
+      minimum: 0
+      default: 1
+
+    WsmPolicyExplanation:
+      description: |
+          Explanation of one policy input, providing the input and the sources
+          that were combined to result in the policy. One of the sources can be the
+          requested object itself. The policyExplanations may be empty/not present if
+          this is a leaf in the explain graph.
+      type: object
+      required: [ objectId, policyInput ]
+      properties:
+        objectId:
+          $ref: '#/components/schemas/WsmPolicyObjectId'
+        policyInput:
+          $ref: '#/components/schemas/WsmPolicyInput'
+        policyExplanations:
+          type: array
+          items:
+            $ref: '#/components/schemas/WsmPolicyExplanation'
+
+    WsmPolicyObject:
+      type: object
+      properties:
+        objectId:
+          $ref: '#/components/schemas/WsmPolicyObjectId'
+        objectType:
+          $ref: '#/components/schemas/WsmPolicyObjectType'
+        component:
+          $ref: '#/components/schemas/WsmPolicyComponent'
+        deleted:
+          description: Policy source has been deleted. Policies from the source still apply.
+          type: boolean
+        access:
+          description: No access to the policy object. Policies from the source still apply.
+          type: boolean
+        name:
+          description: Name of the policy object. Null if no access.
+          type: string
+        properties:
+          description: The properties of the policy object. Empty if no access.
+          $ref: '#/components/schemas/Properties'
+
+    WsmPolicyExplainResult:
+      type: object
+      properties:
+        depth:
+          $ref: '#/components/schemas/WsmPolicyDepth'
+        objectId:
+          $ref: '#/components/schemas/WsmPolicyObjectId'
+        explainObjects:
+          description: List of WSM policy objects referenced in the explanation
+          type: array
+          items:
+            $ref: '#/components/schemas/WsmPolicyObject'
+        explanation:
+          description: One explanation for each policy in the effective policies array
+          type: array
+          items:
+            $ref: '#/components/schemas/WsmPolicyExplanation'
+    
+    WsmPolicyLocation:
+      description: TPS location object description.
+      type: object
+      required: [name, description]
+      properties:
+        name:
+          description: The location name
+          type: string
+        description:
+          description: The location description
+          type: string
+        sublocations:
+          description: Sub-locations contained within this location.
+          type: array
+          items:
+            $ref: '#/components/schemas/WsmPolicyLocation'
+        regions:
+          $ref: '#/components/schemas/Regions'

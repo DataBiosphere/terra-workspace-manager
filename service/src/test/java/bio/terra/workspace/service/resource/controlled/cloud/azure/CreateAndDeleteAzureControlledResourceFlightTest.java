@@ -4,8 +4,6 @@ import static bio.terra.workspace.connected.AzureConnectedTestUtils.getAzureName
 
 import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
-import bio.terra.workspace.common.utils.AzureTestUtils;
-import bio.terra.workspace.connected.AzureConnectedTestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -22,27 +20,27 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.springframework.beans.factory.annotation.Autowired;
 
+@Tag("azureConnectedPlus")
 @TestInstance(Lifecycle.PER_CLASS)
 public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureConnectedTest {
 
   @Autowired private WorkspaceService workspaceService;
-  @Autowired private AzureTestUtils azureTestUtils;
   @Autowired private UserAccessUtils userAccessUtils;
-  @Autowired private AzureConnectedTestUtils azureUtils;
 
   private Workspace sharedWorkspace;
   private UUID workspaceUuid;
 
   @BeforeAll
   public void setup() throws InterruptedException {
-    sharedWorkspace = azureTestUtils.createWorkspace(workspaceService);
+    sharedWorkspace =
+        createWorkspaceWithCloudContext(workspaceService, userAccessUtils.defaultUserAuthRequest());
     workspaceUuid = sharedWorkspace.getWorkspaceId();
-    azureUtils.createCloudContext(workspaceUuid, userAccessUtils.defaultUserAuthRequest());
   }
 
   @AfterAll
@@ -70,9 +68,9 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
                     .cloningInstructions(CloningInstructions.COPY_RESOURCE)
                     .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
                     .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                    .region(creationParameters.getRegion())
                     .build())
             .ipName(creationParameters.getName())
-            .region(creationParameters.getRegion())
             .build();
 
     // Submit an IP creation flight and verify the instance is created.
@@ -109,9 +107,9 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
                     .cloningInstructions(CloningInstructions.COPY_RESOURCE)
                     .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
                     .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                    .region(creationParameters.getRegion())
                     .build())
             .namespaceName(creationParameters.getNamespaceName())
-            .region(creationParameters.getRegion())
             .build();
 
     // Submit a relay creation flight and verify the resource exists in the workspace.
@@ -148,9 +146,9 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
                     .cloningInstructions(CloningInstructions.COPY_RESOURCE)
                     .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
                     .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                    .region(creationParameters.getRegion())
                     .build())
             .diskName(creationParameters.getName())
-            .region(creationParameters.getRegion())
             .size(creationParameters.getSize())
             .build();
 
@@ -188,9 +186,9 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
                     .cloningInstructions(CloningInstructions.COPY_RESOURCE)
                     .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
                     .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                    .region(creationParams.getRegion())
                     .build())
             .networkName(creationParams.getName())
-            .region(creationParams.getRegion())
             .subnetName(creationParams.getSubnetName())
             .addressSpaceCidr(creationParams.getAddressSpaceCidr())
             .subnetAddressCidr(creationParams.getSubnetAddressCidr())

@@ -90,7 +90,7 @@ public class CloneReferencedResourceStep implements Step {
 
       try {
         referencedResourceService.createReferenceResourceForClone(
-            destinationResource.castToReferencedResource(), resource, userRequest);
+            destinationResource.castToReferencedResource());
         cloneDetails.setResult(WsmCloneResourceResult.SUCCEEDED);
       } catch (Exception e) {
         cloneDetails.setResult(WsmCloneResourceResult.FAILED).setErrorMessage(e.getMessage());

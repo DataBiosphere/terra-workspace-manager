@@ -6,6 +6,7 @@ import bio.terra.landingzone.library.LandingZoneMain;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.configuration.external.WorkspaceDatabaseConfiguration;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.workspace.WsmApplicationService;
 import javax.sql.DataSource;
 import org.springframework.context.ApplicationContext;
@@ -48,5 +49,9 @@ public final class StartupInitializer {
     // Fill in this method with any other initialization that needs to happen
     // between the point of having the entire application initialized and
     // the point of opening the port to start accepting REST requests.
+    // TODO (PF-2269): Clean this up once the back-fill is done in all Terra environments.
+    ControlledResourceService controlledResourceService =
+        applicationContext.getBean(ControlledResourceService.class);
+    controlledResourceService.updateControlledBigQueryDatasetsLifetimeAsync();
   }
 }

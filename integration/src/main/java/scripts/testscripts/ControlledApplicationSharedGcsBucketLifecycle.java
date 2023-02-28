@@ -18,7 +18,6 @@ import bio.terra.workspace.model.ApplicationState;
 import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.ControlledResourceIamRole;
 import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
-import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.ResourceList;
 import bio.terra.workspace.model.ResourceType;
@@ -73,17 +72,17 @@ public class ControlledApplicationSharedGcsBucketLifecycle extends WorkspaceAllo
     ControlledGcpResourceApi wsmappResourceApi = new ControlledGcpResourceApi(wsmappApiClient);
 
     // Owner adds a reader and a writer to the workspace
-    workspaceApi.grantRole(
-        new GrantRoleRequestBody().memberEmail(reader.userEmail), getWorkspaceId(), IamRole.READER);
-    logger.info("Added {} as a reader to workspace {}", reader.userEmail, getWorkspaceId());
-    workspaceApi.grantRole(
-        new GrantRoleRequestBody().memberEmail(writer.userEmail), getWorkspaceId(), IamRole.WRITER);
-    logger.info("Added {} as a writer to workspace {}", writer.userEmail, getWorkspaceId());
+    ClientTestUtils.grantRole(workspaceApi, getWorkspaceId(), reader, IamRole.READER);
+    ClientTestUtils.grantRole(workspaceApi, getWorkspaceId(), writer, IamRole.WRITER);
 
     // Create the cloud context
     String projectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
     assertNotNull(projectId);
     logger.info("Created project {}", projectId);
+
+    // Wait for grantees to get permission
+    ClientTestUtils.workspaceRoleWaitForPropagation(reader, projectId);
+    ClientTestUtils.workspaceRoleWaitForPropagation(writer, projectId);
 
     // Create the bucket - should fail because application is not enabled
     String bucketResourceName = RandomStringUtils.random(6, true, false);
@@ -134,11 +133,11 @@ public class ControlledApplicationSharedGcsBucketLifecycle extends WorkspaceAllo
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, disableAppFails.getCode());
     logger.info("Failed to disable app, as expected");
 
+    // Creation of the tester will wait for wsmapp to get EDITOR permissions
     try (GcsBucketAccessTester tester = new GcsBucketAccessTester(wsmapp, bucketName, projectId)) {
-      tester.checkAccess(wsmapp, ControlledResourceIamRole.EDITOR);
-      tester.checkAccess(owner, ControlledResourceIamRole.WRITER);
-      tester.checkAccess(writer, ControlledResourceIamRole.WRITER);
-      tester.checkAccess(reader, ControlledResourceIamRole.READER);
+      tester.assertAccessWait(owner, ControlledResourceIamRole.WRITER);
+      tester.assertAccessWait(writer, ControlledResourceIamRole.WRITER);
+      tester.assertAccessWait(reader, ControlledResourceIamRole.READER);
     }
 
     // The reader should be able to enumerate the bucket.
@@ -157,8 +156,7 @@ public class ControlledApplicationSharedGcsBucketLifecycle extends WorkspaceAllo
             () ->
                 GcsBucketUtils.deleteControlledGcsBucket(
                     createdBucket.getResourceId(), getWorkspaceId(), ownerResourceApi));
-    // TODO: [PF-1208] this should be FORBIDDEN (403), but we are throwing the wrong thing
-    assertEquals(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED, cannotDelete.getCode());
+    assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, cannotDelete.getCode());
     logger.info("Owner delete failed as expected");
 
     // Application can delete the bucket through WSM

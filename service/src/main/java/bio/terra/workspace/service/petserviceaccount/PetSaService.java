@@ -3,20 +3,19 @@ package bio.terra.workspace.service.petserviceaccount;
 import bio.terra.cloudres.google.iam.ServiceAccountName;
 import bio.terra.common.exception.ConflictException;
 import bio.terra.common.exception.InternalServerErrorException;
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
+import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.grant.GrantService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
-import com.google.api.services.iam.v1.model.Binding;
 import com.google.api.services.iam.v1.model.Policy;
 import com.google.api.services.iam.v1.model.SetIamPolicyRequest;
-import com.google.common.collect.ImmutableList;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -35,18 +34,25 @@ import org.springframework.stereotype.Component;
 public class PetSaService {
 
   private static final Logger logger = LoggerFactory.getLogger(PetSaService.class);
-  private static final String SERVICE_ACCOUNT_USER_ROLE = "roles/iam.serviceAccountUser";
 
   private final SamService samService;
   private final GcpCloudContextService gcpCloudContextService;
   private final CrlService crlService;
+  private final GrantService grantService;
+  private final FeatureConfiguration features;
 
   @Autowired
   public PetSaService(
-      SamService samService, GcpCloudContextService gcpCloudContextService, CrlService crlService) {
+      SamService samService,
+      GcpCloudContextService gcpCloudContextService,
+      CrlService crlService,
+      GrantService grantService,
+      FeatureConfiguration features) {
     this.samService = samService;
     this.gcpCloudContextService = gcpCloudContextService;
     this.crlService = crlService;
+    this.grantService = grantService;
+    this.features = features;
   }
 
   /**
@@ -120,7 +126,7 @@ public class PetSaService {
         SamRethrow.onInterrupted(
             () -> samService.getProxyGroupEmail(userToEnableEmail, userReq.getRequiredToken()),
             "enablePet");
-    String targetMember = "group:" + proxyGroupEmail;
+    String proxyGroupMember = GcpUtils.toGroupMember(proxyGroupEmail);
 
     try {
       Policy saPolicy =
@@ -135,31 +141,26 @@ public class PetSaService {
             workspaceUuid);
         return Optional.empty();
       }
-      // See if the user is already on the policy. If so, return the policy. This avoids
-      // calls to set the IAM policy that have a rate limit.
-      Optional<Binding> serviceAccountUserBinding = findServiceAccountUserBinding(saPolicy);
-      if (serviceAccountUserBinding.isPresent()
-          && serviceAccountUserBinding.get().getMembers().contains(targetMember)) {
-        logger.info("user {} is already enabled on petSA {}", userToEnableEmail, petSaName.email());
+
+      // Add the proxy group member to the policy. If it is already there (false), return the
+      // policy.
+      // This avoids calls to set the IAM policy that have a rate limit.
+      if (!PetSaUtils.addSaMember(saPolicy, proxyGroupMember)) {
         return Optional.of(saPolicy);
-      } else if (serviceAccountUserBinding.isPresent()) {
-        // If a binding exists for the ServiceAccountUser role but the proxy group is not a member,
-        // add it.
-        serviceAccountUserBinding.get().getMembers().add(targetMember);
-      } else {
-        // Otherwise, create the ServiceAccountUser role binding.
-        Binding newBinding =
-            new Binding()
-                .setRole(SERVICE_ACCOUNT_USER_ROLE)
-                .setMembers(ImmutableList.of(targetMember));
-        // If no bindings exist, getBindings() returns null instead of an empty list.
-        if (saPolicy.getBindings() != null) {
-          saPolicy.getBindings().add(newBinding);
-        } else {
-          List<Binding> bindingList = new ArrayList<>();
-          bindingList.add(newBinding);
-          saPolicy.setBindings(bindingList);
+      }
+
+      // Temporary grant of user and pet to act as pet.
+      if (features.isTemporaryGrantEnabled()) {
+        String petSaMember = GcpUtils.toSaMember(petSaName.email());
+        PetSaUtils.addSaMember(saPolicy, petSaMember);
+
+        String userMember = null;
+        if (grantService.isUserGrantAllowed(userToEnableEmail)) {
+          userMember = GcpUtils.toUserMember(userToEnableEmail);
+          PetSaUtils.addSaMember(saPolicy, userMember);
         }
+
+        grantService.recordActAsGrant(workspaceUuid, userMember, petSaMember);
       }
 
       SetIamPolicyRequest request = new SetIamPolicyRequest().setPolicy(saPolicy);
@@ -210,7 +211,6 @@ public class PetSaService {
         SamRethrow.onInterrupted(
             () -> samService.getProxyGroupEmail(userToDisableEmail, userRequest.getRequiredToken()),
             "disablePet");
-    String targetMember = "group:" + proxyGroupEmail;
 
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceUuid);
     try {
@@ -241,11 +241,19 @@ public class PetSaService {
       // If the member is already not on the policy, we are done
       // This handles the case where there are no bindings at all, so we don't
       // need to worry about null binding later in the logic.
-      Optional<Binding> bindingToModify = findServiceAccountUserBinding(saPolicy);
-      if (bindingToModify.isEmpty() || !bindingToModify.get().getMembers().contains(targetMember)) {
+      if (!PetSaUtils.removeSaMember(saPolicy, GcpUtils.toGroupMember(proxyGroupEmail))) {
         return Optional.empty();
       }
-      bindingToModify.get().getMembers().remove(targetMember);
+
+      // We try to remove the pet and user as well. We do not test the features or
+      // configuration. Those might have changed since we made the grants, so rather
+      // than risk leaving a grant too long, we attempt to remove them. The remove member
+      // code doesn't complain if the grant is not there.
+      String petSaMember = GcpUtils.toSaMember(userToDisablePetSA.get().email());
+      PetSaUtils.removeSaMember(saPolicy, petSaMember);
+      String userMember = GcpUtils.toUserMember(userToDisableEmail);
+      PetSaUtils.removeSaMember(saPolicy, userMember);
+
       SetIamPolicyRequest request = new SetIamPolicyRequest().setPolicy(saPolicy);
       return Optional.of(
           crlService
@@ -263,31 +271,13 @@ public class PetSaService {
   // This always throws, but we give it a return value, so the compiler knows there
   // is no escape from the catch.
   private Optional<Policy> handleProxyUpdateError(Exception e, String op) {
-    if (e instanceof GoogleJsonResponseException) {
-      var g = (GoogleJsonResponseException) e;
+    if (e instanceof GoogleJsonResponseException g) {
       if (g.getStatusCode() == HttpStatus.SC_CONFLICT) {
         throw new ConflictException("Conflict " + op + " pet SA", e);
       }
     }
     throw new InternalServerErrorException(
         "Error " + op + " user's proxy group to impersonate pet SA", e);
-  }
-
-  /**
-   * Find and return the IAM binding granting "roles/iam.serviceAccountUser", if one exists. Sam
-   * will automatically grant pet service accounts this permission on themselves, but the proxy
-   * group may or may not be a member of the binding.
-   */
-  private Optional<Binding> findServiceAccountUserBinding(Policy saPolicy) {
-    if (saPolicy.getBindings() == null) {
-      return Optional.empty();
-    }
-    for (Binding binding : saPolicy.getBindings()) {
-      if (binding.getRole().equals(SERVICE_ACCOUNT_USER_ROLE)) {
-        return Optional.of(binding);
-      }
-    }
-    return Optional.empty();
   }
 
   /**

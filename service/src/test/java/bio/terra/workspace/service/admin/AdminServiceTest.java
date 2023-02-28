@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.admin;
 
-import static bio.terra.workspace.service.workspace.CloudSyncRoleMapping.CUSTOM_GCP_PROJECT_IAM_ROLES;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -22,6 +21,7 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.CustomGcpIamRole;
+import bio.terra.workspace.service.workspace.CloudSyncRoleMapping;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import com.google.api.services.iam.v1.model.Role;
@@ -34,9 +34,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+@Tag("connectedPlus")
 public class AdminServiceTest extends BaseConnectedTest {
 
   private static final List<String> INCOMPLETE_READER_PERMISSIONS =
@@ -50,6 +52,7 @@ public class AdminServiceTest extends BaseConnectedTest {
   @Autowired WorkspaceDao workspaceDao;
   @Autowired WorkspaceConnectedTestUtils connectedTestUtils;
   @Autowired UserAccessUtils userAccessUtils;
+  @Autowired CloudSyncRoleMapping cloudSyncRoleMapping;
   @Autowired CrlService crlService;
   @Autowired WorkspaceActivityLogDao workspaceActivityLogDao;
 
@@ -85,7 +88,7 @@ public class AdminServiceTest extends BaseConnectedTest {
   void cleanUpWorkspace() {
     jobService.setFlightDebugInfoForTest(null);
     for (UUID workspaceId : workspaceIds) {
-      connectedTestUtils.deleteWorkspaceAndGcpContext(
+      connectedTestUtils.deleteWorkspaceAndCloudContext(
           userAccessUtils.defaultUserAuthRequest(), workspaceId);
     }
   }
@@ -111,7 +114,11 @@ public class AdminServiceTest extends BaseConnectedTest {
     jobService.waitForJob(jobId);
     for (String projectId : projectIds) {
       assertProjectReaderRoleMatchesExpected(
-          projectId, CUSTOM_GCP_PROJECT_IAM_ROLES.get(WsmIamRole.READER).getIncludedPermissions());
+          projectId,
+          cloudSyncRoleMapping
+              .getCustomGcpProjectIamRoles()
+              .get(WsmIamRole.READER)
+              .getIncludedPermissions());
     }
     OffsetDateTime newChangeTimestampOfWorkspace1 =
         workspaceActivityLogDao.getLastUpdatedDetails(workspaceIds.get(0)).get().changeDate();
@@ -144,7 +151,11 @@ public class AdminServiceTest extends BaseConnectedTest {
     jobService.waitForJob(jobId);
     for (String projectId : projectIds) {
       assertProjectReaderRoleMatchesExpected(
-          projectId, CUSTOM_GCP_PROJECT_IAM_ROLES.get(WsmIamRole.READER).getIncludedPermissions());
+          projectId,
+          cloudSyncRoleMapping
+              .getCustomGcpProjectIamRoles()
+              .get(WsmIamRole.READER)
+              .getIncludedPermissions());
     }
     assertTrue(
         workspaceActivityLogDao

@@ -5,7 +5,6 @@ import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.TYPE_PROPERT
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.VERSION_PROPERTY;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.WORKSPACE_NAME;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.getUserFacingId;
-import static bio.terra.workspace.common.utils.MockMvcUtils.UPDATE_WORKSPACES_V1_POLICIES_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_PATH;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
@@ -21,7 +20,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.policy.model.TpsComponent;
@@ -50,8 +48,7 @@ import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
 import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
 import bio.terra.workspace.generated.model.ApiWsmPolicyInputs;
 import bio.terra.workspace.generated.model.ApiWsmPolicyPair;
-import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateMode;
-import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateRequest;
+import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateResult;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
 import bio.terra.workspace.service.iam.model.SamConstants.SamSpendProfileAction;
@@ -64,18 +61,16 @@ import bio.terra.workspace.service.workspace.model.WorkspaceConstants.Properties
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.ResultActions;
 
 /**
  * An example of a mockMvc-based unit test for a controller.
@@ -138,10 +133,6 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
 
     when(mockFeatureConfiguration().isTpsEnabled()).thenReturn(true);
     // We don't need to mock tpsCheck() because Mockito will already do nothing by default.
-
-    // Pretend every workspace has an empty policy. The ID on the PAO will not match the workspace
-    // ID, but that doesn't matter for tests which don't care about policy.
-    when(mockTpsApiDispatch().getPaoIfExists(any())).thenReturn(Optional.of(emptyWorkspacePao()));
   }
 
   @Test
@@ -325,7 +316,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
         USER_REQUEST.getEmail(),
         USER_REQUEST.getSubjectId(),
         OperationType.CLONE,
-        destinationWorkspaceId.toString(),
+        sourceWorkspace.getId().toString(),
         ActivityLogChangedTarget.WORKSPACE);
   }
 
@@ -402,8 +393,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
             .objectId(workspace.getId())
             .attributes(new TpsPolicyInputs().addInputsItem(TPS_GROUP_POLICY))
             .effectiveAttributes(new TpsPolicyInputs().addInputsItem(TPS_GROUP_POLICY));
-    when(mockTpsApiDispatch().getPaoIfExists(eq(workspace.getId())))
-        .thenReturn(Optional.of(getPolicyResult));
+    when(mockTpsApiDispatch().getPao(eq(workspace.getId()))).thenReturn(getPolicyResult);
 
     ApiWorkspaceDescription gotWorkspace =
         mockMvcUtils.getWorkspace(USER_REQUEST, workspace.getId());
@@ -446,11 +436,12 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
             .sourcesObjectIds(Collections.emptyList());
 
     // Return a policy object for the first workspace
-    when(mockTpsApiDispatch().getPaoIfExists(eq(workspace.getId())))
-        .thenReturn(Optional.of(getPolicyResult));
-    // Treat the second workspace like it was created before policy existed and doesn't have a PAO
-    when(mockTpsApiDispatch().getPaoIfExists(eq(noPolicyWorkspace.getId())))
-        .thenReturn(Optional.empty());
+    when(mockTpsApiDispatch().getPao(eq(workspace.getId()))).thenReturn(getPolicyResult);
+    // Treat the second workspace like it was created before policy existed. It should receive an
+    // empty Pao.
+    TpsPaoGetResult emptyPao =
+        new TpsPaoGetResult().effectiveAttributes(new TpsPolicyInputs().inputs(new ArrayList<>()));
+    when(mockTpsApiDispatch().getPao(eq(noPolicyWorkspace.getId()))).thenReturn(emptyPao);
 
     ApiWorkspaceDescription gotWorkspace =
         mockMvcUtils.getWorkspace(USER_REQUEST, workspace.getId());
@@ -487,7 +478,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
     OffsetDateTime lastChangedDate = lastChangeDetails.changeDate();
     assertEquals(OperationType.CREATE, lastChangeDetails.operationType());
 
-    TpsPaoUpdateResult result = updatePolicies(workspace.getId());
+    ApiWsmPolicyUpdateResult result = mockMvcUtils.updatePolicies(USER_REQUEST, workspace.getId());
     assertTrue(result.isUpdateApplied());
     ActivityLogChangeDetails secondChangeDetails =
         workspaceActivityLogService.getLastUpdatedDetails(workspace.getId()).get();
@@ -512,7 +503,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
         workspaceActivityLogService.getLastUpdatedDetails(workspace.getId()).get();
     assertEquals(OperationType.CREATE, lastChangeDetails.operationType());
 
-    TpsPaoUpdateResult result = updatePolicies(workspace.getId());
+    ApiWsmPolicyUpdateResult result = mockMvcUtils.updatePolicies(USER_REQUEST, workspace.getId());
     assertFalse(result.isUpdateApplied());
     assertEquals(
         lastChangeDetails,
@@ -557,38 +548,5 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
         .filter(w -> w.getId().equals(id))
         .findFirst()
         .orElseThrow(() -> new RuntimeException("workspace " + id + "not found in list!"));
-  }
-
-  private TpsPaoUpdateResult updatePolicies(UUID workspaceId) throws Exception {
-    var serializedResponse =
-        updatePoliciesExpect(workspaceId, HttpStatus.SC_OK)
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-    return objectMapper.readValue(serializedResponse, TpsPaoUpdateResult.class);
-  }
-
-  private ResultActions updatePoliciesExpect(UUID workspaceId, int code) throws Exception {
-    ApiWsmPolicyUpdateRequest updateRequest =
-        new ApiWsmPolicyUpdateRequest()
-            .updateMode(ApiWsmPolicyUpdateMode.ENFORCE_CONFLICT)
-            .addAttributes(
-                new ApiWsmPolicyInputs()
-                    .addInputsItem(
-                        new ApiWsmPolicyInput()
-                            .namespace("terra")
-                            .name("region-constraint")
-                            .addAdditionalDataItem(
-                                new ApiWsmPolicyPair().key("foo").value("bar"))));
-    return mockMvc
-        .perform(
-            addAuth(
-                patch(String.format(UPDATE_WORKSPACES_V1_POLICIES_PATH_FORMAT, workspaceId))
-                    .contentType(MediaType.APPLICATION_JSON_VALUE)
-                    .accept(MediaType.APPLICATION_JSON)
-                    .characterEncoding("UTF-8")
-                    .content(objectMapper.writeValueAsString(updateRequest)),
-                USER_REQUEST))
-        .andExpect(status().is(code));
   }
 }

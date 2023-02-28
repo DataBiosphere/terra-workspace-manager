@@ -1,11 +1,14 @@
 package bio.terra.workspace.service.policy;
 
+import bio.terra.common.exception.ForbiddenException;
 import bio.terra.policy.model.TpsComponent;
 import bio.terra.policy.model.TpsObjectType;
 import bio.terra.policy.model.TpsPaoConflict;
 import bio.terra.policy.model.TpsPaoDescription;
 import bio.terra.policy.model.TpsPaoGetResult;
 import bio.terra.policy.model.TpsPaoUpdateResult;
+import bio.terra.policy.model.TpsPolicyExplainSource;
+import bio.terra.policy.model.TpsPolicyExplanation;
 import bio.terra.policy.model.TpsPolicyInput;
 import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.policy.model.TpsPolicyPair;
@@ -15,15 +18,27 @@ import bio.terra.workspace.generated.model.ApiWsmPolicy;
 import bio.terra.workspace.generated.model.ApiWsmPolicyComponent;
 import bio.terra.workspace.generated.model.ApiWsmPolicyConflict;
 import bio.terra.workspace.generated.model.ApiWsmPolicyDescription;
+import bio.terra.workspace.generated.model.ApiWsmPolicyExplanation;
 import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
 import bio.terra.workspace.generated.model.ApiWsmPolicyInputs;
 import bio.terra.workspace.generated.model.ApiWsmPolicyObjectType;
 import bio.terra.workspace.generated.model.ApiWsmPolicyPair;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateMode;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateResult;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
+import bio.terra.workspace.service.policy.model.PolicyComponent;
+import bio.terra.workspace.service.policy.model.PolicyObject;
+import bio.terra.workspace.service.policy.model.PolicyObjectType;
+import bio.terra.workspace.service.workspace.WorkspaceService;
+import com.google.common.base.Preconditions;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The WSM interface uses an identical, but different set of classes for TPS data. This utility
@@ -31,9 +46,13 @@ import javax.annotation.Nullable;
  * classes. It is our buffer when TPS API changes and WSM is not in sync.
  */
 public class TpsApiConversionUtils {
+  private static final Logger logger = LoggerFactory.getLogger(TpsApiConversionUtils.class);
+
   private TpsApiConversionUtils() {}
 
   public static List<ApiWsmPolicyInput> apiEffectivePolicyListFromTpsPao(TpsPaoGetResult tpsPao) {
+    if (tpsPao == null) return new ArrayList<>();
+
     ApiWsmPolicyInputs apiInputs = apiFromTpsPolicyInputs(tpsPao.getEffectiveAttributes());
     return apiInputs.getInputs();
   }
@@ -134,11 +153,68 @@ public class TpsApiConversionUtils {
                 .toList());
   }
 
+  public static ApiWsmPolicyInput policyInputToApi(TpsPolicyInput input) {
+    var wsmInput = new ApiWsmPolicyInput();
+    if (input.getAdditionalData() != null) {
+      input
+          .getAdditionalData()
+          .forEach(
+              data ->
+                  wsmInput.addAdditionalDataItem(
+                      new ApiWsmPolicyPair().key(data.getKey()).value(data.getValue())));
+    }
+    return wsmInput.namespace(input.getNamespace()).name(input.getName());
+  }
+
   public static TpsUpdateMode tpsFromApiTpsUpdateMode(ApiWsmPolicyUpdateMode apiUpdateMode) {
     TpsUpdateMode mode = TpsUpdateMode.fromValue(apiUpdateMode.name());
     if (mode == null) {
       throw new EnumNotRecognizedException("No mapping for update mode");
     }
     return mode;
+  }
+
+  public static PolicyObject buildWsmPolicyObject(
+      TpsPolicyExplainSource source,
+      WorkspaceService workspaceService,
+      AuthenticatedUserRequest userRequest) {
+    boolean access = false;
+    String name = null;
+    Map<String, String> properties = Collections.emptyMap();
+    // When there are more type of policy object, we may need to change this to a switch case.
+    Preconditions.checkState(TpsObjectType.WORKSPACE == source.getObjectType());
+    try {
+      var workspace =
+          workspaceService.validateWorkspaceAndAction(
+              userRequest, source.getObjectId(), SamWorkspaceAction.READ);
+      access = true;
+      name = workspace.displayName();
+      properties = workspace.properties();
+    } catch (ForbiddenException e) {
+      logger.info("Not authorized to read workspace {}.", source.getObjectId());
+    }
+
+    return new PolicyObject(
+        source.getObjectId(),
+        PolicyObjectType.fromTpsObjectType(source.getObjectType()),
+        PolicyComponent.fromTpsComponent(source.getComponent()),
+        source.isDeleted(),
+        access,
+        name,
+        properties);
+  }
+
+  public static ApiWsmPolicyExplanation convertExplanation(TpsPolicyExplanation explanation) {
+    var wsmPolicyExplanation =
+        new ApiWsmPolicyExplanation()
+            .objectId(explanation.getObjectId())
+            .policyInput(policyInputToApi(explanation.getPolicyInput()));
+    if (explanation.getPolicyExplanations() != null) {
+      wsmPolicyExplanation.policyExplanations(
+          explanation.getPolicyExplanations().stream()
+              .map(TpsApiConversionUtils::convertExplanation)
+              .toList());
+    }
+    return wsmPolicyExplanation;
   }
 }

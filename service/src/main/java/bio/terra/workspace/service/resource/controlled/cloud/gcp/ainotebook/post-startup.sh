@@ -182,7 +182,7 @@ sudo -u "${JUPYTER_USER}" sh -c "echo \"export GOOGLE_SERVICE_ACCOUNT_EMAIL='${P
 
 sudo -u "${JUPYTER_USER}" sh -c "mkdir -p /home/${JUPYTER_USER}/.ssh"
 cd "/home/${JUPYTER_USER}"
-readonly TERRA_SSH_KEY="$(sudo -u "${JUPYTER_USER}" sh -c "terra user ssh-key get --format=JSON")"
+readonly TERRA_SSH_KEY="$(sudo -u "${JUPYTER_USER}" sh -c "terra user ssh-key get --include-private-key --format=JSON")"
 
 # Start the ssh-agent. Set this command in bash_profile so everytime user starts a shell, we start the ssh-agent.
 sudo -u "${JUPYTER_USER}" sh -c "echo eval '\"\$(ssh-agent -s)\"' >> /home/${JUPYTER_USER}/.bash_profile"
@@ -191,9 +191,6 @@ if [[ -n "$TERRA_SSH_KEY" ]]; then
   sudo -u "${JUPYTER_USER}" sh -c 'chmod go-rwx .ssh/id_rsa'
   sudo -u "${JUPYTER_USER}" sh -c 'ssh-add .ssh/id_rsa; ssh-keyscan -H github.com >> ~/.ssh/known_hosts'
 fi
-
-# Generate cromwell.conf
-sudo -u "${JUPYTER_USER}" sh -c "terra cromwell generate-config"
 
 # Attempt to clone all the git repo references in the workspace. If the user's ssh key does not exist or doesn't have access
 # to the git references, the corresponding git repo cloning will be skipped.

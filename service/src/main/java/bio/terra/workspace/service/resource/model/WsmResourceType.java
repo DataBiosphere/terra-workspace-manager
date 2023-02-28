@@ -1,6 +1,8 @@
 package bio.terra.workspace.service.resource.model;
 
 import bio.terra.workspace.generated.model.ApiResourceType;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.ControlledAzureBatchPoolHandler;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.ControlledAzureBatchPoolResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpHandler;
@@ -170,7 +172,14 @@ public enum WsmResourceType {
       "CONTROLLED_AZURE_STORAGE_CONTAINER",
       ApiResourceType.AZURE_STORAGE_CONTAINER,
       ControlledAzureStorageContainerResource.class,
-      ControlledAzureStorageContainerHandler::getHandler);
+      ControlledAzureStorageContainerHandler::getHandler),
+  CONTROLLED_AZURE_BATCH_POOL(
+      CloudPlatform.AZURE,
+      StewardshipType.CONTROLLED,
+      "CONTROLLED_AZURE_BATCH_POOL",
+      ApiResourceType.AZURE_BATCH_POOL,
+      ControlledAzureBatchPoolResource.class,
+      ControlledAzureBatchPoolHandler::getHandler);
 
   private final CloudPlatform cloudPlatform;
   private final StewardshipType stewardshipType;

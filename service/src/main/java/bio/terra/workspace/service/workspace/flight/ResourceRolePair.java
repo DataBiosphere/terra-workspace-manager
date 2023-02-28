@@ -2,6 +2,8 @@ package bio.terra.workspace.service.workspace.flight;
 
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * A pair of ControlledResource and ControlledResourceIamRole objects. This represents a single role
@@ -12,7 +14,10 @@ public class ResourceRolePair {
   private final ControlledResource resource;
   private final ControlledResourceIamRole role;
 
-  public ResourceRolePair(ControlledResource resource, ControlledResourceIamRole role) {
+  @JsonCreator
+  public ResourceRolePair(
+      @JsonProperty("resource") ControlledResource resource,
+      @JsonProperty("role") ControlledResourceIamRole role) {
     this.resource = resource;
     this.role = role;
   }

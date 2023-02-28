@@ -1,5 +1,6 @@
 package scripts.utils;
 
+import static org.apache.http.HttpStatus.SC_FORBIDDEN;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -18,6 +19,7 @@ import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiClient;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.ErrorReport;
+import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.JobReport;
 import bio.terra.workspace.model.JobReport.StatusEnum;
@@ -33,11 +35,13 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.bigquery.BigQueryOptions;
 import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageException;
 import com.google.cloud.storage.StorageOptions;
 import com.google.common.base.Strings;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -48,6 +52,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ClientTestUtils {
+  // Retry default parameters
+  // The total allowed duration is a guess. It may be too long, but we have no guidance.
+  // The sleep duration is based on guidance for the fastest we should consider polling.
+  public static final Duration DEFAULT_RETRY_TOTAL_DURATION = Duration.ofMinutes(20);
+  public static final Duration DEFAULT_SLEEP_DURATION = Duration.ofSeconds(30);
 
   public static final String RESOURCE_NAME_PREFIX = "terratest";
   // We may want this to be a test parameter. It has to match what is in the config or in the helm
@@ -254,9 +263,9 @@ public class ClientTestUtils {
   }
 
   /**
-   * Get a result from a call that might throw an exception. Treat the exception as retryable, sleep
-   * for 15 seconds, and retry up to 40 times. This structure is useful for situations where we are
-   * waiting on a cloud IAM permission change to take effect.
+   * Get a result from a call that might throw an exception. Treat the exception as retry-able. This
+   * structure is useful for situations where we are waiting on a cloud IAM permission change to
+   * take effect.
    *
    * @param supplier - code returning the result or throwing an exception
    * @param <T> - type of result
@@ -266,27 +275,8 @@ public class ClientTestUtils {
    */
   public static @Nullable <T> T getWithRetryOnException(SupplierWithException<T> supplier)
       throws Exception {
-    T result = null;
-    int numTries = 40;
-    Duration sleepDuration = Duration.ofSeconds(15);
-    while (numTries > 0) {
-      try {
-        result = supplier.get();
-        break;
-      } catch (Exception e) {
-        numTries--;
-        if (0 == numTries) {
-          throw e;
-        }
-        logger.info(
-            "Exception \"{}\". Waiting {} seconds for permissions to propagate. Tries remaining: {}",
-            e.getMessage(),
-            sleepDuration.toSeconds(),
-            numTries);
-        TimeUnit.MILLISECONDS.sleep(sleepDuration.toMillis());
-      }
-    }
-    return result;
+    return getWithRetryOnException(
+        supplier, DEFAULT_RETRY_TOTAL_DURATION, DEFAULT_SLEEP_DURATION, null);
   }
 
   public static void runWithRetryOnException(Runnable fn) throws Exception {
@@ -295,6 +285,64 @@ public class ClientTestUtils {
           fn.run();
           return null;
         });
+  }
+
+  /**
+   * Get a result from a call that might throw an exception. If the supplier finishes, the result is
+   * returned. If the supplier continues to throw, when totalDuration has elapsed, this method will
+   * throw that exception.
+   *
+   * @param supplier - code returning the result or throwing an exception
+   * @param totalDuration - total amount of time to retry
+   * @param sleepDuration - amount of time to sleep between retries
+   * @param retryExceptionList - nullable; a list of exception classes. If null, any exception is
+   *     retried
+   * @param <T> - type of result
+   * @return - result from supplier, if no exception
+   * @throws InterruptedException if the sleep is interrupted
+   */
+  public static <T> T getWithRetryOnException(
+      SupplierWithException<T> supplier,
+      Duration totalDuration,
+      Duration sleepDuration,
+      @Nullable List<Class<? extends Exception>> retryExceptionList)
+      throws Exception {
+
+    T result = null;
+    Instant endTime = Instant.now().plus(totalDuration);
+
+    while (true) {
+      try {
+        result = supplier.get();
+        break;
+      } catch (Exception e) {
+        // If we are out of time or the exception is not retryable
+        if (Instant.now().isAfter(endTime) || !isRetryable(e, retryExceptionList)) {
+          throw e;
+        }
+        logger.info(
+            "Exception \"{}\". Waiting {} seconds. End time is {}",
+            e.getMessage(),
+            sleepDuration.toSeconds(),
+            endTime);
+        TimeUnit.MILLISECONDS.sleep(sleepDuration.toMillis());
+      }
+    }
+    return result;
+  }
+
+  private static boolean isRetryable(
+      Exception e, @Nullable List<Class<? extends Exception>> retryExceptionList) {
+    // If we didn't get a list, then all exceptions are considered retryable
+    if (retryExceptionList == null) {
+      return true;
+    }
+    for (Class<? extends Exception> clazz : retryExceptionList) {
+      if (clazz.isInstance(e)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -377,7 +425,90 @@ public class ClientTestUtils {
   /** An interface for an arbitrary workspace operation that throws an {@link ApiException}. */
   @FunctionalInterface
   public interface WorkspaceOperation<T> {
-
     T apply() throws ApiException;
+  }
+
+  // TEMPORARY MEASURE UNTIL WE DO THE WAITING IN WSM
+  public static void grantRoleWaitForPropagation(
+      WorkspaceApi workspaceApi,
+      UUID workspaceUuid,
+      String gcpProjectId,
+      TestUserSpecification grantee,
+      IamRole roleToGrant)
+      throws Exception {
+    // Make sure it this will work
+    assertTrue(roleToGrant != IamRole.APPLICATION && roleToGrant != IamRole.DISCOVERER);
+
+    grantRole(workspaceApi, workspaceUuid, grantee, roleToGrant);
+
+    workspaceRoleWaitForPropagation(grantee, gcpProjectId);
+  }
+
+  public static void grantRole(
+      WorkspaceApi workspaceApi,
+      UUID workspaceUuid,
+      TestUserSpecification grantee,
+      IamRole roleToGrant)
+      throws Exception {
+    // Have WSM do the grant
+    workspaceApi.grantRole(
+        new GrantRoleRequestBody().memberEmail(grantee.userEmail), workspaceUuid, roleToGrant);
+    logger.info("Added {} as {} to workspace {}", grantee.userEmail, roleToGrant, workspaceUuid);
+  }
+
+  public static void workspaceRoleWaitForPropagation(
+      TestUserSpecification grantee, String gcpProjectId) throws Exception {
+    Storage granteeStorage = getGcpStorageClient(grantee, gcpProjectId);
+
+    // Wait for the grantee to have storage.bucket.list permission,
+    // indicating that the grant has been propagated to the project.
+    getWithRetryOnException(granteeStorage::list);
+  }
+
+  /**
+   * Revoke a workspace role and wait for propagation
+   *
+   * @param workspaceApi api access
+   * @param workspaceUuid workspace
+   * @param gcpProjectId project
+   * @param testUser user to revoke
+   * @param roleToRevoke role to revoke
+   * @return true if revoke completed; false if non-forbidden error is thrown. Users of this method
+   *     should assert the result.
+   * @throws Exception general
+   */
+  public static boolean revokeRoleWaitForPropagation(
+      WorkspaceApi workspaceApi,
+      UUID workspaceUuid,
+      String gcpProjectId,
+      TestUserSpecification testUser,
+      IamRole roleToRevoke)
+      throws Exception {
+    // Make sure it this will work
+    assertTrue(roleToRevoke != IamRole.APPLICATION && roleToRevoke != IamRole.DISCOVERER);
+
+    workspaceApi.removeRole(workspaceUuid, roleToRevoke, testUser.userEmail);
+    Storage storage = getGcpStorageClient(testUser, gcpProjectId);
+
+    // Wait for the testUser to lose storage.bucket.list permission,
+    // indicating that the revoke has been propagated to the project.
+    return getWithRetryOnException(() -> testForbiddenStorageList(storage, testUser));
+  }
+
+  private static boolean testForbiddenStorageList(Storage storage, TestUserSpecification testUser)
+      throws Exception {
+    try {
+      storage.list();
+      logger.info("User {} still has access to the project", testUser.userEmail);
+      throw new RuntimeException("User still has access to the project: " + testUser.userEmail);
+    } catch (StorageException e) {
+      if (e.getCode() == SC_FORBIDDEN) {
+        return true;
+      }
+      throw e;
+    } catch (Exception e) {
+      logger.info("Caught unexpected exception", e);
+      return false;
+    }
   }
 }

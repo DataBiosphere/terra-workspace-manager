@@ -27,6 +27,7 @@ import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
+import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.any.datareposnapshot.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
@@ -41,7 +42,6 @@ import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.junit.jupiter.api.AfterEach;
@@ -291,18 +291,12 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
       assertThrows(
           MissingRequiredFieldException.class,
           () ->
-              new ReferencedDataRepoSnapshotResource(
-                  null,
-                  UUID.randomUUID(),
-                  "aname",
-                  null,
-                  CloningInstructions.COPY_NOTHING,
-                  DATA_REPO_INSTANCE_NAME,
-                  "polaroid",
-                  /*resourceLineage=*/ null,
-                  /*properties=*/ Map.of(),
-                  DEFAULT_USER_EMAIL,
-                  /*createdDate*/ null));
+              ReferencedDataRepoSnapshotResource.builder()
+                  .wsmResourceFields(
+                      ReferenceResourceFixtures.makeDefaultWsmResourceFieldBuilder(null).build())
+                  .instanceName(DATA_REPO_INSTANCE_NAME)
+                  .snapshotId("polaroid")
+                  .build());
     }
 
     @Test
@@ -310,18 +304,14 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
       assertThrows(
           MissingRequiredFieldException.class,
           () ->
-              new ReferencedDataRepoSnapshotResource(
-                  workspaceUuid,
-                  UUID.randomUUID(),
-                  null,
-                  null,
-                  CloningInstructions.COPY_NOTHING,
-                  DATA_REPO_INSTANCE_NAME,
-                  "polaroid",
-                  /*resourceLineage=*/ null,
-                  /*properties=*/ Map.of(),
-                  DEFAULT_USER_EMAIL,
-                  /*createdDate*/ null));
+              ReferencedDataRepoSnapshotResource.builder()
+                  .wsmResourceFields(
+                      ReferenceResourceFixtures.makeDefaultWsmResourceFieldBuilder(workspaceUuid)
+                          .name(null)
+                          .build())
+                  .instanceName(DATA_REPO_INSTANCE_NAME)
+                  .snapshotId("polaroid")
+                  .build());
     }
 
     @Test
@@ -329,18 +319,14 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
       assertThrows(
           MissingRequiredFieldException.class,
           () ->
-              new ReferencedDataRepoSnapshotResource(
-                  workspaceUuid,
-                  UUID.randomUUID(),
-                  "aname",
-                  null,
-                  null,
-                  DATA_REPO_INSTANCE_NAME,
-                  "polaroid",
-                  /*resourceLineage=*/ null,
-                  /*properties=*/ Map.of(),
-                  DEFAULT_USER_EMAIL,
-                  /*createdDate*/ null));
+              ReferencedDataRepoSnapshotResource.builder()
+                  .wsmResourceFields(
+                      ReferenceResourceFixtures.makeDefaultWsmResourceFieldBuilder(workspaceUuid)
+                          .cloningInstructions(null)
+                          .build())
+                  .instanceName(DATA_REPO_INSTANCE_NAME)
+                  .snapshotId("polaroid")
+                  .build());
     }
 
     @Test
@@ -348,18 +334,14 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
       assertThrows(
           MissingRequiredFieldException.class,
           () ->
-              new ReferencedDataRepoSnapshotResource(
-                  workspaceUuid,
-                  null,
-                  "aname",
-                  null,
-                  null,
-                  DATA_REPO_INSTANCE_NAME,
-                  "polaroid",
-                  /*resourceLineage=*/ null,
-                  /*properties=*/ Map.of(),
-                  DEFAULT_USER_EMAIL,
-                  /*createdDate*/ null));
+              ReferencedDataRepoSnapshotResource.builder()
+                  .wsmResourceFields(
+                      ReferenceResourceFixtures.makeDefaultWsmResourceFieldBuilder(workspaceUuid)
+                          .resourceId(null)
+                          .build())
+                  .instanceName(DATA_REPO_INSTANCE_NAME)
+                  .snapshotId("polaroid")
+                  .build());
     }
   }
 
@@ -444,46 +426,28 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
 
     @Test
     void testInvalidInstanceName() {
-      UUID resourceId = UUID.randomUUID();
-      String resourceName = "testdatarepo-" + resourceId.toString();
-
       assertThrows(
           MissingRequiredFieldException.class,
           () ->
-              new ReferencedDataRepoSnapshotResource(
-                  workspaceUuid,
-                  resourceId,
-                  resourceName,
-                  "description of " + resourceName,
-                  CloningInstructions.COPY_NOTHING,
-                  null,
-                  "polaroid",
-                  /*resourceLineage=*/ null,
-                  /*properties=*/ Map.of(),
-                  DEFAULT_USER_EMAIL,
-                  /*createdDate*/ null));
+              ReferencedDataRepoSnapshotResource.builder()
+                  .wsmResourceFields(
+                      ReferenceResourceFixtures.makeDefaultWsmResourceFields(workspaceUuid))
+                  .instanceName(null)
+                  .snapshotId("polaroid")
+                  .build());
     }
 
     @Test
     void testInvalidSnapshot() {
-      UUID resourceId = UUID.randomUUID();
-      String resourceName = "testdatarepo-" + resourceId.toString();
-
       assertThrows(
           MissingRequiredFieldException.class,
           () ->
-              new ReferencedDataRepoSnapshotResource(
-                  workspaceUuid,
-                  resourceId,
-                  resourceName,
-                  "description of " + resourceName,
-                  CloningInstructions.COPY_NOTHING,
-                  DATA_REPO_INSTANCE_NAME,
-                  null,
-                  /*resourceLineage=*/ null,
-                  /*properties=*/ Map.of(),
-                  DEFAULT_USER_EMAIL,
-                  /*createdDate*/ null));
+              ReferencedDataRepoSnapshotResource.builder()
+                  .wsmResourceFields(
+                      ReferenceResourceFixtures.makeDefaultWsmResourceFields(workspaceUuid))
+                  .instanceName(DATA_REPO_INSTANCE_NAME)
+                  .snapshotId(null)
+                  .build());
     }
 
     @Test
@@ -535,21 +499,11 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
     }
 
     private ReferencedGcsObjectResource makeGcsObjectReference() {
-      UUID resourceId = UUID.randomUUID();
-      String resourceName = "testgcs-" + resourceId;
-
-      return new ReferencedGcsObjectResource(
-          workspaceUuid,
-          resourceId,
-          resourceName,
-          "description of " + resourceName,
-          CloningInstructions.COPY_REFERENCE,
-          /*bucketName=*/ "theres-a-hole-in-the-bottom-of-the",
-          /*objectName=*/ "balloon",
-          /*resourceLineage=*/ null,
-          /*properties=*/ Map.of(),
-          DEFAULT_USER_EMAIL,
-          /*createdDate*/ null);
+      return ReferencedGcsObjectResource.builder()
+          .wsmResourceFields(ReferenceResourceFixtures.makeDefaultWsmResourceFields(workspaceUuid))
+          .bucketName("theres-a-hole-in-the-bottom-of-the")
+          .objectName("balloon")
+          .build();
     }
 
     @Test
@@ -626,20 +580,10 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
     }
 
     private ReferencedGcsBucketResource makeGcsBucketResource() {
-      UUID resourceId = UUID.randomUUID();
-      String resourceName = "testgcs-" + resourceId.toString();
-
-      return new ReferencedGcsBucketResource(
-          workspaceUuid,
-          resourceId,
-          resourceName,
-          "description of " + resourceName,
-          CloningInstructions.COPY_REFERENCE,
-          "theres-a-hole-in-the-bottom-of-the",
-          /*resourceLineage=*/ null,
-          /*properties=*/ Map.of(),
-          DEFAULT_USER_EMAIL,
-          /*createdDate*/ null);
+      return ReferencedGcsBucketResource.builder()
+          .wsmResourceFields(ReferenceResourceFixtures.makeDefaultWsmResourceFields(workspaceUuid))
+          .bucketName("theres-a-hole-in-the-bottom-of-the")
+          .build();
     }
 
     @Test
@@ -681,64 +625,39 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
 
     @Test
     void missingObjectName_throwsException() {
-      UUID resourceId = UUID.randomUUID();
-      String resourceName = "testgcs-" + resourceId;
       assertThrows(
           MissingRequiredFieldException.class,
           () ->
-              new ReferencedGcsObjectResource(
-                  workspaceUuid,
-                  resourceId,
-                  resourceName,
-                  "description of " + resourceName,
-                  CloningInstructions.COPY_REFERENCE,
-                  /*bucketName=*/ "spongebob",
-                  /*fileName=*/ "",
-                  /*resourceLineage=*/ null,
-                  /*properties=*/ Map.of(),
-                  DEFAULT_USER_EMAIL,
-                  /*createdDate*/ null));
+              ReferencedGcsObjectResource.builder()
+                  .wsmResourceFields(
+                      ReferenceResourceFixtures.makeDefaultWsmResourceFields(workspaceUuid))
+                  .bucketName("spongebob")
+                  .objectName(null)
+                  .build());
     }
 
     @Test
     void testMissingBucketName() {
-      UUID resourceId = UUID.randomUUID();
-      String resourceName = "testgcs-" + resourceId;
       assertThrows(
           MissingRequiredFieldException.class,
           () ->
-              new ReferencedGcsBucketResource(
-                  workspaceUuid,
-                  resourceId,
-                  resourceName,
-                  "description of " + resourceName,
-                  CloningInstructions.COPY_REFERENCE,
-                  null,
-                  /*resourceLineage=*/ null,
-                  /*properties=*/ Map.of(),
-                  DEFAULT_USER_EMAIL,
-                  /*createdDate*/ null));
+              ReferencedGcsBucketResource.builder()
+                  .wsmResourceFields(
+                      ReferenceResourceFixtures.makeDefaultWsmResourceFields(workspaceUuid))
+                  .bucketName(null)
+                  .build());
     }
 
     @Test
     void testInvalidBucketName() {
-      UUID resourceId = UUID.randomUUID();
-      String resourceName = "testgcs-" + resourceId;
-
       assertThrows(
           InvalidNameException.class,
           () ->
-              new ReferencedGcsBucketResource(
-                  workspaceUuid,
-                  resourceId,
-                  resourceName,
-                  "description of " + resourceName,
-                  CloningInstructions.COPY_REFERENCE,
-                  "Buckets don't accept * in the names, either",
-                  /*resourceLineage=*/ null,
-                  /*properties=*/ Map.of(),
-                  DEFAULT_USER_EMAIL,
-                  /*createdDate*/ null));
+              ReferencedGcsBucketResource.builder()
+                  .wsmResourceFields(
+                      ReferenceResourceFixtures.makeDefaultWsmResourceFields(workspaceUuid))
+                  .bucketName("Buckets don't accept * in the names, either")
+                  .build());
     }
 
     @Test
@@ -770,36 +689,24 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
       UUID resourceId = UUID.randomUUID();
       String resourceName = "testbq-" + resourceId.toString();
 
-      return new ReferencedBigQueryDatasetResource(
-          workspaceUuid,
-          resourceId,
-          resourceName,
-          "description of " + resourceName,
-          CloningInstructions.COPY_REFERENCE,
-          FAKE_PROJECT_ID,
-          DATASET_NAME,
-          /*resourceLineage=*/ null,
-          /*properties=*/ Map.of(),
-          DEFAULT_USER_EMAIL,
-          /*createdDate*/ null);
+      return ReferencedBigQueryDatasetResource.builder()
+          .wsmResourceFields(
+              ReferenceResourceFixtures.makeDefaultWsmResourceFieldBuilder(workspaceUuid)
+                  .resourceId(resourceId)
+                  .name(resourceName)
+                  .build())
+          .datasetName(DATASET_NAME)
+          .projectId(FAKE_PROJECT_ID)
+          .build();
     }
 
     private ReferencedBigQueryDataTableResource makeBigQueryDataTableResource() {
-      UUID resourceId = UUID.randomUUID();
-      String resourceName = "testbq-" + resourceId;
-      return new ReferencedBigQueryDataTableResource(
-          workspaceUuid,
-          resourceId,
-          resourceName,
-          "description of " + resourceName,
-          CloningInstructions.COPY_REFERENCE,
-          FAKE_PROJECT_ID,
-          DATASET_NAME,
-          DATA_TABLE_NAME,
-          /*resourceLineage=*/ null,
-          /*properties=*/ Map.of(),
-          DEFAULT_USER_EMAIL,
-          /*createdDate*/ null);
+      return ReferencedBigQueryDataTableResource.builder()
+          .wsmResourceFields(ReferenceResourceFixtures.makeDefaultWsmResourceFields(workspaceUuid))
+          .datasetId(DATASET_NAME)
+          .dataTableId(DATA_TABLE_NAME)
+          .projectId(FAKE_PROJECT_ID)
+          .build();
     }
 
     @Test
@@ -1006,24 +913,15 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
 
     @Test
     void createReferencedBigQueryDatasetResource_missesProjectId_throwsException() {
-      UUID resourceId = UUID.randomUUID();
-      String resourceName = "testdatarepo-" + resourceId;
-
       assertThrows(
           MissingRequiredFieldException.class,
           () ->
-              new ReferencedBigQueryDatasetResource(
-                  workspaceUuid,
-                  resourceId,
-                  resourceName,
-                  "description of " + resourceName,
-                  CloningInstructions.COPY_NOTHING,
-                  null,
-                  "testbq_datasetname",
-                  /*resourceLineage=*/ null,
-                  /*properties=*/ Map.of(),
-                  DEFAULT_USER_EMAIL,
-                  /*createdDate*/ null));
+              ReferencedBigQueryDatasetResource.builder()
+                  .wsmResourceFields(
+                      ReferenceResourceFixtures.makeDefaultWsmResourceFields(workspaceUuid))
+                  .projectId(null)
+                  .datasetName("testbq_datasetname")
+                  .build());
     }
 
     @Test
@@ -1034,86 +932,53 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
       assertThrows(
           MissingRequiredFieldException.class,
           () ->
-              new ReferencedBigQueryDataTableResource(
-                  workspaceUuid,
-                  resourceId,
-                  resourceName,
-                  "description of " + resourceName,
-                  CloningInstructions.COPY_NOTHING,
-                  "testbq-projectid",
-                  "testbq-datasetname",
-                  "",
-                  /*resourceLineage=*/ null,
-                  /*properties=*/ Map.of(),
-                  DEFAULT_USER_EMAIL,
-                  /*createdDate*/ null));
+              ReferencedBigQueryDataTableResource.builder()
+                  .wsmResourceFields(
+                      ReferenceResourceFixtures.makeDefaultWsmResourceFields(workspaceUuid))
+                  .projectId("testbq-projectid")
+                  .datasetId("testbq_datasetname")
+                  .dataTableId(null)
+                  .build());
     }
 
     @Test
     void createReferencedBigQueryDatasetResource_missesDatasetName_throwsException() {
-      UUID resourceId = UUID.randomUUID();
-      String resourceName = "testdatarepo-" + resourceId.toString();
-
       assertThrows(
           MissingRequiredFieldException.class,
           () ->
-              new ReferencedBigQueryDatasetResource(
-                  workspaceUuid,
-                  resourceId,
-                  resourceName,
-                  "description of " + resourceName,
-                  CloningInstructions.COPY_NOTHING,
-                  "testbq-projectid",
-                  "",
-                  /*resourceLineage=*/ null,
-                  /*properties=*/ Map.of(),
-                  DEFAULT_USER_EMAIL,
-                  /*createdDate*/ null));
+              ReferencedBigQueryDataTableResource.builder()
+                  .wsmResourceFields(
+                      ReferenceResourceFixtures.makeDefaultWsmResourceFields(workspaceUuid))
+                  .projectId("testbq-projectid")
+                  .datasetId("")
+                  .build());
     }
 
     @Test
     void createReferencedBigQueryDataTableResource_invalidDataTableName_throwsException() {
-      UUID resourceId = UUID.randomUUID();
-      String resourceName = "testdatarepo-" + resourceId;
-
       assertThrows(
           InvalidNameException.class,
           () ->
-              new ReferencedBigQueryDataTableResource(
-                  workspaceUuid,
-                  resourceId,
-                  resourceName,
-                  "description of " + resourceName,
-                  CloningInstructions.COPY_NOTHING,
-                  "testbq-projectid",
-                  DATASET_NAME,
-                  "*&%@#",
-                  /*resourceLineage=*/ null,
-                  /*Properties=*/ Map.of(),
-                  DEFAULT_USER_EMAIL,
-                  /*createdDate*/ null));
+              ReferencedBigQueryDataTableResource.builder()
+                  .wsmResourceFields(
+                      ReferenceResourceFixtures.makeDefaultWsmResourceFields(workspaceUuid))
+                  .projectId("testbq-projectid")
+                  .datasetId("testbq_datasetname")
+                  .dataTableId("*&%@#")
+                  .build());
     }
 
     @Test
     void createReferencedBigQueryDatasetResource_invalidDatasetName_throwsException() {
-      UUID resourceId = UUID.randomUUID();
-      String resourceName = "testdatarepo-" + resourceId.toString();
-
       assertThrows(
           InvalidReferenceException.class,
           () ->
-              new ReferencedBigQueryDatasetResource(
-                  workspaceUuid,
-                  resourceId,
-                  resourceName,
-                  "description of " + resourceName,
-                  CloningInstructions.COPY_NOTHING,
-                  "testbq-projectid",
-                  "Nor do datasets; neither ' nor *",
-                  /*resourceLineage=*/ null,
-                  /*properties=*/ Map.of(),
-                  DEFAULT_USER_EMAIL,
-                  /*createdDate*/ null));
+              ReferencedBigQueryDatasetResource.builder()
+                  .wsmResourceFields(
+                      ReferenceResourceFixtures.makeDefaultWsmResourceFields(workspaceUuid))
+                  .projectId("testbq-projectid")
+                  .datasetName("Nor do datasets; neither ' nor *")
+                  .build());
     }
 
     @Test
@@ -1140,17 +1005,10 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
       UUID resourceId = UUID.randomUUID();
       String resourceName = "terra-workspace-" + resourceId;
 
-      return new ReferencedTerraWorkspaceResource(
-          workspaceUuid,
-          resourceId,
-          resourceName,
-          "description of " + resourceName,
-          CloningInstructions.COPY_NOTHING,
-          /*referencedWorkspaceId=*/ referencedWorkspaceId,
-          /*resourceLineage=*/ null,
-          /*properties=*/ Map.of(),
-          DEFAULT_USER_EMAIL,
-          /*createdDate*/ null);
+      return ReferencedTerraWorkspaceResource.builder()
+          .wsmResourceFields(ReferenceResourceFixtures.makeDefaultWsmResourceFields(workspaceUuid))
+          .referencedWorkspaceId(referencedWorkspaceId)
+          .build();
     }
 
     @Test
@@ -1266,17 +1124,15 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
       UUID resourceId = UUID.randomUUID();
       ReferencedDataRepoSnapshotResource duplicateNameResource =
           new ReferencedDataRepoSnapshotResource(
-              workspaceUuid,
-              resourceId,
-              referencedResource.getName(),
-              null,
-              CloningInstructions.COPY_NOTHING,
+              WsmResourceFields.builder()
+                  .workspaceUuid(workspaceUuid)
+                  .resourceId(resourceId)
+                  .name(referencedResource.getName())
+                  .cloningInstructions(CloningInstructions.COPY_NOTHING)
+                  .createdByEmail(DEFAULT_USER_EMAIL)
+                  .build(),
               DATA_REPO_INSTANCE_NAME,
-              "polaroid",
-              /*resourceLineage=*/ null,
-              /*properties=*/ Map.of(),
-              DEFAULT_USER_EMAIL,
-              /*createdDate*/ null);
+              "polaroid");
 
       assertThrows(
           DuplicateResourceException.class,

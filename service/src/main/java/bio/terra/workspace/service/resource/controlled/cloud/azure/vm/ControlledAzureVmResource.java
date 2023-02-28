@@ -12,7 +12,6 @@ import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
 import bio.terra.workspace.generated.model.ApiAzureVmAttributes;
 import bio.terra.workspace.generated.model.ApiAzureVmResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
-import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
@@ -23,13 +22,17 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
+import bio.terra.workspace.service.resource.controlled.model.WsmControlledResourceFields;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
+import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +41,6 @@ import java.util.UUID;
 
 public class ControlledAzureVmResource extends ControlledResource {
   private final String vmName;
-  private final String region;
   private final String vmSize;
   private final String vmImage;
 
@@ -68,26 +70,31 @@ public class ControlledAzureVmResource extends ControlledResource {
       @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
       @JsonProperty("properties") Map<String, String> properties,
       @JsonProperty("createdByEmail") String createdByEmail,
-      @JsonProperty("createdDate") OffsetDateTime createdDate) {
+      @JsonProperty("createdDate") OffsetDateTime createdDate,
+      @JsonProperty("lastUpdatedByEmail") String lastUpdatedByEmail,
+      @JsonProperty("lastUpdatedDate") OffsetDateTime lastUpdatedDate) {
 
     super(
-        workspaceId,
-        resourceId,
-        name,
-        description,
-        cloningInstructions,
-        assignedUser,
-        accessScope,
-        managedBy,
-        applicationId,
-        privateResourceState,
-        resourceLineage,
-        properties,
-        createdByEmail,
-        createdDate,
-        region);
+        ControlledResourceFields.builder()
+            .workspaceUuid(workspaceId)
+            .resourceId(resourceId)
+            .name(name)
+            .description(description)
+            .cloningInstructions(cloningInstructions)
+            .assignedUser(assignedUser)
+            .accessScope(accessScope)
+            .managedBy(managedBy)
+            .applicationId(applicationId)
+            .privateResourceState(privateResourceState)
+            .resourceLineage(resourceLineage)
+            .properties(properties)
+            .createdByEmail(createdByEmail)
+            .createdDate(createdDate)
+            .lastUpdatedByEmail(lastUpdatedByEmail)
+            .lastUpdatedDate(lastUpdatedDate)
+            .region(region)
+            .build());
     this.vmName = vmName;
-    this.region = region;
     this.vmSize = vmSize;
     this.vmImage = vmImage;
     this.ipId = ipId;
@@ -96,10 +103,34 @@ public class ControlledAzureVmResource extends ControlledResource {
     validate();
   }
 
+  /*
+   // TODO: PF-2512 remove constructor above and enable this constructor
+   @JsonCreator
+   public ControlledAzureVmResource(
+       @JsonProperty("wsmResourceFields") WsmResourceFields resourceFields,
+       @JsonProperty("wsmControlledResourceFields")
+           WsmControlledResourceFields controlledResourceFields,
+       @JsonProperty("vmName") String vmName,
+       @JsonProperty("vmSize") String vmSize,
+       @JsonProperty("vmImage") String vmImage,
+       @JsonProperty("ipId") UUID ipId,
+       @JsonProperty("networkId") UUID networkId,
+       @JsonProperty("diskId") UUID diskId) {
+     super(resourceFields, controlledResourceFields);
+     this.vmName = vmName;
+     this.vmSize = vmSize;
+     this.vmImage = vmImage;
+     this.ipId = ipId;
+     this.networkId = networkId;
+     this.diskId = diskId;
+     validate();
+   }
+
+  */
+
   private ControlledAzureVmResource(
       ControlledResourceFields common,
       String vmName,
-      String region,
       String vmSize,
       String vmImage,
       UUID ipId,
@@ -107,7 +138,6 @@ public class ControlledAzureVmResource extends ControlledResource {
       UUID diskId) {
     super(common);
     this.vmName = vmName;
-    this.region = region;
     this.vmImage = vmImage;
     this.vmSize = vmSize;
     this.ipId = ipId;
@@ -126,8 +156,127 @@ public class ControlledAzureVmResource extends ControlledResource {
     return (T) this;
   }
 
+  // -- getters used in serialization --
+
+  public WsmResourceFields getWsmResourceFields() {
+    return super.getWsmResourceFields();
+  }
+
+  public WsmControlledResourceFields getWsmControlledResourceFields() {
+    return super.getWsmControlledResourceFields();
+  }
+
+  public String getVmName() {
+    return vmName;
+  }
+
+  public String getVmSize() {
+    return vmSize;
+  }
+
+  public String getVmImage() {
+    return vmImage;
+  }
+
+  public UUID getIpId() {
+    return ipId;
+  }
+
+  public UUID getNetworkId() {
+    return networkId;
+  }
+
+  public UUID getDiskId() {
+    return diskId;
+  }
+
+  // -- getters for backward compatibility --
+  // TODO: PF-2512 Remove these getters
+  public UUID getWorkspaceId() {
+    return super.getWorkspaceId();
+  }
+
+  public UUID getResourceId() {
+    return super.getResourceId();
+  }
+
+  public String getName() {
+    return super.getName();
+  }
+
+  public String getDescription() {
+    return super.getDescription();
+  }
+
+  public CloningInstructions getCloningInstructions() {
+    return super.getCloningInstructions();
+  }
+
+  public Optional<String> getAssignedUser() {
+    return super.getAssignedUser();
+  }
+
+  public Optional<PrivateResourceState> getPrivateResourceState() {
+    return super.getPrivateResourceState();
+  }
+
+  public AccessScopeType getAccessScope() {
+    return super.getAccessScope();
+  }
+
+  public ManagedByType getManagedBy() {
+    return super.getManagedBy();
+  }
+
+  public String getApplicationId() {
+    return super.getApplicationId();
+  }
+
+  public List<ResourceLineageEntry> getResourceLineage() {
+    return super.getResourceLineage();
+  }
+
+  public ImmutableMap<String, String> getProperties() {
+    return super.getProperties();
+  }
+
+  public String getCreatedByEmail() {
+    return super.getCreatedByEmail();
+  }
+
+  public OffsetDateTime getCreatedDate() {
+    return super.getCreatedDate();
+  }
+
+  public String getLastUpdatedByEmail() {
+    return super.getLastUpdatedByEmail();
+  }
+
+  public OffsetDateTime getLastUpdatedDate() {
+    return super.getLastUpdatedDate();
+  }
+
+  public String getRegion() {
+    return super.getRegion();
+  }
+
+  // -- getters not included in serialization --
+
+  @Override
+  @JsonIgnore
+  public WsmResourceType getResourceType() {
+    return WsmResourceType.CONTROLLED_AZURE_VM;
+  }
+
+  @Override
+  @JsonIgnore
+  public WsmResourceFamily getResourceFamily() {
+    return WsmResourceFamily.AZURE_VM;
+  }
+
   /** {@inheritDoc} */
   @Override
+  @JsonIgnore
   public Optional<UniquenessCheckAttributes> getUniquenessCheckAttributes() {
     return Optional.of(
         new UniquenessCheckAttributes()
@@ -153,7 +302,7 @@ public class ControlledAzureVmResource extends ControlledResource {
             this,
             flightBeanBag.getResourceDao(),
             flightBeanBag.getLandingZoneApiDispatch(),
-            userRequest),
+            flightBeanBag.getSamService()),
         cloudRetry);
     flight.addStep(
         new CreateAzureVmStep(
@@ -163,8 +312,7 @@ public class ControlledAzureVmResource extends ControlledResource {
             flightBeanBag.getResourceDao()),
         cloudRetry);
     flight.addStep(
-        new UpdateControlledResourceRegionStep(
-            flightBeanBag.getResourceDao(), getWorkspaceId(), getResourceId()),
+        new UpdateControlledResourceRegionStep(flightBeanBag.getResourceDao(), getResourceId()),
         RetryRules.shortDatabase());
     flight.addStep(
         new AssignManagedIdentityAzureVmStep(
@@ -179,7 +327,7 @@ public class ControlledAzureVmResource extends ControlledResource {
             flightBeanBag.getCrlService(),
             this,
             flightBeanBag.getLandingZoneApiDispatch(),
-            userRequest),
+            flightBeanBag.getSamService()),
         cloudRetry);
   }
 
@@ -197,34 +345,6 @@ public class ControlledAzureVmResource extends ControlledResource {
         new DeleteAzureNetworkInterfaceStep(
             flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
         RetryRules.cloud());
-  }
-
-  public String getVmName() {
-    return vmName;
-  }
-
-  public String getRegion() {
-    return region;
-  }
-
-  public String getVmSize() {
-    return vmSize;
-  }
-
-  public String getVmImage() {
-    return vmImage;
-  }
-
-  public UUID getIpId() {
-    return ipId;
-  }
-
-  public UUID getNetworkId() {
-    return networkId;
-  }
-
-  public UUID getDiskId() {
-    return diskId;
   }
 
   public ApiAzureVmAttributes toApiAttributes() {
@@ -247,23 +367,6 @@ public class ControlledAzureVmResource extends ControlledResource {
     ApiResourceAttributesUnion union = new ApiResourceAttributesUnion();
     union.azureVm(toApiAttributes());
     return union;
-  }
-
-  @Override
-  public ApiResourceUnion toApiResourceUnion() {
-    ApiResourceUnion union = new ApiResourceUnion();
-    union.azureVm(toApiResource());
-    return union;
-  }
-
-  @Override
-  public WsmResourceType getResourceType() {
-    return WsmResourceType.CONTROLLED_AZURE_VM;
-  }
-
-  @Override
-  public WsmResourceFamily getResourceFamily() {
-    return WsmResourceFamily.AZURE_VM;
   }
 
   @Override
@@ -355,11 +458,6 @@ public class ControlledAzureVmResource extends ControlledResource {
       return this;
     }
 
-    public ControlledAzureVmResource.Builder region(String region) {
-      this.region = region;
-      return this;
-    }
-
     public ControlledAzureVmResource.Builder ipId(UUID ipId) {
       this.ipId = ipId;
       return this;
@@ -377,7 +475,7 @@ public class ControlledAzureVmResource extends ControlledResource {
 
     public ControlledAzureVmResource build() {
       return new ControlledAzureVmResource(
-          common, vmName, region, vmSize, vmImage, ipId, networkId, diskId);
+          common, vmName, vmSize, vmImage, ipId, networkId, diskId);
     }
   }
 }

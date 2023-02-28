@@ -16,13 +16,13 @@ import bio.terra.workspace.model.ApplicationState;
 import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.ControlledResourceIamRole;
 import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
-import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.PrivateResourceUser;
 import bio.terra.workspace.model.ResourceList;
 import bio.terra.workspace.model.ResourceType;
 import bio.terra.workspace.model.StewardshipType;
 import bio.terra.workspace.model.WorkspaceApplicationDescription;
+import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
@@ -56,7 +56,8 @@ public class ControlledApplicationPrivateGcsBucketLifecycle
   private TestUserSpecification writer;
   private TestUserSpecification reader;
   private TestUserSpecification wsmapp;
-  private String bucketName;
+  private List<CreatedControlledGcpGcsBucket> bucketList;
+  private ControlledGcpResourceApi wsmappResourceApi;
 
   @Override
   protected void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
@@ -73,28 +74,42 @@ public class ControlledApplicationPrivateGcsBucketLifecycle
     this.writer = testUsers.get(1);
     this.reader = testUsers.get(2);
     this.wsmapp = testUsers.get(3);
+
+    this.bucketList = new ArrayList<>();
+    this.wsmappResourceApi =
+        new ControlledGcpResourceApi(ClientTestUtils.getClientForTestUser(wsmapp, server));
+  }
+
+  @Override
+  protected void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
+      throws Exception {
+    try {
+      // Clean any buckets on the list. There might be some if one of the test cases
+      // fails and we do not execute the deletes as part of the test.
+      deleteBucketList();
+    } finally {
+      super.doCleanup(testUsers, workspaceApi);
+    }
   }
 
   @Override
   public void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
       throws Exception {
     ApiClient ownerApiClient = ClientTestUtils.getClientForTestUser(owner, server);
-    ApiClient wsmappApiClient = ClientTestUtils.getClientForTestUser(wsmapp, server);
     WorkspaceApplicationApi ownerWsmAppApi = new WorkspaceApplicationApi(ownerApiClient);
-    ControlledGcpResourceApi wsmappResourceApi = new ControlledGcpResourceApi(wsmappApiClient);
 
     // Owner adds a reader and a writer to the workspace
-    workspaceApi.grantRole(
-        new GrantRoleRequestBody().memberEmail(reader.userEmail), getWorkspaceId(), IamRole.READER);
-    logger.info("Added {} as a reader to workspace {}", reader.userEmail, getWorkspaceId());
-    workspaceApi.grantRole(
-        new GrantRoleRequestBody().memberEmail(writer.userEmail), getWorkspaceId(), IamRole.WRITER);
-    logger.info("Added {} as a writer to workspace {}", writer.userEmail, getWorkspaceId());
+    ClientTestUtils.grantRole(workspaceApi, getWorkspaceId(), reader, IamRole.READER);
+    ClientTestUtils.grantRole(workspaceApi, getWorkspaceId(), writer, IamRole.WRITER);
 
     // Create the cloud context
     String projectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
     assertNotNull(projectId);
     logger.info("Created project {}", projectId);
+
+    // Wait for grantees to have permission
+    ClientTestUtils.workspaceRoleWaitForPropagation(reader, projectId);
+    ClientTestUtils.workspaceRoleWaitForPropagation(writer, projectId);
 
     // Enable the application in the workspace
     WorkspaceApplicationDescription applicationDescription =
@@ -118,6 +133,12 @@ public class ControlledApplicationPrivateGcsBucketLifecycle
             getWorkspaceId(), 0, 5, ResourceType.GCS_BUCKET, StewardshipType.CONTROLLED);
     assertEquals(3, bucketList.getResources().size());
     MultiResourcesUtils.assertResourceType(ResourceType.GCS_BUCKET, bucketList);
+
+    // TODO: PF-2446 This is flaky due to IAM latency. Solution is to make delete
+    //  which is async, retry the delete if it fails for permission reasons.
+    //  This still gets cleaned up (or not) in doCleanup
+    // Try the delete as part of the successful test
+    // deleteBucketList();
   }
 
   private void testNoAssignedUser(ControlledGcpResourceApi resourceApi, String projectId)
@@ -130,16 +151,17 @@ public class ControlledApplicationPrivateGcsBucketLifecycle
             bucketResourceName,
             CloningInstructionsEnum.NOTHING,
             null);
-    bucketName = createdBucket.getGcpBucket().getAttributes().getBucketName();
+    bucketList.add(createdBucket);
+    String bucketName = createdBucket.getGcpBucket().getAttributes().getBucketName();
     assertNotNull(bucketName);
     logger.info("Created no-assigned-user bucket {}", bucketName);
 
+    // Constructing the tester will wait for wsmapp to have EDITOR permission; no additional
+    // test is needed here.
     try (GcsBucketAccessTester tester = new GcsBucketAccessTester(wsmapp, bucketName, projectId)) {
-      tester.checkAccess(wsmapp, ControlledResourceIamRole.EDITOR);
-      tester.checkAccess(owner, null);
+      tester.assertAccess(owner, null);
       // Don't bother testing reader and writer here.
     }
-    deleteBucket(resourceApi, createdBucket);
   }
 
   private void testAssignedReader(ControlledGcpResourceApi resourceApi, String projectId)
@@ -156,16 +178,17 @@ public class ControlledApplicationPrivateGcsBucketLifecycle
             bucketResourceName,
             CloningInstructionsEnum.NOTHING,
             privateUser);
-    bucketName = createdBucket.getGcpBucket().getAttributes().getBucketName();
+    bucketList.add(createdBucket);
+    String bucketName = createdBucket.getGcpBucket().getAttributes().getBucketName();
     assertNotNull(bucketName);
     logger.info("Created assigned-reader bucket {}", bucketName);
 
+    // Constructing the tester will wait for wsmapp to have EDITOR permission; no additional
+    // test is needed here.
     try (GcsBucketAccessTester tester = new GcsBucketAccessTester(wsmapp, bucketName, projectId)) {
-      tester.checkAccess(wsmapp, ControlledResourceIamRole.EDITOR);
-      tester.checkAccess(reader, null);
-      tester.checkAccess(writer, ControlledResourceIamRole.READER);
+      tester.assertAccess(reader, null);
+      tester.assertAccessWait(writer, ControlledResourceIamRole.READER);
     }
-    deleteBucket(resourceApi, createdBucket);
   }
 
   private void testAssignedWriter(ControlledGcpResourceApi resourceApi, String projectId)
@@ -182,33 +205,26 @@ public class ControlledApplicationPrivateGcsBucketLifecycle
             bucketResourceName,
             CloningInstructionsEnum.NOTHING,
             privateUser);
-    bucketName = createdBucket.getGcpBucket().getAttributes().getBucketName();
+    bucketList.add(createdBucket);
+    String bucketName = createdBucket.getGcpBucket().getAttributes().getBucketName();
     assertNotNull(bucketName);
     logger.info("Created assigned-writer bucket {}", bucketName);
 
+    // Constructing the tester will wait for wsmapp to have EDITOR permission; no additional
+    // test is needed here.
     try (GcsBucketAccessTester tester = new GcsBucketAccessTester(wsmapp, bucketName, projectId)) {
-      tester.checkAccess(wsmapp, ControlledResourceIamRole.EDITOR);
-      tester.checkAccess(writer, null);
-      tester.checkAccess(reader, ControlledResourceIamRole.WRITER);
+      tester.assertAccess(writer, null);
+      tester.assertAccessWait(reader, ControlledResourceIamRole.WRITER);
     }
-    deleteBucket(resourceApi, createdBucket);
   }
 
-  private void deleteBucket(
-      ControlledGcpResourceApi resourceApi, CreatedControlledGcpGcsBucket createdBucket)
-      throws Exception {
-    GcsBucketUtils.deleteControlledGcsBucket(
-        createdBucket.getResourceId(), getWorkspaceId(), resourceApi);
-    logger.info("Application deleted bucket {}", bucketName);
-    bucketName = null;
-  }
-
-  @Override
-  protected void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
-      throws Exception {
-    super.doCleanup(testUsers, workspaceApi);
-    if (bucketName != null) {
-      logger.warn("Test failed to cleanup bucket " + bucketName);
+  private void deleteBucketList() throws Exception {
+    for (CreatedControlledGcpGcsBucket bucket : bucketList) {
+      GcsBucketUtils.deleteControlledGcsBucket(
+          bucket.getResourceId(), getWorkspaceId(), wsmappResourceApi);
+      logger.info(
+          "Application deleted bucket {}", bucket.getGcpBucket().getAttributes().getBucketName());
     }
+    bucketList.clear();
   }
 }

@@ -5,7 +5,16 @@ import static bio.terra.workspace.db.WorkspaceActivityLogDao.ACTIVITY_LOG_CHANGE
 import bio.terra.common.db.ReadTransaction;
 import bio.terra.common.db.WriteTransaction;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
+import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
+import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
+import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
+import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.StewardshipType;
+import bio.terra.workspace.service.resource.model.WsmResourceFamily;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -28,6 +37,27 @@ public class RawDaoTestFixture {
   @Autowired
   public RawDaoTestFixture(NamedParameterJdbcTemplate jdbcTemplate) {
     this.jdbcTemplate = jdbcTemplate;
+  }
+
+  @WriteTransaction
+  public void storeControlledGcpResource(
+      UUID workspaceUuid, UUID resourceId, String resourceAttributes) {
+    storeResource(
+        workspaceUuid.toString(),
+        CloudPlatform.GCP.name(),
+        resourceId.toString(),
+        RandomStringUtils.randomAlphabetic(10),
+        RandomStringUtils.randomAlphabetic(100),
+        StewardshipType.CONTROLLED.toSql(),
+        WsmResourceType.CONTROLLED_GCP_GCS_BUCKET.toSql(),
+        WsmResourceFamily.GCS_BUCKET.toSql(),
+        CloningInstructions.COPY_NOTHING.toSql(),
+        resourceAttributes,
+        AccessScopeType.ACCESS_SCOPE_SHARED.toSql(),
+        ManagedByType.MANAGED_BY_APPLICATION.toSql(),
+        null,
+        null,
+        PrivateResourceState.NOT_APPLICABLE.toSql());
   }
 
   // Write a resource into the database from bare parts
@@ -87,17 +117,26 @@ public class RawDaoTestFixture {
 
   @WriteTransaction
   public void writeActivityLogWithTimestamp(
-      UUID workspaceId, String actorEmail, OffsetDateTime timestamp) {
+      UUID workspaceId,
+      String actorEmail,
+      OffsetDateTime timestamp,
+      String changeSubjectId,
+      ActivityLogChangedTarget changedTarget) {
     final String sql =
-        "INSERT INTO workspace_activity_log (workspace_id, change_date, change_type, actor_email, actor_subject_id)"
-            + " VALUES (:workspace_id, :change_date, :change_type, :actor_email, :actor_subject_id)";
+        """
+            INSERT INTO workspace_activity_log (workspace_id, change_date, change_type, actor_email, actor_subject_id,
+            change_subject_id, change_subject_type)
+            VALUES (:workspace_id, :change_date, :change_type, :actor_email, :actor_subject_id, :change_subject_id, :change_subject_type)
+        """;
     final var params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
             .addValue("change_date", timestamp)
             .addValue("change_type", OperationType.CREATE.name())
             .addValue("actor_email", actorEmail)
-            .addValue("actor_subject_id", RandomStringUtils.randomAlphabetic(5));
+            .addValue("actor_subject_id", RandomStringUtils.randomAlphabetic(5))
+            .addValue("change_subject_id", changeSubjectId)
+            .addValue("change_subject_type", changedTarget.name());
     jdbcTemplate.update(sql, params);
   }
 

@@ -12,9 +12,7 @@ import bio.terra.stairway.FlightStatus;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
-import bio.terra.workspace.common.utils.AzureTestUtils;
 import bio.terra.workspace.common.utils.AzureVmUtils;
-import bio.terra.workspace.connected.AzureConnectedTestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiAzureDiskCreationParameters;
@@ -49,22 +47,21 @@ import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.springframework.beans.factory.annotation.Autowired;
 
+// @Tag("azureConnected") - this test is tagged at the individual test level
 @TestInstance(Lifecycle.PER_CLASS)
 public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest {
 
   @Autowired private WorkspaceService workspaceService;
   @Autowired private JobService jobService;
-  @Autowired private AzureTestUtils azureTestUtils;
   @Autowired private UserAccessUtils userAccessUtils;
   @Autowired private ControlledResourceService controlledResourceService;
   @Autowired private WsmResourceService wsmResourceService;
-  @Autowired private AzureConnectedTestUtils azureUtils;
-
   private Workspace sharedWorkspace;
   private UUID workspaceUuid;
   private ControlledAzureIpResource ipResource;
@@ -73,12 +70,9 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
 
   @BeforeAll
   public void setup() throws InterruptedException {
-    sharedWorkspace = azureTestUtils.createWorkspace(workspaceService);
-    workspaceUuid = sharedWorkspace.getWorkspaceId();
-
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
-    // Create cloud context
-    azureUtils.createCloudContext(workspaceUuid, userRequest);
+    sharedWorkspace = createWorkspaceWithCloudContext(workspaceService, userRequest);
+    workspaceUuid = sharedWorkspace.getWorkspaceId();
 
     // Create ip
     ipResource = createIp(workspaceUuid, userRequest);
@@ -97,6 +91,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
     workspaceService.deleteWorkspace(sharedWorkspace, userAccessUtils.defaultUserAuthRequest());
   }
 
+  @Tag("azureConnected")
   @Test
   public void createAndDeleteAzureVmControlledResource() throws InterruptedException {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
@@ -105,26 +100,13 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
         ControlledResourceFixtures.getAzureVmCreationParameters();
 
     // TODO: make this application-private resource once the POC supports it
-    final UUID resourceId = UUID.randomUUID();
     ControlledAzureVmResource resource =
-        ControlledAzureVmResource.builder()
-            .common(
-                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
-                    .workspaceUuid(workspaceUuid)
-                    .resourceId(resourceId)
-                    .name(getAzureName("vm"))
-                    .description(getAzureName("vm-desc"))
-                    .cloningInstructions(CloningInstructions.COPY_RESOURCE)
-                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
-                    .build())
-            .vmName(creationParameters.getName())
-            .vmSize(creationParameters.getVmSize())
-            .vmImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
-            .region(creationParameters.getRegion())
-            .ipId(ipResource.getResourceId())
-            .diskId(diskResource.getResourceId())
-            .networkId(networkResource.getResourceId())
+        ControlledResourceFixtures.makeDefaultControlledAzureVmResourceBuilder(
+                creationParameters,
+                workspaceUuid,
+                ipResource.getResourceId(),
+                networkResource.getResourceId(),
+                diskResource.getResourceId())
             .build();
 
     // Submit a VM creation flight and verify the resource exists in the workspace.
@@ -149,7 +131,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
             jobService.getStairway(),
             DeleteControlledResourcesFlight.class,
             azureTestUtils.deleteControlledResourceInputParameters(
-                workspaceUuid, resourceId, userRequest, resource),
+                workspaceUuid, resource.getResourceId(), userRequest, resource),
             STAIRWAY_FLIGHT_TIMEOUT,
             null);
     assertEquals(FlightStatus.SUCCESS, deleteFlightState.getFlightStatus());
@@ -167,6 +149,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
         () -> computeManager.disks().getById(resolvedVm.osDiskId()));
   }
 
+  @Tag("azureConnectedPlus")
   @Test
   public void createAndDeleteAzureVmControlledResourceWithCustomScriptExtension()
       throws InterruptedException {
@@ -188,11 +171,11 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
                     .cloningInstructions(CloningInstructions.COPY_RESOURCE)
                     .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
                     .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                    .region(creationParameters.getRegion())
                     .build())
             .vmName(creationParameters.getName())
             .vmSize(creationParameters.getVmSize())
             .vmImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
-            .region(creationParameters.getRegion())
             .ipId(ipResource.getResourceId())
             .diskId(diskResource.getResourceId())
             .networkId(networkResource.getResourceId())
@@ -238,6 +221,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
         () -> computeManager.disks().getById(resolvedVm.osDiskId()));
   }
 
+  @Tag("azureConnected")
   @Test
   public void createVmWithFailureMakeSureNetworkInterfaceIsNotAbandoned()
       throws InterruptedException {
@@ -258,11 +242,11 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
                     .cloningInstructions(CloningInstructions.COPY_RESOURCE)
                     .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
                     .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                    .region(creationParameters.getRegion())
                     .build())
             .vmName(creationParameters.getName())
             .vmSize(creationParameters.getVmSize())
             .vmImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
-            .region(creationParameters.getRegion())
             .diskId(diskResource.getResourceId())
             .networkId(networkResource.getResourceId())
             .build();
@@ -325,6 +309,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
     }
   }
 
+  @Tag("azureConnectedPlus")
   @Test
   public void createAndDeleteAzureVmControlledResourceWithCustomScriptExtensionWithNoPublicIp()
       throws InterruptedException {
@@ -346,11 +331,11 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
                     .cloningInstructions(CloningInstructions.COPY_RESOURCE)
                     .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
                     .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                    .region(creationParameters.getRegion())
                     .build())
             .vmName(creationParameters.getName())
             .vmSize(creationParameters.getVmSize())
             .vmImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
-            .region(creationParameters.getRegion())
             // .ipId(ipResource.getResourceId())
             .diskId(diskResource.getResourceId())
             .networkId(networkResource.getResourceId())
@@ -396,6 +381,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
         () -> computeManager.disks().getById(resolvedVm.osDiskId()));
   }
 
+  @Tag("azureConnectedPlus")
   @Test
   public void createAndDeleteAzureVmControlledResourceWithEphemeralDiskWithNoPublicIp()
       throws InterruptedException {
@@ -417,11 +403,11 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
                     .cloningInstructions(CloningInstructions.COPY_RESOURCE)
                     .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
                     .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                    .region(creationParameters.getRegion())
                     .build())
             .vmName(creationParameters.getName())
             .vmSize(creationParameters.getVmSize())
             .vmImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
-            .region(creationParameters.getRegion())
             // .ipId(ipResource.getResourceId())
             // .diskId(diskResource.getResourceId())
             .networkId(networkResource.getResourceId())
@@ -526,22 +512,8 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
         ControlledResourceFixtures.getAzureDiskCreationParameters();
 
     // TODO: make this application-private resource once the POC supports it
-    final UUID resourceId = UUID.randomUUID();
     ControlledAzureDiskResource resource =
-        ControlledAzureDiskResource.builder()
-            .common(
-                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
-                    .workspaceUuid(workspaceUuid)
-                    .resourceId(resourceId)
-                    .name(getAzureName("disk"))
-                    .description(getAzureName("disk-desc"))
-                    .cloningInstructions(CloningInstructions.COPY_RESOURCE)
-                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
-                    .build())
-            .diskName(creationParameters.getName())
-            .region(creationParameters.getRegion())
-            .size(creationParameters.getSize())
+        ControlledResourceFixtures.makeDefaultAzureDiskBuilder(creationParameters, workspaceUuid)
             .build();
 
     // Submit a Disk creation flight.
@@ -564,21 +536,8 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
         ControlledResourceFixtures.getAzureIpCreationParameters();
 
     // TODO: make this application-private resource once the POC supports it
-    final UUID resourceId = UUID.randomUUID();
     ControlledAzureIpResource resource =
-        ControlledAzureIpResource.builder()
-            .common(
-                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
-                    .workspaceUuid(workspaceUuid)
-                    .resourceId(resourceId)
-                    .name(getAzureName("ip"))
-                    .description(getAzureName("ip-desc"))
-                    .cloningInstructions(CloningInstructions.COPY_RESOURCE)
-                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
-                    .build())
-            .ipName(ipCreationParameters.getName())
-            .region(ipCreationParameters.getRegion())
+        ControlledResourceFixtures.makeDefaultAzureIpResource(ipCreationParameters, workspaceUuid)
             .build();
 
     // Submit an IP creation flight.
@@ -602,24 +561,9 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
         ControlledResourceFixtures.getAzureNetworkCreationParameters();
 
     // TODO: make this application-private resource once the POC supports it
-    final UUID resourceId = UUID.randomUUID();
     ControlledAzureNetworkResource resource =
-        ControlledAzureNetworkResource.builder()
-            .common(
-                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
-                    .workspaceUuid(workspaceUuid)
-                    .resourceId(resourceId)
-                    .name(getAzureName("network"))
-                    .description(getAzureName("network-desc"))
-                    .cloningInstructions(CloningInstructions.COPY_RESOURCE)
-                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
-                    .build())
-            .networkName(creationParameters.getName())
-            .region(creationParameters.getRegion())
-            .subnetName(creationParameters.getSubnetName())
-            .addressSpaceCidr(creationParameters.getAddressSpaceCidr())
-            .subnetAddressCidr(creationParameters.getSubnetAddressCidr())
+        ControlledResourceFixtures.makeDefaultAzureNetworkResourceBuilder(
+                creationParameters, workspaceUuid)
             .build();
 
     // Submit a Disk creation flight.

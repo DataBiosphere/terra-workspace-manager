@@ -1,5 +1,10 @@
 package bio.terra.workspace.app.controller;
 
+import static bio.terra.workspace.common.utils.MapperUtils.BatchPoolMapper.mapFrom;
+import static bio.terra.workspace.common.utils.MapperUtils.BatchPoolMapper.mapListOfApplicationPackageReferences;
+import static bio.terra.workspace.common.utils.MapperUtils.BatchPoolMapper.mapListOfMetadataItems;
+import static bio.terra.workspace.common.utils.MapperUtils.BatchPoolMapper.mapListOfUserAssignedIdentities;
+
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
@@ -18,6 +23,7 @@ import bio.terra.workspace.generated.model.ApiCloneControlledAzureStorageContain
 import bio.terra.workspace.generated.model.ApiCloneControlledAzureStorageContainerResult;
 import bio.terra.workspace.generated.model.ApiClonedControlledAzureStorageContainer;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
+import bio.terra.workspace.generated.model.ApiCreateControlledAzureBatchPoolRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureDiskRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureIpRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureNetworkRequestBody;
@@ -27,6 +33,7 @@ import bio.terra.workspace.generated.model.ApiCreateControlledAzureStorageContai
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureStorageRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureVmRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedAzureStorageContainerSasToken;
+import bio.terra.workspace.generated.model.ApiCreatedControlledAzureBatchPool;
 import bio.terra.workspace.generated.model.ApiCreatedControlledAzureDisk;
 import bio.terra.workspace.generated.model.ApiCreatedControlledAzureIp;
 import bio.terra.workspace.generated.model.ApiCreatedControlledAzureNetwork;
@@ -48,6 +55,7 @@ import bio.terra.workspace.service.resource.controlled.ControlledResourceService
 import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureStorageAccessService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.SasPermissionsHelper;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.SasTokenOptions;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.ControlledAzureBatchPoolResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
@@ -60,6 +68,7 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResourceF
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import com.google.common.annotations.VisibleForTesting;
+import io.opencensus.contrib.spring.aop.Traced;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
@@ -109,6 +118,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     this.controlledResourceMetadataManager = controlledResourceMetadataManager;
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiCreatedControlledAzureDisk> createAzureDisk(
       UUID workspaceUuid, ApiCreateControlledAzureDiskRequestBody body) {
@@ -129,7 +139,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         ControlledAzureDiskResource.builder()
             .common(commonFields)
             .diskName(body.getAzureDisk().getName())
-            .region(body.getAzureDisk().getRegion())
             .size(body.getAzureDisk().getSize())
             .build();
 
@@ -147,6 +156,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiCreatedControlledAzureIp> createAzureIp(
       UUID workspaceUuid, @Valid ApiCreateControlledAzureIpRequestBody body) {
@@ -167,7 +177,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         ControlledAzureIpResource.builder()
             .common(commonFields)
             .ipName(body.getAzureIp().getName())
-            .region(body.getAzureIp().getRegion())
             .build();
 
     final ControlledAzureIpResource createdIp =
@@ -176,13 +185,13 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
                 resource, commonFields.getIamRole(), userRequest, body.getAzureIp())
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_IP);
 
+    UUID resourceId = createdIp.getResourceId();
     var response =
-        new ApiCreatedControlledAzureIp()
-            .resourceId(createdIp.getResourceId())
-            .azureIp(createdIp.toApiResource());
+        new ApiCreatedControlledAzureIp().resourceId(resourceId).azureIp(createdIp.toApiResource());
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiCreateControlledAzureRelayNamespaceResult> createAzureRelayNamespace(
       UUID workspaceUuid, @Valid ApiCreateControlledAzureRelayNamespaceRequestBody body) {
@@ -203,7 +212,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         ControlledAzureRelayNamespaceResource.builder()
             .common(commonFields)
             .namespaceName(body.getAzureRelayNamespace().getNamespaceName())
-            .region(body.getAzureRelayNamespace().getRegion())
             .build();
 
     final String jobId =
@@ -221,6 +229,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiCreateControlledAzureRelayNamespaceResult>
       getCreateAzureRelayNamespaceResult(UUID workspaceUuid, String jobId) throws ApiException {
@@ -232,6 +241,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiCreatedAzureStorageContainerSasToken>
       createAzureStorageContainerSasToken(
@@ -271,6 +281,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         HttpStatus.OK);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiCreatedControlledAzureStorage> createAzureStorage(
       UUID workspaceUuid, @Valid ApiCreateControlledAzureStorageRequestBody body) {
@@ -291,7 +302,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         ControlledAzureStorageResource.builder()
             .common(commonFields)
             .storageAccountName(body.getAzureStorage().getStorageAccountName())
-            .region(body.getAzureStorage().getRegion())
             .build();
 
     final ControlledAzureStorageResource createdStorage =
@@ -299,13 +309,15 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .createControlledResourceSync(
                 resource, commonFields.getIamRole(), userRequest, body.getAzureStorage())
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT);
+    UUID resourceId = createdStorage.getResourceId();
     var response =
         new ApiCreatedControlledAzureStorage()
-            .resourceId(createdStorage.getResourceId())
+            .resourceId(resourceId)
             .azureStorage(createdStorage.toApiResource());
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiCreatedControlledAzureStorageContainer> createAzureStorageContainer(
       UUID workspaceUuid, @Valid ApiCreateControlledAzureStorageContainerRequestBody body) {
@@ -338,13 +350,15 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .createControlledResourceSync(
                 resource, commonFields.getIamRole(), userRequest, body.getAzureStorageContainer())
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
+    UUID resourceId = createdStorageContainer.getResourceId();
     var response =
         new ApiCreatedControlledAzureStorageContainer()
-            .resourceId(createdStorageContainer.getResourceId())
+            .resourceId(resourceId)
             .azureStorageContainer(createdStorageContainer.toApiResource());
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiCreatedControlledAzureVmResult> createAzureVm(
       UUID workspaceUuid, @Valid ApiCreateControlledAzureVmRequestBody body) {
@@ -385,7 +399,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     return ControlledAzureVmResource.builder()
         .common(commonFields)
         .vmName(creationParameters.getName())
-        .region(creationParameters.getRegion())
         .vmSize(creationParameters.getVmSize())
         .vmImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
         .ipId(creationParameters.getIpId())
@@ -394,6 +407,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         .build();
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiCreatedControlledAzureVmResult> getCreateAzureVmResult(
       UUID workspaceUuid, String jobId) throws ApiException {
@@ -405,6 +419,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiCreatedControlledAzureNetwork> createAzureNetwork(
       UUID workspaceUuid, ApiCreateControlledAzureNetworkRequestBody body) {
@@ -428,7 +443,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .subnetName(body.getAzureNetwork().getSubnetName())
             .addressSpaceCidr(body.getAzureNetwork().getAddressSpaceCidr())
             .subnetAddressCidr(body.getAzureNetwork().getSubnetAddressCidr())
-            .region(body.getAzureNetwork().getRegion())
             .build();
 
     final ControlledAzureNetworkResource createdNetwork =
@@ -436,10 +450,61 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .createControlledResourceSync(
                 resource, commonFields.getIamRole(), userRequest, body.getAzureNetwork())
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_NETWORK);
+    UUID resourceId = createdNetwork.getResourceId();
     var response =
         new ApiCreatedControlledAzureNetwork()
-            .resourceId(createdNetwork.getResourceId())
+            .resourceId(resourceId)
             .azureNetwork(createdNetwork.toApiResource());
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiCreatedControlledAzureBatchPool> createAzureBatchPool(
+      UUID workspaceUuid, ApiCreateControlledAzureBatchPoolRequestBody body) {
+    features.azureEnabledCheck();
+
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final ControlledResourceFields commonFields =
+        toCommonFields(
+            workspaceUuid,
+            body.getCommon(),
+            /* azure batch pool's region is determined by the batch pool account associated with it. */
+            /*region=*/ null,
+            userRequest,
+            WsmResourceType.CONTROLLED_AZURE_BATCH_POOL);
+    workspaceService.validateMcWorkspaceAndAction(
+        userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
+
+    ControlledAzureBatchPoolResource resource =
+        ControlledAzureBatchPoolResource.builder()
+            .common(commonFields)
+            .id(body.getAzureBatchPool().getId())
+            .vmSize(body.getAzureBatchPool().getVmSize())
+            .displayName(body.getAzureBatchPool().getDisplayName())
+            .deploymentConfiguration(mapFrom(body.getAzureBatchPool().getDeploymentConfiguration()))
+            .userAssignedIdentities(
+                mapListOfUserAssignedIdentities(
+                    body.getAzureBatchPool().getUserAssignedIdentities()))
+            .scaleSettings(mapFrom(body.getAzureBatchPool().getScaleSettings()))
+            .startTask(mapFrom(body.getAzureBatchPool().getStartTask()))
+            .applicationPackages(
+                mapListOfApplicationPackageReferences(
+                    body.getAzureBatchPool().getApplicationPackages()))
+            .networkConfiguration(mapFrom(body.getAzureBatchPool().getNetworkConfiguration()))
+            .metadata(mapListOfMetadataItems(body.getAzureBatchPool().getMetadata()))
+            .build();
+
+    final ControlledAzureBatchPoolResource createdBatchPool =
+        controlledResourceService
+            .createControlledResourceSync(
+                resource, commonFields.getIamRole(), userRequest, body.getAzureBatchPool())
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_BATCH_POOL);
+
+    var response =
+        new ApiCreatedControlledAzureBatchPool()
+            .resourceId(createdBatchPool.getResourceId())
+            .azureBatchPool(createdBatchPool.toApiResource());
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
@@ -449,36 +514,42 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     return deleteHelper(workspaceId, resourceId, body, "Azure Storage Container");
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiDeleteControlledAzureResourceResult> deleteAzureIp(
       UUID workspaceUuid, UUID resourceId, @Valid ApiDeleteControlledAzureResourceRequest body) {
     return deleteHelper(workspaceUuid, resourceId, body, "Azure IP");
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiDeleteControlledAzureResourceResult> deleteAzureRelayNamespace(
       UUID workspaceUuid, UUID resourceId, @Valid ApiDeleteControlledAzureResourceRequest body) {
     return deleteHelper(workspaceUuid, resourceId, body, "Azure Relay Namespace");
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiDeleteControlledAzureResourceResult> deleteAzureDisk(
       UUID workspaceUuid, UUID resourceId, @Valid ApiDeleteControlledAzureResourceRequest body) {
     return deleteHelper(workspaceUuid, resourceId, body, "Azure Disk");
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiDeleteControlledAzureResourceResult> deleteAzureVm(
       UUID workspaceUuid, UUID resourceId, @Valid ApiDeleteControlledAzureResourceRequest body) {
     return deleteHelper(workspaceUuid, resourceId, body, "Azure VM");
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiDeleteControlledAzureResourceResult> deleteAzureNetwork(
       UUID workspaceUuid, UUID resourceId, @Valid ApiDeleteControlledAzureResourceRequest body) {
     return deleteHelper(workspaceUuid, resourceId, body, "Azure Networks");
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiAzureIpResource> getAzureIp(UUID workspaceUuid, UUID resourceId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -491,6 +562,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiAzureRelayNamespaceResource> getAzureRelayNamespace(
       UUID workspaceId, UUID resourceId) {
@@ -504,6 +576,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiAzureDiskResource> getAzureDisk(UUID workspaceUuid, UUID resourceId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -516,6 +589,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiAzureVmResource> getAzureVm(UUID workspaceUuid, UUID resourceId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -528,6 +602,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiAzureNetworkResource> getAzureNetwork(
       UUID workspaceUuid, UUID resourceId) {
@@ -541,6 +616,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiDeleteControlledAzureResourceResult> getDeleteAzureDiskResult(
       UUID workspaceUuid, String jobId) {
@@ -550,6 +626,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     return getJobDeleteResult(jobId);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiDeleteControlledAzureResourceResult> getDeleteAzureIpResult(
       UUID workspaceUuid, String jobId) {
@@ -559,6 +636,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     return getJobDeleteResult(jobId);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiDeleteControlledAzureResourceResult> getDeleteAzureVmResult(
       UUID workspaceUuid, String jobId) {
@@ -568,6 +646,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     return getJobDeleteResult(jobId);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiDeleteControlledAzureResourceResult> getDeleteAzureNetworkResult(
       UUID workspaceUuid, String jobId) {
@@ -577,6 +656,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     return getJobDeleteResult(jobId);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiDeleteControlledAzureResourceResult> getDeleteAzureRelayNamespaceResult(
       UUID workspaceUuid, String jobId) {
@@ -653,6 +733,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         .azureRelayNameSpace(apiResource);
   }
 
+  @Traced
+  @Override
   public ResponseEntity<ApiCloneControlledAzureStorageContainerResult> cloneAzureStorageContainer(
       UUID workspaceId, UUID resourceId, ApiCloneControlledAzureStorageContainerRequest body) {
     features.azureEnabledCheck();
@@ -683,6 +765,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
   }
 
+  @Traced
+  @Override
   public ResponseEntity<ApiCloneControlledAzureStorageContainerResult>
       getCloneAzureStorageContainerResult(UUID workspaceId, String jobId) {
     features.azureEnabledCheck();
@@ -700,9 +784,11 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
     ApiClonedControlledAzureStorageContainer containerResult = null;
     if (jobResult.getResult() != null) {
+      ControlledAzureStorageContainerResource containerResource =
+          jobResult.getResult().storageContainer();
       var container =
           new ApiCreatedControlledAzureStorageContainer()
-              .azureStorageContainer(jobResult.getResult().storageContainer().toApiResource());
+              .azureStorageContainer(containerResource.toApiResource());
       containerResult =
           new ApiClonedControlledAzureStorageContainer()
               .effectiveCloningInstructions(

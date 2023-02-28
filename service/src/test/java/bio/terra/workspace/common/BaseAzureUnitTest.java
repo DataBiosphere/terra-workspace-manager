@@ -3,6 +3,7 @@ package bio.terra.workspace.common;
 import bio.terra.landingzone.service.landingzone.azure.LandingZoneService;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
+import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureStorageAccessService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import org.junit.jupiter.api.Tag;
@@ -17,6 +18,7 @@ public class BaseAzureUnitTest extends BaseUnitTestMocks {
   @MockBean private LandingZoneService mockLandingZoneService;
   @MockBean private WorkspaceService mockWorkspaceService;
   @MockBean private ControlledResourceMetadataManager mockControlledResourceMetadataManager;
+  @MockBean private ControlledResourceService mockControlledResourceService;
 
   public AzureStorageAccessService mockAzureStorageAccessService() {
     return mockAzureStorageAccessService;
@@ -36,5 +38,9 @@ public class BaseAzureUnitTest extends BaseUnitTestMocks {
 
   public ControlledResourceMetadataManager mockControlledResourceMetadataManager() {
     return mockControlledResourceMetadataManager;
+  }
+
+  public ControlledResourceService getMockControlledResourceService() {
+    return mockControlledResourceService;
   }
 }
