@@ -2,6 +2,7 @@ package bio.terra.workspace.service.workspace;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.common.exception.SerializationException;
@@ -9,7 +10,7 @@ import bio.terra.workspace.app.configuration.external.AwsConfiguration;
 import bio.terra.workspace.common.BaseAwsUnitTest;
 import bio.terra.workspace.service.workspace.exceptions.InvalidSerializedVersionException;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
-import java.util.UUID;
+import java.util.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import software.amazon.awssdk.arns.Arn;
@@ -66,18 +67,15 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
   }
 
   private AwsCloudContext buildTestContext(boolean includeNotebookLifecycleConfig) {
-    return AwsCloudContext.builder()
-        .landingZoneName(LZ_NAME)
-        .accountNumber(ACCOUNT_ID)
-        .serviceRoleArn(ROLE_ARN_SERVICE)
-        .serviceRoleAudience(GOOGLE_JWT_AUDIENCE)
-        .userRoleArn(ROLE_ARN_USER)
-        .kmsKeyArn(KMS_KEY_ARN)
-        .notebookLifecycleConfigArn(
-            includeNotebookLifecycleConfig ? NOTEBOOK_LIFECYCLE_CONFIG_ARN : null)
-        .addBucket(Region.US_EAST_1, BUCKET_NAME_US_EAST)
-        .addBucket(Region.US_WEST_1, BUCKET_NAME_US_WEST)
-        .build();
+    return new AwsCloudContext(
+        LZ_NAME,
+        ACCOUNT_ID,
+        ROLE_ARN_SERVICE,
+        GOOGLE_JWT_AUDIENCE,
+        ROLE_ARN_USER,
+        KMS_KEY_ARN,
+        (includeNotebookLifecycleConfig ? NOTEBOOK_LIFECYCLE_CONFIG_ARN : null),
+        Map.of(Region.US_EAST_1, BUCKET_NAME_US_EAST, Region.US_WEST_1, BUCKET_NAME_US_WEST));
   }
 
   private AwsCloudContext buildTestContext() {
@@ -97,7 +95,7 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
         compareContext.getNotebookLifecycleConfigArn());
     assertEquals(BUCKET_NAME_US_EAST, compareContext.getBucketNameForRegion(Region.US_EAST_1));
     assertEquals(BUCKET_NAME_US_WEST, compareContext.getBucketNameForRegion(Region.US_WEST_1));
-    assertEquals(null, compareContext.getBucketNameForRegion(Region.EU_CENTRAL_1));
+    assertNull(compareContext.getBucketNameForRegion(Region.EU_CENTRAL_1));
   }
 
   private void validateContext(AwsCloudContext compareContext) {
