@@ -696,9 +696,10 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
       ReferencedResource resultReferenceResource =
           referenceResourceService.createReferenceResource(referencedResource, USER_REQUEST);
       assertThrows(
-        DuplicateResourceException.class,
-        () ->
-          referenceResourceService.createReferenceResource(resultReferenceResource, USER_REQUEST));
+          DuplicateResourceException.class,
+          () ->
+              referenceResourceService.createReferenceResource(
+                  resultReferenceResource, USER_REQUEST));
 
       var lastUpdateDetailsAfterCreate =
           workspaceActivityLogService.getLastUpdatedDetails(workspaceUuid);

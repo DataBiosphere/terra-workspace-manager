@@ -29,12 +29,9 @@ import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.Refer
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Objects;
 import java.util.Optional;
 import java.util.UUID;
-
-import com.google.common.base.Objects;
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.jetbrains.annotations.Nullable;
 
 public class ControlledBigQueryDatasetResource extends ControlledResource {
@@ -268,7 +265,10 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
     if (this == o) return true;
     if (!(o instanceof ControlledBigQueryDatasetResource that)) return false;
     if (!super.equals(o)) return false;
-    return Objects.equal(datasetName, that.datasetName) && Objects.equal(projectId, that.projectId) && Objects.equal(defaultTableLifetime, that.defaultTableLifetime) && Objects.equal(defaultPartitionLifetime, that.defaultPartitionLifetime);
+    return Objects.equal(datasetName, that.datasetName)
+        && Objects.equal(projectId, that.projectId)
+        && Objects.equal(defaultTableLifetime, that.defaultTableLifetime)
+        && Objects.equal(defaultPartitionLifetime, that.defaultPartitionLifetime);
   }
 
   @Override
@@ -292,7 +292,8 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(super.hashCode(), datasetName, projectId, defaultTableLifetime, defaultPartitionLifetime);
+    return Objects.hashCode(
+        super.hashCode(), datasetName, projectId, defaultTableLifetime, defaultPartitionLifetime);
   }
 
   public static class Builder {

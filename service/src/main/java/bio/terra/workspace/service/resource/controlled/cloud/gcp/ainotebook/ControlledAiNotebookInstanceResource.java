@@ -33,7 +33,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
-
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -300,7 +299,9 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
     if (!(o instanceof ControlledAiNotebookInstanceResource)) return false;
     if (!super.equals(o)) return false;
     ControlledAiNotebookInstanceResource resource = (ControlledAiNotebookInstanceResource) o;
-    return Objects.equal(instanceId, resource.instanceId) && Objects.equal(location, resource.location) && Objects.equal(projectId, resource.projectId);
+    return Objects.equal(instanceId, resource.instanceId)
+        && Objects.equal(location, resource.location)
+        && Objects.equal(projectId, resource.projectId);
   }
 
   @Override

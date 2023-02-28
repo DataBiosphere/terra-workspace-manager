@@ -116,7 +116,7 @@ public class ControlledResourceMetadataManager {
             () -> samService.checkAuthz(userRequest, samName, resourceId.toString(), action),
             "checkAuthz");
         throw new ResourceIsBusyException(
-            "Another user is operating on the resource; wait and try again");
+            "Another operation is running on the resource; wait and try again");
 
       case BROKEN_DELETE:
         // If the resource is in the BROKEN_DELETING state, then it is in an unknown broken state
@@ -156,7 +156,7 @@ public class ControlledResourceMetadataManager {
         return controlledResource;
 
       default:
-        throw new InternalLogicException("Unexpected case");
+        throw new InternalLogicException("Unexpected case: " + controlledResource.getState());
     }
   }
 
