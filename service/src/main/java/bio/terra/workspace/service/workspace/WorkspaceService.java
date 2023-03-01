@@ -378,8 +378,18 @@ public class WorkspaceService {
     List<String> applicationIds =
         applicationDao.listWorkspaceApplicationsForClone(sourceWorkspace.getWorkspaceId());
 
+    // Since we call createWorkspace synchronously first, we'll retrieve the source policies now so
+    // that they can be set on the new workspace correctly during the create call.
+    TpsPolicyInputs policy = null;
+    if (features.isTpsEnabled()) {
+      TpsPaoGetResult sourcePolicy = tpsApiDispatch.getPao(sourceWorkspace.getWorkspaceId());
+      if (sourcePolicy != null) {
+        policy = sourcePolicy.getAttributes();
+      }
+    }
+
     // Create the destination workspace synchronously first.
-    createWorkspace(destinationWorkspace, null, applicationIds, userRequest);
+    createWorkspace(destinationWorkspace, policy, applicationIds, userRequest);
 
     // Remaining steps are an async flight.
     return jobService
