@@ -294,7 +294,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     String errorMsg = "fake SAM error message";
     doThrow(SamExceptionFactory.create(errorMsg, new ApiException(("test"))))
         .when(mockSamService)
-        .createWorkspaceWithDefaults(any(), any());
+        .createWorkspaceWithDefaults(any(), any(), any());
 
     assertThrows(
         ErrorReportException.class,
@@ -479,7 +479,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   void testHandlesSamError() throws Exception {
     String apiErrorMsg = "test";
     ErrorReportException testex = new SamInternalServerErrorException(apiErrorMsg);
-    doThrow(testex).when(mockSamService).createWorkspaceWithDefaults(any(), any());
+    doThrow(testex).when(mockSamService).createWorkspaceWithDefaults(any(), any(), any());
     ErrorReportException exception =
         assertThrows(
             SamInternalServerErrorException.class,

@@ -277,7 +277,8 @@ public class SamService {
    * specific exception types.
    */
   @Traced
-  public void createWorkspaceWithDefaults(AuthenticatedUserRequest userRequest, UUID uuid)
+  public void createWorkspaceWithDefaults(
+      AuthenticatedUserRequest userRequest, UUID uuid, List<String> authDomainList)
       throws InterruptedException {
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     // Sam will throw an error if no owner is specified, so the caller's email is required. It can
@@ -288,11 +289,12 @@ public class SamService {
     // workspace.
 
     String humanUserEmail = getUserEmailFromSam(userRequest);
+
     CreateResourceRequestV2 workspaceRequest =
         new CreateResourceRequestV2()
             .resourceId(uuid.toString())
             .policies(defaultWorkspacePolicies(humanUserEmail))
-            .authDomain(List.of());
+            .authDomain(authDomainList);
     try {
       SamRetry.retry(
           () -> resourceApi.createResourceV2(SamConstants.SamResource.WORKSPACE, workspaceRequest));

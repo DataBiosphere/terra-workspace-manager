@@ -9,6 +9,7 @@ import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.policy.TpsUtilities;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.List;
@@ -36,7 +37,11 @@ public class WorkspaceCreateFlight extends Flight {
     switch (workspace.getWorkspaceStage()) {
       case MC_WORKSPACE -> {
         addStep(
-            new CreateWorkspaceAuthzStep(workspace, appContext.getSamService(), userRequest),
+            new CreateWorkspaceAuthzStep(
+                workspace,
+                appContext.getSamService(),
+                userRequest,
+                TpsUtilities.getGroupConstraintsFromInputs(policyInputs)),
             serviceRetryRule);
         if (appContext.getFeatureConfiguration().isTpsEnabled()) {
           addStep(

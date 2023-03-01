@@ -46,6 +46,7 @@ import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -225,7 +226,7 @@ class SamServiceTest extends BaseConnectedTest {
   void permissionsApiFailsInRawlsWorkspace() throws Exception {
     UUID workspaceUuid = UUID.randomUUID();
     // RAWLS_WORKSPACEs do not own their own Sam resources, so we need to manage them separately.
-    samService.createWorkspaceWithDefaults(defaultUserRequest(), workspaceUuid);
+    samService.createWorkspaceWithDefaults(defaultUserRequest(), workspaceUuid, new ArrayList<>());
 
     Workspace rawlsWorkspace =
         WorkspaceFixtures.buildWorkspace(workspaceUuid, WorkspaceStage.RAWLS_WORKSPACE);
