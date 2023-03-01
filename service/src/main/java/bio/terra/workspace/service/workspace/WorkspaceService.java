@@ -18,7 +18,6 @@ import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
-import bio.terra.workspace.service.policy.TpsUtilities;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneWorkspaceFlight;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.stage.StageService;
@@ -127,9 +126,6 @@ public class WorkspaceService {
             .addParameter(
                 WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name())
             .addParameter(WorkspaceFlightMapKeys.POLICIES, policies)
-            .addParameter(
-                WorkspaceFlightMapKeys.AUTH_DOMAINS,
-                TpsUtilities.getGroupConstraintsFromInputs(policies))
             .addParameter(WorkspaceFlightMapKeys.APPLICATION_IDS, applications);
 
     Optional<SpendProfileId> spendProfile = workspace.getSpendProfileId();
