@@ -730,7 +730,7 @@ public class ResourceDao {
     switch (resourceStateRule) {
       case DELETE_ON_FAILURE -> {
         deleteResourceWorker(
-            resource.getWorkspaceId(), resource.getWorkspaceId(), /* resourceType */ null);
+            resource.getWorkspaceId(), resource.getResourceId(), /* resourceType */ null);
       }
 
       case BROKEN_ON_FAILURE -> {
