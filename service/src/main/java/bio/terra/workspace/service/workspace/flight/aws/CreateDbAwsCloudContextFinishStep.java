@@ -24,10 +24,7 @@ public class CreateDbAwsCloudContextFinishStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext flightContext) throws InterruptedException {
-    String serializedAwsCloudContext =
-        flightContext.getWorkingMap().get(AWS_CLOUD_CONTEXT, String.class);
-
-    AwsCloudContext awsCloudContext = AwsCloudContext.deserialize(serializedAwsCloudContext);
+    AwsCloudContext awsCloudContext = flightContext.getWorkingMap().get(AWS_CLOUD_CONTEXT, AwsCloudContext.class);
 
     // Create the cloud context; throws if the context already exists.
     awsCloudContextService.createAwsCloudContextFinish(

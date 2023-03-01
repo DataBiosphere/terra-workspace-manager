@@ -203,8 +203,6 @@ public class AwsCloudContext {
     }
   }
 
-  @JsonIgnoreProperties(ignoreUnknown = true)
-  //@JsonIgnoreProperties(value = {"bucketListInternal"},  allowGetters=true)
   public static class AwsCloudContextV1 {
     public static final long AWS_CLOUD_CONTEXT_DB_VERSION = 1;
 

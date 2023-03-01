@@ -18,13 +18,9 @@ public class ValidateWLZStep implements Step {
   public StepResult doStep(FlightContext flightContext) throws InterruptedException {
 
     try {
-      String serializedAwsCloudContext =
-          flightContext.getWorkingMap().get(AWS_CLOUD_CONTEXT, String.class);
-
+      AwsCloudContext awsCloudContext = flightContext.getWorkingMap().get(AWS_CLOUD_CONTEXT, AwsCloudContext.class);
       SamUser samUser =
           flightContext.getInputParameters().get(WorkspaceFlightMapKeys.SAM_USER, SamUser.class);
-
-      AwsCloudContext awsCloudContext = AwsCloudContext.deserialize(serializedAwsCloudContext);
 
       MultiCloudUtils.assumeAwsUserRoleFromGcp(awsCloudContext, samUser, new HashSet<>());
 

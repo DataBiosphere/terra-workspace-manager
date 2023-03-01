@@ -117,10 +117,12 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     if (operationType == OperationType.DELETE) {
       switch (af.getActivityLogChangedTarget()) {
         case WORKSPACE -> maybeLogWorkspaceDeletionFlight(workspaceUuid, userEmail, subjectId);
-        case AZURE_CLOUD_CONTEXT -> maybeLogCloudContextDeletionFlight(
-            CloudPlatform.AZURE, workspaceUuid, userEmail, subjectId);
         case GCP_CLOUD_CONTEXT -> maybeLogCloudContextDeletionFlight(
             CloudPlatform.GCP, workspaceUuid, userEmail, subjectId);
+        case AZURE_CLOUD_CONTEXT -> maybeLogCloudContextDeletionFlight(
+                CloudPlatform.AZURE, workspaceUuid, userEmail, subjectId);
+        case AWS_CLOUD_CONTEXT -> maybeLogCloudContextDeletionFlight(
+                CloudPlatform.AWS, workspaceUuid, userEmail, subjectId);
         case RESOURCE -> maybeLogControlledResourcesDeletionFlight(
             context, workspaceUuid, userEmail, subjectId);
         case FOLDER -> maybeLogFolderDeletionFlight(context, workspaceUuid, userEmail, subjectId);

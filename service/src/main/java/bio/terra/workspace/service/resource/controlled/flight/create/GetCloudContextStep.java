@@ -54,13 +54,6 @@ public class GetCloudContextStep implements Step {
     FlightMap workingMap = flightContext.getWorkingMap();
     // Get the cloud context and store it in the working map
     switch (cloudPlatform) {
-      case AZURE -> {
-        if (workingMap.get(AZURE_CLOUD_CONTEXT, AzureCloudContext.class) == null) {
-          workingMap.put(
-              AZURE_CLOUD_CONTEXT,
-              azureCloudContextService.getRequiredAzureCloudContext(workspaceUuid));
-        }
-      }
       case GCP -> {
         if (workingMap.get(GCP_CLOUD_CONTEXT, GcpCloudContext.class) == null) {
           AuthenticatedUserRequest userRequest =
@@ -73,11 +66,16 @@ public class GetCloudContextStep implements Step {
               gcpCloudContextService.getRequiredGcpCloudContext(workspaceUuid, userRequest));
         }
       }
+      case AZURE -> {
+        if (workingMap.get(AZURE_CLOUD_CONTEXT, AzureCloudContext.class) == null) {
+          workingMap.put(
+                  AZURE_CLOUD_CONTEXT,
+                  azureCloudContextService.getRequiredAzureCloudContext(workspaceUuid));
+        }
+      }
       case AWS -> {
         if (workingMap.get(AWS_CLOUD_CONTEXT, AwsCloudContext.class) == null) {
-          AwsCloudContext awsCloudContext =
-              awsCloudContextService.getRequiredAwsCloudContext(workspaceUuid);
-          workingMap.put(AWS_CLOUD_CONTEXT, awsCloudContext.serialize());
+          workingMap.put(AWS_CLOUD_CONTEXT, awsCloudContextService.getRequiredAwsCloudContext(workspaceUuid));
         }
       }
       case ANY ->
