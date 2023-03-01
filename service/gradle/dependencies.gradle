@@ -1,4 +1,4 @@
-// Library Dependencies, Versions, etc.
+// Library Dependencies, Versions, etc
 dependencies {
   // Google dependencies
   constraints {
