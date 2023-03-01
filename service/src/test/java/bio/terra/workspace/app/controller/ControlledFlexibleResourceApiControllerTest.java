@@ -6,7 +6,6 @@ import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertApiFlexibleResourceEquals;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertResourceMetadata;
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -23,10 +22,13 @@ import bio.terra.workspace.generated.model.ApiStewardshipType;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,6 +63,31 @@ public class ControlledFlexibleResourceApiControllerTest extends BaseUnitTest {
   public void create() throws Exception {
     UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
 
+    // Pass in encoded JSON data to ensure it is decoded to a JSON string within the database.
+
+    // Create a JSON object with some data.
+    JSONObject jsonData = new JSONObject();
+
+    jsonData.put("name", "Aaron");
+    jsonData.put("description", "Some description here.");
+    jsonData.put("count", 23);
+
+    JSONArray propertiesArray = new JSONArray();
+    propertiesArray.put(new JSONObject().put("A", 32));
+    propertiesArray.put(new JSONObject().put("B", 33));
+    jsonData.put("properties", propertiesArray);
+
+    JSONObject nestedObject = new JSONObject();
+    nestedObject.put("color", "red");
+    nestedObject.put("map", new JSONObject().put("goose", "bird").put("cod", "fish"));
+    jsonData.put("nestedData", nestedObject);
+
+    // Convert the object to a string.
+    String expectedInputJsonString = jsonData.toString(/*indentFactor=*/ 4);
+
+    // Encode the JSON string in base64.
+    byte[] encodedJsonString = expectedInputJsonString.getBytes(StandardCharsets.UTF_8);
+
     var created =
         mockMvcUtils
             .createFlexibleResource(
@@ -69,7 +96,7 @@ public class ControlledFlexibleResourceApiControllerTest extends BaseUnitTest {
                 "fake-flexible-resource",
                 "terra",
                 "fake-flexible-type",
-                "fake-data".getBytes())
+                encodedJsonString)
             .getFlexibleResource();
 
     assertFlexibleResource(
@@ -83,7 +110,7 @@ public class ControlledFlexibleResourceApiControllerTest extends BaseUnitTest {
         /*expectedLastUpdatedBy=*/ USER_REQUEST.getEmail(),
         "terra",
         "fake-flexible-type",
-        "fake-data".getBytes());
+        expectedInputJsonString);
 
     ApiFlexibleResource gotResource =
         mockMvcUtils.getFlexibleResource(
@@ -136,7 +163,7 @@ public class ControlledFlexibleResourceApiControllerTest extends BaseUnitTest {
       String expectedLastUpdatedBy,
       String expectedTypeNamespace,
       String expectedType,
-      @Nullable byte[] expectedData) {
+      @Nullable String expectedData) {
     assertResourceMetadata(
         actualFlexibleResource.getMetadata(),
         (CloudPlatform.ANY).toApiModel(),
@@ -152,6 +179,6 @@ public class ControlledFlexibleResourceApiControllerTest extends BaseUnitTest {
 
     assertEquals(expectedTypeNamespace, actualFlexibleResource.getAttributes().getTypeNamespace());
     assertEquals(expectedType, actualFlexibleResource.getAttributes().getType());
-    assertArrayEquals(expectedData, actualFlexibleResource.getAttributes().getData());
+    assertEquals(expectedData, actualFlexibleResource.getAttributes().getData());
   }
 }

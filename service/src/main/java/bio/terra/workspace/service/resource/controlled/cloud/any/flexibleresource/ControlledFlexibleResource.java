@@ -39,7 +39,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 public class ControlledFlexibleResource extends ControlledResource {
   private final String typeNamespace;
   private final String type;
-  private final byte[] data;
+  private final String data;
 
   @JsonCreator
   public ControlledFlexibleResource(
@@ -62,7 +62,7 @@ public class ControlledFlexibleResource extends ControlledResource {
       @JsonProperty("region") String region,
       @JsonProperty("typeNamespace") String typeNamespace,
       @JsonProperty("type") String type,
-      @JsonProperty("data") byte[] data) {
+      @JsonProperty("data") String data) {
     super(
         ControlledResourceFields.builder()
             .workspaceUuid(workspaceId)
@@ -110,7 +110,7 @@ public class ControlledFlexibleResource extends ControlledResource {
 
   // Constructor for the builder
   private ControlledFlexibleResource(
-      ControlledResourceFields common, String typeNamespace, String type, byte[] data) {
+      ControlledResourceFields common, String typeNamespace, String type, String data) {
     super(common);
     this.typeNamespace = typeNamespace;
     this.type = type;
@@ -150,7 +150,7 @@ public class ControlledFlexibleResource extends ControlledResource {
     return type;
   }
 
-  public byte[] getData() {
+  public String getData() {
     return data;
   }
 
@@ -337,7 +337,7 @@ public class ControlledFlexibleResource extends ControlledResource {
 
     private String typeNamespace;
     private String type;
-    private byte[] data;
+    private String data;
 
     public ControlledFlexibleResource.Builder common(ControlledResourceFields common) {
       this.common = common;
@@ -354,7 +354,7 @@ public class ControlledFlexibleResource extends ControlledResource {
       return this;
     }
 
-    public ControlledFlexibleResource.Builder data(byte[] data) {
+    public ControlledFlexibleResource.Builder data(String data) {
       this.data = data;
       return this;
     }

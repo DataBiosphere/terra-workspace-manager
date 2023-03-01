@@ -15,6 +15,7 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResourceF
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import io.opencensus.contrib.spring.aop.Traced;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -73,7 +74,7 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
             .common(commonFields)
             .typeNamespace(body.getFlexibleResource().getTypeNamespace())
             .type(body.getFlexibleResource().getType())
-            .data(body.getFlexibleResource().getData())
+            .data(new String(body.getFlexibleResource().getData(), StandardCharsets.UTF_8))
             .build();
 
     ControlledFlexibleResource createdFlexibleResource =

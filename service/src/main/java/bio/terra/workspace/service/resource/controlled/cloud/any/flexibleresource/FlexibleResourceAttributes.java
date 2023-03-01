@@ -6,13 +6,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class FlexibleResourceAttributes {
   private final String typeNamespace;
   private final String type;
-  private final byte[] data;
+  private final String data;
 
   @JsonCreator
   public FlexibleResourceAttributes(
       @JsonProperty("typeNamespace") String typeNamespace,
       @JsonProperty("type") String type,
-      @JsonProperty("data") byte[] data) {
+      @JsonProperty("data") String data) {
     this.typeNamespace = typeNamespace;
     this.type = type;
     this.data = data;
@@ -26,7 +26,7 @@ public class FlexibleResourceAttributes {
     return type;
   }
 
-  public byte[] getData() {
+  public String getData() {
     return data;
   }
 }

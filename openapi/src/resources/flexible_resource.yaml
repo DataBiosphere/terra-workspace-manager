@@ -12,9 +12,8 @@ components:
           description: Type of the flexible resource.
           type: string
         data:
-          description: JSON encoded in base64.
+          description: JSON (decoded from base64).
           type: string
-          format: byte
 
     FlexibleResource:
       type: object
