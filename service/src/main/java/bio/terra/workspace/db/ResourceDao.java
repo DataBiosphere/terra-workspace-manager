@@ -806,12 +806,6 @@ public class ResourceDao {
       @Nullable String targetFlightId,
       WsmResourceState targetState,
       @Nullable Exception exception) {
-    final String sql =
-        """
-      UPDATE resource SET state = :new_state, flight_id = :new_flight_id, error = :error
-      WHERE workspace_id = :workspace_id AND resource_id = :resource_id AND flight_id = :expected_flight_id
-      """;
-
     // If we are already in the target state, assume this is a retry and go on our merry way
     if (checkResourceRetry(dbResource, targetState, targetFlightId)) {
       return;
@@ -846,6 +840,17 @@ public class ResourceDao {
                   (exception.getMessage() == null ? "<no message>" : exception.getMessage())));
     }
 
+    String sql =
+        """
+    UPDATE resource SET state = :new_state, flight_id = :new_flight_id, error = :error
+    WHERE workspace_id = :workspace_id AND resource_id = :resource_id
+    """;
+    if (expectedFlightId == null) {
+      sql = sql + " AND flight_id IS NULL";
+    } else {
+      sql = sql + " AND flight_id = :expected_flight_id";
+    }
+
     var params =
         new MapSqlParameterSource()
             .addValue("workspace_id", dbResource.getWorkspaceId().toString())
@@ -857,7 +862,7 @@ public class ResourceDao {
 
     int rowsAffected = jdbcTemplate.update(sql, params);
     if (rowsAffected != 1) {
-      throw new InternalLogicException("Unexpected database state");
+      throw new InternalLogicException("Unexpected database state - no row updated");
     }
 
     logger.info(
