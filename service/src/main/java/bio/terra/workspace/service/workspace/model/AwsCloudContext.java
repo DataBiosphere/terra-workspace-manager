@@ -7,15 +7,21 @@ import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.generated.model.ApiAwsContext;
 import bio.terra.workspace.service.workspace.exceptions.InvalidSerializedVersionException;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.arns.Arn;
 import software.amazon.awssdk.regions.Region;
 
 public class AwsCloudContext {
+  private static final Logger logger = LoggerFactory.getLogger(AwsCloudContext.class);
+
   private String landingZoneName;
   private String accountNumber;
   private Arn serviceRoleArn;
@@ -120,7 +126,9 @@ public class AwsCloudContext {
     }
 
     try {
+      logger.error("DEX--> 1 --> {}", json);
       AwsCloudContextV1 dbContext = DbSerDes.fromJson(json, AwsCloudContextV1.class);
+      logger.error("DEX--> 2 --> {}", dbContext);
       dbContext.validateVersion();
 
       // Serialized context may not have a notebook lifecycle defined, so check for null before
@@ -129,14 +137,19 @@ public class AwsCloudContext {
           (dbContext.notebookLifecycleConfigArn != null)
               ? Arn.fromString(dbContext.notebookLifecycleConfigArn)
               : null;
+      logger.error("DEX--> 3");
 
       Map<Region, String> bucketMap = new HashMap<>();
-      if (dbContext.bucketList != null) {
-        for (AwsCloudContextBucketV1 bucketV1 : dbContext.bucketList) {
+
+
+      if (dbContext.bucketListAsString != null) {
+        List<AwsCloudContextBucketV1> bucketList = DbSerDes.fromJson(dbContext.bucketListAsString, new TypeReference<>() {});
+        for (AwsCloudContextBucketV1 bucketV1 : bucketList) {
           bucketV1.validateVersion();
           bucketMap.put(Region.of(bucketV1.regionName), bucketV1.bucketName);
         }
       }
+      logger.error("DEX--> 4");
 
       return new AwsCloudContext(
           dbContext.landingZoneName,
@@ -149,7 +162,7 @@ public class AwsCloudContext {
           bucketMap);
 
     } catch (SerializationException e) {
-      throw new InvalidSerializedVersionException("Invalid serialized version " + e);
+      throw new InvalidSerializedVersionException("Invalid serialized version: " + e);
     }
   }
 
@@ -190,6 +203,8 @@ public class AwsCloudContext {
     }
   }
 
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  //@JsonIgnoreProperties(value = {"bucketListInternal"},  allowGetters=true)
   public static class AwsCloudContextV1 {
     public static final long AWS_CLOUD_CONTEXT_DB_VERSION = 1;
 
@@ -203,7 +218,7 @@ public class AwsCloudContext {
     public String userRoleArn;
     public String kmsKeyArn;
     public String notebookLifecycleConfigArn;
-    public List<AwsCloudContextBucketV1> bucketList;
+    public String bucketListAsString;
 
     @JsonCreator
     public AwsCloudContextV1(
@@ -215,7 +230,7 @@ public class AwsCloudContext {
         @JsonProperty("userRoleArn") String userRoleArn,
         @JsonProperty("kmsKeyArn") String kmsKeyArn,
         @JsonProperty("notebookLifecycleConfigArn") String notebookLifecycleConfigArn,
-        @JsonProperty("bucketList") String bucketListStr) {
+        @JsonProperty("bucketList") String bucketListAsString) {
       this.version = version;
       this.landingZoneName = landingZoneName;
       this.accountNumber = accountNumber;
@@ -224,8 +239,7 @@ public class AwsCloudContext {
       this.userRoleArn = userRoleArn;
       this.kmsKeyArn = kmsKeyArn;
       this.notebookLifecycleConfigArn = notebookLifecycleConfigArn;
-      this.bucketList =
-          DbSerDes.fromJson(bucketListStr, new TypeReference<List<AwsCloudContextBucketV1>>() {});
+      this.bucketListAsString = bucketListAsString;
     }
 
     public AwsCloudContextV1(AwsCloudContext context) {
@@ -241,12 +255,13 @@ public class AwsCloudContext {
         this.notebookLifecycleConfigArn = context.notebookLifecycleConfigArn.toString();
       }
       if (context.regionToBucketNameMap != null) {
-        this.bucketList =
+        List<AwsCloudContextBucketV1> bucketListInternal =
             context.regionToBucketNameMap.entrySet().stream()
                 .map(
                     bucket ->
                         new AwsCloudContextBucketV1(bucket.getKey().toString(), bucket.getValue()))
                 .collect(Collectors.toList());
+        this.bucketListAsString = DbSerDes.toJson(bucketListInternal);
       }
     }
 
