@@ -120,9 +120,9 @@ public class WorkspaceActivityLogHook implements StairwayHook {
         case GCP_CLOUD_CONTEXT -> maybeLogCloudContextDeletionFlight(
             CloudPlatform.GCP, workspaceUuid, userEmail, subjectId);
         case AZURE_CLOUD_CONTEXT -> maybeLogCloudContextDeletionFlight(
-                CloudPlatform.AZURE, workspaceUuid, userEmail, subjectId);
+            CloudPlatform.AZURE, workspaceUuid, userEmail, subjectId);
         case AWS_CLOUD_CONTEXT -> maybeLogCloudContextDeletionFlight(
-                CloudPlatform.AWS, workspaceUuid, userEmail, subjectId);
+            CloudPlatform.AWS, workspaceUuid, userEmail, subjectId);
         case RESOURCE -> maybeLogControlledResourcesDeletionFlight(
             context, workspaceUuid, userEmail, subjectId);
         case FOLDER -> maybeLogFolderDeletionFlight(context, workspaceUuid, userEmail, subjectId);

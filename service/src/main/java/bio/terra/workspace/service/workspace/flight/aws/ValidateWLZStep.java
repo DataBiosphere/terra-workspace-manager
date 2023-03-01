@@ -16,9 +16,9 @@ public class ValidateWLZStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext flightContext) throws InterruptedException {
-
     try {
-      AwsCloudContext awsCloudContext = flightContext.getWorkingMap().get(AWS_CLOUD_CONTEXT, AwsCloudContext.class);
+      AwsCloudContext awsCloudContext =
+          flightContext.getWorkingMap().get(AWS_CLOUD_CONTEXT, AwsCloudContext.class);
       SamUser samUser =
           flightContext.getInputParameters().get(WorkspaceFlightMapKeys.SAM_USER, SamUser.class);
 

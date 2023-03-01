@@ -1,5 +1,8 @@
 package bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakernotebook;
 
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.AWS_CLOUD_CONTEXT;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS;
+
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.iam.SamUser;
@@ -30,46 +33,32 @@ public class CreateAwsSageMakerNotebookStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     FlightMap inputParameters = flightContext.getInputParameters();
-    FlightMap workingMap = flightContext.getWorkingMap();
 
-    final ApiAwsSageMakerNotebookCreationParameters creationParameters =
+    ApiAwsSageMakerNotebookCreationParameters creationParameters =
         inputParameters.get(
-            WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS,
-            ApiAwsSageMakerNotebookCreationParameters.class);
+            CREATE_NOTEBOOK_PARAMETERS, ApiAwsSageMakerNotebookCreationParameters.class);
 
-    final SamUser samUser = inputParameters.get(WorkspaceFlightMapKeys.SAM_USER, SamUser.class);
-
-    final String awsCloudContextString =
-        workingMap.get(
-            WorkspaceFlightMapKeys.ControlledResourceKeys.AWS_CLOUD_CONTEXT, String.class);
-
-    final AwsCloudContext awsCloudContext = AwsCloudContext.deserialize(awsCloudContextString);
-    final Credentials awsCredentials = MultiCloudUtils.assumeAwsServiceRoleFromGcp(awsCloudContext);
-
-    InstanceType instanceType = InstanceType.fromValue(creationParameters.getInstanceType());
-    Region region = Region.of(creationParameters.getLocation());
+    AwsCloudContext awsCloudContext =
+        flightContext.getWorkingMap().get(AWS_CLOUD_CONTEXT, AwsCloudContext.class);
+    Credentials awsCredentials = MultiCloudUtils.assumeAwsServiceRoleFromGcp(awsCloudContext);
+    SamUser samUser = inputParameters.get(WorkspaceFlightMapKeys.SAM_USER, SamUser.class);
 
     AwsUtils.createSageMakerNotebook(
         awsCloudContext,
         awsCredentials,
         resource.getWorkspaceId(),
         samUser,
-        region,
-        instanceType,
+        Region.of(creationParameters.getLocation()),
+        InstanceType.fromValue(creationParameters.getInstanceType()),
         creationParameters.getInstanceId());
-
     return StepResult.getStepResultSuccess();
   }
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    FlightMap workingMap = flightContext.getWorkingMap();
-    final String awsCloudContextString =
-        workingMap.get(
-            WorkspaceFlightMapKeys.ControlledResourceKeys.AWS_CLOUD_CONTEXT, String.class);
-
-    final AwsCloudContext awsCloudContext = AwsCloudContext.deserialize(awsCloudContextString);
-    final Credentials awsCredentials = MultiCloudUtils.assumeAwsServiceRoleFromGcp(awsCloudContext);
+    AwsCloudContext awsCloudContext =
+        flightContext.getWorkingMap().get(AWS_CLOUD_CONTEXT, AwsCloudContext.class);
+    Credentials awsCredentials = MultiCloudUtils.assumeAwsServiceRoleFromGcp(awsCloudContext);
 
     Region region = Region.of(resource.getRegion());
     String notebookName = resource.getInstanceId();

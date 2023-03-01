@@ -23,21 +23,17 @@ public class CreateDbAwsCloudContextStartStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext flightContext) throws InterruptedException {
-
     AwsCloudContext awsCloudContext = awsCloudContextService.fromConfiguration();
-
     if (awsCloudContext == null) {
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL,
           new AwsLandingZoneException("No default AWS Landing Zone configured"));
     }
 
-    String serializedAwsCloudContext = awsCloudContext.serialize();
-
     // Create the AWS Cloud Context from the current configuration and put it into the working map
-    flightContext.getWorkingMap().put(AWS_CLOUD_CONTEXT, serializedAwsCloudContext);
-
     awsCloudContextService.createAwsCloudContextStart(workspaceUuid, flightContext.getFlightId());
+    flightContext.getWorkingMap().put(AWS_CLOUD_CONTEXT, awsCloudContext);
+
     return StepResult.getStepResultSuccess();
   }
 

@@ -1,12 +1,13 @@
 package bio.terra.workspace.service.resource.controlled.cloud.aws.storagebucket;
 
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.AWS_CLOUD_CONTEXT;
+
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.common.utils.MultiCloudUtils;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,13 +26,9 @@ public class CreateAwsBucketStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    final String awsCloudContextString =
-        flightContext
-            .getWorkingMap()
-            .get(WorkspaceFlightMapKeys.ControlledResourceKeys.AWS_CLOUD_CONTEXT, String.class);
-
-    final AwsCloudContext awsCloudContext = AwsCloudContext.deserialize(awsCloudContextString);
-    final Credentials awsCredentials = MultiCloudUtils.assumeAwsServiceRoleFromGcp(awsCloudContext);
+    AwsCloudContext awsCloudContext =
+        flightContext.getWorkingMap().get(AWS_CLOUD_CONTEXT, AwsCloudContext.class);
+    Credentials awsCredentials = MultiCloudUtils.assumeAwsServiceRoleFromGcp(awsCloudContext);
 
     AwsUtils.createFolder(
         awsCredentials,
@@ -43,13 +40,9 @@ public class CreateAwsBucketStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    final String awsCloudContextString =
-        flightContext
-            .getWorkingMap()
-            .get(WorkspaceFlightMapKeys.ControlledResourceKeys.AWS_CLOUD_CONTEXT, String.class);
-
-    final AwsCloudContext awsCloudContext = AwsCloudContext.deserialize(awsCloudContextString);
-    final Credentials awsCredentials = MultiCloudUtils.assumeAwsServiceRoleFromGcp(awsCloudContext);
+    AwsCloudContext awsCloudContext =
+        flightContext.getWorkingMap().get(AWS_CLOUD_CONTEXT, AwsCloudContext.class);
+    Credentials awsCredentials = MultiCloudUtils.assumeAwsServiceRoleFromGcp(awsCloudContext);
 
     AwsUtils.undoCreateFolder(
         awsCredentials,

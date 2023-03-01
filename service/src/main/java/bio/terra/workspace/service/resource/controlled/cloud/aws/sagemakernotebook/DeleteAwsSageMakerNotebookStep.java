@@ -1,13 +1,13 @@
 package bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakernotebook;
 
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.AWS_CLOUD_CONTEXT;
+
 import bio.terra.stairway.FlightContext;
-import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.common.utils.MultiCloudUtils;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,19 +28,12 @@ public class DeleteAwsSageMakerNotebookStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    FlightMap workingMap = flightContext.getWorkingMap();
+    AwsCloudContext awsCloudContext =
+        flightContext.getWorkingMap().get(AWS_CLOUD_CONTEXT, AwsCloudContext.class);
+    Credentials awsCredentials = MultiCloudUtils.assumeAwsServiceRoleFromGcp(awsCloudContext);
 
-    final String awsCloudContextString =
-        workingMap.get(
-            WorkspaceFlightMapKeys.ControlledResourceKeys.AWS_CLOUD_CONTEXT, String.class);
-
-    final AwsCloudContext awsCloudContext = AwsCloudContext.deserialize(awsCloudContextString);
-    final Credentials awsCredentials = MultiCloudUtils.assumeAwsServiceRoleFromGcp(awsCloudContext);
-
-    String notebookName = resource.getInstanceId();
-    Region region = Region.of(resource.getRegion());
-
-    AwsUtils.deleteSageMakerNotebook(awsCredentials, region, notebookName);
+    AwsUtils.deleteSageMakerNotebook(
+        awsCredentials, Region.of(resource.getRegion()), resource.getInstanceId());
     return StepResult.getStepResultSuccess();
   }
 

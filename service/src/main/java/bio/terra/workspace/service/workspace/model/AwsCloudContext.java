@@ -7,8 +7,6 @@ import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.generated.model.ApiAwsContext;
 import bio.terra.workspace.service.workspace.exceptions.InvalidSerializedVersionException;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.*;
@@ -141,9 +139,9 @@ public class AwsCloudContext {
 
       Map<Region, String> bucketMap = new HashMap<>();
 
-
       if (dbContext.bucketListAsString != null) {
-        List<AwsCloudContextBucketV1> bucketList = DbSerDes.fromJson(dbContext.bucketListAsString, new TypeReference<>() {});
+        List<AwsCloudContextBucketV1> bucketList =
+            DbSerDes.fromJson(dbContext.bucketListAsString, new TypeReference<>() {});
         for (AwsCloudContextBucketV1 bucketV1 : bucketList) {
           bucketV1.validateVersion();
           bucketMap.put(Region.of(bucketV1.regionName), bucketV1.bucketName);

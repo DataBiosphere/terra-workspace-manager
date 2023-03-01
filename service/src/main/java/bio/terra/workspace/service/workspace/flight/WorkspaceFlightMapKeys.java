@@ -74,6 +74,7 @@ public final class WorkspaceFlightMapKeys {
     public static final String CREATE_GCP_CLOUD_CONTEXT_FLIGHT_ID = "createGcpCloudContextFlightId";
     public static final String CREATE_AZURE_CLOUD_CONTEXT_FLIGHT_ID =
         "createAzureCloudContextFlightId";
+    public static final String CREATE_AWS_CLOUD_CONTEXT_FLIGHT_ID = "createAwsCloudContextFlightId";
     public static final String DESTINATION_BUCKET_NAME = "destinationBucketName";
     public static final String DESTINATION_CLONE_INPUTS = "destinationCloneInputs";
     public static final String DESTINATION_DATASET_NAME = "destinationDatasetName";

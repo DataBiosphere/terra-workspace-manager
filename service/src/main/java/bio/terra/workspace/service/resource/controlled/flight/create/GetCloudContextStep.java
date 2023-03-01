@@ -69,13 +69,14 @@ public class GetCloudContextStep implements Step {
       case AZURE -> {
         if (workingMap.get(AZURE_CLOUD_CONTEXT, AzureCloudContext.class) == null) {
           workingMap.put(
-                  AZURE_CLOUD_CONTEXT,
-                  azureCloudContextService.getRequiredAzureCloudContext(workspaceUuid));
+              AZURE_CLOUD_CONTEXT,
+              azureCloudContextService.getRequiredAzureCloudContext(workspaceUuid));
         }
       }
       case AWS -> {
         if (workingMap.get(AWS_CLOUD_CONTEXT, AwsCloudContext.class) == null) {
-          workingMap.put(AWS_CLOUD_CONTEXT, awsCloudContextService.getRequiredAwsCloudContext(workspaceUuid));
+          workingMap.put(
+              AWS_CLOUD_CONTEXT, awsCloudContextService.getRequiredAwsCloudContext(workspaceUuid));
         }
       }
       case ANY ->

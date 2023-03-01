@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.aws.storagebucket;
 
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.AWS_CLOUD_CONTEXT;
+
 import bio.terra.common.exception.ConflictException;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
@@ -8,7 +10,6 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.common.utils.MultiCloudUtils;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,13 +28,9 @@ class ValidateAwsBucketCreationStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    final String awsCloudContextString =
-        flightContext
-            .getWorkingMap()
-            .get(WorkspaceFlightMapKeys.ControlledResourceKeys.AWS_CLOUD_CONTEXT, String.class);
-
-    final AwsCloudContext awsCloudContext = AwsCloudContext.deserialize(awsCloudContextString);
-    final Credentials awsCredentials = MultiCloudUtils.assumeAwsServiceRoleFromGcp(awsCloudContext);
+    AwsCloudContext awsCloudContext =
+        flightContext.getWorkingMap().get(AWS_CLOUD_CONTEXT, AwsCloudContext.class);
+    Credentials awsCredentials = MultiCloudUtils.assumeAwsServiceRoleFromGcp(awsCloudContext);
 
     if (AwsUtils.checkFolderExistence(
         awsCredentials,
@@ -47,7 +44,6 @@ class ValidateAwsBucketCreationStep implements Step {
                   "Prefix '%s/' already exists in bucket '%s'.",
                   resource.getS3BucketName(), resource.getPrefix())));
     }
-
     return StepResult.getStepResultSuccess();
   }
 

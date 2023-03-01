@@ -36,15 +36,13 @@ public class WaitForAwsSageMakerNotebookStatusStep implements Step {
       throws InterruptedException, RetryException {
     FlightMap workingMap = flightContext.getWorkingMap();
 
-    final AwsCloudContext awsCloudContext =
+    AwsCloudContext awsCloudContext =
         workingMap.get(
             WorkspaceFlightMapKeys.ControlledResourceKeys.AWS_CLOUD_CONTEXT, AwsCloudContext.class);
-    final Credentials awsCredentials = MultiCloudUtils.assumeAwsServiceRoleFromGcp(awsCloudContext);
+    Credentials awsCredentials = MultiCloudUtils.assumeAwsServiceRoleFromGcp(awsCloudContext);
 
-    String notebookName = resource.getInstanceId();
-    Region region = Region.of(resource.getRegion());
-
-    AwsUtils.waitForSageMakerNotebookStatus(awsCredentials, region, notebookName, notebookStatus);
+    AwsUtils.waitForSageMakerNotebookStatus(
+        awsCredentials, Region.of(resource.getRegion()), resource.getInstanceId(), notebookStatus);
     return StepResult.getStepResultSuccess();
   }
 
