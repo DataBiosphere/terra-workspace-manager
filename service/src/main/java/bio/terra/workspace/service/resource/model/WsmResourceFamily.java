@@ -71,7 +71,12 @@ public enum WsmResourceFamily {
       "TERRA_WORKSPACE",
       ApiResourceType.TERRA_WORKSPACE,
       WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE,
-      null);
+      null),
+  FLEXIBLE_RESOURCE(
+      "FLEXIBLE_RESOURCE",
+      ApiResourceType.FLEXIBLE_RESOURCE,
+      null,
+      WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE);
 
   private final String dbString; // serialized form of the resource type
   private final ApiResourceType apiResourceType;

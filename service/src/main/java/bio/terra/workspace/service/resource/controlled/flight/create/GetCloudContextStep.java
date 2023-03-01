@@ -8,7 +8,6 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
@@ -67,9 +66,9 @@ public class GetCloudContextStep implements Step {
               gcpCloudContextService.getRequiredGcpCloudContext(workspaceUuid, userRequest));
         }
       }
-      case ANY ->
-      // There cannot be an ANY resource that is also a controlled resource.
-      throw new InternalLogicException("Invalid cloud platform for controlled resource: ANY");
+      case ANY -> {
+        // A flexible resource is the only controlled resource that has an ANY CloudPlatform.
+      }
     }
 
     return StepResult.getStepResultSuccess();

@@ -204,6 +204,9 @@ public class ResourceValidationUtils {
         // validateAzureRegion(location);
       }
       case GCP -> validateGcpRegion(tpsApiDispatch, workspaceUuid, location);
+      case ANY -> {
+        // Flexible resources are not stored on the cloud. Thus, they have no region policies.
+      }
       default -> throw new InvalidControlledResourceException("Unrecognized platform");
     }
   }

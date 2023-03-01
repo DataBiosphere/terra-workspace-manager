@@ -43,9 +43,11 @@ import bio.terra.workspace.generated.model.ApiCloneWorkspaceRequest;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceResult;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
+import bio.terra.workspace.generated.model.ApiControlledFlexibleResourceCreationParameters;
 import bio.terra.workspace.generated.model.ApiControlledResourceMetadata;
 import bio.terra.workspace.generated.model.ApiCreateCloudContextRequest;
 import bio.terra.workspace.generated.model.ApiCreateCloudContextResult;
+import bio.terra.workspace.generated.model.ApiCreateControlledFlexibleResourceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpAiNotebookInstanceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpBigQueryDatasetRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpGcsBucketRequestBody;
@@ -56,6 +58,7 @@ import bio.terra.workspace.generated.model.ApiCreateGcpGcsBucketReferenceRequest
 import bio.terra.workspace.generated.model.ApiCreateGcpGcsObjectReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateGitRepoReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
+import bio.terra.workspace.generated.model.ApiCreatedControlledFlexibleResource;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpAiNotebookInstanceResult;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpBigQueryDataset;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpGcsBucket;
@@ -63,6 +66,7 @@ import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotAttributes;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
 import bio.terra.workspace.generated.model.ApiErrorReport;
+import bio.terra.workspace.generated.model.ApiFlexibleResource;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableAttributes;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableResource;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetAttributes;
@@ -291,6 +295,10 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/referenced/gitrepos/%s/clone";
   public static final String DELETE_FOLDER_JOB_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/folders/%s/result/%s";
+  public static final String CONTROLLED_FLEXIBLE_RESOURCES_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/any/flexibleResources";
+  public static final String CONTROLLED_FLEXIBLE_RESOURCE_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/any/flexibleResources/%s";
   public static final String UPDATE_POLICIES_PATH_FORMAT = "/api/workspaces/v1/%s/policies";
   public static final String POLICY_V1_GET_REGION_INFO_PATH = "/api/policies/v1/getLocationInfo";
 
@@ -1338,6 +1346,61 @@ public class MockMvcUtils {
     return objectMapper.readValue(serializedResponse, ApiCloneControlledGcpGcsBucketResult.class);
   }
 
+  public ApiFlexibleResource getFlexibleResource(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
+    var serializedResponse =
+        getSerializedResponseForGet(
+            userRequest, CONTROLLED_FLEXIBLE_RESOURCE_V1_PATH_FORMAT, workspaceId, resourceId);
+    return objectMapper.readValue(serializedResponse, ApiFlexibleResource.class);
+  }
+
+  public ApiCreatedControlledFlexibleResource createFlexibleResource(
+      AuthenticatedUserRequest userRequest, UUID workspaceId) throws Exception {
+    return createFlexibleResource(
+        userRequest,
+        workspaceId,
+        /*resourceName=*/ TestUtils.appendRandomNumber("resource-name"),
+        /*typeNamespace=*/ "terra",
+        /*type*/ "default-fake-flexible-type",
+        /*data*/ null);
+  }
+
+  public ApiCreatedControlledFlexibleResource createFlexibleResource(
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      String resourceName,
+      String typeNamespace,
+      String type,
+      @Nullable byte[] data)
+      throws Exception {
+    ApiControlledFlexibleResourceCreationParameters creationParameters =
+        new ApiControlledFlexibleResourceCreationParameters()
+            .typeNamespace(typeNamespace)
+            .type(type);
+    if (data != null) {
+      creationParameters.setData(data);
+    }
+
+    ApiCreateControlledFlexibleResourceRequestBody request =
+        new ApiCreateControlledFlexibleResourceRequestBody()
+            .common(makeDefaultControlledResourceFieldsApi().name(resourceName))
+            .flexibleResource(creationParameters);
+
+    String serializedResponse =
+        getSerializedResponseForPost(
+            userRequest,
+            CONTROLLED_FLEXIBLE_RESOURCES_V1_PATH_FORMAT,
+            workspaceId,
+            objectMapper.writeValueAsString(request));
+    return objectMapper.readValue(serializedResponse, ApiCreatedControlledFlexibleResource.class);
+  }
+
+  public void deleteFlexibleResource(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
+    deleteResource(
+        userRequest, workspaceId, resourceId, CONTROLLED_FLEXIBLE_RESOURCE_V1_PATH_FORMAT);
+  }
+
   public ApiDataRepoSnapshotResource createReferencedDataRepoSnapshot(
       AuthenticatedUserRequest userRequest,
       UUID workspaceId,
@@ -2346,6 +2409,15 @@ public class MockMvcUtils {
     assertEquals(
         expectedDataTable.getMetadata().lastUpdatedDate(null).lastUpdatedBy(null),
         actualDataTable.getMetadata().lastUpdatedDate(null).lastUpdatedBy(null));
+  }
+
+  public static void assertApiFlexibleResourceEquals(
+      ApiFlexibleResource expectedFlexibleResource, ApiFlexibleResource actualFlexibleResource) {
+    // Clear last updated by and last updated date because all the tests are reading and modifying
+    // the same source resources. The last updated date is always in flux.
+    assertEquals(
+        expectedFlexibleResource.getMetadata().lastUpdatedDate(null).lastUpdatedBy(null),
+        actualFlexibleResource.getMetadata().lastUpdatedDate(null).lastUpdatedBy(null));
   }
 
   public static void assertApiDataRepoEquals(
