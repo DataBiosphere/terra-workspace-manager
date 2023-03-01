@@ -13,6 +13,7 @@ import bio.terra.workspace.generated.model.ApiAzureStorageAttributes;
 import bio.terra.workspace.generated.model.ApiAzureStorageResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.policy.flight.ValidateResourceAgainstPolicyStep;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
@@ -28,6 +29,7 @@ import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -254,6 +256,13 @@ public class ControlledAzureStorageResource extends ControlledResource {
         new GetAzureStorageStep(
             flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
         cloudRetry);
+
+    // validate region
+    flight.addStep(
+        new ValidateResourceAgainstPolicyStep(
+            flightBeanBag.getTpsApiDispatch(), CloudPlatform.AZURE, this, getWorkspaceId()),
+        cloudRetry);
+
     flight.addStep(
         new CreateAzureStorageStep(
             flightBeanBag.getAzureConfig(),
