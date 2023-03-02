@@ -29,7 +29,7 @@ public class SetNoOpBucketCloneResponseStep implements Step {
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     final ApiClonedControlledGcpGcsBucket noOpResult =
         new ApiClonedControlledGcpGcsBucket()
-            .effectiveCloningInstructions(ApiCloningInstructionsEnum.NOTHING)
+            .effectiveCloningInstructions(ApiCloningInstructionsEnum.COPY_NOTHING)
             .bucket(null)
             .sourceWorkspaceId(sourceBucket.getWorkspaceId())
             .sourceResourceId(sourceBucket.getResourceId());

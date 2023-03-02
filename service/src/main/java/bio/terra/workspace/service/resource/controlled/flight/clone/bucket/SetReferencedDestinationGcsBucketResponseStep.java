@@ -67,7 +67,7 @@ public class SetReferencedDestinationGcsBucketResponseStep implements Step {
 
     final ApiClonedControlledGcpGcsBucket apiClonedBucket =
         new ApiClonedControlledGcpGcsBucket()
-            .effectiveCloningInstructions(ApiCloningInstructionsEnum.REFERENCE)
+            .effectiveCloningInstructions(ApiCloningInstructionsEnum.COPY_REFERENCE)
             .bucket(apiCreatedBucket)
             .sourceWorkspaceId(sourceBucket.getWorkspaceId())
             .sourceResourceId(sourceBucket.getResourceId());

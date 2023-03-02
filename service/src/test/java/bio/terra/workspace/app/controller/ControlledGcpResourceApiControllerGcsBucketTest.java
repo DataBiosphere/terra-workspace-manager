@@ -176,7 +176,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
     assertGcsBucket(
         sourceBucket,
         ApiStewardshipType.CONTROLLED,
-        ApiCloningInstructionsEnum.DEFINITION,
+        ApiCloningInstructionsEnum.COPY_DEFINITION,
         workspaceId,
         sourceResourceName,
         RESOURCE_DESCRIPTION,
@@ -217,7 +217,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
 
     var newName = TestUtils.appendRandomNumber("newbucketresourcename");
     var newDescription = "This is an updated description";
-    var newCloningInstruction = ApiCloningInstructionsEnum.REFERENCE;
+    var newCloningInstruction = ApiCloningInstructionsEnum.COPY_REFERENCE;
 
     ApiGcpGcsBucketResource updatedResource =
         mockMvcUtils.updateControlledGcsBucket(
@@ -256,7 +256,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
         sourceBucket.getMetadata().getResourceId(),
         sourceResourceName,
         RESOURCE_DESCRIPTION,
-        ApiCloningInstructionsEnum.DEFINITION);
+        ApiCloningInstructionsEnum.COPY_DEFINITION);
   }
 
   @Test
@@ -266,7 +266,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
         /*sourceWorkspaceId=*/ workspaceId,
         /*sourceResourceId=*/ sourceBucket.getMetadata().getResourceId(),
         /*destWorkspaceId=*/ workspaceId2,
-        ApiCloningInstructionsEnum.RESOURCE,
+        ApiCloningInstructionsEnum.COPY_RESOURCE,
         /*destResourceName=*/ null,
         /*destBucketName=*/ null,
         /*destLocation*/ null,
@@ -292,7 +292,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
         /*sourceWorkspaceId=*/ workspaceId,
         /*sourceResourceId=*/ sourceBucket.getMetadata().getResourceId(),
         /*destWorkspaceId=*/ workspaceId2,
-        ApiCloningInstructionsEnum.RESOURCE,
+        ApiCloningInstructionsEnum.COPY_RESOURCE,
         /*destResourceName=*/ null,
         /*destBucketName=*/ null,
         /*destLocation*/ null,
@@ -332,7 +332,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
                 /*sourceWorkspaceId=*/ workspaceId,
                 sourceBucket.getMetadata().getResourceId(),
                 /*destWorkspaceId=*/ workspaceId2,
-                ApiCloningInstructionsEnum.RESOURCE,
+                ApiCloningInstructionsEnum.COPY_RESOURCE,
                 destResourceName,
                 /*destBucketName=*/ null,
                 /*destLocation*/ null)
@@ -371,7 +371,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
             /*sourceWorkspaceId=*/ workspaceId,
             sourceBucket.getMetadata().getResourceId(),
             /*destWorkspaceId=*/ workspaceId,
-            ApiCloningInstructionsEnum.RESOURCE,
+            ApiCloningInstructionsEnum.COPY_RESOURCE,
             /*destBucketName=*/ sourceBucket.getAttributes().getBucketName(),
             HttpStatus.SC_CONFLICT);
     assertThat(
@@ -387,7 +387,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
             /*sourceWorkspaceId=*/ workspaceId,
             sourceBucket.getMetadata().getResourceId(),
             /*destWorkspaceId=*/ workspaceId,
-            ApiCloningInstructionsEnum.NOTHING,
+            ApiCloningInstructionsEnum.COPY_NOTHING,
             destResourceName,
             /*destBucketName=*/ null,
             /*destLocation*/ null);
@@ -416,7 +416,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
                 /*sourceWorkspaceId=*/ workspaceId,
                 sourceBucket.getMetadata().getResourceId(),
                 /*destWorkspaceId=*/ workspaceId2,
-                ApiCloningInstructionsEnum.DEFINITION,
+                ApiCloningInstructionsEnum.COPY_DEFINITION,
                 destResourceName,
                 destBucketName,
                 destLocation)
@@ -426,7 +426,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
     assertClonedGcsBucket(
         clonedResource,
         ApiStewardshipType.CONTROLLED,
-        ApiCloningInstructionsEnum.DEFINITION,
+        ApiCloningInstructionsEnum.COPY_DEFINITION,
         workspaceId2,
         destResourceName,
         sourceBucket.getMetadata().getDescription(),
@@ -472,7 +472,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
                 /*sourceWorkspaceId=*/ workspaceId,
                 sourceBucket.getMetadata().getResourceId(),
                 /*destWorkspaceId=*/ workspaceId,
-                ApiCloningInstructionsEnum.RESOURCE,
+                ApiCloningInstructionsEnum.COPY_RESOURCE,
                 destResourceName,
                 destBucketName,
                 destLocation)
@@ -528,7 +528,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
                 /*sourceWorkspaceId=*/ workspaceId,
                 sourceBucket.getMetadata().getResourceId(),
                 /*destWorkspaceId=*/ workspaceId2,
-                ApiCloningInstructionsEnum.RESOURCE,
+                ApiCloningInstructionsEnum.COPY_RESOURCE,
                 destResourceName,
                 destBucketName,
                 destLocation)
@@ -581,7 +581,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
                 /*sourceWorkspaceId=*/ workspaceId,
                 sourceBucket.getMetadata().getResourceId(),
                 /*destWorkspaceId=*/ workspaceId,
-                ApiCloningInstructionsEnum.REFERENCE,
+                ApiCloningInstructionsEnum.COPY_REFERENCE,
                 destResourceName,
                 /*destBucketName=*/ null,
                 /*destLocation=*/ null)
@@ -593,7 +593,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
         ApiStewardshipType.REFERENCED,
         // COPY_DEFINITION doesn't make sense for referenced resources. COPY_DEFINITION was
         // converted to COPY_REFERENCE.
-        ApiCloningInstructionsEnum.REFERENCE,
+        ApiCloningInstructionsEnum.COPY_REFERENCE,
         workspaceId,
         destResourceName,
         sourceBucket.getMetadata().getDescription(),
@@ -643,7 +643,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
         /*sourceWorkspaceId=*/ workspaceId,
         sourceBucket.getMetadata().getResourceId(),
         /*destWorkspaceId=*/ workspaceId2,
-        ApiCloningInstructionsEnum.REFERENCE,
+        ApiCloningInstructionsEnum.COPY_REFERENCE,
         destResourceName,
         /*destBucketName*/ null,
         /*destLocation*/ null);
@@ -668,7 +668,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
         /*sourceWorkspaceId=*/ workspaceId,
         sourceBucket.getMetadata().getResourceId(),
         /*destWorkspaceId=*/ workspaceId2,
-        ApiCloningInstructionsEnum.RESOURCE,
+        ApiCloningInstructionsEnum.COPY_RESOURCE,
         destResourceName);
 
     // Assert clone doesn't exist. There's no resource ID, so search on resource name.
@@ -684,7 +684,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
         /*sourceWorkspaceId=*/ workspaceId,
         sourceBucket.getMetadata().getResourceId(),
         /*destWorkspaceId=*/ workspaceId2,
-        ApiCloningInstructionsEnum.REFERENCE,
+        ApiCloningInstructionsEnum.COPY_REFERENCE,
         destResourceName);
 
     // Assert clone doesn't exist. There's no resource ID, so search on resource name.
@@ -731,7 +731,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
     assertClonedGcsBucket(
         actualBucket,
         ApiStewardshipType.CONTROLLED,
-        ApiCloningInstructionsEnum.DEFINITION,
+        ApiCloningInstructionsEnum.COPY_DEFINITION,
         expectedWorkspaceId,
         expectedResourceName,
         expectedResourceDescription,

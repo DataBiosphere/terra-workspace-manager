@@ -333,7 +333,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
         mockMvcUtils.createReferencedDataRepoSnapshot(
             USER_REQUEST,
             sourceWorkspaceId,
-            ApiCloningInstructionsEnum.REFERENCE,
+            ApiCloningInstructionsEnum.COPY_REFERENCE,
             "snap1-resource-name",
             "snap1-instance-name",
             "snap1-snapshot");
@@ -341,7 +341,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
         mockMvcUtils.createReferencedDataRepoSnapshot(
             USER_REQUEST,
             sourceWorkspaceId,
-            ApiCloningInstructionsEnum.REFERENCE,
+            ApiCloningInstructionsEnum.COPY_REFERENCE,
             "snap2-resource-name",
             "snap2-instance-name",
             "snap2-snapshot");
@@ -349,7 +349,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
         mockMvcUtils.createReferencedDataRepoSnapshot(
             USER_REQUEST,
             sourceWorkspaceId,
-            ApiCloningInstructionsEnum.NOTHING,
+            ApiCloningInstructionsEnum.COPY_NOTHING,
             "snap3-resource-name",
             "snap3-instance-name",
             "snap3-snapshot");

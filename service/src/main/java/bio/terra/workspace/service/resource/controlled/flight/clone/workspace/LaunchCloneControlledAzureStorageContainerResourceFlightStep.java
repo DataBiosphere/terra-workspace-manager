@@ -61,7 +61,7 @@ public class LaunchCloneControlledAzureStorageContainerResourceFlightStep implem
     subflightInputParameters.put(
         ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId);
     subflightInputParameters.put(
-        ControlledResourceKeys.CLONING_INSTRUCTIONS, sourceResource.getCloningInstructions());
+        ResourceKeys.CLONING_INSTRUCTIONS, sourceResource.getCloningInstructions());
     subflightInputParameters.put(ResourceKeys.RESOURCE, sourceResource);
     subflightInputParameters.put(
         JobMapKeys.DESCRIPTION.getKeyName(),

@@ -11,6 +11,7 @@ import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.policy.flight.MergePolicyAttributesDryRunStep;
 import bio.terra.workspace.service.policy.flight.MergePolicyAttributesStep;
 import bio.terra.workspace.service.policy.flight.ValidateWorkspaceAgainstPolicyStep;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -31,29 +32,35 @@ public class CloneReferencedResourceFlight extends Flight {
     FlightBeanBag appContext = FlightBeanBag.getFromObject(beanBag);
     RetryRule shortDatabaseRetryRule = RetryRules.shortDatabase();
 
-    final UUID destinationWorkspaceId =
+    UUID destinationWorkspaceId =
         FlightUtils.getRequired(
             inputParameters, ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
 
-    final ReferencedResource sourceResource =
+    ReferencedResource sourceResource =
         FlightUtils.getRequired(
             inputParameters,
             WorkspaceFlightMapKeys.ResourceKeys.RESOURCE,
             ReferencedResource.class);
 
-    final ReferencedResource destinationResource =
+    ReferencedResource destinationResource =
         FlightUtils.getRequired(
             inputParameters,
             WorkspaceFlightMapKeys.ResourceKeys.DESTINATION_RESOURCE,
             ReferencedResource.class);
 
-    final AuthenticatedUserRequest userRequest =
+    CloningInstructions cloningInstructions =
+        FlightUtils.getRequired(
+            inputParameters,
+            WorkspaceFlightMapKeys.ResourceKeys.CLONING_INSTRUCTIONS,
+            CloningInstructions.class);
+
+    AuthenticatedUserRequest userRequest =
         FlightUtils.getRequired(
             inputParameters,
             JobMapKeys.AUTH_USER_INFO.getKeyName(),
             AuthenticatedUserRequest.class);
 
-    final boolean mergePolicies =
+    boolean mergePolicies =
         Optional.ofNullable(
                 inputParameters.get(WorkspaceFlightMapKeys.MERGE_POLICIES, Boolean.class))
             .orElse(false);
@@ -63,7 +70,7 @@ public class CloneReferencedResourceFlight extends Flight {
           new MergePolicyAttributesDryRunStep(
               destinationWorkspaceId,
               sourceResource.getWorkspaceId(),
-              userRequest,
+              cloningInstructions,
               appContext.getTpsApiDispatch()));
 
       addStep(

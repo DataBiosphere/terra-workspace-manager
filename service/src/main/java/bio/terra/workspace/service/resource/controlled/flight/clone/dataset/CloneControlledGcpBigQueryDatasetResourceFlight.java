@@ -33,7 +33,7 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
         inputParameters,
         ResourceKeys.RESOURCE,
         JobMapKeys.AUTH_USER_INFO.getKeyName(),
-        ControlledResourceKeys.CLONING_INSTRUCTIONS,
+        ResourceKeys.CLONING_INSTRUCTIONS,
         ControlledResourceKeys.DESTINATION_RESOURCE_ID,
         ControlledResourceKeys.DESTINATION_WORKSPACE_ID);
 
@@ -51,8 +51,7 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
             .orElse(false);
     CloningInstructions resolvedCloningInstructions =
         Optional.ofNullable(
-                inputParameters.get(
-                    ControlledResourceKeys.CLONING_INSTRUCTIONS, CloningInstructions.class))
+                inputParameters.get(ResourceKeys.CLONING_INSTRUCTIONS, CloningInstructions.class))
             .orElse(sourceResource.getCloningInstructions());
 
     if (CloningInstructions.COPY_NOTHING == resolvedCloningInstructions) {
@@ -76,7 +75,7 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
           new MergePolicyAttributesDryRunStep(
               destinationWorkspaceId,
               sourceResource.getWorkspaceId(),
-              userRequest,
+              resolvedCloningInstructions,
               flightBeanBag.getTpsApiDispatch()));
 
       addStep(
@@ -104,7 +103,8 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
     final ControlledBigQueryDatasetResource sourceDataset =
         sourceResource.castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
 
-    if (CloningInstructions.COPY_REFERENCE == resolvedCloningInstructions) {
+    if (CloningInstructions.COPY_REFERENCE == resolvedCloningInstructions
+        || CloningInstructions.LINK_REFERENCE == resolvedCloningInstructions) {
       // Destination dataset is referenced resource
       addStep(
           new SetReferencedDestinationBigQueryDatasetInWorkingMapStep(

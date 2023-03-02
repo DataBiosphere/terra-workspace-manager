@@ -26,7 +26,7 @@ public class SetNoOpBucketCloneResponseStep implements Step {
             .dataset(null)
             .sourceWorkspaceId(sourceDataset.getWorkspaceId())
             .sourceResourceId(sourceDataset.getResourceId())
-            .effectiveCloningInstructions(ApiCloningInstructionsEnum.NOTHING);
+            .effectiveCloningInstructions(ApiCloningInstructionsEnum.COPY_NOTHING);
     FlightUtils.setResponse(context, noOpResult, HttpStatus.OK);
     return StepResult.getStepResultSuccess();
   }

@@ -51,7 +51,8 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
         ControlledResourceKeys.DESTINATION_RESOURCE_ID);
 
     FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(applicationContext);
-    var sourceResource = inputParameters.get(ResourceKeys.RESOURCE, ControlledResource.class);
+    var sourceResource =
+        FlightUtils.getRequired(inputParameters, ResourceKeys.RESOURCE, ControlledResource.class);
     var userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
     var destinationWorkspaceId =
@@ -68,8 +69,7 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
             .orElse(sourceBucket.getRegion());
     CloningInstructions resolvedCloningInstructions =
         Optional.ofNullable(
-                inputParameters.get(
-                    ControlledResourceKeys.CLONING_INSTRUCTIONS, CloningInstructions.class))
+                inputParameters.get(ResourceKeys.CLONING_INSTRUCTIONS, CloningInstructions.class))
             .orElse(sourceBucket.getCloningInstructions());
 
     RetryRule cloudRetry = RetryRules.cloud();
@@ -89,7 +89,7 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
           new MergePolicyAttributesDryRunStep(
               destinationWorkspaceId,
               sourceResource.getWorkspaceId(),
-              userRequest,
+              resolvedCloningInstructions,
               flightBeanBag.getTpsApiDispatch()));
 
       addStep(
@@ -122,7 +122,8 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
             RetrievalMode.CREATION_PARAMETERS),
         cloudRetry);
 
-    if (CloningInstructions.COPY_REFERENCE == resolvedCloningInstructions) {
+    if (CloningInstructions.COPY_REFERENCE == resolvedCloningInstructions
+        || CloningInstructions.LINK_REFERENCE == resolvedCloningInstructions) {
       // Destination bucket is referenced resource
       addStep(
           new SetReferencedDestinationGcsBucketInWorkingMapStep(

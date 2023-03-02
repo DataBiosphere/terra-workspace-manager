@@ -52,7 +52,7 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
         workspaceId,
         /*sourceResourceId=*/ UUID.randomUUID(),
         /*destWorkspaceId=*/ workspaceId,
-        ApiCloningInstructionsEnum.DEFINITION,
+        ApiCloningInstructionsEnum.COPY_DEFINITION,
         /*destResourceName=*/ null,
         HttpStatus.SC_BAD_REQUEST);
   }
@@ -66,7 +66,7 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
         workspaceId,
         /*sourceResourceId=*/ UUID.randomUUID(),
         /*destWorkspaceId=*/ workspaceId,
-        ApiCloningInstructionsEnum.RESOURCE,
+        ApiCloningInstructionsEnum.COPY_RESOURCE,
         /*destResourceName=*/ null,
         HttpStatus.SC_BAD_REQUEST);
   }
@@ -80,7 +80,7 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
         workspaceId,
         /*sourceResourceId=*/ UUID.randomUUID(),
         /*destWorkspaceId=*/ workspaceId,
-        ApiCloningInstructionsEnum.DEFINITION,
+        ApiCloningInstructionsEnum.COPY_DEFINITION,
         /*destResourceName=*/ null,
         HttpStatus.SC_BAD_REQUEST);
   }
@@ -94,7 +94,7 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
         workspaceId,
         /*sourceResourceId=*/ UUID.randomUUID(),
         /*destWorkspaceId=*/ workspaceId,
-        ApiCloningInstructionsEnum.RESOURCE,
+        ApiCloningInstructionsEnum.COPY_RESOURCE,
         /*destResourceName=*/ null,
         HttpStatus.SC_BAD_REQUEST);
   }
@@ -108,7 +108,7 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
         workspaceId,
         /*sourceResourceId=*/ UUID.randomUUID(),
         /*destWorkspaceId=*/ workspaceId,
-        ApiCloningInstructionsEnum.DEFINITION,
+        ApiCloningInstructionsEnum.COPY_DEFINITION,
         /*destResourceName=*/ null,
         HttpStatus.SC_BAD_REQUEST);
   }
@@ -122,7 +122,7 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
         workspaceId,
         /*sourceResourceId=*/ UUID.randomUUID(),
         /*destWorkspaceId=*/ workspaceId,
-        ApiCloningInstructionsEnum.RESOURCE,
+        ApiCloningInstructionsEnum.COPY_RESOURCE,
         /*destResourceName=*/ null,
         HttpStatus.SC_BAD_REQUEST);
   }
@@ -136,7 +136,7 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
         workspaceId,
         /*sourceResourceId=*/ UUID.randomUUID(),
         /*destWorkspaceId=*/ workspaceId,
-        ApiCloningInstructionsEnum.DEFINITION,
+        ApiCloningInstructionsEnum.COPY_DEFINITION,
         /*destResourceName=*/ null,
         HttpStatus.SC_BAD_REQUEST);
   }
@@ -150,7 +150,7 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
         workspaceId,
         /*sourceResourceId=*/ UUID.randomUUID(),
         /*destWorkspaceId=*/ workspaceId,
-        ApiCloningInstructionsEnum.RESOURCE,
+        ApiCloningInstructionsEnum.COPY_RESOURCE,
         /*destResourceName=*/ null,
         HttpStatus.SC_BAD_REQUEST);
   }
@@ -164,7 +164,7 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
         workspaceId,
         /*sourceResourceId=*/ UUID.randomUUID(),
         /*destWorkspaceId=*/ workspaceId,
-        ApiCloningInstructionsEnum.DEFINITION,
+        ApiCloningInstructionsEnum.COPY_DEFINITION,
         /*destResourceName=*/ null,
         HttpStatus.SC_BAD_REQUEST);
   }
@@ -178,7 +178,7 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
         workspaceId,
         /*sourceResourceId=*/ UUID.randomUUID(),
         /*destWorkspaceId=*/ workspaceId,
-        ApiCloningInstructionsEnum.RESOURCE,
+        ApiCloningInstructionsEnum.COPY_RESOURCE,
         /*destResourceName=*/ null,
         HttpStatus.SC_BAD_REQUEST);
   }
@@ -192,7 +192,7 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
         workspaceId,
         /*sourceResourceId=*/ UUID.randomUUID(),
         /*destWorkspaceId=*/ workspaceId,
-        ApiCloningInstructionsEnum.DEFINITION,
+        ApiCloningInstructionsEnum.COPY_DEFINITION,
         /*destResourceName=*/ null,
         HttpStatus.SC_BAD_REQUEST);
   }
@@ -206,7 +206,7 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
         workspaceId,
         /*sourceResourceId=*/ UUID.randomUUID(),
         /*destWorkspaceId=*/ workspaceId,
-        ApiCloningInstructionsEnum.RESOURCE,
+        ApiCloningInstructionsEnum.COPY_RESOURCE,
         /*destResourceName=*/ null,
         HttpStatus.SC_BAD_REQUEST);
   }

@@ -77,7 +77,7 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotTest extends BaseCon
         mockMvcUtils.createReferencedDataRepoSnapshot(
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId,
-            ApiCloningInstructionsEnum.NOTHING,
+            ApiCloningInstructionsEnum.COPY_NOTHING,
             sourceResourceName,
             sourceInstanceName,
             sourceSnapshot);
@@ -96,7 +96,7 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotTest extends BaseCon
     // Assert resource returned by create
     assertDataRepoSnapshot(
         sourceResource,
-        ApiCloningInstructionsEnum.NOTHING,
+        ApiCloningInstructionsEnum.COPY_NOTHING,
         workspaceId,
         sourceResourceName,
         RESOURCE_DESCRIPTION,
@@ -124,7 +124,7 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotTest extends BaseCon
 
     var newName = TestUtils.appendRandomNumber("newdatareporesourcename");
     var newDescription = "This is an updated description";
-    var newCloningInstruction = ApiCloningInstructionsEnum.REFERENCE;
+    var newCloningInstruction = ApiCloningInstructionsEnum.COPY_REFERENCE;
     var newInstanceName = TestUtils.appendRandomNumber("newinstance");
     var newSnapshot = TestUtils.appendRandomNumber("newsnapshot");
     ApiDataRepoSnapshotResource updatedResource =
@@ -166,7 +166,7 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotTest extends BaseCon
         RESOURCE_DESCRIPTION,
         sourceSnapshot,
         sourceInstanceName,
-        ApiCloningInstructionsEnum.NOTHING);
+        ApiCloningInstructionsEnum.COPY_NOTHING);
   }
 
   @Test
@@ -176,7 +176,7 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotTest extends BaseCon
         /*sourceWorkspaceId=*/ workspaceId,
         /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
         /*destWorkspaceId=*/ workspaceId2,
-        ApiCloningInstructionsEnum.REFERENCE,
+        ApiCloningInstructionsEnum.COPY_REFERENCE,
         /*destResourceName=*/ null,
         HttpStatus.SC_FORBIDDEN);
   }
@@ -199,7 +199,7 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotTest extends BaseCon
         /*sourceWorkspaceId=*/ workspaceId,
         /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
         /*destWorkspaceId=*/ workspaceId2,
-        ApiCloningInstructionsEnum.REFERENCE,
+        ApiCloningInstructionsEnum.COPY_REFERENCE,
         /*destResourceName=*/ null,
         HttpStatus.SC_FORBIDDEN);
 
@@ -234,12 +234,12 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotTest extends BaseCon
             /*sourceWorkspaceId=*/ workspaceId,
             /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
             /*destWorkspaceId=*/ workspaceId2,
-            ApiCloningInstructionsEnum.REFERENCE,
+            ApiCloningInstructionsEnum.COPY_REFERENCE,
             /*destResourceName=*/ null);
     assertClonedDataRepoSnapshot(
         clonedResource,
         ApiStewardshipType.REFERENCED,
-        ApiCloningInstructionsEnum.NOTHING,
+        ApiCloningInstructionsEnum.COPY_NOTHING,
         workspaceId2,
         sourceResourceName,
         sourceResource.getMetadata().getDescription(),
@@ -273,7 +273,7 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotTest extends BaseCon
             /*sourceWorkspaceId=*/ workspaceId,
             sourceResource.getMetadata().getResourceId(),
             /*destWorkspaceId=*/ workspaceId,
-            ApiCloningInstructionsEnum.NOTHING,
+            ApiCloningInstructionsEnum.COPY_NOTHING,
             destResourceName);
 
     // Assert clone result has no resource
@@ -294,14 +294,14 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotTest extends BaseCon
             /*sourceWorkspaceId=*/ workspaceId,
             sourceResource.getMetadata().getResourceId(),
             /*destWorkspaceId=*/ workspaceId,
-            ApiCloningInstructionsEnum.REFERENCE,
+            ApiCloningInstructionsEnum.COPY_REFERENCE,
             destResourceName);
 
     // Assert resource returned in clone flight response
     assertClonedDataRepoSnapshot(
         clonedResource,
         ApiStewardshipType.REFERENCED,
-        ApiCloningInstructionsEnum.NOTHING,
+        ApiCloningInstructionsEnum.COPY_NOTHING,
         workspaceId,
         destResourceName,
         sourceResource.getMetadata().getDescription(),
@@ -329,14 +329,14 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotTest extends BaseCon
             /*sourceWorkspaceId=*/ workspaceId,
             sourceResource.getMetadata().getResourceId(),
             /*destWorkspaceId=*/ workspaceId2,
-            ApiCloningInstructionsEnum.REFERENCE,
+            ApiCloningInstructionsEnum.COPY_REFERENCE,
             destResourceName);
 
     // Assert resource returned in clone flight response
     assertClonedDataRepoSnapshot(
         clonedResource,
         ApiStewardshipType.REFERENCED,
-        ApiCloningInstructionsEnum.NOTHING,
+        ApiCloningInstructionsEnum.COPY_NOTHING,
         workspaceId2,
         destResourceName,
         sourceResource.getMetadata().getDescription(),
@@ -387,7 +387,7 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotTest extends BaseCon
         /*sourceWorkspaceId=*/ workspaceId,
         sourceResource.getMetadata().getResourceId(),
         /*destWorkspaceId=*/ workspaceId2,
-        ApiCloningInstructionsEnum.REFERENCE,
+        ApiCloningInstructionsEnum.COPY_REFERENCE,
         destResourceName);
 
     // Assert dest workspace has group and region policies
