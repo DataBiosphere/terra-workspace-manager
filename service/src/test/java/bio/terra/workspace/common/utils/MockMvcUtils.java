@@ -1354,6 +1354,16 @@ public class MockMvcUtils {
     return objectMapper.readValue(serializedResponse, ApiFlexibleResource.class);
   }
 
+  public void getFlexibleResourceExpect(UUID workspaceId, UUID resourceId, int httpStatus)
+      throws Exception {
+    mockMvc
+        .perform(
+            addAuth(
+                get(CONTROLLED_FLEXIBLE_RESOURCE_V1_PATH_FORMAT.formatted(workspaceId, resourceId)),
+                USER_REQUEST))
+        .andExpect(status().is(httpStatus));
+  }
+
   public ApiCreatedControlledFlexibleResource createFlexibleResource(
       AuthenticatedUserRequest userRequest, UUID workspaceId) throws Exception {
     return createFlexibleResource(
@@ -1365,14 +1375,7 @@ public class MockMvcUtils {
         /*data*/ null);
   }
 
-  public ApiCreatedControlledFlexibleResource createFlexibleResource(
-      AuthenticatedUserRequest userRequest,
-      UUID workspaceId,
-      String resourceName,
-      String typeNamespace,
-      String type,
-      @Nullable byte[] data)
-      throws Exception {
+  public ApiCreateControlledFlexibleResourceRequestBody createFlexibleResourceRequestBody(String resourceName, String typeNamespace,String type, @Nullable byte[] data) {
     ApiControlledFlexibleResourceCreationParameters creationParameters =
         new ApiControlledFlexibleResourceCreationParameters()
             .typeNamespace(typeNamespace)
@@ -1381,10 +1384,20 @@ public class MockMvcUtils {
       creationParameters.setData(data);
     }
 
-    ApiCreateControlledFlexibleResourceRequestBody request =
-        new ApiCreateControlledFlexibleResourceRequestBody()
+    return new ApiCreateControlledFlexibleResourceRequestBody()
             .common(makeDefaultControlledResourceFieldsApi().name(resourceName))
             .flexibleResource(creationParameters);
+  }
+
+  public ApiCreatedControlledFlexibleResource createFlexibleResource(
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      String resourceName,
+      String typeNamespace,
+      String type,
+      @Nullable byte[] data)
+      throws Exception {
+    ApiCreateControlledFlexibleResourceRequestBody request = createFlexibleResourceRequestBody(resourceName,typeNamespace,type,data);
 
     String serializedResponse =
         getSerializedResponseForPost(

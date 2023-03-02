@@ -10,6 +10,7 @@ import bio.terra.workspace.generated.model.ApiFlexibleResource;
 import bio.terra.workspace.generated.model.ApiFlexibleResourceAttributes;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
@@ -297,11 +298,8 @@ public class ControlledFlexibleResource extends ControlledResource {
       throw new MissingRequiredFieldException("Missing required field type for Flexible Resource");
     }
 
-    // Allow file sizes of up to X kilobytes (?)
-    //    if (getData().length > MAX_FLEXIBLE_RESOURCE_DATA_BYTE_SIZE) {
-    //      throw new MissingRequiredFieldException(
-    //          "Field data is too large. Please limit it to X size.");
-    //    }
+    // Limit to 5 kilobytes in size.
+    ResourceValidationUtils.validateFlexResourceDataSize(getData());
   }
 
   @Override

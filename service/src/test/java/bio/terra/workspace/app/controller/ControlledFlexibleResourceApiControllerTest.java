@@ -1,37 +1,50 @@
 package bio.terra.workspace.app.controller;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi;
+import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_FLEXIBLE_RESOURCES_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_FLEXIBLE_RESOURCE_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertApiFlexibleResourceEquals;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertResourceMetadata;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.utils.MockMvcUtils;
+import bio.terra.workspace.common.utils.TestUtils;
+import bio.terra.workspace.db.exception.FieldSizeExceededException;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
+import bio.terra.workspace.generated.model.ApiControlledFlexibleResourceCreationParameters;
+import bio.terra.workspace.generated.model.ApiCreateControlledFlexibleResourceRequestBody;
 import bio.terra.workspace.generated.model.ApiFlexibleResource;
 import bio.terra.workspace.generated.model.ApiResourceLineage;
 import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
+import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import javax.annotation.Nullable;
+
+import org.apache.http.HttpStatus;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 /** ControlledFlexibleResourceApiController unit tests. */
@@ -119,6 +132,25 @@ public class ControlledFlexibleResourceApiControllerTest extends BaseUnitTest {
   }
 
   @Test
+  public void create_rejectsLargeData() throws Exception {
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+
+    byte[] veryLargeData = new byte[6000];
+    Arrays.fill(veryLargeData, (byte) 'a');
+    assertThrows(
+        AssertionError.class,
+        () -> {
+          mockMvcUtils.createFlexibleResource(
+              USER_REQUEST,
+              workspaceId,
+              "fake-flexible-resource",
+              "terra",
+              "fake-flexible-type",
+              veryLargeData);
+        });
+  }
+
+  @Test
   public void delete() throws Exception {
     UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
 
@@ -127,7 +159,7 @@ public class ControlledFlexibleResourceApiControllerTest extends BaseUnitTest {
             .createFlexibleResource(
                 USER_REQUEST,
                 workspaceId,
-                "fake-flexible-resource",
+                TestUtils.appendRandomNumber("fake-flexible-resource"),
                 "terra",
                 "fake-flexible-type",
                 null)
@@ -135,21 +167,11 @@ public class ControlledFlexibleResourceApiControllerTest extends BaseUnitTest {
             .getMetadata()
             .getResourceId();
 
-    mockMvc
-        .perform(
-            addAuth(
-                get(CONTROLLED_FLEXIBLE_RESOURCE_V1_PATH_FORMAT.formatted(workspaceId, resourceId)),
-                USER_REQUEST))
-        .andExpect(status().is2xxSuccessful());
+    mockMvcUtils.getFlexibleResourceExpect(workspaceId, resourceId, HttpStatus.SC_OK);
 
     mockMvcUtils.deleteFlexibleResource(USER_REQUEST, workspaceId, resourceId);
 
-    mockMvc
-        .perform(
-            addAuth(
-                get(CONTROLLED_FLEXIBLE_RESOURCE_V1_PATH_FORMAT.formatted(workspaceId, resourceId)),
-                USER_REQUEST))
-        .andExpect(status().is4xxClientError());
+    mockMvcUtils.getFlexibleResourceExpect(workspaceId, resourceId, HttpStatus.SC_NOT_FOUND);
   }
 
   private void assertFlexibleResource(
