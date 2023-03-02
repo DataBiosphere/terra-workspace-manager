@@ -165,6 +165,7 @@ public class CreateAzureVmStep implements Step {
       context.getWorkingMap().put(AzureVmHelper.WORKING_MAP_VM_ID, createdVm.id());
 
     } catch (ManagementException e) {
+      logger.error("***** HERE HERE HERE " + e.getValue().getCode());
       // Stairway steps may run multiple times, so we may already have created this resource. In all
       // other cases, surface the exception and attempt to retry.
       return switch (e.getValue().getCode()) {
