@@ -1,5 +1,9 @@
 package bio.terra.workspace.service.policy;
 
+import bio.terra.policy.client.JSON;
+import com.fasterxml.jackson.core.util.JacksonFeature;
+import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
+import org.glassfish.jersey.client.ClientConfig;
 import bio.terra.common.logging.RequestIdFilter;
 import bio.terra.policy.api.TpsApi;
 import bio.terra.policy.client.ApiClient;
@@ -40,7 +44,11 @@ import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.glassfish.jersey.logging.LoggingFeature;
+import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -60,12 +68,22 @@ public class TpsApiDispatch {
       FeatureConfiguration features, PolicyServiceConfiguration policyServiceConfiguration) {
     this.features = features;
     this.policyServiceConfiguration = policyServiceConfiguration;
-    this.commonHttpClient =
-        new ApiClient()
-            .getHttpClient()
-            .register(
-                new JaxrsClientFilter(
-                    new JaxrsClientExtractor(), Tracing.getPropagationComponent().getB3Format()));
+    this.commonHttpClient = buildHttpClient();
+  }
+
+  // TODO(zloery): This is a shortcut to test client changes on GHA. Do not merge!
+  private Client buildHttpClient() {
+    final ClientConfig clientConfig = new ClientConfig();
+    clientConfig.register(MultiPartFeature.class);
+    clientConfig.register(new JSON());
+    clientConfig.register(JacksonFeature.class);
+    clientConfig.connectorProvider(new ApacheConnectorProvider());
+    PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
+    // Validate inactive connections after 500ms instead of default 2000ms to avoid
+    // NoHttpResponseExceptions from server-side closed connections.
+    connectionManager.setValidateAfterInactivity(500);
+    clientConfig.property("jersey.config.apache.client.connectionManager", connectionManager);
+    return ClientBuilder.newClient(clientConfig);
   }
 
   // -- Policy Attribute Object Interface --
