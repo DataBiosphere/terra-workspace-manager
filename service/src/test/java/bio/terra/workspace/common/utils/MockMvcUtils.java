@@ -399,6 +399,15 @@ public class MockMvcUtils {
     return objectMapper.readValue(serializedResponse, ApiCreatedWorkspace.class);
   }
 
+  public ApiCreatedWorkspace createdWorkspaceWithoutCloudContext(
+      @Nullable AuthenticatedUserRequest userRequest, ApiCreateWorkspaceRequestBody request)
+      throws Exception {
+    String serializedResponse =
+        getSerializedResponseForPost(
+            userRequest, WORKSPACES_V1_PATH, objectMapper.writeValueAsString(request));
+    return objectMapper.readValue(serializedResponse, ApiCreatedWorkspace.class);
+  }
+
   public ApiErrorReport createWorkspaceWithoutCloudContextExpectError(
       @Nullable AuthenticatedUserRequest userRequest,
       UUID workspaceId,

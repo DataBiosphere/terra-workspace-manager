@@ -1,6 +1,7 @@
 package bio.terra.workspace.app.controller;
 
 import bio.terra.common.exception.BadRequestException;
+import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.ControlledGcpResourceApi;
@@ -226,12 +227,12 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
       UUID workspaceUuid, UUID resourceId, @Valid ApiCloneControlledGcpGcsBucketRequest body) {
     logger.info("Cloning GCS bucket resourceId {} workspaceUuid {}", resourceId, workspaceUuid);
 
-    if (body.getCloningInstructions() == ApiCloningInstructionsEnum.REFERENCE
+    if ((body.getCloningInstructions() == ApiCloningInstructionsEnum.COPY_REFERENCE
+            || body.getCloningInstructions() == ApiCloningInstructionsEnum.LINK_REFERENCE)
         && (!StringUtils.isEmpty(body.getBucketName())
             || !StringUtils.isEmpty(body.getLocation()))) {
-      throw new BadRequestException(
-          String.format(
-              "Cannot set bucket or location when cloning a controlled bucket with COPY_REFERENCE"));
+      throw new ValidationException(
+          "Cannot set bucket or location when cloning a controlled bucket with COPY_REFERENCE or LINK_REFERENCE");
     }
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -402,12 +403,12 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
       UUID workspaceUuid,
       UUID resourceId,
       @Valid ApiCloneControlledGcpBigQueryDatasetRequest body) {
-    if (body.getCloningInstructions() == ApiCloningInstructionsEnum.REFERENCE
+    if ((body.getCloningInstructions() == ApiCloningInstructionsEnum.COPY_REFERENCE
+            || body.getCloningInstructions() == ApiCloningInstructionsEnum.LINK_REFERENCE)
         && (!StringUtils.isEmpty(body.getDestinationDatasetName())
             || !StringUtils.isEmpty(body.getLocation()))) {
       throw new BadRequestException(
-          String.format(
-              "Cannot set destination dataset name or location when cloning controlled dataset with COPY_REFERENCE"));
+          "Cannot set destination dataset name or location when cloning controlled dataset with COPY_REFERENCE or LINK_REFERENCE");
     }
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();

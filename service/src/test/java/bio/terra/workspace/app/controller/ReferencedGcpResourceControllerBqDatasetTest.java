@@ -103,7 +103,7 @@ public class ReferencedGcpResourceControllerBqDatasetTest extends BaseConnectedT
     // Assert resource returned by create
     assertBqDataset(
         sourceResource,
-        ApiCloningInstructionsEnum.NOTHING,
+        ApiCloningInstructionsEnum.COPY_NOTHING,
         workspaceId,
         sourceResourceName,
         sourceResource.getMetadata().getDescription(),
@@ -131,7 +131,7 @@ public class ReferencedGcpResourceControllerBqDatasetTest extends BaseConnectedT
 
     var newName = TestUtils.appendRandomNumber("newdatatableresourcename");
     var newDescription = "This is an updated description";
-    var newCloningInstruction = ApiCloningInstructionsEnum.REFERENCE;
+    var newCloningInstruction = ApiCloningInstructionsEnum.COPY_REFERENCE;
     var newDataset = TestUtils.appendRandomNumber("newdataset");
     ApiGcpBigQueryDatasetResource updatedResource =
         mockMvcUtils.updateReferencedBqDataset(
@@ -171,7 +171,7 @@ public class ReferencedGcpResourceControllerBqDatasetTest extends BaseConnectedT
         sourceResource.getMetadata().getResourceId(),
         sourceResourceName,
         RESOURCE_DESCRIPTION,
-        ApiCloningInstructionsEnum.NOTHING,
+        ApiCloningInstructionsEnum.COPY_NOTHING,
         sourceDatasetName);
   }
 
@@ -182,7 +182,7 @@ public class ReferencedGcpResourceControllerBqDatasetTest extends BaseConnectedT
         /*sourceWorkspaceId=*/ workspaceId,
         /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
         /*destWorkspaceId=*/ workspaceId2,
-        ApiCloningInstructionsEnum.REFERENCE,
+        ApiCloningInstructionsEnum.COPY_REFERENCE,
         /*destResourceName=*/ null,
         HttpStatus.SC_FORBIDDEN);
   }
@@ -205,7 +205,7 @@ public class ReferencedGcpResourceControllerBqDatasetTest extends BaseConnectedT
         /*sourceWorkspaceId=*/ workspaceId,
         /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
         /*destWorkspaceId=*/ workspaceId2,
-        ApiCloningInstructionsEnum.REFERENCE,
+        ApiCloningInstructionsEnum.COPY_REFERENCE,
         /*destResourceName=*/ null,
         HttpStatus.SC_FORBIDDEN);
 
@@ -240,13 +240,13 @@ public class ReferencedGcpResourceControllerBqDatasetTest extends BaseConnectedT
             /*sourceWorkspaceId=*/ workspaceId,
             /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
             /*destWorkspaceId=*/ workspaceId2,
-            ApiCloningInstructionsEnum.REFERENCE,
+            ApiCloningInstructionsEnum.COPY_REFERENCE,
             /*destResourceName=*/ null);
 
     assertClonedBqDataset(
         clonedResource,
         ApiStewardshipType.REFERENCED,
-        ApiCloningInstructionsEnum.NOTHING,
+        ApiCloningInstructionsEnum.COPY_NOTHING,
         workspaceId2,
         sourceResourceName,
         sourceResource.getMetadata().getDescription(),
@@ -281,7 +281,7 @@ public class ReferencedGcpResourceControllerBqDatasetTest extends BaseConnectedT
             /*sourceWorkspaceId=*/ workspaceId,
             sourceResource.getMetadata().getResourceId(),
             /*destWorkspaceId=*/ workspaceId,
-            ApiCloningInstructionsEnum.NOTHING,
+            ApiCloningInstructionsEnum.COPY_NOTHING,
             destResourceName);
 
     // Assert clone result has no resource
@@ -302,14 +302,14 @@ public class ReferencedGcpResourceControllerBqDatasetTest extends BaseConnectedT
             /*sourceWorkspaceId=*/ workspaceId,
             sourceResource.getMetadata().getResourceId(),
             /*destWorkspaceId=*/ workspaceId,
-            ApiCloningInstructionsEnum.REFERENCE,
+            ApiCloningInstructionsEnum.COPY_REFERENCE,
             destResourceName);
 
     // Assert resource returned in clone flight response
     assertClonedBqDataset(
         clonedResource,
         ApiStewardshipType.REFERENCED,
-        ApiCloningInstructionsEnum.NOTHING,
+        ApiCloningInstructionsEnum.COPY_NOTHING,
         workspaceId,
         destResourceName,
         sourceResource.getMetadata().getDescription(),
@@ -337,14 +337,14 @@ public class ReferencedGcpResourceControllerBqDatasetTest extends BaseConnectedT
             /*sourceWorkspaceId=*/ workspaceId,
             sourceResource.getMetadata().getResourceId(),
             /*destWorkspaceId=*/ workspaceId2,
-            ApiCloningInstructionsEnum.REFERENCE,
+            ApiCloningInstructionsEnum.COPY_REFERENCE,
             destResourceName);
 
     // Assert resource returned in clone flight response
     assertClonedBqDataset(
         clonedResource,
         ApiStewardshipType.REFERENCED,
-        ApiCloningInstructionsEnum.NOTHING,
+        ApiCloningInstructionsEnum.COPY_NOTHING,
         workspaceId2,
         destResourceName,
         sourceResource.getMetadata().getDescription(),
@@ -395,7 +395,7 @@ public class ReferencedGcpResourceControllerBqDatasetTest extends BaseConnectedT
         /*sourceWorkspaceId=*/ workspaceId,
         sourceResource.getMetadata().getResourceId(),
         /*destWorkspaceId=*/ workspaceId2,
-        ApiCloningInstructionsEnum.REFERENCE,
+        ApiCloningInstructionsEnum.COPY_REFERENCE,
         destResourceName);
 
     // Assert dest workspace has group and region policies

@@ -742,7 +742,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     controlledResourceMetadataManager.validateCloneAction(
         userRequest, workspaceId, body.getDestinationWorkspaceId(), resourceId);
-    if (body.getCloningInstructions() == ApiCloningInstructionsEnum.REFERENCE) {
+    if (body.getCloningInstructions() == ApiCloningInstructionsEnum.COPY_REFERENCE
+        || body.getCloningInstructions() == ApiCloningInstructionsEnum.LINK_REFERENCE) {
       throw new ValidationException(
           "Copying azure storage containers by reference is not supported");
     }
