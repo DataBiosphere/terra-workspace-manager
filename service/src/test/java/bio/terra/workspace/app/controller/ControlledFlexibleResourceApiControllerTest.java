@@ -39,6 +39,10 @@ public class ControlledFlexibleResourceApiControllerTest extends BaseUnitTest {
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
   @Autowired ObjectMapper objectMapper;
+  private static final String defaultDecodedData = "{\"name\":\"original JSON\"}";
+  private static final String defaultName = "fake-flexible-resource";
+  private static final String defaultTypeNamespace = "terra";
+  private static final String defaultType = "fake-flexible-type";
 
   @BeforeEach
   public void setUpSam() throws InterruptedException {
@@ -92,9 +96,9 @@ public class ControlledFlexibleResourceApiControllerTest extends BaseUnitTest {
             .createFlexibleResource(
                 USER_REQUEST,
                 workspaceId,
-                "fake-flexible-resource",
-                "terra",
-                "fake-flexible-type",
+                defaultName,
+                defaultTypeNamespace,
+                defaultType,
                 encodedJsonString)
             .getFlexibleResource();
 
@@ -103,12 +107,12 @@ public class ControlledFlexibleResourceApiControllerTest extends BaseUnitTest {
         ApiStewardshipType.CONTROLLED,
         ApiCloningInstructionsEnum.DEFINITION,
         workspaceId,
-        "fake-flexible-resource",
+        defaultName,
         RESOURCE_DESCRIPTION,
         /*expectedCreatedBy=*/ USER_REQUEST.getEmail(),
         /*expectedLastUpdatedBy=*/ USER_REQUEST.getEmail(),
-        "terra",
-        "fake-flexible-type",
+        defaultTypeNamespace,
+        defaultType,
         expectedInputJsonString);
 
     ApiFlexibleResource gotResource =
@@ -126,13 +130,27 @@ public class ControlledFlexibleResourceApiControllerTest extends BaseUnitTest {
 
     var request =
         mockMvcUtils.createFlexibleResourceRequestBody(
-            "fake-flexible-resource", "terra", "fake-flexible-type", veryLargeData);
+            defaultName, defaultTypeNamespace, defaultType, veryLargeData);
 
     mockMvcUtils.postExpect(
         USER_REQUEST,
         objectMapper.writeValueAsString(request),
         CONTROLLED_FLEXIBLE_RESOURCES_V1_PATH_FORMAT.formatted(workspaceId),
         HttpStatus.SC_BAD_REQUEST);
+  }
+
+  private UUID createDefaultFlexResource(UUID workspaceId) throws Exception {
+    byte[] originalEncodedData = defaultDecodedData.getBytes(StandardCharsets.UTF_8);
+
+    return mockMvcUtils
+        .createFlexibleResource(
+            USER_REQUEST,
+            workspaceId,
+            defaultName,
+            defaultTypeNamespace,
+            defaultType,
+            originalEncodedData)
+        .getResourceId();
   }
 
   @Test
@@ -142,12 +160,7 @@ public class ControlledFlexibleResourceApiControllerTest extends BaseUnitTest {
     var resourceId =
         mockMvcUtils
             .createFlexibleResource(
-                USER_REQUEST,
-                workspaceId,
-                "fake-flexible-resource",
-                "terra",
-                "fake-flexible-type",
-                null)
+                USER_REQUEST, workspaceId, defaultName, defaultTypeNamespace, defaultType, null)
             .getFlexibleResource()
             .getMetadata()
             .getResourceId();
