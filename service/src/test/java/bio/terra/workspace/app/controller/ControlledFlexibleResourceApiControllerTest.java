@@ -137,17 +137,16 @@ public class ControlledFlexibleResourceApiControllerTest extends BaseUnitTest {
 
     byte[] veryLargeData = new byte[6000];
     Arrays.fill(veryLargeData, (byte) 'a');
-    assertThrows(
-        AssertionError.class,
-        () -> {
-          mockMvcUtils.createFlexibleResource(
-              USER_REQUEST,
-              workspaceId,
-              "fake-flexible-resource",
-              "terra",
-              "fake-flexible-type",
-              veryLargeData);
-        });
+
+    var request =
+        mockMvcUtils.createFlexibleResourceRequestBody(
+            "fake-flexible-resource", "terra", "fake-flexible-type", veryLargeData);
+
+    mockMvcUtils.postExpect(
+        USER_REQUEST,
+        objectMapper.writeValueAsString(request),
+        CONTROLLED_FLEXIBLE_RESOURCES_V1_PATH_FORMAT.formatted(workspaceId),
+        HttpStatus.SC_BAD_REQUEST);
   }
 
   @Test

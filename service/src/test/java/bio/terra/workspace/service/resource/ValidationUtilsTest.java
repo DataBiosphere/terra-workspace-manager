@@ -11,6 +11,7 @@ import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.policy.model.TpsPaoGetResult;
 import bio.terra.workspace.app.configuration.external.GitRepoReferencedResourceConfiguration;
 import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.db.exception.FieldSizeExceededException;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmImage;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceContainerImage;
@@ -22,6 +23,9 @@ import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import com.azure.core.management.Region;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -457,6 +461,19 @@ public class ValidationUtilsTest extends BaseUnitTest {
   @Test
   public void validateProperties_folderIdIsUuid_validates() {
     ResourceValidationUtils.validateProperties(Map.of(FOLDER_ID_KEY, UUID.randomUUID().toString()));
+  }
+
+  @Test
+  public void validateFlexResourceDataSize_throwsFieldSizeExceededException() {
+    byte[] largeData = new byte[5050];
+    Arrays.fill(largeData, (byte) 'a');
+    String decodedData = new String(largeData, StandardCharsets.UTF_8);
+
+    assertThrows(
+        FieldSizeExceededException.class,
+        () ->
+            ResourceValidationUtils.validateFlexResourceDataSize(decodedData
+                ));
   }
 
   @Test

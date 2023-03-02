@@ -1,8 +1,8 @@
 package bio.terra.workspace.db.exception;
 
-import bio.terra.common.exception.InternalServerErrorException;
+import bio.terra.common.exception.BadRequestException;
 
-public class FieldSizeExceededException extends InternalServerErrorException {
+public class FieldSizeExceededException extends BadRequestException {
   public FieldSizeExceededException(String message) {
     super(message);
   }
