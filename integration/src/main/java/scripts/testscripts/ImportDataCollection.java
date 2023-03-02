@@ -480,23 +480,7 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
         new WsmPolicyUpdateRequest()
             .removeAttributes(getGroupPolicyInputs(groupNameA))
             .updateMode(WsmPolicyUpdateMode.ENFORCE_CONFLICT), groupTestWorkspace.getId());
-    workspaceApi.updatePolicies(
-        new WsmPolicyUpdateRequest()
-            .addAttributes(getRegionPolicyInputs(usaLocation))
-            .updateMode(WsmPolicyUpdateMode.ENFORCE_CONFLICT), groupTestWorkspace.getId());
 
-    var wsPre = workspaceApi.getWorkspace(groupTestWorkspace.getId(), null);
-    var dcPre = workspaceApi.getWorkspace(groupTestDataCollection.getId(), null);
-
-    referencedGcpResourceApi.cloneGcpGcsBucketReference(
-        new CloneReferencedResourceRequestBody().destinationWorkspaceId(groupTestWorkspace.getId()),
-        groupTestReferenceResource.getMetadata().getWorkspaceId(),
-        groupTestReferenceResource.getMetadata().getResourceId());
-
-    var wsPost = workspaceApi.getWorkspace(groupTestWorkspace.getId(), null);
-    var dcPost = workspaceApi.getWorkspace(groupTestDataCollection.getId(), null);
-
-    /*
     exception =
         assertThrows(
             ApiException.class,
@@ -508,8 +492,6 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
     assertEquals(exception.getCode(), HttpStatus.SC_CONFLICT);
     assertTrue(
         exception.getMessage().contains("Policy merge has conflicts"));
-
-     */
 
     WorkspaceDescription updatedWorkspace = workspaceApi.getWorkspace(groupTestWorkspace.getId(), null);
     List<WsmPolicyInput> updatedPolicies = updatedWorkspace.getPolicies();
