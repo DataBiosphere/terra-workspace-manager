@@ -576,11 +576,13 @@ public class ResourceValidationUtils {
       }
     }
   }
-  public static void validateFlexResourceDataSize(String decodedData) {
-    if (decodedData.getBytes().length > MAX_FLEXIBLE_RESOURCE_DATA_BYTE_SIZE) {
-      logger.warn("Exceeded flex resource data limit (at most 5 kilobytes");
-      throw new FieldSizeExceededException(
-          "Field data is too large. Please limit it to 5 kilobytes.");
+  public static void validateFlexResourceDataSize(@Nullable String decodedData) {
+    if (decodedData != null) {
+      if (decodedData.getBytes().length > MAX_FLEXIBLE_RESOURCE_DATA_BYTE_SIZE) {
+        logger.warn("Exceeded flex resource data limit (at most 5 kilobytes");
+        throw new FieldSizeExceededException(
+            "Field data is too large. Please limit it to 5 kilobytes.");
+      }
     }
   }
 }

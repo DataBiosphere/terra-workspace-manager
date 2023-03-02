@@ -159,7 +159,7 @@ public class ControlledFlexibleResourceApiControllerTest extends BaseUnitTest {
             .createFlexibleResource(
                 USER_REQUEST,
                 workspaceId,
-                TestUtils.appendRandomNumber("fake-flexible-resource"),
+                "fake-flexible-resource",
                 "terra",
                 "fake-flexible-type",
                 null)

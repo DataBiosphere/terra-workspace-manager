@@ -69,12 +69,16 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
             userRequest,
             WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE);
 
+    byte[] encodedJSON = body.getFlexibleResource().getData();
+    String decodedJSON =
+        encodedJSON != null ? new String(encodedJSON, StandardCharsets.UTF_8) : null;
+
     ControlledFlexibleResource resource =
         ControlledFlexibleResource.builder()
             .common(commonFields)
             .typeNamespace(body.getFlexibleResource().getTypeNamespace())
             .type(body.getFlexibleResource().getType())
-            .data(new String(body.getFlexibleResource().getData(), StandardCharsets.UTF_8))
+            .data(decodedJSON)
             .build();
 
     ControlledFlexibleResource createdFlexibleResource =
