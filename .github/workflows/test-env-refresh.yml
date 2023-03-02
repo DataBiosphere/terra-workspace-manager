@@ -23,7 +23,7 @@ jobs:
     steps:
       - name: "Get wsmtest-eng TPS version"
         run: |
-          echo "## Resulting TPS version: "
+          echo "## Resulting TPS version: " >> $GITHUB_STEP_SUMMARY
           curl -X 'GET' \
             'https://tps.wsmtest-eng.bee.envs-terra.bio/version' \
             -H 'accept: */*' | jq >> $GITHUB_STEP_SUMMARY
