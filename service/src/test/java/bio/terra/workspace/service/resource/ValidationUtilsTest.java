@@ -23,7 +23,6 @@ import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import com.azure.core.management.Region;
-
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
@@ -471,9 +470,7 @@ public class ValidationUtilsTest extends BaseUnitTest {
 
     assertThrows(
         FieldSizeExceededException.class,
-        () ->
-            ResourceValidationUtils.validateFlexResourceDataSize(decodedData
-                ));
+        () -> ResourceValidationUtils.validateFlexResourceDataSize(decodedData));
   }
 
   @Test

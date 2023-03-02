@@ -576,6 +576,7 @@ public class ResourceValidationUtils {
       }
     }
   }
+
   public static void validateFlexResourceDataSize(@Nullable String decodedData) {
     if (decodedData != null) {
       if (decodedData.getBytes().length > MAX_FLEXIBLE_RESOURCE_DATA_BYTE_SIZE) {

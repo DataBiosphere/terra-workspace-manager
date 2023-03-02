@@ -1375,7 +1375,8 @@ public class MockMvcUtils {
         /*data*/ null);
   }
 
-  public ApiCreateControlledFlexibleResourceRequestBody createFlexibleResourceRequestBody(String resourceName, String typeNamespace,String type, @Nullable byte[] data) {
+  public ApiCreateControlledFlexibleResourceRequestBody createFlexibleResourceRequestBody(
+      String resourceName, String typeNamespace, String type, @Nullable byte[] data) {
     ApiControlledFlexibleResourceCreationParameters creationParameters =
         new ApiControlledFlexibleResourceCreationParameters()
             .typeNamespace(typeNamespace)
@@ -1385,8 +1386,8 @@ public class MockMvcUtils {
     }
 
     return new ApiCreateControlledFlexibleResourceRequestBody()
-            .common(makeDefaultControlledResourceFieldsApi().name(resourceName))
-            .flexibleResource(creationParameters);
+        .common(makeDefaultControlledResourceFieldsApi().name(resourceName))
+        .flexibleResource(creationParameters);
   }
 
   public ApiCreatedControlledFlexibleResource createFlexibleResource(
@@ -1397,7 +1398,8 @@ public class MockMvcUtils {
       String type,
       @Nullable byte[] data)
       throws Exception {
-    ApiCreateControlledFlexibleResourceRequestBody request = createFlexibleResourceRequestBody(resourceName,typeNamespace,type,data);
+    ApiCreateControlledFlexibleResourceRequestBody request =
+        createFlexibleResourceRequestBody(resourceName, typeNamespace, type, data);
 
     String serializedResponse =
         getSerializedResponseForPost(
