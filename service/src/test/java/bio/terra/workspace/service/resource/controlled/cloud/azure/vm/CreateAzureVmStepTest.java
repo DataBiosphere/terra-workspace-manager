@@ -12,10 +12,12 @@ import bio.terra.cloudres.azure.resourcemanager.compute.data.CreateVirtualMachin
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
+import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseAzureUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.utils.AzureVmUtils;
+import bio.terra.workspace.common.utils.ManagementExceptionUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.service.crl.CrlService;
@@ -26,6 +28,7 @@ import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
+import com.azure.core.http.HttpResponse;
 import com.azure.core.management.Region;
 import com.azure.core.management.exception.ManagementError;
 import com.azure.core.management.exception.ManagementException;
@@ -33,6 +36,7 @@ import com.azure.core.util.Context;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.compute.models.Disk;
 import com.azure.resourcemanager.compute.models.Disks;
+import com.azure.resourcemanager.compute.models.ImageReference;
 import com.azure.resourcemanager.compute.models.VirtualMachine;
 import com.azure.resourcemanager.compute.models.VirtualMachineExtension;
 import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
@@ -53,13 +57,10 @@ import com.azure.resourcemanager.network.models.Subnet;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
-@Disabled(
-    "Until we have a use case for using custom image and we have a custom image available for testing")
 public class CreateAzureVmStepTest extends BaseAzureUnitTest {
 
   private static final String STUB_STRING_RETURN = "stubbed-return";
@@ -85,7 +86,7 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
   @Mock private VirtualMachine.DefinitionStages.WithNetwork mockVmStage3;
   @Mock private VirtualMachine.DefinitionStages.WithProximityPlacementGroup mockVmStage7;
 
-  @Mock private VirtualMachine.DefinitionStages.WithLinuxCreateManaged mockVmStage10;
+  @Mock private VirtualMachine.DefinitionStages.WithLinuxCreateManagedOrUnmanaged mockVmStage10;
   @Mock private VirtualMachine.DefinitionStages.WithManagedCreate mockVmStage11;
   @Mock private VirtualMachine.DefinitionStages.WithCreate mockVmStage11a;
   @Mock private VirtualMachine.DefinitionStages.WithCreate mockVmStage12;
@@ -154,6 +155,13 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
   private NetworkSecurityRule.DefinitionStages.WithDestinationPort<
           NetworkSecurityGroup.DefinitionStages.WithCreate>
       mockNetworkStage7;
+
+  @Mock
+  private VirtualMachine.DefinitionStages.WithLinuxRootUsernameManagedOrUnmanaged mockVmStage7a;
+
+  @Mock
+  private VirtualMachine.DefinitionStages.WithLinuxRootPasswordOrPublicKeyManagedOrUnmanaged
+      mockVmStage7b;
 
   @Mock
   private NetworkSecurityRule.DefinitionStages.WithProtocol<
@@ -252,17 +260,20 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
     when(mockNetworkStage15.attach()).thenReturn(mockNetworkStage13);
     when(mockNetworkStage13.create(any(Context.class))).thenReturn(mockNetwork);
 
-    // Creation vm stages mocks
     when(mockVms.define(anyString())).thenReturn(mockVmStage1);
     when(mockVmStage1.withRegion(any(Region.class))).thenReturn(mockVmStage2);
     when(mockVmStage2.withExistingResourceGroup(anyString())).thenReturn(mockVmStage3);
     when(mockVmStage3.withExistingPrimaryNetworkInterface(mockNi)).thenReturn(mockVmStage7);
-    when(mockVmStage7.withSpecializedLinuxCustomImage(anyString())).thenReturn(mockVmStage10);
+    when(mockVmStage7.withSpecificLinuxImageVersion(any(ImageReference.class)))
+        .thenReturn(mockVmStage7a);
+    when(mockVmStage7a.withRootUsername(anyString())).thenReturn(mockVmStage7b);
+    when(mockVmStage7b.withRootPassword(anyString())).thenReturn(mockVmStage10);
     when(mockVmStage10.withExistingDataDisk(any(Disk.class))).thenReturn(mockVmStage11);
     when(mockVmStage11.withTag(anyString(), anyString())).thenReturn(mockVmStage11a);
     when(mockVmStage11a.withTag(anyString(), anyString())).thenReturn(mockVmStage12);
     when(mockVmStage12.withSize(any(VirtualMachineSizeTypes.class))).thenReturn(mockVmStage12);
     when(mockVmStage12.defineNewExtension(anyString())).thenReturn(mockVmStage13);
+    when(mockVmStage12.create(any(Context.class))).thenReturn(mockVm);
     when(mockVmStage13.withPublisher(anyString())).thenReturn(mockVmStage14);
     when(mockVmStage14.withType(anyString())).thenReturn(mockVmStage15);
     when(mockVmStage15.withVersion(anyString())).thenReturn(mockVmStage16);
@@ -271,7 +282,6 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
     when(mockVmStage16.withTags(any())).thenReturn(mockVmStage16);
     when(mockVmStage16.withoutMinorVersionAutoUpgrade()).thenReturn(mockVmStage16);
     when(mockVmStage16.attach()).thenReturn(mockVmStage12);
-    when(mockVmStage12.create(any(Context.class))).thenReturn(mockVm);
 
     // Resource dao mocks
     when(mockResourceDao.getResource(any(UUID.class), any(UUID.class))).thenReturn(mockWsmResource);
@@ -380,6 +390,103 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
 
     // Verify step still returns success
     assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
+  }
+
+  @Test
+  public void createVm_VmExtensionProvisioningError() throws InterruptedException {
+    final ApiAzureVmCreationParameters creationParameters =
+        ControlledResourceFixtures.getAzureVmCreationParameters();
+
+    final FlightMap creationParametersFlightMap = new FlightMap();
+    creationParametersFlightMap.put(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
+    creationParametersFlightMap.makeImmutable();
+    when(mockFlightContext.getInputParameters()).thenReturn(creationParametersFlightMap);
+
+    var createAzureVmStep =
+        new CreateAzureVmStep(
+            mockAzureConfig,
+            mockCrlService,
+            ControlledResourceFixtures.getAzureVm(creationParameters),
+            mockResourceDao);
+
+    // throw a vm extension provisioning exception
+    // azure sets the HTTP status code to 200 -- we want to make sure to set that here
+    // so we don't trigger the generic 4xx retry logic
+    var mockResponse = mock(HttpResponse.class);
+    when(mockResponse.getStatusCode()).thenReturn(200);
+    var vmExtensionException =
+        new ManagementException(
+            "error",
+            mockResponse,
+            new ManagementError(
+                ManagementExceptionUtils.VM_EXTENSION_PROVISIONING_ERROR, "VM error"));
+    when(mockVmStage12.create(any(Context.class))).thenThrow(vmExtensionException);
+
+    final StepResult stepResult = createAzureVmStep.doStep(mockFlightContext);
+
+    assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));
+  }
+
+  @Test
+  public void createVm_ResourceNotFound() throws InterruptedException {
+    final ApiAzureVmCreationParameters creationParameters =
+        ControlledResourceFixtures.getAzureVmCreationParameters();
+
+    final FlightMap creationParametersFlightMap = new FlightMap();
+    creationParametersFlightMap.put(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
+    creationParametersFlightMap.makeImmutable();
+    when(mockFlightContext.getInputParameters()).thenReturn(creationParametersFlightMap);
+
+    var createAzureVmStep =
+        new CreateAzureVmStep(
+            mockAzureConfig,
+            mockCrlService,
+            ControlledResourceFixtures.getAzureVm(creationParameters),
+            mockResourceDao);
+
+    // throw a not found exception
+    var mockResponse = mock(HttpResponse.class);
+    when(mockResponse.getStatusCode()).thenReturn(200);
+    var notFoundException =
+        new ManagementException(
+            "error",
+            mockResponse,
+            new ManagementError(ManagementExceptionUtils.RESOURCE_NOT_FOUND, "Not found"));
+    when(mockVmStage12.create(any(Context.class))).thenThrow(notFoundException);
+
+    final StepResult stepResult = createAzureVmStep.doStep(mockFlightContext);
+
+    assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));
+  }
+
+  @Test
+  public void createVm_generic4xxException() throws InterruptedException {
+    final ApiAzureVmCreationParameters creationParameters =
+        ControlledResourceFixtures.getAzureVmCreationParameters();
+
+    final FlightMap creationParametersFlightMap = new FlightMap();
+    creationParametersFlightMap.put(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
+    creationParametersFlightMap.makeImmutable();
+    when(mockFlightContext.getInputParameters()).thenReturn(creationParametersFlightMap);
+
+    var createAzureVmStep =
+        new CreateAzureVmStep(
+            mockAzureConfig,
+            mockCrlService,
+            ControlledResourceFixtures.getAzureVm(creationParameters),
+            mockResourceDao);
+
+    // throw a 4xx
+    var mockResponse = mock(HttpResponse.class);
+    when(mockResponse.getStatusCode()).thenReturn(418);
+    var notFoundException =
+        new ManagementException(
+            "error", mockResponse, new ManagementError("unknown error code", "Error"));
+    when(mockVmStage12.create(any(Context.class))).thenThrow(notFoundException);
+
+    final StepResult stepResult = createAzureVmStep.doStep(mockFlightContext);
+
+    assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));
   }
 
   @Test

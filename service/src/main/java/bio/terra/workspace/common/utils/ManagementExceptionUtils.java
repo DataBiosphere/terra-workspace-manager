@@ -20,6 +20,7 @@ public class ManagementExceptionUtils {
   public static final String CONFLICT = "Conflict";
   public static final String SUBNETS_NOT_IN_SAME_VNET = "SubnetsNotInSameVnet";
   public static final String NIC_RESERVED_FOR_ANOTHER_VM = "NicReservedForAnotherVm";
+  public static final String VM_EXTENSION_PROVISIONING_ERROR = "VMExtensionProvisioningError";
 
   /** Returns true iff the exception's code matches the supplied value. */
   public static boolean isExceptionCode(ManagementException ex, String exceptionCode) {
