@@ -367,7 +367,7 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
   }
 
   @Test
-  public void createVm_alreadyExists() throws InterruptedException {
+  void createVm_alreadyExists() throws InterruptedException {
     final ApiAzureVmCreationParameters creationParameters =
         ControlledResourceFixtures.getAzureVmCreationParameters();
 
@@ -393,7 +393,7 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
   }
 
   @Test
-  public void createVm_VmExtensionProvisioningError() throws InterruptedException {
+  void createVm_VmExtensionProvisioningError() throws InterruptedException {
     final ApiAzureVmCreationParameters creationParameters =
         ControlledResourceFixtures.getAzureVmCreationParameters();
 
@@ -428,7 +428,7 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
   }
 
   @Test
-  public void createVm_ResourceNotFound() throws InterruptedException {
+  void createVm_ResourceNotFound() throws InterruptedException {
     final ApiAzureVmCreationParameters creationParameters =
         ControlledResourceFixtures.getAzureVmCreationParameters();
 
@@ -460,7 +460,7 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
   }
 
   @Test
-  public void createVm_generic4xxException() throws InterruptedException {
+  void createVm_generic4xxException() throws InterruptedException {
     final ApiAzureVmCreationParameters creationParameters =
         ControlledResourceFixtures.getAzureVmCreationParameters();
 
@@ -490,7 +490,7 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
   }
 
   @Test
-  public void deleteVm() throws InterruptedException {
+  void deleteVm() throws InterruptedException {
     final ApiAzureVmCreationParameters creationParameters =
         ControlledResourceFixtures.getAzureVmCreationParameters();
 
