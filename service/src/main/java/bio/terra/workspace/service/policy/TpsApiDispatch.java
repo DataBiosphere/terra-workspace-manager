@@ -64,7 +64,11 @@ public class TpsApiDispatch {
       FeatureConfiguration features, PolicyServiceConfiguration policyServiceConfiguration) {
     this.features = features;
     this.policyServiceConfiguration = policyServiceConfiguration;
-    this.commonHttpClient = buildHttpClient();
+    this.commonHttpClient =
+        buildHttpClient()
+            .register(
+                new JaxrsClientFilter(
+                    new JaxrsClientExtractor(), Tracing.getPropagationComponent().getB3Format()));
   }
 
   // TODO(zloery): This is a shortcut to test client changes on GHA. Do not merge!
@@ -73,6 +77,7 @@ public class TpsApiDispatch {
     clientConfig.register(MultiPartFeature.class);
     clientConfig.register(new JSON());
     clientConfig.register(JacksonFeature.class);
+    clientConfig.property(HttpUrlConnectorProvider.SET_METHOD_WORKAROUND, true);
     clientConfig.connectorProvider(new ApacheConnectorProvider());
     PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
     // Validate inactive connections after 500ms instead of default 2000ms to avoid
