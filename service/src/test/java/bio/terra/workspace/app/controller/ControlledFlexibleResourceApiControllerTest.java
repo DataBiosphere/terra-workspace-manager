@@ -39,7 +39,6 @@ public class ControlledFlexibleResourceApiControllerTest extends BaseUnitTest {
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
   @Autowired ObjectMapper objectMapper;
-  private static final String defaultDecodedData = "{\"name\":\"original JSON\"}";
   private static final String defaultName = "fake-flexible-resource";
   private static final String defaultTypeNamespace = "terra";
   private static final String defaultType = "fake-flexible-type";
@@ -137,20 +136,6 @@ public class ControlledFlexibleResourceApiControllerTest extends BaseUnitTest {
         objectMapper.writeValueAsString(request),
         CONTROLLED_FLEXIBLE_RESOURCES_V1_PATH_FORMAT.formatted(workspaceId),
         HttpStatus.SC_BAD_REQUEST);
-  }
-
-  private UUID createDefaultFlexResource(UUID workspaceId) throws Exception {
-    byte[] originalEncodedData = defaultDecodedData.getBytes(StandardCharsets.UTF_8);
-
-    return mockMvcUtils
-        .createFlexibleResource(
-            USER_REQUEST,
-            workspaceId,
-            defaultName,
-            defaultTypeNamespace,
-            defaultType,
-            originalEncodedData)
-        .getResourceId();
   }
 
   @Test
