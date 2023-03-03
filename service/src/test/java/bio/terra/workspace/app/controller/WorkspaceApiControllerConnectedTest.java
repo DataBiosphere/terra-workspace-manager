@@ -429,6 +429,77 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
   @Test
   @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
+  public void mergeCheck_existingResourceNoPolicyOnSource() throws Exception {
+    var userRequest = userAccessUtils.defaultUserAuthRequest();
+    UUID targetWorkspaceId = null;
+    UUID sourceWorkspaceId = null;
+    try {
+      //  Create target workspace with US region constraint.
+      targetWorkspaceId =
+          mockMvcUtils.createWorkspaceWithRegionConstraintAndCloudContext(userRequest, "usa");
+
+      // Then add a resource with US east region to the target.
+      mockMvcUtils.createControlledGcsBucket(
+          userRequest,
+          targetWorkspaceId,
+          "resource-name",
+          String.valueOf(UUID.randomUUID()),
+          "US-CENTRAL1",
+          null,
+          null);
+
+      // Source has no region policy. Should be compatible with existing resource.
+      ApiWsmPolicyMergeCheckResult result =
+          mergeCheck(userRequest, targetWorkspaceId, workspace.getId());
+
+      assertEquals(0, result.getConflicts().size());
+      assertEquals(0, result.getResourcesWithConflict().size());
+    } finally {
+      mockMvcUtils.deleteWorkspace(userRequest, targetWorkspaceId);
+    }
+  }
+
+  @Test
+  @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
+  public void mergeCheck_caseInsensitiveRegion() throws Exception {
+    var userRequest = userAccessUtils.defaultUserAuthRequest();
+    UUID targetWorkspaceId = null;
+    UUID sourceWorkspaceId = null;
+    try {
+      //  Create target workspace with US region constraint.
+      targetWorkspaceId =
+          mockMvcUtils.createWorkspaceWithRegionConstraintAndCloudContext(userRequest, "usa");
+
+      // Then add a resource with US east region to the target.
+      mockMvcUtils.createControlledGcsBucket(
+          userRequest,
+          targetWorkspaceId,
+          "resource-name",
+          String.valueOf(UUID.randomUUID()),
+          "US-CENTRAL1",
+          null,
+          null);
+
+      // Create source workspace with US central region constraint.
+      sourceWorkspaceId =
+          mockMvcUtils.createWorkspaceWithRegionConstraint(userRequest, "gcp.us-central1");
+
+      // Target workspace has a compatible policy with the source.
+      // But target has a resource in US-CENTRAL1, which doesn't match the casing of the policy.
+      // This should be fine.
+      ApiWsmPolicyMergeCheckResult result =
+          mergeCheck(userRequest, targetWorkspaceId, sourceWorkspaceId);
+
+      assertEquals(0, result.getConflicts().size());
+      assertEquals(0, result.getResourcesWithConflict().size());
+    } finally {
+      mockMvcUtils.deleteWorkspace(userRequest, targetWorkspaceId);
+      mockMvcUtils.deleteWorkspace(userRequest, sourceWorkspaceId);
+    }
+  }
+
+  @Test
+  @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
   public void listValidRegions() throws Exception {
     ApiRegions gcps =
         listValid(
