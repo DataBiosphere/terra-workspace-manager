@@ -47,7 +47,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.client.HttpUrlConnectorProvider;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,7 +80,6 @@ public class TpsApiDispatch {
     clientConfig.register(MultiPartFeature.class);
     clientConfig.register(new JSON());
     clientConfig.register(JacksonFeature.class);
-    clientConfig.property(HttpUrlConnectorProvider.SET_METHOD_WORKAROUND, true);
     clientConfig.connectorProvider(new ApacheConnectorProvider());
     PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
     // Validate inactive connections after 500ms instead of default 2000ms to avoid
