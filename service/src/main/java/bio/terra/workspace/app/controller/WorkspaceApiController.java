@@ -758,7 +758,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
               targetWorkspaceId, CloudPlatform.fromApiCloudPlatform(platform));
 
       for (var existingResource : existingResources) {
-        if (!validRegions.contains(existingResource.getRegion())) {
+        if (!validRegions.stream().anyMatch(existingResource.getRegion()::equalsIgnoreCase)) {
           resourceWithConflicts.add(existingResource.getResourceId());
         }
       }
