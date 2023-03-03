@@ -8,6 +8,7 @@ import bio.terra.workspace.common.utils.AzureVmUtils;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.generated.model.*;
+import bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresource.ControlledFlexibleResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.ControlledAzureBatchPoolResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
@@ -560,6 +561,16 @@ public class ControlledResourceFixtures {
         .datasetName(uniqueDatasetId())
         .defaultTableLifetime(DEFAULT_CREATED_BIG_QUERY_TABLE_LIFETIME)
         .defaultPartitionLifetime(DEFAULT_CREATED_BIG_QUERY_PARTITION_LIFETIME);
+  }
+
+  /** Make a flex resource builder with defaults filled in. */
+  public static ControlledFlexibleResource.Builder makeDefaultFlexResourceBuilder(
+      @Nullable UUID workspaceUuid) {
+    return new ControlledFlexibleResource.Builder()
+        .common(makeDefaultControlledResourceFields(workspaceUuid))
+        .typeNamespace("terra")
+        .type("fake-flexible-type")
+        .data(null);
   }
 
   public static final ApiGcpBigQueryDatasetUpdateParameters BQ_DATASET_UPDATE_PARAMETERS_NEW =
