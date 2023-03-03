@@ -345,7 +345,6 @@ public class ReferencedGcpResourceControllerGcsBucketTest extends BaseConnectedT
   // Destination workspace policy is the merge of source workspace policy and pre-clone destination
   // workspace policy
   @Test
-  @Disabled("Group policy milestone 1 restricts policy changes")
   void clone_policiesMerged() throws Exception {
     logger.info("features.isTpsEnabled(): %s".formatted(features.isTpsEnabled()));
     // Don't run the test if TPS is disabled
