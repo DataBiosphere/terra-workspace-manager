@@ -24,7 +24,7 @@ dependencies {
   implementation group: "org.glassfish.jersey.inject", name: "jersey-hk2", version: "2.32"
   // TODO(zloery): This is a shortcut to test client changes on GHA. Do not merge!
   implementation "org.glassfish.jersey.core:jersey-client:2.35"
-  implementation  "org.glassfish.jersey.connectors:jersey-apache-connector:2.35"
+  implementation  "org.glassfish.jersey.connectors:jersey-jdk-connector:2.35"
   implementation 'org.glassfish.jersey.media:jersey-media-multipart:2.35'
 
   // Opencensus utilities for various HTTP clients
