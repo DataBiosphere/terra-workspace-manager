@@ -30,7 +30,6 @@ import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -367,7 +366,6 @@ public class ReferencedGcpResourceControllerBqTableTest extends BaseConnectedTes
   // Destination workspace policy is the merge of source workspace policy and pre-clone destination
   // workspace policy
   @Test
-  @Disabled("Group policy milestone 1 restricts policy changes")
   void clone_policiesMerged() throws Exception {
     logger.info("features.isTpsEnabled(): %s".formatted(features.isTpsEnabled()));
     // Don't run the test if TPS is disabled
@@ -379,16 +377,16 @@ public class ReferencedGcpResourceControllerBqTableTest extends BaseConnectedTes
     mockMvcUtils.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId);
     mockMvcUtils.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
 
-    // Add group policy to source workspace. Add region policy to dest workspace.
+    // Add region policy to source workspace. Add group policy to dest workspace.
     mockMvcUtils.updatePolicies(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
-        /*policiesToAdd=*/ ImmutableList.of(PolicyFixtures.GROUP_POLICY),
+        /*policiesToAdd=*/ ImmutableList.of(PolicyFixtures.REGION_POLICY),
         /*policiesToRemove=*/ null);
     mockMvcUtils.updatePolicies(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId2,
-        /*policiesToAdd=*/ ImmutableList.of(PolicyFixtures.REGION_POLICY),
+        /*policiesToAdd=*/ ImmutableList.of(PolicyFixtures.GROUP_POLICY),
         /*policiesToRemove=*/ null);
 
     // Clone resource

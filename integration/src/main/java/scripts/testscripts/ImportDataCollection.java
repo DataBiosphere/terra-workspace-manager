@@ -43,6 +43,8 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
     String gcpCentralLocation = "gcp.us-central1";
     String gcpEastLocation = "gcp.us-east1";
     String usaLocation = "usa";
+    String groupNameA = "groupA";
+    String groupNameB = "groupB";
 
     /*
      Create a workspace with us-central1 policy and a reference bucket. This will act as our data
@@ -391,26 +393,163 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
 
     workspaceApi.deleteWorkspace(scenario8Workspace.getId());
 
-    // Clean up the data collection used in most of the scenarios.
+    /*
+     Scenario 9: Group policy merging. WS(groupA) can merge DC(nogroup).
+    */
+    CreatedWorkspace groupTestWorkspace =
+        createWorkspaceWithRegionPolicy(workspaceApi, usaLocation);
+    var request =
+        new WsmPolicyUpdateRequest()
+            .addAttributes(getGroupPolicyInputs(groupNameA))
+            .updateMode(WsmPolicyUpdateMode.ENFORCE_CONFLICT);
+    workspaceApi.updatePolicies(request, groupTestWorkspace.getId());
+
+    // data collection has no policies
+    CreatedWorkspace groupTestDataCollection =
+        createWorkspace(UUID.randomUUID(), getSpendProfileId(), workspaceApi);
+
+    GcpGcsBucketResource groupTestReferenceResource =
+        GcsBucketUtils.makeGcsBucketReference(
+            controlledBucketResource.getAttributes(),
+            referencedGcpResourceApi,
+            groupTestDataCollection.getId(),
+            "referenceBucket",
+            CloningInstructionsEnum.REFERENCE);
+
+    CloneReferencedGcpGcsBucketResourceResult referenceResult =
+        referencedGcpResourceApi.cloneGcpGcsBucketReference(
+            new CloneReferencedResourceRequestBody()
+                .destinationWorkspaceId(groupTestWorkspace.getId()),
+            groupTestReferenceResource.getMetadata().getWorkspaceId(),
+            groupTestReferenceResource.getMetadata().getResourceId());
+
+    validateWorkspaceContainsGroupPolicy(workspaceApi, groupTestWorkspace.getId(), groupNameA);
+
+    /*
+     Scenario 10: Group policy merging. WS(groupA) can merge DC(groupA).
+    */
+    // update the data collection to have the same group policy as the workspace
+    workspaceApi.updatePolicies(
+        new WsmPolicyUpdateRequest()
+            .addAttributes(getGroupPolicyInputs(groupNameA))
+            .updateMode(WsmPolicyUpdateMode.ENFORCE_CONFLICT),
+        groupTestDataCollection.getId());
+
+    referencedGcpResourceApi.deleteBucketReference(
+        referenceResult.getResource().getMetadata().getWorkspaceId(),
+        referenceResult.getResource().getMetadata().getResourceId());
+
+    referenceResult =
+        referencedGcpResourceApi.cloneGcpGcsBucketReference(
+            new CloneReferencedResourceRequestBody()
+                .destinationWorkspaceId(groupTestWorkspace.getId()),
+            groupTestReferenceResource.getMetadata().getWorkspaceId(),
+            groupTestReferenceResource.getMetadata().getResourceId());
+
+    validateWorkspaceContainsGroupPolicy(workspaceApi, groupTestWorkspace.getId(), groupNameA);
+
+    /*
+     Scenario 11: Group policy merging. WS(groupA) cannot merge DC(groupB).
+    */
+    // update the data collection to have a different group policy than the workspace
+    workspaceApi.updatePolicies(
+        new WsmPolicyUpdateRequest()
+            .removeAttributes(getGroupPolicyInputs(groupNameA))
+            .updateMode(WsmPolicyUpdateMode.ENFORCE_CONFLICT),
+        groupTestDataCollection.getId());
+    workspaceApi.updatePolicies(
+        new WsmPolicyUpdateRequest()
+            .addAttributes(getGroupPolicyInputs(groupNameB))
+            .updateMode(WsmPolicyUpdateMode.ENFORCE_CONFLICT),
+        groupTestDataCollection.getId());
+
+    validateWorkspaceContainsGroupPolicy(workspaceApi, groupTestDataCollection.getId(), groupNameB);
+
+    referencedGcpResourceApi.deleteBucketReference(
+        referenceResult.getResource().getMetadata().getWorkspaceId(),
+        referenceResult.getResource().getMetadata().getResourceId());
+
+    exception =
+        assertThrows(
+            ApiException.class,
+            () ->
+                referencedGcpResourceApi.cloneGcpGcsBucketReference(
+                    new CloneReferencedResourceRequestBody()
+                        .destinationWorkspaceId(groupTestWorkspace.getId()),
+                    groupTestReferenceResource.getMetadata().getWorkspaceId(),
+                    groupTestReferenceResource.getMetadata().getResourceId()));
+    assertEquals(exception.getCode(), HttpStatus.SC_CONFLICT);
+    assertTrue(exception.getMessage().contains("Policy merge has conflicts"));
+
+    // group should still be A only
+    validateWorkspaceContainsGroupPolicy(workspaceApi, groupTestWorkspace.getId(), groupNameA);
+
+    /*
+     Scenario 12: Group policy merging. WS(nopolicy) cannot merge DC(groupB).
+    */
+    // Remove the group constraint from the workspace.
+    workspaceApi.updatePolicies(
+        new WsmPolicyUpdateRequest()
+            .removeAttributes(getGroupPolicyInputs(groupNameA))
+            .updateMode(WsmPolicyUpdateMode.ENFORCE_CONFLICT),
+        groupTestWorkspace.getId());
+
+    exception =
+        assertThrows(
+            ApiException.class,
+            () ->
+                referencedGcpResourceApi.cloneGcpGcsBucketReference(
+                    new CloneReferencedResourceRequestBody()
+                        .destinationWorkspaceId(groupTestWorkspace.getId()),
+                    groupTestReferenceResource.getMetadata().getWorkspaceId(),
+                    groupTestReferenceResource.getMetadata().getResourceId()));
+    assertEquals(exception.getCode(), HttpStatus.SC_CONFLICT);
+    assertTrue(exception.getMessage().contains("Policy merge has conflicts"));
+
+    WorkspaceDescription updatedWorkspace =
+        workspaceApi.getWorkspace(groupTestWorkspace.getId(), null);
+    List<WsmPolicyInput> updatedPolicies = updatedWorkspace.getPolicies();
+
+    assertEquals(0, updatedPolicies.size());
+
+    // Clean up the data collections used in most of the scenarios.
+    workspaceApi.deleteWorkspace(groupTestDataCollection.getId());
+    workspaceApi.deleteWorkspace(groupTestWorkspace.getId());
     workspaceApi.deleteWorkspace(centralDataCollection.getId());
+  }
+
+  private WsmPolicyInputs getGroupPolicyInputs(String groupname) {
+    return new WsmPolicyInputs()
+        .addInputsItem(
+            new WsmPolicyInput()
+                .name("group-constraint")
+                .namespace("terra")
+                .additionalData(
+                    new ArrayList<>() {
+                      {
+                        add(new WsmPolicyPair().key("group").value(groupname));
+                      }
+                    }));
+  }
+
+  private WsmPolicyInputs getRegionPolicyInputs(String location) {
+    return new WsmPolicyInputs()
+        .addInputsItem(
+            new WsmPolicyInput()
+                .name("region-constraint")
+                .namespace("terra")
+                .additionalData(
+                    new ArrayList<>() {
+                      {
+                        add(new WsmPolicyPair().key("region-name").value(location));
+                      }
+                    }));
   }
 
   private CreatedWorkspace createWorkspaceWithRegionPolicy(
       WorkspaceApi workspaceApi, String location) throws Exception {
     UUID workspaceId = UUID.randomUUID();
-
-    WsmPolicyInputs policies =
-        new WsmPolicyInputs()
-            .addInputsItem(
-                new WsmPolicyInput()
-                    .name("region-constraint")
-                    .namespace("terra")
-                    .additionalData(
-                        new ArrayList<>() {
-                          {
-                            add(new WsmPolicyPair().key("region-name").value(location));
-                          }
-                        }));
+    WsmPolicyInputs policies = getRegionPolicyInputs(location);
 
     Properties properties = new Properties();
     properties.add(
@@ -438,6 +577,20 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
     WsmPolicyPair regionPolicy = updatedPolicies.get(0).getAdditionalData().get(0);
     assertEquals("region-name", regionPolicy.getKey());
     assertEquals(region, regionPolicy.getValue());
+  }
+
+  private void validateWorkspaceContainsGroupPolicy(
+      WorkspaceApi workspaceApi, UUID workspaceId, String groupName) throws Exception {
+    WorkspaceDescription updatedWorkspace = workspaceApi.getWorkspace(workspaceId, null);
+    List<WsmPolicyInput> updatedPolicies = updatedWorkspace.getPolicies();
+
+    List<WsmPolicyInput> groupPolicies =
+        updatedPolicies.stream().filter(p -> p.getName().equals("group-constraint")).toList();
+    assertEquals(1, groupPolicies.size());
+    assertEquals(1, groupPolicies.get(0).getAdditionalData().size());
+    WsmPolicyPair groupPolicy = updatedPolicies.get(0).getAdditionalData().get(0);
+    assertEquals("group", groupPolicy.getKey());
+    assertEquals(groupName, groupPolicy.getValue());
   }
 
   @Override
