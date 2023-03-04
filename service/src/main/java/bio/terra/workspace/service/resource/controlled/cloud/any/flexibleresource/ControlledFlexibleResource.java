@@ -45,70 +45,18 @@ public class ControlledFlexibleResource extends ControlledResource {
 
   @JsonCreator
   public ControlledFlexibleResource(
-      @JsonProperty("workspaceId") UUID workspaceId,
-      @JsonProperty("resourceId") UUID resourceId,
-      @JsonProperty("name") String name,
-      @JsonProperty("description") String description,
-      @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
-      @JsonProperty("assignedUser") String assignedUser,
-      @JsonProperty("privateResourceState") PrivateResourceState privateResourceState,
-      @JsonProperty("accessScope") AccessScopeType accessScope,
-      @JsonProperty("managedBy") ManagedByType managedBy,
-      @JsonProperty("applicationId") String applicationId,
-      @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
-      @JsonProperty("properties") Map<String, String> properties,
-      @JsonProperty("createdByEmail") String createdByEmail,
-      @JsonProperty("createdDate") OffsetDateTime createdDate,
-      @JsonProperty("lastUpdatedByEmail") String lastUpdatedByEmail,
-      @JsonProperty("lastUpdatedDate") OffsetDateTime lastUpdatedDate,
-      @JsonProperty("region") String region,
+      @JsonProperty("wsmResourceFields") WsmResourceFields resourceFields,
+      @JsonProperty("wsmControlledResourceFields")
+          WsmControlledResourceFields controlledResourceFields,
       @JsonProperty("typeNamespace") String typeNamespace,
       @JsonProperty("type") String type,
       @Nullable @JsonProperty("data") String data) {
-    super(
-        ControlledResourceFields.builder()
-            .workspaceUuid(workspaceId)
-            .resourceId(resourceId)
-            .name(name)
-            .description(description)
-            .cloningInstructions(cloningInstructions)
-            .assignedUser(assignedUser)
-            .accessScope(accessScope)
-            .managedBy(managedBy)
-            .applicationId(applicationId)
-            .privateResourceState(privateResourceState)
-            .resourceLineage(resourceLineage)
-            .properties(properties)
-            .createdByEmail(createdByEmail)
-            .createdDate(createdDate)
-            .lastUpdatedByEmail(lastUpdatedByEmail)
-            .lastUpdatedDate(lastUpdatedDate)
-            .region(region)
-            .build());
+    super(resourceFields, controlledResourceFields);
     this.typeNamespace = typeNamespace;
     this.type = type;
     this.data = data;
     validate();
   }
-
-  /*
-     // TODO: PF-2512 remove constructor above and enable this constructor
-   @JsonCreator
-   public FlexibleResourceResource(
-       @JsonProperty("wsmResourceFields") WsmResourceFields resourceFields,
-       @JsonProperty("wsmControlledResourceFields")
-           WsmControlledResourceFields controlledResourceFields,
-       @JsonProperty("type") String type,
-       @JsonProperty("typeNamespace") String typeNamespace,
-       @JsonProperty("data") Object data)
-  {
-     super(resourceFields, controlledResourceFields);
-     this.typeNamespace = typeNamespace;
-     this.type = type;
-     this.data = data;
-     validate();
-   }
-    */
 
   // Constructor for the builder
   private ControlledFlexibleResource(
@@ -155,76 +103,6 @@ public class ControlledFlexibleResource extends ControlledResource {
   @Nullable
   public String getData() {
     return data;
-  }
-
-  // -- getters for backward compatibility --
-  // TODO: PF-2512 Remove these getters
-  public UUID getWorkspaceId() {
-    return super.getWorkspaceId();
-  }
-
-  public UUID getResourceId() {
-    return super.getResourceId();
-  }
-
-  public String getName() {
-    return super.getName();
-  }
-
-  public String getDescription() {
-    return super.getDescription();
-  }
-
-  public CloningInstructions getCloningInstructions() {
-    return super.getCloningInstructions();
-  }
-
-  public Optional<String> getAssignedUser() {
-    return super.getAssignedUser();
-  }
-
-  public Optional<PrivateResourceState> getPrivateResourceState() {
-    return super.getPrivateResourceState();
-  }
-
-  public AccessScopeType getAccessScope() {
-    return super.getAccessScope();
-  }
-
-  public ManagedByType getManagedBy() {
-    return super.getManagedBy();
-  }
-
-  public String getApplicationId() {
-    return super.getApplicationId();
-  }
-
-  public List<ResourceLineageEntry> getResourceLineage() {
-    return super.getResourceLineage();
-  }
-
-  public ImmutableMap<String, String> getProperties() {
-    return super.getProperties();
-  }
-
-  public String getCreatedByEmail() {
-    return super.getCreatedByEmail();
-  }
-
-  public OffsetDateTime getCreatedDate() {
-    return super.getCreatedDate();
-  }
-
-  public String getLastUpdatedByEmail() {
-    return super.getLastUpdatedByEmail();
-  }
-
-  public OffsetDateTime getLastUpdatedDate() {
-    return super.getLastUpdatedDate();
-  }
-
-  public String getRegion() {
-    return super.getRegion();
   }
 
   // -- getters not included in serialization --
