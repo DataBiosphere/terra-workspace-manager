@@ -39,7 +39,10 @@ public class CloneControlledAzureStorageContainerResourceFlight extends Flight {
 
     var flightBeanBag = FlightBeanBag.getFromObject(applicationContext);
     var sourceResource =
-        inputParameters.get(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE, ControlledResource.class);
+        FlightUtils.getRequired(
+            inputParameters,
+            WorkspaceFlightMapKeys.ResourceKeys.RESOURCE,
+            ControlledResource.class);
     var userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
     var destinationWorkspaceId =
@@ -90,7 +93,7 @@ public class CloneControlledAzureStorageContainerResourceFlight extends Flight {
           new MergePolicyAttributesStep(
               sourceResource.getWorkspaceId(),
               destinationWorkspaceId,
-              userRequest,
+              cloningInstructions,
               flightBeanBag.getTpsApiDispatch()));
     }
 

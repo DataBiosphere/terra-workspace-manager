@@ -87,8 +87,8 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
     if (mergePolicies) {
       addStep(
           new MergePolicyAttributesDryRunStep(
-              destinationWorkspaceId,
               sourceResource.getWorkspaceId(),
+              destinationWorkspaceId,
               resolvedCloningInstructions,
               flightBeanBag.getTpsApiDispatch()));
 
@@ -103,9 +103,9 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
 
       addStep(
           new MergePolicyAttributesStep(
-              destinationWorkspaceId,
               sourceResource.getWorkspaceId(),
-              userRequest,
+              destinationWorkspaceId,
+              resolvedCloningInstructions,
               flightBeanBag.getTpsApiDispatch()));
     }
     addStep(

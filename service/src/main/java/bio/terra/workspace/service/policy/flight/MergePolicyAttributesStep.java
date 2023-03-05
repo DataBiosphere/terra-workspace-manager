@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.policy.flight;
 
-import bio.terra.common.iam.BearerToken;
+import bio.terra.policy.model.TpsPaoConflict;
 import bio.terra.policy.model.TpsPaoGetResult;
 import bio.terra.policy.model.TpsPaoUpdateResult;
 import bio.terra.policy.model.TpsPolicyInputs;
@@ -11,9 +11,9 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.exception.InternalLogicException;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.resource.exception.PolicyConflictException;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import java.util.List;
 import java.util.UUID;
@@ -25,17 +25,17 @@ public class MergePolicyAttributesStep implements Step {
 
   private final UUID sourceWorkspaceId;
   private final UUID destinationWorkspaceId;
-  private final AuthenticatedUserRequest userRequest;
+  private final CloningInstructions cloningInstructions;
   private final TpsApiDispatch tpsApiDispatch;
 
   public MergePolicyAttributesStep(
       UUID sourceWorkspaceId,
       UUID destinationWorkspaceId,
-      AuthenticatedUserRequest userRequest,
+      CloningInstructions cloningInstructions,
       TpsApiDispatch tpsApiDispatch) {
     this.sourceWorkspaceId = sourceWorkspaceId;
     this.destinationWorkspaceId = destinationWorkspaceId;
-    this.userRequest = userRequest;
+    this.cloningInstructions = cloningInstructions;
     this.tpsApiDispatch = tpsApiDispatch;
   }
 
@@ -56,11 +56,17 @@ public class MergePolicyAttributesStep implements Step {
     context.getWorkingMap().put(WorkspaceFlightMapKeys.POLICIES, destinationAttributes);
 
     TpsPaoUpdateResult result =
-        tpsApiDispatch.mergePao(
-            destinationWorkspaceId, sourceWorkspaceId, TpsUpdateMode.FAIL_ON_CONFLICT);
+        (cloningInstructions == CloningInstructions.LINK_REFERENCE)
+            ? tpsApiDispatch.linkPao(
+                destinationWorkspaceId, sourceWorkspaceId, TpsUpdateMode.FAIL_ON_CONFLICT)
+            : tpsApiDispatch.mergePao(
+                sourceWorkspaceId, destinationWorkspaceId, TpsUpdateMode.FAIL_ON_CONFLICT);
     if (!result.isUpdateApplied()) {
       List<String> conflictList =
           result.getConflicts().stream().map(c -> c.getNamespace() + ':' + c.getName()).toList();
+      for (TpsPaoConflict conflict : result.getConflicts()) {
+        logger.info("Policy conflict: {}", conflict);
+      }
       throw new PolicyConflictException(
           "Destination workspace policies conflict with source workspace policies", conflictList);
     }
@@ -73,7 +79,6 @@ public class MergePolicyAttributesStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    BearerToken token = new BearerToken(userRequest.getRequiredToken());
     var destinationAttributes =
         context.getWorkingMap().get(WorkspaceFlightMapKeys.POLICIES, TpsPolicyInputs.class);
 

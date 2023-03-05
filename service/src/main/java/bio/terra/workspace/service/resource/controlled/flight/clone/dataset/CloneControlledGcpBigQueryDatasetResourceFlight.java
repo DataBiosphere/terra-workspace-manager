@@ -73,8 +73,8 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
     if (mergePolicies) {
       addStep(
           new MergePolicyAttributesDryRunStep(
-              destinationWorkspaceId,
               sourceResource.getWorkspaceId(),
+              destinationWorkspaceId,
               resolvedCloningInstructions,
               flightBeanBag.getTpsApiDispatch()));
 
@@ -89,9 +89,9 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
 
       addStep(
           new MergePolicyAttributesStep(
-              destinationWorkspaceId,
               sourceResource.getWorkspaceId(),
-              userRequest,
+              destinationWorkspaceId,
+              resolvedCloningInstructions,
               flightBeanBag.getTpsApiDispatch()));
     }
     addStep(

@@ -66,6 +66,8 @@ public class TpsApiDispatch {
             .register(
                 new JaxrsClientFilter(
                     new JaxrsClientExtractor(), Tracing.getPropagationComponent().getB3Format()));
+
+    logger.info("TPS base path: '{}'", policyServiceConfiguration.getBasePath());
   }
 
   // -- Policy Attribute Object Interface --
