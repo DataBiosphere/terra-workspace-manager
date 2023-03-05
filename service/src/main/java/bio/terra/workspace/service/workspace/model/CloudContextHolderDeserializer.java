@@ -7,6 +7,10 @@ import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import java.io.IOException;
 
 public class CloudContextHolderDeserializer extends StdDeserializer<CloudContextHolder> {
+  public CloudContextHolderDeserializer() {
+    this(null);
+  }
+
   public CloudContextHolderDeserializer(Class<CloudContextHolder> t) {
     super(t);
   }

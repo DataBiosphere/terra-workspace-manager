@@ -19,7 +19,9 @@ public class CreateAwsContextFlight extends Flight {
     featureConfiguration.awsEnabledCheck();
 
     UUID workspaceUuid =
-        UUID.fromString(inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
+        UUID.fromString(
+            Objects.requireNonNull(
+                inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class)));
 
     RetryRule dbRetry = RetryRules.shortDatabase();
 

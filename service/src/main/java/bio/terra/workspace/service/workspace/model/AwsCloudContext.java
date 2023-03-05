@@ -76,7 +76,7 @@ public class AwsCloudContext {
     return kmsKeyArn;
   }
 
-  public Arn getNotebookLifecycleConfigArn() {
+  public @Nullable Arn getNotebookLifecycleConfigArn() {
     return notebookLifecycleConfigArn;
   }
 

@@ -6,6 +6,10 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import java.io.IOException;
 
 public class CloudContextHolderSerializer extends StdSerializer<CloudContextHolder> {
+  public CloudContextHolderSerializer() {
+    this(null);
+  }
+
   public CloudContextHolderSerializer(Class<CloudContextHolder> t) {
     super(t);
   }
