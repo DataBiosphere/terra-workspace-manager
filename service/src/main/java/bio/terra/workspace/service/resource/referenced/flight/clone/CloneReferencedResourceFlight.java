@@ -68,8 +68,8 @@ public class CloneReferencedResourceFlight extends Flight {
     if (mergePolicies) {
       addStep(
           new MergePolicyAttributesDryRunStep(
-              destinationWorkspaceId,
               sourceResource.getWorkspaceId(),
+              destinationWorkspaceId,
               cloningInstructions,
               appContext.getTpsApiDispatch()));
 
@@ -84,9 +84,9 @@ public class CloneReferencedResourceFlight extends Flight {
 
       addStep(
           new MergePolicyAttributesStep(
-              destinationWorkspaceId,
               sourceResource.getWorkspaceId(),
-              userRequest,
+              destinationWorkspaceId,
+              cloningInstructions,
               appContext.getTpsApiDispatch()));
     }
 

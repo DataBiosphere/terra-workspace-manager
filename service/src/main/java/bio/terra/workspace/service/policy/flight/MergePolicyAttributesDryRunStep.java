@@ -53,7 +53,7 @@ public class MergePolicyAttributesDryRunStep implements Step {
             ? tpsApiDispatch.linkPao(
                 destinationWorkspaceId, sourceWorkspaceId, TpsUpdateMode.DRY_RUN)
             : tpsApiDispatch.mergePao(
-                destinationWorkspaceId, sourceWorkspaceId, TpsUpdateMode.DRY_RUN);
+                sourceWorkspaceId, destinationWorkspaceId, TpsUpdateMode.DRY_RUN);
 
     if (!dryRunResults.getConflicts().isEmpty()) {
       List<String> conflictList =
@@ -71,7 +71,7 @@ public class MergePolicyAttributesDryRunStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    // Since this was a dry run, there should be nothing to undo, only propagate the flight failure.
-    return context.getResult();
+    // Since this was a dry run, there should be nothing to undo
+    return StepResult.getStepResultSuccess();
   }
 }
