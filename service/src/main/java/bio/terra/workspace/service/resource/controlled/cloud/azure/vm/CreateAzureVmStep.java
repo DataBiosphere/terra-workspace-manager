@@ -177,7 +177,7 @@ public class CreateAzureVmStep implements Step {
         }
 
         case ManagementExceptionUtils.RESOURCE_NOT_FOUND -> {
-          logger.info(
+          logger.error(
               "Either the disk, ip, or network passed into this createVm does not exist "
                   + String.format(
                       "%nResource Group: %s%n\tIp Name: %s%n\tNetwork Name: %s%n\tDisk Name: %s",
@@ -187,6 +187,12 @@ public class CreateAzureVmStep implements Step {
                       diskResource
                           .map(ControlledAzureDiskResource::getDiskName)
                           .orElse("<no disk>")));
+          yield new StepResult(
+              StepStatus.STEP_RESULT_FAILURE_FATAL, new AzureManagementException(e));
+        }
+
+        case ManagementExceptionUtils.VM_EXTENSION_PROVISIONING_ERROR -> {
+          logger.error("Error provisioning VM extension");
           yield new StepResult(
               StepStatus.STEP_RESULT_FAILURE_FATAL, new AzureManagementException(e));
         }
