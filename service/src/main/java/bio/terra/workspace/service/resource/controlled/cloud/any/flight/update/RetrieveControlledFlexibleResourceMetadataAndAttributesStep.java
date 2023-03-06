@@ -10,9 +10,9 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Resou
 import java.util.UUID;
 
 /**
- * A step to retrieve the name, description, and attributes of the original resource.
+ * A step to retrieve the name, description, and attributes of the original flex resource.
  *
- * <p>This step is to make sure that if update fail, we can restore back to the original resource.
+ * <p>This step is to ensure we can restore back to the original state upon failure.
  */
 public class RetrieveControlledFlexibleResourceMetadataAndAttributesStep implements Step {
   private final ResourceDao resourceDao;

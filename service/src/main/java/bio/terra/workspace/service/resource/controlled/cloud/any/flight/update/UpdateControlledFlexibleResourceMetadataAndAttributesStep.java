@@ -17,9 +17,9 @@ import org.springframework.http.HttpStatus;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_FLEX_DATA;
 
 /**
- * A step to retrieve the name, description, and attributes of the original resource reference.
+ * A step to retrieve the name, description, and attributes of the original flex resource.
  *
- * <p>This step is to make sure that if update fail, we can restore back to the original resource.
+ * <p>This step is to ensure we can restore back to the original state upon failure.
  */
 public class UpdateControlledFlexibleResourceMetadataAndAttributesStep implements Step {
   private final ResourceDao resourceDao;
