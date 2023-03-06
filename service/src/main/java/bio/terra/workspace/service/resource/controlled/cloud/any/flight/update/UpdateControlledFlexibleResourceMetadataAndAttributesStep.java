@@ -14,6 +14,8 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import org.springframework.http.HttpStatus;
 
+import java.util.UUID;
+
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_FLEX_DATA;
 
 /**
@@ -25,11 +27,15 @@ public class UpdateControlledFlexibleResourceMetadataAndAttributesStep implement
   private final ResourceDao resourceDao;
 
   private final ControlledFlexibleResource resource;
+  private final UUID workspaceUuid;
+  private final UUID resourceId;
 
   public UpdateControlledFlexibleResourceMetadataAndAttributesStep(
       ResourceDao resourceDao, ControlledFlexibleResource resource) {
     this.resourceDao = resourceDao;
     this.resource = resource;
+    this.workspaceUuid = resource.getWorkspaceId();
+    this.resourceId = resource.getResourceId();
   }
 
   @Override
@@ -49,8 +55,8 @@ public class UpdateControlledFlexibleResourceMetadataAndAttributesStep implement
 
     boolean updated =
         resourceDao.updateResource(
-            resource.getWorkspaceId(),
-            resource.getResourceId(),
+            workspaceUuid,
+            resourceId,
             resourceName,
             resourceDescription,
             newAttributes,
@@ -58,7 +64,6 @@ public class UpdateControlledFlexibleResourceMetadataAndAttributesStep implement
     if (!updated) {
       throw new RetryException("Failed to updated resource");
     }
-    //    FlightUtils.setResponse(flightContext, updated, HttpStatus.OK);
     return StepResult.getStepResultSuccess();
   }
 
@@ -73,8 +78,8 @@ public class UpdateControlledFlexibleResourceMetadataAndAttributesStep implement
     final var previousCloningInstructions =
         workingMap.get(ResourceKeys.PREVIOUS_CLONING_INSTRUCTIONS, CloningInstructions.class);
     resourceDao.updateResource(
-        resource.getWorkspaceId(),
-        resource.getResourceId(),
+        workspaceUuid,
+        resourceId,
         previousName,
         previousDescription,
         previousAttributes,

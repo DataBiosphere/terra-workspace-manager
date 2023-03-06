@@ -37,7 +37,6 @@ public final class WorkspaceFlightMapKeys {
     public static final String UPDATE_PARAMETERS = "updateParameters";
     public static final String UPDATE_FLEX_DATA = "updateFlexData";
     public static final String PREVIOUS_UPDATE_PARAMETERS = "previousUpdateParameters";
-    public static final String PREVIOUS_FLEX_DATA = "previousFlexData";
     public static final String CREATE_RESOURCE_REGION = "createResourceRegion";
 
     public static final String RESOURCE_ROLES_TO_REMOVE = "resourceRolesToRemove";

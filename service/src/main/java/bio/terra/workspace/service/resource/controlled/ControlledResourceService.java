@@ -400,9 +400,6 @@ public class ControlledResourceService {
             .addParameter(ResourceKeys.RESOURCE_NAME, resourceName)
             .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, resourceDescription);
     jobBuilder.submitAndWait();
-//    if (!updated) {
-//      logger.warn("There was no update to the flexible resource.");
-//    }
   }
 
   /**

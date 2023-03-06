@@ -18,8 +18,11 @@ import bio.terra.workspace.service.workspace.WorkspaceService;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+
+import kotlin.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,8 +74,7 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
             WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE);
 
     byte[] encodedJSON = body.getFlexibleResource().getData();
-    String decodedJSON =
-        encodedJSON != null ? new String(encodedJSON, StandardCharsets.UTF_8) : null;
+    String decodedJSON = getDecodedJSONFromByteArray(encodedJSON);
 
     ControlledFlexibleResource resource =
         ControlledFlexibleResource.builder()
@@ -116,11 +118,7 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
     byte[] encodedJSON =
         body.getUpdateParameters() != null ? body.getUpdateParameters().getData() : null;
     // Decode the base64, so we can store the string directly in the database.
-    String decodedJSON =
-        encodedJSON != null ? new String(encodedJSON, StandardCharsets.UTF_8) : null;
-
-    // OR
-//    getControlledResourceService().updateFlexResource()
+    String decodedJSON = getDecodedJSONFromByteArray(encodedJSON);
 
     getControlledResourceService()
         .updateFlexResource(
@@ -132,6 +130,14 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
             .getControlledResource(workspaceUuid, resourceId)
             .castByEnum(WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE);
     return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
+  }
+
+  private String getDecodedJSONFromByteArray(@Nullable byte[] encodedJSON) {
+    // Decode the base64, so we can store the string directly in the database.
+    if (encodedJSON == null) {
+      return null;
+    }
+    return new String(encodedJSON, StandardCharsets.UTF_8);
   }
 
   @Traced
