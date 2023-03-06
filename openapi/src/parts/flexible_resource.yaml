@@ -1,0 +1,107 @@
+paths:
+  /api/workspaces/v1/{workspaceId}/resources/controlled/any/flexibleResources:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Create a new controlled flexible resource.
+      operationId: createFlexibleResource
+      tags: [ ControlledFlexibleResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateControlledFlexibleResourceRequestBody'
+      responses:
+        '200':
+          description: Response to creating a controlled flexible resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatedControlledFlexibleResource'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/any/flexibleResources/{resourceId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Get a controlled flexible resource.
+      operationId: getFlexibleResource
+      tags: [ ControlledFlexibleResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/ControlledFlexibleResourceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    # TODO (PF-2539): Add PATCH method here.
+    delete:
+      summary: Delete a controlled flexible resource.
+      operationId: deleteFlexibleResource
+      tags: [ ControlledFlexibleResource ]
+      responses:
+        '204':
+          description: Success
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  # TODO (PF-2540) - Add clone endpoint here.
+
+components:
+  schemas:
+    # TODO (PF-2540) - Add three schemas for cloning flexible resources.
+    CreatedControlledFlexibleResource:
+      description: Response payload for requesting a new controlled flexible resource.
+      type: object
+      required: [resourceId, flexibleResource]
+      properties:
+        resourceId:
+          description: UUID of newly-created resource.
+          type: string
+          format: uuid
+        flexibleResource:
+          $ref: '#/components/schemas/FlexibleResource'
+    CreateControlledFlexibleResourceRequestBody:
+      description: Payload for requesting a new controlled flexible resource.
+      type: object
+      required: [common, flexibleResource]
+      properties:
+        common:
+          $ref: '#/components/schemas/ControlledResourceCommonFields'
+        flexibleResource:
+          $ref: '#/components/schemas/ControlledFlexibleResourceCreationParameters'
+    ControlledFlexibleResourceCreationParameters:
+      description: Properties specific to flexible resource set on creation.
+      type: object
+      required: [ typeNamespace, type ]
+      properties:
+        typeNamespace:
+          description: Namespace of the type; e.g., 'terra'
+          type: string
+        type:
+          description: Type of the flexible resource.
+          type: string
+        data:
+          description: JSON encoded in base 64.
+          type: string
+          format: byte
+    # TODO (PF-2539) - Add updateControlledFlexibleResourceRequestBody.
+
+  responses:
+    # TODO (PF-2540) - Add clone response.
+    ControlledFlexibleResourceResponse:
+      description: Response containing a controlled flexible resource.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/FlexibleResource'

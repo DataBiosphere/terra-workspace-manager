@@ -21,6 +21,7 @@ components:
         - AZURE_BATCH_POOL
         - GIT_REPO
         - TERRA_WORKSPACE
+        - FLEXIBLE_RESOURCE
 
     ResourceAttributesUnion:
       type: object
@@ -61,6 +62,8 @@ components:
           $ref: '#/components/schemas/GitRepoAttributes'
         terraWorkspace:
           $ref: '#/components/schemas/TerraWorkspaceAttributes'
+        flexibleResource:
+          $ref: '#/components/schemas/FlexibleResourceAttributes'
 
     ResourceUnion:
       type: object
@@ -101,4 +104,5 @@ components:
           $ref: '#/components/schemas/GitRepoResource'
         terraWorkspace:
           $ref: '#/components/schemas/TerraWorkspaceResource'
-
+        flexibleResource:
+          $ref: '#/components/schemas/FlexibleResource'

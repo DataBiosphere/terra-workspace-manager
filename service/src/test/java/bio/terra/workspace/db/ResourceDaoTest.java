@@ -23,6 +23,7 @@ import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
+import bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresource.ControlledFlexibleResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
@@ -96,6 +97,19 @@ public class ResourceDaoTest extends BaseUnitTest {
     assertEquals(resource, getResource);
     assertEquals(DEFAULT_USER_EMAIL, getResource.getLastUpdatedByEmail());
     assertNotNull(getResource.getLastUpdatedDate());
+  }
+
+  @Test
+  public void createGetControlledFlexResource() {
+    ControlledFlexibleResource resource =
+        ControlledResourceFixtures.makeDefaultFlexResourceBuilder(workspaceUuid).build();
+    resourceDao.createControlledResource(resource);
+
+    var getResource = resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId());
+    assertEquals(resource, getResource);
+    assertNotNull(getResource.getCreatedDate());
+    assertEquals(getResource.getCreatedDate(), getResource.getLastUpdatedDate());
+    assertEquals(getResource.getCreatedByEmail(), getResource.getLastUpdatedByEmail());
   }
 
   @Test

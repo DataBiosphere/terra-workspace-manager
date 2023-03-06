@@ -29,13 +29,16 @@ public class ControlledResourceControllerBase extends ControllerBase {
   /**
    * The region field of these wsm resource type are filled during the creation flight because the
    * region is computed at runtime based on e.g. network and storage account.
+   *
+   * <p>Note: WSM Flexible resources are not cloud resources, so they do not require regions.
    */
   private static final List<WsmResourceType> WSM_RESOURCE_WITHOUT_REGION_IN_CREATION_PARAMS =
       List.of(
           WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER,
           WsmResourceType.CONTROLLED_AZURE_VM,
           WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE,
-          WsmResourceType.CONTROLLED_AZURE_BATCH_POOL);
+          WsmResourceType.CONTROLLED_AZURE_BATCH_POOL,
+          WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE);
 
   public ControlledResourceControllerBase(
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
@@ -67,7 +70,8 @@ public class ControlledResourceControllerBase extends ControllerBase {
       checkArgument(
           region != null,
           "Controlled resource must have an associated region specified"
-              + "on creation except for azure storage container and azure VM");
+              + "on creation except for Azure storage containers, Azure VMs, Azure batch pools, "
+              + "Vertex AI notebooks, and Flexible resources");
     }
 
     return ControlledResourceFields.builder()

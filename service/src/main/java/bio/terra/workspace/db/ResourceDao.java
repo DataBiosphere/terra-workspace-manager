@@ -648,9 +648,10 @@ public class ResourceDao {
   public void createControlledResource(ControlledResource controlledResource)
       throws DuplicateResourceException {
 
-    if (!cloudContextExists(
-        controlledResource.getWorkspaceId(),
-        controlledResource.getResourceType().getCloudPlatform())) {
+    CloudPlatform cloudPlatform = controlledResource.getResourceType().getCloudPlatform();
+
+    if ((cloudPlatform != CloudPlatform.ANY)
+        && !cloudContextExists(controlledResource.getWorkspaceId(), cloudPlatform)) {
       throw new CloudContextRequiredException(
           "No cloud context found in which to create a controlled resource");
     }

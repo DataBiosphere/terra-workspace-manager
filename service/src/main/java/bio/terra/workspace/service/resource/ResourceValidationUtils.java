@@ -7,6 +7,7 @@ import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.app.configuration.external.GitRepoReferencedResourceConfiguration;
 import bio.terra.workspace.common.utils.GcpUtils;
+import bio.terra.workspace.db.exception.FieldSizeExceededException;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
@@ -134,6 +135,7 @@ public class ResourceValidationUtils {
   private static final ImmutableList<String> GOOGLE_NAMES = ImmutableList.of("google", "g00gle");
   private static final int MAX_RESOURCE_DESCRIPTION_NAME = 2048;
   private static final int MAX_BATCH_POOL_DISPLAY_NAME = 1024;
+  private static final int MAX_FLEXIBLE_RESOURCE_DATA_BYTE_SIZE = 5000;
 
   private final GitRepoReferencedResourceConfiguration gitRepoReferencedResourceConfiguration;
 
@@ -204,6 +206,9 @@ public class ResourceValidationUtils {
         // validateAzureRegion(location);
       }
       case GCP -> validateGcpRegion(tpsApiDispatch, workspaceUuid, location);
+      case ANY -> {
+        // Flexible resources are not stored on the cloud. Thus, they have no region policies.
+      }
       default -> throw new InvalidControlledResourceException("Unrecognized platform");
     }
   }
@@ -568,6 +573,16 @@ public class ResourceValidationUtils {
             String.format(
                 "Property %s contains an invalid non-UUID format folder id %s.",
                 FOLDER_ID_KEY, properties.get(FOLDER_ID_KEY)));
+      }
+    }
+  }
+
+  public static void validateFlexResourceDataSize(@Nullable String decodedData) {
+    if (decodedData != null) {
+      if (decodedData.getBytes().length > MAX_FLEXIBLE_RESOURCE_DATA_BYTE_SIZE) {
+        logger.warn("Exceeded flex resource data limit (at most 5 kilobytes");
+        throw new FieldSizeExceededException(
+            "Field data is too large. Please limit it to 5 kilobytes.");
       }
     }
   }
