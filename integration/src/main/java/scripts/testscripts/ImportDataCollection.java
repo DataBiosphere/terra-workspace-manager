@@ -397,7 +397,7 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
      Scenario 9: Group policy merging. WS(groupA) can merge DC(nogroup).
     */
     CreatedWorkspace groupTestWorkspace =
-        createWorkspaceWithRegionPolicy(workspaceApi, usaLocation);
+        createWorkspace(UUID.randomUUID(), getSpendProfileId(), workspaceApi);
     var request =
         new WsmPolicyUpdateRequest()
             .addAttributes(getGroupPolicyInputs(groupNameA))
@@ -587,8 +587,8 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
     List<WsmPolicyInput> groupPolicies =
         updatedPolicies.stream().filter(p -> p.getName().equals("group-constraint")).toList();
     assertEquals(1, groupPolicies.size());
+    WsmPolicyPair groupPolicy = groupPolicies.get(0).getAdditionalData().get(0);
     assertEquals(1, groupPolicies.get(0).getAdditionalData().size());
-    WsmPolicyPair groupPolicy = updatedPolicies.get(0).getAdditionalData().get(0);
     assertEquals("group", groupPolicy.getKey());
     assertEquals(groupName, groupPolicy.getValue());
   }
