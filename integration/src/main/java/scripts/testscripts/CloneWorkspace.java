@@ -408,7 +408,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
         sharedBucketCloneDetails.getResult(),
         "Shared Bucket clone succeeded.");
     assertEquals(
-        CloningInstructionsEnum.RESOURCE,
+        CloningInstructionsEnum.COPY_RESOURCE,
         sharedBucketCloneDetails.getCloningInstructions(),
         "RESOURCE cloning instructions preserved.");
     assertEquals(
@@ -475,7 +475,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     assertEquals(
         CloneResourceResult.FAILED, privateBucketCloneDetails.getResult(), "Reports failure.");
     assertEquals(
-        CloningInstructionsEnum.RESOURCE,
+        CloningInstructionsEnum.COPY_RESOURCE,
         privateBucketCloneDetails.getCloningInstructions(),
         "preserves cloning instructions.");
     assertEquals(
@@ -516,7 +516,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
         copyNothingBucketCloneDetails.getResult(),
         "Result is SKIPPED");
     assertEquals(
-        CloningInstructionsEnum.NOTHING,
+        CloningInstructionsEnum.COPY_NOTHING,
         copyNothingBucketCloneDetails.getCloningInstructions(),
         "Cloning instructions of Nothing honored and preserved.");
     assertEquals(
@@ -556,7 +556,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
         copyDefinitionBucketDetails.getResult(),
         "Copy of COPY_DEFINITION bucket succeeded.");
     assertEquals(
-        CloningInstructionsEnum.DEFINITION,
+        CloningInstructionsEnum.COPY_DEFINITION,
         copyDefinitionBucketDetails.getCloningInstructions(),
         "Cloning instructions preserved.");
     assertEquals(
@@ -602,7 +602,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     assertEquals(
         CloneResourceResult.SUCCEEDED, copyDefinitionDatasetDetails.getResult(), "Clone Succeeded");
     assertEquals(
-        CloningInstructionsEnum.DEFINITION,
+        CloningInstructionsEnum.COPY_DEFINITION,
         copyDefinitionDatasetDetails.getCloningInstructions(),
         "Cloning instructions preserved.");
     assertEquals(
@@ -651,7 +651,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
         copyResourceDatasetDetails.getResult(),
         "COPY_RESOURCE dataset successfully cloned");
     assertEquals(
-        CloningInstructionsEnum.RESOURCE,
+        CloningInstructionsEnum.COPY_RESOURCE,
         copyResourceDatasetDetails.getCloningInstructions(),
         "Cloning instructions preserved.");
     assertEquals(
@@ -710,7 +710,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
         privateDatasetDetails.getResult(),
         "Attempt to clone private dataset failed");
     assertEquals(
-        CloningInstructionsEnum.RESOURCE,
+        CloningInstructionsEnum.COPY_RESOURCE,
         privateDatasetDetails.getCloningInstructions(),
         "Cloning instructions preserved.");
     assertEquals(
@@ -743,7 +743,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     assertEquals(
         CloneResourceResult.SUCCEEDED, bucketReferenceDetails.getResult(), "Success reported");
     assertEquals(
-        CloningInstructionsEnum.REFERENCE,
+        CloningInstructionsEnum.COPY_REFERENCE,
         bucketReferenceDetails.getCloningInstructions(),
         "Cloning instructinos preserved");
     assertEquals(
@@ -808,7 +808,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
         bucketFileReferenceDetails.getResult(),
         "bucket file reference clone succeeded");
     assertEquals(
-        CloningInstructionsEnum.REFERENCE,
+        CloningInstructionsEnum.COPY_REFERENCE,
         bucketFileReferenceDetails.getCloningInstructions(),
         "Cloning instructions preserved.");
     assertEquals(
@@ -838,7 +838,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     assertEquals(
         CloneResourceResult.SKIPPED, datasetReferenceDetails.getResult(), "Resource was skipped");
     assertEquals(
-        CloningInstructionsEnum.NOTHING,
+        CloningInstructionsEnum.COPY_NOTHING,
         datasetReferenceDetails.getCloningInstructions(),
         "Clone instructions preserved");
     assertEquals(
@@ -873,7 +873,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
         dataTableReferenceDetails.getResult(),
         "result of skip is SKIPPED");
     assertEquals(
-        CloningInstructionsEnum.NOTHING,
+        CloningInstructionsEnum.COPY_NOTHING,
         dataTableReferenceDetails.getCloningInstructions(),
         "cloning instructions preserved");
     assertEquals(
