@@ -29,23 +29,46 @@ import org.apache.commons.lang3.StringUtils;
  * destination.
  */
 public enum CloningInstructions {
-  COPY_NOTHING(ApiCloningInstructionsEnum.COPY_NOTHING, "COPY_NOTHING", true, true),
-  COPY_DEFINITION(ApiCloningInstructionsEnum.COPY_DEFINITION, "COPY_DEFINITION", true, false),
-  COPY_RESOURCE(ApiCloningInstructionsEnum.COPY_RESOURCE, "COPY_RESOURCE", true, false),
-  COPY_REFERENCE(ApiCloningInstructionsEnum.COPY_REFERENCE, "COPY_REFERENCE", true, true),
-  LINK_REFERENCE(ApiCloningInstructionsEnum.LINK_REFERENCE, "LINK_REFERENCE", true, true);
+  COPY_NOTHING(
+      ApiCloningInstructionsEnum.COPY_NOTHING,
+      ApiCloningInstructionsEnum.NOTHING,
+      "COPY_NOTHING",
+      true,
+      true),
+  COPY_DEFINITION(
+      ApiCloningInstructionsEnum.COPY_DEFINITION,
+      ApiCloningInstructionsEnum.DEFINITION,
+      "COPY_DEFINITION",
+      true,
+      false),
+  COPY_RESOURCE(
+      ApiCloningInstructionsEnum.COPY_RESOURCE,
+      ApiCloningInstructionsEnum.RESOURCE,
+      "COPY_RESOURCE",
+      true,
+      false),
+  COPY_REFERENCE(
+      ApiCloningInstructionsEnum.COPY_REFERENCE,
+      ApiCloningInstructionsEnum.REFERENCE,
+      "COPY_REFERENCE",
+      true,
+      true),
+  LINK_REFERENCE(ApiCloningInstructionsEnum.LINK_REFERENCE, null, "LINK_REFERENCE", true, true);
 
   private final ApiCloningInstructionsEnum apiInstruction;
+  private final ApiCloningInstructionsEnum alternateApiInstruction;
   private final String dbInstruction;
   private final boolean validForControlledResource;
   private final boolean validForReferencedResource;
 
   CloningInstructions(
       ApiCloningInstructionsEnum apiInstruction,
+      @Nullable ApiCloningInstructionsEnum alternateApiInstruction,
       String dbInstruction,
       boolean validForControlledResource,
       boolean validForReferencedResource) {
     this.apiInstruction = apiInstruction;
+    this.alternateApiInstruction = alternateApiInstruction;
     this.dbInstruction = dbInstruction;
     this.validForControlledResource = validForControlledResource;
     this.validForReferencedResource = validForReferencedResource;
@@ -74,7 +97,7 @@ public enum CloningInstructions {
       return null;
     }
     for (CloningInstructions instruction : values()) {
-      if (instruction.apiInstruction == api) {
+      if (instruction.apiInstruction == api || instruction.alternateApiInstruction == api) {
         return instruction;
       }
     }
