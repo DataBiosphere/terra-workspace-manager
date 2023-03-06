@@ -139,7 +139,7 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
           RetryRules.shortDatabase());
       addStep(
           new SetReferencedDestinationGcsBucketResponseStep(
-              flightBeanBag.getResourceDao(), flightBeanBag.getWorkspaceActivityLogService()),
+              flightBeanBag.getResourceDao(), resolvedCloningInstructions),
           RetryRules.shortExponential());
       return;
     }
