@@ -2,18 +2,12 @@ package bio.terra.workspace.service.workspace.model;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import java.io.IOException;
 
-public class CloudContextHolderDeserializer extends StdDeserializer<CloudContextHolder> {
-  public CloudContextHolderDeserializer() {
-    this(null);
-  }
-
-  public CloudContextHolderDeserializer(Class<CloudContextHolder> t) {
-    super(t);
-  }
+public class CloudContextHolderDeserializer extends JsonDeserializer<CloudContextHolder> {
+  public CloudContextHolderDeserializer() {}
 
   @Override
   public CloudContextHolder deserialize(JsonParser jsonParser, DeserializationContext ctx)
