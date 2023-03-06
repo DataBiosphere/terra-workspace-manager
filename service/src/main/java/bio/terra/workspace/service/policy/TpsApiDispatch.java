@@ -82,10 +82,10 @@ public class TpsApiDispatch {
     clientConfig.register(JacksonFeature.class);
     clientConfig.connectorProvider(new ApacheConnectorProvider());
     PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
-    connectionManager.setDefaultMaxPerRoute(20);
-    // Validate inactive connections after 500ms instead of default 2000ms to avoid
-    // NoHttpResponseExceptions from server-side closed connections.
-    connectionManager.setValidateAfterInactivity(500);
+    // Always (if 1ms has elapsed) validate connections before using them. This matches older client
+    // behavior and is a performance hit, but avoids the problem of Terra services silently closing
+    // connections.
+    connectionManager.setValidateAfterInactivity(/*ms=*/1);
     clientConfig.property("jersey.config.apache.client.connectionManager", connectionManager);
     return ClientBuilder.newClient(clientConfig);
   }
