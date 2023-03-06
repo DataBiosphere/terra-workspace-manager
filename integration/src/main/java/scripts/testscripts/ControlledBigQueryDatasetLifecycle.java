@@ -208,7 +208,7 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
     var datasetAfterUpdate = ownerResourceApi.getBigQueryDataset(getWorkspaceId(), resourceId);
     assertEquals(resourceDescription, datasetAfterUpdate.getMetadata().getDescription());
     assertEquals(
-        CloningInstructionsEnum.RESOURCE,
+        CloningInstructionsEnum.COPY_RESOURCE,
         datasetAfterUpdate.getMetadata().getCloningInstructions());
     logger.info("Workspace owner updated resource {}", resourceId);
 

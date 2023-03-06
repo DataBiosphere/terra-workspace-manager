@@ -211,7 +211,7 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
     assertEquals(
         UPDATED_BUCKET_RESOURCE_DESCRIPTION, updatedResource.getMetadata().getDescription());
     assertEquals(
-        CloningInstructionsEnum.DEFINITION, updatedResource.getMetadata().getCloningInstructions());
+        CloningInstructionsEnum.COPY_DEFINITION, updatedResource.getMetadata().getCloningInstructions());
 
     // Invalid updates are rejected.
     String invalidName = "!!!invalid_name!!!";
@@ -424,7 +424,7 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
     assertEquals(sourceBucket.getMetadata().getName(), clonedResourceMetadata.getName());
     assertEquals(clonedBucketDescription, clonedResourceMetadata.getDescription());
     final ResourceMetadata sourceMetadata = sourceBucket.getMetadata();
-    assertEquals(CloningInstructionsEnum.NOTHING, clonedResourceMetadata.getCloningInstructions());
+    assertEquals(CloningInstructionsEnum.COPY_NOTHING, clonedResourceMetadata.getCloningInstructions());
     assertEquals(sourceMetadata.getCloudPlatform(), clonedResourceMetadata.getCloudPlatform());
     assertEquals(ResourceType.GCS_BUCKET, clonedResourceMetadata.getResourceType());
     assertEquals(StewardshipType.CONTROLLED, clonedResourceMetadata.getStewardshipType());
@@ -447,7 +447,7 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
         BUCKET_LOCATION, destinationGcsBucket.getLocation()); // default since not specified
     assertEquals(2, destinationGcsBucket.getLifecycleRules().size());
     verifyClonedLifecycleRules(destinationGcsBucket);
-    assertEquals(CloningInstructionsEnum.RESOURCE, clonedBucket.getEffectiveCloningInstructions());
+    assertEquals(CloningInstructionsEnum.COPY_RESOURCE, clonedBucket.getEffectiveCloningInstructions());
 
     // test retrieving file from destination bucket
     Storage cloningUserStorageClient =
