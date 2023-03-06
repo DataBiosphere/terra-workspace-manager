@@ -45,10 +45,13 @@ public class UpdateControlledFlexibleResourceMetadataAndAttributesStep implement
 
     final String updateData =
         flightContext.getInputParameters().get(UPDATE_FLEX_DATA, String.class);
+
     String newAttributes =
         DbSerDes.toJson(
             new FlexibleResourceAttributes(
-                resource.getTypeNamespace(), resource.getType(), updateData));
+                resource.getTypeNamespace(),
+                resource.getType(),
+                updateData == null ? resource.getData() : updateData));
 
     boolean updated =
         resourceDao.updateResource(
