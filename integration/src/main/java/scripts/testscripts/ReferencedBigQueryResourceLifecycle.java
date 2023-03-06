@@ -233,7 +233,7 @@ public class ReferencedBigQueryResourceLifecycle extends WorkspaceAllocateTestSc
         referencedBqTableAttributes.getProjectId(),
         datasetReferenceFirstUpdate.getAttributes().getProjectId());
     assertEquals(
-        CloningInstructionsEnum.NOTHING,
+        CloningInstructionsEnum.COPY_NOTHING,
         datasetReferenceFirstUpdate.getMetadata().getCloningInstructions());
     // {@code userWithPartialAccess} does not have access to the original dataset.
     assertFalse(
@@ -279,7 +279,7 @@ public class ReferencedBigQueryResourceLifecycle extends WorkspaceAllocateTestSc
     assertTrue(
         partialAccessResourceApi.checkReferenceAccess(getWorkspaceId(), bqDatasetResourceId));
     assertEquals(
-        CloningInstructionsEnum.NOTHING,
+        CloningInstructionsEnum.COPY_NOTHING,
         datasetReferenceSecondUpdate.getMetadata().getCloningInstructions());
 
     // Update BQ data table's name and description.

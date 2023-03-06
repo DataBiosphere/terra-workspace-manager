@@ -293,7 +293,7 @@ public class ReferencedGcsResourceLifecycle extends WorkspaceAllocateTestScriptB
         bucketReferenceFirstUpdate.getAttributes().getBucketName());
     assertTrue(partialAccessResourceApi.checkReferenceAccess(getWorkspaceId(), bucketResourceId));
     assertEquals(
-        CloningInstructionsEnum.NOTHING,
+        CloningInstructionsEnum.COPY_NOTHING,
         bucketReferenceFirstUpdate.getMetadata().getCloningInstructions());
     // Attempt to update bucket reference but {@code userWithPartialAccess} does not have
     // access to the bucket with fine-grained access
