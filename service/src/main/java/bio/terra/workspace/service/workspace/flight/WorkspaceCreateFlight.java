@@ -65,7 +65,11 @@ public class WorkspaceCreateFlight extends Flight {
         }
         addStep(
             new CreateWorkspaceAuthzStep(
-                workspace, appContext.getSamService(), appContext.getTpsApiDispatch(), userRequest),
+                workspace,
+                appContext.getSamService(),
+                appContext.getTpsApiDispatch(),
+                appContext.getFeatureConfiguration(),
+                userRequest),
             serviceRetryRule);
       }
       case RAWLS_WORKSPACE -> addStep(
