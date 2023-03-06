@@ -82,7 +82,6 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.Retri
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.UpdateGcsBucketStep;
 import bio.terra.workspace.service.resource.controlled.exception.ReservedMetadataKeyException;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteMetadataStep;
-import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceMetadataStep;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
@@ -494,11 +493,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(
-        RetrieveControlledResourceMetadataStep.class.getName(),
-        StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(
-        UpdateControlledResourceMetadataStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(
         RetrieveAiNotebookResourceAttributesStep.class.getName(),
         StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
@@ -581,11 +575,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(
-        RetrieveControlledResourceMetadataStep.class.getName(),
-        StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(
-        UpdateControlledResourceMetadataStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(
         RetrieveAiNotebookResourceAttributesStep.class.getName(),
         StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
@@ -637,11 +626,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
 
     Map<String, StepStatus> retrySteps = new HashMap<>();
-    retrySteps.put(
-        RetrieveControlledResourceMetadataStep.class.getName(),
-        StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(
-        UpdateControlledResourceMetadataStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
         RetrieveAiNotebookResourceAttributesStep.class.getName(),
         StepStatus.STEP_RESULT_FAILURE_RETRY);
@@ -1565,11 +1549,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(
-        RetrieveControlledResourceMetadataStep.class.getName(),
-        StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(
-        UpdateControlledResourceMetadataStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(
         RetrieveGcsBucketCloudAttributesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(UpdateGcsBucketStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     jobService.setFlightDebugInfoForTest(
@@ -1602,11 +1581,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     ControlledGcsBucketResource createdBucket = createDefaultSharedGcsBucket(user);
 
     Map<String, StepStatus> retrySteps = new HashMap<>();
-    retrySteps.put(
-        RetrieveControlledResourceMetadataStep.class.getName(),
-        StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(
-        UpdateControlledResourceMetadataStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
         RetrieveGcsBucketCloudAttributesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(UpdateGcsBucketStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
@@ -1823,7 +1797,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   // TODO (PF-2269): Clean this up once the back-fill is done in all Terra environments.
 
-  /** @return A list of big query datasets that were updated (with lifetime set) */
+  /**
+   * @return A list of big query datasets that were updated (with lifetime set)
+   */
   private List<ControlledBigQueryDatasetResource>
       updateControlledBigQueryDatasetsLifetimeAndWait() {
     HashSet<ControlledBigQueryDatasetResource> successfullyUpdatedDatasets =
