@@ -1797,9 +1797,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   // TODO (PF-2269): Clean this up once the back-fill is done in all Terra environments.
 
-  /**
-   * @return A list of big query datasets that were updated (with lifetime set)
-   */
+  /** @return A list of big query datasets that were updated (with lifetime set) */
   private List<ControlledBigQueryDatasetResource>
       updateControlledBigQueryDatasetsLifetimeAndWait() {
     HashSet<ControlledBigQueryDatasetResource> successfullyUpdatedDatasets =
