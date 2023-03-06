@@ -136,8 +136,7 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
     RetryRule cloudRetry = RetryRules.cloud();
     flight.addStep(new CreateAwsSageMakerNotebookStep(this), cloudRetry);
     flight.addStep(
-        new WaitForAwsSageMakerNotebookStatusStep(
-            this, Optional.of(NotebookInstanceStatus.IN_SERVICE)),
+        new WaitForAwsSageMakerNotebookStatusStep(this, NotebookInstanceStatus.IN_SERVICE),
         cloudRetry);
   }
 
@@ -146,8 +145,7 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
   public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
     RetryRule cloudRetry = RetryRules.cloud();
     flight.addStep(new DeleteAwsSageMakerNotebookStep(this), cloudRetry);
-    flight.addStep(
-        new WaitForAwsSageMakerNotebookStatusStep(this, Optional.ofNullable(null)), cloudRetry);
+    flight.addStep(new WaitForAwsSageMakerNotebookStatusStep(this, null), cloudRetry);
   }
 
   public ApiAwsSageMakerNotebookAttributes toApiAttributes() {

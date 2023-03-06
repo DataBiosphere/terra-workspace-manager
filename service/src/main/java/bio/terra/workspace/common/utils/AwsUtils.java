@@ -22,6 +22,7 @@ import org.apache.http.client.utils.URIBuilder;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.arns.Arn;
 import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -72,7 +73,7 @@ public class AwsUtils {
     AssumeRoleWithWebIdentityRequest request =
         AssumeRoleWithWebIdentityRequest.builder()
             .durationSeconds(duration)
-            .roleArn(awsCloudContext.getServiceRoleArn().toString())
+            .roleArn(awsCloudContext.getServiceRoleArn())
             .roleSessionName(getRoleSessionName(serviceEmail))
             .webIdentityToken(idToken)
             .build();
@@ -147,7 +148,7 @@ public class AwsUtils {
     AssumeRoleRequest request =
         AssumeRoleRequest.builder()
             .durationSeconds(duration)
-            .roleArn(awsCloudContext.getUserRoleArn().toString())
+            .roleArn(awsCloudContext.getUserRoleArn())
             .roleSessionName(getRoleSessionName(user.getEmail()))
             .tags(userTags)
             .build();
@@ -339,12 +340,13 @@ public class AwsUtils {
         CreateNotebookInstanceRequest.builder()
             .notebookInstanceName(notebookName)
             .instanceType(instanceType)
-            .roleArn(awsCloudContext.getUserRoleArn().toString())
-            .kmsKeyId(awsCloudContext.getKmsKeyArn().resource().resource())
+            .roleArn(awsCloudContext.getUserRoleArn())
+            .kmsKeyId(Arn.fromString(awsCloudContext.getKmsKeyArn()).resource().resource())
             .tags(toSagemakerTags(tags));
 
     if (awsCloudContext.getNotebookLifecycleConfigArn() != null) {
-      String policyName = awsCloudContext.getNotebookLifecycleConfigArn().resource().resource();
+      String policyName =
+          Arn.fromString(awsCloudContext.getNotebookLifecycleConfigArn()).resource().resource();
       logger.info(
           String.format(
               "Attaching lifecycle policy '%s' to notebook '%s'.", policyName, notebookName));
@@ -358,7 +360,7 @@ public class AwsUtils {
       Credentials credentials,
       Region region,
       String notebookName,
-      Optional<NotebookInstanceStatus> desiredStatus) {
+      NotebookInstanceStatus desiredStatus) {
     SageMakerClient sageMaker = getSagemakerSession(credentials, region);
     SageMakerWaiter sageMakerWaiter =
         SageMakerWaiter.builder()
@@ -372,11 +374,11 @@ public class AwsUtils {
     DescribeNotebookInstanceRequest describeRequest =
         DescribeNotebookInstanceRequest.builder().notebookInstanceName(notebookName).build();
     WaiterResponse<DescribeNotebookInstanceResponse> waiterResponse;
-    if (desiredStatus.isEmpty()) { // DELETED
+    if (desiredStatus == null) { // DELETED
       waiterResponse = sageMakerWaiter.waitUntilNotebookInstanceDeleted(describeRequest);
-    } else if (desiredStatus.get() == NotebookInstanceStatus.IN_SERVICE) {
+    } else if (desiredStatus == NotebookInstanceStatus.IN_SERVICE) {
       waiterResponse = sageMakerWaiter.waitUntilNotebookInstanceInService(describeRequest);
-    } else if (desiredStatus.get() == NotebookInstanceStatus.STOPPED) {
+    } else if (desiredStatus == NotebookInstanceStatus.STOPPED) {
       waiterResponse = sageMakerWaiter.waitUntilNotebookInstanceStopped(describeRequest);
     } else {
       throw new BadRequestException("Can only wait for notebook InService, Stopped or Deleted");

@@ -1,23 +1,39 @@
 package bio.terra.workspace.service.workspace.model;
 
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.core.type.WritableTypeId;
+import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
 import java.io.IOException;
 
-public class CloudContextHolderSerializer extends StdSerializer<CloudContextHolder> {
-  public CloudContextHolderSerializer() {
-    this(null);
-  }
+public class CloudContextHolderSerializer extends JsonSerializer<CloudContextHolder> {
+  public CloudContextHolderSerializer() {}
 
-  public CloudContextHolderSerializer(Class<CloudContextHolder> t) {
-    super(t);
+  @Override
+  public void serializeWithType(
+      CloudContextHolder cch,
+      JsonGenerator jsonGen,
+      SerializerProvider provider,
+      TypeSerializer typeSer)
+      throws IOException {
+    WritableTypeId typeId = typeSer.typeId(cch, JsonToken.START_OBJECT);
+    typeSer.writeTypePrefix(jsonGen, typeId);
+    writeFields(cch, jsonGen);
+    typeId.wrapperWritten = !jsonGen.canWriteTypeId();
+    typeSer.writeTypeSuffix(jsonGen, typeId);
   }
 
   @Override
   public void serialize(CloudContextHolder cch, JsonGenerator jsonGen, SerializerProvider provider)
       throws IOException {
     jsonGen.writeStartObject();
+    writeFields(cch, jsonGen);
+    jsonGen.writeEndObject();
+  }
+
+  private void writeFields(CloudContextHolder cch, JsonGenerator jsonGen) throws IOException {
     if (cch.getGcpCloudContext() != null) {
       jsonGen.writeStringField("gcpCloudContext", cch.getGcpCloudContext().serialize());
     }
@@ -27,6 +43,5 @@ public class CloudContextHolderSerializer extends StdSerializer<CloudContextHold
     if (cch.getAwsCloudContext() != null) {
       jsonGen.writeStringField("awsCloudContext", cch.getAwsCloudContext().serialize());
     }
-    jsonGen.writeEndObject();
   }
 }

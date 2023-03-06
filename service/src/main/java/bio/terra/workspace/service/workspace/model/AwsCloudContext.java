@@ -60,28 +60,28 @@ public class AwsCloudContext {
     return accountNumber;
   }
 
-  public Arn getServiceRoleArn() {
-    return serviceRoleArn;
+  public String getServiceRoleArn() {
+    return serviceRoleArn.toString();
   }
 
   public String getServiceRoleAudience() {
     return serviceRoleAudience;
   }
 
-  public Arn getUserRoleArn() {
-    return userRoleArn;
+  public String getUserRoleArn() {
+    return userRoleArn.toString();
   }
 
-  public Arn getKmsKeyArn() {
-    return kmsKeyArn;
+  public String getKmsKeyArn() {
+    return kmsKeyArn.toString();
   }
 
-  public @Nullable Arn getNotebookLifecycleConfigArn() {
-    return notebookLifecycleConfigArn;
+  public @Nullable String getNotebookLifecycleConfigArn() {
+    return notebookLifecycleConfigArn != null ? notebookLifecycleConfigArn.toString() : null;
   }
 
   public @Nullable String getBucketNameForRegion(Region region) {
-    return regionToBucketNameMap.get(region);
+    return regionToBucketNameMap != null ? regionToBucketNameMap.get(region) : null;
   }
 
   public static AwsCloudContext fromConfiguration(
@@ -124,9 +124,7 @@ public class AwsCloudContext {
     }
 
     try {
-      logger.error("DEX--> 1 --> {}", json);
       AwsCloudContextV1 dbContext = DbSerDes.fromJson(json, AwsCloudContextV1.class);
-      logger.error("DEX--> 2 --> {}", dbContext);
       dbContext.validateVersion();
 
       // Serialized context may not have a notebook lifecycle defined, so check for null before
@@ -135,7 +133,6 @@ public class AwsCloudContext {
           (dbContext.notebookLifecycleConfigArn != null)
               ? Arn.fromString(dbContext.notebookLifecycleConfigArn)
               : null;
-      logger.error("DEX--> 3");
 
       Map<Region, String> bucketMap = new HashMap<>();
 
@@ -147,7 +144,6 @@ public class AwsCloudContext {
           bucketMap.put(Region.of(bucketV1.regionName), bucketV1.bucketName);
         }
       }
-      logger.error("DEX--> 4");
 
       return new AwsCloudContext(
           dbContext.landingZoneName,

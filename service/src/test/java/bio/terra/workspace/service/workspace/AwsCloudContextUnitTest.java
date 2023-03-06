@@ -93,7 +93,7 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
     assertEquals(KMS_KEY_ARN, compareContext.getKmsKeyArn());
     assertEquals(
         expectNotebookLifecycleConfig ? NOTEBOOK_LIFECYCLE_CONFIG_ARN : null,
-        compareContext.getNotebookLifecycleConfigArn());
+        Arn.fromString(compareContext.getNotebookLifecycleConfigArn()));
     assertEquals(BUCKET_NAME_US_EAST, compareContext.getBucketNameForRegion(Region.US_EAST_1));
     assertEquals(BUCKET_NAME_US_WEST, compareContext.getBucketNameForRegion(Region.US_WEST_1));
     assertNull(compareContext.getBucketNameForRegion(Region.EU_CENTRAL_1));

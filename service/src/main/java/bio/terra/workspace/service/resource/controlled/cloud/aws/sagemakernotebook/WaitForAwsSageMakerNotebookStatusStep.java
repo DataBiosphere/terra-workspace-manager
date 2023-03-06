@@ -22,11 +22,10 @@ public class WaitForAwsSageMakerNotebookStatusStep implements Step {
       LoggerFactory.getLogger(WaitForAwsSageMakerNotebookStatusStep.class);
 
   private final ControlledAwsSageMakerNotebookResource resource;
-  private final Optional<NotebookInstanceStatus> notebookStatus;
+  private final NotebookInstanceStatus notebookStatus;
 
   public WaitForAwsSageMakerNotebookStatusStep(
-      ControlledAwsSageMakerNotebookResource resource,
-      Optional<NotebookInstanceStatus> notebookStatus) {
+      ControlledAwsSageMakerNotebookResource resource, NotebookInstanceStatus notebookStatus) {
     this.resource = resource;
     this.notebookStatus = notebookStatus;
   }
