@@ -42,5 +42,7 @@ public class UpdateControlledResourceFlight extends Flight {
             flightBeanBag.getControlledResourceMetadataManager(),
             flightBeanBag.getResourceDao(),
             resource));
+
+    resource.addUpdateSteps(this, flightBeanBag);
   }
 }

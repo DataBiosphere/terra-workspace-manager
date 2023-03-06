@@ -35,18 +35,16 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespac
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpPolicyBuilder;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.UpdateControlledAiNotebookResourceFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.UpdateControlledBigQueryDatasetResourceFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.flight.UpdateGcpControlledResourceRegionFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.UpdateControlledGcsBucketResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.backfill.UpdateControlledBigQueryDatasetsLifetimeFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.CloneControlledAzureStorageContainerResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CloneControlledGcsBucketResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.CloneControlledGcpBigQueryDatasetResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
+import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -170,7 +168,7 @@ public class ControlledResourceService {
         jobService
             .newJob()
             .description(jobDescription)
-            .flightClass(UpdateControlledGcsBucketResourceFlight.class)
+            .flightClass(UpdateControlledResourceFlight.class)
             .resource(resource)
             .operationType(OperationType.UPDATE)
             .userRequest(userRequest)
@@ -336,7 +334,7 @@ public class ControlledResourceService {
         jobService
             .newJob()
             .description(jobDescription)
-            .flightClass(UpdateControlledBigQueryDatasetResourceFlight.class)
+            .flightClass(UpdateControlledResourceFlight.class)
             .resource(resource)
             .operationType(OperationType.UPDATE)
             .resourceType(resource.getResourceType())
@@ -470,7 +468,7 @@ public class ControlledResourceService {
         jobService
             .newJob()
             .description(jobDescription)
-            .flightClass(UpdateControlledAiNotebookResourceFlight.class)
+            .flightClass(UpdateControlledResourceFlight.class)
             .resource(resource)
             .operationType(OperationType.UPDATE)
             .userRequest(userRequest)
