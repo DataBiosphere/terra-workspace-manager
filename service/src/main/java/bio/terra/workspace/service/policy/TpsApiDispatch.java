@@ -84,7 +84,7 @@ public class TpsApiDispatch {
     PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
     // Validate inactive connections after 500ms instead of default 2000ms to avoid
     // NoHttpResponseExceptions from server-side closed connections.
-    connectionManager.setValidateAfterInactivity(500);
+    connectionManager.setValidateAfterInactivity(100);
     clientConfig.property("jersey.config.apache.client.connectionManager", connectionManager);
     return ClientBuilder.newClient(clientConfig);
   }
