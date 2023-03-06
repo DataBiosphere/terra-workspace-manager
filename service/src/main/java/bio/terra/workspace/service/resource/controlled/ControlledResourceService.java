@@ -5,12 +5,14 @@ import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKey
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.ServiceUnavailableException;
+import bio.terra.common.iam.SamUser;
 import bio.terra.stairway.FlightState;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
+import bio.terra.workspace.generated.model.ApiAwsSageMakerNotebookCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureRelayNamespaceCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
@@ -30,6 +32,9 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceSyncMapping.SyncMapping;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.flight.UpdateAwsControlledResourceRegionFlight;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakernotebook.ControlledAwsSageMakerNotebookResource;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.storagebucket.ControlledAwsBucketResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.flight.UpdateAzureControlledResourceRegionFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespace.ControlledAzureRelayNamespaceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
@@ -456,6 +461,39 @@ public class ControlledResourceService {
     return jobId;
   }
 
+  /** Starts a create controlled AI Notebook instance resource job, returning the job id. */
+  public String createAwsSageMakerNotebook(
+      ControlledAwsSageMakerNotebookResource resource,
+      ApiAwsSageMakerNotebookCreationParameters creationParameters,
+      @Nullable ControlledResourceIamRole privateResourceIamRole,
+      @Nullable ApiJobControl jobControl,
+      String resultPath,
+      AuthenticatedUserRequest userRequest,
+      SamUser samUser,
+      @Nullable ControlledAwsBucketResource defaultBucket) {
+
+    // Special check for notebooks: READER is not a useful role
+    if (privateResourceIamRole == ControlledResourceIamRole.READER) {
+      throw new BadRequestException(
+          "A private, controlled Notebook instance must have the writer or editor role or else it is not useful.");
+    }
+
+    JobBuilder jobBuilder =
+        commonCreationJobBuilder(
+            resource, privateResourceIamRole, jobControl, resultPath, userRequest);
+
+    jobBuilder.addParameter(ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS, creationParameters);
+    jobBuilder.addParameter(WorkspaceFlightMapKeys.SAM_USER, samUser);
+
+    if (defaultBucket != null) {
+      jobBuilder.addParameter(ControlledResourceKeys.NOTEBOOK_DEFAULT_BUCKET, defaultBucket);
+    }
+
+    String jobId = jobBuilder.submit();
+    waitForResourceOrJob(resource.getWorkspaceId(), resource.getResourceId(), jobId);
+    return jobId;
+  }
+
   public ControlledAiNotebookInstanceResource updateAiNotebookInstance(
       ControlledAiNotebookInstanceResource resource,
       @Nullable ApiGcpAiNotebookUpdateParameters updateParameters,
@@ -650,6 +688,23 @@ public class ControlledResourceService {
     }
 
     return gcpPolicyBuilder.build();
+  }
+
+  // TODO (PF-2368): clean this up once back-fill is done in all Terra environment.
+  @Traced
+  @Nullable
+  public String updateAwsControlledResourcesRegionAsync(
+      AuthenticatedUserRequest userRequest, boolean wetRun) {
+    return jobService
+        .newJob()
+        .description(
+            "A flight to update controlled resource's missing region in all the existing"
+                + "terra managed aws projects")
+        .flightClass(UpdateAwsControlledResourceRegionFlight.class)
+        .userRequest(userRequest)
+        .addParameter(IS_WET_RUN, wetRun)
+        .operationType(OperationType.UPDATE)
+        .submit();
   }
 
   // TODO (PF-2368): clean this up once back-fill is done in all Terra environment.

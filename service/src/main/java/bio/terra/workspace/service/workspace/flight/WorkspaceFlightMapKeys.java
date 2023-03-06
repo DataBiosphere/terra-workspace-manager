@@ -20,6 +20,7 @@ public final class WorkspaceFlightMapKeys {
   public static final String UPDATED_WORKSPACES = "updatedWorkspaces";
   public static final String SPEND_PROFILE = "spendProfile";
   public static final String PET_SA_CREDENTIALS = "petSaCredentials";
+  public static final String SAM_USER = "samUser";
 
   private WorkspaceFlightMapKeys() {}
 
@@ -34,6 +35,9 @@ public final class WorkspaceFlightMapKeys {
     public static final String AZURE_CLOUD_CONTEXT = "azureCloudContext";
     public static final String WORKSPACE_ID_TO_AZURE_CLOUD_CONTEXT_MAP =
         "workspaceIdToAzureCloudContextMap";
+    public static final String AWS_CLOUD_CONTEXT = "awsCloudContext";
+    public static final String WORKSPACE_ID_TO_AWS_CLOUD_CONTEXT_MAP =
+        "workspaceIdToAwsCloudContextMap";
     public static final String UPDATE_PARAMETERS = "updateParameters";
     public static final String PREVIOUS_UPDATE_PARAMETERS = "previousUpdateParameters";
     public static final String CREATE_RESOURCE_REGION = "createResourceRegion";
@@ -59,6 +63,7 @@ public final class WorkspaceFlightMapKeys {
     public static final String CREATE_NOTEBOOK_LOCATION = "createNotebookLocation";
     public static final String CREATE_NOTEBOOK_SUBNETWORK_NAME = "createNotebookSubnetworkName";
     public static final String NOTEBOOK_PET_SERVICE_ACCOUNT = "notebookPetServiceAccount";
+    public static final String NOTEBOOK_DEFAULT_BUCKET = "notebookDefaultBucket";
 
     // Cloning Keys
     public static final String CLONE_ALL_RESOURCES_FLIGHT_ID = "cloneAllResourcesFlightId";
@@ -68,6 +73,7 @@ public final class WorkspaceFlightMapKeys {
     public static final String CREATE_GCP_CLOUD_CONTEXT_FLIGHT_ID = "createGcpCloudContextFlightId";
     public static final String CREATE_AZURE_CLOUD_CONTEXT_FLIGHT_ID =
         "createAzureCloudContextFlightId";
+    public static final String CREATE_AWS_CLOUD_CONTEXT_FLIGHT_ID = "createAwsCloudContextFlightId";
     public static final String DESTINATION_BUCKET_NAME = "destinationBucketName";
     public static final String DESTINATION_CLONE_INPUTS = "destinationCloneInputs";
     public static final String DESTINATION_DATASET_NAME = "destinationDatasetName";
