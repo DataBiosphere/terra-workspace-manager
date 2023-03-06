@@ -298,6 +298,10 @@ public class ControlledResourceFixtures {
     return new ApiGcpGcsBucketCreationParameters().name(uniqueBucketName());
   }
 
+  public static ApiFlexibleResourceUpdateParameters defaultFlexResourceUpdateParameters() {
+    return new ApiFlexibleResourceUpdateParameters().data(null);
+  }
+
   public static final String RESOURCE_NAME = "my_first_bucket";
 
   public static final String RESOURCE_DESCRIPTION =

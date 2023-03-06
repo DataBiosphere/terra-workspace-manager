@@ -4,6 +4,7 @@ import bio.terra.workspace.common.exception.UnknownFlightClassNameException;
 import bio.terra.workspace.service.admin.flights.cloudcontexts.gcp.SyncGcpIamRolesFlight;
 import bio.terra.workspace.service.folder.flights.DeleteFolderFlight;
 import bio.terra.workspace.service.grant.flight.RevokeTemporaryGrantFlight;
+import bio.terra.workspace.service.resource.controlled.cloud.any.flight.update.UpdateControlledFlexibleResourceFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.flight.UpdateAzureControlledResourceRegionFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.UpdateControlledAiNotebookResourceFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.UpdateControlledBigQueryDatasetResourceFlight;
@@ -51,6 +52,8 @@ public enum ActivityFlight {
   CONTROLLED_BQ_DATASET_UPDATE_FLIGHT(
       UpdateControlledBigQueryDatasetResourceFlight.class.getName(),
       ActivityLogChangedTarget.RESOURCE),
+  CONTROLLED_FLEXIBLE_RESOURCE_UPDATE_FLIGHT(
+      UpdateControlledFlexibleResourceFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
   CONTROLLED_BQ_DATASET_CLONE_FLIGHT(
       CloneControlledGcpBigQueryDatasetResourceFlight.class.getName(),
       ActivityLogChangedTarget.RESOURCE),

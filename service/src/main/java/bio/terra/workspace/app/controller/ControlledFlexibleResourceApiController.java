@@ -4,6 +4,7 @@ import bio.terra.workspace.generated.controller.ControlledFlexibleResourceApi;
 import bio.terra.workspace.generated.model.ApiCreateControlledFlexibleResourceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedControlledFlexibleResource;
 import bio.terra.workspace.generated.model.ApiFlexibleResource;
+import bio.terra.workspace.generated.model.ApiUpdateControlledFlexibleResourceRequestBody;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
@@ -92,6 +93,45 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
             .flexibleResource(createdFlexibleResource.toApiResource());
 
     return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiFlexibleResource> updateFlexibleResource(
+      UUID workspaceUuid,
+      UUID resourceId,
+      @Valid ApiUpdateControlledFlexibleResourceRequestBody body) {
+    logger.info(
+        "Updating flexible resource; resourceId {} workspaceId {}", resourceId, workspaceUuid);
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final ControlledFlexibleResource flexibleResource =
+        controlledResourceMetadataManager
+            .validateControlledResourceAndAction(
+                userRequest,
+                workspaceUuid,
+                resourceId,
+                SamConstants.SamControlledResourceActions.EDIT_ACTION)
+            .castByEnum(WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE);
+
+    byte[] encodedJSON =
+        body.getUpdateParameters() != null ? body.getUpdateParameters().getData() : null;
+    // Decode the base64, so we can store the string directly in the database.
+    String decodedJSON =
+        encodedJSON != null ? new String(encodedJSON, StandardCharsets.UTF_8) : null;
+
+    // OR
+//    getControlledResourceService().updateFlexResource()
+
+    getControlledResourceService()
+        .updateFlexResource(
+            flexibleResource, decodedJSON, body.getName(), body.getDescription(), userRequest);
+
+    // Retrieve and cast response to ApiFlexibleResource
+    final ControlledFlexibleResource updatedResource =
+        getControlledResourceService()
+            .getControlledResource(workspaceUuid, resourceId)
+            .castByEnum(WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE);
+    return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
   @Traced

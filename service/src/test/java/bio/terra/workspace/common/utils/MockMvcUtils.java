@@ -67,6 +67,7 @@ import bio.terra.workspace.generated.model.ApiDataRepoSnapshotAttributes;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiFlexibleResource;
+import bio.terra.workspace.generated.model.ApiFlexibleResourceUpdateParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableAttributes;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableResource;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetAttributes;
@@ -102,6 +103,7 @@ import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
 import bio.terra.workspace.generated.model.ApiUpdateBigQueryDataTableReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateBigQueryDatasetReferenceRequestBody;
+import bio.terra.workspace.generated.model.ApiUpdateControlledFlexibleResourceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateControlledGcpBigQueryDatasetRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateDataRepoSnapshotReferenceRequestBody;
@@ -1416,6 +1418,44 @@ public class MockMvcUtils {
         userRequest, workspaceId, resourceId, CONTROLLED_FLEXIBLE_RESOURCE_V1_PATH_FORMAT);
   }
 
+  public ApiFlexibleResource updateFlexibleResource(
+      UUID workspaceId,
+      UUID resourceId,
+      @Nullable String newResourceName,
+      @Nullable String newDescription,
+      @Nullable byte[] newData)
+      throws Exception {
+    String request =
+        objectMapper.writeValueAsString(
+            getUpdateFlexibleResourceRequestBody(newResourceName, newDescription, newData));
+    String serializedResponse = getSerializedResponseForPatch(
+        USER_REQUEST,CONTROLLED_FLEXIBLE_RESOURCE_V1_PATH_FORMAT,workspaceId,resourceId, request);
+
+    return objectMapper.readValue(serializedResponse, ApiFlexibleResource.class);
+  }
+
+  public void updateFlexibleResourceExpect(
+      UUID workspaceId,
+      UUID resourceId,
+      @Nullable String newResourceName,
+      @Nullable String newDescription,
+      @Nullable byte[] newData,
+      int code) throws Exception {
+      String request =
+      objectMapper.writeValueAsString(
+      getUpdateFlexibleResourceRequestBody(newResourceName, newDescription, newData));
+
+      patchExpect(USER_REQUEST,request,CONTROLLED_FLEXIBLE_RESOURCE_V1_PATH_FORMAT,code);
+  }
+
+  private ApiUpdateControlledFlexibleResourceRequestBody getUpdateFlexibleResourceRequestBody(
+      @Nullable String newResourceName, @Nullable String newDescription, @Nullable byte[] newData) {
+    return new ApiUpdateControlledFlexibleResourceRequestBody()
+        .description(newDescription)
+        .name(newResourceName)
+        .updateParameters(new ApiFlexibleResourceUpdateParameters().data(newData));
+  }
+
   public ApiDataRepoSnapshotResource createReferencedDataRepoSnapshot(
       AuthenticatedUserRequest userRequest,
       UUID workspaceId,
@@ -2382,6 +2422,24 @@ public class MockMvcUtils {
         .getContentAsString();
   }
 
+  private String getSerializedResponseForPatch(
+      AuthenticatedUserRequest userRequest, String path, UUID workspaceId, UUID resourceId, String request)
+      throws Exception {
+    return mockMvc
+        .perform(
+            addAuth(
+                patch(path.formatted(workspaceId,resourceId))
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .characterEncoding("UTF-8")
+                    .content(request),
+                userRequest))
+        .andExpect(status().is2xxSuccessful())
+        .andReturn()
+        .getResponse()
+        .getContentAsString();
+  }
+
   /** Posts http request and expect error thrown. */
   public void postExpect(
       AuthenticatedUserRequest userRequest, String request, String api, int httpStatus)
@@ -2390,6 +2448,22 @@ public class MockMvcUtils {
         .perform(
             addAuth(
                 post(api)
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .characterEncoding("UTF-8")
+                    .content(request),
+                userRequest))
+        .andExpect(status().is(httpStatus));
+  }
+
+  /** Patch http request and expect error thrown. */
+  public ResultActions patchExpect(
+      AuthenticatedUserRequest userRequest, String request, String api, int httpStatus)
+      throws Exception {
+    return mockMvc
+        .perform(
+            addAuth(
+                patch(api)
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .accept(MediaType.APPLICATION_JSON)
                     .characterEncoding("UTF-8")
