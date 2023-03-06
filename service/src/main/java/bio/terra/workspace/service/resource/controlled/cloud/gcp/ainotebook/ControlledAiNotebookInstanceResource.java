@@ -345,7 +345,8 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
     ControlledAiNotebookInstanceResource aiNotebookResource =
         getResourceFromFlightInputParameters(
             flight, WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
-    // Retrieve existing attributes in case of undo later
+
+    // Retrieve existing attributes in case of undo later.
     RetryRule gcpRetry = RetryRules.cloud();
     flight.addStep(
         new RetrieveAiNotebookResourceAttributesStep(
@@ -353,7 +354,8 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
             flightBeanBag.getCrlService(),
             flightBeanBag.getGcpCloudContextService()),
         gcpRetry);
-    // Update AI notebook
+
+    // Update the AI notebook's attributes.
     flight.addStep(
         new UpdateAiNotebookAttributesStep(
             aiNotebookResource,

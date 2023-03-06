@@ -14,7 +14,6 @@ import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
-import bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresource.ControlledFlexibleResource;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceFlight;
@@ -32,7 +31,6 @@ import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -40,7 +38,6 @@ import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -306,7 +303,8 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
     ControlledBigQueryDatasetResource resource =
         getResourceFromFlightInputParameters(
             flight, WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
-    // retrieve existing attributes in case of undo later
+
+    // Retrieve existing attributes in case of undo later.
     flight.addStep(
         new RetrieveBigQueryDatasetCloudAttributesStep(
             resource.castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET),
@@ -314,7 +312,7 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
             flightBeanBag.getGcpCloudContextService()),
         gcpRetryRule);
 
-    // Update the dataset's cloud attributes
+    // Update the dataset's cloud attributes.
     flight.addStep(
         new UpdateBigQueryDatasetStep(
             resource.castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET),

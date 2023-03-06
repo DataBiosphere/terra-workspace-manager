@@ -271,10 +271,11 @@ public class ControlledGcsBucketResource extends ControlledResource {
 
   @Override
   public void addUpdateSteps(UpdateControlledResourceFlight flight, FlightBeanBag flightBeanBag) {
-    // retrieve existing attributes in case of undo later
     ControlledGcsBucketResource resource =
         getResourceFromFlightInputParameters(flight, WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
     RetryRule gcpRetry = RetryRules.cloud();
+
+    // Retrieve existing attributes in case of undo later.
     flight.addStep(
         new RetrieveGcsBucketCloudAttributesStep(
             resource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET),

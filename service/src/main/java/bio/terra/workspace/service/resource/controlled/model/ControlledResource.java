@@ -11,7 +11,6 @@ import bio.terra.workspace.generated.model.ApiControlledResourceMetadata;
 import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
 import bio.terra.workspace.generated.model.ApiResourceMetadata;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceFlight;
@@ -23,7 +22,6 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
-
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -123,18 +121,22 @@ public abstract class ControlledResource extends WsmResource {
       DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag);
 
   /**
-   * The UpdateControlledResourceFlight calls this method to populate the resource-specific step(s) to create the specific cloud resource.
+   * The UpdateControlledResourceFlight calls this method to populate the resource-specific step(s)
+   * to create the specific cloud resource.
+   *
    * @param flight The update flight
    * @param flightBeanBag Bean bag for finding Spring singletons.
    */
   public abstract void addUpdateSteps(
       UpdateControlledResourceFlight flight, FlightBeanBag flightBeanBag);
 
-  public <T extends ControlledResource> T getResourceFromFlightInputParameters(Flight flight, WsmResourceType resourceType) {
+  public <T extends ControlledResource> T getResourceFromFlightInputParameters(
+      Flight flight, WsmResourceType resourceType) {
     return Preconditions.checkNotNull(
-        flight.getInputParameters()
-            .get(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE, ControlledResource.class))
-            .castByEnum(resourceType);
+            flight
+                .getInputParameters()
+                .get(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE, ControlledResource.class))
+        .castByEnum(resourceType);
   }
 
   /**
