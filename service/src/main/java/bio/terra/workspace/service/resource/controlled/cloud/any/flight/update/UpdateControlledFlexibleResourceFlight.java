@@ -13,7 +13,6 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Resou
 import com.google.common.base.Preconditions;
 
 // TODO (PF-2553): Refactor flight into generic update controlled resource flight.
-// This flight is purposefully verbose to match future refactoring.
 
 public class UpdateControlledFlexibleResourceFlight extends Flight {
 
@@ -38,8 +37,8 @@ public class UpdateControlledFlexibleResourceFlight extends Flight {
             flightBeanBag.getResourceDao(),
             resource));
 
+    // Update the flex resource's attributes
     RetryRule dbRetry = RetryRules.shortDatabase();
-    // Update the flex resource's  attributes
     addStep(
         new UpdateControlledFlexibleResourceAttributesStep(
             flightBeanBag.getResourceDao(),
