@@ -6,8 +6,17 @@ import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresource.ControlledFlexibleResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.RetrieveBigQueryDatasetCloudAttributesStep;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.UpdateBigQueryDatasetStep;
+import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
+import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceMetadataStep;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import com.google.common.base.Preconditions;
+
+// TODO (PF-2553): Refactor flight into generic update controlled resource flight.
+// This flight is purposefully verbose to match future refactoring.
 
 public class UpdateControlledFlexibleResourceFlight extends Flight {
 
@@ -15,20 +24,29 @@ public class UpdateControlledFlexibleResourceFlight extends Flight {
     super(inputParameters, beanBag);
 
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
-    final ControlledFlexibleResource resource =
-        Preconditions.checkNotNull(
-            inputParameters.get(ResourceKeys.RESOURCE, ControlledFlexibleResource.class));
+    final ControlledResource resource =
+        Preconditions.checkNotNull(inputParameters.get(ResourceKeys.RESOURCE, ControlledResource.class));
 
-    // Retrieve the metadata and attributes in case of failure.
+    // TODO (PF-2553): Refactor these two steps into the generic update controlled resource flight.
+    // get copy of existing metadata
     addStep(
-        new RetrieveControlledFlexibleResourceMetadataAndAttributesStep(
+        new RetrieveControlledResourceMetadataStep(
             flightBeanBag.getResourceDao(), resource.getWorkspaceId(), resource.getResourceId()));
 
-    RetryRule dbRetry = RetryRules.shortDatabase();
-    // Update the metadata and attributes.
+    // update the metadata (name & description of resource)
     addStep(
-        new UpdateControlledFlexibleResourceMetadataAndAttributesStep(
-            flightBeanBag.getResourceDao(), resource),
+        new UpdateControlledResourceMetadataStep(
+            flightBeanBag.getControlledResourceMetadataManager(),
+            flightBeanBag.getResourceDao(),
+            resource));
+
+    RetryRule dbRetry = RetryRules.shortDatabase();
+    // Update the flex resource's  attributes
+    addStep(
+        new UpdateControlledFlexibleResourceAttributesStep(
+            flightBeanBag.getResourceDao(),
+            resource.castByEnum(WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE),
+            ),
         dbRetry);
   }
 }
