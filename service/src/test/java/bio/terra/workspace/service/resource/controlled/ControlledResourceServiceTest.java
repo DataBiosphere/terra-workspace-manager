@@ -60,8 +60,7 @@ import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresource.ControlledFlexibleResource;
-import bio.terra.workspace.service.resource.controlled.cloud.any.flight.update.RetrieveControlledFlexibleResourceMetadataAndAttributesStep;
-import bio.terra.workspace.service.resource.controlled.cloud.any.flight.update.UpdateControlledFlexibleResourceMetadataAndAttributesStep;
+import bio.terra.workspace.service.resource.controlled.cloud.any.flight.update.UpdateControlledFlexibleResourceAttributesStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.CreateAiNotebookInstanceStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.DeleteAiNotebookInstanceStep;
@@ -1665,10 +1664,12 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(
-        RetrieveControlledFlexibleResourceMetadataAndAttributesStep.class.getName(),
+        RetrieveControlledResourceMetadataStep.class.getName(),
         StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
-        UpdateControlledFlexibleResourceMetadataAndAttributesStep.class.getName(),
+        UpdateControlledResourceMetadataStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        UpdateControlledFlexibleResourceAttributesStep.class.getName(),
         StepStatus.STEP_RESULT_FAILURE_RETRY);
 
     jobService.setFlightDebugInfoForTest(
