@@ -14,6 +14,7 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureRelayNamespaceCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
+import bio.terra.workspace.generated.model.ApiFlexibleResourceUpdateParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookUpdateParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
@@ -355,7 +356,8 @@ public class ControlledResourceService {
   /** Starts an update controlled flexible resource, blocking until its job is finished. */
   public void updateFlexResource(
       ControlledFlexibleResource resource,
-      @Nullable String decodedData,
+      //      @Nullable String decodedData,
+      @Nullable ApiFlexibleResourceUpdateParameters updateParameters,
       @Nullable String resourceName,
       @Nullable String resourceDescription,
       AuthenticatedUserRequest userRequest) {
@@ -372,6 +374,10 @@ public class ControlledResourceService {
     }
     // Description may also be null, but this validator accepts null descriptions.
     ResourceValidationUtils.validateResourceDescriptionName(resourceDescription);
+
+    byte[] encodedJSON = updateParameters != null ? updateParameters.getData() : null;
+    // Decode the base64, so we can store the string directly in the database.
+    String decodedData = ControlledFlexibleResource.getDecodedJSONFromByteArray(encodedJSON);
 
     // The validator accepts null data.
     ResourceValidationUtils.validateFlexResourceDataSize(decodedData);

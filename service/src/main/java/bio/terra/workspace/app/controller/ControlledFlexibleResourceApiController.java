@@ -16,13 +16,9 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResourceF
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import io.opencensus.contrib.spring.aop.Traced;
-import java.nio.charset.StandardCharsets;
 import java.util.UUID;
-import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
-
-import kotlin.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,7 +70,7 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
             WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE);
 
     byte[] encodedJSON = body.getFlexibleResource().getData();
-    String decodedJSON = getDecodedJSONFromByteArray(encodedJSON);
+    String decodedJSON = ControlledFlexibleResource.getDecodedJSONFromByteArray(encodedJSON);
 
     ControlledFlexibleResource resource =
         ControlledFlexibleResource.builder()
@@ -115,14 +111,13 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
                 SamConstants.SamControlledResourceActions.EDIT_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE);
 
-    byte[] encodedJSON =
-        body.getUpdateParameters() != null ? body.getUpdateParameters().getData() : null;
-    // Decode the base64, so we can store the string directly in the database.
-    String decodedJSON = getDecodedJSONFromByteArray(encodedJSON);
-
     getControlledResourceService()
         .updateFlexResource(
-            flexibleResource, decodedJSON, body.getName(), body.getDescription(), userRequest);
+            flexibleResource,
+            body.getUpdateParameters(),
+            body.getName(),
+            body.getDescription(),
+            userRequest);
 
     // Retrieve and cast response to ApiFlexibleResource
     final ControlledFlexibleResource updatedResource =
@@ -130,14 +125,6 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
             .getControlledResource(workspaceUuid, resourceId)
             .castByEnum(WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE);
     return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
-  }
-
-  private String getDecodedJSONFromByteArray(@Nullable byte[] encodedJSON) {
-    // Decode the base64, so we can store the string directly in the database.
-    if (encodedJSON == null) {
-      return null;
-    }
-    return new String(encodedJSON, StandardCharsets.UTF_8);
   }
 
   @Traced

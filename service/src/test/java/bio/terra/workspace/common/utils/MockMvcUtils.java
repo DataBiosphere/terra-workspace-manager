@@ -1428,8 +1428,13 @@ public class MockMvcUtils {
     String request =
         objectMapper.writeValueAsString(
             getUpdateFlexibleResourceRequestBody(newResourceName, newDescription, newData));
-    String serializedResponse = getSerializedResponseForPatch(
-        USER_REQUEST,CONTROLLED_FLEXIBLE_RESOURCE_V1_PATH_FORMAT,workspaceId,resourceId, request);
+    String serializedResponse =
+        getSerializedResponseForPatch(
+            USER_REQUEST,
+            CONTROLLED_FLEXIBLE_RESOURCE_V1_PATH_FORMAT,
+            workspaceId,
+            resourceId,
+            request);
 
     return objectMapper.readValue(serializedResponse, ApiFlexibleResource.class);
   }
@@ -1440,12 +1445,13 @@ public class MockMvcUtils {
       @Nullable String newResourceName,
       @Nullable String newDescription,
       @Nullable byte[] newData,
-      int code) throws Exception {
-      String request =
-      objectMapper.writeValueAsString(
-      getUpdateFlexibleResourceRequestBody(newResourceName, newDescription, newData));
+      int code)
+      throws Exception {
+    String request =
+        objectMapper.writeValueAsString(
+            getUpdateFlexibleResourceRequestBody(newResourceName, newDescription, newData));
 
-      patchExpect(USER_REQUEST,request,CONTROLLED_FLEXIBLE_RESOURCE_V1_PATH_FORMAT,code);
+    patchExpect(USER_REQUEST, request, CONTROLLED_FLEXIBLE_RESOURCE_V1_PATH_FORMAT, code);
   }
 
   private ApiUpdateControlledFlexibleResourceRequestBody getUpdateFlexibleResourceRequestBody(
@@ -2423,12 +2429,16 @@ public class MockMvcUtils {
   }
 
   private String getSerializedResponseForPatch(
-      AuthenticatedUserRequest userRequest, String path, UUID workspaceId, UUID resourceId, String request)
+      AuthenticatedUserRequest userRequest,
+      String path,
+      UUID workspaceId,
+      UUID resourceId,
+      String request)
       throws Exception {
     return mockMvc
         .perform(
             addAuth(
-                patch(path.formatted(workspaceId,resourceId))
+                patch(path.formatted(workspaceId, resourceId))
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .accept(MediaType.APPLICATION_JSON)
                     .characterEncoding("UTF-8")
