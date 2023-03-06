@@ -5,6 +5,7 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
@@ -26,6 +27,7 @@ public class CreateWorkspaceAuthzStep implements Step {
   private final TpsApiDispatch tpsApiDispatch;
   private final AuthenticatedUserRequest userRequest;
   private final Workspace workspace;
+  private final FeatureConfiguration features;
 
   private static final Logger logger = LoggerFactory.getLogger(CreateWorkspaceAuthzStep.class);
 
@@ -33,11 +35,13 @@ public class CreateWorkspaceAuthzStep implements Step {
       Workspace workspace,
       SamService samService,
       TpsApiDispatch tpsApiDispatch,
+      FeatureConfiguration features,
       AuthenticatedUserRequest userRequest) {
     this.samService = samService;
     this.userRequest = userRequest;
     this.workspace = workspace;
     this.tpsApiDispatch = tpsApiDispatch;
+    this.features = features;
   }
 
   @Override
@@ -48,9 +52,14 @@ public class CreateWorkspaceAuthzStep implements Step {
     // possible this step already created the resource. If WSM can either read the existing Sam
     // resource or create a new one, this is considered successful.
     if (!canReadExistingWorkspace(workspace.getWorkspaceId())) {
-      TpsPaoGetResult pao = tpsApiDispatch.getPao(workspace.workspaceId());
-      List<String> authDomains =
-          TpsUtilities.getGroupConstraintsFromInputs(pao.getEffectiveAttributes());
+      List<String> authDomains = null;
+      if (features.isTpsEnabled()) {
+        // Don't depend on the PAO being configured.
+        TpsPaoGetResult pao = tpsApiDispatch.getPao(workspace.workspaceId());
+        if (pao != null) {
+          authDomains = TpsUtilities.getGroupConstraintsFromInputs(pao.getEffectiveAttributes());
+        }
+      }
       samService.createWorkspaceWithDefaults(userRequest, workspace.getWorkspaceId(), authDomains);
     }
     return StepResult.getStepResultSuccess();
