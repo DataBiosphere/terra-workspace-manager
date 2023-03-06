@@ -41,6 +41,7 @@ public class ControlledFlexibleResourceApiControllerTest extends BaseUnitTest {
   @Autowired MockMvcUtils mockMvcUtils;
   @Autowired ObjectMapper objectMapper;
   private static final String defaultDecodedData = "{\"name\":\"original JSON\"}";
+  private static final String defaultNewDecodedData = "{\"description\":\"this is new JSON\"}";
   private static final String defaultName = "fake-flexible-resource";
   private static final String defaultTypeNamespace = "terra";
   private static final String defaultType = "fake-flexible-type";
@@ -141,8 +142,7 @@ public class ControlledFlexibleResourceApiControllerTest extends BaseUnitTest {
     var newName = "new-flex-resource-name";
     var newDescription = "This is an updated description";
 
-    String decodedNewData = "{\"description\":\"this is new JSON\"}";
-    byte[] encodedNewData = decodedNewData.getBytes(StandardCharsets.UTF_8);
+    byte[] encodedNewData = defaultNewDecodedData.getBytes(StandardCharsets.UTF_8);
 
     ApiFlexibleResource updatedFlex =
         mockMvcUtils.updateFlexibleResource(
@@ -150,13 +150,13 @@ public class ControlledFlexibleResourceApiControllerTest extends BaseUnitTest {
 
     assertEquals(newName, updatedFlex.getMetadata().getName());
     assertEquals(newDescription, updatedFlex.getMetadata().getDescription());
-    assertEquals(decodedNewData, updatedFlex.getAttributes().getData());
+    assertEquals(defaultNewDecodedData, updatedFlex.getAttributes().getData());
     assertEquals(defaultType, updatedFlex.getAttributes().getType());
     assertEquals(defaultTypeNamespace, updatedFlex.getAttributes().getTypeNamespace());
   }
 
   @Test
-  public void update_usingNullData() throws Exception {
+  public void update_onlyNameAndDescription() throws Exception {
     UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
 
     UUID resourceId = createDefaultFlexResource(workspaceId).getResourceId();
@@ -175,6 +175,28 @@ public class ControlledFlexibleResourceApiControllerTest extends BaseUnitTest {
   }
 
   @Test
+  public void update_onlyData() throws Exception {
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+
+    var originalFlex = createDefaultFlexResource(workspaceId).getFlexibleResource();
+
+    UUID resourceId = originalFlex.getMetadata().getResourceId();
+
+    String originalDescription = originalFlex.getMetadata().getDescription();
+
+    byte[] encodedNewData = defaultNewDecodedData.getBytes(StandardCharsets.UTF_8);
+
+    ApiFlexibleResource updatedFlex =
+        mockMvcUtils.updateFlexibleResource(workspaceId, resourceId, null, null, encodedNewData);
+
+    assertEquals(defaultName, updatedFlex.getMetadata().getName());
+    assertEquals(originalDescription, updatedFlex.getMetadata().getDescription());
+    assertEquals(defaultNewDecodedData, updatedFlex.getAttributes().getData());
+    assertEquals(defaultType, updatedFlex.getAttributes().getType());
+    assertEquals(defaultTypeNamespace, updatedFlex.getAttributes().getTypeNamespace());
+  }
+
+  @Test
   public void update_rejectsLargeData() throws Exception {
     UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
 
@@ -185,22 +207,6 @@ public class ControlledFlexibleResourceApiControllerTest extends BaseUnitTest {
 
     mockMvcUtils.updateFlexibleResourceExpect(
         workspaceId, resourceId, null, null, veryLargeData, HttpStatus.SC_BAD_REQUEST);
-  }
-
-  @Test
-  public void updateUndo() throws Exception {
-    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
-
-    UUID resourceId = createDefaultFlexResource(workspaceId).getResourceId();
-
-    var newName = "new-flex-resource-name";
-    var newDescription = "This is an updated description";
-    String decodedNewData = "{\"description\":\"this is new JSON\"}";
-    byte[] encodedNewData = decodedNewData.getBytes(StandardCharsets.UTF_8);
-
-    ApiFlexibleResource updatedFlex =
-        mockMvcUtils.updateFlexibleResource(
-            workspaceId, resourceId, newName, newDescription, encodedNewData);
   }
 
   private ApiCreatedControlledFlexibleResource createDefaultFlexResource(UUID workspaceId)
