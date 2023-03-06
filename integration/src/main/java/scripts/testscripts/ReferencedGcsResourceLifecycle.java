@@ -337,13 +337,13 @@ public class ReferencedGcsResourceLifecycle extends WorkspaceAllocateTestScriptB
             newBlobDescription,
             /*bucketName=*/ null,
             /*objectName=*/ null,
-            CloningInstructionsEnum.NOTHING);
+            CloningInstructionsEnum.COPY_NOTHING);
     assertEquals(newBlobName, blobResource.getMetadata().getName());
     assertEquals(newBlobDescription, blobResource.getMetadata().getDescription());
     assertEquals(gcsFileAttributes.getBucketName(), blobResource.getAttributes().getBucketName());
     assertEquals(gcsFileAttributes.getFileName(), blobResource.getAttributes().getFileName());
     assertEquals(
-        CloningInstructionsEnum.NOTHING, blobResource.getMetadata().getCloningInstructions());
+        CloningInstructionsEnum.COPY_NOTHING, blobResource.getMetadata().getCloningInstructions());
     // Update GCS bucket object's referencing target from foo/monkey_sees_monkey_dos.txt to foo/.
 
     assertTrue(partialAccessResourceApi.checkReferenceAccess(getWorkspaceId(), fileResourceId));
