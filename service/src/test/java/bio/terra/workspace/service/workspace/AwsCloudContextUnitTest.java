@@ -71,11 +71,11 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
     return new AwsCloudContext(
         LZ_NAME,
         ACCOUNT_ID,
-        ROLE_ARN_SERVICE,
+        ROLE_ARN_SERVICE.toString(),
         GOOGLE_JWT_AUDIENCE,
-        ROLE_ARN_USER,
-        KMS_KEY_ARN,
-        (includeNotebookLifecycleConfig ? NOTEBOOK_LIFECYCLE_CONFIG_ARN : null),
+        ROLE_ARN_USER.toString(),
+        KMS_KEY_ARN.toString(),
+        (includeNotebookLifecycleConfig ? NOTEBOOK_LIFECYCLE_CONFIG_ARN.toString() : null),
         Map.of(Region.US_EAST_1, BUCKET_NAME_US_EAST, Region.US_WEST_1, BUCKET_NAME_US_WEST));
   }
 
@@ -85,15 +85,17 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
 
   private void validateContext(
       AwsCloudContext compareContext, boolean expectNotebookLifecycleConfig) {
+    assertNotNull(compareContext);
     assertEquals(LZ_NAME, compareContext.getLandingZoneName());
     assertEquals(ACCOUNT_ID, compareContext.getAccountNumber());
-    assertEquals(ROLE_ARN_SERVICE, compareContext.getServiceRoleArn());
+    assertEquals(ROLE_ARN_SERVICE, Arn.fromString(compareContext.getServiceRoleArn()));
     assertEquals(GOOGLE_JWT_AUDIENCE, compareContext.getServiceRoleAudience());
-    assertEquals(ROLE_ARN_USER, compareContext.getUserRoleArn());
-    assertEquals(KMS_KEY_ARN, compareContext.getKmsKeyArn());
-    assertEquals(
-        expectNotebookLifecycleConfig ? NOTEBOOK_LIFECYCLE_CONFIG_ARN : null,
-        Arn.fromString(compareContext.getNotebookLifecycleConfigArn()));
+    assertEquals(ROLE_ARN_USER, Arn.fromString(compareContext.getUserRoleArn()));
+    assertEquals(KMS_KEY_ARN, Arn.fromString(compareContext.getKmsKeyArn()));
+    if (expectNotebookLifecycleConfig) {
+      assertNotNull(compareContext.getNotebookLifecycleConfigArn());
+      assertEquals(NOTEBOOK_LIFECYCLE_CONFIG_ARN, Arn.fromString(compareContext.getNotebookLifecycleConfigArn()));
+    }
     assertEquals(BUCKET_NAME_US_EAST, compareContext.getBucketNameForRegion(Region.US_EAST_1));
     assertEquals(BUCKET_NAME_US_WEST, compareContext.getBucketNameForRegion(Region.US_WEST_1));
     assertNull(compareContext.getBucketNameForRegion(Region.EU_CENTRAL_1));
