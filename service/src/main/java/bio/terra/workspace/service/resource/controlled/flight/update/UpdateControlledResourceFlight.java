@@ -9,6 +9,10 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.google.common.base.Preconditions;
 
+/**
+ * Flight for updating a controlled resource. Some steps are resource-type-agnostic, and others
+ * depend on the resource type. The latter must be passed in via the input parameters map with keys
+ */
 public class UpdateControlledResourceFlight extends Flight {
 
   // addStep is protected in Flight, so make an override that is public
@@ -16,9 +20,8 @@ public class UpdateControlledResourceFlight extends Flight {
   public void addStep(Step step, RetryRule retryRule) {
     super.addStep(step, retryRule);
   }
+
   /**
-   * All subclasses must provide a constructor with this signature.
-   *
    * @param inputParameters FlightMap of the inputs for the flight
    * @param beanBag Anonymous context meaningful to the application using Stairway
    */
