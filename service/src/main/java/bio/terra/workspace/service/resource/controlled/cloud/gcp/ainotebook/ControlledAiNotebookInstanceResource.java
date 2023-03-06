@@ -19,6 +19,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
+import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceRegionStep;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
@@ -337,6 +338,28 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
   public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
     flight.addStep(
         new DeleteAiNotebookInstanceStep(this, flightBeanBag.getCrlService()), RetryRules.cloud());
+  }
+
+  @Override
+  public void addUpdateSteps(UpdateControlledResourceFlight flight, FlightBeanBag flightBeanBag) {
+    ControlledAiNotebookInstanceResource aiNotebookResource =
+        getResourceFromFlightInputParameters(
+            flight, WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
+    // Retrieve existing attributes in case of undo later
+    RetryRule gcpRetry = RetryRules.cloud();
+    flight.addStep(
+        new RetrieveAiNotebookResourceAttributesStep(
+            aiNotebookResource,
+            flightBeanBag.getCrlService(),
+            flightBeanBag.getGcpCloudContextService()),
+        gcpRetry);
+    // Update AI notebook
+    flight.addStep(
+        new UpdateAiNotebookAttributesStep(
+            aiNotebookResource,
+            flightBeanBag.getCrlService(),
+            flightBeanBag.getGcpCloudContextService()),
+        gcpRetry);
   }
 
   public InstanceName toInstanceName(String workspaceProjectId) {

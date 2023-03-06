@@ -17,6 +17,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
+import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
@@ -266,6 +267,29 @@ public class ControlledGcsBucketResource extends ControlledResource {
   public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
     flight.addStep(
         new DeleteGcsBucketStep(this, flightBeanBag.getCrlService()), RetryRules.cloud());
+  }
+
+  @Override
+  public void addUpdateSteps(UpdateControlledResourceFlight flight, FlightBeanBag flightBeanBag) {
+    // retrieve existing attributes in case of undo later
+    ControlledGcsBucketResource resource =
+        getResourceFromFlightInputParameters(flight, WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
+    RetryRule gcpRetry = RetryRules.cloud();
+    flight.addStep(
+        new RetrieveGcsBucketCloudAttributesStep(
+            resource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET),
+            flightBeanBag.getCrlService(),
+            flightBeanBag.getGcpCloudContextService(),
+            RetrieveGcsBucketCloudAttributesStep.RetrievalMode.UPDATE_PARAMETERS),
+        gcpRetry);
+
+    // Update the bucket's cloud attributes
+    flight.addStep(
+        new UpdateGcsBucketStep(
+            resource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET),
+            flightBeanBag.getCrlService(),
+            flightBeanBag.getGcpCloudContextService()),
+        gcpRetry);
   }
 
   public ApiGcpGcsBucketAttributes toApiAttributes() {
