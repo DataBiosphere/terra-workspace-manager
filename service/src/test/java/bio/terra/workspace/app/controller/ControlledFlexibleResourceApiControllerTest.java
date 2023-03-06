@@ -104,7 +104,7 @@ public class ControlledFlexibleResourceApiControllerTest extends BaseUnitTest {
     assertFlexibleResource(
         created,
         ApiStewardshipType.CONTROLLED,
-        ApiCloningInstructionsEnum.DEFINITION,
+        ApiCloningInstructionsEnum.COPY_DEFINITION,
         workspaceId,
         defaultName,
         RESOURCE_DESCRIPTION,

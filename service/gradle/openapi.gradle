@@ -12,7 +12,7 @@ swaggerSources {
               "--api-package", "${artifactGroup}.generated.controller",
               "--model-package", "${artifactGroup}.generated.model",
               "--model-name-prefix", "Api",
-              "--additional-properties", "errorOnUnknownEnum=true",
+              "--additional-properties", "errorOnUnknownEnum=true", "removeEnumValuePrefix=false",
               "-D", "interfaceOnly=true," +
                       "useTags=true," +
                       "dateLibrary=java8"
