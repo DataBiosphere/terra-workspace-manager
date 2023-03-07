@@ -82,6 +82,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.Retri
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.UpdateGcsBucketStep;
 import bio.terra.workspace.service.resource.controlled.exception.ReservedMetadataKeyException;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteMetadataStep;
+import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceMetadataStep;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
@@ -627,6 +628,11 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(
+        RetrieveControlledResourceMetadataStep.class.getName(),
+        StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        UpdateControlledResourceMetadataStep.class.getName(),
+        retrySteps.put(
         RetrieveAiNotebookResourceAttributesStep.class.getName(),
         StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
@@ -1582,6 +1588,11 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(
+        RetrieveControlledResourceMetadataStep.class.getName(),
+        StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        UpdateControlledResourceMetadataStep.class.getName(),
+        retrySteps.put(
         RetrieveGcsBucketCloudAttributesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(UpdateGcsBucketStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     jobService.setFlightDebugInfoForTest(
