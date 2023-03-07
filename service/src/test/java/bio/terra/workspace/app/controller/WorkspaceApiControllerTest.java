@@ -9,6 +9,7 @@ import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_PATH;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
+import static java.util.Collections.EMPTY_LIST;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -34,6 +35,7 @@ import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
+import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.ApiCloneResourceResult;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceResult;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
@@ -57,9 +59,10 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.policy.TpsApiConversionUtils;
 import bio.terra.workspace.service.workspace.model.OperationType;
+import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants.Properties;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableList;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -102,6 +105,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
   @Autowired ObjectMapper objectMapper;
   @Autowired WorkspaceActivityLogService workspaceActivityLogService;
   @Autowired JobService jobService;
+  @Autowired WorkspaceDao workspaceDao;
 
   private static TpsPaoGetResult emptyWorkspacePao() {
     return new TpsPaoGetResult()
@@ -421,11 +425,19 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
     ApiCreatedWorkspace workspace = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
     ApiCreatedWorkspace noPolicyWorkspace =
         mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
+    List<String> missingAuthDomains =
+        List.of(TPS_GROUP_POLICY.getAdditionalData().get(0).getValue());
     when(mockSamService().listWorkspaceIdsAndHighestRoles(any(), any()))
         .thenReturn(
-            ImmutableMap.of(
-                workspace.getId(), WsmIamRole.OWNER, noPolicyWorkspace.getId(), WsmIamRole.OWNER));
-
+            ImmutableList.of(
+                new WorkspaceAndHighestRole(
+                    workspaceDao.getWorkspace(workspace.getId()),
+                    WsmIamRole.OWNER,
+                    missingAuthDomains),
+                new WorkspaceAndHighestRole(
+                    workspaceDao.getWorkspace(noPolicyWorkspace.getId()),
+                    WsmIamRole.OWNER,
+                    Collections.emptyList())));
     TpsPaoGetResult getPolicyResult =
         new TpsPaoGetResult()
             .attributes(new TpsPolicyInputs().addInputsItem(TPS_GROUP_POLICY))
@@ -434,7 +446,6 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
             .objectType(TpsObjectType.WORKSPACE)
             .objectId(workspace.getId())
             .sourcesObjectIds(Collections.emptyList());
-
     // Return a policy object for the first workspace
     when(mockTpsApiDispatch().getPao(eq(workspace.getId()))).thenReturn(getPolicyResult);
     // Treat the second workspace like it was created before policy existed. It should receive an
@@ -443,8 +454,22 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
         new TpsPaoGetResult().effectiveAttributes(new TpsPolicyInputs().inputs(new ArrayList<>()));
     when(mockTpsApiDispatch().getPao(eq(noPolicyWorkspace.getId()))).thenReturn(emptyPao);
 
+    List<ApiWorkspaceDescription> workspaces = listWorkspaces();
+
+    var workspaceDescriptions =
+        workspaces.stream()
+            .filter(
+                w ->
+                    w.getId().equals(workspace.getId())
+                        || w.getId().equals(noPolicyWorkspace.getId()))
+            .toList();
+    assertEquals(2, workspaceDescriptions.size());
     ApiWorkspaceDescription gotWorkspace =
-        mockMvcUtils.getWorkspace(USER_REQUEST, workspace.getId());
+        workspaceDescriptions.stream()
+            .filter(w -> w.getId().equals(workspace.getId()))
+            .findAny()
+            .get();
+    assertEquals(missingAuthDomains, gotWorkspace.getMissingAuthDomains());
     assertEquals(1, gotWorkspace.getPolicies().size());
     // The workspace polices from the REST API are in "ApiTps*" form.
     // So we have to convert from TPS form to API form to compare.
@@ -452,8 +477,12 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
         TpsApiConversionUtils.apiFromTpsPolicyInput(TPS_GROUP_POLICY),
         gotWorkspace.getPolicies().get(0));
     ApiWorkspaceDescription gotNoPolicyWorkspace =
-        getWorkspaceDescriptionFromList(noPolicyWorkspace.getId());
-    assertTrue(gotNoPolicyWorkspace.getPolicies().isEmpty());
+        workspaceDescriptions.stream()
+            .filter(w -> w.getId().equals(noPolicyWorkspace.getId()))
+            .findAny()
+            .get();
+    assertEquals(0, gotNoPolicyWorkspace.getPolicies().size());
+    assertTrue(gotNoPolicyWorkspace.getMissingAuthDomains().isEmpty());
   }
 
   @Test
@@ -461,7 +490,10 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
     when(mockFeatureConfiguration().isTpsEnabled()).thenReturn(false);
     ApiCreatedWorkspace workspace = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
     when(mockSamService().listWorkspaceIdsAndHighestRoles(any(), any()))
-        .thenReturn(ImmutableMap.of(workspace.getId(), WsmIamRole.OWNER));
+        .thenReturn(
+            ImmutableList.of(
+                new WorkspaceAndHighestRole(
+                    workspaceDao.getWorkspace(workspace.getId()), WsmIamRole.OWNER, EMPTY_LIST)));
 
     ApiWorkspaceDescription gotWorkspace =
         mockMvcUtils.getWorkspace(USER_REQUEST, workspace.getId());
@@ -534,7 +566,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
    * Similar to getWorkspaceDescription, but call the ListWorkspaces endpoint instead of the
    * GetWorkspace endpoint.
    */
-  private ApiWorkspaceDescription getWorkspaceDescriptionFromList(UUID id) throws Exception {
+  private List<ApiWorkspaceDescription> listWorkspaces() throws Exception {
     String serializedResponse =
         mockMvc
             .perform(addJsonContentType(addAuth(get(WORKSPACES_V1_PATH), USER_REQUEST)))
@@ -544,9 +576,6 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
             .getContentAsString();
     ApiWorkspaceDescriptionList workspaceDescriptionList =
         objectMapper.readValue(serializedResponse, ApiWorkspaceDescriptionList.class);
-    return workspaceDescriptionList.getWorkspaces().stream()
-        .filter(w -> w.getId().equals(id))
-        .findFirst()
-        .orElseThrow(() -> new RuntimeException("workspace " + id + "not found in list!"));
+    return workspaceDescriptionList.getWorkspaces();
   }
 }

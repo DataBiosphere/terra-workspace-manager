@@ -77,6 +77,7 @@ import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -235,14 +236,21 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
                             buildWorkspaceDescription(
                                 workspaceAndHighestRole.workspace(),
                                 workspaceAndHighestRole.highestRole(),
-                                userRequest))
+                                workspaceAndHighestRole.missingAuthDomains()))
                     .toList());
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
   @Traced
   private ApiWorkspaceDescription buildWorkspaceDescription(
-      Workspace workspace, WsmIamRole highestRole, AuthenticatedUserRequest userRequest) {
+      Workspace workspace, WsmIamRole highestRole) {
+    return buildWorkspaceDescription(
+        workspace, highestRole, /*missingAuthDomains=*/ Collections.emptyList());
+  }
+
+  @Traced
+  private ApiWorkspaceDescription buildWorkspaceDescription(
+      Workspace workspace, WsmIamRole highestRole, List<String> missingAuthDomains) {
     UUID workspaceUuid = workspace.getWorkspaceId();
     ApiGcpContext gcpContext =
         gcpCloudContextService
@@ -295,7 +303,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             lastChangeDetailsOptional
                 .map(ActivityLogChangeDetails::actorEmail)
                 .orElse(workspace.createdByEmail()))
-        .policies(workspacePolicies);
+        .policies(workspacePolicies)
+        .missingAuthDomains(missingAuthDomains);
   }
 
   @Traced
@@ -312,7 +321,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     Workspace workspace = workspaceService.validateWorkspaceAndAction(userRequest, uuid, samAction);
 
     WsmIamRole highestRole = workspaceService.getHighestRole(uuid, userRequest);
-    ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace, highestRole, userRequest);
+    ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace, highestRole);
     logger.info("Got workspace {} for {}", desc, userRequest.getEmail());
 
     return new ResponseEntity<>(desc, HttpStatus.OK);
@@ -336,7 +345,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             userFacingId, userRequest, WsmIamRole.fromApiModel(minimumHighestRole));
     WsmIamRole highestRole =
         workspaceService.getHighestRole(workspace.getWorkspaceId(), userRequest);
-    ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace, highestRole, userRequest);
+    ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace, highestRole);
     logger.info("Got workspace {} for {}", desc, userRequest.getEmail());
 
     return new ResponseEntity<>(desc, HttpStatus.OK);
@@ -364,7 +373,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             body.getDescription(),
             userRequest);
     WsmIamRole highestRole = workspaceService.getHighestRole(workspaceUuid, userRequest);
-    ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace, highestRole, userRequest);
+    ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace, highestRole);
     logger.info("Updated workspace {} for {}", desc, userRequest.getEmail());
 
     return new ResponseEntity<>(desc, HttpStatus.OK);

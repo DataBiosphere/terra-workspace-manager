@@ -217,24 +217,11 @@ public class WorkspaceService {
   public List<WorkspaceAndHighestRole> listWorkspacesAndHighestRoles(
       AuthenticatedUserRequest userRequest, int offset, int limit, WsmIamRole minimumHighestRole) {
     // In general, highest SAM role should be fetched in controller. Fetch here to save a SAM call.
-    Map<UUID, WsmIamRole> samWorkspaceIdsAndHighestRoles =
+    List<WorkspaceAndHighestRole> samWorkspacesResponse =
         SamRethrow.onInterrupted(
             () -> samService.listWorkspaceIdsAndHighestRoles(userRequest, minimumHighestRole),
             "listWorkspaceIds");
-    return workspaceDao
-        .getWorkspacesMatchingList(samWorkspaceIdsAndHighestRoles.keySet(), offset, limit)
-        .stream()
-        .map(
-            workspace -> {
-              WsmIamRole highestRole =
-                  samWorkspaceIdsAndHighestRoles.get(workspace.getWorkspaceId());
-              Workspace workspaceToReturn =
-                  highestRole == WsmIamRole.DISCOVERER
-                      ? Workspace.stripWorkspaceForRequesterWithOnlyDiscovererRole(workspace)
-                      : workspace;
-              return new WorkspaceAndHighestRole(workspaceToReturn, highestRole);
-            })
-        .toList();
+    return samWorkspacesResponse;
   }
 
   /** Retrieves an existing workspace by ID */

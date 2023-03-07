@@ -44,16 +44,15 @@ import bio.terra.workspace.service.resource.referenced.cloud.any.datareposnapsho
 import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
+import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
-import org.hamcrest.collection.IsMapContaining;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -330,11 +329,17 @@ class SamServiceTest extends BaseConnectedTest {
 
   @Test
   void listWorkspaceIdsAndHighestRoles() throws Exception {
-    Map<UUID, WsmIamRole> actual =
+    List<WorkspaceAndHighestRole> actual =
         samService.listWorkspaceIdsAndHighestRoles(
             userAccessUtils.defaultUserAuthRequest(), WsmIamRole.READER);
 
-    assertThat(actual, IsMapContaining.hasEntry(workspaceUuid, WsmIamRole.OWNER));
+    WorkspaceAndHighestRole match =
+        actual.stream()
+            .filter(workspace -> workspace.workspace().workspaceId().equals(workspaceUuid))
+            .findFirst()
+            .orElseThrow();
+    assertEquals(WsmIamRole.OWNER, match.highestRole());
+    assertTrue(match.missingAuthDomains().isEmpty());
   }
 
   @Test

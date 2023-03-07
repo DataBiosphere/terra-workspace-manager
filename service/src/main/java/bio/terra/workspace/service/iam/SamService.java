@@ -9,12 +9,15 @@ import bio.terra.common.tracing.OkHttpClientTracingInterceptor;
 import bio.terra.workspace.app.configuration.external.SamConfiguration;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.GcpUtils;
+import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.RoleBinding;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceCategory;
+import bio.terra.workspace.service.workspace.model.Workspace;
+import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -22,6 +25,7 @@ import com.google.common.collect.ImmutableSet;
 import io.opencensus.contrib.spring.aop.Traced;
 import io.opencensus.trace.Tracing;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,18 +69,20 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class SamService {
+
+  private static final Set<String> SAM_OAUTH_SCOPES = ImmutableSet.of("openid", "email", "profile");
+  private static final List<String> PET_SA_OAUTH_SCOPES =
+      ImmutableList.of(
+          "openid", "email", "profile", "https://www.googleapis.com/auth/cloud-platform");
+  private static final Logger logger = LoggerFactory.getLogger(SamService.class);
   private final SamConfiguration samConfig;
   private final OkHttpClient commonHttpClient;
 
-  private final Set<String> SAM_OAUTH_SCOPES = ImmutableSet.of("openid", "email", "profile");
-  private final List<String> PET_SA_OAUTH_SCOPES =
-      ImmutableList.of(
-          "openid", "email", "profile", "https://www.googleapis.com/auth/cloud-platform");
-  private final Logger logger = LoggerFactory.getLogger(SamService.class);
+  private final WorkspaceDao workspaceDao;
   private boolean wsmServiceAccountInitialized;
 
   @Autowired
-  public SamService(SamConfiguration samConfig) {
+  public SamService(SamConfiguration samConfig, WorkspaceDao workspaceDao) {
     this.samConfig = samConfig;
     this.wsmServiceAccountInitialized = false;
     this.commonHttpClient =
@@ -85,6 +91,7 @@ public class SamService {
             .newBuilder()
             .addInterceptor(new OkHttpClientTracingInterceptor(Tracing.getTracer()))
             .build();
+    this.workspaceDao = workspaceDao;
   }
 
   private ApiClient getApiClient(String accessToken) {
@@ -316,30 +323,41 @@ public class SamService {
    * @return map from workspace ID to highest SAM role
    */
   @Traced
-  public Map<UUID, WsmIamRole> listWorkspaceIdsAndHighestRoles(
+  public List<WorkspaceAndHighestRole> listWorkspaceIdsAndHighestRoles(
       AuthenticatedUserRequest userRequest, WsmIamRole minimumHighestRoleFromRequest)
       throws InterruptedException {
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
-    Map<UUID, WsmIamRole> workspacesAndRoles = new HashMap<>();
+    List<WorkspaceAndHighestRole> result = new ArrayList<>();
     try {
       List<UserResourcesResponse> userResourcesResponses =
           SamRetry.retry(
               () -> resourceApi.listResourcesAndPoliciesV2(SamConstants.SamResource.WORKSPACE));
       for (var userResourcesResponse : userResourcesResponses) {
         try {
+
           UUID workspaceId = UUID.fromString(userResourcesResponse.getResourceId());
+          Optional<Workspace> workspaceOptional = workspaceDao.getWorkspaceIfExists(workspaceId);
+          if (workspaceOptional.isEmpty()) {
+            continue;
+          }
           List<WsmIamRole> roles =
               userResourcesResponse.getDirect().getRoles().stream()
                   .map(WsmIamRole::fromSam)
                   .filter(Objects::nonNull)
                   .collect(Collectors.toList());
+
           // Skip workspaces with no roles. (That means there's a role this WSM doesn't know
           // about.)
           WsmIamRole.getHighestRole(workspaceId, roles)
               .ifPresent(
                   highestRole -> {
                     if (minimumHighestRoleFromRequest.roleAtLeastAsHighAs(highestRole)) {
-                      workspacesAndRoles.put(workspaceId, highestRole);
+                      result.add(
+                          new WorkspaceAndHighestRole(
+                              workspaceOptional.get(),
+                              highestRole,
+                              ImmutableList.copyOf(
+                                  userResourcesResponse.getMissingAuthDomainGroups())));
                     }
                   });
         } catch (IllegalArgumentException e) {
@@ -352,7 +370,7 @@ public class SamService {
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Error listing Workspace Ids in Sam", apiException);
     }
-    return workspacesAndRoles;
+    return result;
   }
 
   @Traced
