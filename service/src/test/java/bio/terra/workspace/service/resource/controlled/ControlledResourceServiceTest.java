@@ -631,8 +631,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         RetrieveControlledResourceMetadataStep.class.getName(),
         StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
-        UpdateControlledResourceMetadataStep.class.getName(),
-        retrySteps.put(
+        UpdateControlledResourceMetadataStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
         RetrieveAiNotebookResourceAttributesStep.class.getName(),
         StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
@@ -1591,8 +1591,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         RetrieveControlledResourceMetadataStep.class.getName(),
         StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
-        UpdateControlledResourceMetadataStep.class.getName(),
-        retrySteps.put(
+        UpdateControlledResourceMetadataStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
         RetrieveGcsBucketCloudAttributesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(UpdateGcsBucketStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     jobService.setFlightDebugInfoForTest(
