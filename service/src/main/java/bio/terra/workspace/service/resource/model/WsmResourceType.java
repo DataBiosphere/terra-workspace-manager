@@ -201,12 +201,12 @@ public enum WsmResourceType {
       ControlledAwsSageMakerNotebookResource.class,
       ControlledAwsSageMakerNotebookHandler::getHandler),
   CONTROLLED_FLEXIBLE_RESOURCE(
-          CloudPlatform.ANY,
-          StewardshipType.CONTROLLED,
-          "CONTROLLED_FLEXIBLE_RESOURCE",
-          ApiResourceType.FLEXIBLE_RESOURCE,
-          ControlledFlexibleResource.class,
-          FlexibleResourceHandler::getHandler);
+      CloudPlatform.ANY,
+      StewardshipType.CONTROLLED,
+      "CONTROLLED_FLEXIBLE_RESOURCE",
+      ApiResourceType.FLEXIBLE_RESOURCE,
+      ControlledFlexibleResource.class,
+      FlexibleResourceHandler::getHandler);
 
   private final CloudPlatform cloudPlatform;
   private final StewardshipType stewardshipType;

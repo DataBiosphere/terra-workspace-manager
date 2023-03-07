@@ -8,8 +8,8 @@ import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.app.configuration.external.GitRepoReferencedResourceConfiguration;
 import bio.terra.workspace.common.utils.GcpUtils;
-import bio.terra.workspace.generated.model.ApiAwsSageMakerNotebookCreationParameters;
 import bio.terra.workspace.db.exception.FieldSizeExceededException;
+import bio.terra.workspace.generated.model.ApiAwsSageMakerNotebookCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
@@ -31,7 +31,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -175,7 +174,7 @@ public class ResourceValidationUtils {
    * <p>This method DOES NOT guarantee that the bucket name is valid.
    *
    * @param name gcs-bucket name
-   * @param validationFailureError
+   * @param validationFailureError validationFailureError
    * @throws InvalidNameException throws exception when the bucket name fails to conform to the
    *     Google naming convention for bucket name.
    */
@@ -215,10 +214,7 @@ public class ResourceValidationUtils {
         // TODO: enable policy check in Azure when we support Azure regions in the TPS ontology.
         // validateAzureRegion(location);
       }
-      case AWS -> {
-        // TODO: enable policy check in AWS when we support AWS regions in the TPS ontology.
-        validateAwsRegion(location);
-      }
+      case AWS -> validateAwsRegion(location);
       case ANY -> {
         // Flexible resources are not stored on the cloud. Thus, they have no region policies.
       }
@@ -269,18 +265,16 @@ public class ResourceValidationUtils {
         return true;
       }
     }
+
     // AWS Code commit host server is region specific. Here are the list of all the valid git
     // connection endpoint: https://docs.aws.amazon.com/codecommit/latest/userguide/regions.html.
-    if (hostName.startsWith("git-codecommit.") && hostName.endsWith(".amazonaws.com")) {
-      return true;
-    }
-    return false;
+    return hostName.startsWith("git-codecommit.") && hostName.endsWith(".amazonaws.com");
   }
   /**
    * Validate GCS object name.
    *
    * @param objectName full path to the object in the bucket
-   * @throws InvalidNameException
+   * @throws InvalidNameException InvalidNameException
    */
   public static void validateGcsObjectName(String objectName) {
     int nameLength = objectName.getBytes(StandardCharsets.UTF_8).length;
@@ -380,7 +374,7 @@ public class ResourceValidationUtils {
   public static void validateBqDataTableName(String name) {
     if (StringUtils.isEmpty(name)
         || !BQ_DATATABLE_NAME_VALIDATION_PATTERN.matcher(name).matches()) {
-      logger.warn("Invalid data table name %s", name);
+      logger.warn("Invalid data table name {}", name);
       throw new InvalidNameException(
           "Invalid BQ table name specified. Name must be 1-1024 characters, contains Unicode characters in category L"
               + " (letter), M (mark), N (number), Pc (connector, including underscore), Pd (dash), Zs (space)");
@@ -477,10 +471,10 @@ public class ResourceValidationUtils {
   }
 
   public static void validateAzureVmSize(String vmSize) {
-    if (!VirtualMachineSizeTypes.values().stream()
-        .map(x -> x.toString())
-        .collect(Collectors.toList())
-        .contains(vmSize)) {
+    if (VirtualMachineSizeTypes.values().stream()
+        .filter(t -> t.toString().equalsIgnoreCase(vmSize))
+        .findFirst()
+        .isEmpty()) {
       logger.warn("Invalid Azure vmSize {}", vmSize);
       throw new InvalidReferenceException(
           "Invalid Azure vm size specified. See the class `com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes`");
@@ -488,7 +482,7 @@ public class ResourceValidationUtils {
   }
 
   public static void validateGcpRegion(
-          TpsApiDispatch tpsApiDispatch, UUID workspaceId, String region) {
+      TpsApiDispatch tpsApiDispatch, UUID workspaceId, String region) {
     region = GcpUtils.parseRegion(region);
     tpsApiDispatch.createPaoIfNotExist(workspaceId);
 
@@ -498,7 +492,7 @@ public class ResourceValidationUtils {
 
     if (validLocations.stream().noneMatch(region::equalsIgnoreCase)) {
       throw new InvalidControlledResourceException(
-              String.format("Specified location %s is not allowed by effective policy.", region));
+          String.format("Specified location %s is not allowed by effective policy.", region));
     }
   }
 
@@ -523,9 +517,9 @@ public class ResourceValidationUtils {
       return;
     }
     if (software.amazon.awssdk.regions.Region.regions().stream()
-            .filter(r -> r.toString().equalsIgnoreCase(region))
-            .findFirst()
-            .isEmpty()) {
+        .filter(r -> r.toString().equalsIgnoreCase(region))
+        .findFirst()
+        .isEmpty()) {
       logger.warn("Invalid AWS region {}", region);
       throw new InvalidControlledResourceException("Invalid AWS Region specified.");
     }
