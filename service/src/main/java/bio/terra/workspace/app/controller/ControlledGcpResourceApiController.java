@@ -1,6 +1,5 @@
 package bio.terra.workspace.app.controller;
 
-import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
@@ -228,10 +227,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
       UUID workspaceUuid, UUID resourceId, @Valid ApiCloneControlledGcpGcsBucketRequest body) {
     logger.info("Cloning GCS bucket resourceId {} workspaceUuid {}", resourceId, workspaceUuid);
 
-    CloningInstructions cloningInstructions =
-        CloningInstructions.fromApiModel(body.getCloningInstructions());
-
-    if ((cloningInstructions != null && cloningInstructions.isReferenceClone())
+    if (CloningInstructions.isReferenceClone(body.getCloningInstructions())
         && (!StringUtils.isEmpty(body.getBucketName())
             || !StringUtils.isEmpty(body.getLocation()))) {
       throw new ValidationException(
@@ -407,13 +403,10 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
       UUID resourceId,
       @Valid ApiCloneControlledGcpBigQueryDatasetRequest body) {
 
-    CloningInstructions cloningInstructions =
-        CloningInstructions.fromApiModel(body.getCloningInstructions());
-
-    if ((cloningInstructions != null && cloningInstructions.isReferenceClone())
+    if (CloningInstructions.isReferenceClone(body.getCloningInstructions())
         && (!StringUtils.isEmpty(body.getDestinationDatasetName())
             || !StringUtils.isEmpty(body.getLocation()))) {
-      throw new BadRequestException(
+      throw new ValidationException(
           "Cannot set destination dataset name or location when cloning controlled dataset with COPY_REFERENCE or LINK_REFERENCE");
     }
 

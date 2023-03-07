@@ -22,7 +22,6 @@ import bio.terra.workspace.generated.model.ApiAzureVmResource;
 import bio.terra.workspace.generated.model.ApiCloneControlledAzureStorageContainerRequest;
 import bio.terra.workspace.generated.model.ApiCloneControlledAzureStorageContainerResult;
 import bio.terra.workspace.generated.model.ApiClonedControlledAzureStorageContainer;
-import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureBatchPoolRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureDiskRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureIpRequestBody;
@@ -65,6 +64,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContai
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.ClonedAzureStorageContainer;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import com.google.common.annotations.VisibleForTesting;
@@ -742,8 +742,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     controlledResourceMetadataManager.validateCloneAction(
         userRequest, workspaceId, body.getDestinationWorkspaceId(), resourceId);
-    if (body.getCloningInstructions() == ApiCloningInstructionsEnum.COPY_REFERENCE
-        || body.getCloningInstructions() == ApiCloningInstructionsEnum.LINK_REFERENCE) {
+    if (CloningInstructions.isReferenceClone(body.getCloningInstructions())) {
       throw new ValidationException(
           "Copying azure storage containers by reference is not supported");
     }
