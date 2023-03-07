@@ -14,11 +14,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.regions.Region;
-
-import javax.annotation.Nullable;
 
 public class AwsCloudContext {
   private static final Logger logger = LoggerFactory.getLogger(AwsCloudContext.class);
@@ -37,14 +36,14 @@ public class AwsCloudContext {
 
   // Constructor for deserializer
   public AwsCloudContext(
-          String landingZoneName,
-          String accountNumber,
-          String serviceRoleArn,
-          String serviceRoleAudience,
-          String userRoleArn,
-          String kmsKeyArn,
-          @Nullable String notebookLifecycleConfigArn,
-          Map<String, String> regionToBucketNameMap) {
+      String landingZoneName,
+      String accountNumber,
+      String serviceRoleArn,
+      String serviceRoleAudience,
+      String userRoleArn,
+      String kmsKeyArn,
+      @Nullable String notebookLifecycleConfigArn,
+      Map<String, String> regionToBucketNameMap) {
     this.landingZoneName = landingZoneName;
     this.accountNumber = accountNumber;
     this.serviceRoleArn = serviceRoleArn;
