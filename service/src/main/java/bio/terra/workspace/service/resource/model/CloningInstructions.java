@@ -118,4 +118,11 @@ public enum CloningInstructions {
   public boolean isReferenceClone() {
     return (this == COPY_REFERENCE || this == LINK_REFERENCE);
   }
+
+  public static boolean isReferenceClone(ApiCloningInstructionsEnum apiInstruction) {
+    if (apiInstruction == null) {
+      return false;
+    }
+    return (fromApiModel(apiInstruction).isReferenceClone());
+  }
 }
