@@ -1,13 +1,11 @@
 package bio.terra.workspace.service.workspace;
 
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.SOURCE_WORKSPACE_ID;
-
+import bio.terra.policy.model.TpsPaoGetResult;
 import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.db.ApplicationDao;
-import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
@@ -19,8 +17,9 @@ import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
+import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneWorkspaceFlight;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.exceptions.BufferServiceDisabledException;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceException;
@@ -70,7 +69,7 @@ public class WorkspaceService {
   private final BufferServiceConfiguration bufferServiceConfiguration;
   private final StageService stageService;
   private final FeatureConfiguration features;
-  private final ResourceDao resourceDao;
+  private final TpsApiDispatch tpsApiDispatch;
   private final WorkspaceActivityLogService workspaceActivityLogService;
 
   @Autowired
@@ -82,7 +81,7 @@ public class WorkspaceService {
       BufferServiceConfiguration bufferServiceConfiguration,
       StageService stageService,
       FeatureConfiguration features,
-      ResourceDao resourceDao,
+      TpsApiDispatch tpsApiDispatch,
       WorkspaceActivityLogService workspaceActivityLogService) {
     this.jobService = jobService;
     this.applicationDao = applicationDao;
@@ -91,7 +90,7 @@ public class WorkspaceService {
     this.bufferServiceConfiguration = bufferServiceConfiguration;
     this.stageService = stageService;
     this.features = features;
-    this.resourceDao = resourceDao;
+    this.tpsApiDispatch = tpsApiDispatch;
     this.workspaceActivityLogService = workspaceActivityLogService;
   }
 
@@ -101,36 +100,6 @@ public class WorkspaceService {
       Workspace workspace,
       @Nullable TpsPolicyInputs policies,
       @Nullable List<String> applications,
-      AuthenticatedUserRequest userRequest) {
-    return createWorkspaceWorker(
-        workspace,
-        policies,
-        applications,
-        /*sourceWorkspaceUuid*/ null,
-        CloningInstructions.COPY_NOTHING,
-        userRequest);
-  }
-
-  /**
-   * Shared method for creating a workspace. It handles both the standalone create workspace and the
-   * create-for-clone. When we create for clone, we have a source workspace and we merge or link
-   * based on the source workspace.
-   *
-   * @param workspace object describing the workspace to create
-   * @param policies nullable initial policies to set on the workspace
-   * @param applications nullable applications to enable
-   * @param sourceWorkspaceUuid nullable source workspace id if doing create-for-clone
-   * @param cloningInstructions COPY_NOTHING for a new create; COPY_REFERENCE or LINK_REFERENCE for
-   *     a clone
-   * @param userRequest identity of the creator
-   * @return id of the new workspace
-   */
-  private UUID createWorkspaceWorker(
-      Workspace workspace,
-      @Nullable TpsPolicyInputs policies,
-      @Nullable List<String> applications,
-      @Nullable UUID sourceWorkspaceUuid,
-      CloningInstructions cloningInstructions,
       AuthenticatedUserRequest userRequest) {
     String workspaceUuid = workspace.getWorkspaceId().toString();
     String jobDescription =
@@ -157,17 +126,12 @@ public class WorkspaceService {
             .addParameter(
                 WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name())
             .addParameter(WorkspaceFlightMapKeys.POLICIES, policies)
-            .addParameter(WorkspaceFlightMapKeys.APPLICATION_IDS, applications)
-            .addParameter(
-                WorkspaceFlightMapKeys.ResourceKeys.CLONING_INSTRUCTIONS, cloningInstructions)
-            .addParameter(SOURCE_WORKSPACE_ID, sourceWorkspaceUuid);
+            .addParameter(WorkspaceFlightMapKeys.APPLICATION_IDS, applications);
 
-    workspace
-        .getSpendProfileId()
-        .ifPresent(
-            spendProfileId ->
-                createJob.addParameter(
-                    WorkspaceFlightMapKeys.SPEND_PROFILE_ID, spendProfileId.getId()));
+    Optional<SpendProfileId> spendProfile = workspace.getSpendProfileId();
+    if (spendProfile.isPresent()) {
+      createJob.addParameter(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, spendProfile.get().getId());
+    }
     return createJob.submitAndWait(UUID.class);
   }
 
@@ -404,7 +368,7 @@ public class WorkspaceService {
       AuthenticatedUserRequest userRequest,
       @Nullable String location,
       Workspace destinationWorkspace) {
-    UUID workspaceUuid = sourceWorkspace.getWorkspaceId();
+    String workspaceUuid = sourceWorkspace.getWorkspaceId().toString();
     String jobDescription =
         String.format(
             "Clone workspace: name: '%s' id: '%s'  ",
@@ -414,21 +378,18 @@ public class WorkspaceService {
     List<String> applicationIds =
         applicationDao.listWorkspaceApplicationsForClone(sourceWorkspace.getWorkspaceId());
 
-    // Find out if the source workspace needs to be linked or merged
-    CloningInstructions cloningInstructions =
-        (resourceDao.workspaceRequiresLinkReferences(workspaceUuid))
-            ? CloningInstructions.LINK_REFERENCE
-            : CloningInstructions.COPY_REFERENCE;
+    // Since we call createWorkspace synchronously first, we'll retrieve the source policies now so
+    // that they can be set on the new workspace correctly during the create call.
+    TpsPolicyInputs policy = null;
+    if (features.isTpsEnabled()) {
+      TpsPaoGetResult sourcePolicy = tpsApiDispatch.getPao(sourceWorkspace.getWorkspaceId());
+      if (sourcePolicy != null) {
+        policy = sourcePolicy.getAttributes();
+      }
+    }
 
     // Create the destination workspace synchronously first.
-    // TODO: [PF-2551] plumb in policies from the clone endpoint
-    createWorkspaceWorker(
-        destinationWorkspace,
-        /* policies */ null,
-        applicationIds,
-        workspaceUuid,
-        cloningInstructions,
-        userRequest);
+    createWorkspace(destinationWorkspace, policy, applicationIds, userRequest);
 
     // Remaining steps are an async flight.
     return jobService
@@ -441,7 +402,8 @@ public class WorkspaceService {
         // allow UI to watch this job (and sub-flights) from dest workspace page during clone
         .workspaceId(destinationWorkspace.getWorkspaceId().toString())
         .addParameter(
-            SOURCE_WORKSPACE_ID, sourceWorkspace.getWorkspaceId()) // TODO: remove this duplication
+            ControlledResourceKeys.SOURCE_WORKSPACE_ID,
+            sourceWorkspace.getWorkspaceId()) // TODO: remove this duplication
         .addParameter(ControlledResourceKeys.LOCATION, location)
         .submit();
   }

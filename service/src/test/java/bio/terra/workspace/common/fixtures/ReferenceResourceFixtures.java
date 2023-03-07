@@ -62,7 +62,7 @@ public class ReferenceResourceFixtures {
     return new ApiReferenceResourceCommonFields()
         .name(appendRandomNumber("test_resource"))
         .description(RESOURCE_DESCRIPTION)
-        .cloningInstructions(ApiCloningInstructionsEnum.COPY_NOTHING)
+        .cloningInstructions(ApiCloningInstructionsEnum.NOTHING)
         .properties(convertMapToApiProperties(DEFAULT_RESOURCE_PROPERTIES));
   }
 }

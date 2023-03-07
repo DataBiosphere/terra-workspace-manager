@@ -5,7 +5,6 @@ import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.Res
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
-import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.app.configuration.external.GitRepoReferencedResourceConfiguration;
 import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.db.exception.FieldSizeExceededException;
@@ -539,25 +538,25 @@ public class ResourceValidationUtils {
    *
    * @param stewardshipType - controlled or referenced
    * @param cloningInstructions - supplied cloning instructions with the API request
-   * @throws ValidationException if the combination is not valid
+   * @throws BadRequestException if the combination is not valid
    */
   public static void validateCloningInstructions(
       StewardshipType stewardshipType, CloningInstructions cloningInstructions) {
-    switch (stewardshipType) {
-      case CONTROLLED:
-        if (cloningInstructions.isValidForControlledResource()) {
-          return;
-        }
-        break;
-      case REFERENCED:
-        if (cloningInstructions.isValidForReferencedResource()) {
-          return;
-        }
+    final boolean valid =
+        (StewardshipType.CONTROLLED == stewardshipType
+                && (CloningInstructions.COPY_NOTHING == cloningInstructions
+                    || CloningInstructions.COPY_DEFINITION == cloningInstructions
+                    || CloningInstructions.COPY_RESOURCE == cloningInstructions
+                    || CloningInstructions.COPY_REFERENCE == cloningInstructions))
+            || (StewardshipType.REFERENCED == stewardshipType
+                && (CloningInstructions.COPY_NOTHING == cloningInstructions
+                    || CloningInstructions.COPY_REFERENCE == cloningInstructions));
+    if (!valid) {
+      throw new BadRequestException(
+          String.format(
+              "Cloning Instruction %s is not valid with Stewardship Type %s",
+              cloningInstructions.toString(), stewardshipType.toString()));
     }
-    throw new ValidationException(
-        String.format(
-            "Cloning Instruction %s is not valid with Stewardship Type %s",
-            cloningInstructions.toString(), stewardshipType));
   }
 
   /**

@@ -65,7 +65,7 @@ public class LaunchCloneGcsBucketResourceFlightStep implements Step {
     subflightInputParameters.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
     subflightInputParameters.put(ResourceKeys.RESOURCE, resource);
     subflightInputParameters.put(
-        ResourceKeys.CLONING_INSTRUCTIONS, resource.getCloningInstructions());
+        ControlledResourceKeys.CLONING_INSTRUCTIONS, resource.getCloningInstructions());
     subflightInputParameters.put(WorkspaceFlightMapKeys.WORKSPACE_ID, destinationWorkspaceId);
     subflightInputParameters.put(
         JobMapKeys.DESCRIPTION.getKeyName(),

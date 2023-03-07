@@ -230,7 +230,6 @@ public class ReferencedResourceService {
       @Nullable String name,
       @Nullable String description,
       @Nullable String email,
-      CloningInstructions cloningInstructions,
       AuthenticatedUserRequest userRequest) {
 
     ReferencedResource destinationResource =
@@ -266,9 +265,9 @@ public class ReferencedResourceService {
             .addParameter(ResourceKeys.RESOURCE, sourceReferencedResource)
             .addParameter(ResourceKeys.DESTINATION_RESOURCE, destinationResource)
             .addParameter(WorkspaceFlightMapKeys.MERGE_POLICIES, mergePolicies)
-            .addParameter(ResourceKeys.CLONING_INSTRUCTIONS, cloningInstructions)
             .addParameter(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
 
-    return jobBuilder.submitAndWait(ReferencedResource.class);
+    var result = jobBuilder.submitAndWait(ReferencedResource.class);
+    return result;
   }
 }
