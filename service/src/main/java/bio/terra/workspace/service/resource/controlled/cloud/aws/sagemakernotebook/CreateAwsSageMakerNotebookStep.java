@@ -50,7 +50,8 @@ public class CreateAwsSageMakerNotebookStep implements Step {
         samUser,
         Region.of(creationParameters.getLocation()),
         InstanceType.fromValue(creationParameters.getInstanceType()),
-        creationParameters.getInstanceId());
+        creationParameters.getInstanceId(),
+        false);
     return StepResult.getStepResultSuccess();
   }
 
@@ -64,8 +65,8 @@ public class CreateAwsSageMakerNotebookStep implements Step {
     String notebookName = resource.getInstanceId();
 
     try {
-      AwsUtils.stopSageMakerNotebook(awsCredentials, region, notebookName);
-      AwsUtils.deleteSageMakerNotebook(awsCredentials, region, notebookName);
+      AwsUtils.stopSageMakerNotebook(awsCredentials, region, notebookName, true);
+      AwsUtils.deleteSageMakerNotebook(awsCredentials, region, notebookName, true);
 
     } catch (ApiException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);

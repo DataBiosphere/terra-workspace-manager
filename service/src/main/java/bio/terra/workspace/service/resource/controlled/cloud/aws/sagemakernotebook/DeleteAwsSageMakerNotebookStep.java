@@ -33,7 +33,7 @@ public class DeleteAwsSageMakerNotebookStep implements Step {
     Credentials awsCredentials = MultiCloudUtils.assumeAwsServiceRoleFromGcp(awsCloudContext);
 
     AwsUtils.deleteSageMakerNotebook(
-        awsCredentials, Region.of(resource.getRegion()), resource.getInstanceId());
+        awsCredentials, Region.of(resource.getRegion()), resource.getInstanceId(), false);
     return StepResult.getStepResultSuccess();
   }
 

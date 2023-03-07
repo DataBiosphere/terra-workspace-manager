@@ -324,36 +324,145 @@ public class AwsUtils {
       SamUser user,
       Region region,
       InstanceType instanceType,
-      String notebookName) {
-    SageMakerClient sageMaker = getSagemakerSession(credentials, region);
+      String notebookName,
+      boolean waitForStatus) {
+    try {
+      SageMakerClient sageMaker = getSagemakerSession(credentials, region);
 
-    Collection<Tag> tags = new HashSet<>();
-    addUserTags(tags, user);
-    addWorkspaceTags(tags, workspaceUuid);
+      Collection<Tag> tags = new HashSet<>();
+      addUserTags(tags, user);
+      addWorkspaceTags(tags, workspaceUuid);
 
-    logger.info(
-        String.format(
-            "Creating SageMaker notebook instance with name '%s' and type '%s'.",
-            notebookName, instanceType));
-
-    CreateNotebookInstanceRequest.Builder requestBuilder =
-        CreateNotebookInstanceRequest.builder()
-            .notebookInstanceName(notebookName)
-            .instanceType(instanceType)
-            .roleArn(awsCloudContext.getUserRoleArn())
-            .kmsKeyId(Arn.fromString(awsCloudContext.getKmsKeyArn()).resource().resource())
-            .tags(toSagemakerTags(tags));
-
-    if (awsCloudContext.getNotebookLifecycleConfigArn() != null) {
-      String policyName =
-          Arn.fromString(awsCloudContext.getNotebookLifecycleConfigArn()).resource().resource();
       logger.info(
           String.format(
-              "Attaching lifecycle policy '%s' to notebook '%s'.", policyName, notebookName));
-      requestBuilder.lifecycleConfigName(policyName);
-    }
+              "Creating SageMaker notebook instance with name '%s' and type '%s'.",
+              notebookName, instanceType));
 
-    sageMaker.createNotebookInstance(requestBuilder.build());
+      CreateNotebookInstanceRequest.Builder requestBuilder =
+          CreateNotebookInstanceRequest.builder()
+              .notebookInstanceName(notebookName)
+              .instanceType(instanceType)
+              .roleArn(awsCloudContext.getUserRoleArn())
+              .kmsKeyId(Arn.fromString(awsCloudContext.getKmsKeyArn()).resource().resource())
+              .tags(toSagemakerTags(tags));
+
+      if (awsCloudContext.getNotebookLifecycleConfigArn() != null) {
+        String policyName =
+            Arn.fromString(awsCloudContext.getNotebookLifecycleConfigArn()).resource().resource();
+        logger.info(
+            String.format(
+                "Attaching lifecycle policy '%s' to notebook '%s'.", policyName, notebookName));
+        requestBuilder.lifecycleConfigName(policyName);
+      }
+
+      SdkHttpResponse httpResponse =
+          sageMaker.createNotebookInstance(requestBuilder.build()).sdkHttpResponse();
+      if (!httpResponse.isSuccessful()) {
+        throw new ApiException(
+            "Error creating notebook instance, "
+                + httpResponse.statusText().orElse(String.valueOf(httpResponse.statusCode())));
+      }
+
+      if (waitForStatus) {
+        AwsUtils.waitForSageMakerNotebookStatus(
+            credentials, region, notebookName, NotebookInstanceStatus.IN_SERVICE);
+      }
+
+    } catch (SdkException e) {
+      checkException(e);
+      throw new ApiException("Error stopping notebook instance", e);
+    }
+  }
+
+  public static void stopSageMakerNotebook(
+      Credentials credentials, Region region, String notebookName, boolean waitForStatus) {
+    // TODO(TERRA-384) - move to COW in TCL
+    try {
+      SageMakerClient sageMaker = getSagemakerSession(credentials, region);
+      DescribeNotebookInstanceRequest describeRequest =
+          DescribeNotebookInstanceRequest.builder().notebookInstanceName(notebookName).build();
+
+      NotebookInstanceStatus notebookStatus =
+          sageMaker.describeNotebookInstance(describeRequest).notebookInstanceStatus();
+      if (startableStatusSet.contains(notebookStatus)) {
+        logger.info(
+            String.format(
+                "SageMaker notebook instance in status %s, no stop needed.", notebookStatus));
+        return;
+      }
+
+      checkNotebookStatus(notebookStatus, stoppableStatusSet);
+      logger.info(
+          String.format("Stopping SageMaker notebook instance with name '%s'.", notebookName));
+
+      SdkHttpResponse httpResponse =
+          sageMaker
+              .stopNotebookInstance(
+                  StopNotebookInstanceRequest.builder().notebookInstanceName(notebookName).build())
+              .sdkHttpResponse();
+      if (!httpResponse.isSuccessful()) {
+        throw new ApiException(
+            "Error stopping notebook instance, "
+                + httpResponse.statusText().orElse(String.valueOf(httpResponse.statusCode())));
+      }
+
+      if (waitForStatus) {
+        AwsUtils.waitForSageMakerNotebookStatus(
+            credentials, region, notebookName, NotebookInstanceStatus.STOPPED);
+      }
+
+    } catch (SdkException e) {
+      checkException(e);
+      throw new ApiException("Error stopping notebook instance", e);
+    }
+  }
+
+  public static void deleteSageMakerNotebook(
+      Credentials credentials, Region region, String notebookName, boolean waitForStatus) {
+    // TODO(TERRA-384) - move to COW in TCL
+    try {
+      SageMakerClient sageMaker = getSagemakerSession(credentials, region);
+      DescribeNotebookInstanceRequest describeRequest =
+          DescribeNotebookInstanceRequest.builder().notebookInstanceName(notebookName).build();
+
+      DescribeNotebookInstanceResponse describeResponse =
+          sageMaker.describeNotebookInstance(describeRequest);
+      SdkHttpResponse describeHttpResponse = describeResponse.sdkHttpResponse();
+      if (!describeHttpResponse.isSuccessful()) {
+        throw new ApiException(
+            "Error fetching notebook instance, "
+                + describeHttpResponse
+                    .statusText()
+                    .orElse(String.valueOf(describeHttpResponse.statusCode())));
+        // TODO: Check if error is thrown on non-existent notebook
+      }
+
+      // must be stopped or failed. AWS throws error if notebook is not found
+      checkNotebookStatus(describeResponse.notebookInstanceStatus(), deletableStatusSet);
+      logger.info(
+          String.format("Deleting SageMaker notebook instance with name '%s'.", notebookName));
+
+      SdkHttpResponse httpResponse =
+          sageMaker
+              .deleteNotebookInstance(
+                  DeleteNotebookInstanceRequest.builder()
+                      .notebookInstanceName(notebookName)
+                      .build())
+              .sdkHttpResponse();
+      if (!httpResponse.isSuccessful()) {
+        throw new ApiException(
+            "Error deleting notebook instance, "
+                + httpResponse.statusText().orElse(String.valueOf(httpResponse.statusCode())));
+      }
+
+      if (waitForStatus) {
+        AwsUtils.waitForSageMakerNotebookStatus(credentials, region, notebookName, null);
+      }
+
+    } catch (SdkException e) {
+      checkException(e);
+      throw new ApiException("Error deleting notebook instance", e);
+    }
   }
 
   public static void waitForSageMakerNotebookStatus(
@@ -386,101 +495,19 @@ public class AwsUtils {
 
     ResponseOrException<DescribeNotebookInstanceResponse> responseOrException =
         waiterResponse.matched();
-    if (responseOrException.response().isPresent()) {
-      checkNotebookStatus(
-          responseOrException.response().get().notebookInstanceStatus(), startableStatusSet);
-      return; // success
 
-    } else if (responseOrException.exception().isPresent()) {
+    if (responseOrException.exception().isPresent()) {
       Throwable t = responseOrException.exception().get();
       if (t instanceof Exception) {
         checkException((Exception) t);
       }
       logger.error("Error polling notebook instance status: " + t);
+
+    } else if (responseOrException.response().isPresent()) {
+      checkNotebookStatus(
+          responseOrException.response().get().notebookInstanceStatus(), Set.of(desiredStatus));
     }
-
-    throw new ApiException("Error checking notebook instance status");
-  }
-
-  public static void stopSageMakerNotebook(
-      Credentials credentials, Region region, String notebookName) {
-    // TODO(TERRA-384) - move to COW in TCL
-    try {
-      SageMakerClient sageMaker = getSagemakerSession(credentials, region);
-      DescribeNotebookInstanceRequest describeRequest =
-          DescribeNotebookInstanceRequest.builder().notebookInstanceName(notebookName).build();
-
-      NotebookInstanceStatus notebookStatus =
-          sageMaker.describeNotebookInstance(describeRequest).notebookInstanceStatus();
-      if (startableStatusSet.contains(notebookStatus)) {
-        logger.info(
-            String.format(
-                "SageMaker notebook instance in status %s, no stop needed.", notebookStatus));
-        return;
-      }
-
-      checkNotebookStatus(notebookStatus, stoppableStatusSet);
-      logger.info(
-          String.format("Stopping SageMaker notebook instance with name '%s'.", notebookName));
-
-      SdkHttpResponse httpResponse =
-          sageMaker
-              .stopNotebookInstance(
-                  StopNotebookInstanceRequest.builder().notebookInstanceName(notebookName).build())
-              .sdkHttpResponse();
-      if (!httpResponse.isSuccessful()) {
-        throw new ApiException(
-            "Error stopping notebook instance, "
-                + httpResponse.statusText().orElse(String.valueOf(httpResponse.statusCode())));
-      }
-
-    } catch (SdkException e) {
-      checkException(e);
-      throw new ApiException("Error stopping notebook instance", e);
-    }
-  }
-
-  public static void deleteSageMakerNotebook(
-      Credentials credentials, Region region, String notebookName) {
-    // TODO(TERRA-384) - move to COW in TCL
-    try {
-      SageMakerClient sageMaker = getSagemakerSession(credentials, region);
-      DescribeNotebookInstanceRequest describeRequest =
-          DescribeNotebookInstanceRequest.builder().notebookInstanceName(notebookName).build();
-
-      DescribeNotebookInstanceResponse describeResponse =
-          sageMaker.describeNotebookInstance(describeRequest);
-      SdkHttpResponse describeHttpResponse = describeResponse.sdkHttpResponse();
-      if (!describeHttpResponse.isSuccessful()) {
-        throw new ApiException(
-            "Error fetching notebook instance, "
-                + describeHttpResponse
-                    .statusText()
-                    .orElse(String.valueOf(describeHttpResponse.statusCode())));
-      }
-
-      // must be stopped or failed. AWS throws error if notebook is not found
-      checkNotebookStatus(describeResponse.notebookInstanceStatus(), deletableStatusSet);
-      logger.info(
-          String.format("Deleting SageMaker notebook instance with name '%s'.", notebookName));
-
-      SdkHttpResponse httpResponse =
-          sageMaker
-              .deleteNotebookInstance(
-                  DeleteNotebookInstanceRequest.builder()
-                      .notebookInstanceName(notebookName)
-                      .build())
-              .sdkHttpResponse();
-      if (!httpResponse.isSuccessful()) {
-        throw new ApiException(
-            "Error deleting notebook instance, "
-                + httpResponse.statusText().orElse(String.valueOf(httpResponse.statusCode())));
-      }
-
-    } catch (SdkException e) {
-      checkException(e);
-      throw new ApiException("Error deleting notebook instance", e);
-    }
+    // success
   }
 
   public static URL getSageMakerNotebookProxyUrl(
