@@ -248,7 +248,7 @@ public class ControlledResourceService {
             .addParameter(ControlledResourceKeys.LOCATION, destinationLocation)
             .addParameter(WorkspaceFlightMapKeys.MERGE_POLICIES, mergePolicies)
             .addParameter(
-                ResourceKeys.CLONING_INSTRUCTIONS,
+                ControlledResourceKeys.CLONING_INSTRUCTIONS,
                 Optional.ofNullable(cloningInstructionsOverride)
                     .map(CloningInstructions::fromApiModel)
                     .orElse(sourceBucketResource.getCloningInstructions()));
@@ -298,7 +298,7 @@ public class ControlledResourceService {
                 ControlledResourceKeys.DESTINATION_CONTAINER_NAME, destinationContainerName)
             .addParameter(WorkspaceFlightMapKeys.MERGE_POLICIES, mergePolicies)
             .addParameter(
-                ResourceKeys.CLONING_INSTRUCTIONS,
+                ControlledResourceKeys.CLONING_INSTRUCTIONS,
                 Optional.ofNullable(cloningInstructionsOverride)
                     .map(CloningInstructions::fromApiModel)
                     .orElse(sourceContainer.getCloningInstructions()));
@@ -416,7 +416,7 @@ public class ControlledResourceService {
             .addParameter(ControlledResourceKeys.DESTINATION_DATASET_NAME, destinationDatasetName)
             .addParameter(WorkspaceFlightMapKeys.MERGE_POLICIES, mergePolicies)
             .addParameter(
-                ResourceKeys.CLONING_INSTRUCTIONS,
+                ControlledResourceKeys.CLONING_INSTRUCTIONS,
                 // compute effective cloning instructions
                 Optional.ofNullable(cloningInstructionsOverride)
                     .map(CloningInstructions::fromApiModel)

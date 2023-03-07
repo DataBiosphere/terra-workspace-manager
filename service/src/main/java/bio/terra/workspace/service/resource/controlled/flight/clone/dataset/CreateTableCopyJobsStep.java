@@ -11,7 +11,6 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.api.services.bigquery.Bigquery;
@@ -66,9 +65,7 @@ public class CreateTableCopyJobsStep implements Step {
     final CloningInstructions effectiveCloningInstructions =
         flightContext
             .getInputParameters()
-            .get(
-                WorkspaceFlightMapKeys.ResourceKeys.CLONING_INSTRUCTIONS,
-                CloningInstructions.class);
+            .get(ControlledResourceKeys.CLONING_INSTRUCTIONS, CloningInstructions.class);
     if (CloningInstructions.COPY_RESOURCE != effectiveCloningInstructions) {
       return StepResult.getStepResultSuccess();
     }

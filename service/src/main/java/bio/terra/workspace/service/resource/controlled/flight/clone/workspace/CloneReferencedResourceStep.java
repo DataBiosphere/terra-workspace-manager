@@ -55,8 +55,7 @@ public class CloneReferencedResourceStep implements Step {
             .setSourceResourceId(resource.getResourceId())
             .setName(resource.getName())
             .setDescription(resource.getDescription());
-    if (CloningInstructions.COPY_REFERENCE == resource.getCloningInstructions()
-        || CloningInstructions.LINK_REFERENCE == resource.getCloningInstructions()) {
+    if (CloningInstructions.COPY_REFERENCE == resource.getCloningInstructions()) {
       FlightUtils.validateRequiredEntries(
           context.getInputParameters(),
           ControlledResourceKeys.DESTINATION_WORKSPACE_ID,

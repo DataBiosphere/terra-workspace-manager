@@ -64,7 +64,7 @@ public class LaunchCloneControlledGcpBigQueryDatasetResourceFlightStep implement
         ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId);
     subflightInputParameters.put(ControlledResourceKeys.LOCATION, location);
     subflightInputParameters.put(
-        ResourceKeys.CLONING_INSTRUCTIONS, resource.getCloningInstructions());
+        ControlledResourceKeys.CLONING_INSTRUCTIONS, resource.getCloningInstructions());
     subflightInputParameters.put(ResourceKeys.RESOURCE, resource);
     subflightInputParameters.put(ControlledResourceKeys.LOCATION, location);
     subflightInputParameters.put(WorkspaceFlightMapKeys.WORKSPACE_ID, destinationWorkspaceId);

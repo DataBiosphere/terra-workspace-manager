@@ -61,7 +61,7 @@ public class SetReferencedDestinationBigQueryDatasetResponseStep implements Step
 
     final ApiClonedControlledGcpBigQueryDataset apiClonedDataset =
         new ApiClonedControlledGcpBigQueryDataset()
-            .effectiveCloningInstructions(ApiCloningInstructionsEnum.COPY_REFERENCE)
+            .effectiveCloningInstructions(ApiCloningInstructionsEnum.REFERENCE)
             .dataset(destDataset.toApiResource())
             .sourceWorkspaceId(sourceDataset.getWorkspaceId())
             .sourceResourceId(sourceDataset.getResourceId());

@@ -1,11 +1,8 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
-import static bio.terra.workspace.service.resource.model.CloningInstructions.COPY_NOTHING;
-
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.utils.FlightBeanBag;
-import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
@@ -86,8 +83,7 @@ public class CloneWorkspaceFlight extends Flight {
     if (flightBeanBag.getFeatureConfiguration().isTpsEnabled()
         && sourceWorkspace.getWorkspaceStage() != WorkspaceStage.RAWLS_WORKSPACE) {
       var destinationWorkspace =
-          FlightUtils.getRequired(
-              inputParameters, JobMapKeys.REQUEST.getKeyName(), Workspace.class);
+          inputParameters.get(JobMapKeys.REQUEST.getKeyName(), Workspace.class);
       var userRequest =
           inputParameters.get(
               JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
@@ -95,7 +91,7 @@ public class CloneWorkspaceFlight extends Flight {
           new MergePolicyAttributesStep(
               sourceWorkspaceId,
               destinationWorkspace.getWorkspaceId(),
-              COPY_NOTHING,
+              userRequest,
               flightBeanBag.getTpsApiDispatch()),
           cloudRetryRule);
     }
