@@ -75,7 +75,7 @@ public class ReferencedResourceCloneTest extends BaseConnectedTest {
   @Test
   public void cloneResourceMerge() throws Exception {
     // When we copy, the destination does not track the source policy
-    testResourceClone(ApiCloningInstructionsEnum.COPY_REFERENCE, "usa");
+    testResourceClone(ApiCloningInstructionsEnum.REFERENCE, "usa");
   }
 
   @Test
@@ -87,7 +87,7 @@ public class ReferencedResourceCloneTest extends BaseConnectedTest {
   @Test
   public void cloneWorkspaceMerge() throws Exception {
     // When we copy, the destination does not track the source policy
-    testWorkspaceClone(ApiCloningInstructionsEnum.COPY_REFERENCE, "usa");
+    testWorkspaceClone(ApiCloningInstructionsEnum.REFERENCE, "usa");
   }
 
   @Test

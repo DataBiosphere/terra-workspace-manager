@@ -1472,7 +1472,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             "A bucket cloned individually into the same workspace.",
             "cloned-bucket-" + UUID.randomUUID().toString().toLowerCase(),
             destinationLocation,
-            ApiCloningInstructionsEnum.COPY_RESOURCE);
+            ApiCloningInstructionsEnum.RESOURCE);
 
     jobService.waitForJob(jobId);
     FlightState flightState = stairwayComponent.get().getFlightState(jobId);
@@ -1504,7 +1504,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             "A bucket cloned individually into the same workspace.",
             "second-cloned-bucket-" + UUID.randomUUID().toString().toLowerCase(),
             destinationLocation,
-            ApiCloningInstructionsEnum.COPY_RESOURCE);
+            ApiCloningInstructionsEnum.RESOURCE);
 
     jobService.waitForJob(jobId2);
     FlightState flightState2 = stairwayComponent.get().getFlightState(jobId2);

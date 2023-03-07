@@ -18,7 +18,7 @@ swaggerSources {
               "--group-id", "${artifactGroup}",
               "--artifact-version", "${version}",
               "--ignore-file-override", "${projectDir}/.swagger-codegen-ignore",
-              "--additional-properties", "errorOnUnknownEnum=true", "removeEnumValuePrefix=false",
+              "--additional-properties", "errorOnUnknownEnum=true",
               "-D", "apiTests=false," +
                       "apiDocs=false," +
                       "modelTests=false," +
