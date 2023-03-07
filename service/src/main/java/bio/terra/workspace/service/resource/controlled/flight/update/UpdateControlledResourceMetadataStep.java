@@ -74,14 +74,8 @@ public class UpdateControlledResourceMetadataStep implements Step {
       cloningInstructions = null; // don't change the value
     }
 
-    boolean updated =
-        controlledResourceMetadataManager.updateControlledResourceMetadata(
-            workspaceUuid, resourceId, resourceName, resourceDescription, cloningInstructions);
-    if (!updated) {
-      throw new RetryException(
-          "Failed to update controlled resource metadata for resource %s in workspace %s"
-              .formatted(resourceId, workspaceUuid));
-    }
+    controlledResourceMetadataManager.updateControlledResourceMetadata(
+        workspaceUuid, resourceId, resourceName, resourceDescription, cloningInstructions);
     return StepResult.getStepResultSuccess();
   }
 

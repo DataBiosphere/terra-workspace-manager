@@ -5,7 +5,6 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRule;
 import bio.terra.stairway.Step;
 import bio.terra.workspace.common.utils.FlightBeanBag;
-import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.google.common.base.Preconditions;
@@ -40,14 +39,12 @@ public class UpdateControlledResourceFlight extends Flight {
         new RetrieveControlledResourceMetadataStep(
             flightBeanBag.getResourceDao(), resource.getWorkspaceId(), resource.getResourceId()));
 
-    RetryRule dbRetry = RetryRules.shortDatabase();
     // Update the metadata (name & description of the resource).
     addStep(
         new UpdateControlledResourceMetadataStep(
             flightBeanBag.getControlledResourceMetadataManager(),
             flightBeanBag.getResourceDao(),
-            resource),
-        dbRetry);
+            resource));
 
     resource.addUpdateSteps(this, flightBeanBag);
   }
