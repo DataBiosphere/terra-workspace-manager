@@ -7,10 +7,9 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
-import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpGcsBucket;
-import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.ReferencedGcsBucketResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -27,12 +26,12 @@ import org.springframework.http.HttpStatus;
  */
 public class SetReferencedDestinationGcsBucketResponseStep implements Step {
   private final ResourceDao resourceDao;
-  private final WorkspaceActivityLogService workspaceActivityLogService;
+  private final CloningInstructions cloningInstructions;
 
   public SetReferencedDestinationGcsBucketResponseStep(
-      ResourceDao resourceDao, WorkspaceActivityLogService workspaceActivityLogService) {
+      ResourceDao resourceDao, CloningInstructions cloningInstructions) {
     this.resourceDao = resourceDao;
-    this.workspaceActivityLogService = workspaceActivityLogService;
+    this.cloningInstructions = cloningInstructions;
   }
 
   @Override
@@ -67,7 +66,7 @@ public class SetReferencedDestinationGcsBucketResponseStep implements Step {
 
     final ApiClonedControlledGcpGcsBucket apiClonedBucket =
         new ApiClonedControlledGcpGcsBucket()
-            .effectiveCloningInstructions(ApiCloningInstructionsEnum.REFERENCE)
+            .effectiveCloningInstructions(cloningInstructions.toApiModel())
             .bucket(apiCreatedBucket)
             .sourceWorkspaceId(sourceBucket.getWorkspaceId())
             .sourceResourceId(sourceBucket.getResourceId());

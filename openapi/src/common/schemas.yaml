@@ -36,18 +36,30 @@ components:
       type: string
       description: >-
         How to clone resource:
-          * COPY_NOTHING: Don't clone resource.
-          * COPY_DEFINITION: Only used for controlled resources. Create new controlled resource
+          * COPY_NOTHING and NOTHING: Don't clone resource.
+          * COPY_DEFINITION and DEFINITION: Only used for controlled resources. Create new controlled resource
             and new cloud resource with same metadata, but don't copy any data. For example
             for GCS bucket, create new GCS bucket with same region/lifecycle rules as source
             bucket. Files will not be copied over.
-          * COPY_RESOURCE: Only used for controlled resources. Create new controlled resource
+          * COPY_RESOURCE and RESOURCE: Only used for controlled resources. Create new controlled resource
             and new cloud resource, with data copied over.  For example for GCS bucket,
             create new GCS bucket with same region/lifecycle rules as source bucket. Copy files
             from source bucket to new bucket.
-          * COPY_REFERENCE: Used for controlled and referenced resources. Create new referenced resource
+          * COPY_REFERENCE and REFERENCE: Used for controlled and referenced resources. Create new referenced resource
             that points to same cloud resource as source resource.
-      enum: ['COPY_NOTHING', 'COPY_DEFINITION', 'COPY_RESOURCE', 'COPY_REFERENCE']
+          * LINK_REFERENCE: Used for controlled and referenced resources. Create a new referenced resource
+            that points to the same cloud resource as the source resource, AND link the source workspace
+            policy to the destination workspace policy; changes in the source will propagate to the destination.
+      enum:
+        - COPY_NOTHING
+        - NOTHING
+        - COPY_DEFINITION
+        - DEFINITION
+        - COPY_RESOURCE
+        - RESOURCE
+        - COPY_REFERENCE
+        - REFERENCE
+        - LINK_REFERENCE
   
     ControlledResourceIamRole:
       description: Enum containing all IAM roles on controlled resources available to users
