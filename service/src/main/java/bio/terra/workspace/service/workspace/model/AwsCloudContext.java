@@ -7,14 +7,18 @@ import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.generated.model.ApiAwsContext;
 import bio.terra.workspace.service.workspace.exceptions.InvalidSerializedVersionException;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.regions.Region;
+
+import javax.annotation.Nullable;
 
 public class AwsCloudContext {
   private static final Logger logger = LoggerFactory.getLogger(AwsCloudContext.class);
@@ -26,21 +30,21 @@ public class AwsCloudContext {
   private String userRoleArn;
   private String kmsKeyArn;
   @Nullable private String notebookLifecycleConfigArn;
-  @Nullable private Map<Region, String> regionToBucketNameMap;
+  private Map<String, String> regionToBucketNameMap;
 
   // Constructor for Jackson
   public AwsCloudContext() {}
 
   // Constructor for deserializer
   public AwsCloudContext(
-      String landingZoneName,
-      String accountNumber,
-      String serviceRoleArn,
-      String serviceRoleAudience,
-      String userRoleArn,
-      String kmsKeyArn,
-      @Nullable String notebookLifecycleConfigArn,
-      @Nullable Map<Region, String> regionToBucketNameMap) {
+          String landingZoneName,
+          String accountNumber,
+          String serviceRoleArn,
+          String serviceRoleAudience,
+          String userRoleArn,
+          String kmsKeyArn,
+          @Nullable String notebookLifecycleConfigArn,
+          Map<String, String> regionToBucketNameMap) {
     this.landingZoneName = landingZoneName;
     this.accountNumber = accountNumber;
     this.serviceRoleArn = serviceRoleArn;
@@ -79,16 +83,21 @@ public class AwsCloudContext {
     return notebookLifecycleConfigArn;
   }
 
-  public @Nullable String getBucketNameForRegion(Region region) {
-    return regionToBucketNameMap != null ? regionToBucketNameMap.get(region) : null;
+  public Map<String, String> getRegionToBucketNameMap() {
+    return regionToBucketNameMap;
+  }
+
+  @JsonIgnore
+  public String getBucketNameForRegion(Region region) {
+    return regionToBucketNameMap.get(region.toString());
   }
 
   public static AwsCloudContext fromConfiguration(
       AwsLandingZoneConfiguration landingZoneConfiguration, String serviceRoleAudience) {
-    Map<Region, String> bucketMap = new HashMap<>();
-    for (AwsLandingZoneBucket bucket : landingZoneConfiguration.getBuckets()) {
-      bucketMap.put(Region.of(bucket.getRegion()), bucket.getName());
-    }
+    Map<String, String> bucketMap =
+        landingZoneConfiguration.getBuckets().stream()
+            .collect(
+                Collectors.toMap(AwsLandingZoneBucket::getRegion, AwsLandingZoneBucket::getName));
 
     return new AwsCloudContext(
         landingZoneConfiguration.getName(),
@@ -119,15 +128,14 @@ public class AwsCloudContext {
       AwsCloudContextV1 dbContext = DbSerDes.fromJson(json, AwsCloudContextV1.class);
       dbContext.validateVersion();
 
-      Map<Region, String> bucketMap = new HashMap<>();
-      if (dbContext.bucketListAsString != null) {
-        List<AwsCloudContextBucketV1> bucketList =
-            DbSerDes.fromJson(dbContext.bucketListAsString, new TypeReference<>() {});
-        for (AwsCloudContextBucketV1 bucketV1 : bucketList) {
-          bucketV1.validateVersion();
-          bucketMap.put(Region.of(bucketV1.regionName), bucketV1.bucketName);
-        }
-      }
+      List<AwsCloudContextBucketV1> bucketList =
+          DbSerDes.fromJson(dbContext.bucketList, new TypeReference<>() {});
+      Map<String, String> bucketMap = new HashMap<>();
+      bucketList.forEach(
+          bucketV1 -> {
+            bucketV1.validateVersion();
+            bucketMap.put(bucketV1.regionName, bucketV1.bucketName);
+          });
 
       return new AwsCloudContext(
           dbContext.landingZoneName,
@@ -194,7 +202,7 @@ public class AwsCloudContext {
     public String userRoleArn;
     public String kmsKeyArn;
     public String notebookLifecycleConfigArn;
-    public String bucketListAsString;
+    public String bucketList;
 
     @JsonCreator
     public AwsCloudContextV1(
@@ -206,7 +214,7 @@ public class AwsCloudContext {
         @JsonProperty("userRoleArn") String userRoleArn,
         @JsonProperty("kmsKeyArn") String kmsKeyArn,
         @JsonProperty("notebookLifecycleConfigArn") String notebookLifecycleConfigArn,
-        @JsonProperty("bucketList") String bucketListAsString) {
+        @JsonProperty("bucketList") String bucketList) {
       this.version = version;
       this.landingZoneName = landingZoneName;
       this.accountNumber = accountNumber;
@@ -215,7 +223,7 @@ public class AwsCloudContext {
       this.userRoleArn = userRoleArn;
       this.kmsKeyArn = kmsKeyArn;
       this.notebookLifecycleConfigArn = notebookLifecycleConfigArn;
-      this.bucketListAsString = bucketListAsString;
+      this.bucketList = bucketList;
     }
 
     public AwsCloudContextV1(AwsCloudContext context) {
@@ -230,15 +238,12 @@ public class AwsCloudContext {
       if (context.notebookLifecycleConfigArn != null) { // optional and may be null
         this.notebookLifecycleConfigArn = context.notebookLifecycleConfigArn;
       }
-      if (context.regionToBucketNameMap != null) {
-        List<AwsCloudContextBucketV1> bucketList =
-            context.regionToBucketNameMap.entrySet().stream()
-                .map(
-                    bucket ->
-                        new AwsCloudContextBucketV1(bucket.getKey().toString(), bucket.getValue()))
-                .collect(Collectors.toList());
-        this.bucketListAsString = DbSerDes.toJson(bucketList);
-      }
+
+      List<AwsCloudContextBucketV1> bucketListInternal =
+          context.regionToBucketNameMap.entrySet().stream()
+              .map(bucket -> new AwsCloudContextBucketV1(bucket.getKey(), bucket.getValue()))
+              .collect(Collectors.toList());
+      this.bucketList = DbSerDes.toJson(bucketListInternal);
     }
 
     public void validateVersion() {
