@@ -47,7 +47,7 @@ public class ControlledResourceMetadataManager {
    * @param description description to change - may be null, in which case resource description will
    *     not be changed.
    */
-  public void updateControlledResourceMetadata(
+  public boolean updateControlledResourceMetadata(
       UUID workspaceUuid,
       UUID resourceId,
       @Nullable String name,
@@ -59,7 +59,7 @@ public class ControlledResourceMetadataManager {
     }
     // Description may also be null, but this validator accepts null descriptions.
     ResourceValidationUtils.validateResourceDescriptionName(description);
-    resourceDao.updateResource(
+    return resourceDao.updateResource(
         workspaceUuid, resourceId, name, description, null, cloningInstructions);
   }
 
