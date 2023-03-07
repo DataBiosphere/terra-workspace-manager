@@ -55,8 +55,8 @@ public class ReferencedGcpResourceControllerGitRepoTest extends BaseConnectedTes
   private UUID workspaceId;
   private UUID workspaceId2;
 
-  private final String sourceResourceName = TestUtils.appendRandomNumber("source-resource-name");
-  private final String sourceGitRepoUrl =
+  private String sourceResourceName = TestUtils.appendRandomNumber("source-resource-name");
+  private String sourceGitRepoUrl =
       "git@github.com:DataBiosphere/%s.git"
           .formatted(TestUtils.appendRandomNumber("terra-workspace-manager"));
   private ApiGitRepoResource sourceResource;
@@ -95,7 +95,7 @@ public class ReferencedGcpResourceControllerGitRepoTest extends BaseConnectedTes
     // Assert resource returned by create
     assertGitRepo(
         sourceResource,
-        ApiCloningInstructionsEnum.COPY_NOTHING,
+        ApiCloningInstructionsEnum.NOTHING,
         workspaceId,
         sourceResourceName,
         sourceResource.getMetadata().getDescription(),
@@ -121,7 +121,7 @@ public class ReferencedGcpResourceControllerGitRepoTest extends BaseConnectedTes
         userAccessUtils.getSecondUserEmail());
     String newGitRepoUrl = "git@github.com:DataBiosphere/terra-workspace-manager.git";
     String newResourceName = TestUtils.appendRandomNumber("newgitreferencename");
-    ApiCloningInstructionsEnum newCloningInstruction = ApiCloningInstructionsEnum.COPY_REFERENCE;
+    ApiCloningInstructionsEnum newCloningInstruction = ApiCloningInstructionsEnum.REFERENCE;
     String newDescription = "This is an updated description";
 
     ApiGitRepoResource updatedResource =
@@ -164,7 +164,7 @@ public class ReferencedGcpResourceControllerGitRepoTest extends BaseConnectedTes
         sourceResourceName,
         RESOURCE_DESCRIPTION,
         sourceGitRepoUrl,
-        ApiCloningInstructionsEnum.COPY_NOTHING,
+        ApiCloningInstructionsEnum.NOTHING,
         userAccessUtils.defaultUserAuthRequest());
   }
 
@@ -175,7 +175,7 @@ public class ReferencedGcpResourceControllerGitRepoTest extends BaseConnectedTes
         /*sourceWorkspaceId=*/ workspaceId,
         /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
         /*destWorkspaceId=*/ workspaceId2,
-        ApiCloningInstructionsEnum.COPY_REFERENCE,
+        ApiCloningInstructionsEnum.REFERENCE,
         /*destResourceName=*/ null,
         HttpStatus.SC_FORBIDDEN);
   }
@@ -199,7 +199,7 @@ public class ReferencedGcpResourceControllerGitRepoTest extends BaseConnectedTes
         /*sourceWorkspaceId=*/ workspaceId,
         /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
         /*destWorkspaceId=*/ workspaceId2,
-        ApiCloningInstructionsEnum.COPY_REFERENCE,
+        ApiCloningInstructionsEnum.REFERENCE,
         /*destResourceName=*/ null,
         HttpStatus.SC_FORBIDDEN);
 
@@ -235,13 +235,13 @@ public class ReferencedGcpResourceControllerGitRepoTest extends BaseConnectedTes
             /*sourceWorkspaceId=*/ workspaceId,
             /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
             /*destWorkspaceId=*/ workspaceId2,
-            ApiCloningInstructionsEnum.COPY_REFERENCE,
+            ApiCloningInstructionsEnum.REFERENCE,
             /*destResourceName=*/ null);
 
     assertClonedGitRepo(
         clonedResource,
         ApiStewardshipType.REFERENCED,
-        ApiCloningInstructionsEnum.COPY_NOTHING,
+        ApiCloningInstructionsEnum.NOTHING,
         workspaceId2,
         sourceResourceName,
         sourceGitRepoUrl,
@@ -273,7 +273,7 @@ public class ReferencedGcpResourceControllerGitRepoTest extends BaseConnectedTes
             /*sourceWorkspaceId=*/ workspaceId,
             sourceResource.getMetadata().getResourceId(),
             /*destWorkspaceId=*/ workspaceId,
-            ApiCloningInstructionsEnum.COPY_NOTHING,
+            ApiCloningInstructionsEnum.NOTHING,
             destResourceName);
 
     // Assert clone result has no resource
@@ -294,14 +294,14 @@ public class ReferencedGcpResourceControllerGitRepoTest extends BaseConnectedTes
             /*sourceWorkspaceId=*/ workspaceId,
             sourceResource.getMetadata().getResourceId(),
             /*destWorkspaceId=*/ workspaceId,
-            ApiCloningInstructionsEnum.COPY_REFERENCE,
+            ApiCloningInstructionsEnum.REFERENCE,
             destResourceName);
 
     // Assert resource returned in clone flight response
     assertClonedGitRepo(
         clonedResource,
         ApiStewardshipType.REFERENCED,
-        ApiCloningInstructionsEnum.COPY_NOTHING,
+        ApiCloningInstructionsEnum.NOTHING,
         workspaceId,
         destResourceName,
         sourceResource.getAttributes().getGitRepoUrl(),
@@ -327,14 +327,14 @@ public class ReferencedGcpResourceControllerGitRepoTest extends BaseConnectedTes
             /*sourceWorkspaceId=*/ workspaceId,
             sourceResource.getMetadata().getResourceId(),
             /*destWorkspaceId=*/ workspaceId2,
-            ApiCloningInstructionsEnum.COPY_REFERENCE,
+            ApiCloningInstructionsEnum.REFERENCE,
             destResourceName);
 
     // Assert resource returned in clone flight response
     assertClonedGitRepo(
         clonedResource,
         ApiStewardshipType.REFERENCED,
-        ApiCloningInstructionsEnum.COPY_NOTHING,
+        ApiCloningInstructionsEnum.NOTHING,
         workspaceId2,
         destResourceName,
         sourceGitRepoUrl,
@@ -383,7 +383,7 @@ public class ReferencedGcpResourceControllerGitRepoTest extends BaseConnectedTes
         /*sourceWorkspaceId=*/ workspaceId,
         sourceResource.getMetadata().getResourceId(),
         /*destWorkspaceId=*/ workspaceId2,
-        ApiCloningInstructionsEnum.COPY_REFERENCE,
+        ApiCloningInstructionsEnum.REFERENCE,
         destResourceName);
 
     // Assert dest workspace has group and region policies
