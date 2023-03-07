@@ -9,7 +9,6 @@ import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_PATH;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
-import static java.util.Collections.EMPTY_LIST;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -493,7 +492,9 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
         .thenReturn(
             ImmutableList.of(
                 new WorkspaceAndHighestRole(
-                    workspaceDao.getWorkspace(workspace.getId()), WsmIamRole.OWNER, EMPTY_LIST)));
+                    workspaceDao.getWorkspace(workspace.getId()),
+                    WsmIamRole.OWNER,
+                    Collections.emptyList())));
 
     ApiWorkspaceDescription gotWorkspace =
         mockMvcUtils.getWorkspace(USER_REQUEST, workspace.getId());
