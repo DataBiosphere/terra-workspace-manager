@@ -293,7 +293,7 @@ public class ReferencedGcsResourceLifecycle extends WorkspaceAllocateTestScriptB
         bucketReferenceFirstUpdate.getAttributes().getBucketName());
     assertTrue(partialAccessResourceApi.checkReferenceAccess(getWorkspaceId(), bucketResourceId));
     assertEquals(
-        CloningInstructionsEnum.COPY_NOTHING,
+        CloningInstructionsEnum.NOTHING,
         bucketReferenceFirstUpdate.getMetadata().getCloningInstructions());
     // Attempt to update bucket reference but {@code userWithPartialAccess} does not have
     // access to the bucket with fine-grained access
@@ -337,13 +337,13 @@ public class ReferencedGcsResourceLifecycle extends WorkspaceAllocateTestScriptB
             newBlobDescription,
             /*bucketName=*/ null,
             /*objectName=*/ null,
-            CloningInstructionsEnum.COPY_NOTHING);
+            CloningInstructionsEnum.NOTHING);
     assertEquals(newBlobName, blobResource.getMetadata().getName());
     assertEquals(newBlobDescription, blobResource.getMetadata().getDescription());
     assertEquals(gcsFileAttributes.getBucketName(), blobResource.getAttributes().getBucketName());
     assertEquals(gcsFileAttributes.getFileName(), blobResource.getAttributes().getFileName());
     assertEquals(
-        CloningInstructionsEnum.COPY_NOTHING, blobResource.getMetadata().getCloningInstructions());
+        CloningInstructionsEnum.NOTHING, blobResource.getMetadata().getCloningInstructions());
     // Update GCS bucket object's referencing target from foo/monkey_sees_monkey_dos.txt to foo/.
 
     assertTrue(partialAccessResourceApi.checkReferenceAccess(getWorkspaceId(), fileResourceId));

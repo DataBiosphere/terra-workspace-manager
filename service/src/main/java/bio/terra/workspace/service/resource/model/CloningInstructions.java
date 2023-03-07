@@ -30,26 +30,26 @@ import org.apache.commons.lang3.StringUtils;
  */
 public enum CloningInstructions {
   COPY_NOTHING(
-      ApiCloningInstructionsEnum.COPY_NOTHING,
       ApiCloningInstructionsEnum.NOTHING,
+      ApiCloningInstructionsEnum.COPY_NOTHING,
       "COPY_NOTHING",
       true,
       true),
   COPY_DEFINITION(
-      ApiCloningInstructionsEnum.COPY_DEFINITION,
       ApiCloningInstructionsEnum.DEFINITION,
+      ApiCloningInstructionsEnum.COPY_DEFINITION,
       "COPY_DEFINITION",
       true,
       false),
   COPY_RESOURCE(
-      ApiCloningInstructionsEnum.COPY_RESOURCE,
       ApiCloningInstructionsEnum.RESOURCE,
+      ApiCloningInstructionsEnum.COPY_RESOURCE,
       "COPY_RESOURCE",
       true,
       false),
   COPY_REFERENCE(
-      ApiCloningInstructionsEnum.COPY_REFERENCE,
       ApiCloningInstructionsEnum.REFERENCE,
+      ApiCloningInstructionsEnum.COPY_REFERENCE,
       "COPY_REFERENCE",
       true,
       true),

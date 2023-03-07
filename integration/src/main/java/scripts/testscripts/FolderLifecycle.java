@@ -91,7 +91,7 @@ public class FolderLifecycle extends WorkspaceAllocateTestScriptBase {
             controlledGcpResourceApi,
             getWorkspaceId(),
             "my-shared-foo-bucket",
-            CloningInstructionsEnum.COPY_DEFINITION);
+            CloningInstructionsEnum.DEFINITION);
     resourceApi.updateResourceProperties(
         List.of(new Property().key(TERRA_FOLDER_ID).value(folderFoo.getId().toString())),
         getWorkspaceId(),
