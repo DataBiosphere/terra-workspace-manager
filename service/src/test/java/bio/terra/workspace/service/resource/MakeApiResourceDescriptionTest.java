@@ -299,7 +299,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
       ApiPrivateResourceUser user = common.getPrivateResourceUser();
       assertThat(user, is(notNullValue()));
       assertEquals(user.getUserName(), assignedUser);
-      assertEquals(ApiCloningInstructionsEnum.COPY_RESOURCE, metadata.getCloningInstructions());
+      assertEquals(ApiCloningInstructionsEnum.RESOURCE, metadata.getCloningInstructions());
     }
   }
 }

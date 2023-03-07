@@ -25,6 +25,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.Contr
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -227,8 +228,10 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
       UUID workspaceUuid, UUID resourceId, @Valid ApiCloneControlledGcpGcsBucketRequest body) {
     logger.info("Cloning GCS bucket resourceId {} workspaceUuid {}", resourceId, workspaceUuid);
 
-    if ((body.getCloningInstructions() == ApiCloningInstructionsEnum.COPY_REFERENCE
-            || body.getCloningInstructions() == ApiCloningInstructionsEnum.LINK_REFERENCE)
+    CloningInstructions cloningInstructions =
+        CloningInstructions.fromApiModel(body.getCloningInstructions());
+
+    if ((cloningInstructions != null && cloningInstructions.isReferenceClone())
         && (!StringUtils.isEmpty(body.getBucketName())
             || !StringUtils.isEmpty(body.getLocation()))) {
       throw new ValidationException(
@@ -403,8 +406,11 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
       UUID workspaceUuid,
       UUID resourceId,
       @Valid ApiCloneControlledGcpBigQueryDatasetRequest body) {
-    if ((body.getCloningInstructions() == ApiCloningInstructionsEnum.COPY_REFERENCE
-            || body.getCloningInstructions() == ApiCloningInstructionsEnum.LINK_REFERENCE)
+
+    CloningInstructions cloningInstructions =
+        CloningInstructions.fromApiModel(body.getCloningInstructions());
+
+    if ((cloningInstructions != null && cloningInstructions.isReferenceClone())
         && (!StringUtils.isEmpty(body.getDestinationDatasetName())
             || !StringUtils.isEmpty(body.getLocation()))) {
       throw new BadRequestException(
