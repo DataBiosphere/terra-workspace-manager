@@ -162,7 +162,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
     assertBqDataset(
         sourceResource,
         ApiStewardshipType.CONTROLLED,
-        ApiCloningInstructionsEnum.COPY_DEFINITION,
+        ApiCloningInstructionsEnum.DEFINITION,
         workspaceId,
         sourceResourceName,
         RESOURCE_DESCRIPTION,
@@ -201,7 +201,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
 
     var newName = TestUtils.appendRandomNumber("newdatatableresourcename");
     var newDescription = "This is an updated description";
-    var newCloningInstruction = ApiCloningInstructionsEnum.COPY_REFERENCE;
+    var newCloningInstruction = ApiCloningInstructionsEnum.REFERENCE;
     ApiGcpBigQueryDatasetResource updatedResource =
         mockMvcUtils.updateControlledBqDataset(
             userAccessUtils.secondUserAuthRequest(),
@@ -240,7 +240,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         sourceResource.getMetadata().getResourceId(),
         sourceResourceName,
         RESOURCE_DESCRIPTION,
-        ApiCloningInstructionsEnum.COPY_DEFINITION);
+        ApiCloningInstructionsEnum.DEFINITION);
   }
 
   @Test
@@ -250,7 +250,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         /*sourceWorkspaceId=*/ workspaceId,
         /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
         /*destWorkspaceId=*/ workspaceId2,
-        ApiCloningInstructionsEnum.COPY_RESOURCE,
+        ApiCloningInstructionsEnum.RESOURCE,
         /*destResourceName=*/ null,
         /*destDatasetName=*/ null,
         /*destLocation=*/ null,
@@ -278,7 +278,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         /*sourceWorkspaceId=*/ workspaceId,
         /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
         /*destWorkspaceId=*/ workspaceId2,
-        ApiCloningInstructionsEnum.COPY_RESOURCE,
+        ApiCloningInstructionsEnum.RESOURCE,
         /*destResourceName=*/ null,
         /*destDatasetName=*/ null,
         /*destLocation=*/ null,
@@ -318,7 +318,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
             workspaceId,
             sourceResource.getMetadata().getResourceId(),
             workspaceId2,
-            ApiCloningInstructionsEnum.COPY_RESOURCE,
+            ApiCloningInstructionsEnum.RESOURCE,
             /*destResourceName=*/ null,
             /*destDatasetName=*/ null,
             /*destLocation=*/ null,
@@ -362,7 +362,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
             /*sourceWorkspaceId=*/ workspaceId,
             sourceResource.getMetadata().getResourceId(),
             /*destWorkspaceId=*/ workspaceId,
-            ApiCloningInstructionsEnum.COPY_RESOURCE,
+            ApiCloningInstructionsEnum.RESOURCE,
             /*destResourceName=*/ null,
             /*destDatasetName=*/ sourceDatasetName,
             HttpStatus.SC_CONFLICT);
@@ -379,7 +379,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
             /*sourceWorkspaceId=*/ workspaceId,
             sourceResource.getMetadata().getResourceId(),
             /*destWorkspaceId=*/ workspaceId,
-            ApiCloningInstructionsEnum.COPY_NOTHING,
+            ApiCloningInstructionsEnum.NOTHING,
             destResourceName,
             /*destDatasetName=*/ null);
 
@@ -407,7 +407,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
             /*sourceWorkspaceId=*/ workspaceId,
             sourceResource.getMetadata().getResourceId(),
             /*destWorkspaceId=*/ workspaceId2,
-            ApiCloningInstructionsEnum.COPY_DEFINITION,
+            ApiCloningInstructionsEnum.DEFINITION,
             destResourceName,
             /*destDatasetName=*/ null,
             destLocation,
@@ -471,7 +471,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
             /*sourceWorkspaceId=*/ workspaceId,
             sourceResource.getMetadata().getResourceId(),
             /*destWorkspaceId=*/ workspaceId,
-            ApiCloningInstructionsEnum.COPY_RESOURCE,
+            ApiCloningInstructionsEnum.RESOURCE,
             destResourceName,
             destDatasetName,
             destLocation,
@@ -531,7 +531,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
             /*sourceWorkspaceId=*/ workspaceId,
             sourceResource.getMetadata().getResourceId(),
             /*destWorkspaceId=*/ workspaceId2,
-            ApiCloningInstructionsEnum.COPY_RESOURCE,
+            ApiCloningInstructionsEnum.RESOURCE,
             destResourceName,
             destDatasetName,
             destLocation,
@@ -585,7 +585,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
             /*sourceWorkspaceId=*/ workspaceId,
             sourceResource.getMetadata().getResourceId(),
             /*destWorkspaceId=*/ workspaceId,
-            ApiCloningInstructionsEnum.COPY_REFERENCE,
+            ApiCloningInstructionsEnum.REFERENCE,
             destResourceName,
             /*destDatasetName*/ null);
 
@@ -595,7 +595,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         ApiStewardshipType.REFERENCED,
         // COPY_DEFINITION doesn't make sense for referenced resources. COPY_DEFINITION was
         // converted to COPY_REFERENCE.
-        ApiCloningInstructionsEnum.COPY_REFERENCE,
+        ApiCloningInstructionsEnum.REFERENCE,
         /*expectedDestWorkspaceId=*/ workspaceId,
         destResourceName,
         sourceResource.getMetadata().getDescription(),
@@ -646,7 +646,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         /*sourceWorkspaceId=*/ workspaceId,
         sourceResource.getMetadata().getResourceId(),
         /*destWorkspaceId=*/ workspaceId2,
-        ApiCloningInstructionsEnum.COPY_REFERENCE,
+        ApiCloningInstructionsEnum.REFERENCE,
         destResourceName,
         /*destDatasetName*/ null);
 
@@ -670,7 +670,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         /*sourceWorkspaceId=*/ workspaceId,
         sourceResource.getMetadata().getResourceId(),
         /*destWorkspaceId=*/ workspaceId2,
-        ApiCloningInstructionsEnum.COPY_RESOURCE,
+        ApiCloningInstructionsEnum.RESOURCE,
         destResourceName);
 
     // Assert clone doesn't exist. There's no resource ID, so search on resource name.
@@ -686,7 +686,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         /*sourceWorkspaceId=*/ workspaceId,
         sourceResource.getMetadata().getResourceId(),
         /*destWorkspaceId=*/ workspaceId2,
-        ApiCloningInstructionsEnum.COPY_REFERENCE,
+        ApiCloningInstructionsEnum.REFERENCE,
         destResourceName);
 
     // Assert clone doesn't exist. There's no resource ID, so search on resource name.
@@ -736,7 +736,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
     assertClonedBqDataset(
         actualDataset,
         ApiStewardshipType.CONTROLLED,
-        ApiCloningInstructionsEnum.COPY_DEFINITION,
+        ApiCloningInstructionsEnum.DEFINITION,
         expectedWorkspaceId,
         expectedResourceName,
         expectedResourceDescription,

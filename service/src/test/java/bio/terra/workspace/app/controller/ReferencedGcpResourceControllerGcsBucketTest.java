@@ -94,7 +94,7 @@ public class ReferencedGcpResourceControllerGcsBucketTest extends BaseConnectedT
     // Assert resource returned by create
     assertGcsBucket(
         sourceResource,
-        ApiCloningInstructionsEnum.COPY_NOTHING,
+        ApiCloningInstructionsEnum.NOTHING,
         workspaceId,
         sourceResourceName,
         RESOURCE_DESCRIPTION,
@@ -122,7 +122,7 @@ public class ReferencedGcpResourceControllerGcsBucketTest extends BaseConnectedT
     var newName = TestUtils.appendRandomNumber("newbucketresourcename");
     var newDescription = "This is an updated description";
     var newBucketName = TestUtils.appendRandomNumber("newcloudbucketname");
-    var newCloningInstruction = ApiCloningInstructionsEnum.COPY_REFERENCE;
+    var newCloningInstruction = ApiCloningInstructionsEnum.REFERENCE;
 
     ApiGcpGcsBucketResource updatedResource =
         mockMvcUtils.updateReferencedGcsBucket(
@@ -162,7 +162,7 @@ public class ReferencedGcpResourceControllerGcsBucketTest extends BaseConnectedT
         sourceResourceName,
         RESOURCE_DESCRIPTION,
         sourceBucketName,
-        ApiCloningInstructionsEnum.COPY_NOTHING);
+        ApiCloningInstructionsEnum.NOTHING);
   }
 
   @Test
@@ -172,7 +172,7 @@ public class ReferencedGcpResourceControllerGcsBucketTest extends BaseConnectedT
         /*sourceWorkspaceId=*/ workspaceId,
         /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
         /*destWorkspaceId=*/ workspaceId2,
-        ApiCloningInstructionsEnum.COPY_REFERENCE,
+        ApiCloningInstructionsEnum.REFERENCE,
         /*destResourceName=*/ null,
         HttpStatus.SC_FORBIDDEN);
   }
@@ -195,7 +195,7 @@ public class ReferencedGcpResourceControllerGcsBucketTest extends BaseConnectedT
         /*sourceWorkspaceId=*/ workspaceId,
         /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
         /*destWorkspaceId=*/ workspaceId2,
-        ApiCloningInstructionsEnum.COPY_REFERENCE,
+        ApiCloningInstructionsEnum.REFERENCE,
         /*destResourceName=*/ null,
         HttpStatus.SC_FORBIDDEN);
 
@@ -230,12 +230,12 @@ public class ReferencedGcpResourceControllerGcsBucketTest extends BaseConnectedT
             /*sourceWorkspaceId=*/ workspaceId,
             /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
             /*destWorkspaceId=*/ workspaceId2,
-            ApiCloningInstructionsEnum.COPY_REFERENCE,
+            ApiCloningInstructionsEnum.REFERENCE,
             /*destResourceName=*/ null);
 
     assertClonedGcsBucket(
         clonedResource,
-        ApiCloningInstructionsEnum.COPY_NOTHING,
+        ApiCloningInstructionsEnum.NOTHING,
         workspaceId2,
         sourceResourceName,
         sourceBucketName,
@@ -266,7 +266,7 @@ public class ReferencedGcpResourceControllerGcsBucketTest extends BaseConnectedT
             /*sourceWorkspaceId=*/ workspaceId,
             sourceResource.getMetadata().getResourceId(),
             /*destWorkspaceId=*/ workspaceId,
-            ApiCloningInstructionsEnum.COPY_NOTHING,
+            ApiCloningInstructionsEnum.NOTHING,
             destResourceName);
 
     // Assert clone result has no resource
@@ -287,13 +287,13 @@ public class ReferencedGcpResourceControllerGcsBucketTest extends BaseConnectedT
             /*sourceWorkspaceId=*/ workspaceId,
             sourceResource.getMetadata().getResourceId(),
             /*destWorkspaceId=*/ workspaceId,
-            ApiCloningInstructionsEnum.COPY_REFERENCE,
+            ApiCloningInstructionsEnum.REFERENCE,
             destResourceName);
 
     // Assert resource returned in clone flight response
     assertClonedGcsBucket(
         clonedResource,
-        ApiCloningInstructionsEnum.COPY_NOTHING,
+        ApiCloningInstructionsEnum.NOTHING,
         workspaceId,
         destResourceName,
         sourceBucketName,
@@ -319,13 +319,13 @@ public class ReferencedGcpResourceControllerGcsBucketTest extends BaseConnectedT
             /*sourceWorkspaceId=*/ workspaceId,
             sourceResource.getMetadata().getResourceId(),
             /*destWorkspaceId=*/ workspaceId2,
-            ApiCloningInstructionsEnum.COPY_REFERENCE,
+            ApiCloningInstructionsEnum.REFERENCE,
             destResourceName);
 
     // Assert resource returned in clone flight response
     assertClonedGcsBucket(
         clonedResource,
-        ApiCloningInstructionsEnum.COPY_NOTHING,
+        ApiCloningInstructionsEnum.NOTHING,
         workspaceId2,
         destResourceName,
         sourceBucketName,
@@ -374,7 +374,7 @@ public class ReferencedGcpResourceControllerGcsBucketTest extends BaseConnectedT
         /*sourceWorkspaceId=*/ workspaceId,
         sourceResource.getMetadata().getResourceId(),
         /*destWorkspaceId=*/ workspaceId2,
-        ApiCloningInstructionsEnum.COPY_REFERENCE,
+        ApiCloningInstructionsEnum.REFERENCE,
         destResourceName);
 
     // Assert dest workspace has group and region policies
