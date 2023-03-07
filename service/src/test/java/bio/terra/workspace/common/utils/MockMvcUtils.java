@@ -20,6 +20,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.stairway.FlightDebugInfo;
+import bio.terra.stairway.Step;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.controller.shared.PropertiesUtils;
 import bio.terra.workspace.common.StairwayTestUtils;
@@ -997,7 +998,7 @@ public class MockMvcUtils {
       throws Exception {
     // Retry to ensure steps are idempotent
     Map<String, StepStatus> retryableStepsMap = new HashMap<>();
-    List<Class> retryableSteps =
+    List<Class<? extends Step>> retryableSteps =
         ImmutableList.of(
             CheckControlledResourceAuthStep.class,
             SetReferencedDestinationBigQueryDatasetInWorkingMapStep.class,
