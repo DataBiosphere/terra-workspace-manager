@@ -14,7 +14,6 @@
 # https://github.com/DataBiosphere/terra-workspace-manager/tree/main/integration#Run-nightly-only-test-suite-locally
 # for instruction on how to run the test.
 
-set -o errexit
 set -o nounset
 set -o pipefail
 set -o xtrace
@@ -23,6 +22,9 @@ set -o xtrace
 # user space, such as setting Terra CLI settings which are persisted in the user's $HOME.
 # This post startup script is not run by the same user.
 readonly JUPYTER_USER="jupyter"
+readonly STATUS_ATTRIBUTE="startup_script/status"
+readonly MESSAGE_ATTRIBUTE="startup_script/message"
+readonly OUTPUT_FILE=".terra/post-startup-output.txt"
 
 # Move to the /tmp directory to let any artifacts left behind by this script can be removed.
 cd /tmp || exit
@@ -30,7 +32,7 @@ cd /tmp || exit
 # Send stdout and stderr from this script to a file for debugging.
 # Make the .terra directory as the user so that they own it and have correct linux permissions.
 sudo -u "${JUPYTER_USER}" sh -c "mkdir -p /home/${JUPYTER_USER}/.terra"
-exec >> /home/"${JUPYTER_USER}"/.terra/post-startup-output.txt
+exec >> /home/"${JUPYTER_USER}"/"${OUTPUT_FILE}"
 exec 2>&1
 
 #######################################
@@ -46,6 +48,30 @@ function get_metadata_value() {
     -H "Metadata-Flavor: Google" \
     "http://metadata/computeMetadata/v1/$1"
 }
+
+#######################################
+# Set guest attributes on GCE. Used here to log completion status of the script.
+# See https://cloud.google.com/compute/docs/metadata/manage-guest-attributes
+# Arguments:
+#   $1: The guest attribute domain and key IE startup_script/status
+#   $2  The data to write to the guest attribute
+#######################################
+function set_guest_attributes() {
+  curl -s -X PUT --data "$2" \
+    -H "Metadata-Flavor: Google" \
+    "http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/$1"
+}
+
+# Write error status and message to guest attributes should an error occur.
+function error_handler {
+  set_guest_attributes "$STATUS_ATTRIBUTE" "ERROR"
+  set_guest_attributes "$MESSAGE_ATTRIBUTE" "Error on line $1, command \"$2\". See $OUTPUT_FILE for more information"
+  exit 1
+}
+trap 'error_handler $LINENO $BASH_COMMAND' ERR
+
+# Let the UI know the script has started
+set_guest_attributes STATUS_ATTRIBUTE "STARTED"
 
 # Install common packages. Use pip instead of conda because conda is slow.
 /opt/conda/bin/pip install pre-commit nbdime nbstripout pylint pytest dsub pandas_gbq
@@ -228,6 +254,8 @@ readonly TERRA_GCP_NOTEBOOK_RESOURCE_NAME="$(get_metadata_value "instance/attrib
 if [[ -n "${TERRA_TEST_VALUE}" ]]; then
   sudo -u "${JUPYTER_USER}" sh -c "terra resource update gcp-notebook --name=${TERRA_GCP_NOTEBOOK_RESOURCE_NAME} --new-metadata=terra-test-result=${TERRA_TEST_VALUE}"
 fi
+
+set_guest_attributes "$STATUS_ATTRIBUTE" "COMPLETE"
 
 ####################################
 # Restart kernel so environment variables work in notebook. See PF-2178.
