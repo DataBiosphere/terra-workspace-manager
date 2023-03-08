@@ -841,7 +841,8 @@ public class MockMvcUtils {
         workspaceId,
         resourceId,
         objectMapper.writeValueAsString(requestBody),
-        userRequest);
+        userRequest,
+        HttpStatus.SC_OK);
   }
 
   private ApiGcpBigQueryDatasetResource getBqDataset(
@@ -1141,7 +1142,8 @@ public class MockMvcUtils {
         workspaceId,
         resourceId,
         objectMapper.writeValueAsString(requestBody),
-        userRequest);
+        userRequest,
+        HttpStatus.SC_OK);
   }
 
   /** Call cloneGcsBucket() and wait for flight to finish. */
@@ -1451,7 +1453,14 @@ public class MockMvcUtils {
         objectMapper.writeValueAsString(
             getUpdateFlexibleResourceRequestBody(newResourceName, newDescription, newData));
 
-    patchExpect(USER_REQUEST, request, CONTROLLED_FLEXIBLE_RESOURCE_V1_PATH_FORMAT, code);
+    updateResource(
+        ApiFlexibleResource.class,
+        CONTROLLED_FLEXIBLE_RESOURCE_V1_PATH_FORMAT,
+        workspaceId,
+        resourceId,
+        request,
+        USER_REQUEST,
+        code);
   }
 
   private ApiUpdateControlledFlexibleResourceRequestBody getUpdateFlexibleResourceRequestBody(
@@ -2052,7 +2061,8 @@ public class MockMvcUtils {
         workspaceId,
         resourceId,
         objectMapper.writeValueAsString(requestBody),
-        userRequest);
+        userRequest,
+        HttpStatus.SC_OK);
   }
 
   private <T> T updateResource(
@@ -2061,7 +2071,8 @@ public class MockMvcUtils {
       UUID workspaceId,
       UUID resourceId,
       String requestBody,
-      AuthenticatedUserRequest userRequest)
+      AuthenticatedUserRequest userRequest,
+      int code)
       throws Exception {
     String serializedResponse =
         mockMvc
@@ -2073,7 +2084,7 @@ public class MockMvcUtils {
                         .characterEncoding("UTF-8")
                         .content(requestBody),
                     userRequest))
-            .andExpect(status().is(HttpStatus.SC_OK))
+            .andExpect(status().is(code))
             .andReturn()
             .getResponse()
             .getContentAsString();

@@ -102,7 +102,7 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
     logger.info(
         "Updating flexible resource; resourceId {} workspaceId {}", resourceId, workspaceUuid);
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    final ControlledFlexibleResource flexibleResource =
+    ControlledFlexibleResource flexibleResource =
         controlledResourceMetadataManager
             .validateControlledResourceAndAction(
                 userRequest,
@@ -120,7 +120,7 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
             userRequest);
 
     // Retrieve and cast response to ApiFlexibleResource
-    final ControlledFlexibleResource updatedResource =
+    ControlledFlexibleResource updatedResource =
         getControlledResourceService()
             .getControlledResource(workspaceUuid, resourceId)
             .castByEnum(WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE);

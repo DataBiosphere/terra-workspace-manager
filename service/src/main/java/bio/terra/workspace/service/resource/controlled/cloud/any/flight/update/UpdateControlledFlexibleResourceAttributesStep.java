@@ -43,10 +43,10 @@ public class UpdateControlledFlexibleResourceAttributesStep implements Step {
         resourceDao.updateResource(
             flexResource.getWorkspaceId(),
             flexResource.getResourceId(),
-            null,
-            null,
+            /*name=*/ null,
+            /*description=*/ null,
             newAttributes,
-            null);
+            /*cloningInstructions=*/ null);
 
     if (!updated) {
       throw new RetryException("Failed to update flex resource with new data.");
@@ -60,6 +60,9 @@ public class UpdateControlledFlexibleResourceAttributesStep implements Step {
         flightContext
             .getWorkingMap()
             .get(WorkspaceFlightMapKeys.ResourceKeys.PREVIOUS_ATTRIBUTES, String.class);
+    if (previousAttributes == null) {
+      return StepResult.getStepResultSuccess();
+    }
     resourceDao.updateResource(
         flexResource.getWorkspaceId(),
         flexResource.getResourceId(),
