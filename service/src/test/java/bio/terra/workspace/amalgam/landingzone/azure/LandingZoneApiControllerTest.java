@@ -262,7 +262,8 @@ public class LandingZoneApiControllerTest extends BaseAzureUnitTest {
       ResultMatcher resourcesMatcher)
       throws Exception {
     LandingZoneJobService.AsyncJobResult<DeletedLandingZone> asyncJobResult =
-        AzureLandingZoneFixtures.createDeleteJobResult(JOB_ID, LANDING_ZONE_ID, jobStatus, BILLING_PROFILE_ID);
+        AzureLandingZoneFixtures.createDeleteJobResult(
+            JOB_ID, LANDING_ZONE_ID, jobStatus, BILLING_PROFILE_ID);
     when(mockLandingZoneService().getAsyncDeletionJobResult(any(), any(), any()))
         .thenReturn(asyncJobResult);
     when(mockFeatureConfiguration().isAzureEnabled()).thenReturn(true);

@@ -78,7 +78,8 @@ public class AzureLandingZoneFixtures {
             .submitted(Instant.now().toString())
             .resultURL("delete-result/"));
 
-    asyncJobResult.result(new DeletedLandingZone(landingZoneId, List.of("resource/id"), billingProfileId));
+    asyncJobResult.result(
+        new DeletedLandingZone(landingZoneId, List.of("resource/id"), billingProfileId));
     return asyncJobResult;
   }
 
