@@ -32,7 +32,6 @@ import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceSyncMapping.SyncMapping;
 import bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresource.ControlledFlexibleResource;
-import bio.terra.workspace.service.resource.controlled.cloud.any.flight.update.UpdateControlledFlexibleResourceFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.flight.UpdateAzureControlledResourceRegionFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespace.ControlledAzureRelayNamespaceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
@@ -391,7 +390,7 @@ public class ControlledResourceService {
         jobService
             .newJob()
             .description(jobDescription)
-            .flightClass(UpdateControlledFlexibleResourceFlight.class)
+            .flightClass(UpdateControlledResourceFlight.class)
             .resource(resource)
             .operationType(OperationType.UPDATE)
             .resourceType(resource.getResourceType())
