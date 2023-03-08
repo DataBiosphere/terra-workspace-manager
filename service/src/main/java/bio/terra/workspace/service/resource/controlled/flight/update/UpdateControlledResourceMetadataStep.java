@@ -16,12 +16,15 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import java.util.Optional;
+import java.util.UUID;
 
 public class UpdateControlledResourceMetadataStep implements Step {
 
   private final ResourceDao resourceDao;
   private final ControlledResourceMetadataManager controlledResourceMetadataManager;
-  private ControlledResource resource;
+  private final ControlledResource resource;
+  private final UUID resourceId;
+  private final UUID workspaceUuid;
 
   public UpdateControlledResourceMetadataStep(
       ControlledResourceMetadataManager controlledResourceMetadataManager,
@@ -30,6 +33,8 @@ public class UpdateControlledResourceMetadataStep implements Step {
     this.resourceDao = resourceDao;
     this.controlledResourceMetadataManager = controlledResourceMetadataManager;
     this.resource = resource;
+    this.resourceId = resource.getResourceId();
+    this.workspaceUuid = resource.getWorkspaceId();
   }
 
   @Override
@@ -70,11 +75,7 @@ public class UpdateControlledResourceMetadataStep implements Step {
     }
 
     controlledResourceMetadataManager.updateControlledResourceMetadata(
-        resource.getWorkspaceId(),
-        resource.getResourceId(),
-        resourceName,
-        resourceDescription,
-        cloningInstructions);
+        workspaceUuid, resourceId, resourceName, resourceDescription, cloningInstructions);
     return StepResult.getStepResultSuccess();
   }
 
@@ -87,8 +88,8 @@ public class UpdateControlledResourceMetadataStep implements Step {
     final var previousCloningInstructions =
         workingMap.get(ResourceKeys.PREVIOUS_CLONING_INSTRUCTIONS, CloningInstructions.class);
     resourceDao.updateResource(
-        resource.getWorkspaceId(),
-        resource.getResourceId(),
+        workspaceUuid,
+        resourceId,
         previousName,
         previousDescription,
         null,

@@ -16,6 +16,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
+import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
@@ -294,6 +295,30 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
   public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
     flight.addStep(
         new DeleteBigQueryDatasetStep(this, flightBeanBag.getCrlService()), RetryRules.cloud());
+  }
+
+  @Override
+  public void addUpdateSteps(UpdateControlledResourceFlight flight, FlightBeanBag flightBeanBag) {
+    final RetryRule gcpRetryRule = RetryRules.cloud();
+    ControlledBigQueryDatasetResource resource =
+        getResourceFromFlightInputParameters(
+            flight, WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
+
+    // Retrieve existing attributes in case of undo later.
+    flight.addStep(
+        new RetrieveBigQueryDatasetCloudAttributesStep(
+            resource.castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET),
+            flightBeanBag.getCrlService(),
+            flightBeanBag.getGcpCloudContextService()),
+        gcpRetryRule);
+
+    // Update the dataset's cloud attributes.
+    flight.addStep(
+        new UpdateBigQueryDatasetStep(
+            resource.castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET),
+            flightBeanBag.getCrlService(),
+            flightBeanBag.getGcpCloudContextService()),
+        gcpRetryRule);
   }
 
   public ApiGcpBigQueryDatasetAttributes toApiAttributes() {

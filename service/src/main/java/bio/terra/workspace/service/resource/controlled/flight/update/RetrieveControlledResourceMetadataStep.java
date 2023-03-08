@@ -44,6 +44,11 @@ public class RetrieveControlledResourceMetadataStep implements Step {
     flightContext
         .getWorkingMap()
         .put(ResourceKeys.PREVIOUS_RESOURCE_DESCRIPTION, controlledResource.getDescription());
+    flightContext
+        .getWorkingMap()
+        .put(
+            ResourceKeys.PREVIOUS_CLONING_INSTRUCTIONS,
+            controlledResource.getCloningInstructions());
     return StepResult.getStepResultSuccess();
   }
 
