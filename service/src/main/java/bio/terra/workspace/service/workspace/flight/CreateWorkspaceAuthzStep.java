@@ -12,6 +12,7 @@ import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.policy.TpsUtilities;
 import bio.terra.workspace.service.workspace.model.Workspace;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -52,7 +53,7 @@ public class CreateWorkspaceAuthzStep implements Step {
     // possible this step already created the resource. If WSM can either read the existing Sam
     // resource or create a new one, this is considered successful.
     if (!canReadExistingWorkspace(workspace.getWorkspaceId())) {
-      List<String> authDomains = null;
+      List<String> authDomains = new ArrayList<>();
       if (features.isTpsEnabled()) {
         // Don't depend on the PAO being configured.
         TpsPaoGetResult pao = tpsApiDispatch.getPao(workspace.workspaceId());
