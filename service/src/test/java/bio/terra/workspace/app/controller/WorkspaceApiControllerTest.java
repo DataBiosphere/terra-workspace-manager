@@ -58,10 +58,10 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.policy.TpsApiConversionUtils;
 import bio.terra.workspace.service.workspace.model.OperationType;
-import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants.Properties;
+import bio.terra.workspace.service.workspace.model.WorkspaceDescription;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -428,12 +428,14 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
         List.of(TPS_GROUP_POLICY.getAdditionalData().get(0).getValue());
     when(mockSamService().listWorkspaceIdsAndHighestRoles(any(), any()))
         .thenReturn(
-            ImmutableList.of(
-                new WorkspaceAndHighestRole(
+            ImmutableMap.of(
+                workspace.getId(),
+                new WorkspaceDescription(
                     workspaceDao.getWorkspace(workspace.getId()),
                     WsmIamRole.OWNER,
                     missingAuthDomains),
-                new WorkspaceAndHighestRole(
+                noPolicyWorkspace.getId(),
+                new WorkspaceDescription(
                     workspaceDao.getWorkspace(noPolicyWorkspace.getId()),
                     WsmIamRole.OWNER,
                     Collections.emptyList())));
@@ -490,8 +492,9 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
     ApiCreatedWorkspace workspace = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
     when(mockSamService().listWorkspaceIdsAndHighestRoles(any(), any()))
         .thenReturn(
-            ImmutableList.of(
-                new WorkspaceAndHighestRole(
+            ImmutableMap.of(
+                workspace.getId(),
+                new WorkspaceDescription(
                     workspaceDao.getWorkspace(workspace.getId()),
                     WsmIamRole.OWNER,
                     Collections.emptyList())));

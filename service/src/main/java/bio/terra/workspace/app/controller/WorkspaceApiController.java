@@ -73,7 +73,7 @@ import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
+import bio.terra.workspace.service.workspace.model.WorkspaceDescription;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.ArrayList;
@@ -224,8 +224,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     // Unlike other operations, there's no Sam permission required to list workspaces. As long as
     // a user is enabled, they can call this endpoint, though they may not have any workspaces they
     // can read.
-    List<WorkspaceAndHighestRole> workspacesAndHighestRoles =
-        workspaceService.listWorkspacesAndHighestRoles(
+    List<WorkspaceDescription> workspacesAndHighestRoles =
+        workspaceService.getWorkspaceDescriptions(
             userRequest, offset, limit, WsmIamRole.fromApiModel(minimumHighestRole));
     var response =
         new ApiWorkspaceDescriptionList()

@@ -17,7 +17,7 @@ import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceCategory;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
+import bio.terra.workspace.service.workspace.model.WorkspaceDescription;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -25,7 +25,6 @@ import com.google.common.collect.ImmutableSet;
 import io.opencensus.contrib.spring.aop.Traced;
 import io.opencensus.trace.Tracing;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -323,11 +322,11 @@ public class SamService {
    * @return map from workspace ID to highest SAM role
    */
   @Traced
-  public List<WorkspaceAndHighestRole> listWorkspaceIdsAndHighestRoles(
+  public Map<UUID, WorkspaceDescription> listWorkspaceIdsAndHighestRoles(
       AuthenticatedUserRequest userRequest, WsmIamRole minimumHighestRoleFromRequest)
       throws InterruptedException {
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
-    List<WorkspaceAndHighestRole> result = new ArrayList<>();
+    Map<UUID, WorkspaceDescription> result = new HashMap();
     try {
       List<UserResourcesResponse> userResourcesResponses =
           SamRetry.retry(
@@ -352,8 +351,9 @@ public class SamService {
               .ifPresent(
                   highestRole -> {
                     if (minimumHighestRoleFromRequest.roleAtLeastAsHighAs(highestRole)) {
-                      result.add(
-                          new WorkspaceAndHighestRole(
+                      result.put(
+                          workspaceId,
+                          new WorkspaceDescription(
                               workspaceOptional.get(),
                               highestRole,
                               ImmutableList.copyOf(

@@ -44,12 +44,13 @@ import bio.terra.workspace.service.resource.referenced.cloud.any.datareposnapsho
 import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
+import bio.terra.workspace.service.workspace.model.WorkspaceDescription;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
@@ -329,15 +330,11 @@ class SamServiceTest extends BaseConnectedTest {
 
   @Test
   void listWorkspaceIdsAndHighestRoles() throws Exception {
-    List<WorkspaceAndHighestRole> actual =
+    Map<UUID, WorkspaceDescription> actual =
         samService.listWorkspaceIdsAndHighestRoles(
             userAccessUtils.defaultUserAuthRequest(), WsmIamRole.READER);
 
-    WorkspaceAndHighestRole match =
-        actual.stream()
-            .filter(workspace -> workspace.workspace().workspaceId().equals(workspaceUuid))
-            .findFirst()
-            .orElseThrow();
+    WorkspaceDescription match = actual.get(workspaceUuid);
     assertEquals(WsmIamRole.OWNER, match.highestRole());
     assertTrue(match.missingAuthDomains().isEmpty());
   }

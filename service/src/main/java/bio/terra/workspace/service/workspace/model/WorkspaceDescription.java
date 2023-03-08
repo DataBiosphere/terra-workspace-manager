@@ -4,5 +4,5 @@ import bio.terra.workspace.service.iam.model.WsmIamRole;
 import java.util.List;
 import javax.annotation.Nullable;
 
-public record WorkspaceAndHighestRole(
+public record WorkspaceDescription(
     Workspace workspace, WsmIamRole highestRole, @Nullable List<String> missingAuthDomains) {}
