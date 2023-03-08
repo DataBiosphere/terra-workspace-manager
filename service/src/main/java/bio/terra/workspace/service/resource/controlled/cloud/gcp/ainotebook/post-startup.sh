@@ -255,6 +255,7 @@ if [[ -n "${TERRA_TEST_VALUE}" ]]; then
   sudo -u "${JUPYTER_USER}" sh -c "terra resource update gcp-notebook --name=${TERRA_GCP_NOTEBOOK_RESOURCE_NAME} --new-metadata=terra-test-result=${TERRA_TEST_VALUE}"
 fi
 
+# Let the UI know the script completed
 set_guest_attributes "$STATUS_ATTRIBUTE" "COMPLETE"
 
 ####################################
