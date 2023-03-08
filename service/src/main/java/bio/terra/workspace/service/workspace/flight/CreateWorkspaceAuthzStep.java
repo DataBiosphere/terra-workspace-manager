@@ -52,7 +52,7 @@ public class CreateWorkspaceAuthzStep implements Step {
     // possible this step already created the resource. If WSM can either read the existing Sam
     // resource or create a new one, this is considered successful.
     if (!canReadExistingWorkspace(workspace.getWorkspaceId())) {
-      List<String> authDomains = null;
+      List<String> authDomains = List.of();
       if (features.isTpsEnabled()) {
         // Don't depend on the PAO being configured.
         TpsPaoGetResult pao = tpsApiDispatch.getPao(workspace.workspaceId());
