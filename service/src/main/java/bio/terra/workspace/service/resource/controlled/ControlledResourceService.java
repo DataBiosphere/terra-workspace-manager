@@ -14,6 +14,7 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureRelayNamespaceCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
+import bio.terra.workspace.generated.model.ApiFlexibleResourceUpdateParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookUpdateParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
@@ -30,6 +31,8 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceSyncMapping.SyncMapping;
+import bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresource.ControlledFlexibleResource;
+import bio.terra.workspace.service.resource.controlled.cloud.any.flight.update.UpdateControlledFlexibleResourceFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.flight.UpdateAzureControlledResourceRegionFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespace.ControlledAzureRelayNamespaceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
@@ -348,6 +351,60 @@ public class ControlledResourceService {
             .addParameter(ResourceKeys.RESOURCE_NAME, resourceName)
             .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, resourceDescription);
     return jobBuilder.submitAndWait(ControlledBigQueryDatasetResource.class);
+  }
+
+  /** Starts an update controlled flexible resource, blocking until its job is finished. */
+  public void updateFlexResource(
+      ControlledFlexibleResource resource,
+      @Nullable ApiFlexibleResourceUpdateParameters updateParameters,
+      @Nullable String resourceName,
+      @Nullable String resourceDescription,
+      AuthenticatedUserRequest userRequest) {
+    // TODO (PF-2540): Include when cloning support is added.
+    //    if (null != updateParameters && null != updateParameters.getCloningInstructions()) {
+    //      ResourceValidationUtils.validateCloningInstructions(
+    //          StewardshipType.CONTROLLED,
+    //          CloningInstructions.fromApiModel(updateParameters.getCloningInstructions()));
+    //    }
+
+    // Name may be null if the user is not updating it in this request.
+    if (resourceName != null) {
+      ResourceValidationUtils.validateResourceName(resourceName);
+    }
+    // Description may also be null, but this validator accepts null descriptions.
+    ResourceValidationUtils.validateResourceDescriptionName(resourceDescription);
+
+    // Decode the base64, so we can store the string directly in the database.
+    byte[] encodedJSON = updateParameters != null ? updateParameters.getData() : null;
+    String decodedData = ControlledFlexibleResource.getDecodedJSONFromByteArray(encodedJSON);
+
+    // The validator accepts null data.
+    ResourceValidationUtils.validateFlexResourceDataSize(decodedData);
+
+    final String jobDescription =
+        String.format(
+            "Update controlled flexible resource type %s (typeNamespace %s); resource id %s; resource name %s",
+            resource.getType(),
+            resource.getTypeNamespace(),
+            resource.getResourceId(),
+            resource.getName());
+
+    final JobBuilder jobBuilder =
+        jobService
+            .newJob()
+            .description(jobDescription)
+            .flightClass(UpdateControlledFlexibleResourceFlight.class)
+            .resource(resource)
+            .operationType(OperationType.UPDATE)
+            .resourceType(resource.getResourceType())
+            .resourceName(resource.getName())
+            .userRequest(userRequest)
+            .workspaceId(resource.getWorkspaceId().toString())
+            .stewardshipType(resource.getStewardshipType())
+            .addParameter(ControlledResourceKeys.UPDATE_FLEX_DATA, decodedData)
+            .addParameter(ResourceKeys.RESOURCE_NAME, resourceName)
+            .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, resourceDescription);
+    jobBuilder.submitAndWait();
   }
 
   /**

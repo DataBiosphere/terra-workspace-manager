@@ -298,6 +298,21 @@ public class ControlledResourceFixtures {
     return new ApiGcpGcsBucketCreationParameters().name(uniqueBucketName());
   }
 
+  public static ApiControlledFlexibleResourceCreationParameters
+      defaultFlexResourceCreationParameters() {
+    return new ApiControlledFlexibleResourceCreationParameters()
+        .typeNamespace("terra")
+        .type("fake-flexible-type")
+        .data(null);
+  }
+
+  public static final byte[] DEFAULT_UPDATE_FLEX_DATA =
+      "{\"description\":\"this is new JSON\"}".getBytes(StandardCharsets.UTF_8);
+
+  public static ApiFlexibleResourceUpdateParameters defaultFlexUpdateParameters() {
+    return new ApiFlexibleResourceUpdateParameters().data(DEFAULT_UPDATE_FLEX_DATA);
+  }
+
   public static final String RESOURCE_NAME = "my_first_bucket";
 
   public static final String RESOURCE_DESCRIPTION =

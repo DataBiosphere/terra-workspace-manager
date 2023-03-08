@@ -23,6 +23,7 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -170,6 +171,14 @@ public class ControlledFlexibleResource extends ControlledResource {
 
     // Limit to 5 kilobytes in size.
     ResourceValidationUtils.validateFlexResourceDataSize(getData());
+  }
+
+  public static String getDecodedJSONFromByteArray(@Nullable byte[] encodedJSON) {
+    // Decode the base64, so we can store the string directly in the database.
+    if (encodedJSON == null) {
+      return null;
+    }
+    return new String(encodedJSON, StandardCharsets.UTF_8);
   }
 
   @Override

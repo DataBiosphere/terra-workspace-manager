@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
+import bio.terra.workspace.generated.model.ApiCreatedControlledFlexibleResource;
 import bio.terra.workspace.generated.model.ApiFlexibleResource;
 import bio.terra.workspace.generated.model.ApiResourceLineage;
 import bio.terra.workspace.generated.model.ApiResourceType;
@@ -39,6 +40,8 @@ public class ControlledFlexibleResourceApiControllerTest extends BaseUnitTest {
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
   @Autowired ObjectMapper objectMapper;
+  private static final String defaultDecodedData = "{\"name\":\"original JSON\"}";
+  private static final String defaultNewDecodedData = "{\"description\":\"this is new JSON\"}";
   private static final String defaultName = "fake-flexible-resource";
   private static final String defaultTypeNamespace = "terra";
   private static final String defaultType = "fake-flexible-type";
@@ -90,19 +93,11 @@ public class ControlledFlexibleResourceApiControllerTest extends BaseUnitTest {
     // Encode the JSON string in base64.
     byte[] encodedJsonString = expectedInputJsonString.getBytes(StandardCharsets.UTF_8);
 
-    var created =
-        mockMvcUtils
-            .createFlexibleResource(
-                USER_REQUEST,
-                workspaceId,
-                defaultName,
-                defaultTypeNamespace,
-                defaultType,
-                encodedJsonString)
-            .getFlexibleResource();
+    ApiFlexibleResource createdFlexResource =
+        createDefaultFlexResourceWithData(workspaceId, encodedJsonString).getFlexibleResource();
 
     assertFlexibleResource(
-        created,
+        createdFlexResource,
         ApiStewardshipType.CONTROLLED,
         ApiCloningInstructionsEnum.DEFINITION,
         workspaceId,
@@ -116,8 +111,8 @@ public class ControlledFlexibleResourceApiControllerTest extends BaseUnitTest {
 
     ApiFlexibleResource gotResource =
         mockMvcUtils.getFlexibleResource(
-            USER_REQUEST, workspaceId, created.getMetadata().getResourceId());
-    assertApiFlexibleResourceEquals(created, gotResource);
+            USER_REQUEST, workspaceId, createdFlexResource.getMetadata().getResourceId());
+    assertApiFlexibleResourceEquals(createdFlexResource, gotResource);
   }
 
   @Test
@@ -139,16 +134,98 @@ public class ControlledFlexibleResourceApiControllerTest extends BaseUnitTest {
   }
 
   @Test
+  public void update() throws Exception {
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+
+    UUID resourceId = createDefaultFlexResource(workspaceId).getResourceId();
+
+    var newName = "new-flex-resource-name";
+    var newDescription = "This is an updated description";
+
+    byte[] encodedNewData = defaultNewDecodedData.getBytes(StandardCharsets.UTF_8);
+
+    ApiFlexibleResource updatedFlex =
+        mockMvcUtils.updateFlexibleResource(
+            workspaceId, resourceId, newName, newDescription, encodedNewData);
+
+    assertEquals(newName, updatedFlex.getMetadata().getName());
+    assertEquals(newDescription, updatedFlex.getMetadata().getDescription());
+    assertEquals(defaultNewDecodedData, updatedFlex.getAttributes().getData());
+    assertEquals(defaultType, updatedFlex.getAttributes().getType());
+    assertEquals(defaultTypeNamespace, updatedFlex.getAttributes().getTypeNamespace());
+  }
+
+  @Test
+  public void update_onlyNameAndDescription() throws Exception {
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+
+    UUID resourceId = createDefaultFlexResource(workspaceId).getResourceId();
+
+    var newName = "new-flex-resource-name";
+    var newDescription = "This is an updated description";
+
+    ApiFlexibleResource updatedFlex =
+        mockMvcUtils.updateFlexibleResource(workspaceId, resourceId, newName, newDescription, null);
+
+    assertEquals(newName, updatedFlex.getMetadata().getName());
+    assertEquals(newDescription, updatedFlex.getMetadata().getDescription());
+    assertEquals(defaultDecodedData, updatedFlex.getAttributes().getData());
+    assertEquals(defaultType, updatedFlex.getAttributes().getType());
+    assertEquals(defaultTypeNamespace, updatedFlex.getAttributes().getTypeNamespace());
+  }
+
+  @Test
+  public void update_onlyData() throws Exception {
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+
+    var originalFlex = createDefaultFlexResource(workspaceId).getFlexibleResource();
+
+    UUID resourceId = originalFlex.getMetadata().getResourceId();
+
+    String originalDescription = originalFlex.getMetadata().getDescription();
+
+    byte[] encodedNewData = defaultNewDecodedData.getBytes(StandardCharsets.UTF_8);
+
+    ApiFlexibleResource updatedFlex =
+        mockMvcUtils.updateFlexibleResource(workspaceId, resourceId, null, null, encodedNewData);
+
+    assertEquals(defaultName, updatedFlex.getMetadata().getName());
+    assertEquals(originalDescription, updatedFlex.getMetadata().getDescription());
+    assertEquals(defaultNewDecodedData, updatedFlex.getAttributes().getData());
+    assertEquals(defaultType, updatedFlex.getAttributes().getType());
+    assertEquals(defaultTypeNamespace, updatedFlex.getAttributes().getTypeNamespace());
+  }
+
+  @Test
+  public void update_rejectsLargeData() throws Exception {
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+
+    UUID resourceId = createDefaultFlexResource(workspaceId).getResourceId();
+
+    byte[] veryLargeData = new byte[6000];
+    Arrays.fill(veryLargeData, (byte) 'a');
+
+    mockMvcUtils.updateFlexibleResourceExpect(
+        workspaceId, resourceId, null, null, veryLargeData, HttpStatus.SC_BAD_REQUEST);
+  }
+
+  private ApiCreatedControlledFlexibleResource createDefaultFlexResource(UUID workspaceId)
+      throws Exception {
+    byte[] originalEncodedData = defaultDecodedData.getBytes(StandardCharsets.UTF_8);
+    return createDefaultFlexResourceWithData(workspaceId, originalEncodedData);
+  }
+
+  private ApiCreatedControlledFlexibleResource createDefaultFlexResourceWithData(
+      UUID workspaceId, byte[] data) throws Exception {
+    return mockMvcUtils.createFlexibleResource(
+        USER_REQUEST, workspaceId, defaultName, defaultTypeNamespace, defaultType, data);
+  }
+
+  @Test
   public void delete() throws Exception {
     UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
 
-    var resourceId =
-        mockMvcUtils
-            .createFlexibleResource(
-                USER_REQUEST, workspaceId, defaultName, defaultTypeNamespace, defaultType, null)
-            .getFlexibleResource()
-            .getMetadata()
-            .getResourceId();
+    var resourceId = createDefaultFlexResourceWithData(workspaceId, null).getResourceId();
 
     mockMvcUtils.getFlexibleResourceExpect(workspaceId, resourceId, HttpStatus.SC_OK);
 

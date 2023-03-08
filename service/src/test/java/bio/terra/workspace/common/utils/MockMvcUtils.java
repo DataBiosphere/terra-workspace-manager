@@ -68,6 +68,7 @@ import bio.terra.workspace.generated.model.ApiDataRepoSnapshotAttributes;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiFlexibleResource;
+import bio.terra.workspace.generated.model.ApiFlexibleResourceUpdateParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableAttributes;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableResource;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetAttributes;
@@ -103,6 +104,7 @@ import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
 import bio.terra.workspace.generated.model.ApiUpdateBigQueryDataTableReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateBigQueryDatasetReferenceRequestBody;
+import bio.terra.workspace.generated.model.ApiUpdateControlledFlexibleResourceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateControlledGcpBigQueryDatasetRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateDataRepoSnapshotReferenceRequestBody;
@@ -850,7 +852,8 @@ public class MockMvcUtils {
         workspaceId,
         resourceId,
         objectMapper.writeValueAsString(requestBody),
-        userRequest);
+        userRequest,
+        HttpStatus.SC_OK);
   }
 
   private ApiGcpBigQueryDatasetResource getBqDataset(
@@ -1148,7 +1151,8 @@ public class MockMvcUtils {
         workspaceId,
         resourceId,
         objectMapper.writeValueAsString(requestBody),
-        userRequest);
+        userRequest,
+        HttpStatus.SC_OK);
   }
 
   /** Call cloneGcsBucket() and wait for flight to finish. */
@@ -1421,6 +1425,57 @@ public class MockMvcUtils {
       AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
     deleteResource(
         userRequest, workspaceId, resourceId, CONTROLLED_FLEXIBLE_RESOURCE_V1_PATH_FORMAT);
+  }
+
+  public ApiFlexibleResource updateFlexibleResource(
+      UUID workspaceId,
+      UUID resourceId,
+      @Nullable String newResourceName,
+      @Nullable String newDescription,
+      @Nullable byte[] newData)
+      throws Exception {
+    String request =
+        objectMapper.writeValueAsString(
+            getUpdateFlexibleResourceRequestBody(newResourceName, newDescription, newData));
+
+    return updateResource(
+        ApiFlexibleResource.class,
+        CONTROLLED_FLEXIBLE_RESOURCE_V1_PATH_FORMAT,
+        workspaceId,
+        resourceId,
+        request,
+        USER_REQUEST,
+        HttpStatus.SC_OK);
+  }
+
+  public void updateFlexibleResourceExpect(
+      UUID workspaceId,
+      UUID resourceId,
+      @Nullable String newResourceName,
+      @Nullable String newDescription,
+      @Nullable byte[] newData,
+      int code)
+      throws Exception {
+    String request =
+        objectMapper.writeValueAsString(
+            getUpdateFlexibleResourceRequestBody(newResourceName, newDescription, newData));
+
+    updateResource(
+        ApiFlexibleResource.class,
+        CONTROLLED_FLEXIBLE_RESOURCE_V1_PATH_FORMAT,
+        workspaceId,
+        resourceId,
+        request,
+        USER_REQUEST,
+        code);
+  }
+
+  private ApiUpdateControlledFlexibleResourceRequestBody getUpdateFlexibleResourceRequestBody(
+      @Nullable String newResourceName, @Nullable String newDescription, @Nullable byte[] newData) {
+    return new ApiUpdateControlledFlexibleResourceRequestBody()
+        .description(newDescription)
+        .name(newResourceName)
+        .updateParameters(new ApiFlexibleResourceUpdateParameters().data(newData));
   }
 
   public ApiDataRepoSnapshotResource createReferencedDataRepoSnapshot(
@@ -2004,18 +2059,24 @@ public class MockMvcUtils {
         workspaceId,
         resourceId,
         objectMapper.writeValueAsString(requestBody),
-        userRequest);
+        userRequest,
+        HttpStatus.SC_OK);
   }
 
+  /**
+   * Expect a code when updating, and return the serialized API resource if expected code is
+   * successful.
+   */
   private <T> T updateResource(
       Class<T> classType,
       String pathFormat,
       UUID workspaceId,
       UUID resourceId,
       String requestBody,
-      AuthenticatedUserRequest userRequest)
+      AuthenticatedUserRequest userRequest,
+      int code)
       throws Exception {
-    String serializedResponse =
+    ResultActions result =
         mockMvc
             .perform(
                 addAuth(
@@ -2025,10 +2086,15 @@ public class MockMvcUtils {
                         .characterEncoding("UTF-8")
                         .content(requestBody),
                     userRequest))
-            .andExpect(status().is(HttpStatus.SC_OK))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
+            .andExpect(status().is(code));
+
+    // If not successful then don't serialize the response.
+    if (code >= 300) {
+      return null;
+    }
+
+    String serializedResponse = result.andReturn().getResponse().getContentAsString();
+
     return objectMapper.readValue(serializedResponse, classType);
   }
 
@@ -2367,6 +2433,28 @@ public class MockMvcUtils {
         .perform(
             addAuth(
                 post(path.formatted(workspaceId))
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .characterEncoding("UTF-8")
+                    .content(request),
+                userRequest))
+        .andExpect(status().is2xxSuccessful())
+        .andReturn()
+        .getResponse()
+        .getContentAsString();
+  }
+
+  private String getSerializedResponseForPatch(
+      AuthenticatedUserRequest userRequest,
+      String path,
+      UUID workspaceId,
+      UUID resourceId,
+      String request)
+      throws Exception {
+    return mockMvc
+        .perform(
+            addAuth(
+                patch(path.formatted(workspaceId, resourceId))
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .accept(MediaType.APPLICATION_JSON)
                     .characterEncoding("UTF-8")

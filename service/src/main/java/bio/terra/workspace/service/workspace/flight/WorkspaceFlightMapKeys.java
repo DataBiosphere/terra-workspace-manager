@@ -35,6 +35,7 @@ public final class WorkspaceFlightMapKeys {
     public static final String WORKSPACE_ID_TO_AZURE_CLOUD_CONTEXT_MAP =
         "workspaceIdToAzureCloudContextMap";
     public static final String UPDATE_PARAMETERS = "updateParameters";
+    public static final String UPDATE_FLEX_DATA = "updateFlexData";
     public static final String PREVIOUS_UPDATE_PARAMETERS = "previousUpdateParameters";
     public static final String CREATE_RESOURCE_REGION = "createResourceRegion";
 
