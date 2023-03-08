@@ -1430,15 +1430,15 @@ public class MockMvcUtils {
     String request =
         objectMapper.writeValueAsString(
             getUpdateFlexibleResourceRequestBody(newResourceName, newDescription, newData));
-    String serializedResponse =
-        getSerializedResponseForPatch(
-            USER_REQUEST,
-            CONTROLLED_FLEXIBLE_RESOURCE_V1_PATH_FORMAT,
-            workspaceId,
-            resourceId,
-            request);
 
-    return objectMapper.readValue(serializedResponse, ApiFlexibleResource.class);
+    return updateResource(
+        ApiFlexibleResource.class,
+        CONTROLLED_FLEXIBLE_RESOURCE_V1_PATH_FORMAT,
+        workspaceId,
+        resourceId,
+        request,
+        USER_REQUEST,
+        HttpStatus.SC_OK);
   }
 
   public void updateFlexibleResourceExpect(
@@ -2065,6 +2065,10 @@ public class MockMvcUtils {
         HttpStatus.SC_OK);
   }
 
+  /**
+   * Expect a code when updating, and return the serialized API resource if expected code is
+   * successful.
+   */
   private <T> T updateResource(
       Class<T> classType,
       String pathFormat,
@@ -2074,7 +2078,7 @@ public class MockMvcUtils {
       AuthenticatedUserRequest userRequest,
       int code)
       throws Exception {
-    String serializedResponse =
+    ResultActions result =
         mockMvc
             .perform(
                 addAuth(
@@ -2084,10 +2088,15 @@ public class MockMvcUtils {
                         .characterEncoding("UTF-8")
                         .content(requestBody),
                     userRequest))
-            .andExpect(status().is(code))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
+            .andExpect(status().is(code));
+
+    // If not successful then don't serialize the response.
+    if (code >= 300) {
+      return null;
+    }
+
+    String serializedResponse = result.andReturn().getResponse().getContentAsString();
+
     return objectMapper.readValue(serializedResponse, classType);
   }
 
@@ -2469,22 +2478,6 @@ public class MockMvcUtils {
         .perform(
             addAuth(
                 post(api)
-                    .contentType(MediaType.APPLICATION_JSON_VALUE)
-                    .accept(MediaType.APPLICATION_JSON)
-                    .characterEncoding("UTF-8")
-                    .content(request),
-                userRequest))
-        .andExpect(status().is(httpStatus));
-  }
-
-  /** Patch http request and expect error thrown. */
-  public ResultActions patchExpect(
-      AuthenticatedUserRequest userRequest, String request, String api, int httpStatus)
-      throws Exception {
-    return mockMvc
-        .perform(
-            addAuth(
-                patch(api)
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .accept(MediaType.APPLICATION_JSON)
                     .characterEncoding("UTF-8")
