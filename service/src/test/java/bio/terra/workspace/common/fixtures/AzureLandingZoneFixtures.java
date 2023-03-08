@@ -66,7 +66,7 @@ public class AzureLandingZoneFixtures {
   }
 
   public static LandingZoneJobService.AsyncJobResult<DeletedLandingZone> createDeleteJobResult(
-      String jobId, UUID landingZoneId, JobReport.StatusEnum jobStatus) {
+      String jobId, UUID landingZoneId, JobReport.StatusEnum jobStatus, UUID billingProfileId) {
     LandingZoneJobService.AsyncJobResult<DeletedLandingZone> asyncJobResult =
         new LandingZoneJobService.AsyncJobResult<>();
     asyncJobResult.jobReport(
@@ -78,7 +78,7 @@ public class AzureLandingZoneFixtures {
             .submitted(Instant.now().toString())
             .resultURL("delete-result/"));
 
-    asyncJobResult.result(new DeletedLandingZone(landingZoneId, List.of("resource/id")));
+    asyncJobResult.result(new DeletedLandingZone(landingZoneId, List.of("resource/id"), billingProfileId));
     return asyncJobResult;
   }
 
