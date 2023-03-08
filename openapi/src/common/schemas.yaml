@@ -47,7 +47,15 @@ components:
             from source bucket to new bucket.
           * COPY_REFERENCE: Used for controlled and referenced resources. Create new referenced resource
             that points to same cloud resource as source resource.
-      enum: ['COPY_NOTHING', 'COPY_DEFINITION', 'COPY_RESOURCE', 'COPY_REFERENCE']
+          * COPY_LINK_REFERENCE: Used for controlled and referenced resources. Create a new referenced resource
+            that points to the same cloud resource as the source resource, AND link the source workspace
+            policy to the destination workspace policy; changes in the source will propagate to the destination.
+      enum:
+        - COPY_NOTHING
+        - COPY_DEFINITION
+        - COPY_RESOURCE
+        - COPY_REFERENCE
+        - COPY_LINK_REFERENCE
   
     ControlledResourceIamRole:
       description: Enum containing all IAM roles on controlled resources available to users
