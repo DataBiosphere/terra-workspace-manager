@@ -48,7 +48,7 @@ public class CloneControlledAzureStorageContainerResourceFlightTest extends Base
     FlightMap inputs = new FlightMap();
     inputs.put(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE, resource);
     inputs.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
-    inputs.put(WorkspaceFlightMapKeys.ControlledResourceKeys.CLONING_INSTRUCTIONS, "COPY_NOTHING");
+    inputs.put(WorkspaceFlightMapKeys.ResourceKeys.CLONING_INSTRUCTIONS, "COPY_NOTHING");
     inputs.put(
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.randomUUID());
     inputs.put(

@@ -33,13 +33,16 @@ public class CloneControlledAzureStorageContainerResourceFlight extends Flight {
         inputParameters,
         WorkspaceFlightMapKeys.ResourceKeys.RESOURCE,
         JobMapKeys.AUTH_USER_INFO.getKeyName(),
-        WorkspaceFlightMapKeys.ControlledResourceKeys.CLONING_INSTRUCTIONS,
+        WorkspaceFlightMapKeys.ResourceKeys.CLONING_INSTRUCTIONS,
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_ID,
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID);
 
     var flightBeanBag = FlightBeanBag.getFromObject(applicationContext);
     var sourceResource =
-        inputParameters.get(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE, ControlledResource.class);
+        FlightUtils.getRequired(
+            inputParameters,
+            WorkspaceFlightMapKeys.ResourceKeys.RESOURCE,
+            ControlledResource.class);
     var userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
     var destinationWorkspaceId =
@@ -53,7 +56,7 @@ public class CloneControlledAzureStorageContainerResourceFlight extends Flight {
     var cloningInstructions =
         Optional.ofNullable(
                 inputParameters.get(
-                    WorkspaceFlightMapKeys.ControlledResourceKeys.CLONING_INSTRUCTIONS,
+                    WorkspaceFlightMapKeys.ResourceKeys.CLONING_INSTRUCTIONS,
                     CloningInstructions.class))
             .orElse(sourceResource.getCloningInstructions());
 
@@ -90,7 +93,7 @@ public class CloneControlledAzureStorageContainerResourceFlight extends Flight {
           new MergePolicyAttributesStep(
               sourceResource.getWorkspaceId(),
               destinationWorkspaceId,
-              userRequest,
+              cloningInstructions,
               flightBeanBag.getTpsApiDispatch()));
     }
 
@@ -106,7 +109,8 @@ public class CloneControlledAzureStorageContainerResourceFlight extends Flight {
 
     // TODO WOR-590 add step to copy source container metadata + attributes
 
-    if (CloningInstructions.COPY_REFERENCE == cloningInstructions) {
+    if (CloningInstructions.COPY_REFERENCE == cloningInstructions
+        || CloningInstructions.LINK_REFERENCE == cloningInstructions) {
       throw new IllegalArgumentException("Cloning referenced azure containers not supported");
     } else if (CloningInstructions.COPY_RESOURCE == cloningInstructions
         || CloningInstructions.COPY_DEFINITION == cloningInstructions) {

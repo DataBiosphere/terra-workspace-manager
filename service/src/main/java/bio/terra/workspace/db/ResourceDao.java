@@ -277,6 +277,30 @@ public class ResourceDao {
   }
 
   /**
+   * If any of the source resource from a workspace require LINK_REFERENCE for the cloning
+   * instruction, then we need to link policy instead of merging policy. This query scans the
+   * resources to find out.
+   *
+   * @param workspaceUuid workspace to query
+   * @return true if the workspace has LINK_REFERENCE cloning instructions on any resources
+   */
+  @ReadTransaction
+  public boolean workspaceRequiresLinkReferences(UUID workspaceUuid) {
+    final String sql =
+        """
+      SELECT COUNT(*) FROM resource
+      WHERE workspace_id = :workspace_id AND cloning_instructions = :cloning_instructions
+      """;
+
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceUuid.toString())
+            .addValue("cloning_instructions", CloningInstructions.LINK_REFERENCE.toSql());
+    Integer count = jdbcTemplate.queryForObject(sql, params, Integer.class);
+    return (count != null && count > 0);
+  }
+
+  /**
    * Returns a list of all controlled resources in a workspace, optionally filtering by cloud
    * platform.
    *

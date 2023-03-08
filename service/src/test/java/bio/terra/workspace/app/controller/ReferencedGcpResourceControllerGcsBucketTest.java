@@ -36,6 +36,7 @@ import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.junit.jupiter.EnabledIf;
 import org.springframework.test.web.servlet.MockMvc;
 
 /** Connected tests for referenced GCS objects. */
@@ -344,13 +345,8 @@ public class ReferencedGcpResourceControllerGcsBucketTest extends BaseConnectedT
   // Destination workspace policy is the merge of source workspace policy and pre-clone destination
   // workspace policy
   @Test
+  @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
   void clone_policiesMerged() throws Exception {
-    logger.info("features.isTpsEnabled(): %s".formatted(features.isTpsEnabled()));
-    // Don't run the test if TPS is disabled
-    if (!features.isTpsEnabled()) {
-      return;
-    }
-
     // Clean up policies from previous runs, if any exist
     mockMvcUtils.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId);
     mockMvcUtils.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
