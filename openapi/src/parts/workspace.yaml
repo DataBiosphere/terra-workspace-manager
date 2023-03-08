@@ -464,6 +464,7 @@ components:
             GCP Location to use for cloud-based resources. If omitted, the location of the source
             resource will be used.
           type: string
+        additionalPolicies:
 
     ResourceCloneDetails:
       description: >-
