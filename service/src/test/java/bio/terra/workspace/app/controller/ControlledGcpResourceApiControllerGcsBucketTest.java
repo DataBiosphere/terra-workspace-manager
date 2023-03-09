@@ -39,6 +39,7 @@ import bio.terra.workspace.generated.model.ApiResourceLineage;
 import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
+import bio.terra.workspace.generated.model.ApiWsmPolicyInputs;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -132,7 +133,9 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
     projectId = workspace.getGcpContext().getProjectId();
     workspaceId2 =
         mockMvcUtils
-            .createWorkspaceWithCloudContext(userAccessUtils.defaultUserAuthRequest())
+            .createWorkspaceWithPolicy(
+                userAccessUtils.defaultUserAuthRequest(),
+                new ApiWsmPolicyInputs().addInputsItem(PolicyFixtures.GROUP_POLICY_DEFAULT))
             .getId();
     ApiWorkspaceDescription workspace2 =
         mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
@@ -652,7 +655,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
     // Assert dest workspace policy is reduced to the narrower region.
     ApiWorkspaceDescription destWorkspace =
         mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
-    assertThat(destWorkspace.getPolicies(), containsInAnyOrder(PolicyFixtures.REGION_POLICY_IOWA));
+    assertThat(destWorkspace.getPolicies(), containsInAnyOrder(PolicyFixtures.REGION_POLICY_IOWA, PolicyFixtures.GROUP_POLICY_DEFAULT));
     assertFalse(destWorkspace.getPolicies().contains(PolicyFixtures.REGION_POLICY_USA));
 
     // Clean up: Delete policies
