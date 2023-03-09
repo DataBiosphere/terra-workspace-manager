@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableList;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -98,7 +99,6 @@ public class ControlledFlexibleResourceApiControllerConnectedTest extends BaseCo
 
   // Destination workspace policy is the merge of source workspace policy and pre-clone destination
   // workspace policy
-  // TODO: Enable when TPS is fixed.
   @Test
   void clone_policiesMerged() throws Exception {
     logger.info("features.isTpsEnabled(): %s".formatted(features.isTpsEnabled()));
@@ -111,16 +111,16 @@ public class ControlledFlexibleResourceApiControllerConnectedTest extends BaseCo
     mockMvcUtils.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId);
     mockMvcUtils.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
 
-    // Add region policy to source workspace. Add group policy to dest workspace.
+    // Add broader region policy to destination, narrow policy on source.
     mockMvcUtils.updatePolicies(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
-        /*policiesToAdd=*/ ImmutableList.of(PolicyFixtures.REGION_POLICY),
+        /*policiesToAdd=*/ ImmutableList.of(PolicyFixtures.REGION_POLICY_IOWA),
         /*policiesToRemove=*/ null);
     mockMvcUtils.updatePolicies(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId2,
-        /*policiesToAdd=*/ ImmutableList.of(PolicyFixtures.GROUP_POLICY),
+        /*policiesToAdd=*/ ImmutableList.of(PolicyFixtures.REGION_POLICY_USA),
         /*policiesToRemove=*/ null);
 
     // Clone resource
@@ -134,68 +134,18 @@ public class ControlledFlexibleResourceApiControllerConnectedTest extends BaseCo
         destResourceName,
         /*destDescription*/ null);
 
-    // Assert dest workspace has group and region policies
+    // Assert dest workspace policy is reduced to the narrower region.
     ApiWorkspaceDescription destWorkspace =
         mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
     assertThat(
         destWorkspace.getPolicies(),
-        containsInAnyOrder(PolicyFixtures.GROUP_POLICY, PolicyFixtures.REGION_POLICY));
+        containsInAnyOrder(PolicyFixtures.REGION_POLICY_IOWA, PolicyFixtures.GROUP_POLICY_DEFAULT));
+    Assertions.assertFalse(destWorkspace.getPolicies().contains(PolicyFixtures.REGION_POLICY_USA));
 
     // Clean up: Delete policies
     mockMvcUtils.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId);
     mockMvcUtils.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
   }
-
-  // Destination workspace policy is the merge of source workspace policy and pre-clone destination
-  // workspace policy
-  //  @Test
-  //  void clone_policiesMerged() throws Exception {
-  //    logger.info("features.isTpsEnabled(): %s".formatted(features.isTpsEnabled()));
-  //    // Don't run the test if TPS is disabled
-  //    if (!features.isTpsEnabled()) {
-  //      return;
-  //    }
-  //
-  //    // Clean up policies from previous runs, if any exist
-  //    mockMvcUtils.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId);
-  //    mockMvcUtils.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
-  //
-  //    // Add broader region policy to destination, narrow policy on source.
-  //    mockMvcUtils.updatePolicies(
-  //        userAccessUtils.defaultUserAuthRequest(),
-  //        workspaceId,
-  //        /*policiesToAdd=*/ ImmutableList.of(PolicyFixtures.REGION_POLICY_IOWA),
-  //        /*policiesToRemove=*/ null);
-  //    mockMvcUtils.updatePolicies(
-  //        userAccessUtils.defaultUserAuthRequest(),
-  //        workspaceId2,
-  //        /*policiesToAdd=*/ ImmutableList.of(PolicyFixtures.REGION_POLICY_USA),
-  //        /*policiesToRemove=*/ null);
-  //
-  //    // Clone resource
-  //    String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
-  //    mockMvcUtils.cloneControlledBqDataset(
-  //        userAccessUtils.defaultUserAuthRequest(),
-  //        /*sourceWorkspaceId=*/ workspaceId,
-  //        sourceResource.getMetadata().getResourceId(),
-  //        /*destWorkspaceId=*/ workspaceId2,
-  //        ApiCloningInstructionsEnum.REFERENCE,
-  //        destResourceName,
-  //        /*destDatasetName*/ null);
-  //
-  //    // Assert dest workspace policy is reduced to the narrower region.
-  //    ApiWorkspaceDescription destWorkspace =
-  //        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
-  //    assertThat(
-  //        destWorkspace.getPolicies(),
-  //        containsInAnyOrder(PolicyFixtures.REGION_POLICY_IOWA,
-  // PolicyFixtures.GROUP_POLICY_DEFAULT));
-  //    assertFalse(destWorkspace.getPolicies().contains(PolicyFixtures.REGION_POLICY_USA));
-  //
-  //    // Clean up: Delete policies
-  //    mockMvcUtils.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId);
-  //    mockMvcUtils.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
-  //  }
 
   @Test
   public void clone_requesterNoReadAccessOnSourceWorkspace_throws403() throws Exception {
