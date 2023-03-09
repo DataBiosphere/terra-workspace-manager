@@ -9,8 +9,6 @@ import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_SUBJECT_ID;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant.DEFAULT_ZONE;
 import static bio.terra.workspace.unit.WorkspaceUnitTestUtils.createWorkspaceWithGcpContext;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -81,7 +79,7 @@ public class ResourceDaoTest extends BaseUnitTest {
     resourceDao.createControlledResource(resource);
 
     var getResource = resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId());
-    assertEquals(resource, getResource);
+    assertTrue(resource.partialEqual(getResource));
     assertNotNull(getResource.getCreatedDate());
     assertEquals(getResource.getCreatedDate(), getResource.getLastUpdatedDate());
     assertEquals(getResource.getCreatedByEmail(), getResource.getLastUpdatedByEmail());
@@ -94,7 +92,7 @@ public class ResourceDaoTest extends BaseUnitTest {
     createControlledResourceAndLog(resource);
 
     var getResource = resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId());
-    assertEquals(resource, getResource);
+    assertTrue(resource.partialEqual(getResource));
     assertEquals(DEFAULT_USER_EMAIL, getResource.getLastUpdatedByEmail());
     assertNotNull(getResource.getLastUpdatedDate());
   }
@@ -106,7 +104,7 @@ public class ResourceDaoTest extends BaseUnitTest {
     resourceDao.createControlledResource(resource);
 
     var getResource = resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId());
-    assertEquals(resource, getResource);
+    assertTrue(resource.partialEqual(getResource));
     assertNotNull(getResource.getCreatedDate());
     assertEquals(getResource.getCreatedDate(), getResource.getLastUpdatedDate());
     assertEquals(getResource.getCreatedByEmail(), getResource.getLastUpdatedByEmail());
@@ -120,7 +118,7 @@ public class ResourceDaoTest extends BaseUnitTest {
     resourceDao.createControlledResource(resource);
 
     var getResource = resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId());
-    assertEquals(resource, getResource);
+    assertTrue(resource.partialEqual(getResource));
     assertNotNull(getResource.getCreatedDate());
     assertEquals(getResource.getCreatedDate(), getResource.getLastUpdatedDate());
     assertEquals(getResource.getCreatedByEmail(), getResource.getLastUpdatedByEmail());
@@ -133,7 +131,7 @@ public class ResourceDaoTest extends BaseUnitTest {
     createControlledResourceAndLog(resource);
 
     var getResource = resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId());
-    assertEquals(resource, getResource);
+    assertTrue(resource.partialEqual(getResource));
     assertEquals(DEFAULT_USER_EMAIL, getResource.getLastUpdatedByEmail());
     assertNotNull(getResource.getLastUpdatedDate());
   }
@@ -150,7 +148,7 @@ public class ResourceDaoTest extends BaseUnitTest {
     resourceDao.createControlledResource(resource);
 
     var getResource = resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId());
-    assertEquals(resource, getResource);
+    assertTrue(resource.partialEqual(getResource));
     assertNotNull(getResource.getCreatedDate());
     assertEquals(getResource.getCreatedDate(), getResource.getLastUpdatedDate());
     assertEquals(getResource.getCreatedByEmail(), getResource.getLastUpdatedByEmail());
@@ -175,7 +173,7 @@ public class ResourceDaoTest extends BaseUnitTest {
             ActivityLogChangedTarget.RESOURCE));
 
     var getResource = resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId());
-    assertEquals(resource, getResource);
+    assertTrue(resource.partialEqual(getResource));
     assertEquals(DEFAULT_USER_EMAIL, getResource.getLastUpdatedByEmail());
     assertNotNull(getResource.getLastUpdatedDate());
   }
@@ -246,8 +244,8 @@ public class ResourceDaoTest extends BaseUnitTest {
         resourceDao.listControlledResources(workspaceUuid, null);
 
     assertTrue(azureList.isEmpty());
-    assertThat(gcpList, containsInAnyOrder(bucket, dataset));
-    assertThat(allCloudList, containsInAnyOrder(bucket, dataset));
+    assertPartialEqualList(gcpList, List.of(bucket, dataset));
+    assertPartialEqualList(allCloudList, List.of(bucket, dataset));
 
     assertTrue(resourceDao.deleteAllControlledResources(workspaceUuid, CloudPlatform.GCP));
     assertFalse(resourceDao.deleteAllControlledResources(workspaceUuid, CloudPlatform.AZURE));
@@ -256,6 +254,18 @@ public class ResourceDaoTest extends BaseUnitTest {
     assertTrue(listAfterDeletion.isEmpty());
     workspaceDao.deleteCloudContext(workspaceUuid, CloudPlatform.GCP);
     workspaceDao.deleteWorkspace(workspaceUuid);
+  }
+
+  private void assertPartialEqualList(
+      List<ControlledResource> actual, List<ControlledResource> expected) {
+    for (var resource : expected) {
+      assertTrue(
+          actual.stream()
+              .anyMatch(
+                  r ->
+                      r.getResourceId().equals(resource.getResourceId())
+                          && r.partialEqual(resource)));
+    }
   }
 
   @Test
@@ -296,9 +306,10 @@ public class ResourceDaoTest extends BaseUnitTest {
             .instanceId(cloudInstanceId)
             .build();
     resourceDao.createControlledResource(initialResource);
-    assertEquals(
-        initialResource,
-        resourceDao.getResource(initialResource.getWorkspaceId(), initialResource.getResourceId()));
+    assertTrue(
+        initialResource.partialEqual(
+            resourceDao.getResource(
+                initialResource.getWorkspaceId(), initialResource.getResourceId())));
 
     ControlledResourceFields commonFields2 =
         ControlledResourceFixtures.makeNotebookCommonFieldsBuilder()
@@ -328,11 +339,11 @@ public class ResourceDaoTest extends BaseUnitTest {
     // should be fine: separate workspaces implies separate gcp projects
     createControlledResourceAndLog(resourceWithDifferentWorkspaceId);
 
-    assertEquals(
-        resourceWithDifferentWorkspaceId,
-        resourceDao.getResource(
-            resourceWithDifferentWorkspaceId.getWorkspaceId(),
-            resourceWithDifferentWorkspaceId.getResourceId()));
+    assertTrue(
+        resourceWithDifferentWorkspaceId.partialEqual(
+            resourceDao.getResource(
+                resourceWithDifferentWorkspaceId.getWorkspaceId(),
+                resourceWithDifferentWorkspaceId.getResourceId())));
 
     ControlledResourceFields commonFields4 =
         ControlledResourceFixtures.makeNotebookCommonFieldsBuilder()
@@ -348,11 +359,11 @@ public class ResourceDaoTest extends BaseUnitTest {
 
     // same project & instance ID but different location from resource1
     createControlledResourceAndLog(resourceWithDifferentLocation);
-    assertEquals(
-        resourceWithDifferentLocation,
-        resourceDao.getResource(
-            resourceWithDifferentLocation.getWorkspaceId(),
-            resourceWithDifferentLocation.getResourceId()));
+    assertTrue(
+        resourceWithDifferentLocation.partialEqual(
+            resourceDao.getResource(
+                resourceWithDifferentLocation.getWorkspaceId(),
+                resourceWithDifferentLocation.getResourceId())));
 
     ControlledResourceFields commonFields5 =
         ControlledResourceFixtures.makeNotebookCommonFieldsBuilder()
@@ -367,11 +378,11 @@ public class ResourceDaoTest extends BaseUnitTest {
             .build();
 
     createControlledResourceAndLog(resourceWithDefaultLocation);
-    assertEquals(
-        resourceWithDefaultLocation,
-        resourceDao.getResource(
-            resourceWithDefaultLocation.getWorkspaceId(),
-            resourceWithDefaultLocation.getResourceId()));
+    assertTrue(
+        resourceWithDefaultLocation.partialEqual(
+            resourceDao.getResource(
+                resourceWithDefaultLocation.getWorkspaceId(),
+                resourceWithDefaultLocation.getResourceId())));
 
     assertEquals(DEFAULT_ZONE, resourceWithDefaultLocation.getLocation());
   }

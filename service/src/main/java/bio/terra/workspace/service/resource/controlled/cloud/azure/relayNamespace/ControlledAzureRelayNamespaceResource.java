@@ -317,6 +317,17 @@ public class ControlledAzureRelayNamespaceResource extends ControlledResource {
   }
 
   @Override
+  public boolean partialEqual(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.partialEqual(o)) return false;
+
+    ControlledAzureRelayNamespaceResource that = (ControlledAzureRelayNamespaceResource) o;
+
+    return namespaceName.equals(that.getNamespaceName());
+  }
+
+  @Override
   public int hashCode() {
     int result = super.hashCode();
     result = 31 * result + namespaceName.hashCode();

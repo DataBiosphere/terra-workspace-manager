@@ -25,6 +25,7 @@ import com.google.common.base.Strings;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
+import org.apache.commons.lang3.builder.EqualsBuilder;
 
 public class ReferencedBigQueryDatasetResource extends ReferencedResource {
   private final String projectId;
@@ -178,6 +179,25 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
                     description,
                     createdByEmail));
     return resultBuilder.build();
+  }
+
+  @Override
+  public boolean partialEqual(Object o) {
+    if (this == o) {
+      return true;
+    }
+
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    ReferencedBigQueryDatasetResource that = (ReferencedBigQueryDatasetResource) o;
+
+    return new EqualsBuilder()
+        .appendSuper(super.partialEqual(o))
+        .append(datasetName, that.datasetName)
+        .append(projectId, that.projectId)
+        .isEquals();
   }
 
   /**

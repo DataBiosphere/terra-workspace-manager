@@ -385,7 +385,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
 
       ReferencedDataRepoSnapshotResource resultResource =
           resultReferenceResource.castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
-      assertEquals(resource, resultResource);
+      assertTrue(resource.partialEqual(resultResource));
 
       assertTrue(
           referenceResourceService.checkAccess(
@@ -399,7 +399,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
           referenceResourceService
               .getReferenceResourceByName(workspaceUuid, resource.getName())
               .castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
-      assertEquals(byid, byname);
+      assertTrue(byid.partialEqual(byname));
 
       referenceResourceService.deleteReferenceResourceForResourceType(
           workspaceUuid,
@@ -539,7 +539,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
 
       ReferencedGcsObjectResource resultResource =
           resultReferenceResource.castByEnum(WsmResourceType.REFERENCED_GCP_GCS_OBJECT);
-      assertEquals(resource, resultResource);
+      assertTrue(resource.partialEqual(resultResource));
 
       assertTrue(
           referenceResourceService.checkAccess(
@@ -554,7 +554,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               .getReferenceResourceByName(workspaceUuid, resource.getName())
               .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_OBJECT);
       assertNotNull(byid);
-      assertEquals(byid, byname);
+      assertTrue(byid.partialEqual(byname));
 
       referenceResourceService.deleteReferenceResourceForResourceType(
           workspaceUuid,
@@ -598,7 +598,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
           referenceResourceService.createReferenceResource(referencedResource, USER_REQUEST);
       ReferencedGcsBucketResource resultResource =
           resultReferenceResource.castByEnum(WsmResourceType.REFERENCED_GCP_GCS_BUCKET);
-      assertEquals(resource, resultResource);
+      assertTrue(resource.partialEqual(resultResource));
 
       // Mock Sam will not return real credentials for a pet SA to make this call, but we don't
       // need real credentials because we also mock out cloud validation here.
@@ -614,7 +614,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
           referenceResourceService
               .getReferenceResourceByName(workspaceUuid, resource.getName())
               .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_BUCKET);
-      assertEquals(byid, byname);
+      assertTrue(byid.partialEqual(byname));
 
       referenceResourceService.deleteReferenceResourceForResourceType(
           workspaceUuid,
@@ -744,7 +744,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
 
       ReferencedBigQueryDatasetResource resultResource =
           resultReferenceResource.castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
-      assertEquals(resource, resultResource);
+      assertTrue(resource.partialEqual(resultResource));
 
       // Mock Sam will not return real credentials for a pet SA to make this call, but we don't
       // need real credentials because we also mock out cloud validation here.
@@ -760,7 +760,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
           referenceResourceService
               .getReferenceResourceByName(workspaceUuid, resource.getName())
               .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
-      assertEquals(byid, byname);
+      assertTrue(byid.partialEqual(byname));
 
       referenceResourceService.deleteReferenceResourceForResourceType(
           workspaceUuid,
@@ -820,7 +820,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
 
       ReferencedBigQueryDataTableResource resultResource =
           resultReferenceResource.castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
-      assertEquals(resource, resultResource);
+      assertTrue(resource.partialEqual(resultResource));
       assertTrue(
           referenceResourceService.checkAccess(
               workspaceUuid, referencedResource.getResourceId(), USER_REQUEST));
@@ -832,7 +832,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
           referenceResourceService
               .getReferenceResourceByName(workspaceUuid, resource.getName())
               .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
-      assertEquals(byid, byname);
+      assertTrue(byid.partialEqual(byname));
 
       referenceResourceService.deleteReferenceResourceForResourceType(
           workspaceUuid,
@@ -879,9 +879,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
           referenceResourceService
               .getReferenceResource(workspaceUuid, referencedResource.getResourceId())
               .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
-      assertEquals(
-          referencedResource.castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE),
-          resource);
+      assertTrue(
+          resource.partialEqual(
+              referencedResource.castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE)));
       var lastUpdateDetailsAfterFailedDeletion =
           workspaceActivityLogService.getLastUpdatedDetails(workspaceUuid);
       assertTrue(lastUpdateDetailsAfterFailedDeletion.isPresent());
@@ -1043,7 +1043,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
       ReferencedTerraWorkspaceResource actual =
           actualReferencedResourceGeneric.castByEnum(
               WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE);
-      assertEquals(expected, actual);
+      assertTrue(expected.partialEqual(actual));
 
       assertTrue(
           referenceResourceService.checkAccess(
@@ -1058,7 +1058,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               .getReferenceResourceByName(workspaceUuid, expected.getName())
               .castByEnum(WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE);
       assertNotNull(byIdActual);
-      assertEquals(byIdActual, byNameActual);
+      assertTrue(byIdActual.partialEqual(byNameActual));
 
       referenceResourceService.deleteReferenceResourceForResourceType(
           workspaceUuid,

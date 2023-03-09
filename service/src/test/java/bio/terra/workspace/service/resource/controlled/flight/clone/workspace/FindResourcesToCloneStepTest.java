@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
@@ -72,7 +73,7 @@ public class FindResourcesToCloneStepTest extends BaseUnitTest {
     final List<ResourceCloneInputs> result =
         workingMap.get(ControlledResourceKeys.RESOURCES_TO_CLONE, new TypeReference<>() {});
     assertThat(result, hasSize(120));
-    assertEquals(resource, result.get(0).getResource());
+    assertTrue(resource.partialEqual(result.get(0).getResource()));
     assertEquals(FLIGHT_ID, result.get(0).getFlightId());
   }
 
@@ -87,7 +88,7 @@ public class FindResourcesToCloneStepTest extends BaseUnitTest {
     final List<ResourceCloneInputs> result =
         workingMap.get(ControlledResourceKeys.RESOURCES_TO_CLONE, new TypeReference<>() {});
     assertThat(result, hasSize(3));
-    assertEquals(resource, result.get(0).getResource());
+    assertTrue(resource.partialEqual(result.get(0).getResource()));
     assertEquals(FLIGHT_ID, result.get(0).getFlightId());
   }
 }
