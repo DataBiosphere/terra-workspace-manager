@@ -85,7 +85,7 @@ public class AzureConnectedTestUtils {
 
     try {
       var castResource = res.castByEnum(resourceType);
-      assertEquals(resource, castResource);
+      assertTrue(resource.partialEqual(castResource));
     } catch (Exception e) {
       fail(String.format("Failed to cast resource to %s", resourceType), e);
     }

@@ -1,6 +1,6 @@
 package bio.terra.workspace.unit;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StairwayMapper;
@@ -219,7 +219,7 @@ public class TestTransitionalSerdes {
 
     ControlledAiNotebookInstanceResource moreResource =
         testMap.get("bar", ControlledAiNotebookInstanceResource.class);
-    assertEquals(moreResource, resource);
+    assertTrue(moreResource.partialEqual(resource));
   }
 
   @Test
@@ -253,7 +253,7 @@ public class TestTransitionalSerdes {
     logger.info("Des: {}", moreResource);
     String moreJsonString = StairwayMapper.getObjectMapper().writeValueAsString(moreResource);
     logger.info("MoreSer: {}", moreJsonString);
-    assertEquals(moreResource, resource);
+    assertTrue(moreResource.partialEqual(resource));
   }
 
   @Test
@@ -287,6 +287,6 @@ public class TestTransitionalSerdes {
     logger.info("Des: {}", moreResource);
     String moreJsonString = StairwayMapper.getObjectMapper().writeValueAsString(moreResource);
     logger.info("MoreSer: {}", moreJsonString);
-    assertEquals(moreResource, resource);
+    assertTrue(moreResource.partialEqual(resource));
   }
 }

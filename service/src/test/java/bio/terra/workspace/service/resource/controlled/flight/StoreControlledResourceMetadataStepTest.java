@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource.controlled.flight;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 
 import bio.terra.stairway.FlightContext;
@@ -68,5 +69,6 @@ public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
 
     ControlledGcsBucketResource daoBucket = (ControlledGcsBucketResource) daoResource;
     assertThat(bucketResource, equalTo(daoBucket));
+    assertTrue(bucketResource.partialEqual(daoBucket));
   }
 }
