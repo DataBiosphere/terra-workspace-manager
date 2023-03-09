@@ -23,14 +23,18 @@ set -o xtrace
 # user space, such as setting Terra CLI settings which are persisted in the user's $HOME.
 # This post startup script is not run by the same user.
 readonly JUPYTER_USER="jupyter"
+readonly STATUS_ATTRIBUTE="startup_script/status"
+readonly MESSAGE_ATTRIBUTE="startup_script/message"
+readonly USER_TERRA_CONFIG_DIR="/home/${JUPYTER_USER}/.terra"
+readonly OUTPUT_FILE="${USER_TERRA_CONFIG_DIR}/post-startup-output.txt"
 
 # Move to the /tmp directory to let any artifacts left behind by this script can be removed.
 cd /tmp || exit
 
 # Send stdout and stderr from this script to a file for debugging.
 # Make the .terra directory as the user so that they own it and have correct linux permissions.
-sudo -u "${JUPYTER_USER}" sh -c "mkdir -p /home/${JUPYTER_USER}/.terra"
-exec >> /home/"${JUPYTER_USER}"/.terra/post-startup-output.txt
+sudo -u "${JUPYTER_USER}" sh -c "mkdir -p ${USER_TERRA_CONFIG_DIR}"
+exec >> "${OUTPUT_FILE}"
 exec 2>&1
 
 #######################################
@@ -42,10 +46,47 @@ exec 2>&1
 #   The metadata value if found, or else an empty string
 #######################################
 function get_metadata_value() {
+  local metadata_path="${1}"
   curl --retry 5 -s -f \
     -H "Metadata-Flavor: Google" \
-    "http://metadata/computeMetadata/v1/$1"
+    "http://metadata/computeMetadata/v1/${metadata_path}"
 }
+
+#######################################
+# Set guest attributes on GCE. Used here to log completion status of the script.
+# See https://cloud.google.com/compute/docs/metadata/manage-guest-attributes
+# Arguments:
+#   $1: The guest attribute domain and key IE startup_script/status
+#   $2  The data to write to the guest attribute
+#######################################
+function set_guest_attributes() {
+  local attr_path="${1}"
+  local attr_value="${2}"
+  curl -s -X PUT --data "${attr_value}" \
+    -H "Metadata-Flavor: Google" \
+    "http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/${attr_path}"
+}
+
+# If the script exits without error let the UI know it completed successfully
+# Otherwise if an error occurred write the line and command that failed to guest attributes.
+function exit_handler {
+  local exit_code="${1}"
+  local line_no="${2}"
+  local command="${3}"
+  # Success! Set the guest attributes and exit cleanly
+  if [[ "${exit_code}" -eq 0 ]]; then
+    set_guest_attributes "${STATUS_ATTRIBUTE}" "COMPLETE"
+    exit 0
+  fi
+  # Write error status and message to guest attributes
+  set_guest_attributes "${STATUS_ATTRIBUTE}" "ERROR"
+  set_guest_attributes "${MESSAGE_ATTRIBUTE}" "Error on line ${line_no}, command \"${command}\". See ${OUTPUT_FILE} for more information."
+  exit "${exit_code}"
+}
+trap 'exit_handler $? $LINENO $BASH_COMMAND' EXIT
+
+# Let the UI know the script has started
+set_guest_attributes "${STATUS_ATTRIBUTE}" "STARTED"
 
 # Install common packages. Use pip instead of conda because conda is slow.
 /opt/conda/bin/pip install pre-commit nbdime nbstripout pylint pytest dsub pandas_gbq
@@ -199,7 +240,7 @@ fi
 sudo -u "$JUPYTER_USER" sh -c "git config --global url."git@github.com:".insteadOf "https://github.com/""
 sudo -u "$JUPYTER_USER" sh -c 'terra git clone --all'
 
-# Setup gitignore to avoid accidental checkin of data. 
+# Setup gitignore to avoid accidental checkin of data.
 readonly GIT_IGNORE="/home/${JUPYTER_USER}/gitignore_global"
 
 cat <<EOF | sudo -E -u jupyter tee "${GIT_IGNORE}"
@@ -228,6 +269,9 @@ readonly TERRA_GCP_NOTEBOOK_RESOURCE_NAME="$(get_metadata_value "instance/attrib
 if [[ -n "${TERRA_TEST_VALUE}" ]]; then
   sudo -u "${JUPYTER_USER}" sh -c "terra resource update gcp-notebook --name=${TERRA_GCP_NOTEBOOK_RESOURCE_NAME} --new-metadata=terra-test-result=${TERRA_TEST_VALUE}"
 fi
+
+# Let the UI know the script completed
+set_guest_attributes "${STATUS_ATTRIBUTE}" "COMPLETE"
 
 ####################################
 # Restart kernel so environment variables work in notebook. See PF-2178.

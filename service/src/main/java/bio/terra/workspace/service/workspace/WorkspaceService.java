@@ -106,9 +106,21 @@ public class WorkspaceService {
         workspace,
         policies,
         applications,
-        /*sourceWorkspaceUuid*/ null,
+        /*sourceWorkspaceUuid=*/ null,
         CloningInstructions.COPY_NOTHING,
         userRequest);
+  }
+
+  @Traced
+  public UUID createWorkspaceForClone(
+      Workspace workspace,
+      @Nullable TpsPolicyInputs policies,
+      @Nullable List<String> applications,
+      UUID sourceWorkspaceId,
+      CloningInstructions cloningInstructions,
+      AuthenticatedUserRequest userRequest) {
+    return createWorkspaceWorker(
+        workspace, policies, applications, sourceWorkspaceId, cloningInstructions, userRequest);
   }
 
   /**
@@ -395,6 +407,7 @@ public class WorkspaceService {
       Workspace sourceWorkspace,
       AuthenticatedUserRequest userRequest,
       @Nullable String location,
+      TpsPolicyInputs additionalPolicies,
       Workspace destinationWorkspace) {
     UUID workspaceUuid = sourceWorkspace.getWorkspaceId();
     String jobDescription =
@@ -413,10 +426,9 @@ public class WorkspaceService {
             : CloningInstructions.COPY_REFERENCE;
 
     // Create the destination workspace synchronously first.
-    // TODO: [PF-2551] plumb in policies from the clone endpoint
-    createWorkspaceWorker(
+    createWorkspaceForClone(
         destinationWorkspace,
-        /* policies */ null,
+        additionalPolicies,
         applicationIds,
         workspaceUuid,
         cloningInstructions,
