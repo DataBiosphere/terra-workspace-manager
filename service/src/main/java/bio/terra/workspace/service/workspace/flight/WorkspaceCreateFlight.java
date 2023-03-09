@@ -48,9 +48,7 @@ public class WorkspaceCreateFlight extends Flight {
     // resource or not, as indicated by the workspace stage enum.
     switch (workspace.getWorkspaceStage()) {
       case MC_WORKSPACE -> {
-        if (appContext.getFeatureConfiguration().isTpsEnabled()
-            && Boolean.FALSE.equals(
-                inputParameters.get(WorkspaceFlightMapKeys.PAO_IS_CREATED, Boolean.class))) {
+        if (appContext.getFeatureConfiguration().isTpsEnabled()) {
           addStep(
               new CreateWorkspacePoliciesStep(
                   workspace, policyInputs, appContext.getTpsApiDispatch(), userRequest),

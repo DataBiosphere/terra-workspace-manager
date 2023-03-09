@@ -2446,28 +2446,6 @@ public class MockMvcUtils {
         .getContentAsString();
   }
 
-  private String getSerializedResponseForPatch(
-      AuthenticatedUserRequest userRequest,
-      String path,
-      UUID workspaceId,
-      UUID resourceId,
-      String request)
-      throws Exception {
-    return mockMvc
-        .perform(
-            addAuth(
-                patch(path.formatted(workspaceId, resourceId))
-                    .contentType(MediaType.APPLICATION_JSON_VALUE)
-                    .accept(MediaType.APPLICATION_JSON)
-                    .characterEncoding("UTF-8")
-                    .content(request),
-                userRequest))
-        .andExpect(status().is2xxSuccessful())
-        .andReturn()
-        .getResponse()
-        .getContentAsString();
-  }
-
   /** Posts http request and expect error thrown. */
   public void postExpect(
       AuthenticatedUserRequest userRequest, String request, String api, int httpStatus)

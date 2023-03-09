@@ -1,6 +1,7 @@
 package bio.terra.workspace.common.fixtures;
 
 import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
+import bio.terra.workspace.generated.model.ApiWsmPolicyInputs;
 import bio.terra.workspace.generated.model.ApiWsmPolicyPair;
 
 public class PolicyFixtures {
@@ -12,15 +13,22 @@ public class PolicyFixtures {
   public static final String DDGROUP = "ddgroup";
   public static final String US_REGION = "usa";
 
+  public static final String WSM_TEST_GROUP = "wsm-test-group";
+
+  public static final String WSM_TEST_GROUP_ALT = "wsm-test-group-alt";
+
   public static ApiWsmPolicyInput GROUP_POLICY =
       new ApiWsmPolicyInput()
           .namespace(NAMESPACE)
           .name(GROUP_CONSTRAINT)
-          .addAdditionalDataItem(new ApiWsmPolicyPair().key(GROUP).value(DDGROUP));
+          .addAdditionalDataItem(new ApiWsmPolicyPair().key(GROUP).value(WSM_TEST_GROUP));
 
   public static ApiWsmPolicyInput REGION_POLICY =
       new ApiWsmPolicyInput()
           .namespace(NAMESPACE)
           .name(REGION_CONSTRAINT)
           .addAdditionalDataItem(new ApiWsmPolicyPair().key(REGION).value(US_REGION));
+
+  public static final ApiWsmPolicyInputs DEFAULT_WSM_POLICY_INPUTS =
+      new ApiWsmPolicyInputs().addInputsItem(GROUP_POLICY).addInputsItem(REGION_POLICY);
 }
