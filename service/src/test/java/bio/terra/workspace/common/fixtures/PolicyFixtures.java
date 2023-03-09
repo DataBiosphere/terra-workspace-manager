@@ -1,6 +1,7 @@
 package bio.terra.workspace.common.fixtures;
 
 import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
+import bio.terra.workspace.generated.model.ApiWsmPolicyInputs;
 import bio.terra.workspace.generated.model.ApiWsmPolicyPair;
 
 public class PolicyFixtures {
@@ -29,6 +30,9 @@ public class PolicyFixtures {
           .namespace(NAMESPACE)
           .name(REGION_CONSTRAINT)
           .addAdditionalDataItem(new ApiWsmPolicyPair().key(REGION).value(US_REGION));
+
+  public static final ApiWsmPolicyInputs DEFAULT_WSM_POLICY_INPUTS =
+      new ApiWsmPolicyInputs().addInputsItem(GROUP_POLICY_DEFAULT).addInputsItem(REGION_POLICY_USA);
 
   public static ApiWsmPolicyInput REGION_POLICY_IOWA =
       new ApiWsmPolicyInput()

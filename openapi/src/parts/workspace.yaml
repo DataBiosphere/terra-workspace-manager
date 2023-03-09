@@ -464,6 +464,12 @@ components:
             GCP Location to use for cloud-based resources. If omitted, the location of the source
             resource will be used.
           type: string
+        additionalPolicies:
+          description: |
+            Additional policies to attached to the cloned workspace. If the
+            additional policies create a conflict with the existing workspace,
+            cloning will fail.
+          $ref: '#/components/schemas/WsmPolicyInputs'
 
     ResourceCloneDetails:
       description: >-

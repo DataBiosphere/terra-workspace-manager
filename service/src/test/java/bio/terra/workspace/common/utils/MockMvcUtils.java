@@ -352,12 +352,14 @@ public class MockMvcUtils {
       AuthenticatedUserRequest userRequest,
       UUID sourceWorkspaceId,
       String spendProfile,
+      @Nullable ApiWsmPolicyInputs policiesToAdd,
       @Nullable UUID destinationWorkspaceId)
       throws Exception {
     ApiCloneWorkspaceRequest request =
         new ApiCloneWorkspaceRequest()
             .destinationWorkspaceId(destinationWorkspaceId)
-            .spendProfile(spendProfile);
+            .spendProfile(spendProfile)
+            .additionalPolicies(policiesToAdd);
     String serializedResponse =
         getSerializedResponseForPost(
             userRequest,
@@ -2448,28 +2450,6 @@ public class MockMvcUtils {
         .perform(
             addAuth(
                 post(path.formatted(workspaceId))
-                    .contentType(MediaType.APPLICATION_JSON_VALUE)
-                    .accept(MediaType.APPLICATION_JSON)
-                    .characterEncoding("UTF-8")
-                    .content(request),
-                userRequest))
-        .andExpect(status().is2xxSuccessful())
-        .andReturn()
-        .getResponse()
-        .getContentAsString();
-  }
-
-  private String getSerializedResponseForPatch(
-      AuthenticatedUserRequest userRequest,
-      String path,
-      UUID workspaceId,
-      UUID resourceId,
-      String request)
-      throws Exception {
-    return mockMvc
-        .perform(
-            addAuth(
-                patch(path.formatted(workspaceId, resourceId))
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .accept(MediaType.APPLICATION_JSON)
                     .characterEncoding("UTF-8")
