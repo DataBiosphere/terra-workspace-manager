@@ -1,7 +1,9 @@
 package bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakernotebook;
 
+import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
+import bio.terra.common.exception.NotImplementedException;
 import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
@@ -17,6 +19,7 @@ import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakernotebook.ControlledAwsSageMakerNotebookAttributes.DefaultBucket;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
+import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
@@ -138,6 +141,12 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
     flight.addStep(
         new WaitForAwsSageMakerNotebookStatusStep(this, NotebookInstanceStatus.IN_SERVICE),
         cloudRetry);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addUpdateSteps(UpdateControlledResourceFlight flight , FlightBeanBag flightBeanBag) {
+    throw new ApiException("addUpdateSteps NotImplemented");
   }
 
   /** {@inheritDoc} */

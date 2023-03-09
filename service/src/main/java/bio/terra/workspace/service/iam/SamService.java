@@ -85,7 +85,8 @@ public class SamService {
   private boolean wsmServiceAccountInitialized;
 
   @Autowired
-  public SamService(SamConfiguration samConfig, SamUserFactory samUserFactory, WorkspaceDao workspaceDao) {
+  public SamService(
+      SamConfiguration samConfig, SamUserFactory samUserFactory, WorkspaceDao workspaceDao) {
     this.samConfig = samConfig;
     this.samUserFactory = samUserFactory;
     this.wsmServiceAccountInitialized = false;
@@ -340,7 +341,7 @@ public class SamService {
       AuthenticatedUserRequest userRequest, WsmIamRole minimumHighestRoleFromRequest)
       throws InterruptedException {
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
-    Map<UUID, WorkspaceDescription> result = new HashMap();
+    Map<UUID, WorkspaceDescription> result = new HashMap<>();
     try {
       List<UserResourcesResponse> userResourcesResponses =
           SamRetry.retry(

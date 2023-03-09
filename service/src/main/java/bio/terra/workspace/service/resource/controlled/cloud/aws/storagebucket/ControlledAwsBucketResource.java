@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.aws.storagebucket;
 
+import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.stairway.RetryRule;
@@ -16,6 +17,7 @@ import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
+import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.*;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
@@ -138,6 +140,12 @@ public class ControlledAwsBucketResource extends ControlledResource {
         flight.addStep(new SeedAwsBucketStep(seedFiles, this), cloudRetry);
       }
     }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addUpdateSteps(UpdateControlledResourceFlight flight , FlightBeanBag flightBeanBag) {
+    throw new ApiException("addUpdateSteps NotImplemented");
   }
 
   /** {@inheritDoc} */
