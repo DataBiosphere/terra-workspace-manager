@@ -10,6 +10,7 @@ import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -40,7 +41,7 @@ public class CreateControlledResourceFlight extends Flight {
         JobMapKeys.AUTH_USER_INFO.getKeyName());
 
     ControlledResource resource =
-        inputParameters.get(ResourceKeys.RESOURCE, ControlledResource.class);
+        FlightUtils.getRequired(inputParameters, ResourceKeys.RESOURCE, ControlledResource.class);
     var userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
     // Role is optionally populated for private resources
@@ -51,7 +52,8 @@ public class CreateControlledResourceFlight extends Flight {
     var petSaEmail =
         inputParameters.get(ControlledResourceKeys.NOTEBOOK_PET_SERVICE_ACCOUNT, String.class);
     var resourceStateRule =
-        inputParameters.get(ResourceKeys.RESOURCE_STATE_RULE, WsmResourceStateRule.class);
+        FlightUtils.getRequired(
+            inputParameters, ResourceKeys.RESOURCE_STATE_RULE, WsmResourceStateRule.class);
 
     // Store the resource metadata in the WSM database. Doing this first means concurrent
     // conflicting resources with the same name or resource attributes can be prevented.
@@ -79,9 +81,11 @@ public class CreateControlledResourceFlight extends Flight {
     resource.addCreateSteps(this, petSaEmail, userRequest, flightBeanBag);
 
     // Update private_resource_state from INITIALIZING to ACTIVE, if this is a private resource.
-    addStep(
-        new MarkPrivateResourceReadyStep(resource, flightBeanBag.getResourceDao()),
-        RetryRules.shortDatabase());
+    if (resource.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE) {
+      addStep(
+          new MarkPrivateResourceReadyStep(resource, flightBeanBag.getResourceDao()),
+          RetryRules.shortDatabase());
+    }
 
     // Complete the create and populate the return response
     addStep(new SetCreateResponseStep(resource, flightBeanBag.getResourceDao(), resourceStateRule));

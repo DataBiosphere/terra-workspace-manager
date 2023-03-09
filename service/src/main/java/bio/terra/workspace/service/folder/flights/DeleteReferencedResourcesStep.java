@@ -36,7 +36,7 @@ public class DeleteReferencedResourcesStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    // Nothing to undo, propagate the flight failure.
-    return context.getResult();
+    // No ability to undo
+    return StepResult.getStepResultSuccess();
   }
 }
