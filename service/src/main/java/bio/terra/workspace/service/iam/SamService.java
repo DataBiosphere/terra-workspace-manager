@@ -3,6 +3,9 @@ package bio.terra.workspace.service.iam;
 import bio.terra.cloudres.google.iam.ServiceAccountName;
 import bio.terra.common.exception.ForbiddenException;
 import bio.terra.common.exception.InternalServerErrorException;
+import bio.terra.common.iam.BearerToken;
+import bio.terra.common.iam.SamUser;
+import bio.terra.common.iam.SamUserFactory;
 import bio.terra.common.sam.SamRetry;
 import bio.terra.common.sam.exception.SamExceptionFactory;
 import bio.terra.common.tracing.OkHttpClientTracingInterceptor;
@@ -34,6 +37,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import javax.servlet.http.HttpServletRequest;
 import okhttp3.OkHttpClient;
 import org.broadinstitute.dsde.workbench.client.sam.ApiClient;
 import org.broadinstitute.dsde.workbench.client.sam.ApiException;
@@ -68,21 +72,23 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class SamService {
-
   private static final Set<String> SAM_OAUTH_SCOPES = ImmutableSet.of("openid", "email", "profile");
   private static final List<String> PET_SA_OAUTH_SCOPES =
       ImmutableList.of(
           "openid", "email", "profile", "https://www.googleapis.com/auth/cloud-platform");
   private static final Logger logger = LoggerFactory.getLogger(SamService.class);
   private final SamConfiguration samConfig;
+  private final SamUserFactory samUserFactory;
   private final OkHttpClient commonHttpClient;
 
   private final WorkspaceDao workspaceDao;
   private boolean wsmServiceAccountInitialized;
 
   @Autowired
-  public SamService(SamConfiguration samConfig, WorkspaceDao workspaceDao) {
+  public SamService(
+      SamConfiguration samConfig, SamUserFactory samUserFactory, WorkspaceDao workspaceDao) {
     this.samConfig = samConfig;
+    this.samUserFactory = samUserFactory;
     this.wsmServiceAccountInitialized = false;
     this.commonHttpClient =
         new ApiClient()
@@ -171,6 +177,15 @@ public class SamService {
   public String getUserEmailFromSam(AuthenticatedUserRequest userRequest)
       throws InterruptedException {
     return getUserStatusInfo(userRequest).getUserEmail();
+  }
+
+  public SamUser getSamUser(HttpServletRequest request) {
+    return samUserFactory.from(request, samConfig.getBasePath());
+  }
+
+  public SamUser getSamUser(String token) {
+    BearerToken bearerToken = new BearerToken(token);
+    return samUserFactory.from(bearerToken, samConfig.getBasePath());
   }
 
   /** Fetch the user status info associated with the user credentials directly from Sam. */
@@ -326,7 +341,7 @@ public class SamService {
       AuthenticatedUserRequest userRequest, WsmIamRole minimumHighestRoleFromRequest)
       throws InterruptedException {
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
-    Map<UUID, WorkspaceDescription> result = new HashMap();
+    Map<UUID, WorkspaceDescription> result = new HashMap<>();
     try {
       List<UserResourcesResponse> userResourcesResponses =
           SamRetry.retry(
