@@ -54,10 +54,7 @@ public class ReferencedResourceCloneTest extends BaseConnectedTest {
   @Autowired ObjectMapper objectMapper;
   @Autowired UserAccessUtils userAccessUtils;
   @Autowired FeatureConfiguration features;
-
-  private final ApiWsmPolicyInput gcpUS = makeRegionPolicyInput("usa");
-  private final ApiWsmPolicyInput wsmTestGroup = makeGroupPolicyInput("wsm-test-group");
-  private final ApiWsmPolicyInput gcpIowa = makeRegionPolicyInput("iowa");
+  private final ApiWsmPolicyInput wsmTestGroup = makeGroupPolicyInput(PolicyFixtures.DEFAULT_GROUP);
   private final String sourceResourceName = TestUtils.appendRandomNumber("source-resource-name");
   private final String sourceBucketName = TestUtils.appendRandomNumber("source-bucket-name");
 
@@ -86,7 +83,9 @@ public class ReferencedResourceCloneTest extends BaseConnectedTest {
     // When we copy, the destination does not track the source policy
     testResourceClone(ApiCloningInstructionsEnum.REFERENCE);
 
-    updateRegionPolicy(/*locationsToAdd=*/ List.of(gcpIowa), /*locationsToRemove=*/ List.of(gcpUS));
+    updateRegionPolicy(
+        /*locationsToAdd=*/ List.of(PolicyFixtures.REGION_POLICY_IOWA),
+        /*locationsToRemove=*/ List.of(PolicyFixtures.REGION_POLICY_USA));
 
     checkRegionPolicy(sourceWorkspaceId, List.of("iowa"));
     checkRegionPolicy(destinationWorkspaceId, List.of("usa"));
@@ -97,7 +96,9 @@ public class ReferencedResourceCloneTest extends BaseConnectedTest {
     // When we link, the destination tracks the source policy
     testResourceClone(ApiCloningInstructionsEnum.LINK_REFERENCE);
 
-    updateRegionPolicy(/*locationsToAdd=*/ List.of(gcpIowa), /*locationsToRemove=*/ List.of(gcpUS));
+    updateRegionPolicy(
+        /*locationsToAdd=*/ List.of(PolicyFixtures.REGION_POLICY_IOWA),
+        /*locationsToRemove=*/ List.of(PolicyFixtures.REGION_POLICY_USA));
 
     checkRegionPolicy(sourceWorkspaceId, List.of("iowa"));
     checkRegionPolicy(destinationWorkspaceId, List.of("iowa"));
@@ -109,7 +110,9 @@ public class ReferencedResourceCloneTest extends BaseConnectedTest {
     // When we copy, the destination does not track the source policy
     testWorkspaceClone(ApiCloningInstructionsEnum.REFERENCE);
 
-    updateRegionPolicy(/*locationsToAdd=*/ List.of(gcpIowa), /*locationsToRemove=*/ List.of(gcpUS));
+    updateRegionPolicy(
+        /*locationsToAdd=*/ List.of(PolicyFixtures.REGION_POLICY_IOWA),
+        /*locationsToRemove=*/ List.of(PolicyFixtures.REGION_POLICY_USA));
 
     checkRegionPolicy(sourceWorkspaceId, List.of("iowa"));
     checkRegionPolicy(destinationWorkspaceId, List.of("usa"));
@@ -121,7 +124,9 @@ public class ReferencedResourceCloneTest extends BaseConnectedTest {
     // When we link, the destination tracks the source policy
     testWorkspaceClone(ApiCloningInstructionsEnum.LINK_REFERENCE);
 
-    updateRegionPolicy(/*locationsToAdd=*/ List.of(gcpIowa), /*locationsToRemove=*/ List.of(gcpUS));
+    updateRegionPolicy(
+        /*locationsToAdd=*/ List.of(PolicyFixtures.REGION_POLICY_IOWA),
+        /*locationsToRemove=*/ List.of(PolicyFixtures.REGION_POLICY_USA));
 
     checkRegionPolicy(sourceWorkspaceId, List.of("iowa"));
     checkRegionPolicy(destinationWorkspaceId, List.of("iowa"));
@@ -131,13 +136,15 @@ public class ReferencedResourceCloneTest extends BaseConnectedTest {
   public void cloneWorkspaceLink_additionalRegionPolicy_changeToOregon_noUpdate() throws Exception {
     testWorkspaceCloneWithAdditionalPolicy(
         ApiCloningInstructionsEnum.LINK_REFERENCE,
-        new ApiWsmPolicyInputs().addInputsItem(wsmTestGroup).addInputsItem(gcpIowa),
+        new ApiWsmPolicyInputs()
+            .addInputsItem(wsmTestGroup)
+            .addInputsItem(PolicyFixtures.REGION_POLICY_IOWA),
         List.of("iowa"));
 
     // When we link, the destination tracks the source policy
     updateRegionPolicyWithConflict(
         /*locationsToAdd=*/ List.of(makeRegionPolicyInput("oregon")),
-        /*locationsToRemove=*/ List.of(gcpUS),
+        /*locationsToRemove=*/ List.of(PolicyFixtures.REGION_POLICY_USA),
         PolicyFixtures.REGION_CONSTRAINT);
 
     checkRegionPolicy(sourceWorkspaceId, List.of("usa"));
@@ -149,13 +156,15 @@ public class ReferencedResourceCloneTest extends BaseConnectedTest {
       throws Exception {
     testWorkspaceCloneWithAdditionalPolicy(
         ApiCloningInstructionsEnum.REFERENCE,
-        new ApiWsmPolicyInputs().addInputsItem(wsmTestGroup).addInputsItem(gcpIowa),
+        new ApiWsmPolicyInputs()
+            .addInputsItem(wsmTestGroup)
+            .addInputsItem(PolicyFixtures.REGION_POLICY_IOWA),
         List.of("iowa"));
 
     // When we copy, the destination does not track the source policy
     updateRegionPolicy(
         /*locationsToAdd=*/ List.of(makeRegionPolicyInput("oregon")),
-        /*locationsToRemove=*/ List.of(gcpUS));
+        /*locationsToRemove=*/ List.of(PolicyFixtures.REGION_POLICY_USA));
 
     checkRegionPolicy(sourceWorkspaceId, List.of("oregon"));
     checkRegionPolicy(destinationWorkspaceId, List.of("iowa"));
@@ -169,7 +178,7 @@ public class ReferencedResourceCloneTest extends BaseConnectedTest {
             .spendProfile(WorkspaceFixtures.DEFAULT_SPEND_PROFILE)
             .additionalPolicies(
                 new ApiWsmPolicyInputs()
-                    .addInputsItem(makeGroupPolicyInput(PolicyFixtures.WSM_TEST_GROUP_ALT)));
+                    .addInputsItem(makeGroupPolicyInput(PolicyFixtures.ALT_GROUP)));
 
     mockMvcUtils.postExpect(
         userAccessUtils.defaultUserAuthRequest(),
@@ -255,7 +264,10 @@ public class ReferencedResourceCloneTest extends BaseConnectedTest {
             .userFacingId(WorkspaceFixtures.getUserFacingId(sourceWorkspaceId))
             .stage(ApiWorkspaceStageModel.MC_WORKSPACE)
             .spendProfile("wm-default-spend-profile")
-            .policies(new ApiWsmPolicyInputs().addInputsItem(gcpUS).addInputsItem(wsmTestGroup));
+            .policies(
+                new ApiWsmPolicyInputs()
+                    .addInputsItem(PolicyFixtures.REGION_POLICY_USA)
+                    .addInputsItem(wsmTestGroup));
 
     mockMvcUtils.createdWorkspaceWithoutCloudContext(
         userAccessUtils.defaultUserAuthRequest(), workspaceRequest);
@@ -322,7 +334,10 @@ public class ReferencedResourceCloneTest extends BaseConnectedTest {
             .userFacingId(WorkspaceFixtures.getUserFacingId(sourceWorkspaceId))
             .stage(ApiWorkspaceStageModel.MC_WORKSPACE)
             .spendProfile("wm-default-spend-profile")
-            .policies(new ApiWsmPolicyInputs().addInputsItem(gcpUS).addInputsItem(wsmTestGroup));
+            .policies(
+                new ApiWsmPolicyInputs()
+                    .addInputsItem(PolicyFixtures.REGION_POLICY_USA)
+                    .addInputsItem(wsmTestGroup));
 
     mockMvcUtils.createdWorkspaceWithoutCloudContext(
         userAccessUtils.defaultUserAuthRequest(), workspaceRequest);
