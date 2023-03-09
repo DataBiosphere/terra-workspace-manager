@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sagemaker.model.InstanceType;
+import software.amazon.awssdk.services.sagemaker.model.NotebookInstanceStatus;
 import software.amazon.awssdk.services.sts.model.Credentials;
 
 public class CreateAwsSageMakerNotebookStep implements Step {
@@ -50,8 +51,7 @@ public class CreateAwsSageMakerNotebookStep implements Step {
         samUser,
         Region.of(creationParameters.getLocation()),
         InstanceType.fromValue(creationParameters.getInstanceType()),
-        creationParameters.getInstanceId(),
-        false);
+        creationParameters.getInstanceId());
     return StepResult.getStepResultSuccess();
   }
 
@@ -65,8 +65,10 @@ public class CreateAwsSageMakerNotebookStep implements Step {
     String notebookName = resource.getInstanceId();
 
     try {
-      AwsUtils.stopSageMakerNotebook(awsCredentials, region, notebookName, true);
-      AwsUtils.deleteSageMakerNotebook(awsCredentials, region, notebookName, true);
+      AwsUtils.stopSageMakerNotebook(awsCredentials, region, notebookName);
+      AwsUtils.waitForSageMakerNotebookStatus(
+          awsCredentials, region, notebookName, NotebookInstanceStatus.STOPPED);
+      AwsUtils.deleteSageMakerNotebook(awsCredentials, region, notebookName);
 
     } catch (ApiException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);

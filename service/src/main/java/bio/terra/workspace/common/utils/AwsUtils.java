@@ -328,8 +328,7 @@ public class AwsUtils {
       SamUser user,
       Region region,
       InstanceType instanceType,
-      String notebookName,
-      boolean waitForStatus) {
+      String notebookName) {
     try {
       SageMakerClient sageMaker = getSagemakerSession(credentials, region);
 
@@ -367,20 +366,15 @@ public class AwsUtils {
                 + httpResponse.statusText().orElse(String.valueOf(httpResponse.statusCode())));
       }
 
-      if (waitForStatus) {
-        waitForSageMakerNotebookStatus(
-            credentials, region, notebookName, NotebookInstanceStatus.IN_SERVICE);
-      }
-
     } catch (SdkException e) {
       checkException(e);
       throw new ApiException("Error creating notebook instance", e);
     }
   }
 
+  // TODO(TERRA-384) - move to COW in TCL
   public static void stopSageMakerNotebook(
-      Credentials credentials, Region region, String notebookName, boolean waitForStatus) {
-    // TODO(TERRA-384) - move to COW in TCL
+      Credentials credentials, Region region, String notebookName) {
     try {
       SageMakerClient sageMaker = getSagemakerSession(credentials, region);
       DescribeNotebookInstanceRequest describeRequest =
@@ -410,11 +404,6 @@ public class AwsUtils {
                 + httpResponse.statusText().orElse(String.valueOf(httpResponse.statusCode())));
       }
 
-      if (waitForStatus) {
-        waitForSageMakerNotebookStatus(
-            credentials, region, notebookName, NotebookInstanceStatus.STOPPED);
-      }
-
     } catch (ValidationException e) {
       logger.error("Cannot stop notebook instance", e);
 
@@ -424,9 +413,9 @@ public class AwsUtils {
     }
   }
 
+  // TODO(TERRA-384) - move to COW in TCL
   public static void deleteSageMakerNotebook(
-      Credentials credentials, Region region, String notebookName, boolean waitForStatus) {
-    // TODO(TERRA-384) - move to COW in TCL
+      Credentials credentials, Region region, String notebookName) {
     try {
       SageMakerClient sageMaker = getSagemakerSession(credentials, region);
       DescribeNotebookInstanceRequest describeRequest =
@@ -461,15 +450,8 @@ public class AwsUtils {
                 + httpResponse.statusText().orElse(String.valueOf(httpResponse.statusCode())));
       }
 
-      if (waitForStatus) {
-        waitForSageMakerNotebookStatus(credentials, region, notebookName, null);
-      }
-
     } catch (ValidationException e) {
       logger.error("Cannot delete notebook instance", e);
-
-    } catch (NotFoundException e) {
-      logger.warn("Notebook instance being deleted or no longer accessible", e);
 
     } catch (SdkException e) {
       checkException(e);
@@ -521,11 +503,16 @@ public class AwsUtils {
             Stream.of(desiredStatus).collect(Collectors.toSet()));
       }
 
+    } catch (NotFoundException e) {
+      // Waiting on deleted resource may result in this, not an error
+      if (desiredStatus != null) {
+        throw e;
+      }
+
     } catch (Exception e) {
       checkException(e);
       throw new ApiException("Error waiting for notebook instance", e);
     }
-    // success
   }
 
   public static URL getSageMakerNotebookProxyUrl(
@@ -564,9 +551,10 @@ public class AwsUtils {
     }
   }
 
+  // TODO(TERRA-384) - move to COW in TCL
   private static void checkNotebookStatusAndThrow(
-      NotebookInstanceStatus currentStatus, Set<NotebookInstanceStatus> expectedStatusSet) {
-    // TODO(TERRA-384) - move to COW in TCL
+      NotebookInstanceStatus currentStatus, Set<NotebookInstanceStatus> expectedStatusSet)
+      throws ValidationException {
     if (!expectedStatusSet.contains(currentStatus)) {
       throw new ValidationException(
           String.format(
@@ -575,21 +563,22 @@ public class AwsUtils {
     }
   }
 
-  private static void checkException(Exception ex) {
-    // TODO(TERRA-384) - move to COW in TCL
+  // TODO(TERRA-384) - move to COW in TCL
+  private static void checkException(Exception ex)
+      throws NotFoundException, UnauthorizedException, BadRequestException {
     if (ex instanceof SdkException) {
       String message = ex.getMessage();
       if (message.contains("ResourceNotFoundException") || message.contains("RecordNotFound")) {
-        logger.warn("resource being deleted or no longer accessible", ex);
+        throw new NotFoundException("Resource deleted or no longer accessible", ex);
 
       } else if (message.contains("not authorized to perform")) {
         throw new UnauthorizedException(
-            "Error performing resource operation, check the name / permissions and retry",
-            ex);
+            "Error performing resource operation, check the name / permissions and retry", ex);
 
       } else if (message.contains("Unable to transition to")) {
-        throw new BadRequestException("Unable to perform resource operation", ex);
+        throw new BadRequestException("Unable to perform resource lifecycle operation", ex);
       }
+
     } else if (ex instanceof ErrorReportException) {
       throw (ErrorReportException) ex;
     }
