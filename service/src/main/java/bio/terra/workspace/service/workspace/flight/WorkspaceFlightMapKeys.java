@@ -13,6 +13,8 @@ public final class WorkspaceFlightMapKeys {
   public static final String APPLICATION_IDS = "applicationIds";
   public static final String OPERATION_TYPE = "operationType";
   public static final String POLICIES = "policies";
+
+  public static final String PAO_IS_CREATED = "paoIsCreated";
   public static final String EFFECTIVE_POLICIES = "effectivePolicies";
   public static final String FOLDER_ID = "folderId";
   public static final String MERGE_POLICIES = "mergePolicies";

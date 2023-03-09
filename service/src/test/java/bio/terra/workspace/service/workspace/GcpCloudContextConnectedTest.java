@@ -12,6 +12,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 
+import bio.terra.policy.model.TpsPolicyInput;
+import bio.terra.policy.model.TpsPolicyInputs;
+import bio.terra.policy.model.TpsPolicyPair;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
@@ -219,6 +222,13 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
             sourceWorkspace,
             userAccessUtils.defaultUserAuthRequest(),
             destinationLocation,
+            new TpsPolicyInputs()
+                .addInputsItem(
+                    new TpsPolicyInput()
+                        .namespace("terra")
+                        .name("region-constraint")
+                        .addAdditionalDataItem(
+                            new TpsPolicyPair().key("region").value("us-east1"))),
             destinationWorkspace);
     jobService.waitForJob(cloneJobId);
     final JobResultOrException<ApiClonedWorkspace> cloneResultOrException =
@@ -340,6 +350,7 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
                 sourceWorkspace,
                 userAccessUtils.defaultUserAuthRequest(),
                 destinationLocation,
+                /*additionalPolicies=*/ null,
                 destinationWorkspace));
     assertThrows(
         WorkspaceNotFoundException.class,

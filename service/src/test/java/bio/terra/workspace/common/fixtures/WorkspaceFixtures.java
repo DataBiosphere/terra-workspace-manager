@@ -6,6 +6,9 @@ import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiProperties;
 import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
+import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
+import bio.terra.workspace.generated.model.ApiWsmPolicyInputs;
+import bio.terra.workspace.generated.model.ApiWsmPolicyPair;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants.Properties;
@@ -29,6 +32,24 @@ public class WorkspaceFixtures {
       new ApiProperty().key(Properties.VERSION).value("version 3");
   public static final ApiProperty USER_SET_PROPERTY =
       new ApiProperty().key("userkey").value("uservalue");
+
+  public static final String DEFAULT_AUTH_DOMAIN = "wsm-test-group";
+  public static final String DEFAULT_REGION = "us";
+  public static final ApiWsmPolicyInputs DEFAULT_WSM_POLICY_INPUTS =
+      new ApiWsmPolicyInputs()
+          .addInputsItem(
+              new ApiWsmPolicyInput()
+                  .name("group-constraint")
+                  .namespace("terra")
+                  .addAdditionalDataItem(
+                      new ApiWsmPolicyPair().key("group").value(DEFAULT_AUTH_DOMAIN)))
+          .addInputsItem(
+              new ApiWsmPolicyInput()
+                  .namespace("terra")
+                  .name("region-constraint")
+                  .addAdditionalDataItem(
+                      new ApiWsmPolicyPair().key("region").value(DEFAULT_REGION)));
+  public static final String DEFAULT_SPEND_PROFILE = "wm-default-spend-profile";
 
   /**
    * Generate the request body for creating an MC_WORKSPACE stage workspace.
@@ -96,8 +117,9 @@ public class WorkspaceFixtures {
         .description("A test workspace created by createWorkspaceRequestBody")
         .userFacingId(getUserFacingId(workspaceId))
         .stage(stageModel)
-        .spendProfile("wm-default-spend-profile")
-        .properties(properties);
+        .spendProfile(DEFAULT_SPEND_PROFILE)
+        .properties(properties)
+        .policies(DEFAULT_WSM_POLICY_INPUTS);
   }
 
   public static String getUserFacingId(UUID workspaceId) {

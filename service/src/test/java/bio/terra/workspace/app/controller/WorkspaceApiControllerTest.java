@@ -299,7 +299,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
     ApiWorkspaceDescription sourceWorkspace = mockMvcUtils.getWorkspace(USER_REQUEST, workspaceId);
 
     ApiCloneWorkspaceResult cloneWorkspace =
-        mockMvcUtils.cloneWorkspace(USER_REQUEST, workspaceId, FAKE_SPEND_PROFILE, null);
+        mockMvcUtils.cloneWorkspace(USER_REQUEST, workspaceId, FAKE_SPEND_PROFILE, null, null);
     jobService.waitForJob(cloneWorkspace.getJobReport().getId());
 
     UUID destinationWorkspaceId = cloneWorkspace.getWorkspace().getDestinationWorkspaceId();
@@ -360,7 +360,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
 
     ApiCloneWorkspaceResult cloneWorkspace =
         mockMvcUtils.cloneWorkspace(
-            USER_REQUEST, sourceWorkspaceId, FAKE_SPEND_PROFILE, destinationWorkspaceId);
+            USER_REQUEST, sourceWorkspaceId, FAKE_SPEND_PROFILE, null, destinationWorkspaceId);
 
     List<ApiResourceCloneDetails> cloneDetails = cloneWorkspace.getWorkspace().getResources();
     assertEquals(3, cloneDetails.size());

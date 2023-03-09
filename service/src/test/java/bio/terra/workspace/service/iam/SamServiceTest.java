@@ -17,6 +17,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import bio.terra.common.exception.ForbiddenException;
 import bio.terra.common.sam.exception.SamBadRequestException;
 import bio.terra.common.sam.exception.SamNotFoundException;
+import bio.terra.policy.model.TpsPolicyInput;
+import bio.terra.policy.model.TpsPolicyInputs;
+import bio.terra.policy.model.TpsPolicyPair;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
@@ -467,7 +470,17 @@ class SamServiceTest extends BaseConnectedTest {
 
   private Workspace createWorkspaceForUser(AuthenticatedUserRequest userRequest) {
     Workspace workspace = WorkspaceFixtures.buildMcWorkspace();
-    workspaceService.createWorkspace(workspace, null, null, userRequest);
+    workspaceService.createWorkspace(
+        workspace,
+        new TpsPolicyInputs()
+            .addInputsItem(
+                new TpsPolicyInput()
+                    .namespace("terra")
+                    .name("group-constraint")
+                    .addAdditionalDataItem(
+                        new TpsPolicyPair().key("group").value("wsm-test-group"))),
+        null,
+        userRequest);
     return workspace;
   }
 }

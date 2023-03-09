@@ -43,7 +43,9 @@ public class WorkspaceCreateFlight extends Flight {
                 userRequest,
                 TpsUtilities.getGroupConstraintsFromInputs(policyInputs)),
             serviceRetryRule);
-        if (appContext.getFeatureConfiguration().isTpsEnabled()) {
+        if (appContext.getFeatureConfiguration().isTpsEnabled()
+            && Boolean.FALSE.equals(
+                inputParameters.get(WorkspaceFlightMapKeys.PAO_IS_CREATED, Boolean.class))) {
           addStep(
               new CreateWorkspacePoliciesStep(
                   workspace, policyInputs, appContext.getTpsApiDispatch(), userRequest),

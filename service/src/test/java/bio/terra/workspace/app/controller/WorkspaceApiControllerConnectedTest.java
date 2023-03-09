@@ -28,9 +28,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.workspace.common.BaseConnectedTest;
+import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.generated.model.ApiCloneWorkspaceResult;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
 import bio.terra.workspace.generated.model.ApiIamRole;
@@ -39,8 +41,11 @@ import bio.terra.workspace.generated.model.ApiRegions;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
 import bio.terra.workspace.generated.model.ApiWsmPolicyExplainResult;
+import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
+import bio.terra.workspace.generated.model.ApiWsmPolicyInputs;
 import bio.terra.workspace.generated.model.ApiWsmPolicyMergeCheckResult;
 import bio.terra.workspace.generated.model.ApiWsmPolicyObject;
+import bio.terra.workspace.generated.model.ApiWsmPolicyPair;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateMode;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateResult;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -586,6 +591,29 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     // clean up
     mockMvcUtils.removeRegionPolicy(
         userAccessUtils.defaultUserAuthRequest(), workspace.getId(), usRegion);
+  }
+
+  @Test
+  @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
+  public void cloneWorkspace_hasAdditionalPolicy_updated() throws Exception {
+    ApiCloneWorkspaceResult cloneResult =
+        mockMvcUtils.cloneWorkspace(
+            userAccessUtils.defaultUserAuthRequest(),
+            workspace.getId(),
+            WorkspaceFixtures.DEFAULT_SPEND_PROFILE,
+            new ApiWsmPolicyInputs()
+                .addInputsItem(
+                    new ApiWsmPolicyInput()
+                        .name("region-constraint")
+                        .namespace("terra")
+                        .addAdditionalDataItem(
+                            new ApiWsmPolicyPair().key("region").value("us-central1"))),
+            null);
+
+    var destWorkspaceId = cloneResult.getWorkspace().getDestinationWorkspaceId();
+    ApiWorkspaceDescription destWorkspace =
+        getWorkspace(userAccessUtils.defaultUserAuthRequest(), destWorkspaceId);
+    assertEquals(2, destWorkspace.getPolicies().size());
   }
 
   private ApiRegions listValid(

@@ -1,7 +1,9 @@
 package bio.terra.workspace.service.workspace;
 
 import bio.terra.policy.model.TpsPaoGetResult;
+import bio.terra.policy.model.TpsPaoUpdateResult;
 import bio.terra.policy.model.TpsPolicyInputs;
+import bio.terra.policy.model.TpsUpdateMode;
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
@@ -23,6 +25,7 @@ import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.exceptions.BufferServiceDisabledException;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceException;
+import bio.terra.workspace.service.workspace.exceptions.InvalidAdditionalPoliciesException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
@@ -94,12 +97,31 @@ public class WorkspaceService {
     this.workspaceActivityLogService = workspaceActivityLogService;
   }
 
-  /** Create a workspace with the specified parameters. Returns workspaceID of the new workspace. */
   @Traced
   public UUID createWorkspace(
       Workspace workspace,
       @Nullable TpsPolicyInputs policies,
       @Nullable List<String> applications,
+      AuthenticatedUserRequest userRequest) {
+    return createWorkspace(workspace, policies, applications, /*paoIsCreated=*/ false, userRequest);
+  }
+
+  @Traced
+  public UUID createWorkspaceForClone(
+      Workspace workspace,
+      @Nullable TpsPolicyInputs policies,
+      @Nullable List<String> applications,
+      AuthenticatedUserRequest userRequest) {
+    return createWorkspace(workspace, policies, applications, /*paoIsCreated=*/ true, userRequest);
+  }
+
+  /** Create a workspace with the specified parameters. Returns workspaceID of the new workspace. */
+  @Traced
+  private UUID createWorkspace(
+      Workspace workspace,
+      @Nullable TpsPolicyInputs policies,
+      @Nullable List<String> applications,
+      boolean paoIsCreated,
       AuthenticatedUserRequest userRequest) {
     String workspaceUuid = workspace.getWorkspaceId().toString();
     String jobDescription =
@@ -126,6 +148,7 @@ public class WorkspaceService {
             .addParameter(
                 WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name())
             .addParameter(WorkspaceFlightMapKeys.POLICIES, policies)
+            .addParameter(WorkspaceFlightMapKeys.PAO_IS_CREATED, paoIsCreated)
             .addParameter(WorkspaceFlightMapKeys.APPLICATION_IDS, applications);
 
     Optional<SpendProfileId> spendProfile = workspace.getSpendProfileId();
@@ -367,6 +390,7 @@ public class WorkspaceService {
       Workspace sourceWorkspace,
       AuthenticatedUserRequest userRequest,
       @Nullable String location,
+      TpsPolicyInputs additionalPolicies,
       Workspace destinationWorkspace) {
     String workspaceUuid = sourceWorkspace.getWorkspaceId().toString();
     String jobDescription =
@@ -382,15 +406,26 @@ public class WorkspaceService {
     // that they can be set on the new workspace correctly during the create call.
     TpsPolicyInputs policy = null;
     if (features.isTpsEnabled()) {
-      TpsPaoGetResult sourcePolicy = tpsApiDispatch.getPao(sourceWorkspace.getWorkspaceId());
-      if (sourcePolicy != null) {
-        policy = sourcePolicy.getAttributes();
+      tpsApiDispatch.createPao(destinationWorkspace.getWorkspaceId(), additionalPolicies);
+      TpsPaoUpdateResult result =
+          tpsApiDispatch.linkPao(
+              destinationWorkspace.getWorkspaceId(),
+              sourceWorkspace.getWorkspaceId(),
+              TpsUpdateMode.FAIL_ON_CONFLICT);
+      if (!result.isUpdateApplied()) {
+        // We cannot clone the workspace with the additional policies attributes. Cloning
+        // will fail so return early and delete the PAO from TPS.
+        tpsApiDispatch.deletePao(destinationWorkspace.getWorkspaceId());
+        throw new InvalidAdditionalPoliciesException(
+            "Failed to clone workspace: additional policy is in conflict with existing ones",
+            result.getConflicts().stream().map(c -> c.toString()).toList());
       }
+      TpsPaoGetResult updateResult = result.getResultingPao();
+      policy = updateResult.getEffectiveAttributes();
     }
 
     // Create the destination workspace synchronously first.
-    createWorkspace(destinationWorkspace, policy, applicationIds, userRequest);
-
+    createWorkspaceForClone(destinationWorkspace, policy, applicationIds, userRequest);
     // Remaining steps are an async flight.
     return jobService
         .newJob()

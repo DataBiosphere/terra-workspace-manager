@@ -346,12 +346,14 @@ public class MockMvcUtils {
       AuthenticatedUserRequest userRequest,
       UUID sourceWorkspaceId,
       String spendProfile,
+      @Nullable ApiWsmPolicyInputs policiesToAdd,
       @Nullable UUID destinationWorkspaceId)
       throws Exception {
     ApiCloneWorkspaceRequest request =
         new ApiCloneWorkspaceRequest()
             .destinationWorkspaceId(destinationWorkspaceId)
-            .spendProfile(spendProfile);
+            .spendProfile(spendProfile)
+            .additionalPolicies(policiesToAdd);
     String serializedResponse =
         getSerializedResponseForPost(
             userRequest,
