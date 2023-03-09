@@ -4,6 +4,7 @@ import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.ErrorReportException;
 import bio.terra.common.exception.NotFoundException;
+import bio.terra.common.exception.ValidationException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.workspace.service.workspace.exceptions.SaCredentialsMissingException;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
@@ -18,6 +19,8 @@ import java.net.URLConnection;
 import java.text.ParseException;
 import java.time.Duration;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.http.client.utils.URIBuilder;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -364,13 +367,13 @@ public class AwsUtils {
       }
 
       if (waitForStatus) {
-        AwsUtils.waitForSageMakerNotebookStatus(
+        waitForSageMakerNotebookStatus(
             credentials, region, notebookName, NotebookInstanceStatus.IN_SERVICE);
       }
 
     } catch (SdkException e) {
       checkException(e);
-      throw new ApiException("Error stopping notebook instance", e);
+      throw new ApiException("Error creating notebook instance", e);
     }
   }
 
@@ -391,7 +394,7 @@ public class AwsUtils {
         return;
       }
 
-      checkNotebookStatus(notebookStatus, stoppableStatusSet);
+      checkNotebookStatusAndThrow(notebookStatus, stoppableStatusSet);
       logger.info(
           String.format("Stopping SageMaker notebook instance with name '%s'.", notebookName));
 
@@ -407,9 +410,12 @@ public class AwsUtils {
       }
 
       if (waitForStatus) {
-        AwsUtils.waitForSageMakerNotebookStatus(
+        waitForSageMakerNotebookStatus(
             credentials, region, notebookName, NotebookInstanceStatus.STOPPED);
       }
+
+    } catch (ValidationException e) {
+      logger.error("Cannot stop notebook instance", e);
 
     } catch (SdkException e) {
       checkException(e);
@@ -434,11 +440,10 @@ public class AwsUtils {
                 + describeHttpResponse
                     .statusText()
                     .orElse(String.valueOf(describeHttpResponse.statusCode())));
-        // TODO: Check if error is thrown on non-existent notebook
       }
 
       // must be stopped or failed. AWS throws error if notebook is not found
-      checkNotebookStatus(describeResponse.notebookInstanceStatus(), deletableStatusSet);
+      checkNotebookStatusAndThrow(describeResponse.notebookInstanceStatus(), deletableStatusSet);
       logger.info(
           String.format("Deleting SageMaker notebook instance with name '%s'.", notebookName));
 
@@ -456,8 +461,14 @@ public class AwsUtils {
       }
 
       if (waitForStatus) {
-        AwsUtils.waitForSageMakerNotebookStatus(credentials, region, notebookName, null);
+        waitForSageMakerNotebookStatus(credentials, region, notebookName, null);
       }
+
+    } catch (ValidationException e) {
+      logger.error("Cannot delete notebook instance", e);
+
+    } catch (NotFoundException e) {
+      logger.warn("Notebook instance being deleted or no longer accessible", e);
 
     } catch (SdkException e) {
       checkException(e);
@@ -470,42 +481,48 @@ public class AwsUtils {
       Region region,
       String notebookName,
       NotebookInstanceStatus desiredStatus) {
-    SageMakerClient sageMaker = getSagemakerSession(credentials, region);
-    SageMakerWaiter sageMakerWaiter =
-        SageMakerWaiter.builder()
-            .client(sageMaker)
-            .overrideConfiguration(
-                WaiterOverrideConfiguration.builder()
-                    .waitTimeout(SAGEMAKER_NOTEBOOK_WAITER_TIMEOUT_DURATION)
-                    .build())
-            .build();
+    try {
+      SageMakerClient sageMaker = getSagemakerSession(credentials, region);
+      SageMakerWaiter sageMakerWaiter =
+          SageMakerWaiter.builder()
+              .client(sageMaker)
+              .overrideConfiguration(
+                  WaiterOverrideConfiguration.builder()
+                      .waitTimeout(SAGEMAKER_NOTEBOOK_WAITER_TIMEOUT_DURATION)
+                      .build())
+              .build();
 
-    DescribeNotebookInstanceRequest describeRequest =
-        DescribeNotebookInstanceRequest.builder().notebookInstanceName(notebookName).build();
-    WaiterResponse<DescribeNotebookInstanceResponse> waiterResponse;
-    if (desiredStatus == null) { // DELETED
-      waiterResponse = sageMakerWaiter.waitUntilNotebookInstanceDeleted(describeRequest);
-    } else if (desiredStatus == NotebookInstanceStatus.IN_SERVICE) {
-      waiterResponse = sageMakerWaiter.waitUntilNotebookInstanceInService(describeRequest);
-    } else if (desiredStatus == NotebookInstanceStatus.STOPPED) {
-      waiterResponse = sageMakerWaiter.waitUntilNotebookInstanceStopped(describeRequest);
-    } else {
-      throw new BadRequestException("Can only wait for notebook InService, Stopped or Deleted");
-    }
-
-    ResponseOrException<DescribeNotebookInstanceResponse> responseOrException =
-        waiterResponse.matched();
-
-    if (responseOrException.exception().isPresent()) {
-      Throwable t = responseOrException.exception().get();
-      if (t instanceof Exception) {
-        checkException((Exception) t);
+      DescribeNotebookInstanceRequest describeRequest =
+          DescribeNotebookInstanceRequest.builder().notebookInstanceName(notebookName).build();
+      WaiterResponse<DescribeNotebookInstanceResponse> waiterResponse;
+      if (desiredStatus == null) { // DELETED
+        waiterResponse = sageMakerWaiter.waitUntilNotebookInstanceDeleted(describeRequest);
+      } else if (desiredStatus == NotebookInstanceStatus.IN_SERVICE) {
+        waiterResponse = sageMakerWaiter.waitUntilNotebookInstanceInService(describeRequest);
+      } else if (desiredStatus == NotebookInstanceStatus.STOPPED) {
+        waiterResponse = sageMakerWaiter.waitUntilNotebookInstanceStopped(describeRequest);
+      } else {
+        throw new BadRequestException("Can only wait for notebook InService, Stopped or Deleted");
       }
-      logger.error("Error polling notebook instance status: " + t);
 
-    } else if (responseOrException.response().isPresent()) {
-      checkNotebookStatus(
-          responseOrException.response().get().notebookInstanceStatus(), Set.of(desiredStatus));
+      ResponseOrException<DescribeNotebookInstanceResponse> responseOrException =
+          waiterResponse.matched();
+      if (responseOrException.exception().isPresent()) {
+        Throwable t = responseOrException.exception().get();
+        if (t instanceof Exception) {
+          checkException((Exception) t);
+        }
+        logger.error("Error polling notebook instance status", t);
+
+      } else if (responseOrException.response().isPresent()) {
+        checkNotebookStatusAndThrow(
+            responseOrException.response().get().notebookInstanceStatus(),
+            Stream.of(desiredStatus).collect(Collectors.toSet()));
+      }
+
+    } catch (Exception e) {
+      checkException(e);
+      throw new ApiException("Error waiting for notebook instance", e);
     }
     // success
   }
@@ -546,11 +563,11 @@ public class AwsUtils {
     }
   }
 
-  private static void checkNotebookStatus(
+  private static void checkNotebookStatusAndThrow(
       NotebookInstanceStatus currentStatus, Set<NotebookInstanceStatus> expectedStatusSet) {
     // TODO(TERRA-384) - move to COW in TCL
     if (!expectedStatusSet.contains(currentStatus)) {
-      throw new ApiException(
+      throw new ValidationException(
           "Expected notebook instance status is "
               + expectedStatusSet
               + " but current status is "
@@ -562,7 +579,9 @@ public class AwsUtils {
     // TODO(TERRA-384) - move to COW in TCL
     if (ex instanceof SdkException) {
       String message = ex.getMessage();
-      if (message.contains("not authorized to perform")) {
+      if (message.contains("ResourceNotFoundException")
+          || message.contains("RecordNotFound")
+          || message.contains("not authorized to perform")) {
         throw new NotFoundException(
             "Error performing notebook operation, check the instance name / permissions and retry",
             ex);
