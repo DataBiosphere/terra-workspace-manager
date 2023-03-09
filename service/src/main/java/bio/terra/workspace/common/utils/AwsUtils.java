@@ -62,7 +62,7 @@ public class AwsUtils {
   private static final Set<NotebookInstanceStatus> startableStatusSet =
       Set.of(NotebookInstanceStatus.STOPPED, NotebookInstanceStatus.FAILED);
   private static final Set<NotebookInstanceStatus> stoppableStatusSet =
-      Set.of(NotebookInstanceStatus.IN_SERVICE);
+      Set.of(NotebookInstanceStatus.IN_SERVICE, NotebookInstanceStatus.FAILED);
   private static final Set<NotebookInstanceStatus> deletableStatusSet =
       Set.of(NotebookInstanceStatus.STOPPED, NotebookInstanceStatus.FAILED);
 
@@ -404,9 +404,6 @@ public class AwsUtils {
                 + httpResponse.statusText().orElse(String.valueOf(httpResponse.statusCode())));
       }
 
-    } catch (ValidationException e) {
-      logger.error("Cannot stop notebook instance", e);
-
     } catch (SdkException e) {
       checkException(e);
       throw new ApiException("Error stopping notebook instance", e);
@@ -449,9 +446,6 @@ public class AwsUtils {
             "Error deleting notebook instance, "
                 + httpResponse.statusText().orElse(String.valueOf(httpResponse.statusCode())));
       }
-
-    } catch (ValidationException e) {
-      logger.error("Cannot delete notebook instance", e);
 
     } catch (SdkException e) {
       checkException(e);
