@@ -74,8 +74,6 @@ public class WorkspaceService {
   private final ResourceDao resourceDao;
   private final WorkspaceActivityLogService workspaceActivityLogService;
 
-  private final TpsApiDispatch tpsApiDispatch;
-
   @Autowired
   public WorkspaceService(
       JobService jobService,
@@ -97,9 +95,9 @@ public class WorkspaceService {
     this.features = features;
     this.resourceDao = resourceDao;
     this.workspaceActivityLogService = workspaceActivityLogService;
-    this.tpsApiDispatch = tpsApiDispatch;
   }
 
+  /** Create a workspace with the specified parameters. Returns workspaceID of the new workspace. */
   @Traced
   public UUID createWorkspace(
       Workspace workspace,
