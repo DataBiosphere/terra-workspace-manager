@@ -38,7 +38,7 @@ import bio.terra.workspace.service.workspace.flight.gcp.RemoveUserFromWorkspaceF
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
+import bio.terra.workspace.service.workspace.model.WorkspaceDescription;
 import com.google.common.base.Preconditions;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
@@ -251,26 +251,18 @@ public class WorkspaceService {
    * @param limit The maximum number of items to return.
    */
   @Traced
-  public List<WorkspaceAndHighestRole> listWorkspacesAndHighestRoles(
+  public List<WorkspaceDescription> getWorkspaceDescriptions(
       AuthenticatedUserRequest userRequest, int offset, int limit, WsmIamRole minimumHighestRole) {
     // In general, highest SAM role should be fetched in controller. Fetch here to save a SAM call.
-    Map<UUID, WsmIamRole> samWorkspaceIdsAndHighestRoles =
+    Map<UUID, WorkspaceDescription> samWorkspacesResponse =
         SamRethrow.onInterrupted(
             () -> samService.listWorkspaceIdsAndHighestRoles(userRequest, minimumHighestRole),
             "listWorkspaceIds");
+
     return workspaceDao
-        .getWorkspacesMatchingList(samWorkspaceIdsAndHighestRoles.keySet(), offset, limit)
+        .getWorkspacesMatchingList(samWorkspacesResponse.keySet(), offset, limit)
         .stream()
-        .map(
-            workspace -> {
-              WsmIamRole highestRole =
-                  samWorkspaceIdsAndHighestRoles.get(workspace.getWorkspaceId());
-              Workspace workspaceToReturn =
-                  highestRole == WsmIamRole.DISCOVERER
-                      ? Workspace.stripWorkspaceForRequesterWithOnlyDiscovererRole(workspace)
-                      : workspace;
-              return new WorkspaceAndHighestRole(workspaceToReturn, highestRole);
-            })
+        .map(w -> samWorkspacesResponse.get(w.getWorkspaceId()))
         .toList();
   }
 

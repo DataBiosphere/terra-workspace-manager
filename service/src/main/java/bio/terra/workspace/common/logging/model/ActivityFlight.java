@@ -4,12 +4,8 @@ import bio.terra.workspace.common.exception.UnknownFlightClassNameException;
 import bio.terra.workspace.service.admin.flights.cloudcontexts.gcp.SyncGcpIamRolesFlight;
 import bio.terra.workspace.service.folder.flights.DeleteFolderFlight;
 import bio.terra.workspace.service.grant.flight.RevokeTemporaryGrantFlight;
-import bio.terra.workspace.service.resource.controlled.cloud.any.flight.update.UpdateControlledFlexibleResourceFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.flight.UpdateAzureControlledResourceRegionFlight;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.UpdateControlledAiNotebookResourceFlight;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.UpdateControlledBigQueryDatasetResourceFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.flight.UpdateGcpControlledResourceRegionFlight;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.UpdateControlledGcsBucketResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.backfill.UpdateControlledBigQueryDatasetsLifetimeFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.CloneControlledAzureStorageContainerResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CloneControlledGcsBucketResourceFlight;
@@ -18,6 +14,7 @@ import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.Cl
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneWorkspaceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
+import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceFlight;
 import bio.terra.workspace.service.resource.referenced.flight.clone.CloneReferencedResourceFlight;
 import bio.terra.workspace.service.resource.referenced.flight.update.UpdateReferenceResourceFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
@@ -45,17 +42,10 @@ public enum ActivityFlight {
       WorkspaceDeleteFlight.class.getName(), ActivityLogChangedTarget.WORKSPACE),
   CONTROLLED_RESOURCE_CREATE_FLIGHT(
       CreateControlledResourceFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
-  CONTROLLED_AI_NOTEBOOK_UPDATE_FLIGHT(
-      UpdateControlledAiNotebookResourceFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
-  CONTROLLED_GCS_BUCKET_UPDATE_FLIGHT(
-      UpdateControlledGcsBucketResourceFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
+  CONTROLLED_RESOURCE_UPDATE_FLIGHT(
+      UpdateControlledResourceFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
   CONTROLLED_GCS_BUCKET_CLONE_FLIGHT(
       CloneControlledGcsBucketResourceFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
-  CONTROLLED_BQ_DATASET_UPDATE_FLIGHT(
-      UpdateControlledBigQueryDatasetResourceFlight.class.getName(),
-      ActivityLogChangedTarget.RESOURCE),
-  CONTROLLED_FLEXIBLE_RESOURCE_UPDATE_FLIGHT(
-      UpdateControlledFlexibleResourceFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
   CONTROLLED_BQ_DATASET_CLONE_FLIGHT(
       CloneControlledGcpBigQueryDatasetResourceFlight.class.getName(),
       ActivityLogChangedTarget.RESOURCE),
