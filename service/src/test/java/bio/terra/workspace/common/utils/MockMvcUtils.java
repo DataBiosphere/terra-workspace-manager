@@ -1462,11 +1462,13 @@ public class MockMvcUtils {
       UUID resourceId,
       @Nullable String newResourceName,
       @Nullable String newDescription,
-      @Nullable byte[] newData)
+      @Nullable byte[] newData,
+      @Nullable ApiCloningInstructionsEnum newCloningInstructions)
       throws Exception {
     String request =
         objectMapper.writeValueAsString(
-            getUpdateFlexibleResourceRequestBody(newResourceName, newDescription, newData));
+            getUpdateFlexibleResourceRequestBody(
+                newResourceName, newDescription, newData, newCloningInstructions));
 
     return updateResource(
         ApiFlexibleResource.class,
@@ -1484,11 +1486,13 @@ public class MockMvcUtils {
       @Nullable String newResourceName,
       @Nullable String newDescription,
       @Nullable byte[] newData,
+      @Nullable ApiCloningInstructionsEnum newCloningInstructions,
       int code)
       throws Exception {
     String request =
         objectMapper.writeValueAsString(
-            getUpdateFlexibleResourceRequestBody(newResourceName, newDescription, newData));
+            getUpdateFlexibleResourceRequestBody(
+                newResourceName, newDescription, newData, newCloningInstructions));
 
     updateResource(
         ApiFlexibleResource.class,
@@ -1501,11 +1505,17 @@ public class MockMvcUtils {
   }
 
   private ApiUpdateControlledFlexibleResourceRequestBody getUpdateFlexibleResourceRequestBody(
-      @Nullable String newResourceName, @Nullable String newDescription, @Nullable byte[] newData) {
+      @Nullable String newResourceName,
+      @Nullable String newDescription,
+      @Nullable byte[] newData,
+      @Nullable ApiCloningInstructionsEnum newCloningInstructions) {
     return new ApiUpdateControlledFlexibleResourceRequestBody()
         .description(newDescription)
         .name(newResourceName)
-        .updateParameters(new ApiFlexibleResourceUpdateParameters().data(newData));
+        .updateParameters(
+            new ApiFlexibleResourceUpdateParameters()
+                .data(newData)
+                .cloningInstructions(newCloningInstructions));
   }
 
   public ApiCloneControlledFlexibleResourceResult cloneFlexResourceHelper(

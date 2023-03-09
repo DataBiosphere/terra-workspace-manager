@@ -180,9 +180,8 @@ components:
           description: JSON encoded in base 64.
           type: string
           format: byte
-          # TODO (PF-2540): Include cloning instructions when cloning is added.
-#       cloningInstructions:
-#         $ref: '#/components/schemas/CloningInstructionsEnum'
+        cloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
 
     UpdateControlledFlexibleResourceRequestBody:
       type: object

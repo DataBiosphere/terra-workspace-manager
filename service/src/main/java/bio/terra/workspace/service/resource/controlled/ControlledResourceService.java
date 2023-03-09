@@ -376,12 +376,11 @@ public class ControlledResourceService {
       @Nullable String resourceName,
       @Nullable String resourceDescription,
       AuthenticatedUserRequest userRequest) {
-    // TODO (PF-2540): Include when cloning support is added.
-    //    if (null != updateParameters && null != updateParameters.getCloningInstructions()) {
-    //      ResourceValidationUtils.validateCloningInstructions(
-    //          StewardshipType.CONTROLLED,
-    //          CloningInstructions.fromApiModel(updateParameters.getCloningInstructions()));
-    //    }
+    if (null != updateParameters && null != updateParameters.getCloningInstructions()) {
+      ResourceValidationUtils.validateCloningInstructions(
+          StewardshipType.CONTROLLED,
+          CloningInstructions.fromApiModel(updateParameters.getCloningInstructions()));
+    }
 
     // Name may be null if the user is not updating it in this request.
     if (resourceName != null) {
@@ -418,6 +417,9 @@ public class ControlledResourceService {
             .workspaceId(resource.getWorkspaceId().toString())
             .stewardshipType(resource.getStewardshipType())
             .addParameter(ControlledResourceKeys.UPDATE_FLEX_DATA, decodedData)
+            .addParameter(
+                ResourceKeys.CLONING_INSTRUCTIONS,
+                CloningInstructions.fromApiModel(updateParameters.getCloningInstructions()))
             .addParameter(ResourceKeys.RESOURCE_NAME, resourceName)
             .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, resourceDescription);
     jobBuilder.submitAndWait();

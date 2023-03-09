@@ -9,7 +9,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
@@ -29,8 +28,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -40,10 +37,7 @@ public class ControlledFlexibleResourceApiControllerTest extends BaseUnitTest {
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
   @Autowired ObjectMapper objectMapper;
-  @Autowired FeatureConfiguration features;
 
-  private static final Logger logger =
-      LoggerFactory.getLogger(ControlledFlexibleResourceApiControllerTest.class);
   private static final String defaultDecodedData = "{\"name\":\"original JSON\"}";
   private static final String defaultNewDecodedData = "{\"description\":\"this is new JSON\"}";
   private static final String defaultName = "fake-flexible-resource";
@@ -141,22 +135,35 @@ public class ControlledFlexibleResourceApiControllerTest extends BaseUnitTest {
   public void update() throws Exception {
     UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
 
-    UUID resourceId = createDefaultFlexResource(workspaceId).getResourceId();
+    var flexResource = createDefaultFlexResource(workspaceId).getFlexibleResource();
+    UUID resourceId = flexResource.getMetadata().getResourceId();
 
     var newName = "new-flex-resource-name";
     var newDescription = "This is an updated description";
 
     byte[] encodedNewData = defaultNewDecodedData.getBytes(StandardCharsets.UTF_8);
 
+    // Ensure cloning instructions are updated. The default COPY_INSTRUCTION for controlled
+    // resources in tests is DEFINITION.
+    assertEquals(
+        ApiCloningInstructionsEnum.DEFINITION, flexResource.getMetadata().getCloningInstructions());
+
     ApiFlexibleResource updatedFlex =
         mockMvcUtils.updateFlexibleResource(
-            workspaceId, resourceId, newName, newDescription, encodedNewData);
+            workspaceId,
+            resourceId,
+            newName,
+            newDescription,
+            encodedNewData,
+            ApiCloningInstructionsEnum.NOTHING);
 
     assertEquals(newName, updatedFlex.getMetadata().getName());
     assertEquals(newDescription, updatedFlex.getMetadata().getDescription());
     assertEquals(defaultNewDecodedData, updatedFlex.getAttributes().getData());
     assertEquals(defaultType, updatedFlex.getAttributes().getType());
     assertEquals(defaultTypeNamespace, updatedFlex.getAttributes().getTypeNamespace());
+    assertEquals(
+        ApiCloningInstructionsEnum.NOTHING, updatedFlex.getMetadata().getCloningInstructions());
   }
 
   @Test
@@ -169,7 +176,8 @@ public class ControlledFlexibleResourceApiControllerTest extends BaseUnitTest {
     var newDescription = "This is an updated description";
 
     ApiFlexibleResource updatedFlex =
-        mockMvcUtils.updateFlexibleResource(workspaceId, resourceId, newName, newDescription, null);
+        mockMvcUtils.updateFlexibleResource(
+            workspaceId, resourceId, newName, newDescription, null, null);
 
     assertEquals(newName, updatedFlex.getMetadata().getName());
     assertEquals(newDescription, updatedFlex.getMetadata().getDescription());
@@ -191,7 +199,8 @@ public class ControlledFlexibleResourceApiControllerTest extends BaseUnitTest {
     byte[] encodedNewData = defaultNewDecodedData.getBytes(StandardCharsets.UTF_8);
 
     ApiFlexibleResource updatedFlex =
-        mockMvcUtils.updateFlexibleResource(workspaceId, resourceId, null, null, encodedNewData);
+        mockMvcUtils.updateFlexibleResource(
+            workspaceId, resourceId, null, null, encodedNewData, null);
 
     assertEquals(defaultName, updatedFlex.getMetadata().getName());
     assertEquals(originalDescription, updatedFlex.getMetadata().getDescription());
@@ -210,7 +219,7 @@ public class ControlledFlexibleResourceApiControllerTest extends BaseUnitTest {
     Arrays.fill(veryLargeData, (byte) 'a');
 
     mockMvcUtils.updateFlexibleResourceExpect(
-        workspaceId, resourceId, null, null, veryLargeData, HttpStatus.SC_BAD_REQUEST);
+        workspaceId, resourceId, null, null, veryLargeData, null, HttpStatus.SC_BAD_REQUEST);
   }
 
   private ApiCreatedControlledFlexibleResource createDefaultFlexResource(UUID workspaceId)
