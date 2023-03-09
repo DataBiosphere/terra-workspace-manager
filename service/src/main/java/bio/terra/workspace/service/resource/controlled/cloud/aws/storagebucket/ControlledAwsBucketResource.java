@@ -144,7 +144,7 @@ public class ControlledAwsBucketResource extends ControlledResource {
 
   /** {@inheritDoc} */
   @Override
-  public void addUpdateSteps(UpdateControlledResourceFlight flight , FlightBeanBag flightBeanBag) {
+  public void addUpdateSteps(UpdateControlledResourceFlight flight, FlightBeanBag flightBeanBag) {
     throw new ApiException("addUpdateSteps NotImplemented");
   }
 

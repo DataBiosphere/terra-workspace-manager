@@ -3,7 +3,6 @@ package bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakernoteb
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
-import bio.terra.common.exception.NotImplementedException;
 import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
@@ -145,7 +144,7 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
 
   /** {@inheritDoc} */
   @Override
-  public void addUpdateSteps(UpdateControlledResourceFlight flight , FlightBeanBag flightBeanBag) {
+  public void addUpdateSteps(UpdateControlledResourceFlight flight, FlightBeanBag flightBeanBag) {
     throw new ApiException("addUpdateSteps NotImplemented");
   }
 

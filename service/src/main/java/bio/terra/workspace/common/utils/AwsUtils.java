@@ -4,6 +4,7 @@ import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.ErrorReportException;
 import bio.terra.common.exception.NotFoundException;
+import bio.terra.common.exception.UnauthorizedException;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.workspace.service.workspace.exceptions.SaCredentialsMissingException;
@@ -568,10 +569,9 @@ public class AwsUtils {
     // TODO(TERRA-384) - move to COW in TCL
     if (!expectedStatusSet.contains(currentStatus)) {
       throw new ValidationException(
-          "Expected notebook instance status is "
-              + expectedStatusSet
-              + " but current status is "
-              + currentStatus);
+          String.format(
+              "Expected notebook instance status is %s but current status is %s",
+              expectedStatusSet, currentStatus));
     }
   }
 
@@ -579,14 +579,16 @@ public class AwsUtils {
     // TODO(TERRA-384) - move to COW in TCL
     if (ex instanceof SdkException) {
       String message = ex.getMessage();
-      if (message.contains("ResourceNotFoundException")
-          || message.contains("RecordNotFound")
-          || message.contains("not authorized to perform")) {
-        throw new NotFoundException(
-            "Error performing notebook operation, check the instance name / permissions and retry",
+      if (message.contains("ResourceNotFoundException") || message.contains("RecordNotFound")) {
+        logger.warn("resource being deleted or no longer accessible", ex);
+
+      } else if (message.contains("not authorized to perform")) {
+        throw new UnauthorizedException(
+            "Error performing resource operation, check the name / permissions and retry",
             ex);
+
       } else if (message.contains("Unable to transition to")) {
-        throw new BadRequestException("Unable to perform notebook operation on cloud platform", ex);
+        throw new BadRequestException("Unable to perform resource operation", ex);
       }
     } else if (ex instanceof ErrorReportException) {
       throw (ErrorReportException) ex;
