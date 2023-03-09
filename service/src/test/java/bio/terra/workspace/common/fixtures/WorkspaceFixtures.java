@@ -1,6 +1,5 @@
 package bio.terra.workspace.common.fixtures;
 
-import static bio.terra.workspace.common.fixtures.PolicyFixtures.DEFAULT_WSM_POLICY_INPUTS;
 import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 
 import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
@@ -100,8 +99,7 @@ public class WorkspaceFixtures {
         .userFacingId(getUserFacingId(workspaceId))
         .stage(stageModel)
         .spendProfile(DEFAULT_SPEND_PROFILE)
-        .properties(properties)
-        .policies(DEFAULT_WSM_POLICY_INPUTS);
+        .properties(properties);
   }
 
   public static String getUserFacingId(UUID workspaceId) {

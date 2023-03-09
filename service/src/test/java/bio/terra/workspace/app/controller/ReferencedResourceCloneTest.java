@@ -1,8 +1,10 @@
 package bio.terra.workspace.app.controller;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
+import static bio.terra.workspace.common.utils.MockMvcUtils.CLONE_WORKSPACE_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_GCP_GCS_BUCKETS_V1_PATH_FORMAT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
@@ -12,6 +14,7 @@ import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.generated.model.ApiCloneWorkspaceRequest;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiCreateGcpGcsBucketReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
@@ -25,6 +28,7 @@ import bio.terra.workspace.generated.model.ApiWsmPolicyInputs;
 import bio.terra.workspace.generated.model.ApiWsmPolicyPair;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.dockerjava.zerodep.shaded.org.apache.hc.core5.http.HttpStatus;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
@@ -57,20 +61,23 @@ public class ReferencedResourceCloneTest extends BaseConnectedTest {
   private final String sourceResourceName = TestUtils.appendRandomNumber("source-resource-name");
   private final String sourceBucketName = TestUtils.appendRandomNumber("source-bucket-name");
 
-  private UUID workspaceId;
-  private UUID workspaceId2;
+  private UUID sourceWorkspaceId;
+  private UUID destinationWorkspaceId;
   private ApiGcpGcsBucketResource sourceResource;
 
   @BeforeEach
   public void setup() throws Exception {
-    workspaceId = null;
-    workspaceId2 = null;
+    sourceWorkspaceId = null;
+    destinationWorkspaceId = null;
   }
 
   @AfterEach
   public void cleanup() throws Exception {
-    mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
-    mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
+    mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), sourceWorkspaceId);
+    if (destinationWorkspaceId != null) {
+      mockMvcUtils.deleteWorkspace(
+          userAccessUtils.defaultUserAuthRequest(), destinationWorkspaceId);
+    }
   }
 
   @Test
@@ -81,8 +88,8 @@ public class ReferencedResourceCloneTest extends BaseConnectedTest {
 
     updateRegionPolicy(/*locationsToAdd=*/ List.of(gcpIowa), /*locationsToRemove=*/ List.of(gcpUS));
 
-    checkRegionPolicy(workspaceId, List.of("iowa"));
-    checkRegionPolicy(workspaceId2, List.of("usa"));
+    checkRegionPolicy(sourceWorkspaceId, List.of("iowa"));
+    checkRegionPolicy(destinationWorkspaceId, List.of("usa"));
   }
 
   @Test
@@ -92,8 +99,8 @@ public class ReferencedResourceCloneTest extends BaseConnectedTest {
 
     updateRegionPolicy(/*locationsToAdd=*/ List.of(gcpIowa), /*locationsToRemove=*/ List.of(gcpUS));
 
-    checkRegionPolicy(workspaceId, List.of("iowa"));
-    checkRegionPolicy(workspaceId2, List.of("iowa"));
+    checkRegionPolicy(sourceWorkspaceId, List.of("iowa"));
+    checkRegionPolicy(destinationWorkspaceId, List.of("iowa"));
   }
 
   @Test
@@ -104,8 +111,8 @@ public class ReferencedResourceCloneTest extends BaseConnectedTest {
 
     updateRegionPolicy(/*locationsToAdd=*/ List.of(gcpIowa), /*locationsToRemove=*/ List.of(gcpUS));
 
-    checkRegionPolicy(workspaceId, List.of("iowa"));
-    checkRegionPolicy(workspaceId2, List.of("usa"));
+    checkRegionPolicy(sourceWorkspaceId, List.of("iowa"));
+    checkRegionPolicy(destinationWorkspaceId, List.of("usa"));
   }
 
   @Test
@@ -116,33 +123,91 @@ public class ReferencedResourceCloneTest extends BaseConnectedTest {
 
     updateRegionPolicy(/*locationsToAdd=*/ List.of(gcpIowa), /*locationsToRemove=*/ List.of(gcpUS));
 
-    checkRegionPolicy(workspaceId, List.of("iowa"));
-    checkRegionPolicy(workspaceId2, List.of("iowa"));
+    checkRegionPolicy(sourceWorkspaceId, List.of("iowa"));
+    checkRegionPolicy(destinationWorkspaceId, List.of("iowa"));
   }
 
   @Test
-  public void cloneWorkspaceLink_additionalPolicy() throws Exception {
-    // When we link, the destination tracks the source policy
+  public void cloneWorkspaceLink_additionalRegionPolicy_changeToOregon_noUpdate() throws Exception {
     testWorkspaceCloneWithAdditionalPolicy(
         ApiCloningInstructionsEnum.LINK_REFERENCE,
         new ApiWsmPolicyInputs().addInputsItem(wsmTestGroup).addInputsItem(gcpIowa),
         List.of("iowa"));
+
+    // When we link, the destination tracks the source policy
+    updateRegionPolicyWithConflict(
+        /*locationsToAdd=*/ List.of(makeRegionPolicyInput("oregon")),
+        /*locationsToRemove=*/ List.of(gcpUS),
+        PolicyFixtures.REGION_CONSTRAINT);
+
+    checkRegionPolicy(sourceWorkspaceId, List.of("usa"));
+    checkRegionPolicy(destinationWorkspaceId, List.of("iowa"));
+  }
+
+  @Test
+  public void cloneWorkspaceMerge_additionalRegionPolicy_changeToOregon_succeeds()
+      throws Exception {
+    testWorkspaceCloneWithAdditionalPolicy(
+        ApiCloningInstructionsEnum.REFERENCE,
+        new ApiWsmPolicyInputs().addInputsItem(wsmTestGroup).addInputsItem(gcpIowa),
+        List.of("iowa"));
+
+    // When we copy, the destination does not track the source policy
+    updateRegionPolicy(
+        /*locationsToAdd=*/ List.of(makeRegionPolicyInput("oregon")),
+        /*locationsToRemove=*/ List.of(gcpUS));
+
+    checkRegionPolicy(sourceWorkspaceId, List.of("oregon"));
+    checkRegionPolicy(destinationWorkspaceId, List.of("iowa"));
+  }
+
+  @Test
+  public void cloneWorkspaceMerge_additionalPolicy_conflictGroupPolicy() throws Exception {
+    workspaceSetup(ApiCloningInstructionsEnum.REFERENCE);
+    ApiCloneWorkspaceRequest request =
+        new ApiCloneWorkspaceRequest()
+            .spendProfile(WorkspaceFixtures.DEFAULT_SPEND_PROFILE)
+            .additionalPolicies(
+                new ApiWsmPolicyInputs()
+                    .addInputsItem(makeGroupPolicyInput(PolicyFixtures.WSM_TEST_GROUP_ALT)));
+
+    mockMvcUtils.postExpect(
+        userAccessUtils.defaultUserAuthRequest(),
+        objectMapper.writeValueAsString(request),
+        CLONE_WORKSPACE_PATH_FORMAT.formatted(sourceWorkspaceId.toString()),
+        HttpStatus.SC_CONFLICT);
+  }
+
+  @Test
+  public void cloneWorkspaceMerge_additionalPolicy_conflictRegionPolicy() throws Exception {
+    workspaceSetup(ApiCloningInstructionsEnum.REFERENCE);
+    ApiCloneWorkspaceRequest request =
+        new ApiCloneWorkspaceRequest()
+            .spendProfile(WorkspaceFixtures.DEFAULT_SPEND_PROFILE)
+            .additionalPolicies(
+                new ApiWsmPolicyInputs().addInputsItem(makeRegionPolicyInput("asia")));
+
+    mockMvcUtils.postExpect(
+        userAccessUtils.defaultUserAuthRequest(),
+        objectMapper.writeValueAsString(request),
+        CLONE_WORKSPACE_PATH_FORMAT.formatted(sourceWorkspaceId.toString()),
+        HttpStatus.SC_CONFLICT);
   }
 
   private void testResourceClone(ApiCloningInstructionsEnum cloningInstruction) throws Exception {
     resourceSetup();
 
-    logger.info("Test workspaceId {}  workspaceId2 {}", workspaceId, workspaceId2);
+    logger.info("Test workspaceId {}  workspaceId2 {}", sourceWorkspaceId, destinationWorkspaceId);
 
     mockMvcUtils.cloneReferencedGcsBucket(
         userAccessUtils.defaultUserAuthRequest(),
-        workspaceId,
+        sourceWorkspaceId,
         sourceResource.getMetadata().getResourceId(),
-        workspaceId2,
+        destinationWorkspaceId,
         cloningInstruction,
         null);
 
-    checkRegionPolicy(workspaceId2, List.of("usa"));
+    checkRegionPolicy(destinationWorkspaceId, List.of("usa"));
   }
 
   private void checkRegionPolicy(UUID workspaceUuid, List<String> expectedRegions)
@@ -182,12 +247,12 @@ public class ReferencedResourceCloneTest extends BaseConnectedTest {
   }
 
   private void resourceSetup() throws Exception {
-    workspaceId = UUID.randomUUID();
+    sourceWorkspaceId = UUID.randomUUID();
     var workspaceRequest =
         new ApiCreateWorkspaceRequestBody()
-            .id(workspaceId)
+            .id(sourceWorkspaceId)
             .displayName("clone source")
-            .userFacingId(WorkspaceFixtures.getUserFacingId(workspaceId))
+            .userFacingId(WorkspaceFixtures.getUserFacingId(sourceWorkspaceId))
             .stage(ApiWorkspaceStageModel.MC_WORKSPACE)
             .spendProfile("wm-default-spend-profile")
             .policies(new ApiWsmPolicyInputs().addInputsItem(gcpUS).addInputsItem(wsmTestGroup));
@@ -195,12 +260,12 @@ public class ReferencedResourceCloneTest extends BaseConnectedTest {
     mockMvcUtils.createdWorkspaceWithoutCloudContext(
         userAccessUtils.defaultUserAuthRequest(), workspaceRequest);
 
-    workspaceId2 = UUID.randomUUID();
+    destinationWorkspaceId = UUID.randomUUID();
     var workspace2Request =
         new ApiCreateWorkspaceRequestBody()
-            .id(workspaceId2)
+            .id(destinationWorkspaceId)
             .displayName("clone destination")
-            .userFacingId(WorkspaceFixtures.getUserFacingId(workspaceId2))
+            .userFacingId(WorkspaceFixtures.getUserFacingId(destinationWorkspaceId))
             .stage(ApiWorkspaceStageModel.MC_WORKSPACE)
             .spendProfile("wm-default-spend-profile")
             .policies(null);
@@ -211,7 +276,7 @@ public class ReferencedResourceCloneTest extends BaseConnectedTest {
     sourceResource =
         mockMvcUtils.createReferencedGcsBucket(
             userAccessUtils.defaultUserAuthRequest(),
-            workspaceId,
+            sourceWorkspaceId,
             sourceResourceName,
             sourceBucketName);
   }
@@ -219,15 +284,15 @@ public class ReferencedResourceCloneTest extends BaseConnectedTest {
   private void testWorkspaceClone(ApiCloningInstructionsEnum cloningInstructions) throws Exception {
     workspaceSetup(cloningInstructions);
 
-    workspaceId2 = UUID.randomUUID();
+    destinationWorkspaceId = UUID.randomUUID();
     mockMvcUtils.cloneWorkspace(
         userAccessUtils.defaultUserAuthRequest(),
-        workspaceId,
+        sourceWorkspaceId,
         "wm-default-spend-profile",
         null,
-        workspaceId2);
+        destinationWorkspaceId);
 
-    checkRegionPolicy(workspaceId2, List.of("usa"));
+    checkRegionPolicy(destinationWorkspaceId, List.of("usa"));
   }
 
   private void testWorkspaceCloneWithAdditionalPolicy(
@@ -237,27 +302,27 @@ public class ReferencedResourceCloneTest extends BaseConnectedTest {
       throws Exception {
     workspaceSetup(cloningInstructions);
 
-    workspaceId2 = UUID.randomUUID();
+    destinationWorkspaceId = UUID.randomUUID();
     mockMvcUtils.cloneWorkspace(
         userAccessUtils.defaultUserAuthRequest(),
-        workspaceId,
+        sourceWorkspaceId,
         "wm-default-spend-profile",
         additionalPolicies,
-        workspaceId2);
+        destinationWorkspaceId);
 
-    checkRegionPolicy(workspaceId2, expectedDestinationRegions);
+    checkRegionPolicy(destinationWorkspaceId, expectedDestinationRegions);
   }
 
   private void workspaceSetup(ApiCloningInstructionsEnum cloningInstructions) throws Exception {
-    workspaceId = UUID.randomUUID();
+    sourceWorkspaceId = UUID.randomUUID();
     var workspaceRequest =
         new ApiCreateWorkspaceRequestBody()
-            .id(workspaceId)
+            .id(sourceWorkspaceId)
             .displayName("clone source")
-            .userFacingId(WorkspaceFixtures.getUserFacingId(workspaceId))
+            .userFacingId(WorkspaceFixtures.getUserFacingId(sourceWorkspaceId))
             .stage(ApiWorkspaceStageModel.MC_WORKSPACE)
             .spendProfile("wm-default-spend-profile")
-            .policies(new ApiWsmPolicyInputs().addInputsItem(gcpUS));
+            .policies(new ApiWsmPolicyInputs().addInputsItem(gcpUS).addInputsItem(wsmTestGroup));
 
     mockMvcUtils.createdWorkspaceWithoutCloudContext(
         userAccessUtils.defaultUserAuthRequest(), workspaceRequest);
@@ -277,7 +342,7 @@ public class ReferencedResourceCloneTest extends BaseConnectedTest {
         mockMvcUtils.getSerializedResponseForPost(
             userAccessUtils.defaultUserAuthRequest(),
             REFERENCED_GCP_GCS_BUCKETS_V1_PATH_FORMAT,
-            workspaceId,
+            sourceWorkspaceId,
             objectMapper.writeValueAsString(request));
     sourceResource = objectMapper.readValue(serializedResponse, ApiGcpGcsBucketResource.class);
   }
@@ -289,10 +354,33 @@ public class ReferencedResourceCloneTest extends BaseConnectedTest {
       ApiWsmPolicyUpdateResult result =
           mockMvcUtils.updatePolicies(
               userAccessUtils.defaultUserAuthRequest(),
-              workspaceId,
+              sourceWorkspaceId,
               /*policiesToAdd*/ locationsToAdd,
               /*policiesToRemove*/ locationsToRemove);
       assertTrue(result.getConflicts().isEmpty());
+    } catch (Exception e) {
+      logger.info("Update failed with exception", e);
+    }
+  }
+
+  private void updateRegionPolicyWithConflict(
+      List<ApiWsmPolicyInput> locationsToAdd,
+      List<ApiWsmPolicyInput> locationsToRemove,
+      String policyName) {
+    try {
+      // Update the source workspace policy
+      ApiWsmPolicyUpdateResult result =
+          mockMvcUtils.updatePolicies(
+              userAccessUtils.defaultUserAuthRequest(),
+              sourceWorkspaceId,
+              /*policiesToAdd*/ locationsToAdd,
+              /*policiesToRemove*/ locationsToRemove);
+      assertFalse(result.isUpdateApplied());
+      assertFalse(
+          result.getConflicts().stream()
+              .filter(c -> c.getName().equals(policyName))
+              .toList()
+              .isEmpty());
     } catch (Exception e) {
       logger.info("Update failed with exception", e);
     }
