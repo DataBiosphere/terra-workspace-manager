@@ -14,6 +14,7 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureRelayNamespaceCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
+import bio.terra.workspace.generated.model.ApiControlledFlexibleResourceCreationParameters;
 import bio.terra.workspace.generated.model.ApiFlexibleResourceUpdateParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookUpdateParameters;
@@ -44,6 +45,7 @@ import bio.terra.workspace.service.resource.controlled.flight.backfill.UpdateCon
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.CloneControlledAzureStorageContainerResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CloneControlledGcsBucketResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.CloneControlledGcpBigQueryDatasetResourceFlight;
+import bio.terra.workspace.service.resource.controlled.flight.clone.flexibleresource.CloneControlledFlexibleResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceFlight;
@@ -52,6 +54,7 @@ import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -305,6 +308,22 @@ public class ControlledResourceService {
     return jobBuilder.submit();
   }
 
+  /** Derive the creation parameters from the source flex resource. */
+  public ControlledResource createControlledFlexResourceSyncWithoutCreationParameters(
+      ControlledFlexibleResource resource,
+      ControlledResourceIamRole privateResourceIamRole,
+      AuthenticatedUserRequest userRequest) {
+
+    var creationParameters =
+        new ApiControlledFlexibleResourceCreationParameters()
+            .data(ControlledFlexibleResource.getEncodedJSONFromString(resource.getData()))
+            .typeNamespace(resource.getTypeNamespace())
+            .type(resource.getType());
+
+    return createControlledResourceSync(
+        resource, privateResourceIamRole, userRequest, creationParameters);
+  }
+
   public <T> ControlledResource createControlledResourceSync(
       ControlledResource resource,
       ControlledResourceIamRole privateResourceIamRole,
@@ -402,6 +421,48 @@ public class ControlledResourceService {
             .addParameter(ResourceKeys.RESOURCE_NAME, resourceName)
             .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, resourceDescription);
     jobBuilder.submitAndWait();
+  }
+
+  public ControlledFlexibleResource cloneFlexResource(
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId,
+      UUID destinationWorkspaceId,
+      UUID destinationResourceId,
+      AuthenticatedUserRequest userRequest,
+      @Nullable String destinationResourceName,
+      @Nullable String destinationDescription,
+      @Nullable ApiCloningInstructionsEnum cloningInstructionsOverride) {
+    final ControlledResource sourceFlexResource =
+        getControlledResource(sourceWorkspaceId, sourceResourceId);
+
+    final String jobDescription =
+        String.format(
+            "Clone controlled flex resource id %s; name %s",
+            sourceResourceId, sourceFlexResource.getName());
+
+    final CloningInstructions effectiveCloningInstructions =
+        Optional.ofNullable(cloningInstructionsOverride)
+            .map(CloningInstructions::fromApiModel)
+            .orElse(sourceFlexResource.getCloningInstructions());
+
+    final JobBuilder jobBuilder =
+        jobService
+            .newJob()
+            .description(jobDescription)
+            .flightClass(CloneControlledFlexibleResourceFlight.class)
+            .resourceType(WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE)
+            .resource(sourceFlexResource)
+            .workspaceId(destinationWorkspaceId.toString())
+            .operationType(OperationType.CLONE)
+            .addParameter(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId)
+            .addParameter(ControlledResourceKeys.DESTINATION_RESOURCE_ID, destinationResourceId)
+            .addParameter(ResourceKeys.RESOURCE_NAME, destinationResourceName)
+            .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, destinationDescription)
+            .addParameter(ResourceKeys.CLONING_INSTRUCTIONS, effectiveCloningInstructions)
+            .addParameter(ResourceKeys.RESOURCE, sourceFlexResource)
+            .addParameter(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
+
+    return jobBuilder.submitAndWait(ControlledFlexibleResource.class);
   }
 
   /**
