@@ -84,8 +84,7 @@ public class WorkspaceService {
       StageService stageService,
       FeatureConfiguration features,
       ResourceDao resourceDao,
-      WorkspaceActivityLogService workspaceActivityLogService,
-      TpsApiDispatch tpsApiDispatch) {
+      WorkspaceActivityLogService workspaceActivityLogService) {
     this.jobService = jobService;
     this.applicationDao = applicationDao;
     this.workspaceDao = workspaceDao;
