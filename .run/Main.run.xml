@@ -5,8 +5,8 @@
     <option name="ENABLE_JMX_AGENT" value="false" />
     <option name="ACTIVE_PROFILES" value="human-readable-logging" />
     <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$/service" />
-    <option name="ALTERNATIVE_JRE_PATH" />
-    <option name="SHORTEN_COMMAND_LINE" value="NONE" />
+    <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
+    <option name="ALTERNATIVE_JRE_PATH" value="temurin-17" />
     <envs>
       <env name="GOOGLE_APPLICATION_CREDENTIALS" value="../config/wsm-sa.json" />
       <env name="WORKSPACE_CLI_OLDESTSUPPORTEDVERSION" value="0.149.0" />

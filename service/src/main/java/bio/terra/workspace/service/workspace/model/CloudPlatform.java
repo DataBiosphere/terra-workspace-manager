@@ -9,6 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 public enum CloudPlatform {
   GCP("GCP", ApiCloudPlatform.GCP, "gcp"),
   AZURE("AZURE", ApiCloudPlatform.AZURE, "azure"),
+  AWS("AWS", ApiCloudPlatform.AWS, "aws"),
   /** The resource does not have to be strongly associated with one cloud platform. */
   ANY("ANY", null, null);
 

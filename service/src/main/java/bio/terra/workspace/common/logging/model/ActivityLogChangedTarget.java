@@ -3,6 +3,7 @@ package bio.terra.workspace.common.logging.model;
 /** Type of targets workspace manager change activity can make changes to. */
 public enum ActivityLogChangedTarget {
   APPLICATION,
+  AWS_CLOUD_CONTEXT,
   AZURE_CLOUD_CONTEXT,
   FOLDER,
   GCP_CLOUD_CONTEXT,

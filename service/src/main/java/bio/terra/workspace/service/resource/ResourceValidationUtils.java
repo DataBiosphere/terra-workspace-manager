@@ -9,6 +9,7 @@ import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.app.configuration.external.GitRepoReferencedResourceConfiguration;
 import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.db.exception.FieldSizeExceededException;
+import bio.terra.workspace.generated.model.ApiAwsSageMakerNotebookCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
@@ -30,7 +31,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -107,6 +107,13 @@ public class ResourceValidationUtils {
       Pattern.compile("(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?)");
 
   /**
+   * SageMaker Notebook instances must be 1-63 characters, using alphanumeric characters and dashes.
+   * The first and last characters must be alphanumeric.
+   */
+  public static final Pattern SAGEMAKER_NOTEBOOK_INSTANCE_NAME_VALIDATION_PATTERN =
+      Pattern.compile("^[a-zA-Z0-9](-*[a-zA-Z0-9])*");
+
+  /**
    * Resource names must be 1-1024 characters, using letters, numbers, dashes, and underscores and
    * must not start with a dash or underscore.
    */
@@ -167,7 +174,7 @@ public class ResourceValidationUtils {
    * <p>This method DOES NOT guarantee that the bucket name is valid.
    *
    * @param name gcs-bucket name
-   * @param validationFailureError
+   * @param validationFailureError validationFailureError
    * @throws InvalidNameException throws exception when the bucket name fails to conform to the
    *     Google naming convention for bucket name.
    */
@@ -202,11 +209,12 @@ public class ResourceValidationUtils {
   public static void validateControlledResourceRegionAgainstPolicy(
       TpsApiDispatch tpsApiDispatch, UUID workspaceUuid, String location, CloudPlatform platform) {
     switch (platform) {
+      case GCP -> validateGcpRegion(tpsApiDispatch, workspaceUuid, location);
       case AZURE -> {
         // TODO: enable policy check in Azure when we support Azure regions in the TPS ontology.
         // validateAzureRegion(location);
       }
-      case GCP -> validateGcpRegion(tpsApiDispatch, workspaceUuid, location);
+      case AWS -> validateAwsRegion(location);
       case ANY -> {
         // Flexible resources are not stored on the cloud. Thus, they have no region policies.
       }
@@ -257,18 +265,16 @@ public class ResourceValidationUtils {
         return true;
       }
     }
+
     // AWS Code commit host server is region specific. Here are the list of all the valid git
     // connection endpoint: https://docs.aws.amazon.com/codecommit/latest/userguide/regions.html.
-    if (hostName.startsWith("git-codecommit.") && hostName.endsWith(".amazonaws.com")) {
-      return true;
-    }
-    return false;
+    return hostName.startsWith("git-codecommit.") && hostName.endsWith(".amazonaws.com");
   }
   /**
    * Validate GCS object name.
    *
    * @param objectName full path to the object in the bucket
-   * @throws InvalidNameException
+   * @throws InvalidNameException InvalidNameException
    */
   public static void validateGcsObjectName(String objectName) {
     int nameLength = objectName.getBytes(StandardCharsets.UTF_8).length;
@@ -368,7 +374,7 @@ public class ResourceValidationUtils {
   public static void validateBqDataTableName(String name) {
     if (StringUtils.isEmpty(name)
         || !BQ_DATATABLE_NAME_VALIDATION_PATTERN.matcher(name).matches()) {
-      logger.warn("Invalid data table name %s", name);
+      logger.warn("Invalid data table name {}", name);
       throw new InvalidNameException(
           "Invalid BQ table name specified. Name must be 1-1024 characters, contains Unicode characters in category L"
               + " (letter), M (mark), N (number), Pc (connector, including underscore), Pd (dash), Zs (space)");
@@ -402,6 +408,18 @@ public class ResourceValidationUtils {
       throw new InconsistentFieldsException(
           "Exactly one of imageName or imageFamily must be specified for a valid vmImage.");
     }
+  }
+
+  public static void validateSageMakerNotebookInstanceId(String name) {
+    if (!SAGEMAKER_NOTEBOOK_INSTANCE_NAME_VALIDATION_PATTERN.matcher(name).matches()) {
+      logger.warn("Invalid SageMaker Notebook instance ID {}", name);
+      throw new InvalidReferenceException(
+          "Invalid SageMaker Notebook instance ID specified. ID must be 1 to 63 alphanumeric characters or dashes, where the first and last characters are not a dash.");
+    }
+  }
+
+  public static void validate(ApiAwsSageMakerNotebookCreationParameters creationParameters) {
+    validateSageMakerNotebookInstanceId(creationParameters.getInstanceId());
   }
 
   public static void validateResourceName(String name) {
@@ -453,13 +471,28 @@ public class ResourceValidationUtils {
   }
 
   public static void validateAzureVmSize(String vmSize) {
-    if (!VirtualMachineSizeTypes.values().stream()
-        .map(x -> x.toString())
-        .collect(Collectors.toList())
-        .contains(vmSize)) {
+    if (VirtualMachineSizeTypes.values().stream()
+        .filter(t -> t.toString().equalsIgnoreCase(vmSize))
+        .findFirst()
+        .isEmpty()) {
       logger.warn("Invalid Azure vmSize {}", vmSize);
       throw new InvalidReferenceException(
           "Invalid Azure vm size specified. See the class `com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes`");
+    }
+  }
+
+  public static void validateGcpRegion(
+      TpsApiDispatch tpsApiDispatch, UUID workspaceId, String region) {
+    region = GcpUtils.parseRegion(region);
+    tpsApiDispatch.createPaoIfNotExist(workspaceId);
+
+    // Get the list of valid locations for this workspace from TPS. If there are no regional
+    // constraints applied to the workspace, TPS should return all available regions.
+    List<String> validLocations = tpsApiDispatch.listValidRegions(workspaceId, CloudPlatform.GCP);
+
+    if (validLocations.stream().noneMatch(region::equalsIgnoreCase)) {
+      throw new InvalidControlledResourceException(
+          String.format("Specified location %s is not allowed by effective policy.", region));
     }
   }
 
@@ -478,18 +511,17 @@ public class ResourceValidationUtils {
     }
   }
 
-  public static void validateGcpRegion(
-      TpsApiDispatch tpsApiDispatch, UUID workspaceId, String region) {
-    region = GcpUtils.parseRegion(region);
-    tpsApiDispatch.createPaoIfNotExist(workspaceId);
-
-    // Get the list of valid locations for this workspace from TPS. If there are no regional
-    // constraints applied to the workspace, TPS should return all available regions.
-    List<String> validLocations = tpsApiDispatch.listValidRegions(workspaceId, CloudPlatform.GCP);
-
-    if (validLocations.stream().noneMatch(region::equalsIgnoreCase)) {
-      throw new InvalidControlledResourceException(
-          String.format("Specified location %s is not allowed by effective policy.", region));
+  public static void validateAwsRegion(String region) {
+    if (StringUtils.isEmpty(region)) {
+      logger.warn("Cannot validate empty AWS region.");
+      return;
+    }
+    if (software.amazon.awssdk.regions.Region.regions().stream()
+        .filter(r -> r.toString().equalsIgnoreCase(region))
+        .findFirst()
+        .isEmpty()) {
+      logger.warn("Invalid AWS region {}", region);
+      throw new InvalidControlledResourceException("Invalid AWS Region specified.");
     }
   }
 

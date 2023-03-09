@@ -73,7 +73,8 @@ public class CloneControlledAzureStorageContainerResourceFlight extends Flight {
             destinationWorkspaceId,
             CloudPlatform.AZURE,
             flightBeanBag.getGcpCloudContextService(),
-            flightBeanBag.getAzureCloudContextService()),
+            flightBeanBag.getAzureCloudContextService(),
+            flightBeanBag.getAwsCloudContextService()),
         RetryRules.shortDatabase());
 
     // Flight plan

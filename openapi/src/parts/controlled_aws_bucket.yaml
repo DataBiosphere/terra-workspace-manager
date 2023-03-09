@@ -1,0 +1,146 @@
+paths:
+  /api/workspaces/v1/{workspaceId}/resources/controlled/aws/buckets:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Create a new controlled AWS bucket
+      operationId: createAwsBucket
+      tags: [ControlledAwsResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateControlledAwsBucketRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CreatedControlledAwsBucketResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/aws/buckets/{resourceId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Get a controlled AWS bucket resource
+      operationId: getAwsBucket
+      tags: [ControlledAwsResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/GetControlledAwsBucketResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/aws/buckets/{resourceId}/consoleLink:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+      - $ref: '#/components/parameters/AwsCredentialAccessScope'
+      - $ref: '#/components/parameters/AwsConsoleSessionDuration'
+    get:
+      summary: Get a link to manage this bucket in the AWS S3 Console
+      operationId: getAwsBucketConsoleLink
+      tags: [ControlledAwsResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/GetControlledAwsBucketConsoleLinkResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/aws/buckets/{resourceId}/credential:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+      - $ref: '#/components/parameters/AwsCredentialAccessScope'
+      - $ref: '#/components/parameters/AwsCredentialDuration'
+    get:
+      summary: Get a credential to access this bucket in the AWS CLI or SDK
+      operationId: getAwsBucketCredential
+      tags: [ControlledAwsResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/GetControlledAwsBucketCredentialResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+components:
+  schemas:
+    CreatedControlledAwsBucket:
+      description: Response Payload for requesting a new controlled AWS bucket.
+      type: object
+      required: [resourceId, awsBucket]
+      properties:
+        resourceId:
+          description: UUID of a newly-created resource.
+          type: string
+          format: uuid
+        awsBucket:
+          $ref: '#/components/schemas/AwsBucketResource'
+
+    CreateControlledAwsBucketRequestBody:
+      description: Payload for requesting a new controlled AWS bucket resource.
+      type: object
+      required: [common, awsBucket]
+      properties:
+        common:
+          $ref: '#/components/schemas/ControlledResourceCommonFields'
+        awsBucket:
+          $ref: '#/components/schemas/AwsBucketCreationParameters'
+
+    AwsBucketCreationParameters:
+      description: >-
+        Bucket-specific properties to be set on creation. These are a subset of the
+        values accepted by the AWS Storage API.
+      type: object
+      properties:
+        location:
+          description: A valid bucket location per https://docs.aws.amazon.com/general/latest/gr/s3.html.
+          type: string
+        seed:
+          description: Seed bucket with sample data.
+          type: boolean
+          default: false
+
+  responses:
+    CreatedControlledAwsBucketResponse:
+      description: Response to Create controlled AWS bucket
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreatedControlledAwsBucket'
+
+    GetControlledAwsBucketResponse:
+      description: Response to get bucket
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AwsBucketResource'
+
+    GetControlledAwsBucketConsoleLinkResponse:
+      description: Response to get bucket
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AwsConsoleLink'
+
+    GetControlledAwsBucketCredentialResponse:
+      description: Response to get bucket
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AwsCredential'
