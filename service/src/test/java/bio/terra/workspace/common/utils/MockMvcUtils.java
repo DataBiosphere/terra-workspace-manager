@@ -29,6 +29,8 @@ import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.generated.model.ApiAccessScope;
+import bio.terra.workspace.generated.model.ApiCloneControlledFlexibleResourceRequest;
+import bio.terra.workspace.generated.model.ApiCloneControlledFlexibleResourceResult;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpBigQueryDatasetRequest;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpBigQueryDatasetResult;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketRequest;
@@ -68,6 +70,7 @@ import bio.terra.workspace.generated.model.ApiDataRepoSnapshotAttributes;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiFlexibleResource;
+import bio.terra.workspace.generated.model.ApiFlexibleResourceAttributes;
 import bio.terra.workspace.generated.model.ApiFlexibleResourceUpdateParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableAttributes;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableResource;
@@ -140,6 +143,7 @@ import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveCon
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.referenced.flight.create.CreateReferenceMetadataStep;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -157,6 +161,7 @@ import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.hamcrest.Matcher;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -303,6 +308,8 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/controlled/any/flexibleResources";
   public static final String CONTROLLED_FLEXIBLE_RESOURCE_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/any/flexibleResources/%s";
+  public static final String CLONE_CONTROLLED_FLEXIBLE_RESOURCE_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/any/flexibleResources/%s/clone";
   public static final String UPDATE_POLICIES_PATH_FORMAT = "/api/workspaces/v1/%s/policies";
   public static final String POLICY_V1_GET_REGION_INFO_PATH = "/api/policies/v1/getLocationInfo";
 
@@ -313,6 +320,12 @@ public class MockMvcUtils {
   public static final AuthenticatedUserRequest USER_REQUEST =
       new AuthenticatedUserRequest(
           DEFAULT_USER_EMAIL, DEFAULT_USER_SUBJECT_ID, Optional.of("ThisIsNotARealBearerToken"));
+  public static final AuthenticatedUserRequest SECOND_USER_REQUEST =
+      new AuthenticatedUserRequest(
+          "secondFake@gmail.com",
+          "secondSubjectId123",
+          Optional.of("ThisIsASecondFakeBearerToken"));
+
   public static final String DEFAULT_GCP_RESOURCE_REGION = "us-central1";
   private static final Logger logger = LoggerFactory.getLogger(MockMvcUtils.class);
   private static final String DEST_BUCKET_RESOURCE_NAME =
@@ -1478,6 +1491,130 @@ public class MockMvcUtils {
         .updateParameters(new ApiFlexibleResourceUpdateParameters().data(newData));
   }
 
+  public ApiCloneControlledFlexibleResourceResult cloneFlexResourceHelper(
+      AuthenticatedUserRequest userRequest,
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId,
+      UUID destWorkspaceId,
+      ApiCloningInstructionsEnum cloningInstructions,
+      @Nullable String destResourceName,
+      @Nullable String destDescription,
+      List<Integer> expectedCodes,
+      boolean shouldUndo)
+      throws Exception {
+    // Retry to ensure steps are idempotent
+    Map<String, StepStatus> retryableStepsMap = new HashMap<>();
+    List<Class<? extends Step>> retryableSteps =
+        ImmutableList.of(CheckControlledResourceAuthStep.class);
+    retryableSteps.forEach(
+        step -> retryableStepsMap.put(step.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY));
+    jobService.setFlightDebugInfoForTest(
+        FlightDebugInfo.newBuilder()
+            .doStepFailures(retryableStepsMap)
+            .lastStepFailure(shouldUndo)
+            .build());
+
+    ApiCloneControlledFlexibleResourceRequest request =
+        new ApiCloneControlledFlexibleResourceRequest()
+            .destinationWorkspaceId(destWorkspaceId)
+            .cloningInstructions(cloningInstructions)
+            .description(destDescription);
+
+    if (!StringUtils.isEmpty(destResourceName)) {
+      request.name(destResourceName);
+    }
+
+    MockHttpServletResponse response =
+        mockMvc
+            .perform(
+                addJsonContentType(
+                    addAuth(
+                        post(CLONE_CONTROLLED_FLEXIBLE_RESOURCE_V1_PATH_FORMAT.formatted(
+                                sourceWorkspaceId, sourceResourceId))
+                            .content(objectMapper.writeValueAsString(request)),
+                        userRequest)))
+            .andExpect(status().is(getExpectedCodesMatcher(expectedCodes)))
+            .andReturn()
+            .getResponse();
+
+    if (isErrorResponse(response)) {
+      return null;
+    }
+
+    String serializedResponse = response.getContentAsString();
+    return objectMapper.readValue(
+        serializedResponse, ApiCloneControlledFlexibleResourceResult.class);
+  }
+
+  /** Call cloneFlexResource() and wait for the flight to finish. */
+  public ApiFlexibleResource cloneFlexResource(
+      AuthenticatedUserRequest userRequest,
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId,
+      UUID destWorkspaceId,
+      ApiCloningInstructionsEnum cloningInstructions,
+      @Nullable String destResourceName,
+      @Nullable String destDescription)
+      throws Exception {
+    ApiCloneControlledFlexibleResourceResult result =
+        cloneFlexResourceHelper(
+            userRequest,
+            sourceWorkspaceId,
+            sourceResourceId,
+            destWorkspaceId,
+            cloningInstructions,
+            destResourceName,
+            destDescription,
+            // clone_copyNothing sometimes returns SC_OK, even for the initial call. So accept both
+            // to avoid flakes.
+            JOB_SUCCESS_CODES,
+            /*shouldUndo=*/ false);
+    logger.info("Controlled flex clone of resource %s completed.".formatted(sourceResourceId));
+    return result.getResource();
+  }
+
+  public void cloneFlex_undo(
+      AuthenticatedUserRequest userRequest,
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId,
+      UUID destWorkspaceId,
+      ApiCloningInstructionsEnum cloningInstructions,
+      @Nullable String destResourceName,
+      @Nullable String destDescription)
+      throws Exception {
+    cloneFlexResourceHelper(
+        userRequest,
+        sourceWorkspaceId,
+        sourceResourceId,
+        destWorkspaceId,
+        cloningInstructions,
+        destResourceName,
+        destDescription,
+        List.of(HttpStatus.SC_INTERNAL_SERVER_ERROR),
+        /*shouldUndo=*/ true);
+  }
+
+  public void cloneFlex_forbidden(
+      AuthenticatedUserRequest userRequest,
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId,
+      UUID destWorkspaceId,
+      ApiCloningInstructionsEnum cloningInstructions,
+      @Nullable String destResourceName,
+      @Nullable String destDescription)
+      throws Exception {
+    cloneFlexResourceHelper(
+        userRequest,
+        sourceWorkspaceId,
+        sourceResourceId,
+        destWorkspaceId,
+        cloningInstructions,
+        destResourceName,
+        destDescription,
+        List.of(HttpStatus.SC_FORBIDDEN),
+        /*shouldUndo=*/ false);
+  }
+
   public ApiDataRepoSnapshotResource createReferencedDataRepoSnapshot(
       AuthenticatedUserRequest userRequest,
       UUID workspaceId,
@@ -2189,13 +2326,15 @@ public class MockMvcUtils {
       ApiManagedBy expectedManagedByType,
       ApiPrivateResourceUser expectedPrivateResourceUser,
       ApiPrivateResourceState expectedPrivateResourceState,
-      String region) {
+      @Nullable String region) {
     assertEquals(expectedAccessScope, actualMetadata.getAccessScope());
     assertEquals(expectedManagedByType, actualMetadata.getManagedBy());
     assertEquals(expectedPrivateResourceUser, actualMetadata.getPrivateResourceUser());
     assertEquals(expectedPrivateResourceState, actualMetadata.getPrivateResourceState());
-    assertEquals(
-        region.toLowerCase(Locale.ROOT), actualMetadata.getRegion().toLowerCase(Locale.ROOT));
+    if (region != null) {
+      assertEquals(
+          region.toLowerCase(Locale.ROOT), actualMetadata.getRegion().toLowerCase(Locale.ROOT));
+    }
   }
 
   public static void assertResourceMetadata(
@@ -2648,5 +2787,68 @@ public class MockMvcUtils {
       logger.error("Not an error report. Serialized response is: {}", serializedResponse);
     }
     return true;
+  }
+
+  public void assertFlexibleResource(
+      ApiFlexibleResource actualFlexibleResource,
+      ApiStewardshipType expectedStewardshipType,
+      ApiCloningInstructionsEnum expectedCloningInstructions,
+      UUID expectedWorkspaceId,
+      String expectedResourceName,
+      String expectedResourceDescription,
+      String expectedCreatedBy,
+      String expectedLastUpdatedBy,
+      String expectedTypeNamespace,
+      String expectedType,
+      @Nullable String expectedData) {
+    assertResourceMetadata(
+        actualFlexibleResource.getMetadata(),
+        (CloudPlatform.ANY).toApiModel(),
+        ApiResourceType.FLEXIBLE_RESOURCE,
+        expectedStewardshipType,
+        expectedCloningInstructions,
+        expectedWorkspaceId,
+        expectedResourceName,
+        expectedResourceDescription,
+        /*expectedResourceLineage=*/ new ApiResourceLineage(),
+        expectedCreatedBy,
+        expectedLastUpdatedBy);
+
+    assertEquals(expectedTypeNamespace, actualFlexibleResource.getAttributes().getTypeNamespace());
+    assertEquals(expectedType, actualFlexibleResource.getAttributes().getType());
+    assertEquals(expectedData, actualFlexibleResource.getAttributes().getData());
+  }
+
+  public void assertClonedControlledFlexibleResource(
+      @NotNull ApiFlexibleResource originalFlexibleResource,
+      ApiFlexibleResource actualFlexibleResource,
+      UUID expectedDestWorkspaceId,
+      String expectedResourceName,
+      String expectedResourceDescription,
+      String expectedCreatedBy,
+      String expectedLastUpdatedBy) {
+    // Attributes are immutable upon cloning.
+    ApiFlexibleResourceAttributes originalAttributes = originalFlexibleResource.getAttributes();
+
+    assertFlexibleResource(
+        actualFlexibleResource,
+        ApiStewardshipType.CONTROLLED,
+        ApiCloningInstructionsEnum.DEFINITION,
+        expectedDestWorkspaceId,
+        expectedResourceName,
+        expectedResourceDescription,
+        expectedCreatedBy,
+        expectedLastUpdatedBy,
+        originalAttributes.getTypeNamespace(),
+        originalAttributes.getType(),
+        originalAttributes.getData());
+
+    assertControlledResourceMetadata(
+        actualFlexibleResource.getMetadata().getControlledResourceMetadata(),
+        ApiAccessScope.SHARED_ACCESS,
+        ApiManagedBy.USER,
+        new ApiPrivateResourceUser(),
+        ApiPrivateResourceState.NOT_APPLICABLE,
+        null);
   }
 }

@@ -445,6 +445,9 @@ public class ControlledResourceService {
             .map(CloningInstructions::fromApiModel)
             .orElse(sourceFlexResource.getCloningInstructions());
 
+    // If TPS is enabled, then we want to merge policies when cloning a flex resource.
+    boolean mergePolicies = features.isTpsEnabled();
+
     final JobBuilder jobBuilder =
         jobService
             .newJob()
@@ -460,6 +463,7 @@ public class ControlledResourceService {
             .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, destinationDescription)
             .addParameter(ResourceKeys.CLONING_INSTRUCTIONS, effectiveCloningInstructions)
             .addParameter(ResourceKeys.RESOURCE, sourceFlexResource)
+            .addParameter(WorkspaceFlightMapKeys.MERGE_POLICIES, mergePolicies)
             .addParameter(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
 
     return jobBuilder.submitAndWait(ControlledFlexibleResource.class);

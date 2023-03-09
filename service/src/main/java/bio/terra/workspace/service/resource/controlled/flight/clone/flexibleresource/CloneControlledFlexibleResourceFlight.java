@@ -92,8 +92,8 @@ public class CloneControlledFlexibleResourceFlight extends Flight {
               WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
       addStep(
           new MergePolicyAttributesDryRunStep(
-              destinationWorkspaceId,
               sourceFlexResource.getWorkspaceId(),
+              destinationWorkspaceId,
               resolvedCloningInstructions,
               flightBeanBag.getTpsApiDispatch()));
 
@@ -110,8 +110,8 @@ public class CloneControlledFlexibleResourceFlight extends Flight {
 
       addStep(
           new MergePolicyAttributesStep(
-              destinationWorkspaceId,
               sourceFlexResource.getWorkspaceId(),
+              destinationWorkspaceId,
               resolvedCloningInstructions,
               flightBeanBag.getTpsApiDispatch()));
     }
