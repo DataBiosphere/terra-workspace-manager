@@ -666,10 +666,10 @@ public class MockMvcUtils {
         new ApiWsmPolicyInputs()
             .addInputsItem(
                 new ApiWsmPolicyInput()
-                    .namespace("terra")
-                    .name("region-constraint")
+                    .namespace(PolicyFixtures.NAMESPACE)
+                    .name(PolicyFixtures.REGION_CONSTRAINT)
                     .addAdditionalDataItem(
-                        new ApiWsmPolicyPair().key("region-name").value(regionName)));
+                        new ApiWsmPolicyPair().key(PolicyFixtures.REGION).value(regionName)));
     ApiCreatedWorkspace workspace = createWorkspaceWithPolicy(userRequest, regionPolicy);
     return workspace.getId();
   }
