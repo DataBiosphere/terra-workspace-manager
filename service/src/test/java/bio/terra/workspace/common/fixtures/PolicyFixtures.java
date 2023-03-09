@@ -8,19 +8,31 @@ public class PolicyFixtures {
   public static final String GROUP_CONSTRAINT = "group-constraint";
   public static final String REGION_CONSTRAINT = "region-constraint";
   public static final String GROUP = "group";
+  public static final String DEFAULT_GROUP = "wsm-test-group";
+  public static final String ALT_GROUP = "wsm-test-group-alt";
   public static final String REGION = "region-name";
-  public static final String DDGROUP = "ddgroup";
   public static final String US_REGION = "usa";
+  public static final String IOWA_REGION = "iowa";
 
-  public static ApiWsmPolicyInput GROUP_POLICY =
+  public static ApiWsmPolicyInput GROUP_POLICY_DEFAULT =
       new ApiWsmPolicyInput()
           .namespace(NAMESPACE)
           .name(GROUP_CONSTRAINT)
-          .addAdditionalDataItem(new ApiWsmPolicyPair().key(GROUP).value(DDGROUP));
-
-  public static ApiWsmPolicyInput REGION_POLICY =
+          .addAdditionalDataItem(new ApiWsmPolicyPair().key(GROUP).value(DEFAULT_GROUP));
+  public static ApiWsmPolicyInput GROUP_POLICY_ALT =
+      new ApiWsmPolicyInput()
+          .namespace(NAMESPACE)
+          .name(GROUP_CONSTRAINT)
+          .addAdditionalDataItem(new ApiWsmPolicyPair().key(GROUP).value(ALT_GROUP));
+  public static ApiWsmPolicyInput REGION_POLICY_USA =
       new ApiWsmPolicyInput()
           .namespace(NAMESPACE)
           .name(REGION_CONSTRAINT)
           .addAdditionalDataItem(new ApiWsmPolicyPair().key(REGION).value(US_REGION));
+
+  public static ApiWsmPolicyInput REGION_POLICY_IOWA =
+      new ApiWsmPolicyInput()
+          .namespace(NAMESPACE)
+          .name(REGION_CONSTRAINT)
+          .addAdditionalDataItem(new ApiWsmPolicyPair().key(REGION).value(IOWA_REGION));
 }

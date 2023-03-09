@@ -11,6 +11,7 @@ import bio.terra.workspace.model.CreatedWorkspace;
 import bio.terra.workspace.model.Properties;
 import bio.terra.workspace.model.Property;
 import bio.terra.workspace.model.WorkspaceStageModel;
+import bio.terra.workspace.model.WsmPolicyInputs;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -74,6 +75,15 @@ public abstract class WorkspaceAllocateTestScriptBase extends WorkspaceApiTestSc
    */
   protected CreatedWorkspace createWorkspace(
       UUID workspaceUuid, String spendProfileId, WorkspaceApi workspaceApi) throws Exception {
+    return createWorkspaceWithPolicy(workspaceUuid, spendProfileId, workspaceApi, null);
+  }
+
+  protected CreatedWorkspace createWorkspaceWithPolicy(
+      UUID workspaceUuid,
+      String spendProfileId,
+      WorkspaceApi workspaceApi,
+      WsmPolicyInputs policyInputs)
+      throws Exception {
     Properties properties = new Properties();
     Property property1 = new Property().key("foo").value("bar");
     Property property2 = new Property().key("xyzzy").value("plohg");
@@ -83,6 +93,7 @@ public abstract class WorkspaceAllocateTestScriptBase extends WorkspaceApiTestSc
     final var requestBody =
         new CreateWorkspaceRequestBody()
             .id(workspaceUuid)
+            .policies(policyInputs)
             .spendProfile(spendProfileId)
             .stage(getStageModel())
             .properties(properties);

@@ -25,6 +25,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.controller.shared.PropertiesUtils;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.fixtures.PolicyFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
@@ -153,6 +154,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
@@ -384,6 +386,26 @@ public class MockMvcUtils {
     ApiCreatedWorkspace createdWorkspace = createWorkspaceWithoutCloudContext(userRequest);
     createGcpCloudContextAndWait(userRequest, createdWorkspace.getId());
     return createdWorkspace;
+  }
+
+  public ApiCreatedWorkspace createWorkspaceWithPolicy(
+      AuthenticatedUserRequest userRequest, ApiWsmPolicyInputs policy) throws Exception {
+    ApiCreateWorkspaceRequestBody request =
+        WorkspaceFixtures.createWorkspaceRequestBody().policies(policy);
+
+    String serializedResponse =
+        mockMvc
+            .perform(
+                addJsonContentType(
+                    addAuth(
+                        post(WORKSPACES_V1_PATH).content(objectMapper.writeValueAsString(request)),
+                        userRequest)))
+            .andExpect(status().is(HttpStatus.SC_OK))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    return objectMapper.readValue(serializedResponse, ApiCreatedWorkspace.class);
   }
 
   public ApiCreatedWorkspace createWorkspaceWithoutCloudContext(
@@ -629,34 +651,27 @@ public class MockMvcUtils {
         userRequest,
         workspaceId,
         /*policiesToAdd=*/ null,
-        /*policiesToRemove=*/ workspace.getPolicies());
+        /*policiesToRemove=*/ workspace.getPolicies().stream()
+            .filter(
+                p ->
+                    // We cannot remove group policies but will remove all others.
+                    !(p.getNamespace().equals(PolicyFixtures.NAMESPACE)
+                        && p.getName().equals(PolicyFixtures.GROUP_CONSTRAINT)))
+            .collect(Collectors.toList()));
   }
 
   public UUID createWorkspaceWithRegionConstraint(
       AuthenticatedUserRequest userRequest, String regionName) throws Exception {
-    ApiCreateWorkspaceRequestBody request =
-        WorkspaceFixtures.createWorkspaceRequestBody()
-            .policies(
-                new ApiWsmPolicyInputs()
-                    .addInputsItem(
-                        new ApiWsmPolicyInput()
-                            .namespace("terra")
-                            .name("region-constraint")
-                            .addAdditionalDataItem(
-                                new ApiWsmPolicyPair().key("region-name").value(regionName))));
-    String serializedResponse =
-        mockMvc
-            .perform(
-                addJsonContentType(
-                    addAuth(
-                        post(WORKSPACES_V1_PATH).content(objectMapper.writeValueAsString(request)),
-                        userRequest)))
-            .andExpect(status().is(HttpStatus.SC_OK))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-
-    return objectMapper.readValue(serializedResponse, ApiCreatedWorkspace.class).getId();
+    ApiWsmPolicyInputs regionPolicy =
+        new ApiWsmPolicyInputs()
+            .addInputsItem(
+                new ApiWsmPolicyInput()
+                    .namespace(PolicyFixtures.NAMESPACE)
+                    .name(PolicyFixtures.REGION_CONSTRAINT)
+                    .addAdditionalDataItem(
+                        new ApiWsmPolicyPair().key(PolicyFixtures.REGION).value(regionName)));
+    ApiCreatedWorkspace workspace = createWorkspaceWithPolicy(userRequest, regionPolicy);
+    return workspace.getId();
   }
 
   public UUID createWorkspaceWithRegionConstraintAndCloudContext(
