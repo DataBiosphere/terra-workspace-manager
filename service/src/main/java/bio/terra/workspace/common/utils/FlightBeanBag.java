@@ -1,6 +1,7 @@
 package bio.terra.workspace.common.utils;
 
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
+import bio.terra.workspace.app.configuration.external.AwsConfiguration;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.CliConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
@@ -25,6 +26,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.Stora
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.BucketCloneRolesService;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.spendprofile.SpendProfileService;
+import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.CloudSyncRoleMapping;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
@@ -47,6 +49,8 @@ public class FlightBeanBag {
   private final GcpCloudContextService gcpCloudContextService;
   private final AzureCloudContextService azureCloudContextService;
   private final AzureConfiguration azureConfig;
+  private final AwsCloudContextService awsCloudContextService;
+  private final AwsConfiguration awsConfiguration;
   private final BucketCloneRolesService bucketCloneRolesService;
   private final BufferService bufferService;
   private final CliConfiguration cliConfiguration;
@@ -81,6 +85,8 @@ public class FlightBeanBag {
       GcpCloudContextService gcpCloudContextService,
       AzureCloudContextService azureCloudContextService,
       AzureConfiguration azureConfig,
+      AwsCloudContextService awsCloudContextService,
+      AwsConfiguration awsConfiguration,
       BucketCloneRolesService bucketCloneRolesService,
       BufferService bufferService,
       CliConfiguration cliConfiguration,
@@ -111,6 +117,8 @@ public class FlightBeanBag {
     this.gcpCloudContextService = gcpCloudContextService;
     this.azureCloudContextService = azureCloudContextService;
     this.azureConfig = azureConfig;
+    this.awsCloudContextService = awsCloudContextService;
+    this.awsConfiguration = awsConfiguration;
     this.bucketCloneRolesService = bucketCloneRolesService;
     this.bufferService = bufferService;
     this.cliConfiguration = cliConfiguration;
@@ -157,6 +165,14 @@ public class FlightBeanBag {
 
   public AzureConfiguration getAzureConfig() {
     return azureConfig;
+  }
+
+  public AwsCloudContextService getAwsCloudContextService() {
+    return awsCloudContextService;
+  }
+
+  public AwsConfiguration getAwsConfiguration() {
+    return awsConfiguration;
   }
 
   public BucketCloneRolesService getBucketCloneRolesService() {
