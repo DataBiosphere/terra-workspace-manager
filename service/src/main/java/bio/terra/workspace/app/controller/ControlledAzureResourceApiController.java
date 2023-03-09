@@ -79,6 +79,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
 
 @Controller
 public class ControlledAzureResourceApiController extends ControlledResourceControllerBase
@@ -506,6 +507,26 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .resourceId(createdBatchPool.getResourceId())
             .azureBatchPool(createdBatchPool.toApiResource());
     return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<Void> deleteAzureBatchPool(
+      @PathVariable("workspaceId") UUID workspaceId, @PathVariable("resourceId") UUID resourceId) {
+    features.azureEnabledCheck();
+
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    controlledResourceMetadataManager.validateControlledResourceAndAction(
+        userRequest, workspaceId, resourceId, SamControlledResourceActions.DELETE_ACTION);
+
+    logger.info(
+        "delete {}({}) from workspace {}",
+        "Azure Batch Pool",
+        resourceId.toString(),
+        workspaceId.toString());
+
+    controlledResourceService.deleteControlledResourceSync(workspaceId, resourceId, userRequest);
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   @Override
