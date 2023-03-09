@@ -146,6 +146,57 @@ public class ControlledFlexibleResourceApiControllerConnectedTest extends BaseCo
     mockMvcUtils.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
   }
 
+  // Destination workspace policy is the merge of source workspace policy and pre-clone destination
+  // workspace policy
+  //  @Test
+  //  void clone_policiesMerged() throws Exception {
+  //    logger.info("features.isTpsEnabled(): %s".formatted(features.isTpsEnabled()));
+  //    // Don't run the test if TPS is disabled
+  //    if (!features.isTpsEnabled()) {
+  //      return;
+  //    }
+  //
+  //    // Clean up policies from previous runs, if any exist
+  //    mockMvcUtils.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+  //    mockMvcUtils.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
+  //
+  //    // Add broader region policy to destination, narrow policy on source.
+  //    mockMvcUtils.updatePolicies(
+  //        userAccessUtils.defaultUserAuthRequest(),
+  //        workspaceId,
+  //        /*policiesToAdd=*/ ImmutableList.of(PolicyFixtures.REGION_POLICY_IOWA),
+  //        /*policiesToRemove=*/ null);
+  //    mockMvcUtils.updatePolicies(
+  //        userAccessUtils.defaultUserAuthRequest(),
+  //        workspaceId2,
+  //        /*policiesToAdd=*/ ImmutableList.of(PolicyFixtures.REGION_POLICY_USA),
+  //        /*policiesToRemove=*/ null);
+  //
+  //    // Clone resource
+  //    String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
+  //    mockMvcUtils.cloneControlledBqDataset(
+  //        userAccessUtils.defaultUserAuthRequest(),
+  //        /*sourceWorkspaceId=*/ workspaceId,
+  //        sourceResource.getMetadata().getResourceId(),
+  //        /*destWorkspaceId=*/ workspaceId2,
+  //        ApiCloningInstructionsEnum.REFERENCE,
+  //        destResourceName,
+  //        /*destDatasetName*/ null);
+  //
+  //    // Assert dest workspace policy is reduced to the narrower region.
+  //    ApiWorkspaceDescription destWorkspace =
+  //        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
+  //    assertThat(
+  //        destWorkspace.getPolicies(),
+  //        containsInAnyOrder(PolicyFixtures.REGION_POLICY_IOWA,
+  // PolicyFixtures.GROUP_POLICY_DEFAULT));
+  //    assertFalse(destWorkspace.getPolicies().contains(PolicyFixtures.REGION_POLICY_USA));
+  //
+  //    // Clean up: Delete policies
+  //    mockMvcUtils.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+  //    mockMvcUtils.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
+  //  }
+
   @Test
   public void clone_requesterNoReadAccessOnSourceWorkspace_throws403() throws Exception {
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
