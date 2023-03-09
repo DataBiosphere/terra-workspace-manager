@@ -141,6 +141,23 @@ public class WsmResourceFields {
   }
 
   @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof WsmResourceFields that)) return false;
+    return Objects.equal(workspaceUuid, that.workspaceUuid)
+        && Objects.equal(resourceId, that.resourceId)
+        && Objects.equal(name, that.name)
+        && Objects.equal(description, that.description)
+        && cloningInstructions == that.cloningInstructions
+        && Objects.equal(properties, that.properties)
+        && Objects.equal(createdByEmail, that.createdByEmail)
+        && Objects.equal(createdDate, that.createdDate)
+        && Objects.equal(lastUpdatedByEmail, that.lastUpdatedByEmail)
+        && Objects.equal(lastUpdatedDate, that.lastUpdatedDate)
+        && Objects.equal(resourceLineage, that.getResourceLineage());
+  }
+
+  @Override
   public int hashCode() {
     return Objects.hashCode(
         workspaceUuid,
