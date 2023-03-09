@@ -41,7 +41,25 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
-    # TODO (PF-2539): Add PATCH method here.
+    patch:
+      summary: Update a controlled flexible resource.
+      operationId: updateFlexibleResource
+      tags: [ ControlledFlexibleResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateControlledFlexibleResourceRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/ControlledFlexibleResourceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
     delete:
       summary: Delete a controlled flexible resource.
       operationId: deleteFlexibleResource
@@ -95,7 +113,30 @@ components:
           description: JSON encoded in base 64.
           type: string
           format: byte
-    # TODO (PF-2539) - Add updateControlledFlexibleResourceRequestBody.
+    FlexibleResourceUpdateParameters:
+      description: >-
+        Parameters that may be changed by a user.
+      properties:
+        data:
+          description: JSON encoded in base 64.
+          type: string
+          format: byte
+          # TODO (PF-2540): Include cloning instructions when cloning is added.
+#       cloningInstructions:
+#         $ref: '#/components/schemas/CloningInstructionsEnum'
+
+    UpdateControlledFlexibleResourceRequestBody:
+      type: object
+      description: Update a flexible resource's metadata and attributes (type, data, and the type's namespace). This operation completely overrides the data field (if specified in the update parameters).
+      properties:
+        name:
+          description: Optional. New name to give to this resource. The resource name will not be updated if this is omitted.
+          type: string
+        description:
+          description: Optional. New description to give to this resource. The resource description will not be updated if this is omitted.
+          type: string
+        updateParameters:
+          $ref: '#/components/schemas/FlexibleResourceUpdateParameters'
 
   responses:
     # TODO (PF-2540) - Add clone response.

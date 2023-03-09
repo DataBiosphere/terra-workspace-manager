@@ -59,6 +59,8 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
+import bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresource.ControlledFlexibleResource;
+import bio.terra.workspace.service.resource.controlled.cloud.any.flight.update.UpdateControlledFlexibleResourceAttributesStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.CreateAiNotebookInstanceStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.DeleteAiNotebookInstanceStep;
@@ -494,11 +496,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(
-        RetrieveControlledResourceMetadataStep.class.getName(),
-        StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(
-        UpdateControlledResourceMetadataStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(
         RetrieveAiNotebookResourceAttributesStep.class.getName(),
         StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
@@ -580,11 +577,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     var metadata = instanceFromCloud.getMetadata();
 
     Map<String, StepStatus> retrySteps = new HashMap<>();
-    retrySteps.put(
-        RetrieveControlledResourceMetadataStep.class.getName(),
-        StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(
-        UpdateControlledResourceMetadataStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
         RetrieveAiNotebookResourceAttributesStep.class.getName(),
         StepStatus.STEP_RESULT_FAILURE_RETRY);
@@ -1565,11 +1557,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(
-        RetrieveControlledResourceMetadataStep.class.getName(),
-        StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(
-        UpdateControlledResourceMetadataStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(
         RetrieveGcsBucketCloudAttributesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(UpdateGcsBucketStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     jobService.setFlightDebugInfoForTest(
@@ -1643,6 +1630,60 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
     assertEquals(createdBucket.getName(), fetchedResource.getName());
     assertEquals(createdBucket.getDescription(), fetchedResource.getDescription());
+  }
+
+  @Test
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
+  void updateFlexResourceUndo() throws Exception {
+    ControlledFlexibleResource originalFlex =
+        ControlledResourceFixtures.makeDefaultFlexResourceBuilder(workspaceId).build();
+    ControlledFlexibleResource createdFlex =
+        controlledResourceService
+            .createControlledResourceSync(
+                originalFlex,
+                null,
+                user.getAuthenticatedRequest(),
+                ControlledResourceFixtures.defaultFlexResourceCreationParameters())
+            .castByEnum(WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE);
+    assertEquals(originalFlex, createdFlex);
+
+    Map<String, StepStatus> retrySteps = new HashMap<>();
+    retrySteps.put(
+        RetrieveControlledResourceMetadataStep.class.getName(),
+        StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        UpdateControlledResourceMetadataStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        UpdateControlledFlexibleResourceAttributesStep.class.getName(),
+        StepStatus.STEP_RESULT_FAILURE_RETRY);
+
+    jobService.setFlightDebugInfoForTest(
+        FlightDebugInfo.newBuilder().undoStepFailures(retrySteps).lastStepFailure(true).build());
+
+    // Update the flex resource
+    String newName = "new-resource-name";
+    String newDescription = "new resource description";
+    // Service methods which wait for a flight to complete will throw an
+    // InvalidResultStateException when that flight fails without a cause, which occurs when a
+    // flight fails via debugInfo.
+    assertThrows(
+        InvalidResultStateException.class,
+        () ->
+            controlledResourceService.updateFlexResource(
+                createdFlex,
+                ControlledResourceFixtures.defaultFlexUpdateParameters(),
+                newName,
+                newDescription,
+                user.getAuthenticatedRequest()));
+
+    // check the properties stored in WSM were not updated
+    ControlledFlexibleResource fetchedResource =
+        controlledResourceService
+            .getControlledResource(workspaceId, createdFlex.getResourceId())
+            .castByEnum(WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE);
+    assertEquals(createdFlex.getName(), fetchedResource.getName());
+    assertEquals(createdFlex.getDescription(), fetchedResource.getDescription());
+    assertEquals(createdFlex.attributesToJson(), fetchedResource.attributesToJson());
   }
 
   @Test

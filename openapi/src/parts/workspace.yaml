@@ -665,6 +665,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/WsmPolicyInput'
+        missingAuthDomains:
+          type: array
+          description: The auth domains that the user is missing for this workspace
+          items:
+            type: string
 
     WorkspaceDescriptionList:
       type: object

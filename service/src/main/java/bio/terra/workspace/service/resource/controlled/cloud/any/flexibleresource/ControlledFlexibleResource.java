@@ -3,7 +3,9 @@ package bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresour
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
+import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
+import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
 import bio.terra.workspace.generated.model.ApiFlexibleResource;
@@ -11,8 +13,10 @@ import bio.terra.workspace.generated.model.ApiFlexibleResourceAttributes;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
+import bio.terra.workspace.service.resource.controlled.cloud.any.flight.update.UpdateControlledFlexibleResourceAttributesStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
+import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.WsmControlledResourceFields;
@@ -23,6 +27,7 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -128,6 +133,19 @@ public class ControlledFlexibleResource extends ControlledResource {
   @Override
   public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {}
 
+  @Override
+  public void addUpdateSteps(UpdateControlledResourceFlight flight, FlightBeanBag flightBeanBag) {
+    ControlledFlexibleResource resource =
+        getResourceFromFlightInputParameters(flight, WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE);
+    // Update the flex resource's attributes
+    RetryRule dbRetry = RetryRules.shortDatabase();
+    flight.addStep(
+        new UpdateControlledFlexibleResourceAttributesStep(
+            flightBeanBag.getResourceDao(),
+            resource.castByEnum(WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE)),
+        dbRetry);
+  }
+
   public ApiFlexibleResourceAttributes toApiAttributes() {
     return new ApiFlexibleResourceAttributes()
         .typeNamespace(getTypeNamespace())
@@ -170,6 +188,14 @@ public class ControlledFlexibleResource extends ControlledResource {
 
     // Limit to 5 kilobytes in size.
     ResourceValidationUtils.validateFlexResourceDataSize(getData());
+  }
+
+  public static String getDecodedJSONFromByteArray(@Nullable byte[] encodedJSON) {
+    // Decode the base64, so we can store the string directly in the database.
+    if (encodedJSON == null) {
+      return null;
+    }
+    return new String(encodedJSON, StandardCharsets.UTF_8);
   }
 
   @Override

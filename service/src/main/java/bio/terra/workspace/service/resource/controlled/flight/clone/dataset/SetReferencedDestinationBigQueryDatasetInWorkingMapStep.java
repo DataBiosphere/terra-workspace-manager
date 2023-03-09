@@ -53,8 +53,9 @@ public class SetReferencedDestinationBigQueryDatasetInWorkingMapStep implements 
         ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
         ControlledResourceKeys.DESTINATION_RESOURCE_ID);
     Preconditions.checkState(
-        resolvedCloningInstructions == CloningInstructions.COPY_REFERENCE,
-        "CloningInstructions must be COPY_REFERENCE");
+        resolvedCloningInstructions == CloningInstructions.COPY_REFERENCE
+            || resolvedCloningInstructions == CloningInstructions.LINK_REFERENCE,
+        "CloningInstructions must be COPY_REFERENCE or LINK_REFERENCE");
     String resourceName =
         FlightUtils.getInputParameterOrWorkingValue(
             flightContext,

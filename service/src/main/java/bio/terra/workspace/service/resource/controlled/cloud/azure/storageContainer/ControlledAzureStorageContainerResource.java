@@ -16,6 +16,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
+import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceRegionStep;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
@@ -282,6 +283,10 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
             this),
         RetryRules.cloud());
   }
+
+  // Azure resources currently do not implement updating.
+  @Override
+  public void addUpdateSteps(UpdateControlledResourceFlight flight, FlightBeanBag flightBeanBag) {}
 
   public ApiAzureStorageContainerAttributes toApiAttributes() {
     return new ApiAzureStorageContainerAttributes()

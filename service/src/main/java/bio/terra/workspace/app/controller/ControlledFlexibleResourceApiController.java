@@ -4,6 +4,7 @@ import bio.terra.workspace.generated.controller.ControlledFlexibleResourceApi;
 import bio.terra.workspace.generated.model.ApiCreateControlledFlexibleResourceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedControlledFlexibleResource;
 import bio.terra.workspace.generated.model.ApiFlexibleResource;
+import bio.terra.workspace.generated.model.ApiUpdateControlledFlexibleResourceRequestBody;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
@@ -15,7 +16,6 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResourceF
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import io.opencensus.contrib.spring.aop.Traced;
-import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -70,8 +70,7 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
             WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE);
 
     byte[] encodedJSON = body.getFlexibleResource().getData();
-    String decodedJSON =
-        encodedJSON != null ? new String(encodedJSON, StandardCharsets.UTF_8) : null;
+    String decodedJSON = ControlledFlexibleResource.getDecodedJSONFromByteArray(encodedJSON);
 
     ControlledFlexibleResource resource =
         ControlledFlexibleResource.builder()
@@ -92,6 +91,40 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
             .flexibleResource(createdFlexibleResource.toApiResource());
 
     return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiFlexibleResource> updateFlexibleResource(
+      UUID workspaceUuid,
+      UUID resourceId,
+      @Valid ApiUpdateControlledFlexibleResourceRequestBody body) {
+    logger.info(
+        "Updating flexible resource; resourceId {} workspaceId {}", resourceId, workspaceUuid);
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ControlledFlexibleResource flexibleResource =
+        controlledResourceMetadataManager
+            .validateControlledResourceAndAction(
+                userRequest,
+                workspaceUuid,
+                resourceId,
+                SamConstants.SamControlledResourceActions.EDIT_ACTION)
+            .castByEnum(WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE);
+
+    getControlledResourceService()
+        .updateFlexResource(
+            flexibleResource,
+            body.getUpdateParameters(),
+            body.getName(),
+            body.getDescription(),
+            userRequest);
+
+    // Retrieve and cast response to ApiFlexibleResource
+    ControlledFlexibleResource updatedResource =
+        getControlledResourceService()
+            .getControlledResource(workspaceUuid, resourceId)
+            .castByEnum(WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE);
+    return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
   @Traced

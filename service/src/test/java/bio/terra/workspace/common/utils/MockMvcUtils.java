@@ -20,6 +20,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.stairway.FlightDebugInfo;
+import bio.terra.stairway.Step;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.controller.shared.PropertiesUtils;
 import bio.terra.workspace.common.StairwayTestUtils;
@@ -67,6 +68,7 @@ import bio.terra.workspace.generated.model.ApiDataRepoSnapshotAttributes;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiFlexibleResource;
+import bio.terra.workspace.generated.model.ApiFlexibleResourceUpdateParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableAttributes;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableResource;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetAttributes;
@@ -102,6 +104,7 @@ import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
 import bio.terra.workspace.generated.model.ApiUpdateBigQueryDataTableReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateBigQueryDatasetReferenceRequestBody;
+import bio.terra.workspace.generated.model.ApiUpdateControlledFlexibleResourceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateControlledGcpBigQueryDatasetRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateDataRepoSnapshotReferenceRequestBody;
@@ -138,6 +141,7 @@ import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.referenced.flight.create.CreateReferenceMetadataStep;
 import bio.terra.workspace.service.workspace.model.OperationType;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.google.common.collect.ImmutableList;
@@ -370,7 +374,7 @@ public class MockMvcUtils {
     String jobId = cloneWorkspace.getJobReport().getId();
     while (StairwayTestUtils.jobIsRunning(cloneWorkspace.getJobReport())) {
       TimeUnit.SECONDS.sleep(5);
-      cloneWorkspace = getCloneWorkspaceResult(USER_REQUEST, destinationWorkspaceId, jobId);
+      cloneWorkspace = getCloneWorkspaceResult(userRequest, destinationWorkspaceId, jobId);
     }
     assertEquals(ApiJobReport.StatusEnum.SUCCEEDED, cloneWorkspace.getJobReport().getStatus());
 
@@ -395,6 +399,15 @@ public class MockMvcUtils {
 
     ApiCreateWorkspaceRequestBody request =
         WorkspaceFixtures.createWorkspaceRequestBody(stageModel);
+    String serializedResponse =
+        getSerializedResponseForPost(
+            userRequest, WORKSPACES_V1_PATH, objectMapper.writeValueAsString(request));
+    return objectMapper.readValue(serializedResponse, ApiCreatedWorkspace.class);
+  }
+
+  public ApiCreatedWorkspace createdWorkspaceWithoutCloudContext(
+      @Nullable AuthenticatedUserRequest userRequest, ApiCreateWorkspaceRequestBody request)
+      throws Exception {
     String serializedResponse =
         getSerializedResponseForPost(
             userRequest, WORKSPACES_V1_PATH, objectMapper.writeValueAsString(request));
@@ -841,7 +854,8 @@ public class MockMvcUtils {
         workspaceId,
         resourceId,
         objectMapper.writeValueAsString(requestBody),
-        userRequest);
+        userRequest,
+        HttpStatus.SC_OK);
   }
 
   private ApiGcpBigQueryDatasetResource getBqDataset(
@@ -989,7 +1003,7 @@ public class MockMvcUtils {
       throws Exception {
     // Retry to ensure steps are idempotent
     Map<String, StepStatus> retryableStepsMap = new HashMap<>();
-    List<Class> retryableSteps =
+    List<Class<? extends Step>> retryableSteps =
         ImmutableList.of(
             CheckControlledResourceAuthStep.class,
             SetReferencedDestinationBigQueryDatasetInWorkingMapStep.class,
@@ -1033,9 +1047,7 @@ public class MockMvcUtils {
             .andReturn()
             .getResponse();
 
-    // If an exception was thrown, deserialization won't work, so don't attempt it.
-    int actualCode = response.getStatus();
-    if (actualCode >= 300) {
+    if (isErrorResponse(response)) {
       return null;
     }
 
@@ -1141,7 +1153,8 @@ public class MockMvcUtils {
         workspaceId,
         resourceId,
         objectMapper.writeValueAsString(requestBody),
-        userRequest);
+        userRequest,
+        HttpStatus.SC_OK);
   }
 
   /** Call cloneGcsBucket() and wait for flight to finish. */
@@ -1302,9 +1315,7 @@ public class MockMvcUtils {
             .andReturn()
             .getResponse();
 
-    // If an exception was thrown, deserialization won't work, so don't attempt it.
-    int actualCode = response.getStatus();
-    if (actualCode >= 300) {
+    if (isErrorResponse(response)) {
       return null;
     }
 
@@ -1418,6 +1429,57 @@ public class MockMvcUtils {
         userRequest, workspaceId, resourceId, CONTROLLED_FLEXIBLE_RESOURCE_V1_PATH_FORMAT);
   }
 
+  public ApiFlexibleResource updateFlexibleResource(
+      UUID workspaceId,
+      UUID resourceId,
+      @Nullable String newResourceName,
+      @Nullable String newDescription,
+      @Nullable byte[] newData)
+      throws Exception {
+    String request =
+        objectMapper.writeValueAsString(
+            getUpdateFlexibleResourceRequestBody(newResourceName, newDescription, newData));
+
+    return updateResource(
+        ApiFlexibleResource.class,
+        CONTROLLED_FLEXIBLE_RESOURCE_V1_PATH_FORMAT,
+        workspaceId,
+        resourceId,
+        request,
+        USER_REQUEST,
+        HttpStatus.SC_OK);
+  }
+
+  public void updateFlexibleResourceExpect(
+      UUID workspaceId,
+      UUID resourceId,
+      @Nullable String newResourceName,
+      @Nullable String newDescription,
+      @Nullable byte[] newData,
+      int code)
+      throws Exception {
+    String request =
+        objectMapper.writeValueAsString(
+            getUpdateFlexibleResourceRequestBody(newResourceName, newDescription, newData));
+
+    updateResource(
+        ApiFlexibleResource.class,
+        CONTROLLED_FLEXIBLE_RESOURCE_V1_PATH_FORMAT,
+        workspaceId,
+        resourceId,
+        request,
+        USER_REQUEST,
+        code);
+  }
+
+  private ApiUpdateControlledFlexibleResourceRequestBody getUpdateFlexibleResourceRequestBody(
+      @Nullable String newResourceName, @Nullable String newDescription, @Nullable byte[] newData) {
+    return new ApiUpdateControlledFlexibleResourceRequestBody()
+        .description(newDescription)
+        .name(newResourceName)
+        .updateParameters(new ApiFlexibleResourceUpdateParameters().data(newData));
+  }
+
   public ApiDataRepoSnapshotResource createReferencedDataRepoSnapshot(
       AuthenticatedUserRequest userRequest,
       UUID workspaceId,
@@ -1516,8 +1578,7 @@ public class MockMvcUtils {
             expectedCode);
 
     // If an exception was thrown, deserialization won't work, so don't attempt it.
-    int actualCode = response.getStatus();
-    if (actualCode >= 300) {
+    if (isErrorResponse(response)) {
       return null;
     }
 
@@ -1616,9 +1677,7 @@ public class MockMvcUtils {
             destResourceName,
             expectedCode);
 
-    // If an exception was thrown, deserialization won't work, so don't attempt it.
-    int actualCode = response.getStatus();
-    if (actualCode >= 300) {
+    if (isErrorResponse(response)) {
       return null;
     }
 
@@ -1731,9 +1790,7 @@ public class MockMvcUtils {
             destResourceName,
             expectedCode);
 
-    // If an exception was thrown, deserialization won't work, so don't attempt it.
-    int actualCode = response.getStatus();
-    if (actualCode >= 300) {
+    if (isErrorResponse(response)) {
       return null;
     }
 
@@ -1833,9 +1890,7 @@ public class MockMvcUtils {
             destResourceName,
             expectedCode);
 
-    // If an exception was thrown, deserialization won't work, so don't attempt it.
-    int actualCode = response.getStatus();
-    if (actualCode >= 300) {
+    if (isErrorResponse(response)) {
       return null;
     }
 
@@ -1940,9 +1995,7 @@ public class MockMvcUtils {
             destResourceName,
             expectedCode);
 
-    // If an exception was thrown, deserialization won't work, so don't attempt it.
-    int actualCode = response.getStatus();
-    if (actualCode >= 300) {
+    if (isErrorResponse(response)) {
       return null;
     }
 
@@ -2008,18 +2061,24 @@ public class MockMvcUtils {
         workspaceId,
         resourceId,
         objectMapper.writeValueAsString(requestBody),
-        userRequest);
+        userRequest,
+        HttpStatus.SC_OK);
   }
 
+  /**
+   * Expect a code when updating, and return the serialized API resource if expected code is
+   * successful.
+   */
   private <T> T updateResource(
       Class<T> classType,
       String pathFormat,
       UUID workspaceId,
       UUID resourceId,
       String requestBody,
-      AuthenticatedUserRequest userRequest)
+      AuthenticatedUserRequest userRequest,
+      int code)
       throws Exception {
-    String serializedResponse =
+    ResultActions result =
         mockMvc
             .perform(
                 addAuth(
@@ -2029,10 +2088,15 @@ public class MockMvcUtils {
                         .characterEncoding("UTF-8")
                         .content(requestBody),
                     userRequest))
-            .andExpect(status().is(HttpStatus.SC_OK))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
+            .andExpect(status().is(code));
+
+    // If not successful then don't serialize the response.
+    if (code >= 300) {
+      return null;
+    }
+
+    String serializedResponse = result.andReturn().getResponse().getContentAsString();
+
     return objectMapper.readValue(serializedResponse, classType);
   }
 
@@ -2074,9 +2138,7 @@ public class MockMvcUtils {
             destResourceName,
             expectedCode);
 
-    // If an exception was thrown, deserialization won't work, so don't attempt it.
-    int actualCode = response.getStatus();
-    if (actualCode >= 300) {
+    if (isErrorResponse(response)) {
       return null;
     }
 
@@ -2366,13 +2428,35 @@ public class MockMvcUtils {
         .getContentAsString();
   }
 
-  private String getSerializedResponseForPost(
+  public String getSerializedResponseForPost(
       AuthenticatedUserRequest userRequest, String path, UUID workspaceId, String request)
       throws Exception {
     return mockMvc
         .perform(
             addAuth(
                 post(path.formatted(workspaceId))
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .characterEncoding("UTF-8")
+                    .content(request),
+                userRequest))
+        .andExpect(status().is2xxSuccessful())
+        .andReturn()
+        .getResponse()
+        .getContentAsString();
+  }
+
+  private String getSerializedResponseForPatch(
+      AuthenticatedUserRequest userRequest,
+      String path,
+      UUID workspaceId,
+      UUID resourceId,
+      String request)
+      throws Exception {
+    return mockMvc
+        .perform(
+            addAuth(
+                patch(path.formatted(workspaceId, resourceId))
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .accept(MediaType.APPLICATION_JSON)
                     .characterEncoding("UTF-8")
@@ -2543,5 +2627,28 @@ public class MockMvcUtils {
         .namespace("terra")
         .name("region-constraint")
         .addAdditionalDataItem(new ApiWsmPolicyPair().key("region-name").value(location));
+  }
+
+  /**
+   * Test that the response is an error. If so, try to format as an error report and log it.
+   * Otherwise, log what is available.
+   *
+   * @param response response from a mock api request
+   * @return true if this was an error; false otherwise
+   */
+  private boolean isErrorResponse(MockHttpServletResponse response) throws Exception {
+    // not an error
+    if (response.getStatus() < 300) {
+      return false;
+    }
+
+    String serializedResponse = response.getContentAsString();
+    try {
+      var errorReport = objectMapper.readValue(serializedResponse, ApiErrorReport.class);
+      logger.error("Error report: {}", errorReport);
+    } catch (JsonProcessingException e) {
+      logger.error("Not an error report. Serialized response is: {}", serializedResponse);
+    }
+    return true;
   }
 }

@@ -57,11 +57,6 @@ feature:
   bpm-azure-enabled: true
   temporary-grant-enabled: true
 
-policy:
-  policy-database:
-    poolMaxIdle: 1
-    uri: jdbc:${env.db.local-db}/policy_db
-
 #Terra Landing Zone Service configuration
 landingzone:
   landingzone-database:

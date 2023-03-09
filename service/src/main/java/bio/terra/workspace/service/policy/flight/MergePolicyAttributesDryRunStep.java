@@ -7,9 +7,9 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.resource.exception.PolicyConflictException;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import java.util.List;
 import java.util.UUID;
@@ -22,18 +22,18 @@ public class MergePolicyAttributesDryRunStep implements Step {
 
   private final UUID sourceWorkspaceId;
   private final UUID destinationWorkspaceId;
-  private final AuthenticatedUserRequest userRequest;
+  private final CloningInstructions cloningInstructions;
   private final TpsApiDispatch tpsApiDispatch;
 
   public MergePolicyAttributesDryRunStep(
       UUID sourceWorkspaceId,
       UUID destinationWorkspaceId,
-      AuthenticatedUserRequest userRequest,
+      CloningInstructions cloningInstructions,
       TpsApiDispatch tpsApiDispatch) {
     this.sourceWorkspaceId = sourceWorkspaceId;
     this.destinationWorkspaceId = destinationWorkspaceId;
-    this.userRequest = userRequest;
     this.tpsApiDispatch = tpsApiDispatch;
+    this.cloningInstructions = cloningInstructions;
   }
 
   @Override
@@ -49,7 +49,11 @@ public class MergePolicyAttributesDryRunStep implements Step {
     }
 
     TpsPaoUpdateResult dryRunResults =
-        tpsApiDispatch.mergePao(destinationWorkspaceId, sourceWorkspaceId, TpsUpdateMode.DRY_RUN);
+        (cloningInstructions == CloningInstructions.LINK_REFERENCE)
+            ? tpsApiDispatch.linkPao(
+                destinationWorkspaceId, sourceWorkspaceId, TpsUpdateMode.DRY_RUN)
+            : tpsApiDispatch.mergePao(
+                sourceWorkspaceId, destinationWorkspaceId, TpsUpdateMode.DRY_RUN);
 
     if (!dryRunResults.getConflicts().isEmpty()) {
       List<String> conflictList =
@@ -67,7 +71,7 @@ public class MergePolicyAttributesDryRunStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    // Since this was a dry run, there should be nothing to undo, only propagate the flight failure.
-    return context.getResult();
+    // Since this was a dry run, there should be nothing to undo
+    return StepResult.getStepResultSuccess();
   }
 }
