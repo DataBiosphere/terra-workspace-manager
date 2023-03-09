@@ -1,11 +1,13 @@
 package bio.terra.workspace.app.controller;
 
+import static bio.terra.workspace.common.utils.MockMvcUtils.assertApiFlexibleResourceEquals;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
+import bio.terra.workspace.common.GcpCloudUtils;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.PolicyFixtures;
 import bio.terra.workspace.common.utils.MockMvcUtils;
@@ -14,9 +16,12 @@ import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiFlexibleResource;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
+import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresource.ControlledFlexibleResource;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
@@ -25,6 +30,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -44,7 +50,11 @@ public class ControlledFlexibleResourceApiControllerConnectedTest extends BaseCo
   @Autowired ObjectMapper objectMapper;
   @Autowired UserAccessUtils userAccessUtils;
   @Autowired JobService jobService;
+  @Autowired GcpCloudUtils cloudUtils;
   @Autowired FeatureConfiguration features;
+  @Autowired CrlService crlService;
+  @Autowired WorkspaceActivityLogService activityLogService;
+  @Autowired SamService samService;
 
   private UUID workspaceId;
   private UUID workspaceId2;
@@ -100,6 +110,9 @@ public class ControlledFlexibleResourceApiControllerConnectedTest extends BaseCo
   // Destination workspace policy is the merge of source workspace policy and pre-clone destination
   // workspace policy
   @Test
+  @Disabled(
+      "PF-2563 seems to cause failure upon setup() for controlled api connected tests due to "
+          + "failure with createWorkspaceWithPolicy(...")
   void clone_policiesMerged() throws Exception {
     logger.info("features.isTpsEnabled(): %s".formatted(features.isTpsEnabled()));
     // Don't run the test if TPS is disabled
@@ -145,6 +158,60 @@ public class ControlledFlexibleResourceApiControllerConnectedTest extends BaseCo
     // Clean up: Delete policies
     mockMvcUtils.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId);
     mockMvcUtils.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
+  }
+
+  @Test
+  void clone_copyResource() throws Exception {
+    String destResourcename = TestUtils.appendRandomNumber("dest-resource-name");
+    String destDescription = "new description";
+
+    ApiFlexibleResource clonedFlexResource =
+        mockMvcUtils.cloneFlexResource(
+            userAccessUtils.defaultUserAuthRequest(),
+            /*sourceWorkspaceId=*/ workspaceId,
+            sourceFlexResource.getMetadata().getResourceId(),
+            /*destWorkspaceId=*/ workspaceId2,
+            ApiCloningInstructionsEnum.RESOURCE,
+            destResourcename,
+            destDescription);
+
+    // Assert resource returned in clone flight response.
+    mockMvcUtils.assertClonedControlledFlexibleResource(
+        sourceFlexResource,
+        clonedFlexResource,
+        /*expectedDestWorkspaceId=*/ workspaceId2,
+        destResourcename,
+        destDescription,
+        userAccessUtils.getDefaultUserEmail(),
+        userAccessUtils.getDefaultUserEmail());
+
+    // Assert resource returned by get
+    final ApiFlexibleResource gotResource =
+        mockMvcUtils.getFlexibleResource(
+            userAccessUtils.defaultUserAuthRequest(),
+            workspaceId2,
+            clonedFlexResource.getMetadata().getResourceId());
+
+    assertApiFlexibleResourceEquals(clonedFlexResource, gotResource);
+  }
+
+  @Test
+  void clone_copyResource_undo() throws Exception {
+    String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
+    String destDescription = "new description";
+
+    mockMvcUtils.cloneFlex_undo(
+        userAccessUtils.defaultUserAuthRequest(),
+        /*sourceWorkspaceId=*/ workspaceId,
+        sourceFlexResource.getMetadata().getResourceId(),
+        /*destWorkspaceId=*/ workspaceId2,
+        ApiCloningInstructionsEnum.RESOURCE,
+        destResourceName,
+        destDescription);
+
+    // Assert clone doesn't exist. There's no resource ID, so search on resource name.
+    mockMvcUtils.assertNoResourceWithName(
+        userAccessUtils.defaultUserAuthRequest(), workspaceId2, destResourceName);
   }
 
   @Test

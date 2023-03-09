@@ -322,12 +322,6 @@ public class MockMvcUtils {
   public static final AuthenticatedUserRequest USER_REQUEST =
       new AuthenticatedUserRequest(
           DEFAULT_USER_EMAIL, DEFAULT_USER_SUBJECT_ID, Optional.of("ThisIsNotARealBearerToken"));
-  public static final AuthenticatedUserRequest SECOND_USER_REQUEST =
-      new AuthenticatedUserRequest(
-          "secondFake@gmail.com",
-          "secondSubjectId123",
-          Optional.of("ThisIsASecondFakeBearerToken"));
-
   public static final String DEFAULT_GCP_RESOURCE_REGION = "us-central1";
   private static final Logger logger = LoggerFactory.getLogger(MockMvcUtils.class);
   private static final String DEST_BUCKET_RESOURCE_NAME =

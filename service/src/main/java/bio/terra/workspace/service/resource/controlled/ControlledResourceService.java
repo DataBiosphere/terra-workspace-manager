@@ -404,6 +404,11 @@ public class ControlledResourceService {
             resource.getResourceId(),
             resource.getName());
 
+    CloningInstructions resolvedCloningInstructions =
+        updateParameters.getCloningInstructions() == null
+            ? resource.getCloningInstructions()
+            : CloningInstructions.fromApiModel(updateParameters.getCloningInstructions());
+
     final JobBuilder jobBuilder =
         jobService
             .newJob()
@@ -417,9 +422,7 @@ public class ControlledResourceService {
             .workspaceId(resource.getWorkspaceId().toString())
             .stewardshipType(resource.getStewardshipType())
             .addParameter(ControlledResourceKeys.UPDATE_FLEX_DATA, decodedData)
-            .addParameter(
-                ResourceKeys.CLONING_INSTRUCTIONS,
-                CloningInstructions.fromApiModel(updateParameters.getCloningInstructions()))
+            .addParameter(ResourceKeys.CLONING_INSTRUCTIONS, resolvedCloningInstructions)
             .addParameter(ResourceKeys.RESOURCE_NAME, resourceName)
             .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, resourceDescription);
     jobBuilder.submitAndWait();
