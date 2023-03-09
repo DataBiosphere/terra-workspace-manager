@@ -27,7 +27,6 @@ import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -179,7 +178,7 @@ public class ReferencedGcpResourceControllerGitRepoTest extends BaseConnectedTes
         /*destResourceName=*/ null,
         HttpStatus.SC_FORBIDDEN);
   }
-  
+
   @Test
   public void clone_requesterNoWriteAccessOnDestWorkspace_throws403() throws Exception {
     mockMvcUtils.grantRole(
