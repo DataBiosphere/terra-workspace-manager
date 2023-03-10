@@ -124,6 +124,6 @@ public class CloneFlexibleResourceStep implements Step {
 
     controlledResourceService.deleteControlledResourceSync(
         destinationWorkspaceId, destinationResourceId, userRequest);
-    return null;
+    return StepResult.getStepResultSuccess();
   }
 }
