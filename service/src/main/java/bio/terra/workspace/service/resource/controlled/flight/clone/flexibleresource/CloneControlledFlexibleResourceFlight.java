@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.flexibleres
 
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
+import bio.terra.workspace.common.exception.CloneInstructionNotSupportedException;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
@@ -81,7 +82,7 @@ public class CloneControlledFlexibleResourceFlight extends Flight {
     // 3. Non-supported cloning instructions.
     if (resolvedCloningInstructions == CloningInstructions.COPY_REFERENCE
         || resolvedCloningInstructions == CloningInstructions.COPY_DEFINITION) {
-      throw new IllegalArgumentException(
+      throw new CloneInstructionNotSupportedException(
           String.format("Cloning Instructions %s not supported", resolvedCloningInstructions));
     }
 

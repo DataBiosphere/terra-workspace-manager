@@ -121,7 +121,7 @@ components:
     CloneControlledFlexibleResourceRequest:
       description: >-
         Values to be assigned with the cloned flex resource for a given source flex resource.
-        Only COPY_RESOURCE is defined for flex resources. The rest of the enums have behavior identical to COPY_NOTHING.
+        Only COPY_RESOURCE and COPY_NOTHING are defined for flex resources.
         Set name and description null to maintain the original values.
       type: object
       required: [ destinationWorkspaceId]
