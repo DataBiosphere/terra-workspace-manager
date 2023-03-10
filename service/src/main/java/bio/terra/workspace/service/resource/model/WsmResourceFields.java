@@ -190,6 +190,7 @@ public class WsmResourceFields {
   public static class Builder<T extends Builder<T>> {
     @JsonProperty("workspaceId")
     private UUID workspaceUuid;
+
     private UUID resourceId;
     private String name;
     private String description;

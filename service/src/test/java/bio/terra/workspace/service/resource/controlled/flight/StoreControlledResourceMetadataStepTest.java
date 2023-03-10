@@ -17,7 +17,6 @@ import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.flight.create.StoreMetadataStep;
 import bio.terra.workspace.service.resource.model.WsmResource;
-import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;

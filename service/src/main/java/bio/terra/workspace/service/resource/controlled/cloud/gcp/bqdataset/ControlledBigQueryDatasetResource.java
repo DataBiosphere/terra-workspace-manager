@@ -32,6 +32,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.jetbrains.annotations.Nullable;
 
 public class ControlledBigQueryDatasetResource extends ControlledResource {
