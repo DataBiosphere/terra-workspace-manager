@@ -30,6 +30,8 @@ public class WorkspaceFixtures {
   public static final ApiProperty USER_SET_PROPERTY =
       new ApiProperty().key("userkey").value("uservalue");
 
+  public static final String DEFAULT_SPEND_PROFILE = "wm-default-spend-profile";
+
   /**
    * Generate the request body for creating an MC_WORKSPACE stage workspace.
    *
@@ -96,7 +98,7 @@ public class WorkspaceFixtures {
         .description("A test workspace created by createWorkspaceRequestBody")
         .userFacingId(getUserFacingId(workspaceId))
         .stage(stageModel)
-        .spendProfile("wm-default-spend-profile")
+        .spendProfile(DEFAULT_SPEND_PROFILE)
         .properties(properties);
   }
 

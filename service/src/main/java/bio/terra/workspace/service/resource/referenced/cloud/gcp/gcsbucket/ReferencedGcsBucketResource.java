@@ -65,6 +65,7 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
   }
 
   // -- getters used in serialization --
+  @Override
   public WsmResourceFields getWsmResourceFields() {
     return super.getWsmResourceFields();
   }

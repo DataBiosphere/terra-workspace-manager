@@ -70,6 +70,7 @@ public class ReferencedGcsObjectResource extends ReferencedResource {
   }
 
   // -- getters used in serialization --
+  @Override
   public WsmResourceFields getWsmResourceFields() {
     return super.getWsmResourceFields();
   }

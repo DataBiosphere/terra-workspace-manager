@@ -7,6 +7,7 @@ import static bio.terra.workspace.common.utils.MockMvcUtils.assertResourceMetada
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.Assert.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
@@ -38,6 +39,7 @@ import bio.terra.workspace.generated.model.ApiResourceLineage;
 import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
+import bio.terra.workspace.generated.model.ApiWsmPolicyInputs;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -131,7 +133,9 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
     projectId = workspace.getGcpContext().getProjectId();
     workspaceId2 =
         mockMvcUtils
-            .createWorkspaceWithCloudContext(userAccessUtils.defaultUserAuthRequest())
+            .createWorkspaceWithPolicy(
+                userAccessUtils.defaultUserAuthRequest(),
+                new ApiWsmPolicyInputs().addInputsItem(PolicyFixtures.GROUP_POLICY_DEFAULT))
             .getId();
     ApiWorkspaceDescription workspace2 =
         mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
@@ -624,16 +628,16 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
     mockMvcUtils.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId);
     mockMvcUtils.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
 
-    // Add region policy to source workspace. Add group policy to dest workspace.
+    // Add broader region policy to destination, narrow policy on source.
     mockMvcUtils.updatePolicies(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
-        /*policiesToAdd=*/ ImmutableList.of(PolicyFixtures.REGION_POLICY),
+        /*policiesToAdd=*/ ImmutableList.of(PolicyFixtures.REGION_POLICY_IOWA),
         /*policiesToRemove=*/ null);
     mockMvcUtils.updatePolicies(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId2,
-        /*policiesToAdd=*/ ImmutableList.of(PolicyFixtures.GROUP_POLICY),
+        /*policiesToAdd=*/ ImmutableList.of(PolicyFixtures.REGION_POLICY_USA),
         /*policiesToRemove=*/ null);
 
     // Clone resource
@@ -648,12 +652,13 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
         /*destBucketName*/ null,
         /*destLocation*/ null);
 
-    // Assert dest workspace has group and region policies
+    // Assert dest workspace policy is reduced to the narrower region.
     ApiWorkspaceDescription destWorkspace =
         mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
     assertThat(
         destWorkspace.getPolicies(),
-        containsInAnyOrder(PolicyFixtures.GROUP_POLICY, PolicyFixtures.REGION_POLICY));
+        containsInAnyOrder(PolicyFixtures.REGION_POLICY_IOWA, PolicyFixtures.GROUP_POLICY_DEFAULT));
+    assertFalse(destWorkspace.getPolicies().contains(PolicyFixtures.REGION_POLICY_USA));
 
     // Clean up: Delete policies
     mockMvcUtils.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId);
