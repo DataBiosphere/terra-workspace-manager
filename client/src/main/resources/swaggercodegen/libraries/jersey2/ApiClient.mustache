@@ -829,6 +829,9 @@ public class ApiClient {
     // Set idle timeout to 2m rather than the default of 30s, as clients may poll more
     // slowly for long-running operations.
     clientConfig.property(JdkConnectorProperties.CONTAINER_IDLE_TIMEOUT, /*120s*/ 120_000);
+    // Set client-side connection idle timeout to 30s rather than the default of 1000s to match
+    // server-side connection timeouts more accurately.
+    clientConfig.property(JdkConnectorProperties.CONNECTION_IDLE_TIMEOUT, /*30s*/ 30_000);
     {{! End Terra change }}
   }
 
