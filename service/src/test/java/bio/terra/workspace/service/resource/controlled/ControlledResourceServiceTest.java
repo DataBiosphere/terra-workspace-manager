@@ -1364,9 +1364,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                   null,
                   userAccessUtils.defaultUserAuthRequest()));
 
-      // check the expiration times stored on the cloud are still undefined, because the update
-      // above
-      // failed
+      // check the expiration times stored on the cloud are still undefined,
+      // because the update above failed
       validateBigQueryDatasetCloudMetadata(
           projectId, createdDataset.getDatasetName(), location, null, null);
 
@@ -1385,9 +1384,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                   null,
                   userAccessUtils.defaultUserAuthRequest()));
 
-      // check the expiration times stored on the cloud are still undefined, because the update
-      // above
-      // failed
+      // check the expiration times stored on the cloud are still undefined,
+      // because the update above failed
       validateBigQueryDatasetCloudMetadata(
           projectId, createdDataset.getDatasetName(), location, null, null);
 
