@@ -34,7 +34,11 @@ public class UpdateNotebookResourceLocationAttributesStep implements Step {
     String newAttributes =
         DbSerDes.toJson(
             new ControlledAiNotebookInstanceAttributes(
-                resource.getInstanceId(), requestedLocation, resource.getProjectId()));
+                resource.getInstanceId(),
+                requestedLocation,
+                resource.getProjectId(),
+                resource.getMachineType(),
+                resource.getAcceleratorConfig()));
 
     resourceDao.updateResource(
         resource.getWorkspaceId(), resource.getResourceId(), null, null, newAttributes, null);

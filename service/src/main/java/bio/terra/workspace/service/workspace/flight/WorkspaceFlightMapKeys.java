@@ -8,6 +8,7 @@ public final class WorkspaceFlightMapKeys {
   public static final String WORKSPACE_STAGE = "workspaceStage";
   public static final String IAM_GROUP_EMAIL_MAP = "iamGroupEmailMap";
   public static final String RBS_RESOURCE_ID = "rbsResourceId";
+  public static final String DESCRIPTION = "descriptionId";
   public static final String USER_TO_REMOVE = "userToRemove";
   public static final String ROLE_TO_REMOVE = "roleToRemove";
   public static final String APPLICATION_IDS = "applicationIds";
@@ -36,6 +37,8 @@ public final class WorkspaceFlightMapKeys {
         "workspaceIdToAzureCloudContextMap";
     public static final String UPDATE_PARAMETERS = "updateParameters";
     public static final String UPDATE_FLEX_DATA = "updateFlexData";
+    public static final String UPDATE_MACHINE_TYPE = "updateMachineType";
+    public static final String UPDATE_ACCELERATOR_CONFIG = "updateAcceleratorConfig";
     public static final String PREVIOUS_UPDATE_PARAMETERS = "previousUpdateParameters";
     public static final String CREATE_RESOURCE_REGION = "createResourceRegion";
 
@@ -61,10 +64,14 @@ public final class WorkspaceFlightMapKeys {
     public static final String CREATE_NOTEBOOK_SUBNETWORK_NAME = "createNotebookSubnetworkName";
     public static final String NOTEBOOK_PET_SERVICE_ACCOUNT = "notebookPetServiceAccount";
 
+    public static final String PREVIOUS_MACHINE_TYPE = "previousMachineType";
+    public static final String PREVIOUS_ACCELERATOR_CONFIG = "previousAcceleratorConfig";
+
     // Cloning Keys
     public static final String CLONE_ALL_RESOURCES_FLIGHT_ID = "cloneAllResourcesFlightId";
     public static final String CLONE_DEFINITION_RESULT = "cloneDefinitionResult";
     public static final String CLONED_RESOURCE_DEFINITION = "clonedResourceDefinition";
+    public static final String CLONING_INSTRUCTIONS = "cloningInstructions";
     public static final String CONTROL_PLANE_PROJECT_ID = "controlPlaneProjectId";
     public static final String CREATE_GCP_CLOUD_CONTEXT_FLIGHT_ID = "createGcpCloudContextFlightId";
     public static final String CREATE_AZURE_CLOUD_CONTEXT_FLIGHT_ID =

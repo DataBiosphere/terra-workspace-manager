@@ -56,6 +56,8 @@ public class ControlledAiNotebookHandler implements WsmResourceHandler {
             .instanceId(attributes.getInstanceId())
             .location(attributes.getLocation())
             .projectId(projectId)
+            .machineType(attributes.getMachineType())
+            .acceleratorConfig(attributes.getAcceleratorConfig())
             .build();
     return resource;
   }

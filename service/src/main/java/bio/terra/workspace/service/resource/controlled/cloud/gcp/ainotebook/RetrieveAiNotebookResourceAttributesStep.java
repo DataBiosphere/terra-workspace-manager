@@ -45,6 +45,10 @@ public class RetrieveAiNotebookResourceAttributesStep implements Step {
       ApiGcpAiNotebookUpdateParameters existingUpdateParameters =
           new ApiGcpAiNotebookUpdateParameters().metadata(metadata);
       workingMap.put(ControlledResourceKeys.PREVIOUS_UPDATE_PARAMETERS, existingUpdateParameters);
+      workingMap.put(ControlledResourceKeys.PREVIOUS_MACHINE_TYPE, instance.getMachineType());
+      workingMap.put(
+          ControlledResourceKeys.PREVIOUS_ACCELERATOR_CONFIG, instance.getAcceleratorConfig());
+
     } catch (GoogleJsonResponseException e) {
       if (HttpStatus.BAD_REQUEST.value() == e.getStatusCode()
           || HttpStatus.NOT_FOUND.value() == e.getStatusCode()) {

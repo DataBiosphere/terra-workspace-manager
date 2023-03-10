@@ -15,6 +15,7 @@ import bio.terra.workspace.generated.model.ApiAzureRelayNamespaceCreationParamet
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiFlexibleResourceUpdateParameters;
+import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAcceleratorConfig;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookUpdateParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
@@ -36,6 +37,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.flight.Update
 import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespace.ControlledAzureRelayNamespaceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpPolicyBuilder;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ApiAiNotebookConversions;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.flight.UpdateGcpControlledResourceRegionFlight;
@@ -74,6 +76,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import com.google.api.services.notebooks.v1.model.AcceleratorConfig;
 
 /** CRUD methods for controlled objects. */
 @Component
@@ -519,7 +523,8 @@ public class ControlledResourceService {
         String.format(
             "Update controlled AI notebook resource %s; id %s; name %s",
             resource.getInstanceId(), resource.getResourceId(), resource.getName());
-    final JobBuilder jobBuilder =
+
+    JobBuilder jobBuilder =
         jobService
             .newJob()
             .description(jobDescription)
@@ -530,9 +535,17 @@ public class ControlledResourceService {
             .workspaceId(resource.getWorkspaceId().toString())
             .resourceType(resource.getResourceType())
             .stewardshipType(resource.getStewardshipType())
-            .addParameter(ControlledResourceKeys.UPDATE_PARAMETERS, updateParameters)
             .addParameter(ResourceKeys.RESOURCE_NAME, newName)
             .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, newDescription);
+    if (updateParameters != null) {
+      final String newMachineType = updateParameters.getMachineType();
+      final AcceleratorConfig newAcceleratorConfig = ApiAiNotebookConversions.fromApiAcceleratorConfig(updateParameters.getAcceleratorConfig());
+
+      jobBuilder.addParameter(ControlledResourceKeys.UPDATE_MACHINE_TYPE,newMachineType)
+          .addParameter(ControlledResourceKeys.UPDATE_ACCELERATOR_CONFIG,newAcceleratorConfig)
+          .addParameter(ControlledResourceKeys.UPDATE_PARAMETERS, updateParameters);
+    }
+
     return jobBuilder.submitAndWait(ControlledAiNotebookInstanceResource.class);
   }
 

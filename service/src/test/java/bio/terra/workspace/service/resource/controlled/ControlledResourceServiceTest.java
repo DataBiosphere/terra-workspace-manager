@@ -2,6 +2,8 @@ package bio.terra.workspace.service.resource.controlled;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.AI_NOTEBOOK_PREV_PARAMETERS;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.AI_NOTEBOOK_UPDATE_PARAMETERS;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.AI_NOTEBOOK_UPDATE_PARAMETERS_WITH_CPU_AND_GPU;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_AI_NOTEBOOK_ACCELERATOR_CONFIG;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_CREATED_BIG_QUERY_PARTITION_LIFETIME;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_CREATED_BIG_QUERY_TABLE_LIFETIME;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_RESOURCE_REGION;
@@ -60,6 +62,7 @@ import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresource.ControlledFlexibleResource;
 import bio.terra.workspace.service.resource.controlled.cloud.any.flight.update.UpdateControlledFlexibleResourceAttributesStep;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ApiAiNotebookConversions;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.CreateAiNotebookInstanceStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.DeleteAiNotebookInstanceStep;
@@ -416,6 +419,13 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         ControlledResourceFixtures.defaultNotebookCreationParameters()
             .instanceId(instanceId)
             .location(DEFAULT_NOTEBOOK_LOCATION);
+    //            .machineType(
+    //                "n1-standard-1") // Change machine type since E2 does not support
+    // accelerators.
+    //            .acceleratorConfig(
+    //                ApiAiNotebookConversions.toApiAcceleratorConfig(
+    //                    DEFAULT_AI_NOTEBOOK_ACCELERATOR_CONFIG));
+
     var resource = makeNotebookTestResource(workspaceId, name, instanceId);
     String jobId =
         controlledResourceService.createAiNotebookInstance(
@@ -452,7 +462,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
     controlledResourceService.updateAiNotebookInstance(
         fetchedInstance,
-        AI_NOTEBOOK_UPDATE_PARAMETERS,
+        AI_NOTEBOOK_UPDATE_PARAMETERS_WITH_CPU_AND_GPU,
+        //        AI_NOTEBOOK_UPDATE_PARAMETERS,
         newName,
         newDescription,
         user.getAuthenticatedRequest());
@@ -471,7 +482,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .instances()
             .get(updatedInstance.toInstanceName(projectId))
             .execute();
-    // Merge metadata from AI_NOTEBOOK_UPDATE_PARAMETERS to metadata.
+    // Merge metadata from AI_NOTEBOOK_UPDATE_PARAMETERS_WITH_CPU_AND_GPU to metadata.
     AI_NOTEBOOK_UPDATE_PARAMETERS
         .getMetadata()
         .forEach(
@@ -482,6 +493,14 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
       assertEquals(
           entrySet.getValue(), updatedInstanceFromCloud.getMetadata().get(entrySet.getKey()));
     }
+
+    assertEquals(
+        AI_NOTEBOOK_UPDATE_PARAMETERS_WITH_CPU_AND_GPU.getMachineType(),
+        updatedInstance.getMachineType());
+
+    assertEquals(
+        AI_NOTEBOOK_UPDATE_PARAMETERS_WITH_CPU_AND_GPU.getAcceleratorConfig(),
+        updatedInstance.getAcceleratorConfig());
   }
 
   @Test
@@ -1824,7 +1843,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   // TODO (PF-2269): Clean this up once the back-fill is done in all Terra environments.
 
-  /** @return A list of big query datasets that were updated (with lifetime set) */
+  /**
+   * @return A list of big query datasets that were updated (with lifetime set)
+   */
   private List<ControlledBigQueryDatasetResource>
       updateControlledBigQueryDatasetsLifetimeAndWait() {
     HashSet<ControlledBigQueryDatasetResource> successfullyUpdatedDatasets =

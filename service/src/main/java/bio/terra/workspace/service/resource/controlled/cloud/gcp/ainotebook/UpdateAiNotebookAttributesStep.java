@@ -23,7 +23,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
-/** {@link Step} to update cloud attributes (e.g. metadata) for a ai notebook instance. */
+/**
+ * {@link Step} to update cloud attributes (e.g. metadata) for a ai notebook instance.
+ *
+ * <p>This does not include updates to the CPU or GPU configurations.
+ */
 public class UpdateAiNotebookAttributesStep implements Step {
   private final ControlledAiNotebookInstanceResource resource;
   private final CrlService crlService;
