@@ -244,6 +244,17 @@ public class ControlledAzureNetworkResource extends ControlledResource {
   }
 
   @Override
+  public boolean partialEqual(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.partialEqual(o)) return false;
+
+    ControlledAzureNetworkResource that = (ControlledAzureNetworkResource) o;
+
+    return networkName.equals(that.getNetworkName());
+  }
+
+  @Override
   public int hashCode() {
     int result = super.hashCode();
     result = 31 * result + networkName.hashCode();

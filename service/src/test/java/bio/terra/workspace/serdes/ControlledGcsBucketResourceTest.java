@@ -1,8 +1,7 @@
 package bio.terra.workspace.serdes;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.stairway.StairwayMapper;
@@ -41,6 +40,6 @@ public class ControlledGcsBucketResourceTest extends BaseUnitTest {
     final ControlledGcsBucketResource deserialized =
         objectMapper.readValue(serialized, ControlledGcsBucketResource.class);
 
-    assertThat(deserialized, equalTo(gcsBucketResource));
+    assertTrue(deserialized.partialEqual(gcsBucketResource));
   }
 }

@@ -287,6 +287,17 @@ public class ControlledAzureVmResource extends ControlledResource {
   }
 
   @Override
+  public boolean partialEqual(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.partialEqual(o)) return false;
+
+    ControlledAzureVmResource that = (ControlledAzureVmResource) o;
+
+    return vmName.equals(that.getVmName());
+  }
+
+  @Override
   public int hashCode() {
     int result = super.hashCode();
     result = 31 * result + vmName.hashCode();

@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
 import java.util.Optional;
 import java.util.UUID;
+import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.jetbrains.annotations.Nullable;
 
 public class ReferencedGcsBucketResource extends ReferencedResource {
@@ -162,6 +163,24 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
                     description,
                     createdByEmail));
     return resultBuilder.build();
+  }
+
+  @Override
+  public boolean partialEqual(Object o) {
+    if (this == o) {
+      return true;
+    }
+
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    ReferencedGcsBucketResource that = (ReferencedGcsBucketResource) o;
+
+    return new EqualsBuilder()
+        .appendSuper(super.partialEqual(o))
+        .append(bucketName, that.getBucketName())
+        .isEquals();
   }
 
   /**

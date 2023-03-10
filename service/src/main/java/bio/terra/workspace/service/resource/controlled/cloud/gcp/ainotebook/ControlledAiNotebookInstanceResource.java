@@ -304,6 +304,17 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
   }
 
   @Override
+  public boolean partialEqual(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.partialEqual(o)) return false;
+
+    ControlledAiNotebookInstanceResource that = (ControlledAiNotebookInstanceResource) o;
+
+    return instanceId.equals(that.instanceId) && location.equals(that.location);
+  }
+
+  @Override
   public int hashCode() {
     int result = super.hashCode();
     result = 31 * result + instanceId.hashCode();

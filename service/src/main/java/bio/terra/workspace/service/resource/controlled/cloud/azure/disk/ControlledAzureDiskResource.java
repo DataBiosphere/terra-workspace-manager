@@ -197,6 +197,17 @@ public class ControlledAzureDiskResource extends ControlledResource {
   }
 
   @Override
+  public boolean partialEqual(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.partialEqual(o)) return false;
+
+    ControlledAzureDiskResource that = (ControlledAzureDiskResource) o;
+
+    return diskName.equals(that.getDiskName());
+  }
+
+  @Override
   public int hashCode() {
     int result = super.hashCode();
     result = 31 * result + diskName.hashCode();

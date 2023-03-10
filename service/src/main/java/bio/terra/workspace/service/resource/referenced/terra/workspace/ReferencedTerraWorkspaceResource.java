@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.UUID;
+import org.apache.commons.lang3.builder.EqualsBuilder;
 
 public class ReferencedTerraWorkspaceResource extends ReferencedResource {
   private final UUID referencedWorkspaceId;
@@ -143,6 +144,24 @@ public class ReferencedTerraWorkspaceResource extends ReferencedResource {
           "Requester does not have read access to workspace " + referencedWorkspaceId.toString(),
           e);
     }
+  }
+
+  @Override
+  public boolean partialEqual(Object o) {
+    if (this == o) {
+      return true;
+    }
+
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    ReferencedTerraWorkspaceResource that = (ReferencedTerraWorkspaceResource) o;
+
+    return new EqualsBuilder()
+        .appendSuper(super.partialEqual(o))
+        .append(referencedWorkspaceId, that.getReferencedWorkspaceId())
+        .isEquals();
   }
 
   /**

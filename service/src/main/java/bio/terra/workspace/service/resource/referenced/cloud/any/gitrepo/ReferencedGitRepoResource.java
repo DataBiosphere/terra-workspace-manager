@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
 import java.util.UUID;
 import javax.annotation.Nullable;
+import org.apache.commons.lang3.builder.EqualsBuilder;
 
 public class ReferencedGitRepoResource extends ReferencedResource {
 
@@ -144,6 +145,24 @@ public class ReferencedGitRepoResource extends ReferencedResource {
       throw new MissingRequiredFieldException(
           "Missing required field for ReferenceGcsObjectResource.");
     }
+  }
+
+  @Override
+  public boolean partialEqual(Object o) {
+    if (this == o) {
+      return true;
+    }
+
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    ReferencedGitRepoResource that = (ReferencedGitRepoResource) o;
+
+    return new EqualsBuilder()
+        .appendSuper(super.partialEqual(o))
+        .append(gitRepoUrl, that.getGitRepoUrl())
+        .isEquals();
   }
 
   /**

@@ -184,6 +184,17 @@ public class ControlledAzureIpResource extends ControlledResource {
   }
 
   @Override
+  public boolean partialEqual(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.partialEqual(o)) return false;
+
+    ControlledAzureIpResource that = (ControlledAzureIpResource) o;
+
+    return ipName.equals(that.getIpName());
+  }
+
+  @Override
   public int hashCode() {
     int result = super.hashCode();
     result = 31 * result + ipName.hashCode();

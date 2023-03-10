@@ -253,6 +253,23 @@ public class ControlledGcsBucketResource extends ControlledResource {
   }
 
   @Override
+  public boolean partialEqual(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    if (!super.partialEqual(o)) {
+      return false;
+    }
+
+    ControlledGcsBucketResource that = (ControlledGcsBucketResource) o;
+
+    return bucketName.equals(that.bucketName);
+  }
+
+  @Override
   public int hashCode() {
     int result = super.hashCode();
     result = 31 * result + bucketName.hashCode();

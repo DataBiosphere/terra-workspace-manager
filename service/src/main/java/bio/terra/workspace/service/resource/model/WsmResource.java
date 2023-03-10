@@ -323,6 +323,12 @@ public abstract class WsmResource {
     return Objects.equal(wsmResourceFields, that.wsmResourceFields);
   }
 
+  public boolean partialEqual(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof WsmResource that)) return false;
+    return wsmResourceFields.partialEqual(that.wsmResourceFields);
+  }
+
   @Override
   public int hashCode() {
     return Objects.hashCode(wsmResourceFields);

@@ -217,6 +217,18 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
   }
 
   @Override
+  public boolean partialEqual(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.partialEqual(o)) return false;
+
+    ControlledAzureStorageContainerResource that = (ControlledAzureStorageContainerResource) o;
+
+    return (storageAccountId == null || storageAccountId.equals(that.getStorageAccountId()))
+        && storageContainerName.equals(that.getStorageContainerName());
+  }
+
+  @Override
   public int hashCode() {
     int result = super.hashCode();
     if (storageAccountId != null) {

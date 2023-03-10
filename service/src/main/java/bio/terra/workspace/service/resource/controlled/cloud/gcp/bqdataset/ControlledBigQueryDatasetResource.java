@@ -281,6 +281,25 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
   }
 
   @Override
+  public boolean partialEqual(Object o) {
+    if (this == o) {
+      return true;
+    }
+
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    ControlledBigQueryDatasetResource that = (ControlledBigQueryDatasetResource) o;
+
+    return new EqualsBuilder()
+        .appendSuper(super.partialEqual(o))
+        .append(datasetName, that.datasetName)
+        .append(projectId, that.projectId)
+        .isEquals();
+  }
+
+  @Override
   public int hashCode() {
     return new HashCodeBuilder(17, 37)
         .appendSuper(super.hashCode())
