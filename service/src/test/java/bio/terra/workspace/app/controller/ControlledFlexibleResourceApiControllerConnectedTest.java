@@ -16,6 +16,7 @@ import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiFlexibleResource;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
+import bio.terra.workspace.generated.model.ApiWsmPolicyInputs;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -30,7 +31,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -74,7 +74,9 @@ public class ControlledFlexibleResourceApiControllerConnectedTest extends BaseCo
             .getId();
     workspaceId2 =
         mockMvcUtils
-            .createWorkspaceWithCloudContext(userAccessUtils.defaultUserAuthRequest())
+            .createWorkspaceWithPolicy(
+                userAccessUtils.defaultUserAuthRequest(),
+                new ApiWsmPolicyInputs().addInputsItem(PolicyFixtures.GROUP_POLICY_DEFAULT))
             .getId();
     // Source flex resource used in clone tests.
     sourceFlexResource =
@@ -110,9 +112,6 @@ public class ControlledFlexibleResourceApiControllerConnectedTest extends BaseCo
   // Destination workspace policy is the merge of source workspace policy and pre-clone destination
   // workspace policy
   @Test
-  @Disabled(
-      "PF-2563 seems to cause failure upon setup() for controlled api connected tests due to "
-          + "failure with createWorkspaceWithPolicy(...")
   void clone_policiesMerged() throws Exception {
     logger.info("features.isTpsEnabled(): %s".formatted(features.isTpsEnabled()));
     // Don't run the test if TPS is disabled
