@@ -32,9 +32,12 @@ import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 public class ControlledResourceStateTest extends BaseUnitTestMockGcpCloudContextService {
+  private static final Logger logger = LoggerFactory.getLogger(ControlledResourceStateTest.class);
   @Autowired JobService jobService;
   @Autowired ControlledResourceService controlledResourceService;
   @Autowired WorkspaceDao workspaceDao;
@@ -81,10 +84,7 @@ public class ControlledResourceStateTest extends BaseUnitTestMockGcpCloudContext
         InvalidResultStateException.class,
         () ->
             controlledResourceService.createControlledResourceSync(
-                resource,
-                /* privateResourceIamRole */ null,
-                MockMvcUtils.USER_REQUEST,
-                creationParameters));
+                resource, null, MockMvcUtils.USER_REQUEST, creationParameters));
 
     try {
       return resourceDao.getResource(workspaceId, resource.getResourceId());

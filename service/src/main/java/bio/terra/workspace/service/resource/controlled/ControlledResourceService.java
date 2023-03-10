@@ -312,6 +312,7 @@ public class ControlledResourceService {
     JobBuilder jobBuilder =
         commonCreationJobBuilder(resource, privateResourceIamRole, userRequest)
             .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
+    logger.info(">>> state rule: {}", features.getStateRule());
     return jobBuilder.submitAndWait(ControlledResource.class);
   }
 
@@ -558,11 +559,13 @@ public class ControlledResourceService {
             "Create controlled resource %s; id %s; name %s",
             resource.getResourceType(), resource.getResourceId(), resource.getName());
 
-    ResourceValidationUtils.validateControlledResourceRegionAgainstPolicy(
-        tpsApiDispatch,
-        resource.getWorkspaceId(),
-        resource.getRegion(),
-        resource.getResourceType().getCloudPlatform());
+    if (features.isTpsEnabled()) {
+      ResourceValidationUtils.validateControlledResourceRegionAgainstPolicy(
+          tpsApiDispatch,
+          resource.getWorkspaceId(),
+          resource.getRegion(),
+          resource.getResourceType().getCloudPlatform());
+    }
 
     return jobService
         .newJob()

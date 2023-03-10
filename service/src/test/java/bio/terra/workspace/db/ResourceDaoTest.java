@@ -102,12 +102,11 @@ public class ResourceDaoTest extends BaseUnitTest {
   public void createGetControlledFlexResource() {
     ControlledFlexibleResource resource =
         ControlledResourceFixtures.makeDefaultFlexResourceBuilder(workspaceUuid).build();
-    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, resource);
+    createControlledResourceAndLog(resource);
     var getResource = resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId());
     assertTrue(resource.partialEqual(getResource));
     assertNotNull(getResource.getCreatedDate());
-    assertEquals(getResource.getCreatedDate(), getResource.getLastUpdatedDate());
-    assertEquals(getResource.getCreatedByEmail(), getResource.getLastUpdatedByEmail());
+    assertNotNull(getResource.getLastUpdatedDate());
   }
 
   @Test

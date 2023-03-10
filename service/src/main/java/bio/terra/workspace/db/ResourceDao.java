@@ -679,13 +679,16 @@ public class ResourceDao {
       return; // It was a retry. We are done here
     }
 
+    // Enforce that there is a cloud context for a controlled resource
     if (resource.getStewardshipType() == CONTROLLED) {
-      // Enforce that there is a cloud context for this resource
-      if (!cloudContextExists(
-          resource.getWorkspaceId(), resource.getResourceType().getCloudPlatform())) {
+      ControlledResource controlledResource = resource.castToControlledResource();
+      CloudPlatform cloudPlatform = controlledResource.getResourceType().getCloudPlatform();
+      if ((cloudPlatform != CloudPlatform.ANY)
+          && !cloudContextExists(controlledResource.getWorkspaceId(), cloudPlatform)) {
         throw new CloudContextRequiredException(
             "No cloud context found in which to create a controlled resource");
       }
+
       // Ensure the resource is unique
       verifyUniqueness(resource);
     }
