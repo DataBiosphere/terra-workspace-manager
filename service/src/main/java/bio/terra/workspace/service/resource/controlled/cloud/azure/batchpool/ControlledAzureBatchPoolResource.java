@@ -31,7 +31,6 @@ import com.azure.resourcemanager.batch.models.StartTask;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.List;
 import java.util.Optional;
 
