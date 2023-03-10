@@ -22,6 +22,7 @@ import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.utils.URIBuilder;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -42,6 +43,7 @@ import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.Tagging;
 import software.amazon.awssdk.services.sagemaker.SageMakerClient;
 import software.amazon.awssdk.services.sagemaker.model.*;
 import software.amazon.awssdk.services.sagemaker.waiters.SageMakerWaiter;
@@ -54,8 +56,6 @@ import software.amazon.awssdk.services.sts.model.Tag;
 public class AwsUtils {
   private static final Logger logger = LoggerFactory.getLogger(AwsUtils.class);
   public static final int MIN_TOKEN_DURATION_SECONDS = 900;
-
-  // TODO(TERRA-384) - move to COW in TCL
   private static final int MAX_ROLE_SESSION_NAME_LENGTH = 64;
   private static final Duration SAGEMAKER_NOTEBOOK_WAITER_TIMEOUT_DURATION =
       Duration.ofSeconds(900);
@@ -91,9 +91,9 @@ public class AwsUtils {
       try {
         JWT jwt = JWTParser.parse(idToken);
         JWTClaimsSet jwtClaimsSet = jwt.getJWTClaimsSet();
-        logger.info(String.format("JWT 'aud' claim: '%s'", jwtClaimsSet.getAudience()));
-        logger.info(String.format("JWT 'azp' claim: '%s'", jwtClaimsSet.getStringClaim("azp")));
-        logger.info(String.format("JWT 'sub' claim: '%s'", jwtClaimsSet.getStringClaim("sub")));
+        logger.info("JWT 'aud' claim: '{}'", jwtClaimsSet.getAudience());
+        logger.info("JWT 'azp' claim: '{}'", jwtClaimsSet.getStringClaim("azp"));
+        logger.info("JWT 'sub' claim: '{}'", jwtClaimsSet.getStringClaim("sub"));
       } catch (ParseException e) {
         throw new SaCredentialsMissingException(
             String.format("Passed SA credential is not a valid JWT: '%s'", e.getMessage()));
@@ -124,15 +124,19 @@ public class AwsUtils {
   }
 
   public static void addUserTags(Collection<Tag> tags, SamUser user) {
-    tags.add(Tag.builder().key("user_email").value(user.getEmail()).build());
-    tags.add(Tag.builder().key("user_id").value(user.getSubjectId()).build());
+    if (user != null) {
+      tags.add(Tag.builder().key("user_email").value(user.getEmail()).build());
+      tags.add(Tag.builder().key("user_id").value(user.getSubjectId()).build());
+    }
   }
 
   public static void addWorkspaceTags(Collection<Tag> tags, UUID workspaceUuid) {
-    tags.add(Tag.builder().key("ws_id").value(workspaceUuid.toString()).build());
+    if (workspaceUuid != null) {
+      tags.add(Tag.builder().key("ws_id").value(workspaceUuid.toString()).build());
+    }
   }
 
-  public static void addBucketTags(
+  public static void addBucketTagsForRole(
       Collection<Tag> tags, RoleTag role, String s3BucketName, String prefix) {
     tags.add(Tag.builder().key("ws_role").value(role.getValue()).build());
     tags.add(Tag.builder().key("s3_bucket").value(s3BucketName).build());
@@ -145,7 +149,6 @@ public class AwsUtils {
       SamUser user,
       Collection<Tag> tags,
       Integer duration) {
-
     addUserTags(tags, user);
     HashSet<Tag> userTags = new HashSet<>(tags);
 
@@ -250,7 +253,20 @@ public class AwsUtils {
         .build();
   }
 
-  public static boolean checkFolderExistence(
+  // TODO: Can we avoid this with generics??
+  private static Collection<software.amazon.awssdk.services.s3.model.Tag> toS3Tags(
+      Collection<Tag> stsTags) {
+    return stsTags.stream()
+        .map(
+            stsTag ->
+                software.amazon.awssdk.services.s3.model.Tag.builder()
+                    .key(stsTag.key())
+                    .value(stsTag.value())
+                    .build())
+        .collect(Collectors.toCollection(HashSet::new));
+  }
+
+  public static boolean checkFolderExistence( // TODO-Dex
       Credentials credentials, Region region, String bucketName, String folder) {
     S3Client s3 = getS3Session(credentials, region);
     String prefix = String.format("%s/", folder);
@@ -268,24 +284,65 @@ public class AwsUtils {
   }
 
   public static void createFolder(
-      Credentials credentials, Region region, String bucketName, String folder) {
+      Credentials credentials,
+      UUID workspaceUuid,
+      SamUser user,
+      Region region,
+      String bucketName,
+      String folder) {
     // Creating a "folder" requires writing an empty object ending with the delimiter ('/').
-    String folderKey = String.format("%s/", folder);
-    putObject(credentials, region, bucketName, folderKey, "");
+    putObject(
+        credentials, workspaceUuid, user, region, bucketName, String.format("%s/", folder), "");
   }
 
-  public static void undoCreateFolder(
+  public static void deleteFolder(
       Credentials credentials, Region region, String bucketName, String folder) {
-    String folderKey = String.format("%s/", folder);
-    deleteObject(credentials, region, bucketName, folderKey);
+    deleteObject(credentials, region, bucketName, String.format("%s/", folder));
   }
 
   public static void putObject(
-      Credentials credentials, Region region, String bucketName, String key, String content) {
-    S3Client s3 = getS3Session(credentials, region);
-    s3.putObject(
-        PutObjectRequest.builder().bucket(bucketName).key(key).build(),
-        RequestBody.fromString(content));
+      Credentials credentials,
+      UUID workspaceUuid,
+      SamUser user,
+      Region region,
+      String bucketName,
+      String key,
+      String content) {
+    try {
+      S3Client s3 = getS3Session(credentials, region);
+
+      Collection<Tag> tags = new HashSet<>();
+      addUserTags(tags, user);
+      addWorkspaceTags(tags, workspaceUuid);
+
+      if (key.endsWith("/")) { // folder
+        logger.info("Creating S3 folder object with name '{}' and key '{}'.", bucketName, key);
+      } else {
+        logger.info(
+            "Creating S3 object with name '{}', key '{}' and {} content.",
+            bucketName,
+            key,
+            StringUtils.isEmpty(content) ? "empty" : "");
+      }
+
+      PutObjectRequest.Builder requestBuilder =
+          PutObjectRequest.builder()
+              .bucket(bucketName)
+              .key(key)
+              .tagging(Tagging.builder().tagSet(toS3Tags(tags)).build());
+
+      SdkHttpResponse httpResponse =
+          s3.putObject(requestBuilder.build(), RequestBody.fromString(content)).sdkHttpResponse();
+      if (!httpResponse.isSuccessful()) {
+        throw new ApiException(
+            "Error creating storage object, "
+                + httpResponse.statusText().orElse(String.valueOf(httpResponse.statusCode())));
+      }
+
+    } catch (SdkException e) {
+      checkException(e);
+      throw new ApiException("Error creating storage object", e);
+    }
   }
 
   public static void deleteObject(
@@ -294,6 +351,48 @@ public class AwsUtils {
     DeleteObjectRequest deleteObjectRequest =
         DeleteObjectRequest.builder().bucket(bucketName).key(key).build();
     s3.deleteObject(deleteObjectRequest);
+
+    /* TODO-Dex implement this for recursive deletion of folder
+
+        try {
+          SageMakerClient sageMaker = getSagemakerSession(credentials, region);
+          DescribeNotebookInstanceRequest describeRequest =
+                  DescribeNotebookInstanceRequest.builder().notebookInstanceName(notebookName).build();
+
+          DescribeNotebookInstanceResponse describeResponse =
+                  sageMaker.describeNotebookInstance(describeRequest);
+          SdkHttpResponse describeHttpResponse = describeResponse.sdkHttpResponse();
+          if (!describeHttpResponse.isSuccessful()) {
+            throw new ApiException(
+                    "Error fetching notebook instance, "
+                            + describeHttpResponse
+                            .statusText()
+                            .orElse(String.valueOf(describeHttpResponse.statusCode())));
+          }
+
+          // must be stopped or failed. AWS throws error if notebook is not found
+          checkNotebookStatusAndThrow(describeResponse.notebookInstanceStatus(), deletableStatusSet);
+          logger.info(
+                  String.format("Deleting SageMaker notebook instance with name '%s'.", notebookName));
+
+          SdkHttpResponse httpResponse =
+                  sageMaker
+                          .deleteNotebookInstance(
+                                  DeleteNotebookInstanceRequest.builder()
+                                          .notebookInstanceName(notebookName)
+                                          .build())
+                          .sdkHttpResponse();
+          if (!httpResponse.isSuccessful()) {
+            throw new ApiException(
+                    "Error deleting notebook instance, "
+                            + httpResponse.statusText().orElse(String.valueOf(httpResponse.statusCode())));
+          }
+
+        } catch (SdkException e) {
+          checkException(e);
+          throw new ApiException("Error deleting notebook instance", e);
+        }
+    */
   }
 
   private static SageMakerClient getSagemakerSession(Credentials credentials, Region region) {
@@ -310,15 +409,14 @@ public class AwsUtils {
   // TODO: Can we avoid this with generics??
   private static Collection<software.amazon.awssdk.services.sagemaker.model.Tag> toSagemakerTags(
       Collection<Tag> stsTags) {
-    Collection<software.amazon.awssdk.services.sagemaker.model.Tag> tags = new HashSet<>();
-    for (Tag stsTag : stsTags) {
-      tags.add(
-          software.amazon.awssdk.services.sagemaker.model.Tag.builder()
-              .key(stsTag.key())
-              .value(stsTag.value())
-              .build());
-    }
-    return tags;
+    return stsTags.stream()
+        .map(
+            stsTag ->
+                software.amazon.awssdk.services.sagemaker.model.Tag.builder()
+                    .key(stsTag.key())
+                    .value(stsTag.value())
+                    .build())
+        .collect(Collectors.toCollection(HashSet::new));
   }
 
   public static void createSageMakerNotebook(
@@ -372,7 +470,6 @@ public class AwsUtils {
     }
   }
 
-  // TODO(TERRA-384) - move to COW in TCL
   public static void stopSageMakerNotebook(
       Credentials credentials, Region region, String notebookName) {
     try {
@@ -410,7 +507,6 @@ public class AwsUtils {
     }
   }
 
-  // TODO(TERRA-384) - move to COW in TCL
   public static void deleteSageMakerNotebook(
       Credentials credentials, Region region, String notebookName) {
     try {
@@ -545,7 +641,6 @@ public class AwsUtils {
     }
   }
 
-  // TODO(TERRA-384) - move to COW in TCL
   private static void checkNotebookStatusAndThrow(
       NotebookInstanceStatus currentStatus, Set<NotebookInstanceStatus> expectedStatusSet)
       throws ValidationException {
@@ -557,7 +652,6 @@ public class AwsUtils {
     }
   }
 
-  // TODO(TERRA-384) - move to COW in TCL
   private static void checkException(Exception ex)
       throws NotFoundException, UnauthorizedException, BadRequestException {
     if (ex instanceof SdkException) {

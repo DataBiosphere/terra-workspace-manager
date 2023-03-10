@@ -165,7 +165,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     Set<Tag> tags = new HashSet<>();
 
     AwsUtils.addWorkspaceTags(tags, workspaceId);
-    AwsUtils.addBucketTags(
+    AwsUtils.addBucketTagsForRole(
         tags,
         (accessScope == ApiAwsCredentialAccessScope.WRITE_READ)
             ? AwsUtils.RoleTag.WRITER

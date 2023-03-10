@@ -79,7 +79,7 @@ public class WorkspaceActivityLogHook implements StairwayHook {
   @Override
   public HookAction endFlight(FlightContext context) throws InterruptedException {
     String flightClassName = context.getFlightClassName();
-    logger.info(String.format("endFlight %s: %s", flightClassName, context.getFlightStatus()));
+    logger.info("endFlight {}: {}", flightClassName, context.getFlightStatus());
     var workspaceId =
         context.getInputParameters().get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class);
     var operationType =

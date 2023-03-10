@@ -110,7 +110,7 @@ public class BucketCloneRolesService {
         return;
       }
       TimeUnit.MILLISECONDS.sleep(RETRY_INTERVAL.toMillis());
-      logger.info(String.format("addRemoveBucketIdentities retry attempts: %d", i));
+      logger.info("addRemoveBucketIdentities retry attempts: {}", i);
       updatedPolicy = storageCow.getIamPolicy(inputs.getBucketName());
     }
     throw new InternalServerErrorException("Bucket policy update propagation timed out");

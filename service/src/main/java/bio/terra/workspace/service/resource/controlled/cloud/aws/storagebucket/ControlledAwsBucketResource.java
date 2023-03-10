@@ -151,7 +151,7 @@ public class ControlledAwsBucketResource extends ControlledResource {
   /** {@inheritDoc} */
   @Override
   public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
-    // TODO: Implement and add delete flight steps.
+    flight.addStep(new DeleteAwsBucketStep(this), RetryRules.cloud());
   }
 
   public ApiAwsBucketAttributes toApiAttributes() {
