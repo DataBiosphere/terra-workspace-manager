@@ -12,6 +12,7 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.BigQueryApiConversions;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.api.services.bigquery.model.Dataset;
@@ -94,10 +95,15 @@ public class RetrieveControlledBigQueryDatasetsLifetimeStep implements Step {
 
     resourceIdToWorkspaceIdMap.put(resourceId, resource.getWorkspaceId().toString());
     if (tableAndPartitionLifetime != null) {
-      resourceIdToDefaultTableLifetimeMap.put(
-          resourceId, tableAndPartitionLifetime.getFirst().toString());
-      resourceIdToDefaultPartitionLifetimeMap.put(
-          resourceId, tableAndPartitionLifetime.getSecond().toString());
+      Long tableLifetime = tableAndPartitionLifetime.getFirst();
+      Long partitionLifetime = tableAndPartitionLifetime.getSecond();
+
+      if (tableLifetime != null) {
+        resourceIdToDefaultTableLifetimeMap.put(resourceId, tableLifetime.toString());
+      }
+      if (partitionLifetime != null) {
+        resourceIdToDefaultPartitionLifetimeMap.put(resourceId, partitionLifetime.toString());
+      }
     }
   }
 
@@ -110,8 +116,8 @@ public class RetrieveControlledBigQueryDatasetsLifetimeStep implements Step {
     Dataset dataset = getBqDataset(resource);
     if (dataset != null) {
       return new Pair<>(
-          dataset.getDefaultTableExpirationMs() / 1000,
-          dataset.getDefaultPartitionExpirationMs() / 1000);
+          BigQueryApiConversions.fromBqExpirationTime(dataset.getDefaultTableExpirationMs()),
+          BigQueryApiConversions.fromBqExpirationTime(dataset.getDefaultPartitionExpirationMs()));
     }
     return null;
   }
