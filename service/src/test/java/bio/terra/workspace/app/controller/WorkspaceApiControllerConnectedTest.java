@@ -54,7 +54,6 @@ import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -241,7 +240,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
         listWorkspaces(userAccessUtils.defaultUserAuthRequest());
 
     List<ApiWorkspaceDescription> matchedWorkspace =
-      listedWorkspaces.stream().filter(l -> l.getId().equals(workspace.getId())).toList();
+        listedWorkspaces.stream().filter(l -> l.getId().equals(workspace.getId())).toList();
 
     assertEquals(1, matchedWorkspace.size(), "Did not find expected workspace");
     assertFullWorkspace(matchedWorkspace.get(0));
@@ -259,7 +258,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     List<ApiWorkspaceDescription> listedWorkspaces =
         listWorkspaces(userAccessUtils.secondUserAuthRequest());
     List<ApiWorkspaceDescription> matchedWorkspace =
-      listedWorkspaces.stream().filter(l -> l.getId().equals(workspace.getId())).toList();
+        listedWorkspaces.stream().filter(l -> l.getId().equals(workspace.getId())).toList();
     assertTrue(matchedWorkspace.isEmpty());
   }
 
@@ -276,7 +275,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     List<ApiWorkspaceDescription> listedWorkspaces =
         listWorkspaces(userAccessUtils.secondUserAuthRequest(), Optional.of(ApiIamRole.READER));
     List<ApiWorkspaceDescription> matchedWorkspace =
-      listedWorkspaces.stream().filter(l -> l.getId().equals(workspace.getId())).toList();
+        listedWorkspaces.stream().filter(l -> l.getId().equals(workspace.getId())).toList();
     assertTrue(matchedWorkspace.isEmpty());
   }
 
