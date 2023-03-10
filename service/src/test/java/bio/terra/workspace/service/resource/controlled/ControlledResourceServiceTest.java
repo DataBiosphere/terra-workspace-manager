@@ -115,6 +115,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterAll;
@@ -130,8 +131,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-
-import javax.annotation.Nullable;
 
 // Per-class lifecycle on this test to allow a shared workspace object across tests, which saves
 // time creating and deleting GCP contexts.
@@ -1866,9 +1865,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   // TODO (PF-2269): Clean this up once the back-fill is done in all Terra environments.
 
-  /**
-   * @return A list of big query datasets that were updated (with lifetime set)
-   */
+  /** @return A list of big query datasets that were updated (with lifetime set) */
   private List<ControlledBigQueryDatasetResource>
       updateControlledBigQueryDatasetsLifetimeAndWait() {
     HashSet<ControlledBigQueryDatasetResource> successfullyUpdatedDatasets =
@@ -2000,18 +1997,23 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     ControlledBigQueryDatasetResource createdDataset =
         makeBigQueryDatasetWithLifetime(
             /*defaultTableLifetime=*/ null, /*defaultPartitionLifetime=*/ null);
+    try {
+      // Both lifetimes are null, so they will be updated (to null).
+      List<ControlledBigQueryDatasetResource> updatedResourceList =
+          updateControlledBigQueryDatasetsLifetimeAndWait();
 
-    // Both lifetimes are null, so they will be updated (to null).
-    List<ControlledBigQueryDatasetResource> updatedResourceList =
-        updateControlledBigQueryDatasetsLifetimeAndWait();
-
-    // The controlled dataset is updated since the lifetime is null.
-    assertEquals(1, updatedResourceList.size());
-    assertControlledBigQueryDatasetLifetimeIsUpdatedAndActivityIsLogged(
-        updatedResourceList,
-        createdDataset.getResourceId(),
-        /*expectedTableLifetime=*/ null,
-        /*expectedPartitionLifetime=*/ null);
+      // The controlled dataset is updated since the lifetime is null.
+      assertEquals(1, updatedResourceList.size());
+      assertControlledBigQueryDatasetLifetimeIsUpdatedAndActivityIsLogged(
+          updatedResourceList,
+          createdDataset.getResourceId(),
+          /*expectedTableLifetime=*/ null,
+          /*expectedPartitionLifetime=*/ null);
+    } finally {
+      // Remove dataset to not conflict with other test that checks for empty lifetime
+      controlledResourceService.deleteControlledResourceSync(
+          workspaceId, createdDataset.getResourceId(), userAccessUtils.defaultUserAuthRequest());
+    }
   }
 
   private ControlledBigQueryDatasetResource makeBigQueryDatasetWithLifetime(
