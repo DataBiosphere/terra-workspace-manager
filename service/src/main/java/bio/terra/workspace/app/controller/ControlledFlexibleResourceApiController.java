@@ -172,7 +172,7 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
   @Override
   public ResponseEntity<ApiCloneControlledFlexibleResourceResult> cloneFlexibleResource(
       UUID workspaceUuid, UUID resourceId, @Valid ApiCloneControlledFlexibleResourceRequest body) {
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
 
     // Do a permission check before validating the cloning instructions.
     // It's preferable to throw a permission error first.
@@ -185,20 +185,20 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
           CloningInstructions.fromApiModel(body.getCloningInstructions()));
     }
 
-    final ControlledResource sourceFlexResource =
+    ControlledResource sourceFlexResource =
         controlledResourceService.getControlledResource(workspaceUuid, resourceId);
 
-    final CloningInstructions effectiveCloningInstructions =
+    CloningInstructions effectiveCloningInstructions =
         Optional.ofNullable(body.getCloningInstructions())
             .map(CloningInstructions::fromApiModel)
             .orElse(sourceFlexResource.getCloningInstructions());
 
-    final UUID sourceResourceId = sourceFlexResource.getResourceId();
-    final UUID sourceWorkspaceId = sourceFlexResource.getWorkspaceId();
+    UUID sourceResourceId = sourceFlexResource.getResourceId();
+    UUID sourceWorkspaceId = sourceFlexResource.getWorkspaceId();
 
     // If COPY_NOTHING return an empty result (no-op).
     if (effectiveCloningInstructions == CloningInstructions.COPY_NOTHING) {
-      final ApiCloneControlledFlexibleResourceResult emptyResult =
+      ApiCloneControlledFlexibleResourceResult emptyResult =
           new ApiCloneControlledFlexibleResourceResult()
               .effectiveCloningInstructions(CloningInstructions.COPY_NOTHING.toApiModel())
               .sourceResourceId(sourceResourceId)
@@ -208,7 +208,7 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
     }
 
     // Otherwise start a flight to clone the flex resource.
-    final ControlledFlexibleResource clonedFlexResource =
+    ControlledFlexibleResource clonedFlexResource =
         controlledResourceService.cloneFlexResource(
             workspaceUuid,
             resourceId,
@@ -219,7 +219,7 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
             body.getDescription(),
             body.getCloningInstructions());
 
-    final var result =
+    ApiCloneControlledFlexibleResourceResult result =
         new ApiCloneControlledFlexibleResourceResult()
             .resource(clonedFlexResource.toApiResource())
             .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel())
