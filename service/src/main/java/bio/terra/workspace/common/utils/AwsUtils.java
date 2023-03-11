@@ -39,9 +39,12 @@ import software.amazon.awssdk.core.waiters.WaiterResponse;
 import software.amazon.awssdk.http.SdkHttpResponse;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.Delete;
+import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
+import software.amazon.awssdk.services.s3.model.DeleteObjectsResponse;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
+import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.Tagging;
 import software.amazon.awssdk.services.sagemaker.SageMakerClient;
@@ -161,12 +164,11 @@ public class AwsUtils {
             .build();
 
     logger.info(
-        String.format(
-            "Assuming User role ('%s') with session name `%s`, duration %d seconds, and tags: '%s'.",
-            request.roleArn(),
-            request.roleSessionName(),
-            request.durationSeconds(),
-            request.tags()));
+        "Assuming User role ('{}') with session name `{}`, duration {} seconds, and tags: '{}'.",
+        request.roleArn(),
+        request.roleSessionName(),
+        request.durationSeconds(),
+        request.tags());
 
     AwsSessionCredentials sessionCredentials =
         AwsSessionCredentials.create(
@@ -297,7 +299,12 @@ public class AwsUtils {
 
   public static void deleteFolder(
       Credentials credentials, Region region, String bucketName, String folder) {
-    deleteObject(credentials, region, bucketName, String.format("%s/", folder));
+    String prefix = folder.endsWith("/") ? folder : String.format("%s/", folder);
+    // TODO(TERRA-410)
+    // Get permissions to list objects by prefix
+    // List objects by prefix
+    // recursively delete objects
+    deleteObjects(credentials, region, bucketName, List.of(prefix));
   }
 
   public static void putObject(
@@ -347,52 +354,45 @@ public class AwsUtils {
 
   public static void deleteObject(
       Credentials credentials, Region region, String bucketName, String key) {
-    S3Client s3 = getS3Session(credentials, region);
-    DeleteObjectRequest deleteObjectRequest =
-        DeleteObjectRequest.builder().bucket(bucketName).key(key).build();
-    s3.deleteObject(deleteObjectRequest);
+    if (key.endsWith("/")) {
+      deleteFolder(credentials, region, bucketName, key);
+    }
+    deleteObjects(credentials, region, bucketName, List.of(key));
+  }
 
-    /* TODO-Dex implement this for recursive deletion of folder
+  public static void deleteObjects(
+      Credentials credentials, Region region, String bucketName, List<String> keys) {
+    try {
+      S3Client s3 = getS3Session(credentials, region);
 
-        try {
-          SageMakerClient sageMaker = getSagemakerSession(credentials, region);
-          DescribeNotebookInstanceRequest describeRequest =
-                  DescribeNotebookInstanceRequest.builder().notebookInstanceName(notebookName).build();
+      Collection<ObjectIdentifier> objectIds =
+          keys.stream().map(key -> ObjectIdentifier.builder().key(key).build()).toList();
 
-          DescribeNotebookInstanceResponse describeResponse =
-                  sageMaker.describeNotebookInstance(describeRequest);
-          SdkHttpResponse describeHttpResponse = describeResponse.sdkHttpResponse();
-          if (!describeHttpResponse.isSuccessful()) {
-            throw new ApiException(
-                    "Error fetching notebook instance, "
-                            + describeHttpResponse
-                            .statusText()
-                            .orElse(String.valueOf(describeHttpResponse.statusCode())));
-          }
+      DeleteObjectsRequest deleteRequest =
+          DeleteObjectsRequest.builder()
+              .bucket(bucketName)
+              .delete(Delete.builder().objects(objectIds).quiet(true).build())
+              .build();
 
-          // must be stopped or failed. AWS throws error if notebook is not found
-          checkNotebookStatusAndThrow(describeResponse.notebookInstanceStatus(), deletableStatusSet);
-          logger.info(
-                  String.format("Deleting SageMaker notebook instance with name '%s'.", notebookName));
+      logger.info("Deleting storage objects with keys {}.", keys);
 
-          SdkHttpResponse httpResponse =
-                  sageMaker
-                          .deleteNotebookInstance(
-                                  DeleteNotebookInstanceRequest.builder()
-                                          .notebookInstanceName(notebookName)
-                                          .build())
-                          .sdkHttpResponse();
-          if (!httpResponse.isSuccessful()) {
-            throw new ApiException(
-                    "Error deleting notebook instance, "
-                            + httpResponse.statusText().orElse(String.valueOf(httpResponse.statusCode())));
-          }
+      DeleteObjectsResponse deleteResponse = s3.deleteObjects(deleteRequest);
+      SdkHttpResponse deleteHttpResponse = deleteResponse.sdkHttpResponse();
+      if (!deleteHttpResponse.isSuccessful()) {
+        throw new ApiException(
+            "Error deleting storage objects: "
+                + deleteHttpResponse
+                    .statusText()
+                    .orElse(String.valueOf(deleteHttpResponse.statusCode())));
+      }
+      deleteResponse
+          .errors()
+          .forEach(s3Error -> logger.warn("Failed to delete storage object: {}", s3Error));
 
-        } catch (SdkException e) {
-          checkException(e);
-          throw new ApiException("Error deleting notebook instance", e);
-        }
-    */
+    } catch (SdkException e) {
+      checkException(e);
+      throw new ApiException("Error deleting storage objects", e);
+    }
   }
 
   private static SageMakerClient getSagemakerSession(Credentials credentials, Region region) {
@@ -480,15 +480,12 @@ public class AwsUtils {
       NotebookInstanceStatus notebookStatus =
           sageMaker.describeNotebookInstance(describeRequest).notebookInstanceStatus();
       if (startableStatusSet.contains(notebookStatus)) {
-        logger.info(
-            String.format(
-                "SageMaker notebook instance in status %s, no stop needed.", notebookStatus));
+        logger.info("SageMaker notebook instance in status {}, no stop needed.", notebookStatus);
         return;
       }
 
       checkNotebookStatusAndThrow(notebookStatus, stoppableStatusSet);
-      logger.info(
-          String.format("Stopping SageMaker notebook instance with name '%s'.", notebookName));
+      logger.info("Stopping SageMaker notebook instance with name '{}'.", notebookName);
 
       SdkHttpResponse httpResponse =
           sageMaker
@@ -527,8 +524,7 @@ public class AwsUtils {
 
       // must be stopped or failed. AWS throws error if notebook is not found
       checkNotebookStatusAndThrow(describeResponse.notebookInstanceStatus(), deletableStatusSet);
-      logger.info(
-          String.format("Deleting SageMaker notebook instance with name '%s'.", notebookName));
+      logger.info("Deleting SageMaker notebook instance with name '{}'.", notebookName);
 
       SdkHttpResponse httpResponse =
           sageMaker
