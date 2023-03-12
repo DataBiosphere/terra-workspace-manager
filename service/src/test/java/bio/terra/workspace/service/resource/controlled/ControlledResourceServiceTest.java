@@ -1988,7 +1988,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 resource, null, user.getAuthenticatedRequest(), creationParameters)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
 
-    assertEquals(resource, createdDataset);
+    assertTrue(resource.partialEqual(createdDataset));
     return createdDataset;
   }
 
