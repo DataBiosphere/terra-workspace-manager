@@ -14,6 +14,7 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresource.ControlledFlexibleResource;
+import bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresource.FlexResourceCreationParameters;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
@@ -88,10 +89,13 @@ public class CloneFlexibleResourceStep implements Step {
     ControlledResourceIamRole iamRole =
         IamRoleUtils.getIamRoleForAccessScope(sourceFlexResource.getAccessScope());
 
+    FlexResourceCreationParameters destCreationParameters =
+        FlexResourceCreationParameters.fromFlexResource(sourceFlexResource);
+
     ControlledFlexibleResource clonedFlexResource =
         controlledResourceService
-            .createControlledFlexResourceSyncWithoutCreationParameters(
-                destinationFlexResource, iamRole, userRequest)
+            .createControlledResourceSync(
+                destinationFlexResource, iamRole, userRequest, destCreationParameters)
             .castByEnum(WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE);
 
     workingMap.put(

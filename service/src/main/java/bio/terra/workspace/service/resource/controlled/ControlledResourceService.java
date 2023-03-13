@@ -307,22 +307,6 @@ public class ControlledResourceService {
     return jobBuilder.submit();
   }
 
-  /** Derive the creation parameters from the source flex resource. */
-  public ControlledResource createControlledFlexResourceSyncWithoutCreationParameters(
-      ControlledFlexibleResource resource,
-      ControlledResourceIamRole privateResourceIamRole,
-      AuthenticatedUserRequest userRequest) {
-
-    var creationParameters =
-        new ApiControlledFlexibleResourceCreationParameters()
-            .data(ControlledFlexibleResource.getEncodedJSONFromString(resource.getData()))
-            .typeNamespace(resource.getTypeNamespace())
-            .type(resource.getType());
-
-    return createControlledResourceSync(
-        resource, privateResourceIamRole, userRequest, creationParameters);
-  }
-
   public <T> ControlledResource createControlledResourceSync(
       ControlledResource resource,
       ControlledResourceIamRole privateResourceIamRole,

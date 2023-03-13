@@ -69,4 +69,12 @@ public class FlexResourceCreationParameters {
         .type(apiCreationParamters.getType())
         .data(apiCreationParamters.getData());
   }
+
+  public static FlexResourceCreationParameters fromFlexResource(
+      ControlledFlexibleResource flexResource) {
+    return new FlexResourceCreationParameters()
+        .typeNamespace(flexResource.getTypeNamespace())
+        .type(flexResource.getType())
+        .data(ControlledFlexibleResource.getEncodedJSONFromString(flexResource.getData()));
+  }
 }
