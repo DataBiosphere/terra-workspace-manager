@@ -54,7 +54,6 @@ import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -100,7 +99,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   /** Clean up workspaces from Broad dev SAM. */
   @AfterAll
   public void cleanup() throws Exception {
-    mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
+    mockMvcUtils.cleanupWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
   }
 
   @Test
@@ -235,23 +234,18 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     assertStrippedWorkspace(gotWorkspace);
   }
 
-  @Disabled("Assert by list size is not reliable if other tests have failed")
-  // TODO: PF-2413 Assert by list size is not reliable if other tests have failed
   @Test
   public void listWorkspaces_requesterIsOwner_returnsFullWorkspace() throws Exception {
     List<ApiWorkspaceDescription> listedWorkspaces =
         listWorkspaces(userAccessUtils.defaultUserAuthRequest());
 
-    assertThat(
-        String.format(
-            "Expected 1 workspace. Got %s: %s", listedWorkspaces.size(), listedWorkspaces),
-        listedWorkspaces.stream().map(ApiWorkspaceDescription::getId).toList(),
-        hasSize(1));
-    assertFullWorkspace(listedWorkspaces.get(0));
+    List<ApiWorkspaceDescription> matchedWorkspace =
+        listedWorkspaces.stream().filter(l -> l.getId().equals(workspace.getId())).toList();
+
+    assertEquals(1, matchedWorkspace.size(), "Did not find expected workspace");
+    assertFullWorkspace(matchedWorkspace.get(0));
   }
 
-  @Disabled("Assert by list size is not reliable if other tests have failed")
-  // TODO: PF-2413 Assert by list size is not reliable if other tests have failed
   @Test
   public void listWorkspaces_requesterIsDiscoverer_requestMinHighestRoleNotSet_returnsNoWorkspaces()
       throws Exception {
@@ -263,11 +257,11 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
     List<ApiWorkspaceDescription> listedWorkspaces =
         listWorkspaces(userAccessUtils.secondUserAuthRequest());
-    assertTrue(listedWorkspaces.isEmpty());
+    List<ApiWorkspaceDescription> matchedWorkspace =
+        listedWorkspaces.stream().filter(l -> l.getId().equals(workspace.getId())).toList();
+    assertTrue(matchedWorkspace.isEmpty());
   }
 
-  @Disabled("Assert by list size is not reliable if other tests have failed")
-  // TODO: PF-2413 Assert by list size is not reliable if other tests have failed
   @Test
   public void
       listWorkspaces_requesterIsDiscoverer_requestMinHighestRoleSetToReader_returnsNoWorkspaces()
@@ -280,8 +274,9 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
     List<ApiWorkspaceDescription> listedWorkspaces =
         listWorkspaces(userAccessUtils.secondUserAuthRequest(), Optional.of(ApiIamRole.READER));
-
-    assertTrue(listedWorkspaces.isEmpty());
+    List<ApiWorkspaceDescription> matchedWorkspace =
+        listedWorkspaces.stream().filter(l -> l.getId().equals(workspace.getId())).toList();
+    assertTrue(matchedWorkspace.isEmpty());
   }
 
   @Test
