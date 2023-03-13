@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.controlled.cloud.aws.storagebucket;
+package bio.terra.workspace.service.resource.controlled.cloud.aws.s3bucket;
 
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.AWS_CLOUD_CONTEXT;
 
@@ -14,12 +14,11 @@ import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sts.model.Credentials;
 
-public class CreateAwsBucketStep implements Step {
-  private static final Logger logger = LoggerFactory.getLogger(CreateAwsBucketStep.class);
+public class DeleteAwsS3BucketStep implements Step {
+  private static final Logger logger = LoggerFactory.getLogger(DeleteAwsS3BucketStep.class);
+  private final ControlledAwsS3BucketResource resource;
 
-  private final ControlledAwsBucketResource resource;
-
-  public CreateAwsBucketStep(ControlledAwsBucketResource resource) {
+  public DeleteAwsS3BucketStep(ControlledAwsS3BucketResource resource) {
     this.resource = resource;
   }
 
@@ -30,7 +29,7 @@ public class CreateAwsBucketStep implements Step {
         flightContext.getWorkingMap().get(AWS_CLOUD_CONTEXT, AwsCloudContext.class);
     Credentials awsCredentials = MultiCloudUtils.assumeAwsServiceRoleFromGcp(awsCloudContext);
 
-    AwsUtils.createFolder(
+    AwsUtils.deleteFolder(
         awsCredentials,
         Region.of(resource.getRegion()),
         resource.getS3BucketName(),
@@ -40,15 +39,11 @@ public class CreateAwsBucketStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    AwsCloudContext awsCloudContext =
-        flightContext.getWorkingMap().get(AWS_CLOUD_CONTEXT, AwsCloudContext.class);
-    Credentials awsCredentials = MultiCloudUtils.assumeAwsServiceRoleFromGcp(awsCloudContext);
-
-    AwsUtils.undoCreateFolder(
-        awsCredentials,
-        Region.of(resource.getRegion()),
-        resource.getS3BucketName(),
-        resource.getPrefix());
-    return StepResult.getStepResultSuccess();
+    logger.error(
+        "Cannot undo delete of AWS bucket resource {} in workspace {}.",
+        resource.getResourceId(),
+        resource.getWorkspaceId());
+    // Surface whatever error caused Stairway to begin undoing.
+    return flightContext.getResult();
   }
 }

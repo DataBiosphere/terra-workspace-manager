@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.controlled.cloud.aws.storagebucket;
+package bio.terra.workspace.service.resource.controlled.cloud.aws.s3bucket;
 
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.BadRequestException;
@@ -10,9 +10,9 @@ import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
-import bio.terra.workspace.generated.model.ApiAwsBucketAttributes;
-import bio.terra.workspace.generated.model.ApiAwsBucketCreationParameters;
-import bio.terra.workspace.generated.model.ApiAwsBucketResource;
+import bio.terra.workspace.generated.model.ApiAwsS3BucketAttributes;
+import bio.terra.workspace.generated.model.ApiAwsS3BucketCreationParameters;
+import bio.terra.workspace.generated.model.ApiAwsS3BucketResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
@@ -30,12 +30,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import java.util.Optional;
 
-public class ControlledAwsBucketResource extends ControlledResource {
+public class ControlledAwsS3BucketResource extends ControlledResource {
   private final String s3BucketName;
   private final String prefix;
 
   @JsonCreator
-  public ControlledAwsBucketResource(
+  public ControlledAwsS3BucketResource(
       @JsonProperty("wsmResourceFields") WsmResourceFields resourceFields,
       @JsonProperty("wsmControlledResourceFields")
           WsmControlledResourceFields controlledResourceFields,
@@ -47,7 +47,7 @@ public class ControlledAwsBucketResource extends ControlledResource {
     validate();
   }
 
-  private ControlledAwsBucketResource(
+  private ControlledAwsS3BucketResource(
       ControlledResourceFields common, String s3BucketName, String prefix) {
     super(common);
     this.s3BucketName = s3BucketName;
@@ -55,8 +55,8 @@ public class ControlledAwsBucketResource extends ControlledResource {
     validate();
   }
 
-  public static ControlledAwsBucketResource.Builder builder() {
-    return new ControlledAwsBucketResource.Builder();
+  public static ControlledAwsS3BucketResource.Builder builder() {
+    return new ControlledAwsS3BucketResource.Builder();
   }
 
   /** {@inheritDoc} */
@@ -121,23 +121,23 @@ public class ControlledAwsBucketResource extends ControlledResource {
       FlightBeanBag flightBeanBag) {
     RetryRule cloudRetry = RetryRules.cloud();
 
-    flight.addStep(new ValidateAwsBucketCreationStep(this), cloudRetry);
-    flight.addStep(new CreateAwsBucketStep(this), cloudRetry);
+    flight.addStep(new ValidateAwsS3BucketCreationStep(this), cloudRetry);
+    flight.addStep(new CreateAwsS3BucketStep(this), cloudRetry);
 
     // Check if the user requested that the bucket be seeded with sample data.
-    ApiAwsBucketCreationParameters creationParameters =
+    ApiAwsS3BucketCreationParameters creationParameters =
         flight
             .getInputParameters()
             .get(
                 WorkspaceFlightMapKeys.ControlledResourceKeys.CREATION_PARAMETERS,
-                ApiAwsBucketCreationParameters.class);
+                ApiAwsS3BucketCreationParameters.class);
 
     if (creationParameters != null && creationParameters.isSeed()) {
       // Check that we actually have example data to seed with.
-      List<AwsConfiguration.AwsBucketSeedFile> seedFiles =
+      List<AwsConfiguration.AwsS3BucketSeedFile> seedFiles =
           flightBeanBag.getAwsConfiguration().getBucketSeedFiles();
       if (seedFiles != null && !seedFiles.isEmpty()) {
-        flight.addStep(new SeedAwsBucketStep(seedFiles, this), cloudRetry);
+        flight.addStep(new SeedAwsS3BucketStep(seedFiles, this), cloudRetry);
       }
     }
   }
@@ -151,30 +151,32 @@ public class ControlledAwsBucketResource extends ControlledResource {
   /** {@inheritDoc} */
   @Override
   public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
-    // TODO: Implement and add delete flight steps.
+    flight.addStep(new DeleteAwsS3BucketStep(this), RetryRules.cloud());
   }
 
-  public ApiAwsBucketAttributes toApiAttributes() {
-    return new ApiAwsBucketAttributes()
+  public ApiAwsS3BucketAttributes toApiAttributes() {
+    return new ApiAwsS3BucketAttributes()
         .s3BucketName(getS3BucketName())
         .prefix(getPrefix())
         .region(getRegion());
   }
 
-  public ApiAwsBucketResource toApiResource() {
-    return new ApiAwsBucketResource().metadata(super.toApiMetadata()).attributes(toApiAttributes());
+  public ApiAwsS3BucketResource toApiResource() {
+    return new ApiAwsS3BucketResource()
+        .metadata(super.toApiMetadata())
+        .attributes(toApiAttributes());
   }
 
   @Override
   public String attributesToJson() {
     return DbSerDes.toJson(
-        new ControlledAwsBucketAttributes(getS3BucketName(), getPrefix(), getRegion()));
+        new ControlledAwsS3BucketAttributes(getS3BucketName(), getPrefix(), getRegion()));
   }
 
   @Override
   public ApiResourceAttributesUnion toApiAttributesUnion() {
     ApiResourceAttributesUnion union = new ApiResourceAttributesUnion();
-    union.awsBucket(toApiAttributes());
+    union.awsS3Bucket(toApiAttributes());
     return union;
   }
 
@@ -198,18 +200,18 @@ public class ControlledAwsBucketResource extends ControlledResource {
       return this;
     }
 
-    public ControlledAwsBucketResource.Builder s3BucketName(String s3BucketName) {
+    public ControlledAwsS3BucketResource.Builder s3BucketName(String s3BucketName) {
       this.s3BucketName = s3BucketName;
       return this;
     }
 
-    public ControlledAwsBucketResource.Builder prefix(String prefix) {
+    public ControlledAwsS3BucketResource.Builder prefix(String prefix) {
       this.prefix = prefix;
       return this;
     }
 
-    public ControlledAwsBucketResource build() {
-      return new ControlledAwsBucketResource(common, s3BucketName, prefix);
+    public ControlledAwsS3BucketResource build() {
+      return new ControlledAwsS3BucketResource(common, s3BucketName, prefix);
     }
   }
 }
