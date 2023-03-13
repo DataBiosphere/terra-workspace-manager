@@ -17,8 +17,8 @@ import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.s3bucket.ControlledAwsS3BucketResource;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakernotebook.ControlledAwsSageMakerNotebookResource;
-import bio.terra.workspace.service.resource.controlled.cloud.aws.storagebucket.ControlledAwsBucketResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
@@ -119,29 +119,30 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
               requestedRegion));
     }
 
-    ControlledAwsBucketResource resource =
-        ControlledAwsBucketResource.builder()
+    ControlledAwsS3BucketResource resource =
+        ControlledAwsS3BucketResource.builder()
             .common(commonFields)
             .s3BucketName(s3BucketName)
             .prefix(commonFields.getName())
             .build();
 
-    final ControlledAwsBucketResource createdAwsBucket =
+    final ControlledAwsS3BucketResource createdBucket =
         controlledResourceService
             .createControlledResourceSync(
                 resource, commonFields.getIamRole(), userRequest, body.getAwsS3Bucket())
             .castByEnum(WsmResourceType.CONTROLLED_AWS_BUCKET);
     var response =
         new ApiCreatedControlledAwsS3Bucket()
-            .resourceId(createdAwsBucket.getResourceId())
-            .awsS3Bucket(createdAwsBucket.toApiResource());
+            .resourceId(createdBucket.getResourceId())
+            .awsS3Bucket(createdBucket.toApiResource());
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
   @Override
-  public ResponseEntity<ApiAwsS3BucketResource> getAwsS3Bucket(UUID workspaceUuid, UUID resourceId) {
+  public ResponseEntity<ApiAwsS3BucketResource> getAwsS3Bucket(
+      UUID workspaceUuid, UUID resourceId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    ControlledAwsBucketResource resource =
+    ControlledAwsS3BucketResource resource =
         controlledResourceMetadataManager
             .validateControlledResourceAndAction(
                 userRequest,
@@ -161,7 +162,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
   private Collection<Tag> getBucketTags(
       UUID workspaceId,
       ApiAwsCredentialAccessScope accessScope,
-      ControlledAwsBucketResource resource) {
+      ControlledAwsS3BucketResource resource) {
     Set<Tag> tags = new HashSet<>();
 
     AwsUtils.addWorkspaceTags(tags, workspaceId);
@@ -183,7 +184,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
       ApiAwsCredentialAccessScope accessScope,
       Integer duration) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    ControlledAwsBucketResource resource =
+    ControlledAwsS3BucketResource resource =
         controlledResourceMetadataManager
             .validateControlledResourceAndAction(
                 userRequest, workspaceUuid, resourceId, getSamAction(accessScope))
@@ -224,7 +225,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
       ApiAwsCredentialAccessScope accessScope,
       Integer duration) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    ControlledAwsBucketResource resource =
+    ControlledAwsS3BucketResource resource =
         controlledResourceMetadataManager
             .validateControlledResourceAndAction(
                 userRequest, workspaceUuid, resourceId, getSamAction(accessScope))
@@ -268,7 +269,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
 
-    ControlledAwsBucketResource defaultBucketResource = null;
+    ControlledAwsS3BucketResource defaultBucketResource = null;
 
     ApiAwsSagemakerNotebookDefaultBucket defaultBucket =
         body.getAwsSageMakerNotebook().getDefaultBucket();

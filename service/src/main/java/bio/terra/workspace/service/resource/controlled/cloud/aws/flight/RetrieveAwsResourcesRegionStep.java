@@ -8,16 +8,13 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.AwsConfiguration;
-import bio.terra.workspace.service.resource.controlled.cloud.aws.storagebucket.ControlledAwsBucketResource;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.s3bucket.ControlledAwsS3BucketResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Preconditions;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,14 +43,15 @@ public class RetrieveAwsResourcesRegionStep implements Step {
             .get(WORKSPACE_ID_TO_AWS_CLOUD_CONTEXT_MAP, new TypeReference<>() {});
     Map<UUID, String> resourceIdToRegionMap = new HashMap<>();
     Map<UUID, String> resourceIdToWorkspaceIdMap = new HashMap<>();
-    for (var resource : controlledResources) {
+    for (var resource : Objects.requireNonNull(controlledResources)) {
       WsmResourceType resourceType = resource.getResourceType();
       logger.info(
           "Getting cloud region for resource {} in workspace {}",
           resource.getResourceId(),
           resource.getWorkspaceId());
       Preconditions.checkState(
-          workspaceIdToAwsCloudContextMap.containsKey(resource.getWorkspaceId()),
+          Objects.requireNonNull(workspaceIdToAwsCloudContextMap)
+              .containsKey(resource.getWorkspaceId()),
           "Aws workspace %s must have an aws cloud context",
           resource.getWorkspaceId());
       AwsCloudContext awsCloudContext =
@@ -98,7 +96,7 @@ public class RetrieveAwsResourcesRegionStep implements Step {
   }
 
   private String getAwsRegion(
-      ControlledAwsBucketResource resource,
+      ControlledAwsS3BucketResource resource,
       AwsCloudContext awsCloudContext,
       AwsConfiguration awsConfiguration) {
     String region = resource.getRegion();

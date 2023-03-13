@@ -1,12 +1,12 @@
-package bio.terra.workspace.service.resource.controlled.cloud.aws.storagebucket;
+package bio.terra.workspace.service.resource.controlled.cloud.aws.s3bucket;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class ControlledAwsBucketAttributes {
+public class ControlledAwsS3BucketAttributes {
 
   @JsonCreator
-  public ControlledAwsBucketAttributes(
+  public ControlledAwsS3BucketAttributes(
       @JsonProperty("s3BucketName") String s3BucketName,
       @JsonProperty("prefix") String prefix,
       @JsonProperty("region") String region) {

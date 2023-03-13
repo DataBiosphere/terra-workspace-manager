@@ -35,8 +35,8 @@ import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceSyncMapping.SyncMapping;
 import bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresource.ControlledFlexibleResource;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.flight.UpdateAwsControlledResourceRegionFlight;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.s3bucket.ControlledAwsS3BucketResource;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakernotebook.ControlledAwsSageMakerNotebookResource;
-import bio.terra.workspace.service.resource.controlled.cloud.aws.storagebucket.ControlledAwsBucketResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.flight.UpdateAzureControlledResourceRegionFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespace.ControlledAzureRelayNamespaceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
@@ -524,7 +524,7 @@ public class ControlledResourceService {
       String resultPath,
       AuthenticatedUserRequest userRequest,
       SamUser samUser,
-      @Nullable ControlledAwsBucketResource defaultBucket) {
+      @Nullable ControlledAwsS3BucketResource defaultBucket) {
 
     // Special check for notebooks: READER is not a useful role
     if (privateResourceIamRole == ControlledResourceIamRole.READER) {
@@ -836,7 +836,7 @@ public class ControlledResourceService {
       String resultPath,
       AuthenticatedUserRequest userRequest) {
     WsmResource resource = resourceDao.getResource(workspaceUuid, resourceId);
-    final String jobDescription = "Delete controlled resource; id: " + resourceId.toString();
+    final String jobDescription = "Delete controlled resource; id: " + resourceId;
 
     List<WsmResource> resourceToDelete = new ArrayList<>();
     resourceToDelete.add(resource);

@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.controlled.cloud.aws.storagebucket;
+package bio.terra.workspace.service.resource.controlled.cloud.aws.s3bucket;
 
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.AWS_CLOUD_CONTEXT;
 
@@ -19,13 +19,14 @@ import java.util.List;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sts.model.Credentials;
 
-public class SeedAwsBucketStep implements Step {
+public class SeedAwsS3BucketStep implements Step {
 
-  private final List<AwsConfiguration.AwsBucketSeedFile> seedFiles;
-  private final ControlledAwsBucketResource resource;
+  private final List<AwsConfiguration.AwsS3BucketSeedFile> seedFiles;
+  private final ControlledAwsS3BucketResource resource;
 
-  public SeedAwsBucketStep(
-      List<AwsConfiguration.AwsBucketSeedFile> seedFiles, ControlledAwsBucketResource resource) {
+  public SeedAwsS3BucketStep(
+      List<AwsConfiguration.AwsS3BucketSeedFile> seedFiles,
+      ControlledAwsS3BucketResource resource) {
     this.seedFiles = seedFiles;
     this.resource = resource;
   }
@@ -45,7 +46,7 @@ public class SeedAwsBucketStep implements Step {
     Credentials awsCredentials = MultiCloudUtils.assumeAwsServiceRoleFromGcp(awsCloudContext);
     SamUser samUser = inputParameters.get(WorkspaceFlightMapKeys.SAM_USER, SamUser.class);
 
-    for (AwsConfiguration.AwsBucketSeedFile seedFile : seedFiles) {
+    for (AwsConfiguration.AwsS3BucketSeedFile seedFile : seedFiles) {
       String content =
           new String(
               Base64.getDecoder().decode(seedFile.getContent().getBytes(StandardCharsets.UTF_8)));
@@ -68,7 +69,7 @@ public class SeedAwsBucketStep implements Step {
         flightContext.getWorkingMap().get(AWS_CLOUD_CONTEXT, AwsCloudContext.class);
     Credentials awsCredentials = MultiCloudUtils.assumeAwsServiceRoleFromGcp(awsCloudContext);
 
-    for (AwsConfiguration.AwsBucketSeedFile seedFile : seedFiles) {
+    for (AwsConfiguration.AwsS3BucketSeedFile seedFile : seedFiles) {
       String key = getKey(seedFile.getPath());
       AwsUtils.deleteObject(
           awsCredentials, Region.of(resource.getRegion()), resource.getS3BucketName(), key);

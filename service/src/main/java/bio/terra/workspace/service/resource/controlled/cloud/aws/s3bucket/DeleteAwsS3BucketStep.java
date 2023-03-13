@@ -1,12 +1,10 @@
-package bio.terra.workspace.service.resource.controlled.cloud.aws.storagebucket;
+package bio.terra.workspace.service.resource.controlled.cloud.aws.s3bucket;
 
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.AWS_CLOUD_CONTEXT;
 
-import bio.terra.common.exception.ConflictException;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
-import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.common.utils.MultiCloudUtils;
@@ -16,12 +14,11 @@ import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sts.model.Credentials;
 
-class ValidateAwsBucketCreationStep implements Step {
-  private static final Logger logger = LoggerFactory.getLogger(ValidateAwsBucketCreationStep.class);
+public class DeleteAwsS3BucketStep implements Step {
+  private static final Logger logger = LoggerFactory.getLogger(DeleteAwsS3BucketStep.class);
+  private final ControlledAwsS3BucketResource resource;
 
-  private final ControlledAwsBucketResource resource;
-
-  ValidateAwsBucketCreationStep(ControlledAwsBucketResource resource) {
+  public DeleteAwsS3BucketStep(ControlledAwsS3BucketResource resource) {
     this.resource = resource;
   }
 
@@ -32,23 +29,21 @@ class ValidateAwsBucketCreationStep implements Step {
         flightContext.getWorkingMap().get(AWS_CLOUD_CONTEXT, AwsCloudContext.class);
     Credentials awsCredentials = MultiCloudUtils.assumeAwsServiceRoleFromGcp(awsCloudContext);
 
-    if (AwsUtils.checkFolderExistence(
+    AwsUtils.deleteFolder(
         awsCredentials,
         Region.of(resource.getRegion()),
         resource.getS3BucketName(),
-        resource.getPrefix())) {
-      return new StepResult(
-          StepStatus.STEP_RESULT_FAILURE_FATAL,
-          new ConflictException(
-              String.format(
-                  "Prefix '%s/' already exists in bucket '%s'.",
-                  resource.getS3BucketName(), resource.getPrefix())));
-    }
+        resource.getPrefix());
     return StepResult.getStepResultSuccess();
   }
 
   @Override
-  public StepResult undoStep(FlightContext context) throws InterruptedException {
-    return StepResult.getStepResultSuccess();
+  public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
+    logger.error(
+        "Cannot undo delete of AWS bucket resource {} in workspace {}.",
+        resource.getResourceId(),
+        resource.getWorkspaceId());
+    // Surface whatever error caused Stairway to begin undoing.
+    return flightContext.getResult();
   }
 }
