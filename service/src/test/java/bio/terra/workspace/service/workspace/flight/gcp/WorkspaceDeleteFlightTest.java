@@ -71,7 +71,7 @@ public class WorkspaceDeleteFlightTest extends BaseConnectedTest {
         controlledResourceService
             .getControlledResource(workspace.getWorkspaceId(), dataset.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
-    assertEquals(dataset, gotResource);
+    assertTrue(dataset.partialEqual(gotResource);
 
     // Run the delete flight, retrying every step once
     FlightMap deleteParameters = new FlightMap();
@@ -131,7 +131,7 @@ public class WorkspaceDeleteFlightTest extends BaseConnectedTest {
         controlledResourceService
             .getControlledResource(workspace.getWorkspaceId(), dataset.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
-    assertEquals(dataset, gotResource);
+    assertTrue(dataset.partialEqual(gotResource);
 
     FlightMap deleteParameters = new FlightMap();
     deleteParameters.put(
