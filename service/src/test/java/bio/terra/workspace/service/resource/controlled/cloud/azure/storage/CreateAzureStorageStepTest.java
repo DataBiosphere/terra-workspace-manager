@@ -89,14 +89,12 @@ public class CreateAzureStorageStepTest extends BaseStorageStepTest {
 
   private CreateAzureStorageStep createCreateAzureStorageStep() {
 
-    CreateAzureStorageStep createAzureStorageStep =
-        new CreateAzureStorageStep(
-            mockAzureConfig,
-            mockCrlService,
-            ControlledResourceFixtures.getAzureStorage(
-                creationParameters.getStorageAccountName(), creationParameters.getRegion()),
-            mockStorageAccountKeyProvider);
-    return createAzureStorageStep;
+    return new CreateAzureStorageStep(
+        mockAzureConfig,
+        mockCrlService,
+        ControlledResourceFixtures.getAzureStorage(
+            creationParameters.getStorageAccountName(), creationParameters.getRegion()),
+        mockStorageAccountKeyProvider);
   }
 
   @Test

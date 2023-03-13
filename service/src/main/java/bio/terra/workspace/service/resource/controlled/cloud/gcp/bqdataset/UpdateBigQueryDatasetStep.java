@@ -114,6 +114,6 @@ public class UpdateBigQueryDatasetStep implements Step {
    * PATCH, not an UPDATE, a null for the new value means no update.
    */
   private static boolean valueChanged(Long newVal, Long prevVal) {
-    return newVal == null ? false : !newVal.equals(prevVal);
+    return newVal != null && !newVal.equals(prevVal);
   }
 }

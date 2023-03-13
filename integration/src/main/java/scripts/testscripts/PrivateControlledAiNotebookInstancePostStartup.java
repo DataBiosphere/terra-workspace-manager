@@ -95,12 +95,10 @@ public class PrivateControlledAiNotebookInstancePostStartup
   }
 
   private String composeInstanceName(GcpAiNotebookInstanceResource resource) {
-    String instanceName =
-        String.format(
-            "projects/%s/locations/%s/instances/%s",
-            resource.getAttributes().getProjectId(),
-            resource.getAttributes().getLocation(),
-            resource.getAttributes().getInstanceId());
-    return instanceName;
+    return String.format(
+        "projects/%s/locations/%s/instances/%s",
+        resource.getAttributes().getProjectId(),
+        resource.getAttributes().getLocation(),
+        resource.getAttributes().getInstanceId());
   }
 }

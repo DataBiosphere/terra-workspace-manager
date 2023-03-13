@@ -16,8 +16,7 @@ public abstract class CreateStorageContainerRequestData extends BaseStorageConta
 
   @Override
   public JsonObject serialize() {
-    JsonObject requestData = super.serializeCommon();
-    return requestData;
+    return super.serializeCommon();
   }
 
   public static Builder builder() {

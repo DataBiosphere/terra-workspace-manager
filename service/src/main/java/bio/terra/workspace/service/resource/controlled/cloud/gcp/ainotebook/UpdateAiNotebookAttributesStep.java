@@ -51,7 +51,7 @@ public class UpdateAiNotebookAttributesStep implements Step {
     Map<String, String> sanitizedMetadata = new HashMap<>();
     for (var entrySet : updateParameters.getMetadata().entrySet()) {
       if (ControlledAiNotebookInstanceResource.RESERVED_METADATA_KEYS.contains(entrySet.getKey())) {
-        logger.error(String.format("Cannot modify terra reserved keys %s", entrySet.getKey()));
+        logger.error("Cannot modify terra reserved keys {}", entrySet.getKey());
         throw new ReservedMetadataKeyException(
             String.format("Cannot modify terra reserved keys %s", entrySet.getKey()));
       }

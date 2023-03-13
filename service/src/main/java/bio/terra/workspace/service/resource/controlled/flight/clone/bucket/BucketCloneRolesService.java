@@ -3,7 +3,6 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.bucket;
 import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.stairway.FlightMap;
-import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.google.api.client.util.Strings;
@@ -68,7 +67,7 @@ public class BucketCloneRolesService {
   /**
    * Add or remove roles for an Identity.
    *
-   * <p>NOTE: The previous implementation used {@link GcpUtils.pollUntilEqual} to compare the
+   * <p>NOTE: The previous implementation used GcpUtils.pollUntilEqua to compare the
    * newPolicy against the updated policy. That would never match, because the etag in the Policy
    * object is part of the equals evaluation. The updated comparison technique just looks at the
    * specific roles with the specific identity to see whether it is added or removed. This is not
@@ -110,7 +109,7 @@ public class BucketCloneRolesService {
         return;
       }
       TimeUnit.MILLISECONDS.sleep(RETRY_INTERVAL.toMillis());
-      logger.info(String.format("addRemoveBucketIdentities retry attempts: %d", i));
+      logger.info("addRemoveBucketIdentities retry attempts: {}", i);
       updatedPolicy = storageCow.getIamPolicy(inputs.getBucketName());
     }
     throw new InternalServerErrorException("Bucket policy update propagation timed out");

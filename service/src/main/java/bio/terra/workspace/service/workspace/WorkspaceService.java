@@ -319,7 +319,7 @@ public class WorkspaceService {
             "listRequesterRoles");
     Optional<WsmIamRole> highestRole = WsmIamRole.getHighestRole(uuid, requesterRoles);
     Preconditions.checkState(
-        highestRole.isPresent(), String.format("Workspace %s missing roles", uuid.toString()));
+        highestRole.isPresent(), String.format("Workspace %s missing roles", uuid));
     return highestRole.get();
   }
 
@@ -581,13 +581,12 @@ public class WorkspaceService {
     // specified role. Users may also be added to a workspace via managed groups, but WSM does not
     // control membership of those groups, and so cannot remove them here.
     List<String> roleMembers =
-        samService
-            .listUsersWithWorkspaceRole(workspace.getWorkspaceId(), role, executingUserRequest)
-            .stream()
-            // SAM does not always use lowercase emails, so lowercase everything here before the
-            // contains check below
-            .map(String::toLowerCase)
-            .collect(Collectors.toList());
+            samService
+                    .listUsersWithWorkspaceRole(workspace.getWorkspaceId(), role, executingUserRequest)
+                    .stream()
+                    // SAM does not always use lowercase emails, so lowercase everything here before the
+                    // contains check below
+                    .map(String::toLowerCase).toList();
     if (!roleMembers.contains(targetUserEmail)) {
       return;
     }

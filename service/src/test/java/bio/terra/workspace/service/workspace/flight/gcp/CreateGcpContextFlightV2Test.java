@@ -308,7 +308,7 @@ class CreateGcpContextFlightV2Test extends BaseConnectedTest {
             .getFullyQualifiedRoleName(projectId);
     List<Binding> actualGcpBindingList = gcpPolicy.getBindings();
     List<String> actualGcpRoleList =
-        actualGcpBindingList.stream().map(Binding::getRole).collect(Collectors.toList());
+            actualGcpBindingList.stream().map(Binding::getRole).toList();
     assertTrue(actualGcpRoleList.contains(expectedGcpRoleName));
     assertTrue(
         actualGcpBindingList

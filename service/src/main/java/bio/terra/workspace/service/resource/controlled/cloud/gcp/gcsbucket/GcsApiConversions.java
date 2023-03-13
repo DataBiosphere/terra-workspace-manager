@@ -60,8 +60,8 @@ public class GcsApiConversions {
    * toUpdateParameters(). TODO: standardize on this function and remove the notion of update
    * parameters, since this largely subsumes that. PF-850
    *
-   * @param bucketInfo
-   * @return
+   * @param bucketInfo bucketInfo
+   * @return ApiGcpGcsBucketCreationParameters
    */
   public static ApiGcpGcsBucketCreationParameters toCreationParameters(BucketInfo bucketInfo) {
     return new ApiGcpGcsBucketCreationParameters()
@@ -77,7 +77,7 @@ public class GcsApiConversions {
    *
    * @param bucketName - existing name for the bucket
    * @param updateParameters - update structure. Null field means no change.
-   * @return
+   * @return BucketInfo
    */
   public static BucketInfo toBucketInfo(
       String bucketName, ApiGcpGcsBucketUpdateParameters updateParameters) {

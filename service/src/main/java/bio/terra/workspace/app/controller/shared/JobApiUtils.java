@@ -130,17 +130,14 @@ public class JobApiUtils {
       }
     }
 
-    ApiJobReport jobReport =
-        new ApiJobReport()
-            .id(flightState.getFlightId())
-            .description(description)
-            .status(jobStatus)
-            .statusCode(statusCode.value())
-            .submitted(submittedDate)
-            .completed(completedDate)
-            .resultURL(resultUrlFromFlightState(flightState));
-
-    return jobReport;
+    return new ApiJobReport()
+        .id(flightState.getFlightId())
+        .description(description)
+        .status(jobStatus)
+        .statusCode(statusCode.value())
+        .submitted(submittedDate)
+        .completed(completedDate)
+        .resultURL(resultUrlFromFlightState(flightState));
   }
 
   public ApiJobResult fetchJobResult(String jobId) {

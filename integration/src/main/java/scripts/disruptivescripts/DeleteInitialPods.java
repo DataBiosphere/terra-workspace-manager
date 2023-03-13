@@ -44,16 +44,15 @@ public class DeleteInitialPods extends DisruptiveScript {
     // TODO (QA-1421): refactor this out into a method of the Test Runner KubernetesClientUtils
     // class.
     List<String> podsToDelete =
-        KubernetesClientUtils.listPods().stream()
-            .filter(
-                pod ->
-                    pod.getMetadata().getLabels().containsKey(componentLabelKey)
-                        && pod.getMetadata()
-                            .getLabels()
-                            .get(componentLabelKey)
-                            .equals(componentLabelVal))
-            .map(pod -> pod.getMetadata().getName())
-            .collect(Collectors.toList());
+            KubernetesClientUtils.listPods().stream()
+                    .filter(
+                            pod ->
+                                    pod.getMetadata().getLabels().containsKey(componentLabelKey)
+                                            && pod.getMetadata()
+                                            .getLabels()
+                                            .get(componentLabelKey)
+                                            .equals(componentLabelVal))
+                    .map(pod -> pod.getMetadata().getName()).toList();
 
     // delete original pods, and give them a chance to recover
     for (String podName : podsToDelete) {
@@ -80,7 +79,7 @@ public class DeleteInitialPods extends DisruptiveScript {
     }
 
     logger.debug("original pods:");
-    podsToDelete.forEach(p -> logger.debug(p));
+    podsToDelete.forEach(logger::debug);
     KubernetesClientUtils.printApiPods(workspacemanagerDeployment);
   }
 }

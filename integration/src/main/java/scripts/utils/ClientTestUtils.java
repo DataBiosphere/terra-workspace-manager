@@ -308,7 +308,7 @@ public class ClientTestUtils {
       @Nullable List<Class<? extends Exception>> retryExceptionList)
       throws Exception {
 
-    T result = null;
+    T result;
     Instant endTime = Instant.now().plus(totalDuration);
 
     while (true) {

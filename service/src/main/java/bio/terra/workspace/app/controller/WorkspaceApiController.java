@@ -761,9 +761,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     List<UUID> resourceWithConflicts = new ArrayList<>();
 
     for (var platform : ApiCloudPlatform.values()) {
-      HashSet<String> validRegions = new HashSet<>();
-      validRegions.addAll(
-          tpsApiDispatch.listValidRegions(
+      HashSet<String> validRegions = new HashSet<>(tpsApiDispatch.listValidRegions(
               sourceWorkspaceId, CloudPlatform.fromApiCloudPlatform(platform)));
 
       List<ControlledResource> existingResources =

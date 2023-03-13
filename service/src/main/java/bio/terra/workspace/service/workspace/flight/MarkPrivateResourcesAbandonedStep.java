@@ -68,8 +68,7 @@ public class MarkPrivateResourcesAbandonedStep implements Step {
     List<ControlledResource> uniqueControlledResources =
         resourceRolePairs.stream()
             .map(ResourceRolePair::getResource)
-            .distinct()
-            .collect(Collectors.toList());
+            .distinct().toList();
     for (ControlledResource resource : uniqueControlledResources) {
       PrivateResourceState privateResourceState =
           resource

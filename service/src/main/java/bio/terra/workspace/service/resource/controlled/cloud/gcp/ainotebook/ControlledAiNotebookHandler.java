@@ -50,14 +50,12 @@ public class ControlledAiNotebookHandler implements WsmResourceHandler {
         Optional.ofNullable(attributes.getProjectId())
             .orElse(gcpCloudContextService.getRequiredGcpProject(dbResource.getWorkspaceId()));
 
-    var resource =
-        ControlledAiNotebookInstanceResource.builder()
-            .common(new ControlledResourceFields(dbResource))
-            .instanceId(attributes.getInstanceId())
-            .location(attributes.getLocation())
-            .projectId(projectId)
-            .build();
-    return resource;
+    return ControlledAiNotebookInstanceResource.builder()
+        .common(new ControlledResourceFields(dbResource))
+        .instanceId(attributes.getInstanceId())
+        .location(attributes.getLocation())
+        .projectId(projectId)
+        .build();
   }
 
   /**
