@@ -7,28 +7,26 @@ import org.jetbrains.annotations.NotNull;
 import javax.annotation.Nullable;
 
 public class FlexResourceCreationParameters {
-  @NotNull private String typeNamespace;
-  @NotNull private String type;
+  private String typeNamespace;
+  private String type;
   @Nullable private byte[] data;
 
   public FlexResourceCreationParameters() {}
 
   @JsonCreator
   public FlexResourceCreationParameters(
-      @NotNull @JsonProperty("typeNamespace") String typeNamespace,
-      @NotNull @JsonProperty("type") String type,
+      @JsonProperty("typeNamespace") String typeNamespace,
+      @JsonProperty("type") String type,
       @Nullable @JsonProperty("data") byte[] data) {
     this.typeNamespace = typeNamespace;
     this.type = type;
     this.data = data;
   }
 
-  @NotNull
   public String getTypeNamespace() {
     return typeNamespace;
   }
 
-  @NotNull
   public String getType() {
     return type;
   }
@@ -38,11 +36,11 @@ public class FlexResourceCreationParameters {
     return data;
   }
 
-  public void setTypeNamespace(@NotNull String typeNamespace) {
+  public void setTypeNamespace(String typeNamespace) {
     this.typeNamespace = typeNamespace;
   }
 
-  public void setType(@NotNull String type) {
+  public void setType(String type) {
     this.type = type;
   }
 
