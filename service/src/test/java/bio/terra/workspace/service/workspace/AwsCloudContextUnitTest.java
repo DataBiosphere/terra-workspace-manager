@@ -76,7 +76,11 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
         ROLE_ARN_USER.toString(),
         KMS_KEY_ARN.toString(),
         (includeNotebookLifecycleConfig ? NOTEBOOK_LIFECYCLE_CONFIG_ARN.toString() : null),
-        Map.of(Region.US_EAST_1, BUCKET_NAME_US_EAST, Region.US_WEST_1, BUCKET_NAME_US_WEST));
+        Map.of(
+            Region.US_EAST_1.toString(),
+            BUCKET_NAME_US_EAST,
+            Region.US_WEST_1.toString(),
+            BUCKET_NAME_US_WEST));
   }
 
   private AwsCloudContext buildTestContext() {
