@@ -10,9 +10,9 @@ import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
-import bio.terra.workspace.generated.model.ApiAwsBucketAttributes;
-import bio.terra.workspace.generated.model.ApiAwsBucketCreationParameters;
-import bio.terra.workspace.generated.model.ApiAwsBucketResource;
+import bio.terra.workspace.generated.model.ApiAwsS3BucketAttributes;
+import bio.terra.workspace.generated.model.ApiAwsS3BucketCreationParameters;
+import bio.terra.workspace.generated.model.ApiAwsS3BucketResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
@@ -125,12 +125,12 @@ public class ControlledAwsBucketResource extends ControlledResource {
     flight.addStep(new CreateAwsBucketStep(this), cloudRetry);
 
     // Check if the user requested that the bucket be seeded with sample data.
-    ApiAwsBucketCreationParameters creationParameters =
+    ApiAwsS3BucketCreationParameters creationParameters =
         flight
             .getInputParameters()
             .get(
                 WorkspaceFlightMapKeys.ControlledResourceKeys.CREATION_PARAMETERS,
-                ApiAwsBucketCreationParameters.class);
+                ApiAwsS3BucketCreationParameters.class);
 
     if (creationParameters != null && creationParameters.isSeed()) {
       // Check that we actually have example data to seed with.
@@ -154,15 +154,15 @@ public class ControlledAwsBucketResource extends ControlledResource {
     flight.addStep(new DeleteAwsBucketStep(this), RetryRules.cloud());
   }
 
-  public ApiAwsBucketAttributes toApiAttributes() {
-    return new ApiAwsBucketAttributes()
+  public ApiAwsS3BucketAttributes toApiAttributes() {
+    return new ApiAwsS3BucketAttributes()
         .s3BucketName(getS3BucketName())
         .prefix(getPrefix())
         .region(getRegion());
   }
 
-  public ApiAwsBucketResource toApiResource() {
-    return new ApiAwsBucketResource().metadata(super.toApiMetadata()).attributes(toApiAttributes());
+  public ApiAwsS3BucketResource toApiResource() {
+    return new ApiAwsS3BucketResource().metadata(super.toApiMetadata()).attributes(toApiAttributes());
   }
 
   @Override
@@ -174,7 +174,7 @@ public class ControlledAwsBucketResource extends ControlledResource {
   @Override
   public ApiResourceAttributesUnion toApiAttributesUnion() {
     ApiResourceAttributesUnion union = new ApiResourceAttributesUnion();
-    union.awsBucket(toApiAttributes());
+    union.awsS3Bucket(toApiAttributes());
     return union;
   }
 

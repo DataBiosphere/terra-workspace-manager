@@ -81,8 +81,8 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
   }
 
   @Override
-  public ResponseEntity<ApiCreatedControlledAwsBucket> createAwsBucket(
-      UUID workspaceUuid, @Valid ApiCreateControlledAwsBucketRequestBody body) {
+  public ResponseEntity<ApiCreatedControlledAwsS3Bucket> createAwsS3Bucket(
+      UUID workspaceUuid, @Valid ApiCreateControlledAwsS3BucketRequestBody body) {
     features.awsEnabledCheck();
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -90,7 +90,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
         toCommonFields(
             workspaceUuid,
             body.getCommon(),
-            body.getAwsBucket().getLocation(),
+            body.getAwsS3Bucket().getLocation(),
             userRequest,
             WsmResourceType.CONTROLLED_AWS_BUCKET);
     workspaceService.validateMcWorkspaceAndAction(
@@ -99,7 +99,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     AwsCloudContext awsCloudContext =
         awsCloudContextService.getRequiredAwsCloudContext(workspaceUuid);
 
-    final ApiAwsBucketCreationParameters creationParameters = body.getAwsBucket();
+    final ApiAwsS3BucketCreationParameters creationParameters = body.getAwsS3Bucket();
     Region requestedRegion;
 
     try {
@@ -129,17 +129,17 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     final ControlledAwsBucketResource createdAwsBucket =
         controlledResourceService
             .createControlledResourceSync(
-                resource, commonFields.getIamRole(), userRequest, body.getAwsBucket())
+                resource, commonFields.getIamRole(), userRequest, body.getAwsS3Bucket())
             .castByEnum(WsmResourceType.CONTROLLED_AWS_BUCKET);
     var response =
-        new ApiCreatedControlledAwsBucket()
+        new ApiCreatedControlledAwsS3Bucket()
             .resourceId(createdAwsBucket.getResourceId())
-            .awsBucket(createdAwsBucket.toApiResource());
+            .awsS3Bucket(createdAwsBucket.toApiResource());
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
   @Override
-  public ResponseEntity<ApiAwsBucketResource> getAwsBucket(UUID workspaceUuid, UUID resourceId) {
+  public ResponseEntity<ApiAwsS3BucketResource> getAwsS3Bucket(UUID workspaceUuid, UUID resourceId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledAwsBucketResource resource =
         controlledResourceMetadataManager
@@ -177,7 +177,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
   }
 
   @Override
-  public ResponseEntity<ApiAwsConsoleLink> getAwsBucketConsoleLink(
+  public ResponseEntity<ApiAwsConsoleLink> getAwsS3BucketConsoleLink(
       UUID workspaceUuid,
       UUID resourceId,
       ApiAwsCredentialAccessScope accessScope,
@@ -218,7 +218,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
   }
 
   @Override
-  public ResponseEntity<ApiAwsCredential> getAwsBucketCredential(
+  public ResponseEntity<ApiAwsCredential> getAwsS3BucketCredential(
       UUID workspaceUuid,
       UUID resourceId,
       ApiAwsCredentialAccessScope accessScope,
