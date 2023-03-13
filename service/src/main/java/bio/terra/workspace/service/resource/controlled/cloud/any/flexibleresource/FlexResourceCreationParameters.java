@@ -5,12 +5,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import javax.annotation.Nullable;
 
-public class FlexResourceCreationParameters {
-  private String typeNamespace;
-  private String type;
-  @Nullable private byte[] data;
-
-  public FlexResourceCreationParameters() {}
+public record FlexResourceCreationParameters(
+    String typeNamespace, String type, @Nullable byte[] data) {
 
   @JsonCreator
   public FlexResourceCreationParameters(
@@ -22,51 +18,11 @@ public class FlexResourceCreationParameters {
     this.data = data;
   }
 
-  public String getTypeNamespace() {
-    return typeNamespace;
-  }
-
-  public String getType() {
-    return type;
-  }
-
-  @Nullable
-  public byte[] getData() {
-    return data;
-  }
-
-  public void setTypeNamespace(String typeNamespace) {
-    this.typeNamespace = typeNamespace;
-  }
-
-  public void setType(String type) {
-    this.type = type;
-  }
-
-  public void setData(@Nullable byte[] data) {
-    this.data = data;
-  }
-
-  public FlexResourceCreationParameters type(String type) {
-    this.type = type;
-    return this;
-  }
-
-  public FlexResourceCreationParameters typeNamespace(String typeNamespace) {
-    this.typeNamespace = typeNamespace;
-    return this;
-  }
-
-  public FlexResourceCreationParameters data(byte[] data) {
-    this.data = data;
-    return this;
-  }
-
   public static FlexResourceCreationParameters fromApiCreationParameters(
-      ApiControlledFlexibleResourceCreationParameters apiCreationParamters) {
-    return new FlexResourceCreationParameters()
-        .typeNamespace(apiCreationParamters.getTypeNamespace())
-        .type(apiCreationParamters.getType())
-        .data(apiCreationParamters.getData());
+      ApiControlledFlexibleResourceCreationParameters apiCreationParameters) {
+    return new FlexResourceCreationParameters(
+        apiCreationParameters.getTypeNamespace(),
+        apiCreationParameters.getType(),
+        apiCreationParameters.getData());
   }
 }
