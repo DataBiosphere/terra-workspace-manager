@@ -665,7 +665,6 @@ public class ControlledResourceService {
       UUID resourceId,
       String resultPath,
       AuthenticatedUserRequest userRequest) {
-
     JobBuilder deleteJob =
         commonDeletionJobBuilder(
             jobControl.getId(), workspaceUuid, resourceId, resultPath, userRequest);

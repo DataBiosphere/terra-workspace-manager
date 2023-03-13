@@ -80,6 +80,30 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     this.jobService = jobService;
   }
 
+  private String getSamAction(ApiAwsCredentialAccessScope accessScope) {
+    return (accessScope == ApiAwsCredentialAccessScope.WRITE_READ)
+        ? SamConstants.SamControlledResourceActions.WRITE_ACTION
+        : SamConstants.SamControlledResourceActions.READ_ACTION;
+  }
+
+  private Collection<Tag> getBucketTags(
+      UUID workspaceId,
+      ApiAwsCredentialAccessScope accessScope,
+      ControlledAwsS3BucketResource resource) {
+    Set<Tag> tags = new HashSet<>();
+
+    AwsUtils.addWorkspaceTags(tags, workspaceId);
+    AwsUtils.addBucketTagsForRole(
+        tags,
+        (accessScope == ApiAwsCredentialAccessScope.WRITE_READ)
+            ? AwsUtils.RoleTag.WRITER
+            : AwsUtils.RoleTag.READER,
+        resource.getS3BucketName(),
+        resource.getPrefix());
+
+    return tags;
+  }
+
   @Override
   public ResponseEntity<ApiCreatedControlledAwsS3Bucket> createAwsS3Bucket(
       UUID workspaceUuid, @Valid ApiCreateControlledAwsS3BucketRequestBody body) {
@@ -153,28 +177,21 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
-  private String getSamAction(ApiAwsCredentialAccessScope accessScope) {
-    return (accessScope == ApiAwsCredentialAccessScope.WRITE_READ)
-        ? SamConstants.SamControlledResourceActions.WRITE_ACTION
-        : SamConstants.SamControlledResourceActions.READ_ACTION;
-  }
+  @Override
+  public ResponseEntity<Void> deleteAwsS3Bucket(UUID workspaceUuid, UUID resourceId) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    controlledResourceMetadataManager.validateControlledResourceAndAction(
+        userRequest,
+        workspaceUuid,
+        resourceId,
+        SamConstants.SamControlledResourceActions.DELETE_ACTION);
+    logger.info(
+        "deleteAwsS3Bucket workspace {} resource {}",
+        workspaceUuid.toString(),
+        resourceId.toString());
 
-  private Collection<Tag> getBucketTags(
-      UUID workspaceId,
-      ApiAwsCredentialAccessScope accessScope,
-      ControlledAwsS3BucketResource resource) {
-    Set<Tag> tags = new HashSet<>();
-
-    AwsUtils.addWorkspaceTags(tags, workspaceId);
-    AwsUtils.addBucketTagsForRole(
-        tags,
-        (accessScope == ApiAwsCredentialAccessScope.WRITE_READ)
-            ? AwsUtils.RoleTag.WRITER
-            : AwsUtils.RoleTag.READER,
-        resource.getS3BucketName(),
-        resource.getPrefix());
-
-    return tags;
+    controlledResourceService.deleteControlledResourceSync(workspaceUuid, resourceId, userRequest);
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   @Override
@@ -354,8 +371,6 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
   @Override
   public ResponseEntity<ApiDeleteControlledAwsSageMakerNotebookResult> deleteAwsSageMakerNotebook(
       UUID workspaceUuid, UUID resourceId, ApiDeleteControlledAwsSageMakerNotebookRequest body) {
-    features.awsEnabledCheck();
-
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     controlledResourceMetadataManager.validateControlledResourceAndAction(
         userRequest,
