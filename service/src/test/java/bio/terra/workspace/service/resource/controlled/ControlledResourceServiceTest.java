@@ -1348,41 +1348,52 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 resource, null, user.getAuthenticatedRequest(), creationParameters)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
 
-    // make an update request to set the table expiration time to an invalid value (<3600)
-    final ApiGcpBigQueryDatasetUpdateParameters updateParameters =
-        new ApiGcpBigQueryDatasetUpdateParameters()
-            .defaultTableLifetime(3000L)
-            .defaultPartitionLifetime(3601L);
-    assertThrows(
-        BadRequestException.class,
-        () ->
-            controlledResourceService.updateBqDataset(
-                resource, updateParameters, null, null, userAccessUtils.defaultUserAuthRequest()));
+    try {
+      // make an update request to set the table expiration time to an invalid value (<3600)
+      final ApiGcpBigQueryDatasetUpdateParameters updateParameters =
+          new ApiGcpBigQueryDatasetUpdateParameters()
+              .defaultTableLifetime(3000L)
+              .defaultPartitionLifetime(3601L);
+      assertThrows(
+          BadRequestException.class,
+          () ->
+              controlledResourceService.updateBqDataset(
+                  resource,
+                  updateParameters,
+                  null,
+                  null,
+                  userAccessUtils.defaultUserAuthRequest()));
 
-    // check the expiration times stored on the cloud are still undefined, because the update above
-    // failed
-    validateBigQueryDatasetCloudMetadata(
-        projectId, createdDataset.getDatasetName(), location, null, null);
+      // check the expiration times stored on the cloud are still undefined,
+      // because the update above failed
+      validateBigQueryDatasetCloudMetadata(
+          projectId, createdDataset.getDatasetName(), location, null, null);
 
-    // make another update request to set the partition expiration time to an invalid value (<0)
-    final ApiGcpBigQueryDatasetUpdateParameters updateParameters2 =
-        new ApiGcpBigQueryDatasetUpdateParameters()
-            .defaultTableLifetime(3600L)
-            .defaultPartitionLifetime(-2L);
-    assertThrows(
-        BadRequestException.class,
-        () ->
-            controlledResourceService.updateBqDataset(
-                resource, updateParameters2, null, null, userAccessUtils.defaultUserAuthRequest()));
+      // make another update request to set the partition expiration time to an invalid value (<0)
+      final ApiGcpBigQueryDatasetUpdateParameters updateParameters2 =
+          new ApiGcpBigQueryDatasetUpdateParameters()
+              .defaultTableLifetime(3600L)
+              .defaultPartitionLifetime(-2L);
+      assertThrows(
+          BadRequestException.class,
+          () ->
+              controlledResourceService.updateBqDataset(
+                  resource,
+                  updateParameters2,
+                  null,
+                  null,
+                  userAccessUtils.defaultUserAuthRequest()));
 
-    // check the expiration times stored on the cloud are still undefined, because the update above
-    // failed
-    validateBigQueryDatasetCloudMetadata(
-        projectId, createdDataset.getDatasetName(), location, null, null);
+      // check the expiration times stored on the cloud are still undefined,
+      // because the update above failed
+      validateBigQueryDatasetCloudMetadata(
+          projectId, createdDataset.getDatasetName(), location, null, null);
 
-    // Remove dataset to not conflict with other test that checks for empty lifetime
-    controlledResourceService.deleteControlledResourceSync(
-        workspaceId, resource.getResourceId(), userAccessUtils.defaultUserAuthRequest());
+    } finally {
+      // Remove dataset to not conflict with other test that checks for empty lifetime
+      controlledResourceService.deleteControlledResourceSync(
+          workspaceId, resource.getResourceId(), userAccessUtils.defaultUserAuthRequest());
+    }
   }
 
   @Test
@@ -1968,28 +1979,33 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     ControlledBigQueryDatasetResource createdDataset =
         makeBigQueryDatasetWithLifetime(
             /*defaultTableLifetime=*/ null, DEFAULT_CREATED_BIG_QUERY_PARTITION_LIFETIME);
+    try {
+      // Check which BQ datasets' lifetime to update.
+      List<ControlledBigQueryDatasetResource> emptyList =
+          updateControlledBigQueryDatasetsLifetimeAndWait();
 
-    // Check which BQ datasets' lifetime to update.
-    List<ControlledBigQueryDatasetResource> emptyList =
-        updateControlledBigQueryDatasetsLifetimeAndWait();
+      // Update nothing because one of the lifetimes is populated (the SQL query checks for AND -
+      // both lifetimes null).
+      assertTrue(emptyList.isEmpty());
 
-    // Update nothing because one of the lifetimes is populated (the SQL query checks for AND - both
-    // lifetimes null).
-    assertTrue(emptyList.isEmpty());
+      // Artificially set lifetimes to null in the database.
+      resourceDao.updateBigQueryDatasetDefaultTableAndPartitionLifetime(createdDataset, null, null);
 
-    // Artificially set lifetimes to null in the database.
-    resourceDao.updateBigQueryDatasetDefaultTableAndPartitionLifetime(createdDataset, null, null);
+      List<ControlledBigQueryDatasetResource> updatedResourceList =
+          updateControlledBigQueryDatasetsLifetimeAndWait();
 
-    List<ControlledBigQueryDatasetResource> updatedResourceList =
-        updateControlledBigQueryDatasetsLifetimeAndWait();
-
-    // The controlled dataset is updated since the lifetime is null.
-    assertEquals(1, updatedResourceList.size());
-    assertControlledBigQueryDatasetLifetimeIsUpdatedAndActivityIsLogged(
-        updatedResourceList,
-        createdDataset.getResourceId(),
-        /*expectedTableLifetime=*/ null,
-        DEFAULT_CREATED_BIG_QUERY_PARTITION_LIFETIME);
+      // The controlled dataset is updated since the lifetime is null.
+      assertEquals(1, updatedResourceList.size());
+      assertControlledBigQueryDatasetLifetimeIsUpdatedAndActivityIsLogged(
+          updatedResourceList,
+          createdDataset.getResourceId(),
+          /*expectedTableLifetime=*/ null,
+          DEFAULT_CREATED_BIG_QUERY_PARTITION_LIFETIME);
+    } finally {
+      // Remove dataset to not conflict with other test that checks for empty lifetime
+      controlledResourceService.deleteControlledResourceSync(
+          workspaceId, createdDataset.getResourceId(), userAccessUtils.defaultUserAuthRequest());
+    }
   }
   // Ensure the flight doesn't crash when there are BigQuery datasets with two null lifetimes on the
   // cloud.
