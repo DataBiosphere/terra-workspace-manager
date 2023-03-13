@@ -73,22 +73,16 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
     byte[] encodedJSON = body.getFlexibleResource().getData();
     String decodedJSON = ControlledFlexibleResource.getDecodedJSONFromByteArray(encodedJSON);
 
-    String typeNamespace = body.getFlexibleResource().getTypeNamespace();
-    String type = body.getFlexibleResource().getType();
-
     ControlledFlexibleResource resource =
         ControlledFlexibleResource.builder()
             .common(commonFields)
-            .typeNamespace(typeNamespace)
-            .type(type)
+            .typeNamespace(body.getFlexibleResource().getTypeNamespace())
+            .type(body.getFlexibleResource().getType())
             .data(decodedJSON)
             .build();
 
     FlexResourceCreationParameters creationParameters =
-        new FlexResourceCreationParameters()
-            .type(type)
-            .typeNamespace(typeNamespace)
-            .data(encodedJSON);
+        FlexResourceCreationParameters.fromApiCreationParameters(body.getFlexibleResource());
 
     ControlledFlexibleResource createdFlexibleResource =
         getControlledResourceService()

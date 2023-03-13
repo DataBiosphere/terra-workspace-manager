@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresource;
 
+import bio.terra.workspace.generated.model.ApiControlledFlexibleResourceCreationParameters;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.jetbrains.annotations.NotNull;
@@ -61,5 +62,13 @@ public class FlexResourceCreationParameters {
   public FlexResourceCreationParameters data(byte[] data) {
     this.data = data;
     return this;
+  }
+
+  public static FlexResourceCreationParameters fromApiCreationParameters(
+      ApiControlledFlexibleResourceCreationParameters apiCreationParamters) {
+    return new FlexResourceCreationParameters()
+        .typeNamespace(apiCreationParamters.getTypeNamespace())
+        .type(apiCreationParamters.getType())
+        .data(apiCreationParamters.getData());
   }
 }
