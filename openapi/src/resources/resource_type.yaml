@@ -60,8 +60,8 @@ components:
           $ref: '#/components/schemas/AzureVmAttributes'
         azureBatchPool:
           $ref: '#/components/schemas/AzureBatchPoolAttributes'
-        awsBucket:
-          $ref: '#/components/schemas/AwsBucketAttributes'
+        awsS3Bucket:
+          $ref: '#/components/schemas/AwsS3BucketAttributes'
         awsSagemakerNotebook:
           $ref: '#/components/schemas/AwsSageMakerNotebookAttributes'
         gitRepo:
@@ -106,8 +106,8 @@ components:
           $ref: '#/components/schemas/AzureStorageContainerResource'
         azureBatchPool:
           $ref: '#/components/schemas/AzureBatchPoolResource'
-        awsBucket:
-          $ref: '#/components/schemas/AwsBucketResource'
+        awsS3Bucket:
+          $ref: '#/components/schemas/AwsS3BucketResource'
         awsSageMakerNotebook:
           $ref: '#/components/schemas/AwsSageMakerNotebookResource'
         gitRepo:

@@ -57,10 +57,7 @@ paths:
           $ref: '#/components/responses/ServerError'
     post:
       summary: |
-        Delete a controlled AWS SageMaker Notebook instance resource. This is async, because deleting the
-        notebook instance can take ~5 minutes. NOTE: this cannot be an HTTP DELETE, because
-        something between generated code and server behavior does not support delete operations with
-        bodies. We require the body for the async state, so this is a POST.
+        Delete a controlled AWS SageMaker Notebook resource
       operationId: deleteAwsSageMakerNotebook
       tags: [ ControlledAwsResource ]
       requestBody:

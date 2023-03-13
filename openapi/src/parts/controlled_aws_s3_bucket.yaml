@@ -3,18 +3,18 @@ paths:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
     post:
-      summary: Create a new controlled AWS bucket
-      operationId: createAwsBucket
+      summary: Create a new controlled Aws S3 Bucket
+      operationId: createAwsS3Bucket
       tags: [ControlledAwsResource]
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateControlledAwsBucketRequestBody'
+              $ref: '#/components/schemas/CreateControlledAwsS3BucketRequestBody'
       responses:
         '200':
-          $ref: '#/components/responses/CreatedControlledAwsBucketResponse'
+          $ref: '#/components/responses/CreatedControlledAwsS3BucketResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '500':
@@ -25,12 +25,27 @@ paths:
       - $ref: '#/components/parameters/WorkspaceId'
       - $ref: '#/components/parameters/ResourceId'
     get:
-      summary: Get a controlled AWS bucket resource
-      operationId: getAwsBucket
+      summary: Get a controlled Aws S3 Bucket resource
+      operationId: getAwsS3Bucket
       tags: [ControlledAwsResource]
       responses:
         '200':
-          $ref: '#/components/responses/GetControlledAwsBucketResponse'
+          $ref: '#/components/responses/GetControlledAwsS3BucketResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Delete controlled Aws S3 Bucket resource
+      operationId: deleteAwsS3Bucket
+      tags: [ ControlledAzureResource ]
+      responses:
+        '204':
+          description: Success
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '404':
@@ -46,11 +61,11 @@ paths:
       - $ref: '#/components/parameters/AwsConsoleSessionDuration'
     get:
       summary: Get a link to manage this bucket in the AWS S3 Console
-      operationId: getAwsBucketConsoleLink
+      operationId: getAwsS3BucketConsoleLink
       tags: [ControlledAwsResource]
       responses:
         '200':
-          $ref: '#/components/responses/GetControlledAwsBucketConsoleLinkResponse'
+          $ref: '#/components/responses/GetControlledAwsS3BucketConsoleLinkResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '404':
@@ -66,11 +81,11 @@ paths:
       - $ref: '#/components/parameters/AwsCredentialDuration'
     get:
       summary: Get a credential to access this bucket in the AWS CLI or SDK
-      operationId: getAwsBucketCredential
+      operationId: getAwsS3BucketCredential
       tags: [ControlledAwsResource]
       responses:
         '200':
-          $ref: '#/components/responses/GetControlledAwsBucketCredentialResponse'
+          $ref: '#/components/responses/GetControlledAwsS3BucketCredentialResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '404':
@@ -80,29 +95,29 @@ paths:
 
 components:
   schemas:
-    CreatedControlledAwsBucket:
-      description: Response Payload for requesting a new controlled AWS bucket.
+    CreatedControlledAwsS3Bucket:
+      description: Response Payload for requesting a new controlled Aws S3 Bucket.
       type: object
-      required: [resourceId, awsBucket]
+      required: [resourceId, AwsS3Bucket]
       properties:
         resourceId:
           description: UUID of a newly-created resource.
           type: string
           format: uuid
-        awsBucket:
-          $ref: '#/components/schemas/AwsBucketResource'
+        AwsS3Bucket:
+          $ref: '#/components/schemas/AwsS3BucketResource'
 
-    CreateControlledAwsBucketRequestBody:
-      description: Payload for requesting a new controlled AWS bucket resource.
+    CreateControlledAwsS3BucketRequestBody:
+      description: Payload for requesting a new controlled Aws S3 Bucket resource.
       type: object
-      required: [common, awsBucket]
+      required: [common, AwsS3Bucket]
       properties:
         common:
           $ref: '#/components/schemas/ControlledResourceCommonFields'
-        awsBucket:
-          $ref: '#/components/schemas/AwsBucketCreationParameters'
+        AwsS3Bucket:
+          $ref: '#/components/schemas/AwsS3BucketCreationParameters'
 
-    AwsBucketCreationParameters:
+    AwsS3BucketCreationParameters:
       description: >-
         Bucket-specific properties to be set on creation. These are a subset of the
         values accepted by the AWS Storage API.
@@ -117,28 +132,28 @@ components:
           default: false
 
   responses:
-    CreatedControlledAwsBucketResponse:
-      description: Response to Create controlled AWS bucket
+    CreatedControlledAwsS3BucketResponse:
+      description: Response to Create controlled Aws S3 Bucket
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/CreatedControlledAwsBucket'
+            $ref: '#/components/schemas/CreatedControlledAwsS3Bucket'
 
-    GetControlledAwsBucketResponse:
+    GetControlledAwsS3BucketResponse:
       description: Response to get bucket
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/AwsBucketResource'
+            $ref: '#/components/schemas/AwsS3BucketResource'
 
-    GetControlledAwsBucketConsoleLinkResponse:
+    GetControlledAwsS3BucketConsoleLinkResponse:
       description: Response to get bucket
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/AwsConsoleLink'
 
-    GetControlledAwsBucketCredentialResponse:
+    GetControlledAwsS3BucketCredentialResponse:
       description: Response to get bucket
       content:
         application/json:
