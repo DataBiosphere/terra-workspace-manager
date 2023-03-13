@@ -3,8 +3,6 @@ package bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresour
 import bio.terra.workspace.generated.model.ApiControlledFlexibleResourceCreationParameters;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.jetbrains.annotations.NotNull;
-
 import javax.annotation.Nullable;
 
 public class FlexResourceCreationParameters {
