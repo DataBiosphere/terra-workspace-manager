@@ -28,9 +28,9 @@ public record FlexResourceCreationParameters(
 
   public static FlexResourceCreationParameters fromFlexResource(
       ControlledFlexibleResource flexResource) {
-    return new FlexResourceCreationParameters()
-        .typeNamespace(flexResource.getTypeNamespace())
-        .type(flexResource.getType())
-        .data(ControlledFlexibleResource.getEncodedJSONFromString(flexResource.getData()));
+    return new FlexResourceCreationParameters(
+        flexResource.getTypeNamespace(),
+        flexResource.getType(),
+        ControlledFlexibleResource.getEncodedJSONFromString(flexResource.getData()));
   }
 }
