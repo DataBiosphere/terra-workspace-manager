@@ -2058,12 +2058,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 resource, null, user.getAuthenticatedRequest(), creationParameters)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
 
-    assertEquals(resource.getResourceId(), createdDataset.getResourceId());
-    assertEquals(datasetId, createdDataset.getDatasetName());
-    assertEquals(projectId, createdDataset.getProjectId());
-    assertEquals(defaultTableLifetime, createdDataset.getDefaultTableLifetime());
-    assertEquals(defaultPartitionLifetime, createdDataset.getDefaultPartitionLifetime());
-
+    assertTrue(resource.partialEqual(createdDataset));
     return createdDataset;
   }
 
