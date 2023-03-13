@@ -22,6 +22,8 @@ import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.utils.URIBuilder;
 import org.json.JSONObject;
@@ -46,6 +48,7 @@ import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
 import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Object;
 import software.amazon.awssdk.services.s3.model.Tagging;
 import software.amazon.awssdk.services.sagemaker.SageMakerClient;
 import software.amazon.awssdk.services.sagemaker.model.*;
@@ -60,6 +63,8 @@ public class AwsUtils {
   private static final Logger logger = LoggerFactory.getLogger(AwsUtils.class);
   public static final int MIN_TOKEN_DURATION_SECONDS = 900;
   private static final int MAX_ROLE_SESSION_NAME_LENGTH = 64;
+
+  private static final int S3_BUCKET_MAX_OBJECTS_PER_REQUEST = 1000;
   private static final Duration SAGEMAKER_NOTEBOOK_WAITER_TIMEOUT_DURATION =
       Duration.ofSeconds(900);
   private static final Set<NotebookInstanceStatus> startableStatusSet =
@@ -268,21 +273,11 @@ public class AwsUtils {
         .collect(Collectors.toCollection(HashSet::new));
   }
 
-  public static boolean checkFolderExistence( // TODO-Dex
+  public static boolean checkFolderExistence(
       Credentials credentials, Region region, String bucketName, String folder) {
-    S3Client s3 = getS3Session(credentials, region);
-    String prefix = String.format("%s/", folder);
-
-    ListObjectsV2Request request =
-        ListObjectsV2Request.builder()
-            .bucket(bucketName)
-            .prefix(prefix)
-            .delimiter("/")
-            .maxKeys(1)
-            .build();
-
-    ListObjectsV2Response result = s3.listObjectsV2(request);
-    return result.keyCount() > 0;
+    String folderKey = folder.endsWith("/") ? folder : String.format("%s/", folder);
+    return CollectionUtils.isNotEmpty(
+        getObjectKeysByPrefix(credentials, region, bucketName, folderKey, 1));
   }
 
   public static void createFolder(
@@ -293,18 +288,16 @@ public class AwsUtils {
       String bucketName,
       String folder) {
     // Creating a "folder" requires writing an empty object ending with the delimiter ('/').
-    putObject(
-        credentials, workspaceUuid, user, region, bucketName, String.format("%s/", folder), "");
+    String folderKey = folder.endsWith("/") ? folder : String.format("%s/", folder);
+    putObject(credentials, workspaceUuid, user, region, bucketName, folderKey, "");
   }
 
   public static void deleteFolder(
       Credentials credentials, Region region, String bucketName, String folder) {
-    String prefix = folder.endsWith("/") ? folder : String.format("%s/", folder);
-    // TODO(TERRA-410)
-    // Get permissions to list objects by prefix
-    // List objects by prefix
-    // recursively delete objects
-    deleteObjects(credentials, region, bucketName, List.of(prefix));
+    String folderKey = folder.endsWith("/") ? folder : String.format("%s/", folder);
+    List<String> objectKeys =
+        getObjectKeysByPrefix(credentials, region, bucketName, folderKey, Integer.MAX_VALUE);
+    deleteObjects(credentials, region, bucketName, objectKeys);
   }
 
   public static void putObject(
@@ -352,6 +345,46 @@ public class AwsUtils {
     }
   }
 
+  public static List<String> getObjectKeysByPrefix(
+      Credentials credentials, Region region, String bucketName, String prefix, int limit) {
+    try {
+      S3Client s3 = getS3Session(credentials, region);
+
+      ListObjectsV2Request.Builder requestBuilder =
+          ListObjectsV2Request.builder().bucket(bucketName).prefix(prefix).delimiter("/");
+
+      int limitRemaining = limit;
+      String continuationToken = null;
+      List<String> objectKeys = new ArrayList<>();
+      while (limitRemaining > 0) {
+        int curLimit = Math.min(S3_BUCKET_MAX_OBJECTS_PER_REQUEST, limitRemaining);
+        limitRemaining -= curLimit;
+
+        ListObjectsV2Response listResponse =
+            s3.listObjectsV2(
+                requestBuilder.continuationToken(continuationToken).maxKeys(curLimit).build());
+
+        SdkHttpResponse httpResponse = listResponse.sdkHttpResponse();
+        if (!httpResponse.isSuccessful()) {
+          throw new ApiException(
+              "Error listing storage objects, "
+                  + httpResponse.statusText().orElse(String.valueOf(httpResponse.statusCode())));
+        }
+
+        objectKeys.addAll(listResponse.contents().stream().map(S3Object::key).toList());
+        if (!listResponse.isTruncated()) {
+          break; // ignore limitRemaining if there are no more results
+        }
+        continuationToken = listResponse.continuationToken();
+      }
+      return objectKeys;
+
+    } catch (SdkException e) {
+      checkException(e);
+      throw new ApiException("Error listing storage objects", e);
+    }
+  }
+
   public static void deleteObject(
       Credentials credentials, Region region, String bucketName, String key) {
     if (key.endsWith("/")) {
@@ -364,30 +397,38 @@ public class AwsUtils {
       Credentials credentials, Region region, String bucketName, List<String> keys) {
     try {
       S3Client s3 = getS3Session(credentials, region);
+      DeleteObjectsRequest.Builder deleteRequestBuilder =
+          DeleteObjectsRequest.builder().bucket(bucketName);
 
-      Collection<ObjectIdentifier> objectIds =
-          keys.stream().map(key -> ObjectIdentifier.builder().key(key).build()).toList();
+      ListUtils.partition(keys, S3_BUCKET_MAX_OBJECTS_PER_REQUEST)
+          .forEach(
+              keysList -> {
+                logger.info("Deleting storage objects with keys {}.", keysList);
 
-      DeleteObjectsRequest deleteRequest =
-          DeleteObjectsRequest.builder()
-              .bucket(bucketName)
-              .delete(Delete.builder().objects(objectIds).quiet(true).build())
-              .build();
+                Collection<ObjectIdentifier> objectIds =
+                    keysList.stream()
+                        .map(key -> ObjectIdentifier.builder().key(key).build())
+                        .toList();
 
-      logger.info("Deleting storage objects with keys {}.", keys);
+                DeleteObjectsResponse deleteResponse =
+                    s3.deleteObjects(
+                        deleteRequestBuilder
+                            .delete(Delete.builder().objects(objectIds).quiet(true).build())
+                            .build());
 
-      DeleteObjectsResponse deleteResponse = s3.deleteObjects(deleteRequest);
-      SdkHttpResponse deleteHttpResponse = deleteResponse.sdkHttpResponse();
-      if (!deleteHttpResponse.isSuccessful()) {
-        throw new ApiException(
-            "Error deleting storage objects: "
-                + deleteHttpResponse
-                    .statusText()
-                    .orElse(String.valueOf(deleteHttpResponse.statusCode())));
-      }
-      deleteResponse
-          .errors()
-          .forEach(s3Error -> logger.warn("Failed to delete storage object: {}", s3Error));
+                SdkHttpResponse deleteHttpResponse = deleteResponse.sdkHttpResponse();
+                if (!deleteHttpResponse.isSuccessful()) {
+                  throw new ApiException(
+                      "Error deleting storage objects: "
+                          + deleteHttpResponse
+                              .statusText()
+                              .orElse(String.valueOf(deleteHttpResponse.statusCode())));
+                }
+                deleteResponse
+                    .errors()
+                    .forEach(
+                        s3Error -> logger.warn("Failed to delete storage objects: {}", s3Error));
+              });
 
     } catch (SdkException e) {
       checkException(e);

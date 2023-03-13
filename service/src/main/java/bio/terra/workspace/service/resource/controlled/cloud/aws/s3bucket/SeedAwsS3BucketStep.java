@@ -38,7 +38,6 @@ public class SeedAwsS3BucketStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    // TODO-Dex check extra params
     FlightMap inputParameters = flightContext.getInputParameters();
 
     AwsCloudContext awsCloudContext =
@@ -69,11 +68,11 @@ public class SeedAwsS3BucketStep implements Step {
         flightContext.getWorkingMap().get(AWS_CLOUD_CONTEXT, AwsCloudContext.class);
     Credentials awsCredentials = MultiCloudUtils.assumeAwsServiceRoleFromGcp(awsCloudContext);
 
-    for (AwsConfiguration.AwsS3BucketSeedFile seedFile : seedFiles) {
-      String key = getKey(seedFile.getPath());
-      AwsUtils.deleteObject(
-          awsCredentials, Region.of(resource.getRegion()), resource.getS3BucketName(), key);
-    }
+    List<String> seedFileKeys =
+        seedFiles.stream().map(seedFile -> getKey(seedFile.getPath())).toList();
+
+    AwsUtils.deleteObjects(
+        awsCredentials, Region.of(resource.getRegion()), resource.getS3BucketName(), seedFileKeys);
     return StepResult.getStepResultSuccess();
   }
 }
