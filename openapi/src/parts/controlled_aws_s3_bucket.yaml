@@ -42,7 +42,7 @@ paths:
       operationId: deleteAwsS3Bucket
       tags: [ ControlledAwsResource ]
       responses:
-        '204':
+        '200':
           description: Success
         '400':
           $ref: '#/components/responses/BadRequest'
