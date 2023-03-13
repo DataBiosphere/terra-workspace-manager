@@ -1,6 +1,6 @@
 components:
   schemas:
-    AwsBucketAttributes:
+    AwsS3BucketAttributes:
       description: >-
         Storage bucket properties included in post-creation get.
       type: object
@@ -15,7 +15,7 @@ components:
           description: Region in which the bucket was created
           type: string
 
-    AwsBucketResource:
+    AwsS3BucketResource:
       type: object
       description: Description of an AWS storage bucket.
       required: [ metadata, attributes ]
@@ -24,4 +24,4 @@ components:
           description: the resource metadata common to all resources
           $ref: '#/components/schemas/ResourceMetadata'
         attributes:
-          $ref: '#/components/schemas/AwsBucketAttributes'
+          $ref: '#/components/schemas/AwsS3BucketAttributes'

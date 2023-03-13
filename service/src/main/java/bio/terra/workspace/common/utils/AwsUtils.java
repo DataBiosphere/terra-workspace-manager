@@ -22,6 +22,9 @@ import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.ListUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.utils.URIBuilder;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -38,10 +41,15 @@ import software.amazon.awssdk.core.waiters.WaiterResponse;
 import software.amazon.awssdk.http.SdkHttpResponse;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.Delete;
+import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
+import software.amazon.awssdk.services.s3.model.DeleteObjectsResponse;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
+import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Object;
+import software.amazon.awssdk.services.s3.model.Tagging;
 import software.amazon.awssdk.services.sagemaker.SageMakerClient;
 import software.amazon.awssdk.services.sagemaker.model.*;
 import software.amazon.awssdk.services.sagemaker.waiters.SageMakerWaiter;
@@ -54,9 +62,9 @@ import software.amazon.awssdk.services.sts.model.Tag;
 public class AwsUtils {
   private static final Logger logger = LoggerFactory.getLogger(AwsUtils.class);
   public static final int MIN_TOKEN_DURATION_SECONDS = 900;
-
-  // TODO(TERRA-384) - move to COW in TCL
   private static final int MAX_ROLE_SESSION_NAME_LENGTH = 64;
+
+  private static final int S3_BUCKET_MAX_OBJECTS_PER_REQUEST = 1000;
   private static final Duration SAGEMAKER_NOTEBOOK_WAITER_TIMEOUT_DURATION =
       Duration.ofSeconds(900);
   private static final Set<NotebookInstanceStatus> startableStatusSet =
@@ -91,9 +99,9 @@ public class AwsUtils {
       try {
         JWT jwt = JWTParser.parse(idToken);
         JWTClaimsSet jwtClaimsSet = jwt.getJWTClaimsSet();
-        logger.info(String.format("JWT 'aud' claim: '%s'", jwtClaimsSet.getAudience()));
-        logger.info(String.format("JWT 'azp' claim: '%s'", jwtClaimsSet.getStringClaim("azp")));
-        logger.info(String.format("JWT 'sub' claim: '%s'", jwtClaimsSet.getStringClaim("sub")));
+        logger.info("JWT 'aud' claim: '{}'", jwtClaimsSet.getAudience());
+        logger.info("JWT 'azp' claim: '{}'", jwtClaimsSet.getStringClaim("azp"));
+        logger.info("JWT 'sub' claim: '{}'", jwtClaimsSet.getStringClaim("sub"));
       } catch (ParseException e) {
         throw new SaCredentialsMissingException(
             String.format("Passed SA credential is not a valid JWT: '%s'", e.getMessage()));
@@ -124,15 +132,19 @@ public class AwsUtils {
   }
 
   public static void addUserTags(Collection<Tag> tags, SamUser user) {
-    tags.add(Tag.builder().key("user_email").value(user.getEmail()).build());
-    tags.add(Tag.builder().key("user_id").value(user.getSubjectId()).build());
+    if (user != null) {
+      tags.add(Tag.builder().key("user_email").value(user.getEmail()).build());
+      tags.add(Tag.builder().key("user_id").value(user.getSubjectId()).build());
+    }
   }
 
   public static void addWorkspaceTags(Collection<Tag> tags, UUID workspaceUuid) {
-    tags.add(Tag.builder().key("ws_id").value(workspaceUuid.toString()).build());
+    if (workspaceUuid != null) {
+      tags.add(Tag.builder().key("ws_id").value(workspaceUuid.toString()).build());
+    }
   }
 
-  public static void addBucketTags(
+  public static void addBucketTagsForRole(
       Collection<Tag> tags, RoleTag role, String s3BucketName, String prefix) {
     tags.add(Tag.builder().key("ws_role").value(role.getValue()).build());
     tags.add(Tag.builder().key("s3_bucket").value(s3BucketName).build());
@@ -145,7 +157,6 @@ public class AwsUtils {
       SamUser user,
       Collection<Tag> tags,
       Integer duration) {
-
     addUserTags(tags, user);
     HashSet<Tag> userTags = new HashSet<>(tags);
 
@@ -158,12 +169,11 @@ public class AwsUtils {
             .build();
 
     logger.info(
-        String.format(
-            "Assuming User role ('%s') with session name `%s`, duration %d seconds, and tags: '%s'.",
-            request.roleArn(),
-            request.roleSessionName(),
-            request.durationSeconds(),
-            request.tags()));
+        "Assuming User role ('{}') with session name `{}`, duration {} seconds, and tags: '{}'.",
+        request.roleArn(),
+        request.roleSessionName(),
+        request.durationSeconds(),
+        request.tags());
 
     AwsSessionCredentials sessionCredentials =
         AwsSessionCredentials.create(
@@ -250,50 +260,180 @@ public class AwsUtils {
         .build();
   }
 
+  // TODO: Can we avoid this with generics??
+  private static Collection<software.amazon.awssdk.services.s3.model.Tag> toS3Tags(
+      Collection<Tag> stsTags) {
+    return stsTags.stream()
+        .map(
+            stsTag ->
+                software.amazon.awssdk.services.s3.model.Tag.builder()
+                    .key(stsTag.key())
+                    .value(stsTag.value())
+                    .build())
+        .collect(Collectors.toCollection(HashSet::new));
+  }
+
   public static boolean checkFolderExistence(
       Credentials credentials, Region region, String bucketName, String folder) {
-    S3Client s3 = getS3Session(credentials, region);
-    String prefix = String.format("%s/", folder);
-
-    ListObjectsV2Request request =
-        ListObjectsV2Request.builder()
-            .bucket(bucketName)
-            .prefix(prefix)
-            .delimiter("/")
-            .maxKeys(1)
-            .build();
-
-    ListObjectsV2Response result = s3.listObjectsV2(request);
-    return result.keyCount() > 0;
+    String folderKey = folder.endsWith("/") ? folder : String.format("%s/", folder);
+    return CollectionUtils.isNotEmpty(
+        getObjectKeysByPrefix(credentials, region, bucketName, folderKey, 1));
   }
 
   public static void createFolder(
-      Credentials credentials, Region region, String bucketName, String folder) {
+      Credentials credentials,
+      UUID workspaceUuid,
+      SamUser user,
+      Region region,
+      String bucketName,
+      String folder) {
     // Creating a "folder" requires writing an empty object ending with the delimiter ('/').
-    String folderKey = String.format("%s/", folder);
-    putObject(credentials, region, bucketName, folderKey, "");
+    String folderKey = folder.endsWith("/") ? folder : String.format("%s/", folder);
+    putObject(credentials, workspaceUuid, user, region, bucketName, folderKey, "");
   }
 
-  public static void undoCreateFolder(
+  public static void deleteFolder(
       Credentials credentials, Region region, String bucketName, String folder) {
-    String folderKey = String.format("%s/", folder);
-    deleteObject(credentials, region, bucketName, folderKey);
+    String folderKey = folder.endsWith("/") ? folder : String.format("%s/", folder);
+    List<String> objectKeys =
+        getObjectKeysByPrefix(credentials, region, bucketName, folderKey, Integer.MAX_VALUE);
+    deleteObjects(credentials, region, bucketName, objectKeys);
   }
 
   public static void putObject(
-      Credentials credentials, Region region, String bucketName, String key, String content) {
-    S3Client s3 = getS3Session(credentials, region);
-    s3.putObject(
-        PutObjectRequest.builder().bucket(bucketName).key(key).build(),
-        RequestBody.fromString(content));
+      Credentials credentials,
+      UUID workspaceUuid,
+      SamUser user,
+      Region region,
+      String bucketName,
+      String key,
+      String content) {
+    try {
+      S3Client s3 = getS3Session(credentials, region);
+
+      Collection<Tag> tags = new HashSet<>();
+      addUserTags(tags, user);
+      addWorkspaceTags(tags, workspaceUuid);
+
+      if (key.endsWith("/")) { // folder
+        logger.info("Creating S3 folder object with name '{}' and key '{}'.", bucketName, key);
+      } else {
+        logger.info(
+            "Creating S3 object with name '{}', key '{}' and {} content.",
+            bucketName,
+            key,
+            StringUtils.isEmpty(content) ? "empty" : "");
+      }
+
+      PutObjectRequest.Builder requestBuilder =
+          PutObjectRequest.builder()
+              .bucket(bucketName)
+              .key(key)
+              .tagging(Tagging.builder().tagSet(toS3Tags(tags)).build());
+
+      SdkHttpResponse httpResponse =
+          s3.putObject(requestBuilder.build(), RequestBody.fromString(content)).sdkHttpResponse();
+      if (!httpResponse.isSuccessful()) {
+        throw new ApiException(
+            "Error creating storage object, "
+                + httpResponse.statusText().orElse(String.valueOf(httpResponse.statusCode())));
+      }
+
+    } catch (SdkException e) {
+      checkException(e);
+      throw new ApiException("Error creating storage object", e);
+    }
+  }
+
+  public static List<String> getObjectKeysByPrefix(
+      Credentials credentials, Region region, String bucketName, String prefix, int limit) {
+    try {
+      S3Client s3 = getS3Session(credentials, region);
+
+      ListObjectsV2Request.Builder requestBuilder =
+          ListObjectsV2Request.builder().bucket(bucketName).prefix(prefix).delimiter("/");
+
+      int limitRemaining = limit;
+      String continuationToken = null;
+      List<String> objectKeys = new ArrayList<>();
+      while (limitRemaining > 0) {
+        int curLimit = Math.min(S3_BUCKET_MAX_OBJECTS_PER_REQUEST, limitRemaining);
+        limitRemaining -= curLimit;
+
+        ListObjectsV2Response listResponse =
+            s3.listObjectsV2(
+                requestBuilder.continuationToken(continuationToken).maxKeys(curLimit).build());
+
+        SdkHttpResponse httpResponse = listResponse.sdkHttpResponse();
+        if (!httpResponse.isSuccessful()) {
+          throw new ApiException(
+              "Error listing storage objects, "
+                  + httpResponse.statusText().orElse(String.valueOf(httpResponse.statusCode())));
+        }
+
+        objectKeys.addAll(listResponse.contents().stream().map(S3Object::key).toList());
+        if (!listResponse.isTruncated()) {
+          break; // ignore limitRemaining if there are no more results
+        }
+        continuationToken = listResponse.continuationToken();
+      }
+      return objectKeys;
+
+    } catch (SdkException e) {
+      checkException(e);
+      throw new ApiException("Error listing storage objects", e);
+    }
   }
 
   public static void deleteObject(
       Credentials credentials, Region region, String bucketName, String key) {
-    S3Client s3 = getS3Session(credentials, region);
-    DeleteObjectRequest deleteObjectRequest =
-        DeleteObjectRequest.builder().bucket(bucketName).key(key).build();
-    s3.deleteObject(deleteObjectRequest);
+    if (key.endsWith("/")) {
+      deleteFolder(credentials, region, bucketName, key);
+    }
+    deleteObjects(credentials, region, bucketName, List.of(key));
+  }
+
+  public static void deleteObjects(
+      Credentials credentials, Region region, String bucketName, List<String> keys) {
+    try {
+      S3Client s3 = getS3Session(credentials, region);
+      DeleteObjectsRequest.Builder deleteRequestBuilder =
+          DeleteObjectsRequest.builder().bucket(bucketName);
+
+      ListUtils.partition(keys, S3_BUCKET_MAX_OBJECTS_PER_REQUEST)
+          .forEach(
+              keysList -> {
+                logger.info("Deleting storage objects with keys {}.", keysList);
+
+                Collection<ObjectIdentifier> objectIds =
+                    keysList.stream()
+                        .map(key -> ObjectIdentifier.builder().key(key).build())
+                        .toList();
+
+                DeleteObjectsResponse deleteResponse =
+                    s3.deleteObjects(
+                        deleteRequestBuilder
+                            .delete(Delete.builder().objects(objectIds).quiet(true).build())
+                            .build());
+
+                SdkHttpResponse deleteHttpResponse = deleteResponse.sdkHttpResponse();
+                if (!deleteHttpResponse.isSuccessful()) {
+                  throw new ApiException(
+                      "Error deleting storage objects: "
+                          + deleteHttpResponse
+                              .statusText()
+                              .orElse(String.valueOf(deleteHttpResponse.statusCode())));
+                }
+                deleteResponse
+                    .errors()
+                    .forEach(
+                        s3Error -> logger.warn("Failed to delete storage objects: {}", s3Error));
+              });
+
+    } catch (SdkException e) {
+      checkException(e);
+      throw new ApiException("Error deleting storage objects", e);
+    }
   }
 
   private static SageMakerClient getSagemakerSession(Credentials credentials, Region region) {
@@ -310,15 +450,14 @@ public class AwsUtils {
   // TODO: Can we avoid this with generics??
   private static Collection<software.amazon.awssdk.services.sagemaker.model.Tag> toSagemakerTags(
       Collection<Tag> stsTags) {
-    Collection<software.amazon.awssdk.services.sagemaker.model.Tag> tags = new HashSet<>();
-    for (Tag stsTag : stsTags) {
-      tags.add(
-          software.amazon.awssdk.services.sagemaker.model.Tag.builder()
-              .key(stsTag.key())
-              .value(stsTag.value())
-              .build());
-    }
-    return tags;
+    return stsTags.stream()
+        .map(
+            stsTag ->
+                software.amazon.awssdk.services.sagemaker.model.Tag.builder()
+                    .key(stsTag.key())
+                    .value(stsTag.value())
+                    .build())
+        .collect(Collectors.toCollection(HashSet::new));
   }
 
   public static void createSageMakerNotebook(
@@ -372,7 +511,6 @@ public class AwsUtils {
     }
   }
 
-  // TODO(TERRA-384) - move to COW in TCL
   public static void stopSageMakerNotebook(
       Credentials credentials, Region region, String notebookName) {
     try {
@@ -383,15 +521,12 @@ public class AwsUtils {
       NotebookInstanceStatus notebookStatus =
           sageMaker.describeNotebookInstance(describeRequest).notebookInstanceStatus();
       if (startableStatusSet.contains(notebookStatus)) {
-        logger.info(
-            String.format(
-                "SageMaker notebook instance in status %s, no stop needed.", notebookStatus));
+        logger.info("SageMaker notebook instance in status {}, no stop needed.", notebookStatus);
         return;
       }
 
       checkNotebookStatusAndThrow(notebookStatus, stoppableStatusSet);
-      logger.info(
-          String.format("Stopping SageMaker notebook instance with name '%s'.", notebookName));
+      logger.info("Stopping SageMaker notebook instance with name '{}'.", notebookName);
 
       SdkHttpResponse httpResponse =
           sageMaker
@@ -410,7 +545,6 @@ public class AwsUtils {
     }
   }
 
-  // TODO(TERRA-384) - move to COW in TCL
   public static void deleteSageMakerNotebook(
       Credentials credentials, Region region, String notebookName) {
     try {
@@ -431,8 +565,7 @@ public class AwsUtils {
 
       // must be stopped or failed. AWS throws error if notebook is not found
       checkNotebookStatusAndThrow(describeResponse.notebookInstanceStatus(), deletableStatusSet);
-      logger.info(
-          String.format("Deleting SageMaker notebook instance with name '%s'.", notebookName));
+      logger.info("Deleting SageMaker notebook instance with name '{}'.", notebookName);
 
       SdkHttpResponse httpResponse =
           sageMaker
@@ -545,7 +678,6 @@ public class AwsUtils {
     }
   }
 
-  // TODO(TERRA-384) - move to COW in TCL
   private static void checkNotebookStatusAndThrow(
       NotebookInstanceStatus currentStatus, Set<NotebookInstanceStatus> expectedStatusSet)
       throws ValidationException {
@@ -557,7 +689,6 @@ public class AwsUtils {
     }
   }
 
-  // TODO(TERRA-384) - move to COW in TCL
   private static void checkException(Exception ex)
       throws NotFoundException, UnauthorizedException, BadRequestException {
     if (ex instanceof SdkException) {

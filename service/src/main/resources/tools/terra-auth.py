@@ -197,7 +197,7 @@ credential_process = "{os.path.realpath(__file__)}" --bucket {resourceId} --acce
 
 def print_bucket_details(bucket, default, write_read):
     bucket_metadata = bucket['metadata']
-    bucket_attributes = bucket['resourceAttributes']['awsBucket']
+    bucket_attributes = bucket['resourceAttributes']['awsS3Bucket']
 
     default_string = ''
     profile_string = ''

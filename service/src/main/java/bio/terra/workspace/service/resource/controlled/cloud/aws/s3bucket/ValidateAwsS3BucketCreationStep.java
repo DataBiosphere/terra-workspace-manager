@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.controlled.cloud.aws.storagebucket;
+package bio.terra.workspace.service.resource.controlled.cloud.aws.s3bucket;
 
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.AWS_CLOUD_CONTEXT;
 
@@ -16,12 +16,13 @@ import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sts.model.Credentials;
 
-class ValidateAwsBucketCreationStep implements Step {
-  private static final Logger logger = LoggerFactory.getLogger(ValidateAwsBucketCreationStep.class);
+class ValidateAwsS3BucketCreationStep implements Step {
+  private static final Logger logger =
+      LoggerFactory.getLogger(ValidateAwsS3BucketCreationStep.class);
 
-  private final ControlledAwsBucketResource resource;
+  private final ControlledAwsS3BucketResource resource;
 
-  ValidateAwsBucketCreationStep(ControlledAwsBucketResource resource) {
+  ValidateAwsS3BucketCreationStep(ControlledAwsS3BucketResource resource) {
     this.resource = resource;
   }
 
