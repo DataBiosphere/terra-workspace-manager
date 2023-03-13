@@ -128,13 +128,17 @@ public class WsmResourceFields {
     return lastUpdatedDate;
   }
 
-  // TODO: PF-2513 We should not leave fields out of the equals method
-  //  Make a specific method for a partially equals semantic.
-  //  Missing compares:
-  //  - resourceLineage
-  //  - createdDate
-  //  - lastUpdatedByEmail
-  //  - lastUpdatedDate
+  public boolean partialEqual(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof WsmResourceFields that)) return false;
+    return Objects.equal(workspaceUuid, that.workspaceUuid)
+        && Objects.equal(resourceId, that.resourceId)
+        && Objects.equal(name, that.name)
+        && Objects.equal(description, that.description)
+        && cloningInstructions == that.cloningInstructions
+        && Objects.equal(properties, that.properties)
+        && Objects.equal(createdByEmail, that.createdByEmail);
+  }
 
   @Override
   public boolean equals(Object o) {
@@ -146,7 +150,11 @@ public class WsmResourceFields {
         && Objects.equal(description, that.description)
         && cloningInstructions == that.cloningInstructions
         && Objects.equal(properties, that.properties)
-        && Objects.equal(createdByEmail, that.createdByEmail);
+        && Objects.equal(createdByEmail, that.createdByEmail)
+        && Objects.equal(createdDate, that.createdDate)
+        && Objects.equal(lastUpdatedByEmail, that.lastUpdatedByEmail)
+        && Objects.equal(lastUpdatedDate, that.lastUpdatedDate)
+        && Objects.equal(resourceLineage, that.getResourceLineage());
   }
 
   @Override

@@ -125,7 +125,8 @@ public class ControlledAzureResourceApiControllerBatchPoolTest extends BaseAzure
                 WsmResourceType.CONTROLLED_AZURE_BATCH_POOL));
 
     when(getMockControlledResourceService()
-            .createControlledResourceSync(eq(resource), any(), any(), any()))
+            .createControlledResourceSync(
+                any(ControlledAzureBatchPoolResource.class), any(), any(), any()))
         .thenReturn(resource);
 
     mockMvc

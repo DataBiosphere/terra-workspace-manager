@@ -59,10 +59,19 @@ public class UpdateControlledBigQueryDatasetsLifetimeStep implements Step {
     for (var resource : controlledBigQueryDatasets) {
       var id = resource.getResourceId();
       if (resourceIdsToWorkspaceIdMap.containsKey(id)) {
+        String tableLifetimeValue = resourceIdToDefaultTableLifetimeMap.get(id);
+        String partitionLifetimeValue = resourceIdToDefaultPartitionLifetimeMap.get(id);
+        // BigQuery dataset may have unspecified lifetime on the cloud.
+        // In this case, update with null.
+        Long tableLifetimeUpdate =
+            tableLifetimeValue == null ? null : Long.valueOf(tableLifetimeValue);
+        Long partitionLifetimeUpdate =
+            partitionLifetimeValue == null ? null : Long.valueOf(partitionLifetimeValue);
+
         resourceDao.updateBigQueryDatasetDefaultTableAndPartitionLifetime(
             resource.castByEnum(CONTROLLED_GCP_BIG_QUERY_DATASET),
-            Long.valueOf(resourceIdToDefaultTableLifetimeMap.get(id)),
-            Long.valueOf(resourceIdToDefaultPartitionLifetimeMap.get(id)));
+            tableLifetimeUpdate,
+            partitionLifetimeUpdate);
       }
     }
 

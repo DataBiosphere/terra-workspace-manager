@@ -195,7 +195,7 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
     var referenceFromDb =
         (ReferencedBigQueryDatasetResource)
             resourceDao.getResource(workspaceUuid, referencedDataset.getResourceId());
-    assertEquals(referencedDataset, referenceFromDb);
+    assertTrue(referencedDataset.partialEqual(referenceFromDb));
   }
 
   // Set up mocks for interacting with GCP to delete a project.

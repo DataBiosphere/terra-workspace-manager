@@ -24,6 +24,7 @@ import com.google.common.base.Strings;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
+import org.apache.commons.lang3.builder.EqualsBuilder;
 
 public class ReferencedGcsObjectResource extends ReferencedResource {
   private final String bucketName;
@@ -69,6 +70,7 @@ public class ReferencedGcsObjectResource extends ReferencedResource {
   }
 
   // -- getters used in serialization --
+  @Override
   public WsmResourceFields getWsmResourceFields() {
     return super.getWsmResourceFields();
   }
@@ -168,6 +170,25 @@ public class ReferencedGcsObjectResource extends ReferencedResource {
                     description,
                     createdByEmail));
     return resultBuilder.build();
+  }
+
+  @Override
+  public boolean partialEqual(Object o) {
+    if (this == o) {
+      return true;
+    }
+
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    ReferencedGcsObjectResource that = (ReferencedGcsObjectResource) o;
+
+    return new EqualsBuilder()
+        .appendSuper(super.partialEqual(o))
+        .append(bucketName, that.getBucketName())
+        .append(objectName, that.getObjectName())
+        .isEquals();
   }
 
   /**

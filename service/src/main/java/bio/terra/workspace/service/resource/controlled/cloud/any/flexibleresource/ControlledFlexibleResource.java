@@ -226,6 +226,24 @@ public class ControlledFlexibleResource extends ControlledResource {
   }
 
   @Override
+  public boolean partialEqual(Object o) {
+    if (this == o) {
+      return true;
+    }
+
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    ControlledFlexibleResource that = (ControlledFlexibleResource) o;
+    return new EqualsBuilder()
+        .appendSuper(super.partialEqual(o))
+        .append(type, that.type)
+        .append(data, that.data)
+        .isEquals();
+  }
+
+  @Override
   public int hashCode() {
     return new HashCodeBuilder(19, 41)
         .appendSuper(super.hashCode())

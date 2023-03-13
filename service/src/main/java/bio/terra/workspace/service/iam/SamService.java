@@ -326,7 +326,7 @@ public class SamService {
       AuthenticatedUserRequest userRequest, WsmIamRole minimumHighestRoleFromRequest)
       throws InterruptedException {
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
-    Map<UUID, WorkspaceDescription> result = new HashMap();
+    Map<UUID, WorkspaceDescription> result = new HashMap<>();
     try {
       List<UserResourcesResponse> userResourcesResponses =
           SamRetry.retry(

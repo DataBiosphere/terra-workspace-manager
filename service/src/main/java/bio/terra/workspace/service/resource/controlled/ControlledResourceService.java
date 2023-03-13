@@ -82,7 +82,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class ControlledResourceService {
   private static final Logger logger = LoggerFactory.getLogger(ControlledResourceService.class);
-
   // These are chosen to retry a maximum wait time so we return under a 30 second
   // network timeout.
   private static final int RESOURCE_ROW_WAIT_SECONDS = 1;

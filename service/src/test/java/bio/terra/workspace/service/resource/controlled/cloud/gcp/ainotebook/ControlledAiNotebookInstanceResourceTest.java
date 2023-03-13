@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant.DEFAULT_ZONE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.stairway.FlightMap;
@@ -58,7 +59,9 @@ public class ControlledAiNotebookInstanceResourceTest extends BaseUnitTest {
 
     FlightMap flightMap = new FlightMap();
     flightMap.put("resource", resource);
-    assertEquals(resource, flightMap.get("resource", ControlledAiNotebookInstanceResource.class));
+    assertTrue(
+        resource.partialEqual(
+            flightMap.get("resource", ControlledAiNotebookInstanceResource.class)));
   }
 
   @Test

@@ -115,6 +115,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterAll;
@@ -273,9 +274,10 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertEquals(
         FlightStatus.SUCCESS, stairwayComponent.get().getFlightState(jobId).getFlightStatus());
 
-    assertEquals(
-        resource,
-        controlledResourceService.getControlledResource(workspaceId, resource.getResourceId()));
+    assertTrue(
+        resource.partialEqual(
+            controlledResourceService.getControlledResource(
+                workspaceId, resource.getResourceId())));
 
     InstanceName instanceName =
         resource.toInstanceName(gcpCloudContextService.getRequiredGcpProject(workspaceId));
@@ -887,13 +889,13 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .createControlledResourceSync(
                 resource, null, user.getAuthenticatedRequest(), creationParameters)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
-    assertEquals(resource, createdDataset);
+    assertTrue(resource.partialEqual(createdDataset));
 
     ControlledBigQueryDatasetResource fetchedDataset =
         controlledResourceService
             .getControlledResource(workspaceId, resource.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
-    assertEquals(resource, fetchedDataset);
+    assertTrue(resource.partialEqual(fetchedDataset));
 
     String newName = "NEW_createGetUpdateDeleteBqDataset";
     String newDescription = "new resource description";
@@ -965,7 +967,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .createControlledResourceSync(
                 resource, null, user.getAuthenticatedRequest(), creationParameters)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
-    assertEquals(resource, createdDataset);
+    assertTrue(resource.partialEqual(createdDataset));
 
     BigQueryCow bqCow = crlService.createWsmSaBigQueryCow();
     Dataset cloudDataset =
@@ -975,9 +977,10 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertEquals(
         defaultPartitionLifetimeSec * 1000L, cloudDataset.getDefaultPartitionExpirationMs());
 
-    assertEquals(
-        resource,
-        controlledResourceService.getControlledResource(workspaceId, resource.getResourceId()));
+    assertTrue(
+        resource.partialEqual(
+            controlledResourceService.getControlledResource(
+                workspaceId, resource.getResourceId())));
   }
 
   @Test
@@ -1043,7 +1046,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .createControlledResourceSync(
                 resource, null, user.getAuthenticatedRequest(), creationParameters)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
-    assertEquals(resource, createdDataset);
+    assertTrue(resource.partialEqual(createdDataset));
 
     // Test idempotency of delete by retrying steps once.
     Map<String, StepStatus> retrySteps = new HashMap<>();
@@ -1087,7 +1090,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .createControlledResourceSync(
                 resource, null, user.getAuthenticatedRequest(), creationParameters)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
-    assertEquals(resource, createdDataset);
+    assertTrue(resource.partialEqual(createdDataset));
 
     // None of the steps on this flight are undoable, so even with lastStepFailure set to true we
     // should expect the resource to really be deleted.
@@ -1133,7 +1136,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .createControlledResourceSync(
                 resource, null, user.getAuthenticatedRequest(), creationParameters)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
-    assertEquals(resource, createdDataset);
+    assertTrue(resource.partialEqual(createdDataset));
 
     // Test idempotency of dataset-specific steps by retrying them once.
     Map<String, StepStatus> retrySteps = new HashMap<>();
@@ -1200,7 +1203,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .createControlledResourceSync(
                 resource, null, user.getAuthenticatedRequest(), creationParameters)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
-    assertEquals(resource, createdDataset);
+    assertTrue(resource.partialEqual(createdDataset));
 
     // Test idempotency of dataset-specific steps by retrying them once.
     Map<String, StepStatus> retrySteps = new HashMap<>();
@@ -1645,7 +1648,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 user.getAuthenticatedRequest(),
                 ControlledResourceFixtures.defaultFlexResourceCreationParameters())
             .castByEnum(WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE);
-    assertEquals(originalFlex, createdFlex);
+    assertTrue(originalFlex.partialEqual(createdFlex));
 
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(
@@ -1933,7 +1936,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 resource, null, user.getAuthenticatedRequest(), creationParameters)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
 
-    assertEquals(resource, createdDataset);
+    assertTrue(resource.partialEqual(createdDataset));
 
     // Check which BQ datasets' lifetime to update.
     List<ControlledBigQueryDatasetResource> emptyList =
@@ -1955,6 +1958,92 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         createdDataset.getResourceId(),
         DEFAULT_CREATED_BIG_QUERY_TABLE_LIFETIME,
         DEFAULT_CREATED_BIG_QUERY_PARTITION_LIFETIME);
+  }
+
+  // Ensure the flight doesn't crash when there are BigQuery datasets with one null lifetime on the
+  // cloud.
+  @Test
+  public void updateControlledBigQueryDataset_HandlesDatasets_WithOneNullLifetime()
+      throws Exception {
+    ControlledBigQueryDatasetResource createdDataset =
+        makeBigQueryDatasetWithLifetime(
+            /*defaultTableLifetime=*/ null, DEFAULT_CREATED_BIG_QUERY_PARTITION_LIFETIME);
+
+    // Check which BQ datasets' lifetime to update.
+    List<ControlledBigQueryDatasetResource> emptyList =
+        updateControlledBigQueryDatasetsLifetimeAndWait();
+
+    // Update nothing because one of the lifetimes is populated (the SQL query checks for AND - both
+    // lifetimes null).
+    assertTrue(emptyList.isEmpty());
+
+    // Artificially set lifetimes to null in the database.
+    resourceDao.updateBigQueryDatasetDefaultTableAndPartitionLifetime(createdDataset, null, null);
+
+    List<ControlledBigQueryDatasetResource> updatedResourceList =
+        updateControlledBigQueryDatasetsLifetimeAndWait();
+
+    // The controlled dataset is updated since the lifetime is null.
+    assertEquals(1, updatedResourceList.size());
+    assertControlledBigQueryDatasetLifetimeIsUpdatedAndActivityIsLogged(
+        updatedResourceList,
+        createdDataset.getResourceId(),
+        /*expectedTableLifetime=*/ null,
+        DEFAULT_CREATED_BIG_QUERY_PARTITION_LIFETIME);
+  }
+  // Ensure the flight doesn't crash when there are BigQuery datasets with two null lifetimes on the
+  // cloud.
+  @Test
+  public void updateControlledBigQueryDataset_HandlesDatasets_WithTwoNullLifetimes()
+      throws Exception {
+    ControlledBigQueryDatasetResource createdDataset =
+        makeBigQueryDatasetWithLifetime(
+            /*defaultTableLifetime=*/ null, /*defaultPartitionLifetime=*/ null);
+    try {
+      // Both lifetimes are null, so they will be updated (to null).
+      List<ControlledBigQueryDatasetResource> updatedResourceList =
+          updateControlledBigQueryDatasetsLifetimeAndWait();
+
+      // The controlled dataset is updated since the lifetime is null.
+      assertEquals(1, updatedResourceList.size());
+      assertControlledBigQueryDatasetLifetimeIsUpdatedAndActivityIsLogged(
+          updatedResourceList,
+          createdDataset.getResourceId(),
+          /*expectedTableLifetime=*/ null,
+          /*expectedPartitionLifetime=*/ null);
+    } finally {
+      // Remove dataset to not conflict with other test that checks for empty lifetime
+      controlledResourceService.deleteControlledResourceSync(
+          workspaceId, createdDataset.getResourceId(), userAccessUtils.defaultUserAuthRequest());
+    }
+  }
+
+  private ControlledBigQueryDatasetResource makeBigQueryDatasetWithLifetime(
+      @Nullable Long defaultTableLifetime, @Nullable Long defaultPartitionLifetime) {
+    var datasetId = ControlledResourceFixtures.uniqueDatasetId();
+
+    ApiGcpBigQueryDatasetCreationParameters creationParameters =
+        new ApiGcpBigQueryDatasetCreationParameters()
+            .datasetId(datasetId)
+            .defaultTableLifetime(defaultTableLifetime)
+            .defaultPartitionLifetime(defaultPartitionLifetime);
+
+    ControlledBigQueryDatasetResource resource =
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
+            .datasetName(datasetId)
+            .projectId(projectId)
+            .defaultTableLifetime(creationParameters.getDefaultTableLifetime())
+            .defaultPartitionLifetime(creationParameters.getDefaultPartitionLifetime())
+            .build();
+
+    ControlledBigQueryDatasetResource createdDataset =
+        controlledResourceService
+            .createControlledResourceSync(
+                resource, null, user.getAuthenticatedRequest(), creationParameters)
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
+
+    assertTrue(resource.partialEqual(createdDataset));
+    return createdDataset;
   }
 
   private void assertControlledBigQueryDatasetLifetimeIsUpdatedAndActivityIsLogged(
@@ -1990,7 +2079,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 user.getAuthenticatedRequest(),
                 ControlledResourceFixtures.getGoogleBucketCreationParameters())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
-    assertEquals(originalResource, createdBucket);
+    assertTrue(originalResource.partialEqual(createdBucket));
     return createdBucket;
   }
 
