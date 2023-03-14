@@ -189,6 +189,10 @@ components:
       type: object
       required: [definition, billingProfileId]
       properties:
+        landingZoneId:
+          description: The ID of the landing zone (optional)
+          type: string
+          format: uuid
         definition:
           description: A definition to create an Azure landing zone from
           type: string
