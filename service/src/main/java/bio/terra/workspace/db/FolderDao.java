@@ -181,7 +181,7 @@ public class FolderDao {
           && message.contains(
               "duplicate key value violates unique constraint \"folder_display_name_parent_folder_id_workspace_id_key\"")) {
         throw new DuplicateFolderDisplayNameException(
-                "Fails to update due to duplicate display name at the same folder level");
+            "Fails to update due to duplicate display name at the same folder level");
       }
       throw e;
     }

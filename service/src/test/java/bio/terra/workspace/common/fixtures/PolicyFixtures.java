@@ -36,7 +36,7 @@ public class PolicyFixtures {
   public static final ApiWsmPolicyInputs DEFAULT_WSM_POLICY_INPUTS =
       new ApiWsmPolicyInputs().addInputsItem(GROUP_POLICY_DEFAULT).addInputsItem(REGION_POLICY_USA);
 
-  public static ApiWsmPolicyInput REGION_POLICY_IOWA =
+  public static final ApiWsmPolicyInput REGION_POLICY_IOWA =
       new ApiWsmPolicyInput()
           .namespace(NAMESPACE)
           .name(REGION_CONSTRAINT)

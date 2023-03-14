@@ -31,7 +31,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -452,7 +451,8 @@ public class ResourceValidationUtils {
 
   public static void validateAzureVmSize(String vmSize) {
     if (!VirtualMachineSizeTypes.values().stream()
-            .map(ExpandableStringEnum::toString).toList()
+        .map(ExpandableStringEnum::toString)
+        .toList()
         .contains(vmSize)) {
       logger.warn("Invalid Azure vmSize {}", vmSize);
       throw new InvalidReferenceException(

@@ -43,7 +43,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -581,12 +580,13 @@ public class WorkspaceService {
     // specified role. Users may also be added to a workspace via managed groups, but WSM does not
     // control membership of those groups, and so cannot remove them here.
     List<String> roleMembers =
-            samService
-                    .listUsersWithWorkspaceRole(workspace.getWorkspaceId(), role, executingUserRequest)
-                    .stream()
-                    // SAM does not always use lowercase emails, so lowercase everything here before the
-                    // contains check below
-                    .map(String::toLowerCase).toList();
+        samService
+            .listUsersWithWorkspaceRole(workspace.getWorkspaceId(), role, executingUserRequest)
+            .stream()
+            // SAM does not always use lowercase emails, so lowercase everything here before the
+            // contains check below
+            .map(String::toLowerCase)
+            .toList();
     if (!roleMembers.contains(targetUserEmail)) {
       return;
     }

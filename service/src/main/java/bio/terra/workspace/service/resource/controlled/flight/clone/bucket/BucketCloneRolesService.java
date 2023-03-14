@@ -67,12 +67,12 @@ public class BucketCloneRolesService {
   /**
    * Add or remove roles for an Identity.
    *
-   * <p>NOTE: The previous implementation used GcpUtils.pollUntilEqua to compare the
-   * newPolicy against the updated policy. That would never match, because the etag in the Policy
-   * object is part of the equals evaluation. The updated comparison technique just looks at the
-   * specific roles with the specific identity to see whether it is added or removed. This is not
-   * 100% safe, since concurrent changes to the policy would be a problem. At this point in time,
-   * WSM is not programmed to prevent concurrent access and that is outside the scope of this fix.
+   * <p>NOTE: The previous implementation used GcpUtils.pollUntilEqua to compare the newPolicy
+   * against the updated policy. That would never match, because the etag in the Policy object is
+   * part of the equals evaluation. The updated comparison technique just looks at the specific
+   * roles with the specific identity to see whether it is added or removed. This is not 100% safe,
+   * since concurrent changes to the policy would be a problem. At this point in time, WSM is not
+   * programmed to prevent concurrent access and that is outside the scope of this fix.
    *
    * @param operation - flag for add or remove
    * @param inputs - source or destination input object

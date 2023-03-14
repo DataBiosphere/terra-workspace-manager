@@ -103,30 +103,29 @@ public class JobApiUtils {
               .orElseThrow(
                   () -> new InvalidResultStateException("No completed time for completed flight"));
       switch (jobStatus) {
-        case FAILED:
+        case FAILED -> {
           int errorCode =
-              flightState
-                  .getException()
-                  .map(e -> ErrorReportUtils.buildApiErrorReport(e).getStatusCode())
-                  .orElseThrow(
-                      () ->
-                          new InvalidResultStateException(
-                              String.format(
-                                  "Flight %s failed with no exception reported",
-                                  flightState.getFlightId())));
+                  flightState
+                          .getException()
+                          .map(e -> ErrorReportUtils.buildApiErrorReport(e).getStatusCode())
+                          .orElseThrow(
+                                  () ->
+                                          new InvalidResultStateException(
+                                                  String.format(
+                                                          "Flight %s failed with no exception reported",
+                                                          flightState.getFlightId())));
           statusCode = HttpStatus.valueOf(errorCode);
-          break;
-        case SUCCEEDED:
+        }
+        case SUCCEEDED -> {
           FlightMap resultMap =
-              flightState.getResultMap().orElseThrow(InvalidResultStateException::noResultMap);
+                  flightState.getResultMap().orElseThrow(InvalidResultStateException::noResultMap);
           statusCode = resultMap.get(JobMapKeys.STATUS_CODE.getKeyName(), HttpStatus.class);
           if (statusCode == null) {
             statusCode = HttpStatus.OK;
           }
-          break;
-        default:
-          throw new IllegalStateException(
-              "Cannot get status code of flight in unknown state " + jobStatus);
+        }
+        default -> throw new IllegalStateException(
+                "Cannot get status code of flight in unknown state " + jobStatus);
       }
     }
 

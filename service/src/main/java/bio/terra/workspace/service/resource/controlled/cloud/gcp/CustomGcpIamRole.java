@@ -2,7 +2,6 @@ package bio.terra.workspace.service.resource.controlled.cloud.gcp;
 
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
-import bio.terra.workspace.service.resource.model.WsmResourceType;
 import java.util.List;
 
 /**
