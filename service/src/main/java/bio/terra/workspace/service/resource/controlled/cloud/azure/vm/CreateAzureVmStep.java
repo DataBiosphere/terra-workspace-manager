@@ -176,7 +176,6 @@ public class CreateAzureVmStep implements Step {
           yield StepResult.getStepResultSuccess();
         }
 
-          // TODO-Dex
         case ManagementExceptionUtils.RESOURCE_NOT_FOUND -> {
           logger.error(
               "Either the disk, ip, or network passed into this createVm does not exist "

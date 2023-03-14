@@ -75,12 +75,9 @@ public class UpdateAiNotebookAttributesStep implements Step {
               .get(resource.toInstanceName(projectId))
               .execute()
               .getMetadata();
-      for (var entry : currentMetadata.entrySet()) {
-        // reset the new key entry to "" value because the gcp api does not allow deleting
-        // metadata item so we can't simply undo the add.
-        currentMetadata.put(
-            entry.getKey(), prevParameters.getMetadata().getOrDefault(entry.getKey(), ""));
-      }
+      // reset the new key entry to "" value because the gcp api does not allow deleting
+      // metadata item so we can't simply undo the add.
+      currentMetadata.replaceAll((k, v) -> prevParameters.getMetadata().getOrDefault(k, ""));
       return updateAiNotebook(currentMetadata, projectId);
     } catch (GoogleJsonResponseException e) {
       if (HttpStatus.BAD_REQUEST.value() == e.getStatusCode()
