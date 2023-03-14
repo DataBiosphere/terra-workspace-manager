@@ -105,27 +105,27 @@ public class JobApiUtils {
       switch (jobStatus) {
         case FAILED -> {
           int errorCode =
-                  flightState
-                          .getException()
-                          .map(e -> ErrorReportUtils.buildApiErrorReport(e).getStatusCode())
-                          .orElseThrow(
-                                  () ->
-                                          new InvalidResultStateException(
-                                                  String.format(
-                                                          "Flight %s failed with no exception reported",
-                                                          flightState.getFlightId())));
+              flightState
+                  .getException()
+                  .map(e -> ErrorReportUtils.buildApiErrorReport(e).getStatusCode())
+                  .orElseThrow(
+                      () ->
+                          new InvalidResultStateException(
+                              String.format(
+                                  "Flight %s failed with no exception reported",
+                                  flightState.getFlightId())));
           statusCode = HttpStatus.valueOf(errorCode);
         }
         case SUCCEEDED -> {
           FlightMap resultMap =
-                  flightState.getResultMap().orElseThrow(InvalidResultStateException::noResultMap);
+              flightState.getResultMap().orElseThrow(InvalidResultStateException::noResultMap);
           statusCode = resultMap.get(JobMapKeys.STATUS_CODE.getKeyName(), HttpStatus.class);
           if (statusCode == null) {
             statusCode = HttpStatus.OK;
           }
         }
         default -> throw new IllegalStateException(
-                "Cannot get status code of flight in unknown state " + jobStatus);
+            "Cannot get status code of flight in unknown state " + jobStatus);
       }
     }
 

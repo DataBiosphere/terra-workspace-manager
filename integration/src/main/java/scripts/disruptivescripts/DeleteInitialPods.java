@@ -8,7 +8,6 @@ import java.time.LocalDateTime;
 import java.util.Calendar;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,15 +43,16 @@ public class DeleteInitialPods extends DisruptiveScript {
     // TODO (QA-1421): refactor this out into a method of the Test Runner KubernetesClientUtils
     // class.
     List<String> podsToDelete =
-            KubernetesClientUtils.listPods().stream()
-                    .filter(
-                            pod ->
-                                    pod.getMetadata().getLabels().containsKey(componentLabelKey)
-                                            && pod.getMetadata()
-                                            .getLabels()
-                                            .get(componentLabelKey)
-                                            .equals(componentLabelVal))
-                    .map(pod -> pod.getMetadata().getName()).toList();
+        KubernetesClientUtils.listPods().stream()
+            .filter(
+                pod ->
+                    pod.getMetadata().getLabels().containsKey(componentLabelKey)
+                        && pod.getMetadata()
+                            .getLabels()
+                            .get(componentLabelKey)
+                            .equals(componentLabelVal))
+            .map(pod -> pod.getMetadata().getName())
+            .toList();
 
     // delete original pods, and give them a chance to recover
     for (String podName : podsToDelete) {

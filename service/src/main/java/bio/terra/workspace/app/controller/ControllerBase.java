@@ -131,33 +131,33 @@ public class ControllerBase {
         // Validate that the assigned user is a member of the workspace. It must have at least
         // READ action.
         SamRethrow.onInterrupted(
-                () ->
-                        samService.userIsAuthorized(
-                                SamConstants.SamResource.WORKSPACE,
-                                workspaceUuid.toString(),
-                                SamConstants.SamWorkspaceAction.READ,
-                                userEmail,
-                                userRequest),
-                "validate private user is workspace member");
+            () ->
+                samService.userIsAuthorized(
+                    SamConstants.SamResource.WORKSPACE,
+                    workspaceUuid.toString(),
+                    SamConstants.SamWorkspaceAction.READ,
+                    userEmail,
+                    userRequest),
+            "validate private user is workspace member");
 
         // Translate the incoming role list into our internal model form
         // This also validates that the incoming API model values are correct.
         var iamRole =
-                ControlledResourceIamRole.fromApiModel(
-                        commonFields.getPrivateResourceUser().getPrivateResourceIamRole());
+            ControlledResourceIamRole.fromApiModel(
+                commonFields.getPrivateResourceUser().getPrivateResourceIamRole());
 
         if (iamRole != ControlledResourceIamRole.READER
-                && iamRole != ControlledResourceIamRole.WRITER) {
+            && iamRole != ControlledResourceIamRole.WRITER) {
           throw new ValidationException(
-                  "For application private controlled resources, only READER and WRITER roles are allowed. Found "
-                          + iamRole.toApiModel());
+              "For application private controlled resources, only READER and WRITER roles are allowed. Found "
+                  + iamRole.toApiModel());
         }
 
         return new PrivateUserRole.Builder()
-                .present(true)
-                .userEmail(userEmail)
-                .role(iamRole)
-                .build();
+            .present(true)
+            .userEmail(userEmail)
+            .role(iamRole)
+            .build();
       }
       case MANAGED_BY_USER -> {
         validateNoInputUser(inputUser);
@@ -166,10 +166,10 @@ public class ControllerBase {
         // This could be parameterized if we ever have reason to grant different permissions
         // to different objects.
         return new PrivateUserRole.Builder()
-                .present(true)
-                .userEmail(samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest))
-                .role(ControlledResourceIamRole.EDITOR)
-                .build();
+            .present(true)
+            .userEmail(samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest))
+            .role(ControlledResourceIamRole.EDITOR)
+            .build();
       }
       default -> throw new InternalLogicException("Unknown managedBy enum");
     }
