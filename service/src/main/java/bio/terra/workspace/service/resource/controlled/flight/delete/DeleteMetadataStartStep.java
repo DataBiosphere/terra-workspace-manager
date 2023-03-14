@@ -41,8 +41,12 @@ public class DeleteMetadataStartStep implements Step {
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     // If we successfully changed state, then we assume that something bad happened
-    // during delete processing and call this a broken delete.
-    // Otherwise, we assume it failed because the resource is busy and simply return.
+    // during delete processing and we made it to this step because all UNDO
+    // processing was successful. We return the resource to the READY state.
+    // It is unclear that this ever happens - failures on delete typically lead
+    // to dismal failures - the resource will be stuck in a DELETING state
+    // and we will have to do a manual intervention. However, being conservative,
+    // there may be recoverable delete cases, so we handle them this way.
     var resourceStateChanged =
         flightContext
             .getWorkingMap()

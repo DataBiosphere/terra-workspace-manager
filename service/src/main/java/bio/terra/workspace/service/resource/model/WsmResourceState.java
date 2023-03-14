@@ -13,7 +13,6 @@ import org.apache.commons.lang3.SerializationException;
  */
 public enum WsmResourceState {
   BROKEN("BROKEN", ApiState.BROKEN),
-  BROKEN_DELETE("BROKEN_DELETE", ApiState.BROKEN_DELETE),
   CREATING("CREATING", ApiState.CREATING),
   DELETING("DELETING", ApiState.DELETING),
   READY("READY", ApiState.READY),
@@ -22,34 +21,25 @@ public enum WsmResourceState {
 
   // -- Valid state transitions --
   private static final List<WsmResourceState> BROKEN_TRANSITIONS = List.of(DELETING);
-  // BROKEN_DELETING requires manual intervention to clean up
-  private static final List<WsmResourceState> BROKEN_DELETING_TRANSITIONS = List.of();
-  // We allow the NOT_EXISTS transition for the V1 apis where we move failed resources from
-  // creating to non-existent.
+  // We allow the NOT_EXISTS transition when the state rule is DELETE_ON_FAILURE, where
+  // we move failed resources from creating to non-existent.
   private static final List<WsmResourceState> CREATING_TRANSITIONS =
       List.of(BROKEN, READY, NOT_EXISTS);
-  private static final List<WsmResourceState> DELETING_TRANSITIONS =
-      List.of(BROKEN_DELETE, NOT_EXISTS);
+  // We allow DELETING to READY to support the case of a successful undo of a delete
+  // flight.
+  private static final List<WsmResourceState> DELETING_TRANSITIONS = List.of(READY, NOT_EXISTS);
   private static final List<WsmResourceState> READY_TRANSITIONS = List.of(UPDATING, DELETING);
   private static final List<WsmResourceState> UPDATING_TRANSITIONS = List.of(BROKEN, READY);
   private static final List<WsmResourceState> NOT_EXISTS_TRANSITIONS = List.of(CREATING);
 
   private static final Map<WsmResourceState, List<WsmResourceState>> VALID_TRANSITIONS =
       Map.of(
-          BROKEN,
-          BROKEN_TRANSITIONS,
-          BROKEN_DELETE,
-          BROKEN_DELETING_TRANSITIONS,
-          CREATING,
-          CREATING_TRANSITIONS,
-          DELETING,
-          DELETING_TRANSITIONS,
-          READY,
-          READY_TRANSITIONS,
-          UPDATING,
-          UPDATING_TRANSITIONS,
-          NOT_EXISTS,
-          NOT_EXISTS_TRANSITIONS);
+          BROKEN, BROKEN_TRANSITIONS,
+          CREATING, CREATING_TRANSITIONS,
+          DELETING, DELETING_TRANSITIONS,
+          READY, READY_TRANSITIONS,
+          UPDATING, UPDATING_TRANSITIONS,
+          NOT_EXISTS, NOT_EXISTS_TRANSITIONS);
 
   private final String dbString;
   private final ApiState apiState;
@@ -99,12 +89,6 @@ public enum WsmResourceState {
     if (startState == endState) {
       return true;
     }
-
-    for (WsmResourceState validState : validTransitionList) {
-      if (validState == endState) {
-        return true;
-      }
-    }
-    return false;
+    return validTransitionList.contains(endState);
   }
 }

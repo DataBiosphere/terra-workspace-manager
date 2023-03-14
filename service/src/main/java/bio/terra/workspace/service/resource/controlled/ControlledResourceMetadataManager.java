@@ -11,7 +11,6 @@ import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.exception.ResourceIsBusyException;
-import bio.terra.workspace.service.resource.controlled.exception.ResourceIsCorruptException;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -118,20 +117,13 @@ public class ControlledResourceMetadataManager {
         throw new ResourceIsBusyException(
             "Another operation is running on the resource; wait and try again");
 
-      case BROKEN_DELETE:
-        // If the resource is in the BROKEN_DELETING state, then it is in an unknown broken state
-        // and cannot be deleted by a user. It has to be cleaned up manually by Terra personnel.
-        throw new ResourceIsCorruptException(
-            "Resource is in an internally corrupted state. Contact support.");
-
       case BROKEN:
         // If the resource is in the BROKEN state, then there may be no Sam resource. We do our
         // best with what we know. We handle two cases:
-        //  1. If the resource is an application resource, and the application is making the
-        // request,
-        //     we go ahead.
-        //  2. If the resource is a user resource, we test that the user is a WRITER on the
-        // workspace.
+        //  1. If the resource is an application resource, and the application is making
+        //     the request, we go ahead and perform the operation.
+        //  2. If the resource is a user resource, we test that the user has delete action
+        //     on the workspace.
         if (controlledResource.getManagedBy() == ManagedByType.MANAGED_BY_APPLICATION) {
           WsmApplication application =
               applicationDao.getApplication(controlledResource.getApplicationId());
@@ -143,7 +135,9 @@ public class ControlledResourceMetadataManager {
                     + "can delete a broken application resource");
           }
         } else {
-          // broken user resource
+          // Broken user resource. The Sam resource for this resource will not exist.
+          // Either it failed to get created or we undid it on the way out of the
+          // flight. So we base the authz check on the user's permission on the workspace.
           SamRethrow.onInterrupted(
               () ->
                   samService.checkAuthz(

@@ -141,7 +141,10 @@ public class ResourceDao {
   }
 
   /**
-   * For flight-based resource deletion, test and make the state transition to deleting.
+   * For flight-based resource deletion, test and make the state transition to DELETING.
+   *
+   * <p>The DELETING state is resolve by either a call to deleteResourceSuccess or
+   * deleteResourceFailure.
    *
    * @param workspaceUuid workspace id
    * @param resourceId resource id
@@ -151,23 +154,32 @@ public class ResourceDao {
   public void deleteResourceStart(UUID workspaceUuid, UUID resourceId, String flightId) {
     DbResource dbResource = getDbResourceFromIds(workspaceUuid, resourceId);
     updateState(
-        dbResource, /* expectedFlightId */
-        null,
+        dbResource,
+        /*expectedFlightId=*/ null,
         flightId,
-        WsmResourceState.DELETING, /* exception */
-        null);
+        WsmResourceState.DELETING,
+        /*exception=*/ null);
   }
 
+  /**
+   * Successful end state of a delete operation. The operation succeeded, so it is safe to delete
+   * the metadata
+   *
+   * @param workspaceUuid workspace id
+   * @param resourceId resource id
+   */
   @WriteTransaction
   public void deleteResourceSuccess(UUID workspaceUuid, UUID resourceId) {
     DbResource dbResource = getDbResourceFromIds(workspaceUuid, resourceId);
-    if (!checkResourceRetry(dbResource, WsmResourceState.NOT_EXISTS, null)) {
-      deleteResourceWorker(workspaceUuid, resourceId, /* resourceType */ null);
+    if (!isResourceInState(dbResource, WsmResourceState.NOT_EXISTS, /*flightId=*/ null)) {
+      deleteResourceWorker(workspaceUuid, resourceId, /*resourceType=*/ null);
     }
   }
 
   /**
-   * The delete operation failed, we put the resource into BROKEN_DELETE. It is a "dismal failure".
+   * Failure end state of a delete operation. The only way to get to this code is if a delete flight
+   * manages to UNDO without creating a dismal failure. That seems unlikely, but rather than assume
+   * it never happens, we allow this transition.
    *
    * @param workspaceUuid workspace of the resource
    * @param resourceId identifier of the resource
@@ -178,15 +190,30 @@ public class ResourceDao {
   public void deleteResourceFailure(
       UUID workspaceUuid, UUID resourceId, String flightId, @Nullable Exception exception) {
     DbResource dbResource = getDbResourceFromIds(workspaceUuid, resourceId);
-    updateState(
-        dbResource, flightId, /* targetFlightId */ null, WsmResourceState.BROKEN_DELETE, exception);
+    updateState(dbResource, flightId, /*targetFlightId=*/ null, WsmResourceState.READY, exception);
   }
 
+  /**
+   * For deleting metadata-only referenced resources; there are no state transitions. We simply
+   * delete the metadata.
+   *
+   * @param workspaceUuid workspace id
+   * @param resourceId resource id
+   */
   @WriteTransaction
   public void deleteReferencedResource(UUID workspaceUuid, UUID resourceId) {
-    deleteResourceWorker(workspaceUuid, resourceId, /* resourceType */ null);
+    deleteResourceWorker(workspaceUuid, resourceId, /*resourceType=*/ null);
   }
 
+  /**
+   * Delete metadata-only referenced resource with an extra check to make sure it is of the right
+   * resource type.
+   *
+   * @param workspaceUuid workspace id
+   * @param resourceId resource id
+   * @param resourceType resource type to check
+   * @return true if resource was deleted, false otherwise
+   */
   @WriteTransaction
   public boolean deleteReferencedResourceForResourceType(
       UUID workspaceUuid, UUID resourceId, WsmResourceType resourceType) {
@@ -666,6 +693,9 @@ public class ResourceDao {
    * allows creating flights to retry the metadata create step simply by re-issuing this create
    * call.
    *
+   * <p>The CREATING state is resolve by either a call to createResourceSuccess or
+   * createResourceFailure.
+   *
    * @param resource a filled in resource object
    * @param flightId flight id performing the create
    * @throws DuplicateResourceException on a duplicate resource
@@ -675,7 +705,7 @@ public class ResourceDao {
       throws DuplicateResourceException {
     DbResource dbResource =
         getDbResourceFromIds(resource.getWorkspaceId(), resource.getResourceId());
-    if (checkResourceRetry(dbResource, WsmResourceState.CREATING, flightId)) {
+    if (isResourceInState(dbResource, WsmResourceState.CREATING, flightId)) {
       return; // It was a retry. We are done here
     }
 
@@ -696,7 +726,7 @@ public class ResourceDao {
   }
 
   /**
-   * Complete a successful resource create
+   * Successful completion of a create, transitions from CREATING to READY.
    *
    * @param resource the resource object successfully created
    * @param flightId flight id doing the creation
@@ -709,14 +739,20 @@ public class ResourceDao {
     updateState(
         dbResource,
         flightId,
-        /* targetFlightId */ null,
+        /*targetFlightId=*/ null,
         WsmResourceState.READY,
-        /* exception */ null);
+        /*exception=*/ null);
     return getResource(resource.getWorkspaceId(), resource.getResourceId());
   }
 
   /**
-   * Complete a failed resource create
+   * Failed completion of a create. How we handle this case depends on the resource state rule. The
+   * rule is a configuration parameter that is typically an input parameter to flights.
+   *
+   * <p>If the rule is DELETE_ON_FAILURE, then we delete the metadata.
+   *
+   * <p>If the rule is BROKEN_ON_FAILURE, we update the metadata to the BROKEN state and remember
+   * the exception causing the failure.
    *
    * @param resource the resource object successfully created
    * @param flightId flight id doing the creation
@@ -733,16 +769,13 @@ public class ResourceDao {
     switch (resourceStateRule) {
       case DELETE_ON_FAILURE -> {
         deleteResourceWorker(
-            resource.getWorkspaceId(), resource.getResourceId(), /* resourceType */ null);
+            resource.getWorkspaceId(), resource.getResourceId(), /*resourceType=*/ null);
       }
 
       case BROKEN_ON_FAILURE -> {
-        // If the resource is already in the broken state with an empty flightId
-        // we assume we already completed this operation and this is a retry.
-        // Nothing to do here.
         DbResource dbResource =
             getDbResourceFromIds(resource.getWorkspaceId(), resource.getResourceId());
-        updateState(dbResource, flightId, /* flightId */ null, WsmResourceState.BROKEN, exception);
+        updateState(dbResource, flightId, /*flightId=*/ null, WsmResourceState.BROKEN, exception);
       }
       default -> throw new InternalLogicException("Invalid switch case");
     }
@@ -758,7 +791,7 @@ public class ResourceDao {
    * @param flightId expected flightId on a retry
    * @return true if the resource is in the expect state; false otherwise
    */
-  private boolean checkResourceRetry(
+  private boolean isResourceInState(
       @Nullable DbResource dbResource, WsmResourceState state, String flightId) {
     if (dbResource == null) {
       return (state == WsmResourceState.NOT_EXISTS && flightId == null);
@@ -810,7 +843,7 @@ public class ResourceDao {
       WsmResourceState targetState,
       @Nullable Exception exception) {
     // If we are already in the target state, assume this is a retry and go on our merry way
-    if (checkResourceRetry(dbResource, targetState, targetFlightId)) {
+    if (isResourceInState(dbResource, targetState, targetFlightId)) {
       return;
     }
 
@@ -1199,7 +1232,7 @@ public class ResourceDao {
     return getDbResource(sql, params);
   }
 
-  private DbResource getDbResource(String sql, MapSqlParameterSource params) {
+  private @Nullable DbResource getDbResource(String sql, MapSqlParameterSource params) {
     try {
       return jdbcTemplate.queryForObject(sql, params, DB_RESOURCE_ROW_MAPPER);
     } catch (EmptyResultDataAccessException e) {

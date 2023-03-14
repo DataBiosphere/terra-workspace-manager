@@ -9,6 +9,7 @@ databaseChangeLog:
             - column:
                   name: state
                   type: text
+                  value: "READY"
                   remarks: |
                       String for of the state enum. See WsmResourceState.
             - column:
@@ -21,23 +22,4 @@ databaseChangeLog:
                   type: text
                   remarks: |
                       Serialized exception; must be a subclass of ErrorReportException
-    -addColumn:
-        tableName: cloud_context
-        columns:
-            - column:
-                 name: state
-                 type: text
-                 remarks: |
-                     String for of the state enum. See WsmResourceState.
-            - column:
-                 name: flight_id
-                 type: text
-                 remarks: |
-                     For transition states (e.g., updating), the flight doing the transition.
-                     This field supersedes the creating_flight column.
-            - column:
-                 name: error
-                 type: text
-                 remarks: |
-                     Serialized exception; must be a subclass of ErrorReportException
         
