@@ -190,7 +190,7 @@ components:
       required: [definition, billingProfileId]
       properties:
         landingZoneId:
-          description: The ID of the landing zone (optional)
+          description: The ID of the landing zone (optional). If omitted an ID will be auto-generated.
           type: string
           format: uuid
         definition:
