@@ -59,8 +59,8 @@ public class ReferencedGcpResourceControllerGcsBucketTest extends BaseConnectedT
   private UUID workspaceId;
   private UUID workspaceId2;
 
-  private String sourceResourceName = TestUtils.appendRandomNumber("source-resource-name");
-  private String sourceBucketName = TestUtils.appendRandomNumber("source-bucket-name");
+  private final String sourceResourceName = TestUtils.appendRandomNumber("source-resource-name");
+  private final String sourceBucketName = TestUtils.appendRandomNumber("source-bucket-name");
   private ApiGcpGcsBucketResource sourceResource;
 
   // See here for how to skip workspace creation for local runs:

@@ -96,7 +96,7 @@ public class ControlledResourceFixtures {
       new ApiGcpGcsBucketCreationParameters()
           .name(TestUtils.appendRandomNumber(BUCKET_NAME_PREFIX))
           .location(GcpResourceConstant.DEFAULT_REGION);
-  public static String DEFAULT_AZURE_RESOURCE_REGION = "westcentralus";
+  public static final String DEFAULT_AZURE_RESOURCE_REGION = "westcentralus";
 
   /** Construct a parameter object with a unique bucket name to avoid unintended clashes. */
   public static ApiGcpGcsBucketCreationParameters getGoogleBucketCreationParameters() {

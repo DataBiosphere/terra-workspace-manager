@@ -51,7 +51,7 @@ import org.slf4j.LoggerFactory;
  * <p>A step that illustrates the inconsistent approach to IAM in GCP
  */
 public class RevokeStep implements Step {
-  public static Logger logger = LoggerFactory.getLogger(RevokeStep.class);
+  public static final Logger logger = LoggerFactory.getLogger(RevokeStep.class);
   private final GcpCloudContextService gcpCloudContextService;
   private final CrlService crlService;
   private final GrantDao grantDao;
@@ -176,9 +176,7 @@ public class RevokeStep implements Step {
             controlledResource.castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
         revokeResourceBq(bqResource, grantData);
       }
-      default -> {
-        throw new InternalLogicException("Non-GCP resource got a temporary grant");
-      }
+      default -> throw new InternalLogicException("Non-GCP resource got a temporary grant");
     }
   }
 

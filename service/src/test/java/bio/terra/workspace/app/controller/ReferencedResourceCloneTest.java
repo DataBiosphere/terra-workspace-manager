@@ -233,7 +233,7 @@ public class ReferencedResourceCloneTest extends BaseConnectedTest {
     List<String> actualRegions =
         regionPolicy.getAdditionalData().stream()
             .filter(data -> data.getKey().equals(PolicyFixtures.REGION))
-            .map(region -> region.getValue())
+            .map(ApiWsmPolicyPair::getValue)
             .toList();
     assertEquals(expectedRegions, actualRegions);
   }

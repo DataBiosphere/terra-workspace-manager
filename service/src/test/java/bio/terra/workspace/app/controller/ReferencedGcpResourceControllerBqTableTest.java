@@ -61,9 +61,9 @@ public class ReferencedGcpResourceControllerBqTableTest extends BaseConnectedTes
   private String projectId;
   private UUID workspaceId2;
 
-  private String sourceResourceName = TestUtils.appendRandomNumber("source-resource-name");
-  private String sourceDatasetName = TestUtils.appendRandomNumber("source-dataset-name");
-  private String sourceTableId = TestUtils.appendRandomNumber("source-table-id");
+  private final String sourceResourceName = TestUtils.appendRandomNumber("source-resource-name");
+  private final String sourceDatasetName = TestUtils.appendRandomNumber("source-dataset-name");
+  private final String sourceTableId = TestUtils.appendRandomNumber("source-table-id");
   private ApiGcpBigQueryDataTableResource sourceResource;
 
   // See here for how to skip workspace creation for local runs:

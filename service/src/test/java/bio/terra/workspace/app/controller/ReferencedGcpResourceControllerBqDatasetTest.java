@@ -64,8 +64,8 @@ public class ReferencedGcpResourceControllerBqDatasetTest extends BaseConnectedT
   private String projectId;
   private UUID workspaceId2;
 
-  private String sourceResourceName = TestUtils.appendRandomNumber("source-resource-name");
-  private String sourceDatasetName = TestUtils.appendRandomNumber("source-dataset-name");
+  private final String sourceResourceName = TestUtils.appendRandomNumber("source-resource-name");
+  private final String sourceDatasetName = TestUtils.appendRandomNumber("source-dataset-name");
   private ApiGcpBigQueryDatasetResource sourceResource;
 
   // See here for how to skip workspace creation for local runs:

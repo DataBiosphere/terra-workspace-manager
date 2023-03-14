@@ -66,8 +66,7 @@ public class LaunchCloneAllResourcesFlightStep implements Step {
     subflightInputParameters.put(
         JobMapKeys.DESCRIPTION.getKeyName(),
         String.format(
-            "Clone all resources into workspace %s",
-            destinationWorkspace.getWorkspaceId().toString()));
+            "Clone all resources into workspace %s", destinationWorkspace.getWorkspaceId()));
 
     // Build a CloneAllResourcesFlight
     try {

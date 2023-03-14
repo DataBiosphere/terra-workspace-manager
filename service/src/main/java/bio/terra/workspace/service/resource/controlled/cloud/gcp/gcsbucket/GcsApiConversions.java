@@ -149,16 +149,13 @@ public class GcsApiConversions {
   }
 
   public static LifecycleAction toGcsApi(ApiGcpGcsBucketLifecycleRuleAction lifecycleRuleAction) {
-    switch (lifecycleRuleAction.getType()) {
-      case DELETE:
-        return LifecycleAction.newDeleteAction();
-      case SET_STORAGE_CLASS:
-        return LifecycleAction.newSetStorageClassAction(
-            toGcsApi(lifecycleRuleAction.getStorageClass()));
-      default:
-        throw new BadRequestException(
-            "Unrecognized lifecycle action type " + lifecycleRuleAction.getType());
-    }
+    return switch (lifecycleRuleAction.getType()) {
+      case DELETE -> LifecycleAction.newDeleteAction();
+      case SET_STORAGE_CLASS -> LifecycleAction.newSetStorageClassAction(
+          toGcsApi(lifecycleRuleAction.getStorageClass()));
+      default -> throw new BadRequestException(
+          "Unrecognized lifecycle action type " + lifecycleRuleAction.getType());
+    };
   }
 
   public static ApiGcpGcsBucketLifecycleRuleAction toWsmApi(LifecycleAction action) {
@@ -169,16 +166,13 @@ public class GcsApiConversions {
   }
 
   public static ApiGcpGcsBucketLifecycleRuleActionType toWsmApi(String lifecycleActionType) {
-    switch (lifecycleActionType) {
-      case DeleteLifecycleAction.TYPE:
-        return ApiGcpGcsBucketLifecycleRuleActionType.DELETE;
-      case SetStorageClassLifecycleAction.TYPE:
-        return ApiGcpGcsBucketLifecycleRuleActionType.SET_STORAGE_CLASS;
-      default:
-        throw new IllegalArgumentException(
-            String.format(
-                "GCS BucketLifecycle action type %s not recognized.", lifecycleActionType));
-    }
+    return switch (lifecycleActionType) {
+      case DeleteLifecycleAction.TYPE -> ApiGcpGcsBucketLifecycleRuleActionType.DELETE;
+      case SetStorageClassLifecycleAction.TYPE -> ApiGcpGcsBucketLifecycleRuleActionType
+          .SET_STORAGE_CLASS;
+      default -> throw new IllegalArgumentException(
+          String.format("GCS BucketLifecycle action type %s not recognized.", lifecycleActionType));
+    };
   }
 
   /**
@@ -195,9 +189,7 @@ public class GcsApiConversions {
       case DeleteLifecycleAction.TYPE:
         return Optional.empty(); // Delete action has no storage class
       case SetStorageClassLifecycleAction.TYPE:
-        if (lifecycleAction instanceof SetStorageClassLifecycleAction) {
-          SetStorageClassLifecycleAction storageClassLifecycleAction =
-              (SetStorageClassLifecycleAction) lifecycleAction;
+        if (lifecycleAction instanceof SetStorageClassLifecycleAction storageClassLifecycleAction) {
           return Optional.of(storageClassLifecycleAction.getStorageClass());
         } else {
           throw new IllegalArgumentException(

@@ -18,7 +18,7 @@ public class VersionConfiguration implements InitializingBean {
   private String gitTag;
   private String build;
 
-  private ConfigurableEnvironment configurableEnvironment;
+  private final ConfigurableEnvironment configurableEnvironment;
 
   @Autowired
   public VersionConfiguration(ConfigurableEnvironment configurableEnvironment) {

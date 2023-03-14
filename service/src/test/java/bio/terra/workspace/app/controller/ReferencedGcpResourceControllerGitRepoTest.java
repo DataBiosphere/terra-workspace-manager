@@ -56,8 +56,8 @@ public class ReferencedGcpResourceControllerGitRepoTest extends BaseConnectedTes
   private UUID workspaceId;
   private UUID workspaceId2;
 
-  private String sourceResourceName = TestUtils.appendRandomNumber("source-resource-name");
-  private String sourceGitRepoUrl =
+  private final String sourceResourceName = TestUtils.appendRandomNumber("source-resource-name");
+  private final String sourceGitRepoUrl =
       "git@github.com:DataBiosphere/%s.git"
           .formatted(TestUtils.appendRandomNumber("terra-workspace-manager"));
   private ApiGitRepoResource sourceResource;

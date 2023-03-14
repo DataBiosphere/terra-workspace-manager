@@ -82,9 +82,9 @@ public class GlobalExceptionHandler {
       Throwable ex, HttpStatus statusCode, List<String> causes) {
     StringBuilder combinedCauseString = new StringBuilder();
     for (Throwable cause = ex; cause != null; cause = cause.getCause()) {
-      combinedCauseString.append("cause: ").append(cause.toString()).append(", ");
+      combinedCauseString.append("cause: ").append(cause).append(", ");
     }
-    logger.error("Global exception handler: " + combinedCauseString.toString(), ex);
+    logger.error("Global exception handler: " + combinedCauseString, ex);
     String message =
         Optional.ofNullable(ex).map(Throwable::getMessage).orElse("no message present");
 

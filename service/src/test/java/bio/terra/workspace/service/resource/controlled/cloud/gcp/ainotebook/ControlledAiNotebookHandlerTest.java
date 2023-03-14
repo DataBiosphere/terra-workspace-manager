@@ -2,7 +2,6 @@ package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource.MAX_INSTANCE_NAME_LENGTH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.common.BaseUnitTest;
 import org.junit.jupiter.api.Test;
@@ -15,7 +14,7 @@ public class ControlledAiNotebookHandlerTest extends BaseUnitTest {
     String instanceId =
         ControlledAiNotebookHandler.getHandler().generateCloudName(null, instanceName);
 
-    assertTrue(instanceId.equals("yuhuyoyo"));
+    assertEquals("yuhuyoyo", instanceId);
   }
 
   @Test
@@ -24,7 +23,7 @@ public class ControlledAiNotebookHandlerTest extends BaseUnitTest {
     String instanceId =
         ControlledAiNotebookHandler.getHandler().generateCloudName(null, instanceName);
 
-    assertTrue(instanceId.equals("yuhuyoyo"));
+    assertEquals("yuhuyoyo", instanceId);
   }
 
   @Test
@@ -33,7 +32,7 @@ public class ControlledAiNotebookHandlerTest extends BaseUnitTest {
     String instanceId =
         ControlledAiNotebookHandler.getHandler().generateCloudName(null, instanceName);
 
-    assertTrue(instanceId.equals("yuhuyoyo"));
+    assertEquals("yuhuyoyo", instanceId);
   }
 
   @Test
@@ -42,7 +41,7 @@ public class ControlledAiNotebookHandlerTest extends BaseUnitTest {
     String instanceId =
         ControlledAiNotebookHandler.getHandler().generateCloudName(null, instanceName);
 
-    assertTrue(instanceId.equals("yuhuyoyo"));
+    assertEquals("yuhuyoyo", instanceId);
   }
 
   @Test
@@ -51,7 +50,7 @@ public class ControlledAiNotebookHandlerTest extends BaseUnitTest {
     String instanceId =
         ControlledAiNotebookHandler.getHandler().generateCloudName(null, instanceName);
 
-    assertTrue(instanceId.equals("yuhuyoyo"));
+    assertEquals("yuhuyoyo", instanceId);
   }
 
   @Test
@@ -60,7 +59,7 @@ public class ControlledAiNotebookHandlerTest extends BaseUnitTest {
     String instanceId =
         ControlledAiNotebookHandler.getHandler().generateCloudName(null, instanceName);
 
-    assertTrue(instanceId.equals("yuhuyoyo"));
+    assertEquals("yuhuyoyo", instanceId);
   }
 
   @Test
@@ -73,6 +72,6 @@ public class ControlledAiNotebookHandlerTest extends BaseUnitTest {
     int maxNameLength = MAX_INSTANCE_NAME_LENGTH;
 
     assertEquals(maxNameLength, instanceId.length());
-    assertTrue(instanceId.equals(instanceId.substring(0, maxNameLength)));
+    assertEquals(instanceId, instanceId.substring(0, maxNameLength));
   }
 }

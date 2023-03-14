@@ -96,8 +96,8 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
   private UUID workspaceId2;
   private String projectId2;
 
-  private String sourceResourceName = TestUtils.appendRandomNumber("sourceresourcename");
-  private String sourceDatasetName = TestUtils.appendRandomNumber("sourcedatasetname");
+  private final String sourceResourceName = TestUtils.appendRandomNumber("sourceresourcename");
+  private final String sourceDatasetName = TestUtils.appendRandomNumber("sourcedatasetname");
   private ApiGcpBigQueryDatasetResource sourceResource;
 
   // See here for how to skip workspace creation for local runs:
@@ -801,12 +801,12 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         crlService.createWsmSaBigQueryCow().datasets().get(projectId, datasetId).execute();
     assertEquals(expectedLocation, dataset.getLocation());
     if (expectedDefaultTableLifetime == null) {
-      assertEquals(null, dataset.getDefaultTableExpirationMs());
+      assertNull(dataset.getDefaultTableExpirationMs());
     } else {
       assertEquals(expectedDefaultTableLifetime, dataset.getDefaultTableExpirationMs() / 1000);
     }
     if (expectedDefaultPartitionLifetime == null) {
-      assertEquals(null, dataset.getDefaultPartitionExpirationMs());
+      assertNull(dataset.getDefaultPartitionExpirationMs());
     } else {
       assertEquals(
           expectedDefaultPartitionLifetime, dataset.getDefaultPartitionExpirationMs() / 1000);

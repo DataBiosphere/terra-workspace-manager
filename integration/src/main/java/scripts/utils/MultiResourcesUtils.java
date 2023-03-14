@@ -122,22 +122,16 @@ public class MultiResourcesUtils {
     for (ResourceMetadata metadata : resources) {
       if (metadata.getStewardshipType() == StewardshipType.CONTROLLED) {
         switch (metadata.getResourceType()) {
-          case GCS_BUCKET:
-            GcsBucketUtils.deleteControlledGcsBucket(
-                metadata.getResourceId(), workspaceUuid, controlledGcpResourceApi);
-            break;
-          case BIG_QUERY_DATASET:
-            controlledGcpResourceApi.deleteBigQueryDataset(workspaceUuid, metadata.getResourceId());
-            break;
-          case AI_NOTEBOOK:
-            NotebookUtils.deleteControlledNotebookUserPrivate(
-                workspaceUuid, metadata.getResourceId(), controlledGcpResourceApi);
-            break;
-          default:
-            throw new IllegalStateException(
-                String.format(
-                    "No cleanup method specified for resource type %s.",
-                    metadata.getResourceType()));
+          case GCS_BUCKET -> GcsBucketUtils.deleteControlledGcsBucket(
+                  metadata.getResourceId(), workspaceUuid, controlledGcpResourceApi);
+          case BIG_QUERY_DATASET ->
+                  controlledGcpResourceApi.deleteBigQueryDataset(workspaceUuid, metadata.getResourceId());
+          case AI_NOTEBOOK -> NotebookUtils.deleteControlledNotebookUserPrivate(
+                  workspaceUuid, metadata.getResourceId(), controlledGcpResourceApi);
+          default -> throw new IllegalStateException(
+                  String.format(
+                          "No cleanup method specified for resource type %s.",
+                          metadata.getResourceType()));
         }
       }
     }

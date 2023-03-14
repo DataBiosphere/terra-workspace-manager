@@ -837,7 +837,7 @@ public class ControlledResourceService {
       String resultPath,
       AuthenticatedUserRequest userRequest) {
     WsmResource resource = resourceDao.getResource(workspaceUuid, resourceId);
-    final String jobDescription = "Delete controlled resource; id: " + resourceId.toString();
+    final String jobDescription = "Delete controlled resource; id: " + resourceId;
 
     List<WsmResource> resourceToDelete = new ArrayList<>();
     resourceToDelete.add(resource);

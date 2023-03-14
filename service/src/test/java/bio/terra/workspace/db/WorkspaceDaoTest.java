@@ -156,10 +156,9 @@ class WorkspaceDaoTest extends BaseUnitTest {
     WorkspaceUnitTestUtils.createGcpCloudContextInDatabase(workspaceDao, workspace3, project3);
     WorkspaceUnitTestUtils.createCloudContextInDatabase(
         workspaceDao, workspace4, project4, CloudPlatform.AZURE);
-    Map<UUID, String> workspaceIdToGcpContextMap = new HashMap<>();
 
-    workspaceIdToGcpContextMap.putAll(
-        workspaceDao.getWorkspaceIdToCloudContextMap(CloudPlatform.GCP));
+    Map<UUID, String> workspaceIdToGcpContextMap =
+        new HashMap<>(workspaceDao.getWorkspaceIdToCloudContextMap(CloudPlatform.GCP));
 
     for (Map.Entry<UUID, String> cloudContext : workspaceIdToGcpContextMap.entrySet()) {
       workspaceIdToGcpContextMap.put(

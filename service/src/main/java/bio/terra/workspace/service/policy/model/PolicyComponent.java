@@ -7,8 +7,8 @@ import bio.terra.workspace.generated.model.ApiWsmPolicyComponent;
 public enum PolicyComponent {
   WSM(ApiWsmPolicyComponent.WSM, TpsComponent.WSM);
 
-  private ApiWsmPolicyComponent apiWsmPolicyComponent;
-  private TpsComponent tpsComponent;
+  private final ApiWsmPolicyComponent apiWsmPolicyComponent;
+  private final TpsComponent tpsComponent;
 
   PolicyComponent(ApiWsmPolicyComponent wsmPolicyComponent, TpsComponent tpsComponent) {
     this.apiWsmPolicyComponent = wsmPolicyComponent;

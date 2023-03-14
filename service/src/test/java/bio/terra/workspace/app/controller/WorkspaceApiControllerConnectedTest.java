@@ -613,9 +613,8 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
       throws Exception {
     MockHttpServletRequestBuilder requestBuilder =
         get(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, id));
-    if (minimumHighestRole.isPresent()) {
-      requestBuilder.param("minimumHighestRole", minimumHighestRole.get().name());
-    }
+    minimumHighestRole.ifPresent(
+        apiIamRole -> requestBuilder.param("minimumHighestRole", apiIamRole.name()));
     String serializedResponse =
         mockMvc
             .perform(addAuth(requestBuilder, request))
@@ -634,9 +633,8 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
       throws Exception {
     MockHttpServletRequestBuilder requestBuilder =
         get(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, id));
-    if (minimumHighestRole.isPresent()) {
-      requestBuilder.param("minimumHighestRole", minimumHighestRole.get().name());
-    }
+    minimumHighestRole.ifPresent(
+        apiIamRole -> requestBuilder.param("minimumHighestRole", apiIamRole.name()));
     mockMvc.perform(addAuth(requestBuilder, userRequest)).andExpect(status().is(statusCode));
   }
 
@@ -653,9 +651,8 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
       throws Exception {
     MockHttpServletRequestBuilder requestBuilder =
         get(String.format(WORKSPACES_V1_BY_UFID_PATH_FORMAT, userFacingId));
-    if (minimumHighestRole.isPresent()) {
-      requestBuilder.param("minimumHighestRole", minimumHighestRole.get().name());
-    }
+    minimumHighestRole.ifPresent(
+        apiIamRole -> requestBuilder.param("minimumHighestRole", apiIamRole.name()));
     String serializedResponse =
         mockMvc
             .perform(addAuth(requestBuilder, request))
@@ -674,9 +671,8 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
       throws Exception {
     MockHttpServletRequestBuilder requestBuilder =
         get(String.format(WORKSPACES_V1_BY_UFID_PATH_FORMAT, userFacingId));
-    if (minimumHighestRole.isPresent()) {
-      requestBuilder.param("minimumHighestRole", minimumHighestRole.get().name());
-    }
+    minimumHighestRole.ifPresent(
+        apiIamRole -> requestBuilder.param("minimumHighestRole", apiIamRole.name()));
     mockMvc.perform(addAuth(requestBuilder, userRequest)).andExpect(status().is(statusCode));
   }
 
@@ -688,9 +684,8 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   private List<ApiWorkspaceDescription> listWorkspaces(
       AuthenticatedUserRequest request, Optional<ApiIamRole> minimumHighestRole) throws Exception {
     MockHttpServletRequestBuilder requestBuilder = get(WORKSPACES_V1_PATH);
-    if (minimumHighestRole.isPresent()) {
-      requestBuilder.param("minimumHighestRole", minimumHighestRole.get().name());
-    }
+    minimumHighestRole.ifPresent(
+        apiIamRole -> requestBuilder.param("minimumHighestRole", apiIamRole.name()));
     String serializedResponse =
         mockMvc
             .perform(addAuth(requestBuilder, request))

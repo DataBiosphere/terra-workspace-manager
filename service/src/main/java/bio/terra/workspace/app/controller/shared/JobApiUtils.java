@@ -171,7 +171,7 @@ public class JobApiUtils {
     // support it.
     String protocol =
         ingressConfig.getDomainName().startsWith("localhost") ? "http://" : "https://";
-    return protocol + Path.of(ingressConfig.getDomainName(), resultPath).toString();
+    return protocol + Path.of(ingressConfig.getDomainName(), resultPath);
   }
 
   /**

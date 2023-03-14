@@ -28,7 +28,7 @@ public class CreateAzureStorageStepTest extends BaseStorageStepTest {
   @Mock private StorageAccountKeyProvider mockStorageAccountKeyProvider;
 
   private ApiAzureStorageCreationParameters creationParameters;
-  private ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
+  private final ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
 
   @BeforeEach
   public void setup() {
