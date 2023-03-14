@@ -207,7 +207,10 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         workspaceUtils
             .createWorkspaceWithGcpContext(userAccessUtils.defaultUserAuthRequest())
             .getWorkspaceId();
+
+    //    workspaceId = UUID.fromString("cd58ab63-5f77-4c46-8775-e7ee25fee458");
     projectId = gcpCloudContextService.getRequiredGcpProject(workspaceId);
+    //    projectId = "terra-vdevel-clean-lemon-8345";
   }
 
   /**
@@ -222,9 +225,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   /** After running all tests, delete the shared workspace. */
   @AfterAll
   private void cleanUp() {
-    user = userAccessUtils.defaultUser();
-    Workspace workspace = workspaceService.getWorkspace(workspaceId);
-    workspaceService.deleteWorkspace(workspace, user.getAuthenticatedRequest());
+    //    user = userAccessUtils.defaultUser();
+    //    Workspace workspace = workspaceService.getWorkspace(workspaceId);
+    //    workspaceService.deleteWorkspace(workspace, user.getAuthenticatedRequest());
   }
 
   @Test
@@ -418,9 +421,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     var creationParameters =
         ControlledResourceFixtures.defaultNotebookCreationParameters()
             .instanceId(instanceId)
-            .location(DEFAULT_NOTEBOOK_LOCATION);
-    //            .machineType(
-    //                "n1-standard-1") // Change machine type since E2 does not support
+            .location(DEFAULT_NOTEBOOK_LOCATION)
+            .machineType("n1-standard-1"); // Change machine type since E2 does not support
     // accelerators.
     //            .acceleratorConfig(
     //                ApiAiNotebookConversions.toApiAcceleratorConfig(
@@ -499,7 +501,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         updatedInstance.getMachineType());
 
     assertEquals(
-        AI_NOTEBOOK_UPDATE_PARAMETERS_WITH_CPU_AND_GPU.getAcceleratorConfig(),
+        ApiAiNotebookConversions.fromApiAcceleratorConfig(
+            AI_NOTEBOOK_UPDATE_PARAMETERS_WITH_CPU_AND_GPU.getAcceleratorConfig()),
         updatedInstance.getAcceleratorConfig());
   }
 

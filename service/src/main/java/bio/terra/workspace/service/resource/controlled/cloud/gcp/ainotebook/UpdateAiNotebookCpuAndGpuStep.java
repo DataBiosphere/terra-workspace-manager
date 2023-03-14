@@ -8,6 +8,7 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.utils.RetryUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
@@ -27,6 +28,7 @@ import com.google.cloud.notebooks.v1.Instance;
 import com.google.cloud.notebooks.v1.NotebookServiceClient;
 import com.google.cloud.notebooks.v1.SetInstanceMachineTypeRequestOrBuilder;
 import com.google.rpc.context.AttributeContext;
+import org.apache.tomcat.jni.Time;
 import org.springframework.http.HttpStatus;
 
 import java.io.IOException;
@@ -68,9 +70,9 @@ public class UpdateAiNotebookCpuAndGpuStep implements Step {
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     // TODO (aaronwa@): Merge check stopped/ update needed step here.
-    String machineType = context.getWorkingMap().get(UPDATE_MACHINE_TYPE, String.class);
+    String machineType = context.getInputParameters().get(UPDATE_MACHINE_TYPE, String.class);
     AcceleratorConfig acceleratorConfig =
-        context.getWorkingMap().get(UPDATE_ACCELERATOR_CONFIG, AcceleratorConfig.class);
+        context.getInputParameters().get(UPDATE_ACCELERATOR_CONFIG, AcceleratorConfig.class);
     // TODO (aaronwa@): place in working map or input param?
     String projectId = resource.getProjectId();
     InstanceName instanceName = resource.toInstanceName(projectId);
@@ -108,18 +110,16 @@ public class UpdateAiNotebookCpuAndGpuStep implements Step {
       GoogleCredentials creds =
           GoogleCredentials.getApplicationDefault().createScoped(AIPlatformNotebooksScopes.all());
 
-      //      var aaron2proj =
-      // gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
+      var aaron2proj = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
 
       //      if (aaron2.equals(projectId)) {
       //
       //      }
 
-      //      String petSaEmail =
-      //          SamRethrow.onInterrupted(
-      //              () -> samService.getOrCreatePetSaEmail(aaron2proj,
-      // userRequest.getRequiredToken()),
-      //              "aaron");
+      String petSaEmail =
+          SamRethrow.onInterrupted(
+              () -> samService.getOrCreatePetSaEmail(aaron2proj, userRequest.getRequiredToken()),
+              "aaron");
 
       //      NotebookServiceClient
 
@@ -138,59 +138,67 @@ public class UpdateAiNotebookCpuAndGpuStep implements Step {
       //      instance.setServiceAccount(serviceAccountEmail);
       //      instance.setServiceAccountScopes(SERVICE_ACCOUNT_SCOPES);
 
+      //      ProjectName parent = ProjectName.of(destinationProjectId);
+      //      String petSaEmail =
+      //          SamRethrow.onInterrupted(
+      //              () ->
+      //                  samService.getOrCreatePetSaEmail(
+      //                      gcpCloudContextService.getRequiredGcpProject(destinationWorkspaceId),
+      //                      userRequest.getRequiredToken()),
+      //              "CopyBigQueryDatasetDifferentRegionStep");
+      //
+      //      TransferConfig config =
+      //          dataTransferServiceClient.createTransferConfig(
+      //              CreateTransferConfigRequest.newBuilder()
+      //                  .setParent(parent.toString())
+      //                  .setTransferConfig(transferConfig)
+      //                  .setServiceAccountName(petSaEmail)
+      //                  .build());
+
       try (NotebookServiceClient notebookServiceClient = NotebookServiceClient.create()) {
         InstanceName instanceName = resource.toInstanceName(projectId);
-        Instance response = notebookServiceClient.getInstance(instanceName.formatName());
 
-        com.google.cloud.notebooks.v1.SetInstanceMachineTypeRequest request =
-            com.google.cloud.notebooks.v1.SetInstanceMachineTypeRequest.newBuilder()
-                .setName(instanceName.formatName())
-                .setMachineType(machineType)
-                .build();
-        Instance response2 = notebookServiceClient.setInstanceMachineTypeAsync(request).get();
+        //        notebookServiceClient.getSettings();
+        //        Instance getInstance =
+        // notebookServiceClient.getInstance(instanceName.formatName());
+
+        if (machineType != null) {
+          var aaron2 =
+              RetryUtils.getWithRetryOnException(
+                  () ->
+                      notebookServiceClient
+                          .setInstanceMachineTypeAsync(
+                              com.google.cloud.notebooks.v1.SetInstanceMachineTypeRequest
+                                  .newBuilder()
+                                  .setName(instanceName.formatName())
+                                  .setMachineType(machineType)
+                                  .build())
+                          .get());
+        }
+
+        if (acceleratorConfig != null) {
+          var aaron =
+              RetryUtils.getWithRetryOnException(
+                  () ->
+                      notebookServiceClient
+                          .setInstanceAcceleratorAsync(
+                              com.google.cloud.notebooks.v1.SetInstanceAcceleratorRequest
+                                  .newBuilder()
+                                  .setName(instanceName.formatName())
+                                  .setCoreCount(acceleratorConfig.getCoreCount())
+                                  .setType(
+                                      Instance.AcceleratorType.valueOf(acceleratorConfig.getType()))
+                                  .build())
+                          .get());
+        }
+
       } catch (ExecutionException | InterruptedException e) {
+        //        throw new RuntimeException(e);
+        //        Thread.sleep(1000 * 5);
+        return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+      } catch (Exception e) {
         throw new RuntimeException(e);
       }
-
-      try (NotebookServiceClient notebookServiceClient = NotebookServiceClient.create()) {
-        InstanceName instanceName = resource.toInstanceName(projectId);
-        Instance response = notebookServiceClient.getInstance(instanceName.formatName());
-        com.google.cloud.notebooks.v1.SetInstanceAcceleratorRequest request =
-            com.google.cloud.notebooks.v1.SetInstanceAcceleratorRequest.newBuilder()
-                .setName(instanceName.formatName())
-                .setCoreCount(acceleratorConfig.getCoreCount())
-                .setType(Instance.AcceleratorType.valueOf(acceleratorConfig.getType()))
-                .build();
-        Instance response2 = notebookServiceClient.setInstanceAcceleratorAsync(request).get();
-      } catch (ExecutionException | InterruptedException e) {
-        throw new RuntimeException(e);
-      }
-
-      //      String notebookPath =
-      //          "projects/%s/locations/%s/instances/%s".formatted(projectId, location,
-      // instanceId);
-
-      //      // Update the machine type (CPU).
-      //      notebooks
-      //          .projects()
-      //          .locations()
-      //          .instances()
-      //          .setMachineType(
-      //              notebookPath, new SetInstanceMachineTypeRequest().setMachineType(machineType))
-      //          .execute();
-      //      // Update the accelerator config (GPU).
-      //      if (acceleratorConfig != null) {
-      //        notebooks
-      //            .projects()
-      //            .locations()
-      //            .instances()
-      //            .setAccelerator(
-      //                notebookPath,
-      //                new SetInstanceAcceleratorRequest()
-      //                    .setType(acceleratorConfig.getType())
-      //                    .setCoreCount(acceleratorConfig.getCoreCount()))
-      //            .execute();
-      //      }
 
     } catch (GoogleJsonResponseException e) {
       if (HttpStatus.BAD_REQUEST.value() == e.getStatusCode()
@@ -201,6 +209,7 @@ public class UpdateAiNotebookCpuAndGpuStep implements Step {
     } catch (IOException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
+
     return StepResult.getStepResultSuccess();
   }
 }
