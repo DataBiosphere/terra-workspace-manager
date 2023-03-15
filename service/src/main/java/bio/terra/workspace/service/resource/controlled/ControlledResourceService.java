@@ -291,7 +291,6 @@ public class ControlledResourceService {
     JobBuilder jobBuilder =
         commonCreationJobBuilder(resource, privateResourceIamRole, userRequest)
             .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
-    logger.info(">>> state rule: {}", features.getStateRule());
     return jobBuilder.submitAndWait(ControlledResource.class);
   }
 
