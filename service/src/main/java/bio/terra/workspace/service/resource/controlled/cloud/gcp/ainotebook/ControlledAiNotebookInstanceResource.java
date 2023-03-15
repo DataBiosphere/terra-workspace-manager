@@ -12,7 +12,6 @@ import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
-import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAcceleratorConfig;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAttributes;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
@@ -35,10 +34,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.api.services.notebooks.v1.model.AcceleratorConfig;
-import com.google.common.collect.ImmutableMap;
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Map;
+
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -312,7 +308,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
         .projectId(projectId)
         .location(getLocation())
         .instanceId(getInstanceId())
-        .acceleratorConfig(ApiAiNotebookConversions.toApiAcceleratorConfig(getAcceleratorConfig()))
+        .acceleratorConfig(AiNotebookApiConversions.toApiAcceleratorConfig(getAcceleratorConfig()))
         .machineType(getMachineType());
   }
 

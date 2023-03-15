@@ -15,7 +15,6 @@ import bio.terra.workspace.generated.model.ApiAzureRelayNamespaceCreationParamet
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiFlexibleResourceUpdateParameters;
-import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAcceleratorConfig;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookUpdateParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
@@ -37,7 +36,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.flight.Update
 import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespace.ControlledAzureRelayNamespaceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpPolicyBuilder;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ApiAiNotebookConversions;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.AiNotebookApiConversions;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.flight.UpdateGcpControlledResourceRegionFlight;
@@ -539,7 +538,7 @@ public class ControlledResourceService {
             .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, newDescription);
     if (updateParameters != null) {
       final String newMachineType = updateParameters.getMachineType();
-      final AcceleratorConfig newAcceleratorConfig = ApiAiNotebookConversions.fromApiAcceleratorConfig(updateParameters.getAcceleratorConfig());
+      final AcceleratorConfig newAcceleratorConfig = AiNotebookApiConversions.fromApiAcceleratorConfig(updateParameters.getAcceleratorConfig());
 
       jobBuilder.addParameter(ControlledResourceKeys.UPDATE_MACHINE_TYPE,newMachineType)
           .addParameter(ControlledResourceKeys.UPDATE_ACCELERATOR_CONFIG,newAcceleratorConfig)

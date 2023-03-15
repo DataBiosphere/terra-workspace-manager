@@ -18,7 +18,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.Contr
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ApiAiNotebookConversions;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.AiNotebookApiConversions;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource.Builder;
@@ -659,7 +659,7 @@ public class ControlledResourceFixtures {
   public static final String DEFAULT_CREATED_AI_NOTEBOOK_MACHINE_TYPE = "n1-standard-4";
 
   public static final AcceleratorConfig DEFAULT_AI_NOTEBOOK_ACCELERATOR_CONFIG =
-      ApiAiNotebookConversions.fromApiAcceleratorConfig(
+      AiNotebookApiConversions.fromApiAcceleratorConfig(
           new ApiGcpAiNotebookInstanceAcceleratorConfig().type("NVIDIA_TESLA_V100").coreCount(2L));
 
   public static ApiGcpAiNotebookUpdateParameters AI_NOTEBOOK_UPDATE_PARAMETERS_WITH_CPU_AND_GPU =

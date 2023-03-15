@@ -6,8 +6,8 @@ import com.google.api.services.notebooks.v1.model.AcceleratorConfig;
 import javax.annotation.Nullable;
 
 /** Utility method for converting AI notebook objects between WSM formats and GCP formats. */
-public class ApiAiNotebookConversions {
-  private ApiAiNotebookConversions() {}
+public class AiNotebookApiConversions {
+  private AiNotebookApiConversions() {}
 
   /** Convert from GCP accelerator config to API object. */
   public static ApiGcpAiNotebookInstanceAcceleratorConfig toApiAcceleratorConfig(
@@ -30,5 +30,4 @@ public class ApiAiNotebookConversions {
         .setType(ApiAcceleratorConfig.getType())
         .setCoreCount(ApiAcceleratorConfig.getCoreCount());
   }
-  // TODO (aaronwa@: add test).
 }
