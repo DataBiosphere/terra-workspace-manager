@@ -186,6 +186,7 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
     var newName = "new-instance-notebook-name";
     var newDescription = "new description for the new instance notebook name";
     var newMetadata = ImmutableMap.of("foo", "bar", "count", "3");
+    var newMachineType = "n1-standard-4";
     GcpAiNotebookInstanceResource updatedResource =
         resourceUserApi.updateAiNotebookInstance(
             new UpdateControlledGcpAiNotebookInstanceRequestBody()
@@ -194,13 +195,13 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
                 .updateParameters(
                     new GcpAiNotebookUpdateParameters()
                         .metadata(newMetadata)
-                        .machineType("n1-highmem-4")),
+                        .machineType(newMachineType)),
             getWorkspaceId(),
             resourceId);
 
     assertEquals(newName, updatedResource.getMetadata().getName());
     assertEquals(newDescription, updatedResource.getMetadata().getDescription());
-    assertEquals("n1-highmem-4", updatedResource.getAttributes().getMachineType());
+    assertEquals(newMachineType, updatedResource.getAttributes().getMachineType());
 
     var metadata =
         userNotebooks.projects().locations().instances().get(instanceName).execute().getMetadata();

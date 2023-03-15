@@ -70,6 +70,8 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.Note
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.RetrieveAiNotebookResourceAttributesStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.RetrieveNetworkNameStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.UpdateAiNotebookAttributesStep;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.UpdateAiNotebookCpuAndGpuStep;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.UpdateNotebookCpuAndGpuAttributesStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.UpdateNotebookResourceLocationAttributesStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.CreateBigQueryDatasetStep;
@@ -589,6 +591,12 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
         UpdateAiNotebookAttributesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        UpdateNotebookCpuAndGpuAttributesStep.class.getName(),
+        StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        UpdateAiNotebookCpuAndGpuStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().undoStepFailures(retrySteps).lastStepFailure(true).build());
     assertThrows(
@@ -1826,7 +1834,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   // TODO (PF-2269): Clean this up once the back-fill is done in all Terra environments.
 
-  /** @return A list of big query datasets that were updated (with lifetime set) */
+  /**
+   * @return A list of big query datasets that were updated (with lifetime set)
+   */
   private List<ControlledBigQueryDatasetResource>
       updateControlledBigQueryDatasetsLifetimeAndWait() {
     HashSet<ControlledBigQueryDatasetResource> successfullyUpdatedDatasets =
