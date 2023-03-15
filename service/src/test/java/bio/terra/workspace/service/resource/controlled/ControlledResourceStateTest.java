@@ -50,7 +50,7 @@ public class ControlledResourceStateTest extends BaseUnitTestMockGcpCloudContext
   }
 
   @Test
-  public void testCreateBucketFailBroken() throws RetryException, InterruptedException {
+  public void testCreateBucketFailBroken() throws Exception {
     // Get the resource from database and check state
     WsmResource dbResource = testCreateBucketFailedState(WsmResourceStateRule.BROKEN_ON_FAILURE);
     assertNotNull(dbResource);
@@ -58,14 +58,14 @@ public class ControlledResourceStateTest extends BaseUnitTestMockGcpCloudContext
   }
 
   @Test
-  public void testCreateBucketFailDeleted() throws RetryException, InterruptedException {
+  public void testCreateBucketFailDeleted() throws Exception {
     // Get the resource from database and check state
     WsmResource dbResource = testCreateBucketFailedState(WsmResourceStateRule.DELETE_ON_FAILURE);
     assertNull(dbResource);
   }
 
   private WsmResource testCreateBucketFailedState(WsmResourceStateRule rule)
-      throws RetryException, InterruptedException {
+      throws Exception {
     when(mockFeatureConfiguration().getStateRule()).thenReturn(rule);
 
     UUID workspaceId = WorkspaceUnitTestUtils.createWorkspaceWithGcpContext(workspaceDao);
