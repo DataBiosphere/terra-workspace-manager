@@ -62,7 +62,6 @@ import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresource.ControlledFlexibleResource;
 import bio.terra.workspace.service.resource.controlled.cloud.any.flight.update.UpdateControlledFlexibleResourceAttributesStep;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ApiAiNotebookConversions;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.CreateAiNotebookInstanceStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.DeleteAiNotebookInstanceStep;
@@ -207,10 +206,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         workspaceUtils
             .createWorkspaceWithGcpContext(userAccessUtils.defaultUserAuthRequest())
             .getWorkspaceId();
-
-    //    workspaceId = UUID.fromString("cd58ab63-5f77-4c46-8775-e7ee25fee458");
     projectId = gcpCloudContextService.getRequiredGcpProject(workspaceId);
-    //    projectId = "terra-vdevel-clean-lemon-8345";
   }
 
   /**
@@ -225,9 +221,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   /** After running all tests, delete the shared workspace. */
   @AfterAll
   private void cleanUp() {
-    //    user = userAccessUtils.defaultUser();
-    //    Workspace workspace = workspaceService.getWorkspace(workspaceId);
-    //    workspaceService.deleteWorkspace(workspace, user.getAuthenticatedRequest());
+    user = userAccessUtils.defaultUser();
+    Workspace workspace = workspaceService.getWorkspace(workspaceId);
+    workspaceService.deleteWorkspace(workspace, user.getAuthenticatedRequest());
   }
 
   @Test
@@ -422,7 +418,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         ControlledResourceFixtures.defaultNotebookCreationParameters()
             .instanceId(instanceId)
             .location(DEFAULT_NOTEBOOK_LOCATION);
-
     var resource = makeNotebookTestResource(workspaceId, name, instanceId);
     String jobId =
         controlledResourceService.createAiNotebookInstance(
@@ -457,15 +452,12 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         UpdateAiNotebookAttributesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
-
-    crlService
-        .getAIPlatformNotebooksCow()
-        .instances()
-        .stop(fetchedInstance.toInstanceName(projectId));
-    var pet = samService.getOrCreatePetSaCredentials(projectId, user.getAuthenticatedRequest());
-
     controlledResourceService.updateAiNotebookInstance(
-        fetchedInstance, AI_NOTEBOOK_UPDATE_PARAMETERS, newName, newDescription, pet);
+        fetchedInstance,
+        AI_NOTEBOOK_UPDATE_PARAMETERS,
+        newName,
+        newDescription,
+        user.getAuthenticatedRequest());
 
     ControlledAiNotebookInstanceResource updatedInstance =
         controlledResourceService
@@ -481,7 +473,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .instances()
             .get(updatedInstance.toInstanceName(projectId))
             .execute();
-    // Merge metadata from AI_NOTEBOOK_UPDATE_PARAMETERS_WITH_CPU_AND_GPU to metadata.
+    // Merge metadata from AI_NOTEBOOK_UPDATE_PARAMETERS to metadata.
     AI_NOTEBOOK_UPDATE_PARAMETERS
         .getMetadata()
         .forEach(
@@ -1834,9 +1826,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   // TODO (PF-2269): Clean this up once the back-fill is done in all Terra environments.
 
-  /**
-   * @return A list of big query datasets that were updated (with lifetime set)
-   */
+  /** @return A list of big query datasets that were updated (with lifetime set) */
   private List<ControlledBigQueryDatasetResource>
       updateControlledBigQueryDatasetsLifetimeAndWait() {
     HashSet<ControlledBigQueryDatasetResource> successfullyUpdatedDatasets =
