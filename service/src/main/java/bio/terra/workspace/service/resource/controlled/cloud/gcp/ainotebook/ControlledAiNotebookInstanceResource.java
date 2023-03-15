@@ -279,7 +279,8 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
             flightBeanBag.getCrlService().getClientConfig(),
             flightBeanBag.getSamService(),
             userRequest,
-            flightBeanBag.getGcpCloudContextService()),
+            flightBeanBag.getGcpCloudContextService(),
+            flightBeanBag.getResourceDao()),
         gcpRetry);
   }
 
@@ -305,7 +306,9 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
     return new ApiGcpAiNotebookInstanceAttributes()
         .projectId(projectId)
         .location(getLocation())
-        .instanceId(getInstanceId());
+        .instanceId(getInstanceId())
+        .acceleratorConfig(ApiAiNotebookConversions.toApiAcceleratorConfig(getAcceleratorConfig()))
+        .machineType(getMachineType());
   }
 
   @Override
