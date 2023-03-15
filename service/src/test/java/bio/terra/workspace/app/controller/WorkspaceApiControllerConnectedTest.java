@@ -570,7 +570,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
         userAccessUtils.defaultUserAuthRequest(),
         workspace.getId(),
         HttpStatus.SC_CONFLICT,
-        buildWsmRegionPolicyInput("asia"),
+        buildWsmRegionPolicyInput("asiapacific"),
         ApiWsmPolicyUpdateMode.ENFORCE_CONFLICT);
     updatedWorkspace =
         mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
