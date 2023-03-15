@@ -65,14 +65,15 @@ public class UpdateAiNotebookCpuAndGpuStep implements Step {
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     // The notebook instance must be stopped for CPU and GPU updates to occur.
-    // If requested update will not change anything on the cloud, then this flight ends successfully
+    // If the requested update will not change anything on the cloud, then this flight ends
+    // successfully
     // (no further action is needed - i.e., no update call).
     if (noEffectiveUpdateRequested(context)) {
       return StepResult.getStepResultSuccess();
     }
 
     // Otherwise, the requested update changes at least one of the CPU or GPU.
-    // Check if the notebook is stopped, so we can update later in the flight.
+    // Check if the notebook is stopped, so we can proceed with updating in the flight.
     var projectId = cloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
     InstanceName instanceName = resource.toInstanceName(projectId);
 
@@ -82,11 +83,11 @@ public class UpdateAiNotebookCpuAndGpuStep implements Step {
       // If not stopped, then we cannot proceed with the update.
       var instanceState = instance.getState();
 
-      // Retry and wait until the instance stops.
+      // If stopping, then retry and wait until the instance stops.
       if (instanceState.equals(Instance.State.STOPPING.toString())) {
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY);
       }
-      // In all other cases when the instance is not stopped, a FATAL result should be returned.
+      // Otherwise, when the instance is not stopped or stopping, the flight cannot continue.
       if (!instanceState.equals(Instance.State.STOPPED.toString())) {
         return new StepResult(
             StepStatus.STEP_RESULT_FAILURE_FATAL,
