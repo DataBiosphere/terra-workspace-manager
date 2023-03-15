@@ -9,6 +9,7 @@ import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
@@ -19,10 +20,13 @@ import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiResourceLineage;
 import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
+import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants;
 import java.util.List;
 import java.util.UUID;
+
+import com.google.cloud.notebooks.v1.InstanceName;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -44,6 +48,7 @@ public class ControlledGcpResourceApiControllerAiNotebookTest extends BaseConnec
   @Autowired MockMvcUtils mockMvcUtils;
   @Autowired UserAccessUtils userAccessUtils;
   @Autowired JobService jobService;
+  @Autowired CrlService crlService;
 
   private UUID workspaceId;
 
@@ -121,14 +126,25 @@ public class ControlledGcpResourceApiControllerAiNotebookTest extends BaseConnec
             .createAiNotebookInstance(userAccessUtils.defaultUserAuthRequest(), workspaceId, null)
             .getAiNotebookInstance();
 
+    //    var notebookResource = notebook
 
+    //    resource.toInstanceName(notebook.getAttributes().getProjectId())
 
-//    var updatedInstanceFromCloud =
-//        crlService
-//            .getAIPlatformNotebooksCow()
-//            .instances()
-//            .get(notebook.toInstanceName(notebook))
-//            .execute();
+    //    InstanceName name = InstanceName.parse(notebook.getAttributes().getInstanceId());
+    var instanceName =
+        "projects/%s/locations/%s/instances/%s"
+            .formatted(
+                notebook.getAttributes().getProjectId(),
+                notebook.getAttributes().getLocation(),
+                notebook.getAttributes().getInstanceId());
+    // Stop the notebook so the CPU and GPU can be updated.
+    crlService.getAIPlatformNotebooksCow().instances().stop(instanceName);
+    //    var updatedInstanceFromCloud =
+    //        crlService
+    //            .getAIPlatformNotebooksCow()
+    //            .instances()
+    //            .get(notebook.toInstanceName(notebook))
+    //            .execute();[
 
     var updatedNotebook =
         mockMvcUtils.updateAiNotebookInstance(

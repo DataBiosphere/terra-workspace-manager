@@ -656,7 +656,7 @@ public class ControlledResourceFixtures {
   public static final ApiGcpAiNotebookUpdateParameters AI_NOTEBOOK_UPDATE_PARAMETERS =
       new ApiGcpAiNotebookUpdateParameters().metadata(ImmutableMap.of("foo", "bar", "count", "3"));
 
-  public static final String DEFAULT_CREATED_AI_NOTEBOOK_MACHINE_TYPE = "e2-standard-2";
+  public static final String DEFAULT_CREATED_AI_NOTEBOOK_MACHINE_TYPE = "n1-standard-4";
 
   public static final AcceleratorConfig DEFAULT_AI_NOTEBOOK_ACCELERATOR_CONFIG =
       ApiAiNotebookConversions.fromApiAcceleratorConfig(
