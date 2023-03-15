@@ -61,13 +61,15 @@ public abstract class ControlledResource extends WsmResource {
   }
 
   /**
-   * Construct the ControlledResource from the fields builder
+   * Construct the ControlledResource from the fields builder NOTE: we make a copy of the
+   * WsmResourceFields. This seems prudent, so the created resource cannot be mutated by some input
+   * field builder.
    *
    * @param fields container for building WsmResource and Controlled resource
    */
   protected ControlledResource(ControlledResourceFields fields) {
     super(
-        new WsmResourceFields.Builder<>()
+        WsmResourceFields.builder()
             .workspaceUuid(fields.getWorkspaceId())
             .resourceId(fields.getResourceId())
             .name(fields.getName())
@@ -79,6 +81,9 @@ public abstract class ControlledResource extends WsmResource {
             .createdDate(fields.getCreatedDate())
             .lastUpdatedByEmail(fields.getLastUpdatedByEmail())
             .lastUpdatedDate(fields.getLastUpdatedDate())
+            .state(fields.getState())
+            .flightId(fields.getFlightId())
+            .error(fields.getError())
             .build());
     this.wsmControlledResourceFields = fields.getWsmControlledResourceFields();
   }

@@ -12,6 +12,7 @@ import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresource.ControlledFlexibleResource;
+import bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresource.FlexResourceCreationParameters;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -80,9 +81,13 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
             .data(decodedJSON)
             .build();
 
+    FlexResourceCreationParameters creationParameters =
+        FlexResourceCreationParameters.fromApiCreationParameters(body.getFlexibleResource());
+
     ControlledFlexibleResource createdFlexibleResource =
         getControlledResourceService()
-            .createControlledResourceSync(resource, commonFields.getIamRole(), userRequest, body)
+            .createControlledResourceSync(
+                resource, commonFields.getIamRole(), userRequest, creationParameters)
             .castByEnum(WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE);
 
     var response =

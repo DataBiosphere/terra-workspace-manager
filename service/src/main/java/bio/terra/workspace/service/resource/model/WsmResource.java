@@ -5,6 +5,7 @@ import static bio.terra.workspace.service.resource.model.CloningInstructions.COP
 import static bio.terra.workspace.service.resource.model.CloningInstructions.COPY_REFERENCE;
 import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties.FOLDER_ID_KEY;
 
+import bio.terra.common.exception.ErrorReportException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.exception.CloneInstructionNotSupportedException;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
@@ -102,6 +103,17 @@ public abstract class WsmResource {
     return wsmResourceFields.getLastUpdatedDate();
   }
 
+  public WsmResourceState getState() {
+    return wsmResourceFields.getState();
+  }
+
+  public @Nullable String getFlightId() {
+    return wsmResourceFields.getFlightId();
+  }
+
+  public @Nullable ErrorReportException getError() {
+    return wsmResourceFields.getError();
+  }
   /**
    * Sub-classes must identify their stewardship type
    *

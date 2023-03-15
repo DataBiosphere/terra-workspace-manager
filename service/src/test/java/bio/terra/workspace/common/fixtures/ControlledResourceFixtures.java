@@ -7,6 +7,7 @@ import bio.terra.stairway.ShortUUID;
 import bio.terra.workspace.common.utils.AzureVmUtils;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
+import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresource.ControlledFlexibleResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.ControlledAzureBatchPoolResource;
@@ -24,6 +25,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.Contr
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource.Builder;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
@@ -855,5 +857,12 @@ public class ControlledResourceFixtures {
                 .region(creationParameters.getRegion())
                 .build())
         .namespaceName(TestUtils.appendRandomNumber("namespace"));
+  }
+
+  public static void insertControlledResourceRow(
+      ResourceDao resourceDao, ControlledResource resource) {
+    String fakeFlightId = UUID.randomUUID().toString();
+    resourceDao.createResourceStart(resource, fakeFlightId);
+    resourceDao.createResourceSuccess(resource, fakeFlightId);
   }
 }

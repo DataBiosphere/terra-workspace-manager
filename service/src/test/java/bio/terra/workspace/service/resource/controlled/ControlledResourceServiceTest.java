@@ -1680,7 +1680,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertEquals(DEFAULT_RESOURCE_REGION, createdBucket.getRegion());
     // Create a bucket with underscores.
     var secondBucketId = UUID.randomUUID();
-    resourceDao.createControlledResource(
+    ControlledResourceFixtures.insertControlledResourceRow(
+        resourceDao,
         ControlledGcsBucketResource.builder()
             .common(
                 ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
@@ -1793,21 +1794,22 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceId)
             .bucketName(ControlledResourceFixtures.uniqueBucketName())
             .build();
-    resourceDao.createControlledResource(bucket);
+    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, bucket);
+
     // create dataset in db
     ControlledBigQueryDatasetResource dataset =
         ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
             .datasetName(ControlledResourceFixtures.uniqueDatasetId())
             .projectId(projectId)
             .build();
-    resourceDao.createControlledResource(dataset);
+    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, dataset);
     // create notebook in db
     ControlledAiNotebookInstanceResource notebookResource =
         makeNotebookTestResource(
             workspaceId,
             TestUtils.appendRandomNumber("notebookresourcename"),
             TestUtils.appendRandomNumber("default-instance-id"));
-    resourceDao.createControlledResource(notebookResource);
+    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, notebookResource);
     // Artificially set regions to null in the database.
     resourceDao.updateControlledResourceRegion(bucket.getResourceId(), /*region=*/ null);
     resourceDao.updateControlledResourceRegion(dataset.getResourceId(), /*region=*/ null);

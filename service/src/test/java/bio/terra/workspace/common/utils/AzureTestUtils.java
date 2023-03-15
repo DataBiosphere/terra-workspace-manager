@@ -13,6 +13,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.StewardshipType;
+import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
@@ -87,6 +88,7 @@ public class AzureTestUtils {
     inputs.put(ResourceKeys.STEWARDSHIP_TYPE, StewardshipType.CONTROLLED);
     inputs.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
     inputs.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
+    inputs.put(ResourceKeys.RESOURCE_STATE_RULE, WsmResourceStateRule.DELETE_ON_FAILURE);
     return inputs;
   }
 

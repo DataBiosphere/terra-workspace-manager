@@ -6,7 +6,6 @@ import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
@@ -23,7 +22,6 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import io.opencensus.contrib.spring.aop.Traced;
-import java.util.List;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
@@ -185,7 +183,8 @@ public class ReferencedResourceService {
       UUID resourceId,
       WsmResourceType resourceType,
       AuthenticatedUserRequest userRequest) {
-    if (resourceDao.deleteResourceForResourceType(workspaceUuid, resourceId, resourceType)) {
+    if (resourceDao.deleteReferencedResourceForResourceType(
+        workspaceUuid, resourceId, resourceType)) {
       workspaceActivityLogService.writeActivity(
           userRequest,
           workspaceUuid,
@@ -203,14 +202,6 @@ public class ReferencedResourceService {
   @Traced
   public ReferencedResource getReferenceResourceByName(UUID workspaceUuid, String name) {
     return resourceDao.getResourceByName(workspaceUuid, name).castToReferencedResource();
-  }
-
-  @Traced
-  public List<ReferencedResource> enumerateReferences(
-      UUID workspaceUuid, int offset, int limit, AuthenticatedUserRequest userRequest) {
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
-    return resourceDao.enumerateReferences(workspaceUuid, offset, limit);
   }
 
   @Traced
