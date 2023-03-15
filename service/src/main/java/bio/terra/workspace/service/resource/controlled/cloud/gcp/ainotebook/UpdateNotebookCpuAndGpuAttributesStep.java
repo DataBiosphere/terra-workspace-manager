@@ -4,6 +4,7 @@ import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKey
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_MACHINE_TYPE;
 
 import bio.terra.stairway.FlightContext;
+import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
@@ -11,6 +12,8 @@ import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.google.api.services.notebooks.v1.model.AcceleratorConfig;
+
+import java.util.Optional;
 
 public class UpdateNotebookCpuAndGpuAttributesStep implements Step {
 
@@ -26,18 +29,18 @@ public class UpdateNotebookCpuAndGpuAttributesStep implements Step {
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     String previousAttributes = resource.attributesToJson();
-    context
-        .getWorkingMap()
-        .put(WorkspaceFlightMapKeys.ResourceKeys.PREVIOUS_ATTRIBUTES, previousAttributes);
+    FlightMap workingMap = context.getWorkingMap();
 
-    String machineType = context.getInputParameters().get(UPDATE_MACHINE_TYPE, String.class);
-    AcceleratorConfig acceleratorConfig =
-        context.getInputParameters().get(UPDATE_ACCELERATOR_CONFIG, AcceleratorConfig.class);
+    workingMap.put(WorkspaceFlightMapKeys.ResourceKeys.PREVIOUS_ATTRIBUTES, previousAttributes);
 
-    // If null, then don't update
-    String newMachineType = machineType == null ? resource.getMachineType() : machineType;
-    AcceleratorConfig newAcceleratorConfig =
-        acceleratorConfig == null ? resource.getAcceleratorConfig() : acceleratorConfig;
+    // Use the effective update instructions calculated from the previous step.
+    String effectiveMachineType = workingMap.get(UPDATE_MACHINE_TYPE, String.class);
+    AcceleratorConfig effectiveAcceleratorConfig =
+        workingMap.get(UPDATE_ACCELERATOR_CONFIG, AcceleratorConfig.class);
+
+    if (effectiveMachineType == null && effectiveAcceleratorConfig == null) {
+      return StepResult.getStepResultSuccess();
+    }
 
     String newAttributes =
         DbSerDes.toJson(
@@ -45,8 +48,9 @@ public class UpdateNotebookCpuAndGpuAttributesStep implements Step {
                 resource.getInstanceId(),
                 resource.getLocation(),
                 resource.getProjectId(),
-                newMachineType,
-                newAcceleratorConfig));
+                Optional.ofNullable(effectiveMachineType).orElse(resource.getMachineType()),
+                Optional.ofNullable(effectiveAcceleratorConfig)
+                    .orElse(resource.getAcceleratorConfig())));
     resourceDao.updateResource(
         resource.getWorkspaceId(), resource.getResourceId(), null, null, newAttributes, null);
     return StepResult.getStepResultSuccess();
