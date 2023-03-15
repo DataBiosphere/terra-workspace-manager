@@ -1,5 +1,10 @@
 package bio.terra.workspace.service.resource.model;
 
+import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
+import static bio.terra.workspace.service.resource.model.CloningInstructions.COPY_NOTHING;
+import static bio.terra.workspace.service.resource.model.CloningInstructions.COPY_REFERENCE;
+import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties.FOLDER_ID_KEY;
+
 import bio.terra.common.exception.ErrorReportException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.exception.CloneInstructionNotSupportedException;
@@ -18,8 +23,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
-
-import javax.annotation.Nullable;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,11 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-
-import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
-import static bio.terra.workspace.service.resource.model.CloningInstructions.COPY_NOTHING;
-import static bio.terra.workspace.service.resource.model.CloningInstructions.COPY_REFERENCE;
-import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties.FOLDER_ID_KEY;
+import javax.annotation.Nullable;
 
 /**
  * Top-level class for a Resource. Children of this class can be controlled resources, references,
@@ -284,7 +283,10 @@ public abstract class WsmResource {
             .lastUpdatedBy(Optional.ofNullable(getLastUpdatedByEmail()).orElse(getCreatedByEmail()))
             .lastUpdatedDate(Optional.ofNullable(getLastUpdatedDate()).orElse(getCreatedDate()))
             .state(getState().toApi())
-            .errorReport(Optional.ofNullable(getError()).map(ErrorReportUtils::buildApiErrorReport).orElse(null))
+            .errorReport(
+                Optional.ofNullable(getError())
+                    .map(ErrorReportUtils::buildApiErrorReport)
+                    .orElse(null))
             .jobId(getFlightId());
     ApiResourceLineage apiResourceLineage = new ApiResourceLineage();
     apiResourceLineage.addAll(

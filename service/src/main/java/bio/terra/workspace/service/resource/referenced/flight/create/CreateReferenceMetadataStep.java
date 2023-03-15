@@ -42,7 +42,7 @@ public class CreateReferenceMetadataStep implements Step {
 
     try {
       referencedResourceService.createReferenceResource(
-        referencedResource.castToReferencedResource(), userRequest);
+          referencedResource.castToReferencedResource(), userRequest);
     } catch (DuplicateResourceException e) {
       // TODO: [PF-2131] remove this ambiguity
       //  We get a duplicate resource exception; the most likely reason is that

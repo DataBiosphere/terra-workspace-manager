@@ -22,7 +22,8 @@ public class UserAccessUtils {
 
   /**
    * The path to the service account to use. This service account should be delegated to impersonate
-   * users. <a href="https://developers.google.com/admin-sdk/directory/v1/guides/delegation">delegation</a>
+   * users. <a
+   * href="https://developers.google.com/admin-sdk/directory/v1/guides/delegation">delegation</a>
    */
   @Value("${workspace.connected-test.user-delegated-service-account-path}")
   public String userDelegatedServiceAccountPath;
@@ -60,27 +61,27 @@ public class UserAccessUtils {
     }
     return defaultUser;
   }
+
   public TestUser secondUser() {
     if (secondUser == null) {
       secondUser = new TestUser(secondUserEmail);
     }
     return secondUser;
   }
+
   public TestUser billingUser() {
     if (billingUser == null) {
       billingUser = new TestUser(billingUserEmail);
     }
     return billingUser;
   }
+
   public TestUser noBillingUser() {
     if (noBillingUser == null) {
       noBillingUser = new TestUser(noBillingAccessUserEmail);
     }
     return noBillingUser;
   }
-
-
-
 
   /** Creates Google credentials for the user. Relies on domain delegation. */
   public GoogleCredentials generateCredentials(String userEmail) {

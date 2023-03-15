@@ -2513,15 +2513,15 @@ public class MockMvcUtils {
   }
 
   /**
-   * Compare resource metadata skipping comparison of the output-only fields.
-   * For example, lastUpdatedBy, state, jobId. This allows comparing the input resource
-   * to the resulting resource.
+   * Compare resource metadata skipping comparison of the output-only fields. For example,
+   * lastUpdatedBy, state, jobId. This allows comparing the input resource to the resulting
+   * resource.
    *
    * @param expectedMetadata resource metadata
    * @param actualMetadata resource metadata
    */
   public static void assertResourceMetadataEquals(
-    ApiResourceMetadata expectedMetadata, ApiResourceMetadata actualMetadata) {
+      ApiResourceMetadata expectedMetadata, ApiResourceMetadata actualMetadata) {
     assertEquals(expectedMetadata.getWorkspaceId(), actualMetadata.getWorkspaceId());
     assertEquals(expectedMetadata.getResourceId(), actualMetadata.getResourceId());
     assertEquals(expectedMetadata.getName(), actualMetadata.getName());
@@ -2529,13 +2529,15 @@ public class MockMvcUtils {
     assertEquals(expectedMetadata.getResourceType(), actualMetadata.getResourceType());
     assertEquals(expectedMetadata.getStewardshipType(), actualMetadata.getStewardshipType());
     assertEquals(expectedMetadata.getCloudPlatform(), actualMetadata.getCloudPlatform());
-    assertEquals(expectedMetadata.getCloningInstructions(), actualMetadata.getCloningInstructions());
+    assertEquals(
+        expectedMetadata.getCloningInstructions(), actualMetadata.getCloningInstructions());
     assertEquals(expectedMetadata.getResourceLineage(), actualMetadata.getResourceLineage());
     assertEquals(expectedMetadata.getProperties(), actualMetadata.getProperties());
 
     if (expectedMetadata.getStewardshipType() == ApiStewardshipType.CONTROLLED) {
-      assertEquals(expectedMetadata.getControlledResourceMetadata(),
-        actualMetadata.getControlledResourceMetadata());
+      assertEquals(
+          expectedMetadata.getControlledResourceMetadata(),
+          actualMetadata.getControlledResourceMetadata());
     }
   }
 
@@ -2560,7 +2562,8 @@ public class MockMvcUtils {
 
   public static void assertApiFlexibleResourceEquals(
       ApiFlexibleResource expectedFlexibleResource, ApiFlexibleResource actualFlexibleResource) {
-    assertResourceMetadataEquals(expectedFlexibleResource.getMetadata(), actualFlexibleResource.getMetadata());
+    assertResourceMetadataEquals(
+        expectedFlexibleResource.getMetadata(), actualFlexibleResource.getMetadata());
     assertEquals(expectedFlexibleResource.getAttributes(), actualFlexibleResource.getAttributes());
   }
 
