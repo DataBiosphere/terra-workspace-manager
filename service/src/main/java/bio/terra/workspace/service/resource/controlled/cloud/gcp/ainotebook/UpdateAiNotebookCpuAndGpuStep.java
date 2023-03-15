@@ -79,22 +79,6 @@ public class UpdateAiNotebookCpuAndGpuStep implements Step {
     String machineType = context.getInputParameters().get(UPDATE_MACHINE_TYPE, String.class);
     AcceleratorConfig acceleratorConfig =
         context.getInputParameters().get(UPDATE_ACCELERATOR_CONFIG, AcceleratorConfig.class);
-    // Update in the database.
-    String previousAttributes = resource.attributesToJson();
-    context
-        .getWorkingMap()
-        .put(WorkspaceFlightMapKeys.ResourceKeys.PREVIOUS_ATTRIBUTES, previousAttributes);
-    String newAttributes =
-        DbSerDes.toJson(
-            new ControlledAiNotebookInstanceAttributes(
-                resource.getInstanceId(),
-                resource.getLocation(),
-                resource.getProjectId(),
-                machineType,
-                acceleratorConfig));
-    resourceDao.updateResource(
-        resource.getWorkspaceId(), resource.getResourceId(), null, null, newAttributes, null);
-
     // Update in the cloud.
     // TODO (aaronwa@): place in working map or input param?
     String projectId = resource.getProjectId();
@@ -107,19 +91,10 @@ public class UpdateAiNotebookCpuAndGpuStep implements Step {
     String previousMachineType = context.getWorkingMap().get(PREVIOUS_MACHINE_TYPE, String.class);
     AcceleratorConfig previousAcceleratorConfig =
         context.getWorkingMap().get(PREVIOUS_ACCELERATOR_CONFIG, AcceleratorConfig.class);
-    // Revert database update
-    String previousAttributes =
-        context
-            .getWorkingMap()
-            .get(WorkspaceFlightMapKeys.ResourceKeys.PREVIOUS_ATTRIBUTES, String.class);
-    resourceDao.updateResource(
-        resource.getWorkspaceId(), resource.getResourceId(), null, null, previousAttributes, null);
-
     // Revert cloud update.
     String projectId = resource.getProjectId();
     InstanceName instanceName = resource.toInstanceName(projectId);
-
-    return updateAiNotebookCpuAndGpu(projectId, instanceName.location(), previousAcceleratorConfig);
+    return updateAiNotebookCpuAndGpu(projectId, previousMachineType, previousAcceleratorConfig);
   }
 
   private StepResult updateAiNotebookCpuAndGpu(
