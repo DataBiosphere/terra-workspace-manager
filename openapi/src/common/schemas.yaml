@@ -293,6 +293,11 @@ components:
           type: string
           format: date-time
 
+    State:
+      type: string
+      description: WSM object state
+      enum: ['BROKEN', 'CREATING', 'DELETING', 'READY', 'UPDATING']
+
     StewardshipType:
       description: Enum containing valid stewardship types. Used for enumeration
       type: string

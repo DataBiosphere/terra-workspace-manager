@@ -11,6 +11,7 @@ import bio.terra.common.exception.ForbiddenException;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
+import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.common.utils.TestUtils;
@@ -41,6 +42,7 @@ import bio.terra.workspace.service.resource.referenced.cloud.any.gitrepo.Referen
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdatatable.ReferencedBigQueryDataTableResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.ReferencedGcsBucketResource;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -169,7 +171,7 @@ public class FolderServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void deleteFolder_successWithStepRetry() {
+  void deleteFolder_successWithStepRetry() throws InterruptedException {
     createFoldersAndResources();
     // foo/bar/loo contains a private notebook, thus the folder cannot be deleted by non-owner.
     assertThrows(
@@ -210,25 +212,27 @@ public class FolderServiceTest extends BaseConnectedTest {
     assertTrue(resourceDao.enumerateResources(workspaceId, null, null, 0, 100).isEmpty());
   }
 
-  private void createFoldersAndResources() {
+  private void createFoldersAndResources() throws InterruptedException {
     fooFolder = createFolder("foo", FOO_FOLDER_ID, null);
     fooBarFolder = createFolder("bar", FOO_BAR_FOLDER_ID, FOO_FOLDER_ID);
     fooFooFolder = createFolder("Foo", FOO_FOO_FOLDER_ID, FOO_FOLDER_ID);
     fooBarLooFolder = createFolder("loo", FOO_BAR_LOO_FOLDER_ID, FOO_BAR_FOLDER_ID);
 
+    String notebookJobId =
+        controlledResourceService.createAiNotebookInstance(
+            controlledAiNotebookInFooBarLoo,
+            ControlledResourceFixtures.defaultNotebookCreationParameters(),
+            ControlledResourceIamRole.EDITOR,
+            new ApiJobControl().id(UUID.randomUUID().toString()),
+            "falseResultPath",
+            userAccessUtils.defaultUserAuthRequest());
+
+    // Create everything else in parallel with the notebook
     controlledResourceService.createControlledResourceSync(
         controlledBucket2InFooFoo,
         /*privateResourceIamRole=*/ null,
         userAccessUtils.secondUserAuthRequest(),
         ControlledResourceFixtures.getGoogleBucketCreationParameters());
-
-    controlledResourceService.createAiNotebookInstance(
-        controlledAiNotebookInFooBarLoo,
-        ControlledResourceFixtures.defaultNotebookCreationParameters(),
-        ControlledResourceIamRole.EDITOR,
-        new ApiJobControl().id(UUID.randomUUID().toString()),
-        "falseResultPath",
-        userAccessUtils.defaultUserAuthRequest());
 
     referencedResourceService.createReferenceResource(
         referencedBucketInFooFoo, userAccessUtils.defaultUserAuthRequest());
@@ -240,6 +244,13 @@ public class FolderServiceTest extends BaseConnectedTest {
 
     referencedResourceService.createReferenceResource(
         referencedGitRepoInFooBarLoo, userAccessUtils.defaultUserAuthRequest());
+
+    // Wait for the AI notebook create to complete
+    StairwayTestUtils.pollUntilComplete(
+        notebookJobId,
+        jobService.getStairway(),
+        /* polling interval */ Duration.ofSeconds(30),
+        /* maximum wait */ Duration.ofMinutes(20));
   }
 
   @Test

@@ -34,12 +34,14 @@ import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 /** ControlledGcpResourceApiController unit tests. */
+@Tag("unit")
 public class ControlledGcpResourceApiControllerTest extends BaseUnitTestMockGcpCloudContextService {
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;

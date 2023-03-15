@@ -10,7 +10,6 @@ import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
-import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.any.datareposnapshot.ReferencedDataRepoSnapshotAttributes;
 import bio.terra.workspace.service.resource.referenced.cloud.any.datareposnapshot.ReferencedDataRepoSnapshotResource;
@@ -60,7 +59,6 @@ public class ResourceLineageUtilsTest extends BaseUnitTest {
             .name(resourceName)
             .description("description of " + resourceName)
             .stewardshipType(StewardshipType.REFERENCED)
-            .cloudResourceType(WsmResourceFamily.DATA_REPO_SNAPSHOT)
             .resourceType(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT)
             .cloningInstructions(CloningInstructions.COPY_REFERENCE)
             .attributes(attributesJson)
@@ -115,7 +113,6 @@ public class ResourceLineageUtilsTest extends BaseUnitTest {
             .name(resourceName)
             .description("description of " + resourceName)
             .stewardshipType(StewardshipType.REFERENCED)
-            .cloudResourceType(WsmResourceFamily.DATA_REPO_SNAPSHOT)
             .resourceType(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT)
             .cloningInstructions(CloningInstructions.COPY_REFERENCE)
             .attributes(attributesJson)
