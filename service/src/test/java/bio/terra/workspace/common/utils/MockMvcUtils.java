@@ -782,14 +782,12 @@ public class MockMvcUtils {
     String request =
         objectMapper.writeValueAsString(
             new ApiUpdateControlledGcpAiNotebookInstanceRequestBody()
-                .updateParameters(new ApiGcpAiNotebookUpdateParameters().machineType(machineType)
-                    .putMetadataItem("aaron","hello")
-                )
-            );
+                .updateParameters(
+                    new ApiGcpAiNotebookUpdateParameters()
+                        .machineType(machineType)
+                        .putMetadataItem("aaron", "hello")));
 
-
-
-//    var request = ;
+    //    var request = ;
 
     return updateResource(
         ApiGcpAiNotebookInstanceResource.class,

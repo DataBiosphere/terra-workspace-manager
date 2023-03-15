@@ -60,6 +60,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Resou
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.WsmApplication;
+import com.google.api.services.notebooks.v1.model.AcceleratorConfig;
 import com.google.cloud.Policy;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.time.Duration;
@@ -75,8 +76,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import com.google.api.services.notebooks.v1.model.AcceleratorConfig;
 
 /** CRUD methods for controlled objects. */
 @Component
@@ -538,10 +537,13 @@ public class ControlledResourceService {
             .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, newDescription);
     if (updateParameters != null) {
       final String newMachineType = updateParameters.getMachineType();
-      final AcceleratorConfig newAcceleratorConfig = AiNotebookApiConversions.fromApiAcceleratorConfig(updateParameters.getAcceleratorConfig());
+      final AcceleratorConfig newAcceleratorConfig =
+          AiNotebookApiConversions.fromApiAcceleratorConfig(
+              updateParameters.getAcceleratorConfig());
 
-      jobBuilder.addParameter(ControlledResourceKeys.UPDATE_MACHINE_TYPE,newMachineType)
-          .addParameter(ControlledResourceKeys.UPDATE_ACCELERATOR_CONFIG,newAcceleratorConfig)
+      jobBuilder
+          .addParameter(ControlledResourceKeys.UPDATE_MACHINE_TYPE, newMachineType)
+          .addParameter(ControlledResourceKeys.UPDATE_ACCELERATOR_CONFIG, newAcceleratorConfig)
           .addParameter(ControlledResourceKeys.UPDATE_PARAMETERS, updateParameters);
     }
 

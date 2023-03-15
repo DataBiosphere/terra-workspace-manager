@@ -2,7 +2,6 @@ package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAcceleratorConfig;
 import com.google.api.services.notebooks.v1.model.AcceleratorConfig;
-
 import javax.annotation.Nullable;
 
 /** Utility method for converting AI notebook objects between WSM formats and GCP formats. */

@@ -34,7 +34,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.api.services.notebooks.v1.model.AcceleratorConfig;
-
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
