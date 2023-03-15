@@ -17,6 +17,7 @@ import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.flight.create.StoreMetadataStep;
 import bio.terra.workspace.service.resource.model.WsmResource;
+import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
@@ -48,7 +49,8 @@ public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
     gcpCloudContextService.createGcpCloudContextFinish(
         workspaceUuid, new GcpCloudContext("fake-project"), "flight-testentersinfo");
 
-    StoreMetadataStep storeGoogleBucketMetadataStep = new StoreMetadataStep(resourceDao);
+    StoreMetadataStep storeGoogleBucketMetadataStep =
+        new StoreMetadataStep(resourceDao, WsmResourceStateRule.DELETE_ON_FAILURE);
 
     // Stub the flight map as of this step
     ControlledGcsBucketResource bucketResource =

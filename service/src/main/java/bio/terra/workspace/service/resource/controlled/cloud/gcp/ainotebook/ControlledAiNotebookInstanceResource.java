@@ -32,6 +32,7 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Objects;
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -295,12 +296,12 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (!(o instanceof ControlledAiNotebookInstanceResource)) return false;
     if (!super.equals(o)) return false;
-
-    ControlledAiNotebookInstanceResource that = (ControlledAiNotebookInstanceResource) o;
-
-    return instanceId.equals(that.instanceId) && location.equals(that.location);
+    ControlledAiNotebookInstanceResource resource = (ControlledAiNotebookInstanceResource) o;
+    return Objects.equal(instanceId, resource.instanceId)
+        && Objects.equal(location, resource.location)
+        && Objects.equal(projectId, resource.projectId);
   }
 
   @Override
@@ -316,10 +317,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
 
   @Override
   public int hashCode() {
-    int result = super.hashCode();
-    result = 31 * result + instanceId.hashCode();
-    result = 31 * result + location.hashCode();
-    return result;
+    return Objects.hashCode(super.hashCode(), instanceId, location, projectId);
   }
 
   /** Builder for {@link ControlledAiNotebookInstanceResource}. */

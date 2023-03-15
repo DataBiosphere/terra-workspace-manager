@@ -17,6 +17,8 @@ import bio.terra.workspace.generated.model.ApiCreatedControlledFlexibleResource;
 import bio.terra.workspace.generated.model.ApiFlexibleResource;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
+import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -37,7 +39,6 @@ public class ControlledFlexibleResourceApiControllerTest extends BaseUnitTest {
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
   @Autowired ObjectMapper objectMapper;
-
   private static final String defaultDecodedData = "{\"name\":\"original JSON\"}";
   private static final String defaultNewDecodedData = "{\"description\":\"this is new JSON\"}";
   private static final String defaultName = "fake-flexible-resource";
@@ -60,6 +61,9 @@ public class ControlledFlexibleResourceApiControllerTest extends BaseUnitTest {
     // Needed for assertion that requester has role on workspace.
     when(mockSamService().listRequesterRoles(any(), any(), any()))
         .thenReturn(List.of(WsmIamRole.OWNER));
+
+    when(mockFeatureConfiguration().getStateRule())
+        .thenReturn(WsmResourceStateRule.DELETE_ON_FAILURE);
   }
 
   @Test

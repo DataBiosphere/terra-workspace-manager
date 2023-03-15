@@ -81,6 +81,7 @@ public class LandingZoneApiDispatch {
 
     LandingZoneRequest landingZoneRequest =
         LandingZoneRequest.builder()
+            .landingZoneId(body.getLandingZoneId())
             .definition(body.getDefinition())
             .version(body.getVersion())
             .parameters(

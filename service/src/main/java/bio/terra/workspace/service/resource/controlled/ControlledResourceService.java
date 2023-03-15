@@ -347,7 +347,8 @@ public class ControlledResourceService {
             .stewardshipType(resource.getStewardshipType())
             .addParameter(ControlledResourceKeys.UPDATE_PARAMETERS, updateParameters)
             .addParameter(ResourceKeys.RESOURCE_NAME, resourceName)
-            .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, resourceDescription);
+            .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, resourceDescription)
+            .addParameter(ResourceKeys.RESOURCE_STATE_RULE, features.getStateRule());
     return jobBuilder.submitAndWait(ControlledBigQueryDatasetResource.class);
   }
 
@@ -610,11 +611,13 @@ public class ControlledResourceService {
             "Create controlled resource %s; id %s; name %s",
             resource.getResourceType(), resource.getResourceId(), resource.getName());
 
-    ResourceValidationUtils.validateControlledResourceRegionAgainstPolicy(
-        tpsApiDispatch,
-        resource.getWorkspaceId(),
-        resource.getRegion(),
-        resource.getResourceType().getCloudPlatform());
+    if (features.isTpsEnabled()) {
+      ResourceValidationUtils.validateControlledResourceRegionAgainstPolicy(
+          tpsApiDispatch,
+          resource.getWorkspaceId(),
+          resource.getRegion(),
+          resource.getResourceType().getCloudPlatform());
+    }
 
     return jobService
         .newJob()
@@ -629,7 +632,8 @@ public class ControlledResourceService {
         .resourceType(resource.getResourceType())
         .stewardshipType(resource.getStewardshipType())
         .addParameter(ControlledResourceKeys.PRIVATE_RESOURCE_IAM_ROLE, privateResourceIamRole)
-        .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
+        .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
+        .addParameter(ResourceKeys.RESOURCE_STATE_RULE, features.getStateRule());
   }
 
   /**

@@ -160,6 +160,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.hamcrest.Matcher;
@@ -353,6 +354,29 @@ public class MockMvcUtils {
     String serializedResponse =
         getSerializedResponseForGet(userRequest, WORKSPACES_V1_BY_UUID_PATH_FORMAT, workspaceId);
     return objectMapper.readValue(serializedResponse, ApiWorkspaceDescription.class);
+  }
+
+  /**
+   * A method for cleaning up test workspaces. It checks for null workspaceId, and for the existence
+   * of the workspace, before deleting.
+   *
+   * @param userRequest user doing the deleting
+   * @param workspaceId workspace to delete
+   * @throws Exception as usual in tests
+   */
+  public void cleanupWorkspace(AuthenticatedUserRequest userRequest, @Nullable UUID workspaceId)
+      throws Exception {
+    if (workspaceId == null) {
+      return;
+    }
+
+    // Check if the workspace is already gone. Don't issue a failing delete if it is gone.
+    int status = deleteWorkspaceNoCheck(userRequest, workspaceId);
+    if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_NO_CONTENT) {
+      return;
+    }
+
+    logger.error("Failed to cleanup workspace {}", workspaceId);
   }
 
   public ApiCloneWorkspaceResult cloneWorkspace(
