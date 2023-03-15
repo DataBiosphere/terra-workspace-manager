@@ -271,11 +271,6 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
     flight.addStep(
         new UpdateAiNotebookCpuAndGpuStep(
             aiNotebookResource,
-            flightBeanBag.getCrlService().getClientConfig(),
-            flightBeanBag.getSamService(),
-            userRequest,
-            flightBeanBag.getGcpCloudContextService(),
-            flightBeanBag.getResourceDao(),
             flightBeanBag.getGcpCloudContextService(),
             flightBeanBag.getCrlService()),
         gcpRetry);

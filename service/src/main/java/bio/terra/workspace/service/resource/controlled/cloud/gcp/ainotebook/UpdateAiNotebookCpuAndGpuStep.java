@@ -11,7 +11,6 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.RetryUtils;
-import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -33,31 +32,14 @@ import org.springframework.http.HttpStatus;
  */
 public class UpdateAiNotebookCpuAndGpuStep implements Step {
   private final ControlledAiNotebookInstanceResource resource;
-  private final ClientConfig clientConfig;
-  private final SamService samService;
-  private final AuthenticatedUserRequest userRequest;
-
-  private final GcpCloudContextService gcpCloudContextService;
-  private final ResourceDao resourceDao;
-
   private final GcpCloudContextService cloudContextService;
   private final CrlService crlService;
 
   public UpdateAiNotebookCpuAndGpuStep(
       ControlledAiNotebookInstanceResource resource,
-      ClientConfig clientConfig,
-      SamService samService,
-      AuthenticatedUserRequest userRequest,
-      GcpCloudContextService gcpCloudContextService,
-      ResourceDao resourceDao,
       GcpCloudContextService cloudContextService,
       CrlService crlService) {
     this.resource = resource;
-    this.clientConfig = clientConfig;
-    this.samService = samService;
-    this.userRequest = userRequest;
-    this.gcpCloudContextService = gcpCloudContextService;
-    this.resourceDao = resourceDao;
     this.cloudContextService = cloudContextService;
     this.crlService = crlService;
   }
