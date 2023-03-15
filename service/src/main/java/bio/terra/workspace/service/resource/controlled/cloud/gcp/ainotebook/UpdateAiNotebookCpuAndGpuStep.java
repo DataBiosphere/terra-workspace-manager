@@ -33,63 +33,16 @@ import org.springframework.http.HttpStatus;
 public class UpdateAiNotebookCpuAndGpuStep implements Step {
   private final ControlledAiNotebookInstanceResource resource;
   private final GcpCloudContextService cloudContextService;
-  private final CrlService crlService;
 
   public UpdateAiNotebookCpuAndGpuStep(
-      ControlledAiNotebookInstanceResource resource,
-      GcpCloudContextService cloudContextService,
-      CrlService crlService) {
+      ControlledAiNotebookInstanceResource resource, GcpCloudContextService cloudContextService) {
     this.resource = resource;
     this.cloudContextService = cloudContextService;
-    this.crlService = crlService;
   }
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    // The notebook instance must be stopped for CPU and GPU updates to occur.
-    // If the requested update will not change anything on the cloud, then this flight ends
-    // successfully
-    // (no further action is needed - i.e., no update call).
-    if (noEffectiveUpdateRequested(context)) {
-      return StepResult.getStepResultSuccess();
-    }
-
-    // Otherwise, the requested update changes at least one of the CPU or GPU.
-    // Check if the notebook is stopped, so we can proceed with updating in the flight.
-    var projectId = cloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
-    InstanceName instanceName = resource.toInstanceName(projectId);
-
-    try {
-      com.google.api.services.notebooks.v1.model.Instance instance =
-          crlService.getAIPlatformNotebooksCow().instances().get(instanceName).execute();
-      // If not stopped, then we cannot proceed with the update.
-      var instanceState = instance.getState();
-
-      // If stopping, then retry and wait until the instance stops.
-      if (instanceState.equals(Instance.State.STOPPING.toString())) {
-        return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY);
-      }
-      // Otherwise, when the instance is not stopped or stopping, the flight cannot continue.
-      if (!instanceState.equals(Instance.State.STOPPED.toString())) {
-        return new StepResult(
-            StepStatus.STEP_RESULT_FAILURE_FATAL,
-            new IllegalStateException(
-                "Notebook instance must be stopped before updating the CPU or GPU configuration. The current notebook state is: %s (instanceName: %s; id: %s)"
-                    .formatted(
-                        instance.getState(),
-                        instanceName.formatName(),
-                        resource.getWsmResourceFields().getResourceId())));
-      }
-    } catch (GoogleJsonResponseException e) {
-      if (HttpStatus.BAD_REQUEST.value() == e.getStatusCode()
-          || HttpStatus.NOT_FOUND.value() == e.getStatusCode()) {
-        return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
-      }
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
-    } catch (IOException e) {
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
-    }
-
+    // TODO: use the working map.
     String newMachineType =
         context
             .getInputParameters()
@@ -101,60 +54,20 @@ public class UpdateAiNotebookCpuAndGpuStep implements Step {
             .get(
                 WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_ACCELERATOR_CONFIG,
                 AcceleratorConfig.class);
+
+    var projectId = cloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
     return updateAiNotebookCpuAndGpu(projectId, newMachineType, newAcceleratorConfig);
   }
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    // Case 1: No update would have been performed in the "do" step.
-    // The flight context working map is never modified during any part of this entire flight, so
-    // the result of this update check function is identical to the result in the "do" step.
-    if (noEffectiveUpdateRequested(context)) {
-      return StepResult.getStepResultSuccess();
-    }
     // Case 2: Some update may have occurred.
     String previousMachineType = context.getWorkingMap().get(PREVIOUS_MACHINE_TYPE, String.class);
     AcceleratorConfig previousAcceleratorConfig =
         context.getWorkingMap().get(PREVIOUS_ACCELERATOR_CONFIG, AcceleratorConfig.class);
     String projectId = resource.getProjectId();
-    // Attempt to revert cloud update.
+    // Attempt to revert cloud update (if it happened).
     return updateAiNotebookCpuAndGpu(projectId, previousMachineType, previousAcceleratorConfig);
-  }
-
-  // Returns true if no update is required (the update will not change the previous attributes).
-  private boolean noEffectiveUpdateRequested(FlightContext context) {
-    String previousMachineType =
-        context
-            .getWorkingMap()
-            .get(WorkspaceFlightMapKeys.ControlledResourceKeys.PREVIOUS_MACHINE_TYPE, String.class);
-
-    AcceleratorConfig previousAcceleratorConfig =
-        context
-            .getWorkingMap()
-            .get(
-                WorkspaceFlightMapKeys.ControlledResourceKeys.PREVIOUS_ACCELERATOR_CONFIG,
-                AcceleratorConfig.class);
-
-    String newMachineType =
-        context
-            .getInputParameters()
-            .get(WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_MACHINE_TYPE, String.class);
-
-    AcceleratorConfig newAcceleratorConfig =
-        context
-            .getInputParameters()
-            .get(
-                WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_ACCELERATOR_CONFIG,
-                AcceleratorConfig.class);
-
-    // No update requested.
-    if (newMachineType == null && newAcceleratorConfig == null) {
-      return true;
-    }
-
-    // Check if the requested update differs from the previous.
-    return Objects.equals(newMachineType, previousMachineType)
-        && (Objects.equals(newAcceleratorConfig, previousAcceleratorConfig));
   }
 
   private StepResult updateAiNotebookCpuAndGpu(

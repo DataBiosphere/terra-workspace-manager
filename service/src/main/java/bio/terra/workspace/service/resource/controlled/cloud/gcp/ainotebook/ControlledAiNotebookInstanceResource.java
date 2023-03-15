@@ -263,6 +263,12 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
             flightBeanBag.getGcpCloudContextService()),
         gcpRetry);
 
+    // Checks if the notebook is stopped, and calculates the effective updates for future steps.
+    flight.addStep(
+        new CheckAiNotebookStoppedForGpuAndCpuUpdateStep(
+            aiNotebookResource, flightBeanBag.getCrlService()),
+        gcpRetry);
+
     flight.addStep(
         new UpdateNotebookCpuAndGpuAttributesStep(
             aiNotebookResource, flightBeanBag.getResourceDao()),
@@ -270,9 +276,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
 
     flight.addStep(
         new UpdateAiNotebookCpuAndGpuStep(
-            aiNotebookResource,
-            flightBeanBag.getGcpCloudContextService(),
-            flightBeanBag.getCrlService()),
+            aiNotebookResource, flightBeanBag.getGcpCloudContextService()),
         gcpRetry);
   }
 
