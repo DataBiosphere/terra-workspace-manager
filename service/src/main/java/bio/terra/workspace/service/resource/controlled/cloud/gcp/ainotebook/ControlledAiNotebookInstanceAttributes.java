@@ -1,8 +1,8 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 
-import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAcceleratorConfig;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.api.services.notebooks.v1.model.AcceleratorConfig;
 
 /** Attributes class for serializing {@link ControlledAiNotebookInstanceResource} as json. */
@@ -11,6 +11,8 @@ public class ControlledAiNotebookInstanceAttributes {
   private final String location;
   private final String projectId;
   private final String machineType;
+
+  @JsonDeserialize(using = AcceleratorConfigDeserializer.class)
   private final AcceleratorConfig acceleratorConfig;
 
   @JsonCreator

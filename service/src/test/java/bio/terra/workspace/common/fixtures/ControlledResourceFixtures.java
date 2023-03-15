@@ -634,6 +634,7 @@ public class ControlledResourceFixtures {
         .instanceId(TestUtils.appendRandomNumber("my-cloud-id"))
         .location("us-east1-b")
         .projectId("my-project-id")
+        .machineType("n1-highmem-4")
         .acceleratorConfig(DEFAULT_AI_NOTEBOOK_ACCELERATOR_CONFIG);
   }
 
@@ -644,6 +645,7 @@ public class ControlledResourceFixtures {
         .instanceId(TestUtils.appendRandomNumber("my-cloud-id"))
         .location("us-east1-b")
         .projectId("my-project-id")
+        .machineType("n1-highmem-4")
         .acceleratorConfig(DEFAULT_AI_NOTEBOOK_ACCELERATOR_CONFIG);
   }
 
