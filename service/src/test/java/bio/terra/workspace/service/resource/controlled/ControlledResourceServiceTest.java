@@ -421,12 +421,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     var creationParameters =
         ControlledResourceFixtures.defaultNotebookCreationParameters()
             .instanceId(instanceId)
-            .location(DEFAULT_NOTEBOOK_LOCATION)
-            .machineType("n1-standard-1"); // Change machine type since E2 does not support
-    // accelerators.
-    //            .acceleratorConfig(
-    //                ApiAiNotebookConversions.toApiAcceleratorConfig(
-    //                    DEFAULT_AI_NOTEBOOK_ACCELERATOR_CONFIG));
+            .location(DEFAULT_NOTEBOOK_LOCATION);
 
     var resource = makeNotebookTestResource(workspaceId, name, instanceId);
     String jobId =
@@ -470,12 +465,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     var pet = samService.getOrCreatePetSaCredentials(projectId, user.getAuthenticatedRequest());
 
     controlledResourceService.updateAiNotebookInstance(
-        fetchedInstance,
-        AI_NOTEBOOK_UPDATE_PARAMETERS_WITH_CPU_AND_GPU,
-        //        AI_NOTEBOOK_UPDATE_PARAMETERS,
-        newName,
-        newDescription,
-        pet);
+        fetchedInstance, AI_NOTEBOOK_UPDATE_PARAMETERS, newName, newDescription, pet);
 
     ControlledAiNotebookInstanceResource updatedInstance =
         controlledResourceService
@@ -502,15 +492,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
       assertEquals(
           entrySet.getValue(), updatedInstanceFromCloud.getMetadata().get(entrySet.getKey()));
     }
-
-    assertEquals(
-        AI_NOTEBOOK_UPDATE_PARAMETERS_WITH_CPU_AND_GPU.getMachineType(),
-        updatedInstance.getMachineType());
-
-    assertEquals(
-        ApiAiNotebookConversions.fromApiAcceleratorConfig(
-            AI_NOTEBOOK_UPDATE_PARAMETERS_WITH_CPU_AND_GPU.getAcceleratorConfig()),
-        updatedInstance.getAcceleratorConfig());
   }
 
   @Test

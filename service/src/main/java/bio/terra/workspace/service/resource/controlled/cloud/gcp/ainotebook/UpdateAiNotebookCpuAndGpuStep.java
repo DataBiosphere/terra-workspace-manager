@@ -79,6 +79,9 @@ public class UpdateAiNotebookCpuAndGpuStep implements Step {
     String machineType = context.getInputParameters().get(UPDATE_MACHINE_TYPE, String.class);
     AcceleratorConfig acceleratorConfig =
         context.getInputParameters().get(UPDATE_ACCELERATOR_CONFIG, AcceleratorConfig.class);
+    if (machineType == null && acceleratorConfig == null) {
+      return StepResult.getStepResultSuccess();
+    }
     // Update in the cloud.
     // TODO (aaronwa@): place in working map or input param?
     String projectId = resource.getProjectId();

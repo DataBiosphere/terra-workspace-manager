@@ -22,6 +22,7 @@ import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants;
 import java.util.List;
 import java.util.UUID;
@@ -126,25 +127,14 @@ public class ControlledGcpResourceApiControllerAiNotebookTest extends BaseConnec
             .createAiNotebookInstance(userAccessUtils.defaultUserAuthRequest(), workspaceId, null)
             .getAiNotebookInstance();
 
-    //    var notebookResource = notebook
-
-    //    resource.toInstanceName(notebook.getAttributes().getProjectId())
-
-    //    InstanceName name = InstanceName.parse(notebook.getAttributes().getInstanceId());
-    var instanceName =
+    String instanceName =
         "projects/%s/locations/%s/instances/%s"
             .formatted(
                 notebook.getAttributes().getProjectId(),
                 notebook.getAttributes().getLocation(),
                 notebook.getAttributes().getInstanceId());
     // Stop the notebook so the CPU and GPU can be updated.
-    crlService.getAIPlatformNotebooksCow().instances().stop(instanceName);
-    //    var updatedInstanceFromCloud =
-    //        crlService
-    //            .getAIPlatformNotebooksCow()
-    //            .instances()
-    //            .get(notebook.toInstanceName(notebook))
-    //            .execute();[
+    crlService.getAIPlatformNotebooksCow().instances().stop(instanceName).execute();
 
     var updatedNotebook =
         mockMvcUtils.updateAiNotebookInstance(

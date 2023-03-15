@@ -82,7 +82,9 @@ public class CheckAiNotebookStoppedForGpuAndCpuUpdateStep implements Step {
       Instance instance =
           crlService.getAIPlatformNotebooksCow().instances().get(instanceName).execute();
       // If stopped, then we cannot proceed with the update.
-      if (instance.getState().equals("STOPPED")) {
+      if (instance
+          .getState()
+          .equals(com.google.cloud.notebooks.v1.Instance.State.STOPPED.toString())) {
         return new StepResult(
             StepStatus.STEP_RESULT_FAILURE_FATAL,
             new IllegalStateException(
