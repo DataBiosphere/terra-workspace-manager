@@ -114,6 +114,32 @@ public class ControlledGcpResourceApiControllerAiNotebookTest extends BaseConnec
         List.of(WorkspaceConstants.Properties.DEFAULT_RESOURCE_LOCATION));
   }
 
+  @Test
+  public void updateAiNotebookInstance_machineTypeAndAcceleratorConfig() throws Exception {
+    ApiGcpAiNotebookInstanceResource notebook =
+        mockMvcUtils
+            .createAiNotebookInstance(userAccessUtils.defaultUserAuthRequest(), workspaceId, null)
+            .getAiNotebookInstance();
+
+
+
+//    var updatedInstanceFromCloud =
+//        crlService
+//            .getAIPlatformNotebooksCow()
+//            .instances()
+//            .get(notebook.toInstanceName(notebook))
+//            .execute();
+
+    var updatedNotebook =
+        mockMvcUtils.updateAiNotebookInstance(
+            userAccessUtils.defaultUserAuthRequest(),
+            workspaceId,
+            notebook.getMetadata().getResourceId(),
+            "n1-highmem-2");
+
+    assertEquals("n1-highmem-2", updatedNotebook.getAttributes().getMachineType());
+  }
+
   private void assertAiNotebook(
       ApiGcpAiNotebookInstanceResource actualResource,
       UUID expectedWorkspaceId,

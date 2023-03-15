@@ -70,6 +70,8 @@ import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiFlexibleResource;
 import bio.terra.workspace.generated.model.ApiFlexibleResourceUpdateParameters;
+import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
+import bio.terra.workspace.generated.model.ApiGcpAiNotebookUpdateParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableAttributes;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableResource;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetAttributes;
@@ -106,6 +108,7 @@ import bio.terra.workspace.generated.model.ApiStewardshipType;
 import bio.terra.workspace.generated.model.ApiUpdateBigQueryDataTableReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateBigQueryDatasetReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateControlledFlexibleResourceRequestBody;
+import bio.terra.workspace.generated.model.ApiUpdateControlledGcpAiNotebookInstanceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateControlledGcpBigQueryDatasetRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateDataRepoSnapshotReferenceRequestBody;
@@ -250,6 +253,9 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/%s/properties";
   public static final String CONTROLLED_GCP_AI_NOTEBOOKS_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/gcp/ai-notebook-instances";
+
+  public static final String CONTROLLED_GCP_AI_NOTEBOOK_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/gcp/ai-notebook-instances/%s";
   public static final String CONTROLLED_GCP_AI_NOTEBOOKS_V1_RESULT_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/gcp/ai-notebook-instances/create-result/%s";
   public static final String CONTROLLED_GCP_BIG_QUERY_DATASETS_V1_PATH_FORMAT =
@@ -768,6 +774,31 @@ public class MockMvcUtils {
             userRequest, CONTROLLED_GCP_AI_NOTEBOOKS_V1_RESULT_PATH_FORMAT, workspaceId, jobId);
     return objectMapper.readValue(
         serializedResponse, ApiCreatedControlledGcpAiNotebookInstanceResult.class);
+  }
+
+  public ApiGcpAiNotebookInstanceResource updateAiNotebookInstance(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId, String machineType)
+      throws Exception {
+    String request =
+        objectMapper.writeValueAsString(
+            new ApiUpdateControlledGcpAiNotebookInstanceRequestBody()
+                .updateParameters(new ApiGcpAiNotebookUpdateParameters().machineType(machineType)
+                    .putMetadataItem("aaron","hello")
+                )
+            );
+
+
+
+//    var request = ;
+
+    return updateResource(
+        ApiGcpAiNotebookInstanceResource.class,
+        CONTROLLED_GCP_AI_NOTEBOOK_V1_PATH_FORMAT,
+        workspaceId,
+        resourceId,
+        request,
+        userRequest,
+        HttpStatus.SC_OK);
   }
 
   public ApiCreatedControlledGcpBigQueryDataset createControlledBqDataset(

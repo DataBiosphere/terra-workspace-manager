@@ -462,13 +462,20 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         UpdateAiNotebookAttributesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
+
+    crlService
+        .getAIPlatformNotebooksCow()
+        .instances()
+        .stop(fetchedInstance.toInstanceName(projectId));
+    var pet = samService.getOrCreatePetSaCredentials(projectId, user.getAuthenticatedRequest());
+
     controlledResourceService.updateAiNotebookInstance(
         fetchedInstance,
         AI_NOTEBOOK_UPDATE_PARAMETERS_WITH_CPU_AND_GPU,
         //        AI_NOTEBOOK_UPDATE_PARAMETERS,
         newName,
         newDescription,
-        user.getAuthenticatedRequest());
+        pet);
 
     ControlledAiNotebookInstanceResource updatedInstance =
         controlledResourceService

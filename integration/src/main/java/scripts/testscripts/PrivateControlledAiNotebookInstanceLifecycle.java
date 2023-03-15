@@ -191,12 +191,17 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
             new UpdateControlledGcpAiNotebookInstanceRequestBody()
                 .description(newDescription)
                 .name(newName)
-                .updateParameters(new GcpAiNotebookUpdateParameters().metadata(newMetadata)),
+                .updateParameters(
+                    new GcpAiNotebookUpdateParameters()
+                        .metadata(newMetadata)
+                        .machineType("n1-highmem-4")),
             getWorkspaceId(),
             resourceId);
 
     assertEquals(newName, updatedResource.getMetadata().getName());
     assertEquals(newDescription, updatedResource.getMetadata().getDescription());
+    assertEquals("n1-highmem-4", updatedResource.getAttributes().getMachineType());
+
     var metadata =
         userNotebooks.projects().locations().instances().get(instanceName).execute().getMetadata();
     for (var entrySet : newMetadata.entrySet()) {
