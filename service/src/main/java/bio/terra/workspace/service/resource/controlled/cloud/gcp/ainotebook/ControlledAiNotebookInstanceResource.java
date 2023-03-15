@@ -276,10 +276,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
         RetryRules.shortDatabase());
 
     // Update the CPU and GPU attributes in the cloud.
-    flight.addStep(
-        new UpdateAiNotebookCpuAndGpuStep(
-            aiNotebookResource, flightBeanBag.getGcpCloudContextService()),
-        gcpRetry);
+    flight.addStep(new UpdateAiNotebookCpuAndGpuStep(aiNotebookResource), gcpRetry);
   }
 
   public InstanceName toInstanceName(String workspaceProjectId) {

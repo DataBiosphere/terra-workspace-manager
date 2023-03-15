@@ -26,42 +26,36 @@ import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import org.springframework.http.HttpStatus;
 
-/**
- * Make a direct cloud call using the Google API Client Library for AI notebooks {@link
- * AIPlatformNotebooks}.
- */
+/** Update the CPU/GPU using the client library for AI notebooks {@link NotebookServiceClient}. */
 public class UpdateAiNotebookCpuAndGpuStep implements Step {
   private final ControlledAiNotebookInstanceResource resource;
-  private final GcpCloudContextService cloudContextService;
 
-  public UpdateAiNotebookCpuAndGpuStep(
-      ControlledAiNotebookInstanceResource resource, GcpCloudContextService cloudContextService) {
+  public UpdateAiNotebookCpuAndGpuStep(ControlledAiNotebookInstanceResource resource) {
     this.resource = resource;
-    this.cloudContextService = cloudContextService;
   }
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    // TODO: use the working map.
-    String newMachineType =
+    // The effective update instructions will respectively be null if no update would occur
+    // (i.e., the previous attribute and the requested new attribute value are equal)
+    String effectiveMachineType =
         context
-            .getInputParameters()
+            .getWorkingMap()
             .get(WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_MACHINE_TYPE, String.class);
 
-    AcceleratorConfig newAcceleratorConfig =
+    AcceleratorConfig effectiveAcceleratorConfig =
         context
-            .getInputParameters()
+            .getWorkingMap()
             .get(
                 WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_ACCELERATOR_CONFIG,
                 AcceleratorConfig.class);
 
-    var projectId = cloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
-    return updateAiNotebookCpuAndGpu(projectId, newMachineType, newAcceleratorConfig);
+    var projectId = resource.getProjectId();
+    return updateAiNotebookCpuAndGpu(projectId, effectiveMachineType, effectiveAcceleratorConfig);
   }
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    // Case 2: Some update may have occurred.
     String previousMachineType = context.getWorkingMap().get(PREVIOUS_MACHINE_TYPE, String.class);
     AcceleratorConfig previousAcceleratorConfig =
         context.getWorkingMap().get(PREVIOUS_ACCELERATOR_CONFIG, AcceleratorConfig.class);
@@ -71,36 +65,44 @@ public class UpdateAiNotebookCpuAndGpuStep implements Step {
   }
 
   private StepResult updateAiNotebookCpuAndGpu(
-      String projectId, String machineType, AcceleratorConfig acceleratorConfig) {
+      String projectId, String effectiveMachineType, AcceleratorConfig effectiveAcceleratorConfig) {
+    if (effectiveMachineType == null && effectiveAcceleratorConfig == null) {
+      return StepResult.getStepResultSuccess();
+    }
+
     try (NotebookServiceClient notebookServiceClient = NotebookServiceClient.create()) {
       InstanceName instanceName = resource.toInstanceName(projectId);
 
       // TODO (aaronwa@):
-      // The AI notebook may be stopped in the small window between the above check, and when this
-      // update is executed. We should not retry in that case.
+      // The AI notebook may be stopped in the small window between the previous "check if notebook
+      // stopped" step and when this update is executed. We should not retry in that case.
+      // Catch this invalid state error (i.e., strictly not stopped - don't allow "stopping" here)
+      // here somehow.
 
-      // TODO: Maybe refactor these two into one combined update to simplify the undo process?
-      if (machineType != null) {
+      // TODO (aaronwa@): refactor these two into one combined update to simplify the undo process?
+      if (effectiveMachineType != null) {
         RetryUtils.getWithRetryOnException(
             () ->
                 notebookServiceClient
                     .setInstanceMachineTypeAsync(
                         com.google.cloud.notebooks.v1.SetInstanceMachineTypeRequest.newBuilder()
                             .setName(instanceName.formatName())
-                            .setMachineType(machineType)
+                            .setMachineType(effectiveMachineType)
                             .build())
                     .get());
       }
 
-      if (acceleratorConfig != null) {
+      if (effectiveAcceleratorConfig != null) {
         RetryUtils.getWithRetryOnException(
             () ->
                 notebookServiceClient
                     .setInstanceAcceleratorAsync(
                         com.google.cloud.notebooks.v1.SetInstanceAcceleratorRequest.newBuilder()
                             .setName(instanceName.formatName())
-                            .setCoreCount(acceleratorConfig.getCoreCount())
-                            .setType(Instance.AcceleratorType.valueOf(acceleratorConfig.getType()))
+                            .setCoreCount(effectiveAcceleratorConfig.getCoreCount())
+                            .setType(
+                                Instance.AcceleratorType.valueOf(
+                                    effectiveAcceleratorConfig.getType()))
                             .build())
                     .get());
       }
