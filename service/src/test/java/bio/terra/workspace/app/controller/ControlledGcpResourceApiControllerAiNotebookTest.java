@@ -140,6 +140,9 @@ public class ControlledGcpResourceApiControllerAiNotebookTest extends BaseConnec
             "n1-highmem-2");
 
     assertEquals("n1-highmem-2", updatedNotebook.getAttributes().getMachineType());
+    assertEquals(
+        "nvidia-tesla-v100", updatedNotebook.getAttributes().getAcceleratorConfig().getType());
+    assertEquals(2L, updatedNotebook.getAttributes().getAcceleratorConfig().getCoreCount());
   }
 
   private void assertAiNotebook(

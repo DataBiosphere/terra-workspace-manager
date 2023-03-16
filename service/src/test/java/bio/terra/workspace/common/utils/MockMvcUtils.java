@@ -70,6 +70,7 @@ import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiFlexibleResource;
 import bio.terra.workspace.generated.model.ApiFlexibleResourceUpdateParameters;
+import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAcceleratorConfig;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookUpdateParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableAttributes;
@@ -160,6 +161,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletResponse;
+
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.hamcrest.Matcher;
@@ -785,9 +788,10 @@ public class MockMvcUtils {
                 .updateParameters(
                     new ApiGcpAiNotebookUpdateParameters()
                         .machineType(machineType)
-                        .putMetadataItem("aaron", "hello")));
-
-    //    var request = ;
+                        .metadata(ImmutableMap.of("foo", "bar", "count", "3"))
+                        .acceleratorConfig(new ApiGcpAiNotebookInstanceAcceleratorConfig()
+                            .coreCount(2L).type("nvidia-tesla-v100"))
+                ));
 
     return updateResource(
         ApiGcpAiNotebookInstanceResource.class,
