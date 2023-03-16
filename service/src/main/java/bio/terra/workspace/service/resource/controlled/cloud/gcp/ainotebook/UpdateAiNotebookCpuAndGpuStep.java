@@ -103,12 +103,7 @@ public class UpdateAiNotebookCpuAndGpuStep implements Step {
                             .setName(instanceName.formatName())
                             .setMachineType(effectiveMachineType)
                             .build())
-                    .get(),
-            Duration.ofMinutes(5),
-            RetryUtils.DEFAULT_RETRY_SLEEP_DURATION,
-            RetryUtils.DEFAULT_RETRY_FACTOR_INCREASE,
-            RetryUtils.DEFAULT_RETRY_SLEEP_DURATION_MAX,
-            null);
+                    .get());
       }
 
       if (effectiveAcceleratorConfig != null) {
