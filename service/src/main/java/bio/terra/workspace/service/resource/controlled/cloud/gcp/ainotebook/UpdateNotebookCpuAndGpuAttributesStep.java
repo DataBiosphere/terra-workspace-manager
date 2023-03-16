@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_ACCELERATOR_CONFIG;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_MACHINE_TYPE;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_ACCELERATOR_CONFIG;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_MACHINE_TYPE;
 
@@ -32,6 +34,21 @@ public class UpdateNotebookCpuAndGpuAttributesStep implements Step {
     FlightMap workingMap = context.getWorkingMap();
 
     workingMap.put(WorkspaceFlightMapKeys.ResourceKeys.PREVIOUS_ATTRIBUTES, previousAttributes);
+
+    // This step is overloaded for use in the create flight. Treat these creation parameters as
+    // guaranteed updates if they exist.
+    String creationMachineType =
+        context.getInputParameters().get(CREATE_NOTEBOOK_MACHINE_TYPE, String.class);
+    AcceleratorConfig creationAcceleratorConfig =
+        context
+            .getInputParameters()
+            .get(CREATE_NOTEBOOK_ACCELERATOR_CONFIG, AcceleratorConfig.class);
+    if (creationMachineType != null) {
+      workingMap.put(UPDATE_MACHINE_TYPE, creationMachineType);
+    }
+    if (creationMachineType != null) {
+      workingMap.put(UPDATE_ACCELERATOR_CONFIG, creationAcceleratorConfig);
+    }
 
     // Use the effective update instructions calculated from the previous step.
     String effectiveMachineType = workingMap.get(UPDATE_MACHINE_TYPE, String.class);

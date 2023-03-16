@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.controller;
 
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_CREATED_AI_NOTEBOOK_MACHINE_TYPE;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertControlledResourceMetadata;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertResourceMetadata;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -115,6 +116,16 @@ public class ControlledGcpResourceApiControllerAiNotebookTest extends BaseConnec
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
         List.of(WorkspaceConstants.Properties.DEFAULT_RESOURCE_LOCATION));
+  }
+
+  @Test
+  public void createAiNotebookInstance_populates_machineType_inGetResponse() throws Exception {
+    ApiGcpAiNotebookInstanceResource notebook =
+        mockMvcUtils
+            .createAiNotebookInstance(userAccessUtils.defaultUserAuthRequest(), workspaceId, null)
+            .getAiNotebookInstance();
+    assertEquals(
+        DEFAULT_CREATED_AI_NOTEBOOK_MACHINE_TYPE, notebook.getAttributes().getMachineType());
   }
 
   @Test

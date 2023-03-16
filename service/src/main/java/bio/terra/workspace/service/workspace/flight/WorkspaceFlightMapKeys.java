@@ -60,6 +60,8 @@ public final class WorkspaceFlightMapKeys {
     public static final String CREATE_NOTEBOOK_NETWORK_NAME = "createNotebookNetworkName";
     public static final String CREATE_NOTEBOOK_PARAMETERS = "createNotebookParameters";
     public static final String CREATE_NOTEBOOK_LOCATION = "createNotebookLocation";
+    public static final String CREATE_NOTEBOOK_MACHINE_TYPE = "createMachineType";
+    public static final String CREATE_NOTEBOOK_ACCELERATOR_CONFIG = "createAcceleratorConfig";
     public static final String CREATE_NOTEBOOK_SUBNETWORK_NAME = "createNotebookSubnetworkName";
     public static final String NOTEBOOK_PET_SERVICE_ACCOUNT = "notebookPetServiceAccount";
 

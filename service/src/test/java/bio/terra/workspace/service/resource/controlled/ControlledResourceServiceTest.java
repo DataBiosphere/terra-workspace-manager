@@ -256,6 +256,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     retrySteps.put(
         UpdateNotebookResourceLocationAttributesStep.class.getName(),
         StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        UpdateNotebookCpuAndGpuAttributesStep.class.getName(),
+        StepStatus.STEP_RESULT_FAILURE_RETRY);
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
 
