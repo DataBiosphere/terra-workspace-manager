@@ -71,7 +71,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.Retr
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.UpdateAiNotebookCpuAndGpuStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.UpdateAiNotebookMetadataAttributesStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.UpdateNotebookCpuAndGpuAttributesStep;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.UpdateNotebookResourceLocationAttributesStep;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.UpdateNotebookResourceAttributesStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.CreateBigQueryDatasetStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.DeleteBigQueryDatasetStep;
@@ -254,11 +254,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         CreateAiNotebookInstanceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(NotebookCloudSyncStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
-        UpdateNotebookResourceLocationAttributesStep.class.getName(),
-        StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(
-        UpdateNotebookCpuAndGpuAttributesStep.class.getName(),
-        StepStatus.STEP_RESULT_FAILURE_RETRY);
+        UpdateNotebookResourceAttributesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
 

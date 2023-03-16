@@ -1,6 +1,8 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_ACCELERATOR_CONFIG;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_LOCATION;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_MACHINE_TYPE;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
@@ -10,13 +12,14 @@ import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
+import com.google.api.services.notebooks.v1.model.AcceleratorConfig;
 
-public class UpdateNotebookResourceLocationAttributesStep implements Step {
+public class UpdateNotebookResourceAttributesStep implements Step {
 
   private final ControlledAiNotebookInstanceResource resource;
   private final ResourceDao resourceDao;
 
-  public UpdateNotebookResourceLocationAttributesStep(
+  public UpdateNotebookResourceAttributesStep(
       ControlledAiNotebookInstanceResource resource, ResourceDao resourceDao) {
     this.resource = resource;
     this.resourceDao = resourceDao;
@@ -28,6 +31,15 @@ public class UpdateNotebookResourceLocationAttributesStep implements Step {
     String previousAttributes = resource.attributesToJson();
     flightContext.getWorkingMap().put(ResourceKeys.PREVIOUS_ATTRIBUTES, previousAttributes);
 
+    String creationMachineType =
+        FlightUtils.getRequired(
+            flightContext.getInputParameters(), CREATE_NOTEBOOK_MACHINE_TYPE, String.class);
+
+    AcceleratorConfig creationAcceleratorConfig =
+        flightContext
+            .getInputParameters()
+            .get(CREATE_NOTEBOOK_ACCELERATOR_CONFIG, AcceleratorConfig.class);
+
     String requestedLocation =
         FlightUtils.getRequired(
             flightContext.getWorkingMap(), CREATE_NOTEBOOK_LOCATION, String.class);
@@ -37,8 +49,8 @@ public class UpdateNotebookResourceLocationAttributesStep implements Step {
                 resource.getInstanceId(),
                 requestedLocation,
                 resource.getProjectId(),
-                resource.getMachineType(),
-                resource.getAcceleratorConfig()));
+                creationMachineType,
+                creationAcceleratorConfig));
 
     resourceDao.updateResource(
         resource.getWorkspaceId(), resource.getResourceId(), null, null, newAttributes, null);

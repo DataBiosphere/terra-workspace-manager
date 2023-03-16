@@ -222,10 +222,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
             userRequest),
         gcpRetryRule);
     flight.addStep(
-        new UpdateNotebookResourceLocationAttributesStep(this, flightBeanBag.getResourceDao()),
-        shortDatabaseRetryRule);
-    flight.addStep(
-        new UpdateNotebookCpuAndGpuAttributesStep(this, flightBeanBag.getResourceDao()),
+        new UpdateNotebookResourceAttributesStep(this, flightBeanBag.getResourceDao()),
         shortDatabaseRetryRule);
     flight.addStep(
         new UpdateControlledResourceRegionStep(flightBeanBag.getResourceDao(), getResourceId()),
