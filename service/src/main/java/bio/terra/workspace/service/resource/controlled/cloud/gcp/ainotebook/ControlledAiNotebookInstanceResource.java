@@ -16,7 +16,6 @@ import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAttributes;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
@@ -68,7 +67,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
   private final String location;
   private final String projectId;
   private final String machineType;
-  private final AcceleratorConfig acceleratorConfig;
+  @Nullable private final AcceleratorConfig acceleratorConfig;
 
   @JsonCreator
   public ControlledAiNotebookInstanceResource(
@@ -79,7 +78,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
       @JsonProperty("location") String location,
       @JsonProperty("projectId") String projectId,
       @JsonProperty("machineType") String machineType,
-      @JsonProperty("acceleratorConfig") AcceleratorConfig acceleratorConfig) {
+      @Nullable @JsonProperty("acceleratorConfig") AcceleratorConfig acceleratorConfig) {
     super(resourceFields, controlledResourceFields);
     this.instanceId = instanceId;
     this.location = location;
@@ -96,7 +95,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
       String location,
       String projectId,
       String machineType,
-      AcceleratorConfig acceleratorConfig) {
+      @Nullable AcceleratorConfig acceleratorConfig) {
     super(common);
     this.instanceId = instanceId;
     this.location = location;
@@ -152,6 +151,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
     return machineType;
   }
 
+  @Nullable
   public AcceleratorConfig getAcceleratorConfig() {
     return acceleratorConfig;
   }
@@ -242,10 +242,6 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
         getResourceFromFlightInputParameters(
             flight, WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
 
-    var userRequest =
-        flight
-            .getInputParameters()
-            .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
     // Retrieve existing attributes in case of undo later.
     RetryRule gcpRetry = RetryRules.cloud();
     flight.addStep(
@@ -257,7 +253,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
 
     // Update the AI notebook's attributes (excluding CPU and GPU).
     flight.addStep(
-        new UpdateAiNotebookAttributesStep(
+        new UpdateAiNotebookMetadataAttributesStep(
             aiNotebookResource,
             flightBeanBag.getCrlService(),
             flightBeanBag.getGcpCloudContextService()),
@@ -376,7 +372,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
     private String location;
     private String projectId;
     private String machineType;
-    private AcceleratorConfig acceleratorConfig;
+    @Nullable private AcceleratorConfig acceleratorConfig;
 
     public Builder common(ControlledResourceFields common) {
       this.common = common;
@@ -403,7 +399,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
       return this;
     }
 
-    public Builder acceleratorConfig(AcceleratorConfig acceleratorConfig) {
+    public Builder acceleratorConfig(@Nullable AcceleratorConfig acceleratorConfig) {
       this.acceleratorConfig = acceleratorConfig;
       return this;
     }

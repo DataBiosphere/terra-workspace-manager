@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.api.services.notebooks.v1.model.AcceleratorConfig;
 
+import javax.annotation.Nullable;
+
 /** Attributes class for serializing {@link ControlledAiNotebookInstanceResource} as json. */
 public class ControlledAiNotebookInstanceAttributes {
   private final String instanceId;
@@ -13,6 +15,7 @@ public class ControlledAiNotebookInstanceAttributes {
   private final String machineType;
 
   @JsonDeserialize(using = AcceleratorConfigDeserializer.class)
+  @Nullable
   private final AcceleratorConfig acceleratorConfig;
 
   @JsonCreator
@@ -21,7 +24,7 @@ public class ControlledAiNotebookInstanceAttributes {
       @JsonProperty("location") String location,
       @JsonProperty("projectId") String projectId,
       @JsonProperty("machineType") String machineType,
-      @JsonProperty("acceleratorConfig") AcceleratorConfig acceleratorConfig) {
+      @Nullable @JsonProperty("acceleratorConfig") AcceleratorConfig acceleratorConfig) {
     this.instanceId = instanceName;
     this.location = location;
     this.projectId = projectId;
@@ -45,6 +48,7 @@ public class ControlledAiNotebookInstanceAttributes {
     return machineType;
   }
 
+  @Nullable
   public AcceleratorConfig getAcceleratorConfig() {
     return acceleratorConfig;
   }

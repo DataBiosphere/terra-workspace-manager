@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.google.api.services.notebooks.v1.model.AcceleratorConfig;
 import java.io.IOException;
@@ -19,20 +20,13 @@ public class AcceleratorConfigDeserializer extends StdDeserializer<AcceleratorCo
   @Override
   public AcceleratorConfig deserialize(JsonParser jp, DeserializationContext ctxt)
       throws IOException {
-    Root root = jp.readValueAs(Root.class);
-
     AcceleratorConfig config = new AcceleratorConfig();
-    if (root.coreCount != null) {
-      config.setCoreCount(root.coreCount);
+    JsonNode node = jp.readValueAsTree();
+    if (node.isNull()) {
+      return null;
     }
-    if (root.type != null) {
-      config.setType(root.type);
-    }
+    config.setCoreCount(node.get("coreCount").asLong());
+    config.setType(node.get("coreType").asText());
     return config;
-  }
-
-  private static class Root {
-    public Long coreCount;
-    public String type;
   }
 }

@@ -17,7 +17,7 @@ public class AiNotebookApiConversionsTest extends BaseUnitTest {
     ApiGcpAiNotebookInstanceAcceleratorConfig apiAcceleratorConfig =
         AiNotebookApiConversions.toApiAcceleratorConfig(DEFAULT_AI_NOTEBOOK_ACCELERATOR_CONFIG);
     Assertions.assertEquals(2L, apiAcceleratorConfig.getCoreCount());
-    Assertions.assertEquals("NVIDIA_TESLA_V100", apiAcceleratorConfig.getType());
+    Assertions.assertEquals("nvidia-tesla-t4", apiAcceleratorConfig.getType());
 
     // Test null type.
     ApiGcpAiNotebookInstanceAcceleratorConfig configWithNullType =

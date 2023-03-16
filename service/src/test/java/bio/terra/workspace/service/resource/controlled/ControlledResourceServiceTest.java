@@ -68,7 +68,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.Gran
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.NotebookCloudSyncStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.RetrieveAiNotebookResourceAttributesStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.RetrieveNetworkNameStep;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.UpdateAiNotebookAttributesStep;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.UpdateAiNotebookMetadataAttributesStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.UpdateAiNotebookCpuAndGpuStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.UpdateNotebookCpuAndGpuAttributesStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.UpdateNotebookResourceLocationAttributesStep;
@@ -450,7 +450,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         RetrieveAiNotebookResourceAttributesStep.class.getName(),
         StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
-        UpdateAiNotebookAttributesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+        UpdateAiNotebookMetadataAttributesStep.class.getName(),
+        StepStatus.STEP_RESULT_FAILURE_RETRY);
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
     controlledResourceService.updateAiNotebookInstance(
@@ -532,7 +533,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         RetrieveAiNotebookResourceAttributesStep.class.getName(),
         StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
-        UpdateAiNotebookAttributesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+        UpdateAiNotebookMetadataAttributesStep.class.getName(),
+        StepStatus.STEP_RESULT_FAILURE_RETRY);
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
     controlledResourceService.updateAiNotebookInstance(
@@ -589,7 +591,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         RetrieveAiNotebookResourceAttributesStep.class.getName(),
         StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
-        UpdateAiNotebookAttributesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+        UpdateAiNotebookMetadataAttributesStep.class.getName(),
+        StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
         CheckAiNotebookStoppedForGpuAndCpuUpdateStep.class.getName(),
         StepStatus.STEP_RESULT_FAILURE_RETRY);

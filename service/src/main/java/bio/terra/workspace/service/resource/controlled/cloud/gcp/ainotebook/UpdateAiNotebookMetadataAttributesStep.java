@@ -28,14 +28,15 @@ import org.springframework.http.HttpStatus;
  *
  * <p>This does not include updates to the CPU or GPU configurations.
  */
-public class UpdateAiNotebookAttributesStep implements Step {
+public class UpdateAiNotebookMetadataAttributesStep implements Step {
   private final ControlledAiNotebookInstanceResource resource;
   private final CrlService crlService;
   private final GcpCloudContextService cloudContextService;
 
-  private final Logger logger = LoggerFactory.getLogger(UpdateAiNotebookAttributesStep.class);
+  private final Logger logger =
+      LoggerFactory.getLogger(UpdateAiNotebookMetadataAttributesStep.class);
 
-  UpdateAiNotebookAttributesStep(
+  UpdateAiNotebookMetadataAttributesStep(
       ControlledAiNotebookInstanceResource resource,
       CrlService crlService,
       GcpCloudContextService gcpCloudContextService) {
