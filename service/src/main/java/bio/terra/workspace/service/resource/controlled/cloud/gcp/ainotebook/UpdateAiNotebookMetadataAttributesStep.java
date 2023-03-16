@@ -50,7 +50,7 @@ public class UpdateAiNotebookMetadataAttributesStep implements Step {
     final FlightMap inputMap = context.getInputParameters();
     final ApiGcpAiNotebookUpdateParameters updateParameters =
         inputMap.get(UPDATE_PARAMETERS, ApiGcpAiNotebookUpdateParameters.class);
-    if (updateParameters == null) {
+    if (updateParameters == null || updateParameters.getMetadata() == null) {
       return StepResult.getStepResultSuccess();
     }
     Map<String, String> sanitizedMetadata = new HashMap<>();

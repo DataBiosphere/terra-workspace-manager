@@ -150,7 +150,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -778,9 +777,11 @@ public class MockMvcUtils {
   }
 
   public ApiGcpAiNotebookInstanceResource updateAiNotebookInstance(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId, String machineType,
-      @Nullable  ApiGcpAiNotebookInstanceAcceleratorConfig acceleratorConfig
-      )
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      UUID resourceId,
+      String machineType,
+      @Nullable ApiGcpAiNotebookInstanceAcceleratorConfig acceleratorConfig)
       throws Exception {
     String request =
         objectMapper.writeValueAsString(

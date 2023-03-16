@@ -48,8 +48,7 @@ public class UpdateAiNotebookCpuAndGpuStep implements Step {
                 WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_ACCELERATOR_CONFIG,
                 AcceleratorConfig.class);
 
-    var projectId = resource.getProjectId();
-    return updateAiNotebookCpuAndGpu(projectId, effectiveMachineType, effectiveAcceleratorConfig);
+    return updateAiNotebookCpuAndGpu(effectiveMachineType, effectiveAcceleratorConfig);
   }
 
   @Override
@@ -69,38 +68,24 @@ public class UpdateAiNotebookCpuAndGpuStep implements Step {
     String previousMachineType = workingMap.get(PREVIOUS_MACHINE_TYPE, String.class);
     AcceleratorConfig previousAcceleratorConfig =
         workingMap.get(PREVIOUS_ACCELERATOR_CONFIG, AcceleratorConfig.class);
-    String projectId = resource.getProjectId();
     // Attempt to revert cloud update (if it happened).
-    return updateAiNotebookCpuAndGpu(projectId, previousMachineType, previousAcceleratorConfig);
+    return updateAiNotebookCpuAndGpu(previousMachineType, previousAcceleratorConfig);
   }
 
   private StepResult updateAiNotebookCpuAndGpu(
-      String projectId, String effectiveMachineType, AcceleratorConfig effectiveAcceleratorConfig) {
+      String effectiveMachineType, AcceleratorConfig effectiveAcceleratorConfig) {
     if (effectiveMachineType == null && effectiveAcceleratorConfig == null) {
       return StepResult.getStepResultSuccess();
     }
+    String projectId = resource.getProjectId();
 
     try (NotebookServiceClient notebookServiceClient = NotebookServiceClient.create()) {
       InstanceName instanceName = resource.toInstanceName(projectId);
-
-      // TODO (aaronwa@):
-      // The AI notebook may be stopped in the small window between the previous "check if notebook
-      // stopped" step and when this update is executed. We should not retry in that case.
-      // Catch this invalid state error (i.e., strictly not stopped - don't allow "stopping" here)
-      // here somehow.
 
       List<Class<? extends Exception>> retryableErrors = new ArrayList<>();
       // Exceptions include waiting to queue the operation (409 conflict).
       retryableErrors.add(GoogleJsonResponseException.class);
 
-      // DEBUGGING (edge case if the notebook is running here).
-      //      notebookServiceClient
-      //          .stopInstanceAsync(
-      //              StopInstanceRequest.newBuilder().setName(instanceName.formatName()).build())
-      //          .get();
-      //      System.out.println("aaronwa: stopped notebook between check and update (edge case).");
-
-      // TODO (aaronwa@): place these two into one combined update to simplify the undo process?
       if (effectiveMachineType != null) {
         RetryUtils.getWithRetryOnException(
             () ->
@@ -111,7 +96,7 @@ public class UpdateAiNotebookCpuAndGpuStep implements Step {
                             .setMachineType(effectiveMachineType)
                             .build())
                     .get(),
-            Duration.ofMinutes(5),
+            Duration.ofMinutes(7),
             DEFAULT_RETRY_SLEEP_DURATION,
             DEFAULT_RETRY_FACTOR_INCREASE,
             DEFAULT_RETRY_SLEEP_DURATION_MAX,
@@ -119,7 +104,6 @@ public class UpdateAiNotebookCpuAndGpuStep implements Step {
       }
 
       if (effectiveAcceleratorConfig != null) {
-        var aaron = Instance.AcceleratorType.valueOf(effectiveAcceleratorConfig.getType());
         RetryUtils.getWithRetryOnException(
             () ->
                 notebookServiceClient
@@ -132,7 +116,7 @@ public class UpdateAiNotebookCpuAndGpuStep implements Step {
                                     effectiveAcceleratorConfig.getType()))
                             .build())
                     .get(),
-            Duration.ofMinutes(5),
+            Duration.ofMinutes(7),
             DEFAULT_RETRY_SLEEP_DURATION,
             DEFAULT_RETRY_FACTOR_INCREASE,
             DEFAULT_RETRY_SLEEP_DURATION_MAX,
