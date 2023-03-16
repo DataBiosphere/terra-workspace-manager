@@ -16,8 +16,10 @@ public class AiNotebookApiConversionsTest extends BaseUnitTest {
   public void testToApiAcceleratorConfig() {
     ApiGcpAiNotebookInstanceAcceleratorConfig apiAcceleratorConfig =
         AiNotebookApiConversions.toApiAcceleratorConfig(DEFAULT_AI_NOTEBOOK_ACCELERATOR_CONFIG);
-    Assertions.assertEquals(2L, apiAcceleratorConfig.getCoreCount());
-    Assertions.assertEquals("nvidia-tesla-t4", apiAcceleratorConfig.getType());
+    Assertions.assertEquals(
+        DEFAULT_AI_NOTEBOOK_ACCELERATOR_CONFIG.getCoreCount(), apiAcceleratorConfig.getCoreCount());
+    Assertions.assertEquals(
+        DEFAULT_AI_NOTEBOOK_ACCELERATOR_CONFIG.getType(), apiAcceleratorConfig.getType());
 
     // Test null type.
     ApiGcpAiNotebookInstanceAcceleratorConfig configWithNullType =
@@ -40,8 +42,10 @@ public class AiNotebookApiConversionsTest extends BaseUnitTest {
     AcceleratorConfig resultAcceleratorConfig =
         AiNotebookApiConversions.fromApiAcceleratorConfig(defaultApiAcceleratorConfig);
 
-    Assertions.assertEquals(4L, resultAcceleratorConfig.getCoreCount());
-    Assertions.assertEquals("fake-type", resultAcceleratorConfig.getType());
+    Assertions.assertEquals(
+        defaultApiAcceleratorConfig.getCoreCount(), resultAcceleratorConfig.getCoreCount());
+    Assertions.assertEquals(
+        defaultApiAcceleratorConfig.getType(), resultAcceleratorConfig.getType());
 
     // Test null type.
     AcceleratorConfig configWithNullType =

@@ -14,6 +14,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.google.api.services.notebooks.v1.model.AcceleratorConfig;
 import java.util.Optional;
 
+// Update the CPU and GPU attributes in the database.
 public class UpdateNotebookCpuAndGpuAttributesStep implements Step {
 
   private final ControlledAiNotebookInstanceResource resource;
