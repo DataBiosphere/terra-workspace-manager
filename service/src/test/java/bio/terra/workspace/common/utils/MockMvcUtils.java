@@ -706,6 +706,12 @@ public class MockMvcUtils {
   public ApiCreatedControlledGcpAiNotebookInstanceResult createAiNotebookInstance(
       AuthenticatedUserRequest userRequest, UUID workspaceId, @Nullable String location)
       throws Exception {
+    return createAiNotebookInstanceAndWait(userRequest, workspaceId, /*instanceId=*/null, location);
+  }
+
+  public ApiCreatedControlledGcpAiNotebookInstanceResult createAiNotebookInstance(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, @Nullable String instanceId, @Nullable String location)
+      throws Exception {
     ApiCreateControlledGcpAiNotebookInstanceRequestBody request =
         new ApiCreateControlledGcpAiNotebookInstanceRequestBody()
             .common(
@@ -716,7 +722,32 @@ public class MockMvcUtils {
             .aiNotebookInstance(
                 defaultNotebookCreationParameters()
                     .location(location)
-                    .instanceId(TestUtils.appendRandomNumber("instance-id")));
+                    .instanceId(Optional.ofNullable(instanceId).orElse(TestUtils.appendRandomNumber("instance-id"))));
+
+    String serializedResponse =
+        getSerializedResponseForPost(
+            userRequest,
+            CONTROLLED_GCP_AI_NOTEBOOKS_V1_PATH_FORMAT,
+            workspaceId,
+            objectMapper.writeValueAsString(request));
+    return objectMapper.readValue(
+            serializedResponse, ApiCreatedControlledGcpAiNotebookInstanceResult.class);
+  }
+
+  public ApiCreatedControlledGcpAiNotebookInstanceResult createAiNotebookInstanceAndWait(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, @Nullable String instanceId, @Nullable String location)
+      throws Exception {
+    ApiCreateControlledGcpAiNotebookInstanceRequestBody request =
+        new ApiCreateControlledGcpAiNotebookInstanceRequestBody()
+            .common(
+                makeDefaultControlledResourceFieldsApi()
+                    .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE.toApiModel())
+                    .name(TestUtils.appendRandomNumber("ai-notebook")))
+            .jobControl(new ApiJobControl().id(UUID.randomUUID().toString()))
+            .aiNotebookInstance(
+                defaultNotebookCreationParameters()
+                    .location(location)
+                    .instanceId(Optional.ofNullable(instanceId).orElse(TestUtils.appendRandomNumber("instance-id"))));
 
     String serializedResponse =
         getSerializedResponseForPost(

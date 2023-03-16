@@ -114,6 +114,24 @@ public class ControlledGcpResourceApiControllerAiNotebookTest extends BaseConnec
         List.of(WorkspaceConstants.Properties.DEFAULT_RESOURCE_LOCATION));
   }
 
+  @Test
+  public void createAiNotebookInstance_duplicateInstanceId() throws Exception {
+    var duplicateName = "not-unique-name";
+    var location = "us-central1-a";
+    mockMvcUtils
+            .createAiNotebookInstance(userAccessUtils.defaultUserAuthRequest(), workspaceId, duplicateName, location)
+            .getAiNotebookInstance();
+
+
+    ApiGcpAiNotebookInstanceResource notebook2 =
+        mockMvcUtils
+            .createAiNotebookInstanceAndWait(userAccessUtils.defaultUserAuthRequest(), workspaceId, duplicateName, location)
+            .getAiNotebookInstance();
+
+    assertEquals(location, notebook2.getAttributes().getLocation());
+    assertEquals(duplicateName, notebook2.getAttributes().getInstanceId());
+  }
+
   private void assertAiNotebook(
       ApiGcpAiNotebookInstanceResource actualResource,
       UUID expectedWorkspaceId,

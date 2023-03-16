@@ -593,6 +593,32 @@ public class ResourceDaoTest extends BaseUnitTest {
   }
 
   @Test
+  public void storeNotebookWithSameAttribute() {
+    UUID workspaceUuid = createWorkspaceWithGcpContext(workspaceDao);
+    var instanceId = TestUtils.appendRandomNumber("coolnotebook");
+      ControlledAiNotebookInstanceResource notebook1 =
+          ControlledResourceFixtures.makeDefaultAiNotebookInstance(workspaceUuid).instanceId(
+              instanceId
+          ).location("us-central1-a").build();
+      ControlledAiNotebookInstanceResource notebook2 =
+          ControlledResourceFixtures.makeDefaultAiNotebookInstance(workspaceUuid).instanceId(
+              instanceId
+          ).location("us-central1-a").build();
+
+    ControlledAiNotebookInstanceResource notebook3 =
+        ControlledResourceFixtures.makeDefaultAiNotebookInstance(workspaceUuid).instanceId(
+            instanceId
+        ).location("us-east-a").build();
+
+    resourceDao.createControlledResource(notebook1);
+      assertThrows(
+          DuplicateResourceException.class,
+          () -> resourceDao.createControlledResource(notebook2)
+      );
+      resourceDao.createControlledResource(notebook3);
+  }
+
+  @Test
   public void listControlledResourceWithoutRegion() {
     UUID workspaceUuid = createWorkspaceWithGcpContext(workspaceDao);
     UUID workspaceUuid2 = createWorkspaceWithGcpContext(workspaceDao);
