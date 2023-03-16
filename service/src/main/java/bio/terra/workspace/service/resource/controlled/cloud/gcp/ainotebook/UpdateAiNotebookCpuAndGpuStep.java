@@ -15,6 +15,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.google.api.services.notebooks.v1.model.AcceleratorConfig;
 import com.google.cloud.notebooks.v1.Instance;
 import com.google.cloud.notebooks.v1.NotebookServiceClient;
+import java.time.Duration;
 import java.util.concurrent.ExecutionException;
 
 /** Update the CPU/GPU using the client library for AI notebooks {@link NotebookServiceClient}. */
@@ -82,7 +83,17 @@ public class UpdateAiNotebookCpuAndGpuStep implements Step {
       // Catch this invalid state error (i.e., strictly not stopped - don't allow "stopping" here)
       // here somehow.
 
-      // TODO (aaronwa@): refactor these two into one combined update to simplify the undo process?
+      //      List<Exception> nonRetryableErrors = new ArrayList<>();
+      //      nonRetryableErrors.add()
+
+      // DEBUGGING (edge case if the notebook is running here).
+      //      notebookServiceClient
+      //          .stopInstanceAsync(
+      //              StopInstanceRequest.newBuilder().setName(instanceName.formatName()).build())
+      //          .get();
+      //      System.out.println("aaronwa: stopped notebook between check and update (edge case).");
+
+      // TODO (aaronwa@): place these two into one combined update to simplify the undo process?
       if (effectiveMachineType != null) {
         RetryUtils.getWithRetryOnException(
             () ->
@@ -92,7 +103,12 @@ public class UpdateAiNotebookCpuAndGpuStep implements Step {
                             .setName(instanceName.formatName())
                             .setMachineType(effectiveMachineType)
                             .build())
-                    .get());
+                    .get(),
+            Duration.ofMinutes(5),
+            RetryUtils.DEFAULT_RETRY_SLEEP_DURATION,
+            RetryUtils.DEFAULT_RETRY_FACTOR_INCREASE,
+            RetryUtils.DEFAULT_RETRY_SLEEP_DURATION_MAX,
+            null);
       }
 
       if (effectiveAcceleratorConfig != null) {

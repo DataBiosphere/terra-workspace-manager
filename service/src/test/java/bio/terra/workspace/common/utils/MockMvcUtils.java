@@ -150,6 +150,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -161,8 +162,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletResponse;
-
-import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.hamcrest.Matcher;
@@ -789,9 +788,10 @@ public class MockMvcUtils {
                     new ApiGcpAiNotebookUpdateParameters()
                         .machineType(machineType)
                         .metadata(ImmutableMap.of("foo", "bar", "count", "3"))
-                        .acceleratorConfig(new ApiGcpAiNotebookInstanceAcceleratorConfig()
-                            .coreCount(2L).type("nvidia-tesla-v100"))
-                ));
+                        .acceleratorConfig(
+                            new ApiGcpAiNotebookInstanceAcceleratorConfig()
+                                .coreCount(2L)
+                                .type("nvidia-tesla-v100"))));
 
     return updateResource(
         ApiGcpAiNotebookInstanceResource.class,

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.api.services.notebooks.v1.model.AcceleratorConfig;
-
 import javax.annotation.Nullable;
 
 /** Attributes class for serializing {@link ControlledAiNotebookInstanceResource} as json. */
