@@ -15,10 +15,13 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.RetryUtils;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.notebooks.v1.model.AcceleratorConfig;
 import com.google.cloud.notebooks.v1.Instance;
 import com.google.cloud.notebooks.v1.NotebookServiceClient;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 /** Update the CPU/GPU using the client library for AI notebooks {@link NotebookServiceClient}. */
@@ -86,8 +89,9 @@ public class UpdateAiNotebookCpuAndGpuStep implements Step {
       // Catch this invalid state error (i.e., strictly not stopped - don't allow "stopping" here)
       // here somehow.
 
-      //      List<Exception> nonRetryableErrors = new ArrayList<>();
-      //      nonRetryableErrors.add()
+      List<Class<? extends Exception>> retryableErrors = new ArrayList<>();
+      // Exceptions include waiting to queue the operation (409 conflict).
+      retryableErrors.add(GoogleJsonResponseException.class);
 
       // DEBUGGING (edge case if the notebook is running here).
       //      notebookServiceClient
@@ -107,14 +111,15 @@ public class UpdateAiNotebookCpuAndGpuStep implements Step {
                             .setMachineType(effectiveMachineType)
                             .build())
                     .get(),
-            Duration.ofMinutes(2),
+            Duration.ofMinutes(5),
             DEFAULT_RETRY_SLEEP_DURATION,
             DEFAULT_RETRY_FACTOR_INCREASE,
             DEFAULT_RETRY_SLEEP_DURATION_MAX,
-            null);
+            retryableErrors);
       }
 
       if (effectiveAcceleratorConfig != null) {
+        var aaron = Instance.AcceleratorType.valueOf(effectiveAcceleratorConfig.getType());
         RetryUtils.getWithRetryOnException(
             () ->
                 notebookServiceClient
@@ -127,11 +132,11 @@ public class UpdateAiNotebookCpuAndGpuStep implements Step {
                                     effectiveAcceleratorConfig.getType()))
                             .build())
                     .get(),
-            Duration.ofMinutes(2),
+            Duration.ofMinutes(5),
             DEFAULT_RETRY_SLEEP_DURATION,
             DEFAULT_RETRY_FACTOR_INCREASE,
             DEFAULT_RETRY_SLEEP_DURATION_MAX,
-            null);
+            retryableErrors);
       }
 
     } catch (ExecutionException | InterruptedException e) {

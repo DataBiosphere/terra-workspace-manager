@@ -11,6 +11,7 @@ import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
+import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAcceleratorConfig;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
 import bio.terra.workspace.generated.model.ApiManagedBy;
 import bio.terra.workspace.generated.model.ApiPrivateResourceState;
@@ -137,11 +138,14 @@ public class ControlledGcpResourceApiControllerAiNotebookTest extends BaseConnec
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId,
             notebook.getMetadata().getResourceId(),
-            "n1-highmem-2");
+            "n1-highmem-2",
+            new ApiGcpAiNotebookInstanceAcceleratorConfig()
+                .coreCount(2L)
+                .type("NVIDIA_TESLA_V100"));
 
     assertEquals("n1-highmem-2", updatedNotebook.getAttributes().getMachineType());
     assertEquals(
-        "nvidia-tesla-t4", updatedNotebook.getAttributes().getAcceleratorConfig().getType());
+        "NVIDIA_TESLA_V100", updatedNotebook.getAttributes().getAcceleratorConfig().getType());
     assertEquals(2L, updatedNotebook.getAttributes().getAcceleratorConfig().getCoreCount());
   }
 

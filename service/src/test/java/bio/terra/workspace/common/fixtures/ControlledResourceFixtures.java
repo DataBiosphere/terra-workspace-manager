@@ -660,16 +660,7 @@ public class ControlledResourceFixtures {
 
   public static final AcceleratorConfig DEFAULT_AI_NOTEBOOK_ACCELERATOR_CONFIG =
       AiNotebookApiConversions.fromApiAcceleratorConfig(
-          new ApiGcpAiNotebookInstanceAcceleratorConfig().type("nvidia-tesla-t4").coreCount(2L));
-
-  public static ApiGcpAiNotebookUpdateParameters AI_NOTEBOOK_UPDATE_PARAMETERS_WITH_CPU_AND_GPU =
-      new ApiGcpAiNotebookUpdateParameters()
-          .metadata(ImmutableMap.of("foo", "bar", "count", "3"))
-          .machineType("n1-standard-8")
-          .acceleratorConfig(
-              new ApiGcpAiNotebookInstanceAcceleratorConfig()
-                  .coreCount(4L)
-                  .type("nvidia-tesla-v100"));
+          new ApiGcpAiNotebookInstanceAcceleratorConfig().type("NVIDIA_TESLA_V4").coreCount(2L));
 
   public static final OffsetDateTime OFFSET_DATE_TIME_1 =
       OffsetDateTime.parse("2017-12-03T10:15:30+01:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);

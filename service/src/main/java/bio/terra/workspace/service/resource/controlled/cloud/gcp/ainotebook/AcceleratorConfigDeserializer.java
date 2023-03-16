@@ -25,8 +25,12 @@ public class AcceleratorConfigDeserializer extends StdDeserializer<AcceleratorCo
     if (node.isNull()) {
       return null;
     }
-    config.setCoreCount(node.get("coreCount").asLong());
-    config.setType(node.get("coreType").asText());
+    if (node.get("coreCount") != null) {
+      config.setCoreCount(node.get("coreCount").asLong());
+    }
+    if (node.get("type") != null) {
+      config.setType(node.get("type").asText());
+    }
     return config;
   }
 }

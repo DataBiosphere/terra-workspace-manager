@@ -255,7 +255,6 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/%s/properties";
   public static final String CONTROLLED_GCP_AI_NOTEBOOKS_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/gcp/ai-notebook-instances";
-
   public static final String CONTROLLED_GCP_AI_NOTEBOOK_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/gcp/ai-notebook-instances/%s";
   public static final String CONTROLLED_GCP_AI_NOTEBOOKS_V1_RESULT_PATH_FORMAT =
@@ -779,7 +778,9 @@ public class MockMvcUtils {
   }
 
   public ApiGcpAiNotebookInstanceResource updateAiNotebookInstance(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId, String machineType)
+      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId, String machineType,
+      @Nullable  ApiGcpAiNotebookInstanceAcceleratorConfig acceleratorConfig
+      )
       throws Exception {
     String request =
         objectMapper.writeValueAsString(
@@ -787,11 +788,7 @@ public class MockMvcUtils {
                 .updateParameters(
                     new ApiGcpAiNotebookUpdateParameters()
                         .machineType(machineType)
-                        .metadata(ImmutableMap.of("foo", "bar", "count", "3"))
-                        .acceleratorConfig(
-                            new ApiGcpAiNotebookInstanceAcceleratorConfig()
-                                .coreCount(2L)
-                                .type("nvidia-tesla-v100"))));
+                        .acceleratorConfig(acceleratorConfig)));
 
     return updateResource(
         ApiGcpAiNotebookInstanceResource.class,
