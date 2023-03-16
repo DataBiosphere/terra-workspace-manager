@@ -1,5 +1,9 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 
+import static bio.terra.workspace.common.utils.RetryUtils.DEFAULT_RETRY_FACTOR_INCREASE;
+import static bio.terra.workspace.common.utils.RetryUtils.DEFAULT_RETRY_SLEEP_DURATION;
+import static bio.terra.workspace.common.utils.RetryUtils.DEFAULT_RETRY_SLEEP_DURATION_MAX;
+import static bio.terra.workspace.common.utils.RetryUtils.DEFAULT_RETRY_TOTAL_DURATION;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.PREVIOUS_ACCELERATOR_CONFIG;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.PREVIOUS_MACHINE_TYPE;
 
@@ -103,7 +107,12 @@ public class UpdateAiNotebookCpuAndGpuStep implements Step {
                             .setName(instanceName.formatName())
                             .setMachineType(effectiveMachineType)
                             .build())
-                    .get());
+                    .get(),
+            Duration.ofMinutes(2),
+            DEFAULT_RETRY_SLEEP_DURATION,
+            DEFAULT_RETRY_FACTOR_INCREASE,
+            DEFAULT_RETRY_SLEEP_DURATION_MAX,
+            null);
       }
 
       if (effectiveAcceleratorConfig != null) {
@@ -118,7 +127,12 @@ public class UpdateAiNotebookCpuAndGpuStep implements Step {
                                 Instance.AcceleratorType.valueOf(
                                     effectiveAcceleratorConfig.getType()))
                             .build())
-                    .get());
+                    .get(),
+            Duration.ofMinutes(2),
+            DEFAULT_RETRY_SLEEP_DURATION,
+            DEFAULT_RETRY_FACTOR_INCREASE,
+            DEFAULT_RETRY_SLEEP_DURATION_MAX,
+            null);
       }
 
     } catch (ExecutionException | InterruptedException e) {
