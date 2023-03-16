@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
 import bio.terra.stairway.FlightStatus;
+import bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresource.ControlledFlexibleResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
@@ -128,6 +129,32 @@ public class WorkspaceCloneUtils {
                 description,
                 createdByEmail,
                 region))
+        .build();
+  }
+
+  public static ControlledFlexibleResource buildDestinationControlledFlexResource(
+      ControlledFlexibleResource sourceFlex,
+      UUID destinationWorkspaceId,
+      UUID destinationResourceId,
+      @Nullable UUID destinationFolderId,
+      @Nullable String name,
+      @Nullable String description,
+      String createdByEmail) {
+    // Only change the name and description, if specified.
+    // Flex resources attributes are immutable during cloning.
+    return ControlledFlexibleResource.builder()
+        .typeNamespace(sourceFlex.getTypeNamespace())
+        .type(sourceFlex.getType())
+        .data(sourceFlex.getData())
+        .common(
+            sourceFlex.buildControlledCloneResourceCommonFields(
+                destinationWorkspaceId,
+                destinationResourceId,
+                destinationFolderId,
+                name,
+                description,
+                createdByEmail,
+                sourceFlex.getRegion()))
         .build();
   }
 }

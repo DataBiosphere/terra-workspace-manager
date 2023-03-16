@@ -12,4 +12,12 @@ public record FlexResourceCreationParameters(
         apiCreationParameters.getType(),
         apiCreationParameters.getData());
   }
+
+  public static FlexResourceCreationParameters fromFlexResource(
+      ControlledFlexibleResource flexResource) {
+    return new FlexResourceCreationParameters(
+        flexResource.getTypeNamespace(),
+        flexResource.getType(),
+        ControlledFlexibleResource.getEncodedJSONFromString(flexResource.getData()));
+  }
 }
