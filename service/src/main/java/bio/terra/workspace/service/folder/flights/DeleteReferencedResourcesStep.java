@@ -29,14 +29,14 @@ public class DeleteReferencedResourcesStep implements Step {
             .getInputParameters()
             .get(ReferencedResourceKeys.REFERENCED_RESOURCES_TO_DELETE, new TypeReference<>() {});
     for (var resource : referencedResources) {
-      resourceDao.deleteResource(workspaceId, resource.getResourceId());
+      resourceDao.deleteReferencedResource(workspaceId, resource.getResourceId());
     }
     return StepResult.getStepResultSuccess();
   }
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    // Nothing to undo, propagate the flight failure.
-    return context.getResult();
+    // No ability to undo
+    return StepResult.getStepResultSuccess();
   }
 }

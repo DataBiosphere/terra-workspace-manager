@@ -70,6 +70,9 @@ public class UpdateControlledResourceMetadataStep implements Step {
               Optional.ofNullable(datasetUpdateParameters)
                   .map(ApiGcpBigQueryDatasetUpdateParameters::getCloningInstructions)
                   .orElse(null));
+    } else if (WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE == resource.getResourceType()) {
+      cloningInstructions =
+          inputParameters.get(ResourceKeys.CLONING_INSTRUCTIONS, CloningInstructions.class);
     } else {
       cloningInstructions = null; // don't change the value
     }

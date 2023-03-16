@@ -10,6 +10,7 @@ import bio.terra.workspace.service.resource.controlled.flight.backfill.UpdateCon
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.CloneControlledAzureStorageContainerResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CloneControlledGcsBucketResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.CloneControlledGcpBigQueryDatasetResourceFlight;
+import bio.terra.workspace.service.resource.controlled.flight.clone.flexibleresource.CloneControlledFlexibleResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneAllResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneWorkspaceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
@@ -81,7 +82,9 @@ public enum ActivityFlight {
   REVOKE_TEMPORARY_GRANT_FLIGHT(
       RevokeTemporaryGrantFlight.class.getName(), ActivityLogChangedTarget.WORKSPACE),
   CLONE_REFERENCED_RESOURCE_FLIGHT(
-      CloneReferencedResourceFlight.class.getName(), ActivityLogChangedTarget.RESOURCE);
+      CloneReferencedResourceFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
+  CLONE_FLEX_RESOURCE_FLIGHT(
+      CloneControlledFlexibleResourceFlight.class.getName(), ActivityLogChangedTarget.RESOURCE);
 
   private final String flightClassName;
   private final ActivityLogChangedTarget changedTarget;

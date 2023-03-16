@@ -190,12 +190,20 @@ public class ControlledFlexibleResource extends ControlledResource {
     ResourceValidationUtils.validateFlexResourceDataSize(getData());
   }
 
+  // Decode the base64, so we can store the string directly in the database.
   public static String getDecodedJSONFromByteArray(@Nullable byte[] encodedJSON) {
-    // Decode the base64, so we can store the string directly in the database.
     if (encodedJSON == null) {
       return null;
     }
     return new String(encodedJSON, StandardCharsets.UTF_8);
+  }
+
+  // Encode the string in base64, so we can pass it through the API.
+  public static byte[] getEncodedJSONFromString(@Nullable String decodedJSON) {
+    if (decodedJSON == null) {
+      return null;
+    }
+    return decodedJSON.getBytes(StandardCharsets.UTF_8);
   }
 
   @Override
