@@ -60,6 +60,7 @@ import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresource.ControlledFlexibleResource;
 import bio.terra.workspace.service.resource.controlled.cloud.any.flight.update.UpdateControlledFlexibleResourceAttributesStep;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.CheckAiNotebookStoppedForGpuAndCpuUpdateStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.CreateAiNotebookInstanceStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.DeleteAiNotebookInstanceStep;
@@ -589,6 +590,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
         UpdateAiNotebookAttributesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        CheckAiNotebookStoppedForGpuAndCpuUpdateStep.class.getName(),
+        StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
         UpdateNotebookCpuAndGpuAttributesStep.class.getName(),
         StepStatus.STEP_RESULT_FAILURE_RETRY);
@@ -1834,7 +1838,11 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   // TODO (PF-2269): Clean this up once the back-fill is done in all Terra environments.
 
-  /** @return A list of big query datasets that were updated (with lifetime set) */
+  /**
+   * Update the lifetime of big query datasets and wait for the job to complete.
+   *
+   * @return A list of big query datasets that were updated (with lifetime set)
+   */
   private List<ControlledBigQueryDatasetResource>
       updateControlledBigQueryDatasetsLifetimeAndWait() {
     HashSet<ControlledBigQueryDatasetResource> successfullyUpdatedDatasets =

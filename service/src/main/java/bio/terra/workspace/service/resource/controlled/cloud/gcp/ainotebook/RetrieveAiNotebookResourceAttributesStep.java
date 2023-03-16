@@ -45,7 +45,9 @@ public class RetrieveAiNotebookResourceAttributesStep implements Step {
       ApiGcpAiNotebookUpdateParameters existingUpdateParameters =
           new ApiGcpAiNotebookUpdateParameters().metadata(metadata);
       workingMap.put(ControlledResourceKeys.PREVIOUS_UPDATE_PARAMETERS, existingUpdateParameters);
-      workingMap.put(ControlledResourceKeys.PREVIOUS_MACHINE_TYPE, instance.getMachineType());
+      workingMap.put(
+          ControlledResourceKeys.PREVIOUS_MACHINE_TYPE,
+          getMachineTypeFromUrl(instance.getMachineType()));
       workingMap.put(
           ControlledResourceKeys.PREVIOUS_ACCELERATOR_CONFIG, instance.getAcceleratorConfig());
 
@@ -64,5 +66,9 @@ public class RetrieveAiNotebookResourceAttributesStep implements Step {
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
     return StepResult.getStepResultSuccess();
+  }
+
+  private String getMachineTypeFromUrl(String notebookUrl) {
+    return notebookUrl.substring(notebookUrl.lastIndexOf("/"));
   }
 }

@@ -636,8 +636,7 @@ public class ControlledResourceFixtures {
         .instanceId(TestUtils.appendRandomNumber("my-cloud-id"))
         .location("us-east1-b")
         .projectId("my-project-id")
-        .machineType("n1-highmem-4")
-        .acceleratorConfig(DEFAULT_AI_NOTEBOOK_ACCELERATOR_CONFIG);
+        .machineType(DEFAULT_CREATED_AI_NOTEBOOK_MACHINE_TYPE);
   }
 
   public static ControlledAiNotebookInstanceResource.Builder makeDefaultAiNotebookInstance(
@@ -647,8 +646,7 @@ public class ControlledResourceFixtures {
         .instanceId(TestUtils.appendRandomNumber("my-cloud-id"))
         .location("us-east1-b")
         .projectId("my-project-id")
-        .machineType("n1-highmem-4")
-        .acceleratorConfig(DEFAULT_AI_NOTEBOOK_ACCELERATOR_CONFIG);
+        .machineType(DEFAULT_CREATED_AI_NOTEBOOK_MACHINE_TYPE);
   }
 
   public static final ApiGcpAiNotebookUpdateParameters AI_NOTEBOOK_PREV_PARAMETERS =
@@ -658,11 +656,11 @@ public class ControlledResourceFixtures {
   public static final ApiGcpAiNotebookUpdateParameters AI_NOTEBOOK_UPDATE_PARAMETERS =
       new ApiGcpAiNotebookUpdateParameters().metadata(ImmutableMap.of("foo", "bar", "count", "3"));
 
-  public static final String DEFAULT_CREATED_AI_NOTEBOOK_MACHINE_TYPE = "n1-standard-4";
+  public static final String DEFAULT_CREATED_AI_NOTEBOOK_MACHINE_TYPE = "e2-standard-2";
 
   public static final AcceleratorConfig DEFAULT_AI_NOTEBOOK_ACCELERATOR_CONFIG =
       AiNotebookApiConversions.fromApiAcceleratorConfig(
-          new ApiGcpAiNotebookInstanceAcceleratorConfig().type("NVIDIA_TESLA_V100").coreCount(2L));
+          new ApiGcpAiNotebookInstanceAcceleratorConfig().type("nvidia-tesla-t4").coreCount(2L));
 
   public static ApiGcpAiNotebookUpdateParameters AI_NOTEBOOK_UPDATE_PARAMETERS_WITH_CPU_AND_GPU =
       new ApiGcpAiNotebookUpdateParameters()
@@ -671,7 +669,7 @@ public class ControlledResourceFixtures {
           .acceleratorConfig(
               new ApiGcpAiNotebookInstanceAcceleratorConfig()
                   .coreCount(4L)
-                  .type("NVIDIA_TESLA_P4"));
+                  .type("nvidia-tesla-v100"));
 
   public static final OffsetDateTime OFFSET_DATE_TIME_1 =
       OffsetDateTime.parse("2017-12-03T10:15:30+01:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);

@@ -3,28 +3,19 @@ package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.PREVIOUS_ACCELERATOR_CONFIG;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.PREVIOUS_MACHINE_TYPE;
 
-import bio.terra.cloudres.common.ClientConfig;
 import bio.terra.cloudres.google.notebooks.InstanceName;
 import bio.terra.stairway.FlightContext;
+import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.RetryUtils;
-import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
-import com.google.api.client.googleapis.json.GoogleJsonResponseException;
-import com.google.api.services.notebooks.v1.AIPlatformNotebooks;
 import com.google.api.services.notebooks.v1.model.AcceleratorConfig;
 import com.google.cloud.notebooks.v1.Instance;
 import com.google.cloud.notebooks.v1.NotebookServiceClient;
-import java.io.IOException;
-import java.util.Objects;
 import java.util.concurrent.ExecutionException;
-import org.springframework.http.HttpStatus;
 
 /** Update the CPU/GPU using the client library for AI notebooks {@link NotebookServiceClient}. */
 public class UpdateAiNotebookCpuAndGpuStep implements Step {
@@ -56,9 +47,21 @@ public class UpdateAiNotebookCpuAndGpuStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    String previousMachineType = context.getWorkingMap().get(PREVIOUS_MACHINE_TYPE, String.class);
+    FlightMap workingMap = context.getWorkingMap();
+    String effectiveMachineType =
+        workingMap.get(
+            WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_MACHINE_TYPE, String.class);
+    AcceleratorConfig effectiveAcceleratorConfig =
+        workingMap.get(
+            WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_ACCELERATOR_CONFIG,
+            AcceleratorConfig.class);
+    // If no effective update was requested, then there's nothing to undo.
+    if (effectiveMachineType == null && effectiveAcceleratorConfig == null) {
+      return StepResult.getStepResultSuccess();
+    }
+    String previousMachineType = workingMap.get(PREVIOUS_MACHINE_TYPE, String.class);
     AcceleratorConfig previousAcceleratorConfig =
-        context.getWorkingMap().get(PREVIOUS_ACCELERATOR_CONFIG, AcceleratorConfig.class);
+        workingMap.get(PREVIOUS_ACCELERATOR_CONFIG, AcceleratorConfig.class);
     String projectId = resource.getProjectId();
     // Attempt to revert cloud update (if it happened).
     return updateAiNotebookCpuAndGpu(projectId, previousMachineType, previousAcceleratorConfig);
