@@ -11,7 +11,9 @@ import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
+import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
+import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
 import bio.terra.workspace.generated.model.ApiManagedBy;
 import bio.terra.workspace.generated.model.ApiPrivateResourceState;
 import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
@@ -117,19 +119,22 @@ public class ControlledGcpResourceApiControllerAiNotebookTest extends BaseConnec
   @Test
   public void createAiNotebookInstance_duplicateInstanceId() throws Exception {
     var duplicateName = "not-unique-name";
-    var location = "us-central1-a";
     mockMvcUtils
-            .createAiNotebookInstance(userAccessUtils.defaultUserAuthRequest(), workspaceId, duplicateName, location)
-            .getAiNotebookInstance();
+        .createAiNotebookInstanceAndWait(
+            userAccessUtils.defaultUserAuthRequest(), workspaceId, duplicateName, null)
+        .getAiNotebookInstance();
 
-
-    ApiGcpAiNotebookInstanceResource notebook2 =
+    ApiErrorReport errorReport =
         mockMvcUtils
-            .createAiNotebookInstanceAndWait(userAccessUtils.defaultUserAuthRequest(), workspaceId, duplicateName, location)
-            .getAiNotebookInstance();
+            .createAiNotebookInstanceAndExpect(
+                userAccessUtils.defaultUserAuthRequest(),
+                workspaceId,
+                duplicateName,
+                null,
+                StatusEnum.FAILED)
+            .getErrorReport();
 
-    assertEquals(location, notebook2.getAttributes().getLocation());
-    assertEquals(duplicateName, notebook2.getAttributes().getInstanceId());
+    assertEquals("A resource with matching attributes already exists", errorReport.getMessage());
   }
 
   private void assertAiNotebook(

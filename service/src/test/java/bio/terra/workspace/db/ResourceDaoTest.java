@@ -595,29 +595,22 @@ public class ResourceDaoTest extends BaseUnitTest {
   }
 
   @Test
-  public void storeNotebookWithSameAttribute() {
+  public void storeNotebookWithSameAttribute_throwDuplicateException() {
     UUID workspaceUuid = createWorkspaceWithGcpContext(workspaceDao);
     var instanceId = TestUtils.appendRandomNumber("coolnotebook");
-      ControlledAiNotebookInstanceResource notebook1 =
-          ControlledResourceFixtures.makeDefaultAiNotebookInstance(workspaceUuid).instanceId(
-              instanceId
-          ).location("us-central1-a").build();
-      ControlledAiNotebookInstanceResource notebook2 =
-          ControlledResourceFixtures.makeDefaultAiNotebookInstance(workspaceUuid).instanceId(
-              instanceId
-          ).location("us-central1-a").build();
+    ControlledAiNotebookInstanceResource notebook1 =
+        ControlledResourceFixtures.makeDefaultAiNotebookInstance(workspaceUuid)
+            .instanceId(instanceId)
+            .build();
+    ControlledAiNotebookInstanceResource notebook2 =
+        ControlledResourceFixtures.makeDefaultAiNotebookInstance(workspaceUuid)
+            .instanceId(instanceId)
+            .build();
 
-    ControlledAiNotebookInstanceResource notebook3 =
-        ControlledResourceFixtures.makeDefaultAiNotebookInstance(workspaceUuid).instanceId(
-            instanceId
-        ).location("us-east-a").build();
-
-    resourceDao.createControlledResource(notebook1);
-      assertThrows(
-          DuplicateResourceException.class,
-          () -> resourceDao.createControlledResource(notebook2)
-      );
-      resourceDao.createControlledResource(notebook3);
+    resourceDao.createResourceStart(notebook1, UUID.randomUUID().toString());
+    assertThrows(
+        DuplicateResourceException.class,
+        () -> resourceDao.createResourceStart(notebook2, UUID.randomUUID().toString()));
   }
 
   @Test
