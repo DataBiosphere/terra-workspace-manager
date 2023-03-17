@@ -40,7 +40,6 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.Cont
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.flight.UpdateGcpControlledResourceRegionFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
-import bio.terra.workspace.service.resource.controlled.flight.backfill.UpdateControlledBigQueryDatasetsLifetimeFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.CloneControlledAzureStorageContainerResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CloneControlledGcsBucketResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.CloneControlledGcpBigQueryDatasetResourceFlight;
@@ -793,36 +792,6 @@ public class ControlledResourceService {
         .userRequest(userRequest)
         .operationType(OperationType.UPDATE)
         .addParameter(IS_WET_RUN, wetRun)
-        .submit();
-  }
-  // TODO (PF-2269): Clean this up once the back-fill is done in all Terra environments.
-
-  /**
-   * Starts a flight to update missing lifetime for controlled BigQuery datasets.
-   *
-   * @return the job ID string (to await job completion in the connected tests.)
-   */
-  @Traced
-  @Nullable
-  public String updateControlledBigQueryDatasetsLifetimeAsync() {
-    String wsmSaToken = samService.getWsmServiceAccountToken();
-    // wsmSaToken is null for unit test when samService is mocked out.
-    if (wsmSaToken == null) {
-      logger.warn(
-          "#updateGcpControlledBigQueryDatasetsLifetimeAsync: workspace manager service account token is null");
-      return null;
-    }
-    AuthenticatedUserRequest wsmSaRequest =
-        new AuthenticatedUserRequest().token(Optional.of(wsmSaToken));
-    return jobService
-        .newJob()
-        .description(
-            "A flight to update controlled BigQuery datasets' missing "
-                + "default table lifetime and default partition lifetime "
-                + "in all the existing terra managed gcp projects")
-        .flightClass(UpdateControlledBigQueryDatasetsLifetimeFlight.class)
-        .userRequest(wsmSaRequest)
-        .operationType(OperationType.UPDATE)
         .submit();
   }
 
