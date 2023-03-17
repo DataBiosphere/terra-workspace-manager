@@ -22,7 +22,8 @@ public class UserAccessUtils {
 
   /**
    * The path to the service account to use. This service account should be delegated to impersonate
-   * users. https://developers.google.com/admin-sdk/directory/v1/guides/delegation
+   * users. <a
+   * href="https://developers.google.com/admin-sdk/directory/v1/guides/delegation">delegation</a>
    */
   @Value("${workspace.connected-test.user-delegated-service-account-path}")
   public String userDelegatedServiceAccountPath;
@@ -45,6 +46,43 @@ public class UserAccessUtils {
   @Value("${workspace.connected-test.no-billing-access-user-email}")
   private String noBillingAccessUserEmail;
 
+  // Note: we cannot construct these as finals, since the input emails are not
+  // populated at the time of the `new` operation. Instead, we populate in the
+  // accessor.
+  private TestUser defaultUser = null;
+  private TestUser secondUser = null;
+  private TestUser billingUser = null;
+  private TestUser noBillingUser = null;
+
+  /** Creates a {@link TestUser} for the default test user. */
+  public TestUser defaultUser() {
+    if (defaultUser == null) {
+      defaultUser = new TestUser(defaultUserEmail);
+    }
+    return defaultUser;
+  }
+
+  public TestUser secondUser() {
+    if (secondUser == null) {
+      secondUser = new TestUser(secondUserEmail);
+    }
+    return secondUser;
+  }
+
+  public TestUser billingUser() {
+    if (billingUser == null) {
+      billingUser = new TestUser(billingUserEmail);
+    }
+    return billingUser;
+  }
+
+  public TestUser noBillingUser() {
+    if (noBillingUser == null) {
+      noBillingUser = new TestUser(noBillingAccessUserEmail);
+    }
+    return noBillingUser;
+  }
+
   /** Creates Google credentials for the user. Relies on domain delegation. */
   public GoogleCredentials generateCredentials(String userEmail) {
     try {
@@ -59,34 +97,25 @@ public class UserAccessUtils {
     }
   }
 
+  // TODO: [PF-2578] remove these direct getters and reference via the TestUser object
   /** Generates an OAuth access token for the userEmail. Relies on domain delegation. */
   public AccessToken generateAccessToken(String userEmail) {
     return generateCredentials(userEmail).getAccessToken();
   }
 
-  /** Creates a {@link TestUser} for the default test user. */
-  public TestUser defaultUser() {
-    return new TestUser(defaultUserEmail);
-  }
-
   /** Generates an OAuth access token for the default test user. */
   public AccessToken defaultUserAccessToken() {
-    return generateAccessToken(defaultUserEmail);
+    return defaultUser().getAccessToken();
   }
 
   /** Generates an OAuth access token for the second test user. */
   public AccessToken secondUserAccessToken() {
-    return generateAccessToken(secondUserEmail);
+    return secondUser().getAccessToken();
   }
 
   /** Generates an OAuth access token for the billing test user. */
   public AccessToken billingUserAccessToken() {
-    return generateAccessToken(billingUserEmail);
-  }
-
-  /** Generates an OAuth access token for the billing test user. */
-  public AccessToken noBillingAccessUserAccessToken() {
-    return generateAccessToken(noBillingAccessUserEmail);
+    return billingUser().getAccessToken();
   }
 
   /** Expose the default test user email. */
@@ -99,40 +128,22 @@ public class UserAccessUtils {
     return secondUserEmail;
   }
 
-  /** Expose the billing test user email. */
-  public String getBillingUserEmail() {
-    return billingUserEmail;
-  }
-
-  /** Expose the no-billing-access test user email */
-  public String getNoBillingAccessUserEmail() {
-    return noBillingAccessUserEmail;
-  }
-
+  // TODO: [PF-2578] remove these direct getters and reference via the TestUser object
   /** Provides an AuthenticatedUserRequest using the default user's email and access token. */
   public AuthenticatedUserRequest defaultUserAuthRequest() {
-    return new AuthenticatedUserRequest()
-        .email(getDefaultUserEmail())
-        .token(Optional.of(defaultUserAccessToken().getTokenValue()));
+    return defaultUser().getAuthenticatedRequest();
   }
 
-  /** Provides an AuthenticatedUserRequest using the second user's email and access token. */
   public AuthenticatedUserRequest secondUserAuthRequest() {
-    return new AuthenticatedUserRequest()
-        .email(getSecondUserEmail())
-        .token(Optional.of(secondUserAccessToken().getTokenValue()));
+    return secondUser().getAuthenticatedRequest();
   }
 
   public AuthenticatedUserRequest thirdUserAuthRequest() {
-    return new AuthenticatedUserRequest()
-        .email(getBillingUserEmail())
-        .token(Optional.of(billingUserAccessToken().getTokenValue()));
+    return billingUser().getAuthenticatedRequest();
   }
 
   public AuthenticatedUserRequest noBillingAccessUserAuthRequest() {
-    return new AuthenticatedUserRequest()
-        .email(getNoBillingAccessUserEmail())
-        .token(Optional.of(noBillingAccessUserAccessToken().getTokenValue()));
+    return noBillingUser().getAuthenticatedRequest();
   }
 
   /**

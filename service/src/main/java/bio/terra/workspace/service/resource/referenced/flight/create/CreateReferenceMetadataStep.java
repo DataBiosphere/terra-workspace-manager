@@ -8,6 +8,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
@@ -38,8 +39,17 @@ public class CreateReferenceMetadataStep implements Step {
       logger.warn("Fails to get referenced resource to create");
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL);
     }
-    referencedResourceService.createReferenceResource(
-        referencedResource.castToReferencedResource(), userRequest);
+
+    try {
+      referencedResourceService.createReferenceResource(
+          referencedResource.castToReferencedResource(), userRequest);
+    } catch (DuplicateResourceException e) {
+      // TODO: [PF-2131] remove this ambiguity
+      //  We get a duplicate resource exception; the most likely reason is that
+      //  this is a retry and we have already created the resource. There is a chance
+      //  that we didn't, though.
+      logger.warn("Treating duplicate resource as a retry", e);
+    }
     FlightUtils.setResponse(flightContext, referencedResource.getResourceId(), HttpStatus.OK);
     return StepResult.getStepResultSuccess();
   }
@@ -70,7 +80,7 @@ public class CreateReferenceMetadataStep implements Step {
             : WsmResourceType.valueOf(
                 inputParameters.get(ResourceKeys.RESOURCE_TYPE, String.class));
 
-    // First check working map DESTINATION_REFERENCED_RESOURCE. For cloning a controlled resource to
+    // Next check working map DESTINATION_REFERENCED_RESOURCE. For cloning a controlled resource to
     // referenced resource, this step is used to create destination resource. Working map
     // DESTINATION_REFERENCED_RESOURCE has destination resource, whereas input parameter RESOURCE
     // has source resource.
