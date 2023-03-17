@@ -18,6 +18,8 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.cloud.notebooks.v1.Instance;
 import com.google.cloud.notebooks.v1.NotebookServiceClient;
+import com.google.cloud.notebooks.v1.SetInstanceAcceleratorRequest;
+import com.google.cloud.notebooks.v1.SetInstanceMachineTypeRequest;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -90,7 +92,7 @@ public class UpdateAiNotebookCpuAndGpuStep implements Step {
             () ->
                 notebookServiceClient
                     .setInstanceMachineTypeAsync(
-                        com.google.cloud.notebooks.v1.SetInstanceMachineTypeRequest.newBuilder()
+                        SetInstanceMachineTypeRequest.newBuilder()
                             .setName(instanceName.formatName())
                             .setMachineType(effectiveMachineType)
                             .build())
@@ -103,16 +105,23 @@ public class UpdateAiNotebookCpuAndGpuStep implements Step {
       }
 
       if (effectiveAcceleratorConfig != null) {
+        SetInstanceAcceleratorRequest.Builder setInstanceRequestBuilder =
+            SetInstanceAcceleratorRequest.newBuilder().setName(instanceName.formatName());
+
+        if (effectiveAcceleratorConfig.coreCount() != null) {
+          setInstanceRequestBuilder.setCoreCount(effectiveAcceleratorConfig.coreCount());
+        }
+        if (effectiveAcceleratorConfig.type() != null) {
+          setInstanceRequestBuilder.setType(
+              Instance.AcceleratorType.valueOf(effectiveAcceleratorConfig.type()));
+        }
+        SetInstanceAcceleratorRequest setInstanceAcceleratorRequest =
+            setInstanceRequestBuilder.build();
+
         RetryUtils.getWithRetryOnException(
             () ->
                 notebookServiceClient
-                    .setInstanceAcceleratorAsync(
-                        com.google.cloud.notebooks.v1.SetInstanceAcceleratorRequest.newBuilder()
-                            .setName(instanceName.formatName())
-                            .setCoreCount(effectiveAcceleratorConfig.coreCount())
-                            .setType(
-                                Instance.AcceleratorType.valueOf(effectiveAcceleratorConfig.type()))
-                            .build())
+                    .setInstanceAcceleratorAsync(setInstanceAcceleratorRequest)
                     .get(),
             Duration.ofMinutes(7),
             DEFAULT_RETRY_SLEEP_DURATION,
