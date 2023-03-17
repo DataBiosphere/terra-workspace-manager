@@ -28,6 +28,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.workspace.common.BaseConnectedTest;
+import bio.terra.workspace.common.fixtures.PolicyFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
@@ -368,12 +369,12 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     // Create workspace with US region constraint.
     UUID targetWorkspaceId =
         mockMvcUtils.createWorkspaceWithRegionConstraint(
-            userAccessUtils.defaultUserAuthRequest(), "usa");
+            userAccessUtils.defaultUserAuthRequest(), PolicyFixtures.US_REGION);
 
     // Create workspace with Europe region constraint.
     UUID sourceWorkspaceId =
         mockMvcUtils.createWorkspaceWithRegionConstraint(
-            userAccessUtils.defaultUserAuthRequest(), "eu");
+            userAccessUtils.defaultUserAuthRequest(), PolicyFixtures.EUROPE_REGION);
 
     // Both workspaces have conflicting policy.
     ApiWsmPolicyMergeCheckResult result =
@@ -392,7 +393,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     try {
       //  Create target workspace with US region constraint.
       targetWorkspaceId =
-          mockMvcUtils.createWorkspaceWithRegionConstraintAndCloudContext(userRequest, "usa");
+          mockMvcUtils.createWorkspaceWithRegionConstraintAndCloudContext(userRequest, PolicyFixtures.US_REGION);
 
       // Then add a resource with US east region to the target.
       mockMvcUtils.createControlledGcsBucket(
@@ -431,7 +432,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     try {
       //  Create target workspace with US region constraint.
       targetWorkspaceId =
-          mockMvcUtils.createWorkspaceWithRegionConstraintAndCloudContext(userRequest, "usa");
+          mockMvcUtils.createWorkspaceWithRegionConstraintAndCloudContext(userRequest, PolicyFixtures.US_REGION);
 
       // Then add a resource with US east region to the target.
       mockMvcUtils.createControlledGcsBucket(
@@ -463,7 +464,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     try {
       //  Create target workspace with US region constraint.
       targetWorkspaceId =
-          mockMvcUtils.createWorkspaceWithRegionConstraintAndCloudContext(userRequest, "usa");
+          mockMvcUtils.createWorkspaceWithRegionConstraintAndCloudContext(userRequest, PolicyFixtures.US_REGION);
 
       // Then add a resource with US east region to the target.
       mockMvcUtils.createControlledGcsBucket(
@@ -520,7 +521,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     assertTrue(workspaceWithoutPolicy.getPolicies().isEmpty());
 
     // add attributes
-    String usRegion = "usa";
+    String usRegion = PolicyFixtures.US_REGION;
     ApiWsmPolicyUpdateResult result =
         mockMvcUtils.updateRegionPolicy(
             userAccessUtils.defaultUserAuthRequest(), workspace.getId(), usRegion);
@@ -550,7 +551,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
         mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
     assertTrue(workspaceWithoutPolicy.getPolicies().isEmpty());
 
-    var usRegion = "usa";
+    var usRegion = PolicyFixtures.US_REGION;
     ApiWsmPolicyUpdateResult result =
         mockMvcUtils.updateRegionPolicy(
             userAccessUtils.defaultUserAuthRequest(), workspace.getId(), usRegion);
@@ -564,7 +565,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
         userAccessUtils.defaultUserAuthRequest(),
         workspace.getId(),
         HttpStatus.SC_CONFLICT,
-        buildWsmRegionPolicyInput("europe"),
+        buildWsmRegionPolicyInput(PolicyFixtures.EUROPE_REGION),
         ApiWsmPolicyUpdateMode.FAIL_ON_CONFLICT);
     mockMvcUtils.updatePoliciesExpect(
         userAccessUtils.defaultUserAuthRequest(),
