@@ -559,11 +559,6 @@ public class ControlledResourceService {
             "enablePet");
     jobBuilder.addParameter(ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS, creationParameters);
     jobBuilder.addParameter(ControlledResourceKeys.NOTEBOOK_PET_SERVICE_ACCOUNT, petSaEmail);
-    jobBuilder.addParameter(
-        ControlledResourceKeys.CREATE_NOTEBOOK_MACHINE_TYPE, creationParameters.getMachineType());
-    jobBuilder.addParameter(
-        ControlledResourceKeys.CREATE_NOTEBOOK_ACCELERATOR_CONFIG,
-        AcceleratorConfig.fromApiAcceleratorConfig(creationParameters.getAcceleratorConfig()));
 
     String jobId = jobBuilder.submit();
     waitForResourceOrJob(resource.getWorkspaceId(), resource.getResourceId(), jobId);
