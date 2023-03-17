@@ -82,7 +82,7 @@ public class ValidateWorkspaceAgainstPolicyStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    // Validation step so there should be nothing to undo, only propagate the flight failure.
-    return context.getResult();
+    // Nothing to do. Continue undoing.
+    return StepResult.getStepResultSuccess();
   }
 }

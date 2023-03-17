@@ -13,7 +13,9 @@ public class PolicyFixtures {
   public static final String ALT_GROUP = "wsm-test-group-alt";
   public static final String REGION = "region-name";
   public static final String US_REGION = "usa";
+  public static final String EUROPE_REGION = "europe";
   public static final String IOWA_REGION = "iowa";
+  public static final String NEVADA_REGION = "nevada";
 
   public static ApiWsmPolicyInput GROUP_POLICY_DEFAULT =
       new ApiWsmPolicyInput()
@@ -39,4 +41,10 @@ public class PolicyFixtures {
           .namespace(NAMESPACE)
           .name(REGION_CONSTRAINT)
           .addAdditionalDataItem(new ApiWsmPolicyPair().key(REGION).value(IOWA_REGION));
+
+  public static ApiWsmPolicyInput REGION_POLICY_NEVADA =
+      new ApiWsmPolicyInput()
+          .namespace(NAMESPACE)
+          .name(REGION_CONSTRAINT)
+          .addAdditionalDataItem(new ApiWsmPolicyPair().key(REGION).value(NEVADA_REGION));
 }

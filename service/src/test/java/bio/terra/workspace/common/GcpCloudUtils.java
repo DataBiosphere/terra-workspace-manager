@@ -192,6 +192,18 @@ public class GcpCloudUtils {
         .build()
         .getService();
   }
+
+  public static void waitForProjectAccess(GoogleCredentials userCredential, String projectId)
+      throws Exception {
+    Storage storage = getGcpStorageClient(userCredential, projectId);
+    getWithRetryOnException(() -> testIam(storage));
+  }
+
+  private static Boolean testIam(Storage storage) {
+    storage.list();
+    return true;
+  }
+
   /**
    * Get a result from a call that might throw an exception. Treat the exception as retryable, sleep
    * for 15 seconds, and retry up to 40 times. This structure is useful for situations where we are
