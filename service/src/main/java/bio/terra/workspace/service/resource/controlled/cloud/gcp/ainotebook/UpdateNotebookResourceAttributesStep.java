@@ -12,7 +12,6 @@ import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
-import com.google.api.services.notebooks.v1.model.AcceleratorConfig;
 
 public class UpdateNotebookResourceAttributesStep implements Step {
 

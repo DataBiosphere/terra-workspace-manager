@@ -11,7 +11,6 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
-import com.google.api.services.notebooks.v1.model.AcceleratorConfig;
 import java.util.Optional;
 
 // Update the CPU and GPU attributes in the database.

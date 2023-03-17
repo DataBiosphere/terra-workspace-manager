@@ -16,7 +16,6 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.RetryUtils;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
-import com.google.api.services.notebooks.v1.model.AcceleratorConfig;
 import com.google.cloud.notebooks.v1.Instance;
 import com.google.cloud.notebooks.v1.NotebookServiceClient;
 import java.time.Duration;
@@ -110,10 +109,9 @@ public class UpdateAiNotebookCpuAndGpuStep implements Step {
                     .setInstanceAcceleratorAsync(
                         com.google.cloud.notebooks.v1.SetInstanceAcceleratorRequest.newBuilder()
                             .setName(instanceName.formatName())
-                            .setCoreCount(effectiveAcceleratorConfig.getCoreCount())
+                            .setCoreCount(effectiveAcceleratorConfig.coreCount())
                             .setType(
-                                Instance.AcceleratorType.valueOf(
-                                    effectiveAcceleratorConfig.getType()))
+                                Instance.AcceleratorType.valueOf(effectiveAcceleratorConfig.type()))
                             .build())
                     .get(),
             Duration.ofMinutes(7),

@@ -36,7 +36,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.flight.Update
 import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespace.ControlledAzureRelayNamespaceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpPolicyBuilder;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.AiNotebookApiConversions;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.AcceleratorConfig;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.flight.UpdateGcpControlledResourceRegionFlight;
@@ -62,7 +62,6 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Resou
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.WsmApplication;
-import com.google.api.services.notebooks.v1.model.AcceleratorConfig;
 import com.google.cloud.Policy;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.time.Duration;
@@ -564,8 +563,7 @@ public class ControlledResourceService {
         ControlledResourceKeys.CREATE_NOTEBOOK_MACHINE_TYPE, creationParameters.getMachineType());
     jobBuilder.addParameter(
         ControlledResourceKeys.CREATE_NOTEBOOK_ACCELERATOR_CONFIG,
-        AiNotebookApiConversions.fromApiAcceleratorConfig(
-            creationParameters.getAcceleratorConfig()));
+        AcceleratorConfig.fromApiAcceleratorConfig(creationParameters.getAcceleratorConfig()));
 
     String jobId = jobBuilder.submit();
     waitForResourceOrJob(resource.getWorkspaceId(), resource.getResourceId(), jobId);
@@ -599,8 +597,7 @@ public class ControlledResourceService {
     if (updateParameters != null) {
       final String newMachineType = updateParameters.getMachineType();
       final AcceleratorConfig newAcceleratorConfig =
-          AiNotebookApiConversions.fromApiAcceleratorConfig(
-              updateParameters.getAcceleratorConfig());
+          AcceleratorConfig.fromApiAcceleratorConfig(updateParameters.getAcceleratorConfig());
 
       jobBuilder
           .addParameter(ControlledResourceKeys.UPDATE_MACHINE_TYPE, newMachineType)

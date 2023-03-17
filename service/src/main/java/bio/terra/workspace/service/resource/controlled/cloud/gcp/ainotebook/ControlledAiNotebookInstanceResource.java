@@ -32,7 +32,6 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.api.services.notebooks.v1.model.AcceleratorConfig;
 import com.google.common.base.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -298,7 +297,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
         .projectId(projectId)
         .location(getLocation())
         .instanceId(getInstanceId())
-        .acceleratorConfig(AiNotebookApiConversions.toApiAcceleratorConfig(getAcceleratorConfig()))
+        .acceleratorConfig(AcceleratorConfig.toApiAcceleratorConfig(getAcceleratorConfig()))
         .machineType(getMachineType());
   }
 

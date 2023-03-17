@@ -19,6 +19,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.Contr
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.AcceleratorConfig;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource.Builder;
@@ -33,7 +34,6 @@ import com.azure.resourcemanager.batch.models.DeploymentConfiguration;
 import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.google.api.client.util.DateTime;
 import com.google.api.services.bigquery.model.Dataset;
-import com.google.api.services.notebooks.v1.model.AcceleratorConfig;
 import com.google.cloud.storage.BucketInfo;
 import com.google.cloud.storage.BucketInfo.LifecycleRule;
 import com.google.cloud.storage.BucketInfo.LifecycleRule.LifecycleAction;
@@ -658,7 +658,7 @@ public class ControlledResourceFixtures {
   public static final String DEFAULT_CREATED_AI_NOTEBOOK_MACHINE_TYPE = "e2-standard-2";
 
   public static final AcceleratorConfig DEFAULT_AI_NOTEBOOK_ACCELERATOR_CONFIG =
-      new AcceleratorConfig().setType("NVIDIA_TESLA_V4").setCoreCount(2L);
+      new AcceleratorConfig("NVIDIA_TESLA_V4", 2L);
 
   public static final OffsetDateTime OFFSET_DATE_TIME_1 =
       OffsetDateTime.parse("2017-12-03T10:15:30+01:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
