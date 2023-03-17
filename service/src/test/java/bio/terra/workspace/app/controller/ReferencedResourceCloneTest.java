@@ -194,7 +194,7 @@ public class ReferencedResourceCloneTest extends BaseConnectedTest {
         new ApiCloneWorkspaceRequest()
             .spendProfile(WorkspaceFixtures.DEFAULT_SPEND_PROFILE)
             .additionalPolicies(
-                new ApiWsmPolicyInputs().addInputsItem(makeRegionPolicyInput("asia")));
+                new ApiWsmPolicyInputs().addInputsItem(makeRegionPolicyInput("asiapacific")));
 
     mockMvcUtils.postExpect(
         userAccessUtils.defaultUserAuthRequest(),
