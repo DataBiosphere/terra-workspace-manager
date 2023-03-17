@@ -6,7 +6,6 @@ import bio.terra.landingzone.library.LandingZoneMain;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.configuration.external.WorkspaceDatabaseConfiguration;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.workspace.WsmApplicationService;
 import javax.sql.DataSource;
 import org.springframework.context.ApplicationContext;
