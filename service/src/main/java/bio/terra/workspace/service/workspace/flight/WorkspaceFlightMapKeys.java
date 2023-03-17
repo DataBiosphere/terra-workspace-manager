@@ -124,6 +124,9 @@ public final class WorkspaceFlightMapKeys {
     public static final String CLONING_INSTRUCTIONS = "cloningInstructions";
     public static final String RESOURCE_STATE_RULE = "resourceStateRule";
     public static final String RESOURCE_STATE_CHANGED = "resourceStateChanged";
+    public static final String UPDATE_PARAMETERS = "updateParameters";
+    public static final String COMMON_UPDATE_PARAMETERS = "commonUpdateParameters";
+    public static final String DB_UPDATER = "dbUpdater";
 
     private ResourceKeys() {}
   }

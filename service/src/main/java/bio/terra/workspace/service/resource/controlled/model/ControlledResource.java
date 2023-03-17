@@ -13,7 +13,6 @@ import bio.terra.workspace.generated.model.ApiResourceMetadata;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
-import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceFlight;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
@@ -139,16 +138,6 @@ public abstract class ControlledResource extends WsmResource {
    */
   public abstract void addDeleteSteps(
       DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag);
-
-  /**
-   * The UpdateControlledResourceFlight calls this method to populate the resource-specific step(s)
-   * to create the specific cloud resource.
-   *
-   * @param flight The update flight
-   * @param flightBeanBag Bean bag for finding Spring singletons.
-   */
-  public abstract void addUpdateSteps(
-      UpdateControlledResourceFlight flight, FlightBeanBag flightBeanBag);
 
   public <T extends ControlledResource> T getResourceFromFlightInputParameters(
       Flight flight, WsmResourceType resourceType) {

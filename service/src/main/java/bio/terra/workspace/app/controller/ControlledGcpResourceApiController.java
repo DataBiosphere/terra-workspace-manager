@@ -5,13 +5,13 @@ import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.ControlledGcpResourceApi;
 import bio.terra.workspace.generated.model.*;
-import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant;
@@ -25,6 +25,7 @@ import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.CommonUpdateParameters;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -54,7 +55,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   private final JobApiUtils jobApiUtils;
   private final GcpCloudContextService gcpCloudContextService;
   private final ControlledResourceMetadataManager controlledResourceMetadataManager;
-  private final CrlService crlService;
+  private final WsmResourceService wsmResourceService;
 
   @Autowired
   public ControlledGcpResourceApiController(
@@ -67,14 +68,14 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
       JobApiUtils jobApiUtils,
       GcpCloudContextService gcpCloudContextService,
       ControlledResourceMetadataManager controlledResourceMetadataManager,
-      CrlService crlService) {
+      WsmResourceService wsmResourceService) {
     super(authenticatedUserRequestFactory, request, controlledResourceService, samService);
     this.workspaceService = workspaceService;
     this.jobService = jobService;
     this.jobApiUtils = jobApiUtils;
     this.gcpCloudContextService = gcpCloudContextService;
     this.controlledResourceMetadataManager = controlledResourceMetadataManager;
-    this.crlService = crlService;
+    this.wsmResourceService = wsmResourceService;
   }
 
   @Traced
@@ -199,22 +200,22 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   public ResponseEntity<ApiGcpGcsBucketResource> updateGcsBucket(
       UUID workspaceUuid, UUID resourceId, @Valid ApiUpdateControlledGcpGcsBucketRequestBody body) {
     logger.info("Updating bucket resourceId {} workspaceUuid {}", resourceId, workspaceUuid);
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    final ControlledGcsBucketResource bucketResource =
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ControlledGcsBucketResource bucketResource =
         controlledResourceMetadataManager
             .validateControlledResourceAndAction(
                 userRequest, workspaceUuid, resourceId, SamControlledResourceActions.EDIT_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
-    getControlledResourceService()
-        .updateGcsBucket(
-            bucketResource,
-            body.getUpdateParameters(),
-            body.getName(),
-            body.getDescription(),
-            userRequest);
-
-    // Retrieve and cast response to ApiGcpGcsBucketResource
-    final ControlledGcsBucketResource updatedResource =
+    ApiGcpGcsBucketUpdateParameters updateParameters = body.getUpdateParameters();
+    CommonUpdateParameters commonUpdateParameters =
+        new CommonUpdateParameters()
+            .setName(body.getName())
+            .setDescription(body.getDescription())
+            .setCloningInstructions(
+                (updateParameters == null ? null : updateParameters.getCloningInstructions()));
+    wsmResourceService.updateResource(
+        userRequest, bucketResource, commonUpdateParameters, updateParameters);
+    ControlledGcsBucketResource updatedResource =
         getControlledResourceService()
             .getControlledResource(workspaceUuid, resourceId)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
@@ -316,14 +317,15 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .validateControlledResourceAndAction(
                 userRequest, workspaceUuid, resourceId, SamControlledResourceActions.EDIT_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
-    getControlledResourceService()
-        .updateBqDataset(
-            resource,
-            body.getUpdateParameters(),
-            body.getName(),
-            body.getDescription(),
-            userRequest);
-
+    ApiGcpBigQueryDatasetUpdateParameters updateParameters = body.getUpdateParameters();
+    CommonUpdateParameters commonUpdateParameters =
+        new CommonUpdateParameters()
+            .setName(body.getName())
+            .setDescription(body.getDescription())
+            .setCloningInstructions(
+                (updateParameters == null ? null : updateParameters.getCloningInstructions()));
+    wsmResourceService.updateResource(
+        userRequest, resource, commonUpdateParameters, updateParameters);
     final ControlledBigQueryDatasetResource updatedResource =
         getControlledResourceService()
             .getControlledResource(workspaceUuid, resourceId)
@@ -528,20 +530,16 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .validateControlledResourceAndAction(
                 userRequest, workspaceUuid, resourceId, SamControlledResourceActions.EDIT_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
-
-    getControlledResourceService()
-        .updateAiNotebookInstance(
-            resource,
-            requestBody.getUpdateParameters(),
-            requestBody.getName(),
-            requestBody.getDescription(),
-            userRequest);
-
-    final ControlledAiNotebookInstanceResource updatedResource =
+    CommonUpdateParameters commonUpdateParameters =
+        new CommonUpdateParameters()
+            .setName(requestBody.getName())
+            .setDescription(requestBody.getDescription());
+    wsmResourceService.updateResource(
+        userRequest, resource, commonUpdateParameters, requestBody.getUpdateParameters());
+    ControlledAiNotebookInstanceResource updatedResource =
         getControlledResourceService()
             .getControlledResource(workspaceUuid, resourceId)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
-
     return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 

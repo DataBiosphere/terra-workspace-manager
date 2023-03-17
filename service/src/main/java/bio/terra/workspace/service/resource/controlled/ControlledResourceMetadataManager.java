@@ -4,6 +4,7 @@ import bio.terra.common.exception.ForbiddenException;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
+import bio.terra.workspace.db.exception.ResourceStateConflictException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
@@ -115,10 +116,14 @@ public class ControlledResourceMetadataManager {
             () -> samService.checkAuthz(userRequest, samName, resourceId.toString(), action),
             "checkAuthz");
         throw new ResourceIsBusyException(
-            "Another operation is running on the resource; wait and try again");
+            "Another operation is running on the resource; try again later");
 
       case BROKEN:
-        // If the resource is in the BROKEN state, then there may be no Sam resource. We do our
+        if (!SamControlledResourceActions.DELETE_ACTION.equals(action)) {
+          throw new ResourceStateConflictException(
+              "Delete is the only operation allowed on a resource in the broken state");
+        }
+        // For a resource in the BROKEN state, then there may be no Sam resource. We do our
         // best with what we know. We handle two cases:
         //  1. If the resource is an application resource, and the application is making
         //     the request, we go ahead and perform the operation.

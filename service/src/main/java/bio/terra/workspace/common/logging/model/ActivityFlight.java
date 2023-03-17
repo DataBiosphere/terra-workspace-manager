@@ -13,7 +13,7 @@ import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.Cl
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneWorkspaceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
-import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceFlight;
+import bio.terra.workspace.service.resource.flight.UpdateResourceFlight;
 import bio.terra.workspace.service.resource.referenced.flight.clone.CloneReferencedResourceFlight;
 import bio.terra.workspace.service.resource.referenced.flight.update.UpdateReferenceResourceFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
@@ -39,8 +39,6 @@ public enum ActivityFlight {
       WorkspaceDeleteFlight.class.getName(), ActivityLogChangedTarget.WORKSPACE),
   CONTROLLED_RESOURCE_CREATE_FLIGHT(
       CreateControlledResourceFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
-  CONTROLLED_RESOURCE_UPDATE_FLIGHT(
-      UpdateControlledResourceFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
   CONTROLLED_GCS_BUCKET_CLONE_FLIGHT(
       CloneControlledGcsBucketResourceFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
   CONTROLLED_BQ_DATASET_CLONE_FLIGHT(
@@ -60,6 +58,7 @@ public enum ActivityFlight {
       RemoveUserFromWorkspaceFlight.class.getName(), ActivityLogChangedTarget.USER),
   REFERENCED_RESOURCE_UPDATE_FLIGHT(
       UpdateReferenceResourceFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
+  RESOURCE_UPDATE_FLIGHT(UpdateResourceFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
   ALL_RESOURCES_CLONE_FLIGHT(
       CloneAllResourcesFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
   GCP_WORKSPACE_CLONE_FLIGHT(

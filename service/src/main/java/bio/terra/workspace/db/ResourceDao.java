@@ -13,6 +13,7 @@ import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.db.exception.ResourceStateConflictException;
 import bio.terra.workspace.db.model.DbResource;
+import bio.terra.workspace.db.model.DbUpdater;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetAttributes;
@@ -24,6 +25,7 @@ import bio.terra.workspace.service.resource.controlled.model.PrivateResourceStat
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.CommonUpdateParameters;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
@@ -650,6 +652,73 @@ public class ResourceDao {
     return updated;
   }
 
+  @WriteTransaction
+  public DbUpdater updateResourceStart(
+      UUID workspaceUuid,
+      UUID resourceId,
+      CommonUpdateParameters commonUpdateParameters,
+      String flightId) {
+    DbResource dbResource = getDbResourceFromIds(workspaceUuid, resourceId);
+    updateState(dbResource, null, flightId, WsmResourceState.UPDATING, null);
+
+    DbUpdater dbUpdater =
+        new DbUpdater(
+            dbResource.getName(),
+            dbResource.getDescription(),
+            dbResource.getCloningInstructions(),
+            dbResource.getAttributes());
+    dbUpdater.updateFromCommonParameters(commonUpdateParameters);
+
+    return dbUpdater;
+  }
+
+  @WriteTransaction
+  public void updateResourceSuccess(
+      UUID workspaceUuid, UUID resourceId, DbUpdater dbUpdater, String flightId) {
+
+    var params = new MapSqlParameterSource();
+
+    if (dbUpdater.isNameUpdated()) {
+      params.addValue("name", dbUpdater.getUpdatedName());
+    }
+    if (dbUpdater.isDescriptionUpdated()) {
+      params.addValue("description", dbUpdater.getUpdatedDescription());
+    }
+    if (dbUpdater.isCloningInstructionsUpdated()) {
+      params.addValue("cloning_instructions", dbUpdater.getUpdatedCloningInstructions().toSql());
+    }
+    if (dbUpdater.isJsonAttributesUpdated()) {
+      params.addValue("attributes", dbUpdater.getUpdatedJsonAttributes());
+    }
+
+    StringBuilder sb = new StringBuilder("UPDATE resource SET ");
+    sb.append(DbUtils.setColumnsClause(params, "attributes"));
+    sb.append(" WHERE workspace_id = :workspace_id AND resource_id = :resource_id");
+
+    params
+        .addValue("workspace_id", workspaceUuid.toString())
+        .addValue("resource_id", resourceId.toString());
+
+    int rowsAffected = jdbcTemplate.update(sb.toString(), params);
+    boolean updated = rowsAffected > 0;
+
+    logger.info(
+        "{} record for resource {} in workspace {}",
+        (updated ? "Updated" : "No Update - did not find"),
+        resourceId,
+        workspaceUuid);
+
+    DbResource dbResource = getDbResourceFromIds(workspaceUuid, resourceId);
+    updateState(dbResource, flightId, /*flightId=*/ null, WsmResourceState.READY, null);
+  }
+
+  @WriteTransaction
+  public void updateResourceFailure(UUID workspaceUuid, UUID resourceId, String flightId) {
+    DbResource dbResource = getDbResourceFromIds(workspaceUuid, resourceId);
+    updateState(dbResource, flightId, /*flightId=*/ null, WsmResourceState.READY, null);
+  }
+
+  // TODO: make this go away
   /**
    * Update name, description, and/or attributes of the resource.
    *
