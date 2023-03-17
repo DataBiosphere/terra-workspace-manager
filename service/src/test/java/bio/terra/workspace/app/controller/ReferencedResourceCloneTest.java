@@ -238,15 +238,17 @@ public class ReferencedResourceCloneTest extends BaseConnectedTest {
     assertEquals(expectedRegions, actualRegions);
   }
 
-  private void checkGroupPolicy(UUID workspaceUuid, List<String> expectedGroups)
-      throws Exception {
+  private void checkGroupPolicy(UUID workspaceUuid, List<String> expectedGroups) throws Exception {
     ApiWorkspaceDescription workspaceDescription =
         mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceUuid);
 
     List<ApiWsmPolicyInput> policies = workspaceDescription.getPolicies();
     ApiWsmPolicyInput groupPolicy =
         policies.stream()
-            .filter(p -> p.getNamespace().equals(PolicyFixtures.NAMESPACE) && p.getName().equals(PolicyFixtures.GROUP_CONSTRAINT))
+            .filter(
+                p ->
+                    p.getNamespace().equals(PolicyFixtures.NAMESPACE)
+                        && p.getName().equals(PolicyFixtures.GROUP_CONSTRAINT))
             .findAny()
             .get();
     assertEquals(PolicyFixtures.GROUP_CONSTRAINT, groupPolicy.getName());
@@ -283,9 +285,7 @@ public class ReferencedResourceCloneTest extends BaseConnectedTest {
             .userFacingId(WorkspaceFixtures.getUserFacingId(sourceWorkspaceId))
             .stage(ApiWorkspaceStageModel.MC_WORKSPACE)
             .spendProfile("wm-default-spend-profile")
-            .policies(
-                new ApiWsmPolicyInputs()
-                    .addInputsItem(PolicyFixtures.REGION_POLICY_USA));
+            .policies(new ApiWsmPolicyInputs().addInputsItem(PolicyFixtures.REGION_POLICY_USA));
 
     mockMvcUtils.createdWorkspaceWithoutCloudContext(
         userAccessUtils.defaultUserAuthRequest(), workspaceRequest);
@@ -352,9 +352,7 @@ public class ReferencedResourceCloneTest extends BaseConnectedTest {
             .userFacingId(WorkspaceFixtures.getUserFacingId(sourceWorkspaceId))
             .stage(ApiWorkspaceStageModel.MC_WORKSPACE)
             .spendProfile("wm-default-spend-profile")
-            .policies(
-                new ApiWsmPolicyInputs()
-                    .addInputsItem(PolicyFixtures.REGION_POLICY_USA));
+            .policies(new ApiWsmPolicyInputs().addInputsItem(PolicyFixtures.REGION_POLICY_USA));
 
     mockMvcUtils.createdWorkspaceWithoutCloudContext(
         userAccessUtils.defaultUserAuthRequest(), workspaceRequest);

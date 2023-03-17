@@ -34,10 +34,14 @@ public class ValidateGroupPolicyAttributesStep implements Step {
 
     final TpsPaoGetResult currentPao = tpsApiDispatch.getPao(workspaceId);
 
-    HashSet<String> groups1 = new HashSet<>(TpsUtilities.getGroupConstraintsFromInputs(currentPao.getEffectiveAttributes()));
-    HashSet<String> groups2 = new HashSet<>(TpsUtilities.getGroupConstraintsFromInputs(mergedPao.getEffectiveAttributes()));
+    HashSet<String> groups1 =
+        new HashSet<>(
+            TpsUtilities.getGroupConstraintsFromInputs(currentPao.getEffectiveAttributes()));
+    HashSet<String> groups2 =
+        new HashSet<>(
+            TpsUtilities.getGroupConstraintsFromInputs(mergedPao.getEffectiveAttributes()));
 
-    if (! (groups1.containsAll(groups2) && groups2.containsAll(groups1))) {
+    if (!(groups1.containsAll(groups2) && groups2.containsAll(groups1))) {
       throw new PolicyConflictException("Cannot update group policies.");
     }
 

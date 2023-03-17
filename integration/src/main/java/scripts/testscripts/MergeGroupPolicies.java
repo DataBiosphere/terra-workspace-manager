@@ -8,6 +8,7 @@ import bio.terra.workspace.api.ReferencedGcpResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.*;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
@@ -153,7 +154,7 @@ public class MergeGroupPolicies extends WorkspaceAllocateTestScriptBase {
                     groupBTestReferenceResource.getMetadata().getWorkspaceId(),
                     groupBTestReferenceResource.getMetadata().getResourceId()));
     assertEquals(HttpStatus.SC_CONFLICT, exception.getCode());
-    assertTrue(exception.getMessage().contains("Policy merge has conflicts"));
+    assertTrue(exception.getMessage().contains("Cannot update group policies."));
 
     // group should still be A only
     validateWorkspaceContainsGroupPolicy(workspaceApi, groupTestWorkspace.getId(), groupNameA);
@@ -174,7 +175,7 @@ public class MergeGroupPolicies extends WorkspaceAllocateTestScriptBase {
                     groupBTestReferenceResource.getMetadata().getWorkspaceId(),
                     groupBTestReferenceResource.getMetadata().getResourceId()));
     assertEquals(HttpStatus.SC_CONFLICT, exception.getCode());
-    assertTrue(exception.getMessage().contains("Policy merge has conflicts"));
+    assertTrue(exception.getMessage().contains("Cannot update group policies."));
 
     WorkspaceDescription updatedWorkspace =
         workspaceApi.getWorkspace(noGroupPolicyWorkspace.getId(), null);
@@ -184,8 +185,31 @@ public class MergeGroupPolicies extends WorkspaceAllocateTestScriptBase {
     workspaceApi.deleteWorkspace(noGroupPolicyWorkspace.getId());
 
     /*
-    Scenario 5:
+    Scenario 5: Clone a workspace and add additional groups. WS(groupA), Clone(+groupB) = WS(groupA, groupB)
      */
+    CreatedWorkspace workspaceToClone =
+        createWorkspaceWithPolicy(
+            UUID.randomUUID(), getSpendProfileId(), workspaceApi, groupPolicyA);
+
+    UUID cloneWorkspaceId = UUID.randomUUID();
+    CloneWorkspaceRequest request =
+        new CloneWorkspaceRequest()
+            .destinationWorkspaceId(cloneWorkspaceId)
+            .additionalPolicies(groupPolicyB)
+            .spendProfile(getSpendProfileId());
+
+    workspaceApi.cloneWorkspace(request, workspaceToClone.getId());
+    updatedWorkspace = workspaceApi.getWorkspace(cloneWorkspaceId, null);
+    updatedPolicies = updatedWorkspace.getPolicies();
+
+    assertEquals(1, updatedPolicies.size());
+    var additionalData = updatedPolicies.get(0).getAdditionalData();
+    assertEquals(2, additionalData.size());
+    assertTrue(
+        additionalData.stream()
+            .map(data -> data.getValue())
+            .toList()
+            .containsAll(Arrays.asList(groupNameA, groupNameB)));
 
     // Clean up the data collections used in most of the scenarios.
     workspaceApi.deleteWorkspace(groupBDataCollection.getId());
