@@ -13,6 +13,7 @@ public class PolicyFixtures {
   public static final String ALT_GROUP = "wsm-test-group-alt";
   public static final String REGION = "region-name";
   public static final String US_REGION = "usa";
+  public static final String EUROPE_REGION = "europe";
   public static final String IOWA_REGION = "iowa";
   public static final String NEVADA_REGION = "nevada";
 
