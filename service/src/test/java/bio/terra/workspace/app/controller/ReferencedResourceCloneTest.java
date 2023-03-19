@@ -188,7 +188,7 @@ public class ReferencedResourceCloneTest extends BaseConnectedTest {
   }
 
   @Test
-  public void cloneWorkspaceMerge_addAdditionalGroupPolicy() throws Exception {
+  public void cloneWorkspaceMerge_mergeCompatibleRegionPolicy() throws Exception {
     testWorkspaceCloneWithAdditionalPolicy(
         ApiCloningInstructionsEnum.REFERENCE,
         new ApiWsmPolicyInputs()
