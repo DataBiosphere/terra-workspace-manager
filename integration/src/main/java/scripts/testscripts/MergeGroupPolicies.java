@@ -11,8 +11,6 @@ import bio.terra.workspace.model.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-
-import org.apache.commons.math3.analysis.function.Add;
 import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +35,8 @@ public class MergeGroupPolicies extends WorkspaceAllocateTestScriptBase {
     String groupNameA = "wsm-test-group";
     String groupNameB = "wsm-test-group-alt";
 
-    // Add a cloud context and bucket resource to the test workspace. We'll use this resource to clone references in the scenarios in this journey.
+    // Add a cloud context and bucket resource to the test workspace. We'll use this resource to
+    // clone references in the scenarios in this journey.
     String projectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
     logger.info("Created project {}", projectId);
 
@@ -176,7 +175,8 @@ public class MergeGroupPolicies extends WorkspaceAllocateTestScriptBase {
     assertEquals(0, updatedPolicies.size());
     workspaceApi.deleteWorkspace(noGroupPolicyWorkspace.getId());
 
-    // Scenario 5: Clone a workspace and add additional groups. WS(groupA), Clone(+groupB) = WS(groupA, groupB)
+    // Scenario 5: Clone a workspace and add additional groups. WS(groupA), Clone(+groupB) =
+    // WS(groupA, groupB)
     CreatedWorkspace workspaceToClone =
         createWorkspaceWithPolicy(
             UUID.randomUUID(), getSpendProfileId(), workspaceApi, groupPolicyA);
