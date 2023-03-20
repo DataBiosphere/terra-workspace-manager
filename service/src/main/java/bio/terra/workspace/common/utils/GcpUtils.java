@@ -4,16 +4,19 @@ import bio.terra.cloudres.google.api.services.common.OperationCow;
 import bio.terra.cloudres.google.api.services.common.OperationUtils;
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.common.exception.BadRequestException;
+import bio.terra.common.exception.ForbiddenException;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.workspace.exceptions.SaCredentialsMissingException;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
+import com.google.api.gax.rpc.PermissionDeniedException;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
 import com.google.auth.ServiceAccountSigner;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.ServiceOptions;
+import io.grpc.Status;
 import io.grpc.Status.Code;
 import java.io.IOException;
 import java.time.Duration;
@@ -82,6 +85,9 @@ public class GcpUtils {
         // do not waste time retrying on client error.
         throw new BadRequestException(
             String.format("Gcp calls failed with client error code %s. Do not retry", code));
+      } else if (code == Code.PERMISSION_DENIED.value()) {
+        throw new ForbiddenException(
+            String.format("%s", operation.getOperationAdapter().getError().getMessage()));
       } else {
         throw new RetryException(
             String.format(

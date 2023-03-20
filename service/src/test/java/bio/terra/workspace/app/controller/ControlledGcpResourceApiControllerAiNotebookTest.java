@@ -3,7 +3,9 @@ package bio.terra.workspace.app.controller;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertControlledResourceMetadata;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertResourceMetadata;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import bio.terra.common.exception.ForbiddenException;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
@@ -11,7 +13,9 @@ import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
+import bio.terra.workspace.generated.model.ApiCreatedControlledGcpAiNotebookInstanceResult;
 import bio.terra.workspace.generated.model.ApiErrorReport;
+import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
 import bio.terra.workspace.generated.model.ApiManagedBy;
@@ -22,9 +26,15 @@ import bio.terra.workspace.generated.model.ApiResourceLineage;
 import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.CreateAiNotebookInstanceStep;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants;
 import java.util.List;
 import java.util.UUID;
+
+import com.google.api.services.notebooks.v1.model.Instance;
+import com.google.rpc.Code;
+import org.apache.http.HttpStatus;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -135,6 +145,23 @@ public class ControlledGcpResourceApiControllerAiNotebookTest extends BaseConnec
             .getErrorReport();
 
     assertEquals("A resource with matching attributes already exists", errorReport.getMessage());
+  }
+
+  @Test
+  public void createAiNotebookInstance_CPU_quotaExceeded() throws Exception {
+    ApiCreatedControlledGcpAiNotebookInstanceResult job =
+        mockMvcUtils.createAiNotebookInstanceAndExpect(
+            userAccessUtils.defaultUserAuthRequest(),
+            workspaceId,
+            "notebook-exceeding-cpu-quota",
+            "us-east1",
+            StatusEnum.FAILED);
+
+    ApiErrorReport errorReport = job.getErrorReport();
+
+    assertEquals(errorReport.getStatusCode(), HttpStatus.SC_FORBIDDEN);
+
+    Assertions.assertThat(errorReport.getMessage()).contains("Quota 'CPUS' exceeded");
   }
 
   private void assertAiNotebook(
