@@ -41,11 +41,11 @@ public class ValidateGroupPolicyAttributesStep implements Step {
         new HashSet<>(
             TpsUtilities.getGroupConstraintsFromInputs(mergedPao.getEffectiveAttributes()));
 
-    if (!(groups1.containsAll(groups2) && groups2.containsAll(groups1))) {
-      throw new PolicyConflictException("Cannot update group policies.");
+    if (groups1.containsAll(groups2) && groups2.containsAll(groups1)) {
+      return StepResult.getStepResultSuccess();
     }
 
-    return StepResult.getStepResultSuccess();
+    throw new PolicyConflictException("Cannot update group policies.");
   }
 
   @Override
