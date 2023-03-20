@@ -740,17 +740,18 @@ public class MockMvcUtils {
       AuthenticatedUserRequest userRequest, UUID workspaceId, @Nullable String location)
       throws Exception {
     return createAiNotebookInstanceAndWait(
-        userRequest, workspaceId, /*instanceId=*/ null, location);
+        userRequest, workspaceId, /*instanceId=*/ null, location, /*machineType=*/ null);
   }
 
   public ApiCreatedControlledGcpAiNotebookInstanceResult createAiNotebookInstanceAndWait(
       AuthenticatedUserRequest userRequest,
       UUID workspaceId,
       @Nullable String instanceId,
-      @Nullable String location)
+      @Nullable String location,
+      @Nullable String machineType)
       throws Exception {
     return createAiNotebookInstanceAndExpect(
-        userRequest, workspaceId, instanceId, location, StatusEnum.SUCCEEDED);
+        userRequest, workspaceId, instanceId, location, machineType, StatusEnum.SUCCEEDED);
   }
 
   public ApiCreatedControlledGcpAiNotebookInstanceResult createAiNotebookInstanceAndExpect(
@@ -758,6 +759,7 @@ public class MockMvcUtils {
       UUID workspaceId,
       @Nullable String instanceId,
       @Nullable String location,
+      @Nullable String machineType,
       StatusEnum jobStatus)
       throws Exception {
     ApiCreateControlledGcpAiNotebookInstanceRequestBody request =
@@ -770,6 +772,7 @@ public class MockMvcUtils {
             .aiNotebookInstance(
                 defaultNotebookCreationParameters()
                     .location(location)
+                    .machineType(machineType)
                     .instanceId(
                         Optional.ofNullable(instanceId)
                             .orElse(TestUtils.appendRandomNumber("instance-id"))));
