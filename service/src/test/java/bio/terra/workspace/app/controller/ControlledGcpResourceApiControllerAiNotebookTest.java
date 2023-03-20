@@ -147,19 +147,19 @@ public class ControlledGcpResourceApiControllerAiNotebookTest extends BaseConnec
 
   @Test
   public void createAiNotebookInstance_CPU_quotaExceeded() throws Exception {
-    // CPU Quota: Limit of 72.0 in region us-east1.
+    // CPU Quota: Limit of 72.0 in region us-central1.
     ApiCreatedControlledGcpAiNotebookInstanceResult job =
         mockMvcUtils.createAiNotebookInstanceAndExpect(
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId,
             "notebook-exceeding-cpu-quota",
-            "us-east1-b",
+            "us-central1-b",
             "n1-standard-96",
             StatusEnum.FAILED);
 
     ApiErrorReport errorReport = job.getErrorReport();
 
-    assertEquals(errorReport.getStatusCode(), HttpStatus.SC_FORBIDDEN);
+    assertEquals(HttpStatus.SC_FORBIDDEN, errorReport.getStatusCode());
 
     Assertions.assertThat(errorReport.getMessage()).contains("Quota 'CPUS' exceeded");
   }
