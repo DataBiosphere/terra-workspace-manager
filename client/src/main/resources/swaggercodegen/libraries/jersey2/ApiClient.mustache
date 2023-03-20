@@ -826,12 +826,12 @@ public class ApiClient {
     // For JDK17, we need to use this connection provider to work around the way Jersey
     // implements PATCH
     clientConfig.connectorProvider(new JdkConnectorProvider());
-    // Set idle timeout to 2m rather than the default of 30s, as clients may poll more
-    // slowly for long-running operations.
+    // Set local threadpool idle timeout to 2m rather than the default of 30s,
+    // as clients may poll more slowly for long-running operations.
     clientConfig.property(JdkConnectorProperties.CONTAINER_IDLE_TIMEOUT, /*120s*/ 120_000);
-    // Set client-side connection idle timeout to 30s rather than the default of 1000s to match
-    // server-side connection timeouts more accurately.
-    clientConfig.property(JdkConnectorProperties.CONNECTION_IDLE_TIMEOUT, /*30s*/ 30_000);
+    // Set client-side connection idle timeout to 45s rather than the default of 1000s to match
+    // server-side connection timeouts (~1 minute) more accurately.
+    clientConfig.property(JdkConnectorProperties.CONNECTION_IDLE_TIMEOUT, /*45s*/ 45_000);
     {{! End Terra change }}
   }
 
