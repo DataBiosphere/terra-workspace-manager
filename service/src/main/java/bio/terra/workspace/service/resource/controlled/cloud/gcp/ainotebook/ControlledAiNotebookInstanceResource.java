@@ -176,8 +176,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
     return Optional.of(
         new UniquenessCheckAttributes()
             .uniquenessScope(UniquenessScope.WORKSPACE)
-            .addParameter("instanceId", getInstanceId())
-            .addParameter("location", getLocation()));
+            .addParameter("instanceId", getInstanceId()));
   }
 
   /** {@inheritDoc} */

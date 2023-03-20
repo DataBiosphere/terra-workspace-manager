@@ -745,6 +745,27 @@ public class MockMvcUtils {
   public ApiCreatedControlledGcpAiNotebookInstanceResult createAiNotebookInstance(
       AuthenticatedUserRequest userRequest, UUID workspaceId, @Nullable String location)
       throws Exception {
+    return createAiNotebookInstanceAndWait(
+        userRequest, workspaceId, /*instanceId=*/ null, location);
+  }
+
+  public ApiCreatedControlledGcpAiNotebookInstanceResult createAiNotebookInstanceAndWait(
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      @Nullable String instanceId,
+      @Nullable String location)
+      throws Exception {
+    return createAiNotebookInstanceAndExpect(
+        userRequest, workspaceId, instanceId, location, StatusEnum.SUCCEEDED);
+  }
+
+  public ApiCreatedControlledGcpAiNotebookInstanceResult createAiNotebookInstanceAndExpect(
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      @Nullable String instanceId,
+      @Nullable String location,
+      StatusEnum jobStatus)
+      throws Exception {
     ApiCreateControlledGcpAiNotebookInstanceRequestBody request =
         new ApiCreateControlledGcpAiNotebookInstanceRequestBody()
             .common(
@@ -755,7 +776,9 @@ public class MockMvcUtils {
             .aiNotebookInstance(
                 defaultNotebookCreationParameters()
                     .location(location)
-                    .instanceId(TestUtils.appendRandomNumber("instance-id")));
+                    .instanceId(
+                        Optional.ofNullable(instanceId)
+                            .orElse(TestUtils.appendRandomNumber("instance-id"))));
 
     String serializedResponse =
         getSerializedResponseForPost(
@@ -771,7 +794,7 @@ public class MockMvcUtils {
       Thread.sleep(/*millis=*/ 5000);
       result = getAiNotebookInstanceResult(userRequest, workspaceId, jobId);
     }
-    assertEquals(StatusEnum.SUCCEEDED, result.getJobReport().getStatus());
+    assertEquals(jobStatus, result.getJobReport().getStatus());
 
     return result;
   }

@@ -13,7 +13,9 @@ import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAcceleratorConfig;
+import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
+import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
 import bio.terra.workspace.generated.model.ApiManagedBy;
 import bio.terra.workspace.generated.model.ApiPrivateResourceState;
 import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
@@ -158,6 +160,27 @@ public class ControlledGcpResourceApiControllerAiNotebookTest extends BaseConnec
     assertEquals(
         "NVIDIA_TESLA_V100", updatedNotebook.getAttributes().getAcceleratorConfig().getType());
     assertEquals(2L, updatedNotebook.getAttributes().getAcceleratorConfig().getCoreCount());
+  }
+
+  @Test
+  public void createAiNotebookInstance_duplicateInstanceId() throws Exception {
+    var duplicateName = "not-unique-name";
+    mockMvcUtils
+        .createAiNotebookInstanceAndWait(
+            userAccessUtils.defaultUserAuthRequest(), workspaceId, duplicateName, null)
+        .getAiNotebookInstance();
+
+    ApiErrorReport errorReport =
+        mockMvcUtils
+            .createAiNotebookInstanceAndExpect(
+                userAccessUtils.defaultUserAuthRequest(),
+                workspaceId,
+                duplicateName,
+                null,
+                StatusEnum.FAILED)
+            .getErrorReport();
+
+    assertEquals("A resource with matching attributes already exists", errorReport.getMessage());
   }
 
   private void assertAiNotebook(
