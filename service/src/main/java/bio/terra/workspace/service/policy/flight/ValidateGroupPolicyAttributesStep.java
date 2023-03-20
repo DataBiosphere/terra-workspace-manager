@@ -12,6 +12,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import java.util.HashSet;
 import java.util.UUID;
 
+// TODO: Once we have support for group update, we can remove this class.
 public class ValidateGroupPolicyAttributesStep implements Step {
   private final UUID workspaceId;
   private final TpsApiDispatch tpsApiDispatch;
@@ -24,7 +25,7 @@ public class ValidateGroupPolicyAttributesStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    final TpsPaoGetResult mergedPao =
+    TpsPaoGetResult mergedPao =
         flightContext
             .getWorkingMap()
             .get(WorkspaceFlightMapKeys.EFFECTIVE_POLICIES, TpsPaoGetResult.class);
@@ -32,16 +33,16 @@ public class ValidateGroupPolicyAttributesStep implements Step {
     // For Milestone 1, we aren't able to change groups. So if the effectivePolices have different
     // groups than the existing workspace, we'll fail. Otherwise, the step will succeed.
 
-    final TpsPaoGetResult currentPao = tpsApiDispatch.getPao(workspaceId);
+    TpsPaoGetResult currentPao = tpsApiDispatch.getPao(workspaceId);
 
-    HashSet<String> groups1 =
+    HashSet<String> currentGroup =
         new HashSet<>(
             TpsUtilities.getGroupConstraintsFromInputs(currentPao.getEffectiveAttributes()));
-    HashSet<String> groups2 =
+    HashSet<String> mergedGroup =
         new HashSet<>(
             TpsUtilities.getGroupConstraintsFromInputs(mergedPao.getEffectiveAttributes()));
 
-    if (groups1.containsAll(groups2) && groups2.containsAll(groups1)) {
+    if (currentGroup.equals(mergedGroup)) {
       return StepResult.getStepResultSuccess();
     }
 

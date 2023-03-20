@@ -11,6 +11,8 @@ import bio.terra.workspace.model.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+
+import org.apache.commons.math3.analysis.function.Add;
 import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,9 +37,7 @@ public class MergeGroupPolicies extends WorkspaceAllocateTestScriptBase {
     String groupNameA = "wsm-test-group";
     String groupNameB = "wsm-test-group-alt";
 
-    /*
-     Add a cloud context and bucket resource to the test workspace. We'll use this resource to clone references in the scenarios in this journey.
-    */
+    // Add a cloud context and bucket resource to the test workspace. We'll use this resource to clone references in the scenarios in this journey.
     String projectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
     logger.info("Created project {}", projectId);
 
@@ -67,9 +67,7 @@ public class MergeGroupPolicies extends WorkspaceAllocateTestScriptBase {
                     .namespace("terra")
                     .addAdditionalDataItem(new WsmPolicyPair().key("group").value(groupNameB)));
 
-    /*
-     Scenario 1: WS(groupA) can merge DC(nogroup).
-    */
+    // Scenario 1: WS(groupA) can merge DC(nogroup).
     CreatedWorkspace groupTestWorkspace =
         createWorkspaceWithPolicy(
             UUID.randomUUID(), getSpendProfileId(), workspaceApi, groupPolicyA);
@@ -96,9 +94,7 @@ public class MergeGroupPolicies extends WorkspaceAllocateTestScriptBase {
     validateWorkspaceContainsGroupPolicy(workspaceApi, groupTestWorkspace.getId(), groupNameA);
     workspaceApi.deleteWorkspace(noGroupDataCollection.getId());
 
-    /*
-     Scenario 2: WS(groupA) can merge DC(groupA).
-    */
+    // Scenario 2: WS(groupA) can merge DC(groupA).
     CreatedWorkspace groupADataCollection =
         createWorkspaceWithPolicy(
             UUID.randomUUID(), getSpendProfileId(), workspaceApi, groupPolicyA);
@@ -125,9 +121,7 @@ public class MergeGroupPolicies extends WorkspaceAllocateTestScriptBase {
     validateWorkspaceContainsGroupPolicy(workspaceApi, groupTestWorkspace.getId(), groupNameA);
     workspaceApi.deleteWorkspace(groupADataCollection.getId());
 
-    /*
-     Scenario 3: WS(groupA) cannot merge DC(groupB).
-    */
+    // Scenario 3: WS(groupA) cannot merge DC(groupB).
     CreatedWorkspace groupBDataCollection =
         createWorkspaceWithPolicy(
             UUID.randomUUID(), getSpendProfileId(), workspaceApi, groupPolicyB);
@@ -159,9 +153,7 @@ public class MergeGroupPolicies extends WorkspaceAllocateTestScriptBase {
     // group should still be A only
     validateWorkspaceContainsGroupPolicy(workspaceApi, groupTestWorkspace.getId(), groupNameA);
 
-    /*
-     Scenario 4: WS(nopolicy) cannot merge DC(groupB).
-    */
+    // Scenario 4: WS(nopolicy) cannot merge DC(groupB).
     CreatedWorkspace noGroupPolicyWorkspace =
         createWorkspace(UUID.randomUUID(), getSpendProfileId(), workspaceApi);
 
@@ -184,9 +176,7 @@ public class MergeGroupPolicies extends WorkspaceAllocateTestScriptBase {
     assertEquals(0, updatedPolicies.size());
     workspaceApi.deleteWorkspace(noGroupPolicyWorkspace.getId());
 
-    /*
-    Scenario 5: Clone a workspace and add additional groups. WS(groupA), Clone(+groupB) = WS(groupA, groupB)
-     */
+    // Scenario 5: Clone a workspace and add additional groups. WS(groupA), Clone(+groupB) = WS(groupA, groupB)
     CreatedWorkspace workspaceToClone =
         createWorkspaceWithPolicy(
             UUID.randomUUID(), getSpendProfileId(), workspaceApi, groupPolicyA);
