@@ -45,7 +45,7 @@ dependencies {
     constraints {
         implementation 'com.google.guava:guava:30.1.1-jre'
     }
-    implementation platform('com.google.cloud:libraries-bom:20.2.0')
+    implementation platform('com.google.cloud:libraries-bom:26.0.0')
     implementation "com.google.api-client:google-api-client"
     implementation "com.google.apis:google-api-services-container:${googleContainer}"
     implementation "com.google.apis:google-api-services-iam:${googleIam}"
