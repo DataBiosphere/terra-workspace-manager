@@ -168,25 +168,7 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
   @Override
   public void addUpdateSteps(UpdateResourceFlight flight, FlightBeanBag flightBeanBag) {
     final RetryRule gcpRetryRule = RetryRules.cloud();
-    ControlledBigQueryDatasetResource resource =
-        getResourceFromFlightInputParameters(
-            flight, WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
-
-    // Retrieve existing attributes in case of undo later.
-    flight.addStep(
-        new RetrieveBigQueryDatasetCloudAttributesStep(
-            resource.castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET),
-            flightBeanBag.getCrlService(),
-            flightBeanBag.getGcpCloudContextService()),
-        gcpRetryRule);
-
-    // Update the dataset's cloud attributes.
-    flight.addStep(
-        new UpdateBigQueryDatasetStep(
-            resource.castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET),
-            flightBeanBag.getCrlService(),
-            flightBeanBag.getGcpCloudContextService()),
-        gcpRetryRule);
+    flight.addStep(new UpdateBigQueryDatasetStep(flightBeanBag.getCrlService()), gcpRetryRule);
   }
 
   public ApiGcpBigQueryDatasetAttributes toApiAttributes() {

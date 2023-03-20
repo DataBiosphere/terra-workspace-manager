@@ -57,7 +57,6 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.Upda
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.CreateBigQueryDatasetStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.DeleteBigQueryDatasetStep;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.RetrieveBigQueryDatasetCloudAttributesStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.UpdateBigQueryDatasetStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.CreateGcsBucketStep;
@@ -575,16 +574,22 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .getControlledResource(workspaceId, resource.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
 
+    Map<String, StepStatus> doErrorStep = new HashMap<>();
+    doErrorStep.put(
+        UpdateAiNotebookAttributesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_FATAL);
+
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(UpdateStartStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(UpdateFinishStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
         RetrieveAiNotebookResourceAttributesStep.class.getName(),
         StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
         UpdateAiNotebookAttributesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     jobService.setFlightDebugInfoForTest(
-        FlightDebugInfo.newBuilder().undoStepFailures(retrySteps).lastStepFailure(true).build());
+        FlightDebugInfo.newBuilder()
+            .doStepFailures(doErrorStep)
+            .undoStepFailures(retrySteps)
+            .build());
     assertThrows(
         InvalidResultStateException.class,
         () ->
@@ -821,6 +826,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetId).location(location);
     ControlledBigQueryDatasetResource resource =
         ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
+            .projectId(projectId)
             .datasetName(datasetId)
             .build();
 
@@ -893,6 +899,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .defaultPartitionLifetime(defaultPartitionLifetimeSec);
     ControlledBigQueryDatasetResource resource =
         ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
+            .projectId(projectId)
             .datasetName(datasetId)
             .build();
 
@@ -932,6 +939,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetId).location(location);
     ControlledBigQueryDatasetResource resource =
         ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
+            .projectId(projectId)
             .datasetName(datasetId)
             .build();
 
@@ -977,6 +985,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetId).location(location);
     ControlledBigQueryDatasetResource resource =
         ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
+            .projectId(projectId)
             .datasetName(datasetId)
             .build();
 
@@ -1021,6 +1030,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetId).location(location);
     ControlledBigQueryDatasetResource resource =
         ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
+            .projectId(projectId)
             .datasetName(datasetId)
             .build();
 
@@ -1067,6 +1077,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetId).location(location);
     ControlledBigQueryDatasetResource resource =
         ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
+            .projectId(projectId)
             .datasetName(datasetId)
             .build();
 
@@ -1079,9 +1090,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     // Test idempotency of dataset-specific steps by retrying them once.
     Map<String, StepStatus> retrySteps = new HashMap<>();
-    retrySteps.put(
-        RetrieveBigQueryDatasetCloudAttributesStep.class.getName(),
-        StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(UpdateBigQueryDatasetStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
@@ -1134,6 +1142,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .defaultPartitionLifetime(initialDefaultPartitionLifetime);
     ControlledBigQueryDatasetResource resource =
         ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
+            .projectId(projectId)
             .datasetName(datasetId)
             .build();
     ControlledBigQueryDatasetResource createdDataset =
@@ -1143,17 +1152,18 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
     assertTrue(resource.partialEqual(createdDataset));
 
-    // Test idempotency of dataset-specific steps by retrying them once.
-    Map<String, StepStatus> retrySteps = new HashMap<>();
-    retrySteps.put(
-        RetrieveBigQueryDatasetCloudAttributesStep.class.getName(),
-        StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(UpdateBigQueryDatasetStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    // Test idempotency of BQ-specific steps by forcing an error and retrying on the undo path
+    Map<String, StepStatus> doRetrySteps = new HashMap<>();
+    doRetrySteps.put(
+        UpdateBigQueryDatasetStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_FATAL);
+    Map<String, StepStatus> undoRetrySteps = new HashMap<>();
+    undoRetrySteps.put(
+        UpdateBigQueryDatasetStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder()
-            // Fail after the last step to test that everything is back to the original on undo.
-            .lastStepFailure(true)
-            .undoStepFailures(retrySteps)
+            .doStepFailures(doRetrySteps)
+            .undoStepFailures(undoRetrySteps)
             .build());
 
     // update the dataset
@@ -1209,6 +1219,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .defaultPartitionLifetime(initialDefaultPartitionLifetime);
     ControlledBigQueryDatasetResource resource =
         ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
+            .projectId(projectId)
             .datasetName(datasetId)
             .build();
     ControlledBigQueryDatasetResource createdDataset =
@@ -1548,8 +1559,10 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void updateGcsBucketUndo() throws Exception {
-    Workspace workspace = workspaceService.getWorkspace(workspaceId);
     ControlledGcsBucketResource createdBucket = createDefaultSharedGcsBucket(user);
+
+    Map<String, StepStatus> doErrorStep = new HashMap<>();
+    doErrorStep.put(UpdateGcsBucketStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_FATAL);
 
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(UpdateStartStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
@@ -1558,19 +1571,16 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         RetrieveGcsBucketCloudAttributesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(UpdateGcsBucketStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     jobService.setFlightDebugInfoForTest(
-        FlightDebugInfo.newBuilder().undoStepFailures(retrySteps).lastStepFailure(true).build());
+        FlightDebugInfo.newBuilder()
+            .doStepFailures(doErrorStep)
+            .undoStepFailures(retrySteps)
+            .build());
 
     // update the bucket
     var commonUpdateParameters =
         new CommonUpdateParameters()
             .setName("NEW_bucketname")
             .setDescription("new resource description");
-
-    wsmResourceService.updateResource(
-        user.getAuthenticatedRequest(),
-        createdBucket,
-        commonUpdateParameters,
-        ControlledResourceFixtures.BUCKET_UPDATE_PARAMETERS_2);
 
     // Service methods which wait for a flight to complete will throw an
     // InvalidResultStateException when that flight fails without a cause, which occurs when a
@@ -1615,15 +1625,22 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .castByEnum(WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE);
     assertTrue(originalFlex.partialEqual(createdFlex));
 
+    Map<String, StepStatus> doErrorStep = new HashMap<>();
+    doErrorStep.put(
+        UpdateControlledFlexibleResourceAttributesStep.class.getName(),
+        StepStatus.STEP_RESULT_FAILURE_FATAL);
+
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(UpdateStartStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(UpdateFinishStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
         UpdateControlledFlexibleResourceAttributesStep.class.getName(),
         StepStatus.STEP_RESULT_FAILURE_RETRY);
 
     jobService.setFlightDebugInfoForTest(
-        FlightDebugInfo.newBuilder().undoStepFailures(retrySteps).lastStepFailure(true).build());
+        FlightDebugInfo.newBuilder()
+            .doStepFailures(doErrorStep)
+            .undoStepFailures(retrySteps)
+            .build());
 
     // Update the flex resource
     String newName = "new-resource-name";

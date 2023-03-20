@@ -47,6 +47,7 @@ import bio.terra.workspace.service.resource.referenced.cloud.any.datareposnapsho
 import bio.terra.workspace.service.resource.referenced.cloud.any.datareposnapshot.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.resource.referenced.cloud.any.gitrepo.ReferencedGitRepoAttributes;
 import bio.terra.workspace.service.resource.referenced.cloud.any.gitrepo.ReferencedGitRepoResource;
+import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetAttributes;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdatatable.ReferencedBigQueryDataTableAttributes;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdatatable.ReferencedBigQueryDataTableResource;
@@ -62,7 +63,6 @@ import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -421,52 +421,17 @@ public class ReferencedGcpResourceController extends ControllerBase
   public ResponseEntity<ApiGcpBigQueryDatasetResource> updateBigQueryDatasetReferenceResource(
       UUID workspaceUuid, UUID resourceId, ApiUpdateBigQueryDatasetReferenceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceUuid, SamWorkspaceAction.UPDATE_REFERENCE);
-    String updatedDatasetId = body.getDatasetId();
-    String updatedProjectId = body.getProjectId();
-    CloningInstructions cloningInstructions =
-        CloningInstructions.fromApiModel(body.getCloningInstructions());
-    if (StringUtils.isEmpty(updatedDatasetId) && StringUtils.isEmpty(updatedProjectId)) {
-      // identity of the resource is the same
-      referencedResourceService.updateReferenceResource(
-          workspaceUuid,
-          resourceId,
-          body.getName(),
-          body.getDescription(),
-          null,
-          cloningInstructions,
-          userRequest);
-    } else {
-      // build new one from scratch
-      ReferencedBigQueryDatasetResource referenceResource =
-          referencedResourceService
-              .getReferenceResource(workspaceUuid, resourceId)
-              .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
-      ReferencedBigQueryDatasetResource.Builder updatedBqDatasetResourceBuilder =
-          referenceResource.toBuilder();
-      if (!StringUtils.isEmpty(updatedProjectId)) {
-        updatedBqDatasetResourceBuilder.projectId(updatedProjectId);
-      }
-      if (!StringUtils.isEmpty(updatedDatasetId)) {
-        updatedBqDatasetResourceBuilder.datasetName(updatedDatasetId);
-      }
-      if (cloningInstructions != null) {
-        updatedBqDatasetResourceBuilder.wsmResourceFields(
-            referenceResource.getWsmResourceFields().toBuilder()
-                .cloningInstructions(cloningInstructions)
-                .build());
-      }
-      referencedResourceService.updateReferenceResource(
-          workspaceUuid,
-          resourceId,
-          body.getName(),
-          body.getDescription(),
-          updatedBqDatasetResourceBuilder.build(),
-          cloningInstructions,
-          userRequest);
-    }
-
+    ReferencedResource resource =
+        referencedResourceService.validateReferencedResourceAndAction(
+            userRequest, workspaceUuid, resourceId, SamWorkspaceAction.UPDATE_REFERENCE);
+    wsmResourceService.updateResource(
+        userRequest,
+        resource,
+        new CommonUpdateParameters()
+            .setName(body.getName())
+            .setDescription(body.getDescription())
+            .setCloningInstructions(body.getCloningInstructions()),
+        new ReferencedBigQueryDatasetAttributes(body.getProjectId(), body.getDatasetId()));
     final ReferencedBigQueryDatasetResource updatedResource =
         referencedResourceService
             .getReferenceResource(workspaceUuid, resourceId)

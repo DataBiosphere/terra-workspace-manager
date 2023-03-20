@@ -1,8 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset;
 
-import static bio.terra.workspace.service.crl.CrlService.getBigQueryDataset;
-import static bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.BigQueryApiConversions.fromBqExpirationTime;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.PREVIOUS_UPDATE_PARAMETERS;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_PARAMETERS;
 
 import bio.terra.cloudres.google.bigquery.BigQueryCow;
@@ -12,108 +9,137 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.utils.FlightUtils;
+import bio.terra.workspace.db.model.DbUpdater;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.google.api.services.bigquery.model.Dataset;
 import java.io.IOException;
-import javax.annotation.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class UpdateBigQueryDatasetStep implements Step {
-  private final Logger logger = LoggerFactory.getLogger(UpdateBigQueryDatasetStep.class);
-  private final ControlledBigQueryDatasetResource datasetResource;
   private final CrlService crlService;
-  private final GcpCloudContextService gcpCloudContextService;
 
-  public UpdateBigQueryDatasetStep(
-      ControlledBigQueryDatasetResource datasetResource,
-      CrlService crlService,
-      GcpCloudContextService gcpCloudContextService) {
-    this.datasetResource = datasetResource;
+  public UpdateBigQueryDatasetStep(CrlService crlService) {
     this.crlService = crlService;
-    this.gcpCloudContextService = gcpCloudContextService;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    final FlightMap inputMap = flightContext.getInputParameters();
-    final ApiGcpBigQueryDatasetUpdateParameters updateParameters =
-        inputMap.get(UPDATE_PARAMETERS, ApiGcpBigQueryDatasetUpdateParameters.class);
+    ApiGcpBigQueryDatasetUpdateParameters updateParameters =
+        flightContext
+            .getInputParameters()
+            .get(UPDATE_PARAMETERS, ApiGcpBigQueryDatasetUpdateParameters.class);
+    if (updateParameters == null) {
+      return StepResult.getStepResultSuccess();
+    }
+    FlightMap workingMap = flightContext.getWorkingMap();
+    DbUpdater dbUpdater =
+        FlightUtils.getRequired(
+            workingMap, WorkspaceFlightMapKeys.ResourceKeys.DB_UPDATER, DbUpdater.class);
+    var originalAttributes =
+        dbUpdater.getOriginalAttributes(ControlledBigQueryDatasetAttributes.class);
 
-    return updateDataset(updateParameters);
+    // Compute the updates, if any
+    // Capture changes for the dbUpdater
+    Long attributeTableLifetime = originalAttributes.getDefaultTableLifetime();
+    Long attributePartitionLifetime = originalAttributes.getDefaultPartitionLifetime();
+
+    // Compute what should be changed
+    NewLifetime newTableLifetime =
+        computeNewLifetimeSecs(attributeTableLifetime, updateParameters.getDefaultTableLifetime());
+    NewLifetime newPartitionLifetime =
+        computeNewLifetimeSecs(
+            attributePartitionLifetime, updateParameters.getDefaultPartitionLifetime());
+
+    // If there are updates, set the changes in the dataset and attributes variables
+    if (newTableLifetime.changed()) {
+      attributeTableLifetime = newTableLifetime.newValue();
+    }
+    if (newPartitionLifetime.changed()) {
+      attributePartitionLifetime = newPartitionLifetime.newValue();
+    }
+
+    // Apply the new attributes
+    if (newTableLifetime.changed() || newPartitionLifetime.changed()) {
+      var newAttributes =
+          new ControlledBigQueryDatasetAttributes(
+              originalAttributes.getDatasetName(),
+              originalAttributes.getProjectId(),
+              attributeTableLifetime,
+              attributePartitionLifetime);
+      dbUpdater.updateAttributes(newAttributes);
+      return updateDataset(newAttributes);
+    }
+
+    return StepResult.getStepResultSuccess();
   }
 
   // Restore the previous values of the update parameters
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    final FlightMap workingMap = flightContext.getWorkingMap();
-    final ApiGcpBigQueryDatasetUpdateParameters previousUpdateParameters =
-        workingMap.get(PREVIOUS_UPDATE_PARAMETERS, ApiGcpBigQueryDatasetUpdateParameters.class);
-
-    return updateDataset(previousUpdateParameters);
-  }
-
-  private StepResult updateDataset(
-      @Nullable ApiGcpBigQueryDatasetUpdateParameters updateParameters) {
+    ApiGcpBigQueryDatasetUpdateParameters updateParameters =
+        flightContext
+            .getInputParameters()
+            .get(UPDATE_PARAMETERS, ApiGcpBigQueryDatasetUpdateParameters.class);
     if (updateParameters == null) {
-      // nothing to change
-      logger.info("No update parameters supplied, so no changes to make.");
       return StepResult.getStepResultSuccess();
     }
-    final String projectId =
-        gcpCloudContextService.getRequiredGcpProject(datasetResource.getWorkspaceId());
-    final String datasetId = datasetResource.getDatasetName();
-    final BigQueryCow bigQueryCow = crlService.createWsmSaBigQueryCow();
+    FlightMap workingMap = flightContext.getWorkingMap();
+    DbUpdater dbUpdater =
+        FlightUtils.getRequired(
+            workingMap, WorkspaceFlightMapKeys.ResourceKeys.DB_UPDATER, DbUpdater.class);
+    var originalAttributes =
+        dbUpdater.getOriginalAttributes(ControlledBigQueryDatasetAttributes.class);
+    return updateDataset(originalAttributes);
+  }
+
+  private StepResult updateDataset(ControlledBigQueryDatasetAttributes attributes) {
+    BigQueryCow bigQueryCow = crlService.createWsmSaBigQueryCow();
+
+    Dataset dataset;
     try {
-      // get the existing dataset
-      Dataset existingDataset = getBigQueryDataset(bigQueryCow, projectId, datasetId);
-      if (existingDataset == null) {
-        IllegalStateException isEx =
-            new IllegalStateException("No dataset found to update with id " + datasetId);
-        logger.error("No dataset found to update with id {}.", datasetId, isEx);
-        return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, isEx);
+      dataset =
+          CrlService.getBigQueryDataset(
+              bigQueryCow, attributes.getProjectId(), attributes.getDatasetName());
+      if (dataset == null) {
+        throw new ResourceNotFoundException(
+            "No dataset found with id " + attributes.getDatasetName());
       }
-
-      final Long newDefaultTableLifetime = updateParameters.getDefaultTableLifetime();
-      final Long newDefaultPartitionLifetime = updateParameters.getDefaultPartitionLifetime();
-
-      final boolean defaultTableLifetimeChanged =
-          valueChanged(
-              newDefaultTableLifetime,
-              fromBqExpirationTime(existingDataset.getDefaultTableExpirationMs()));
-      final boolean defaultPartitionLifetimeChanged =
-          valueChanged(
-              newDefaultPartitionLifetime,
-              fromBqExpirationTime(existingDataset.getDefaultPartitionExpirationMs()));
-      if (defaultTableLifetimeChanged) {
-        existingDataset.setDefaultTableExpirationMs(
-            BigQueryApiConversions.toBqExpirationTime(newDefaultTableLifetime));
-      }
-      if (defaultPartitionLifetimeChanged) {
-        existingDataset.setDefaultPartitionExpirationMs(
-            BigQueryApiConversions.toBqExpirationTime(newDefaultPartitionLifetime));
-      }
-      if (defaultTableLifetimeChanged || defaultPartitionLifetimeChanged) {
-        crlService.updateBigQueryDataset(bigQueryCow, projectId, datasetId, existingDataset);
-      } else {
-        logger.info(
-            "Cloud attributes for Dataset {} were not changed as all inputs were null or unchanged.",
-            datasetId);
-      }
+      dataset.setDefaultTableExpirationMs(
+          BigQueryApiConversions.toBqExpirationTime(attributes.getDefaultTableLifetime()));
+      dataset.setDefaultPartitionExpirationMs(
+          BigQueryApiConversions.toBqExpirationTime(attributes.getDefaultPartitionLifetime()));
+      crlService.updateBigQueryDataset(
+          bigQueryCow, attributes.getProjectId(), attributes.getDatasetName(), dataset);
       return StepResult.getStepResultSuccess();
-    } catch (IOException ioEx) {
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, ioEx);
+    } catch (IOException e) {
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
   }
 
   /**
-   * Helper method to check if the default expiration time fields changed. Since this WSM API is a
-   * PATCH, not an UPDATE, a null for the new value means no update.
+   * Helper method to compute change and updated value. if update == null, no change if update == 0,
+   * if null != original value, set to null update is a value, if value != original value, set to
+   * value
+   *
+   * @param originalLifetime original lifetime from database
+   * @param updateLifetime new lifetime from update parameters
+   * @return pair of change and new value
    */
-  private static boolean valueChanged(Long newVal, Long prevVal) {
-    return newVal != null && !newVal.equals(prevVal);
+  private NewLifetime computeNewLifetimeSecs(Long originalLifetime, Long updateLifetime) {
+    if (updateLifetime == null) {
+      return new NewLifetime(false, null);
+    }
+
+    if (updateLifetime == 0) {
+      return new NewLifetime((originalLifetime != null), null);
+    }
+    // update is a non-null value
+    return new NewLifetime(!updateLifetime.equals(originalLifetime), updateLifetime);
   }
+
+  private record NewLifetime(boolean changed, Long newValue) {}
 }

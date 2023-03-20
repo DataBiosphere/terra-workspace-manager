@@ -18,9 +18,13 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.db.DbSerDes;
+import bio.terra.workspace.db.model.DbUpdater;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.google.api.services.bigquery.model.Dataset;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -35,14 +39,21 @@ import org.mockito.Mockito;
 
 public class UpdateBigQueryDatasetStepTest extends BaseUnitTest {
   private static final String PROJECT_ID = "my-gcp-project";
-
-  private UpdateBigQueryDatasetStep updateBigQueryDatasetStep;
+  private static final String DATASET_ID = "my-ds-id";
 
   @Mock private CrlService mockCrlService;
   @Mock private FlightContext mockFlightContext;
   @Mock private BigQueryCow mockBigQueryCow;
   @Mock private GcpCloudContextService mockGcpCloudContextService;
+
+  UpdateBigQueryDatasetStep updateBigQueryDatasetStep;
   Dataset mockExistingDataset = new Dataset();
+  ControlledBigQueryDatasetResource baseDatasetResource =
+      ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(null)
+          .projectId(PROJECT_ID)
+          .build();
+  FlightMap workingMap = new FlightMap();
+  DbUpdater dbUpdater;
 
   @Captor private ArgumentCaptor<Dataset> datasetCaptor;
 
@@ -53,14 +64,10 @@ public class UpdateBigQueryDatasetStepTest extends BaseUnitTest {
           "OK to ignore return value for Mockito functions that setup mocked return values")
   public void setup() throws IOException {
     // new dataset properties
-    final FlightMap inputParameters = new FlightMap();
+    FlightMap inputParameters = new FlightMap();
     inputParameters.put(ControlledResourceKeys.UPDATE_PARAMETERS, BQ_DATASET_UPDATE_PARAMETERS_NEW);
     doReturn(inputParameters).when(mockFlightContext).getInputParameters();
 
-    // previous dataset properties
-    final FlightMap workingMap = new FlightMap();
-    workingMap.put(
-        ControlledResourceKeys.PREVIOUS_UPDATE_PARAMETERS, BQ_DATASET_UPDATE_PARAMETERS_PREV);
     when(mockFlightContext.getWorkingMap()).thenReturn(workingMap);
     when(mockCrlService.createWsmSaBigQueryCow()).thenReturn(mockBigQueryCow);
     doNothing()
@@ -68,14 +75,10 @@ public class UpdateBigQueryDatasetStepTest extends BaseUnitTest {
         .updateBigQueryDataset(
             eq(mockBigQueryCow), eq(PROJECT_ID), any(String.class), datasetCaptor.capture());
 
-    final ControlledBigQueryDatasetResource datasetResource =
-        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(null).build();
-
-    when(mockGcpCloudContextService.getRequiredGcpProject(datasetResource.getWorkspaceId()))
+    when(mockGcpCloudContextService.getRequiredGcpProject(baseDatasetResource.getWorkspaceId()))
         .thenReturn(PROJECT_ID);
 
-    updateBigQueryDatasetStep =
-        new UpdateBigQueryDatasetStep(datasetResource, mockCrlService, mockGcpCloudContextService);
+    updateBigQueryDatasetStep = new UpdateBigQueryDatasetStep(mockCrlService);
   }
 
   @Test
@@ -107,9 +110,9 @@ public class UpdateBigQueryDatasetStepTest extends BaseUnitTest {
   }
 
   @Test
-  public void testUndoStepWithChange() throws InterruptedException, IOException {
-    // pretend the existing dataset has the new values (so it will do the update)
-    mockExistingDatasetExpirationTimes(BQ_DATASET_UPDATE_PARAMETERS_NEW);
+  public void testUndoStep() throws InterruptedException, IOException {
+    // We always perform the update on undo, ensuring the original values are set
+    mockExistingDatasetExpirationTimes(BQ_DATASET_UPDATE_PARAMETERS_PREV);
 
     // run the undoStep and make sure it succeeds
     try (MockedStatic<CrlService> crlServiceMockedStatic = Mockito.mockStatic(CrlService.class)) {
@@ -152,35 +155,10 @@ public class UpdateBigQueryDatasetStepTest extends BaseUnitTest {
       crlServiceMockedStatic.verify(
           () ->
               CrlService.getBigQueryDataset(eq(mockBigQueryCow), eq(PROJECT_ID), any(String.class)),
-          times(1));
+          times(0));
     }
 
-    // get() should have been called once, update() not at all (because there was no change)
-    verifyUpdateCalled(0);
-  }
-
-  @Test
-  public void testUndoStepWithoutChange() throws InterruptedException, IOException {
-    // pretend the existing dataset has the previous values (so it won't do the update)
-    mockExistingDatasetExpirationTimes(BQ_DATASET_UPDATE_PARAMETERS_PREV);
-
-    // run the undoStep and make sure it succeeds
-    try (MockedStatic<CrlService> crlServiceMockedStatic = Mockito.mockStatic(CrlService.class)) {
-      crlServiceMockedStatic
-          .when(
-              () ->
-                  CrlService.getBigQueryDataset(
-                      eq(mockBigQueryCow), eq(PROJECT_ID), any(String.class)))
-          .thenReturn(mockExistingDataset);
-      StepResult result = updateBigQueryDatasetStep.undoStep(mockFlightContext);
-      assertEquals(StepResult.getStepResultSuccess(), result);
-      crlServiceMockedStatic.verify(
-          () ->
-              CrlService.getBigQueryDataset(eq(mockBigQueryCow), eq(PROJECT_ID), any(String.class)),
-          times(1));
-    }
-
-    // get() should have been called once, update() not at all (because there was no change)
+    // If there are not changes neither get() nor update() should be called
     verifyUpdateCalled(0);
   }
 
@@ -189,11 +167,27 @@ public class UpdateBigQueryDatasetStepTest extends BaseUnitTest {
    * expiration times.
    */
   private void mockExistingDatasetExpirationTimes(ApiGcpBigQueryDatasetUpdateParameters params) {
+    Long tableLifetime = params.getDefaultTableLifetime();
+    Long partitionLifetime = params.getDefaultPartitionLifetime();
+
+    // Construct a new updater with the right initial settings for this test.
+    String jsonAttributes =
+        DbSerDes.toJson(
+            new ControlledBigQueryDatasetAttributes(
+                DATASET_ID, PROJECT_ID, tableLifetime, partitionLifetime));
+    var originalData =
+        new DbUpdater.UpdateData()
+            .setName(baseDatasetResource.getName())
+            .setDescription(baseDatasetResource.getDescription())
+            .setCloningInstructions(CloningInstructions.COPY_NOTHING)
+            .setJsonAttributes(jsonAttributes);
+    dbUpdater = new DbUpdater(originalData, new DbUpdater.UpdateData());
+    workingMap.put(WorkspaceFlightMapKeys.ResourceKeys.DB_UPDATER, dbUpdater);
+
     mockExistingDataset
-        .setDefaultTableExpirationMs(
-            BigQueryApiConversions.toBqExpirationTime(params.getDefaultTableLifetime()))
+        .setDefaultTableExpirationMs(BigQueryApiConversions.toBqExpirationTime(tableLifetime))
         .setDefaultPartitionExpirationMs(
-            BigQueryApiConversions.toBqExpirationTime(params.getDefaultPartitionLifetime()));
+            BigQueryApiConversions.toBqExpirationTime(partitionLifetime));
   }
 
   /** Assert that the step called BigQuery get() and update() the specified number of times. */
