@@ -74,6 +74,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.Creat
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.DeleteBigQueryDatasetStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.RetrieveBigQueryDatasetCloudAttributesStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.UpdateBigQueryDatasetStep;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.UpdateControlledBigQueryDatasetLifetimeAttributesStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.CreateGcsBucketStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.DeleteGcsBucketStep;
@@ -1087,6 +1088,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     // Test idempotency of dataset-specific steps by retrying them once.
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(
+        UpdateControlledBigQueryDatasetLifetimeAttributesStep.class.getName(),
+        StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
         RetrieveBigQueryDatasetCloudAttributesStep.class.getName(),
         StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(UpdateBigQueryDatasetStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
@@ -1124,6 +1128,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
     assertEquals(newName, fetchedResource.getName());
     assertEquals(newDescription, fetchedResource.getDescription());
+    assertEquals(newDefaultTableLifetime, fetchedResource.getDefaultTableLifetime());
+    assertEquals(newDefaultPartitionLifetime, fetchedResource.getDefaultPartitionLifetime());
   }
 
   @Test
@@ -1153,6 +1159,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     // Test idempotency of dataset-specific steps by retrying them once.
     Map<String, StepStatus> retrySteps = new HashMap<>();
+    retrySteps.put(
+        UpdateControlledBigQueryDatasetLifetimeAttributesStep.class.getName(),
+        StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
         RetrieveBigQueryDatasetCloudAttributesStep.class.getName(),
         StepStatus.STEP_RESULT_FAILURE_RETRY);
@@ -1198,6 +1207,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
     assertEquals(resource.getName(), fetchedResource.getName());
     assertEquals(resource.getDescription(), fetchedResource.getDescription());
+    assertEquals(resource.getDefaultTableLifetime(), fetchedResource.getDefaultTableLifetime());
+    assertEquals(
+        resource.getDefaultPartitionLifetime(), fetchedResource.getDefaultPartitionLifetime());
   }
 
   @Test

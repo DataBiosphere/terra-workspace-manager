@@ -172,6 +172,13 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
         getResourceFromFlightInputParameters(
             flight, WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
 
+    // Update the BigQuery attributes in the database (default table lifetime and default partition
+    // lifetime).
+    flight.addStep(
+        new UpdateControlledBigQueryDatasetLifetimeAttributesStep(
+            flightBeanBag.getResourceDao(), resource),
+        RetryRules.shortDatabase());
+
     // Retrieve existing attributes in case of undo later.
     flight.addStep(
         new RetrieveBigQueryDatasetCloudAttributesStep(
