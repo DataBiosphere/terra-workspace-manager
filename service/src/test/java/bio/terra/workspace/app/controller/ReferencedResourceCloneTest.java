@@ -1,6 +1,7 @@
 package bio.terra.workspace.app.controller;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
+import static bio.terra.workspace.common.fixtures.PolicyFixtures.IOWA_REGION;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CLONE_WORKSPACE_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_GCP_GCS_BUCKETS_V1_PATH_FORMAT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -171,23 +172,6 @@ public class ReferencedResourceCloneTest extends BaseConnectedTest {
   }
 
   @Test
-  public void cloneWorkspaceMerge_additionalPolicy_conflictGroupPolicy() throws Exception {
-    workspaceSetup(ApiCloningInstructionsEnum.REFERENCE);
-    ApiCloneWorkspaceRequest request =
-        new ApiCloneWorkspaceRequest()
-            .spendProfile(WorkspaceFixtures.DEFAULT_SPEND_PROFILE)
-            .additionalPolicies(
-                new ApiWsmPolicyInputs()
-                    .addInputsItem(makeGroupPolicyInput(PolicyFixtures.ALT_GROUP)));
-
-    mockMvcUtils.postExpect(
-        userAccessUtils.defaultUserAuthRequest(),
-        objectMapper.writeValueAsString(request),
-        CLONE_WORKSPACE_PATH_FORMAT.formatted(sourceWorkspaceId.toString()),
-        HttpStatus.SC_CONFLICT);
-  }
-
-  @Test
   public void cloneWorkspaceMerge_additionalPolicy_conflictRegionPolicy() throws Exception {
     workspaceSetup(ApiCloningInstructionsEnum.REFERENCE);
     ApiCloneWorkspaceRequest request =
@@ -201,6 +185,19 @@ public class ReferencedResourceCloneTest extends BaseConnectedTest {
         objectMapper.writeValueAsString(request),
         CLONE_WORKSPACE_PATH_FORMAT.formatted(sourceWorkspaceId.toString()),
         HttpStatus.SC_CONFLICT);
+  }
+
+  @Test
+  public void cloneWorkspaceMerge_mergeCompatibleRegionPolicy() throws Exception {
+    testWorkspaceCloneWithAdditionalPolicy(
+        ApiCloningInstructionsEnum.REFERENCE,
+        new ApiWsmPolicyInputs()
+            .addInputsItem(wsmTestGroup)
+            .addInputsItem(PolicyFixtures.REGION_POLICY_IOWA),
+        List.of(IOWA_REGION));
+
+    checkRegionPolicy(destinationWorkspaceId, List.of(IOWA_REGION));
+    checkGroupPolicy(destinationWorkspaceId, List.of(PolicyFixtures.DEFAULT_GROUP));
   }
 
   private void testResourceClone(ApiCloningInstructionsEnum cloningInstruction) throws Exception {
@@ -241,6 +238,30 @@ public class ReferencedResourceCloneTest extends BaseConnectedTest {
     assertEquals(expectedRegions, actualRegions);
   }
 
+  private void checkGroupPolicy(UUID workspaceUuid, List<String> expectedGroups) throws Exception {
+    ApiWorkspaceDescription workspaceDescription =
+        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceUuid);
+
+    List<ApiWsmPolicyInput> policies = workspaceDescription.getPolicies();
+    ApiWsmPolicyInput groupPolicy =
+        policies.stream()
+            .filter(
+                p ->
+                    p.getNamespace().equals(PolicyFixtures.NAMESPACE)
+                        && p.getName().equals(PolicyFixtures.GROUP_CONSTRAINT))
+            .findAny()
+            .get();
+    assertEquals(PolicyFixtures.GROUP_CONSTRAINT, groupPolicy.getName());
+    assertEquals(expectedGroups.size(), groupPolicy.getAdditionalData().size());
+
+    List<String> actualGroups =
+        groupPolicy.getAdditionalData().stream()
+            .filter(data -> data.getKey().equals(PolicyFixtures.GROUP))
+            .map(group -> group.getValue())
+            .toList();
+    assertEquals(expectedGroups, actualGroups);
+  }
+
   private ApiWsmPolicyInput makeRegionPolicyInput(String region) {
     return new ApiWsmPolicyInput()
         .namespace(PolicyFixtures.NAMESPACE)
@@ -251,8 +272,8 @@ public class ReferencedResourceCloneTest extends BaseConnectedTest {
   private ApiWsmPolicyInput makeGroupPolicyInput(String group) {
     return new ApiWsmPolicyInput()
         .namespace(PolicyFixtures.NAMESPACE)
-        .name(PolicyFixtures.GROUP)
-        .addAdditionalDataItem(new ApiWsmPolicyPair().key(PolicyFixtures.REGION).value(group));
+        .name(PolicyFixtures.GROUP_CONSTRAINT)
+        .addAdditionalDataItem(new ApiWsmPolicyPair().key(PolicyFixtures.GROUP).value(group));
   }
 
   private void resourceSetup() throws Exception {
@@ -264,10 +285,7 @@ public class ReferencedResourceCloneTest extends BaseConnectedTest {
             .userFacingId(WorkspaceFixtures.getUserFacingId(sourceWorkspaceId))
             .stage(ApiWorkspaceStageModel.MC_WORKSPACE)
             .spendProfile("wm-default-spend-profile")
-            .policies(
-                new ApiWsmPolicyInputs()
-                    .addInputsItem(PolicyFixtures.REGION_POLICY_USA)
-                    .addInputsItem(wsmTestGroup));
+            .policies(new ApiWsmPolicyInputs().addInputsItem(PolicyFixtures.REGION_POLICY_USA));
 
     mockMvcUtils.createdWorkspaceWithoutCloudContext(
         userAccessUtils.defaultUserAuthRequest(), workspaceRequest);
@@ -334,10 +352,7 @@ public class ReferencedResourceCloneTest extends BaseConnectedTest {
             .userFacingId(WorkspaceFixtures.getUserFacingId(sourceWorkspaceId))
             .stage(ApiWorkspaceStageModel.MC_WORKSPACE)
             .spendProfile("wm-default-spend-profile")
-            .policies(
-                new ApiWsmPolicyInputs()
-                    .addInputsItem(PolicyFixtures.REGION_POLICY_USA)
-                    .addInputsItem(wsmTestGroup));
+            .policies(new ApiWsmPolicyInputs().addInputsItem(PolicyFixtures.REGION_POLICY_USA));
 
     mockMvcUtils.createdWorkspaceWithoutCloudContext(
         userAccessUtils.defaultUserAuthRequest(), workspaceRequest);
