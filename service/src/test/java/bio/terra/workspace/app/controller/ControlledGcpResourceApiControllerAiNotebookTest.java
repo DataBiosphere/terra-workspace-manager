@@ -153,7 +153,7 @@ public class ControlledGcpResourceApiControllerAiNotebookTest extends BaseConnec
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId,
             "notebook-exceeding-cpu-quota",
-            "us-east1",
+            "us-east1-b",
             "n1-standard-96",
             StatusEnum.FAILED);
 

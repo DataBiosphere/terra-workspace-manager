@@ -74,6 +74,7 @@ import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiFlexibleResource;
 import bio.terra.workspace.generated.model.ApiFlexibleResourceAttributes;
 import bio.terra.workspace.generated.model.ApiFlexibleResourceUpdateParameters;
+import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableAttributes;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableResource;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetAttributes;
@@ -762,6 +763,17 @@ public class MockMvcUtils {
       @Nullable String machineType,
       StatusEnum jobStatus)
       throws Exception {
+    ApiGcpAiNotebookInstanceCreationParameters creationParameters =
+        defaultNotebookCreationParameters()
+            .location(location)
+            .instanceId(
+                Optional.ofNullable(instanceId)
+                    .orElse(TestUtils.appendRandomNumber("instance-id")));
+
+    if (machineType != null) {
+      creationParameters.machineType(machineType);
+    }
+
     ApiCreateControlledGcpAiNotebookInstanceRequestBody request =
         new ApiCreateControlledGcpAiNotebookInstanceRequestBody()
             .common(
@@ -769,13 +781,7 @@ public class MockMvcUtils {
                     .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE.toApiModel())
                     .name(TestUtils.appendRandomNumber("ai-notebook")))
             .jobControl(new ApiJobControl().id(UUID.randomUUID().toString()))
-            .aiNotebookInstance(
-                defaultNotebookCreationParameters()
-                    .location(location)
-                    .machineType(machineType)
-                    .instanceId(
-                        Optional.ofNullable(instanceId)
-                            .orElse(TestUtils.appendRandomNumber("instance-id"))));
+            .aiNotebookInstance(creationParameters);
 
     String serializedResponse =
         getSerializedResponseForPost(
