@@ -7,7 +7,6 @@ import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.mak
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeNotebookCommonFieldsBuilder;
 import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_SUBJECT_ID;
-import static bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant.DEFAULT_ZONE;
 import static bio.terra.workspace.unit.WorkspaceUnitTestUtils.createWorkspaceWithGcpContext;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -333,7 +332,7 @@ public class ResourceDaoTest extends BaseUnitTest {
             .workspaceUuid(createWorkspaceWithGcpContext(workspaceDao))
             .name("resource-3")
             .build();
-    final ControlledResource resourceWithDifferentWorkspaceId =
+    ControlledResource resourceWithDifferentWorkspaceId =
         ControlledResourceFixtures.makeDefaultAiNotebookInstance()
             .common(commonFields3)
             .instanceId(cloudInstanceId)
@@ -341,32 +340,11 @@ public class ResourceDaoTest extends BaseUnitTest {
 
     // should be fine: separate workspaces implies separate gcp projects
     createControlledResourceAndLog(resourceWithDifferentWorkspaceId);
-
     assertTrue(
         resourceWithDifferentWorkspaceId.partialEqual(
             resourceDao.getResource(
                 resourceWithDifferentWorkspaceId.getWorkspaceId(),
                 resourceWithDifferentWorkspaceId.getResourceId())));
-
-    ControlledResourceFields commonFields4 =
-        ControlledResourceFixtures.makeNotebookCommonFieldsBuilder()
-            .workspaceUuid(workspaceUuid)
-            .name("resource-4")
-            .build();
-    final ControlledResource resourceWithDifferentLocation =
-        ControlledResourceFixtures.makeDefaultAiNotebookInstance()
-            .common(commonFields4)
-            .instanceId(cloudInstanceId)
-            .location("somewhere-else")
-            .build();
-
-    // same project & instance ID but different location from resource1
-    createControlledResourceAndLog(resourceWithDifferentLocation);
-    assertTrue(
-        resourceWithDifferentLocation.partialEqual(
-            resourceDao.getResource(
-                resourceWithDifferentLocation.getWorkspaceId(),
-                resourceWithDifferentLocation.getResourceId())));
 
     ControlledResourceFields commonFields5 =
         ControlledResourceFixtures.makeNotebookCommonFieldsBuilder()
@@ -380,14 +358,11 @@ public class ResourceDaoTest extends BaseUnitTest {
             .location(null)
             .build();
 
-    createControlledResourceAndLog(resourceWithDefaultLocation);
-    assertTrue(
-        resourceWithDefaultLocation.partialEqual(
-            resourceDao.getResource(
-                resourceWithDefaultLocation.getWorkspaceId(),
-                resourceWithDefaultLocation.getResourceId())));
-
-    assertEquals(DEFAULT_ZONE, resourceWithDefaultLocation.getLocation());
+    assertThrows(
+        DuplicateResourceException.class,
+        () ->
+            resourceDao.createResourceStart(
+                resourceWithDefaultLocation, UUID.randomUUID().toString()));
   }
 
   @Test
@@ -701,7 +676,7 @@ public class ResourceDaoTest extends BaseUnitTest {
   }
 
   private void createControlledResourceAndLog(ControlledResource resource) {
-    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, resource);
+    resourceDao.createResourceStart(resource, UUID.randomUUID().toString());
     activityLogDao.writeActivity(
         workspaceUuid,
         new DbWorkspaceActivityLog(

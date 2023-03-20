@@ -10,7 +10,6 @@ import static org.mockito.Mockito.when;
 
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
-import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.BaseUnitTestMockGcpCloudContextService;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.utils.MockMvcUtils;
@@ -50,7 +49,7 @@ public class ControlledResourceStateTest extends BaseUnitTestMockGcpCloudContext
   }
 
   @Test
-  public void testCreateBucketFailBroken() throws RetryException, InterruptedException {
+  public void testCreateBucketFailBroken() throws Exception {
     // Get the resource from database and check state
     WsmResource dbResource = testCreateBucketFailedState(WsmResourceStateRule.BROKEN_ON_FAILURE);
     assertNotNull(dbResource);
@@ -58,14 +57,13 @@ public class ControlledResourceStateTest extends BaseUnitTestMockGcpCloudContext
   }
 
   @Test
-  public void testCreateBucketFailDeleted() throws RetryException, InterruptedException {
+  public void testCreateBucketFailDeleted() throws Exception {
     // Get the resource from database and check state
     WsmResource dbResource = testCreateBucketFailedState(WsmResourceStateRule.DELETE_ON_FAILURE);
     assertNull(dbResource);
   }
 
-  private WsmResource testCreateBucketFailedState(WsmResourceStateRule rule)
-      throws RetryException, InterruptedException {
+  private WsmResource testCreateBucketFailedState(WsmResourceStateRule rule) throws Exception {
     when(mockFeatureConfiguration().getStateRule()).thenReturn(rule);
 
     UUID workspaceId = WorkspaceUnitTestUtils.createWorkspaceWithGcpContext(workspaceDao);
