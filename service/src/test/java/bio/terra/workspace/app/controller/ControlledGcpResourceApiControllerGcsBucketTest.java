@@ -183,10 +183,6 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
         userAccessUtils.defaultUser().getGoogleCredentials(), projectId);
     GcpCloudUtils.waitForProjectAccess(
         userAccessUtils.defaultUser().getGoogleCredentials(), projectId2);
-    GcpCloudUtils.waitForProjectAccess(
-        userAccessUtils.secondUser().getGoogleCredentials(), projectId);
-    GcpCloudUtils.waitForProjectAccess(
-        userAccessUtils.secondUser().getGoogleCredentials(), projectId2);
 
     // It is easier to make two buckets and do clone both directions than to
     // get different permissions on users.
