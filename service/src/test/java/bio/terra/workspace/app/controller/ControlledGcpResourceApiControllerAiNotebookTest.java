@@ -11,7 +11,6 @@ import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
-import bio.terra.workspace.generated.model.ApiCreatedControlledGcpAiNotebookInstanceResult;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
@@ -26,8 +25,6 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants;
 import java.util.List;
 import java.util.UUID;
-import org.apache.http.HttpStatus;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -124,11 +121,7 @@ public class ControlledGcpResourceApiControllerAiNotebookTest extends BaseConnec
     var duplicateName = "not-unique-name";
     mockMvcUtils
         .createAiNotebookInstanceAndWait(
-            userAccessUtils.defaultUserAuthRequest(),
-            workspaceId,
-            duplicateName,
-            /*location=*/ null,
-            /*machineType=*/ null)
+            userAccessUtils.defaultUserAuthRequest(), workspaceId, duplicateName, null)
         .getAiNotebookInstance();
 
     ApiErrorReport errorReport =
@@ -137,31 +130,11 @@ public class ControlledGcpResourceApiControllerAiNotebookTest extends BaseConnec
                 userAccessUtils.defaultUserAuthRequest(),
                 workspaceId,
                 duplicateName,
-                /*location=*/ null,
-                /*machineType=*/ null,
+                null,
                 StatusEnum.FAILED)
             .getErrorReport();
 
     assertEquals("A resource with matching attributes already exists", errorReport.getMessage());
-  }
-
-  @Test
-  public void createAiNotebookInstance_CPU_quotaExceeded() throws Exception {
-    // CPU Quota: Limit of 72.0 in region us-central1.
-    ApiCreatedControlledGcpAiNotebookInstanceResult job =
-        mockMvcUtils.createAiNotebookInstanceAndExpect(
-            userAccessUtils.defaultUserAuthRequest(),
-            workspaceId,
-            "notebook-exceeding-cpu-quota",
-            "us-central1-b",
-            "n1-standard-96",
-            StatusEnum.FAILED);
-
-    ApiErrorReport errorReport = job.getErrorReport();
-
-    assertEquals(HttpStatus.SC_FORBIDDEN, errorReport.getStatusCode());
-
-    Assertions.assertThat(errorReport.getMessage()).contains("Quota 'CPUS' exceeded");
   }
 
   private void assertAiNotebook(

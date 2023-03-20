@@ -74,7 +74,6 @@ import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiFlexibleResource;
 import bio.terra.workspace.generated.model.ApiFlexibleResourceAttributes;
 import bio.terra.workspace.generated.model.ApiFlexibleResourceUpdateParameters;
-import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableAttributes;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableResource;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetAttributes;
@@ -741,18 +740,17 @@ public class MockMvcUtils {
       AuthenticatedUserRequest userRequest, UUID workspaceId, @Nullable String location)
       throws Exception {
     return createAiNotebookInstanceAndWait(
-        userRequest, workspaceId, /*instanceId=*/ null, location, /*machineType=*/ null);
+        userRequest, workspaceId, /*instanceId=*/ null, location);
   }
 
   public ApiCreatedControlledGcpAiNotebookInstanceResult createAiNotebookInstanceAndWait(
       AuthenticatedUserRequest userRequest,
       UUID workspaceId,
       @Nullable String instanceId,
-      @Nullable String location,
-      @Nullable String machineType)
+      @Nullable String location)
       throws Exception {
     return createAiNotebookInstanceAndExpect(
-        userRequest, workspaceId, instanceId, location, machineType, StatusEnum.SUCCEEDED);
+        userRequest, workspaceId, instanceId, location, StatusEnum.SUCCEEDED);
   }
 
   public ApiCreatedControlledGcpAiNotebookInstanceResult createAiNotebookInstanceAndExpect(
@@ -760,20 +758,8 @@ public class MockMvcUtils {
       UUID workspaceId,
       @Nullable String instanceId,
       @Nullable String location,
-      @Nullable String machineType,
       StatusEnum jobStatus)
       throws Exception {
-    ApiGcpAiNotebookInstanceCreationParameters creationParameters =
-        defaultNotebookCreationParameters()
-            .location(location)
-            .instanceId(
-                Optional.ofNullable(instanceId)
-                    .orElse(TestUtils.appendRandomNumber("instance-id")));
-
-    if (machineType != null) {
-      creationParameters.machineType(machineType);
-    }
-
     ApiCreateControlledGcpAiNotebookInstanceRequestBody request =
         new ApiCreateControlledGcpAiNotebookInstanceRequestBody()
             .common(
@@ -781,7 +767,12 @@ public class MockMvcUtils {
                     .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE.toApiModel())
                     .name(TestUtils.appendRandomNumber("ai-notebook")))
             .jobControl(new ApiJobControl().id(UUID.randomUUID().toString()))
-            .aiNotebookInstance(creationParameters);
+            .aiNotebookInstance(
+                defaultNotebookCreationParameters()
+                    .location(location)
+                    .instanceId(
+                        Optional.ofNullable(instanceId)
+                            .orElse(TestUtils.appendRandomNumber("instance-id"))));
 
     String serializedResponse =
         getSerializedResponseForPost(
