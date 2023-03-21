@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -30,6 +31,8 @@ import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.generated.model.ApiAccessScope;
+import bio.terra.workspace.generated.model.ApiCloneControlledFlexibleResourceRequest;
+import bio.terra.workspace.generated.model.ApiCloneControlledFlexibleResourceResult;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpBigQueryDatasetRequest;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpBigQueryDatasetResult;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketRequest;
@@ -69,6 +72,7 @@ import bio.terra.workspace.generated.model.ApiDataRepoSnapshotAttributes;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiFlexibleResource;
+import bio.terra.workspace.generated.model.ApiFlexibleResourceAttributes;
 import bio.terra.workspace.generated.model.ApiFlexibleResourceUpdateParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableAttributes;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableResource;
@@ -102,6 +106,7 @@ import bio.terra.workspace.generated.model.ApiResourceLineageEntry;
 import bio.terra.workspace.generated.model.ApiResourceList;
 import bio.terra.workspace.generated.model.ApiResourceMetadata;
 import bio.terra.workspace.generated.model.ApiResourceType;
+import bio.terra.workspace.generated.model.ApiState;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
 import bio.terra.workspace.generated.model.ApiUpdateBigQueryDataTableReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateBigQueryDatasetReferenceRequestBody;
@@ -141,6 +146,7 @@ import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveCon
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.referenced.flight.create.CreateReferenceMetadataStep;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -156,9 +162,11 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.hamcrest.Matcher;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -305,6 +313,8 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/controlled/any/flexibleResources";
   public static final String CONTROLLED_FLEXIBLE_RESOURCE_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/any/flexibleResources/%s";
+  public static final String CLONE_CONTROLLED_FLEXIBLE_RESOURCE_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/any/flexibleResources/%s/clone";
   public static final String UPDATE_POLICIES_PATH_FORMAT = "/api/workspaces/v1/%s/policies";
   public static final String POLICY_V1_GET_REGION_INFO_PATH = "/api/policies/v1/getLocationInfo";
 
@@ -346,6 +356,29 @@ public class MockMvcUtils {
     String serializedResponse =
         getSerializedResponseForGet(userRequest, WORKSPACES_V1_BY_UUID_PATH_FORMAT, workspaceId);
     return objectMapper.readValue(serializedResponse, ApiWorkspaceDescription.class);
+  }
+
+  /**
+   * A method for cleaning up test workspaces. It checks for null workspaceId, and for the existence
+   * of the workspace, before deleting.
+   *
+   * @param userRequest user doing the deleting
+   * @param workspaceId workspace to delete
+   * @throws Exception as usual in tests
+   */
+  public void cleanupWorkspace(AuthenticatedUserRequest userRequest, @Nullable UUID workspaceId)
+      throws Exception {
+    if (workspaceId == null) {
+      return;
+    }
+
+    // Check if the workspace is already gone. Don't issue a failing delete if it is gone.
+    int status = deleteWorkspaceNoCheck(userRequest, workspaceId);
+    if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_NO_CONTENT) {
+      return;
+    }
+
+    logger.error("Failed to cleanup workspace {}", workspaceId);
   }
 
   public ApiCloneWorkspaceResult cloneWorkspace(
@@ -472,7 +505,7 @@ public class MockMvcUtils {
     }
   }
 
-  private void createGcpCloudContextAndWait(AuthenticatedUserRequest userRequest, UUID workspaceId)
+  public void createGcpCloudContextAndWait(AuthenticatedUserRequest userRequest, UUID workspaceId)
       throws Exception {
     ApiCreateCloudContextResult result = createGcpCloudContext(userRequest, workspaceId);
     String jobId = result.getJobReport().getId();
@@ -706,6 +739,27 @@ public class MockMvcUtils {
   public ApiCreatedControlledGcpAiNotebookInstanceResult createAiNotebookInstance(
       AuthenticatedUserRequest userRequest, UUID workspaceId, @Nullable String location)
       throws Exception {
+    return createAiNotebookInstanceAndWait(
+        userRequest, workspaceId, /*instanceId=*/ null, location);
+  }
+
+  public ApiCreatedControlledGcpAiNotebookInstanceResult createAiNotebookInstanceAndWait(
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      @Nullable String instanceId,
+      @Nullable String location)
+      throws Exception {
+    return createAiNotebookInstanceAndExpect(
+        userRequest, workspaceId, instanceId, location, StatusEnum.SUCCEEDED);
+  }
+
+  public ApiCreatedControlledGcpAiNotebookInstanceResult createAiNotebookInstanceAndExpect(
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      @Nullable String instanceId,
+      @Nullable String location,
+      StatusEnum jobStatus)
+      throws Exception {
     ApiCreateControlledGcpAiNotebookInstanceRequestBody request =
         new ApiCreateControlledGcpAiNotebookInstanceRequestBody()
             .common(
@@ -716,7 +770,9 @@ public class MockMvcUtils {
             .aiNotebookInstance(
                 defaultNotebookCreationParameters()
                     .location(location)
-                    .instanceId(TestUtils.appendRandomNumber("instance-id")));
+                    .instanceId(
+                        Optional.ofNullable(instanceId)
+                            .orElse(TestUtils.appendRandomNumber("instance-id"))));
 
     String serializedResponse =
         getSerializedResponseForPost(
@@ -732,7 +788,7 @@ public class MockMvcUtils {
       Thread.sleep(/*millis=*/ 5000);
       result = getAiNotebookInstanceResult(userRequest, workspaceId, jobId);
     }
-    assertEquals(StatusEnum.SUCCEEDED, result.getJobReport().getStatus());
+    assertEquals(jobStatus, result.getJobReport().getStatus());
 
     return result;
   }
@@ -1061,6 +1117,9 @@ public class MockMvcUtils {
             .andExpect(status().is(getExpectedCodesMatcher(expectedCodes)))
             .andReturn()
             .getResponse();
+
+    // Disable the debug info post flight
+    jobService.setFlightDebugInfoForTest(null);
 
     if (isErrorResponse(response)) {
       return null;
@@ -1449,11 +1508,13 @@ public class MockMvcUtils {
       UUID resourceId,
       @Nullable String newResourceName,
       @Nullable String newDescription,
-      @Nullable byte[] newData)
+      @Nullable byte[] newData,
+      @Nullable ApiCloningInstructionsEnum newCloningInstructions)
       throws Exception {
     String request =
         objectMapper.writeValueAsString(
-            getUpdateFlexibleResourceRequestBody(newResourceName, newDescription, newData));
+            getUpdateFlexibleResourceRequestBody(
+                newResourceName, newDescription, newData, newCloningInstructions));
 
     return updateResource(
         ApiFlexibleResource.class,
@@ -1471,11 +1532,13 @@ public class MockMvcUtils {
       @Nullable String newResourceName,
       @Nullable String newDescription,
       @Nullable byte[] newData,
+      @Nullable ApiCloningInstructionsEnum newCloningInstructions,
       int code)
       throws Exception {
     String request =
         objectMapper.writeValueAsString(
-            getUpdateFlexibleResourceRequestBody(newResourceName, newDescription, newData));
+            getUpdateFlexibleResourceRequestBody(
+                newResourceName, newDescription, newData, newCloningInstructions));
 
     updateResource(
         ApiFlexibleResource.class,
@@ -1488,11 +1551,141 @@ public class MockMvcUtils {
   }
 
   private ApiUpdateControlledFlexibleResourceRequestBody getUpdateFlexibleResourceRequestBody(
-      @Nullable String newResourceName, @Nullable String newDescription, @Nullable byte[] newData) {
+      @Nullable String newResourceName,
+      @Nullable String newDescription,
+      @Nullable byte[] newData,
+      @Nullable ApiCloningInstructionsEnum newCloningInstructions) {
     return new ApiUpdateControlledFlexibleResourceRequestBody()
         .description(newDescription)
         .name(newResourceName)
-        .updateParameters(new ApiFlexibleResourceUpdateParameters().data(newData));
+        .updateParameters(
+            new ApiFlexibleResourceUpdateParameters()
+                .data(newData)
+                .cloningInstructions(newCloningInstructions));
+  }
+
+  public ApiCloneControlledFlexibleResourceResult cloneFlexResourceHelper(
+      AuthenticatedUserRequest userRequest,
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId,
+      UUID destWorkspaceId,
+      ApiCloningInstructionsEnum cloningInstructions,
+      @Nullable String destResourceName,
+      @Nullable String destDescription,
+      List<Integer> expectedCodes,
+      boolean shouldUndo)
+      throws Exception {
+    // Retry to ensure steps are idempotent
+    Map<String, StepStatus> retryableStepsMap = new HashMap<>();
+    List<Class<? extends Step>> retryableSteps =
+        ImmutableList.of(CheckControlledResourceAuthStep.class);
+    retryableSteps.forEach(
+        step -> retryableStepsMap.put(step.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY));
+    jobService.setFlightDebugInfoForTest(
+        FlightDebugInfo.newBuilder()
+            .doStepFailures(retryableStepsMap)
+            .lastStepFailure(shouldUndo)
+            .build());
+
+    ApiCloneControlledFlexibleResourceRequest request =
+        new ApiCloneControlledFlexibleResourceRequest()
+            .destinationWorkspaceId(destWorkspaceId)
+            .cloningInstructions(cloningInstructions)
+            .description(destDescription);
+
+    if (!StringUtils.isEmpty(destResourceName)) {
+      request.name(destResourceName);
+    }
+
+    MockHttpServletResponse response =
+        mockMvc
+            .perform(
+                addJsonContentType(
+                    addAuth(
+                        post(CLONE_CONTROLLED_FLEXIBLE_RESOURCE_V1_PATH_FORMAT.formatted(
+                                sourceWorkspaceId, sourceResourceId))
+                            .content(objectMapper.writeValueAsString(request)),
+                        userRequest)))
+            .andExpect(status().is(getExpectedCodesMatcher(expectedCodes)))
+            .andReturn()
+            .getResponse();
+
+    if (isErrorResponse(response)) {
+      return null;
+    }
+
+    String serializedResponse = response.getContentAsString();
+    return objectMapper.readValue(
+        serializedResponse, ApiCloneControlledFlexibleResourceResult.class);
+  }
+
+  /** Call cloneFlexResource() and wait for the flight to finish. */
+  public ApiFlexibleResource cloneFlexResource(
+      AuthenticatedUserRequest userRequest,
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId,
+      UUID destWorkspaceId,
+      ApiCloningInstructionsEnum cloningInstructions,
+      @Nullable String destResourceName,
+      @Nullable String destDescription)
+      throws Exception {
+    ApiCloneControlledFlexibleResourceResult result =
+        cloneFlexResourceHelper(
+            userRequest,
+            sourceWorkspaceId,
+            sourceResourceId,
+            destWorkspaceId,
+            cloningInstructions,
+            destResourceName,
+            destDescription,
+            // clone_copyNothing sometimes returns SC_OK, even for the initial call. So accept both
+            // to avoid flakes.
+            JOB_SUCCESS_CODES,
+            /*shouldUndo=*/ false);
+    logger.info("Controlled flex clone of resource %s completed.".formatted(sourceResourceId));
+    return result.getResource();
+  }
+
+  public void cloneFlex_undo(
+      AuthenticatedUserRequest userRequest,
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId,
+      UUID destWorkspaceId,
+      ApiCloningInstructionsEnum cloningInstructions,
+      @Nullable String destResourceName,
+      @Nullable String destDescription)
+      throws Exception {
+    cloneFlexResourceHelper(
+        userRequest,
+        sourceWorkspaceId,
+        sourceResourceId,
+        destWorkspaceId,
+        cloningInstructions,
+        destResourceName,
+        destDescription,
+        List.of(HttpStatus.SC_INTERNAL_SERVER_ERROR),
+        /*shouldUndo=*/ true);
+  }
+
+  public void cloneFlex_forbidden(
+      AuthenticatedUserRequest userRequest,
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId,
+      UUID destWorkspaceId,
+      ApiCloningInstructionsEnum cloningInstructions,
+      @Nullable String destResourceName,
+      @Nullable String destDescription)
+      throws Exception {
+    cloneFlexResourceHelper(
+        userRequest,
+        sourceWorkspaceId,
+        sourceResourceId,
+        destWorkspaceId,
+        cloningInstructions,
+        destResourceName,
+        destDescription,
+        List.of(HttpStatus.SC_FORBIDDEN),
+        /*shouldUndo=*/ false);
   }
 
   public ApiDataRepoSnapshotResource createReferencedDataRepoSnapshot(
@@ -2206,13 +2399,15 @@ public class MockMvcUtils {
       ApiManagedBy expectedManagedByType,
       ApiPrivateResourceUser expectedPrivateResourceUser,
       ApiPrivateResourceState expectedPrivateResourceState,
-      String region) {
+      @Nullable String region) {
     assertEquals(expectedAccessScope, actualMetadata.getAccessScope());
     assertEquals(expectedManagedByType, actualMetadata.getManagedBy());
     assertEquals(expectedPrivateResourceUser, actualMetadata.getPrivateResourceUser());
     assertEquals(expectedPrivateResourceState, actualMetadata.getPrivateResourceState());
-    assertEquals(
-        region.toLowerCase(Locale.ROOT), actualMetadata.getRegion().toLowerCase(Locale.ROOT));
+    if (region != null) {
+      assertEquals(
+          region.toLowerCase(Locale.ROOT), actualMetadata.getRegion().toLowerCase(Locale.ROOT));
+    }
   }
 
   public static void assertResourceMetadata(
@@ -2477,50 +2672,71 @@ public class MockMvcUtils {
         .andExpect(status().is(httpStatus));
   }
 
+  public static void assertResourceReady(ApiResourceMetadata metadata) {
+    assertEquals(ApiState.READY, metadata.getState());
+    assertNull(metadata.getErrorReport());
+    assertNull(metadata.getJobId());
+  }
+
+  /**
+   * Compare resource metadata skipping comparison of the output-only fields. For example,
+   * lastUpdatedBy, state, jobId. This allows comparing the input resource to the resulting
+   * resource.
+   *
+   * @param expectedMetadata resource metadata
+   * @param actualMetadata resource metadata
+   */
+  public static void assertResourceMetadataEquals(
+      ApiResourceMetadata expectedMetadata, ApiResourceMetadata actualMetadata) {
+    assertEquals(expectedMetadata.getWorkspaceId(), actualMetadata.getWorkspaceId());
+    assertEquals(expectedMetadata.getResourceId(), actualMetadata.getResourceId());
+    assertEquals(expectedMetadata.getName(), actualMetadata.getName());
+    assertEquals(expectedMetadata.getDescription(), actualMetadata.getDescription());
+    assertEquals(expectedMetadata.getResourceType(), actualMetadata.getResourceType());
+    assertEquals(expectedMetadata.getStewardshipType(), actualMetadata.getStewardshipType());
+    assertEquals(expectedMetadata.getCloudPlatform(), actualMetadata.getCloudPlatform());
+    assertEquals(
+        expectedMetadata.getCloningInstructions(), actualMetadata.getCloningInstructions());
+    assertEquals(expectedMetadata.getResourceLineage(), actualMetadata.getResourceLineage());
+    assertEquals(expectedMetadata.getProperties(), actualMetadata.getProperties());
+
+    if (expectedMetadata.getStewardshipType() == ApiStewardshipType.CONTROLLED) {
+      assertEquals(
+          expectedMetadata.getControlledResourceMetadata(),
+          actualMetadata.getControlledResourceMetadata());
+    }
+  }
+
   public static void assertApiGcsBucketEquals(
       ApiGcpGcsBucketResource expectedBucket, ApiGcpGcsBucketResource actualBucket) {
-    // Clear last updated by and last updated date because all the tests are reading and modifying
-    // the same source resources. The last updated date is always in flux.
-    assertEquals(
-        expectedBucket.getMetadata().lastUpdatedDate(null).lastUpdatedBy(null),
-        actualBucket.getMetadata().lastUpdatedDate(null).lastUpdatedBy(null));
+    assertResourceMetadataEquals(expectedBucket.getMetadata(), actualBucket.getMetadata());
+    assertEquals(expectedBucket.getAttributes(), actualBucket.getAttributes());
   }
 
   public static void assertApiBqDatasetEquals(
       ApiGcpBigQueryDatasetResource expectedDataset, ApiGcpBigQueryDatasetResource actualDataset) {
-    // Clear last updated by and last updated date because all the tests are reading and modifying
-    // the same source resources. The last updated date is always in flux.
-    assertEquals(
-        expectedDataset.getMetadata().lastUpdatedDate(null).lastUpdatedBy(null),
-        actualDataset.getMetadata().lastUpdatedDate(null).lastUpdatedBy(null));
+    assertResourceMetadataEquals(expectedDataset.getMetadata(), actualDataset.getMetadata());
+    assertEquals(expectedDataset.getAttributes(), actualDataset.getAttributes());
   }
 
   public static void assertApiBqDataTableEquals(
       ApiGcpBigQueryDataTableResource expectedDataTable,
       ApiGcpBigQueryDataTableResource actualDataTable) {
-    // Clear last updated by and last updated date because all the tests are reading and modifying
-    // the same source resources. The last updated date is always in flux.
-    assertEquals(
-        expectedDataTable.getMetadata().lastUpdatedDate(null).lastUpdatedBy(null),
-        actualDataTable.getMetadata().lastUpdatedDate(null).lastUpdatedBy(null));
+    assertResourceMetadataEquals(expectedDataTable.getMetadata(), actualDataTable.getMetadata());
+    assertEquals(expectedDataTable.getAttributes(), actualDataTable.getAttributes());
   }
 
   public static void assertApiFlexibleResourceEquals(
       ApiFlexibleResource expectedFlexibleResource, ApiFlexibleResource actualFlexibleResource) {
-    // Clear last updated by and last updated date because all the tests are reading and modifying
-    // the same source resources. The last updated date is always in flux.
-    assertEquals(
-        expectedFlexibleResource.getMetadata().lastUpdatedDate(null).lastUpdatedBy(null),
-        actualFlexibleResource.getMetadata().lastUpdatedDate(null).lastUpdatedBy(null));
+    assertResourceMetadataEquals(
+        expectedFlexibleResource.getMetadata(), actualFlexibleResource.getMetadata());
+    assertEquals(expectedFlexibleResource.getAttributes(), actualFlexibleResource.getAttributes());
   }
 
   public static void assertApiDataRepoEquals(
       ApiDataRepoSnapshotResource expectedDataRepo, ApiDataRepoSnapshotResource actualDataRepo) {
-    // Clear last updated by and last updated date because all the tests are reading and modifying
-    // the same source resources. The last updated date is always in flux.
-    assertEquals(
-        expectedDataRepo.getMetadata().lastUpdatedDate(null).lastUpdatedBy(null),
-        actualDataRepo.getMetadata().lastUpdatedDate(null).lastUpdatedBy(null));
+    assertResourceMetadataEquals(expectedDataRepo.getMetadata(), actualDataRepo.getMetadata());
+    assertEquals(expectedDataRepo.getAttributes(), actualDataRepo.getAttributes());
   }
 
   // I can't figure out the proper way to do this
@@ -2643,5 +2859,68 @@ public class MockMvcUtils {
       logger.error("Not an error report. Serialized response is: {}", serializedResponse);
     }
     return true;
+  }
+
+  public void assertFlexibleResource(
+      ApiFlexibleResource actualFlexibleResource,
+      ApiStewardshipType expectedStewardshipType,
+      ApiCloningInstructionsEnum expectedCloningInstructions,
+      UUID expectedWorkspaceId,
+      String expectedResourceName,
+      String expectedResourceDescription,
+      String expectedCreatedBy,
+      String expectedLastUpdatedBy,
+      String expectedTypeNamespace,
+      String expectedType,
+      @Nullable String expectedData) {
+    assertResourceMetadata(
+        actualFlexibleResource.getMetadata(),
+        (CloudPlatform.ANY).toApiModel(),
+        ApiResourceType.FLEXIBLE_RESOURCE,
+        expectedStewardshipType,
+        expectedCloningInstructions,
+        expectedWorkspaceId,
+        expectedResourceName,
+        expectedResourceDescription,
+        /*expectedResourceLineage=*/ new ApiResourceLineage(),
+        expectedCreatedBy,
+        expectedLastUpdatedBy);
+
+    assertEquals(expectedTypeNamespace, actualFlexibleResource.getAttributes().getTypeNamespace());
+    assertEquals(expectedType, actualFlexibleResource.getAttributes().getType());
+    assertEquals(expectedData, actualFlexibleResource.getAttributes().getData());
+  }
+
+  public void assertClonedControlledFlexibleResource(
+      @NotNull ApiFlexibleResource originalFlexibleResource,
+      ApiFlexibleResource actualFlexibleResource,
+      UUID expectedDestWorkspaceId,
+      String expectedResourceName,
+      String expectedResourceDescription,
+      String expectedCreatedBy,
+      String expectedLastUpdatedBy) {
+    // Attributes are immutable upon cloning.
+    ApiFlexibleResourceAttributes originalAttributes = originalFlexibleResource.getAttributes();
+
+    assertFlexibleResource(
+        actualFlexibleResource,
+        ApiStewardshipType.CONTROLLED,
+        ApiCloningInstructionsEnum.DEFINITION,
+        expectedDestWorkspaceId,
+        expectedResourceName,
+        expectedResourceDescription,
+        expectedCreatedBy,
+        expectedLastUpdatedBy,
+        originalAttributes.getTypeNamespace(),
+        originalAttributes.getType(),
+        originalAttributes.getData());
+
+    assertControlledResourceMetadata(
+        actualFlexibleResource.getMetadata().getControlledResourceMetadata(),
+        ApiAccessScope.SHARED_ACCESS,
+        ApiManagedBy.USER,
+        new ApiPrivateResourceUser(),
+        ApiPrivateResourceState.NOT_APPLICABLE,
+        null);
   }
 }

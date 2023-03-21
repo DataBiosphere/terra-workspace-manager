@@ -28,6 +28,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.workspace.common.BaseConnectedTest;
+import bio.terra.workspace.common.fixtures.PolicyFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
@@ -54,7 +55,6 @@ import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -100,7 +100,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   /** Clean up workspaces from Broad dev SAM. */
   @AfterAll
   public void cleanup() throws Exception {
-    mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
+    mockMvcUtils.cleanupWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
   }
 
   @Test
@@ -235,23 +235,18 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     assertStrippedWorkspace(gotWorkspace);
   }
 
-  @Disabled("Assert by list size is not reliable if other tests have failed")
-  // TODO: PF-2413 Assert by list size is not reliable if other tests have failed
   @Test
   public void listWorkspaces_requesterIsOwner_returnsFullWorkspace() throws Exception {
     List<ApiWorkspaceDescription> listedWorkspaces =
         listWorkspaces(userAccessUtils.defaultUserAuthRequest());
 
-    assertThat(
-        String.format(
-            "Expected 1 workspace. Got %s: %s", listedWorkspaces.size(), listedWorkspaces),
-        listedWorkspaces.stream().map(ApiWorkspaceDescription::getId).toList(),
-        hasSize(1));
-    assertFullWorkspace(listedWorkspaces.get(0));
+    List<ApiWorkspaceDescription> matchedWorkspace =
+        listedWorkspaces.stream().filter(l -> l.getId().equals(workspace.getId())).toList();
+
+    assertEquals(1, matchedWorkspace.size(), "Did not find expected workspace");
+    assertFullWorkspace(matchedWorkspace.get(0));
   }
 
-  @Disabled("Assert by list size is not reliable if other tests have failed")
-  // TODO: PF-2413 Assert by list size is not reliable if other tests have failed
   @Test
   public void listWorkspaces_requesterIsDiscoverer_requestMinHighestRoleNotSet_returnsNoWorkspaces()
       throws Exception {
@@ -263,11 +258,11 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
     List<ApiWorkspaceDescription> listedWorkspaces =
         listWorkspaces(userAccessUtils.secondUserAuthRequest());
-    assertTrue(listedWorkspaces.isEmpty());
+    List<ApiWorkspaceDescription> matchedWorkspace =
+        listedWorkspaces.stream().filter(l -> l.getId().equals(workspace.getId())).toList();
+    assertTrue(matchedWorkspace.isEmpty());
   }
 
-  @Disabled("Assert by list size is not reliable if other tests have failed")
-  // TODO: PF-2413 Assert by list size is not reliable if other tests have failed
   @Test
   public void
       listWorkspaces_requesterIsDiscoverer_requestMinHighestRoleSetToReader_returnsNoWorkspaces()
@@ -280,8 +275,9 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
     List<ApiWorkspaceDescription> listedWorkspaces =
         listWorkspaces(userAccessUtils.secondUserAuthRequest(), Optional.of(ApiIamRole.READER));
-
-    assertTrue(listedWorkspaces.isEmpty());
+    List<ApiWorkspaceDescription> matchedWorkspace =
+        listedWorkspaces.stream().filter(l -> l.getId().equals(workspace.getId())).toList();
+    assertTrue(matchedWorkspace.isEmpty());
   }
 
   @Test
@@ -373,12 +369,12 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     // Create workspace with US region constraint.
     UUID targetWorkspaceId =
         mockMvcUtils.createWorkspaceWithRegionConstraint(
-            userAccessUtils.defaultUserAuthRequest(), "usa");
+            userAccessUtils.defaultUserAuthRequest(), PolicyFixtures.US_REGION);
 
     // Create workspace with Europe region constraint.
     UUID sourceWorkspaceId =
         mockMvcUtils.createWorkspaceWithRegionConstraint(
-            userAccessUtils.defaultUserAuthRequest(), "eu");
+            userAccessUtils.defaultUserAuthRequest(), PolicyFixtures.EUROPE_REGION);
 
     // Both workspaces have conflicting policy.
     ApiWsmPolicyMergeCheckResult result =
@@ -397,7 +393,8 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     try {
       //  Create target workspace with US region constraint.
       targetWorkspaceId =
-          mockMvcUtils.createWorkspaceWithRegionConstraintAndCloudContext(userRequest, "usa");
+          mockMvcUtils.createWorkspaceWithRegionConstraintAndCloudContext(
+              userRequest, PolicyFixtures.US_REGION);
 
       // Then add a resource with US east region to the target.
       mockMvcUtils.createControlledGcsBucket(
@@ -436,7 +433,8 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     try {
       //  Create target workspace with US region constraint.
       targetWorkspaceId =
-          mockMvcUtils.createWorkspaceWithRegionConstraintAndCloudContext(userRequest, "usa");
+          mockMvcUtils.createWorkspaceWithRegionConstraintAndCloudContext(
+              userRequest, PolicyFixtures.US_REGION);
 
       // Then add a resource with US east region to the target.
       mockMvcUtils.createControlledGcsBucket(
@@ -468,7 +466,8 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     try {
       //  Create target workspace with US region constraint.
       targetWorkspaceId =
-          mockMvcUtils.createWorkspaceWithRegionConstraintAndCloudContext(userRequest, "usa");
+          mockMvcUtils.createWorkspaceWithRegionConstraintAndCloudContext(
+              userRequest, PolicyFixtures.US_REGION);
 
       // Then add a resource with US east region to the target.
       mockMvcUtils.createControlledGcsBucket(
@@ -525,7 +524,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     assertTrue(workspaceWithoutPolicy.getPolicies().isEmpty());
 
     // add attributes
-    String usRegion = "usa";
+    String usRegion = PolicyFixtures.US_REGION;
     ApiWsmPolicyUpdateResult result =
         mockMvcUtils.updateRegionPolicy(
             userAccessUtils.defaultUserAuthRequest(), workspace.getId(), usRegion);
@@ -555,7 +554,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
         mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
     assertTrue(workspaceWithoutPolicy.getPolicies().isEmpty());
 
-    var usRegion = "usa";
+    var usRegion = PolicyFixtures.US_REGION;
     ApiWsmPolicyUpdateResult result =
         mockMvcUtils.updateRegionPolicy(
             userAccessUtils.defaultUserAuthRequest(), workspace.getId(), usRegion);
@@ -569,13 +568,13 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
         userAccessUtils.defaultUserAuthRequest(),
         workspace.getId(),
         HttpStatus.SC_CONFLICT,
-        buildWsmRegionPolicyInput("europe"),
+        buildWsmRegionPolicyInput(PolicyFixtures.EUROPE_REGION),
         ApiWsmPolicyUpdateMode.FAIL_ON_CONFLICT);
     mockMvcUtils.updatePoliciesExpect(
         userAccessUtils.defaultUserAuthRequest(),
         workspace.getId(),
         HttpStatus.SC_CONFLICT,
-        buildWsmRegionPolicyInput("asia"),
+        buildWsmRegionPolicyInput("asiapacific"),
         ApiWsmPolicyUpdateMode.ENFORCE_CONFLICT);
     updatedWorkspace =
         mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());

@@ -1,6 +1,7 @@
 package bio.terra.workspace.app.configuration.external;
 
 import bio.terra.workspace.common.exception.FeatureNotSupportedException;
+import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -20,6 +21,7 @@ public class FeatureConfiguration {
   private boolean bpmAzureEnabled;
   private boolean temporaryGrantEnabled;
   private boolean dataprocEnabled;
+  private WsmResourceStateRule stateRule;
 
   public boolean isAzureEnabled() {
     return azureEnabled;
@@ -77,6 +79,15 @@ public class FeatureConfiguration {
     this.dataprocEnabled = dataprocEnabled;
   }
 
+  public WsmResourceStateRule getStateRule() {
+    return stateRule;
+  }
+
+  public FeatureConfiguration setStateRule(WsmResourceStateRule stateRule) {
+    this.stateRule = stateRule;
+    return this;
+  }
+
   public void azureEnabledCheck() {
     if (!isAzureEnabled()) {
       throw new FeatureNotSupportedException("Azure features are not enabled");
@@ -108,5 +119,6 @@ public class FeatureConfiguration {
     logger.info("Feature: bpm-gcp-enabled: {}", isBpmGcpEnabled());
     logger.info("Feature: temporary-grant-enabled: {}", isTemporaryGrantEnabled());
     logger.info("Feature: dataproc-enabled: {}", isDataprocEnabled());
+    logger.info("Feature: state-rule: {}", getStateRule());
   }
 }

@@ -10,6 +10,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.policy.flight.MergePolicyAttributesDryRunStep;
 import bio.terra.workspace.service.policy.flight.MergePolicyAttributesStep;
+import bio.terra.workspace.service.policy.flight.ValidateGroupPolicyAttributesStep;
 import bio.terra.workspace.service.policy.flight.ValidateWorkspaceAgainstPolicyStep;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
@@ -81,6 +82,10 @@ public class CloneReferencedResourceFlight extends Flight {
               userRequest,
               appContext.getResourceDao(),
               appContext.getTpsApiDispatch()));
+
+      addStep(
+          new ValidateGroupPolicyAttributesStep(
+              destinationWorkspaceId, appContext.getTpsApiDispatch()));
 
       addStep(
           new MergePolicyAttributesStep(

@@ -17,13 +17,11 @@ import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.AiNotebookCloudId;
 import bio.terra.workspace.model.CreatedControlledGcpAiNotebookInstanceResult;
-import bio.terra.workspace.model.DeleteControlledGcpAiNotebookInstanceRequest;
-import bio.terra.workspace.model.DeleteControlledGcpAiNotebookInstanceResult;
 import bio.terra.workspace.model.GcpAiNotebookInstanceResource;
 import bio.terra.workspace.model.GcpAiNotebookUpdateParameters;
 import bio.terra.workspace.model.GenerateGcpAiNotebookCloudIdRequestBody;
 import bio.terra.workspace.model.IamRole;
-import bio.terra.workspace.model.JobControl;
+import bio.terra.workspace.model.ResourceDescription;
 import bio.terra.workspace.model.ResourceList;
 import bio.terra.workspace.model.ResourceType;
 import bio.terra.workspace.model.StewardshipType;
@@ -33,7 +31,6 @@ import com.google.api.services.notebooks.v1.AIPlatformNotebooks;
 import com.google.api.services.notebooks.v1.model.StopInstanceRequest;
 import com.google.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -137,7 +134,16 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
     ResourceList notebookList =
         otherUserApi.enumerateResources(
             getWorkspaceId(), 0, 5, ResourceType.AI_NOTEBOOK, StewardshipType.CONTROLLED);
-    assertEquals(1, notebookList.getResources().size());
+    List<ResourceDescription> matchNotebook =
+        notebookList.getResources().stream()
+            .filter(
+                n ->
+                    n.getResourceAttributes()
+                        .getGcpAiNotebookInstance()
+                        .getInstanceId()
+                        .equals(instanceId))
+            .toList();
+    assertEquals(1, matchNotebook.size());
     MultiResourcesUtils.assertResourceType(ResourceType.AI_NOTEBOOK, notebookList);
 
     createAControlledAiNotebookInstanceWithoutSpecifiedInstanceId_validInstanceIdIsGenerated(
@@ -198,22 +204,8 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
     }
 
     // Delete the AI Notebook through WSM.
-    DeleteControlledGcpAiNotebookInstanceResult deleteResult =
-        resourceUserApi.deleteAiNotebookInstance(
-            new DeleteControlledGcpAiNotebookInstanceRequest()
-                .jobControl(new JobControl().id(UUID.randomUUID().toString())),
-            getWorkspaceId(),
-            resourceId);
-    String deleteJobId = deleteResult.getJobReport().getId();
-    deleteResult =
-        ClientTestUtils.pollWhileRunning(
-            deleteResult,
-            () -> resourceUserApi.getDeleteAiNotebookInstanceResult(getWorkspaceId(), deleteJobId),
-            DeleteControlledGcpAiNotebookInstanceResult::getJobReport,
-            Duration.ofSeconds(10));
-
-    ClientTestUtils.assertJobSuccess(
-        "delete ai notebook", deleteResult.getJobReport(), deleteResult.getErrorReport());
+    NotebookUtils.deleteControlledNotebookUserPrivate(
+        getWorkspaceId(), resourceId, resourceUserApi);
 
     // Verify the notebook was deleted from WSM metadata.
     ApiException notebookIsMissing =
@@ -252,14 +244,13 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
             .getAiNotebookInstance()
             .getAttributes()
             .getInstanceId());
-    resourceUserApi.deleteAiNotebookInstance(
-        new DeleteControlledGcpAiNotebookInstanceRequest()
-            .jobControl(new JobControl().id(UUID.randomUUID().toString())),
-        getWorkspaceId(),
+    UUID resourceId =
         resourceWithNotebookInstanceIdNotSpecified
             .getAiNotebookInstance()
             .getMetadata()
-            .getResourceId());
+            .getResourceId();
+    NotebookUtils.deleteControlledNotebookUserPrivate(
+        getWorkspaceId(), resourceId, resourceUserApi);
   }
 
   private void createAControlledAiNotebookInstanceWithoutSpecifiedInstanceId_specifyLocation(
@@ -279,13 +270,12 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
             .getAiNotebookInstance()
             .getAttributes()
             .getLocation());
-    resourceUserApi.deleteAiNotebookInstance(
-        new DeleteControlledGcpAiNotebookInstanceRequest()
-            .jobControl(new JobControl().id(UUID.randomUUID().toString())),
-        getWorkspaceId(),
+    UUID resourceId =
         resourceWithNotebookInstanceIdNotSpecified
             .getAiNotebookInstance()
             .getMetadata()
-            .getResourceId());
+            .getResourceId();
+    NotebookUtils.deleteControlledNotebookUserPrivate(
+        getWorkspaceId(), resourceId, resourceUserApi);
   }
 }

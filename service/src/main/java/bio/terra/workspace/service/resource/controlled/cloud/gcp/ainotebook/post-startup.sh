@@ -89,7 +89,14 @@ trap 'exit_handler $? $LINENO $BASH_COMMAND' EXIT
 set_guest_attributes "${STATUS_ATTRIBUTE}" "STARTED"
 
 # Install common packages. Use pip instead of conda because conda is slow.
-/opt/conda/bin/pip install pre-commit nbdime nbstripout pylint pytest dsub pandas_gbq
+/opt/conda/bin/pip install \
+  dsub \
+  nbdime \
+  nbstripout \
+  pandas_gbq \
+  pre-commit \
+  pylint \
+  pytest
 
 # Install nbstripout for the jupyter user in all git repositories.
 sudo -u "${JUPYTER_USER}" sh -c "/opt/conda/bin/nbstripout --install --global"
@@ -133,7 +140,13 @@ sudo mv nextflow /usr/bin/nextflow
 readonly CROMWELL_LATEST_VERSION="81"
 sudo -u "${JUPYTER_USER}" sh -c "curl -LO https://github.com/broadinstitute/cromwell/releases/download/${CROMWELL_LATEST_VERSION}/cromwell-${CROMWELL_LATEST_VERSION}.jar"
 sudo mv "cromwell-${CROMWELL_LATEST_VERSION}.jar" "/usr/share/java/"
-sudo -u "${JUPYTER_USER}" sh -c "echo \"export CROMWELL_JAR='/usr/share/java/cromwell-${CROMWELL_LATEST_VERSION}.jar'\" >> /home/${JUPYTER_USER}/.bash_profile"
+
+# Set a variable for the user in the bash_profile
+cat << EOF >> "/home/${JUPYTER_USER}/.bash_profile"
+
+# Set a convenience variable pointing to the version-specific Cromwell JAR file
+export CROMWELL_JAR='/usr/share/java/cromwell-${CROMWELL_LATEST_VERSION}.jar'
+EOF
 
 #Install cromshell
 sudo apt-get -y install mailutils
@@ -155,6 +168,8 @@ fi
 
 # Log in with app-default-credentials
 sudo -u "${JUPYTER_USER}" sh -c "terra auth login --mode=APP_DEFAULT_CREDENTIALS"
+# Generate the bash completion scripot
+sudo -u "${JUPYTER_USER}" sh -c "terra generate-completion | sudo tee /etc/bash_completion.d/terra" > /dev/null
 
 ####################################
 # Shell and notebook environment
@@ -182,40 +197,68 @@ fi
 # (https://github.com/DataBiosphere/leonardo)
 
 # OWNER_EMAIL is really the Terra user account email address
-
 readonly OWNER_EMAIL="$(
   sudo -u "${JUPYTER_USER}" sh -c "terra workspace describe --format=json" | \
   jq --raw-output ".userEmail")"
-sudo -u "${JUPYTER_USER}" sh -c "echo \"export OWNER_EMAIL='${OWNER_EMAIL}'\" >> /home/${JUPYTER_USER}/.bash_profile"
 
 # GOOGLE_PROJECT is the project id for the GCP project backing the workspace
-
 readonly GOOGLE_PROJECT="$(
   sudo -u "${JUPYTER_USER}" sh -c "terra workspace describe --format=json" | \
   jq --raw-output ".googleProjectId")"
-sudo -u "${JUPYTER_USER}" sh -c "echo \"export GOOGLE_PROJECT='${GOOGLE_PROJECT}'\" >> /home/${JUPYTER_USER}/.bash_profile"
 
 # PET_SA_EMAIL is the pet service account for the Terra user and
 # is specific to the GCP project backing the workspace
-
 readonly PET_SA_EMAIL="$(
   sudo -u "${JUPYTER_USER}" sh -c "terra auth status --format=json" | \
   jq --raw-output ".serviceAccountEmail")"
-sudo -u "${JUPYTER_USER}" sh -c "echo \"export PET_SA_EMAIL='${PET_SA_EMAIL}'\" >> /home/${JUPYTER_USER}/.bash_profile"
 
 # These are equivalent environment variables which are set for a
 # command when calling "terra app execute <command>".
-
+#
 # TERRA_USER_EMAIL is the Terra user account email address.
-sudo -u "${JUPYTER_USER}" sh -c "echo \"export TERRA_USER_EMAIL='${OWNER_EMAIL}'\" >> /home/${JUPYTER_USER}/.bash_profile"
-
 # GOOGLE_CLOUD_PROJECT is the project id for the GCP project backing the
 # workspace.
-sudo -u "${JUPYTER_USER}" sh -c "echo \"export GOOGLE_CLOUD_PROJECT='${GOOGLE_PROJECT}'\" >> /home/${JUPYTER_USER}/.bash_profile"
-
 # GOOGLE_SERVICE_ACCOUNT_EMAIL is the pet service account for the Terra user
 # and is specific to the GCP project backing the workspace.
-sudo -u "${JUPYTER_USER}" sh -c "echo \"export GOOGLE_SERVICE_ACCOUNT_EMAIL='${PET_SA_EMAIL}'\" >> /home/${JUPYTER_USER}/.bash_profile"
+
+cat << EOF >> "/home/${JUPYTER_USER}/.bash_profile"
+
+# Set up a few legacy Terra-specific convenience variables
+export OWNER_EMAIL='${OWNER_EMAIL}'
+export GOOGLE_PROJECT='${GOOGLE_PROJECT}'
+export PET_SA_EMAIL='${PET_SA_EMAIL}'
+
+# Set up a few Terra-specific convenience variables
+export TERRA_USER_EMAIL='${OWNER_EMAIL}'
+export GOOGLE_CLOUD_PROJECT='${GOOGLE_PROJECT}'
+export GOOGLE_SERVICE_ACCOUNT_EMAIL='${PET_SA_EMAIL}'
+EOF
+
+#################
+# bash completion
+#################
+#
+# bash_completion is installed on Vertex AI notebooks, but the installed
+# completion scripts are *not* sourced from /etc/profile.
+# If we need it system-wide, we can install it there, but otherwise, let's
+# keep changes localized to the JUPYTER_USER.
+#
+cat << 'EOF' >> "/home/${JUPYTER_USER}/.bash_profile"
+
+# Source available global bash tab completion scripts
+if [[ -d /etc/bash_completion.d ]]; then
+  for BASH_COMPLETION_SCRIPT in /etc/bash_completion.d/* ; do
+    source "${BASH_COMPLETION_SCRIPT}"
+  done
+fi
+
+# Source available user installed bash tab completion scripts
+if [[ -d ~/bash_completion.d ]]; then
+  for BASH_COMPLETION_SCRIPT in ~/bash_completion.d/* ; do
+    source "${BASH_COMPLETION_SCRIPT}"
+  done
+fi
+EOF
 
 ###############
 # git setup
@@ -225,8 +268,14 @@ sudo -u "${JUPYTER_USER}" sh -c "mkdir -p /home/${JUPYTER_USER}/.ssh"
 cd "/home/${JUPYTER_USER}"
 readonly TERRA_SSH_KEY="$(sudo -u "${JUPYTER_USER}" sh -c "terra user ssh-key get --include-private-key --format=JSON")"
 
-# Start the ssh-agent. Set this command in bash_profile so everytime user starts a shell, we start the ssh-agent.
-sudo -u "${JUPYTER_USER}" sh -c "echo eval '\"\$(ssh-agent -s)\"' >> /home/${JUPYTER_USER}/.bash_profile"
+# Set ssh-agent launch command in .bash_profile so everytime
+# user starts a shell, we start the ssh-agent.
+cat << 'EOF' >> "/home/${JUPYTER_USER}/.bash_profile"
+
+# Start the ssh-agent
+eval "$(ssh-agent -s)"
+EOF
+
 if [[ -n "$TERRA_SSH_KEY" ]]; then
   printf '%s' "$TERRA_SSH_KEY" | sudo -u "${JUPYTER_USER}" sh -c "jq -r '.privateSshKey' > .ssh/id_rsa"
   sudo -u "${JUPYTER_USER}" sh -c 'chmod go-rwx .ssh/id_rsa'

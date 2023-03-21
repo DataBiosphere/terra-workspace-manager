@@ -1,0 +1,21 @@
+{
+  "name": "MergeGroupPolicies",
+  "description": "Import Data Collection into a workspace and merge its policies.",
+  "serverSpecificationFile": "workspace-local.json",
+  "kubernetes": {},
+  "application": {},
+  "testScripts": [
+    {
+      "name": "MergeGroupPolicies",
+      "numberOfUserJourneyThreadsToRun": 1,
+      "userJourneyThreadPoolSize": 1,
+      "expectedTimeForEach": 75,
+      "expectedTimeForEachUnit": "MINUTES",
+      "parametersMap": {
+        "spend-profile-id": "wm-default-spend-profile"
+      }
+    }
+  ],
+  "testUserFiles": ["bella.json"],
+  "maxRetries" : 0
+}

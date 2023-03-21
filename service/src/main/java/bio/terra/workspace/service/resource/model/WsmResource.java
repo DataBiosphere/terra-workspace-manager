@@ -5,8 +5,10 @@ import static bio.terra.workspace.service.resource.model.CloningInstructions.COP
 import static bio.terra.workspace.service.resource.model.CloningInstructions.COPY_REFERENCE;
 import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties.FOLDER_ID_KEY;
 
+import bio.terra.common.exception.ErrorReportException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.exception.CloneInstructionNotSupportedException;
+import bio.terra.workspace.common.utils.ErrorReportUtils;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.generated.model.ApiProperties;
@@ -102,6 +104,17 @@ public abstract class WsmResource {
     return wsmResourceFields.getLastUpdatedDate();
   }
 
+  public WsmResourceState getState() {
+    return wsmResourceFields.getState();
+  }
+
+  public @Nullable String getFlightId() {
+    return wsmResourceFields.getFlightId();
+  }
+
+  public @Nullable ErrorReportException getError() {
+    return wsmResourceFields.getError();
+  }
   /**
    * Sub-classes must identify their stewardship type
    *
@@ -254,7 +267,6 @@ public abstract class WsmResource {
    */
   public ApiResourceMetadata toApiMetadata() {
     ApiProperties apiProperties = convertMapToApiProperties(getProperties());
-
     ApiResourceMetadata apiResourceMetadata =
         new ApiResourceMetadata()
             .workspaceId(getWorkspaceId())
@@ -269,7 +281,13 @@ public abstract class WsmResource {
             .createdBy(getCreatedByEmail())
             .createdDate(getCreatedDate())
             .lastUpdatedBy(Optional.ofNullable(getLastUpdatedByEmail()).orElse(getCreatedByEmail()))
-            .lastUpdatedDate(Optional.ofNullable(getLastUpdatedDate()).orElse(getCreatedDate()));
+            .lastUpdatedDate(Optional.ofNullable(getLastUpdatedDate()).orElse(getCreatedDate()))
+            .state(getState().toApi())
+            .errorReport(
+                Optional.ofNullable(getError())
+                    .map(ErrorReportUtils::buildApiErrorReport)
+                    .orElse(null))
+            .jobId(getFlightId());
     ApiResourceLineage apiResourceLineage = new ApiResourceLineage();
     apiResourceLineage.addAll(
         getResourceLineage().stream().map(ResourceLineageEntry::toApiModel).toList());

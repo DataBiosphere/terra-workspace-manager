@@ -292,6 +292,19 @@ components:
           description: Timestamp where the resource was last updated
           type: string
           format: date-time
+        state:
+          $ref: '#/components/schemas/State'
+        errorReport:
+          # Null if the object is not in a broken state
+          $ref: '#/components/schemas/ErrorReport'
+        jobId:
+          # Null if the no WSM operation is running on the object (create, update, delete)
+          type: string
+
+    State:
+      type: string
+      description: WSM object state
+      enum: ['BROKEN', 'CREATING', 'DELETING', 'READY', 'UPDATING']
 
     StewardshipType:
       description: Enum containing valid stewardship types. Used for enumeration

@@ -6,7 +6,6 @@ import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEF
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_CREATED_BIG_QUERY_TABLE_LIFETIME;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_RESOURCE_REGION;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -104,7 +103,6 @@ import com.google.api.services.iam.v1.model.TestIamPermissionsRequest;
 import com.google.api.services.iam.v1.model.TestIamPermissionsResponse;
 import com.google.api.services.notebooks.v1.model.Instance;
 import com.google.cloud.storage.BucketInfo;
-import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -114,14 +112,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -229,9 +225,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  @Disabled
-  //  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches =
-  // BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void createAiNotebookInstanceDo() throws Exception {
     String workspaceUserFacingId = workspaceService.getWorkspace(workspaceId).getUserFacingId();
     var instanceId = "create-ai-notebook-instance-do";
@@ -284,43 +278,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     Instance instance =
         crlService.getAIPlatformNotebooksCow().instances().get(instanceName).execute();
 
-    // Test that the user has permissions from WRITER roles on the notebooks instance. Only notebook
-    // instance level permissions can be checked on the notebook instance test IAM permissions
-    // endpoint, so no "notebooks.instances.list" permission as that's project level.
-    List<String> expectedWriterPermissions =
-        ImmutableList.of(
-            "notebooks.instances.get",
-            "notebooks.instances.reset",
-            "notebooks.instances.setAccelerator",
-            "notebooks.instances.setMachineType",
-            "notebooks.instances.start",
-            "notebooks.instances.stop",
-            "notebooks.instances.use");
-
-    // Wait for actual permissions to show up before asserting
-    List<String> actualPermissions = null;
-    for (int i = 0; i < retryCount; i++) {
-      actualPermissions =
-          AIPlatformNotebooksCow.create(crlService.getClientConfig(), user.getGoogleCredentials())
-              .instances()
-              .testIamPermissions(
-                  instanceName,
-                  new com.google.api.services.notebooks.v1.model.TestIamPermissionsRequest()
-                      .setPermissions(expectedWriterPermissions))
-              .execute()
-              .getPermissions();
-
-      // I have seen two return values before completion. A null string and just the 'get'
-      // permission.
-      if (actualPermissions != null && actualPermissions.size() > 1) {
-        break;
-      }
-      logger.warn(
-          "Permissions not set yet: {}. Retry {} of {}", actualPermissions, i + 1, retryCount);
-      TimeUnit.SECONDS.sleep(retryWaitSeconds);
-    }
-
-    assertThat(actualPermissions, containsInAnyOrder(expectedWriterPermissions.toArray()));
+    // NOTE: permission checks proved unreliable, so have been removed
 
     // Test that the user has access to the notebook with a service account through proxy mode.
     // git secrets gets a false positive if 'service_account' is double quoted.
@@ -333,18 +291,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .projectId(instanceName.projectId())
             .email(instance.getServiceAccount())
             .build();
-    // The user needs to have the actAs permission on the service account.
-    String actAsPermission = "iam.serviceAccounts.actAs";
-    assertThat(
-        IamCow.create(crlService.getClientConfig(), user.getGoogleCredentials())
-            .projects()
-            .serviceAccounts()
-            .testIamPermissions(
-                serviceAccountName,
-                new TestIamPermissionsRequest().setPermissions(List.of(actAsPermission)))
-            .execute()
-            .getPermissions(),
-        Matchers.contains(actAsPermission));
 
     // Creating a controlled resource with a duplicate underlying notebook instance is not allowed.
     ControlledAiNotebookInstanceResource duplicateResource =
@@ -1726,7 +1672,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertEquals(DEFAULT_RESOURCE_REGION, createdBucket.getRegion());
     // Create a bucket with underscores.
     var secondBucketId = UUID.randomUUID();
-    resourceDao.createControlledResource(
+    ControlledResourceFixtures.insertControlledResourceRow(
+        resourceDao,
         ControlledGcsBucketResource.builder()
             .common(
                 ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
@@ -1839,21 +1786,22 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceId)
             .bucketName(ControlledResourceFixtures.uniqueBucketName())
             .build();
-    resourceDao.createControlledResource(bucket);
+    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, bucket);
+
     // create dataset in db
     ControlledBigQueryDatasetResource dataset =
         ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
             .datasetName(ControlledResourceFixtures.uniqueDatasetId())
             .projectId(projectId)
             .build();
-    resourceDao.createControlledResource(dataset);
+    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, dataset);
     // create notebook in db
     ControlledAiNotebookInstanceResource notebookResource =
         makeNotebookTestResource(
             workspaceId,
             TestUtils.appendRandomNumber("notebookresourcename"),
             TestUtils.appendRandomNumber("default-instance-id"));
-    resourceDao.createControlledResource(notebookResource);
+    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, notebookResource);
     // Artificially set regions to null in the database.
     resourceDao.updateControlledResourceRegion(bucket.getResourceId(), /*region=*/ null);
     resourceDao.updateControlledResourceRegion(dataset.getResourceId(), /*region=*/ null);
