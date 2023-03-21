@@ -1,6 +1,8 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.PREVIOUS_UPDATE_PARAMETERS;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_ACCELERATOR_CONFIG;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_MACHINE_TYPE;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_PARAMETERS;
 
 import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
@@ -11,43 +13,78 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.db.DbSerDes;
+import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookUpdateParameters;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.exception.ReservedMetadataKeyException;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
 /**
- * {@link Step} to update cloud attributes (e.g. metadata) for a ai notebook instance.
- *
- * <p>This does not include updates to the CPU or GPU configurations.
+ * {@link Step} to update cloud attributes (e.g. metadata), and notebook-specific attributes
+ * (machineType and acceleratorConfig) in the database for an AI notebook instance.
  */
-public class UpdateAiNotebookMetadataAttributesStep implements Step {
+public class UpdateAiNotebookAttributesStep implements Step {
   private final ControlledAiNotebookInstanceResource resource;
   private final CrlService crlService;
   private final GcpCloudContextService cloudContextService;
+  private final ResourceDao resourceDao;
 
-  private final Logger logger =
-      LoggerFactory.getLogger(UpdateAiNotebookMetadataAttributesStep.class);
+  private final Logger logger = LoggerFactory.getLogger(UpdateAiNotebookAttributesStep.class);
 
-  UpdateAiNotebookMetadataAttributesStep(
+  UpdateAiNotebookAttributesStep(
       ControlledAiNotebookInstanceResource resource,
       CrlService crlService,
-      GcpCloudContextService gcpCloudContextService) {
+      GcpCloudContextService gcpCloudContextService,
+      ResourceDao resourceDao) {
     this.resource = resource;
     this.crlService = crlService;
     this.cloudContextService = gcpCloudContextService;
+    this.resourceDao = resourceDao;
   }
 
+  // Two parts:
+  // 1. Update the attributes (machineType and acceleratorConfig) in the database.
+  // 2. Update the attributes (metadata) in the cloud.
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     final FlightMap inputMap = context.getInputParameters();
+    // First part: update notebook-specific attributes in the database.
+    FlightMap workingMap = context.getWorkingMap();
+    String previousAttributes = resource.attributesToJson();
+    workingMap.put(WorkspaceFlightMapKeys.ResourceKeys.PREVIOUS_ATTRIBUTES, previousAttributes);
+
+    // Use the initial update instructions (the effective update instructions have not been
+    // calculated yet).
+    String newMachineType = inputMap.get(UPDATE_MACHINE_TYPE, String.class);
+    AcceleratorConfig newAcceleratorConfig =
+        inputMap.get(UPDATE_ACCELERATOR_CONFIG, AcceleratorConfig.class);
+
+    if (newMachineType != null || newAcceleratorConfig != null) {
+      String newAttributes =
+          DbSerDes.toJson(
+              new ControlledAiNotebookInstanceAttributes(
+                  resource.getInstanceId(),
+                  resource.getLocation(),
+                  resource.getProjectId(),
+                  Optional.ofNullable(newMachineType).orElse(resource.getMachineType()),
+                  Optional.ofNullable(newAcceleratorConfig)
+                      .orElse(resource.getAcceleratorConfig())));
+      resourceDao.updateResource(
+          resource.getWorkspaceId(), resource.getResourceId(), null, null, newAttributes, null);
+    }
+
+    // Second part: update the attributes (metadata) in the cloud.
     final ApiGcpAiNotebookUpdateParameters updateParameters =
         inputMap.get(UPDATE_PARAMETERS, ApiGcpAiNotebookUpdateParameters.class);
     if (updateParameters == null || updateParameters.getMetadata() == null) {
@@ -69,6 +106,20 @@ public class UpdateAiNotebookMetadataAttributesStep implements Step {
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
     final FlightMap workingMap = context.getWorkingMap();
+    // Revert first part (database update).
+    String previousAttributes =
+        workingMap.get(WorkspaceFlightMapKeys.ResourceKeys.PREVIOUS_ATTRIBUTES, String.class);
+    if (previousAttributes != null) {
+      resourceDao.updateResource(
+          resource.getWorkspaceId(),
+          resource.getResourceId(),
+          null,
+          null,
+          previousAttributes,
+          null);
+    }
+
+    // Revert second part (cloud update).
     final ApiGcpAiNotebookUpdateParameters prevParameters =
         workingMap.get(PREVIOUS_UPDATE_PARAMETERS, ApiGcpAiNotebookUpdateParameters.class);
     var projectId = cloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
@@ -114,4 +165,6 @@ public class UpdateAiNotebookMetadataAttributesStep implements Step {
     }
     return StepResult.getStepResultSuccess();
   }
+
+  private void updateAiNotebookAttributesInDatabase() {}
 }
