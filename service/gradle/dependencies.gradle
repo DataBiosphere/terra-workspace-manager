@@ -79,6 +79,12 @@ dependencies {
   compileOnly "com.github.spotbugs:spotbugs-annotations:${spotbugs.toolVersion.get()}"
   spotbugs "com.github.spotbugs:spotbugs:${spotbugs.toolVersion.get()}"
 
+  // TODO(zloery): Workaround to test unsubmitted changes in the TPS client
+  implementation "org.glassfish.jersey.core:jersey-client:2.35"
+  implementation "org.glassfish.jersey.media:jersey-media-json-jackson:2.35"
+  implementation "org.glassfish.jersey.media:jersey-media-multipart:2.35"
+  implementation "org.glassfish.jersey.connectors:jersey-apache-connector:2.35"
+
   // Test deps
   testImplementation group: "io.vavr", name: "vavr", version: "0.10.3"
   testImplementation('org.springframework.boot:spring-boot-starter-test') {

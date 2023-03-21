@@ -4,6 +4,7 @@ import bio.terra.common.logging.RequestIdFilter;
 import bio.terra.policy.api.TpsApi;
 import bio.terra.policy.client.ApiClient;
 import bio.terra.policy.client.ApiException;
+import bio.terra.policy.client.JSON;
 import bio.terra.policy.model.TpsComponent;
 import bio.terra.policy.model.TpsLocation;
 import bio.terra.policy.model.TpsObjectType;
@@ -40,7 +41,15 @@ import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.glassfish.jersey.apache.connector.ApacheClientProperties;
+import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.jackson.JacksonFeature;
+import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -61,13 +70,32 @@ public class TpsApiDispatch {
     this.features = features;
     this.policyServiceConfiguration = policyServiceConfiguration;
     this.commonHttpClient =
-        new ApiClient()
-            .getHttpClient()
+        buildHttpClient()
             .register(
                 new JaxrsClientFilter(
                     new JaxrsClientExtractor(), Tracing.getPropagationComponent().getB3Format()));
 
     logger.info("TPS base path: '{}'", policyServiceConfiguration.getBasePath());
+  }
+
+  // TODO(zloery): This is a workaround to test unsubmitted changes to the TPS client.
+  private Client buildHttpClient() {
+    final ClientConfig clientConfig = new ClientConfig();
+    clientConfig.register(MultiPartFeature.class);
+    clientConfig.register(new JSON());
+    clientConfig.register(JacksonFeature.class);
+    clientConfig.connectorProvider(new ApacheConnectorProvider());
+    PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
+    connectionManager.setDefaultMaxPerRoute(20);
+    connectionManager.setValidateAfterInactivity(1);
+    clientConfig.property(ApacheClientProperties.CONNECTION_MANAGER, connectionManager);
+    // This is the untested change: default to a 45s idle connection timeout on the client side,
+    // rather than assuming connections stay open indefinitely. Terra servers tend to drop
+    // connections after ~60s of not being used. This may help with tests where WSM gets unexpected
+    // "connection reset" errors from TPS.
+    RequestConfig requestConfig = RequestConfig.custom().setSocketTimeout(45_000).build();
+    clientConfig.property(ApacheClientProperties.REQUEST_CONFIG, requestConfig);
+    return ClientBuilder.newClient(clientConfig);
   }
 
   // -- Policy Attribute Object Interface --
