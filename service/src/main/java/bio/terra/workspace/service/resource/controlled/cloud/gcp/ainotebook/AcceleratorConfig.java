@@ -4,7 +4,7 @@ import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAcceleratorCo
 import javax.annotation.Nullable;
 
 /**
- * Interal record for the AcceleratorConfig of AI notebooks {@link
+ * Internal record for the AcceleratorConfig of AI notebooks {@link
  * com.google.api.services.notebooks.v1.model.AcceleratorConfig}
  *
  * @param type Type of this accelerator. The value may be {@code null}.

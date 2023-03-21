@@ -590,13 +590,9 @@ public class ControlledResourceService {
             .addParameter(ResourceKeys.RESOURCE_NAME, newName)
             .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, newDescription);
     if (updateParameters != null) {
-      final String newMachineType = updateParameters.getMachineType();
-      final AcceleratorConfig newAcceleratorConfig =
-          AcceleratorConfig.fromApiAcceleratorConfig(updateParameters.getAcceleratorConfig());
-
       jobBuilder
-          .addParameter(ControlledResourceKeys.UPDATE_MACHINE_TYPE, newMachineType)
-          .addParameter(ControlledResourceKeys.UPDATE_ACCELERATOR_CONFIG, newAcceleratorConfig)
+          .addParameter(ControlledResourceKeys.UPDATE_MACHINE_TYPE, updateParameters.getMachineType())
+          .addParameter(ControlledResourceKeys.UPDATE_ACCELERATOR_CONFIG, AcceleratorConfig.fromApiAcceleratorConfig(updateParameters.getAcceleratorConfig()))
           .addParameter(ControlledResourceKeys.UPDATE_PARAMETERS, updateParameters);
     }
 

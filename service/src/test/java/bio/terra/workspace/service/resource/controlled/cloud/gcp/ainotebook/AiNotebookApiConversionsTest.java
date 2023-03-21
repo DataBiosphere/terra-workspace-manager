@@ -12,23 +12,27 @@ public class AiNotebookApiConversionsTest extends BaseUnitTest {
       new ApiGcpAiNotebookInstanceAcceleratorConfig().type("fake-type").coreCount(4L);
 
   @Test
-  public void testToApiAcceleratorConfig() {
+  public void toApiAcceleratorConfig() {
     ApiGcpAiNotebookInstanceAcceleratorConfig apiAcceleratorConfig =
         AcceleratorConfig.toApiAcceleratorConfig(DEFAULT_AI_NOTEBOOK_ACCELERATOR_CONFIG);
     Assertions.assertEquals(
         DEFAULT_AI_NOTEBOOK_ACCELERATOR_CONFIG.coreCount(), apiAcceleratorConfig.getCoreCount());
     Assertions.assertEquals(
         DEFAULT_AI_NOTEBOOK_ACCELERATOR_CONFIG.type(), apiAcceleratorConfig.getType());
+  }
 
-    // Test null type.
+  @Test
+  public void toApiAcceleratorConfig_nullType() {
     ApiGcpAiNotebookInstanceAcceleratorConfig configWithNullType =
         AcceleratorConfig.toApiAcceleratorConfig(
             new AcceleratorConfig("fake-type-null-count", null));
 
     Assertions.assertNull(configWithNullType.getCoreCount());
     Assertions.assertEquals("fake-type-null-count", configWithNullType.getType());
+  }
 
-    // Test null count.
+  @Test
+  public void toApiAcceleratorConfig_nullCount() {
     ApiGcpAiNotebookInstanceAcceleratorConfig configWithNullCount =
         AcceleratorConfig.toApiAcceleratorConfig(new AcceleratorConfig(null, 1L));
 
@@ -37,23 +41,27 @@ public class AiNotebookApiConversionsTest extends BaseUnitTest {
   }
 
   @Test
-  public void testFromApiAcceleratorConfig() {
+  public void fromApiAcceleratorConfig() {
     AcceleratorConfig resultAcceleratorConfig =
         AcceleratorConfig.fromApiAcceleratorConfig(defaultApiAcceleratorConfig);
 
     Assertions.assertEquals(
         defaultApiAcceleratorConfig.getCoreCount(), resultAcceleratorConfig.coreCount());
     Assertions.assertEquals(defaultApiAcceleratorConfig.getType(), resultAcceleratorConfig.type());
+  }
 
-    // Test null type.
+  @Test
+  public void fromApiAcceleratorConfig_nullType() {
     AcceleratorConfig configWithNullType =
         AcceleratorConfig.fromApiAcceleratorConfig(
             new ApiGcpAiNotebookInstanceAcceleratorConfig().type("fake-type-null-count"));
 
     Assertions.assertNull(configWithNullType.coreCount());
     Assertions.assertEquals("fake-type-null-count", configWithNullType.type());
+  }
 
-    // Test null count.
+  @Test
+  public void fromApiAcceleratorConfig_nullCount() {
     AcceleratorConfig configWithNullCount =
         AcceleratorConfig.fromApiAcceleratorConfig(
             new ApiGcpAiNotebookInstanceAcceleratorConfig().coreCount(1L));

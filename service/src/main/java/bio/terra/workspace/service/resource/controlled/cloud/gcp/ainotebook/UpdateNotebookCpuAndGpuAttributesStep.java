@@ -62,6 +62,9 @@ public class UpdateNotebookCpuAndGpuAttributesStep implements Step {
         context
             .getWorkingMap()
             .get(WorkspaceFlightMapKeys.ResourceKeys.PREVIOUS_ATTRIBUTES, String.class);
+    if (previousAttributes == null) {
+      return StepResult.getStepResultSuccess();
+    }
     resourceDao.updateResource(
         resource.getWorkspaceId(), resource.getResourceId(), null, null, previousAttributes, null);
     return StepResult.getStepResultSuccess();

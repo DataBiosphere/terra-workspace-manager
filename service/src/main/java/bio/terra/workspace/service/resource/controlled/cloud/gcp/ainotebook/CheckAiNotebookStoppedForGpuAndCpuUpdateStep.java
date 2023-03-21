@@ -12,6 +12,8 @@ import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.cloud.notebooks.v1.Instance;
 import java.io.IOException;
 import java.util.Objects;
+
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 
 /**
@@ -64,7 +66,7 @@ public class CheckAiNotebookStoppedForGpuAndCpuUpdateStep implements Step {
 
     // No update requested OR the requested update does not differ from the original attributes.
     if ((requestedNewMachineType == null && requestedNewAcceleratorConfig == null)
-        || (Objects.equals(requestedNewMachineType, previousMachineType)
+        || (StringUtils.equals(requestedNewMachineType, previousMachineType)
             && (Objects.equals(requestedNewAcceleratorConfig, previousAcceleratorConfig)))) {
       // Place the effective update instructions in the working map for future steps.
       context
