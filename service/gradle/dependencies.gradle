@@ -1,10 +1,17 @@
+// Transitive dependencies pulled in via Spring dependency management need to be
+// modified via dependency-management plugin settings. Otherwise, the plugin
+// will just clobber versions. See the list of modifiable versions here:
+// https://docs.spring.io/spring-boot/docs/current/reference/html/dependency-versions.html#appendix.dependency-versions.properties
+project.ext {
+  set("snakeyaml.version", "1.33")
+}
 // Library Dependencies, Versions, etc.
 dependencies {
   // Google dependencies
   constraints {
     implementation 'com.google.guava:guava:31.1-jre' // "-jre" for Java 8 or higher
   }
-  implementation platform('com.google.cloud:libraries-bom:25.1.0')
+  implementation platform('com.google.cloud:libraries-bom:26.0.0')
 
   implementation 'com.google.cloud:google-cloud-bigquery'
   implementation 'com.google.cloud:google-cloud-bigquerydatatransfer'
@@ -27,17 +34,17 @@ dependencies {
   implementation group: "io.opencensus", name: "opencensus-contrib-http-jaxrs", version: "0.28.3"
 
   // Get stairway via TCL
-  implementation("bio.terra:terra-common-lib:0.0.69-SNAPSHOT") {
+  implementation("bio.terra:terra-common-lib:0.0.80-SNAPSHOT") {
     exclude group: "org.broadinstitute.dsde.workbench", module: "sam-client_2.12"
   }
-  implementation group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.13", version: "0.1-41409f6"
+  implementation group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.13", version: "0.1-df5a43a"
   implementation group: "bio.terra", name: "terra-resource-buffer-client", version: "0.4.3-SNAPSHOT"
   // Required by Sam client
   implementation group: "com.squareup.okhttp3", name: "okhttp", version: "4.9.1"
   implementation group: "com.squareup.okhttp3", name: "logging-interceptor", version: "4.9.1"
 
   // Cloud Resource Library
-  implementation group: 'bio.terra', name: 'terra-cloud-resource-lib', version: "1.2.6-SNAPSHOT"
+  implementation group: 'bio.terra', name: 'terra-cloud-resource-lib', version: "1.2.8-SNAPSHOT"
 
   // Terra Landing Zone Service
   implementation ('bio.terra:terra-landing-zone-service:0.0.36-SNAPSHOT') {
@@ -87,7 +94,6 @@ dependencies {
   testImplementation group: "org.hamcrest", name: "hamcrest", version: "2.2"
   // Allows us to mock final classes
   testImplementation 'org.mockito:mockito-inline:2.13.0'
-  testImplementation 'com.google.cloud:google-cloud-bigquery'
 
   testImplementation "org.testcontainers:testcontainers:1.17.5"
   testImplementation "org.testcontainers:junit-jupiter:1.17.5"
