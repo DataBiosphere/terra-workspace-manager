@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAcceleratorConfig;
-
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 

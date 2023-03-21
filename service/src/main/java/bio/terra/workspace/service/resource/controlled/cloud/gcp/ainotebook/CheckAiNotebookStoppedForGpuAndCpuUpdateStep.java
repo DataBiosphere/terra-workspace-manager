@@ -12,7 +12,6 @@ import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.cloud.notebooks.v1.Instance;
 import java.io.IOException;
 import java.util.Objects;
-
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 
