@@ -5,5 +5,5 @@ import org.springframework.test.context.ActiveProfiles;
 
 /** Base class for AWS tests. Treat these as connected tests: connected to AWS */
 @Tag("aws")
-@ActiveProfiles({"aws-test"})
+@ActiveProfiles({"aws-test", "connected-test"})
 public class BaseAwsConnectedTest extends BaseTest {}

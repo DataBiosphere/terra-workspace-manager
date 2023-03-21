@@ -42,25 +42,27 @@ public class AwsUtilsTest extends BaseAwsConnectedTest {
     AwsCredentialsProvider awsCredentialsProvider =
         AwsUtils.createWsmCredentialProvider(awsConfiguration, environment);
 
-    // TODO: Add region enumeration method to Environment class -- hard-code us-east-1 for now
-    Region region = Region.US_EAST_1;
-    Optional<LandingZone> landingZoneOptional = environment.getLandingZone(region);
-    Assertions.assertTrue(landingZoneOptional.isPresent());
-    LandingZone landingZone = landingZoneOptional.get();
+    // Iterate over supported regions in Environment.
 
-    // Perform a HeadBucket command to check storage bucket existence; this requires ListBucket
-    // permissions on the bucket, which the WSM role has.  This is a basic "Hello, world!" test that
-    // we've discovered the environment and assumed the TerraWorkspaceManager role.
+    for (Region region : environmentDiscovery.discoverEnvironment().getSupportedRegions()) {
+      Optional<LandingZone> landingZoneOptional = environment.getLandingZone(region);
+      Assertions.assertTrue(landingZoneOptional.isPresent());
+      LandingZone landingZone = landingZoneOptional.get();
 
-    S3Client s3Client =
-        S3Client.builder().region(region).credentialsProvider(awsCredentialsProvider).build();
+      // Perform a HeadBucket command to check storage bucket existence; this requires ListBucket
+      // permissions on the bucket, which the WSM role has.  This is a basic "Hello, world!" test
+      // that we've discovered the environment and assumed the TerraWorkspaceManager role.
 
-    HeadBucketRequest request =
-        HeadBucketRequest.builder().bucket(landingZone.getStorageBucket().name()).build();
+      S3Client s3Client =
+          S3Client.builder().region(region).credentialsProvider(awsCredentialsProvider).build();
 
-    Assertions.assertDoesNotThrow(
-        () -> {
-          s3Client.headBucket(request);
-        });
+      HeadBucketRequest request =
+          HeadBucketRequest.builder().bucket(landingZone.getStorageBucket().name()).build();
+
+      Assertions.assertDoesNotThrow(
+          () -> {
+            s3Client.headBucket(request);
+          });
+    }
   }
 }
