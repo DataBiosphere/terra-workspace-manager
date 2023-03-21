@@ -64,32 +64,35 @@ public class CheckAiNotebookStoppedForGpuAndCpuUpdateStep implements Step {
                 WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_ACCELERATOR_CONFIG,
                 AcceleratorConfig.class);
 
-    // No update requested OR the requested update does not differ from the original attributes.
-    if ((requestedNewMachineType == null && requestedNewAcceleratorConfig == null)
-        || (StringUtils.equals(requestedNewMachineType, previousMachineType)
-            && (Objects.equals(requestedNewAcceleratorConfig, previousAcceleratorConfig)))) {
-      // Place the effective update instructions in the working map for future steps.
-      context
-          .getWorkingMap()
-          .put(WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_MACHINE_TYPE, null);
-      context
-          .getWorkingMap()
-          .put(WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_ACCELERATOR_CONFIG, null);
+    // If attributes are the same as the previous, then no update is required.
+    String effectiveMachineType =
+        StringUtils.equals(requestedNewMachineType, previousMachineType)
+            ? null
+            : requestedNewMachineType;
 
-      return StepResult.getStepResultSuccess();
-    }
-    // Otherwise, the requested update changes at least one of the CPU or GPU.
+    AcceleratorConfig effectiveAcceleratorConfig =
+        Objects.equals(requestedNewAcceleratorConfig, previousAcceleratorConfig)
+            ? null
+            : requestedNewAcceleratorConfig;
+
     // Place the effective update instructions in the working map for future steps.
     context
         .getWorkingMap()
         .put(
             WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_MACHINE_TYPE,
-            requestedNewMachineType);
+            effectiveMachineType);
     context
         .getWorkingMap()
         .put(
             WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_ACCELERATOR_CONFIG,
-            requestedNewAcceleratorConfig);
+            effectiveAcceleratorConfig);
+
+    // No update requested OR the requested update does not differ from the original attributes.
+    if ((requestedNewMachineType == null && requestedNewAcceleratorConfig == null)
+        || (effectiveMachineType == null && effectiveAcceleratorConfig == null)) {
+      return StepResult.getStepResultSuccess();
+    }
+    // Otherwise, the requested update changes at least one of the CPU or GPU.
 
     // Check if the notebook is stopped, so the flight can proceed with updating.
     var projectId = resource.getProjectId();
