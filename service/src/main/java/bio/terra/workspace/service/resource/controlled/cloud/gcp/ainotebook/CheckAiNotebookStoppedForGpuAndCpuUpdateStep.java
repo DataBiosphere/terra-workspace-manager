@@ -36,7 +36,7 @@ public class CheckAiNotebookStoppedForGpuAndCpuUpdateStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    // If the requested update will not change anything on the cloud, then this flight ends
+    // If the requested update will not change anything on the cloud, then this step ends
     // successfully (i.e., no need to check if the notebook is stopped).
 
     // First, calculate the effective update instructions.
@@ -133,13 +133,7 @@ public class CheckAiNotebookStoppedForGpuAndCpuUpdateStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    // Undo placing the effective update instructions by setting them to null.
-    context
-        .getWorkingMap()
-        .put(WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_MACHINE_TYPE, null);
-    context
-        .getWorkingMap()
-        .put(WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_ACCELERATOR_CONFIG, null);
+    // This is a read-only step checking the state of the notebook instance.
     return StepResult.getStepResultSuccess();
   }
 }

@@ -16,6 +16,9 @@ import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.notebooks.v1.model.Instance;
 import java.io.IOException;
 import java.util.Map;
+
+import com.google.cloud.notebooks.v1.NotebookServiceClient;
+import org.springframework.data.relational.core.sql.In;
 import org.springframework.http.HttpStatus;
 
 public class RetrieveAiNotebookResourceAttributesStep implements Step {
@@ -68,11 +71,14 @@ public class RetrieveAiNotebookResourceAttributesStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
-  // In "com.google.api.services.notebooks.v1.model", the machine type is the "full" URL
-  // In "com.google.cloud.notebooks.v1", the machine is the string itself (e.g., "n1-standard-4").
-  // Future steps for updating CPU/GPU use the client library {@link NotebookServiceClient}:
-  // (i.e., "com.google.cloud.notebooks.v1")
+  /**
+   * In {@link com.google.api.services.notebooks.v1.model}, the machine type is the "full" URL In
+   * {@link com.google.cloud.notebooks.v1}, the machine is the string itself (e.g.,
+   * "n1-standard-4").
+   * <p> Future steps for updating CPU/GPU use the client library {@link
+   * NotebookServiceClient}: (i.e., {@link com.google.cloud.notebooks.v1})
+   */
   private String getMachineTypeFromUrl(String notebookUrl) {
-    return notebookUrl.substring(notebookUrl.lastIndexOf("/"));
+    return notebookUrl.substring(notebookUrl.lastIndexOf("/") + 1);
   }
 }
