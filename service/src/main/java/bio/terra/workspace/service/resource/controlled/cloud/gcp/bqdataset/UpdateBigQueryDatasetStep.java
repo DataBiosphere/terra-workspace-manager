@@ -71,6 +71,7 @@ public class UpdateBigQueryDatasetStep implements Step {
               attributeTableLifetime,
               attributePartitionLifetime);
       dbUpdater.updateAttributes(newAttributes);
+      workingMap.put(WorkspaceFlightMapKeys.ResourceKeys.DB_UPDATER, dbUpdater);
       return updateDataset(newAttributes);
     }
 

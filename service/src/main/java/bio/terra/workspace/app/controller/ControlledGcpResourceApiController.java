@@ -350,6 +350,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             userRequest,
             WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
 
+    ApiGcpBigQueryDatasetCreationParameters dataset = body.getDataset();
+
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceUuid);
     ControlledBigQueryDatasetResource resource =
         ControlledBigQueryDatasetResource.builder()
@@ -357,18 +359,19 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
                 ControlledBigQueryDatasetHandler.getHandler()
                     .generateCloudName(
                         workspaceUuid,
-                        Optional.ofNullable(body.getDataset().getDatasetId())
+                        Optional.ofNullable(dataset.getDatasetId())
                             .orElse(body.getCommon().getName())))
             .projectId(projectId)
+            .defaultPartitionLifetime(dataset.getDefaultPartitionLifetime())
+            .defaultTableLifetime(dataset.getDefaultTableLifetime())
+            .datasetName(dataset.getDatasetId())
             .common(commonFields)
             .build();
-
-    body.getDataset().location(resourceLocation);
 
     final ControlledBigQueryDatasetResource createdDataset =
         getControlledResourceService()
             .createControlledResourceSync(
-                resource, commonFields.getIamRole(), userRequest, body.getDataset())
+                resource, commonFields.getIamRole(), userRequest, /*creationParameters=*/ null)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
 
     UUID resourceId = createdDataset.getResourceId();
