@@ -22,25 +22,6 @@ public class AiNotebookApiConversionsTest extends BaseUnitTest {
   }
 
   @Test
-  public void toApiAcceleratorConfig_nullType() {
-    ApiGcpAiNotebookInstanceAcceleratorConfig configWithNullType =
-        AcceleratorConfig.toApiAcceleratorConfig(
-            new AcceleratorConfig("fake-type-null-count", null));
-
-    Assertions.assertNull(configWithNullType.getCoreCount());
-    Assertions.assertEquals("fake-type-null-count", configWithNullType.getType());
-  }
-
-  @Test
-  public void toApiAcceleratorConfig_nullCount() {
-    ApiGcpAiNotebookInstanceAcceleratorConfig configWithNullCount =
-        AcceleratorConfig.toApiAcceleratorConfig(new AcceleratorConfig(null, 1L));
-
-    Assertions.assertEquals(1L, configWithNullCount.getCoreCount());
-    Assertions.assertNull(configWithNullCount.getType());
-  }
-
-  @Test
   public void fromApiAcceleratorConfig() {
     AcceleratorConfig resultAcceleratorConfig =
         AcceleratorConfig.fromApiAcceleratorConfig(defaultApiAcceleratorConfig);
@@ -48,26 +29,6 @@ public class AiNotebookApiConversionsTest extends BaseUnitTest {
     Assertions.assertEquals(
         defaultApiAcceleratorConfig.getCoreCount(), resultAcceleratorConfig.coreCount());
     Assertions.assertEquals(defaultApiAcceleratorConfig.getType(), resultAcceleratorConfig.type());
-  }
-
-  @Test
-  public void fromApiAcceleratorConfig_nullType() {
-    AcceleratorConfig configWithNullType =
-        AcceleratorConfig.fromApiAcceleratorConfig(
-            new ApiGcpAiNotebookInstanceAcceleratorConfig().type("fake-type-null-count"));
-
-    Assertions.assertNull(configWithNullType.coreCount());
-    Assertions.assertEquals("fake-type-null-count", configWithNullType.type());
-  }
-
-  @Test
-  public void fromApiAcceleratorConfig_nullCount() {
-    AcceleratorConfig configWithNullCount =
-        AcceleratorConfig.fromApiAcceleratorConfig(
-            new ApiGcpAiNotebookInstanceAcceleratorConfig().coreCount(1L));
-
-    Assertions.assertEquals(1L, configWithNullCount.coreCount());
-    Assertions.assertNull(configWithNullCount.type());
   }
 
   @Test

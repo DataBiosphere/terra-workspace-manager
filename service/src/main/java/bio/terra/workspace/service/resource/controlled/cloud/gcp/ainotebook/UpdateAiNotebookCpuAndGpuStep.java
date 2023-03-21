@@ -105,23 +105,16 @@ public class UpdateAiNotebookCpuAndGpuStep implements Step {
       }
 
       if (effectiveAcceleratorConfig != null) {
-        SetInstanceAcceleratorRequest.Builder setInstanceRequestBuilder =
-            SetInstanceAcceleratorRequest.newBuilder().setName(instanceName.formatName());
-
-        if (effectiveAcceleratorConfig.coreCount() != null) {
-          setInstanceRequestBuilder.setCoreCount(effectiveAcceleratorConfig.coreCount());
-        }
-        if (effectiveAcceleratorConfig.type() != null) {
-          setInstanceRequestBuilder.setType(
-              Instance.AcceleratorType.valueOf(effectiveAcceleratorConfig.type()));
-        }
-        SetInstanceAcceleratorRequest setInstanceAcceleratorRequest =
-            setInstanceRequestBuilder.build();
-
         RetryUtils.getWithRetryOnException(
             () ->
                 notebookServiceClient
-                    .setInstanceAcceleratorAsync(setInstanceAcceleratorRequest)
+                    .setInstanceAcceleratorAsync(
+                        SetInstanceAcceleratorRequest.newBuilder()
+                            .setName(instanceName.formatName())
+                            .setType(
+                                Instance.AcceleratorType.valueOf(effectiveAcceleratorConfig.type()))
+                            .setCoreCount(effectiveAcceleratorConfig.coreCount())
+                            .build())
                     .get(),
             Duration.ofMinutes(7),
             DEFAULT_RETRY_SLEEP_DURATION,
