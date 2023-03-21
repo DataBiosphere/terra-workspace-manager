@@ -13,12 +13,12 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 
-public class UpdateNotebookResourceAttributesStep implements Step {
+public class UpdateAiNotebookResourceAttributesDuringCreationStep implements Step {
 
   private final ControlledAiNotebookInstanceResource resource;
   private final ResourceDao resourceDao;
 
-  public UpdateNotebookResourceAttributesStep(
+  public UpdateAiNotebookResourceAttributesDuringCreationStep(
       ControlledAiNotebookInstanceResource resource, ResourceDao resourceDao) {
     this.resource = resource;
     this.resourceDao = resourceDao;
