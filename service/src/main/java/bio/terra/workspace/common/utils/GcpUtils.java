@@ -83,6 +83,7 @@ public class GcpUtils {
         // do not waste time retrying on client error.
         throw new BadRequestException(
             String.format("Gcp calls failed with client error code %s. Do not retry", code));
+        // Handles the "CPU quota limit exceeded" error for AI notebook creation.
       } else if (code == Code.PERMISSION_DENIED.value()) {
         throw new ForbiddenException(
             String.format("%s", operation.getOperationAdapter().getError().getMessage()));

@@ -27,4 +27,11 @@ public class GcpUtilsTest extends BaseUnitTest {
     assertEquals("asia-northeast3", GcpUtils.parseRegion("asia-northeast3-c"));
     assertEquals("australia-southeast2", GcpUtils.parseRegion("australia-southeast2-b"));
   }
+
+  // The permission denied code includes cases of the "quota exceeded limit" error for AI notebook
+  // creation.
+  @Test
+  public void pollAndRetry_catchesPermissionDeniedError() {
+
+  }
 }
