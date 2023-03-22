@@ -39,11 +39,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.client.config.RequestConfig;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.glassfish.jersey.apache.connector.ApacheClientProperties;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
@@ -85,16 +85,15 @@ public class TpsApiDispatch {
     clientConfig.register(new JSON());
     clientConfig.register(JacksonFeature.class);
     clientConfig.connectorProvider(new ApacheConnectorProvider());
-    PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
-    connectionManager.setDefaultMaxPerRoute(20);
-    connectionManager.setValidateAfterInactivity(1);
-    clientConfig.property(ApacheClientProperties.CONNECTION_MANAGER, connectionManager);
     // This is the untested change: default to a 45s idle connection timeout on the client side,
     // rather than assuming connections stay open indefinitely. Terra servers tend to drop
     // connections after ~60s of not being used. This may help with tests where WSM gets unexpected
     // "connection reset" errors from TPS.
-    RequestConfig requestConfig = RequestConfig.custom().setSocketTimeout(45_000).build();
-    clientConfig.property(ApacheClientProperties.REQUEST_CONFIG, requestConfig);
+    PoolingHttpClientConnectionManager connectionManager =
+        new PoolingHttpClientConnectionManager(/*timeToLive=*/ 45, /*timeUnit=*/ TimeUnit.SECONDS);
+    connectionManager.setDefaultMaxPerRoute(20);
+    connectionManager.setValidateAfterInactivity(1);
+    clientConfig.property(ApacheClientProperties.CONNECTION_MANAGER, connectionManager);
     return ClientBuilder.newClient(clientConfig);
   }
 
