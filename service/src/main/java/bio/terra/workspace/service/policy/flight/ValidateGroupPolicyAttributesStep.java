@@ -52,6 +52,6 @@ public class ValidateGroupPolicyAttributesStep implements Step {
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
     // Validation step so there should be nothing to undo, only propagate the flight failure.
-    return context.getResult();
+    return StepResult.getStepResultSuccess();
   }
 }
