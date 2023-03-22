@@ -19,7 +19,6 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
-import com.azure.core.util.ExpandableStringEnum;
 import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -451,7 +450,7 @@ public class ResourceValidationUtils {
 
   public static void validateAzureVmSize(String vmSize) {
     if (!VirtualMachineSizeTypes.values().stream()
-        .map(ExpandableStringEnum::toString)
+        .map(VirtualMachineSizeTypes::toString)
         .toList()
         .contains(vmSize)) {
       logger.warn("Invalid Azure vmSize {}", vmSize);

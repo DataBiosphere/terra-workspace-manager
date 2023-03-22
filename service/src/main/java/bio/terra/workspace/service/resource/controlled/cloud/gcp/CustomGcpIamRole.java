@@ -47,7 +47,7 @@ public class CustomGcpIamRole {
 
   /**
    * Create a custom GCP role from name and permissions list. Roles applied at the resource level
-   * should use {@link CustomGcpIamRole.ofResource(WsmResourceFamily, ControlledResourceIamRole,
+   * should use {@link CustomGcpIamRole#ofResource(WsmResourceFamily, ControlledResourceIamRole,
    * List)} instead.
    *
    * @param roleName roleName
