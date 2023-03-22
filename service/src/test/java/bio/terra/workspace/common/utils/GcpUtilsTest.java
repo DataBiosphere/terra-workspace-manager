@@ -2,20 +2,16 @@ package bio.terra.workspace.common.utils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import bio.terra.cloudres.google.api.services.common.OperationCow;
 import bio.terra.common.exception.ForbiddenException;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.CreateAiNotebookInstanceStep;
 import com.google.api.services.notebooks.v1.model.Operation;
 import com.google.rpc.Code;
+import java.time.Duration;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-
-import java.time.Duration;
 
 public class GcpUtilsTest extends BaseUnitTest {
 
