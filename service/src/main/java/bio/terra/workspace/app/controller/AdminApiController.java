@@ -71,26 +71,6 @@ public class AdminApiController extends ControllerBase implements AdminApi {
 
   @Traced
   @Override
-  public ResponseEntity<ApiJobResult> backfillControlledResourcesRegions(
-      ApiCloudPlatform cloudPlatform, Boolean wetRun) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    SamRethrow.onInterrupted(
-        () -> getSamService().checkAdminAuthz(userRequest),
-        "check whether the user has admin access");
-
-    String jobId =
-        switch (cloudPlatform) {
-          case GCP -> controlledResourceService.updateGcpControlledResourcesRegionAsync(
-              userRequest, Boolean.TRUE.equals(wetRun));
-          case AZURE -> controlledResourceService.updateAzureControlledResourcesRegionAsync(
-              userRequest, Boolean.TRUE.equals(wetRun));
-        };
-    ApiJobResult response = jobApiUtils.fetchJobResult(jobId);
-    return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
-  }
-
-  @Traced
-  @Override
   public ResponseEntity<ApiJobResult> getBackfillControlledResourcesRegionsResult(String jobId) {
     return getApiJobResult(jobId);
   }

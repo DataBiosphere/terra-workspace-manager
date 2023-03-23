@@ -97,7 +97,7 @@ public class CreateAzureDiskStepTest extends BaseAzureUnitTest {
             mockCrlService,
             ControlledResourceFixtures.getAzureDisk(
                 creationParameters.getName(),
-                creationParameters.getRegion(),
+                ControlledResourceFixtures.DEFAULT_AZURE_RESOURCE_REGION,
                 creationParameters.getSize()));
 
     final StepResult stepResult = createAzureDiskStep.doStep(mockFlightContext);
@@ -118,7 +118,7 @@ public class CreateAzureDiskStepTest extends BaseAzureUnitTest {
     CreateDiskRequestData expected =
         CreateDiskRequestData.builder()
             .setName(creationParameters.getName())
-            .setRegion(Region.fromName(creationParameters.getRegion()))
+            .setRegion(Region.fromName(ControlledResourceFixtures.DEFAULT_AZURE_RESOURCE_REGION))
             .setSize(50)
             .setTenantId(mockAzureCloudContext.getAzureTenantId())
             .setSubscriptionId(mockAzureCloudContext.getAzureSubscriptionId())
@@ -139,7 +139,7 @@ public class CreateAzureDiskStepTest extends BaseAzureUnitTest {
             mockCrlService,
             ControlledResourceFixtures.getAzureDisk(
                 creationParameters.getName(),
-                creationParameters.getRegion(),
+                ControlledResourceFixtures.DEFAULT_AZURE_RESOURCE_REGION,
                 creationParameters.getSize()));
 
     // Stub creation to throw Conflict exception.
@@ -162,7 +162,7 @@ public class CreateAzureDiskStepTest extends BaseAzureUnitTest {
             mockCrlService,
             ControlledResourceFixtures.getAzureDisk(
                 creationParameters.getName(),
-                creationParameters.getRegion(),
+                ControlledResourceFixtures.DEFAULT_AZURE_RESOURCE_REGION,
                 creationParameters.getSize()));
 
     final StepResult stepResult = createAzureDiskStep.undoStep(mockFlightContext);

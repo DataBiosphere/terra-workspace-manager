@@ -68,10 +68,10 @@ public class TestLandingZoneManager {
     storageManager = crlService.getStorageManager(azureCloudContext, azureConfig);
   }
 
-  public void createLandingZoneWithSharedStorageAccount(
+  public StorageAccount createLandingZoneWithSharedStorageAccount(
       UUID landingZoneId, UUID workspaceId, String storageAccountName, String region) {
     createLandingZoneDbRecord(landingZoneId, workspaceId);
-    createStorageAccount(storageAccountName, region, landingZoneId);
+    return createStorageAccount(storageAccountName, region, landingZoneId);
   }
 
   public void deleteLandingZoneWithSharedStorageAccount(

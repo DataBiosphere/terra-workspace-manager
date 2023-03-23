@@ -6,20 +6,17 @@ import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.AzureVmCreationParameters;
 import bio.terra.workspace.model.CreateControlledAzureVmRequestBody;
 import bio.terra.workspace.model.CreatedControlledAzureDisk;
-import bio.terra.workspace.model.CreatedControlledAzureNetwork;
 import bio.terra.workspace.model.CreatedControlledAzureVmResult;
 import bio.terra.workspace.model.JobControl;
 import scripts.utils.ControlledAzureVmTestScriptBase;
 
-/** Create Vm with private IP and with Custom Script Extension. Default scenario. */
-public class ControlledAzureVmWithCustomScriptExtensionNoPublicIpLifecycle
-    extends ControlledAzureVmTestScriptBase {
+/** Creates VM with private IP and without Custom Script Extension. */
+public class ControlledAzureVmLifecycle extends ControlledAzureVmTestScriptBase {
   @Override
   protected CreatedControlledAzureVmResult createVm(
       String resourceSuffix,
       String createVmJobId,
-      CreatedControlledAzureDisk disk,
-      CreatedControlledAzureNetwork network)
+      CreatedControlledAzureDisk disk)
       throws ApiException {
     CreateControlledAzureVmRequestBody vmRequestBody =
         new CreateControlledAzureVmRequestBody()
@@ -28,12 +25,9 @@ public class ControlledAzureVmWithCustomScriptExtensionNoPublicIpLifecycle
     AzureVmCreationParameters vmCreationParameters =
         new AzureVmCreationParameters()
             .name(String.format("vm-%s", resourceSuffix))
-            .region(REGION)
             .vmSize("Standard_D8s_v3")
             .diskId(disk.getResourceId())
-            .networkId(network.getResourceId())
             .vmImage(createAzureVmImage())
-            .customScriptExtension(createVmCustomScriptExtension())
             .vmUser(createUser());
     vmRequestBody.azureVm(vmCreationParameters);
     CreatedControlledAzureVmResult vmCreateResult =

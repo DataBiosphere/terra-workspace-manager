@@ -12,7 +12,6 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
@@ -63,15 +62,6 @@ public class DeleteAzureStorageContainerStep implements Step {
 
     try {
       String storageAccountName;
-      if (resource.getStorageAccountId() != null) {
-        WsmResource wsmResource =
-            resourceDao.getResource(resource.getWorkspaceId(), resource.getStorageAccountId());
-        ControlledAzureStorageResource storageAccount =
-            wsmResource
-                .castToControlledResource()
-                .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT);
-        storageAccountName = storageAccount.getStorageAccountName();
-      } else {
         try {
           // Storage container was created based on landing zone shared storage account
           var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
@@ -101,7 +91,6 @@ public class DeleteAzureStorageContainerStep implements Step {
                       azureCloudContext.getAzureSubscriptionId(),
                       azureCloudContext.getAzureResourceGroupId())));
         }
-      }
 
       logger.info(
           "Attempting to delete storage container '{}' in account '{}'",
@@ -115,14 +104,6 @@ public class DeleteAzureStorageContainerStep implements Step {
               resource.getStorageContainerName());
       return StepResult.getStepResultSuccess();
 
-    } catch (
-        ResourceNotFoundException resourceNotFoundException) { // Thrown by resourceDao.getResource
-      return new StepResult(
-          StepStatus.STEP_RESULT_FAILURE_FATAL,
-          new ResourceNotFoundException(
-              String.format(
-                  "The storage account with ID '%s' cannot be retrieved from the WSM resource manager.",
-                  resource.getStorageAccountId())));
     } catch (ManagementException ex) {
       logger.warn(
           "Attempt to delete Azure storage container failed on this try: '{}'. Error Code: {}.",

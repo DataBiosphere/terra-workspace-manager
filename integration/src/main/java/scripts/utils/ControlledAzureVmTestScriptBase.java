@@ -8,8 +8,6 @@ import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.AccessScope;
 import bio.terra.workspace.model.AzureDiskCreationParameters;
-import bio.terra.workspace.model.AzureIpCreationParameters;
-import bio.terra.workspace.model.AzureNetworkCreationParameters;
 import bio.terra.workspace.model.AzureVmCustomScriptExtension;
 import bio.terra.workspace.model.AzureVmCustomScriptExtensionSetting;
 import bio.terra.workspace.model.AzureVmCustomScriptExtensionTag;
@@ -18,17 +16,12 @@ import bio.terra.workspace.model.AzureVmUser;
 import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.ControlledResourceCommonFields;
 import bio.terra.workspace.model.CreateControlledAzureDiskRequestBody;
-import bio.terra.workspace.model.CreateControlledAzureIpRequestBody;
-import bio.terra.workspace.model.CreateControlledAzureNetworkRequestBody;
 import bio.terra.workspace.model.CreatedControlledAzureDisk;
-import bio.terra.workspace.model.CreatedControlledAzureIp;
-import bio.terra.workspace.model.CreatedControlledAzureNetwork;
 import bio.terra.workspace.model.CreatedControlledAzureVmResult;
 import bio.terra.workspace.model.JobReport;
 import bio.terra.workspace.model.ManagedBy;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
@@ -48,38 +41,18 @@ public abstract class ControlledAzureVmTestScriptBase extends ControlledAzureTes
   protected static final int VM_CREATE_WAIT_POLL_INTERVAL_SECONDS = 5;
 
   protected String createVmJobId;
-  // controls if we want to provision VM with public ip
-  protected boolean vmWithPublicIp;
-  protected Optional<CreatedControlledAzureIp> publicIp;
-
-  @Override
-  protected void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
-      throws Exception {
-    super.doSetup(testUsers, workspaceApi);
-    vmWithPublicIp = false;
-    publicIp = Optional.empty();
-  }
 
   @Override
   protected void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
       throws Exception {
     azureApi = ClientTestUtils.getControlledAzureResourceClient(testUser, server);
 
-    // create public ip
-    if (vmWithPublicIp) {
-      CreatedControlledAzureIp ip = createPublicIp(suffix);
-      publicIp = Optional.of(ip);
-    }
-
-    // create network
-    CreatedControlledAzureNetwork network = createNetwork(suffix);
-
     // create disk
     CreatedControlledAzureDisk disk = createDisk(suffix);
 
     // create vm
     createVmJobId = UUID.randomUUID().toString();
-    CreatedControlledAzureVmResult vmCreateResult = createVm(suffix, createVmJobId, disk, network);
+    CreatedControlledAzureVmResult vmCreateResult = createVm(suffix, createVmJobId, disk);
 
     vmCreateResult = waitForVmCreationCompletion(createVmJobId, vmCreateResult);
 
@@ -102,47 +75,8 @@ public abstract class ControlledAzureVmTestScriptBase extends ControlledAzureTes
   protected abstract CreatedControlledAzureVmResult createVm(
       String resourceSuffix,
       String createVmJobId,
-      CreatedControlledAzureDisk disk,
-      CreatedControlledAzureNetwork network)
+      CreatedControlledAzureDisk disk)
       throws ApiException;
-
-  protected CreatedControlledAzureIp createPublicIp(String resourceSuffix) throws ApiException {
-    AzureIpCreationParameters ipCreationParameters =
-        new AzureIpCreationParameters().name(String.format("ip-%s", suffix)).region(REGION);
-    CreateControlledAzureIpRequestBody ipRequestBody =
-        new CreateControlledAzureIpRequestBody()
-            .common(createCommonFields("common-ip", resourceSuffix))
-            .azureIp(ipCreationParameters);
-    CreatedControlledAzureIp ip = azureApi.createAzureIp(ipRequestBody, getWorkspaceId());
-    assertNotNull(ip);
-    logger.info(
-        "Created IP with the following parameters Name={}, Resource Id={}",
-        ip.getAzureIp().getAttributes().getIpName(),
-        ip.getResourceId());
-    return ip;
-  }
-
-  protected CreatedControlledAzureNetwork createNetwork(String resourceSuffix) throws ApiException {
-    CreateControlledAzureNetworkRequestBody networkRequestBody =
-        new CreateControlledAzureNetworkRequestBody()
-            .common(createCommonFields("common-network", resourceSuffix));
-    AzureNetworkCreationParameters networkParameters =
-        new AzureNetworkCreationParameters()
-            .name(String.format("network-%s", suffix))
-            .subnetName(String.format("subnet-%s", suffix))
-            .addressSpaceCidr("192.168.0.0/16")
-            .subnetAddressCidr("192.168.1.0/24")
-            .region(REGION);
-    networkRequestBody.azureNetwork(networkParameters);
-    CreatedControlledAzureNetwork network =
-        azureApi.createAzureNetwork(networkRequestBody, getWorkspaceId());
-    assertNotNull(network.getResourceId());
-    logger.info(
-        "Created Network with following parameters Name={}, Resource Id={}",
-        network.getAzureNetwork().getAttributes().getNetworkName(),
-        network.getResourceId());
-    return network;
-  }
 
   protected CreatedControlledAzureDisk createDisk(String resourceSuffix) throws ApiException {
     CreateControlledAzureDiskRequestBody diskRequestBody =
@@ -151,8 +85,7 @@ public abstract class ControlledAzureVmTestScriptBase extends ControlledAzureTes
     AzureDiskCreationParameters diskParameters =
         new AzureDiskCreationParameters()
             .name(String.format("disk-%s", suffix))
-            .size(50)
-            .region(REGION);
+            .size(50);
     diskRequestBody.azureDisk(diskParameters);
     CreatedControlledAzureDisk disk = azureApi.createAzureDisk(diskRequestBody, getWorkspaceId());
     assertNotNull(disk.getResourceId());

@@ -26,8 +26,6 @@ public abstract class CreateStorageContainerRequestData extends BaseStorageConta
   @AutoValue.Builder
   public abstract static class Builder {
 
-    public abstract CreateStorageContainerRequestData.Builder setStorageAccountId(UUID value);
-
     public abstract CreateStorageContainerRequestData.Builder setStorageContainerName(String value);
 
     public abstract CreateStorageContainerRequestData.Builder setResourceGroupName(String value);

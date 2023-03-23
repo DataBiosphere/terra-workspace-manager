@@ -10,13 +10,13 @@ import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.generated.model.ApiAccessScope;
-import bio.terra.workspace.generated.model.ApiAzureIpCreationParameters;
 import bio.terra.workspace.generated.model.ApiManagedBy;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
@@ -33,6 +33,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.gcp.DeleteGcpProjectStep;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import com.azure.core.management.Region;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
@@ -100,25 +101,26 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
     azureCloudContextService.getRequiredAzureCloudContext(workspaceUuid);
   }
 
-  private UUID createAzureIpResource(UUID workspaceUuid, AuthenticatedUserRequest userRequest)
+  private UUID createAzureResource(UUID workspaceUuid, AuthenticatedUserRequest userRequest)
       throws Exception {
-    ApiAzureIpCreationParameters ipCreationParameters =
-        ControlledResourceFixtures.getAzureIpCreationParameters();
+    var creationParameters =
+        ControlledResourceFixtures.getAzureDiskCreationParameters();
 
-    final UUID ipId = UUID.randomUUID();
-    ControlledAzureIpResource ipResource =
-        ControlledAzureIpResource.builder()
+    final UUID id = UUID.randomUUID();
+    var azureResource =
+        ControlledAzureDiskResource.builder()
             .common(
                 ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                     .workspaceUuid(workspaceUuid)
-                    .resourceId(ipId)
-                    .name("wsm-test" + ipId)
+                    .resourceId(id)
+                    .name("wsm-test-" + id)
                     .cloningInstructions(CloningInstructions.COPY_RESOURCE)
                     .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
                     .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
-                    .region(ipCreationParameters.getRegion())
+                    .region(Region.US_EAST2.name())
                     .build())
-            .ipName(ipCreationParameters.getName())
+            .diskName(creationParameters.getName())
+            .size(creationParameters.getSize())
             .build();
 
     // Submit an IP creation flight.
@@ -127,12 +129,12 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
             jobService.getStairway(),
             CreateControlledResourceFlight.class,
             azureTestUtils.createControlledResourceInputParameters(
-                workspaceUuid, userRequest, ipResource),
+                workspaceUuid, userRequest, azureResource),
             CREATION_FLIGHT_TIMEOUT,
             null);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
 
-    return ipId;
+    return id;
   }
 
   @Test
@@ -211,7 +213,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
   void deleteResourcesInContext() throws Exception {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     createAzureContext(workspaceUuid, userRequest);
-    UUID ipId = createAzureIpResource(workspaceUuid, userRequest);
+    UUID resourceId = createAzureResource(workspaceUuid, userRequest);
 
     // Delete the azure context.
     FlightMap deleteParameters = new FlightMap();
@@ -234,7 +236,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
     assertTrue(azureCloudContextService.getAzureCloudContext(workspaceUuid).isEmpty());
     assertThrows(
         ResourceNotFoundException.class,
-        () -> controlledResourceService.getControlledResource(workspaceUuid, ipId));
+        () -> controlledResourceService.getControlledResource(workspaceUuid, resourceId));
   }
 
   // This test would be better in the WorkspaceDeleteFlightTest, but that class extends
@@ -252,7 +254,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
     UUID mcWorkspaceUuid = workspaceService.createWorkspace(request, null, null, userRequest);
 
     createAzureContext(mcWorkspaceUuid, userRequest);
-    UUID ipId = createAzureIpResource(mcWorkspaceUuid, userRequest);
+    UUID resourceId = createAzureResource(mcWorkspaceUuid, userRequest);
 
     // Run the delete flight, retrying every retryable step once
     FlightMap deleteParameters = new FlightMap();
@@ -281,7 +283,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
     // Verify the resource and workspace are not in WSM DB
     assertThrows(
         ResourceNotFoundException.class,
-        () -> controlledResourceService.getControlledResource(mcWorkspaceUuid, ipId));
+        () -> controlledResourceService.getControlledResource(mcWorkspaceUuid, resourceId));
     assertThrows(
         WorkspaceNotFoundException.class, () -> workspaceService.getWorkspace(mcWorkspaceUuid));
   }

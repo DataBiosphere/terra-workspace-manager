@@ -21,7 +21,6 @@ import bio.terra.workspace.generated.model.ApiAzureStorageContainerCreationParam
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.BaseStorageStepTest;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
@@ -51,8 +50,6 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
   final ApiAzureStorageContainerCreationParameters creationParameters =
       ControlledResourceFixtures.getAzureStorageContainerCreationParameters();
   private ControlledAzureStorageContainerResource storageContainerResource;
-  private final ControlledAzureStorageResource storageAccountResource =
-      ControlledResourceFixtures.getAzureStorage(storageAccountName, "mockRegion");
   private final ManagementException containerNotFoundException =
       new ManagementException(
           "Resource was not found.",
@@ -69,10 +66,9 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
     when(mockSamSerivce.getWsmServiceAccountToken()).thenReturn("wsm-token");
   }
 
-  private void initValidationStep(Optional<UUID> storageAccountId) {
+  private void initValidationStep() {
     storageContainerResource =
-        ControlledResourceFixtures.getAzureStorageContainer(
-            storageAccountId.orElse(null), creationParameters.getStorageContainerName());
+        ControlledResourceFixtures.getAzureStorageContainer(creationParameters.getStorageContainerName());
 
     verifyCanBeCreatedStep =
         new VerifyAzureStorageContainerCanBeCreatedStep(
@@ -84,41 +80,10 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
             storageContainerResource);
   }
 
-  private void mockStorageAccountExists() {
-    when(mockResourceDao.getResource(
-            storageContainerResource.getWorkspaceId(), creationParameters.getStorageAccountId()))
-        .thenReturn(storageAccountResource);
-    when(mockStorageAccounts.getByResourceGroup(
-            mockAzureCloudContext.getAzureResourceGroupId(), storageAccountName))
-        .thenReturn(mockStorageAccount);
-    when(mockFlightContext
-            .getWorkingMap()
-            .get(WorkspaceFlightMapKeys.ControlledResourceKeys.STORAGE_ACCOUNT_NAME, String.class))
-        .thenReturn(storageAccountName);
-  }
-
-  @Test
-  public void getStorageContainer_containerCanBeCreated() throws InterruptedException {
-    initValidationStep(Optional.of(creationParameters.getStorageAccountId()));
-    mockStorageAccountExists();
-
-    // The storage container must not already exist.
-    when(mockBlobContainers.get(
-            mockAzureCloudContext.getAzureResourceGroupId(),
-            storageAccountName,
-            creationParameters.getStorageContainerName()))
-        .thenThrow(containerNotFoundException);
-
-    final StepResult stepResult = verifyCanBeCreatedStep.doStep(mockFlightContext);
-
-    // Verify step returns success
-    assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
-  }
-
   @Test
   public void getStorageContainer_containerCanBeCreatedBasedOnLandingZoneSharedStorageAccount()
       throws InterruptedException {
-    initValidationStep(Optional.empty());
+    initValidationStep();
 
     when(mockLandingZoneApiDispatch.getLandingZoneId(any(BearerToken.class), any()))
         .thenReturn(LANDING_ZONE_ID);
@@ -150,45 +115,8 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
   }
 
   @Test
-  public void getStorageAccountContainer_storageAccountDoesNotExistInWSM()
-      throws InterruptedException {
-    initValidationStep(Optional.of(creationParameters.getStorageAccountId()));
-    // Storage account doesn't exist in WSM
-    when(mockResourceDao.getResource(
-            storageContainerResource.getWorkspaceId(), creationParameters.getStorageAccountId()))
-        .thenThrow(new ResourceNotFoundException("Not Found"));
-
-    final StepResult stepResult = verifyCanBeCreatedStep.doStep(mockFlightContext);
-
-    // Verify step returns error because storage account does not exist.
-    assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));
-    assertThat(stepResult.getException().get(), instanceOf(ResourceNotFoundException.class));
-  }
-
-  @Test
-  public void getStorageAccountContainer_storageAccountDoesNotExistInAzure()
-      throws InterruptedException {
-    initValidationStep(Optional.of(creationParameters.getStorageAccountId()));
-    // Storage account exists in WSM.
-    when(mockResourceDao.getResource(
-            storageContainerResource.getWorkspaceId(), creationParameters.getStorageAccountId()))
-        .thenReturn(storageAccountResource);
-
-    // Storage account doesn't exist in Azure
-    when(mockStorageAccounts.getByResourceGroup(
-            mockAzureCloudContext.getAzureResourceGroupId(), storageAccountName))
-        .thenThrow(resourceNotFoundException);
-
-    final StepResult stepResult = verifyCanBeCreatedStep.doStep(mockFlightContext);
-
-    // Verify step returns error because storage account does not exist.
-    assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));
-    assertThat(stepResult.getException().get(), instanceOf(ResourceNotFoundException.class));
-  }
-
-  @Test
   public void getStorageAccountContainer_landingZoneDoesntExist() throws InterruptedException {
-    initValidationStep(Optional.empty());
+    initValidationStep();
 
     when(mockUserRequest.getRequiredToken()).thenReturn("FAKE_TOKEN");
     // there are no landing zone association with azure cloud context
@@ -208,7 +136,7 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
   @Test
   public void getStorageAccountContainer_landingZoneDoesntHaveSharedStorageAccount()
       throws InterruptedException {
-    initValidationStep(Optional.empty());
+    initValidationStep();
 
     when(mockLandingZoneApiDispatch.getLandingZoneId(any(BearerToken.class), any()))
         .thenReturn(LANDING_ZONE_ID);
@@ -225,28 +153,9 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
   }
 
   @Test
-  public void getStorageContainer_containerAlreadyExists() throws InterruptedException {
-    initValidationStep(Optional.of(creationParameters.getStorageAccountId()));
-    mockStorageAccountExists();
-
-    // A storage container with this name already exists.
-    when(mockBlobContainers.get(
-            mockAzureCloudContext.getAzureResourceGroupId(),
-            storageAccountName,
-            creationParameters.getStorageContainerName()))
-        .thenReturn(mockBlobContainer);
-
-    final StepResult stepResult = verifyCanBeCreatedStep.doStep(mockFlightContext);
-
-    // Verify step fails.
-    assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));
-    assertThat(stepResult.getException().get(), instanceOf(DuplicateResourceException.class));
-  }
-
-  @Test
   public void getStorageContainer_containerAlreadyExistsInLandingZoneSharedStorageAccount()
       throws InterruptedException {
-    initValidationStep(Optional.empty());
+    initValidationStep();
 
     when(mockLandingZoneApiDispatch.getLandingZoneId(any(BearerToken.class), any()))
         .thenReturn(LANDING_ZONE_ID);

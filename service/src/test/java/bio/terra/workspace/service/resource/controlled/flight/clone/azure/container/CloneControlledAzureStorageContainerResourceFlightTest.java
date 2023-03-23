@@ -41,7 +41,6 @@ public class CloneControlledAzureStorageContainerResourceFlightTest extends Base
                 makeDefaultControlledResourceFieldsBuilder()
                     .cloningInstructions(CloningInstructions.COPY_RESOURCE)
                     .build())
-            .storageAccountId(UUID.randomUUID())
             .storageContainerName(UUID.randomUUID().toString())
             .build();
 

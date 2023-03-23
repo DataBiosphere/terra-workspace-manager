@@ -12,7 +12,6 @@ import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.StorageAccountKeyProvider;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
@@ -241,19 +240,19 @@ public class AzureStorageAccessService {
    * constiuent blobs.
    *
    * @param containerResource The WSM container resource the client will operate on
-   * @param storageAccountResource The parent storage account for the WSM container resource
+   * @param storageAccount The parent storage account for the WSM container resource
    * @return An Azure blob container client
    */
   public BlobContainerClient buildBlobContainerClient(
       ControlledAzureStorageContainerResource containerResource,
-      ControlledAzureStorageResource storageAccountResource) {
+      StorageAccount storageAccount) {
     StorageSharedKeyCredential storageAccountKey =
         storageAccountKeyProvider.getStorageAccountKey(
-            containerResource.getWorkspaceId(), storageAccountResource.getStorageAccountName());
+            containerResource.getWorkspaceId(), storageAccount.name());
 
     return new BlobContainerClientBuilder()
         .credential(storageAccountKey)
-        .endpoint(storageAccountResource.getStorageAccountEndpoint())
+        .endpoint(storageAccount.endPoints().primary().blob())
         .httpClient(HttpClient.createDefault())
         .containerName(containerResource.getStorageContainerName())
         .buildClient();
@@ -302,21 +301,7 @@ public class AzureStorageAccessService {
                 storageContainerUuid,
                 SamConstants.SamControlledResourceActions.READ_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
-    String storageAccountName;
-    String endpoint;
-    if (storageContainerResource.getStorageAccountId() != null) {
-      final ControlledAzureStorageResource storageAccountResource =
-          controlledResourceMetadataManager
-              .validateControlledResourceAndAction(
-                  userRequest,
-                  workspaceUuid,
-                  storageContainerResource.getStorageAccountId(),
-                  SamConstants.SamControlledResourceActions.READ_ACTION)
-              .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT);
-      storageAccountName = storageAccountResource.getStorageAccountName();
-      endpoint = storageAccountResource.getStorageAccountEndpoint();
-    } else {
-      // get details from LZ shared storage account
+    // get details from LZ shared storage account
       var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
       UUID landingZoneId = landingZoneApiDispatch.getLandingZoneId(bearerToken, workspaceUuid);
       Optional<ApiAzureLandingZoneDeployedResource> existingSharedStorageAccount =
@@ -337,9 +322,7 @@ public class AzureStorageAccessService {
           storageManager
               .storageAccounts()
               .getById(existingSharedStorageAccount.get().getResourceId());
-      storageAccountName = storageAccount.name();
-      endpoint = storageAccount.endPoints().primary().blob().toLowerCase(Locale.ROOT);
-    }
-    return new StorageData(storageAccountName, endpoint, storageContainerResource);
+    return new StorageData(storageAccount.name(),
+        storageAccount.endPoints().primary().blob().toLowerCase(Locale.ROOT), storageContainerResource);
   }
 }

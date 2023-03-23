@@ -22,10 +22,6 @@ public abstract class BaseStorageContainerRequestData implements ResourceManager
   /** The resource group of the resource. */
   public abstract String resourceGroupName();
 
-  /** The storage account resource ID. */
-  @Nullable
-  public abstract UUID storageAccountId();
-
   /**
    * Serializes this object to JSON. Not overriding {@link ResourceManagerRequestData#serialize()}
    * to ensure subclasses implement their own serialize method.
@@ -34,9 +30,6 @@ public abstract class BaseStorageContainerRequestData implements ResourceManager
     JsonObject requestData = new JsonObject();
     requestData.addProperty("resourceGroupName", resourceGroupName());
     requestData.addProperty("storageContainerName", storageContainerName());
-    if (storageAccountId() != null) {
-      requestData.addProperty("storageAccountId", storageAccountId().toString());
-    }
     return requestData;
   }
 }

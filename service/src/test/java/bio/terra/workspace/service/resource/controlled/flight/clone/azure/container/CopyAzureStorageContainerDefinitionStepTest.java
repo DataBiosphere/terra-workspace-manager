@@ -68,7 +68,6 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseAzureUnitTe
       String storageContainerName, String resourceName, UUID resourceId, UUID workspaceId) {
     return new ControlledAzureStorageContainerResource.Builder()
         .storageContainerName(storageContainerName)
-        .storageAccountId(UUID.randomUUID())
         .common(
             ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                 .resourceId(resourceId)
@@ -134,9 +133,6 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseAzureUnitTe
     assertEquals(cloned.getName(), destResourceName);
     assertEquals(cloned.getCloningInstructions(), CloningInstructions.COPY_DEFINITION);
     assertEquals(sharedAccountRegion, cloned.getRegion());
-    assertNull(
-        cloned.getStorageAccountId(),
-        "Storage account should be null since this is a landing zone backed workspace");
     assertEquals(sharedAccountRegion, cloned.getRegion());
   }
 

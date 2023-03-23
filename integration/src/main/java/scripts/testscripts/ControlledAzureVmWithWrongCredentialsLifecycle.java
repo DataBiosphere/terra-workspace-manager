@@ -10,7 +10,6 @@ import bio.terra.workspace.model.AzureVmCreationParameters;
 import bio.terra.workspace.model.AzureVmUser;
 import bio.terra.workspace.model.CreateControlledAzureVmRequestBody;
 import bio.terra.workspace.model.CreatedControlledAzureDisk;
-import bio.terra.workspace.model.CreatedControlledAzureNetwork;
 import bio.terra.workspace.model.CreatedControlledAzureVmResult;
 import bio.terra.workspace.model.JobControl;
 import bio.terra.workspace.model.JobReport;
@@ -30,8 +29,7 @@ public class ControlledAzureVmWithWrongCredentialsLifecycle
   protected CreatedControlledAzureVmResult createVm(
       String resourceSuffix,
       String createVmJobId,
-      CreatedControlledAzureDisk disk,
-      CreatedControlledAzureNetwork network)
+      CreatedControlledAzureDisk disk)
       throws ApiException {
     CreateControlledAzureVmRequestBody vmRequestBody =
         new CreateControlledAzureVmRequestBody()
@@ -40,10 +38,8 @@ public class ControlledAzureVmWithWrongCredentialsLifecycle
     AzureVmCreationParameters vmCreationParameters =
         new AzureVmCreationParameters()
             .name(String.format("vm-%s", resourceSuffix))
-            .region(REGION)
             .vmSize("Standard_D8s_v3")
             .diskId(disk.getResourceId())
-            .networkId(network.getResourceId())
             .vmImage(createAzureVmImage())
             .vmUser(createUser());
     vmRequestBody.azureVm(vmCreationParameters);

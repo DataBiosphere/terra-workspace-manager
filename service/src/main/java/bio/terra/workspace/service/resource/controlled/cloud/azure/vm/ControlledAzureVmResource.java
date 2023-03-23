@@ -17,7 +17,6 @@ import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceFlight;
-import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceRegionStep;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.WsmControlledResourceFields;
@@ -36,8 +35,6 @@ public class ControlledAzureVmResource extends ControlledResource {
   private final String vmSize;
   private final String vmImage;
 
-  private final UUID ipId;
-  private final UUID networkId;
   private final UUID diskId;
 
   @JsonCreator
@@ -48,15 +45,11 @@ public class ControlledAzureVmResource extends ControlledResource {
       @JsonProperty("vmName") String vmName,
       @JsonProperty("vmSize") String vmSize,
       @JsonProperty("vmImage") String vmImage,
-      @JsonProperty("ipId") UUID ipId,
-      @JsonProperty("networkId") UUID networkId,
       @JsonProperty("diskId") UUID diskId) {
     super(resourceFields, controlledResourceFields);
     this.vmName = vmName;
     this.vmSize = vmSize;
     this.vmImage = vmImage;
-    this.ipId = ipId;
-    this.networkId = networkId;
     this.diskId = diskId;
     validate();
   }
@@ -66,15 +59,11 @@ public class ControlledAzureVmResource extends ControlledResource {
       String vmName,
       String vmSize,
       String vmImage,
-      UUID ipId,
-      UUID networkId,
       UUID diskId) {
     super(common);
     this.vmName = vmName;
     this.vmImage = vmImage;
     this.vmSize = vmSize;
-    this.ipId = ipId;
-    this.networkId = networkId;
     this.diskId = diskId;
     validate();
   }
@@ -111,14 +100,6 @@ public class ControlledAzureVmResource extends ControlledResource {
 
   public String getVmImage() {
     return vmImage;
-  }
-
-  public UUID getIpId() {
-    return ipId;
-  }
-
-  public UUID getNetworkId() {
-    return networkId;
   }
 
   public UUID getDiskId() {
@@ -177,9 +158,6 @@ public class ControlledAzureVmResource extends ControlledResource {
             flightBeanBag.getResourceDao()),
         cloudRetry);
     flight.addStep(
-        new UpdateControlledResourceRegionStep(flightBeanBag.getResourceDao(), getResourceId()),
-        RetryRules.shortDatabase());
-    flight.addStep(
         new AssignManagedIdentityAzureVmStep(
             flightBeanBag.getAzureConfig(),
             flightBeanBag.getCrlService(),
@@ -222,9 +200,7 @@ public class ControlledAzureVmResource extends ControlledResource {
         .region(getRegion())
         .vmSize(getVmSize())
         .vmImage(getVmImage())
-        .ipId(getIpId())
-        .diskId(getDiskId())
-        .networkId(getNetworkId());
+        .diskId(getDiskId());
   }
 
   public ApiAzureVmResource toApiResource() {
@@ -246,8 +222,6 @@ public class ControlledAzureVmResource extends ControlledResource {
             getRegion(),
             getVmSize(),
             getVmImage(),
-            getIpId(),
-            getNetworkId(),
             getDiskId()));
   }
 
@@ -311,11 +285,8 @@ public class ControlledAzureVmResource extends ControlledResource {
   public static class Builder {
     private ControlledResourceFields common;
     private String vmName;
-    private String region;
     private String vmSize;
     private String vmImage;
-    private UUID ipId;
-    private UUID networkId;
     private UUID diskId;
 
     public Builder common(ControlledResourceFields common) {
@@ -338,16 +309,6 @@ public class ControlledAzureVmResource extends ControlledResource {
       return this;
     }
 
-    public ControlledAzureVmResource.Builder ipId(UUID ipId) {
-      this.ipId = ipId;
-      return this;
-    }
-
-    public ControlledAzureVmResource.Builder networkId(UUID networkId) {
-      this.networkId = networkId;
-      return this;
-    }
-
     public ControlledAzureVmResource.Builder diskId(UUID diskId) {
       this.diskId = diskId;
       return this;
@@ -355,7 +316,7 @@ public class ControlledAzureVmResource extends ControlledResource {
 
     public ControlledAzureVmResource build() {
       return new ControlledAzureVmResource(
-          common, vmName, vmSize, vmImage, ipId, networkId, diskId);
+          common, vmName, vmSize, vmImage, diskId);
     }
   }
 }

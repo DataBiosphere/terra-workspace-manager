@@ -66,15 +66,13 @@ public class CreateAzureStorageContainerStep implements Step {
           .create(
               Defaults.buildContext(
                   CreateStorageContainerRequestData.builder()
-                      .setStorageAccountId(resource.getStorageAccountId())
                       .setStorageContainerName(resource.getStorageContainerName())
                       .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
                       .build()));
     } catch (ManagementException e) {
       logger.error(
-          "Failed to create the Azure storage container '{}' with storage account with the ID '{}'. Error Code: {}",
+          "Failed to create the Azure storage container '{}'. Error Code: {}",
           resource.getStorageContainerName(),
-          resource.getStorageAccountId(),
           e.getValue().getCode(),
           e);
 

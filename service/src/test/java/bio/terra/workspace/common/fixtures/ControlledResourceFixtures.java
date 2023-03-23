@@ -12,10 +12,6 @@ import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresource.ControlledFlexibleResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.ControlledAzureBatchPoolResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespace.ControlledAzureRelayNamespaceResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant;
@@ -29,6 +25,7 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResourceF
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import com.azure.core.management.Region;
 import com.azure.resourcemanager.batch.models.DeploymentConfiguration;
 import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.google.api.client.util.DateTime;
@@ -52,8 +49,6 @@ public class ControlledResourceFixtures {
 
   public static final UUID WORKSPACE_ID = UUID.fromString("00000000-fcf0-4981-bb96-6b8dd634e7c0");
   public static final UUID RESOURCE_ID = UUID.fromString("11111111-fcf0-4981-bb96-6b8dd634e7c0");
-  public static final UUID STORAGE_ACCOUNT_REFERENCE_ID =
-      UUID.fromString("33333333-fcf0-4981-bb96-6b8dd634e7c0");
   public static final String OWNER_EMAIL = "jay@all-the-bits-thats-fit-to-blit.dev";
   public static final ApiGcpGcsBucketLifecycleRule LIFECYCLE_RULE_1 =
       new ApiGcpGcsBucketLifecycleRule()
@@ -84,11 +79,7 @@ public class ControlledResourceFixtures {
       new ArrayList<>(List.of(LIFECYCLE_RULE_1, LIFECYCLE_RULE_2));
   public static final String BUCKET_NAME_PREFIX = "my-bucket";
   public static final String AZURE_NAME_PREFIX = "az";
-  public static final String AZURE_IP_NAME_PREFIX = "ip";
-  public static final String AZURE_RELAY_NAMESPACE_NAME_PREFIX = "relay-ns";
   public static final String AZURE_DISK_NAME_PREFIX = "disk";
-  public static final String AZURE_NETWORK_NAME_PREFIX = "network";
-  public static final String AZURE_SUBNET_NAME_PREFIX = "subnet";
   public static final String AZURE_VM_NAME_PREFIX = "vm";
   public static final Map<String, String> DEFAULT_RESOURCE_PROPERTIES = Map.of("foo", "bar");
 
@@ -116,52 +107,18 @@ public class ControlledResourceFixtures {
         .location(DEFAULT_RESOURCE_REGION);
   }
 
-  /** Construct a parameter object with a unique ip name to avoid unintended clashes. */
-  public static ApiAzureIpCreationParameters getAzureIpCreationParameters() {
-    return new ApiAzureIpCreationParameters()
-        .name(uniqueAzureName(AZURE_IP_NAME_PREFIX))
-        .region(DEFAULT_AZURE_RESOURCE_REGION);
-  }
-
-  /** Construct a parameter object with a unique ip name to avoid unintended clashes. */
-  public static ApiAzureRelayNamespaceCreationParameters
-      getAzureRelayNamespaceCreationParameters() {
-    return new ApiAzureRelayNamespaceCreationParameters()
-        .namespaceName(uniqueAzureName(AZURE_RELAY_NAMESPACE_NAME_PREFIX))
-        .region(DEFAULT_AZURE_RESOURCE_REGION);
-  }
-
   /** Construct a parameter object with a unique disk name to avoid unintended clashes. */
   public static ApiAzureDiskCreationParameters getAzureDiskCreationParameters() {
     return new ApiAzureDiskCreationParameters()
         .name(uniqueAzureName(AZURE_DISK_NAME_PREFIX))
-        .region(DEFAULT_AZURE_RESOURCE_REGION)
         .size(50);
-  }
-
-  /** Construct a parameter object with a unique name to avoid unintended clashes. */
-  public static ApiAzureStorageCreationParameters getAzureStorageCreationParameters() {
-    return new ApiAzureStorageCreationParameters()
-        .storageAccountName(uniqueStorageAccountName())
-        .region("eastus");
   }
 
   /** Construct a parameter object with a unique name to avoid unintended clashes. */
   public static ApiAzureStorageContainerCreationParameters
       getAzureStorageContainerCreationParameters() {
     return new ApiAzureStorageContainerCreationParameters()
-        .storageContainerName(uniqueBucketName())
-        .storageAccountId(STORAGE_ACCOUNT_REFERENCE_ID);
-  }
-
-  /** Construct a parameter object with a unique bucket name to avoid unintended clashes. */
-  public static ApiAzureNetworkCreationParameters getAzureNetworkCreationParameters() {
-    return new ApiAzureNetworkCreationParameters()
-        .name(uniqueAzureName(AZURE_NETWORK_NAME_PREFIX))
-        .subnetName(uniqueAzureName(AZURE_SUBNET_NAME_PREFIX))
-        .addressSpaceCidr("192.168.0.0/16")
-        .subnetAddressCidr("192.168.1.0/24")
-        .region("westcentralus");
+        .storageContainerName(uniqueBucketName());
   }
 
   /** Construct a parameter object with a unique vm name to avoid unintended clashes. */
@@ -169,7 +126,6 @@ public class ControlledResourceFixtures {
     return new ApiAzureVmCreationParameters()
         .name(uniqueAzureName(AZURE_VM_NAME_PREFIX))
         .vmSize(VirtualMachineSizeTypes.STANDARD_D2S_V3.toString())
-        .region(DEFAULT_AZURE_RESOURCE_REGION)
         .vmImage(
             new ApiAzureVmImage()
                 .publisher("microsoft-dsvm")
@@ -177,16 +133,13 @@ public class ControlledResourceFixtures {
                 .sku("2004-gen2")
                 .version("22.04.27"))
         .vmUser(new ApiAzureVmUser().name("noname").password("StrongP@ssowrd123!!!"))
-        .ipId(UUID.randomUUID())
-        .diskId(UUID.randomUUID())
-        .networkId(UUID.randomUUID());
+        .diskId(UUID.randomUUID());
   }
 
   public static ApiAzureVmCreationParameters
       getAzureVmCreationParametersWithCustomScriptExtension() {
     return new ApiAzureVmCreationParameters()
         .name(uniqueAzureName(AZURE_VM_NAME_PREFIX))
-        .region("westcentralus")
         .vmSize(VirtualMachineSizeTypes.STANDARD_D2S_V3.toString())
         .vmImage(
             new ApiAzureVmImage()
@@ -195,9 +148,7 @@ public class ControlledResourceFixtures {
                 .sku("2004-gen2")
                 .version("22.04.27"))
         .vmUser(new ApiAzureVmUser().name("noname").password("StrongP@ssowrd123!!!"))
-        .ipId(UUID.randomUUID())
         .diskId(UUID.randomUUID())
-        .networkId(UUID.randomUUID())
         .customScriptExtension(getAzureVmCustomScriptExtension());
   }
 
@@ -205,7 +156,6 @@ public class ControlledResourceFixtures {
       getAzureVmCreationParametersWithEphemeralOsDiskAndCustomData() {
     return new ApiAzureVmCreationParameters()
         .name(uniqueAzureName(AZURE_VM_NAME_PREFIX))
-        .region("westcentralus")
         .vmSize(VirtualMachineSizeTypes.STANDARD_D8S_V3.toString())
         .vmImage(
             new ApiAzureVmImage()
@@ -214,8 +164,6 @@ public class ControlledResourceFixtures {
                 .sku("2004-gen2")
                 .version("22.04.27"))
         .vmUser(new ApiAzureVmUser().name("noname").password("StrongP@ssowrd123!!!"))
-        .ipId(UUID.randomUUID())
-        .networkId(UUID.randomUUID())
         .ephemeralOSDisk(ApiAzureVmCreationParameters.EphemeralOSDiskEnum.OS_CACHE)
         .customData(
             Base64.getEncoder()
@@ -226,7 +174,6 @@ public class ControlledResourceFixtures {
     // use password which is not strong enough
     return new ApiAzureVmCreationParameters()
         .name(uniqueAzureName(AZURE_VM_NAME_PREFIX))
-        .region("westcentralus")
         .vmSize(VirtualMachineSizeTypes.STANDARD_D2S_V3.toString())
         .vmImage(
             new ApiAzureVmImage()
@@ -235,9 +182,7 @@ public class ControlledResourceFixtures {
                 .sku("2004-gen2")
                 .version("22.04.27"))
         .vmUser(new ApiAzureVmUser().name("noname").password("noname"))
-        .ipId(UUID.randomUUID())
         .diskId(UUID.randomUUID())
-        .networkId(UUID.randomUUID())
         .customScriptExtension(getAzureVmCustomScriptExtension());
   }
 
@@ -353,21 +298,6 @@ public class ControlledResourceFixtures {
         .build();
   }
 
-  public static ControlledAzureIpResource getAzureIp(String ipName, String region) {
-    return ControlledAzureIpResource.builder()
-        .common(makeDefaultControlledResourceFieldsBuilder().region(region).build())
-        .ipName(ipName)
-        .build();
-  }
-
-  public static ControlledAzureRelayNamespaceResource getAzureRelayNamespace(
-      String namespaceName, String region) {
-    return ControlledAzureRelayNamespaceResource.builder()
-        .common(makeDefaultControlledResourceFieldsBuilder().region(region).build())
-        .namespaceName(namespaceName)
-        .build();
-  }
-
   public static ControlledAzureDiskResource getAzureDisk(String diskName, String region, int size) {
     return ControlledAzureDiskResource.builder()
         .common(makeDefaultControlledResourceFieldsBuilder().region(region).build())
@@ -376,61 +306,16 @@ public class ControlledResourceFixtures {
         .build();
   }
 
-  public static ControlledAzureNetworkResource getAzureNetwork(
-      ApiAzureNetworkCreationParameters creationParameters) {
-    return ControlledAzureNetworkResource.builder()
-        .common(
-            makeDefaultControlledResourceFieldsBuilder()
-                .region(creationParameters.getRegion())
-                .build())
-        .networkName(creationParameters.getName())
-        .subnetName(creationParameters.getSubnetName())
-        .addressSpaceCidr(creationParameters.getAddressSpaceCidr())
-        .subnetAddressCidr(creationParameters.getSubnetAddressCidr())
-        .build();
-  }
-
-  public static ControlledAzureStorageResource getAzureStorage(
-      String storageAccountName, String region) {
-    return ControlledAzureStorageResource.builder()
-        .common(makeDefaultControlledResourceFieldsBuilder().region(region).build())
-        .storageAccountName(storageAccountName)
-        .build();
-  }
-
-  public static ControlledAzureStorageResource getAzureStorage(
-      UUID workspaceUuid,
-      UUID accountResourceId,
-      String storageAccountName,
-      String region,
-      String resourceName,
-      String resourceDescription) {
-    return ControlledAzureStorageResource.builder()
-        .common(
-            makeDefaultControlledResourceFieldsBuilder()
-                .workspaceUuid(workspaceUuid)
-                .resourceId(accountResourceId)
-                .name(resourceName)
-                .description(resourceDescription)
-                .cloningInstructions(CloningInstructions.COPY_NOTHING)
-                .region(region)
-                .build())
-        .storageAccountName(storageAccountName)
-        .build();
-  }
-
   public static ControlledAzureStorageContainerResource getAzureStorageContainer(
-      UUID storageAccountId, String storageContainerName) {
+      String storageContainerName) {
     return ControlledAzureStorageContainerResource.builder()
         .common(makeDefaultControlledResourceFields(WORKSPACE_ID))
         .storageContainerName(storageContainerName)
-        .storageAccountId(storageAccountId)
         .build();
   }
 
   public static ControlledAzureStorageContainerResource getAzureStorageContainer(
       UUID workspaceUuid,
-      UUID accountResourceId,
       UUID containerResourceId,
       String containerName,
       String resourceName,
@@ -447,7 +332,6 @@ public class ControlledResourceFixtures {
                 .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
                 .region("eastus") // Needs to match the AzureControlledStorageContainerFlightTest
                 .build())
-        .storageAccountId(accountResourceId)
         .storageContainerName(containerName)
         .build();
   }
@@ -480,13 +364,10 @@ public class ControlledResourceFixtures {
     return ControlledAzureVmResource.builder()
         .common(
             makeDefaultControlledResourceFieldsBuilder()
-                .region(creationParameters.getRegion())
                 .build())
         .vmName(creationParameters.getName())
         .vmSize(creationParameters.getVmSize())
         .vmImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
-        .ipId(creationParameters.getIpId())
-        .networkId(creationParameters.getNetworkId())
         .diskId(creationParameters.getDiskId())
         .build();
   }
@@ -515,8 +396,7 @@ public class ControlledResourceFixtures {
       makeDefaultAzureStorageContainerResourceBuilder(UUID workspaceId) {
     return ControlledAzureStorageContainerResource.builder()
         .common(makeDefaultControlledResourceFields(workspaceId))
-        .storageContainerName(TestUtils.appendRandomNumber("storageaccountfoo"))
-        .storageAccountId(UUID.randomUUID());
+        .storageContainerName(TestUtils.appendRandomNumber("storageaccountfoo"));
   }
 
   /**
@@ -750,21 +630,6 @@ public class ControlledResourceFixtures {
   public static final ApiGcpGcsBucketUpdateParameters BUCKET_UPDATE_PARAMETERS_EMPTY =
       new ApiGcpGcsBucketUpdateParameters();
 
-  public static ControlledAzureIpResource.Builder makeDefaultAzureIpResource(
-      ApiAzureIpCreationParameters ipCreationParameters, UUID workspaceId) {
-    return ControlledAzureIpResource.builder()
-        .common(
-            makeDefaultControlledResourceFieldsBuilder()
-                .workspaceUuid(workspaceId)
-                .name(getAzureName("ip"))
-                .cloningInstructions(CloningInstructions.COPY_RESOURCE)
-                .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-                .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
-                .region(ipCreationParameters.getRegion())
-                .build())
-        .ipName(ipCreationParameters.getName());
-  }
-
   public static ControlledAzureDiskResource.Builder makeDefaultAzureDiskBuilder(
       ApiAzureDiskCreationParameters creationParameters, UUID workspaceId) {
     return ControlledAzureDiskResource.builder()
@@ -775,35 +640,15 @@ public class ControlledResourceFixtures {
                 .cloningInstructions(CloningInstructions.COPY_RESOURCE)
                 .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
                 .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
-                .region(creationParameters.getRegion())
+                .region(Region.US_EAST2.name())
                 .build())
         .diskName(creationParameters.getName())
         .size(creationParameters.getSize());
   }
 
-  public static ControlledAzureNetworkResource.Builder makeDefaultAzureNetworkResourceBuilder(
-      ApiAzureNetworkCreationParameters creationParameters, UUID workspaceId) {
-    return ControlledAzureNetworkResource.builder()
-        .common(
-            makeDefaultControlledResourceFieldsBuilder()
-                .workspaceUuid(workspaceId)
-                .name(getAzureName("network"))
-                .cloningInstructions(CloningInstructions.COPY_RESOURCE)
-                .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-                .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
-                .region(creationParameters.getRegion())
-                .build())
-        .networkName(creationParameters.getName())
-        .subnetName(creationParameters.getSubnetName())
-        .addressSpaceCidr(creationParameters.getAddressSpaceCidr())
-        .subnetAddressCidr(creationParameters.getSubnetAddressCidr());
-  }
-
   public static ControlledAzureVmResource.Builder makeDefaultControlledAzureVmResourceBuilder(
       ApiAzureVmCreationParameters creationParameters,
       UUID workspaceId,
-      UUID ipResourceId,
-      UUID networksResourceId,
       UUID diskResourceId) {
     return ControlledAzureVmResource.builder()
         .common(
@@ -813,29 +658,11 @@ public class ControlledResourceFixtures {
                 .cloningInstructions(CloningInstructions.COPY_RESOURCE)
                 .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
                 .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
-                .region(creationParameters.getRegion())
                 .build())
         .vmName(creationParameters.getName())
         .vmSize(creationParameters.getVmSize())
         .vmImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
-        .ipId(ipResourceId)
-        .diskId(diskResourceId)
-        .networkId(networksResourceId);
-  }
-
-  public static ControlledAzureRelayNamespaceResource.Builder makeDefaultRelayNamespaceBuilder(
-      ApiAzureRelayNamespaceCreationParameters creationParameters, UUID workspaceId) {
-    return ControlledAzureRelayNamespaceResource.builder()
-        .common(
-            makeDefaultControlledResourceFieldsBuilder()
-                .workspaceUuid(workspaceId)
-                .name(getAzureName("relaynamespace"))
-                .cloningInstructions(CloningInstructions.COPY_RESOURCE)
-                .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-                .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
-                .region(creationParameters.getRegion())
-                .build())
-        .namespaceName(TestUtils.appendRandomNumber("namespace"));
+        .diskId(diskResourceId);
   }
 
   public static void insertControlledResourceRow(

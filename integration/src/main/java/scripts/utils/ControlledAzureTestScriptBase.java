@@ -19,8 +19,6 @@ import org.slf4j.LoggerFactory;
 public abstract class ControlledAzureTestScriptBase extends WorkspaceAllocateTestScriptBase {
   private static final Logger logger = LoggerFactory.getLogger(ControlledAzureTestScriptBase.class);
 
-  protected static final String REGION = "westcentralus";
-
   protected ControlledAzureResourceApi azureApi;
   // resource suffix to easily locate resources in the resource group in case of troubleshooting
   protected String suffix;

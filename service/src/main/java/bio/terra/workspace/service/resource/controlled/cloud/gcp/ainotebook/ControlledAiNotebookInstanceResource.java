@@ -20,7 +20,6 @@ import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceFlight;
-import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceRegionStep;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
@@ -199,9 +198,6 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
         gcpRetryRule);
     flight.addStep(
         new UpdateNotebookResourceLocationAttributesStep(this, flightBeanBag.getResourceDao()),
-        shortDatabaseRetryRule);
-    flight.addStep(
-        new UpdateControlledResourceRegionStep(flightBeanBag.getResourceDao(), getResourceId()),
         shortDatabaseRetryRule);
   }
 
