@@ -24,7 +24,7 @@ public final class StorageTransferServiceUtils {
    * @param storageTransferService - transfer service
    * @param transferJobName - unidque name of the transfer job
    * @param controlPlaneProjectId - GCP project ID of the control plane
-   * @throws IOException
+   * @throws IOException IOException
    */
   public static void deleteTransferJob(
       Storagetransfer storageTransferService, String transferJobName, String controlPlaneProjectId)
@@ -58,8 +58,8 @@ public final class StorageTransferServiceUtils {
   /**
    * A reusable step implementation for deleting a storage transfer job.
    *
-   * @param flightContext
-   * @return
+   * @param flightContext flightContext
+   * @return StepResult
    */
   public static StepResult deleteTransferJobStepImpl(
       FlightContext flightContext, Storagetransfer storagetransfer) {

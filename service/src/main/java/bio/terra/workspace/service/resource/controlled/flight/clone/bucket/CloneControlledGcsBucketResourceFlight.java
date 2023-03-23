@@ -10,6 +10,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.policy.flight.MergePolicyAttributesDryRunStep;
 import bio.terra.workspace.service.policy.flight.MergePolicyAttributesStep;
+import bio.terra.workspace.service.policy.flight.ValidateGroupPolicyAttributesStep;
 import bio.terra.workspace.service.policy.flight.ValidateWorkspaceAgainstPolicyStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.RetrieveGcsBucketCloudAttributesStep;
@@ -100,6 +101,10 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
               userRequest,
               flightBeanBag.getResourceDao(),
               flightBeanBag.getTpsApiDispatch()));
+
+      addStep(
+          new ValidateGroupPolicyAttributesStep(
+              destinationWorkspaceId, flightBeanBag.getTpsApiDispatch()));
 
       addStep(
           new MergePolicyAttributesStep(

@@ -95,8 +95,8 @@ public class CompleteTransferOperationStep implements Step {
    * @param transferJobName - name of job owning the transfer operation
    * @param operationName - server-generated name of running operation
    * @return StepResult indicating success or failure
-   * @throws IOException
-   * @throws InterruptedException
+   * @throws IOException IOException
+   * @throws InterruptedException InterruptedException
    */
   private StepResult getTransferOperationResult(String transferJobName, String operationName)
       throws IOException, InterruptedException {

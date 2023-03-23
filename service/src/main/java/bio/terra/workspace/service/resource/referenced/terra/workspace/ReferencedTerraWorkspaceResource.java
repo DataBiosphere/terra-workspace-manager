@@ -141,8 +141,7 @@ public class ReferencedTerraWorkspaceResource extends ReferencedResource {
           SamConstants.SamWorkspaceAction.READ);
     } catch (InterruptedException e) {
       throw new InvalidReferenceException(
-          "Requester does not have read access to workspace " + referencedWorkspaceId.toString(),
-          e);
+          "Requester does not have read access to workspace " + referencedWorkspaceId, e);
     }
   }
 

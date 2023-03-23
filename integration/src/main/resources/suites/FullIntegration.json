@@ -13,6 +13,7 @@
     "integration/ImportDataCollection.json",
     "integration/Jobs.json",
     "integration/ListWorkspaces.json",
+    "integration/MergeGroupPolicies.json",
     "integration/PrivateControlledAiNotebookInstanceLifecycle.json",
     "integration/ReferencedBigQueryResourceLifecycle.json",
     "integration/ReferencedDataRepoSnapshotLifecycle.json",

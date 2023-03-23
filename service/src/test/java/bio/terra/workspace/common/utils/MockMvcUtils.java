@@ -1138,7 +1138,7 @@ public class MockMvcUtils {
     // ApiErrorReport.
     ApiCloneControlledGcpBigQueryDatasetResult result =
         getCloneControlledBqDatasetResult(userRequest, workspaceId, jobId);
-    ApiErrorReport errorReport = null;
+    ApiErrorReport errorReport;
     while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
       Thread.sleep(/*millis=*/ 3000);
       String serializedResponse =
@@ -1367,13 +1367,13 @@ public class MockMvcUtils {
             .cloningInstructions(cloningInstructions)
             .name(TestUtils.appendRandomNumber(DEST_BUCKET_RESOURCE_NAME))
             .jobControl(new ApiJobControl().id(UUID.randomUUID().toString()));
-    if (destResourceName != "") {
+    if (!StringUtils.isEmpty(destResourceName)) {
       request.name(destResourceName);
     }
-    if (destBucketName != "") {
+    if (!StringUtils.isEmpty(destBucketName)) {
       request.bucketName(destBucketName);
     }
-    if (destLocation != "") {
+    if (!StringUtils.isEmpty(destLocation)) {
       request.location(destLocation);
     }
     MockHttpServletResponse response =
@@ -1405,7 +1405,7 @@ public class MockMvcUtils {
     // ApiErrorReport.
     ApiCloneControlledGcpGcsBucketResult result =
         getCloneControlledGcsBucketResult(userRequest, workspaceId, jobId);
-    ApiErrorReport errorReport = null;
+    ApiErrorReport errorReport;
     while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
       Thread.sleep(/*millis=*/ 3000);
       String serializedResponse =

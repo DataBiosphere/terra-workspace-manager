@@ -25,12 +25,10 @@ public class ControlledAzureIpHandler implements WsmResourceHandler {
     ControlledAzureIpAttributes attributes =
         DbSerDes.fromJson(dbResource.getAttributes(), ControlledAzureIpAttributes.class);
 
-    var resource =
-        ControlledAzureIpResource.builder()
-            .ipName(attributes.getIpName())
-            .common(new ControlledResourceFields(dbResource, attributes.getRegion()))
-            .build();
-    return resource;
+    return ControlledAzureIpResource.builder()
+        .ipName(attributes.getIpName())
+        .common(new ControlledResourceFields(dbResource, attributes.getRegion()))
+        .build();
   }
 
   public String generateCloudName(@Nullable UUID workspaceUuid, String resourceName) {

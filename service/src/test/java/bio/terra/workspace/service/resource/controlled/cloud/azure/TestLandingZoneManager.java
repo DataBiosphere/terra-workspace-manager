@@ -112,25 +112,23 @@ public class TestLandingZoneManager {
 
   private StorageAccount createStorageAccount(
       String storageAccountName, String region, UUID landingZoneId) {
-    StorageAccount storageAccount =
-        storageManager
-            .storageAccounts()
-            .define(storageAccountName)
-            .withRegion(region)
-            .withExistingResourceGroup(azureCloudContext.getAzureResourceGroupId())
-            .withHnsEnabled(true)
-            .withTag("workspaceId", workspaceUuid.toString())
-            .withTag(LandingZoneTagKeys.LANDING_ZONE_ID.toString(), landingZoneId.toString())
-            .withTag(
-                LandingZoneTagKeys.LANDING_ZONE_PURPOSE.toString(),
-                ResourcePurpose.SHARED_RESOURCE.toString())
-            .create(
-                Defaults.buildContext(
-                    CreateStorageAccountRequestData.builder()
-                        .setName(storageAccountName)
-                        .setRegion(Region.fromName(region))
-                        .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
-                        .build()));
-    return storageAccount;
+    return storageManager
+        .storageAccounts()
+        .define(storageAccountName)
+        .withRegion(region)
+        .withExistingResourceGroup(azureCloudContext.getAzureResourceGroupId())
+        .withHnsEnabled(true)
+        .withTag("workspaceId", workspaceUuid.toString())
+        .withTag(LandingZoneTagKeys.LANDING_ZONE_ID.toString(), landingZoneId.toString())
+        .withTag(
+            LandingZoneTagKeys.LANDING_ZONE_PURPOSE.toString(),
+            ResourcePurpose.SHARED_RESOURCE.toString())
+        .create(
+            Defaults.buildContext(
+                CreateStorageAccountRequestData.builder()
+                    .setName(storageAccountName)
+                    .setRegion(Region.fromName(region))
+                    .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
+                    .build()));
   }
 }

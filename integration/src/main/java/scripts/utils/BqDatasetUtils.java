@@ -252,8 +252,8 @@ public class BqDatasetUtils {
    * @param dataset - empty BigQuery dataset
    * @param ownerUser - User who owns the dataset
    * @param projectId - project that owns the dataset
-   * @throws IOException
-   * @throws InterruptedException
+   * @throws IOException IOException
+   * @throws InterruptedException InterruptedException
    */
   public static void populateBigQueryDataset(
       GcpBigQueryDatasetResource dataset, TestUserSpecification ownerUser, String projectId)

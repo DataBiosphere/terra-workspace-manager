@@ -8,7 +8,6 @@ import java.time.LocalDateTime;
 import java.util.Calendar;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +52,7 @@ public class DeleteInitialPods extends DisruptiveScript {
                             .get(componentLabelKey)
                             .equals(componentLabelVal))
             .map(pod -> pod.getMetadata().getName())
-            .collect(Collectors.toList());
+            .toList();
 
     // delete original pods, and give them a chance to recover
     for (String podName : podsToDelete) {
@@ -80,7 +79,7 @@ public class DeleteInitialPods extends DisruptiveScript {
     }
 
     logger.debug("original pods:");
-    podsToDelete.forEach(p -> logger.debug(p));
+    podsToDelete.forEach(logger::debug);
     KubernetesClientUtils.printApiPods(workspacemanagerDeployment);
   }
 }

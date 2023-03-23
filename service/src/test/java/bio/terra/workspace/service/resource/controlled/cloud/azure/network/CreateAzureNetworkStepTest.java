@@ -108,7 +108,7 @@ public class CreateAzureNetworkStepTest extends BaseAzureUnitTest {
   @Mock private ManagementException mockException;
   @Mock private FlightMap mockWorkingMap;
 
-  private ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
+  private final ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
 
   @BeforeEach
   public void setup() {

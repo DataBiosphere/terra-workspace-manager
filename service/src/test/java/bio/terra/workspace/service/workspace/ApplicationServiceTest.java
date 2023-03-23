@@ -271,12 +271,10 @@ public class ApplicationServiceTest extends BaseUnitTest {
     // There may be stray applications in the DB, so we make sure that we at least have ours
     assertThat(wsmAppList.size(), greaterThanOrEqualTo(3));
     for (WsmWorkspaceApplication wsmApp : wsmAppList) {
-      if (wsmApp.getApplication().getApplicationId().equals(LEO_ID)) {
-        assertEquals(leoEnabled, wsmApp.isEnabled());
-      } else if (wsmApp.getApplication().getApplicationId().equals(CARMEN_ID)) {
-        assertEquals(carmenEnabled, wsmApp.isEnabled());
-      } else if (wsmApp.getApplication().getApplicationId().equals(NORM_ID)) {
-        assertEquals(normEnabled, wsmApp.isEnabled());
+      switch (wsmApp.getApplication().getApplicationId()) {
+        case LEO_ID -> assertEquals(leoEnabled, wsmApp.isEnabled());
+        case CARMEN_ID -> assertEquals(carmenEnabled, wsmApp.isEnabled());
+        case NORM_ID -> assertEquals(normEnabled, wsmApp.isEnabled());
       }
     }
   }

@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class FakeDao {
 
-  private AtomicInteger count = new AtomicInteger(0);
+  private final AtomicInteger count = new AtomicInteger(0);
 
   @ReadTransaction
   public void throwMeRead(Exception e) throws Exception {

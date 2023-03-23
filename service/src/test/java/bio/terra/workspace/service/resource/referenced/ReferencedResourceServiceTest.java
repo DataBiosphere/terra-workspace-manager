@@ -659,7 +659,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
 
     private ReferencedBigQueryDatasetResource makeBigQueryDatasetResource() {
       UUID resourceId = UUID.randomUUID();
-      String resourceName = "testbq-" + resourceId.toString();
+      String resourceName = "testbq-" + resourceId;
 
       return ReferencedBigQueryDatasetResource.builder()
           .wsmResourceFields(

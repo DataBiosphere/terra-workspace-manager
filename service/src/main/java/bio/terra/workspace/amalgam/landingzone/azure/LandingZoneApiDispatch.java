@@ -161,14 +161,10 @@ public class LandingZoneApiDispatch {
 
   private ApiDeleteAzureLandingZoneResult toApiDeleteAzureLandingZoneResult(
       LandingZoneJobService.AsyncJobResult<StartLandingZoneDeletion> jobResult) {
-
-    ApiDeleteAzureLandingZoneResult result =
-        new ApiDeleteAzureLandingZoneResult()
-            .jobReport(MapperUtils.JobReportMapper.from(jobResult.getJobReport()))
-            .errorReport(MapperUtils.ErrorReportMapper.from(jobResult.getApiErrorReport()))
-            .landingZoneId(jobResult.getResult().landingZoneId());
-
-    return result;
+    return new ApiDeleteAzureLandingZoneResult()
+        .jobReport(MapperUtils.JobReportMapper.from(jobResult.getJobReport()))
+        .errorReport(MapperUtils.ErrorReportMapper.from(jobResult.getApiErrorReport()))
+        .landingZoneId(jobResult.getResult().landingZoneId());
   }
 
   public ApiAzureLandingZoneResourcesList listAzureLandingZoneResources(

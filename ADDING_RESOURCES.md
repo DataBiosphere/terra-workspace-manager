@@ -9,7 +9,7 @@ minimum of file conflicts.
 This section summarizes the steps to add a new resource. I recommend this order to be able
 to compile your code as you go.
 
-1. Create your resource type and attributes in the `openapi` sub-project.
+1. Create your resource type and attributes in the `openapi` subproject.
    - Add your resource file to `src/resources/` directory, defining the resource and the
      attributes objects.
    - Edit the `resource_type.yaml` file in that directory, creating an enumeration for the
@@ -33,7 +33,7 @@ to compile your code as you go.
    `resource/model/WsmResourceType` and `ApiResourceType`. At this point,
    `./gradlew :service:compileJava` should succeed.
 6. Add your REST API
-   - In the `openapi` sub-project, in the `parts` directory, create a yaml file for your
+   - In the `openapi` subproject, in the `parts` directory, create a yaml file for your
      resource API. The file should contain all resource-type-specific parameters,
      responses, and schemas as well as the endpoint paths. You can find shared components
      in the `src/common` directory.

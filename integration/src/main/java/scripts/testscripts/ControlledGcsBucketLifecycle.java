@@ -368,7 +368,7 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
       TestUserSpecification cloningUser,
       ControlledGcpResourceApi resourceApi)
       throws Exception {
-    final String destinationBucketName = "clone-" + UUID.randomUUID().toString();
+    final String destinationBucketName = "clone-" + UUID.randomUUID();
     // clone the bucket
     final String clonedBucketDescription = "A cloned bucket";
     final CloneControlledGcpGcsBucketRequest cloneRequest =
