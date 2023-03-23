@@ -419,7 +419,10 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
             new SasTokenOptions(null, startTime, expiryTime, blobName, null));
 
     assertValidToken(result.sasToken(), BlobContainerSasPermission.parse("racwdl"), true);
-    assertTrue(result.sasUrl().contains(storageContainerResource.getStorageContainerName() + "/" + blobName + "?"));
+    assertTrue(
+        result
+            .sasUrl()
+            .contains(storageContainerResource.getStorageContainerName() + "/" + blobName + "?"));
   }
 
   @Test

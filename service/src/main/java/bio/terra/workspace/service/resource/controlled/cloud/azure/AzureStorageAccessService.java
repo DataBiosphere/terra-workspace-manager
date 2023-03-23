@@ -216,7 +216,10 @@ public class AzureStorageAccessService {
     if (sasTokenOptions.blobName() != null) {
       var blobClient = blobContainerClient.getBlobClient(sasTokenOptions.blobName());
       token = blobClient.generateSas(sasValues);
-      resourceName = storageData.storageContainerResource().getStorageContainerName() + "/" + sasTokenOptions.blobName();
+      resourceName =
+          storageData.storageContainerResource().getStorageContainerName()
+              + "/"
+              + sasTokenOptions.blobName();
     } else {
       token = blobContainerClient.generateSas(sasValues);
       resourceName = storageData.storageContainerResource().getStorageContainerName();
