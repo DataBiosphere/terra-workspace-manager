@@ -19,8 +19,8 @@ dependencies {
   implementation group: "com.google.guava", name:"guava"
 
   // Azure dependencies
-  implementation 'com.azure:azure-storage-blob:12.17.1'
-  implementation group: 'com.azure.resourcemanager', name: 'azure-resourcemanager-monitor', version: '2.18.0'
+  implementation 'com.azure:azure-storage-blob:12.21.1'
+  implementation group: 'com.azure.resourcemanager', name: 'azure-resourcemanager-monitor', version: '2.24.0'
 
   // Terra deps
   implementation group: "bio.terra", name: "datarepo-client", version: "1.41.0-SNAPSHOT"
