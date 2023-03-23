@@ -25,17 +25,15 @@ public class ControlledAzureVmHandler implements WsmResourceHandler {
     ControlledAzureVmAttributes attributes =
         DbSerDes.fromJson(dbResource.getAttributes(), ControlledAzureVmAttributes.class);
 
-    var resource =
-        ControlledAzureVmResource.builder()
-            .vmName(attributes.getVmName())
-            .vmSize(attributes.getVmSize())
-            .vmImage(attributes.getVmImage())
-            .ipId(attributes.getIpId())
-            .networkId(attributes.getNetworkId())
-            .diskId(attributes.getDiskId())
-            .common(new ControlledResourceFields(dbResource, attributes.getRegion()))
-            .build();
-    return resource;
+    return ControlledAzureVmResource.builder()
+        .vmName(attributes.getVmName())
+        .vmSize(attributes.getVmSize())
+        .vmImage(attributes.getVmImage())
+        .ipId(attributes.getIpId())
+        .networkId(attributes.getNetworkId())
+        .diskId(attributes.getDiskId())
+        .common(new ControlledResourceFields(dbResource, attributes.getRegion()))
+        .build();
   }
 
   public String generateCloudName(@Nullable UUID workspaceUuid, String resourceName) {

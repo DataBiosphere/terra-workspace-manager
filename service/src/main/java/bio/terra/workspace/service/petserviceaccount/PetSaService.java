@@ -291,7 +291,7 @@ public class PetSaService {
             () -> samService.constructUserPetSaEmail(projectId, userEmail, userRequest),
             "getUserPetSa");
 
-    return constructedSa.filter(sa -> serviceAccountExists(sa));
+    return constructedSa.filter(this::serviceAccountExists);
   }
 
   /**

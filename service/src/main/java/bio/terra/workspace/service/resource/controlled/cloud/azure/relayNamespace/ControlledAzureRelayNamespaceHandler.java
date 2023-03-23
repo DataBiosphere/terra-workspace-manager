@@ -26,12 +26,10 @@ public class ControlledAzureRelayNamespaceHandler implements WsmResourceHandler 
         DbSerDes.fromJson(
             dbResource.getAttributes(), ControlledAzureRelayNamespaceAttributes.class);
 
-    var resource =
-        ControlledAzureRelayNamespaceResource.builder()
-            .namespaceName(attributes.getNamespaceName())
-            .common(new ControlledResourceFields(dbResource, attributes.getRegion()))
-            .build();
-    return resource;
+    return ControlledAzureRelayNamespaceResource.builder()
+        .namespaceName(attributes.getNamespaceName())
+        .common(new ControlledResourceFields(dbResource, attributes.getRegion()))
+        .build();
   }
 
   public String generateCloudName(@Nullable UUID workspaceUuid, String resourceName) {

@@ -308,7 +308,7 @@ public class ClientTestUtils {
       @Nullable List<Class<? extends Exception>> retryExceptionList)
       throws Exception {
 
-    T result = null;
+    T result;
     Instant endTime = Instant.now().plus(totalDuration);
 
     while (true) {
@@ -370,7 +370,7 @@ public class ClientTestUtils {
 
   /** @return a generated unique resource name consisting of letters, numbers, and underscores. */
   public static String generateCloudResourceName() {
-    String name = RESOURCE_NAME_PREFIX + UUID.randomUUID().toString();
+    String name = RESOURCE_NAME_PREFIX + UUID.randomUUID();
     return name.replace("-", "_");
   }
 

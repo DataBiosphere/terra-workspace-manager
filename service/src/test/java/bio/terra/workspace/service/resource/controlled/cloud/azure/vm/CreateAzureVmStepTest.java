@@ -192,7 +192,7 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
   @Mock private ControlledAzureNetworkResource mockAzureNetworkResource;
   @Mock private FlightMap mockWorkingMap;
 
-  private ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
+  private final ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
 
   @Mock private NicIpConfiguration mockIpConfiguration;
 

@@ -227,22 +227,14 @@ public class ValidationUtilsTest extends BaseUnitTest {
 
   @Test
   public void validateResourceDescription_nameTooLong_throwsException() {
-    StringBuilder sb = new StringBuilder();
-    for (int i = 0; i < 2050; i++) {
-      sb.append("a");
-    }
     assertThrows(
         InvalidNameException.class,
-        () -> ResourceValidationUtils.validateResourceDescriptionName(sb.toString()));
+        () -> ResourceValidationUtils.validateResourceDescriptionName("a".repeat(2050)));
   }
 
   @Test
   public void validateResourceDescription_nameWith2048Char_validates() {
-    StringBuilder sb = new StringBuilder();
-    for (int i = 0; i < 2048; i++) {
-      sb.append("a");
-    }
-    ResourceValidationUtils.validateResourceDescriptionName(sb.toString());
+    ResourceValidationUtils.validateResourceDescriptionName("a".repeat(2048));
   }
 
   @Test
@@ -483,9 +475,9 @@ public class ValidationUtilsTest extends BaseUnitTest {
 
     for (var region : testRegions) {
       // these validations should not throw an exception
-      validationUtils.validateControlledResourceRegionAgainstPolicy(
+      ResourceValidationUtils.validateControlledResourceRegionAgainstPolicy(
           mockTpsApiDispatch(), workspaceId, region, CloudPlatform.GCP);
-      validationUtils.validateControlledResourceRegionAgainstPolicy(
+      ResourceValidationUtils.validateControlledResourceRegionAgainstPolicy(
           mockTpsApiDispatch(), workspaceId, region.toUpperCase(Locale.ROOT), CloudPlatform.GCP);
     }
   }
@@ -500,11 +492,11 @@ public class ValidationUtilsTest extends BaseUnitTest {
     assertThrows(
         InvalidControlledResourceException.class,
         () ->
-            validationUtils.validateControlledResourceRegionAgainstPolicy(
+            ResourceValidationUtils.validateControlledResourceRegionAgainstPolicy(
                 mockTpsApiDispatch(), workspaceId, "badregion", CloudPlatform.GCP));
 
     // shouldn't throw until we start validating Azure regions against TPS
-    validationUtils.validateControlledResourceRegionAgainstPolicy(
+    ResourceValidationUtils.validateControlledResourceRegionAgainstPolicy(
         mockTpsApiDispatch(), workspaceId, "badregion", CloudPlatform.AZURE);
   }
 
@@ -514,9 +506,9 @@ public class ValidationUtilsTest extends BaseUnitTest {
 
     for (var region : Region.values()) {
       var regionName = region.name();
-      validationUtils.validateAzureRegion(regionName);
+      ResourceValidationUtils.validateAzureRegion(regionName);
 
-      validationUtils.validateControlledResourceRegionAgainstPolicy(
+      ResourceValidationUtils.validateControlledResourceRegionAgainstPolicy(
           mockTpsApiDispatch(), workspaceId, region.name(), CloudPlatform.AZURE);
     }
   }
@@ -526,7 +518,7 @@ public class ValidationUtilsTest extends BaseUnitTest {
     UUID workspaceId = UUID.randomUUID();
 
     // null region shouldn't throw.
-    validationUtils.validateAzureRegion(null);
+    ResourceValidationUtils.validateAzureRegion(null);
   }
 
   @Test
@@ -534,6 +526,6 @@ public class ValidationUtilsTest extends BaseUnitTest {
 
     assertThrows(
         InvalidControlledResourceException.class,
-        () -> validationUtils.validateAzureRegion("badlocation"));
+        () -> ResourceValidationUtils.validateAzureRegion("badlocation"));
   }
 }

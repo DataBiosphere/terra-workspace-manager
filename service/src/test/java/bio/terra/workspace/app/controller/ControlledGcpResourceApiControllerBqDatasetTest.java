@@ -7,8 +7,8 @@ import static bio.terra.workspace.common.utils.MockMvcUtils.assertResourceMetada
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import bio.terra.stairway.FlightDebugInfo;
@@ -96,8 +96,8 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
   private UUID workspaceId2;
   private String projectId2;
 
-  private String sourceResourceName = TestUtils.appendRandomNumber("sourceresourcename");
-  private String sourceDatasetName = TestUtils.appendRandomNumber("sourcedatasetname");
+  private final String sourceResourceName = TestUtils.appendRandomNumber("sourceresourcename");
+  private final String sourceDatasetName = TestUtils.appendRandomNumber("sourcedatasetname");
   private ApiGcpBigQueryDatasetResource sourceResource;
 
   // See here for how to skip workspace creation for local runs:
@@ -801,12 +801,12 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         crlService.createWsmSaBigQueryCow().datasets().get(projectId, datasetId).execute();
     assertEquals(expectedLocation, dataset.getLocation());
     if (expectedDefaultTableLifetime == null) {
-      assertEquals(null, dataset.getDefaultTableExpirationMs());
+      assertNull(dataset.getDefaultTableExpirationMs());
     } else {
       assertEquals(expectedDefaultTableLifetime, dataset.getDefaultTableExpirationMs() / 1000);
     }
     if (expectedDefaultPartitionLifetime == null) {
-      assertEquals(null, dataset.getDefaultPartitionExpirationMs());
+      assertNull(dataset.getDefaultPartitionExpirationMs());
     } else {
       assertEquals(
           expectedDefaultPartitionLifetime, dataset.getDefaultPartitionExpirationMs() / 1000);

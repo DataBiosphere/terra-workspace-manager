@@ -51,7 +51,7 @@ public class UpdateAiNotebookAttributesStep implements Step {
     Map<String, String> sanitizedMetadata = new HashMap<>();
     for (var entrySet : updateParameters.getMetadata().entrySet()) {
       if (ControlledAiNotebookInstanceResource.RESERVED_METADATA_KEYS.contains(entrySet.getKey())) {
-        logger.error(String.format("Cannot modify terra reserved keys %s", entrySet.getKey()));
+        logger.error("Cannot modify terra reserved keys {}", entrySet.getKey());
         throw new ReservedMetadataKeyException(
             String.format("Cannot modify terra reserved keys %s", entrySet.getKey()));
       }
@@ -75,12 +75,9 @@ public class UpdateAiNotebookAttributesStep implements Step {
               .get(resource.toInstanceName(projectId))
               .execute()
               .getMetadata();
-      for (var entry : currentMetadata.entrySet()) {
-        // reset the new key entry to "" value because the gcp api does not allow deleting
-        // metadata item so we can't simply undo the add.
-        currentMetadata.put(
-            entry.getKey(), prevParameters.getMetadata().getOrDefault(entry.getKey(), ""));
-      }
+      // reset the new key entry to "" value because the gcp api does not allow deleting
+      // metadata item so we can't simply undo the add.
+      currentMetadata.replaceAll((k, v) -> prevParameters.getMetadata().getOrDefault(k, ""));
       return updateAiNotebook(currentMetadata, projectId);
     } catch (GoogleJsonResponseException e) {
       if (HttpStatus.BAD_REQUEST.value() == e.getStatusCode()

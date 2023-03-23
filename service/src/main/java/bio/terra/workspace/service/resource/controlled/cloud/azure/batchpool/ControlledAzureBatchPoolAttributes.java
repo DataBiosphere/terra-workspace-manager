@@ -4,8 +4,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ControlledAzureBatchPoolAttributes {
-  private String id;
-  private String vmSize;
+  private final String id;
+  private final String vmSize;
 
   @JsonCreator
   public ControlledAzureBatchPoolAttributes(

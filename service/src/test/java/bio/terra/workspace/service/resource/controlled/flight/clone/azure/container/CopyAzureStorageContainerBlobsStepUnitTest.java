@@ -33,7 +33,7 @@ public class CopyAzureStorageContainerBlobsStepUnitTest extends BaseAzureUnitTes
   @Mock private ControlledAzureStorageContainerResource sourceContainer;
   @Mock private FlightContext flightContext;
 
-  private AuthenticatedUserRequest userRequest =
+  private final AuthenticatedUserRequest userRequest =
       new AuthenticatedUserRequest().email("example@example.com").token(Optional.of("fake-token"));
 
   @BeforeEach

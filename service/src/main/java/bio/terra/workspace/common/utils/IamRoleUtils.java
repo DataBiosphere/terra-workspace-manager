@@ -19,15 +19,13 @@ public final class IamRoleUtils {
    * @return IAM role for the user on the resource
    */
   public static ControlledResourceIamRole getIamRoleForAccessScope(AccessScopeType accessScope) {
-    switch (accessScope) {
-      case ACCESS_SCOPE_SHARED:
-        return null;
-      case ACCESS_SCOPE_PRIVATE:
-        // User owns the cloned private resource completely
-        return ControlledResourceIamRole.EDITOR;
-      default:
-        throw new EnumNotRecognizedException(
-            String.format("Access Scope %s is not recognized.", accessScope));
-    }
+    return switch (accessScope) {
+      case ACCESS_SCOPE_SHARED -> null;
+      case ACCESS_SCOPE_PRIVATE ->
+      // User owns the cloned private resource completely
+      ControlledResourceIamRole.EDITOR;
+      default -> throw new EnumNotRecognizedException(
+          String.format("Access Scope %s is not recognized.", accessScope));
+    };
   }
 }

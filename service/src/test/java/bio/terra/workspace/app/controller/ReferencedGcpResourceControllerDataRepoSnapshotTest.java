@@ -5,8 +5,8 @@ import static bio.terra.workspace.common.utils.MockMvcUtils.assertApiDataRepoEqu
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertResourceMetadata;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.junit.Assert.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
@@ -57,9 +57,9 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotTest extends BaseCon
   private UUID workspaceId;
   private UUID workspaceId2;
 
-  private String sourceResourceName = TestUtils.appendRandomNumber("source-resource-name");
-  private String sourceInstanceName = TestUtils.appendRandomNumber("source-instance-name");
-  private String sourceSnapshot = TestUtils.appendRandomNumber("source-snapshot");
+  private final String sourceResourceName = TestUtils.appendRandomNumber("source-resource-name");
+  private final String sourceInstanceName = TestUtils.appendRandomNumber("source-instance-name");
+  private final String sourceSnapshot = TestUtils.appendRandomNumber("source-snapshot");
   private ApiDataRepoSnapshotResource sourceResource;
 
   // See here for how to skip workspace creation for local runs:

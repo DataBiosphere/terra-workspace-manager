@@ -105,9 +105,9 @@ public abstract class WorkspaceAllocateTestScriptBase extends WorkspaceApiTestSc
   /**
    * Clean up workspace only.
    *
-   * @param testUsers
-   * @param workspaceApi
-   * @throws ApiException
+   * @param testUsers testUsers
+   * @param workspaceApi workspaceApi
+   * @throws ApiException ApiException
    */
   @Override
   protected void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)

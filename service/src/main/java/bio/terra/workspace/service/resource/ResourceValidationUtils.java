@@ -30,7 +30,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -167,7 +166,7 @@ public class ResourceValidationUtils {
    * <p>This method DOES NOT guarantee that the bucket name is valid.
    *
    * @param name gcs-bucket name
-   * @param validationFailureError
+   * @param validationFailureError validationFailureError
    * @throws InvalidNameException throws exception when the bucket name fails to conform to the
    *     Google naming convention for bucket name.
    */
@@ -259,16 +258,13 @@ public class ResourceValidationUtils {
     }
     // AWS Code commit host server is region specific. Here are the list of all the valid git
     // connection endpoint: https://docs.aws.amazon.com/codecommit/latest/userguide/regions.html.
-    if (hostName.startsWith("git-codecommit.") && hostName.endsWith(".amazonaws.com")) {
-      return true;
-    }
-    return false;
+    return hostName.startsWith("git-codecommit.") && hostName.endsWith(".amazonaws.com");
   }
   /**
    * Validate GCS object name.
    *
    * @param objectName full path to the object in the bucket
-   * @throws InvalidNameException
+   * @throws InvalidNameException InvalidNameException
    */
   public static void validateGcsObjectName(String objectName) {
     int nameLength = objectName.getBytes(StandardCharsets.UTF_8).length;
@@ -368,7 +364,7 @@ public class ResourceValidationUtils {
   public static void validateBqDataTableName(String name) {
     if (StringUtils.isEmpty(name)
         || !BQ_DATATABLE_NAME_VALIDATION_PATTERN.matcher(name).matches()) {
-      logger.warn("Invalid data table name %s", name);
+      logger.warn("Invalid data table name {}", name);
       throw new InvalidNameException(
           "Invalid BQ table name specified. Name must be 1-1024 characters, contains Unicode characters in category L"
               + " (letter), M (mark), N (number), Pc (connector, including underscore), Pd (dash), Zs (space)");
@@ -454,8 +450,8 @@ public class ResourceValidationUtils {
 
   public static void validateAzureVmSize(String vmSize) {
     if (!VirtualMachineSizeTypes.values().stream()
-        .map(x -> x.toString())
-        .collect(Collectors.toList())
+        .map(VirtualMachineSizeTypes::toString)
+        .toList()
         .contains(vmSize)) {
       logger.warn("Invalid Azure vmSize {}", vmSize);
       throw new InvalidReferenceException(

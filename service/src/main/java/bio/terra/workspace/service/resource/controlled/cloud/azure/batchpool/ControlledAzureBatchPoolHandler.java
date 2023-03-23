@@ -23,13 +23,11 @@ public class ControlledAzureBatchPoolHandler implements WsmResourceHandler {
   public WsmResource makeResourceFromDb(DbResource dbResource) {
     ControlledAzureBatchPoolAttributes attributes =
         DbSerDes.fromJson(dbResource.getAttributes(), ControlledAzureBatchPoolAttributes.class);
-    var resource =
-        ControlledAzureBatchPoolResource.builder()
-            .id(attributes.getId())
-            .vmSize(attributes.getVmSize())
-            .common(new ControlledResourceFields(dbResource))
-            .build();
-    return resource;
+    return ControlledAzureBatchPoolResource.builder()
+        .id(attributes.getId())
+        .vmSize(attributes.getVmSize())
+        .common(new ControlledResourceFields(dbResource))
+        .build();
   }
 
   @Override
