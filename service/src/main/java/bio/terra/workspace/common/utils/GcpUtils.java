@@ -80,53 +80,30 @@ public class GcpUtils {
       throws RetryException, IOException, InterruptedException {
     operation = OperationUtils.pollUntilComplete(operation, pollingInterval, timeout);
     if (operation.getOperationAdapter().getError() != null) {
+      // Mapping details of gRPC status codes to HTTP in
+      // https://chromium.googlesource.com/external/github.com/grpc/grpc/+/refs/tags/v1.21.4-pre1/doc/statuscodes.md
       int intCode = operation.getOperationAdapter().getError().getCode();
       // Do not waste time retrying on client error.
-      if (is4xxClientError(intCode)) {
-        Code code = Code.values()[intCode];
-        String errorMessage = operation.getOperationAdapter().getError().getMessage();
-        switch (code) {
-            // 400
-          case INVALID_ARGUMENT, OUT_OF_RANGE, FAILED_PRECONDITION -> throw new BadRequestException(
-              errorMessage);
-            // 401
-          case UNAUTHENTICATED -> throw new UnauthorizedException(errorMessage);
-            // 403
-          case PERMISSION_DENIED -> throw new ForbiddenException(errorMessage);
-            // 409
-          case ALREADY_EXISTS, ABORTED -> throw new ConflictException(errorMessage);
-            // 429
-          case RESOURCE_EXHAUSTED -> throw new BadRequestException(errorMessage);
-          default -> throw new BadRequestException(
-              String.format("GCP calls failed - %s: %s", code, errorMessage));
-        }
-      } else {
-        throw new RetryException(
+      Code code = Code.values()[intCode];
+      String errorMessage = operation.getOperationAdapter().getError().getMessage();
+      switch (code) {
+          // 400
+        case INVALID_ARGUMENT, OUT_OF_RANGE, FAILED_PRECONDITION -> throw new BadRequestException(
+            errorMessage);
+          // 401
+        case UNAUTHENTICATED -> throw new UnauthorizedException(errorMessage);
+          // 403 - This includes the "CPU quota limit exceeded" error for AI notebooks.
+        case PERMISSION_DENIED -> throw new ForbiddenException(errorMessage);
+          // 409
+        case ALREADY_EXISTS, ABORTED -> throw new ConflictException(errorMessage);
+          // 429
+        case RESOURCE_EXHAUSTED -> throw new BadRequestException(errorMessage);
+        default -> throw new RetryException(
             String.format(
                 "Error polling operation. name [%s] message [%s]",
-                operation.getOperationAdapter().getName(),
-                operation.getOperationAdapter().getError().getMessage()));
+                operation.getOperationAdapter().getName(), errorMessage));
       }
     }
-  }
-
-  /**
-   * Check whether the grpc status code is a client error.
-   *
-   * <p>Details of mapping of gRPC status code to http in
-   * https://chromium.googlesource.com/external/github.com/grpc/grpc/+/refs/tags/v1.21.4-pre1/doc/statuscodes.md
-   *
-   * @param code gRPC status code.
-   */
-  private static boolean is4xxClientError(int code) {
-    return Code.INVALID_ARGUMENT.value() == code // 400
-        || Code.OUT_OF_RANGE.value() == code // 400
-        || Code.FAILED_PRECONDITION.value() == code // 400
-        || Code.ALREADY_EXISTS.value() == code // 409
-        || Code.ABORTED.value() == code // 409
-        || Code.UNAUTHENTICATED.value() == code // 401
-        || Code.RESOURCE_EXHAUSTED.value() == code // 429
-        || Code.PERMISSION_DENIED.value() == code; // 403
   }
 
   public static String getControlPlaneProjectId() {
@@ -158,6 +135,33 @@ public class GcpUtils {
     } catch (IOException e) {
       throw new SaCredentialsMissingException(
           "Unable to find WSM service account credentials. Ensure WSM is actually running as a service account");
+    }
+  }
+
+  /**
+   * Obtains an OIDC token from Service Account that this WSM service instance is running as.
+   *
+   * @param audience 'aud' claim to include in the OIDC JWT
+   * @return OIDC JWT representing the WSM SA
+   */
+  public static String getWsmSaJwt(String audience) {
+    try {
+      GoogleCredentials googleCredentials = GoogleCredentials.getApplicationDefault();
+
+      IdTokenCredentials idTokenCredentials =
+          IdTokenCredentials.newBuilder()
+              .setIdTokenProvider((IdTokenProvider) googleCredentials)
+              .setTargetAudience(audience)
+              .setOptions(
+                  Arrays.asList(
+                      IdTokenProvider.Option.FORMAT_FULL, IdTokenProvider.Option.LICENSES_TRUE))
+              .build();
+
+      String tokenValue = idTokenCredentials.refreshAccessToken().getTokenValue();
+      return tokenValue;
+    } catch (IOException e) {
+      throw new SaCredentialsMissingException(
+          "Unable to get WSM service account JWT. Ensure WSM is actually running as a service account");
     }
   }
 
