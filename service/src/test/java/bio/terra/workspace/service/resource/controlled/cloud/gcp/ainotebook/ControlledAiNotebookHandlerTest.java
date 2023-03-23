@@ -72,6 +72,6 @@ public class ControlledAiNotebookHandlerTest extends BaseUnitTest {
     int maxNameLength = MAX_INSTANCE_NAME_LENGTH;
 
     assertEquals(maxNameLength, instanceId.length());
-    assertEquals(instanceId, instanceId.substring(0, maxNameLength));
+    assertEquals(instanceId.substring(0, maxNameLength), instanceId);
   }
 }
