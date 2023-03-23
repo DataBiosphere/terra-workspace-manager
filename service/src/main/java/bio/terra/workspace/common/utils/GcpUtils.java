@@ -4,7 +4,9 @@ import bio.terra.cloudres.google.api.services.common.OperationCow;
 import bio.terra.cloudres.google.api.services.common.OperationUtils;
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.common.exception.BadRequestException;
+import bio.terra.common.exception.ConflictException;
 import bio.terra.common.exception.ForbiddenException;
+import bio.terra.common.exception.UnauthorizedException;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -78,15 +80,26 @@ public class GcpUtils {
       throws RetryException, IOException, InterruptedException {
     operation = OperationUtils.pollUntilComplete(operation, pollingInterval, timeout);
     if (operation.getOperationAdapter().getError() != null) {
-      int code = operation.getOperationAdapter().getError().getCode();
-      if (is4xxClientError(code)) {
-        // do not waste time retrying on client error.
-        throw new BadRequestException(
-            String.format("Gcp calls failed with client error code %s. Do not retry", code));
-        // Handles the "CPU quota limit exceeded" error for AI notebook creation.
-      } else if (code == Code.PERMISSION_DENIED.value()) {
-        throw new ForbiddenException(
-            String.format("%s", operation.getOperationAdapter().getError().getMessage()));
+      int intCode = operation.getOperationAdapter().getError().getCode();
+      // Do not waste time retrying on client error.
+      if (is4xxClientError(intCode)) {
+        Code code = Code.values()[intCode];
+        String errorMessage = operation.getOperationAdapter().getError().getMessage();
+        switch (code) {
+            // 400
+          case INVALID_ARGUMENT, OUT_OF_RANGE, FAILED_PRECONDITION -> throw new BadRequestException(
+              errorMessage);
+            // 401
+          case UNAUTHENTICATED -> throw new UnauthorizedException(errorMessage);
+            // 403
+          case PERMISSION_DENIED -> throw new ForbiddenException(errorMessage);
+            // 409
+          case ALREADY_EXISTS, ABORTED -> throw new ConflictException(errorMessage);
+            // 429
+          case RESOURCE_EXHAUSTED -> throw new BadRequestException(errorMessage);
+          default -> throw new BadRequestException(
+              String.format("GCP calls failed - %s: %s", code, errorMessage));
+        }
       } else {
         throw new RetryException(
             String.format(
@@ -112,7 +125,8 @@ public class GcpUtils {
         || Code.ALREADY_EXISTS.value() == code // 409
         || Code.ABORTED.value() == code // 409
         || Code.UNAUTHENTICATED.value() == code // 401
-        || Code.RESOURCE_EXHAUSTED.value() == code; // 429
+        || Code.RESOURCE_EXHAUSTED.value() == code // 429
+        || Code.PERMISSION_DENIED.value() == code; // 403
   }
 
   public static String getControlPlaneProjectId() {
