@@ -81,7 +81,7 @@ components:
 
     AzureContext:
       type: object
-      description: The azure cloud context associated with a workspace.
+      description: The Azure cloud context associated with a workspace.
       properties:
         tenantId:
           description: The ID of Azure tenant associated with the workspace.
