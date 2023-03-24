@@ -2800,22 +2800,20 @@ public class MockMvcUtils {
   }
 
   public List<String> listValidRegions(
-      AuthenticatedUserRequest userRequest,
-      UUID workspaceId,
-      String platform)
-      throws Exception {
-    var serializedResponse = mockMvc
-        .perform(
-            addAuth(
-                get(String.format(WORKSPACES_V1_LIST_VALID_REGIONS_PATH_FORMAT, workspaceId))
-                    .queryParam("platform", platform)
-                    .accept(MediaType.APPLICATION_JSON)
-                    .characterEncoding("UTF-8"),
-                userRequest))
-        .andExpect(status().isOk())
-        .andReturn()
-        .getResponse()
-        .getContentAsString();
+      AuthenticatedUserRequest userRequest, UUID workspaceId, String platform) throws Exception {
+    var serializedResponse =
+        mockMvc
+            .perform(
+                addAuth(
+                    get(String.format(WORKSPACES_V1_LIST_VALID_REGIONS_PATH_FORMAT, workspaceId))
+                        .queryParam("platform", platform)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .characterEncoding("UTF-8"),
+                    userRequest))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
     return Arrays.asList(objectMapper.readValue(serializedResponse, String[].class));
   }
 
