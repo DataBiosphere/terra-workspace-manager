@@ -2,7 +2,6 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import bio.terra.cloudres.azure.resourcemanager.common.Defaults;
 import bio.terra.landingzone.db.LandingZoneDao;
 import bio.terra.landingzone.db.model.LandingZoneRecord;
 import bio.terra.landingzone.library.landingzones.deployment.LandingZoneTagKeys;
@@ -11,10 +10,8 @@ import bio.terra.landingzone.library.landingzones.deployment.SubnetResourcePurpo
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.resourcemanager.data.CreateStorageAccountRequestData;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
-import com.azure.core.management.Region;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.network.models.Network;
 import com.azure.resourcemanager.storage.StorageManager;
@@ -144,13 +141,7 @@ public class TestLandingZoneManager {
         .withTag(
             LandingZoneTagKeys.LANDING_ZONE_PURPOSE.toString(),
             ResourcePurpose.SHARED_RESOURCE.toString())
-        .create(
-            Defaults.buildContext(
-                CreateStorageAccountRequestData.builder()
-                    .setName(storageAccountName)
-                    .setRegion(Region.fromName(region))
-                    .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
-                    .build()));
+        .create();
   }
 
   private Network createNetworkWithComputeSubnet(
