@@ -176,9 +176,9 @@ public class RetrieveAzureResourcesRegionStep implements Step {
           .regionName();
     } catch (ApiErrorException e) {
       logger.warn(
-          String.format(
-              "Cannot get resource group %s for azure disk %s",
-              azureCloudContext.getAzureResourceGroupId(), resource.getDiskName()));
+          "Cannot get resource group {} for azure disk {}",
+          azureCloudContext.getAzureResourceGroupId(),
+          resource.getDiskName());
       return null;
     }
   }
@@ -194,9 +194,9 @@ public class RetrieveAzureResourcesRegionStep implements Step {
           .regionName();
     } catch (ApiErrorException e) {
       logger.warn(
-          String.format(
-              "Cannot get resource group %s for azure storage account %s",
-              azureCloudContext.getAzureResourceGroupId(), resource.getStorageAccountName()));
+          "Cannot get resource group {} for azure storage account {}",
+          azureCloudContext.getAzureResourceGroupId(),
+          resource.getStorageAccountName());
       return null;
     }
   }
@@ -212,9 +212,9 @@ public class RetrieveAzureResourcesRegionStep implements Step {
           .regionName();
     } catch (ApiErrorException e) {
       logger.warn(
-          String.format(
-              "Cannot get resource group %s for azure namespace %s",
-              azureCloudContext.getAzureResourceGroupId(), resource.getNamespaceName()));
+          "Cannot get resource group {} for azure namespace {}",
+          azureCloudContext.getAzureResourceGroupId(),
+          resource.getNamespaceName());
       return null;
     }
   }
@@ -257,9 +257,9 @@ public class RetrieveAzureResourcesRegionStep implements Step {
           .regionName();
     } catch (ApiErrorException e) {
       logger.warn(
-          String.format(
-              "Cannot get resource group %s for azure VM %s",
-              azureCloudContext.getAzureResourceGroupId(), resource.getVmName()));
+          "Cannot get resource group {} for azure VM {}",
+          azureCloudContext.getAzureResourceGroupId(),
+          resource.getVmName());
       return null;
     }
   }
@@ -275,9 +275,9 @@ public class RetrieveAzureResourcesRegionStep implements Step {
           .regionName();
     } catch (ApiErrorException e) {
       logger.warn(
-          String.format(
-              "Cannot get resource group %s for azure IP %s",
-              azureCloudContext.getAzureResourceGroupId(), resource.getIpName()));
+          "Cannot get resource group {} for azure IP {}",
+          azureCloudContext.getAzureResourceGroupId(),
+          resource.getIpName());
       return null;
     }
   }
@@ -294,9 +294,9 @@ public class RetrieveAzureResourcesRegionStep implements Step {
           .regionName();
     } catch (ApiErrorException e) {
       logger.warn(
-          String.format(
-              "Cannot get resource group %s for azure network %s",
-              azureCloudContext.getAzureResourceGroupId(), resource.getNetworkName()));
+          "Cannot get resource group {} for azure network {}",
+          azureCloudContext.getAzureResourceGroupId(),
+          resource.getNetworkName());
       return null;
     }
   }

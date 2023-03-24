@@ -25,15 +25,13 @@ public class ControlledAzureNetworkHandler implements WsmResourceHandler {
     ControlledAzureNetworkAttributes attributes =
         DbSerDes.fromJson(dbResource.getAttributes(), ControlledAzureNetworkAttributes.class);
 
-    var resource =
-        ControlledAzureNetworkResource.builder()
-            .common(new ControlledResourceFields(dbResource, attributes.getRegion()))
-            .networkName(attributes.getNetworkName())
-            .subnetName(attributes.getSubnetName())
-            .addressSpaceCidr(attributes.getAddressSpaceCidr())
-            .subnetAddressCidr(attributes.getSubnetAddressCidr())
-            .build();
-    return resource;
+    return ControlledAzureNetworkResource.builder()
+        .common(new ControlledResourceFields(dbResource, attributes.getRegion()))
+        .networkName(attributes.getNetworkName())
+        .subnetName(attributes.getSubnetName())
+        .addressSpaceCidr(attributes.getAddressSpaceCidr())
+        .subnetAddressCidr(attributes.getSubnetAddressCidr())
+        .build();
   }
 
   public String generateCloudName(@Nullable UUID workspaceUuid, String resourceName) {

@@ -845,8 +845,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     String newName = "NEW_createGetUpdateDeleteBqDataset";
     String newDescription = "new resource description";
-    Long newDefaultTableLifetime = 3600L;
-    Long newDefaultPartitionLifetime = 3601L;
+    long newDefaultTableLifetime = 3600L;
+    long newDefaultPartitionLifetime = 3601L;
     ApiGcpBigQueryDatasetUpdateParameters updateParameters =
         new ApiGcpBigQueryDatasetUpdateParameters()
             .defaultTableLifetime(newDefaultTableLifetime)
@@ -890,8 +890,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   void createBqDatasetDo() throws Exception {
     String datasetId = ControlledResourceFixtures.uniqueDatasetId();
     String location = "us-central1";
-    Long defaultTableLifetimeSec = 5900L;
-    Long defaultPartitionLifetimeSec = 5901L;
+    long defaultTableLifetimeSec = 5900L;
+    long defaultPartitionLifetimeSec = 5901L;
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
         new ApiGcpBigQueryDatasetCreationParameters()
             .datasetId(datasetId)

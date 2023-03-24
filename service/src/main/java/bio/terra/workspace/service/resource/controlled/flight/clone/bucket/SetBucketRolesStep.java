@@ -97,9 +97,9 @@ public class SetBucketRolesStep implements Step {
   /**
    * Remove the roles from the buckets. The removeAllBucketRoles function is idempotent.
    *
-   * @param flightContext
-   * @return
-   * @throws InterruptedException
+   * @param flightContext flightContext
+   * @return StepResult
+   * @throws InterruptedException InterruptedException
    */
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {

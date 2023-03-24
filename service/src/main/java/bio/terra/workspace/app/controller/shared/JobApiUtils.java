@@ -103,7 +103,7 @@ public class JobApiUtils {
               .orElseThrow(
                   () -> new InvalidResultStateException("No completed time for completed flight"));
       switch (jobStatus) {
-        case FAILED:
+        case FAILED -> {
           int errorCode =
               flightState
                   .getException()
@@ -115,32 +115,28 @@ public class JobApiUtils {
                                   "Flight %s failed with no exception reported",
                                   flightState.getFlightId())));
           statusCode = HttpStatus.valueOf(errorCode);
-          break;
-        case SUCCEEDED:
+        }
+        case SUCCEEDED -> {
           FlightMap resultMap =
               flightState.getResultMap().orElseThrow(InvalidResultStateException::noResultMap);
           statusCode = resultMap.get(JobMapKeys.STATUS_CODE.getKeyName(), HttpStatus.class);
           if (statusCode == null) {
             statusCode = HttpStatus.OK;
           }
-          break;
-        default:
-          throw new IllegalStateException(
-              "Cannot get status code of flight in unknown state " + jobStatus);
+        }
+        default -> throw new IllegalStateException(
+            "Cannot get status code of flight in unknown state " + jobStatus);
       }
     }
 
-    ApiJobReport jobReport =
-        new ApiJobReport()
-            .id(flightState.getFlightId())
-            .description(description)
-            .status(jobStatus)
-            .statusCode(statusCode.value())
-            .submitted(submittedDate)
-            .completed(completedDate)
-            .resultURL(resultUrlFromFlightState(flightState));
-
-    return jobReport;
+    return new ApiJobReport()
+        .id(flightState.getFlightId())
+        .description(description)
+        .status(jobStatus)
+        .statusCode(statusCode.value())
+        .submitted(submittedDate)
+        .completed(completedDate)
+        .resultURL(resultUrlFromFlightState(flightState));
   }
 
   public ApiJobResult fetchJobResult(String jobId) {
@@ -174,7 +170,7 @@ public class JobApiUtils {
     // support it.
     String protocol =
         ingressConfig.getDomainName().startsWith("localhost") ? "http://" : "https://";
-    return protocol + Path.of(ingressConfig.getDomainName(), resultPath).toString();
+    return protocol + Path.of(ingressConfig.getDomainName(), resultPath);
   }
 
   /**

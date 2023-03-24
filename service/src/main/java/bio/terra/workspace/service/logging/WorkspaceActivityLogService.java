@@ -27,7 +27,7 @@ public class WorkspaceActivityLogService {
   }
 
   @Traced
-  /** Writes the change activity. */
+  // Writes the change activity
   public void writeActivity(
       AuthenticatedUserRequest userRequest,
       UUID workspaceUuid,

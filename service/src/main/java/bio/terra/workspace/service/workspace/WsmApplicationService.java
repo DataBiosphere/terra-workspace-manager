@@ -72,13 +72,13 @@ public class WsmApplicationService {
       AuthenticatedUserRequest userRequest, Workspace workspace, String applicationId) {
     return commonAbleJob(
         // Wrap in arraylist for JSON serialization
-        userRequest, workspace, new ArrayList<String>(List.of(applicationId)), AbleEnum.DISABLE);
+        userRequest, workspace, new ArrayList<>(List.of(applicationId)), AbleEnum.DISABLE);
   }
 
   public WsmWorkspaceApplication enableWorkspaceApplication(
       AuthenticatedUserRequest userRequest, Workspace workspace, String applicationId) {
     return commonAbleJob(
-        userRequest, workspace, new ArrayList<String>(List.of(applicationId)), AbleEnum.ENABLE);
+        userRequest, workspace, new ArrayList<>(List.of(applicationId)), AbleEnum.ENABLE);
   }
 
   // Common method to launch and wait for enable and disable flights.
@@ -148,7 +148,7 @@ public class WsmApplicationService {
     List<String> missing = new ArrayList<>();
     for (WsmDbApplication dbApp : dbAppMap.values()) {
       if (!dbApp.isMatched()) {
-        missing.add(dbApp.getWsmApplication().getApplicationId().toString());
+        missing.add(dbApp.getWsmApplication().getApplicationId());
       }
     }
     if (missing.size() > 0) {

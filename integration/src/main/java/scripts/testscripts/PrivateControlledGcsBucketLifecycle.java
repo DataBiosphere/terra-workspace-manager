@@ -172,7 +172,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
                 GcsBucketUtils.makeControlledGcsBucket(
                     privateUserResourceApi,
                     getWorkspaceId(),
-                    RESOURCE_PREFIX + UUID.randomUUID().toString(),
+                    RESOURCE_PREFIX + UUID.randomUUID(),
                     /*bucketName=*/ null,
                     AccessScope.PRIVATE_ACCESS,
                     ManagedBy.USER,
@@ -197,7 +197,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
                 GcsBucketUtils.makeControlledGcsBucket(
                     privateUserResourceApi,
                     getWorkspaceId(),
-                    RESOURCE_PREFIX + UUID.randomUUID().toString(),
+                    RESOURCE_PREFIX + UUID.randomUUID(),
                     /*bucketName=*/ null,
                     AccessScope.PRIVATE_ACCESS,
                     ManagedBy.USER,
@@ -206,12 +206,12 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     assertThat(ex.getMessage(), containsString("MethodArgumentNotValidException"));
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, ex.getCode());
 
-    String uniqueBucketName = String.format("terra-%s-bucket", UUID.randomUUID().toString());
+    String uniqueBucketName = String.format("terra-%s-bucket", UUID.randomUUID());
     CreatedControlledGcpGcsBucket bucketWithBucketNameSpecified =
         GcsBucketUtils.makeControlledGcsBucket(
             privateUserResourceApi,
             getWorkspaceId(),
-            RESOURCE_PREFIX + UUID.randomUUID().toString(),
+            RESOURCE_PREFIX + UUID.randomUUID(),
             /*bucketName=*/ uniqueBucketName,
             AccessScope.PRIVATE_ACCESS,
             ManagedBy.USER,

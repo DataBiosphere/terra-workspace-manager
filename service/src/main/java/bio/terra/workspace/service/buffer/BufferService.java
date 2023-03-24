@@ -59,7 +59,7 @@ public class BufferService {
    * Retrieve a single resource from the Buffer Service. The instance and pool are already
    * configured.
    *
-   * @param requestBody
+   * @param requestBody requestBody
    * @return ResourceInfo
    */
   public ResourceInfo handoutResource(HandoutRequestBody requestBody) {

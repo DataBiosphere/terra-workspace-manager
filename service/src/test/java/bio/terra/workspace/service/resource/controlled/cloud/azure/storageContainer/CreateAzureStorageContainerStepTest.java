@@ -65,14 +65,12 @@ public class CreateAzureStorageContainerStepTest extends BaseStorageStepTest {
             .get(WorkspaceFlightMapKeys.ControlledResourceKeys.STORAGE_ACCOUNT_NAME, String.class))
         .thenReturn(storageAccountName);
 
-    CreateAzureStorageContainerStep createAzureStorageContainerStep =
-        new CreateAzureStorageContainerStep(
-            mockAzureConfig,
-            mockCrlService,
-            ControlledResourceFixtures.getAzureStorageContainer(
-                creationParameters.getStorageAccountId(),
-                creationParameters.getStorageContainerName()));
-    return createAzureStorageContainerStep;
+    return new CreateAzureStorageContainerStep(
+        mockAzureConfig,
+        mockCrlService,
+        ControlledResourceFixtures.getAzureStorageContainer(
+            creationParameters.getStorageAccountId(),
+            creationParameters.getStorageContainerName()));
   }
 
   @Test

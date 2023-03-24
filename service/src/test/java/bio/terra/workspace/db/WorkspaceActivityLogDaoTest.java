@@ -362,7 +362,6 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
             + " FROM workspace_activity_log WHERE workspace_id = :workspace_id"
             + " ORDER BY change_date DESC LIMIT 1";
     final var params = new MapSqlParameterSource().addValue("workspace_id", workspaceId.toString());
-    var changeType = jdbcTemplate.queryForObject(sql, params, String.class);
-    return changeType;
+    return jdbcTemplate.queryForObject(sql, params, String.class);
   }
 }

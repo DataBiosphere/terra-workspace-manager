@@ -28,7 +28,7 @@ public class CreateAzureStorageStepTest extends BaseStorageStepTest {
   @Mock private StorageAccountKeyProvider mockStorageAccountKeyProvider;
 
   private ApiAzureStorageCreationParameters creationParameters;
-  private ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
+  private final ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
 
   @BeforeEach
   public void setup() {
@@ -89,14 +89,12 @@ public class CreateAzureStorageStepTest extends BaseStorageStepTest {
 
   private CreateAzureStorageStep createCreateAzureStorageStep() {
 
-    CreateAzureStorageStep createAzureStorageStep =
-        new CreateAzureStorageStep(
-            mockAzureConfig,
-            mockCrlService,
-            ControlledResourceFixtures.getAzureStorage(
-                creationParameters.getStorageAccountName(), creationParameters.getRegion()),
-            mockStorageAccountKeyProvider);
-    return createAzureStorageStep;
+    return new CreateAzureStorageStep(
+        mockAzureConfig,
+        mockCrlService,
+        ControlledResourceFixtures.getAzureStorage(
+            creationParameters.getStorageAccountName(), creationParameters.getRegion()),
+        mockStorageAccountKeyProvider);
   }
 
   @Test

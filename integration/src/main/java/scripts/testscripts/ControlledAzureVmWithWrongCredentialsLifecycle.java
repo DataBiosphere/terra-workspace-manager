@@ -23,7 +23,7 @@ public class ControlledAzureVmWithWrongCredentialsLifecycle
   private static final Logger logger =
       LoggerFactory.getLogger(ControlledAzureVmWithWrongCredentialsLifecycle.class);
 
-  private static String AZURE_VM_PROVISION_ERROR_MESSAGE =
+  private static final String AZURE_VM_PROVISION_ERROR_MESSAGE =
       "The supplied password must be between 6-72 characters long and must satisfy at least 3 of password complexity requirements";
 
   @Override

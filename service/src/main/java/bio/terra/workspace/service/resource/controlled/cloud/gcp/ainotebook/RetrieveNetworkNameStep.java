@@ -72,7 +72,7 @@ public class RetrieveNetworkNameStep implements Step {
 
     return zoneList.getItems().stream()
         .filter(zone -> extractNameFromUrl(zone.getRegion()).equalsIgnoreCase(location))
-        .map(zone -> zone.getName())
+        .map(Zone::getName)
         .sorted()
         .findAny()
         .orElse(location);
