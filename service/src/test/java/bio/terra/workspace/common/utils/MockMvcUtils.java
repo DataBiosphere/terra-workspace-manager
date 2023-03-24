@@ -153,6 +153,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.google.common.collect.ImmutableList;
 import java.time.OffsetDateTime;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -2796,6 +2797,26 @@ public class MockMvcUtils {
                     .content(objectMapper.writeValueAsString(updateRequest)),
                 userRequest))
         .andExpect(status().is(code));
+  }
+
+  public List<String> listValidRegions(
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      String platform)
+      throws Exception {
+    var serializedResponse = mockMvc
+        .perform(
+            addAuth(
+                get(String.format(WORKSPACES_V1_LIST_VALID_REGIONS_PATH_FORMAT, workspaceId))
+                    .queryParam("platform", platform)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .characterEncoding("UTF-8"),
+                userRequest))
+        .andExpect(status().isOk())
+        .andReturn()
+        .getResponse()
+        .getContentAsString();
+    return Arrays.asList(objectMapper.readValue(serializedResponse, String[].class));
   }
 
   public ApiWsmPolicyUpdateResult removeRegionPolicy(
