@@ -16,8 +16,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * This service provides methods for managing GCP cloud context in the WSM database. These methods
- * do not perform any access control and operate directly against the {@link
- * bio.terra.workspace.db.WorkspaceDao}
+ * do not perform any access control and operate directly against the {@link WorkspaceDao}
  */
 @Component
 public class GcpCloudContextService {
