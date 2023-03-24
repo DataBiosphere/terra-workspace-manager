@@ -12,7 +12,6 @@ import org.springframework.context.annotation.Configuration;
 @EnableConfigurationProperties
 @ConfigurationProperties(prefix = "workspace.aws")
 public class AwsConfiguration {
-
   private Discovery discovery;
   private Authentication authentication;
 
@@ -30,6 +29,12 @@ public class AwsConfiguration {
 
   public void setAuthentication(Authentication authentication) {
     this.authentication = authentication;
+  }
+
+  @Override
+  public String toString() {
+    return String.format(
+        "{authentication=%s, discovery=%s}", authentication.toString(), discovery.toString());
   }
 
   public static class Discovery {
@@ -61,6 +66,13 @@ public class AwsConfiguration {
       this.caching = caching;
     }
 
+    @Override
+    public String toString() {
+      return String.format(
+          "{bucket=%s, caching=%s, roleArn=\"%s\"}",
+          bucket.toString(), caching.toString(), roleArn);
+    }
+
     public static class Bucket {
 
       private String name;
@@ -81,11 +93,19 @@ public class AwsConfiguration {
       public void setRegion(String region) {
         this.region = region;
       }
+
+      @Override
+      public String toString() {
+        return String.format("{name=\"%s\", region=\"%s\"}", name, region.toString());
+      }
     }
 
     public static class Caching {
-      private boolean enabled = true;
-      private long expirationTimeSeconds = 600;
+      public static boolean DEFAULT_ENABLED = true;
+      public static long DEFAULT_EXPIRATION_TIME_SECONDS = 600;
+
+      private boolean enabled = DEFAULT_ENABLED;
+      private long expirationTimeSeconds = DEFAULT_EXPIRATION_TIME_SECONDS;
 
       public boolean isEnabled() {
         return enabled;
@@ -102,13 +122,22 @@ public class AwsConfiguration {
       public void setExpirationTimeSeconds(long expirationTimeSeconds) {
         this.expirationTimeSeconds = expirationTimeSeconds;
       }
+
+      @Override
+      public String toString() {
+        return String.format(
+            "{enabled=%b, expirationTimeSeconds=%d}", enabled, expirationTimeSeconds);
+      }
     }
   }
 
   public static class Authentication {
+    public static long DEFAULT_CREDENTIAL_LIFETIME_SECONDS = 900;
+    public static long DEFAULT_CREDENTIAL_STALE_TIME_SECONDS = 300;
+
     private String googleJwtAudience;
-    private long credentialLifetimeSeconds = 900;
-    private long credentialStaleTimeSeconds = 300;
+    private long credentialLifetimeSeconds = DEFAULT_CREDENTIAL_LIFETIME_SECONDS;
+    private long credentialStaleTimeSeconds = DEFAULT_CREDENTIAL_STALE_TIME_SECONDS;
 
     public String getGoogleJwtAudience() {
       return googleJwtAudience;
@@ -132,6 +161,13 @@ public class AwsConfiguration {
 
     public void setCredentialStaleTimeSeconds(long credentialStaleTimeSeconds) {
       this.credentialStaleTimeSeconds = credentialStaleTimeSeconds;
+    }
+
+    @Override
+    public String toString() {
+      return String.format(
+          "{credentialLifetimeSeconds=%d, credentialStaleTimeSeconds=%d, googleJwtAudience=\"%s\"}",
+          credentialLifetimeSeconds, credentialStaleTimeSeconds, googleJwtAudience);
     }
   }
 }
