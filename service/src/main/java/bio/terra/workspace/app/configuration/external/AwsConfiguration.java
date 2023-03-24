@@ -101,8 +101,8 @@ public class AwsConfiguration {
     }
 
     public static class Caching {
-      public static boolean DEFAULT_ENABLED = true;
-      public static long DEFAULT_EXPIRATION_TIME_SECONDS = 600;
+      public static final boolean DEFAULT_ENABLED = true;
+      public static final long DEFAULT_EXPIRATION_TIME_SECONDS = 600;
 
       private boolean enabled = DEFAULT_ENABLED;
       private long expirationTimeSeconds = DEFAULT_EXPIRATION_TIME_SECONDS;
@@ -132,8 +132,8 @@ public class AwsConfiguration {
   }
 
   public static class Authentication {
-    public static long DEFAULT_CREDENTIAL_LIFETIME_SECONDS = 900;
-    public static long DEFAULT_CREDENTIAL_STALE_TIME_SECONDS = 300;
+    public static final long DEFAULT_CREDENTIAL_LIFETIME_SECONDS = 900;
+    public static final long DEFAULT_CREDENTIAL_STALE_TIME_SECONDS = 300;
 
     private String googleJwtAudience;
     private long credentialLifetimeSeconds = DEFAULT_CREDENTIAL_LIFETIME_SECONDS;
