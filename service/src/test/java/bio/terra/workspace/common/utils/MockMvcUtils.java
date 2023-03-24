@@ -100,6 +100,7 @@ import bio.terra.workspace.generated.model.ApiPrivateResourceState;
 import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
 import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiPropertyKeys;
+import bio.terra.workspace.generated.model.ApiRegions;
 import bio.terra.workspace.generated.model.ApiResourceDescription;
 import bio.terra.workspace.generated.model.ApiResourceLineage;
 import bio.terra.workspace.generated.model.ApiResourceLineageEntry;
@@ -153,7 +154,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.google.common.collect.ImmutableList;
 import java.time.OffsetDateTime;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -2799,7 +2799,7 @@ public class MockMvcUtils {
         .andExpect(status().is(code));
   }
 
-  public List<String> listValidRegions(
+  public ApiRegions listValidRegions(
       AuthenticatedUserRequest userRequest, UUID workspaceId, String platform) throws Exception {
     var serializedResponse =
         mockMvc
@@ -2814,7 +2814,7 @@ public class MockMvcUtils {
             .andReturn()
             .getResponse()
             .getContentAsString();
-    return Arrays.asList(objectMapper.readValue(serializedResponse, String[].class));
+    return objectMapper.readValue(serializedResponse, ApiRegions.class);
   }
 
   public ApiWsmPolicyUpdateResult removeRegionPolicy(
