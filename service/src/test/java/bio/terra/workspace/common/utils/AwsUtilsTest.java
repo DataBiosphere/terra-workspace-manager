@@ -36,10 +36,7 @@ public class AwsUtilsTest extends BaseAwsConnectedTest {
 
   @Test
   void hello_bucket() throws IOException {
-    Assertions.assertDoesNotThrow(
-        () -> {
-          featureConfiguration.awsEnabledCheck();
-        });
+    Assertions.assertDoesNotThrow(() -> featureConfiguration.awsEnabledCheck());
 
     // Log the AWS config
     logger.info("AWS Configuration: {}", awsConfiguration.toString());
@@ -52,8 +49,8 @@ public class AwsUtilsTest extends BaseAwsConnectedTest {
     // caching will happen under the hood to prevent too many S3 calls to the discovery bucket.
     Environment environment = environmentDiscovery.discoverEnvironment();
 
-    // This lifetime should track that of the discovered environment where possible (stale creds
-    // will get refreshed under the hood).
+    // This lifetime should track that of the discovered environment where possible (stale
+    // credentials will get refreshed under the hood).
     AwsCredentialsProvider awsCredentialsProvider =
         AwsUtils.createWsmCredentialProvider(awsConfiguration, environment);
 
@@ -71,17 +68,16 @@ public class AwsUtilsTest extends BaseAwsConnectedTest {
       // permissions on the bucket, which the WSM role has.  This is a basic "Hello, world!" test
       // that we've discovered the environment and assumed the TerraWorkspaceManager role.
 
-      S3Client s3Client =
-          S3Client.builder().region(region).credentialsProvider(awsCredentialsProvider).build();
-
       String bucketName = landingZone.getStorageBucket().name();
-
       HeadBucketRequest request = HeadBucketRequest.builder().bucket(bucketName).build();
 
-      Assertions.assertDoesNotThrow(
-          () -> {
-            s3Client.headBucket(request);
-          });
+      // SdkClient classes should generally be used in try-with-resource blocks.
+      try (S3Client s3Client =
+          S3Client.builder().region(region).credentialsProvider(awsCredentialsProvider).build()) {
+        s3Client.headBucket(request);
+      } catch (Exception exception) {
+        Assertions.fail(String.format("HeadBucket request failed: %s", exception), exception);
+      }
 
       logger.info(
           "Confirmed access to bucket '{}' in AWS Region {}", bucketName, region.toString());

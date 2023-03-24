@@ -96,7 +96,7 @@ public class AwsConfiguration {
 
       @Override
       public String toString() {
-        return String.format("{name=\"%s\", region=\"%s\"}", name, region.toString());
+        return String.format("{name=\"%s\", region=\"%s\"}", name, region);
       }
     }
 
