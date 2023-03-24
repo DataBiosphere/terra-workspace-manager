@@ -56,15 +56,16 @@ public class BaseAzureUnitTest extends BaseUnitTestMocks {
 
   public void setupMockLandingZoneRegion(Region region) {
     when(mockWorkspaceService().getWorkspace(any())).thenReturn(createDefaultMcWorkspace());
-    when(mockLandingZoneService().getLandingZonesByBillingProfile(any(), any())).thenReturn(
-        List.of(
-            LandingZone.builder()
-                .landingZoneId(UUID.randomUUID())
-                .billingProfileId(UUID.randomUUID())
-                .definition("definition")
-                .version("1")
-                .createdDate(Instant.now().atOffset(ZoneOffset.UTC))
-                .build()));
+    when(mockLandingZoneService().getLandingZonesByBillingProfile(any(), any()))
+        .thenReturn(
+            List.of(
+                LandingZone.builder()
+                    .landingZoneId(UUID.randomUUID())
+                    .billingProfileId(UUID.randomUUID())
+                    .definition("definition")
+                    .version("1")
+                    .createdDate(Instant.now().atOffset(ZoneOffset.UTC))
+                    .build()));
     when(mockLandingZoneService().getLandingZoneRegion(any(), any())).thenReturn(region.name());
   }
 }

@@ -28,7 +28,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Optional;
-import java.util.UUID;
 
 public class ControlledAzureStorageContainerResource extends ControlledResource {
   private final String storageContainerName;
@@ -147,8 +146,7 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
   public void addUpdateSteps(UpdateControlledResourceFlight flight, FlightBeanBag flightBeanBag) {}
 
   public ApiAzureStorageContainerAttributes toApiAttributes() {
-    return new ApiAzureStorageContainerAttributes()
-        .storageContainerName(getStorageContainerName());
+    return new ApiAzureStorageContainerAttributes().storageContainerName(getStorageContainerName());
   }
 
   public ApiAzureStorageContainerResource toApiResource() {
@@ -232,8 +230,7 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
     }
 
     public ControlledAzureStorageContainerResource build() {
-      return new ControlledAzureStorageContainerResource(
-          common, storageContainerName);
+      return new ControlledAzureStorageContainerResource(common, storageContainerName);
     }
   }
 }

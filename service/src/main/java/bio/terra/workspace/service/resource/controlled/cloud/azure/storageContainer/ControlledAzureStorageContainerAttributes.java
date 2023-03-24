@@ -2,7 +2,6 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure.storageConta
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.UUID;
 
 public class ControlledAzureStorageContainerAttributes {
   private final String storageContainerName;

@@ -44,7 +44,6 @@ import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import com.azure.core.management.Region;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.compute.models.VirtualMachine;
@@ -96,13 +95,14 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
     // create quasi landing zone with a single resource - vnet with compute subnet
     networkName = String.format("lzsharedstacc%s", TestUtils.getRandomString(6));
     landingZoneId = UUID.fromString(landingZoneTestUtils.getDefaultLandingZoneId());
-    testLandingZoneManager = new TestLandingZoneManager(
-        azureCloudContextService,
-        landingZoneDao,
-        workspaceDao,
-        crlService,
-        azureConfig,
-        workspaceUuid);
+    testLandingZoneManager =
+        new TestLandingZoneManager(
+            azureCloudContextService,
+            landingZoneDao,
+            workspaceDao,
+            crlService,
+            azureConfig,
+            workspaceUuid);
 
     testLandingZoneManager.createLandingZoneWithComputeSubnet(
         landingZoneId, workspaceUuid, networkName, DEFAULT_AZURE_RESOURCE_REGION);
@@ -113,7 +113,10 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
     // Deleting the workspace will also delete any resources contained in the workspace, including
     // VMs and the resources created during setup.
     workspaceService.deleteWorkspace(sharedWorkspace, userAccessUtils.defaultUserAuthRequest());
-    testLandingZoneManager.deleteLandingZoneWithComputeSubnet(landingZoneId, azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(), networkName);
+    testLandingZoneManager.deleteLandingZoneWithComputeSubnet(
+        landingZoneId,
+        azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
+        networkName);
   }
 
   @Tag("azureConnected")
@@ -127,9 +130,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
     // TODO: make this application-private resource once the POC supports it
     ControlledAzureVmResource resource =
         ControlledResourceFixtures.makeDefaultControlledAzureVmResourceBuilder(
-                creationParameters,
-                workspaceUuid,
-                diskResource.getResourceId())
+                creationParameters, workspaceUuid, diskResource.getResourceId())
             .build();
 
     // Submit a VM creation flight and verify the resource exists in the workspace.

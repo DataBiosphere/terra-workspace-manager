@@ -121,7 +121,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       UUID workspaceUuid, ApiCreateControlledAzureDiskRequestBody body) {
     features.azureEnabledCheck();
 
-
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledResourceFields commonFields =
         toCommonFields(

@@ -27,9 +27,7 @@ public class ControlledAzureVmWithWrongCredentialsLifecycle
 
   @Override
   protected CreatedControlledAzureVmResult createVm(
-      String resourceSuffix,
-      String createVmJobId,
-      CreatedControlledAzureDisk disk)
+      String resourceSuffix, String createVmJobId, CreatedControlledAzureDisk disk)
       throws ApiException {
     CreateControlledAzureVmRequestBody vmRequestBody =
         new CreateControlledAzureVmRequestBody()

@@ -2,7 +2,6 @@ package bio.terra.workspace.app.controller;
 
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.generated.controller.AdminApi;
-import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiJobResult;
 import bio.terra.workspace.service.admin.AdminService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;

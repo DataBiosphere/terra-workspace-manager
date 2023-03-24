@@ -73,9 +73,7 @@ public abstract class ControlledAzureVmTestScriptBase extends ControlledAzureTes
   }
 
   protected abstract CreatedControlledAzureVmResult createVm(
-      String resourceSuffix,
-      String createVmJobId,
-      CreatedControlledAzureDisk disk)
+      String resourceSuffix, String createVmJobId, CreatedControlledAzureDisk disk)
       throws ApiException;
 
   protected CreatedControlledAzureDisk createDisk(String resourceSuffix) throws ApiException {
@@ -83,9 +81,7 @@ public abstract class ControlledAzureVmTestScriptBase extends ControlledAzureTes
         new CreateControlledAzureDiskRequestBody()
             .common(createCommonFields("common-disk", resourceSuffix));
     AzureDiskCreationParameters diskParameters =
-        new AzureDiskCreationParameters()
-            .name(String.format("disk-%s", suffix))
-            .size(50);
+        new AzureDiskCreationParameters().name(String.format("disk-%s", suffix)).size(50);
     diskRequestBody.azureDisk(diskParameters);
     CreatedControlledAzureDisk disk = azureApi.createAzureDisk(diskRequestBody, getWorkspaceId());
     assertNotNull(disk.getResourceId());

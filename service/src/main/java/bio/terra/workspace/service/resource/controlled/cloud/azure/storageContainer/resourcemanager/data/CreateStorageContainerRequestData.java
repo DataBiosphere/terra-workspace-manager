@@ -4,7 +4,6 @@ import bio.terra.cloudres.common.CloudOperation;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.resourcemanager.StorageManagerOperation;
 import com.google.auto.value.AutoValue;
 import com.google.gson.JsonObject;
-import java.util.UUID;
 
 @AutoValue
 public abstract class CreateStorageContainerRequestData extends BaseStorageContainerRequestData {

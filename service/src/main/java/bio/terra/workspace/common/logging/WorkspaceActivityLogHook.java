@@ -184,7 +184,9 @@ public class WorkspaceActivityLogHook implements StairwayHook {
       String subjectId) {
     if (SyncGcpIamRolesFlight.class.getName().equals(flightClassName)) {
       maybeLogForSyncGcpIamRolesFlight(context, operationType, userEmail, subjectId);
-    } else if (UpdateControlledBigQueryDatasetsLifetimeFlight.class.getName().equals(flightClassName)) {
+    } else if (UpdateControlledBigQueryDatasetsLifetimeFlight.class
+        .getName()
+        .equals(flightClassName)) {
       maybeLogUpdateControlledResourceFieldsFlight(context, operationType, userEmail, subjectId);
     } else {
       throw new UnhandledActivityLogException(

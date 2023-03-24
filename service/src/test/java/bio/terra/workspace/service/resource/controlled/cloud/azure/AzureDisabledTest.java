@@ -1,8 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
 import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AZURE_DISK_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AZURE_IP_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AZURE_NETWORK_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AZURE_VM_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_CLOUD_CONTEXT_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.GET_CLOUD_CONTEXT_PATH_FORMAT;

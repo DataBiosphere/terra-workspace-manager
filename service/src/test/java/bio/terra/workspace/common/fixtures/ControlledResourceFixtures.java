@@ -25,7 +25,6 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResourceF
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import com.azure.core.management.Region;
 import com.azure.resourcemanager.batch.models.DeploymentConfiguration;
 import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.google.api.client.util.DateTime;
@@ -362,9 +361,7 @@ public class ControlledResourceFixtures {
   public static ControlledAzureVmResource getAzureVm(
       ApiAzureVmCreationParameters creationParameters) {
     return ControlledAzureVmResource.builder()
-        .common(
-            makeDefaultControlledResourceFieldsBuilder()
-                .build())
+        .common(makeDefaultControlledResourceFieldsBuilder().build())
         .vmName(creationParameters.getName())
         .vmSize(creationParameters.getVmSize())
         .vmImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
@@ -647,9 +644,7 @@ public class ControlledResourceFixtures {
   }
 
   public static ControlledAzureVmResource.Builder makeDefaultControlledAzureVmResourceBuilder(
-      ApiAzureVmCreationParameters creationParameters,
-      UUID workspaceId,
-      UUID diskResourceId) {
+      ApiAzureVmCreationParameters creationParameters, UUID workspaceId, UUID diskResourceId) {
     return ControlledAzureVmResource.builder()
         .common(
             makeDefaultControlledResourceFieldsBuilder()

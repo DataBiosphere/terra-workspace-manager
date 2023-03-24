@@ -68,7 +68,8 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
 
   private void initValidationStep() {
     storageContainerResource =
-        ControlledResourceFixtures.getAzureStorageContainer(creationParameters.getStorageContainerName());
+        ControlledResourceFixtures.getAzureStorageContainer(
+            creationParameters.getStorageContainerName());
 
     verifyCanBeCreatedStep =
         new VerifyAzureStorageContainerCanBeCreatedStep(

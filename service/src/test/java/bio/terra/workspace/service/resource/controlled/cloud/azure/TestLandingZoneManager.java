@@ -96,7 +96,10 @@ public class TestLandingZoneManager {
       UUID landingZoneId, String azureResourceGroup, String networkName) {
     landingZoneDao.deleteLandingZone(landingZoneId);
 
-    computeManager.networkManager().networks().deleteByResourceGroup(azureResourceGroup, networkName);
+    computeManager
+        .networkManager()
+        .networks()
+        .deleteByResourceGroup(azureResourceGroup, networkName);
   }
 
   public void createLandingZoneWithoutResources(UUID landingZoneId, UUID workspaceId) {
@@ -155,7 +158,8 @@ public class TestLandingZoneManager {
     final String subnetName = "COMPUTE_SUBNET";
 
     return computeManager
-        .networkManager().networks()
+        .networkManager()
+        .networks()
         .define(networkName)
         .withRegion(region)
         .withExistingResourceGroup(azureCloudContext.getAzureResourceGroupId())

@@ -55,11 +55,7 @@ public class ControlledAzureVmResource extends ControlledResource {
   }
 
   private ControlledAzureVmResource(
-      ControlledResourceFields common,
-      String vmName,
-      String vmSize,
-      String vmImage,
-      UUID diskId) {
+      ControlledResourceFields common, String vmName, String vmSize, String vmImage, UUID diskId) {
     super(common);
     this.vmName = vmName;
     this.vmImage = vmImage;
@@ -218,11 +214,7 @@ public class ControlledAzureVmResource extends ControlledResource {
   public String attributesToJson() {
     return DbSerDes.toJson(
         new ControlledAzureVmAttributes(
-            getVmName(),
-            getRegion(),
-            getVmSize(),
-            getVmImage(),
-            getDiskId()));
+            getVmName(), getRegion(), getVmSize(), getVmImage(), getDiskId()));
   }
 
   @Override
@@ -315,8 +307,7 @@ public class ControlledAzureVmResource extends ControlledResource {
     }
 
     public ControlledAzureVmResource build() {
-      return new ControlledAzureVmResource(
-          common, vmName, vmSize, vmImage, diskId);
+      return new ControlledAzureVmResource(common, vmName, vmSize, vmImage, diskId);
     }
   }
 }

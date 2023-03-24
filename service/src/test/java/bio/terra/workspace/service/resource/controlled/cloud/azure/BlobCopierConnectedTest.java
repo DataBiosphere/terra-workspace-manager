@@ -82,8 +82,9 @@ public class BlobCopierConnectedTest extends BaseAzureConnectedTest {
             azureConfig,
             workspace.getWorkspaceId());
 
-    storageAcct = testLandingZoneManager.createLandingZoneWithSharedStorageAccount(
-        landingZoneId, workspaceId, storageAccountName, "eastus");
+    storageAcct =
+        testLandingZoneManager.createLandingZoneWithSharedStorageAccount(
+            landingZoneId, workspaceId, storageAccountName, "eastus");
 
     userRequest = userAccessUtils.defaultUserAuthRequest();
 
@@ -130,13 +131,9 @@ public class BlobCopierConnectedTest extends BaseAzureConnectedTest {
     var result =
         bc.copyBlobs(
             new StorageData(
-                storageAcct.name(),
-                storageAcct.endPoints().primary().blob(),
-                sourceContainer),
+                storageAcct.name(), storageAcct.endPoints().primary().blob(), sourceContainer),
             new StorageData(
-                storageAcct.name(),
-                storageAcct.endPoints().primary().blob(),
-                destContainer));
+                storageAcct.name(), storageAcct.endPoints().primary().blob(), destContainer));
 
     assertFalse(result.anyFailures());
     var destClient = azureStorageAccessService.buildBlobContainerClient(destContainer, storageAcct);

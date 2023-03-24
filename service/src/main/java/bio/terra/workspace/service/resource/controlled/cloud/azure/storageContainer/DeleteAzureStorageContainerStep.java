@@ -13,8 +13,6 @@ import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
-import bio.terra.workspace.service.resource.model.WsmResource;
-import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementException;
@@ -62,35 +60,35 @@ public class DeleteAzureStorageContainerStep implements Step {
 
     try {
       String storageAccountName;
-        try {
-          // Storage container was created based on landing zone shared storage account
-          var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
-          UUID landingZoneId =
-              landingZoneApiDispatch.getLandingZoneId(bearerToken, resource.getWorkspaceId());
-          Optional<ApiAzureLandingZoneDeployedResource> sharedStorageAccount =
-              landingZoneApiDispatch.getSharedStorageAccount(bearerToken, landingZoneId);
-          if (sharedStorageAccount.isPresent()) {
-            StorageAccount storageAccount =
-                manager.storageAccounts().getById(sharedStorageAccount.get().getResourceId());
-            storageAccountName = storageAccount.name();
-          } else {
-            return new StepResult(
-                StepStatus.STEP_RESULT_FAILURE_FATAL,
-                new ResourceNotFoundException(
-                    String.format(
-                        "Shared storage account not found in landing zone. Landing zone ID='%s'.",
-                        landingZoneId)));
-          }
-        } catch (IllegalStateException illegalStateException) { // Thrown by landingZoneApiDispatch
+      try {
+        // Storage container was created based on landing zone shared storage account
+        var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
+        UUID landingZoneId =
+            landingZoneApiDispatch.getLandingZoneId(bearerToken, resource.getWorkspaceId());
+        Optional<ApiAzureLandingZoneDeployedResource> sharedStorageAccount =
+            landingZoneApiDispatch.getSharedStorageAccount(bearerToken, landingZoneId);
+        if (sharedStorageAccount.isPresent()) {
+          StorageAccount storageAccount =
+              manager.storageAccounts().getById(sharedStorageAccount.get().getResourceId());
+          storageAccountName = storageAccount.name();
+        } else {
           return new StepResult(
               StepStatus.STEP_RESULT_FAILURE_FATAL,
-              new LandingZoneNotFoundException(
+              new ResourceNotFoundException(
                   String.format(
-                      "Landing zone associated with the Azure cloud context not found. TenantId='%s', SubscriptionId='%s', ResourceGroupId='%s'",
-                      azureCloudContext.getAzureTenantId(),
-                      azureCloudContext.getAzureSubscriptionId(),
-                      azureCloudContext.getAzureResourceGroupId())));
+                      "Shared storage account not found in landing zone. Landing zone ID='%s'.",
+                      landingZoneId)));
         }
+      } catch (IllegalStateException illegalStateException) { // Thrown by landingZoneApiDispatch
+        return new StepResult(
+            StepStatus.STEP_RESULT_FAILURE_FATAL,
+            new LandingZoneNotFoundException(
+                String.format(
+                    "Landing zone associated with the Azure cloud context not found. TenantId='%s', SubscriptionId='%s', ResourceGroupId='%s'",
+                    azureCloudContext.getAzureTenantId(),
+                    azureCloudContext.getAzureSubscriptionId(),
+                    azureCloudContext.getAzureResourceGroupId())));
+      }
 
       logger.info(
           "Attempting to delete storage container '{}' in account '{}'",

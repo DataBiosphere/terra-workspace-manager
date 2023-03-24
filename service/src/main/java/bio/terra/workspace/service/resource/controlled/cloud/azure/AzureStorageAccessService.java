@@ -244,8 +244,7 @@ public class AzureStorageAccessService {
    * @return An Azure blob container client
    */
   public BlobContainerClient buildBlobContainerClient(
-      ControlledAzureStorageContainerResource containerResource,
-      StorageAccount storageAccount) {
+      ControlledAzureStorageContainerResource containerResource, StorageAccount storageAccount) {
     StorageSharedKeyCredential storageAccountKey =
         storageAccountKeyProvider.getStorageAccountKey(
             containerResource.getWorkspaceId(), storageAccount.name());
@@ -302,27 +301,29 @@ public class AzureStorageAccessService {
                 SamConstants.SamControlledResourceActions.READ_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
     // get details from LZ shared storage account
-      var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
-      UUID landingZoneId = landingZoneApiDispatch.getLandingZoneId(bearerToken, workspaceUuid);
-      Optional<ApiAzureLandingZoneDeployedResource> existingSharedStorageAccount =
-          landingZoneApiDispatch.getSharedStorageAccount(bearerToken, landingZoneId);
-      if (existingSharedStorageAccount.isEmpty()) {
-        // redefine exception
-        throw new IllegalStateException(
-            String.format(
-                "Shared storage account not found. LandingZoneId='%s'."
-                    + " Please validate that landing zone deployment complete.",
-                landingZoneId));
-      }
-      var storageManager =
-          crlService.getStorageManager(
-              azureCloudContextService.getRequiredAzureCloudContext(workspaceUuid),
-              azureConfiguration);
-      StorageAccount storageAccount =
-          storageManager
-              .storageAccounts()
-              .getById(existingSharedStorageAccount.get().getResourceId());
-    return new StorageData(storageAccount.name(),
-        storageAccount.endPoints().primary().blob().toLowerCase(Locale.ROOT), storageContainerResource);
+    var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
+    UUID landingZoneId = landingZoneApiDispatch.getLandingZoneId(bearerToken, workspaceUuid);
+    Optional<ApiAzureLandingZoneDeployedResource> existingSharedStorageAccount =
+        landingZoneApiDispatch.getSharedStorageAccount(bearerToken, landingZoneId);
+    if (existingSharedStorageAccount.isEmpty()) {
+      // redefine exception
+      throw new IllegalStateException(
+          String.format(
+              "Shared storage account not found. LandingZoneId='%s'."
+                  + " Please validate that landing zone deployment complete.",
+              landingZoneId));
+    }
+    var storageManager =
+        crlService.getStorageManager(
+            azureCloudContextService.getRequiredAzureCloudContext(workspaceUuid),
+            azureConfiguration);
+    StorageAccount storageAccount =
+        storageManager
+            .storageAccounts()
+            .getById(existingSharedStorageAccount.get().getResourceId());
+    return new StorageData(
+        storageAccount.name(),
+        storageAccount.endPoints().primary().blob().toLowerCase(Locale.ROOT),
+        storageContainerResource);
   }
 }

@@ -16,7 +16,6 @@ import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
@@ -103,8 +102,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
 
   private UUID createAzureResource(UUID workspaceUuid, AuthenticatedUserRequest userRequest)
       throws Exception {
-    var creationParameters =
-        ControlledResourceFixtures.getAzureDiskCreationParameters();
+    var creationParameters = ControlledResourceFixtures.getAzureDiskCreationParameters();
 
     final UUID id = UUID.randomUUID();
     var azureResource =

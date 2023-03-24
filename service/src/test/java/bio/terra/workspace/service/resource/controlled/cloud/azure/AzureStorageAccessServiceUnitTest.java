@@ -470,27 +470,25 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
                 eq(storageContainerResource.getResourceId()),
                 eq(SamConstants.SamControlledResourceActions.READ_ACTION)))
         .thenReturn(storageContainerResource);
-      when(mockLandingZoneApiDispatch.getLandingZoneId(
-              any(), eq(storageContainerResource.getWorkspaceId())))
-          .thenReturn(landingZoneId);
-      Optional<ApiAzureLandingZoneDeployedResource> lzSharedStorageAccount =
-          lzSharedStorageAccountExists
-              ? Optional.of(sharedStorageAccount)
-              : Optional.empty();
-      when(mockLandingZoneApiDispatch.getSharedStorageAccount(any(), eq(landingZoneId)))
-          .thenReturn(lzSharedStorageAccount);
-      StorageManager mockStorageManager = mock(StorageManager.class);
-      StorageAccount mockStorageAccount = mock(StorageAccount.class);
-      StorageAccounts mockStorageAccounts = mock(StorageAccounts.class);
-      PublicEndpoints mockPublicEndpoints = mock(PublicEndpoints.class);
-      Endpoints mockEndpoints = mock(Endpoints.class);
-      when(mockStorageManager.storageAccounts()).thenReturn(mockStorageAccounts);
-      when(mockCrlService().getStorageManager(any(), any())).thenReturn(mockStorageManager);
-      when(mockEndpoints.blob())
-          .thenReturn(String.format("https://%s.blob.core.windows.net", "mockStorageAccountName"));
-      when(mockPublicEndpoints.primary()).thenReturn(mockEndpoints);
-      when(mockStorageAccount.name()).thenReturn("mockStorageAccountName");
-      when(mockStorageAccount.endPoints()).thenReturn(mockPublicEndpoints);
-      when(mockStorageAccounts.getById(any())).thenReturn(mockStorageAccount);
+    when(mockLandingZoneApiDispatch.getLandingZoneId(
+            any(), eq(storageContainerResource.getWorkspaceId())))
+        .thenReturn(landingZoneId);
+    Optional<ApiAzureLandingZoneDeployedResource> lzSharedStorageAccount =
+        lzSharedStorageAccountExists ? Optional.of(sharedStorageAccount) : Optional.empty();
+    when(mockLandingZoneApiDispatch.getSharedStorageAccount(any(), eq(landingZoneId)))
+        .thenReturn(lzSharedStorageAccount);
+    StorageManager mockStorageManager = mock(StorageManager.class);
+    StorageAccount mockStorageAccount = mock(StorageAccount.class);
+    StorageAccounts mockStorageAccounts = mock(StorageAccounts.class);
+    PublicEndpoints mockPublicEndpoints = mock(PublicEndpoints.class);
+    Endpoints mockEndpoints = mock(Endpoints.class);
+    when(mockStorageManager.storageAccounts()).thenReturn(mockStorageAccounts);
+    when(mockCrlService().getStorageManager(any(), any())).thenReturn(mockStorageManager);
+    when(mockEndpoints.blob())
+        .thenReturn(String.format("https://%s.blob.core.windows.net", "mockStorageAccountName"));
+    when(mockPublicEndpoints.primary()).thenReturn(mockEndpoints);
+    when(mockStorageAccount.name()).thenReturn("mockStorageAccountName");
+    when(mockStorageAccount.endPoints()).thenReturn(mockPublicEndpoints);
+    when(mockStorageAccounts.getById(any())).thenReturn(mockStorageAccount);
   }
 }

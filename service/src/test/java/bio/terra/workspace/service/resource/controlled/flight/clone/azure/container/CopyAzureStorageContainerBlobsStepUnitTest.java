@@ -46,8 +46,7 @@ public class CopyAzureStorageContainerBlobsStepUnitTest extends BaseAzureUnitTes
         destinationWorkspaceId);
 
     var destinationContainer =
-        ControlledResourceFixtures.getAzureStorageContainer(
-            "sc-" + UUID.randomUUID());
+        ControlledResourceFixtures.getAzureStorageContainer("sc-" + UUID.randomUUID());
     var workingMap = new FlightMap();
 
     workingMap.put(
