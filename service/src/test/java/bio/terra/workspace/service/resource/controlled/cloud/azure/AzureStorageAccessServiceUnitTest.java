@@ -367,7 +367,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
 
   @Test
   void createAzureStorageContainerSasToken_blobName() throws InterruptedException {
-    var storageAccountResource = buildStorageAccount();
+    var blobName = "foo/the/bar.baz";
     var storageContainerResource =
         buildStorageContainerResource(
             PrivateResourceState.ACTIVE,
