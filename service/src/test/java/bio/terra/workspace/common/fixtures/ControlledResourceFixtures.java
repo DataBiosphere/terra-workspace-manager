@@ -640,7 +640,7 @@ public class ControlledResourceFixtures {
                 .cloningInstructions(CloningInstructions.COPY_RESOURCE)
                 .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
                 .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
-                .region(Region.US_EAST2.name())
+                .region(DEFAULT_AZURE_RESOURCE_REGION)
                 .build())
         .diskName(creationParameters.getName())
         .size(creationParameters.getSize());

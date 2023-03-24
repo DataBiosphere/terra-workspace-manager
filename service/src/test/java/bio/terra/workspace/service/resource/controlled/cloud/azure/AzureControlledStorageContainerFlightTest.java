@@ -1,9 +1,9 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_AZURE_RESOURCE_REGION;
 import static bio.terra.workspace.connected.AzureConnectedTestUtils.getAzureName;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.landingzone.db.LandingZoneDao;
@@ -88,7 +88,7 @@ public class AzureControlledStorageContainerFlightTest extends BaseAzureConnecte
             workspaceUuid);
 
     testLandingZoneManager.createLandingZoneWithSharedStorageAccount(
-        landingZoneId, workspaceUuid, storageAccountName, "eastus");
+        landingZoneId, workspaceUuid, storageAccountName, DEFAULT_AZURE_RESOURCE_REGION);
   }
 
   private void cleanupLandingZone() {

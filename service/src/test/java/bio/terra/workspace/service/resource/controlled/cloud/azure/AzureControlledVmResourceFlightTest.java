@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_AZURE_RESOURCE_REGION;
 import static bio.terra.workspace.connected.AzureConnectedTestUtils.STAIRWAY_FLIGHT_TIMEOUT;
 import static bio.terra.workspace.connected.AzureConnectedTestUtils.getAzureName;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -7,17 +8,23 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import bio.terra.landingzone.db.LandingZoneDao;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
+import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.utils.AzureVmUtils;
+import bio.terra.workspace.common.utils.TestUtils;
+import bio.terra.workspace.connected.LandingZoneTestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiAzureDiskCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiManagedBy;
+import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.WsmResourceService;
@@ -33,9 +40,11 @@ import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
+import com.azure.core.management.Region;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.compute.models.VirtualMachine;
@@ -58,9 +67,18 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
   @Autowired private UserAccessUtils userAccessUtils;
   @Autowired private ControlledResourceService controlledResourceService;
   @Autowired private WsmResourceService wsmResourceService;
+  @Autowired private LandingZoneTestUtils landingZoneTestUtils;
+  @Autowired private AzureCloudContextService azureCloudContextService;
+  @Autowired private LandingZoneDao landingZoneDao;
+  @Autowired private WorkspaceDao workspaceDao;
+  @Autowired private CrlService crlService;
+  @Autowired private AzureConfiguration azureConfig;
   private Workspace sharedWorkspace;
   private UUID workspaceUuid;
   private ControlledAzureDiskResource diskResource;
+  private String networkName;
+  private TestLandingZoneManager testLandingZoneManager;
+  private UUID landingZoneId;
 
   @BeforeAll
   public void setup() throws InterruptedException {
@@ -68,8 +86,26 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
     sharedWorkspace = createWorkspaceWithCloudContext(workspaceService, userRequest);
     workspaceUuid = sharedWorkspace.getWorkspaceId();
 
+    setupLandingZone();
+
     // Create disk
     diskResource = createDisk(workspaceUuid, userRequest);
+  }
+
+  private void setupLandingZone() {
+    // create quasi landing zone with a single resource - vnet with compute subnet
+    networkName = String.format("lzsharedstacc%s", TestUtils.getRandomString(6));
+    landingZoneId = UUID.fromString(landingZoneTestUtils.getDefaultLandingZoneId());
+    testLandingZoneManager = new TestLandingZoneManager(
+        azureCloudContextService,
+        landingZoneDao,
+        workspaceDao,
+        crlService,
+        azureConfig,
+        workspaceUuid);
+
+    testLandingZoneManager.createLandingZoneWithComputeSubnet(
+        landingZoneId, workspaceUuid, networkName, DEFAULT_AZURE_RESOURCE_REGION);
   }
 
   @AfterAll
@@ -77,6 +113,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
     // Deleting the workspace will also delete any resources contained in the workspace, including
     // VMs and the resources created during setup.
     workspaceService.deleteWorkspace(sharedWorkspace, userAccessUtils.defaultUserAuthRequest());
+    testLandingZoneManager.deleteLandingZoneWithComputeSubnet(landingZoneId, azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(), networkName);
   }
 
   @Tag("azureConnected")
