@@ -365,7 +365,7 @@ public class ControlledResourceService {
             resource.getName());
 
     CloningInstructions resolvedCloningInstructions =
-        updateParameters.getCloningInstructions() == null
+        (updateParameters == null || updateParameters.getCloningInstructions() == null)
             ? resource.getCloningInstructions()
             : CloningInstructions.fromApiModel(updateParameters.getCloningInstructions());
 
