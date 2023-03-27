@@ -81,7 +81,7 @@ public class GcpCloudContext {
   }
 
   public ApiGcpContext toApi() {
-    return new ApiGcpContext().projectId(getGcpProjectId());
+    return new ApiGcpContext().projectId(gcpProjectId);
   }
 
   public String serialize() {
