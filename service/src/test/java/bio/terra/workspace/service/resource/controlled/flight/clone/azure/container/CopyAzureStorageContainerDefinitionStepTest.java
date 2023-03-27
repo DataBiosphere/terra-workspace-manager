@@ -133,7 +133,6 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseAzureUnitTe
     assertEquals(cloned.getName(), destResourceName);
     assertEquals(cloned.getCloningInstructions(), CloningInstructions.COPY_DEFINITION);
     assertEquals(sharedAccountRegion, cloned.getRegion());
-    assertEquals(sharedAccountRegion, cloned.getRegion());
   }
 
   @Test

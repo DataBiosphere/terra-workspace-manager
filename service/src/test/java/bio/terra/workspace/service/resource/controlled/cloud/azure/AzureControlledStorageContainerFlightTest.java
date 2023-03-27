@@ -4,6 +4,7 @@ import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEF
 import static bio.terra.workspace.connected.AzureConnectedTestUtils.getAzureName;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.landingzone.db.LandingZoneDao;
@@ -145,6 +146,10 @@ public class AzureControlledStorageContainerFlightTest extends BaseAzureConnecte
         sharedContainerResource.getStorageContainerName(),
         null); // Don't sleep/verify deletion yet.
 
+    // Verify containers have been deleted (Can't do this in submitControlledResourceDeletionFlight
+    // because the get function takes a different number of arguments. Also no need to sleep another
+    // 5 seconds.)
+    verifyStorageAccountContainerIsDeleted(storageContainerName);
     cleanupLandingZone();
   }
 
@@ -221,5 +226,20 @@ public class AzureControlledStorageContainerFlightTest extends BaseAzureConnecte
 
     // clean up resources - delete alternate lz database record only
     testLandingZoneManager.deleteLandingZoneWithoutResources(alternateLandingZoneId);
+  }
+
+  private void verifyStorageAccountContainerIsDeleted(String containerName) {
+    com.azure.core.exception.HttpResponseException exception =
+        assertThrows(
+            com.azure.core.exception.HttpResponseException.class,
+            () ->
+                azureTestUtils
+                    .getStorageManager()
+                    .blobContainers()
+                    .get(
+                        azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
+                        storageAccountName,
+                        containerName));
+    assertEquals(404, exception.getResponse().getStatusCode());
   }
 }

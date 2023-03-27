@@ -26,6 +26,7 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
+import com.azure.core.management.Region;
 import com.azure.core.util.BinaryData;
 import com.azure.resourcemanager.storage.models.StorageAccount;
 import com.azure.storage.blob.BlobContainerClient;
@@ -84,7 +85,7 @@ public class BlobCopierConnectedTest extends BaseAzureConnectedTest {
 
     storageAcct =
         testLandingZoneManager.createLandingZoneWithSharedStorageAccount(
-            landingZoneId, workspaceId, storageAccountName, "eastus");
+            landingZoneId, workspaceId, storageAccountName, Region.US_EAST.name());
 
     userRequest = userAccessUtils.defaultUserAuthRequest();
 
