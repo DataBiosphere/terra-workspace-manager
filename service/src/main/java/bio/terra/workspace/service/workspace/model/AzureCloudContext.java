@@ -50,9 +50,9 @@ public class AzureCloudContext {
 
   public ApiAzureContext toApi() {
     return new ApiAzureContext()
-        .tenantId(getAzureTenantId())
-        .subscriptionId(getAzureSubscriptionId())
-        .resourceGroupId(getAzureResourceGroupId());
+        .tenantId(azureTenantId)
+        .subscriptionId(azureSubscriptionId)
+        .resourceGroupId(azureResourceGroupId);
   }
 
   public static AzureCloudContext fromApi(ApiAzureContext azureContext) {
@@ -94,8 +94,7 @@ public class AzureCloudContext {
 
   public String serialize() {
     AzureCloudContextV100 dbContext =
-        AzureCloudContextV100.from(
-            getAzureTenantId(), getAzureSubscriptionId(), getAzureResourceGroupId());
+        AzureCloudContextV100.from(azureTenantId, azureSubscriptionId, azureResourceGroupId);
     return DbSerDes.toJson(dbContext);
   }
 

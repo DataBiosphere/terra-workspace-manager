@@ -69,7 +69,6 @@ public class CreateAzureStorageContainerStepTest extends BaseStorageStepTest {
         mockAzureConfig,
         mockCrlService,
         ControlledResourceFixtures.getAzureStorageContainer(
-            creationParameters.getStorageAccountId(),
             creationParameters.getStorageContainerName()));
   }
 
@@ -96,7 +95,6 @@ public class CreateAzureStorageContainerStepTest extends BaseStorageStepTest {
     CreateStorageContainerRequestData expected =
         CreateStorageContainerRequestData.builder()
             .setStorageContainerName(creationParameters.getStorageContainerName())
-            .setStorageAccountId(creationParameters.getStorageAccountId())
             .setResourceGroupName(mockAzureCloudContext.getAzureResourceGroupId())
             .build();
 

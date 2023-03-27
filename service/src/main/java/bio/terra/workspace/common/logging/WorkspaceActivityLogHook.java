@@ -28,8 +28,6 @@ import bio.terra.workspace.service.admin.flights.cloudcontexts.gcp.SyncGcpIamRol
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.flight.UpdateAzureControlledResourceRegionFlight;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.flight.UpdateGcpControlledResourceRegionFlight;
 import bio.terra.workspace.service.resource.controlled.flight.backfill.UpdateControlledBigQueryDatasetsLifetimeFlight;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
@@ -186,9 +184,9 @@ public class WorkspaceActivityLogHook implements StairwayHook {
       String subjectId) {
     if (SyncGcpIamRolesFlight.class.getName().equals(flightClassName)) {
       maybeLogForSyncGcpIamRolesFlight(context, operationType, userEmail, subjectId);
-    } else if (UpdateGcpControlledResourceRegionFlight.class.getName().equals(flightClassName)
-        || UpdateAzureControlledResourceRegionFlight.class.getName().equals(flightClassName)
-        || UpdateControlledBigQueryDatasetsLifetimeFlight.class.getName().equals(flightClassName)) {
+    } else if (UpdateControlledBigQueryDatasetsLifetimeFlight.class
+        .getName()
+        .equals(flightClassName)) {
       maybeLogUpdateControlledResourceFieldsFlight(context, operationType, userEmail, subjectId);
     } else {
       throw new UnhandledActivityLogException(

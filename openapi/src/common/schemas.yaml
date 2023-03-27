@@ -11,7 +11,7 @@ components:
     CloudPlatform:
       type: string
       description: Enum representing a cloud platform type.
-      enum: ['AZURE', 'GCP']
+      enum: ['GCP', 'AZURE']
 
     CloneReferencedResourceRequestBody:
       description: >-
@@ -109,21 +109,6 @@ components:
       description: Optional. Default lifetime (in seconds) for partitions in newly created partitioned tables.
       type: integer
       format: int64
-
-    DeleteControlledAzureResourceRequest:
-      type: object
-      required: [ jobControl ]
-      properties:
-        jobControl:
-          $ref: '#/components/schemas/JobControl'
-
-    DeleteControlledAzureResourceResult:
-      type: object
-      properties:
-        jobReport:
-          $ref: '#/components/schemas/JobReport'
-        errorReport:
-          $ref: '#/components/schemas/ErrorReport'
 
     ErrorReport:
       type: object

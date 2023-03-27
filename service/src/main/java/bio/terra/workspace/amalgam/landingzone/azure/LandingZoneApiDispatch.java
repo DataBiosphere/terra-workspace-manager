@@ -313,6 +313,11 @@ public class LandingZoneApiDispatch {
     return toApiAzureLandingZone(landingZoneRecord);
   }
 
+  public String getAzureLandingZoneRegion(BearerToken bearerToken, UUID landingZoneId) {
+    features.azureEnabledCheck();
+    return landingZoneService.getLandingZoneRegion(bearerToken, landingZoneId);
+  }
+
   public ApiAzureLandingZoneList listAzureLandingZones(
       BearerToken bearerToken, UUID billingProfileId) {
     features.azureEnabledCheck();

@@ -7,14 +7,6 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.Con
 import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.ControlledAzureBatchPoolResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpHandler;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkHandler;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespace.ControlledAzureRelayNamespaceHandler;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespace.ControlledAzureRelayNamespaceResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageHandler;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmHandler;
@@ -126,20 +118,6 @@ public enum WsmResourceType {
       ApiResourceType.TERRA_WORKSPACE,
       ReferencedTerraWorkspaceResource.class,
       ReferencedTerraWorkspaceHandler::getHandler),
-  CONTROLLED_AZURE_IP(
-      CloudPlatform.AZURE,
-      StewardshipType.CONTROLLED,
-      "CONTROLLED_AZURE_IP",
-      ApiResourceType.AZURE_IP,
-      ControlledAzureIpResource.class,
-      ControlledAzureIpHandler::getHandler),
-  CONTROLLED_AZURE_RELAY_NAMESPACE(
-      CloudPlatform.AZURE,
-      StewardshipType.CONTROLLED,
-      "CONTROLLED_AZURE_RELAY_NAMESPACE",
-      ApiResourceType.AZURE_RELAY_NAMESPACE,
-      ControlledAzureRelayNamespaceResource.class,
-      ControlledAzureRelayNamespaceHandler::getHandler),
   CONTROLLED_AZURE_DISK(
       CloudPlatform.AZURE,
       StewardshipType.CONTROLLED,
@@ -147,13 +125,6 @@ public enum WsmResourceType {
       ApiResourceType.AZURE_DISK,
       ControlledAzureDiskResource.class,
       ControlledAzureDiskHandler::getHandler),
-  CONTROLLED_AZURE_NETWORK(
-      CloudPlatform.AZURE,
-      StewardshipType.CONTROLLED,
-      "CONTROLLED_AZURE_NETWORK",
-      ApiResourceType.AZURE_NETWORK,
-      ControlledAzureNetworkResource.class,
-      ControlledAzureNetworkHandler::getHandler),
   CONTROLLED_AZURE_VM(
       CloudPlatform.AZURE,
       StewardshipType.CONTROLLED,
@@ -161,13 +132,6 @@ public enum WsmResourceType {
       ApiResourceType.AZURE_VM,
       ControlledAzureVmResource.class,
       ControlledAzureVmHandler::getHandler),
-  CONTROLLED_AZURE_STORAGE_ACCOUNT(
-      CloudPlatform.AZURE,
-      StewardshipType.CONTROLLED,
-      "CONTROLLED_AZURE_STORAGE_ACCOUNT",
-      ApiResourceType.AZURE_STORAGE_ACCOUNT,
-      ControlledAzureStorageResource.class,
-      ControlledAzureStorageHandler::getHandler),
   CONTROLLED_AZURE_STORAGE_CONTAINER(
       CloudPlatform.AZURE,
       StewardshipType.CONTROLLED,
