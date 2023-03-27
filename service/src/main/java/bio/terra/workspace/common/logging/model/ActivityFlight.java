@@ -4,8 +4,6 @@ import bio.terra.workspace.common.exception.UnknownFlightClassNameException;
 import bio.terra.workspace.service.admin.flights.cloudcontexts.gcp.SyncGcpIamRolesFlight;
 import bio.terra.workspace.service.folder.flights.DeleteFolderFlight;
 import bio.terra.workspace.service.grant.flight.RevokeTemporaryGrantFlight;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.flight.UpdateAzureControlledResourceRegionFlight;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.flight.UpdateGcpControlledResourceRegionFlight;
 import bio.terra.workspace.service.resource.controlled.flight.backfill.UpdateControlledBigQueryDatasetsLifetimeFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.CloneControlledAzureStorageContainerResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CloneControlledGcsBucketResourceFlight;
@@ -72,13 +70,9 @@ public enum ActivityFlight {
   CONTROLLED_AZURE_STORAGE_CONTAINER_CLONE_FLIGHT(
       CloneControlledAzureStorageContainerResourceFlight.class.getName(),
       ActivityLogChangedTarget.RESOURCE),
-  UPDATE_GCP_CONTROLLED_RESOURCES_REGION_FLIGHT(
-      UpdateGcpControlledResourceRegionFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
   UPDATE_GCP_CONTROLLED_BQ_DATASETS_LIFETIME_FLIGHT(
       UpdateControlledBigQueryDatasetsLifetimeFlight.class.getName(),
       ActivityLogChangedTarget.RESOURCE),
-  UPDATE_AZURE_CONTROLLED_RESOURCES_REGION_FLIGHT(
-      UpdateAzureControlledResourceRegionFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
   REVOKE_TEMPORARY_GRANT_FLIGHT(
       RevokeTemporaryGrantFlight.class.getName(), ActivityLogChangedTarget.WORKSPACE),
   CLONE_REFERENCED_RESOURCE_FLIGHT(

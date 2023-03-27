@@ -96,15 +96,10 @@ components:
         Disk-specific properties to be set on creation. These are a subset of the values
         accepted by the azure resource API
       type: object
-      required: [ name, region, size ]
+      required: [ name, size ]
       properties:
         name:
           description: A valid disk name per https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules
-          type: string
-        region:
-          description: |
-            A valid region string representation per https://docs.microsoft.com/en-us/dotnet/api/microsoft.azure.management.resourcemanager.fluent.core.region.
-            It is best to look at the Region class definition for valid strings (e.g. 'eastus' == Region.US_EAST.toString())
           type: string
         size:
           description: |

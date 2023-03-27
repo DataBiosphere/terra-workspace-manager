@@ -19,6 +19,7 @@ import bio.terra.workspace.generated.model.ApiCreateControlledAzureBatchPoolRequ
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.ControlledAzureBatchPoolResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
+import com.azure.core.management.Region;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.UUID;
@@ -87,6 +88,7 @@ public class ControlledAzureResourceApiControllerBatchPoolTest extends BaseAzure
     when(getMockControlledResourceService()
             .createControlledResourceSync(eq(resource), any(), any(), any()))
         .thenReturn(resource);
+    setupMockLandingZoneRegion(Region.GERMANY_CENTRAL);
 
     mockMvc
         .perform(
@@ -128,6 +130,7 @@ public class ControlledAzureResourceApiControllerBatchPoolTest extends BaseAzure
             .createControlledResourceSync(
                 any(ControlledAzureBatchPoolResource.class), any(), any(), any()))
         .thenReturn(resource);
+    setupMockLandingZoneRegion(Region.GERMANY_CENTRAL);
 
     mockMvc
         .perform(

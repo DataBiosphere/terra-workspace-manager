@@ -18,8 +18,6 @@ import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesPurposeGr
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
-import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.resourcemanager.network.NetworkManager;
 import com.azure.resourcemanager.network.models.Network;
@@ -48,8 +46,6 @@ public class CreateAzureNetworkInterfaceStepTest extends BaseAzureUnitTest {
   @Mock private ResourceDao resourceDao;
 
   @Mock private LandingZoneApiDispatch landingZoneApiDispatch;
-
-  @Mock private ControlledAzureNetworkResource controlledAzureNetworkResource;
 
   @Mock private Networks networks;
 
@@ -85,20 +81,6 @@ public class CreateAzureNetworkInterfaceStepTest extends BaseAzureUnitTest {
   }
 
   @Test
-  void getExistingNetworkResources_networkIdIsProvided_returnsWorkspaceNetwork() {
-    var networkId = UUID.randomUUID();
-    var workspaceId = UUID.randomUUID();
-
-    setUpNetworkInWorkspaceInteractionChain(networkId, workspaceId);
-
-    NetworkSubnetPair result =
-        networkInterfaceStep.getExistingNetworkResources(azureCloudContext, networkManager);
-
-    assertThat(result.network(), equalTo(armNetwork));
-    assertThat(result.subnet(), equalTo(armSubnet));
-  }
-
-  @Test
   void getExistingNetworkResources_networkIdIsNotProvided_returnsLZNetwork() {
     var networkId = UUID.randomUUID();
     var workspaceId = UUID.randomUUID();
@@ -106,23 +88,10 @@ public class CreateAzureNetworkInterfaceStepTest extends BaseAzureUnitTest {
     setUpNetworkInLZInteractionChain(networkId, workspaceId);
 
     NetworkSubnetPair result =
-        networkInterfaceStep.getExistingNetworkResources(azureCloudContext, networkManager);
+        networkInterfaceStep.getNetworkResourcesFromLandingZone(networkManager);
 
     assertThat(result.network(), equalTo(armNetwork));
     assertThat(result.subnet(), equalTo(armSubnet));
-  }
-
-  private void setUpNetworkInWorkspaceInteractionChain(UUID networkId, UUID workspaceId) {
-    when(azureCloudContext.getAzureResourceGroupId()).thenReturn(STUB_MRG);
-    when(resource.getNetworkId()).thenReturn(networkId);
-    when(resource.getWorkspaceId()).thenReturn(workspaceId);
-    when(resourceDao.getResource(workspaceId, networkId))
-        .thenReturn(controlledAzureNetworkResource);
-    when(controlledAzureNetworkResource.castByEnum(WsmResourceType.CONTROLLED_AZURE_NETWORK))
-        .thenReturn(controlledAzureNetworkResource);
-    when(controlledAzureNetworkResource.getNetworkName()).thenReturn(networkId.toString());
-    when(controlledAzureNetworkResource.getSubnetName()).thenReturn(STUB_SUBNET);
-    when(networks.getByResourceGroup(STUB_MRG, networkId.toString())).thenReturn(armNetwork);
   }
 
   private void setUpNetworkInLZInteractionChain(UUID networkId, UUID workspaceId) {
@@ -138,7 +107,6 @@ public class CreateAzureNetworkInterfaceStepTest extends BaseAzureUnitTest {
                         .resourceName(STUB_SUBNET)
                         .resourceParentId(networkId.toString()))));
 
-    when(resource.getNetworkId()).thenReturn(null);
     when(resource.getWorkspaceId()).thenReturn(workspaceId);
     when(landingZoneApiDispatch.getLandingZoneId(eq(bearerToken), eq(workspaceId)))
         .thenReturn(lzId);

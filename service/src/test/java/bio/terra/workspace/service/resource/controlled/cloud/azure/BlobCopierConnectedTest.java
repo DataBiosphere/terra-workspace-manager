@@ -6,21 +6,29 @@ import static org.hamcrest.Matchers.in;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
+import bio.terra.landingzone.db.LandingZoneDao;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
+import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.utils.TestUtils;
+import bio.terra.workspace.connected.LandingZoneTestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
+import com.azure.core.management.Region;
 import com.azure.core.util.BinaryData;
+import com.azure.resourcemanager.storage.models.StorageAccount;
 import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.models.BlobItem;
 import io.vavr.collection.Stream;
@@ -43,32 +51,43 @@ public class BlobCopierConnectedTest extends BaseAzureConnectedTest {
   @Autowired private WorkspaceService workspaceService;
   @Autowired private JobService jobService;
   @Autowired private UserAccessUtils userAccessUtils;
+  @Autowired private LandingZoneTestUtils landingZoneTestUtils;
+  private TestLandingZoneManager testLandingZoneManager;
+  @Autowired private AzureCloudContextService azureCloudContextService;
+  @Autowired private LandingZoneDao landingZoneDao;
+  @Autowired private WorkspaceDao workspaceDao;
+  @Autowired private CrlService crlService;
+  @Autowired private AzureConfiguration azureConfig;
 
   private ControlledAzureStorageContainerResource sourceContainer;
   private ControlledAzureStorageContainerResource destContainer;
-  private ControlledAzureStorageResource storageAcct;
+  private StorageAccount storageAcct;
   private AuthenticatedUserRequest userRequest;
   private UUID workspaceId;
 
   @BeforeAll
   void setup() throws InterruptedException {
-    userRequest = userAccessUtils.defaultUserAuthRequest();
-    Workspace workspace = createWorkspaceWithCloudContext(workspaceService, userRequest);
+    Workspace workspace =
+        createWorkspaceWithCloudContext(workspaceService, userAccessUtils.defaultUserAuthRequest());
     workspaceId = workspace.getWorkspaceId();
 
-    var storageAccountId = UUID.randomUUID();
-    var saName = generateAzureResourceName("sa");
+    // create quasi landing zone with a single resource - shared storage account
+    var storageAccountName = String.format("lzsharedstacc%s", TestUtils.getRandomString(6));
+    UUID landingZoneId = UUID.fromString(landingZoneTestUtils.getDefaultLandingZoneId());
+    testLandingZoneManager =
+        new TestLandingZoneManager(
+            azureCloudContextService,
+            landingZoneDao,
+            workspaceDao,
+            crlService,
+            azureConfig,
+            workspace.getWorkspaceId());
+
     storageAcct =
-        ControlledAzureStorageResource.builder()
-            .common(
-                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
-                    .workspaceUuid(workspaceId)
-                    .resourceId(storageAccountId)
-                    .region("eastus")
-                    .build())
-            .storageAccountName(saName)
-            .build();
-    createResource(workspaceId, userRequest, storageAcct);
+        testLandingZoneManager.createLandingZoneWithSharedStorageAccount(
+            landingZoneId, workspaceId, storageAccountName, Region.US_EAST.name());
+
+    userRequest = userAccessUtils.defaultUserAuthRequest();
 
     var sourceScName = generateAzureResourceName("sc");
     sourceContainer =
@@ -79,7 +98,6 @@ public class BlobCopierConnectedTest extends BaseAzureConnectedTest {
                     .resourceId(UUID.randomUUID())
                     .build())
             .storageContainerName(sourceScName)
-            .storageAccountId(storageAcct.getResourceId())
             .build();
     createResource(workspaceId, userRequest, sourceContainer);
 
@@ -92,7 +110,6 @@ public class BlobCopierConnectedTest extends BaseAzureConnectedTest {
                     .resourceId(UUID.randomUUID())
                     .build())
             .storageContainerName(destScName)
-            .storageAccountId(storageAcct.getResourceId())
             .build();
     createResource(workspaceId, userRequest, destContainer);
   }
@@ -115,13 +132,9 @@ public class BlobCopierConnectedTest extends BaseAzureConnectedTest {
     var result =
         bc.copyBlobs(
             new StorageData(
-                storageAcct.getStorageAccountName(),
-                storageAcct.getStorageAccountEndpoint(),
-                sourceContainer),
+                storageAcct.name(), storageAcct.endPoints().primary().blob(), sourceContainer),
             new StorageData(
-                storageAcct.getStorageAccountName(),
-                storageAcct.getStorageAccountEndpoint(),
-                destContainer));
+                storageAcct.name(), storageAcct.endPoints().primary().blob(), destContainer));
 
     assertFalse(result.anyFailures());
     var destClient = azureStorageAccessService.buildBlobContainerClient(destContainer, storageAcct);

@@ -17,7 +17,6 @@ import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceFlight;
-import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceRegionStep;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.WsmControlledResourceFields;
@@ -29,10 +28,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Optional;
-import java.util.UUID;
 
 public class ControlledAzureStorageContainerResource extends ControlledResource {
-  private final UUID storageAccountId;
   private final String storageContainerName;
 
   @JsonCreator
@@ -40,18 +37,15 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
       @JsonProperty("wsmResourceFields") WsmResourceFields resourceFields,
       @JsonProperty("wsmControlledResourceFields")
           WsmControlledResourceFields controlledResourceFields,
-      @JsonProperty("storageAccountId") UUID storageAccountId,
       @JsonProperty("storageContainerName") String storageContainerName) {
     super(resourceFields, controlledResourceFields);
-    this.storageAccountId = storageAccountId;
     this.storageContainerName = storageContainerName;
     validate();
   }
 
   private ControlledAzureStorageContainerResource(
-      ControlledResourceFields common, UUID storageAccountId, String storageContainerName) {
+      ControlledResourceFields common, String storageContainerName) {
     super(common);
-    this.storageAccountId = storageAccountId;
     this.storageContainerName = storageContainerName;
     validate();
   }
@@ -82,10 +76,6 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
     return super.getWsmControlledResourceFields();
   }
 
-  public UUID getStorageAccountId() {
-    return storageAccountId;
-  }
-
   public String getStorageContainerName() {
     return storageContainerName;
   }
@@ -111,9 +101,6 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
     return Optional.of(
         new UniquenessCheckAttributes()
             .uniquenessScope(UniquenessScope.WORKSPACE)
-            .addParameter(
-                "storageAccountId",
-                Optional.ofNullable(getStorageAccountId()).map(UUID::toString).orElse(null))
             .addParameter("storageContainerName", getStorageContainerName()));
   }
 
@@ -138,9 +125,6 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
         new CreateAzureStorageContainerStep(
             flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
         cloudRetry);
-    flight.addStep(
-        new UpdateControlledResourceRegionStep(flightBeanBag.getResourceDao(), getResourceId()),
-        RetryRules.shortDatabase());
   }
 
   /** {@inheritDoc} */
@@ -162,9 +146,7 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
   public void addUpdateSteps(UpdateControlledResourceFlight flight, FlightBeanBag flightBeanBag) {}
 
   public ApiAzureStorageContainerAttributes toApiAttributes() {
-    return new ApiAzureStorageContainerAttributes()
-        .storageAccountId(getStorageAccountId())
-        .storageContainerName(getStorageContainerName());
+    return new ApiAzureStorageContainerAttributes().storageContainerName(getStorageContainerName());
   }
 
   public ApiAzureStorageContainerResource toApiResource() {
@@ -176,8 +158,7 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
   @Override
   public String attributesToJson() {
     return DbSerDes.toJson(
-        new ControlledAzureStorageContainerAttributes(
-            getStorageAccountId(), getStorageContainerName()));
+        new ControlledAzureStorageContainerAttributes(getStorageContainerName()));
   }
 
   @Override
@@ -212,8 +193,7 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
 
     ControlledAzureStorageContainerResource that = (ControlledAzureStorageContainerResource) o;
 
-    return (storageAccountId == null || storageAccountId.equals(that.getStorageAccountId()))
-        && storageContainerName.equals(that.getStorageContainerName());
+    return storageContainerName.equals(that.getStorageContainerName());
   }
 
   @Override
@@ -224,32 +204,22 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
 
     ControlledAzureStorageContainerResource that = (ControlledAzureStorageContainerResource) o;
 
-    return (storageAccountId == null || storageAccountId.equals(that.getStorageAccountId()))
-        && storageContainerName.equals(that.getStorageContainerName());
+    return storageContainerName.equals(that.getStorageContainerName());
   }
 
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    if (storageAccountId != null) {
-      result = 31 * result + storageAccountId.hashCode();
-    }
     result = 31 * result + storageContainerName.hashCode();
     return result;
   }
 
   public static class Builder {
     private ControlledResourceFields common;
-    private UUID storageAccountId;
     private String storageContainerName;
 
     public Builder common(ControlledResourceFields common) {
       this.common = common;
-      return this;
-    }
-
-    public ControlledAzureStorageContainerResource.Builder storageAccountId(UUID storageAccountId) {
-      this.storageAccountId = storageAccountId;
       return this;
     }
 
@@ -260,8 +230,7 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
     }
 
     public ControlledAzureStorageContainerResource build() {
-      return new ControlledAzureStorageContainerResource(
-          common, storageAccountId, storageContainerName);
+      return new ControlledAzureStorageContainerResource(common, storageContainerName);
     }
   }
 }
