@@ -139,8 +139,8 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
     //
     // We split the create workspace from the cloud context so that we can
     // do the grants and get the Sam group set before we sync the permissions
-    // to the project. The owner gets a temporary grant, but we need to wait
-    // for propagation of the other permissions. So the
+    // to the project. The owner may or may not get a temporary grant, but we need to wait
+    // for propagation of the other user's permissions. So the
     // sequence is:
     //
     // 1. create workspaces as default user
@@ -178,7 +178,11 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
         mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
     projectId2 = workspace2.getGcpContext().getProjectId();
 
-    // Wait for 2nd and 3rd users to have permission
+    // Wait for both users to have permission in both projects
+    GcpCloudUtils.waitForProjectAccess(
+        userAccessUtils.defaultUser().getGoogleCredentials(), projectId);
+    GcpCloudUtils.waitForProjectAccess(
+        userAccessUtils.defaultUser().getGoogleCredentials(), projectId2);
     GcpCloudUtils.waitForProjectAccess(
         userAccessUtils.secondUser().getGoogleCredentials(), projectId);
     GcpCloudUtils.waitForProjectAccess(
