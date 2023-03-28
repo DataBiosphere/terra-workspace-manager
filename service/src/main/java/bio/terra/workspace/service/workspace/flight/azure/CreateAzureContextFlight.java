@@ -32,8 +32,17 @@ public class CreateAzureContextFlight extends Flight {
 
     RetryRule dbRetry = RetryRules.shortDatabase();
 
+    if (featureConfiguration.isTpsEnabled()) {
+      addStep(
+          new ValidateLandingZoneRegionAgainstPolicyStep(
+              appContext.getLandingZoneApiDispatch(),
+              userRequest,
+              appContext.getTpsApiDispatch(),
+              workspaceUuid));
+    }
+
     // check that we are allowed to link to this spend profile
-    if (appContext.getFeatureConfiguration().isBpmAzureEnabled()) {
+    if (featureConfiguration.isBpmAzureEnabled()) {
       addStep(
           new CheckSpendProfileStep(
               appContext.getWorkspaceDao(),

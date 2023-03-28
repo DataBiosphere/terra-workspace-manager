@@ -13,7 +13,7 @@ import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
-import bio.terra.workspace.service.resource.controlled.exception.InvalidControlledResourceException;
+import bio.terra.workspace.service.resource.controlled.exception.RegionNotAllowedException;
 import bio.terra.workspace.service.resource.exception.InvalidNameException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
@@ -198,18 +198,15 @@ public class ResourceValidationUtils {
     }
   }
 
-  public static void validateControlledResourceRegionAgainstPolicy(
-      TpsApiDispatch tpsApiDispatch, UUID workspaceUuid, String location, CloudPlatform platform) {
+  public static void validateRegionAgainstPolicy(
+      TpsApiDispatch tpsApiDispatch, UUID workspaceUuid, String region, CloudPlatform platform) {
     switch (platform) {
-      case AZURE -> {
-        // TODO: enable policy check in Azure when we support Azure regions in the TPS ontology.
-        // validateAzureRegion(location);
-      }
-      case GCP -> validateGcpRegion(tpsApiDispatch, workspaceUuid, location);
+      case AZURE -> validateRegion(tpsApiDispatch, workspaceUuid, region, platform);
+      case GCP -> validateRegion(
+          tpsApiDispatch, workspaceUuid, GcpUtils.parseRegion(region), platform);
       case ANY -> {
         // Flexible resources are not stored on the cloud. Thus, they have no region policies.
       }
-      default -> throw new InvalidControlledResourceException("Unrecognized platform");
     }
   }
 
@@ -459,33 +456,17 @@ public class ResourceValidationUtils {
     }
   }
 
-  public static void validateAzureRegion(String region) {
-    if (StringUtils.isEmpty(region)) {
-      // Azure resources like workspaces may not have a region.
-      logger.warn("Cannot validate empty Azure region.");
-      return;
-    }
-    if (com.azure.core.management.Region.values().stream()
-        .filter(r -> r.toString().equalsIgnoreCase(region))
-        .findFirst()
-        .isEmpty()) {
-      logger.warn("Invalid Azure region {}", region);
-      throw new InvalidControlledResourceException("Invalid Azure Region specified.");
-    }
-  }
-
-  public static void validateGcpRegion(
-      TpsApiDispatch tpsApiDispatch, UUID workspaceId, String region) {
-    region = GcpUtils.parseRegion(region);
+  public static void validateRegion(
+      TpsApiDispatch tpsApiDispatch, UUID workspaceId, String region, CloudPlatform cloudPlatform) {
     tpsApiDispatch.createPaoIfNotExist(workspaceId);
 
     // Get the list of valid locations for this workspace from TPS. If there are no regional
     // constraints applied to the workspace, TPS should return all available regions.
-    List<String> validLocations = tpsApiDispatch.listValidRegions(workspaceId, CloudPlatform.GCP);
+    List<String> validLocations = tpsApiDispatch.listValidRegions(workspaceId, cloudPlatform);
 
     if (validLocations.stream().noneMatch(region::equalsIgnoreCase)) {
-      throw new InvalidControlledResourceException(
-          String.format("Specified location %s is not allowed by effective policy.", region));
+      throw new RegionNotAllowedException(
+          String.format("Specified region %s is not allowed by effective policy.", region));
     }
   }
 
