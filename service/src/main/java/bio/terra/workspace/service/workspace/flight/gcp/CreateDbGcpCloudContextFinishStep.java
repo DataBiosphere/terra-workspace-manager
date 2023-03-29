@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.workspace.flight.gcp;
 
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.GCP_DEFAULT_ZONE;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.GCP_PROJECT_ID;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.IAM_GROUP_EMAIL_MAP;
 
@@ -8,12 +9,14 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.CloudContextHolder;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 
@@ -34,6 +37,10 @@ public class CreateDbGcpCloudContextFinishStep implements Step {
         flightContext.getWorkingMap(), GCP_PROJECT_ID, IAM_GROUP_EMAIL_MAP);
 
     String projectId = flightContext.getWorkingMap().get(GCP_PROJECT_ID, String.class);
+    String gcpDefaultZone =
+        Optional.ofNullable(flightContext.getInputParameters().get(GCP_DEFAULT_ZONE, String.class))
+            .orElse(GcpResourceConstant.DEFAULT_ZONE);
+
     Map<WsmIamRole, String> workspaceRoleGroupsMap =
         flightContext
             .getWorkingMap()
@@ -42,6 +49,7 @@ public class CreateDbGcpCloudContextFinishStep implements Step {
     GcpCloudContext context =
         new GcpCloudContext(
             projectId,
+            gcpDefaultZone,
             workspaceRoleGroupsMap.get(WsmIamRole.OWNER),
             workspaceRoleGroupsMap.get(WsmIamRole.WRITER),
             workspaceRoleGroupsMap.get(WsmIamRole.READER),

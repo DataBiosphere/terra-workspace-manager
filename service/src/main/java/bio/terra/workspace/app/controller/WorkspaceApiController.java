@@ -15,6 +15,7 @@ import bio.terra.workspace.common.exception.FeatureNotSupportedException;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
+import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
@@ -62,6 +63,7 @@ import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.policy.TpsApiConversionUtils;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.policy.model.PolicyExplainResult;
+import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
@@ -548,12 +550,12 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       workspaceService.createAzureCloudContext(
           workspace, jobId, userRequest, resultPath, azureCloudContext);
     } else {
-      workspaceService.createGcpCloudContext(workspace, jobId, userRequest, resultPath);
-      gcpCloudContextService.updateGcpCloudContext(
-          tpsApiDispatch,
-          workspace.getWorkspaceId(),
-          Optional.ofNullable(body.getGcpDefaultZone()).orElse(GcpResourceConstant.DEFAULT_ZONE),
-          userRequest);
+      String gcpDefaultZone = body.getGcpDefaultZone();
+      // Validate the region against the workspace policy.
+      ResourceValidationUtils.validateGcpRegion(
+          tpsApiDispatch, uuid, GcpUtils.parseRegion(gcpDefaultZone));
+      workspaceService.createGcpCloudContext(
+          workspace, gcpDefaultZone, jobId, userRequest, resultPath);
     }
 
     ApiCreateCloudContextResult response = fetchCreateCloudContextResult(jobId);

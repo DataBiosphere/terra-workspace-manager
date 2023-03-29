@@ -453,6 +453,8 @@ public class WorkspaceService {
    * Process the request to create a GCP cloud context
    *
    * @param workspace workspace in which to create the context
+   * @param defaultZone default zone for newly-created resources. Region validation is performed at
+   *     the controller level.
    * @param jobId caller-supplied job id of the async job
    * @param userRequest user authentication info
    * @param resultPath optional endpoint where the result of the completed job can be retrieved
@@ -460,6 +462,7 @@ public class WorkspaceService {
   @Traced
   public void createGcpCloudContext(
       Workspace workspace,
+      @Nullable String defaultZone,
       String jobId,
       AuthenticatedUserRequest userRequest,
       @Nullable String resultPath) {
@@ -483,13 +486,14 @@ public class WorkspaceService {
         .operationType(OperationType.CREATE)
         .workspaceId(workspace.getWorkspaceId().toString())
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
+        .addParameter(WorkspaceFlightMapKeys.GCP_DEFAULT_ZONE, defaultZone)
         .submit();
   }
 
   @Traced
   public void createGcpCloudContext(
       Workspace workspace, String jobId, AuthenticatedUserRequest userRequest) {
-    createGcpCloudContext(workspace, jobId, userRequest, null);
+    createGcpCloudContext(workspace, null, jobId, userRequest, null);
   }
 
   /**

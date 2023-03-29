@@ -4,6 +4,7 @@ public final class WorkspaceFlightMapKeys {
   public static final String WORKSPACE_ID = "workspaceId";
   public static final String SPEND_PROFILE_ID = "spendProfileId";
   public static final String GCP_PROJECT_ID = "gcpProjectId";
+  public static final String GCP_DEFAULT_ZONE = "gcpDefaultZone";
   public static final String WORKSPACE_ID_TO_GCP_PROJECT_ID_MAP = "workspaceIdToGcpProjectIdMap";
   public static final String WORKSPACE_STAGE = "workspaceStage";
   public static final String IAM_GROUP_EMAIL_MAP = "iamGroupEmailMap";

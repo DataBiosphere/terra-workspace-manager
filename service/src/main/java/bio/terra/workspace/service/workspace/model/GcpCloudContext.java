@@ -44,13 +44,11 @@ public class GcpCloudContext {
   // Constructor for V2
   public GcpCloudContext(
       String gcpProjectId,
-      //      String gcpDefaultZone,
       @Nullable String samPolicyOwner,
       @Nullable String samPolicyWriter,
       @Nullable String samPolicyReader,
       @Nullable String samPolicyApplication) {
     this.gcpProjectId = gcpProjectId;
-    //    this.gcpDefaultZone = gcpDefaultZone;
     this.samPolicyOwner = samPolicyOwner;
     this.samPolicyWriter = samPolicyWriter;
     this.samPolicyReader = samPolicyReader;
