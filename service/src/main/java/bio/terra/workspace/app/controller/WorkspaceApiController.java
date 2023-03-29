@@ -64,7 +64,6 @@ import bio.terra.workspace.service.policy.TpsApiConversionUtils;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.policy.model.PolicyExplainResult;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
@@ -550,10 +549,12 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       workspaceService.createAzureCloudContext(
           workspace, jobId, userRequest, resultPath, azureCloudContext);
     } else {
-      String gcpDefaultZone = body.getGcpDefaultZone();
-      // Validate the region against the workspace policy.
-      ResourceValidationUtils.validateGcpRegion(
-          tpsApiDispatch, uuid, GcpUtils.parseRegion(gcpDefaultZone));
+      String gcpDefaultZone = GcpUtils.convertLocationToZone(body.getGcpDefaultZone());
+      if (gcpDefaultZone != null) {
+        // Validate the region against the workspace policy.
+        ResourceValidationUtils.validateGcpRegion(
+            tpsApiDispatch, uuid, GcpUtils.parseRegion(gcpDefaultZone));
+      }
       workspaceService.createGcpCloudContext(
           workspace, gcpDefaultZone, jobId, userRequest, resultPath);
     }
@@ -570,9 +571,17 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
     workspaceService.validateMcWorkspaceAndAction(
         userRequest, workspaceId, SamWorkspaceAction.WRITE);
+
+    String gcpDefaultZone = GcpUtils.convertLocationToZone(body.getGcpDefaultZone());
     // Update the defaultZone in the gcpContext object.
+    // Validate the region against the workspace policy.
+    if (gcpDefaultZone != null) {
+      ResourceValidationUtils.validateGcpRegion(
+          tpsApiDispatch, workspaceId, GcpUtils.parseRegion(gcpDefaultZone));
+    }
+
     gcpCloudContextService.updateGcpCloudContext(
-        tpsApiDispatch, workspaceId, body.getDefaultZone(), userRequest);
+        tpsApiDispatch, workspaceId, gcpDefaultZone, userRequest);
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
@@ -706,15 +715,26 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .createdByEmail(getSamService().getUserEmailFromSamAndRethrowOnInterrupt(petRequest))
             .build();
 
+    // Get the requested new location, or use the location from the source workspace.
+    String location =
+        Optional.ofNullable(body.getLocation())
+            .orElse(
+                gcpCloudContextService
+                    .getGcpCloudContext(sourceWorkspace.getWorkspaceId())
+                    .map(GcpCloudContext::getGcpDefaultZone)
+                    .orElse(null));
+    String gcpDefaultZone = GcpUtils.convertLocationToZone(location);
     // Validate the region against the workspace policy.
-    ResourceValidationUtils.validateGcpRegion(
-        tpsApiDispatch, workspaceUuid, GcpUtils.parseRegion(body.getLocation()));
+    if (gcpDefaultZone != null) {
+      ResourceValidationUtils.validateGcpRegion(
+          tpsApiDispatch, workspaceUuid, GcpUtils.parseRegion(gcpDefaultZone));
+    }
 
     final String jobId =
         workspaceService.cloneWorkspace(
             sourceWorkspace,
             petRequest,
-            body.getLocation(),
+            gcpDefaultZone,
             TpsApiConversionUtils.tpsFromApiTpsPolicyInputs(body.getAdditionalPolicies()),
             destinationWorkspace);
 

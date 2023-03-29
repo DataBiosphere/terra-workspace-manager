@@ -24,6 +24,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.util.StringUtils;
 
 /** Utilities for interacting with Google Cloud APIs within {@link Step}s. */
 public class GcpUtils {
@@ -186,6 +187,53 @@ public class GcpUtils {
    */
   public static String parseRegion(String location) {
     return location.replaceAll("(?!^)-[a-z]$", "");
+  }
+
+  // TODO (aaronwa@): Use regex to properly match region/zone patterns: [0-9a-z]-[a-z]
+  /**
+   * Checks if the string is formed like a zone (e.g., us-east1-a). This returns true if there are
+   * two dashes "-" in the string.
+   *
+   * <p>Note: This does <b>not</b> check if it is a valid zone.
+   */
+  public static boolean isZoneFormat(String zone) {
+    return StringUtils.countOccurrencesOf(zone, "-") == 2;
+  }
+
+  /**
+   * Checks if the string is formed like a region (e.g., us-east1). This returns true if there is
+   * one dash "-" in the string.
+   *
+   * <p>Note: This does <b>not</b> check if it is a valid region.
+   */
+  public static boolean isRegionFormat(String zone) {
+    return StringUtils.countOccurrencesOf(zone, "-") == 1;
+  }
+
+  /** Appends "-a" onto a region string to make it a zone. If region is null, then return null. */
+  public static String makeZoneFromRegion(String region) {
+    if (region == null) {
+      return null;
+    }
+    return region.concat("-a");
+  }
+
+  /**
+   * Converts a location string to be a zonal string by appending "-a". If the location is a region,
+   * then make a zone. If the location is a zone, then return it. Return null in all other cases.
+   *
+   * <p>Note: This does <b>not</b> check if {@code location} is a valid region or zone string.
+   */
+  public static String convertLocationToZone(String location) {
+    if (isZoneFormat(location)) {
+      return location;
+    }
+    // If the location is a region, then proceed in conversion.
+    if (isRegionFormat(location)) {
+      return makeZoneFromRegion(location);
+    }
+    // Otherwise, this is not a region string:
+    return null;
   }
 
   // Methods for building member strings using in GCP IAM bindings

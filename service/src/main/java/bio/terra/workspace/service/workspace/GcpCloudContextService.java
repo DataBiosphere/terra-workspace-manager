@@ -1,13 +1,11 @@
 package bio.terra.workspace.service.workspace;
 
-import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
-import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.flight.gcp.CreateGcpContextFlightV2;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
@@ -162,9 +160,6 @@ public class GcpCloudContextService {
     // Add defaultZone onto the GCP context object
     Map<String, String> propertySyncUpdate = new HashMap<>();
     if (gcpDefaultZone != null) {
-      // Validate the region against the workspace policy.
-      ResourceValidationUtils.validateGcpRegion(
-          tpsApiDispatch, workspaceUuid, GcpUtils.parseRegion(gcpDefaultZone));
       gcpCloudContext.setGcpDefaultZone(gcpDefaultZone);
       // TODO (PF-2556): Remove once terra-default-location workspace properties have been
       // deprecated.

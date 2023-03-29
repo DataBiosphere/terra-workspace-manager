@@ -28,7 +28,6 @@ import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceExcept
 import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.azure.CreateAzureContextFlight;
 import bio.terra.workspace.service.workspace.flight.azure.DeleteAzureContextFlight;
 import bio.terra.workspace.service.workspace.flight.gcp.CreateGcpContextFlightV2;
@@ -446,7 +445,9 @@ public class WorkspaceService {
         .workspaceId(destinationWorkspace.getWorkspaceId().toString())
         .addParameter(
             SOURCE_WORKSPACE_ID, sourceWorkspace.getWorkspaceId()) // TODO: remove this duplication
-        .addParameter(ControlledResourceKeys.LOCATION, location)
+        .addParameter(
+            WorkspaceFlightMapKeys.GCP_DEFAULT_ZONE,
+            Optional.ofNullable(location).orElse(GcpResourceConstant.DEFAULT_ZONE))
         .submit();
   }
 
@@ -454,8 +455,8 @@ public class WorkspaceService {
    * Process the request to create a GCP cloud context
    *
    * @param workspace workspace in which to create the context
-   * @param defaultZone default zone for newly-created resources. Region validation is performed at
-   *     the controller level.
+   * @param defaultZone default zone for newly-created resources. Region validation and zone
+   *     conversion are performed at the controller level.
    * @param jobId caller-supplied job id of the async job
    * @param userRequest user authentication info
    * @param resultPath optional endpoint where the result of the completed job can be retrieved
