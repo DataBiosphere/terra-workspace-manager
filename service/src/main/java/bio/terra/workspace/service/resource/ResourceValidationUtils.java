@@ -466,7 +466,9 @@ public class ResourceValidationUtils {
 
     if (validLocations.stream().noneMatch(region::equalsIgnoreCase)) {
       throw new RegionNotAllowedException(
-          String.format("Specified region %s is not allowed by effective policy.", region));
+          String.format(
+              "Specified region %s is not allowed by effective policy. Allowed regions are %s",
+              region, validLocations));
     }
   }
 

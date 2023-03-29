@@ -25,6 +25,7 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResourceF
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import com.azure.core.management.Region;
 import com.azure.resourcemanager.batch.models.DeploymentConfiguration;
 import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.google.api.client.util.DateTime;
@@ -86,7 +87,8 @@ public class ControlledResourceFixtures {
       new ApiGcpGcsBucketCreationParameters()
           .name(TestUtils.appendRandomNumber(BUCKET_NAME_PREFIX))
           .location(GcpResourceConstant.DEFAULT_REGION);
-  public static final String DEFAULT_AZURE_RESOURCE_REGION = "westcentralus";
+  public static final String DEFAULT_AZURE_RESOURCE_REGION = Region.US_EAST2.name();
+  public static final String TEST_AZURE_STORAGE_ACCOUNT_NAME = "teststgacctdonotdelete";
 
   /** Construct a parameter object with a unique bucket name to avoid unintended clashes. */
   public static ApiGcpGcsBucketCreationParameters getGoogleBucketCreationParameters() {
