@@ -44,11 +44,28 @@ public class GcpCloudContext {
   // Constructor for V2
   public GcpCloudContext(
       String gcpProjectId,
+      //      String gcpDefaultZone,
       @Nullable String samPolicyOwner,
       @Nullable String samPolicyWriter,
       @Nullable String samPolicyReader,
       @Nullable String samPolicyApplication) {
     this.gcpProjectId = gcpProjectId;
+    //    this.gcpDefaultZone = gcpDefaultZone;
+    this.samPolicyOwner = samPolicyOwner;
+    this.samPolicyWriter = samPolicyWriter;
+    this.samPolicyReader = samPolicyReader;
+    this.samPolicyApplication = samPolicyApplication;
+  }
+
+  public GcpCloudContext(
+      String gcpProjectId,
+      String gcpDefaultZone,
+      @Nullable String samPolicyOwner,
+      @Nullable String samPolicyWriter,
+      @Nullable String samPolicyReader,
+      @Nullable String samPolicyApplication) {
+    this.gcpProjectId = gcpProjectId;
+    this.gcpDefaultZone = gcpDefaultZone;
     this.samPolicyOwner = samPolicyOwner;
     this.samPolicyWriter = samPolicyWriter;
     this.samPolicyReader = samPolicyReader;
@@ -132,6 +149,7 @@ public class GcpCloudContext {
         }
         return new GcpCloudContext(
             v2Context.gcpProjectId,
+            v2Context.gcpDefaultZone,
             v2Context.samPolicyOwner,
             v2Context.samPolicyWriter,
             v2Context.samPolicyReader,
@@ -183,6 +201,7 @@ public class GcpCloudContext {
     public long version;
 
     public String gcpProjectId;
+    public String gcpDefaultZone;
     public String samPolicyOwner;
     public String samPolicyWriter;
     public String samPolicyReader;
@@ -192,12 +211,14 @@ public class GcpCloudContext {
     public GcpCloudContextV2(
         @JsonProperty("version") long version,
         @JsonProperty("gcpProjectId") String gcpProjectId,
+        @JsonProperty("gcpDefaultZone") String gcpDefaultZone,
         @JsonProperty("samPolicyOwner") String samPolicyOwner,
         @JsonProperty("samPolicyWriter") String samPolicyWriter,
         @JsonProperty("samPolicyReader") String samPolicyReader,
         @JsonProperty("samPolicyApplication") String samPolicyApplication) {
       this.version = version;
       this.gcpProjectId = gcpProjectId;
+      this.gcpDefaultZone = gcpDefaultZone;
       this.samPolicyOwner = samPolicyOwner;
       this.samPolicyWriter = samPolicyWriter;
       this.samPolicyReader = samPolicyReader;
@@ -207,6 +228,7 @@ public class GcpCloudContext {
     public GcpCloudContextV2(GcpCloudContext gcpCloudContext) {
       this.version = GCP_CLOUD_CONTEXT_DB_VERSION;
       this.gcpProjectId = gcpCloudContext.gcpProjectId;
+      this.gcpDefaultZone = gcpCloudContext.gcpDefaultZone;
       this.samPolicyOwner = gcpCloudContext.samPolicyOwner;
       this.samPolicyWriter = gcpCloudContext.samPolicyWriter;
       this.samPolicyReader = gcpCloudContext.samPolicyReader;
