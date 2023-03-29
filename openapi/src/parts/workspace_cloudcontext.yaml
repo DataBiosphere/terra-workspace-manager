@@ -100,7 +100,7 @@ components:
 
     GcpDefaultZone:
       type: string
-      description: The default zone for this GCP cloud context.
+      description: The default zone for newly-created resources in this GCP cloud context.
 
     AzureContext:
       type: object
@@ -157,7 +157,7 @@ components:
       type: object
       description: Request for updating a cloud context.
       properties:
-        defaultZone:
+        gcpDefaultZone:
           $ref: '#/components/schemas/GcpDefaultZone'
 
   responses:

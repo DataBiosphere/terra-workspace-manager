@@ -129,6 +129,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
         .getGcpCloudContext(workspace.getWorkspaceId())
         .map(GcpCloudContext::getGcpDefaultZone)
         .orElse(
+            // TODO (PF-2556): Remove once terra-default-location workspace properties have been
+            // deprecated.
             workspace
                 .getProperties()
                 .getOrDefault(
