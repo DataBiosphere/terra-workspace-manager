@@ -190,17 +190,15 @@ public class GcpCloudContextService {
       return GcpUtils.convertLocationToZone(requestedLocation);
     }
 
-    // Use the default zone from the properties, otherwise use the zone from the object.
-    return getGcpCloudContext(workspace.getWorkspaceId())
-        .map(GcpCloudContext::getGcpDefaultZone)
-        .orElse(
-            // TODO (PF-2556): Remove once terra-default-location workspace properties have been
-            // deprecated.
-            workspace
-                .getProperties()
-                .getOrDefault(
-                    WorkspaceConstants.Properties.DEFAULT_RESOURCE_LOCATION,
-                    GcpResourceConstant.DEFAULT_REGION));
+    // TODO (PF-2556): Remove property retrieval once terra-default-location workspace properties
+    // have been deprecated.
+    return workspace
+        .getProperties()
+        .getOrDefault(
+            WorkspaceConstants.Properties.DEFAULT_RESOURCE_LOCATION,
+            getGcpCloudContext(workspace.getWorkspaceId())
+                .map(GcpCloudContext::getGcpDefaultZone)
+                .orElse(GcpResourceConstant.DEFAULT_ZONE));
   }
 
   /**
