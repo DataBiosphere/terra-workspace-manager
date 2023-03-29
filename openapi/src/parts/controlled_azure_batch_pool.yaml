@@ -118,8 +118,12 @@ components:
       type: object
       description: |
         The configuration for compute nodes in a pool based on the Azure Virtual Machines infrastructure.
-      required: [ imageReference, nodeAgentSkuId]
+      required: [ imageReference, nodeAgentSkuId ]
       properties:
+        containerConfiguration:
+          description: |
+            Container configuration
+          $ref: '#/components/schemas/AzureBatchPoolVirtualMachineContainerConfiguration'
         imageReference:
           description: |
             A reference to an Azure Virtual Machines Marketplace image or the Azure Image resource of a custom Virtual Machine.
@@ -177,6 +181,16 @@ components:
             have replicas in the same region as the Azure Batch account. For information about the firewall 
             settings for the Batch node agent to communicate with the Batch service see
             https://docs.microsoft.com/en-us/azure/batch/batch-api-basics#virtual-network-vnet-and-firewall-configuration.
+          type: string
+
+    AzureBatchPoolVirtualMachineContainerConfiguration:
+      type: object
+      description: |
+        Container configuration
+      properties:
+        type: 
+          description: |
+            Set to dockerCompatible if container supports Docker images
           type: string
 
     AzureBatchPoolUserAssignedIdentity:
