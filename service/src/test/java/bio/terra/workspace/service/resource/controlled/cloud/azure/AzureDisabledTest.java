@@ -1,8 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
 import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AZURE_DISK_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AZURE_IP_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AZURE_NETWORK_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AZURE_VM_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_CLOUD_CONTEXT_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.GET_CLOUD_CONTEXT_PATH_FORMAT;
@@ -21,8 +19,6 @@ import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiCreateCloudContextRequest;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureDiskRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateControlledAzureIpRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateControlledAzureNetworkRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureVmRequestBody;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -90,20 +86,6 @@ public class AzureDisabledTest extends BaseConnectedTest {
     final ApiControlledResourceCommonFields commonFields =
         ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi();
 
-    // Create IP
-    final ApiCreateControlledAzureIpRequestBody ipRequest =
-        new ApiCreateControlledAzureIpRequestBody()
-            .common(commonFields)
-            .azureIp(ControlledResourceFixtures.getAzureIpCreationParameters());
-    mockMvc
-        .perform(
-            addJsonContentType(
-                addAuth(
-                    post(String.format(CREATE_AZURE_IP_PATH_FORMAT, workspaceUuid))
-                        .content(objectMapper.writeValueAsString(ipRequest)),
-                    userRequest)))
-        .andExpect(status().is(HttpStatus.SC_NOT_IMPLEMENTED));
-
     // Create disk
     final ApiCreateControlledAzureDiskRequestBody diskRequest =
         new ApiCreateControlledAzureDiskRequestBody()
@@ -115,20 +97,6 @@ public class AzureDisabledTest extends BaseConnectedTest {
                 addAuth(
                     post(String.format(CREATE_AZURE_DISK_PATH_FORMAT, workspaceUuid))
                         .content(objectMapper.writeValueAsString(diskRequest)),
-                    userRequest)))
-        .andExpect(status().is(HttpStatus.SC_NOT_IMPLEMENTED));
-
-    // Create network
-    final ApiCreateControlledAzureNetworkRequestBody networkRequest =
-        new ApiCreateControlledAzureNetworkRequestBody()
-            .common(commonFields)
-            .azureNetwork(ControlledResourceFixtures.getAzureNetworkCreationParameters());
-    mockMvc
-        .perform(
-            addJsonContentType(
-                addAuth(
-                    post(String.format(CREATE_AZURE_NETWORK_PATH_FORMAT, workspaceUuid))
-                        .content(objectMapper.writeValueAsString(networkRequest)),
                     userRequest)))
         .andExpect(status().is(HttpStatus.SC_NOT_IMPLEMENTED));
 

@@ -2,18 +2,18 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import bio.terra.cloudres.azure.resourcemanager.common.Defaults;
 import bio.terra.landingzone.db.LandingZoneDao;
 import bio.terra.landingzone.db.model.LandingZoneRecord;
 import bio.terra.landingzone.library.landingzones.deployment.LandingZoneTagKeys;
 import bio.terra.landingzone.library.landingzones.deployment.ResourcePurpose;
+import bio.terra.landingzone.library.landingzones.deployment.SubnetResourcePurpose;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.resourcemanager.data.CreateStorageAccountRequestData;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
-import com.azure.core.management.Region;
+import com.azure.resourcemanager.compute.ComputeManager;
+import com.azure.resourcemanager.network.models.Network;
 import com.azure.resourcemanager.storage.StorageManager;
 import com.azure.resourcemanager.storage.models.StorageAccount;
 import java.time.LocalDate;
@@ -47,6 +47,7 @@ public class TestLandingZoneManager {
   private final AzureCloudContext azureCloudContext;
   private final StorageManager storageManager;
   private final WorkspaceDao workspaceDao;
+  private final ComputeManager computeManager;
 
   public TestLandingZoneManager(
       AzureCloudContextService azureCloudContextService,
@@ -66,12 +67,13 @@ public class TestLandingZoneManager {
     assertNotNull(azureCloudContext, "Azure cloud context should exist. Make sure it was created.");
 
     storageManager = crlService.getStorageManager(azureCloudContext, azureConfig);
+    computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
   }
 
-  public void createLandingZoneWithSharedStorageAccount(
+  public StorageAccount createLandingZoneWithSharedStorageAccount(
       UUID landingZoneId, UUID workspaceId, String storageAccountName, String region) {
     createLandingZoneDbRecord(landingZoneId, workspaceId);
-    createStorageAccount(storageAccountName, region, landingZoneId);
+    return createStorageAccount(storageAccountName, region, landingZoneId);
   }
 
   public void deleteLandingZoneWithSharedStorageAccount(
@@ -79,6 +81,22 @@ public class TestLandingZoneManager {
     landingZoneDao.deleteLandingZone(landingZoneId);
 
     storageManager.storageAccounts().deleteByResourceGroup(azureResourceGroup, storageAccountName);
+  }
+
+  public Network createLandingZoneWithComputeSubnet(
+      UUID landingZoneId, UUID workspaceId, String networkName, String region) {
+    createLandingZoneDbRecord(landingZoneId, workspaceId);
+    return createNetworkWithComputeSubnet(networkName, region, landingZoneId);
+  }
+
+  public void deleteLandingZoneWithComputeSubnet(
+      UUID landingZoneId, String azureResourceGroup, String networkName) {
+    landingZoneDao.deleteLandingZone(landingZoneId);
+
+    computeManager
+        .networkManager()
+        .networks()
+        .deleteByResourceGroup(azureResourceGroup, networkName);
   }
 
   public void createLandingZoneWithoutResources(UUID landingZoneId, UUID workspaceId) {
@@ -123,12 +141,24 @@ public class TestLandingZoneManager {
         .withTag(
             LandingZoneTagKeys.LANDING_ZONE_PURPOSE.toString(),
             ResourcePurpose.SHARED_RESOURCE.toString())
-        .create(
-            Defaults.buildContext(
-                CreateStorageAccountRequestData.builder()
-                    .setName(storageAccountName)
-                    .setRegion(Region.fromName(region))
-                    .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
-                    .build()));
+        .create();
+  }
+
+  private Network createNetworkWithComputeSubnet(
+      String networkName, String region, UUID landingZoneId) {
+    final String subnetName = "COMPUTE_SUBNET";
+
+    return computeManager
+        .networkManager()
+        .networks()
+        .define(networkName)
+        .withRegion(region)
+        .withExistingResourceGroup(azureCloudContext.getAzureResourceGroupId())
+        .withAddressSpace("10.1.0.0/27")
+        .withSubnet(subnetName, "10.1.0.24/29")
+        .withTag("workspaceId", workspaceUuid.toString())
+        .withTag(LandingZoneTagKeys.LANDING_ZONE_ID.toString(), landingZoneId.toString())
+        .withTag(SubnetResourcePurpose.WORKSPACE_COMPUTE_SUBNET.toString(), subnetName)
+        .create();
   }
 }

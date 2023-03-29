@@ -39,9 +39,6 @@ public class CopyAzureStorageContainerBlobsStepUnitTest extends BaseAzureUnitTes
   @BeforeEach
   void setup() {
     var destinationWorkspaceId = UUID.randomUUID();
-    var storageAccount =
-        ControlledResourceFixtures.getAzureStorage(
-            "sa" + UUID.randomUUID().toString().substring(0, 6), "eastus");
 
     var inputParameters = new FlightMap();
     inputParameters.put(
@@ -49,8 +46,7 @@ public class CopyAzureStorageContainerBlobsStepUnitTest extends BaseAzureUnitTes
         destinationWorkspaceId);
 
     var destinationContainer =
-        ControlledResourceFixtures.getAzureStorageContainer(
-            storageAccount.getResourceId(), "sc-" + UUID.randomUUID());
+        ControlledResourceFixtures.getAzureStorageContainer("sc-" + UUID.randomUUID());
     var workingMap = new FlightMap();
 
     workingMap.put(
@@ -58,10 +54,6 @@ public class CopyAzureStorageContainerBlobsStepUnitTest extends BaseAzureUnitTes
         destinationContainer);
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);
-    when(resourceDao.getResource(destinationWorkspaceId, storageAccount.getResourceId()))
-        .thenReturn(storageAccount);
-    when(resourceDao.getResource(sourceContainer.getWorkspaceId(), sourceContainer.getResourceId()))
-        .thenReturn(storageAccount);
   }
 
   @Test

@@ -38,24 +38,8 @@ public enum WsmResourceFamily {
       ApiResourceType.BIG_QUERY_DATA_TABLE,
       WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE,
       null), // no controlled type for BQ data table
-  AZURE_IP("AZURE_IP", ApiResourceType.AZURE_IP, null, WsmResourceType.CONTROLLED_AZURE_IP),
-  AZURE_RELAY_NAMESPACE(
-      "AZURE_RELAY_NAMESPACE",
-      ApiResourceType.AZURE_RELAY_NAMESPACE,
-      null,
-      WsmResourceType.CONTROLLED_AZURE_RELAY_NAMESPACE),
   AZURE_DISK("AZURE_DISK", ApiResourceType.AZURE_DISK, null, WsmResourceType.CONTROLLED_AZURE_DISK),
-  AZURE_NETWORK(
-      "AZURE_NETWORK",
-      ApiResourceType.AZURE_NETWORK,
-      null,
-      WsmResourceType.CONTROLLED_AZURE_NETWORK),
   AZURE_VM("AZURE_VM", ApiResourceType.AZURE_VM, null, WsmResourceType.CONTROLLED_AZURE_VM),
-  AZURE_STORAGE_ACCOUNT(
-      "AZURE_STORAGE_ACCOUNT",
-      ApiResourceType.AZURE_STORAGE_ACCOUNT,
-      null,
-      WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT),
   AZURE_STORAGE_CONTAINER(
       "AZURE_STORAGE_CONTAINER",
       ApiResourceType.AZURE_STORAGE_CONTAINER,

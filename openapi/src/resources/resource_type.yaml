@@ -11,12 +11,8 @@ components:
         - DATA_REPO_SNAPSHOT
         - GCS_BUCKET
         - GCS_OBJECT
-        - AZURE_IP
         - AZURE_DISK
-        - AZURE_NETWORK
         - AZURE_VM
-        - AZURE_RELAY_NAMESPACE
-        - AZURE_STORAGE_ACCOUNT
         - AZURE_STORAGE_CONTAINER
         - AZURE_BATCH_POOL
         - GIT_REPO
@@ -44,14 +40,6 @@ components:
           $ref: '#/components/schemas/GcpAiNotebookInstanceAttributes'
         azureDisk:
           $ref: '#/components/schemas/AzureDiskAttributes'
-        azureIp:
-          $ref: '#/components/schemas/AzureIpAttributes'
-        azureNetwork:
-          $ref: '#/components/schemas/AzureNetworkAttributes'
-        azureRelayNamespace:
-          $ref: '#/components/schemas/AzureRelayNamespaceAttributes'
-        azureStorage:
-          $ref: '#/components/schemas/AzureStorageAttributes'
         azureStorageContainer:
           $ref: '#/components/schemas/AzureStorageContainerAttributes'
         azureVm:
@@ -84,18 +72,10 @@ components:
           $ref: '#/components/schemas/GcpGcsObjectResource'
         gcpAiNotebookInstance:
           $ref: '#/components/schemas/GcpAiNotebookInstanceResource'
-        azureIp:
-          $ref: '#/components/schemas/AzureIpResource'
         azureDisk:
           $ref: '#/components/schemas/AzureDiskResource'
-        azureNetwork:
-          $ref: '#/components/schemas/AzureNetworkResource'
         azureVm:
           $ref: '#/components/schemas/AzureVmResource'
-        azureRelayNamespace:
-          $ref: '#/components/schemas/AzureRelayNamespaceResource'
-        azureStorageAccount:
-          $ref: '#/components/schemas/AzureStorageResource'
         azureStorageContainer:
           $ref: '#/components/schemas/AzureStorageContainerResource'
         azureBatchPool:
