@@ -34,6 +34,7 @@ public class GcpUtilsTest extends BaseUnitTest {
     assertEquals("", GcpUtils.parseRegion(""));
     assertEquals(" ", GcpUtils.parseRegion(" "));
     assertEquals("-a", GcpUtils.parseRegion("-a"));
+    assertNull(GcpUtils.parseRegion(null));
   }
 
   @Test

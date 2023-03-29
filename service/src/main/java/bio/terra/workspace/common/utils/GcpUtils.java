@@ -182,6 +182,7 @@ public class GcpUtils {
    * "-[a-z]".
    */
   public static String parseRegion(String location) {
+    if (location == null) return null;
     return location.replaceAll("(?!^)-[a-z]$", "");
   }
 
