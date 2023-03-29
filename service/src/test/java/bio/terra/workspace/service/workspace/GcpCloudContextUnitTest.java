@@ -153,7 +153,7 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
   }
 
   @Test
-  void updateWorkspaceGcpContext() throws InterruptedException {
+  void updateWorkspaceGcpContext() {
     // Create a workspace record
     UUID workspaceUuid = UUID.randomUUID();
     var workspace = WorkspaceFixtures.buildMcWorkspace(workspaceUuid);

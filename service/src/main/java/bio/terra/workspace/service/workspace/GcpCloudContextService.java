@@ -31,14 +31,12 @@ public class GcpCloudContextService {
 
   private final WorkspaceDao workspaceDao;
   private final SamService samService;
-  private final TpsApiDispatch tpsApiDispatch;
 
   @Autowired
   public GcpCloudContextService(
       WorkspaceDao workspaceDao, SamService samService, TpsApiDispatch tpsApiDispatch) {
     this.workspaceDao = workspaceDao;
     this.samService = samService;
-    this.tpsApiDispatch = tpsApiDispatch;
   }
 
   /**
