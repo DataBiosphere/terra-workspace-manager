@@ -26,6 +26,23 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/workspaces/v1/{workspaceId}/cloudcontexts/gcp:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    patch:
+      summary: Update the GCP cloud context of a workspace.
+      operationId: updateCloudContext
+      tags: [Workspace]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCloudContextRequest'
+      responses:
+        '204':
+          description: OK
+
   /api/workspaces/v1/{workspaceId}/cloudcontexts/result/{jobId}:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -78,6 +95,12 @@ components:
         projectId:
           description: The ID of Gcp Project associated with the workspace.
           type: string
+        gcpDefaultZone:
+          $ref: '#/components/schemas/GcpDefaultZone'
+
+    GcpDefaultZone:
+      type: string
+      description: The default zone for this GCP cloud context.
 
     AzureContext:
       type: object
@@ -110,6 +133,8 @@ components:
           $ref: '#/components/schemas/JobControl'
         azureContext:
           $ref: '#/components/schemas/AzureContext'
+        gcpDefaultZone:
+          $ref: '#/components/schemas/GcpDefaultZone'
 
     CreateCloudContextResult:
       type: object
@@ -127,6 +152,13 @@ components:
           $ref: '#/components/schemas/AzureContext'
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
+
+    UpdateCloudContextRequest:
+      type: object
+      description: Request for updating a cloud context.
+      properties:
+        defaultZone:
+          $ref: '#/components/schemas/GcpDefaultZone'
 
   responses:
     CreateCloudContextResultResponse:

@@ -56,6 +56,8 @@ public class CloneWorkspaceFlight extends Flight {
       addStep(
           new LaunchCreateCloudContextFlightStep(
               flightBeanBag.getWorkspaceService(),
+              flightBeanBag.getGcpCloudContextService(),
+              flightBeanBag.getTpsApiDispatch(),
               CloudPlatform.GCP,
               ControlledResourceKeys.CREATE_GCP_CLOUD_CONTEXT_FLIGHT_ID),
           cloudRetryRule);
@@ -72,6 +74,8 @@ public class CloneWorkspaceFlight extends Flight {
       addStep(
           new LaunchCreateCloudContextFlightStep(
               flightBeanBag.getWorkspaceService(),
+              flightBeanBag.getGcpCloudContextService(),
+              flightBeanBag.getTpsApiDispatch(),
               CloudPlatform.AZURE,
               ControlledResourceKeys.CREATE_AZURE_CLOUD_CONTEXT_FLIGHT_ID),
           cloudRetryRule);

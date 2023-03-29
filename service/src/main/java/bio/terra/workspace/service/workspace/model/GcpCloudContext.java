@@ -11,6 +11,7 @@ import javax.annotation.Nullable;
 
 public class GcpCloudContext {
   private String gcpProjectId;
+  private String gcpDefaultZone;
   // V2 additions:
   // - Sam policy groups for the workspace roles; nullable
   @Nullable private String samPolicyOwner;
@@ -24,6 +25,16 @@ public class GcpCloudContext {
   // Constructor for V1
   public GcpCloudContext(String gcpProjectId) {
     this.gcpProjectId = gcpProjectId;
+    this.gcpDefaultZone = null;
+    this.samPolicyOwner = null;
+    this.samPolicyWriter = null;
+    this.samPolicyReader = null;
+    this.samPolicyApplication = null;
+  }
+
+  public GcpCloudContext(String gcpProjectId, String gcpDefaultZone) {
+    this.gcpProjectId = gcpProjectId;
+    this.gcpDefaultZone = gcpDefaultZone;
     this.samPolicyOwner = null;
     this.samPolicyWriter = null;
     this.samPolicyReader = null;
@@ -46,6 +57,10 @@ public class GcpCloudContext {
 
   public String getGcpProjectId() {
     return gcpProjectId;
+  }
+
+  public String getGcpDefaultZone() {
+    return gcpDefaultZone;
   }
 
   public Optional<String> getSamPolicyOwner() {
@@ -80,8 +95,12 @@ public class GcpCloudContext {
     this.samPolicyApplication = samPolicyApplication;
   }
 
+  public void setGcpDefaultZone(String gcpDefaultZone) {
+    this.gcpDefaultZone = gcpDefaultZone;
+  }
+
   public ApiGcpContext toApi() {
-    return new ApiGcpContext().projectId(gcpProjectId);
+    return new ApiGcpContext().projectId(gcpProjectId).gcpDefaultZone(gcpDefaultZone);
   }
 
   public String serialize() {
@@ -125,7 +144,7 @@ public class GcpCloudContext {
     try {
       GcpCloudContextV1 v1Context = DbSerDes.fromJson(json, GcpCloudContextV1.class);
       if (v1Context.version == GcpCloudContextV1.GCP_CLOUD_CONTEXT_DB_VERSION) {
-        return new GcpCloudContext(v1Context.gcpProjectId);
+        return new GcpCloudContext(v1Context.gcpProjectId, v1Context.gcpDefaultZone);
       }
     } catch (SerializationException e) {
       // Deserialization of V1 failed.
@@ -138,17 +157,22 @@ public class GcpCloudContext {
     public static final long GCP_CLOUD_CONTEXT_DB_VERSION = 1;
     public long version;
     public String gcpProjectId;
+    public String gcpDefaultZone;
 
     @JsonCreator
     public GcpCloudContextV1(
-        @JsonProperty("version") long version, @JsonProperty("gcpProjectId") String gcpProjectId) {
+        @JsonProperty("version") long version,
+        @JsonProperty("gcpProjectId") String gcpProjectId,
+        @JsonProperty("gcpDefaultZone") String gcpDefaultZone) {
       this.version = version;
       this.gcpProjectId = gcpProjectId;
+      this.gcpDefaultZone = gcpDefaultZone;
     }
 
     public GcpCloudContextV1(GcpCloudContext gcpCloudContext) {
       this.version = GCP_CLOUD_CONTEXT_DB_VERSION;
       this.gcpProjectId = gcpCloudContext.gcpProjectId;
+      this.gcpDefaultZone = gcpCloudContext.gcpDefaultZone;
     }
   }
 

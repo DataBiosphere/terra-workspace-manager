@@ -38,6 +38,7 @@ import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiRegions;
 import bio.terra.workspace.generated.model.ApiRoleBinding;
 import bio.terra.workspace.generated.model.ApiRoleBindingList;
+import bio.terra.workspace.generated.model.ApiUpdateCloudContextRequest;
 import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
@@ -61,6 +62,7 @@ import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.policy.TpsApiConversionUtils;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.policy.model.PolicyExplainResult;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
@@ -547,10 +549,37 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
           workspace, jobId, userRequest, resultPath, azureCloudContext);
     } else {
       workspaceService.createGcpCloudContext(workspace, jobId, userRequest, resultPath);
+      try {
+        gcpCloudContextService.updateGcpCloudContext(
+            tpsApiDispatch,
+            workspace.getWorkspaceId(),
+            Optional.ofNullable(body.getGcpDefaultZone()).orElse(GcpResourceConstant.DEFAULT_ZONE),
+            userRequest);
+      } catch (InterruptedException e) {
+        return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+      }
     }
 
     ApiCreateCloudContextResult response = fetchCreateCloudContextResult(jobId);
     return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<Void> updateCloudContext(
+      UUID workspaceId, @Valid ApiUpdateCloudContextRequest body) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+
+    workspaceService.validateMcWorkspaceAndAction(
+        userRequest, workspaceId, SamWorkspaceAction.WRITE);
+    // Update the defaultZone in the gcpContext object.
+    try {
+      gcpCloudContextService.updateGcpCloudContext(
+          tpsApiDispatch, workspaceId, body.getDefaultZone(), userRequest);
+    } catch (InterruptedException e) {
+      return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+    return new ResponseEntity<>(HttpStatus.OK);
   }
 
   @Traced

@@ -6,17 +6,25 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
+import bio.terra.policy.model.TpsPolicyInput;
+import bio.terra.policy.model.TpsPolicyInputs;
+import bio.terra.policy.model.TpsPolicyPair;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.fixtures.PolicyFixtures;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
+import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.SamConstants.SamSpendProfileAction;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
+import bio.terra.workspace.service.resource.controlled.exception.InvalidControlledResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
@@ -24,9 +32,12 @@ import bio.terra.workspace.service.workspace.exceptions.InvalidSerializedVersion
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
+import bio.terra.workspace.service.workspace.model.WorkspaceConstants;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
 import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -144,6 +155,47 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
     assertEquals(updatedContext.getSamPolicyWriter().orElse(null), POLICY_WRITER);
     assertEquals(updatedContext.getSamPolicyReader().orElse(null), POLICY_READER);
     assertEquals(updatedContext.getSamPolicyApplication().orElse(null), POLICY_APPLICATION);
+  }
+
+  @Test
+  void updateWorkspaceGcpContext() throws InterruptedException {
+    // Create a workspace record
+    UUID workspaceUuid = UUID.randomUUID();
+    var workspace = WorkspaceFixtures.buildMcWorkspace(workspaceUuid);
+    workspaceDao.createWorkspace(workspace, /* applicationIds */ null);
+
+    // Create the GCP cloud context object in the database.
+    String flightId = "fake-flight-update-gcp-context-id";
+    gcpCloudContextService.createGcpCloudContextStart(workspaceUuid, flightId);
+    GcpCloudContext gcpCloudContext = new GcpCloudContext("fake-project-id", "us-central1-a");
+    gcpCloudContextService.createGcpCloudContextFinish(workspaceUuid, gcpCloudContext, flightId);
+
+    // Update the GCP cloud context with a new default zone.
+    // Note: region validation is performed when updating the zone.
+    when(mockTpsApiDispatch().listValidRegions(workspaceUuid, CloudPlatform.GCP))
+        .thenReturn(List.of("us-central1", "us-east1"));
+
+    // Invalid zone for update.
+    String invalidDefaultZone = "asia-central1-a";
+    assertThrows(
+        InvalidControlledResourceException.class,
+        () ->
+            gcpCloudContextService.updateGcpCloudContext(
+                mockTpsApiDispatch(), workspaceUuid, invalidDefaultZone, null));
+
+    // Valid zone for update.
+    String newDefaultZone = "us-east1-b";
+    gcpCloudContextService.updateGcpCloudContext(
+        mockTpsApiDispatch(), workspaceUuid, newDefaultZone, new AuthenticatedUserRequest());
+    GcpCloudContext gotCloudContext =
+        gcpCloudContextService.getGcpCloudContext(workspaceUuid).orElse(new GcpCloudContext());
+    assertEquals(newDefaultZone, gotCloudContext.getGcpDefaultZone());
+
+    // TODO (PF-2556): Remove once terra-default-location workspace properties have been deprecated.
+    // Ensure the properties are synced for the UI and CLI.
+    Map<String, String> syncedPropertyUpdate =
+        Map.of(WorkspaceConstants.Properties.DEFAULT_RESOURCE_LOCATION, newDefaultZone);
+    assertEquals(syncedPropertyUpdate, workspaceDao.getWorkspace(workspaceUuid).getProperties());
   }
 
   @Test

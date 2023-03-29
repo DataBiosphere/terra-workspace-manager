@@ -28,6 +28,7 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants;
 import com.google.common.base.Strings;
@@ -119,13 +120,20 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   }
 
   private String getResourceLocation(Workspace workspace, String requestedLocation) {
-    return Strings.isNullOrEmpty(requestedLocation)
-        ? workspace
-            .getProperties()
-            .getOrDefault(
-                WorkspaceConstants.Properties.DEFAULT_RESOURCE_LOCATION,
-                GcpResourceConstant.DEFAULT_REGION)
-        : requestedLocation;
+    if (!Strings.isNullOrEmpty(requestedLocation)) {
+      return requestedLocation;
+    }
+    // Use the default zone from the workspace cloud context object, if it exists.
+    // Otherwise, fallback to the properties.
+    return gcpCloudContextService
+        .getGcpCloudContext(workspace.getWorkspaceId())
+        .map(GcpCloudContext::getGcpDefaultZone)
+        .orElse(
+            workspace
+                .getProperties()
+                .getOrDefault(
+                    WorkspaceConstants.Properties.DEFAULT_RESOURCE_LOCATION,
+                    GcpResourceConstant.DEFAULT_REGION));
   }
 
   @Traced

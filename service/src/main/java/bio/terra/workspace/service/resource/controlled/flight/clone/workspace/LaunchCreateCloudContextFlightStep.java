@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
 import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntries;
 
+import bio.terra.policy.api.TpsApi;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
@@ -11,21 +12,35 @@ import bio.terra.stairway.exception.FlightNotFoundException;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.policy.TpsApiDispatch;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
+import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
+import java.util.Objects;
+import java.util.Optional;
 
 public class LaunchCreateCloudContextFlightStep implements Step {
 
   private final WorkspaceService workspaceService;
+  private final GcpCloudContextService gcpCloudContextService;
+  private final TpsApiDispatch tpsApiDispatch;
   private final CloudPlatform cloudPlatform;
   private final String flightIdKey;
 
   public LaunchCreateCloudContextFlightStep(
-      WorkspaceService workspaceService, CloudPlatform cloudPlatform, String flightIdKey) {
+      WorkspaceService workspaceService,
+      GcpCloudContextService gcpCloudContextService,
+      TpsApiDispatch tpsApiDispatch,
+      CloudPlatform cloudPlatform,
+      String flightIdKey) {
     this.workspaceService = workspaceService;
+    this.gcpCloudContextService = gcpCloudContextService;
+    this.tpsApiDispatch = tpsApiDispatch;
     this.cloudPlatform = cloudPlatform;
     this.flightIdKey = flightIdKey;
   }
@@ -44,7 +59,8 @@ public class LaunchCreateCloudContextFlightStep implements Step {
             .getInputParameters()
             .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
     var destinationWorkspace =
-        context.getInputParameters().get(JobMapKeys.REQUEST.getKeyName(), Workspace.class);
+        Objects.requireNonNull(
+            context.getInputParameters().get(JobMapKeys.REQUEST.getKeyName(), Workspace.class));
 
     var cloudContextJobId = context.getWorkingMap().get(flightIdKey, String.class);
 
@@ -71,6 +87,20 @@ public class LaunchCreateCloudContextFlightStep implements Step {
       } else {
         workspaceService.createGcpCloudContext(
             destinationWorkspace, cloudContextJobId, userRequest);
+
+        // Use the default zone of the workspace if it exists. Otherwise, use the default zone
+        // constant.
+        String destinationDefaultZone =
+            gcpCloudContextService
+                .getGcpCloudContext(destinationWorkspace.getWorkspaceId())
+                .orElse(new GcpCloudContext())
+                .getGcpDefaultZone();
+
+        gcpCloudContextService.updateGcpCloudContext(
+            tpsApiDispatch,
+            destinationWorkspace.getWorkspaceId(),
+            Optional.ofNullable(destinationDefaultZone).orElse(GcpResourceConstant.DEFAULT_ZONE),
+            userRequest);
       }
     }
     return StepResult.getStepResultSuccess();

@@ -1,14 +1,21 @@
 package bio.terra.workspace.service.workspace;
 
+import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
+import bio.terra.workspace.service.policy.TpsApiDispatch;
+import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.flight.gcp.CreateGcpContextFlightV2;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
+import bio.terra.workspace.service.workspace.model.WorkspaceConstants;
 import io.opencensus.contrib.spring.aop.Traced;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,11 +31,14 @@ public class GcpCloudContextService {
 
   private final WorkspaceDao workspaceDao;
   private final SamService samService;
+  private final TpsApiDispatch tpsApiDispatch;
 
   @Autowired
-  public GcpCloudContextService(WorkspaceDao workspaceDao, SamService samService) {
+  public GcpCloudContextService(
+      WorkspaceDao workspaceDao, SamService samService, TpsApiDispatch tpsApiDispatch) {
     this.workspaceDao = workspaceDao;
     this.samService = samService;
+    this.tpsApiDispatch = tpsApiDispatch;
   }
 
   /**
@@ -125,6 +135,46 @@ public class GcpCloudContextService {
       workspaceDao.updateCloudContext(workspaceUuid, CloudPlatform.GCP, context.serialize());
     }
     return context;
+  }
+
+  /**
+   * Update the GCP cloud context.
+   *
+   * <p>Retrieve the original GCP context, and then accordingly update it.
+   *
+   * <p>Note: Updates to the {@code gcpDefaultZone} in the cloud context will be synced with the
+   * workspace properties until both the UI and CLI have migrated away from using properties (i.e.,
+   * when PF-2556 is resolved):
+   *
+   * @param workspaceUuid workspace identifier of the cloud context
+   * @param gcpDefaultZone The default zone for all newly-created GCP resources in this workspace.
+   */
+  public void updateGcpCloudContext(
+      TpsApiDispatch tpsApiDispatch,
+      UUID workspaceUuid,
+      String gcpDefaultZone,
+      AuthenticatedUserRequest userRequest)
+      throws InterruptedException {
+    // Get the required GCP context.
+    GcpCloudContext gcpCloudContext = getRequiredGcpCloudContext(workspaceUuid, userRequest);
+
+    // Add defaultZone onto the GCP context object
+    Map<String, String> propertySyncUpdate = new HashMap<>();
+    if (gcpDefaultZone != null) {
+      // Validate the region against the workspace policy.
+      ResourceValidationUtils.validateGcpRegion(
+          tpsApiDispatch, workspaceUuid, GcpUtils.parseRegion(gcpDefaultZone));
+      gcpCloudContext.setGcpDefaultZone(gcpDefaultZone);
+      // TODO (PF-2556): Remove once terra-default-location workspace properties have been
+      // deprecated.
+      propertySyncUpdate.put(
+          WorkspaceConstants.Properties.DEFAULT_RESOURCE_LOCATION, gcpDefaultZone);
+    }
+    // Call workspace dao to update the cloud context
+    workspaceDao.updateCloudContext(workspaceUuid, CloudPlatform.GCP, gcpCloudContext.serialize());
+    // TODO (PF-2556): Remove once terra-default-location workspace properties have been deprecated.
+    // Sync updates to the workspace properties until both the UI and CLI have migrated.
+    workspaceDao.updateWorkspaceProperties(workspaceUuid, propertySyncUpdate);
   }
 
   /**
