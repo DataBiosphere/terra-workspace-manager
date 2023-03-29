@@ -3,6 +3,7 @@ package bio.terra.workspace.service.workspace;
 import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
@@ -114,7 +115,7 @@ public class GcpCloudContextService {
    * @return GCP cloud context with all policies filled in.
    */
   public GcpCloudContext getRequiredGcpCloudContext(
-      UUID workspaceUuid, AuthenticatedUserRequest userRequest) throws InterruptedException {
+      UUID workspaceUuid, AuthenticatedUserRequest userRequest) {
     GcpCloudContext context =
         getGcpCloudContext(workspaceUuid)
             .orElseThrow(
@@ -124,14 +125,18 @@ public class GcpCloudContextService {
     // policyOwner is a good sentinel for knowing we need to update the cloud context and
     // store the sync'd workspace policies.
     if (context.getSamPolicyOwner().isEmpty()) {
-      context.setSamPolicyOwner(
-          samService.getWorkspacePolicy(workspaceUuid, WsmIamRole.OWNER, userRequest));
-      context.setSamPolicyWriter(
-          samService.getWorkspacePolicy(workspaceUuid, WsmIamRole.WRITER, userRequest));
-      context.setSamPolicyReader(
-          samService.getWorkspacePolicy(workspaceUuid, WsmIamRole.READER, userRequest));
-      context.setSamPolicyApplication(
-          samService.getWorkspacePolicy(workspaceUuid, WsmIamRole.APPLICATION, userRequest));
+      SamRethrow.onInterrupted(
+          () -> {
+            context.setSamPolicyOwner(
+                samService.getWorkspacePolicy(workspaceUuid, WsmIamRole.OWNER, userRequest));
+            context.setSamPolicyWriter(
+                samService.getWorkspacePolicy(workspaceUuid, WsmIamRole.WRITER, userRequest));
+            context.setSamPolicyReader(
+                samService.getWorkspacePolicy(workspaceUuid, WsmIamRole.READER, userRequest));
+            context.setSamPolicyApplication(
+                samService.getWorkspacePolicy(workspaceUuid, WsmIamRole.APPLICATION, userRequest));
+          },
+          "Query SAM and store the sync'd workspace policies in the cloud context during getRequiredGcpCloudContext");
       workspaceDao.updateCloudContext(workspaceUuid, CloudPlatform.GCP, context.serialize());
     }
     return context;
@@ -153,8 +158,7 @@ public class GcpCloudContextService {
       TpsApiDispatch tpsApiDispatch,
       UUID workspaceUuid,
       String gcpDefaultZone,
-      AuthenticatedUserRequest userRequest)
-      throws InterruptedException {
+      AuthenticatedUserRequest userRequest) {
     // Get the required GCP context.
     GcpCloudContext gcpCloudContext = getRequiredGcpCloudContext(workspaceUuid, userRequest);
 

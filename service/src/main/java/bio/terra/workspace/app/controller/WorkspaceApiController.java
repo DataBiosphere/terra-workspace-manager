@@ -549,15 +549,11 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
           workspace, jobId, userRequest, resultPath, azureCloudContext);
     } else {
       workspaceService.createGcpCloudContext(workspace, jobId, userRequest, resultPath);
-      try {
-        gcpCloudContextService.updateGcpCloudContext(
-            tpsApiDispatch,
-            workspace.getWorkspaceId(),
-            Optional.ofNullable(body.getGcpDefaultZone()).orElse(GcpResourceConstant.DEFAULT_ZONE),
-            userRequest);
-      } catch (InterruptedException e) {
-        return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-      }
+      gcpCloudContextService.updateGcpCloudContext(
+          tpsApiDispatch,
+          workspace.getWorkspaceId(),
+          Optional.ofNullable(body.getGcpDefaultZone()).orElse(GcpResourceConstant.DEFAULT_ZONE),
+          userRequest);
     }
 
     ApiCreateCloudContextResult response = fetchCreateCloudContextResult(jobId);
@@ -573,12 +569,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     workspaceService.validateMcWorkspaceAndAction(
         userRequest, workspaceId, SamWorkspaceAction.WRITE);
     // Update the defaultZone in the gcpContext object.
-    try {
-      gcpCloudContextService.updateGcpCloudContext(
-          tpsApiDispatch, workspaceId, body.getDefaultZone(), userRequest);
-    } catch (InterruptedException e) {
-      return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+    gcpCloudContextService.updateGcpCloudContext(
+        tpsApiDispatch, workspaceId, body.getDefaultZone(), userRequest);
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
