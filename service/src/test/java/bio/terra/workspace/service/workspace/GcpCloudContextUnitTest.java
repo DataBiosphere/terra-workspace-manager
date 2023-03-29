@@ -9,15 +9,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
-import bio.terra.policy.model.TpsPolicyInput;
-import bio.terra.policy.model.TpsPolicyInputs;
-import bio.terra.policy.model.TpsPolicyPair;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
-import bio.terra.workspace.common.fixtures.PolicyFixtures;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
-import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;

@@ -2,7 +2,6 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
 import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntries;
 
-import bio.terra.policy.api.TpsApi;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
