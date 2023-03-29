@@ -3,8 +3,8 @@ package bio.terra.workspace.common.utils;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import bio.terra.cloudres.google.api.services.common.OperationCow;
@@ -64,7 +64,7 @@ public class GcpUtilsTest extends BaseUnitTest {
     assertNull(GcpUtils.convertLocationToZone(null));
     assertNull(GcpUtils.convertLocationToZone(""));
   }
-    
+
   // The permission denied code includes cases of the "quota exceeded limit" error for AI notebook
   // creation.
   @Test
