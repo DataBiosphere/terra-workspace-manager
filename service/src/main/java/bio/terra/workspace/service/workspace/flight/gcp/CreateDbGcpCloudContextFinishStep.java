@@ -16,6 +16,7 @@ import bio.terra.workspace.service.workspace.model.CloudContextHolder;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -38,8 +39,8 @@ public class CreateDbGcpCloudContextFinishStep implements Step {
 
     String projectId = flightContext.getWorkingMap().get(GCP_PROJECT_ID, String.class);
     String gcpDefaultZone =
-        Optional.ofNullable(flightContext.getInputParameters().get(GCP_DEFAULT_ZONE, String.class))
-            .orElse(GcpResourceConstant.DEFAULT_ZONE);
+        Objects.requireNonNull(
+            flightContext.getInputParameters().get(GCP_DEFAULT_ZONE, String.class));
 
     Map<WsmIamRole, String> workspaceRoleGroupsMap =
         flightContext

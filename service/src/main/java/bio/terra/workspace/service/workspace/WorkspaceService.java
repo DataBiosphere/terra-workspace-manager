@@ -19,6 +19,7 @@ import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneWorkspaceFlight;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.stage.StageService;
@@ -486,7 +487,9 @@ public class WorkspaceService {
         .operationType(OperationType.CREATE)
         .workspaceId(workspace.getWorkspaceId().toString())
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
-        .addParameter(WorkspaceFlightMapKeys.GCP_DEFAULT_ZONE, defaultZone)
+        .addParameter(
+            WorkspaceFlightMapKeys.GCP_DEFAULT_ZONE,
+            Optional.ofNullable(defaultZone).orElse(GcpResourceConstant.DEFAULT_ZONE))
         .submit();
   }
 

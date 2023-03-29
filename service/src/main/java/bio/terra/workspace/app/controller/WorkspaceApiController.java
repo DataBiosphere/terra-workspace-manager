@@ -706,6 +706,10 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .createdByEmail(getSamService().getUserEmailFromSamAndRethrowOnInterrupt(petRequest))
             .build();
 
+    // Validate the region against the workspace policy.
+    ResourceValidationUtils.validateGcpRegion(
+        tpsApiDispatch, workspaceUuid, GcpUtils.parseRegion(body.getLocation()));
+
     final String jobId =
         workspaceService.cloneWorkspace(
             sourceWorkspace,

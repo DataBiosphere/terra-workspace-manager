@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
 import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntries;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.GCP_DEFAULT_ZONE;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
@@ -84,22 +85,12 @@ public class LaunchCreateCloudContextFlightStep implements Step {
                 .getInputParameters()
                 .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class));
       } else {
+        String gcpDefaultZone =
+            Objects.requireNonNull(
+                context.getInputParameters().get(GCP_DEFAULT_ZONE, String.class));
+
         workspaceService.createGcpCloudContext(
-            destinationWorkspace, cloudContextJobId, userRequest);
-
-        // Use the default zone of the workspace if it exists. Otherwise, use the default zone
-        // constant.
-        String destinationDefaultZone =
-            gcpCloudContextService
-                .getGcpCloudContext(destinationWorkspace.getWorkspaceId())
-                .orElse(new GcpCloudContext())
-                .getGcpDefaultZone();
-
-        gcpCloudContextService.updateGcpCloudContext(
-            tpsApiDispatch,
-            destinationWorkspace.getWorkspaceId(),
-            Optional.ofNullable(destinationDefaultZone).orElse(GcpResourceConstant.DEFAULT_ZONE),
-            userRequest);
+            destinationWorkspace, gcpDefaultZone, cloudContextJobId, userRequest, null);
       }
     }
     return StepResult.getStepResultSuccess();
