@@ -54,7 +54,7 @@ public class LaunchCloneControlledFlexibleResourceFlightStep implements Step {
                 WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
 
     // Gather input parameters for the flight.
-    // Omit name, description, and cloning instructions to use the source values.
+    // Omit name, and description to use the source values.
     FlightMap subFlightInputParameters = new FlightMap();
     subFlightInputParameters.put(
         JobMapKeys.DESCRIPTION.getKeyName(),
