@@ -76,11 +76,13 @@ import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
+import bio.terra.workspace.service.workspace.model.WorkspaceConstants;
 import bio.terra.workspace.service.workspace.model.WorkspaceDescription;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -557,6 +559,14 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       }
       workspaceService.createGcpCloudContext(
           workspace, gcpDefaultZone, jobId, userRequest, resultPath);
+      // TODO (PF-2556): Remove once terra-default-location workspace properties have been
+      // deprecated.
+      if (gcpDefaultZone != null) {
+        Map<String, String> propertySyncUpdate = new HashMap<>();
+        propertySyncUpdate.put(
+            WorkspaceConstants.Properties.DEFAULT_RESOURCE_LOCATION, gcpDefaultZone);
+        workspaceService.updateWorkspaceProperties(uuid, propertySyncUpdate, userRequest);
+      }
     }
 
     ApiCreateCloudContextResult response = fetchCreateCloudContextResult(jobId);
