@@ -3,6 +3,7 @@ package bio.terra.workspace.app.controller;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
+import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.generated.controller.ControlledGcpResourceApi;
 import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.crl.CrlService;
@@ -86,8 +87,11 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     Workspace workspace =
         workspaceService.validateMcWorkspaceAndAction(
             userRequest, workspaceUuid, getSamAction(body.getCommon()));
+    // Buckets are regional resources.
     String resourceLocation =
-        gcpCloudContextService.getResourceLocation(workspace, body.getGcsBucket().getLocation());
+        GcpUtils.parseRegion(
+            gcpCloudContextService.getResourceLocation(
+                workspace, body.getGcsBucket().getLocation()));
     ControlledResourceFields commonFields =
         toCommonFields(
             workspaceUuid,
@@ -331,8 +335,10 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     Workspace workspace =
         workspaceService.validateWorkspaceAndAction(
             userRequest, workspaceUuid, getSamAction(body.getCommon()));
+    // Big Query datasets are regional resources
     String resourceLocation =
-        gcpCloudContextService.getResourceLocation(workspace, body.getDataset().getLocation());
+        GcpUtils.parseRegion(
+            gcpCloudContextService.getResourceLocation(workspace, body.getDataset().getLocation()));
     ControlledResourceFields commonFields =
         toCommonFields(
             workspaceUuid,
@@ -454,6 +460,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     Workspace workspace =
         workspaceService.validateWorkspaceAndAction(
             userRequest, workspaceUuid, getSamAction(body.getCommon()));
+    // AI Notebooks are zonal resources. So, don't parse the region from the zone.
     String resourceLocation =
         gcpCloudContextService.getResourceLocation(
             workspace, body.getAiNotebookInstance().getLocation());
