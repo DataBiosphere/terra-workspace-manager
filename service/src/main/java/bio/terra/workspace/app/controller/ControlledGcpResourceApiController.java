@@ -86,7 +86,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     Workspace workspace =
         workspaceService.validateMcWorkspaceAndAction(
             userRequest, workspaceUuid, getSamAction(body.getCommon()));
-    String resourceLocation = getResourceLocation(workspace, body.getGcsBucket().getLocation());
+    String resourceLocation =
+        gcpCloudContextService.getResourceLocation(workspace, body.getGcsBucket().getLocation());
     ControlledResourceFields commonFields =
         toCommonFields(
             workspaceUuid,
@@ -117,25 +118,6 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .resourceId(createdBucket.getResourceId())
             .gcpBucket(createdBucket.toApiResource());
     return new ResponseEntity<>(response, HttpStatus.OK);
-  }
-
-  private String getResourceLocation(Workspace workspace, String requestedLocation) {
-    if (!Strings.isNullOrEmpty(requestedLocation)) {
-      return requestedLocation;
-    }
-    // Use the default zone from the workspace cloud context object, if it exists.
-    // Otherwise, fallback to the properties.
-    return gcpCloudContextService
-        .getGcpCloudContext(workspace.getWorkspaceId())
-        .map(GcpCloudContext::getGcpDefaultZone)
-        .orElse(
-            // TODO (PF-2556): Remove once terra-default-location workspace properties have been
-            // deprecated.
-            workspace
-                .getProperties()
-                .getOrDefault(
-                    WorkspaceConstants.Properties.DEFAULT_RESOURCE_LOCATION,
-                    GcpResourceConstant.DEFAULT_REGION));
   }
 
   @Traced
@@ -349,7 +331,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     Workspace workspace =
         workspaceService.validateWorkspaceAndAction(
             userRequest, workspaceUuid, getSamAction(body.getCommon()));
-    String resourceLocation = getResourceLocation(workspace, body.getDataset().getLocation());
+    String resourceLocation =
+        gcpCloudContextService.getResourceLocation(workspace, body.getDataset().getLocation());
     ControlledResourceFields commonFields =
         toCommonFields(
             workspaceUuid,
@@ -472,7 +455,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
         workspaceService.validateWorkspaceAndAction(
             userRequest, workspaceUuid, getSamAction(body.getCommon()));
     String resourceLocation =
-        getResourceLocation(workspace, body.getAiNotebookInstance().getLocation());
+        gcpCloudContextService.getResourceLocation(
+            workspace, body.getAiNotebookInstance().getLocation());
     ControlledResourceFields commonFields =
         toCommonFields(
             workspaceUuid,

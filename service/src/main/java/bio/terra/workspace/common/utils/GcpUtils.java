@@ -214,6 +214,7 @@ public class GcpUtils {
     return region.concat("-a");
   }
 
+  // TODO (aaronwa@): Make this conversion stricter?
   /**
    * Converts a location string to be a zonal string by appending "-a". If the location is a region,
    * then make a zone. If the location is a zone, then return it. Return null in all other cases.

@@ -580,8 +580,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
           tpsApiDispatch, workspaceId, GcpUtils.parseRegion(gcpDefaultZone));
     }
 
-    gcpCloudContextService.updateGcpCloudContext(
-        tpsApiDispatch, workspaceId, gcpDefaultZone, userRequest);
+    gcpCloudContextService.updateGcpCloudContext(workspaceId, gcpDefaultZone, userRequest);
     return new ResponseEntity<>(HttpStatus.OK);
   }
 

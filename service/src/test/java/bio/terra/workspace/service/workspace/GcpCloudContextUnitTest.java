@@ -165,23 +165,10 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
     GcpCloudContext gcpCloudContext = new GcpCloudContext("fake-project-id", "us-central1-a");
     gcpCloudContextService.createGcpCloudContextFinish(workspaceUuid, gcpCloudContext, flightId);
 
-    // Update the GCP cloud context with a new default zone.
-    // Note: region validation is performed when updating the zone.
-    when(mockTpsApiDispatch().listValidRegions(workspaceUuid, CloudPlatform.GCP))
-        .thenReturn(List.of("us-central1", "us-east1"));
-
-    // Invalid zone for update.
-    String invalidDefaultZone = "asia-central1-a";
-    assertThrows(
-        InvalidControlledResourceException.class,
-        () ->
-            gcpCloudContextService.updateGcpCloudContext(
-                mockTpsApiDispatch(), workspaceUuid, invalidDefaultZone, null));
-
-    // Valid zone for update.
+    // Update the zone in the cloud context.
     String newDefaultZone = "us-east1-b";
     gcpCloudContextService.updateGcpCloudContext(
-        mockTpsApiDispatch(), workspaceUuid, newDefaultZone, new AuthenticatedUserRequest());
+        workspaceUuid, newDefaultZone, new AuthenticatedUserRequest());
     GcpCloudContext gotCloudContext =
         gcpCloudContextService.getGcpCloudContext(workspaceUuid).orElse(new GcpCloudContext());
     assertEquals(newDefaultZone, gotCloudContext.getGcpDefaultZone());

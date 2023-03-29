@@ -1,16 +1,20 @@
 package bio.terra.workspace.service.workspace;
 
+import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.flight.gcp.CreateGcpContextFlightV2;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
+import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants;
+import com.google.common.base.Strings;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.HashMap;
 import java.util.Map;
@@ -150,10 +154,7 @@ public class GcpCloudContextService {
    * @param gcpDefaultZone The default zone for all newly-created GCP resources in this workspace.
    */
   public void updateGcpCloudContext(
-      TpsApiDispatch tpsApiDispatch,
-      UUID workspaceUuid,
-      String gcpDefaultZone,
-      AuthenticatedUserRequest userRequest) {
+      UUID workspaceUuid, String gcpDefaultZone, AuthenticatedUserRequest userRequest) {
     // Get the required GCP context.
     GcpCloudContext gcpCloudContext = getRequiredGcpCloudContext(workspaceUuid, userRequest);
 
@@ -171,6 +172,35 @@ public class GcpCloudContextService {
     // TODO (PF-2556): Remove once terra-default-location workspace properties have been deprecated.
     // Sync updates to the workspace properties until both the UI and CLI have migrated.
     workspaceDao.updateWorkspaceProperties(workspaceUuid, propertySyncUpdate);
+  }
+
+  /**
+   * Returns the zone for resource creation. If {@code requestedLocation} is not specified, then
+   * retrieve the default from the properties, cloud context, or default constant (in that order).
+   *
+   * <p>NOTE (PF-2556): Updates to the gcpDefaultZone in the cloud context objects are be synced to
+   * the properties. However, updates to the properties are not synced to the gcpDefaultZone. So,
+   * the default location property will always be on-par or ahead of the gcpDefaultZone (until we
+   * deprecate updating properties).
+   *
+   * @return
+   */
+  public String getResourceLocation(Workspace workspace, String requestedLocation) {
+    if (!Strings.isNullOrEmpty(requestedLocation)) {
+      return GcpUtils.convertLocationToZone(requestedLocation);
+    }
+
+    // Use the default zone from the properties, otherwise use the zone from the object.
+    return getGcpCloudContext(workspace.getWorkspaceId())
+        .map(GcpCloudContext::getGcpDefaultZone)
+        .orElse(
+            // TODO (PF-2556): Remove once terra-default-location workspace properties have been
+            // deprecated.
+            workspace
+                .getProperties()
+                .getOrDefault(
+                    WorkspaceConstants.Properties.DEFAULT_RESOURCE_LOCATION,
+                    GcpResourceConstant.DEFAULT_REGION));
   }
 
   /**

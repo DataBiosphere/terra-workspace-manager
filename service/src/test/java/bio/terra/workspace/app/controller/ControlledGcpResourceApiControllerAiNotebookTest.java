@@ -74,6 +74,8 @@ public class ControlledGcpResourceApiControllerAiNotebookTest extends BaseConnec
 
   @Test
   public void createAiNotebookInstance_correctZone() throws Exception {
+    // TODO (PF-2556): Change this to update the cloud context instead. For now, keep this as-is to
+    // ensure compatibility with the UI / CLI.
     mockMvcUtils.updateWorkspaceProperties(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
