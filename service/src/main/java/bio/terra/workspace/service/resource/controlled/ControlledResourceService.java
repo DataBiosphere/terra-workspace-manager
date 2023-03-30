@@ -56,7 +56,6 @@ import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.WsmApplication;
 import com.google.cloud.Policy;
-import io.opencensus.contrib.spring.aop.Traced;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
