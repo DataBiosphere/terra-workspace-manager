@@ -46,10 +46,9 @@ public class ResourceLineageEntry {
     if (this == o) {
       return true;
     }
-    if (!(o instanceof ResourceLineageEntry)) {
+    if (!(o instanceof ResourceLineageEntry entry)) {
       return false;
     }
-    ResourceLineageEntry entry = (ResourceLineageEntry) o;
     return sourceWorkspaceId.equals(entry.sourceWorkspaceId)
         && sourceResourceId.equals(entry.sourceResourceId);
   }

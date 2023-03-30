@@ -780,7 +780,7 @@ public class SamService {
    *
    * @param workspaceUuid workspace to use
    * @param role workspace role to lookup
-   * @param userRequest
+   * @param userRequest userRequest
    * @return email of the sync'd policy group
    * @throws InterruptedException on shutdown during retry wait
    */

@@ -539,17 +539,17 @@ public class ResourceDao {
     if (null != cloningInstructions) {
       params.addValue("cloning_instructions", cloningInstructions.toSql());
     }
-    StringBuilder sb = new StringBuilder("UPDATE resource SET ");
 
-    sb.append(DbUtils.setColumnsClause(params, "attributes"));
-
-    sb.append(" WHERE workspace_id = :workspace_id AND resource_id = :resource_id");
+    String sb =
+        "UPDATE resource SET "
+            + DbUtils.setColumnsClause(params, "attributes")
+            + " WHERE workspace_id = :workspace_id AND resource_id = :resource_id";
 
     params
         .addValue("workspace_id", workspaceUuid.toString())
         .addValue("resource_id", resourceId.toString());
 
-    int rowsAffected = jdbcTemplate.update(sb.toString(), params);
+    int rowsAffected = jdbcTemplate.update(sb, params);
     boolean updated = rowsAffected > 0;
 
     logger.info(

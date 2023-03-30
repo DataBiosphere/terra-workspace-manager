@@ -47,7 +47,7 @@ public class WorkspaceFixtures {
         RandomStringUtils.randomAlphabetic(10).toLowerCase(Locale.ROOT),
         "default workspace",
         "this is an awesome workspace",
-        new SpendProfileId("default-spend"),
+        new SpendProfileId(UUID.randomUUID().toString()),
         Collections.emptyMap(),
         WorkspaceStage.MC_WORKSPACE,
         DEFAULT_USER_EMAIL,

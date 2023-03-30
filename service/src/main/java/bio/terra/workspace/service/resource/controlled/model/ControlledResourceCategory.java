@@ -101,6 +101,6 @@ public enum ControlledResourceCategory {
     throw new IllegalStateException(
         String.format(
             "Unrecognized resource category: AccessScopeType %s and ManagedByType %s",
-            accessScopeType.toString(), managedByType.toString()));
+            accessScopeType, managedByType.toString()));
   }
 }

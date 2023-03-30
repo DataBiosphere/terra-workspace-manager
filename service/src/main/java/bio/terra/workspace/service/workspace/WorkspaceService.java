@@ -43,7 +43,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -319,7 +318,7 @@ public class WorkspaceService {
             "listRequesterRoles");
     Optional<WsmIamRole> highestRole = WsmIamRole.getHighestRole(uuid, requesterRoles);
     Preconditions.checkState(
-        highestRole.isPresent(), String.format("Workspace %s missing roles", uuid.toString()));
+        highestRole.isPresent(), String.format("Workspace %s missing roles", uuid));
     return highestRole.get();
   }
 
@@ -587,7 +586,7 @@ public class WorkspaceService {
             // SAM does not always use lowercase emails, so lowercase everything here before the
             // contains check below
             .map(String::toLowerCase)
-            .collect(Collectors.toList());
+            .toList();
     if (!roleMembers.contains(targetUserEmail)) {
       return;
     }

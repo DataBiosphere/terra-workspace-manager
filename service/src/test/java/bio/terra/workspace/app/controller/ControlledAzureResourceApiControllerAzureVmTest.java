@@ -87,6 +87,7 @@ public class ControlledAzureResourceApiControllerAzureVmTest extends BaseAzureUn
             new JobApiUtils.AsyncJobResult<ControlledAzureVmResource>()
                 .result(resource)
                 .jobReport(new ApiJobReport().status(ApiJobReport.StatusEnum.SUCCEEDED)));
+    setupMockLandingZoneRegion(Region.GERMANY_CENTRAL);
 
     mockMvc
         .perform(

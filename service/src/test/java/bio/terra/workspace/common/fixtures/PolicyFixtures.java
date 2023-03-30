@@ -17,17 +17,17 @@ public class PolicyFixtures {
   public static final String IOWA_REGION = "iowa";
   public static final String NEVADA_REGION = "nevada";
 
-  public static ApiWsmPolicyInput GROUP_POLICY_DEFAULT =
+  public static final ApiWsmPolicyInput GROUP_POLICY_DEFAULT =
       new ApiWsmPolicyInput()
           .namespace(NAMESPACE)
           .name(GROUP_CONSTRAINT)
           .addAdditionalDataItem(new ApiWsmPolicyPair().key(GROUP).value(DEFAULT_GROUP));
-  public static ApiWsmPolicyInput GROUP_POLICY_ALT =
+  public static final ApiWsmPolicyInput GROUP_POLICY_ALT =
       new ApiWsmPolicyInput()
           .namespace(NAMESPACE)
           .name(GROUP_CONSTRAINT)
           .addAdditionalDataItem(new ApiWsmPolicyPair().key(GROUP).value(ALT_GROUP));
-  public static ApiWsmPolicyInput REGION_POLICY_USA =
+  public static final ApiWsmPolicyInput REGION_POLICY_USA =
       new ApiWsmPolicyInput()
           .namespace(NAMESPACE)
           .name(REGION_CONSTRAINT)
@@ -36,7 +36,7 @@ public class PolicyFixtures {
   public static final ApiWsmPolicyInputs DEFAULT_WSM_POLICY_INPUTS =
       new ApiWsmPolicyInputs().addInputsItem(GROUP_POLICY_DEFAULT).addInputsItem(REGION_POLICY_USA);
 
-  public static ApiWsmPolicyInput REGION_POLICY_IOWA =
+  public static final ApiWsmPolicyInput REGION_POLICY_IOWA =
       new ApiWsmPolicyInput()
           .namespace(NAMESPACE)
           .name(REGION_CONSTRAINT)

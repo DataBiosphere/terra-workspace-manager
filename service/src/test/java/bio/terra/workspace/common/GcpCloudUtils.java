@@ -213,7 +213,7 @@ public class GcpCloudUtils {
    * @param <T> - type of result
    * @return - result from supplier, the first time it doesn't throw, or null if all tries have been
    *     exhausted
-   * @throws InterruptedException
+   * @throws InterruptedException InterruptedException
    */
   public static @Nullable <T> T getWithRetryOnException(SupplierWithException<T> supplier)
       throws Exception {

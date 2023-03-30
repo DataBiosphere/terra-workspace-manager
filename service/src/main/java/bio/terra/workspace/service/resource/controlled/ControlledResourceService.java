@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.resource.controlled;
 
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.IS_WET_RUN;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.ServiceUnavailableException;
@@ -11,7 +10,6 @@ import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
-import bio.terra.workspace.generated.model.ApiAzureRelayNamespaceCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiFlexibleResourceUpdateParameters;
@@ -32,13 +30,10 @@ import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceSyncMapping.SyncMapping;
 import bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresource.ControlledFlexibleResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.flight.UpdateAzureControlledResourceRegionFlight;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespace.ControlledAzureRelayNamespaceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpPolicyBuilder;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.flight.UpdateGcpControlledResourceRegionFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.CloneControlledAzureStorageContainerResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CloneControlledGcsBucketResourceFlight;
@@ -114,24 +109,6 @@ public class ControlledResourceService {
     this.features = features;
     this.tpsApiDispatch = tpsApiDispatch;
     this.grantService = grantService;
-  }
-
-  public String createAzureRelayNamespace(
-      ControlledAzureRelayNamespaceResource resource,
-      ApiAzureRelayNamespaceCreationParameters creationParameters,
-      ControlledResourceIamRole privateResourceIamRole,
-      ApiJobControl jobControl,
-      String resultPath,
-      AuthenticatedUserRequest userRequest) {
-
-    JobBuilder jobBuilder =
-        commonCreationJobBuilder(
-                resource, privateResourceIamRole, jobControl, resultPath, userRequest)
-            .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
-
-    String jobId = jobBuilder.submit();
-    waitForResourceOrJob(resource.getWorkspaceId(), resource.getResourceId(), jobId);
-    return jobId;
   }
 
   public String createAzureVm(
@@ -387,7 +364,7 @@ public class ControlledResourceService {
             resource.getName());
 
     CloningInstructions resolvedCloningInstructions =
-        updateParameters.getCloningInstructions() == null
+        (updateParameters == null || updateParameters.getCloningInstructions() == null)
             ? resource.getCloningInstructions()
             : CloningInstructions.fromApiModel(updateParameters.getCloningInstructions());
 
@@ -611,7 +588,7 @@ public class ControlledResourceService {
             resource.getResourceType(), resource.getResourceId(), resource.getName());
 
     if (features.isTpsEnabled()) {
-      ResourceValidationUtils.validateControlledResourceRegionAgainstPolicy(
+      ResourceValidationUtils.validateRegionAgainstPolicy(
           tpsApiDispatch,
           resource.getWorkspaceId(),
           resource.getRegion(),
@@ -761,40 +738,6 @@ public class ControlledResourceService {
     return gcpPolicyBuilder.build();
   }
 
-  // TODO (PF-2368): clean this up once back-fill is done in all Terra environment.
-  @Traced
-  @Nullable
-  public String updateAzureControlledResourcesRegionAsync(
-      AuthenticatedUserRequest userRequest, boolean wetRun) {
-    return jobService
-        .newJob()
-        .description(
-            "A flight to update controlled resource's missing region in all the existing"
-                + "terra managed azure projects")
-        .flightClass(UpdateAzureControlledResourceRegionFlight.class)
-        .userRequest(userRequest)
-        .addParameter(IS_WET_RUN, wetRun)
-        .operationType(OperationType.UPDATE)
-        .submit();
-  }
-
-  // TODO (PF-2368): clean this up once back-fill is done in all Terra environment.
-  @Traced
-  @Nullable
-  public String updateGcpControlledResourcesRegionAsync(
-      AuthenticatedUserRequest userRequest, boolean wetRun) {
-    return jobService
-        .newJob()
-        .description(
-            "A flight to update controlled resource's missing region in all the existing"
-                + "terra managed gcp projects")
-        .flightClass(UpdateGcpControlledResourceRegionFlight.class)
-        .userRequest(userRequest)
-        .operationType(OperationType.UPDATE)
-        .addParameter(IS_WET_RUN, wetRun)
-        .submit();
-  }
-
   /**
    * Creates and returns a JobBuilder object for deleting a controlled resource. Depending on the
    * type of resource being deleted, this job may need to run asynchronously.
@@ -806,7 +749,7 @@ public class ControlledResourceService {
       String resultPath,
       AuthenticatedUserRequest userRequest) {
     WsmResource resource = resourceDao.getResource(workspaceUuid, resourceId);
-    final String jobDescription = "Delete controlled resource; id: " + resourceId.toString();
+    final String jobDescription = "Delete controlled resource; id: " + resourceId;
 
     List<WsmResource> resourceToDelete = new ArrayList<>();
     resourceToDelete.add(resource);

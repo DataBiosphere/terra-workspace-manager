@@ -13,12 +13,14 @@ The directory structure is setup like this:
 - parts
 - resources
 - common
-- - schemas.yaml - shared schema elements
-- - responses.yaml - shared response elements
-- - parameters.yaml - shared parameter elements
+  - schemas.yaml - shared schema elements
+  - schemas_azure.yaml - Azure specific schema elements
+  - responses.yaml - shared response elements
+  - responses_azure.yaml - Azure specific response elements
+  - parameters.yaml - shared parameter elements
 
 ### Parts
-This directory contains all of the paths and the high-level schema material.
+This directory contains all the paths and the high-level schema material.
 
 ### Resources
 This directory contains the resource and attribute definitions for all resource types.

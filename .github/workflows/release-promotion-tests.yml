@@ -45,7 +45,7 @@ jobs:
       # Set up workload-identity so we can auth to Sherlock
       - name: "Authenticate to GCP"
         id: 'auth'
-        uses: google-github-actions/auth@v0
+        uses: google-github-actions/auth@v1
         with:
           workload_identity_provider: 'projects/1038484894585/locations/global/workloadIdentityPools/github-wi-pool/providers/github-wi-provider'
           service_account: 'dsp-tools-iap-access@dsp-tools-k8s.iam.gserviceaccount.com'

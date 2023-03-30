@@ -29,7 +29,7 @@ public class BigQueryApiConversionsTest extends BaseUnitTest {
   @Test
   public void testFromBqExpirationTime() {
     assertNull(fromBqExpirationTime(null));
-    assertEquals(123, fromBqExpirationTime(Long.valueOf(123000)));
+    assertEquals(123, fromBqExpirationTime(123000L));
   }
 
   @Test
@@ -41,7 +41,7 @@ public class BigQueryApiConversionsTest extends BaseUnitTest {
 
   @Test
   public void testRoundTrip() {
-    assertEquals(null, fromBqExpirationTime(toBqExpirationTime(null)));
+    assertNull(fromBqExpirationTime(toBqExpirationTime(null)));
     assertEquals(789L, fromBqExpirationTime(toBqExpirationTime(789L)));
   }
 }

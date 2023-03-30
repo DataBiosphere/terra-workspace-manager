@@ -37,7 +37,7 @@ public class ManagementExceptionUtils {
 
   public static StepStatus maybeRetryStatus(ManagementException me) {
     return getHttpStatus(me)
-        .filter(sc -> sc.is4xxClientError())
+        .filter(HttpStatus::is4xxClientError)
         .map(sc -> StepStatus.STEP_RESULT_FAILURE_FATAL)
         .orElse(StepStatus.STEP_RESULT_FAILURE_RETRY);
   }

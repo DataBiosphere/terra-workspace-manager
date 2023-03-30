@@ -53,7 +53,6 @@ class DeleteControlledAzureResourcesStepTest extends BaseAzureUnitTest {
                     .managedBy(ManagedByType.MANAGED_BY_USER)
                     .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
                     .build())
-            .storageAccountId(UUID.randomUUID())
             .storageContainerName("user-storage-container")
             .build();
     ControlledResource cannotDeleteMe =
@@ -68,7 +67,6 @@ class DeleteControlledAzureResourcesStepTest extends BaseAzureUnitTest {
                     .managedBy(ManagedByType.MANAGED_BY_APPLICATION)
                     .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
                     .build())
-            .storageAccountId(UUID.randomUUID())
             .storageContainerName("application-storage-container")
             .build();
     doReturn(List.of(deleteMe, cannotDeleteMe))
@@ -124,7 +122,6 @@ class DeleteControlledAzureResourcesStepTest extends BaseAzureUnitTest {
                     .managedBy(ManagedByType.MANAGED_BY_USER)
                     .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
                     .build())
-            .storageAccountId(UUID.randomUUID())
             .storageContainerName("user-storage-container")
             .build();
     ControlledResource deleteMeToo =
@@ -139,7 +136,6 @@ class DeleteControlledAzureResourcesStepTest extends BaseAzureUnitTest {
                     .managedBy(ManagedByType.MANAGED_BY_APPLICATION)
                     .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
                     .build())
-            .storageAccountId(UUID.randomUUID())
             .storageContainerName("application-storage-container")
             .build();
     doReturn(List.of(deleteMe, deleteMeToo))

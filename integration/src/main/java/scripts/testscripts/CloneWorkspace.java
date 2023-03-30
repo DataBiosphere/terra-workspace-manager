@@ -20,6 +20,7 @@ import static scripts.utils.GcsBucketUtils.makeControlledGcsBucketUserPrivate;
 import static scripts.utils.GcsBucketUtils.makeControlledGcsBucketUserShared;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
+import bio.terra.workspace.api.ControlledFlexibleResourceApi;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.FolderApi;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
@@ -31,6 +32,7 @@ import bio.terra.workspace.model.CloneWorkspaceResult;
 import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.CreateFolderRequestBody;
 import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
+import bio.terra.workspace.model.FlexibleResource;
 import bio.terra.workspace.model.Folder;
 import bio.terra.workspace.model.GcpBigQueryDataTableAttributes;
 import bio.terra.workspace.model.GcpBigQueryDataTableResource;
@@ -66,6 +68,7 @@ import org.slf4j.LoggerFactory;
 import scripts.utils.BqDatasetUtils;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
+import scripts.utils.FlexResourceUtils;
 import scripts.utils.GcsBucketObjectUtils;
 import scripts.utils.GcsBucketUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
@@ -86,11 +89,14 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
   private GcpBigQueryDataTableResource sourceDataTableReference;
   private GcpBigQueryDatasetResource copyDefinitionDataset;
   private GcpBigQueryDatasetResource copyResourceDataset;
+  private FlexibleResource copyFlexResource;
   private GcpBigQueryDatasetResource privateDataset;
   private GcpGcsBucketResource sourceBucketReference;
   private GcpGcsObjectResource sourceBucketFileReference;
   private String copyDefinitionDatasetResourceName;
   private String copyResourceDatasetResourceName;
+  private String copyFlexResourceName;
+  private byte[] copyFlexResourceData;
   private String nameSuffix;
   private String privateDatasetResourceName;
   private String sharedBucketSourceResourceName;
@@ -162,8 +168,10 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     ClientTestUtils.workspaceRoleWaitForPropagation(cloningUser, sourceProjectId);
 
     // Give users resource APIs
-    final ControlledGcpResourceApi sourceOwnerResourceApi =
+    final ControlledGcpResourceApi sourceOwnerGcpResourceApi =
         ClientTestUtils.getControlledGcpResourceClient(sourceOwnerUser, server);
+    final ControlledFlexibleResourceApi sourceOwnerFlexResourceApi =
+        ClientTestUtils.getControlledFlexResourceClient(sourceOwnerUser, server);
     cloningUserResourceApi = ClientTestUtils.getControlledGcpResourceClient(cloningUser, server);
     cloningUserFolderApi = new FolderApi(ClientTestUtils.getClientForTestUser(cloningUser, server));
     ownerFolderApi = new FolderApi(ClientTestUtils.getClientForTestUser(sourceOwnerUser, server));
@@ -175,7 +183,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     sharedBucketSourceResourceName = BUCKET_RESOURCE_PREFIX + nameSuffix;
     sharedSourceBucket =
         makeControlledGcsBucketUserShared(
-            sourceOwnerResourceApi,
+            sourceOwnerGcpResourceApi,
             getWorkspaceId(),
             sharedBucketSourceResourceName,
             CloningInstructionsEnum.RESOURCE);
@@ -195,7 +203,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     // Create a private GCS bucket, which the non-creating user can't clone
     privateSourceBucket =
         makeControlledGcsBucketUserPrivate(
-            sourceOwnerResourceApi,
+            sourceOwnerGcpResourceApi,
             getWorkspaceId(),
             UUID.randomUUID().toString(),
             CloningInstructionsEnum.RESOURCE);
@@ -204,7 +212,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     // Create a GCS bucket with data and COPY_NOTHING instruction
     sharedCopyNothingSourceBucket =
         makeControlledGcsBucketUserShared(
-            sourceOwnerResourceApi,
+            sourceOwnerGcpResourceApi,
             getWorkspaceId(),
             UUID.randomUUID().toString(),
             CloningInstructionsEnum.NOTHING);
@@ -213,7 +221,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     // Create a GCS bucket with data and COPY_DEFINITION
     copyDefinitionSourceBucket =
         makeControlledGcsBucketUserShared(
-            sourceOwnerResourceApi,
+            sourceOwnerGcpResourceApi,
             getWorkspaceId(),
             UUID.randomUUID().toString(),
             CloningInstructionsEnum.DEFINITION);
@@ -223,7 +231,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     copyDefinitionDatasetResourceName = "copy_definition_" + nameSuffix.replace('-', '_');
     copyDefinitionDataset =
         makeControlledBigQueryDatasetUserShared(
-            sourceOwnerResourceApi,
+            sourceOwnerGcpResourceApi,
             getWorkspaceId(),
             copyDefinitionDatasetResourceName,
             null,
@@ -234,7 +242,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     copyResourceDatasetResourceName = "copy_resource_dataset";
     copyResourceDataset =
         makeControlledBigQueryDatasetUserShared(
-            sourceOwnerResourceApi,
+            sourceOwnerGcpResourceApi,
             getWorkspaceId(),
             copyResourceDatasetResourceName,
             null,
@@ -245,10 +253,24 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     privateDatasetResourceName = "private_dataset";
     privateDataset =
         makeControlledBigQueryDatasetUserPrivate(
-            sourceOwnerResourceApi,
+            sourceOwnerGcpResourceApi,
             getWorkspaceId(),
             privateDatasetResourceName,
             null,
+            CloningInstructionsEnum.RESOURCE);
+
+    // Create a flex resource with COPY_RESOURCE copy instruction.
+    copyFlexResourceName = "copy_resource_flex_resource";
+    copyFlexResourceData = FlexResourceUtils.getEncodedJSONFromString("{\"color\":\"red\"}");
+
+    copyFlexResource =
+        FlexResourceUtils.makeFlexibleResourceShared(
+            sourceOwnerFlexResourceApi,
+            getWorkspaceId(),
+            copyFlexResourceName,
+            "fake-type",
+            "terra",
+            copyFlexResourceData,
             CloningInstructionsEnum.RESOURCE);
 
     // Create reference to the shared GCS bucket in this workspace with COPY_REFERENCE
@@ -888,6 +910,53 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
         dataTableReferenceDetails.getDestinationResourceId(),
         "Destination resource ID omitted for skipped resource");
     assertNull(dataTableReferenceDetails.getErrorMessage(), "No error message for successful skip");
+
+    // Verify clone flex resource succeeded.
+    final ResourceCloneDetails copyResourceFlexResourceDetails =
+        assertPresent(
+            cloneResult.getWorkspace().getResources().stream()
+                .filter(
+                    r ->
+                        copyFlexResource
+                            .getMetadata()
+                            .getResourceId()
+                            .equals(r.getSourceResourceId()))
+                .findFirst(),
+            "COPY_RESOURCE flex resource is included in workspace clone details.");
+    logger.info(
+        "COPY_RESOURCE flex resource (expected success): {}", copyResourceFlexResourceDetails);
+    assertEquals(
+        CloneResourceResult.SUCCEEDED,
+        copyResourceFlexResourceDetails.getResult(),
+        "COPY_RESOURCE flex resource successfully cloned");
+    assertEquals(
+        CloningInstructionsEnum.RESOURCE,
+        copyResourceFlexResourceDetails.getCloningInstructions(),
+        "Cloning instructions preserved.");
+    assertEquals(
+        ResourceType.FLEXIBLE_RESOURCE,
+        copyResourceFlexResourceDetails.getResourceType(),
+        "Resource Type preserved");
+    assertEquals(
+        StewardshipType.CONTROLLED,
+        copyResourceFlexResourceDetails.getStewardshipType(),
+        "Stewardship Type preserved.");
+    assertNotNull(
+        copyResourceFlexResourceDetails.getDestinationResourceId(),
+        "Destination Resource ID populated.");
+    assertNull(
+        copyResourceFlexResourceDetails.getErrorMessage(), "Error message omitted for success");
+    ControlledFlexibleResourceApi cloningUserControlledFlexResourceApi =
+        ClientTestUtils.getControlledFlexResourceClient(cloningUser, server);
+
+    FlexibleResource clonedFlexResource =
+        cloningUserControlledFlexResourceApi.getFlexibleResource(
+            cloneResult.getWorkspace().getDestinationWorkspaceId(),
+            copyResourceFlexResourceDetails.getDestinationResourceId());
+    // Check that the "data" is copied over properly.
+    assertEquals(
+        FlexResourceUtils.getDecodedJSONFromByteArray(copyFlexResourceData),
+        clonedFlexResource.getAttributes().getData());
     logger.info("End User Journey");
   }
 

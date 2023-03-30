@@ -131,7 +131,7 @@ public class WorkspaceDao {
                 "Workspace with id %s already exists - display name %s stage %s",
                 workspaceUuid,
                 workspace.getDisplayName().orElse(null),
-                workspace.getWorkspaceStage().toString()),
+                workspace.getWorkspaceStage()),
             e);
       } else if (message != null
           && message.contains(

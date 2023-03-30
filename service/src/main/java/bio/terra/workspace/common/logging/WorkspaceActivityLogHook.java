@@ -28,8 +28,6 @@ import bio.terra.workspace.service.admin.flights.cloudcontexts.gcp.SyncGcpIamRol
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.flight.UpdateAzureControlledResourceRegionFlight;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.flight.UpdateGcpControlledResourceRegionFlight;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.WsmResource;
@@ -78,7 +76,7 @@ public class WorkspaceActivityLogHook implements StairwayHook {
   @Override
   public HookAction endFlight(FlightContext context) throws InterruptedException {
     String flightClassName = context.getFlightClassName();
-    logger.info(String.format("endFlight %s: %s", flightClassName, context.getFlightStatus()));
+    logger.info("endFlight {}: {}", flightClassName, context.getFlightStatus());
     var workspaceId =
         context.getInputParameters().get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class);
     var operationType =
@@ -185,9 +183,6 @@ public class WorkspaceActivityLogHook implements StairwayHook {
       String subjectId) {
     if (SyncGcpIamRolesFlight.class.getName().equals(flightClassName)) {
       maybeLogForSyncGcpIamRolesFlight(context, operationType, userEmail, subjectId);
-    } else if (UpdateGcpControlledResourceRegionFlight.class.getName().equals(flightClassName)
-        || UpdateAzureControlledResourceRegionFlight.class.getName().equals(flightClassName)) {
-      maybeLogUpdateControlledResourceFieldsFlight(context, operationType, userEmail, subjectId);
     } else {
       throw new UnhandledActivityLogException(
           String.format(
@@ -255,10 +250,9 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     try {
       workspaceDao.getWorkspace(workspaceUuid);
       logger.warn(
-          String.format(
-              "Workspace %s is failed to be deleted; "
-                  + "not writing deletion to workspace activity log",
-              workspaceUuid));
+          "Workspace {} is failed to be deleted; "
+              + "not writing deletion to workspace activity log",
+          workspaceUuid);
     } catch (WorkspaceNotFoundException e) {
       activityLogDao.writeActivity(
           workspaceUuid,
@@ -285,10 +279,9 @@ public class WorkspaceActivityLogHook implements StairwayHook {
               ActivityLogChangedTarget.WORKSPACE));
     } else {
       logger.warn(
-          String.format(
-              "CloudContext in workspace %s deletion fails; not writing deletion "
-                  + "to workspace activity log",
-              workspaceUuid));
+          "CloudContext in workspace {} deletion fails; not writing deletion "
+              + "to workspace activity log",
+          workspaceUuid);
     }
   }
 
@@ -314,10 +307,10 @@ public class WorkspaceActivityLogHook implements StairwayHook {
       try {
         resourceDao.getResource(workspaceUuid, resourceId);
         logger.warn(
-            String.format(
-                "Controlled resource %s in workspace %s is failed to be deleted; "
-                    + "not writing deletion to workspace activity log",
-                resourceId, workspaceUuid));
+            "Controlled resource {} in workspace {} is failed to be deleted; "
+                + "not writing deletion to workspace activity log",
+            resourceId,
+            workspaceUuid);
       } catch (ResourceNotFoundException e) {
         activityLogDao.writeActivity(
             workspaceUuid,
