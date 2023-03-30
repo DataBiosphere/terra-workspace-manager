@@ -53,7 +53,7 @@ public class StairwayTestUtils {
 
     stairway.submitWithDebugInfo(
         flightId, flightClass, inputParameters, /* shouldQueue= */ false, debugInfo);
-    return pollUntilComplete(flightId, stairway, timeout.dividedBy(20), timeout);
+    return pollUntilComplete(flightId, stairway, Duration.ofSeconds(1), timeout);
   }
 
   /**

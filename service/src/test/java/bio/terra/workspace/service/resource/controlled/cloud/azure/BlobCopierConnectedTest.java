@@ -1,22 +1,19 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.TEST_AZURE_STORAGE_ACCOUNT_NAME;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.in;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
-import bio.terra.landingzone.db.LandingZoneDao;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
-import bio.terra.workspace.common.utils.TestUtils;
-import bio.terra.workspace.connected.LandingZoneTestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
-import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobService;
@@ -26,7 +23,6 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import com.azure.core.management.Region;
 import com.azure.core.util.BinaryData;
 import com.azure.resourcemanager.storage.models.StorageAccount;
 import com.azure.storage.blob.BlobContainerClient;
@@ -51,13 +47,9 @@ public class BlobCopierConnectedTest extends BaseAzureConnectedTest {
   @Autowired private WorkspaceService workspaceService;
   @Autowired private JobService jobService;
   @Autowired private UserAccessUtils userAccessUtils;
-  @Autowired private LandingZoneTestUtils landingZoneTestUtils;
-  private TestLandingZoneManager testLandingZoneManager;
-  @Autowired private AzureCloudContextService azureCloudContextService;
-  @Autowired private LandingZoneDao landingZoneDao;
-  @Autowired private WorkspaceDao workspaceDao;
   @Autowired private CrlService crlService;
   @Autowired private AzureConfiguration azureConfig;
+  @Autowired private AzureCloudContextService azureCloudContextService;
 
   private ControlledAzureStorageContainerResource sourceContainer;
   private ControlledAzureStorageContainerResource destContainer;
@@ -71,21 +63,13 @@ public class BlobCopierConnectedTest extends BaseAzureConnectedTest {
         createWorkspaceWithCloudContext(workspaceService, userAccessUtils.defaultUserAuthRequest());
     workspaceId = workspace.getWorkspaceId();
 
-    // create quasi landing zone with a single resource - shared storage account
-    var storageAccountName = String.format("lzsharedstacc%s", TestUtils.getRandomString(6));
-    UUID landingZoneId = UUID.fromString(landingZoneTestUtils.getDefaultLandingZoneId());
-    testLandingZoneManager =
-        new TestLandingZoneManager(
-            azureCloudContextService,
-            landingZoneDao,
-            workspaceDao,
-            crlService,
-            azureConfig,
-            workspace.getWorkspaceId());
-
+    var azureCloudContext = azureCloudContextService.getAzureCloudContext(workspaceId).get();
+    var storageManager = crlService.getStorageManager(azureCloudContext, azureConfig);
     storageAcct =
-        testLandingZoneManager.createLandingZoneWithSharedStorageAccount(
-            landingZoneId, workspaceId, storageAccountName, Region.US_EAST.name());
+        storageManager
+            .storageAccounts()
+            .getByResourceGroup(
+                azureCloudContext.getAzureResourceGroupId(), TEST_AZURE_STORAGE_ACCOUNT_NAME);
 
     userRequest = userAccessUtils.defaultUserAuthRequest();
 

@@ -181,7 +181,7 @@ public class GcpUtils {
    * "-[a-z]".
    */
   public static String parseRegion(String location) {
-    return location.replaceAll("(?!^)-[a-z]$", "");
+    return location.replaceAll("(?!^)-[a-zA-Z]$", "");
   }
 
   // Methods for building member strings using in GCP IAM bindings

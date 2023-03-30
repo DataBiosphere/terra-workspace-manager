@@ -589,7 +589,7 @@ public class ControlledResourceService {
             resource.getResourceType(), resource.getResourceId(), resource.getName());
 
     if (features.isTpsEnabled()) {
-      ResourceValidationUtils.validateControlledResourceRegionAgainstPolicy(
+      ResourceValidationUtils.validateRegionAgainstPolicy(
           tpsApiDispatch,
           resource.getWorkspaceId(),
           resource.getRegion(),
