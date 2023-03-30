@@ -519,7 +519,7 @@ public class ReferencedGcpResourceController extends ControllerBase
             .setName(body.getName())
             .setDescription(body.getDescription())
             .setCloningInstructions(body.getCloningInstructions()),
-        new ReferencedDataRepoSnapshotAttributes(body.getSnapshot(), body.getInstanceName()));
+        new ReferencedDataRepoSnapshotAttributes(body.getInstanceName(), body.getSnapshot()));
     ReferencedDataRepoSnapshotResource updatedResource =
         referencedResourceService
             .getReferenceResource(workspaceUuid, resourceId)
@@ -913,7 +913,9 @@ public class ReferencedGcpResourceController extends ControllerBase
         referencedResourceService.validateReferencedResourceAndAction(
             userRequest, workspaceUuid, resourceId, SamWorkspaceAction.UPDATE_REFERENCE);
     String gitRepoUrl = body.getGitRepoUrl();
-    validationUtils.validateGitRepoUri(gitRepoUrl);
+    if (gitRepoUrl != null) {
+      validationUtils.validateGitRepoUri(gitRepoUrl);
+    }
     wsmResourceService.updateResource(
         userRequest,
         resource,

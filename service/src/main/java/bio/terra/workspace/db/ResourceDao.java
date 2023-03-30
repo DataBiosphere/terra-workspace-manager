@@ -677,36 +677,46 @@ public class ResourceDao {
       UUID workspaceUuid, UUID resourceId, DbUpdater dbUpdater, String flightId) {
 
     var params = new MapSqlParameterSource();
+    boolean somethingChanged = false;
 
     if (dbUpdater.isNameUpdated()) {
       params.addValue("name", dbUpdater.getUpdatedName());
+      somethingChanged = true;
     }
     if (dbUpdater.isDescriptionUpdated()) {
       params.addValue("description", dbUpdater.getUpdatedDescription());
+      somethingChanged = true;
     }
     if (dbUpdater.isCloningInstructionsUpdated()) {
       params.addValue("cloning_instructions", dbUpdater.getUpdatedCloningInstructions().toSql());
+      somethingChanged = true;
     }
     if (dbUpdater.isJsonAttributesUpdated()) {
       params.addValue("attributes", dbUpdater.getUpdatedJsonAttributes());
+      somethingChanged = true;
     }
 
-    StringBuilder sb = new StringBuilder("UPDATE resource SET ");
-    sb.append(DbUtils.setColumnsClause(params, "attributes"));
-    sb.append(" WHERE workspace_id = :workspace_id AND resource_id = :resource_id");
+    if (somethingChanged) {
+      StringBuilder sb = new StringBuilder("UPDATE resource SET ");
+      sb.append(DbUtils.setColumnsClause(params, "attributes"));
+      sb.append(" WHERE workspace_id = :workspace_id AND resource_id = :resource_id");
 
-    params
-        .addValue("workspace_id", workspaceUuid.toString())
-        .addValue("resource_id", resourceId.toString());
+      params
+          .addValue("workspace_id", workspaceUuid.toString())
+          .addValue("resource_id", resourceId.toString());
 
-    int rowsAffected = jdbcTemplate.update(sb.toString(), params);
-    boolean updated = rowsAffected > 0;
+      int rowsAffected = jdbcTemplate.update(sb.toString(), params);
+      boolean updated = rowsAffected > 0;
 
-    logger.info(
-        "{} record for resource {} in workspace {}",
-        (updated ? "Updated" : "No Update - did not find"),
-        resourceId,
-        workspaceUuid);
+      logger.info(
+          "{} record for resource {} in workspace {}",
+          (updated ? "Updated" : "No Update - did not find"),
+          resourceId,
+          workspaceUuid);
+    } else {
+      logger.info(
+          "No changes made on update of resource {} in workspace {}", resourceId, workspaceUuid);
+    }
 
     DbResource dbResource = getDbResourceFromIds(workspaceUuid, resourceId);
     updateState(dbResource, flightId, /*flightId=*/ null, WsmResourceState.READY, null);

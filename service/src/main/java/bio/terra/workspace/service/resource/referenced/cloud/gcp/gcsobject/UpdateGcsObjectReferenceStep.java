@@ -34,7 +34,7 @@ public class UpdateGcsObjectReferenceStep implements Step {
     String objectName =
         StringUtils.isEmpty(attributes.getObjectName())
             ? oldAttributes.getObjectName()
-            : attributes.getBucketName();
+            : attributes.getObjectName();
 
     dbUpdater.updateAttributes(new ReferencedGcsObjectAttributes(bucketName, objectName));
     context.getWorkingMap().put(WorkspaceFlightMapKeys.ResourceKeys.DB_UPDATER, dbUpdater);
