@@ -28,6 +28,8 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import bio.terra.workspace.service.workspace.flight.aws.CreateAwsContextFlight;
+import bio.terra.workspace.service.workspace.flight.aws.DeleteAwsContextFlight;
 import bio.terra.workspace.service.workspace.flight.azure.CreateAzureContextFlight;
 import bio.terra.workspace.service.workspace.flight.azure.DeleteAzureContextFlight;
 import bio.terra.workspace.service.workspace.flight.gcp.CreateGcpContextFlightV2;
