@@ -11,6 +11,7 @@ import bio.terra.testrunner.common.utils.AuthenticationUtils;
 import bio.terra.testrunner.runner.config.ServerSpecification;
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledAzureResourceApi;
+import bio.terra.workspace.api.ControlledFlexibleResourceApi;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.JobsApi;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
@@ -183,6 +184,12 @@ public class ClientTestUtils {
       TestUserSpecification testUser, ServerSpecification server) throws IOException {
     final ApiClient apiClient = getClientForTestUser(testUser, server);
     return new ControlledGcpResourceApi(apiClient);
+  }
+
+  public static ControlledFlexibleResourceApi getControlledFlexResourceClient(
+      TestUserSpecification testUser, ServerSpecification server) throws IOException {
+    final ApiClient apiClient = getClientForTestUser(testUser, server);
+    return new ControlledFlexibleResourceApi(apiClient);
   }
 
   public static ControlledAzureResourceApi getControlledAzureResourceClient(
