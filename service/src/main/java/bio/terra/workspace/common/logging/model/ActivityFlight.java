@@ -15,7 +15,6 @@ import bio.terra.workspace.service.resource.controlled.flight.create.CreateContr
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.flight.UpdateResourceFlight;
 import bio.terra.workspace.service.resource.referenced.flight.clone.CloneReferencedResourceFlight;
-import bio.terra.workspace.service.resource.referenced.flight.update.UpdateReferenceResourceFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.flight.application.able.ApplicationAbleFlight;
@@ -56,8 +55,6 @@ public enum ActivityFlight {
       DeleteGcpContextFlight.class.getName(), ActivityLogChangedTarget.GCP_CLOUD_CONTEXT),
   REMOVE_USER_FROM_WORKSPACE_FLIGHT(
       RemoveUserFromWorkspaceFlight.class.getName(), ActivityLogChangedTarget.USER),
-  REFERENCED_RESOURCE_UPDATE_FLIGHT(
-      UpdateReferenceResourceFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
   RESOURCE_UPDATE_FLIGHT(UpdateResourceFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
   ALL_RESOURCES_CLONE_FLIGHT(
       CloneAllResourcesFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),

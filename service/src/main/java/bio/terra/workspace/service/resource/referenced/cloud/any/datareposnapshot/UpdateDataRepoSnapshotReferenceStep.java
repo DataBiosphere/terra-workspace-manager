@@ -15,16 +15,22 @@ public class UpdateDataRepoSnapshotReferenceStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
+    var attributes =
+        context
+            .getInputParameters()
+            .get(
+                WorkspaceFlightMapKeys.ResourceKeys.UPDATE_PARAMETERS,
+                ReferencedDataRepoSnapshotAttributes.class);
+    // If the attributes are not passed in, then we have nothing to do here
+    if (attributes == null) {
+      return StepResult.getStepResultSuccess();
+    }
+
     var dbUpdater =
         FlightUtils.getRequired(
             context.getWorkingMap(),
             WorkspaceFlightMapKeys.ResourceKeys.DB_UPDATER,
             DbUpdater.class);
-    var attributes =
-        FlightUtils.getRequired(
-            context.getInputParameters(),
-            WorkspaceFlightMapKeys.ResourceKeys.UPDATE_PARAMETERS,
-            ReferencedDataRepoSnapshotAttributes.class);
     var oldAttributes = dbUpdater.getOriginalAttributes(ReferencedDataRepoSnapshotAttributes.class);
 
     String instanceName =

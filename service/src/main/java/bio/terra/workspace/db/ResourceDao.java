@@ -659,6 +659,11 @@ public class ResourceDao {
       CommonUpdateParameters commonUpdateParameters,
       String flightId) {
     DbResource dbResource = getDbResourceFromIds(workspaceUuid, resourceId);
+    if (dbResource == null) {
+      throw new ResourceNotFoundException(
+          String.format("Cannot find resource %s in workspace %s.", resourceId, workspaceUuid));
+    }
+
     updateState(dbResource, null, flightId, WsmResourceState.UPDATING, null);
 
     DbUpdater dbUpdater =
@@ -728,7 +733,10 @@ public class ResourceDao {
     updateState(dbResource, flightId, /*flightId=*/ null, WsmResourceState.READY, null);
   }
 
-  // TODO: make this go away
+  // TODO: [PF-2269, PF-2556] this can go away when backfill
+  // updateBigQueryDatasetDefaultTableAndPartitionLifetime
+  //  stops using it and when we are defaulting zone so we do not have to update it in the notebook
+  // flight.
   /**
    * Update name, description, and/or attributes of the resource.
    *
@@ -747,23 +755,6 @@ public class ResourceDao {
       @Nullable CloningInstructions cloningInstructions) {
     return updateResourceWorker(
         workspaceUuid, resourceId, name, description, attributes, cloningInstructions);
-  }
-
-  /**
-   * Update name, description, and/or cloning instructions of the resource.
-   *
-   * @param name name of the resource, may be null if it does not need to be updated
-   * @param description description of the resource, may be null if it does not need to be updated
-   */
-  @WriteTransaction
-  public boolean updateResource(
-      UUID workspaceUuid,
-      UUID resourceId,
-      @Nullable String name,
-      @Nullable String description,
-      @Nullable CloningInstructions cloningInstructions) {
-    return updateResourceWorker(
-        workspaceUuid, resourceId, name, description, /*attributes=*/ null, cloningInstructions);
   }
 
   /**

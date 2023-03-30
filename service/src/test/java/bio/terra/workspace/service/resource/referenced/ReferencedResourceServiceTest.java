@@ -21,14 +21,17 @@ import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
+import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.InvalidNameException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.CommonUpdateParameters;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.resource.referenced.cloud.any.datareposnapshot.ReferencedDataRepoSnapshotAttributes;
 import bio.terra.workspace.service.resource.referenced.cloud.any.datareposnapshot.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdatatable.ReferencedBigQueryDataTableResource;
@@ -61,6 +64,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
   @Autowired private ReferencedResourceService referenceResourceService;
   @Autowired private JobService jobService;
   @Autowired private WorkspaceActivityLogService workspaceActivityLogService;
+  @Autowired private WsmResourceService wsmResourceService;
 
   private UUID workspaceUuid;
   private ReferencedResource referencedResource;
@@ -107,22 +111,14 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
     String originalDescription = referencedResource.getDescription();
     String originalInstanceName = originalResource.getInstanceName();
 
-    String newSnapshotId = "new_snapshot_id";
-    ReferencedResource updatedResource =
-        originalResource.toBuilder().snapshotId(newSnapshotId).build();
-
     var updateDetailsBeforeResourceUpdate =
         workspaceActivityLogService.getLastUpdatedDetails(workspaceUuid);
     assertTrue(updateDetailsBeforeResourceUpdate.isPresent());
 
-    referenceResourceService.updateReferenceResource(
-        workspaceUuid,
-        referencedResource.getResourceId(),
-        null,
-        null,
-        updatedResource,
-        null,
-        USER_REQUEST);
+    String newSnapshotId = "new_snapshot_id";
+    var attributes = new ReferencedDataRepoSnapshotAttributes(null, newSnapshotId);
+    wsmResourceService.updateResource(
+        USER_REQUEST, referencedResource, new CommonUpdateParameters(), attributes);
 
     ReferencedDataRepoSnapshotResource result =
         referenceResourceService
@@ -165,20 +161,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
 
     String newSnapshotId = "new_snapshot_id";
     String newInstanceName = "new_instance_name";
-    ReferencedResource updatedResource =
-        originalResource.toBuilder()
-            .snapshotId(newSnapshotId)
-            .instanceName(newInstanceName)
-            .build();
-
-    referenceResourceService.updateReferenceResource(
-        workspaceUuid,
-        referencedResource.getResourceId(),
-        null,
-        null,
-        updatedResource,
-        null,
-        USER_REQUEST);
+    var attributes = new ReferencedDataRepoSnapshotAttributes(newInstanceName, newSnapshotId);
+    wsmResourceService.updateResource(
+        USER_REQUEST, referencedResource, new CommonUpdateParameters(), attributes);
 
     ReferencedDataRepoSnapshotResource result =
         referenceResourceService
@@ -199,14 +184,14 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
     String updatedName = "renamed-" + referencedResource.getName();
     String originalDescription = referencedResource.getDescription();
     CloningInstructions updatedCloningInstructions = CloningInstructions.COPY_REFERENCE;
-    referenceResourceService.updateReferenceResource(
-        workspaceUuid,
-        referencedResource.getResourceId(),
-        updatedName,
-        null,
-        null,
-        updatedCloningInstructions,
-        USER_REQUEST);
+    var commonUpdateParameters =
+        new CommonUpdateParameters()
+            .setDescription(null)
+            .setName(updatedName)
+            .setCloningInstructions(StewardshipType.REFERENCED, updatedCloningInstructions);
+    wsmResourceService.updateResource(
+        USER_REQUEST, referencedResource, commonUpdateParameters, /*updateParameters=*/ null);
+
     referencedResource =
         referenceResourceService.getReferenceResourceByName(workspaceUuid, updatedName);
     assertEquals(referencedResource.getName(), updatedName);
@@ -215,11 +200,17 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
 
     // Change the description
     String updatedDescription = "updated " + referencedResource.getDescription();
+    CloningInstructions noUpdateCloningInstructions = null;
 
     var lastUpdateDetailsBeforeResourceUpdate =
         workspaceActivityLogService.getLastUpdatedDetails(workspaceUuid);
-    referenceResourceService.updateReferenceResource(
-        workspaceUuid, referencedResource.getResourceId(), null, updatedDescription, USER_REQUEST);
+    commonUpdateParameters
+        .setDescription(updatedDescription)
+        .setName(null)
+        .setCloningInstructions(StewardshipType.REFERENCED, noUpdateCloningInstructions);
+    wsmResourceService.updateResource(
+        USER_REQUEST, referencedResource, commonUpdateParameters, /*updateParameters=*/ null);
+
     referencedResource =
         referenceResourceService.getReferenceResource(
             workspaceUuid, referencedResource.getResourceId());
@@ -245,12 +236,10 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
     // Change both
     String updatedName2 = "2" + updatedName;
     String updatedDescription2 = "2" + updatedDescription;
-    referenceResourceService.updateReferenceResource(
-        workspaceUuid,
-        referencedResource.getResourceId(),
-        updatedName2,
-        updatedDescription2,
-        USER_REQUEST);
+    commonUpdateParameters.setDescription(updatedDescription2).setName(updatedName2);
+    wsmResourceService.updateResource(
+        USER_REQUEST, referencedResource, commonUpdateParameters, /*updateParameters=*/ null);
+
     referencedResource =
         referenceResourceService.getReferenceResource(
             workspaceUuid, referencedResource.getResourceId());
@@ -261,14 +250,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
     String invalidName = "!!!!invalid_name!!!";
     assertThrows(
         InvalidNameException.class,
-        () ->
-            referenceResourceService.updateReferenceResource(
-                workspaceUuid,
-                referencedResource.getResourceId(),
-                invalidName,
-                null,
-                USER_REQUEST));
-    // Update to invalid description
+        () -> commonUpdateParameters.setDescription(null).setName(invalidName));
   }
 
   /**

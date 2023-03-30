@@ -10,18 +10,15 @@ import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
-import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.exception.ResourceIsBusyException;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.WsmApplication;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.UUID;
-import javax.annotation.Nullable;
 import org.apache.commons.codec.binary.StringUtils;
 import org.springframework.stereotype.Component;
 
@@ -48,31 +45,6 @@ public class ControlledResourceMetadataManager {
     this.samService = samService;
     this.workspaceService = workspaceService;
     this.applicationDao = applicationDao;
-  }
-  /**
-   * Update the name and description metadata fields of a controlled resource. These are only stored
-   * inside WSM, so this does not require any calls to clouds.
-   *
-   * @param workspaceUuid workspace of interest
-   * @param resourceId resource to update
-   * @param name name to change - may be null, in which case resource name will not be changed.
-   * @param description description to change - may be null, in which case resource description will
-   *     not be changed.
-   */
-  public void updateControlledResourceMetadata(
-      UUID workspaceUuid,
-      UUID resourceId,
-      @Nullable String name,
-      @Nullable String description,
-      @Nullable CloningInstructions cloningInstructions) {
-    // Name may be null if the user is not updating it in this request.
-    if (name != null) {
-      ResourceValidationUtils.validateResourceName(name);
-    }
-    // Description may also be null, but this validator accepts null descriptions.
-    ResourceValidationUtils.validateResourceDescriptionName(description);
-    resourceDao.updateResource(
-        workspaceUuid, resourceId, name, description, null, cloningInstructions);
   }
 
   /**

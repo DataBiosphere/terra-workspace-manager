@@ -16,13 +16,11 @@ import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
-import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.exception.ResourceIsBusyException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.flight.clone.CloneReferencedResourceFlight;
-import bio.terra.workspace.service.resource.referenced.flight.update.UpdateReferenceResourceFlight;
 import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -91,93 +89,6 @@ public class ReferencedResourceService {
   public ReferencedResource createReferenceResourceForClone(ReferencedResource resourceToClone) {
     resourceDao.createReferencedResource(resourceToClone);
     return getReferenceResource(resourceToClone.getWorkspaceId(), resourceToClone.getResourceId());
-  }
-
-  /**
-   * Updates name and/or description of the reference resource.
-   *
-   * @param workspaceUuid workspace of interest
-   * @param resourceId resource to update
-   * @param name name to change - may be null
-   * @param description description to change - may be null
-   */
-  @Traced
-  public void updateReferenceResource(
-      UUID workspaceUuid,
-      UUID resourceId,
-      @Nullable String name,
-      @Nullable String description,
-      AuthenticatedUserRequest userRequest) {
-    updateReferenceResource(
-        workspaceUuid,
-        resourceId,
-        name,
-        description,
-        /*referencedResource=*/ null,
-        /*cloningInstructions=*/ null,
-        userRequest);
-  }
-
-  /**
-   * Updates name, description and/or referencing target of the reference resource.
-   *
-   * @param workspaceUuid workspace of interest
-   * @param resourceId resource to update
-   * @param name name to change - may be null
-   * @param description description to change - may be null
-   * @param resource referencedResource to be updated to - may be null if not intending to update
-   *     referencing target.
-   * @param cloningInstructions cloning instructions to change - may be null. If resource is
-   *     non-null, the cloning instructions will be taken from its metadata and this parameter will
-   *     be ignored.
-   */
-  @Traced
-  public void updateReferenceResource(
-      UUID workspaceUuid,
-      UUID resourceId,
-      @Nullable String name,
-      @Nullable String description,
-      @Nullable ReferencedResource resource,
-      @Nullable CloningInstructions cloningInstructions,
-      AuthenticatedUserRequest userRequest) {
-    // Name may be null if the user is not updating it in this request.
-    if (name != null) {
-      ResourceValidationUtils.validateResourceName(name);
-    }
-    // Description may also be null, but this validator accepts null descriptions.
-    ResourceValidationUtils.validateResourceDescriptionName(description);
-    boolean updated;
-    if (resource != null) {
-      JobBuilder updateJob =
-          jobService
-              .newJob()
-              .description("Update reference target")
-              .flightClass(UpdateReferenceResourceFlight.class)
-              .resource(resource)
-              .operationType(OperationType.UPDATE)
-              .userRequest(userRequest)
-              .workspaceId(workspaceUuid.toString())
-              .resourceType(resource.getResourceType())
-              .resourceName(name)
-              .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, description);
-      updated = updateJob.submitAndWait(Boolean.class);
-    } else {
-      // we are not updating anything on the cloud, just the DB
-      updated =
-          resourceDao.updateResource(
-              workspaceUuid, resourceId, name, description, cloningInstructions);
-      if (updated) {
-        workspaceActivityLogService.writeActivity(
-            userRequest,
-            workspaceUuid,
-            OperationType.UPDATE,
-            resourceId.toString(),
-            ActivityLogChangedTarget.RESOURCE);
-      }
-    }
-    if (!updated) {
-      logger.warn("There's no update to the referenced resource");
-    }
   }
 
   /**
