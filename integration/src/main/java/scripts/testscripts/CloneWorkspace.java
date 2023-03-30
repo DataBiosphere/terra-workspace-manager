@@ -56,7 +56,6 @@ import com.google.cloud.bigquery.TableResult;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.Storage;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;

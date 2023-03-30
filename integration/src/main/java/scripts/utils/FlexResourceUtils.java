@@ -10,7 +10,6 @@ import bio.terra.workspace.model.CreateControlledFlexibleResourceRequestBody;
 import bio.terra.workspace.model.FlexibleResource;
 import bio.terra.workspace.model.ManagedBy;
 import bio.terra.workspace.model.PrivateResourceUser;
-
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.UUID;
