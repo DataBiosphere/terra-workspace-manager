@@ -560,9 +560,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         workspaceService.createAzureCloudContext(
             workspace, jobId, userRequest, resultPath, azureCloudContext);
       }
-      case AWS -> workspaceService.createAwsCloudContext(
-          workspace, jobId, userRequest, resultPath, AwsCloudContext.fromApi(body.getAwsContext()));
-
+      case AWS -> workspaceService.createAwsCloudContext(workspace, jobId, userRequest, resultPath);
       default -> workspaceService.createGcpCloudContext(workspace, jobId, userRequest, resultPath);
     }
 

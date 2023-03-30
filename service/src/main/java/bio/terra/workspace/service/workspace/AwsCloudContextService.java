@@ -1,11 +1,17 @@
 package bio.terra.workspace.service.workspace;
 
+import bio.terra.aws.resource.discovery.Environment;
+import bio.terra.aws.resource.discovery.Metadata;
+import bio.terra.workspace.app.configuration.external.AwsConfiguration;
+import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import io.opencensus.contrib.spring.aop.Traced;
+import java.io.IOException;
 import java.util.*;
+import javax.validation.constraints.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -17,12 +23,15 @@ import org.springframework.stereotype.Component;
 public class AwsCloudContextService {
 
   private final WorkspaceDao workspaceDao;
-
-  // TODO-Dex Add configuration
+  private final AwsConfiguration awsConfiguration;
+  private final Environment environment;
 
   @Autowired
-  public AwsCloudContextService(WorkspaceDao workspaceDao) {
+  public AwsCloudContextService(WorkspaceDao workspaceDao, AwsConfiguration awsConfiguration)
+      throws IOException {
     this.workspaceDao = workspaceDao;
+    this.awsConfiguration = awsConfiguration;
+    this.environment = AwsUtils.createEnvironmentDiscovery(awsConfiguration).discoverEnvironment();
   }
 
   /**
@@ -75,7 +84,7 @@ public class AwsCloudContextService {
   }
 
   /**
-   * Retrieve the optional AWS cloud context
+   * Retrieve the optional AWS cloud context for given workspace
    *
    * @param workspaceUuid workspace identifier of the cloud context
    * @return optional AWS cloud context
@@ -87,9 +96,30 @@ public class AwsCloudContextService {
         .map(AwsCloudContext::deserialize);
   }
 
+  /**
+   * Retrieve the required AWS cloud context for given workspace
+   *
+   * @param workspaceUuid workspace identifier of the cloud context
+   * @return AWS cloud context
+   * @throws CloudContextRequiredException CloudContextRequiredException
+   */
   public AwsCloudContext getRequiredAwsCloudContext(UUID workspaceUuid) {
     return getAwsCloudContext(workspaceUuid)
         .orElseThrow(
             () -> new CloudContextRequiredException("Operation requires AWS cloud context"));
+  }
+
+  /**
+   * Return the AWS cloud context for current environment
+   *
+   * @return AWS cloud context
+   */
+  public @NotNull AwsCloudContext fromConfiguration() {
+    Metadata metadata = this.environment.getMetadata();
+    return new AwsCloudContext(
+        metadata.getOrganizationId(),
+        metadata.getAccountId(),
+        metadata.getTenantAlias(),
+        metadata.getEnvironmentAlias());
   }
 }

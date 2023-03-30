@@ -120,7 +120,6 @@ components:
         For Azure, a managed resource group (MRG) is created outside of WSM within a tenant
         and a subscription obtained from the spend profile linked to the parent workspace, unless
         the spend profile service is not enabled; in that case, azureContext must be provided.
-        For Aws, workspaces resources are created within a workspace landing zone
       properties:
         cloudPlatform:
           $ref: '#/components/schemas/CloudPlatform'
@@ -128,8 +127,6 @@ components:
           $ref: '#/components/schemas/JobControl'
         azureContext:
           $ref: '#/components/schemas/AzureContext'
-        awsContext:
-          $ref: '#/components/schemas/AwsContext'
 
     CreateCloudContextResult:
       type: object
