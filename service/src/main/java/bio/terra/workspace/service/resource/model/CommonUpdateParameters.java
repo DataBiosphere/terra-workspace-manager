@@ -44,18 +44,19 @@ public class CommonUpdateParameters {
 
   @JsonIgnore
   public CommonUpdateParameters setCloningInstructions(
+      StewardshipType stewardshipType,
       @Nullable ApiCloningInstructionsEnum apiCloningInstructions) {
-    return setCloningInstructions(CloningInstructions.fromApiModel(apiCloningInstructions));
+    return setCloningInstructions(
+        stewardshipType, CloningInstructions.fromApiModel(apiCloningInstructions));
   }
 
   @JsonIgnore
   public CommonUpdateParameters setCloningInstructions(
-      @Nullable CloningInstructions cloningInstructions) {
+      StewardshipType stewardshipType, @Nullable CloningInstructions cloningInstructions) {
     if (cloningInstructions == null) {
       this.dbCloningInstructions = null;
     } else {
-      ResourceValidationUtils.validateCloningInstructions(
-          StewardshipType.CONTROLLED, cloningInstructions);
+      ResourceValidationUtils.validateCloningInstructions(stewardshipType, cloningInstructions);
       this.dbCloningInstructions = cloningInstructions.toSql();
     }
     return this;

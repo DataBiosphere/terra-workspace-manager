@@ -26,6 +26,7 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResourceF
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.CommonUpdateParameters;
+import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -212,6 +213,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .setName(body.getName())
             .setDescription(body.getDescription())
             .setCloningInstructions(
+                StewardshipType.CONTROLLED,
                 (updateParameters == null ? null : updateParameters.getCloningInstructions()));
     wsmResourceService.updateResource(
         userRequest, bucketResource, commonUpdateParameters, updateParameters);
@@ -323,6 +325,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .setName(body.getName())
             .setDescription(body.getDescription())
             .setCloningInstructions(
+                StewardshipType.CONTROLLED,
                 (updateParameters == null ? null : updateParameters.getCloningInstructions()));
     wsmResourceService.updateResource(
         userRequest, resource, commonUpdateParameters, updateParameters);

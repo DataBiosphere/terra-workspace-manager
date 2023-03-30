@@ -281,9 +281,12 @@ public class ReferencedResourceService {
    * <p>Throws ResourceNotFound from getResource if the resource does not exist in the specified
    * workspace, regardless of the user's permission.
    *
-   * <p>????
+   * <p>Throws InvalidReferencedResourceException if the given resource is not referenced.
    *
-   * <p>Throws InvalidControlledResourceException if the given resource is not controlled.
+   * <p>Throws ResourceIsBusy if another operation is running against the resource
+   *
+   * <p>Throws ResourceConflictException if an attempt is made to do any operation other than delete
+   * of a broken resource.
    *
    * <p>Throws ForbiddenException if the user is not permitted to perform the specified action on
    * the resource in question.

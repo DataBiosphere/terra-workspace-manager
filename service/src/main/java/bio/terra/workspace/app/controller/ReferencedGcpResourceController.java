@@ -164,7 +164,7 @@ public class ReferencedGcpResourceController extends ControllerBase
         new CommonUpdateParameters()
             .setName(body.getName())
             .setDescription(body.getDescription())
-            .setCloningInstructions(body.getCloningInstructions()),
+            .setCloningInstructions(StewardshipType.REFERENCED, body.getCloningInstructions()),
         new ReferencedGcsObjectAttributes(body.getBucketName(), body.getObjectName()));
     ReferencedGcsObjectResource updatedResource =
         referencedResourceService
@@ -250,7 +250,7 @@ public class ReferencedGcpResourceController extends ControllerBase
         new CommonUpdateParameters()
             .setName(body.getName())
             .setDescription(body.getDescription())
-            .setCloningInstructions(body.getCloningInstructions()),
+            .setCloningInstructions(StewardshipType.REFERENCED, body.getCloningInstructions()),
         new ReferencedGcsBucketAttributes(body.getBucketName()));
     final ReferencedGcsBucketResource updatedResource =
         referencedResourceService
@@ -336,7 +336,7 @@ public class ReferencedGcpResourceController extends ControllerBase
         new CommonUpdateParameters()
             .setName(body.getName())
             .setDescription(body.getDescription())
-            .setCloningInstructions(body.getCloningInstructions()),
+            .setCloningInstructions(StewardshipType.REFERENCED, body.getCloningInstructions()),
         new ReferencedBigQueryDataTableAttributes(
             body.getProjectId(), body.getDatasetId(), body.getDataTableId()));
     final ReferencedBigQueryDataTableResource updatedResource =
@@ -430,7 +430,7 @@ public class ReferencedGcpResourceController extends ControllerBase
         new CommonUpdateParameters()
             .setName(body.getName())
             .setDescription(body.getDescription())
-            .setCloningInstructions(body.getCloningInstructions()),
+            .setCloningInstructions(StewardshipType.REFERENCED, body.getCloningInstructions()),
         new ReferencedBigQueryDatasetAttributes(body.getProjectId(), body.getDatasetId()));
     final ReferencedBigQueryDatasetResource updatedResource =
         referencedResourceService
@@ -518,7 +518,7 @@ public class ReferencedGcpResourceController extends ControllerBase
         new CommonUpdateParameters()
             .setName(body.getName())
             .setDescription(body.getDescription())
-            .setCloningInstructions(body.getCloningInstructions()),
+            .setCloningInstructions(StewardshipType.REFERENCED, body.getCloningInstructions()),
         new ReferencedDataRepoSnapshotAttributes(body.getInstanceName(), body.getSnapshot()));
     ReferencedDataRepoSnapshotResource updatedResource =
         referencedResourceService
@@ -922,7 +922,7 @@ public class ReferencedGcpResourceController extends ControllerBase
         new CommonUpdateParameters()
             .setName(body.getName())
             .setDescription(body.getDescription())
-            .setCloningInstructions(body.getCloningInstructions()),
+            .setCloningInstructions(StewardshipType.REFERENCED, body.getCloningInstructions()),
         new ReferencedGitRepoAttributes(gitRepoUrl));
     ReferencedGitRepoResource updatedResource =
         referencedResourceService
