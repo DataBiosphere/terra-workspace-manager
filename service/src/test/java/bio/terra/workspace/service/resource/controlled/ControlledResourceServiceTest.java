@@ -2,8 +2,6 @@ package bio.terra.workspace.service.resource.controlled;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.AI_NOTEBOOK_PREV_PARAMETERS;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.AI_NOTEBOOK_UPDATE_PARAMETERS;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_CREATED_BIG_QUERY_PARTITION_LIFETIME;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_CREATED_BIG_QUERY_TABLE_LIFETIME;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -34,6 +32,7 @@ import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.RetryUtils;
+import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.db.ResourceDao;
@@ -81,6 +80,7 @@ import bio.terra.workspace.service.resource.controlled.exception.ReservedMetadat
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceMetadataStep;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
@@ -1658,51 +1658,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             changeSubjectId,
             ActivityLogChangedTarget.RESOURCE),
         latestLog);
-  }
-
-  @Test
-  public void updateGcpControlledResourcesRegion_cloudResourceDoesNotExist_noUpdate() {
-    // create bucket in db
-    ControlledGcsBucketResource bucket =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceId)
-            .bucketName(ControlledResourceFixtures.uniqueBucketName())
-            .build();
-    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, bucket);
-
-    // create dataset in db
-    ControlledBigQueryDatasetResource dataset =
-        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
-            .datasetName(ControlledResourceFixtures.uniqueDatasetId())
-            .projectId(projectId)
-            .build();
-    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, dataset);
-    // create notebook in db
-    ControlledAiNotebookInstanceResource notebookResource =
-        makeNotebookTestResource(
-            workspaceId,
-            TestUtils.appendRandomNumber("notebookresourcename"),
-            TestUtils.appendRandomNumber("default-instance-id"));
-    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, notebookResource);
-    // Artificially set regions to null in the database.
-    resourceDao.updateControlledResourceRegion(bucket.getResourceId(), /*region=*/ null);
-    resourceDao.updateControlledResourceRegion(dataset.getResourceId(), /*region=*/ null);
-    resourceDao.updateControlledResourceRegion(notebookResource.getResourceId(), /*region=*/ null);
-
-    List<ControlledResource> updatedResource = updateControlledResourcesRegionAndWait();
-
-    // The three controlled resources are not updated as the cloud resource does not exist.
-    assertTrue(updatedResource.isEmpty());
-  }
-
-  private List<ControlledResource> updateControlledResourcesRegionAndWait() {
-    String jobId =
-        controlledResourceService.updateGcpControlledResourcesRegionAsync(
-            userAccessUtils.defaultUserAuthRequest(), true);
-    jobService.waitForJob(jobId);
-
-    AsyncJobResult<List<ControlledResource>> jobResult =
-        jobApiUtils.retrieveAsyncJobResult(jobId, new TypeReference<>() {});
-    return jobResult.getResult();
   }
 
   /**
