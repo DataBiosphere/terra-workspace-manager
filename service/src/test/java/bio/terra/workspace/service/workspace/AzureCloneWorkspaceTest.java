@@ -22,7 +22,9 @@ import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import java.util.Optional;
 import java.util.UUID;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -40,12 +42,22 @@ public class AzureCloneWorkspaceTest extends BaseAzureConnectedTest {
   @Autowired private WsmResourceService wsmResourceService;
   @Autowired private UserAccessUtils userAccessUtils;
 
-  private Workspace sourceWorkspace;
+  private Workspace sourceWorkspace = null;
+  private Workspace destWorkspace = null;
 
   @BeforeAll
   public void setup() throws InterruptedException {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     sourceWorkspace = createWorkspaceWithCloudContext(workspaceService, userRequest);
+  }
+
+  @AfterAll
+  void cleanup() {
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    Optional.ofNullable(sourceWorkspace)
+        .ifPresent(workspace -> workspaceService.deleteWorkspace(workspace, userRequest));
+    Optional.ofNullable(destWorkspace)
+        .ifPresent(workspace -> workspaceService.deleteWorkspace(workspace, userRequest));
   }
 
   @Test
@@ -79,7 +91,7 @@ public class AzureCloneWorkspaceTest extends BaseAzureConnectedTest {
             .storageContainerName("storageContainerName"));
 
     UUID destUUID = UUID.randomUUID();
-    Workspace destWorkspace =
+    destWorkspace =
         Workspace.builder()
             .workspaceId(destUUID)
             .userFacingId("a" + destUUID)
