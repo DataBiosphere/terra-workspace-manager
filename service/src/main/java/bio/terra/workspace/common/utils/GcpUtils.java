@@ -183,7 +183,7 @@ public class GcpUtils {
    */
   public static String parseRegion(String location) {
     if (location == null) return null;
-    return location.replaceAll("(?!^)-[a-z]$", "");
+    return location.replaceAll("(?!^)-[a-zA-Z]$", "");
   }
 
   // TODO (aaronwa@): Use regex to properly match region/zone patterns: [0-9a-z]-[a-z]

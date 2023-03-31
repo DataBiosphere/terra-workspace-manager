@@ -83,24 +83,9 @@ public class LaunchCreateCloudContextFlightStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
-  /**
-   * Destroy the created workspace and cloud context. The only time we want to run the workspace
-   * delete is if the create workspace subflight succeeded, but a later step in the flight fails.
-   * The failure of the create workspace flight will have deleted the workspace on undo and we don't
-   * get here. But if we fail to create the flight context, we want to delete the workspace.
-   */
+  /** Nested flights should clean up their own messes. */
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    var userRequest =
-        context
-            .getInputParameters()
-            .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
-    var destinationWorkspace =
-        context.getInputParameters().get(JobMapKeys.REQUEST.getKeyName(), Workspace.class);
-    if (destinationWorkspace != null && userRequest != null) {
-      // delete workspace is idempotent, so it's safe to call it more than once
-      workspaceService.deleteWorkspace(destinationWorkspace, userRequest);
-    } // otherwise, if it never got created, that's fine too
     return StepResult.getStepResultSuccess();
   }
 }
