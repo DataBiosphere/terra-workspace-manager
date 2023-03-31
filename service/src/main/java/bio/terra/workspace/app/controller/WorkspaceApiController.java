@@ -554,8 +554,11 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       String gcpDefaultZone = GcpUtils.convertLocationToZone(body.getGcpDefaultZone());
       if (gcpDefaultZone != null) {
         // Validate the region against the workspace policy.
-        ResourceValidationUtils.validateGcpRegion(
-            tpsApiDispatch, uuid, GcpUtils.extractRegionFromLocation(gcpDefaultZone));
+        ResourceValidationUtils.validateRegion(
+            tpsApiDispatch,
+            uuid,
+            GcpUtils.extractRegionFromLocation(gcpDefaultZone),
+            CloudPlatform.GCP);
       }
       workspaceService.createGcpCloudContext(
           workspace, gcpDefaultZone, jobId, userRequest, resultPath);
@@ -586,8 +589,11 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     // Update the defaultZone in the gcpContext object.
     // Validate the region against the workspace policy.
     if (gcpDefaultZone != null) {
-      ResourceValidationUtils.validateGcpRegion(
-          tpsApiDispatch, workspaceId, GcpUtils.extractRegionFromLocation(gcpDefaultZone));
+      ResourceValidationUtils.validateRegion(
+          tpsApiDispatch,
+          workspaceId,
+          GcpUtils.extractRegionFromLocation(gcpDefaultZone),
+          CloudPlatform.GCP);
     }
 
     gcpCloudContextService.updateGcpCloudContext(workspaceId, gcpDefaultZone, userRequest);
@@ -735,8 +741,11 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     String gcpDefaultZone = GcpUtils.convertLocationToZone(location);
     // Validate the region against the workspace policy.
     if (gcpDefaultZone != null) {
-      ResourceValidationUtils.validateGcpRegion(
-          tpsApiDispatch, workspaceUuid, GcpUtils.extractRegionFromLocation(gcpDefaultZone));
+      ResourceValidationUtils.validateRegion(
+          tpsApiDispatch,
+          workspaceUuid,
+          GcpUtils.extractRegionFromLocation(gcpDefaultZone),
+          CloudPlatform.GCP);
     }
 
     final String jobId =
