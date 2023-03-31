@@ -4,7 +4,40 @@ import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.ControlledGcpResourceApi;
-import bio.terra.workspace.generated.model.*;
+import bio.terra.workspace.generated.model.ApiAiNotebookCloudId;
+import bio.terra.workspace.generated.model.ApiBqDatasetCloudId;
+import bio.terra.workspace.generated.model.ApiCloneControlledGcpBigQueryDatasetRequest;
+import bio.terra.workspace.generated.model.ApiCloneControlledGcpBigQueryDatasetResult;
+import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketRequest;
+import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketResult;
+import bio.terra.workspace.generated.model.ApiClonedControlledGcpBigQueryDataset;
+import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
+import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
+import bio.terra.workspace.generated.model.ApiCreateControlledGcpAiNotebookInstanceRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateControlledGcpBigQueryDatasetRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateControlledGcpGcsBucketRequestBody;
+import bio.terra.workspace.generated.model.ApiCreatedControlledGcpAiNotebookInstanceResult;
+import bio.terra.workspace.generated.model.ApiCreatedControlledGcpBigQueryDataset;
+import bio.terra.workspace.generated.model.ApiCreatedControlledGcpGcsBucket;
+import bio.terra.workspace.generated.model.ApiDeleteControlledGcpAiNotebookInstanceRequest;
+import bio.terra.workspace.generated.model.ApiDeleteControlledGcpAiNotebookInstanceResult;
+import bio.terra.workspace.generated.model.ApiDeleteControlledGcpGcsBucketRequest;
+import bio.terra.workspace.generated.model.ApiDeleteControlledGcpGcsBucketResult;
+import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
+import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
+import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
+import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
+import bio.terra.workspace.generated.model.ApiGcsBucketCloudName;
+import bio.terra.workspace.generated.model.ApiGenerateGcpAiNotebookCloudIdRequestBody;
+import bio.terra.workspace.generated.model.ApiGenerateGcpBigQueryDatasetCloudIDRequestBody;
+import bio.terra.workspace.generated.model.ApiGenerateGcpGcsBucketCloudNameRequestBody;
+import bio.terra.workspace.generated.model.ApiJobControl;
+import bio.terra.workspace.generated.model.ApiJobReport;
+import bio.terra.workspace.generated.model.ApiUpdateControlledGcpAiNotebookInstanceRequestBody;
+import bio.terra.workspace.generated.model.ApiUpdateControlledGcpBigQueryDatasetRequestBody;
+import bio.terra.workspace.generated.model.ApiUpdateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
@@ -355,7 +388,11 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
 
     ApiGcpBigQueryDatasetCreationParameters dataset = body.getDataset();
     String datasetName =
-        Optional.ofNullable(dataset.getDatasetId()).orElse(body.getCommon().getName());
+        ControlledBigQueryDatasetHandler.getHandler()
+            .generateCloudName(
+                workspaceUuid,
+                Optional.ofNullable(body.getDataset().getDatasetId())
+                    .orElse(body.getCommon().getName()));
 
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceUuid);
     ControlledBigQueryDatasetResource resource =

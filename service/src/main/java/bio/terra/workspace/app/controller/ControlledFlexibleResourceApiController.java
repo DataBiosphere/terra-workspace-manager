@@ -131,7 +131,7 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
             .setDescription(body.getDescription())
             .setCloningInstructions(
                 StewardshipType.CONTROLLED,
-                updateParameters != null ? updateParameters.getCloningInstructions() : null);
+                updateParameters == null ? null : updateParameters.getCloningInstructions());
     byte[] encodedJSON = updateParameters != null ? updateParameters.getData() : null;
     String decodedData = ControlledFlexibleResource.getDecodedJSONFromByteArray(encodedJSON);
     ResourceValidationUtils.validateFlexResourceDataSize(decodedData);

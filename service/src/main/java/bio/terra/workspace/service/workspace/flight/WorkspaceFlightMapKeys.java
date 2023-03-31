@@ -32,17 +32,12 @@ public final class WorkspaceFlightMapKeys {
     public static final String PRIVATE_RESOURCE_IAM_ROLE = "privateResourceIamRole";
     public static final String GCP_CLOUD_CONTEXT = "gcpCloudContext";
     public static final String AZURE_CLOUD_CONTEXT = "azureCloudContext";
-    public static final String WORKSPACE_ID_TO_AZURE_CLOUD_CONTEXT_MAP =
-        "workspaceIdToAzureCloudContextMap";
-    public static final String UPDATE_PARAMETERS = "updateParameters";
     public static final String PREVIOUS_UPDATE_PARAMETERS = "previousUpdateParameters";
     public static final String CREATE_RESOURCE_REGION = "createResourceRegion";
 
     public static final String RESOURCE_ROLES_TO_REMOVE = "resourceRolesToRemove";
     public static final String REMOVED_USER_IS_WORKSPACE_MEMBER = "removedUserIsWorkspaceMember";
 
-    public static final String CONTROLLED_RESOURCES_WITHOUT_REGION =
-        "controlledResourcesWithoutRegion";
     public static final String CONTROLLED_BIG_QUERY_DATASETS_WITHOUT_LIFETIME =
         "controlledBigQueryDatasetsWithoutLifetime";
     public static final String CONTROLLED_BIG_QUERY_DATASET_RESOURCE_ID_TO_TABLE_LIFETIME_MAP =

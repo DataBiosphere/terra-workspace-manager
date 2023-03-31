@@ -25,7 +25,6 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.google.api.services.bigquery.model.Dataset;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.IOException;
@@ -65,7 +64,8 @@ public class UpdateBigQueryDatasetStepTest extends BaseUnitTest {
   public void setup() throws IOException {
     // new dataset properties
     FlightMap inputParameters = new FlightMap();
-    inputParameters.put(ControlledResourceKeys.UPDATE_PARAMETERS, BQ_DATASET_UPDATE_PARAMETERS_NEW);
+    inputParameters.put(
+        WorkspaceFlightMapKeys.ResourceKeys.UPDATE_PARAMETERS, BQ_DATASET_UPDATE_PARAMETERS_NEW);
     doReturn(inputParameters).when(mockFlightContext).getInputParameters();
 
     when(mockFlightContext.getWorkingMap()).thenReturn(workingMap);
