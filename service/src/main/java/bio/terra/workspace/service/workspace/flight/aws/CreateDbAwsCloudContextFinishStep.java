@@ -1,7 +1,5 @@
 package bio.terra.workspace.service.workspace.flight.aws;
 
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.AWS_CLOUD_CONTEXT;
-
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
@@ -24,8 +22,7 @@ public class CreateDbAwsCloudContextFinishStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext flightContext) throws InterruptedException {
-    AwsCloudContext awsCloudContext =
-        flightContext.getWorkingMap().get(AWS_CLOUD_CONTEXT, AwsCloudContext.class);
+    AwsCloudContext awsCloudContext = awsCloudContextService.getCloudContextFromConfiguration();
 
     // Create the cloud context; throws if the context already exists.
     awsCloudContextService.createAwsCloudContextFinish(

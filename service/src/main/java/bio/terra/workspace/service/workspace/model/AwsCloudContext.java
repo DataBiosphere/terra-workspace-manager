@@ -45,22 +45,6 @@ public class AwsCloudContext {
     return terraEnvironment;
   }
 
-  public void setAwsOrganization(String awsOrganization) {
-    this.awsOrganization = awsOrganization;
-  }
-
-  public void setAwsAccountNumber(String awsAccountNumber) {
-    this.awsAccountNumber = awsAccountNumber;
-  }
-
-  public void setTenantId(String tenantId) {
-    this.tenantId = tenantId;
-  }
-
-  public void setTerraEnvironment(String terraEnvironment) {
-    this.terraEnvironment = terraEnvironment;
-  }
-
   public ApiAwsContext toApi() {
     return new ApiAwsContext()
         .awsOrganization(awsOrganization)

@@ -3,9 +3,12 @@ package bio.terra.workspace.service.workspace;
 import bio.terra.aws.resource.discovery.Environment;
 import bio.terra.aws.resource.discovery.Metadata;
 import bio.terra.workspace.app.configuration.external.AwsConfiguration;
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
+import bio.terra.workspace.common.exception.FeatureNotSupportedException;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
+import bio.terra.workspace.service.workspace.exceptions.InvalidApplicationConfigException;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import io.opencensus.contrib.spring.aop.Traced;
@@ -27,11 +30,37 @@ public class AwsCloudContextService {
   private final Environment environment;
 
   @Autowired
-  public AwsCloudContextService(WorkspaceDao workspaceDao, AwsConfiguration awsConfiguration)
+  public AwsCloudContextService(
+      WorkspaceDao workspaceDao,
+      FeatureConfiguration featureConfiguration,
+      AwsConfiguration awsConfiguration)
       throws IOException {
     this.workspaceDao = workspaceDao;
     this.awsConfiguration = awsConfiguration;
-    this.environment = AwsUtils.createEnvironmentDiscovery(awsConfiguration).discoverEnvironment();
+
+    Environment configEnvironment = null;
+    if (featureConfiguration.isAwsEnabled()) {
+      configEnvironment =
+          AwsUtils.createEnvironmentDiscovery(awsConfiguration).discoverEnvironment();
+      verifyEnvironment(configEnvironment);
+    }
+
+    this.environment = configEnvironment;
+  }
+
+  private void verifyEnvironment(Environment configEnvironment) {
+    String error = null;
+    if (configEnvironment == null) {
+      error = "environment null";
+    } else if (configEnvironment.getMetadata() == null) {
+      error = "environment.metadata null";
+    } else if (configEnvironment.getSupportedRegions().isEmpty()) {
+      error = "environment.landingZones empty";
+    }
+
+    if (error != null) {
+      throw new InvalidApplicationConfigException("AWS configuration error: " + error);
+    }
   }
 
   /**
@@ -114,7 +143,11 @@ public class AwsCloudContextService {
    *
    * @return AWS cloud context
    */
-  public @NotNull AwsCloudContext fromConfiguration() {
+  public @NotNull AwsCloudContext getCloudContextFromConfiguration() {
+    if (environment == null) {
+      throw new FeatureNotSupportedException("AWS environment not configured");
+    }
+
     Metadata metadata = this.environment.getMetadata();
     return new AwsCloudContext(
         metadata.getOrganizationId(),
