@@ -63,6 +63,18 @@ task unitTest(type: Test) {
   finalizedBy tasks.combinedJaCoCoReport
 }
 
+// Use the connected test tag for PR runs.
+// No retries; devs can manually rerun
+task connectedTest(type: Test) {
+  environment.put('TEST_ENV', System.getenv("TEST_ENV"))
+  useJUnitPlatform {
+    includeTags "connected"
+  }
+  outputs.upToDateWhen { false }
+  finalizedBy tasks.combinedJaCoCoReport
+  maxParallelForks = runnerThreads
+}
+
 task connectedPlusTest(type: Test) {
   environment.put('TEST_ENV', System.getenv("TEST_ENV"))
   useJUnitPlatform {
@@ -91,12 +103,20 @@ task connectedPlusTest(type: Test) {
   maxParallelForks = runnerThreads
 }
 
-// Use the connected test tag for PR runs.
-// No retries; devs can manually rerun
-task connectedTest(type: Test) {
-  environment.put('TEST_ENV', System.getenv("TEST_ENV"))
+task azureUnitTest(type: Test) {
   useJUnitPlatform {
-    includeTags "connected"
+    includeTags "azure-unit"
+  }
+  outputs.upToDateWhen { false }
+  finalizedBy tasks.combinedJaCoCoReport
+  maxParallelForks = runnerThreads
+}
+
+// Use the azureConnected test tag for PR runs.
+// No retries; devs can manually rerun
+task azureConnectedTest(type: Test) {
+  useJUnitPlatform {
+    includeTags "azureConnected"
   }
   outputs.upToDateWhen { false }
   finalizedBy tasks.combinedJaCoCoReport
@@ -131,20 +151,9 @@ task azureConnectedPlusTest(type: Test) {
   maxParallelForks = runnerThreads
 }
 
-// Use the azureConnected test tag for PR runs.
-// No retries; devs can manually rerun
-task azureConnectedTest(type: Test) {
+task awsUnitTest(type: Test) {
   useJUnitPlatform {
-    includeTags "azureConnected"
-  }
-  outputs.upToDateWhen { false }
-  finalizedBy tasks.combinedJaCoCoReport
-  maxParallelForks = runnerThreads
-}
-
-task azureUnitTest(type: Test) {
-  useJUnitPlatform {
-    includeTags "azure-unit"
+    includeTags "aws-unit"
   }
   outputs.upToDateWhen { false }
   finalizedBy tasks.combinedJaCoCoReport
