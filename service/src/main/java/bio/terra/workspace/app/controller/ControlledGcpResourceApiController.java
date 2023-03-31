@@ -85,7 +85,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             userRequest, workspaceUuid, getSamAction(body.getCommon()));
     // Buckets are regional resources.
     String resourceLocation =
-        GcpUtils.parseRegion(
+        GcpUtils.extractRegionFromLocation(
             gcpCloudContextService.getResourceLocation(
                 workspace, body.getGcsBucket().getLocation()));
     ControlledResourceFields commonFields =
@@ -333,7 +333,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             userRequest, workspaceUuid, getSamAction(body.getCommon()));
     // Big Query datasets are regional resources
     String resourceLocation =
-        GcpUtils.parseRegion(
+        GcpUtils.extractRegionFromLocation(
             gcpCloudContextService.getResourceLocation(workspace, body.getDataset().getLocation()));
     ControlledResourceFields commonFields =
         toCommonFields(

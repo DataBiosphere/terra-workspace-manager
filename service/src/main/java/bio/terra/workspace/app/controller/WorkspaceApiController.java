@@ -555,7 +555,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       if (gcpDefaultZone != null) {
         // Validate the region against the workspace policy.
         ResourceValidationUtils.validateGcpRegion(
-            tpsApiDispatch, uuid, GcpUtils.parseRegion(gcpDefaultZone));
+            tpsApiDispatch, uuid, GcpUtils.extractRegionFromLocation(gcpDefaultZone));
       }
       workspaceService.createGcpCloudContext(
           workspace, gcpDefaultZone, jobId, userRequest, resultPath);
@@ -587,7 +587,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     // Validate the region against the workspace policy.
     if (gcpDefaultZone != null) {
       ResourceValidationUtils.validateGcpRegion(
-          tpsApiDispatch, workspaceId, GcpUtils.parseRegion(gcpDefaultZone));
+          tpsApiDispatch, workspaceId, GcpUtils.extractRegionFromLocation(gcpDefaultZone));
     }
 
     gcpCloudContextService.updateGcpCloudContext(workspaceId, gcpDefaultZone, userRequest);
@@ -736,7 +736,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     // Validate the region against the workspace policy.
     if (gcpDefaultZone != null) {
       ResourceValidationUtils.validateGcpRegion(
-          tpsApiDispatch, workspaceUuid, GcpUtils.parseRegion(gcpDefaultZone));
+          tpsApiDispatch, workspaceUuid, GcpUtils.extractRegionFromLocation(gcpDefaultZone));
     }
 
     final String jobId =

@@ -24,24 +24,26 @@ public class GcpUtilsTest extends BaseUnitTest {
 
   @Test
   public void parseRegionWithRegions() {
-    assertEquals("us-east1", GcpUtils.parseRegion("us-east1"));
-    assertEquals("asia-northeast3", GcpUtils.parseRegion("asia-northeast3"));
-    assertEquals("australia-southeast2", GcpUtils.parseRegion("australia-southeast2"));
+    assertEquals("us-east1", GcpUtils.extractRegionFromLocation("us-east1"));
+    assertEquals("asia-northeast3", GcpUtils.extractRegionFromLocation("asia-northeast3"));
+    assertEquals(
+        "australia-southeast2", GcpUtils.extractRegionFromLocation("australia-southeast2"));
   }
 
   @Test
   public void parseRegionEdgeCases() {
-    assertEquals("", GcpUtils.parseRegion(""));
-    assertEquals(" ", GcpUtils.parseRegion(" "));
-    assertEquals("-a", GcpUtils.parseRegion("-a"));
-    assertNull(GcpUtils.parseRegion(null));
+    assertEquals("", GcpUtils.extractRegionFromLocation(""));
+    assertEquals(" ", GcpUtils.extractRegionFromLocation(" "));
+    assertEquals("-a", GcpUtils.extractRegionFromLocation("-a"));
+    assertNull(GcpUtils.extractRegionFromLocation(null));
   }
 
   @Test
   public void parseRegionWithZones() {
-    assertEquals("us-east1", GcpUtils.parseRegion("us-east1-a"));
-    assertEquals("asia-northeast3", GcpUtils.parseRegion("asia-northeast3-c"));
-    assertEquals("australia-southeast2", GcpUtils.parseRegion("australia-southeast2-b"));
+    assertEquals("us-east1", GcpUtils.extractRegionFromLocation("us-east1-a"));
+    assertEquals("asia-northeast3", GcpUtils.extractRegionFromLocation("asia-northeast3-c"));
+    assertEquals(
+        "australia-southeast2", GcpUtils.extractRegionFromLocation("australia-southeast2-b"));
   }
 
   @Test

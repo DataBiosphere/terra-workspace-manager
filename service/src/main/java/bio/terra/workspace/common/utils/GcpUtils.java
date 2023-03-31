@@ -181,8 +181,10 @@ public class GcpUtils {
    * If the string looks like a zone, return just the region part. Basically, remove any trailing
    * "-[a-z]".
    */
-  public static String parseRegion(String location) {
-    if (location == null) return null;
+  public static String extractRegionFromLocation(String location) {
+    if (location == null) {
+      return null;
+    }
     return location.replaceAll("(?!^)-[a-zA-Z]$", "");
   }
 
