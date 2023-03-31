@@ -52,7 +52,7 @@ public class BaseAzureConnectedTest extends BaseTest {
     landingZoneId = UUID.fromString(landingZoneTestUtils.getDefaultLandingZoneId());
     testLandingZoneManager =
         new TestLandingZoneManager(landingZoneDao, workspaceDao, azureTestUtils);
-    testLandingZoneManager.createLandingZoneDbRecord(landingZoneId, workspace.workspaceId());
+    testLandingZoneManager.createLandingZoneDbRecord(landingZoneId);
 
     azureUtils.createCloudContext(workspace.getWorkspaceId(), userRequest);
     return workspace;

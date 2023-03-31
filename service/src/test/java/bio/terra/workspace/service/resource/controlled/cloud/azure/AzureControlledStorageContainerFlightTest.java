@@ -113,47 +113,7 @@ public class AzureControlledStorageContainerFlightTest extends BaseAzureConnecte
     verifyStorageAccountContainerIsDeleted(storageContainerName);
   }
 
-  @Disabled("TODO(TOAZ-286): Re-enable this test when the ticket is fixed")
-  @Test
-  public void
-      createAzureStorageContainerFlightFailedBecauseLandingZoneDoesntHaveSharedStorageAccount()
-          throws InterruptedException {
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
-
-    // create quasi landing zone without resources
-    UUID alternateLandingZoneId = UUID.fromString(landingZoneTestUtils.getDefaultLandingZoneId());
-
-    testLandingZoneManager.createLandingZone(alternateLandingZoneId, workspaceUuid);
-
-    // Submit a storage container creation flight which should error out
-    final UUID containerResourceId = UUID.randomUUID();
-    final String storageContainerName = ControlledResourceFixtures.uniqueBucketName();
-    ControlledAzureStorageContainerResource containerResource =
-        ControlledResourceFixtures.getAzureStorageContainer(
-            workspaceUuid,
-            containerResourceId,
-            storageContainerName,
-            getAzureName("rc"),
-            getAzureName("rc-desc"));
-
-    FlightState flightState =
-        StairwayTestUtils.blockUntilFlightCompletes(
-            jobService.getStairway(),
-            CreateControlledResourceFlight.class,
-            azureTestUtils.createControlledResourceInputParameters(
-                workspaceUuid, userRequest, containerResource, null),
-            STAIRWAY_FLIGHT_TIMEOUT,
-            null);
-
-    assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
-    assertTrue(flightState.getException().isPresent());
-    assertEquals(ResourceNotFoundException.class, flightState.getException().get().getClass());
-
-    // clean up resources - delete alternate lz database record only
-    testLandingZoneManager.deleteLandingZone(alternateLandingZoneId);
-  }
-
-  private void verifyStorageAccountContainerIsDeleted(String containerName) {
+ private void verifyStorageAccountContainerIsDeleted(String containerName) {
     com.azure.core.exception.HttpResponseException exception =
         assertThrows(
             com.azure.core.exception.HttpResponseException.class,
