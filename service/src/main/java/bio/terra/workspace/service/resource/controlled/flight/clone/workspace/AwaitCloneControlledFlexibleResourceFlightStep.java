@@ -1,5 +1,9 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
+import static bio.terra.workspace.common.utils.FlightUtils.FLIGHT_POLL_CYCLES;
+import static bio.terra.workspace.common.utils.FlightUtils.FLIGHT_POLL_SECONDS;
+import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntries;
+
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
@@ -21,15 +25,10 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.WsmCloneResourceResult;
 import bio.terra.workspace.service.workspace.model.WsmResourceCloneDetails;
 import com.fasterxml.jackson.core.type.TypeReference;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-
-import static bio.terra.workspace.common.utils.FlightUtils.FLIGHT_POLL_CYCLES;
-import static bio.terra.workspace.common.utils.FlightUtils.FLIGHT_POLL_SECONDS;
-import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntries;
 
 /**
  * Wait for the clone flexible resource flight to complete and add the result to the appropriate
