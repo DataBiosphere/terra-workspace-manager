@@ -9,6 +9,7 @@ import bio.terra.common.exception.ErrorReportException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.exception.CloneInstructionNotSupportedException;
 import bio.terra.workspace.common.utils.ErrorReportUtils;
+import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.generated.model.ApiProperties;
@@ -17,6 +18,7 @@ import bio.terra.workspace.generated.model.ApiResourceLineage;
 import bio.terra.workspace.generated.model.ApiResourceMetadata;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.flight.UpdateResourceFlight;
 import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -172,6 +174,16 @@ public abstract class WsmResource {
    * @return cast to subtype
    */
   public abstract <T> T castByEnum(WsmResourceType expectedType);
+
+  /**
+   * The UpdateResourceFlight calls this method to populate the resource-specific step(s) to modify
+   * resource attributes and/or cloud resources. We provide a default implementation for the "no
+   * steps" case.
+   *
+   * @param flight The update flight
+   * @param flightBeanBag Bean bag for finding Spring singletons.
+   */
+  public void addUpdateSteps(UpdateResourceFlight flight, FlightBeanBag flightBeanBag) {}
 
   /**
    * Build a ReferencedResource clone object of this resource object. Both controlled and referenced
