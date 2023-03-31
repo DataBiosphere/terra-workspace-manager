@@ -1,10 +1,13 @@
 package bio.terra.workspace.app.controller;
 
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_AI_NOTEBOOK_ACCELERATOR_CONFIG;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_AI_NOTEBOOK_MACHINE_TYPE_ALLOWING_ACCELERATOR_CONFIG;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_CREATED_AI_NOTEBOOK_MACHINE_TYPE;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertControlledResourceMetadata;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertResourceMetadata;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import bio.terra.cloudres.google.notebooks.InstanceName;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
@@ -13,7 +16,6 @@ import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiErrorReport;
-import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAcceleratorConfig;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
 import bio.terra.workspace.generated.model.ApiManagedBy;
@@ -25,6 +27,7 @@ import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.AcceleratorConfig;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants;
 import java.util.List;
 import java.util.UUID;
@@ -137,12 +140,13 @@ public class ControlledGcpResourceApiControllerAiNotebookTest extends BaseConnec
             .createAiNotebookInstance(userAccessUtils.defaultUserAuthRequest(), workspaceId, null)
             .getAiNotebookInstance();
 
-    String instanceName =
-        "projects/%s/locations/%s/instances/%s"
-            .formatted(
-                notebook.getAttributes().getProjectId(),
-                notebook.getAttributes().getLocation(),
-                notebook.getAttributes().getInstanceId());
+    InstanceName instanceName =
+        InstanceName.builder()
+            .projectId(notebook.getAttributes().getProjectId())
+            .location(notebook.getAttributes().getLocation())
+            .instanceId(notebook.getAttributes().getInstanceId())
+            .build();
+
     // Stop the notebook so the CPU and GPU can be updated.
     crlService.getAIPlatformNotebooksCow().instances().stop(instanceName).execute();
 
@@ -151,15 +155,18 @@ public class ControlledGcpResourceApiControllerAiNotebookTest extends BaseConnec
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId,
             notebook.getMetadata().getResourceId(),
-            "n1-highmem-2",
-            new ApiGcpAiNotebookInstanceAcceleratorConfig()
-                .coreCount(2L)
-                .type("NVIDIA_TESLA_V100"));
+            DEFAULT_AI_NOTEBOOK_MACHINE_TYPE_ALLOWING_ACCELERATOR_CONFIG,
+            AcceleratorConfig.toApiAcceleratorConfig(DEFAULT_AI_NOTEBOOK_ACCELERATOR_CONFIG));
 
-    assertEquals("n1-highmem-2", updatedNotebook.getAttributes().getMachineType());
     assertEquals(
-        "NVIDIA_TESLA_V100", updatedNotebook.getAttributes().getAcceleratorConfig().getType());
-    assertEquals(2L, updatedNotebook.getAttributes().getAcceleratorConfig().getCoreCount());
+        DEFAULT_AI_NOTEBOOK_MACHINE_TYPE_ALLOWING_ACCELERATOR_CONFIG,
+        updatedNotebook.getAttributes().getMachineType());
+    assertEquals(
+        DEFAULT_AI_NOTEBOOK_ACCELERATOR_CONFIG.type(),
+        updatedNotebook.getAttributes().getAcceleratorConfig().getType());
+    assertEquals(
+        DEFAULT_AI_NOTEBOOK_ACCELERATOR_CONFIG.coreCount(),
+        updatedNotebook.getAttributes().getAcceleratorConfig().getCoreCount());
   }
 
   @Test

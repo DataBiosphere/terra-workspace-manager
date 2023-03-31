@@ -537,8 +537,11 @@ public class ControlledResourceFixtures {
 
   public static final String DEFAULT_CREATED_AI_NOTEBOOK_MACHINE_TYPE = "e2-standard-2";
 
+  public static final String DEFAULT_AI_NOTEBOOK_MACHINE_TYPE_ALLOWING_ACCELERATOR_CONFIG =
+      "n1-standard-2";
+
   public static final AcceleratorConfig DEFAULT_AI_NOTEBOOK_ACCELERATOR_CONFIG =
-      new AcceleratorConfig("NVIDIA_TESLA_V4", 2L);
+      new AcceleratorConfig("NVIDIA_TESLA_V100", 2L);
 
   public static final OffsetDateTime OFFSET_DATE_TIME_1 =
       OffsetDateTime.parse("2017-12-03T10:15:30+01:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
