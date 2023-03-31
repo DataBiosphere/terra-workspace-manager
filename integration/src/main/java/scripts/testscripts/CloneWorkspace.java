@@ -75,7 +75,7 @@ import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
   private static final Logger logger = LoggerFactory.getLogger(CloneWorkspace.class);
-  private static final int EXPECTED_NUM_CLONED_RESOURCES = 11;
+  private static final int EXPECTED_NUM_CLONED_RESOURCES = 12;
   private static final String TERRA_FOLDER_ID = "terra-folder-id";
   private static final String FOLDER_DISPLAY_NAME = "folderDisplayName";
   private ControlledGcpResourceApi cloningUserResourceApi;
@@ -89,7 +89,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
   private GcpBigQueryDataTableResource sourceDataTableReference;
   private GcpBigQueryDatasetResource copyDefinitionDataset;
   private GcpBigQueryDatasetResource copyResourceDataset;
-  private FlexibleResource copyFlexResource;
+  private FlexibleResource copySourceFlexResource;
   private GcpBigQueryDatasetResource privateDataset;
   private GcpGcsBucketResource sourceBucketReference;
   private GcpGcsObjectResource sourceBucketFileReference;
@@ -263,7 +263,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     copyFlexResourceName = "copy_resource_flex_resource";
     copyFlexResourceData = FlexResourceUtils.getEncodedJSONFromString("{\"color\":\"red\"}");
 
-    copyFlexResource =
+    copySourceFlexResource =
         FlexResourceUtils.makeFlexibleResourceShared(
             sourceOwnerFlexResourceApi,
             getWorkspaceId(),
@@ -917,7 +917,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
             cloneResult.getWorkspace().getResources().stream()
                 .filter(
                     r ->
-                        copyFlexResource
+                        copySourceFlexResource
                             .getMetadata()
                             .getResourceId()
                             .equals(r.getSourceResourceId()))

@@ -79,10 +79,12 @@ public class ControlledFlexibleResource extends ControlledResource {
 
   // -- getters used in serialization --
 
+  @Override
   public WsmResourceFields getWsmResourceFields() {
     return super.getWsmResourceFields();
   }
 
+  @Override
   public WsmControlledResourceFields getWsmControlledResourceFields() {
     return super.getWsmControlledResourceFields();
   }
