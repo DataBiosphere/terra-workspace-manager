@@ -49,8 +49,7 @@ public class AwaitCloneControlledFlexibleResourceFlightStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     try {
-
-      FlightState subflightState =
+      FlightState subFlightState =
           flightContext
               .getStairway()
               .waitForFlight(subFlightId, FLIGHT_POLL_SECONDS, FLIGHT_POLL_CYCLES);
@@ -67,24 +66,21 @@ public class AwaitCloneControlledFlexibleResourceFlightStep implements Step {
       // Generate the cloneDetails.
       WsmResourceCloneDetails cloneDetails = new WsmResourceCloneDetails();
       WsmCloneResourceResult cloneResult =
-          WorkspaceCloneUtils.flightStatusToCloneResult(subflightState.getFlightStatus(), resource);
+          WorkspaceCloneUtils.flightStatusToCloneResult(subFlightState.getFlightStatus(), resource);
       cloneDetails.setResult(cloneResult);
 
-      FlightMap resultMap = FlightUtils.getResultMapRequired(subflightState);
-      var clonedDataset =
-          resultMap.get(
-              JobMapKeys.RESPONSE.getKeyName(), ApiCloneControlledFlexibleResourceResult.class);
+      FlightMap resultMap = FlightUtils.getResultMapRequired(subFlightState);
+      ControlledFlexibleResource clonedFlexResource =
+          resultMap.get(JobMapKeys.RESPONSE.getKeyName(), ControlledFlexibleResource.class);
       cloneDetails.setStewardshipType(StewardshipType.CONTROLLED);
       cloneDetails.setResourceType(WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE);
       cloneDetails.setCloningInstructions(resource.getCloningInstructions());
       cloneDetails.setSourceResourceId(resource.getResourceId());
       cloneDetails.setDestinationResourceId(
-          Optional.ofNullable(clonedDataset)
-              .map(ApiCloneControlledFlexibleResourceResult::getResource)
-              .map(ApiFlexibleResource::getMetadata)
-              .map(ApiResourceMetadata::getResourceId)
+          Optional.ofNullable(clonedFlexResource)
+              .map(ControlledFlexibleResource::getResourceId)
               .orElse(null));
-      String errorMessage = FlightUtils.getFlightErrorMessage(subflightState);
+      String errorMessage = FlightUtils.getFlightErrorMessage(subFlightState);
       cloneDetails.setErrorMessage(errorMessage);
 
       cloneDetails.setName(resource.getName());
