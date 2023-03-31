@@ -15,7 +15,7 @@ public class UniquenessCheckAttributes {
     /** search all resources of this type in the WSM database */
     GLOBAL,
     /** search resources of this type within the workspace */
-    WORKSPACE;
+    WORKSPACE
   }
 
   private UniquenessScope uniquenessScope;

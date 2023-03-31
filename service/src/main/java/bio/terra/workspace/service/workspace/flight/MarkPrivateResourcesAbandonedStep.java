@@ -13,7 +13,6 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * Step for marking all of user's private resources in a workspace as ABANDONED. This doesn't change
@@ -66,10 +65,7 @@ public class MarkPrivateResourcesAbandonedStep implements Step {
     List<ResourceRolePair> resourceRolePairs =
         workingMap.get(ControlledResourceKeys.RESOURCE_ROLES_TO_REMOVE, new TypeReference<>() {});
     List<ControlledResource> uniqueControlledResources =
-        resourceRolePairs.stream()
-            .map(ResourceRolePair::getResource)
-            .distinct()
-            .collect(Collectors.toList());
+        resourceRolePairs.stream().map(ResourceRolePair::getResource).distinct().toList();
     for (ControlledResource resource : uniqueControlledResources) {
       PrivateResourceState privateResourceState =
           resource

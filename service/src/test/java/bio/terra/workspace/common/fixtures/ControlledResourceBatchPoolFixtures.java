@@ -10,12 +10,12 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResourceF
 import java.util.UUID;
 
 public class ControlledResourceBatchPoolFixtures {
-  private static String BATCH_POOL_ID = UUID.randomUUID().toString();
-  private static String BATCH_POOL_VM_SIZE = "Standard_D2s_v3";
-  private static String NODE_AGENT_SKU_ID = "batch.node.ubuntu 18.04";
-  private static String IMAGE_REFERENCE_PUBLISHER = "canonical";
-  private static String IMAGE_REFERENCE_OFFER = "ubuntuserver";
-  private static String IMAGE_REFERENCE_SKU = "18.04-lts";
+  private static final String BATCH_POOL_ID = UUID.randomUUID().toString();
+  private static final String BATCH_POOL_VM_SIZE = "Standard_D2s_v3";
+  private static final String NODE_AGENT_SKU_ID = "batch.node.ubuntu 18.04";
+  private static final String IMAGE_REFERENCE_PUBLISHER = "canonical";
+  private static final String IMAGE_REFERENCE_OFFER = "ubuntuserver";
+  private static final String IMAGE_REFERENCE_SKU = "18.04-lts";
 
   public static ApiAzureBatchPoolCreationParameters createBatchPoolWithRequiredParameters() {
     var imageReference =

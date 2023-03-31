@@ -24,14 +24,11 @@ public enum AccessScopeType {
       throw new MissingRequiredFieldException("Valid accessScope is required");
     }
 
-    switch (apiAccessScope) {
-      case PRIVATE_ACCESS:
-        return ACCESS_SCOPE_PRIVATE;
-      case SHARED_ACCESS:
-        return ACCESS_SCOPE_SHARED;
-      default:
-        throw new InternalLogicException("Unknown API access scope");
-    }
+    return switch (apiAccessScope) {
+      case PRIVATE_ACCESS -> ACCESS_SCOPE_PRIVATE;
+      case SHARED_ACCESS -> ACCESS_SCOPE_SHARED;
+      default -> throw new InternalLogicException("Unknown API access scope");
+    };
   }
 
   public static AccessScopeType fromSql(String dbString) {

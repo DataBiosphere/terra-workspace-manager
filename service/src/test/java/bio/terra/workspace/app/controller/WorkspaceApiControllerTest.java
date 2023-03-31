@@ -546,6 +546,17 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
         workspaceActivityLogService.getLastUpdatedDetails(workspace.getId()).get());
   }
 
+  @Test
+  void listValidRegions() throws Exception {
+    var expectedRegions = List.of("region1", "region2");
+    var workspace = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
+    when(mockTpsApiDispatch().listValidRegions(eq(workspace.getId()), any()))
+        .thenReturn(expectedRegions);
+
+    var result = mockMvcUtils.listValidRegions(USER_REQUEST, workspace.getId(), "GCP");
+    assertEquals(expectedRegions, result);
+  }
+
   private ApiErrorReport createRawlsWorkspaceWithPolicyExpectError(int expectedCode)
       throws Exception {
     // Note: this is the WSM REST API form of the policy inputs

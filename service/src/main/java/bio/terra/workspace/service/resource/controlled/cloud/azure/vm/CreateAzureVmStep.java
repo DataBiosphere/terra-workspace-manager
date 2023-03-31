@@ -15,7 +15,6 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.exception.AzureNetworkInterfaceNameNotFoundException;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -29,7 +28,6 @@ import com.azure.resourcemanager.compute.models.ImageReference;
 import com.azure.resourcemanager.compute.models.VirtualMachine;
 import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.azure.resourcemanager.network.models.NetworkInterface;
-import com.azure.resourcemanager.network.models.PublicIpAddress;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -68,14 +66,6 @@ public class CreateAzureVmStep implements Step {
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
     ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
 
-    final Optional<ControlledAzureIpResource> ipResource =
-        Optional.ofNullable(resource.getIpId())
-            .map(
-                ipId ->
-                    resourceDao
-                        .getResource(resource.getWorkspaceId(), ipId)
-                        .castByEnum(WsmResourceType.CONTROLLED_AZURE_IP));
-
     final Optional<ControlledAzureDiskResource> diskResource =
         Optional.ofNullable(resource.getDiskId())
             .map(
@@ -95,15 +85,6 @@ public class CreateAzureVmStep implements Step {
                       .disks()
                       .getByResourceGroup(
                           azureCloudContext.getAzureResourceGroupId(), diskRes.getDiskName()));
-
-      Optional<PublicIpAddress> existingAzureIp =
-          ipResource.map(
-              ipRes ->
-                  computeManager
-                      .networkManager()
-                      .publicIpAddresses()
-                      .getByResourceGroup(
-                          azureCloudContext.getAzureResourceGroupId(), ipRes.getIpName()));
 
       if (!context.getWorkingMap().containsKey(AzureVmHelper.WORKING_MAP_NETWORK_INTERFACE_KEY)) {
         logger.error(
@@ -157,7 +138,6 @@ public class CreateAzureVmStep implements Step {
                       .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
                       .setNetwork(networkInterface.primaryIPConfiguration().getNetwork())
                       .setSubnetName(subnetName)
-                      .setPublicIpAddress(existingAzureIp.orElse(null))
                       .setDisk(existingAzureDisk.orElse(null))
                       .setImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
                       .build()));
@@ -180,10 +160,8 @@ public class CreateAzureVmStep implements Step {
           logger.error(
               "Either the disk, ip, or network passed into this createVm does not exist "
                   + String.format(
-                      "%nResource Group: %s%n\tIp Name: %s%n\tNetwork Name: %s%n\tDisk Name: %s",
+                      "%nResource Group: %s%n\tDisk Name: %s",
                       azureCloudContext.getAzureResourceGroupId(),
-                      ipResource.map(ControlledAzureIpResource::getIpName).orElse("<no public ip>"),
-                      resource.getNetworkId(),
                       diskResource
                           .map(ControlledAzureDiskResource::getDiskName)
                           .orElse("<no disk>")));

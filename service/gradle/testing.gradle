@@ -150,3 +150,12 @@ task azureUnitTest(type: Test) {
   finalizedBy tasks.combinedJaCoCoReport
   maxParallelForks = runnerThreads
 }
+
+task awsConnectedTest(type: Test) {
+  useJUnitPlatform {
+    includeTags "awsConnected"
+  }
+  outputs.upToDateWhen { false }
+  finalizedBy tasks.combinedJaCoCoReport
+  maxParallelForks = runnerThreads
+}

@@ -24,7 +24,6 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.BaseStorageStepTest;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import com.azure.resourcemanager.storage.models.BlobContainers;
 import java.util.Optional;
@@ -50,8 +49,6 @@ public class DeleteAzureStorageContainerStepTest extends BaseStorageStepTest {
   private final ApiAzureStorageContainerCreationParameters creationParameters =
       ControlledResourceFixtures.getAzureStorageContainerCreationParameters();
   private final String storageAccountName = ControlledResourceFixtures.uniqueStorageAccountName();
-  private final ControlledAzureStorageResource storageAccountResource =
-      ControlledResourceFixtures.getAzureStorage(storageAccountName, "mockRegion");
   private ControlledAzureStorageContainerResource storageContainerResource;
   private DeleteAzureStorageContainerStep deleteAzureStorageContainerStep;
 
@@ -66,7 +63,7 @@ public class DeleteAzureStorageContainerStepTest extends BaseStorageStepTest {
   private void initDeleteValidationStep(Optional<UUID> storageAccountId) {
     storageContainerResource =
         ControlledResourceFixtures.getAzureStorageContainer(
-            storageAccountId.orElse(null), creationParameters.getStorageContainerName());
+            creationParameters.getStorageContainerName());
 
     deleteAzureStorageContainerStep =
         new DeleteAzureStorageContainerStep(
@@ -84,34 +81,6 @@ public class DeleteAzureStorageContainerStepTest extends BaseStorageStepTest {
             eq(JobMapKeys.AUTH_USER_INFO.getKeyName()), eq(AuthenticatedUserRequest.class)))
         .thenReturn(mockAuthenticatedUserRequest);
     when(mockFlightContext.getInputParameters()).thenReturn(mockFlightMap);
-  }
-
-  @Test
-  public void deleteStorageAccountContainerControlledByWsmStorageAccountSuccess()
-      throws InterruptedException {
-    initDeleteValidationStep(Optional.of(creationParameters.getStorageAccountId()));
-    when(mockResourceDao.getResource(
-            storageContainerResource.getWorkspaceId(), creationParameters.getStorageAccountId()))
-        .thenReturn(storageAccountResource);
-
-    // act
-    final StepResult stepResult = deleteAzureStorageContainerStep.doStep(mockFlightContext);
-
-    assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
-
-    verify(mockBlobContainers, times(1))
-        .delete(
-            resourceGroupNameCaptor.capture(),
-            accountNameCaptor.capture(),
-            containerNameCaptor.capture());
-    assertThat(
-        resourceGroupNameCaptor.getValue(),
-        equalTo(mockAzureCloudContext.getAzureResourceGroupId()));
-    assertThat(
-        accountNameCaptor.getValue(), equalTo(storageAccountResource.getStorageAccountName()));
-    assertThat(
-        containerNameCaptor.getValue(),
-        equalTo(storageContainerResource.getStorageContainerName()));
   }
 
   @Test

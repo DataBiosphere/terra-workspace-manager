@@ -32,14 +32,11 @@ public enum ManagedByType {
       throw new MissingRequiredFieldException("Valid managedBy is required");
     }
 
-    switch (apiManagedBy) {
-      case USER:
-        return ManagedByType.MANAGED_BY_USER;
-      case APPLICATION:
-        return ManagedByType.MANAGED_BY_APPLICATION;
-      default:
-        throw new InternalLogicException("Unknown managedBy");
-    }
+    return switch (apiManagedBy) {
+      case USER -> ManagedByType.MANAGED_BY_USER;
+      case APPLICATION -> ManagedByType.MANAGED_BY_APPLICATION;
+      default -> throw new InternalLogicException("Unknown managedBy");
+    };
   }
 
   public static ManagedByType fromSql(String dbString) {

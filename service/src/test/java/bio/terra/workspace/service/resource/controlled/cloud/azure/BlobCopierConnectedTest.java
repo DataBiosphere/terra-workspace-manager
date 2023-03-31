@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.TEST_AZURE_STORAGE_ACCOUNT_NAME;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.in;
@@ -8,19 +9,22 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
+import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import com.azure.core.util.BinaryData;
+import com.azure.resourcemanager.storage.models.StorageAccount;
 import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.models.BlobItem;
 import io.vavr.collection.Stream;
@@ -43,32 +47,31 @@ public class BlobCopierConnectedTest extends BaseAzureConnectedTest {
   @Autowired private WorkspaceService workspaceService;
   @Autowired private JobService jobService;
   @Autowired private UserAccessUtils userAccessUtils;
+  @Autowired private CrlService crlService;
+  @Autowired private AzureConfiguration azureConfig;
+  @Autowired private AzureCloudContextService azureCloudContextService;
 
   private ControlledAzureStorageContainerResource sourceContainer;
   private ControlledAzureStorageContainerResource destContainer;
-  private ControlledAzureStorageResource storageAcct;
+  private StorageAccount storageAcct;
   private AuthenticatedUserRequest userRequest;
   private UUID workspaceId;
 
   @BeforeAll
   void setup() throws InterruptedException {
-    userRequest = userAccessUtils.defaultUserAuthRequest();
-    Workspace workspace = createWorkspaceWithCloudContext(workspaceService, userRequest);
+    Workspace workspace =
+        createWorkspaceWithCloudContext(workspaceService, userAccessUtils.defaultUserAuthRequest());
     workspaceId = workspace.getWorkspaceId();
 
-    var storageAccountId = UUID.randomUUID();
-    var saName = generateAzureResourceName("sa");
+    var azureCloudContext = azureCloudContextService.getAzureCloudContext(workspaceId).get();
+    var storageManager = crlService.getStorageManager(azureCloudContext, azureConfig);
     storageAcct =
-        ControlledAzureStorageResource.builder()
-            .common(
-                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
-                    .workspaceUuid(workspaceId)
-                    .resourceId(storageAccountId)
-                    .region("eastus")
-                    .build())
-            .storageAccountName(saName)
-            .build();
-    createResource(workspaceId, userRequest, storageAcct);
+        storageManager
+            .storageAccounts()
+            .getByResourceGroup(
+                azureCloudContext.getAzureResourceGroupId(), TEST_AZURE_STORAGE_ACCOUNT_NAME);
+
+    userRequest = userAccessUtils.defaultUserAuthRequest();
 
     var sourceScName = generateAzureResourceName("sc");
     sourceContainer =
@@ -79,7 +82,6 @@ public class BlobCopierConnectedTest extends BaseAzureConnectedTest {
                     .resourceId(UUID.randomUUID())
                     .build())
             .storageContainerName(sourceScName)
-            .storageAccountId(storageAcct.getResourceId())
             .build();
     createResource(workspaceId, userRequest, sourceContainer);
 
@@ -92,7 +94,6 @@ public class BlobCopierConnectedTest extends BaseAzureConnectedTest {
                     .resourceId(UUID.randomUUID())
                     .build())
             .storageContainerName(destScName)
-            .storageAccountId(storageAcct.getResourceId())
             .build();
     createResource(workspaceId, userRequest, destContainer);
   }
@@ -115,13 +116,9 @@ public class BlobCopierConnectedTest extends BaseAzureConnectedTest {
     var result =
         bc.copyBlobs(
             new StorageData(
-                storageAcct.getStorageAccountName(),
-                storageAcct.getStorageAccountEndpoint(),
-                sourceContainer),
+                storageAcct.name(), storageAcct.endPoints().primary().blob(), sourceContainer),
             new StorageData(
-                storageAcct.getStorageAccountName(),
-                storageAcct.getStorageAccountEndpoint(),
-                destContainer));
+                storageAcct.name(), storageAcct.endPoints().primary().blob(), destContainer));
 
     assertFalse(result.anyFailures());
     var destClient = azureStorageAccessService.buildBlobContainerClient(destContainer, storageAcct);

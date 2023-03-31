@@ -13,7 +13,7 @@ import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
-import bio.terra.workspace.service.resource.controlled.exception.InvalidControlledResourceException;
+import bio.terra.workspace.service.resource.controlled.exception.RegionNotAllowedException;
 import bio.terra.workspace.service.resource.exception.InvalidNameException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
@@ -30,7 +30,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -167,7 +166,7 @@ public class ResourceValidationUtils {
    * <p>This method DOES NOT guarantee that the bucket name is valid.
    *
    * @param name gcs-bucket name
-   * @param validationFailureError
+   * @param validationFailureError validationFailureError
    * @throws InvalidNameException throws exception when the bucket name fails to conform to the
    *     Google naming convention for bucket name.
    */
@@ -199,18 +198,15 @@ public class ResourceValidationUtils {
     }
   }
 
-  public static void validateControlledResourceRegionAgainstPolicy(
-      TpsApiDispatch tpsApiDispatch, UUID workspaceUuid, String location, CloudPlatform platform) {
+  public static void validateRegionAgainstPolicy(
+      TpsApiDispatch tpsApiDispatch, UUID workspaceUuid, String region, CloudPlatform platform) {
     switch (platform) {
-      case AZURE -> {
-        // TODO: enable policy check in Azure when we support Azure regions in the TPS ontology.
-        // validateAzureRegion(location);
-      }
-      case GCP -> validateGcpRegion(tpsApiDispatch, workspaceUuid, location);
+      case AZURE -> validateRegion(tpsApiDispatch, workspaceUuid, region, platform);
+      case GCP -> validateRegion(
+          tpsApiDispatch, workspaceUuid, GcpUtils.parseRegion(region), platform);
       case ANY -> {
         // Flexible resources are not stored on the cloud. Thus, they have no region policies.
       }
-      default -> throw new InvalidControlledResourceException("Unrecognized platform");
     }
   }
 
@@ -259,16 +255,13 @@ public class ResourceValidationUtils {
     }
     // AWS Code commit host server is region specific. Here are the list of all the valid git
     // connection endpoint: https://docs.aws.amazon.com/codecommit/latest/userguide/regions.html.
-    if (hostName.startsWith("git-codecommit.") && hostName.endsWith(".amazonaws.com")) {
-      return true;
-    }
-    return false;
+    return hostName.startsWith("git-codecommit.") && hostName.endsWith(".amazonaws.com");
   }
   /**
    * Validate GCS object name.
    *
    * @param objectName full path to the object in the bucket
-   * @throws InvalidNameException
+   * @throws InvalidNameException InvalidNameException
    */
   public static void validateGcsObjectName(String objectName) {
     int nameLength = objectName.getBytes(StandardCharsets.UTF_8).length;
@@ -368,7 +361,7 @@ public class ResourceValidationUtils {
   public static void validateBqDataTableName(String name) {
     if (StringUtils.isEmpty(name)
         || !BQ_DATATABLE_NAME_VALIDATION_PATTERN.matcher(name).matches()) {
-      logger.warn("Invalid data table name %s", name);
+      logger.warn("Invalid data table name {}", name);
       throw new InvalidNameException(
           "Invalid BQ table name specified. Name must be 1-1024 characters, contains Unicode characters in category L"
               + " (letter), M (mark), N (number), Pc (connector, including underscore), Pd (dash), Zs (space)");
@@ -454,8 +447,8 @@ public class ResourceValidationUtils {
 
   public static void validateAzureVmSize(String vmSize) {
     if (!VirtualMachineSizeTypes.values().stream()
-        .map(x -> x.toString())
-        .collect(Collectors.toList())
+        .map(VirtualMachineSizeTypes::toString)
+        .toList()
         .contains(vmSize)) {
       logger.warn("Invalid Azure vmSize {}", vmSize);
       throw new InvalidReferenceException(
@@ -463,33 +456,19 @@ public class ResourceValidationUtils {
     }
   }
 
-  public static void validateAzureRegion(String region) {
-    if (StringUtils.isEmpty(region)) {
-      // Azure resources like workspaces may not have a region.
-      logger.warn("Cannot validate empty Azure region.");
-      return;
-    }
-    if (com.azure.core.management.Region.values().stream()
-        .filter(r -> r.toString().equalsIgnoreCase(region))
-        .findFirst()
-        .isEmpty()) {
-      logger.warn("Invalid Azure region {}", region);
-      throw new InvalidControlledResourceException("Invalid Azure Region specified.");
-    }
-  }
-
-  public static void validateGcpRegion(
-      TpsApiDispatch tpsApiDispatch, UUID workspaceId, String region) {
-    region = GcpUtils.parseRegion(region);
+  public static void validateRegion(
+      TpsApiDispatch tpsApiDispatch, UUID workspaceId, String region, CloudPlatform cloudPlatform) {
     tpsApiDispatch.createPaoIfNotExist(workspaceId);
 
     // Get the list of valid locations for this workspace from TPS. If there are no regional
     // constraints applied to the workspace, TPS should return all available regions.
-    List<String> validLocations = tpsApiDispatch.listValidRegions(workspaceId, CloudPlatform.GCP);
+    List<String> validLocations = tpsApiDispatch.listValidRegions(workspaceId, cloudPlatform);
 
     if (validLocations.stream().noneMatch(region::equalsIgnoreCase)) {
-      throw new InvalidControlledResourceException(
-          String.format("Specified location %s is not allowed by effective policy.", region));
+      throw new RegionNotAllowedException(
+          String.format(
+              "Specified region %s is not allowed by effective policy. Allowed regions are %s",
+              region, validLocations));
     }
   }
 

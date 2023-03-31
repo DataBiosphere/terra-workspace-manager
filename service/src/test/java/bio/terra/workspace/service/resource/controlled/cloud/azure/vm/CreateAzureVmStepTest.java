@@ -22,8 +22,6 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -65,8 +63,6 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
 
   private static final String STUB_STRING_RETURN = "stubbed-return";
   private static final String STUB_DISK_NAME = "stub-disk-name";
-  private static final String STUB_IP_NAME = "stub-disk-name";
-  private static final String STUB_NETWORK_NAME = "stub-network-name";
   private static final String STUB_SUBNET_NAME = "stub-subnet-name";
   private static final String STUB_NETWORK_INTERFACE_NAME = "nic-name";
 
@@ -187,12 +183,10 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
       mockNetworkStage15;
 
   @Mock private WsmResource mockWsmResource;
-  @Mock private ControlledAzureIpResource mockAzureIpResource;
   @Mock private ControlledAzureDiskResource mockAzureDiskResource;
-  @Mock private ControlledAzureNetworkResource mockAzureNetworkResource;
   @Mock private FlightMap mockWorkingMap;
 
-  private ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
+  private final ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
 
   @Mock private NicIpConfiguration mockIpConfiguration;
 
@@ -287,16 +281,9 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
     when(mockResourceDao.getResource(any(UUID.class), any(UUID.class))).thenReturn(mockWsmResource);
     when(mockWsmResource.castByEnum(WsmResourceType.CONTROLLED_AZURE_DISK))
         .thenReturn(mockAzureDiskResource);
-    when(mockWsmResource.castByEnum(WsmResourceType.CONTROLLED_AZURE_IP))
-        .thenReturn(mockAzureIpResource);
-    when(mockWsmResource.castByEnum(WsmResourceType.CONTROLLED_AZURE_NETWORK))
-        .thenReturn(mockAzureNetworkResource);
 
     // Resource mocks
     when(mockAzureDiskResource.getDiskName()).thenReturn(STUB_DISK_NAME);
-    when(mockAzureIpResource.getIpName()).thenReturn(STUB_IP_NAME);
-    when(mockAzureNetworkResource.getNetworkName()).thenReturn(STUB_NETWORK_NAME);
-    when(mockAzureNetworkResource.getSubnetName()).thenReturn(STUB_SUBNET_NAME);
 
     // Exception mock
     when(mockException.getValue())
@@ -350,14 +337,13 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
     CreateVirtualMachineRequestData expected =
         CreateVirtualMachineRequestData.builder()
             .setName(creationParameters.getName())
-            .setRegion(Region.fromName(creationParameters.getRegion()))
+            .setRegion(Region.fromName(STUB_NETWORK_REGION_NAME))
             .setTenantId(mockAzureCloudContext.getAzureTenantId())
             .setSubscriptionId(mockAzureCloudContext.getAzureSubscriptionId())
             .setResourceGroupName(mockAzureCloudContext.getAzureResourceGroupId())
             .setDisk(mockDisk)
             .setNetwork(mockNetwork)
             .setSubnetName(STUB_SUBNET_NAME)
-            .setPublicIpAddress(mockPublicIpAddress)
             .setImage(
                 AzureVmUtils.getImageData(
                     ControlledResourceFixtures.getAzureVmCreationParameters().getVmImage()))

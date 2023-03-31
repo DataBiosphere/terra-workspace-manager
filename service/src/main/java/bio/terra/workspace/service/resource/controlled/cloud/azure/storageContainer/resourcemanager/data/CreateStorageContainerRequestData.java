@@ -4,7 +4,6 @@ import bio.terra.cloudres.common.CloudOperation;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.resourcemanager.StorageManagerOperation;
 import com.google.auto.value.AutoValue;
 import com.google.gson.JsonObject;
-import java.util.UUID;
 
 @AutoValue
 public abstract class CreateStorageContainerRequestData extends BaseStorageContainerRequestData {
@@ -16,8 +15,7 @@ public abstract class CreateStorageContainerRequestData extends BaseStorageConta
 
   @Override
   public JsonObject serialize() {
-    JsonObject requestData = super.serializeCommon();
-    return requestData;
+    return super.serializeCommon();
   }
 
   public static Builder builder() {
@@ -26,8 +24,6 @@ public abstract class CreateStorageContainerRequestData extends BaseStorageConta
 
   @AutoValue.Builder
   public abstract static class Builder {
-
-    public abstract CreateStorageContainerRequestData.Builder setStorageAccountId(UUID value);
 
     public abstract CreateStorageContainerRequestData.Builder setStorageContainerName(String value);
 

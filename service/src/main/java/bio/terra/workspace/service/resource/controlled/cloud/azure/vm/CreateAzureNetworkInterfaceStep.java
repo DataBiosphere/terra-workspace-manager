@@ -17,9 +17,6 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
-import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementException;
@@ -27,7 +24,6 @@ import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.network.NetworkManager;
 import com.azure.resourcemanager.network.models.Network;
 import com.azure.resourcemanager.network.models.NetworkInterface;
-import com.azure.resourcemanager.network.models.PublicIpAddress;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -71,27 +67,10 @@ public class CreateAzureNetworkInterfaceStep implements Step {
                 AzureCloudContext.class);
     ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
 
-    final Optional<ControlledAzureIpResource> ipResource =
-        Optional.ofNullable(resource.getIpId())
-            .map(
-                ipId ->
-                    resourceDao
-                        .getResource(resource.getWorkspaceId(), ipId)
-                        .castByEnum(WsmResourceType.CONTROLLED_AZURE_IP));
-
     String networkInterfaceName = String.format("nic-%s", resource.getVmName());
     try {
-      Optional<PublicIpAddress> existingAzureIp =
-          ipResource.map(
-              ipRes ->
-                  computeManager
-                      .networkManager()
-                      .publicIpAddresses()
-                      .getByResourceGroup(
-                          azureCloudContext.getAzureResourceGroupId(), ipRes.getIpName()));
-
       NetworkSubnetPair existingNetwork =
-          getExistingNetworkResources(azureCloudContext, computeManager.networkManager());
+          getNetworkResourcesFromLandingZone(computeManager.networkManager());
 
       NetworkInterface networkInterface =
           createNetworkInterface(
@@ -99,8 +78,7 @@ public class CreateAzureNetworkInterfaceStep implements Step {
               azureCloudContext,
               networkInterfaceName,
               existingNetwork.network(),
-              existingNetwork.subnet().name(),
-              existingAzureIp);
+              existingNetwork.subnet().name());
 
       // create vm step will use these later
       context
@@ -128,27 +106,7 @@ public class CreateAzureNetworkInterfaceStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
-  NetworkSubnetPair getExistingNetworkResources(
-      AzureCloudContext azureCloudContext, NetworkManager networkManager) {
-
-    // we are considering the network id to be optional
-    if (resource.getNetworkId() == null) {
-      return getNetworkResourcesFromLandingZone(networkManager);
-    }
-
-    final ControlledAzureNetworkResource networkResource =
-        resourceDao
-            .getResource(resource.getWorkspaceId(), resource.getNetworkId())
-            .castByEnum(WsmResourceType.CONTROLLED_AZURE_NETWORK);
-
-    return NetworkSubnetPair.createNetworkSubnetPair(
-        networkManager,
-        azureCloudContext.getAzureResourceGroupId(),
-        networkResource.getNetworkName(),
-        networkResource.getSubnetName());
-  }
-
-  private NetworkSubnetPair getNetworkResourcesFromLandingZone(NetworkManager networkManager) {
+  NetworkSubnetPair getNetworkResourcesFromLandingZone(NetworkManager networkManager) {
     var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
     final UUID lzId =
         landingZoneApiDispatch.getLandingZoneId(bearerToken, resource.getWorkspaceId());
@@ -202,8 +160,7 @@ public class CreateAzureNetworkInterfaceStep implements Step {
       AzureCloudContext azureCloudContext,
       String networkInterfaceName,
       Network existingNetwork,
-      String subnetName,
-      Optional<PublicIpAddress> existingAzureIp) {
+      String subnetName) {
     var createNicStep =
         computeManager
             .networkManager()
@@ -214,7 +171,6 @@ public class CreateAzureNetworkInterfaceStep implements Step {
             .withExistingPrimaryNetwork(existingNetwork)
             .withSubnet(subnetName)
             .withPrimaryPrivateIPAddressDynamic();
-    existingAzureIp.ifPresent(createNicStep::withExistingPrimaryPublicIPAddress);
     return createNicStep.create();
   }
 }

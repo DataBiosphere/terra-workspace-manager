@@ -68,7 +68,7 @@ public class GetAzureDiskStepTest extends BaseAzureConnectedTest {
             mockCrlService,
             ControlledResourceFixtures.getAzureDisk(
                 creationParameters.getName(),
-                creationParameters.getRegion(),
+                ControlledResourceFixtures.DEFAULT_AZURE_RESOURCE_REGION,
                 creationParameters.getSize()));
 
     when(mockDisks.getByResourceGroup(
@@ -92,7 +92,7 @@ public class GetAzureDiskStepTest extends BaseAzureConnectedTest {
             mockCrlService,
             ControlledResourceFixtures.getAzureDisk(
                 creationParameters.getName(),
-                creationParameters.getRegion(),
+                ControlledResourceFixtures.DEFAULT_AZURE_RESOURCE_REGION,
                 creationParameters.getSize()));
 
     when(mockDisks.getByResourceGroup(

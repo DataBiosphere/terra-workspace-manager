@@ -96,7 +96,8 @@ public class FindResourcesToCloneStep implements Step {
   private static boolean isCloneable(WsmResource resource) {
     return StewardshipType.REFERENCED == resource.getStewardshipType()
         || (StewardshipType.CONTROLLED == resource.getStewardshipType()
-            && (WsmResourceType.CONTROLLED_GCP_GCS_BUCKET == resource.getResourceType()
+            && (WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE == resource.getResourceType()
+                || WsmResourceType.CONTROLLED_GCP_GCS_BUCKET == resource.getResourceType()
                 || WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET == resource.getResourceType()
                 || WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER
                     == resource.getResourceType()));

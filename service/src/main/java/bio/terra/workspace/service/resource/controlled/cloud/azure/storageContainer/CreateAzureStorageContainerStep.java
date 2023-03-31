@@ -66,15 +66,13 @@ public class CreateAzureStorageContainerStep implements Step {
           .create(
               Defaults.buildContext(
                   CreateStorageContainerRequestData.builder()
-                      .setStorageAccountId(resource.getStorageAccountId())
                       .setStorageContainerName(resource.getStorageContainerName())
                       .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
                       .build()));
     } catch (ManagementException e) {
       logger.error(
-          "Failed to create the Azure storage container '{}' with storage account with the ID '{}'. Error Code: {}",
+          "Failed to create the Azure storage container '{}'. Error Code: {}",
           resource.getStorageContainerName(),
-          resource.getStorageAccountId(),
           e.getValue().getCode(),
           e);
 
@@ -88,9 +86,9 @@ public class CreateAzureStorageContainerStep implements Step {
    * Deletes the storage container if the container is available. If the storage container is
    * available and deletes fails, the failure is considered fatal and must looked into it.
    *
-   * @param context
+   * @param context context
    * @return Step result.
-   * @throws InterruptedException
+   * @throws InterruptedException InterruptedException
    */
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {

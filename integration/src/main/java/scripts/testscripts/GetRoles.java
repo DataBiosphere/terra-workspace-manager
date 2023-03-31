@@ -48,7 +48,7 @@ public class GetRoles extends WorkspaceAllocateTestScriptBase {
   /**
    * Specify an MC Terra workspace so that roles are supported.
    *
-   * @return
+   * @return WorkspaceStageModel
    */
   @Override
   protected WorkspaceStageModel getStageModel() {

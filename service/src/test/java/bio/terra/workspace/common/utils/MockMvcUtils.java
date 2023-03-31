@@ -103,6 +103,7 @@ import bio.terra.workspace.generated.model.ApiPrivateResourceState;
 import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
 import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiPropertyKeys;
+import bio.terra.workspace.generated.model.ApiRegions;
 import bio.terra.workspace.generated.model.ApiResourceDescription;
 import bio.terra.workspace.generated.model.ApiResourceLineage;
 import bio.terra.workspace.generated.model.ApiResourceLineageEntry;
@@ -1169,7 +1170,7 @@ public class MockMvcUtils {
     // ApiErrorReport.
     ApiCloneControlledGcpBigQueryDatasetResult result =
         getCloneControlledBqDatasetResult(userRequest, workspaceId, jobId);
-    ApiErrorReport errorReport = null;
+    ApiErrorReport errorReport;
     while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
       Thread.sleep(/*millis=*/ 3000);
       String serializedResponse =
@@ -1398,13 +1399,13 @@ public class MockMvcUtils {
             .cloningInstructions(cloningInstructions)
             .name(TestUtils.appendRandomNumber(DEST_BUCKET_RESOURCE_NAME))
             .jobControl(new ApiJobControl().id(UUID.randomUUID().toString()));
-    if (destResourceName != "") {
+    if (!StringUtils.isEmpty(destResourceName)) {
       request.name(destResourceName);
     }
-    if (destBucketName != "") {
+    if (!StringUtils.isEmpty(destBucketName)) {
       request.bucketName(destBucketName);
     }
-    if (destLocation != "") {
+    if (!StringUtils.isEmpty(destLocation)) {
       request.location(destLocation);
     }
     MockHttpServletResponse response =
@@ -1436,7 +1437,7 @@ public class MockMvcUtils {
     // ApiErrorReport.
     ApiCloneControlledGcpGcsBucketResult result =
         getCloneControlledGcsBucketResult(userRequest, workspaceId, jobId);
-    ApiErrorReport errorReport = null;
+    ApiErrorReport errorReport;
     while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
       Thread.sleep(/*millis=*/ 3000);
       String serializedResponse =
@@ -2827,6 +2828,24 @@ public class MockMvcUtils {
                     .content(objectMapper.writeValueAsString(updateRequest)),
                 userRequest))
         .andExpect(status().is(code));
+  }
+
+  public ApiRegions listValidRegions(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, String platform) throws Exception {
+    var serializedResponse =
+        mockMvc
+            .perform(
+                addAuth(
+                    get(String.format(WORKSPACES_V1_LIST_VALID_REGIONS_PATH_FORMAT, workspaceId))
+                        .queryParam("platform", platform)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .characterEncoding("UTF-8"),
+                    userRequest))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    return objectMapper.readValue(serializedResponse, ApiRegions.class);
   }
 
   public ApiWsmPolicyUpdateResult removeRegionPolicy(

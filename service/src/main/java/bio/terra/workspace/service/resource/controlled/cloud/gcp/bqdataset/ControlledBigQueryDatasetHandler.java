@@ -50,17 +50,15 @@ public class ControlledBigQueryDatasetHandler implements WsmResourceHandler {
         Optional.ofNullable(attributes.getProjectId())
             .orElse(gcpCloudContextService.getRequiredGcpProject(dbResource.getWorkspaceId()));
 
-    var resource =
-        ControlledBigQueryDatasetResource.builder()
-            .datasetName(
-                ControlledBigQueryDatasetHandler.getHandler()
-                    .generateCloudName(dbResource.getWorkspaceId(), attributes.getDatasetName()))
-            .projectId(projectId)
-            .defaultTableLifetime(attributes.getDefaultTableLifetime())
-            .defaultPartitionLifetime(attributes.getDefaultPartitionLifetime())
-            .common(new ControlledResourceFields(dbResource))
-            .build();
-    return resource;
+    return ControlledBigQueryDatasetResource.builder()
+        .datasetName(
+            ControlledBigQueryDatasetHandler.getHandler()
+                .generateCloudName(dbResource.getWorkspaceId(), attributes.getDatasetName()))
+        .projectId(projectId)
+        .defaultTableLifetime(attributes.getDefaultTableLifetime())
+        .defaultPartitionLifetime(attributes.getDefaultPartitionLifetime())
+        .common(new ControlledResourceFields(dbResource))
+        .build();
   }
 
   /**

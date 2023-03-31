@@ -25,13 +25,11 @@ public class ControlledAzureDiskHandler implements WsmResourceHandler {
     ControlledAzureDiskAttributes attributes =
         DbSerDes.fromJson(dbResource.getAttributes(), ControlledAzureDiskAttributes.class);
 
-    var resource =
-        ControlledAzureDiskResource.builder()
-            .diskName(attributes.getDiskName())
-            .size(attributes.getSize())
-            .common(new ControlledResourceFields(dbResource, attributes.getRegion()))
-            .build();
-    return resource;
+    return ControlledAzureDiskResource.builder()
+        .diskName(attributes.getDiskName())
+        .size(attributes.getSize())
+        .common(new ControlledResourceFields(dbResource, attributes.getRegion()))
+        .build();
   }
 
   public String generateCloudName(@Nullable UUID workspaceUuid, String resourceName) {

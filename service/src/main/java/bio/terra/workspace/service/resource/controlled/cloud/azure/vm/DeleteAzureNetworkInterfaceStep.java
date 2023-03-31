@@ -20,7 +20,7 @@ public class DeleteAzureNetworkInterfaceStep implements Step {
   private final CrlService crlService;
   // Network interface is not a freestanding WSM resource. It is tightly coupled to the Vm.
   private final ControlledAzureVmResource resource;
-  private String networkInterfaceName;
+  private final String networkInterfaceName;
 
   public DeleteAzureNetworkInterfaceStep(
       AzureConfiguration azureConfig, CrlService crlService, ControlledAzureVmResource resource) {

@@ -42,7 +42,6 @@ public class CloneControlledFlexibleResourceFlight extends Flight {
         inputParameters,
         WorkspaceFlightMapKeys.ResourceKeys.RESOURCE,
         JobMapKeys.AUTH_USER_INFO.getKeyName(),
-        WorkspaceFlightMapKeys.ResourceKeys.CLONING_INSTRUCTIONS,
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_ID,
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID);
 
