@@ -456,7 +456,8 @@ public class WorkspaceService {
    *
    * @param workspace workspace in which to create the context
    * @param defaultZone default zone for newly-created resources. Region validation and zone
-   *     conversion are performed at the controller level.
+   *     conversion are performed at the ?? level. (TODO (aaronwa@): change comments and centralize
+   *     defaulting.)
    * @param jobId caller-supplied job id of the async job
    * @param userRequest user authentication info
    * @param resultPath optional endpoint where the result of the completed job can be retrieved
