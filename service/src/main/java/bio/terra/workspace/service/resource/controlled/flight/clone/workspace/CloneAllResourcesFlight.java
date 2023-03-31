@@ -14,6 +14,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.util.retry.Retry;
 
 /**
  * This flight uses a dynamic list of steps depending on ControlledResourceKeys.RESOURCES_TO_CLONE
@@ -107,6 +108,11 @@ public class CloneAllResourcesFlight extends Flight {
                     resourceCloneInputs.getFlightId(),
                     resourceCloneInputs.getDestinationResourceId(),
                     resourceCloneInputs.getDestinationFolderId()),
+                RetryRules.shortDatabase());
+            addStep(
+                new AwaitCloneControlledFlexibleResourceFlightStep(
+                    resource.castByEnum(WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE),
+                    resourceCloneInputs.getFlightId()),
                 RetryRules.shortDatabase());
           }
           case CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE ->
