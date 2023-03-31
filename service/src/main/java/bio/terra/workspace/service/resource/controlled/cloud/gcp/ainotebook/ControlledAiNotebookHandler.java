@@ -64,12 +64,12 @@ public class ControlledAiNotebookHandler implements WsmResourceHandler {
             .orElse(gcpCloudContextService.getRequiredGcpProject(dbResource.getWorkspaceId()));
 
     // Notebook attributes created prior to PF-2323 do not have machineType or acceleratorConfig
-    // stored.
+    // stored. Note: machineType is required.
     // Thus, retrieve these two values from the cloud.
     String retrievedMachineType = attributes.getMachineType();
     AcceleratorConfig retrievedAcceleratorConfig = attributes.getAcceleratorConfig();
 
-    if (retrievedMachineType == null || retrievedAcceleratorConfig == null) {
+    if (retrievedMachineType == null) {
       try (NotebookServiceClient notebookServiceClient = NotebookServiceClient.create()) {
         InstanceName instanceName =
             InstanceName.builder()
