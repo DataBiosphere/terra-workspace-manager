@@ -31,6 +31,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.Acce
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants;
 import java.util.List;
 import java.util.UUID;
+import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -167,6 +168,23 @@ public class ControlledGcpResourceApiControllerAiNotebookTest extends BaseConnec
     assertEquals(
         DEFAULT_AI_NOTEBOOK_ACCELERATOR_CONFIG.coreCount(),
         updatedNotebook.getAttributes().getAcceleratorConfig().getCoreCount());
+  }
+
+  @Test
+  public void updateAiNotebookInstance_notStopped_throws() throws Exception {
+    ApiGcpAiNotebookInstanceResource notebook =
+        mockMvcUtils
+            .createAiNotebookInstance(userAccessUtils.defaultUserAuthRequest(), workspaceId, null)
+            .getAiNotebookInstance();
+
+    // By default, the notebook will be running (i.e., not stopping or stopped).
+    mockMvcUtils.updateAiNotebookInstanceAndExpect(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId,
+        notebook.getMetadata().getResourceId(),
+        DEFAULT_AI_NOTEBOOK_MACHINE_TYPE_ALLOWING_ACCELERATOR_CONFIG,
+        AcceleratorConfig.toApiAcceleratorConfig(DEFAULT_AI_NOTEBOOK_ACCELERATOR_CONFIG),
+        HttpStatus.SC_CONFLICT);
   }
 
   @Test

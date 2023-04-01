@@ -816,6 +816,18 @@ public class MockMvcUtils {
       String machineType,
       @Nullable ApiGcpAiNotebookInstanceAcceleratorConfig acceleratorConfig)
       throws Exception {
+    return updateAiNotebookInstanceAndExpect(
+        userRequest, workspaceId, resourceId, machineType, acceleratorConfig, HttpStatus.SC_OK);
+  }
+
+  public ApiGcpAiNotebookInstanceResource updateAiNotebookInstanceAndExpect(
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      UUID resourceId,
+      String machineType,
+      @Nullable ApiGcpAiNotebookInstanceAcceleratorConfig acceleratorConfig,
+      int code)
+      throws Exception {
     String request =
         objectMapper.writeValueAsString(
             new ApiUpdateControlledGcpAiNotebookInstanceRequestBody()
@@ -831,7 +843,7 @@ public class MockMvcUtils {
         resourceId,
         request,
         userRequest,
-        HttpStatus.SC_OK);
+        code);
   }
 
   public ApiCreatedControlledGcpBigQueryDataset createControlledBqDataset(
