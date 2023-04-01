@@ -8,11 +8,13 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAcceleratorConfig;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookUpdateParameters;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
+import com.google.api.services.notebooks.v1.model.AcceleratorConfig;
 import com.google.api.services.notebooks.v1.model.Instance;
 import com.google.cloud.notebooks.v1.NotebookServiceClient;
 import java.io.IOException;
@@ -43,15 +45,18 @@ public class RetrieveAiNotebookResourceAttributesStep implements Step {
     try {
       Instance instance = notebooksCow.instances().get(instanceName).execute();
       Map<String, String> metadata = instance.getMetadata();
-      ApiGcpAiNotebookUpdateParameters existingUpdateParameters =
-          new ApiGcpAiNotebookUpdateParameters().metadata(metadata);
-      workingMap.put(ControlledResourceKeys.PREVIOUS_UPDATE_PARAMETERS, existingUpdateParameters);
-      workingMap.put(
-          ControlledResourceKeys.PREVIOUS_MACHINE_TYPE,
-          getMachineTypeFromUrl(instance.getMachineType()));
-      workingMap.put(
-          ControlledResourceKeys.PREVIOUS_ACCELERATOR_CONFIG, instance.getAcceleratorConfig());
 
+      AcceleratorConfig acceleratorConfig = instance.getAcceleratorConfig();
+      ApiGcpAiNotebookUpdateParameters existingUpdateParameters =
+          new ApiGcpAiNotebookUpdateParameters()
+              .metadata(metadata)
+              .machineType(getMachineTypeFromUrl(instance.getMachineType()))
+              .acceleratorConfig(
+                  new ApiGcpAiNotebookInstanceAcceleratorConfig()
+                      .type(acceleratorConfig.getType())
+                      .coreCount(acceleratorConfig.getCoreCount()));
+
+      workingMap.put(ControlledResourceKeys.PREVIOUS_UPDATE_PARAMETERS, existingUpdateParameters);
     } catch (GoogleJsonResponseException e) {
       if (HttpStatus.BAD_REQUEST.value() == e.getStatusCode()
           || HttpStatus.NOT_FOUND.value() == e.getStatusCode()) {

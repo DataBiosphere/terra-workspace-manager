@@ -6,6 +6,8 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.generated.model.ApiGcpAiNotebookUpdateParameters;
+import bio.terra.workspace.generated.model.ApiUpdateControlledGcpAiNotebookInstanceRequestBody;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
@@ -14,6 +16,9 @@ import java.io.IOException;
 import java.util.Objects;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
+
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.PREVIOUS_UPDATE_PARAMETERS;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys.UPDATE_PARAMETERS;
 
 /**
  * The notebook instance must be stopped for CPU and GPU updates to occur. If the requested CPU
@@ -39,29 +44,26 @@ public class CheckAiNotebookStoppedForGpuAndCpuUpdateStep implements Step {
     // successfully (i.e., no need to check if the notebook is stopped).
 
     // First, calculate the effective update instructions.
-    String previousMachineType =
-        context
-            .getWorkingMap()
-            .get(WorkspaceFlightMapKeys.ControlledResourceKeys.PREVIOUS_MACHINE_TYPE, String.class);
+    ApiGcpAiNotebookUpdateParameters prevParameters =
+        Objects.requireNonNull(
+            context
+                .getWorkingMap()
+                .get(PREVIOUS_UPDATE_PARAMETERS, ApiGcpAiNotebookUpdateParameters.class));
+
+    String previousMachineType = prevParameters.getMachineType();
 
     AcceleratorConfig previousAcceleratorConfig =
-        context
-            .getWorkingMap()
-            .get(
-                WorkspaceFlightMapKeys.ControlledResourceKeys.PREVIOUS_ACCELERATOR_CONFIG,
-                AcceleratorConfig.class);
+        AcceleratorConfig.fromApiAcceleratorConfig(prevParameters.getAcceleratorConfig());
+
+    ApiGcpAiNotebookUpdateParameters updateParameters =
+        context.getInputParameters().get(UPDATE_PARAMETERS, ApiGcpAiNotebookUpdateParameters.class);
 
     String requestedNewMachineType =
-        context
-            .getInputParameters()
-            .get(WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_MACHINE_TYPE, String.class);
+        updateParameters == null ? null : updateParameters.getMachineType();
 
     AcceleratorConfig requestedNewAcceleratorConfig =
-        context
-            .getInputParameters()
-            .get(
-                WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_ACCELERATOR_CONFIG,
-                AcceleratorConfig.class);
+        AcceleratorConfig.fromApiAcceleratorConfig(
+            updateParameters == null ? null : updateParameters.getAcceleratorConfig());
 
     // If attributes are the same as the previous, then no update is required.
     String effectiveMachineType =
@@ -75,16 +77,13 @@ public class CheckAiNotebookStoppedForGpuAndCpuUpdateStep implements Step {
             : requestedNewAcceleratorConfig;
 
     // Place the effective update instructions in the working map for future steps.
-    context
-        .getWorkingMap()
-        .put(
-            WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_MACHINE_TYPE,
-            effectiveMachineType);
-    context
-        .getWorkingMap()
-        .put(
-            WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_ACCELERATOR_CONFIG,
-            effectiveAcceleratorConfig);
+    ApiGcpAiNotebookUpdateParameters effectiveUpdateParameters =
+        new ApiGcpAiNotebookUpdateParameters()
+            .machineType(effectiveMachineType)
+            .acceleratorConfig(
+                AcceleratorConfig.toApiAcceleratorConfig(effectiveAcceleratorConfig));
+
+    context.getWorkingMap().put(UPDATE_PARAMETERS, effectiveUpdateParameters);
 
     // No update requested OR the requested update does not differ from the original attributes.
     if ((requestedNewMachineType == null && requestedNewAcceleratorConfig == null)
