@@ -10,6 +10,7 @@ import bio.terra.workspace.generated.model.ApiGitRepoAttributes;
 import bio.terra.workspace.generated.model.ApiGitRepoResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.resource.flight.UpdateResourceFlight;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
@@ -133,6 +134,11 @@ public class ReferencedGitRepoResource extends ReferencedResource {
 
   public ApiGitRepoResource toApiResource() {
     return new ApiGitRepoResource().metadata(super.toApiMetadata()).attributes(toApiAttributes());
+  }
+
+  @Override
+  public void addUpdateSteps(UpdateResourceFlight flight, FlightBeanBag flightBeanBag) {
+    flight.addStep(new UpdateGitRepoReferenceStep());
   }
 
   @Override

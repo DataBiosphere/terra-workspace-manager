@@ -5,20 +5,14 @@ import static bio.terra.workspace.connected.AzureConnectedTestUtils.getAzureName
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import bio.terra.stairway.FlightState;
-import bio.terra.stairway.FlightStatus;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
-import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.connected.LandingZoneTestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
-import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
-import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
@@ -28,7 +22,6 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -111,46 +104,6 @@ public class AzureControlledStorageContainerFlightTest extends BaseAzureConnecte
     // because the get function takes a different number of arguments. Also no need to sleep another
     // 5 seconds.)
     verifyStorageAccountContainerIsDeleted(storageContainerName);
-  }
-
-  @Disabled("TODO(TOAZ-286): Re-enable this test when the ticket is fixed")
-  @Test
-  public void
-      createAzureStorageContainerFlightFailedBecauseLandingZoneDoesntHaveSharedStorageAccount()
-          throws InterruptedException {
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
-
-    // create quasi landing zone without resources
-    UUID alternateLandingZoneId = UUID.fromString(landingZoneTestUtils.getDefaultLandingZoneId());
-
-    testLandingZoneManager.createLandingZone(alternateLandingZoneId, workspaceUuid);
-
-    // Submit a storage container creation flight which should error out
-    final UUID containerResourceId = UUID.randomUUID();
-    final String storageContainerName = ControlledResourceFixtures.uniqueBucketName();
-    ControlledAzureStorageContainerResource containerResource =
-        ControlledResourceFixtures.getAzureStorageContainer(
-            workspaceUuid,
-            containerResourceId,
-            storageContainerName,
-            getAzureName("rc"),
-            getAzureName("rc-desc"));
-
-    FlightState flightState =
-        StairwayTestUtils.blockUntilFlightCompletes(
-            jobService.getStairway(),
-            CreateControlledResourceFlight.class,
-            azureTestUtils.createControlledResourceInputParameters(
-                workspaceUuid, userRequest, containerResource, null),
-            STAIRWAY_FLIGHT_TIMEOUT,
-            null);
-
-    assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
-    assertTrue(flightState.getException().isPresent());
-    assertEquals(ResourceNotFoundException.class, flightState.getException().get().getClass());
-
-    // clean up resources - delete alternate lz database record only
-    testLandingZoneManager.deleteLandingZone(alternateLandingZoneId);
   }
 
   private void verifyStorageAccountContainerIsDeleted(String containerName) {

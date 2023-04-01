@@ -1,75 +1,51 @@
 package bio.terra.workspace.service.resource.controlled.cloud.any.flight.update;
 
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_FLEX_DATA;
-
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.db.DbSerDes;
-import bio.terra.workspace.db.ResourceDao;
-import bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresource.ControlledFlexibleResource;
+import bio.terra.workspace.common.utils.FlightUtils;
+import bio.terra.workspace.db.model.DbUpdater;
 import bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresource.FlexibleResourceAttributes;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 
+/**
+ * The update parameter for flexible resources is simply the decoded string of the updated data. It
+ * may be null.
+ */
 public class UpdateControlledFlexibleResourceAttributesStep implements Step {
-  private final ResourceDao resourceDao;
-  private final ControlledFlexibleResource flexResource;
-
-  public UpdateControlledFlexibleResourceAttributesStep(
-      ResourceDao resourceDao, ControlledFlexibleResource flexResource) {
-    this.resourceDao = resourceDao;
-    this.flexResource = flexResource;
-  }
+  public UpdateControlledFlexibleResourceAttributesStep() {}
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    String previousAttributes = flexResource.attributesToJson();
-    context
-        .getWorkingMap()
-        .put(WorkspaceFlightMapKeys.ResourceKeys.PREVIOUS_ATTRIBUTES, previousAttributes);
-
-    final String updateData = context.getInputParameters().get(UPDATE_FLEX_DATA, String.class);
-
+    DbUpdater dbUpdater =
+        FlightUtils.getRequired(
+            context.getWorkingMap(),
+            WorkspaceFlightMapKeys.ResourceKeys.DB_UPDATER,
+            DbUpdater.class);
+    String updateData =
+        context
+            .getInputParameters()
+            .get(WorkspaceFlightMapKeys.ResourceKeys.UPDATE_PARAMETERS, String.class);
     if (updateData == null) {
       return StepResult.getStepResultSuccess();
     }
 
-    String newAttributes =
-        DbSerDes.toJson(
-            new FlexibleResourceAttributes(
-                flexResource.getTypeNamespace(), flexResource.getType(), updateData));
-    boolean updated =
-        resourceDao.updateResource(
-            flexResource.getWorkspaceId(),
-            flexResource.getResourceId(),
-            /*name=*/ null,
-            /*description=*/ null,
-            newAttributes,
-            /*cloningInstructions=*/ null);
-
-    if (!updated) {
-      throw new RetryException("Failed to update flex resource with new data.");
-    }
+    // Compute the new attributes and save them in the DbUpdater
+    FlexibleResourceAttributes originalAttributes =
+        dbUpdater.getOriginalAttributes(FlexibleResourceAttributes.class);
+    dbUpdater.updateAttributes(
+        new FlexibleResourceAttributes(
+            originalAttributes.getTypeNamespace(), originalAttributes.getType(), updateData));
+    // Save the mutated updater in the map
+    context.getWorkingMap().put(WorkspaceFlightMapKeys.ResourceKeys.DB_UPDATER, dbUpdater);
     return StepResult.getStepResultSuccess();
   }
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    String previousAttributes =
-        flightContext
-            .getWorkingMap()
-            .get(WorkspaceFlightMapKeys.ResourceKeys.PREVIOUS_ATTRIBUTES, String.class);
-    if (previousAttributes == null) {
-      return StepResult.getStepResultSuccess();
-    }
-    resourceDao.updateResource(
-        flexResource.getWorkspaceId(),
-        flexResource.getResourceId(),
-        null,
-        null,
-        previousAttributes,
-        null);
+    // Nothing to undo - the do step mutates the DbUpdater, but does not change any
+    // persistent state.
     return StepResult.getStepResultSuccess();
   }
 }

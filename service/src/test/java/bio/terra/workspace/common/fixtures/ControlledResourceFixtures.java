@@ -446,7 +446,8 @@ public class ControlledResourceFixtures {
   }
 
   /**
-   * Make a bigquery builder with defaults filled in
+   * Make a bigquery builder with defaults filled in NOTE: when using this in a connected test, you
+   * MUST overwrite the project id. "my_project" won't work.
    *
    * @return resource builder
    */

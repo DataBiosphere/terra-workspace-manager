@@ -1,9 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.PREVIOUS_UPDATE_PARAMETERS;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_ACCELERATOR_CONFIG;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_MACHINE_TYPE;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_PARAMETERS;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys.UPDATE_PARAMETERS;
 
 import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
 import bio.terra.cloudres.google.notebooks.InstanceName;
@@ -58,6 +56,12 @@ public class UpdateAiNotebookAttributesStep implements Step {
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     final FlightMap inputMap = context.getInputParameters();
+
+    final ApiGcpAiNotebookUpdateParameters updateParameters =
+        inputMap.get(UPDATE_PARAMETERS, ApiGcpAiNotebookUpdateParameters.class);
+    if (updateParameters == null) {
+      return StepResult.getStepResultSuccess();
+    }
     // First part: update notebook-specific attributes in the database.
     FlightMap workingMap = context.getWorkingMap();
     String previousAttributes = resource.attributesToJson();
@@ -65,9 +69,9 @@ public class UpdateAiNotebookAttributesStep implements Step {
 
     // Use the initial update instructions (the effective update instructions have not been
     // calculated yet).
-    String newMachineType = inputMap.get(UPDATE_MACHINE_TYPE, String.class);
+    String newMachineType = updateParameters.getMachineType();
     AcceleratorConfig newAcceleratorConfig =
-        inputMap.get(UPDATE_ACCELERATOR_CONFIG, AcceleratorConfig.class);
+        AcceleratorConfig.fromApiAcceleratorConfig(updateParameters.getAcceleratorConfig());
 
     if (newMachineType != null || newAcceleratorConfig != null) {
       String newAttributes =
@@ -84,9 +88,7 @@ public class UpdateAiNotebookAttributesStep implements Step {
     }
 
     // Second part: update the attributes (metadata) in the cloud.
-    final ApiGcpAiNotebookUpdateParameters updateParameters =
-        inputMap.get(UPDATE_PARAMETERS, ApiGcpAiNotebookUpdateParameters.class);
-    if (updateParameters == null || updateParameters.getMetadata() == null) {
+    if (updateParameters.getMetadata() == null) {
       return StepResult.getStepResultSuccess();
     }
     Map<String, String> sanitizedMetadata = new HashMap<>();
@@ -161,6 +163,4 @@ public class UpdateAiNotebookAttributesStep implements Step {
     }
     return StepResult.getStepResultSuccess();
   }
-
-  private void updateAiNotebookAttributesInDatabase() {}
 }

@@ -54,6 +54,7 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
+import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresource.ControlledFlexibleResource;
 import bio.terra.workspace.service.resource.controlled.cloud.any.flight.update.UpdateControlledFlexibleResourceAttributesStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.CheckAiNotebookStoppedForGpuAndCpuUpdateStep;
@@ -70,7 +71,6 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.Upda
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.CreateBigQueryDatasetStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.DeleteBigQueryDatasetStep;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.RetrieveBigQueryDatasetCloudAttributesStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.UpdateBigQueryDatasetStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.CreateGcsBucketStep;
@@ -81,11 +81,12 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.Retri
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.UpdateGcsBucketStep;
 import bio.terra.workspace.service.resource.controlled.exception.ReservedMetadataKeyException;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteMetadataStep;
-import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
-import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceMetadataStep;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
+import bio.terra.workspace.service.resource.flight.UpdateFinishStep;
+import bio.terra.workspace.service.resource.flight.UpdateStartStep;
+import bio.terra.workspace.service.resource.model.CommonUpdateParameters;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
@@ -134,6 +135,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   /** The default GCP location to create notebooks for this test. */
   private static final String DEFAULT_NOTEBOOK_LOCATION = "us-east1-b";
 
+  private static final String DEFAULT_DATASET_LOCATION = "us-central1";
+
   // Store workspaceId instead of workspace so that for local development, one can easily use a
   // previously created workspace.
   private UUID workspaceId;
@@ -156,6 +159,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @Autowired private ResourceDao resourceDao;
   @Autowired private JobApiUtils jobApiUtils;
   @Autowired private WorkspaceActivityLogService workspaceActivityLogService;
+  @Autowired private WsmResourceService wsmResourceService;
 
   private static void assertNotFound(InstanceName instanceName, AIPlatformNotebooksCow notebooks) {
     GoogleJsonResponseException exception =
@@ -321,12 +325,12 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     // Test idempotency of undo steps by retrying them once.
     Map<String, StepStatus> retrySteps = new HashMap<>();
+    retrySteps.put(UpdateStartStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
         GrantPetUsagePermissionStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
         CreateAiNotebookInstanceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(
-        UpdateControlledResourceMetadataStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(UpdateFinishStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder()
             // Fail after the last step to test that everything is deleted on undo.
@@ -445,12 +449,11 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         UpdateAiNotebookAttributesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
-    controlledResourceService.updateAiNotebookInstance(
+    wsmResourceService.updateResource(
+        user.getAuthenticatedRequest(),
         fetchedInstance,
-        AI_NOTEBOOK_UPDATE_PARAMETERS,
-        newName,
-        newDescription,
-        user.getAuthenticatedRequest());
+        new CommonUpdateParameters().setName(newName).setDescription(newDescription),
+        AI_NOTEBOOK_UPDATE_PARAMETERS);
 
     ControlledAiNotebookInstanceResource updatedInstance =
         controlledResourceService
@@ -527,8 +530,11 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         UpdateAiNotebookAttributesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
-    controlledResourceService.updateAiNotebookInstance(
-        fetchedInstance, null, newName, newDescription, user.getAuthenticatedRequest());
+    wsmResourceService.updateResource(
+        user.getAuthenticatedRequest(),
+        fetchedInstance,
+        new CommonUpdateParameters().setName(newName).setDescription(newDescription),
+        null);
 
     ControlledAiNotebookInstanceResource updatedInstance =
         controlledResourceService
@@ -571,12 +577,12 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .getControlledResource(workspaceId, resource.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
 
+    Map<String, StepStatus> doErrorStep = new HashMap<>();
+    doErrorStep.put(
+        UpdateAiNotebookAttributesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_FATAL);
+
     Map<String, StepStatus> retrySteps = new HashMap<>();
-    retrySteps.put(
-        RetrieveControlledResourceMetadataStep.class.getName(),
-        StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(
-        UpdateControlledResourceMetadataStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(UpdateStartStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
         RetrieveAiNotebookResourceAttributesStep.class.getName(),
         StepStatus.STEP_RESULT_FAILURE_RETRY);
@@ -589,16 +595,18 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         UpdateAiNotebookCpuAndGpuStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
 
     jobService.setFlightDebugInfoForTest(
-        FlightDebugInfo.newBuilder().undoStepFailures(retrySteps).lastStepFailure(true).build());
+        FlightDebugInfo.newBuilder()
+            .doStepFailures(doErrorStep)
+            .undoStepFailures(retrySteps)
+            .build());
     assertThrows(
         InvalidResultStateException.class,
         () ->
-            controlledResourceService.updateAiNotebookInstance(
+            wsmResourceService.updateResource(
+                user.getAuthenticatedRequest(),
                 fetchedInstance,
-                AI_NOTEBOOK_UPDATE_PARAMETERS,
-                newName,
-                newDescription,
-                user.getAuthenticatedRequest()));
+                new CommonUpdateParameters().setName(newName).setDescription(newDescription),
+                AI_NOTEBOOK_UPDATE_PARAMETERS));
 
     ControlledAiNotebookInstanceResource updatedInstance =
         controlledResourceService
@@ -668,12 +676,11 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertThrows(
         ReservedMetadataKeyException.class,
         () ->
-            controlledResourceService.updateAiNotebookInstance(
+            wsmResourceService.updateResource(
+                user.getAuthenticatedRequest(),
                 fetchedInstance,
-                new ApiGcpAiNotebookUpdateParameters().metadata(illegalMetadataToUpdate),
-                newName,
-                newDescription,
-                user.getAuthenticatedRequest()));
+                new CommonUpdateParameters().setName(newName).setDescription(newDescription),
+                new ApiGcpAiNotebookUpdateParameters().metadata(illegalMetadataToUpdate)));
 
     ControlledAiNotebookInstanceResource updatedInstance =
         controlledResourceService
@@ -828,6 +835,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetId).location(location);
     ControlledBigQueryDatasetResource resource =
         ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
+            .projectId(projectId)
             .datasetName(datasetId)
             .build();
 
@@ -852,12 +860,11 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         new ApiGcpBigQueryDatasetUpdateParameters()
             .defaultTableLifetime(newDefaultTableLifetime)
             .defaultPartitionLifetime(newDefaultPartitionLifetime);
-    controlledResourceService.updateBqDataset(
+    wsmResourceService.updateResource(
+        userAccessUtils.defaultUser().getAuthenticatedRequest(),
         fetchedDataset,
-        updateParameters,
-        newName,
-        newDescription,
-        userAccessUtils.defaultUserAuthRequest());
+        new CommonUpdateParameters().setName(newName).setDescription(newDescription),
+        updateParameters);
 
     ControlledBigQueryDatasetResource updatedResource =
         controlledResourceService
@@ -901,6 +908,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .defaultPartitionLifetime(defaultPartitionLifetimeSec);
     ControlledBigQueryDatasetResource resource =
         ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
+            .projectId(projectId)
             .datasetName(datasetId)
             .build();
 
@@ -940,6 +948,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetId).location(location);
     ControlledBigQueryDatasetResource resource =
         ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
+            .projectId(projectId)
             .datasetName(datasetId)
             .build();
 
@@ -985,6 +994,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetId).location(location);
     ControlledBigQueryDatasetResource resource =
         ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
+            .projectId(projectId)
             .datasetName(datasetId)
             .build();
 
@@ -1029,6 +1039,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetId).location(location);
     ControlledBigQueryDatasetResource resource =
         ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
+            .projectId(projectId)
             .datasetName(datasetId)
             .build();
 
@@ -1069,27 +1080,13 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void updateBqDatasetDo() throws Exception {
     // create the dataset
-    String datasetId = ControlledResourceFixtures.uniqueDatasetId();
-    String location = "us-central1";
-    ApiGcpBigQueryDatasetCreationParameters creationParameters =
-        new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetId).location(location);
+    Long initialDefaultTableLifetime = 5900L;
+    Long initialDefaultPartitionLifetime = 5901L;
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
-            .datasetName(datasetId)
-            .build();
-
-    ControlledBigQueryDatasetResource createdDataset =
-        controlledResourceService
-            .createControlledResourceSync(
-                resource, null, user.getAuthenticatedRequest(), creationParameters)
-            .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
-    assertTrue(resource.partialEqual(createdDataset));
+        createBigQueryResource(initialDefaultTableLifetime, initialDefaultPartitionLifetime);
 
     // Test idempotency of dataset-specific steps by retrying them once.
     Map<String, StepStatus> retrySteps = new HashMap<>();
-    retrySteps.put(
-        RetrieveBigQueryDatasetCloudAttributesStep.class.getName(),
-        StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(UpdateBigQueryDatasetStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
@@ -1103,20 +1100,15 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         new ApiGcpBigQueryDatasetUpdateParameters()
             .defaultTableLifetime(newDefaultTableLifetime)
             .defaultPartitionLifetime(newDefaultPartitionLifetime);
-    controlledResourceService.updateBqDataset(
+    wsmResourceService.updateResource(
+        userAccessUtils.defaultUser().getAuthenticatedRequest(),
         resource,
-        updateParameters,
-        newName,
-        newDescription,
-        userAccessUtils.defaultUserAuthRequest());
+        new CommonUpdateParameters().setName(newName).setDescription(newDescription),
+        updateParameters);
 
     // check the properties stored on the cloud were updated
     validateBigQueryDatasetCloudMetadata(
-        projectId,
-        createdDataset.getDatasetName(),
-        location,
-        newDefaultTableLifetime,
-        newDefaultPartitionLifetime);
+        projectId, resource.getDatasetName(), newDefaultTableLifetime, newDefaultPartitionLifetime);
 
     // check the properties stored in WSM were updated
     ControlledBigQueryDatasetResource fetchedResource =
@@ -1130,39 +1122,23 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void updateBqDatasetUndo() throws Exception {
-    // create the dataset
-    String datasetId = ControlledResourceFixtures.uniqueDatasetId();
-    String location = "us-central1";
     Long initialDefaultTableLifetime = 4800L;
     Long initialDefaultPartitionLifetime = 4801L;
-    ApiGcpBigQueryDatasetCreationParameters creationParameters =
-        new ApiGcpBigQueryDatasetCreationParameters()
-            .datasetId(datasetId)
-            .location(location)
-            .defaultTableLifetime(initialDefaultTableLifetime)
-            .defaultPartitionLifetime(initialDefaultPartitionLifetime);
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
-            .datasetName(datasetId)
-            .build();
-    ControlledBigQueryDatasetResource createdDataset =
-        controlledResourceService
-            .createControlledResourceSync(
-                resource, null, user.getAuthenticatedRequest(), creationParameters)
-            .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
-    assertTrue(resource.partialEqual(createdDataset));
+        createBigQueryResource(initialDefaultTableLifetime, initialDefaultPartitionLifetime);
 
-    // Test idempotency of dataset-specific steps by retrying them once.
-    Map<String, StepStatus> retrySteps = new HashMap<>();
-    retrySteps.put(
-        RetrieveBigQueryDatasetCloudAttributesStep.class.getName(),
-        StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(UpdateBigQueryDatasetStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    // Test idempotency of BQ-specific steps by forcing an error and retrying on the undo path
+    Map<String, StepStatus> doRetrySteps = new HashMap<>();
+    doRetrySteps.put(
+        UpdateBigQueryDatasetStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_FATAL);
+    Map<String, StepStatus> undoRetrySteps = new HashMap<>();
+    undoRetrySteps.put(
+        UpdateBigQueryDatasetStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder()
-            // Fail after the last step to test that everything is back to the original on undo.
-            .lastStepFailure(true)
-            .undoStepFailures(retrySteps)
+            .doStepFailures(doRetrySteps)
+            .undoStepFailures(undoRetrySteps)
             .build());
 
     // update the dataset
@@ -1177,18 +1153,18 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertThrows(
         InvalidResultStateException.class,
         () ->
-            controlledResourceService.updateBqDataset(
+            wsmResourceService.updateResource(
+                userAccessUtils.defaultUser().getAuthenticatedRequest(),
                 resource,
-                updateParameters,
-                "NEW_updateBqDatasetUndo",
-                "new resource description",
-                userAccessUtils.defaultUserAuthRequest()));
+                new CommonUpdateParameters()
+                    .setName("NEW_updateBqDatasetUndo")
+                    .setDescription("new resource description"),
+                updateParameters));
 
     // check the properties stored on the cloud were not updated
     validateBigQueryDatasetCloudMetadata(
         projectId,
-        createdDataset.getDatasetName(),
-        location,
+        resource.getDatasetName(),
         initialDefaultTableLifetime,
         initialDefaultPartitionLifetime);
 
@@ -1204,32 +1180,15 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void updateBqDatasetWithUndefinedExpirationTimes() throws Exception {
-    // create the dataset, with expiration times initially defined
-    String datasetId = ControlledResourceFixtures.uniqueDatasetId();
-    String location = "us-central1";
     Long initialDefaultTableLifetime = 4800L;
     Long initialDefaultPartitionLifetime = 4801L;
-    ApiGcpBigQueryDatasetCreationParameters creationParameters =
-        new ApiGcpBigQueryDatasetCreationParameters()
-            .datasetId(datasetId)
-            .location(location)
-            .defaultTableLifetime(initialDefaultTableLifetime)
-            .defaultPartitionLifetime(initialDefaultPartitionLifetime);
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
-            .datasetName(datasetId)
-            .build();
-    ControlledBigQueryDatasetResource createdDataset =
-        controlledResourceService
-            .createControlledResourceSync(
-                resource, null, user.getAuthenticatedRequest(), creationParameters)
-            .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
+        createBigQueryResource(initialDefaultTableLifetime, initialDefaultPartitionLifetime);
 
     // check the expiration times stored on the cloud are defined
     validateBigQueryDatasetCloudMetadata(
         projectId,
-        createdDataset.getDatasetName(),
-        location,
+        resource.getDatasetName(),
         initialDefaultTableLifetime,
         initialDefaultPartitionLifetime);
 
@@ -1238,62 +1197,51 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         new ApiGcpBigQueryDatasetUpdateParameters()
             .defaultTableLifetime(0L)
             .defaultPartitionLifetime(0L);
-    controlledResourceService.updateBqDataset(
-        resource, updateParameters, null, null, userAccessUtils.defaultUserAuthRequest());
+
+    wsmResourceService.updateResource(
+        userAccessUtils.defaultUser().getAuthenticatedRequest(),
+        resource,
+        new CommonUpdateParameters(),
+        updateParameters);
 
     // check the expiration times stored on the cloud are now undefined
-    validateBigQueryDatasetCloudMetadata(
-        projectId, createdDataset.getDatasetName(), location, null, null);
+    validateBigQueryDatasetCloudMetadata(projectId, resource.getDatasetName(), null, null);
 
     // update just one expiration time back to a defined value
     Long newDefaultTableLifetime = 3600L;
     updateParameters =
         new ApiGcpBigQueryDatasetUpdateParameters().defaultTableLifetime(newDefaultTableLifetime);
-    controlledResourceService.updateBqDataset(
-        resource, updateParameters, null, null, userAccessUtils.defaultUserAuthRequest());
+    wsmResourceService.updateResource(
+        userAccessUtils.defaultUser().getAuthenticatedRequest(),
+        resource,
+        new CommonUpdateParameters(),
+        updateParameters);
 
     // check there is one defined and one undefined expiration value
     validateBigQueryDatasetCloudMetadata(
-        projectId, createdDataset.getDatasetName(), location, newDefaultTableLifetime, null);
+        projectId, resource.getDatasetName(), newDefaultTableLifetime, null);
 
     // update the other expiration time back to a defined value
     Long newDefaultPartitionLifetime = 3601L;
     updateParameters =
         new ApiGcpBigQueryDatasetUpdateParameters()
             .defaultPartitionLifetime(newDefaultPartitionLifetime);
-    controlledResourceService.updateBqDataset(
-        resource, updateParameters, null, null, userAccessUtils.defaultUserAuthRequest());
+    wsmResourceService.updateResource(
+        userAccessUtils.defaultUser().getAuthenticatedRequest(),
+        resource,
+        new CommonUpdateParameters(),
+        updateParameters);
 
     // check the expiration times stored on the cloud are both defined again
     validateBigQueryDatasetCloudMetadata(
-        projectId,
-        createdDataset.getDatasetName(),
-        location,
-        newDefaultTableLifetime,
-        newDefaultPartitionLifetime);
+        projectId, resource.getDatasetName(), newDefaultTableLifetime, newDefaultPartitionLifetime);
   }
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void updateBqDatasetWithInvalidExpirationTimes() throws Exception {
     // create the dataset, with expiration times initially undefined
-    String datasetId = ControlledResourceFixtures.uniqueDatasetId();
-    String location = "us-central1";
-    ApiGcpBigQueryDatasetCreationParameters creationParameters =
-        new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetId).location(location);
-    ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
-            .datasetName(datasetId)
-            .projectId(projectId)
-            .defaultTableLifetime(null)
-            .defaultPartitionLifetime(null)
-            .build();
-
-    ControlledBigQueryDatasetResource createdDataset =
-        controlledResourceService
-            .createControlledResourceSync(
-                resource, null, user.getAuthenticatedRequest(), creationParameters)
-            .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
+    ControlledBigQueryDatasetResource resource = createBigQueryResource(null, null);
 
     try {
       // make an update request to set the table expiration time to an invalid value (<3600)
@@ -1304,17 +1252,15 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
       assertThrows(
           BadRequestException.class,
           () ->
-              controlledResourceService.updateBqDataset(
+              wsmResourceService.updateResource(
+                  userAccessUtils.defaultUser().getAuthenticatedRequest(),
                   resource,
-                  updateParameters,
-                  null,
-                  null,
-                  userAccessUtils.defaultUserAuthRequest()));
+                  new CommonUpdateParameters(),
+                  updateParameters));
 
       // check the expiration times stored on the cloud are still undefined,
       // because the update above failed
-      validateBigQueryDatasetCloudMetadata(
-          projectId, createdDataset.getDatasetName(), location, null, null);
+      validateBigQueryDatasetCloudMetadata(projectId, resource.getDatasetName(), null, null);
 
       // make another update request to set the partition expiration time to an invalid value (<0)
       final ApiGcpBigQueryDatasetUpdateParameters updateParameters2 =
@@ -1324,23 +1270,54 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
       assertThrows(
           BadRequestException.class,
           () ->
-              controlledResourceService.updateBqDataset(
+              wsmResourceService.updateResource(
+                  userAccessUtils.defaultUser().getAuthenticatedRequest(),
                   resource,
-                  updateParameters2,
-                  null,
-                  null,
-                  userAccessUtils.defaultUserAuthRequest()));
+                  new CommonUpdateParameters(),
+                  updateParameters2));
 
       // check the expiration times stored on the cloud are still undefined,
       // because the update above failed
-      validateBigQueryDatasetCloudMetadata(
-          projectId, createdDataset.getDatasetName(), location, null, null);
+      validateBigQueryDatasetCloudMetadata(projectId, resource.getDatasetName(), null, null);
 
     } finally {
       // Remove dataset to not conflict with other test that checks for empty lifetime
       controlledResourceService.deleteControlledResourceSync(
           workspaceId, resource.getResourceId(), userAccessUtils.defaultUserAuthRequest());
     }
+  }
+
+  /**
+   * Create the starter big query resource for the update tests
+   *
+   * @param initialDefaultTableLifetime read the
+   * @param initialDefaultPartitionLifetime parameter name
+   * @return and guess
+   */
+  private ControlledBigQueryDatasetResource createBigQueryResource(
+      Long initialDefaultTableLifetime, Long initialDefaultPartitionLifetime) {
+    String datasetId = ControlledResourceFixtures.uniqueDatasetId();
+    ApiGcpBigQueryDatasetCreationParameters creationParameters =
+        new ApiGcpBigQueryDatasetCreationParameters()
+            .datasetId(datasetId)
+            .location(DEFAULT_DATASET_LOCATION)
+            .defaultTableLifetime(initialDefaultTableLifetime)
+            .defaultPartitionLifetime(initialDefaultPartitionLifetime);
+    ControlledBigQueryDatasetResource resource =
+        ControlledBigQueryDatasetResource.builder()
+            .common(ControlledResourceFixtures.makeDefaultControlledResourceFields(workspaceId))
+            .projectId(projectId)
+            .datasetName(datasetId)
+            .defaultTableLifetime(initialDefaultTableLifetime)
+            .defaultPartitionLifetime(initialDefaultPartitionLifetime)
+            .build();
+    ControlledBigQueryDatasetResource createdDataset =
+        controlledResourceService
+            .createControlledResourceSync(
+                resource, null, user.getAuthenticatedRequest(), creationParameters)
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
+    assertTrue(resource.partialEqual(createdDataset));
+    return resource;
   }
 
   @Test
@@ -1524,14 +1501,16 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
 
     // update the bucket
-    String newName = "NEW_bucketname";
-    String newDescription = "new resource description";
-    controlledResourceService.updateGcsBucket(
+    var commonUpdateParameters =
+        new CommonUpdateParameters()
+            .setName("NEW_bucketname")
+            .setDescription("new resource description");
+
+    wsmResourceService.updateResource(
+        user.getAuthenticatedRequest(),
         createdBucket,
-        ControlledResourceFixtures.BUCKET_UPDATE_PARAMETERS_2,
-        newName,
-        newDescription,
-        user.getAuthenticatedRequest());
+        commonUpdateParameters,
+        ControlledResourceFixtures.BUCKET_UPDATE_PARAMETERS_2);
 
     // check the properties stored in WSM were updated
     ControlledGcsBucketResource fetchedResource =
@@ -1539,43 +1518,47 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .getControlledResource(workspaceId, createdBucket.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
 
-    assertEquals(newName, fetchedResource.getName());
-    assertEquals(newDescription, fetchedResource.getDescription());
+    assertEquals(commonUpdateParameters.getName(), fetchedResource.getName());
+    assertEquals(commonUpdateParameters.getDescription(), fetchedResource.getDescription());
   }
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void updateGcsBucketUndo() throws Exception {
-    Workspace workspace = workspaceService.getWorkspace(workspaceId);
     ControlledGcsBucketResource createdBucket = createDefaultSharedGcsBucket(user);
 
+    Map<String, StepStatus> doErrorStep = new HashMap<>();
+    doErrorStep.put(UpdateGcsBucketStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_FATAL);
+
     Map<String, StepStatus> retrySteps = new HashMap<>();
-    retrySteps.put(
-        RetrieveControlledResourceMetadataStep.class.getName(),
-        StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(
-        UpdateControlledResourceMetadataStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(UpdateStartStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(UpdateFinishStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
         RetrieveGcsBucketCloudAttributesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(UpdateGcsBucketStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     jobService.setFlightDebugInfoForTest(
-        FlightDebugInfo.newBuilder().undoStepFailures(retrySteps).lastStepFailure(true).build());
+        FlightDebugInfo.newBuilder()
+            .doStepFailures(doErrorStep)
+            .undoStepFailures(retrySteps)
+            .build());
 
     // update the bucket
-    String newName = "NEW_bucketname";
-    String newDescription = "new resource description";
+    var commonUpdateParameters =
+        new CommonUpdateParameters()
+            .setName("NEW_bucketname")
+            .setDescription("new resource description");
+
     // Service methods which wait for a flight to complete will throw an
     // InvalidResultStateException when that flight fails without a cause, which occurs when a
     // flight fails via debugInfo.
     assertThrows(
         InvalidResultStateException.class,
         () ->
-            controlledResourceService.updateGcsBucket(
+            wsmResourceService.updateResource(
+                user.getAuthenticatedRequest(),
                 createdBucket,
-                ControlledResourceFixtures.BUCKET_UPDATE_PARAMETERS_2,
-                newName,
-                newDescription,
-                user.getAuthenticatedRequest()));
+                commonUpdateParameters,
+                ControlledResourceFixtures.BUCKET_UPDATE_PARAMETERS_2));
 
     // check the properties stored on the cloud were not updated
     BucketInfo updatedBucket =
@@ -1608,18 +1591,22 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .castByEnum(WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE);
     assertTrue(originalFlex.partialEqual(createdFlex));
 
+    Map<String, StepStatus> doErrorStep = new HashMap<>();
+    doErrorStep.put(
+        UpdateControlledFlexibleResourceAttributesStep.class.getName(),
+        StepStatus.STEP_RESULT_FAILURE_FATAL);
+
     Map<String, StepStatus> retrySteps = new HashMap<>();
-    retrySteps.put(
-        RetrieveControlledResourceMetadataStep.class.getName(),
-        StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(
-        UpdateControlledResourceMetadataStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(UpdateStartStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
         UpdateControlledFlexibleResourceAttributesStep.class.getName(),
         StepStatus.STEP_RESULT_FAILURE_RETRY);
 
     jobService.setFlightDebugInfoForTest(
-        FlightDebugInfo.newBuilder().undoStepFailures(retrySteps).lastStepFailure(true).build());
+        FlightDebugInfo.newBuilder()
+            .doStepFailures(doErrorStep)
+            .undoStepFailures(retrySteps)
+            .build());
 
     // Update the flex resource
     String newName = "new-resource-name";
@@ -1630,12 +1617,11 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertThrows(
         InvalidResultStateException.class,
         () ->
-            controlledResourceService.updateFlexResource(
+            wsmResourceService.updateResource(
+                userAccessUtils.defaultUser().getAuthenticatedRequest(),
                 createdFlex,
-                ControlledResourceFixtures.defaultFlexUpdateParameters(),
-                newName,
-                newDescription,
-                user.getAuthenticatedRequest()));
+                new CommonUpdateParameters().setName(newName).setDescription(newDescription),
+                ControlledResourceFixtures.defaultFlexUpdateParameters()));
 
     // check the properties stored in WSM were not updated
     ControlledFlexibleResource fetchedResource =
@@ -1902,14 +1888,13 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   private void validateBigQueryDatasetCloudMetadata(
       String projectId,
       String datasetId,
-      String location,
       Long defaultTableExpirationSec,
       Long defaultPartitionExpirationSec)
       throws IOException {
     BigQueryCow bqCow = crlService.createWsmSaBigQueryCow();
     Dataset cloudDataset = bqCow.datasets().get(projectId, datasetId).execute();
 
-    assertEquals(location, cloudDataset.getLocation());
+    assertEquals(DEFAULT_DATASET_LOCATION, cloudDataset.getLocation());
 
     if (defaultTableExpirationSec == null) {
       assertNull(cloudDataset.getDefaultTableExpirationMs());

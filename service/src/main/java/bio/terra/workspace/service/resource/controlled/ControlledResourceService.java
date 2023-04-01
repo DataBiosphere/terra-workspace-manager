@@ -12,11 +12,7 @@ import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
-import bio.terra.workspace.generated.model.ApiFlexibleResourceUpdateParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
-import bio.terra.workspace.generated.model.ApiGcpAiNotebookUpdateParameters;
-import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.grant.GrantService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -34,8 +30,6 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.Controlled
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpPolicyBuilder;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.AcceleratorConfig;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.flight.backfill.UpdateControlledBigQueryDatasetsLifetimeFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.CloneControlledAzureStorageContainerResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CloneControlledGcsBucketResourceFlight;
@@ -43,11 +37,9 @@ import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.Clon
 import bio.terra.workspace.service.resource.controlled.flight.clone.flexibleresource.CloneControlledFlexibleResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
-import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
@@ -128,39 +120,6 @@ public class ControlledResourceService {
     String jobId = jobBuilder.submit();
     waitForResourceOrJob(resource.getWorkspaceId(), resource.getResourceId(), jobId);
     return jobId;
-  }
-
-  public ControlledGcsBucketResource updateGcsBucket(
-      ControlledGcsBucketResource resource,
-      @Nullable ApiGcpGcsBucketUpdateParameters updateParameters,
-      @Nullable String resourceName,
-      @Nullable String resourceDescription,
-      AuthenticatedUserRequest userRequest) {
-    if (null != updateParameters && null != updateParameters.getCloningInstructions()) {
-      ResourceValidationUtils.validateCloningInstructions(
-          StewardshipType.CONTROLLED,
-          CloningInstructions.fromApiModel(updateParameters.getCloningInstructions()));
-    }
-    final String jobDescription =
-        String.format(
-            "Update controlled GCS Bucket resource %s; id %s; name %s",
-            resource.getBucketName(), resource.getResourceId(), resource.getName());
-    final JobBuilder jobBuilder =
-        jobService
-            .newJob()
-            .description(jobDescription)
-            .flightClass(UpdateControlledResourceFlight.class)
-            .resource(resource)
-            .operationType(OperationType.UPDATE)
-            .userRequest(userRequest)
-            .workspaceId(resource.getWorkspaceId().toString())
-            // TODO: [PF-1282] need to disambiguate the RESOURCE and RESOURCE_NAME usage
-            .resourceType(resource.getResourceType())
-            .stewardshipType(resource.getStewardshipType())
-            .addParameter(ControlledResourceKeys.UPDATE_PARAMETERS, updateParameters)
-            .addParameter(ResourceKeys.RESOURCE_NAME, resourceName)
-            .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, resourceDescription);
-    return jobBuilder.submitAndWait(ControlledGcsBucketResource.class);
   }
 
   /**
@@ -293,100 +252,6 @@ public class ControlledResourceService {
         commonCreationJobBuilder(resource, privateResourceIamRole, userRequest)
             .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
     return jobBuilder.submitAndWait(ControlledResource.class);
-  }
-
-  /** Starts an update controlled BigQuery dataset resource, blocking until its job is finished. */
-  public ControlledBigQueryDatasetResource updateBqDataset(
-      ControlledBigQueryDatasetResource resource,
-      @Nullable ApiGcpBigQueryDatasetUpdateParameters updateParameters,
-      @Nullable String resourceName,
-      @Nullable String resourceDescription,
-      AuthenticatedUserRequest userRequest) {
-    if (null != updateParameters && null != updateParameters.getCloningInstructions()) {
-      ResourceValidationUtils.validateCloningInstructions(
-          StewardshipType.CONTROLLED,
-          CloningInstructions.fromApiModel(updateParameters.getCloningInstructions()));
-    }
-    final String jobDescription =
-        String.format(
-            "Update controlled BigQuery Dataset name %s ; resource id %s; resource name %s",
-            resource.getDatasetName(), resource.getResourceId(), resource.getName());
-    final JobBuilder jobBuilder =
-        jobService
-            .newJob()
-            .description(jobDescription)
-            .flightClass(UpdateControlledResourceFlight.class)
-            .resource(resource)
-            .operationType(OperationType.UPDATE)
-            .resourceType(resource.getResourceType())
-            .resourceName(resource.getName())
-            .userRequest(userRequest)
-            .workspaceId(resource.getWorkspaceId().toString())
-            .stewardshipType(resource.getStewardshipType())
-            .addParameter(ControlledResourceKeys.UPDATE_PARAMETERS, updateParameters)
-            .addParameter(ResourceKeys.RESOURCE_NAME, resourceName)
-            .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, resourceDescription)
-            .addParameter(ResourceKeys.RESOURCE_STATE_RULE, features.getStateRule());
-    return jobBuilder.submitAndWait(ControlledBigQueryDatasetResource.class);
-  }
-
-  /** Starts an update controlled flexible resource, blocking until its job is finished. */
-  public void updateFlexResource(
-      ControlledFlexibleResource resource,
-      @Nullable ApiFlexibleResourceUpdateParameters updateParameters,
-      @Nullable String resourceName,
-      @Nullable String resourceDescription,
-      AuthenticatedUserRequest userRequest) {
-    if (null != updateParameters && null != updateParameters.getCloningInstructions()) {
-      ResourceValidationUtils.validateCloningInstructions(
-          StewardshipType.CONTROLLED,
-          CloningInstructions.fromApiModel(updateParameters.getCloningInstructions()));
-    }
-
-    // Name may be null if the user is not updating it in this request.
-    if (resourceName != null) {
-      ResourceValidationUtils.validateResourceName(resourceName);
-    }
-    // Description may also be null, but this validator accepts null descriptions.
-    ResourceValidationUtils.validateResourceDescriptionName(resourceDescription);
-
-    // Decode the base64, so we can store the string directly in the database.
-    byte[] encodedJSON = updateParameters != null ? updateParameters.getData() : null;
-    String decodedData = ControlledFlexibleResource.getDecodedJSONFromByteArray(encodedJSON);
-
-    // The validator accepts null data.
-    ResourceValidationUtils.validateFlexResourceDataSize(decodedData);
-
-    final String jobDescription =
-        String.format(
-            "Update controlled flexible resource type %s (typeNamespace %s); resource id %s; resource name %s",
-            resource.getType(),
-            resource.getTypeNamespace(),
-            resource.getResourceId(),
-            resource.getName());
-
-    CloningInstructions resolvedCloningInstructions =
-        (updateParameters == null || updateParameters.getCloningInstructions() == null)
-            ? resource.getCloningInstructions()
-            : CloningInstructions.fromApiModel(updateParameters.getCloningInstructions());
-
-    final JobBuilder jobBuilder =
-        jobService
-            .newJob()
-            .description(jobDescription)
-            .flightClass(UpdateControlledResourceFlight.class)
-            .resource(resource)
-            .operationType(OperationType.UPDATE)
-            .resourceType(resource.getResourceType())
-            .resourceName(resource.getName())
-            .userRequest(userRequest)
-            .workspaceId(resource.getWorkspaceId().toString())
-            .stewardshipType(resource.getStewardshipType())
-            .addParameter(ControlledResourceKeys.UPDATE_FLEX_DATA, decodedData)
-            .addParameter(ResourceKeys.CLONING_INSTRUCTIONS, resolvedCloningInstructions)
-            .addParameter(ResourceKeys.RESOURCE_NAME, resourceName)
-            .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, resourceDescription);
-    jobBuilder.submitAndWait();
   }
 
   public ControlledFlexibleResource cloneFlexResource(
@@ -536,47 +401,9 @@ public class ControlledResourceService {
             "enablePet");
     jobBuilder.addParameter(ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS, creationParameters);
     jobBuilder.addParameter(ControlledResourceKeys.NOTEBOOK_PET_SERVICE_ACCOUNT, petSaEmail);
-
     String jobId = jobBuilder.submit();
     waitForResourceOrJob(resource.getWorkspaceId(), resource.getResourceId(), jobId);
     return jobId;
-  }
-
-  public ControlledAiNotebookInstanceResource updateAiNotebookInstance(
-      ControlledAiNotebookInstanceResource resource,
-      @Nullable ApiGcpAiNotebookUpdateParameters updateParameters,
-      @Nullable String newName,
-      @Nullable String newDescription,
-      AuthenticatedUserRequest userRequest) {
-    final String jobDescription =
-        String.format(
-            "Update controlled AI notebook resource %s; id %s; name %s",
-            resource.getInstanceId(), resource.getResourceId(), resource.getName());
-
-    JobBuilder jobBuilder =
-        jobService
-            .newJob()
-            .description(jobDescription)
-            .flightClass(UpdateControlledResourceFlight.class)
-            .resource(resource)
-            .operationType(OperationType.UPDATE)
-            .userRequest(userRequest)
-            .workspaceId(resource.getWorkspaceId().toString())
-            .resourceType(resource.getResourceType())
-            .stewardshipType(resource.getStewardshipType())
-            .addParameter(ResourceKeys.RESOURCE_NAME, newName)
-            .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, newDescription);
-    if (updateParameters != null) {
-      jobBuilder
-          .addParameter(
-              ControlledResourceKeys.UPDATE_MACHINE_TYPE, updateParameters.getMachineType())
-          .addParameter(
-              ControlledResourceKeys.UPDATE_ACCELERATOR_CONFIG,
-              AcceleratorConfig.fromApiAcceleratorConfig(updateParameters.getAcceleratorConfig()))
-          .addParameter(ControlledResourceKeys.UPDATE_PARAMETERS, updateParameters);
-    }
-
-    return jobBuilder.submitAndWait(ControlledAiNotebookInstanceResource.class);
   }
 
   /** Simpler interface for synchronous controlled resource creation */

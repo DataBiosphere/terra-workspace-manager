@@ -32,20 +32,12 @@ public final class WorkspaceFlightMapKeys {
     public static final String PRIVATE_RESOURCE_IAM_ROLE = "privateResourceIamRole";
     public static final String GCP_CLOUD_CONTEXT = "gcpCloudContext";
     public static final String AZURE_CLOUD_CONTEXT = "azureCloudContext";
-    public static final String WORKSPACE_ID_TO_AZURE_CLOUD_CONTEXT_MAP =
-        "workspaceIdToAzureCloudContextMap";
-    public static final String UPDATE_PARAMETERS = "updateParameters";
-    public static final String UPDATE_FLEX_DATA = "updateFlexData";
-    public static final String UPDATE_MACHINE_TYPE = "updateMachineType";
-    public static final String UPDATE_ACCELERATOR_CONFIG = "updateAcceleratorConfig";
     public static final String PREVIOUS_UPDATE_PARAMETERS = "previousUpdateParameters";
     public static final String CREATE_RESOURCE_REGION = "createResourceRegion";
 
     public static final String RESOURCE_ROLES_TO_REMOVE = "resourceRolesToRemove";
     public static final String REMOVED_USER_IS_WORKSPACE_MEMBER = "removedUserIsWorkspaceMember";
 
-    public static final String CONTROLLED_RESOURCES_WITHOUT_REGION =
-        "controlledResourcesWithoutRegion";
     public static final String CONTROLLED_BIG_QUERY_DATASETS_WITHOUT_LIFETIME =
         "controlledBigQueryDatasetsWithoutLifetime";
     public static final String CONTROLLED_BIG_QUERY_DATASET_RESOURCE_ID_TO_TABLE_LIFETIME_MAP =
@@ -60,8 +52,6 @@ public final class WorkspaceFlightMapKeys {
     public static final String CREATE_NOTEBOOK_NETWORK_NAME = "createNotebookNetworkName";
     public static final String CREATE_NOTEBOOK_PARAMETERS = "createNotebookParameters";
     public static final String CREATE_NOTEBOOK_LOCATION = "createNotebookLocation";
-    public static final String CREATE_NOTEBOOK_MACHINE_TYPE = "createMachineType";
-    public static final String CREATE_NOTEBOOK_ACCELERATOR_CONFIG = "createAcceleratorConfig";
     public static final String CREATE_NOTEBOOK_SUBNETWORK_NAME = "createNotebookSubnetworkName";
     public static final String NOTEBOOK_PET_SERVICE_ACCOUNT = "notebookPetServiceAccount";
 
@@ -124,13 +114,16 @@ public final class WorkspaceFlightMapKeys {
     public static final String PREVIOUS_RESOURCE_DESCRIPTION = "previousResourceDescription";
     public static final String PREVIOUS_ATTRIBUTES = "previousAttributes";
     public static final String PREVIOUS_CLONING_INSTRUCTIONS = "previousCloningInstructions";
-    // additional keys for job filtering
     public static final String STEWARDSHIP_TYPE = "stewardshipType";
     public static final String RESOURCE = "resource";
     public static final String DESTINATION_RESOURCE = "destinationResource";
     public static final String CLONING_INSTRUCTIONS = "cloningInstructions";
     public static final String RESOURCE_STATE_RULE = "resourceStateRule";
     public static final String RESOURCE_STATE_CHANGED = "resourceStateChanged";
+    public static final String UPDATE_PARAMETERS = "updateParameters";
+    public static final String COMMON_UPDATE_PARAMETERS = "commonUpdateParameters";
+    public static final String DB_UPDATER = "dbUpdater";
+    public static final String UPDATE_COMPLETE = "updateComplete";
 
     private ResourceKeys() {}
   }
