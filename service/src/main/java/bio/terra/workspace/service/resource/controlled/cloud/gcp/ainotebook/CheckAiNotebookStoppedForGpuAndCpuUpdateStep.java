@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 
 import bio.terra.cloudres.google.notebooks.InstanceName;
+import bio.terra.common.exception.ConflictException;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
@@ -109,7 +110,7 @@ public class CheckAiNotebookStoppedForGpuAndCpuUpdateStep implements Step {
       if (!instanceState.equals(Instance.State.STOPPED.toString())) {
         return new StepResult(
             StepStatus.STEP_RESULT_FAILURE_FATAL,
-            new IllegalStateException(
+            new ConflictException(
                 "Notebook instance must be stopped before updating the CPU or GPU configuration. The current notebook state is: %s (instanceName: %s; id: %s)"
                     .formatted(
                         instance.getState(),
