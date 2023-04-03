@@ -101,15 +101,12 @@ components:
         Contains the CloudPlatform for the context and the JobControl object.
         For GCP, a project is created to contain the cloud resources of the context.
         For Azure, a managed resource group (MRG) is created outside of WSM within a tenant
-        and a subscription obtained from the spend profile linked to the parent workspace, unless
-        the spend profile service is not enabled; in that case, azureContext must be provided.
+        and a subscription obtained from the spend profile linked to the parent workspace.
       properties:
         cloudPlatform:
           $ref: '#/components/schemas/CloudPlatform'
         jobControl:
           $ref: '#/components/schemas/JobControl'
-        azureContext:
-          $ref: '#/components/schemas/AzureContext'
 
     CreateCloudContextResult:
       type: object
