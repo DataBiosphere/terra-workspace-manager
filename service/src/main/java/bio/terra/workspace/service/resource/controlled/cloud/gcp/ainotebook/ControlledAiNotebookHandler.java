@@ -64,8 +64,7 @@ public class ControlledAiNotebookHandler implements WsmResourceHandler {
             .orElse(gcpCloudContextService.getRequiredGcpProject(dbResource.getWorkspaceId()));
 
     // Notebook attributes created prior to PF-2323 do not have machineType or acceleratorConfig
-    // stored. Note: machineType is required.
-    // Thus, retrieve these two values from the cloud.
+    // stored. Thus, retrieve these two values from the cloud.
     String retrievedMachineType = attributes.getMachineType();
     AcceleratorConfig retrievedAcceleratorConfig = attributes.getAcceleratorConfig();
 
@@ -74,7 +73,7 @@ public class ControlledAiNotebookHandler implements WsmResourceHandler {
         InstanceName instanceName =
             InstanceName.builder()
                 .instanceId(attributes.getInstanceId())
-                .projectId(attributes.getProjectId())
+                .projectId(projectId)
                 .location(attributes.getLocation())
                 .build();
 
@@ -91,10 +90,10 @@ public class ControlledAiNotebookHandler implements WsmResourceHandler {
                 DEFAULT_RETRY_SLEEP_DURATION_MAX,
                 retryableErrors);
 
-        retrievedMachineType = cloudInstance.getMachineType();
+        retrievedMachineType = parseMachineTypeFromUrl(cloudInstance.getMachineType());
         retrievedAcceleratorConfig =
             new AcceleratorConfig(
-                cloudInstance.getMachineType(),
+                cloudInstance.getAcceleratorConfig().getType().toString(),
                 cloudInstance.getAcceleratorConfig().getCoreCount());
 
       } catch (Exception e) {
@@ -144,5 +143,18 @@ public class ControlledAiNotebookHandler implements WsmResourceHandler {
               aiNotebookName));
     }
     return generatedName;
+  }
+
+  /**
+   * In {@link com.google.api.services.notebooks.v1.model}, the machine type is the "full" URL.
+   *
+   * <p>However, in {@link com.google.cloud.notebooks.v1}, the machine type is the string itself
+   * (e.g., "n1-standard-4"). The attributes also store this string (rather than the URL).
+   *
+   * <p>Steps for updating CPU/GPU use the client library {@link NotebookServiceClient}: (i.e.,
+   * {@link com.google.cloud.notebooks.v1})
+   */
+  public String parseMachineTypeFromUrl(String notebookUrl) {
+    return notebookUrl.substring(notebookUrl.lastIndexOf("/") + 1);
   }
 }

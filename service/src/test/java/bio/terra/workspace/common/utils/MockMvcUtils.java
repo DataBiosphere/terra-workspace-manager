@@ -135,6 +135,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.AcceleratorConfig;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.RetrieveGcsBucketCloudAttributesStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.CheckControlledResourceAuthStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CompleteTransferOperationStep;
@@ -750,6 +751,13 @@ public class MockMvcUtils {
         userRequest, workspaceId, /*instanceId=*/ null, location);
   }
 
+  public ApiCreatedControlledGcpAiNotebookInstanceResult createAiNotebookInstance(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, @Nullable String location, String machineType, @Nullable AcceleratorConfig acceleratorConfig)
+      throws Exception {
+    return createAiNotebookInstanceAndExpect(
+        userRequest, workspaceId, /*instanceId=*/ null, location, machineType, acceleratorConfig, StatusEnum.SUCCEEDED);
+  }
+
   public ApiCreatedControlledGcpAiNotebookInstanceResult createAiNotebookInstanceAndWait(
       AuthenticatedUserRequest userRequest,
       UUID workspaceId,
@@ -767,6 +775,18 @@ public class MockMvcUtils {
       @Nullable String location,
       StatusEnum jobStatus)
       throws Exception {
+    return createAiNotebookInstanceAndExpect(userRequest,workspaceId,instanceId,location,/*machineType=*/null,/*acceleratorConfig=*/null,jobStatus);
+  }
+
+  public ApiCreatedControlledGcpAiNotebookInstanceResult createAiNotebookInstanceAndExpect(
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      @Nullable String instanceId,
+      @Nullable String location,
+      String machineType,
+      @Nullable AcceleratorConfig acceleratorConfig,
+      StatusEnum jobStatus)
+      throws Exception {
     ApiCreateControlledGcpAiNotebookInstanceRequestBody request =
         new ApiCreateControlledGcpAiNotebookInstanceRequestBody()
             .common(
@@ -779,7 +799,9 @@ public class MockMvcUtils {
                     .location(location)
                     .instanceId(
                         Optional.ofNullable(instanceId)
-                            .orElse(TestUtils.appendRandomNumber("instance-id"))));
+                            .orElse(TestUtils.appendRandomNumber("instance-id")))
+                    .machineType(machineType)
+                    .acceleratorConfig(AcceleratorConfig.toApiAcceleratorConfig(acceleratorConfig)));
 
     String serializedResponse =
         getSerializedResponseForPost(
