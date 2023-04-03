@@ -28,7 +28,6 @@ import bio.terra.workspace.service.resource.controlled.ControlledResourceSyncMap
 import bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresource.ControlledFlexibleResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpPolicyBuilder;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.AcceleratorConfig;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.flight.backfill.UpdateControlledBigQueryDatasetsLifetimeFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.CloneControlledAzureStorageContainerResourceFlight;

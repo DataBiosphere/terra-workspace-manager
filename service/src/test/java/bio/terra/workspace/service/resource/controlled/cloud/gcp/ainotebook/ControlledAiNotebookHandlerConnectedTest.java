@@ -1,5 +1,9 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_AI_NOTEBOOK_ACCELERATOR_CONFIG;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_AI_NOTEBOOK_MACHINE_TYPE_ALLOWING_ACCELERATOR_CONFIG;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
@@ -7,7 +11,6 @@ import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
-import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAttributes;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.service.crl.CrlService;
@@ -19,8 +22,9 @@ import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
-import bio.terra.workspace.service.resource.referenced.cloud.any.datareposnapshot.ReferencedDataRepoSnapshotAttributes;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
+import java.util.HashMap;
+import java.util.UUID;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -29,14 +33,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.MockMvc;
-
-import java.util.HashMap;
-import java.util.UUID;
-
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_AI_NOTEBOOK_ACCELERATOR_CONFIG;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_AI_NOTEBOOK_MACHINE_TYPE_ALLOWING_ACCELERATOR_CONFIG;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_CREATED_AI_NOTEBOOK_MACHINE_TYPE;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Tag("connected")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)

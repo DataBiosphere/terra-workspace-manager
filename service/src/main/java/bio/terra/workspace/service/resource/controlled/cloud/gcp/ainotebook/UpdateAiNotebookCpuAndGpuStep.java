@@ -5,7 +5,6 @@ import static bio.terra.workspace.common.utils.RetryUtils.DEFAULT_RETRY_SLEEP_DU
 import static bio.terra.workspace.common.utils.RetryUtils.DEFAULT_RETRY_SLEEP_DURATION_MAX;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.PREVIOUS_ACCELERATOR_CONFIG;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.PREVIOUS_MACHINE_TYPE;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.PREVIOUS_UPDATE_PARAMETERS;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys.UPDATE_PARAMETERS;
 
 import bio.terra.cloudres.google.notebooks.InstanceName;
@@ -17,7 +16,6 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.RetryUtils;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookUpdateParameters;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.cloud.notebooks.v1.Instance;
 import com.google.cloud.notebooks.v1.NotebookServiceClient;

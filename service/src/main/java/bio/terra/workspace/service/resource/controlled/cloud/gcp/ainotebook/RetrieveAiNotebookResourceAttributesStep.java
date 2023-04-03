@@ -16,7 +16,6 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.notebooks.v1.model.AcceleratorConfig;
 import com.google.api.services.notebooks.v1.model.Instance;
-
 import java.io.IOException;
 import java.util.Map;
 import org.springframework.http.HttpStatus;

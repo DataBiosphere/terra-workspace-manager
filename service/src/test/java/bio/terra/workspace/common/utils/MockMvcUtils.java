@@ -752,10 +752,20 @@ public class MockMvcUtils {
   }
 
   public ApiCreatedControlledGcpAiNotebookInstanceResult createAiNotebookInstance(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, @Nullable String location, String machineType, @Nullable AcceleratorConfig acceleratorConfig)
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      @Nullable String location,
+      String machineType,
+      @Nullable AcceleratorConfig acceleratorConfig)
       throws Exception {
     return createAiNotebookInstanceAndExpect(
-        userRequest, workspaceId, /*instanceId=*/ null, location, machineType, acceleratorConfig, StatusEnum.SUCCEEDED);
+        userRequest,
+        workspaceId,
+        /*instanceId=*/ null,
+        location,
+        machineType,
+        acceleratorConfig,
+        StatusEnum.SUCCEEDED);
   }
 
   public ApiCreatedControlledGcpAiNotebookInstanceResult createAiNotebookInstanceAndWait(
@@ -775,7 +785,14 @@ public class MockMvcUtils {
       @Nullable String location,
       StatusEnum jobStatus)
       throws Exception {
-    return createAiNotebookInstanceAndExpect(userRequest,workspaceId,instanceId,location,/*machineType=*/null,/*acceleratorConfig=*/null,jobStatus);
+    return createAiNotebookInstanceAndExpect(
+        userRequest,
+        workspaceId,
+        instanceId,
+        location,
+        /*machineType=*/ null,
+        /*acceleratorConfig=*/ null,
+        jobStatus);
   }
 
   public ApiCreatedControlledGcpAiNotebookInstanceResult createAiNotebookInstanceAndExpect(
@@ -801,7 +818,8 @@ public class MockMvcUtils {
                         Optional.ofNullable(instanceId)
                             .orElse(TestUtils.appendRandomNumber("instance-id")))
                     .machineType(machineType)
-                    .acceleratorConfig(AcceleratorConfig.toApiAcceleratorConfig(acceleratorConfig)));
+                    .acceleratorConfig(
+                        AcceleratorConfig.toApiAcceleratorConfig(acceleratorConfig)));
 
     String serializedResponse =
         getSerializedResponseForPost(
