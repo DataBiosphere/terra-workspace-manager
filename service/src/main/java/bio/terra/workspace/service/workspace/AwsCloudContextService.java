@@ -9,12 +9,16 @@ import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.exceptions.InvalidApplicationConfigException;
+import bio.terra.workspace.service.workspace.flight.application.able.ApplicationAblePrecheckStep;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.io.IOException;
 import java.util.*;
 import javax.validation.constraints.NotNull;
+import org.slf4j.ILoggerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -24,6 +28,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class AwsCloudContextService {
+  private static final Logger logger = LoggerFactory.getLogger(AwsCloudContextService.class);
 
   private final WorkspaceDao workspaceDao;
   private final AwsConfiguration awsConfiguration;
@@ -37,6 +42,8 @@ public class AwsCloudContextService {
       throws IOException {
     this.workspaceDao = workspaceDao;
     this.awsConfiguration = awsConfiguration;
+
+    logger.info("AWS Configuration: {}", awsConfiguration.toString());
 
     Environment configEnvironment = null;
     if (featureConfiguration.isAwsEnabled()) {
