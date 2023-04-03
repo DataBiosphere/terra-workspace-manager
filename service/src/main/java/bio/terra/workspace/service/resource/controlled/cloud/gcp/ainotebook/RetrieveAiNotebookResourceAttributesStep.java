@@ -52,9 +52,11 @@ public class RetrieveAiNotebookResourceAttributesStep implements Step {
               .metadata(metadata)
               .machineType(getMachineTypeFromUrl(instance.getMachineType()))
               .acceleratorConfig(
-                  new ApiGcpAiNotebookInstanceAcceleratorConfig()
-                      .type(acceleratorConfig.getType())
-                      .coreCount(acceleratorConfig.getCoreCount()));
+                  acceleratorConfig == null
+                      ? null
+                      : new ApiGcpAiNotebookInstanceAcceleratorConfig()
+                          .type(acceleratorConfig.getType())
+                          .coreCount(acceleratorConfig.getCoreCount()));
 
       workingMap.put(ControlledResourceKeys.PREVIOUS_UPDATE_PARAMETERS, existingUpdateParameters);
     } catch (GoogleJsonResponseException e) {
