@@ -72,7 +72,8 @@ public class DeleteControlledResourcesFlight extends Flight {
             workspaceUuid,
             resource.getResourceType().getCloudPlatform(),
             flightBeanBag.getGcpCloudContextService(),
-            flightBeanBag.getAzureCloudContextService()),
+            flightBeanBag.getAzureCloudContextService(),
+            flightBeanBag.getAwsCloudContextService()),
         cloudRetry);
 
     // Delete the cloud resource. This has unique logic for each resource type. Depending on the

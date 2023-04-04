@@ -74,7 +74,8 @@ public class CreateControlledResourceFlight extends Flight {
             resource.getWorkspaceId(),
             resource.getResourceType().getCloudPlatform(),
             flightBeanBag.getGcpCloudContextService(),
-            flightBeanBag.getAzureCloudContextService()),
+            flightBeanBag.getAzureCloudContextService(),
+            flightBeanBag.getAwsCloudContextService()),
         dbRetryRule);
 
     // Tell the resource to make its specific steps
