@@ -204,7 +204,7 @@ landingzone:
 # into the appropriate values file. That includes the values file in local_dev.
 feature:
   # azure-enabled - Controls inclusion of Azure support in WSM
-  azure-enabled: true
+  azure-enabled: false
   # aws-enabled - Controls inclusion of AWS support in WSM
   aws-enabled: false
   # alpha1-enabled - Controls support of the Alpha1 experimental API and service
@@ -230,4 +230,3 @@ reference:
       - bitbucket.org
       - dev.azure.com
       - ssh.dev.azure.com
-
