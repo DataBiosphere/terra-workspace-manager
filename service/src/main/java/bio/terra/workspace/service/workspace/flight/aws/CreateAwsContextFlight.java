@@ -32,9 +32,6 @@ public class CreateAwsContextFlight extends Flight {
         new CreateDbAwsCloudContextStartStep(workspaceUuid, appContext.getAwsCloudContextService()),
         dbRetry);
 
-    // validate the workspace landing zone
-    addStep(new ValidateWLZStep());
-
     // update the DB row filling in the cloud context
     addStep(
         new CreateDbAwsCloudContextFinishStep(
