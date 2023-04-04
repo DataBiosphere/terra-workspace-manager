@@ -97,7 +97,10 @@ public class SamService {
     // OkHttpClient objects manage their own thread pools, so it's much more performant to share one
     // across requests.
     ApiClient apiClient =
-        new ApiClient().setHttpClient(commonHttpClient).setBasePath(samConfig.getBasePath());
+        new ApiClient()
+            .setHttpClient(commonHttpClient)
+            .setBasePath(samConfig.getBasePath())
+            .setDebugging(true);
     apiClient.setAccessToken(accessToken);
     return apiClient;
   }
@@ -364,7 +367,6 @@ public class SamService {
           // WSM always uses UUIDs for workspace IDs, but this is not enforced in Sam and there are
           // old workspaces that don't use UUIDs. Any workspace with a non-UUID workspace ID is
           // ignored here.
-          continue;
         }
       }
     } catch (ApiException apiException) {
@@ -1005,9 +1007,7 @@ public class SamService {
    *     a workspace owner to ensure the WSM SA is being used on a user's behalf correctly.
    */
   public List<ControlledResourceIamRole> getUserRolesOnPrivateResource(
-      ControlledResource resource, String userEmail, AuthenticatedUserRequest userRequest)
-      throws InterruptedException {
-
+      ControlledResource resource, String userEmail, AuthenticatedUserRequest userRequest) {
     try {
       ResourcesApi wsmSaResourceApi = samResourcesApi(getWsmServiceAccountToken());
       List<AccessPolicyResponseEntryV2> policyList =

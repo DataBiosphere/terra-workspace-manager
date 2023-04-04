@@ -74,7 +74,7 @@ public class CreateGcpContextFlightV2 extends Flight {
     addStep(new GenerateRbsRequestIdStep());
     addStep(
         new PullProjectFromPoolStep(
-            appContext.getBufferService(), crl.getCloudResourceManagerCow()),
+            workspaceUuid, appContext.getBufferService(), crl.getCloudResourceManagerCow()),
         RetryRules.buffer());
 
     // Configure the project for WSM
