@@ -16,18 +16,21 @@ import bio.terra.workspace.service.buffer.BufferService;
 import bio.terra.workspace.service.buffer.exception.BufferServiceAPIException;
 import bio.terra.workspace.service.buffer.exception.BufferServiceAuthorizationException;
 import java.io.IOException;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
 /** A {@link Step} for pulling a project from a Buffer Service pool. */
 public class PullProjectFromPoolStep implements Step {
+  private final UUID workspaceUuid;
   private final BufferService bufferService;
   private final CloudResourceManagerCow resourceManager;
   private final Logger logger = LoggerFactory.getLogger(PullProjectFromPoolStep.class);
 
   public PullProjectFromPoolStep(
-      BufferService bufferService, CloudResourceManagerCow resourceManager) {
+      UUID workspaceUuid, BufferService bufferService, CloudResourceManagerCow resourceManager) {
+    this.workspaceUuid = workspaceUuid;
     this.bufferService = bufferService;
     this.resourceManager = resourceManager;
   }
@@ -36,13 +39,19 @@ public class PullProjectFromPoolStep implements Step {
   public StepResult doStep(FlightContext flightContext) {
     try {
       String resourceId = flightContext.getWorkingMap().get(RBS_RESOURCE_ID, String.class);
-      logger.info("Preparing to query Buffer Service for resource with ID: " + resourceId);
+      logger.info(
+          "Preparing to query Buffer Service for resource with id: {} for workspace: {}"
+              + resourceId,
+          workspaceUuid);
       HandoutRequestBody body = new HandoutRequestBody();
       body.setHandoutRequestId(resourceId);
 
       ResourceInfo info = bufferService.handoutResource(body);
       String projectId = info.getCloudResourceUid().getGoogleProjectUid().getProjectId();
-      logger.info("Buffer Service returned project with id: " + projectId);
+      logger.info(
+          "Buffer Service returned project with id: {} for workspace: {}",
+          projectId,
+          workspaceUuid);
       flightContext.getWorkingMap().put(GCP_PROJECT_ID, projectId);
       return StepResult.getStepResultSuccess();
     } catch (BufferServiceAPIException e) {

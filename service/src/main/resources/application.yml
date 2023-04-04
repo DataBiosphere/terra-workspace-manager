@@ -24,7 +24,7 @@ env:
     exportEnabled: ${CLOUD_TRACE_ENABLED:false}
     samplingRate: ${SAMPLING_PROBABILITY:0}
   urls: # While we've traditionally thought of these as env specific and ok to hardcode, with kubernetes they may change
-    sam: ${SAM_ADDRESS:https://sam.dsde-dev.broadinstitute.org/}
+    sam: ${SAM_ADDRESS:https://terra-devel-sam.api.verily.com/}
     terra-datarepo: ${TERRA_DATAREPO_URL:https://jade.datarepo-dev.broadinstitute.org}
     bpm: ${BPM_ADDRESS:https://bpm.dsde-dev.broadinstitute.org/}
     tps: ${TPS_ADDRESS:https://tps.dsde-dev.broadinstitute.org/}
@@ -136,6 +136,15 @@ workspace:
     sas-token-expiry-time-maximum-minutes-offset: 1440
     azure-monitor-linux-agent-version: "1.22"
     cors-allowed-origins:
+
+  aws:
+    discovery:
+      role-arn: "arn:aws:iam::291066939231:role/v0TerraDiscovery"
+      bucket:
+        name: "v0discovery"
+        region: "us-east-1"
+    authentication:
+      google-jwt-audience: "aws_terra_devel"
 
 terra.common:
   kubernetes:
