@@ -15,6 +15,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.Controll
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.AcceleratorConfig;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource.Builder;
@@ -231,7 +232,7 @@ public class ControlledResourceFixtures {
     return new ApiGcpAiNotebookInstanceCreationParameters()
         .instanceId(TestUtils.appendRandomNumber("default-instance-id"))
         .location("us-east1-b")
-        .machineType("e2-standard-2")
+        .machineType(DEFAULT_CREATED_AI_NOTEBOOK_MACHINE_TYPE)
         .vmImage(
             new ApiGcpAiNotebookInstanceVmImage()
                 .projectId("deeplearning-platform-release")
@@ -513,7 +514,8 @@ public class ControlledResourceFixtures {
         .common(makeNotebookCommonFieldsBuilder().build())
         .instanceId(TestUtils.appendRandomNumber("my-cloud-id"))
         .location("us-east1-b")
-        .projectId("my-project-id");
+        .projectId("my-project-id")
+        .machineType(DEFAULT_CREATED_AI_NOTEBOOK_MACHINE_TYPE);
   }
 
   public static ControlledAiNotebookInstanceResource.Builder makeDefaultAiNotebookInstance(
@@ -522,7 +524,8 @@ public class ControlledResourceFixtures {
         .common(makeNotebookCommonFieldsBuilder().workspaceUuid(workspaceId).build())
         .instanceId(TestUtils.appendRandomNumber("my-cloud-id"))
         .location("us-east1-b")
-        .projectId("my-project-id");
+        .projectId("my-project-id")
+        .machineType(DEFAULT_CREATED_AI_NOTEBOOK_MACHINE_TYPE);
   }
 
   public static final ApiGcpAiNotebookUpdateParameters AI_NOTEBOOK_PREV_PARAMETERS =
@@ -531,6 +534,14 @@ public class ControlledResourceFixtures {
 
   public static final ApiGcpAiNotebookUpdateParameters AI_NOTEBOOK_UPDATE_PARAMETERS =
       new ApiGcpAiNotebookUpdateParameters().metadata(ImmutableMap.of("foo", "bar", "count", "3"));
+
+  public static final String DEFAULT_CREATED_AI_NOTEBOOK_MACHINE_TYPE = "e2-standard-2";
+
+  public static final String DEFAULT_AI_NOTEBOOK_MACHINE_TYPE_ALLOWING_ACCELERATOR_CONFIG =
+      "n1-standard-2";
+
+  public static final AcceleratorConfig DEFAULT_AI_NOTEBOOK_ACCELERATOR_CONFIG =
+      new AcceleratorConfig("NVIDIA_TESLA_V100", 2L);
 
   public static final OffsetDateTime OFFSET_DATE_TIME_1 =
       OffsetDateTime.parse("2017-12-03T10:15:30+01:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);

@@ -201,9 +201,7 @@ components:
             to access it.
           type: string
         machineType:
-          description: The Compute Engine machine type of this instance, see
-            https://cloud.google.com/compute/docs/machine-types
-          type: string
+          $ref: '#/components/schemas/GcpAiNotebookInstanceMachineType'
         acceleratorConfig:
           $ref: '#/components/schemas/GcpAiNotebookInstanceAcceleratorConfig'
         installGpuDriver:
@@ -268,6 +266,11 @@ components:
           type: integer
           format: int64
 
+    GcpAiNotebookInstanceMachineType:
+      description: The Compute Engine machine type of this instance, see
+        https://cloud.google.com/compute/docs/machine-types
+      type: string
+
     GcpAiNotebookInstanceVmImage:
       description: >-
         Either this or containerImage must be specified. Definition of a custom Compute Engine
@@ -329,6 +332,10 @@ components:
       description: >-
         Parameters that may be changed by a user. Location and dataset id are fixed upon create.
       properties:
+        machineType:
+          $ref: '#/components/schemas/GcpAiNotebookInstanceMachineType'
+        acceleratorConfig:
+          $ref: '#/components/schemas/GcpAiNotebookInstanceAcceleratorConfig'
         metadata:
           description: >-
             A map of custom metadata to apply to this instance. Some metadata 
