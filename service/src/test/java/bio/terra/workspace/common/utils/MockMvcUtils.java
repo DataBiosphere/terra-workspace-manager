@@ -30,107 +30,13 @@ import bio.terra.workspace.common.fixtures.PolicyFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
-import bio.terra.workspace.generated.model.ApiAccessScope;
-import bio.terra.workspace.generated.model.ApiCloneControlledFlexibleResourceRequest;
-import bio.terra.workspace.generated.model.ApiCloneControlledFlexibleResourceResult;
-import bio.terra.workspace.generated.model.ApiCloneControlledGcpBigQueryDatasetRequest;
-import bio.terra.workspace.generated.model.ApiCloneControlledGcpBigQueryDatasetResult;
-import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketRequest;
-import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketResult;
-import bio.terra.workspace.generated.model.ApiCloneReferencedGcpBigQueryDataTableResourceResult;
-import bio.terra.workspace.generated.model.ApiCloneReferencedGcpBigQueryDatasetResourceResult;
-import bio.terra.workspace.generated.model.ApiCloneReferencedGcpDataRepoSnapshotResourceResult;
-import bio.terra.workspace.generated.model.ApiCloneReferencedGcpGcsBucketResourceResult;
-import bio.terra.workspace.generated.model.ApiCloneReferencedGcpGcsObjectResourceResult;
-import bio.terra.workspace.generated.model.ApiCloneReferencedGitRepoResourceResult;
-import bio.terra.workspace.generated.model.ApiCloneReferencedResourceRequestBody;
-import bio.terra.workspace.generated.model.ApiCloneWorkspaceRequest;
-import bio.terra.workspace.generated.model.ApiCloneWorkspaceResult;
-import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
-import bio.terra.workspace.generated.model.ApiCloudPlatform;
-import bio.terra.workspace.generated.model.ApiControlledFlexibleResourceCreationParameters;
-import bio.terra.workspace.generated.model.ApiControlledResourceMetadata;
-import bio.terra.workspace.generated.model.ApiCreateCloudContextRequest;
-import bio.terra.workspace.generated.model.ApiCreateCloudContextResult;
-import bio.terra.workspace.generated.model.ApiCreateControlledFlexibleResourceRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateControlledGcpAiNotebookInstanceRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateControlledGcpBigQueryDatasetRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateControlledGcpGcsBucketRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateDataRepoSnapshotReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateGcpBigQueryDataTableReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateGcpBigQueryDatasetReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateGcpGcsBucketReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateGcpGcsObjectReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateGitRepoReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
-import bio.terra.workspace.generated.model.ApiCreatedControlledFlexibleResource;
-import bio.terra.workspace.generated.model.ApiCreatedControlledGcpAiNotebookInstanceResult;
-import bio.terra.workspace.generated.model.ApiCreatedControlledGcpBigQueryDataset;
-import bio.terra.workspace.generated.model.ApiCreatedControlledGcpGcsBucket;
-import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
-import bio.terra.workspace.generated.model.ApiDataRepoSnapshotAttributes;
-import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
-import bio.terra.workspace.generated.model.ApiErrorReport;
-import bio.terra.workspace.generated.model.ApiFlexibleResource;
-import bio.terra.workspace.generated.model.ApiFlexibleResourceAttributes;
-import bio.terra.workspace.generated.model.ApiFlexibleResourceUpdateParameters;
-import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableAttributes;
-import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableResource;
-import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetAttributes;
-import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
-import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
-import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketAttributes;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketDefaultStorageClass;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycle;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
-import bio.terra.workspace.generated.model.ApiGcpGcsObjectAttributes;
-import bio.terra.workspace.generated.model.ApiGcpGcsObjectResource;
-import bio.terra.workspace.generated.model.ApiGitRepoAttributes;
-import bio.terra.workspace.generated.model.ApiGitRepoResource;
-import bio.terra.workspace.generated.model.ApiGrantRoleRequestBody;
-import bio.terra.workspace.generated.model.ApiJobControl;
-import bio.terra.workspace.generated.model.ApiJobReport;
+import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
-import bio.terra.workspace.generated.model.ApiJobResult;
-import bio.terra.workspace.generated.model.ApiManagedBy;
-import bio.terra.workspace.generated.model.ApiPrivateResourceState;
-import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
-import bio.terra.workspace.generated.model.ApiProperty;
-import bio.terra.workspace.generated.model.ApiPropertyKeys;
-import bio.terra.workspace.generated.model.ApiRegions;
-import bio.terra.workspace.generated.model.ApiResourceDescription;
-import bio.terra.workspace.generated.model.ApiResourceLineage;
-import bio.terra.workspace.generated.model.ApiResourceLineageEntry;
-import bio.terra.workspace.generated.model.ApiResourceList;
-import bio.terra.workspace.generated.model.ApiResourceMetadata;
-import bio.terra.workspace.generated.model.ApiResourceType;
-import bio.terra.workspace.generated.model.ApiState;
-import bio.terra.workspace.generated.model.ApiStewardshipType;
-import bio.terra.workspace.generated.model.ApiUpdateBigQueryDataTableReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiUpdateBigQueryDatasetReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiUpdateControlledFlexibleResourceRequestBody;
-import bio.terra.workspace.generated.model.ApiUpdateControlledGcpBigQueryDatasetRequestBody;
-import bio.terra.workspace.generated.model.ApiUpdateControlledGcpGcsBucketRequestBody;
-import bio.terra.workspace.generated.model.ApiUpdateDataRepoSnapshotReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiUpdateGcsBucketObjectReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiUpdateGcsBucketReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiUpdateGitRepoReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
-import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
-import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
-import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
-import bio.terra.workspace.generated.model.ApiWsmPolicyInputs;
-import bio.terra.workspace.generated.model.ApiWsmPolicyPair;
-import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateMode;
-import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateRequest;
-import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateResult;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.AcceleratorConfig;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.RetrieveGcsBucketCloudAttributesStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.CheckControlledResourceAuthStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CompleteTransferOperationStep;
@@ -258,6 +164,8 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/%s/properties";
   public static final String CONTROLLED_GCP_AI_NOTEBOOKS_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/gcp/ai-notebook-instances";
+  public static final String CONTROLLED_GCP_AI_NOTEBOOK_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/gcp/ai-notebook-instances/%s";
   public static final String CONTROLLED_GCP_AI_NOTEBOOKS_V1_RESULT_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/gcp/ai-notebook-instances/create-result/%s";
   public static final String CONTROLLED_GCP_BIG_QUERY_DATASETS_V1_PATH_FORMAT =
@@ -744,6 +652,23 @@ public class MockMvcUtils {
         userRequest, workspaceId, /*instanceId=*/ null, location);
   }
 
+  public ApiCreatedControlledGcpAiNotebookInstanceResult createAiNotebookInstance(
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      @Nullable String location,
+      String machineType,
+      @Nullable AcceleratorConfig acceleratorConfig)
+      throws Exception {
+    return createAiNotebookInstanceAndExpect(
+        userRequest,
+        workspaceId,
+        /*instanceId=*/ null,
+        location,
+        machineType,
+        acceleratorConfig,
+        StatusEnum.SUCCEEDED);
+  }
+
   public ApiCreatedControlledGcpAiNotebookInstanceResult createAiNotebookInstanceAndWait(
       AuthenticatedUserRequest userRequest,
       UUID workspaceId,
@@ -761,6 +686,38 @@ public class MockMvcUtils {
       @Nullable String location,
       StatusEnum jobStatus)
       throws Exception {
+    return createAiNotebookInstanceAndExpect(
+        userRequest,
+        workspaceId,
+        instanceId,
+        location,
+        /*machineType=*/ null,
+        /*acceleratorConfig=*/ null,
+        jobStatus);
+  }
+
+  public ApiCreatedControlledGcpAiNotebookInstanceResult createAiNotebookInstanceAndExpect(
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      @Nullable String instanceId,
+      @Nullable String location,
+      String machineType,
+      @Nullable AcceleratorConfig acceleratorConfig,
+      StatusEnum jobStatus)
+      throws Exception {
+    ApiGcpAiNotebookInstanceCreationParameters creationParameters =
+        defaultNotebookCreationParameters()
+            .location(location)
+            .instanceId(
+                Optional.ofNullable(instanceId).orElse(TestUtils.appendRandomNumber("instance-id")))
+            .acceleratorConfig(AcceleratorConfig.toApiAcceleratorConfig(acceleratorConfig));
+
+    // If not specified, then use the default machine type specified in the default creation
+    // parameters.
+    if (machineType != null) {
+      creationParameters.machineType(machineType);
+    }
+
     ApiCreateControlledGcpAiNotebookInstanceRequestBody request =
         new ApiCreateControlledGcpAiNotebookInstanceRequestBody()
             .common(
@@ -768,12 +725,7 @@ public class MockMvcUtils {
                     .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE.toApiModel())
                     .name(TestUtils.appendRandomNumber("ai-notebook")))
             .jobControl(new ApiJobControl().id(UUID.randomUUID().toString()))
-            .aiNotebookInstance(
-                defaultNotebookCreationParameters()
-                    .location(location)
-                    .instanceId(
-                        Optional.ofNullable(instanceId)
-                            .orElse(TestUtils.appendRandomNumber("instance-id"))));
+            .aiNotebookInstance(creationParameters);
 
     String serializedResponse =
         getSerializedResponseForPost(
@@ -801,6 +753,43 @@ public class MockMvcUtils {
             userRequest, CONTROLLED_GCP_AI_NOTEBOOKS_V1_RESULT_PATH_FORMAT, workspaceId, jobId);
     return objectMapper.readValue(
         serializedResponse, ApiCreatedControlledGcpAiNotebookInstanceResult.class);
+  }
+
+  public ApiGcpAiNotebookInstanceResource updateAiNotebookInstance(
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      UUID resourceId,
+      String machineType,
+      @Nullable ApiGcpAiNotebookInstanceAcceleratorConfig acceleratorConfig)
+      throws Exception {
+    return updateAiNotebookInstanceAndExpect(
+        userRequest, workspaceId, resourceId, machineType, acceleratorConfig, HttpStatus.SC_OK);
+  }
+
+  public ApiGcpAiNotebookInstanceResource updateAiNotebookInstanceAndExpect(
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      UUID resourceId,
+      String machineType,
+      @Nullable ApiGcpAiNotebookInstanceAcceleratorConfig acceleratorConfig,
+      int code)
+      throws Exception {
+    String request =
+        objectMapper.writeValueAsString(
+            new ApiUpdateControlledGcpAiNotebookInstanceRequestBody()
+                .updateParameters(
+                    new ApiGcpAiNotebookUpdateParameters()
+                        .machineType(machineType)
+                        .acceleratorConfig(acceleratorConfig)));
+
+    return updateResource(
+        ApiGcpAiNotebookInstanceResource.class,
+        CONTROLLED_GCP_AI_NOTEBOOK_V1_PATH_FORMAT,
+        workspaceId,
+        resourceId,
+        request,
+        userRequest,
+        code);
   }
 
   public ApiCreatedControlledGcpBigQueryDataset createControlledBqDataset(

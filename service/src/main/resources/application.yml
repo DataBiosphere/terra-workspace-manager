@@ -222,8 +222,6 @@ feature:
   tps-enabled: false
   # bpm-enabled-gcp - Controls whether spend profile checks are made for GCP workspaces
   bpm-gcp-enabled: false
-  # bpm-enabled-azure - Controls whether spend profile checks are made for Azure workspaces
-  bpm-azure-enabled: false
   # temporary-grant-enabled - Controls whether temporary direct ACL grants are made on creates
   temporary-grant-enabled: false
   # dataproc-enabled - Controls whether project level Dataproc permissions are enabled for owners

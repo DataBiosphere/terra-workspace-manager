@@ -57,6 +57,9 @@ public final class WorkspaceFlightMapKeys {
     public static final String CREATE_NOTEBOOK_SUBNETWORK_NAME = "createNotebookSubnetworkName";
     public static final String NOTEBOOK_PET_SERVICE_ACCOUNT = "notebookPetServiceAccount";
 
+    public static final String PREVIOUS_MACHINE_TYPE = "previousMachineType";
+    public static final String PREVIOUS_ACCELERATOR_CONFIG = "previousAcceleratorConfig";
+
     // Cloning Keys
     public static final String CLONE_ALL_RESOURCES_FLIGHT_ID = "cloneAllResourcesFlightId";
     public static final String CLONE_DEFINITION_RESULT = "cloneDefinitionResult";

@@ -74,4 +74,15 @@ public class ControlledAiNotebookHandlerTest extends BaseUnitTest {
     assertEquals(maxNameLength, instanceId.length());
     assertEquals(instanceId.substring(0, maxNameLength), instanceId);
   }
+
+  @Test
+  public void parseMachineTypeFromUrl() {
+    String parsedMachineType = "n1-standard-2";
+    String machineTypeUrl =
+        "https://www.googleapis.com/compute/v1/projects/fake-project-id/zones/us-central1-a/machineTypes/%s"
+            .formatted(parsedMachineType);
+    assertEquals(
+        parsedMachineType,
+        ControlledAiNotebookHandler.getHandler().parseMachineTypeFromUrl(machineTypeUrl));
+  }
 }
