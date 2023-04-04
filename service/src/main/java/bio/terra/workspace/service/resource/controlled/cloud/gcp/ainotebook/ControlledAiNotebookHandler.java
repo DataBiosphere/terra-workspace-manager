@@ -91,11 +91,16 @@ public class ControlledAiNotebookHandler implements WsmResourceHandler {
                 retryableErrors);
 
         retrievedMachineType = parseMachineTypeFromUrl(cloudInstance.getMachineType());
-        retrievedAcceleratorConfig =
-            new AcceleratorConfig(
-                cloudInstance.getAcceleratorConfig().getType().toString(),
-                cloudInstance.getAcceleratorConfig().getCoreCount());
+        // Note: getAcceleratorConfig (of google.cloud.notebooks.v1.Instance) never returns null.
+        // Instead, an empty AcceleratorConfig object is returned.
+        Instance.AcceleratorType acceleratorType = cloudInstance.getAcceleratorConfig().getType();
 
+        if (acceleratorType != Instance.AcceleratorType.UNRECOGNIZED
+            && acceleratorType != Instance.AcceleratorType.ACCELERATOR_TYPE_UNSPECIFIED) {
+          retrievedAcceleratorConfig =
+              new AcceleratorConfig(
+                  acceleratorType.toString(), cloudInstance.getAcceleratorConfig().getCoreCount());
+        }
       } catch (Exception e) {
         throw new RuntimeException(e);
       }

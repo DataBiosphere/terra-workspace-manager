@@ -99,7 +99,7 @@ public class UpdateAiNotebookCpuAndGpuStep implements Step {
                             .setMachineType(effectiveMachineType)
                             .build())
                     .get(),
-            Duration.ofMinutes(7),
+            Duration.ofMinutes(5),
             DEFAULT_RETRY_SLEEP_DURATION,
             DEFAULT_RETRY_FACTOR_INCREASE,
             DEFAULT_RETRY_SLEEP_DURATION_MAX,
@@ -118,7 +118,7 @@ public class UpdateAiNotebookCpuAndGpuStep implements Step {
                             .setCoreCount(effectiveAcceleratorConfig.coreCount())
                             .build())
                     .get(),
-            Duration.ofMinutes(7),
+            Duration.ofMinutes(5),
             DEFAULT_RETRY_SLEEP_DURATION,
             DEFAULT_RETRY_FACTOR_INCREASE,
             DEFAULT_RETRY_SLEEP_DURATION_MAX,
