@@ -7,7 +7,6 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.utils.FlightUtils;
-import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
@@ -33,19 +32,13 @@ public class CreateDbAzureCloudContextFinishStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext) throws InterruptedException {
     AzureCloudContext azureCloudContext;
-    if (featureConfiguration.isBpmAzureEnabled()) {
-      var spendProfile = flightContext.getWorkingMap().get(SPEND_PROFILE, SpendProfile.class);
-      azureCloudContext =
-          new AzureCloudContext(
-              spendProfile.tenantId().toString(),
-              spendProfile.subscriptionId().toString(),
-              spendProfile.managedResourceGroupId());
-    } else {
-      azureCloudContext =
-          flightContext
-              .getInputParameters()
-              .get(JobMapKeys.REQUEST.getKeyName(), AzureCloudContext.class);
-    }
+    var spendProfile = flightContext.getWorkingMap().get(SPEND_PROFILE, SpendProfile.class);
+    azureCloudContext =
+        new AzureCloudContext(
+            spendProfile.tenantId().toString(),
+            spendProfile.subscriptionId().toString(),
+            spendProfile.managedResourceGroupId());
+
     // Create the cloud context; throws if the context already exists.
     azureCloudContextService.createAzureCloudContextFinish(
         workspaceUuid, azureCloudContext, flightContext.getFlightId());
