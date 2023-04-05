@@ -41,8 +41,6 @@ public class AwsCloudContextService {
     this.workspaceDao = workspaceDao;
     this.awsConfiguration = awsConfiguration;
 
-    logger.info("AWS Configuration: {}", awsConfiguration.toString());
-
     Environment configEnvironment = null;
     if (featureConfiguration.isAwsEnabled()) {
       configEnvironment =
