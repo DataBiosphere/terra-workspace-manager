@@ -202,7 +202,8 @@ public class ControlledResourceService {
       @Nullable String destinationResourceName,
       @Nullable String destinationDescription,
       @Nullable String destinationContainerName,
-      @Nullable ApiCloningInstructionsEnum cloningInstructionsOverride) {
+      @Nullable ApiCloningInstructionsEnum cloningInstructionsOverride,
+      @Nullable String[] prefixesToClone) {
     final ControlledResource sourceContainer =
         getControlledResource(sourceWorkspaceId, sourceResourceId);
 
@@ -238,7 +239,8 @@ public class ControlledResourceService {
                 ResourceKeys.CLONING_INSTRUCTIONS,
                 Optional.ofNullable(cloningInstructionsOverride)
                     .map(CloningInstructions::fromApiModel)
-                    .orElse(sourceContainer.getCloningInstructions()));
+                    .orElse(sourceContainer.getCloningInstructions()))
+            .addParameter(ResourceKeys.PREFIXES_TO_CLONE, prefixesToClone);
     return jobBuilder.submit();
   }
 

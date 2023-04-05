@@ -2,8 +2,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.TEST_AZURE_STORAGE_ACCOUNT_NAME;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.everyItem;
-import static org.hamcrest.Matchers.in;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
@@ -32,11 +31,11 @@ import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import javax.annotation.Nullable;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Tag("azureConnectedPlus")
@@ -57,7 +56,7 @@ public class BlobCopierConnectedTest extends BaseAzureConnectedTest {
   private AuthenticatedUserRequest userRequest;
   private UUID workspaceId;
 
-  @BeforeAll
+  @BeforeEach
   void setup() throws InterruptedException {
     Workspace workspace =
         createWorkspaceWithCloudContext(workspaceService, userAccessUtils.defaultUserAuthRequest());
@@ -98,13 +97,14 @@ public class BlobCopierConnectedTest extends BaseAzureConnectedTest {
     createResource(workspaceId, userRequest, destContainer);
   }
 
-  @AfterAll
+  @AfterEach
   void teardown() {
     workspaceService.deleteWorkspace(workspaceService.getWorkspace(workspaceId), userRequest);
   }
 
-  @Test
-  void copyBlobs() {
+  @ParameterizedTest
+  @MethodSource("getPrefixesToCopyAllFiles")
+  void copyAllBlobs(@Nullable String[] prefixesToCopy, String[] blobNames) {
     // upload blob to source container
     var sourceContainerClient =
         azureStorageAccessService.buildBlobContainerClient(sourceContainer, storageAcct);
@@ -112,19 +112,76 @@ public class BlobCopierConnectedTest extends BaseAzureConnectedTest {
     BlobCopier bc = new BlobCopier(azureStorageAccessService, userRequest);
 
     // do the copy
-    var sourceBlobs = uploadTestData(sourceContainerClient, 10);
+    uploadTestData(sourceContainerClient, List.of(blobNames));
     var result =
         bc.copyBlobs(
             new StorageData(
                 storageAcct.name(), storageAcct.endPoints().primary().blob(), sourceContainer),
             new StorageData(
-                storageAcct.name(), storageAcct.endPoints().primary().blob(), destContainer));
+                storageAcct.name(), storageAcct.endPoints().primary().blob(), destContainer),
+            prefixesToCopy);
 
     assertFalse(result.anyFailures());
     var destClient = azureStorageAccessService.buildBlobContainerClient(destContainer, storageAcct);
     var copiedBlobs =
-        destClient.listBlobs().stream().map(BlobItem::getName).collect(Collectors.toList());
-    assertThat(copiedBlobs, everyItem(in(sourceBlobs)));
+        destClient.listBlobs().stream()
+            .filter(blobItem -> blobItem.getProperties().getContentLength() > 0)
+            .map(BlobItem::getName)
+            .collect(Collectors.toList());
+    assertThat(copiedBlobs, everyItem(in(blobNames)));
+    assertEquals(copiedBlobs.size(), blobNames.length);
+  }
+
+  private static java.util.stream.Stream<Arguments> getPrefixesToCopyAllFiles() {
+    return java.util.stream.Stream.of(
+        Arguments.of(null, generateFilenames(6)),
+        Arguments.of(new String[] {}, generateFilenames(3)),
+        Arguments.of(new String[] {""}, generateFilenames(2)),
+        Arguments.of(new String[] {"0/", "1/", "2/", "3/", "4/"}, generateFilenames(5)));
+  }
+
+  @ParameterizedTest
+  @MethodSource("getPrefixesToCopySomeFiles")
+  void copyBlobsWithPrefix(String[] prefixesToCopy, String[] allNames, String[] copiedNames) {
+    // upload blob to source container
+    var sourceContainerClient =
+        azureStorageAccessService.buildBlobContainerClient(sourceContainer, storageAcct);
+
+    BlobCopier bc = new BlobCopier(azureStorageAccessService, userRequest);
+
+    // do the copy
+    uploadTestData(sourceContainerClient, List.of(allNames));
+    var result =
+        bc.copyBlobs(
+            new StorageData(
+                storageAcct.name(), storageAcct.endPoints().primary().blob(), sourceContainer),
+            new StorageData(
+                storageAcct.name(), storageAcct.endPoints().primary().blob(), destContainer),
+            prefixesToCopy);
+
+    assertFalse(result.anyFailures());
+    var destClient = azureStorageAccessService.buildBlobContainerClient(destContainer, storageAcct);
+    var copiedBlobs =
+        destClient.listBlobs().stream()
+            .filter(blobItem -> blobItem.getProperties().getContentLength() > 0)
+            .map(BlobItem::getName)
+            .collect(Collectors.toList());
+    assertThat(copiedBlobs, everyItem(in(copiedNames)));
+    assertEquals(copiedBlobs.size(), copiedNames.length);
+  }
+
+  private static java.util.stream.Stream<Arguments> getPrefixesToCopySomeFiles() {
+    var sixItems = generateFilenames(6);
+    var folderWithThreeItems =
+        new String[] {"folder/item1.txt", "folder/item2.txt", "folder/item3.txt"};
+    return java.util.stream.Stream.of(
+        Arguments.of(new String[] {" "}, generateFilenames(1), new String[] {}),
+        Arguments.of(new String[] {"2", "5"}, sixItems, new String[] {sixItems[2], sixItems[5]}),
+        Arguments.of(new String[] {"folder/"}, folderWithThreeItems, folderWithThreeItems),
+        Arguments.of(
+            new String[] {"folder/item2", "folder/item1.txt"},
+            folderWithThreeItems,
+            new String[] {folderWithThreeItems[0], folderWithThreeItems[1]}));
   }
 
   private static String generateAzureResourceName(String tag) {
@@ -147,16 +204,22 @@ public class BlobCopierConnectedTest extends BaseAzureConnectedTest {
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
   }
 
-  private List<String> uploadTestData(BlobContainerClient containerClient, int numberOfFiles) {
+  private static String[] generateFilenames(int numberOfFiles) {
     return Stream.range(0, numberOfFiles)
         .map(
             idx -> {
               var fileId = UUID.randomUUID();
-              var binaryData = BinaryData.fromString("test data" + fileId);
-              var blobName = "it-blob-" + fileId;
-              containerClient.getBlobClient(blobName).upload(binaryData);
+              var blobName = idx + "/it-blob-" + fileId;
               return blobName;
             })
-        .collect(Collectors.toList());
+        .collect(Collectors.toList())
+        .toArray(new String[0]);
+  }
+
+  private void uploadTestData(BlobContainerClient containerClient, List<String> filenames) {
+    for (String filename : filenames) {
+      var binaryData = BinaryData.fromString("test data" + filename);
+      containerClient.getBlobClient(filename).upload(binaryData);
+    }
   }
 }

@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.azure.container;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -33,6 +33,8 @@ public class CopyAzureStorageContainerBlobsStepUnitTest extends BaseAzureUnitTes
   @Mock private ControlledAzureStorageContainerResource sourceContainer;
   @Mock private FlightContext flightContext;
 
+  private final String[] clonePrefixes = {"analyses/"};
+
   private final AuthenticatedUserRequest userRequest =
       new AuthenticatedUserRequest().email("example@example.com").token(Optional.of("fake-token"));
 
@@ -52,6 +54,9 @@ public class CopyAzureStorageContainerBlobsStepUnitTest extends BaseAzureUnitTes
     workingMap.put(
         WorkspaceFlightMapKeys.ControlledResourceKeys.CLONED_RESOURCE_DEFINITION,
         destinationContainer);
+
+    workingMap.put(WorkspaceFlightMapKeys.ResourceKeys.PREFIXES_TO_CLONE, clonePrefixes);
+
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);
   }
@@ -64,7 +69,7 @@ public class CopyAzureStorageContainerBlobsStepUnitTest extends BaseAzureUnitTes
             azureStorageAccessService, sourceContainer, resourceDao, userRequest, copier);
     var copyResult =
         new BlobCopierResult(Map.of(LongRunningOperationStatus.SUCCESSFULLY_COMPLETED, List.of()));
-    when(copier.copyBlobs(any(), any())).thenReturn(copyResult);
+    when(copier.copyBlobs(any(), any(), eq(clonePrefixes))).thenReturn(copyResult);
 
     var result = copyBlobsStep.doStep(flightContext);
 
@@ -84,7 +89,7 @@ public class CopyAzureStorageContainerBlobsStepUnitTest extends BaseAzureUnitTes
                 List.of(),
                 LongRunningOperationStatus.FAILED,
                 List.of()));
-    when(copier.copyBlobs(any(), any())).thenReturn(errorCopyResult);
+    when(copier.copyBlobs(any(), any(), eq(clonePrefixes))).thenReturn(errorCopyResult);
 
     var result = copyBlobsStep.doStep(flightContext);
 

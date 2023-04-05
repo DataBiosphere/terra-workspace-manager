@@ -52,6 +52,11 @@ public class CopyAzureStorageContainerBlobsStep implements Step {
                 WorkspaceFlightMapKeys.ControlledResourceKeys.CLONED_RESOURCE_DEFINITION,
                 ControlledAzureStorageContainerResource.class);
 
+    String[] prefixesToClone =
+        flightContext
+            .getWorkingMap()
+            .get(WorkspaceFlightMapKeys.ResourceKeys.PREFIXES_TO_CLONE, String[].class);
+
     var sourceStorageData =
         azureStorageAccessService.getStorageAccountData(
             sourceContainer.getWorkspaceId(), sourceContainer.getResourceId(), userRequest);
@@ -61,7 +66,7 @@ public class CopyAzureStorageContainerBlobsStep implements Step {
             destinationContainer.getResourceId(),
             userRequest);
 
-    var results = blobCopier.copyBlobs(sourceStorageData, destStorageData);
+    var results = blobCopier.copyBlobs(sourceStorageData, destStorageData, prefixesToClone);
     if (results.anyFailures()) {
       FlightUtils.setErrorResponse(
           flightContext, "Blobs failed to copy", HttpStatus.INTERNAL_SERVER_ERROR);
