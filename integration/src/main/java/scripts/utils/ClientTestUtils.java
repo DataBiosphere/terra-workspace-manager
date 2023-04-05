@@ -48,6 +48,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,7 +58,9 @@ public class ClientTestUtils {
   // The total allowed duration is a guess. It may be too long, but we have no guidance.
   // The sleep duration is based on guidance for the fastest we should consider polling.
   public static final Duration DEFAULT_RETRY_TOTAL_DURATION = Duration.ofMinutes(20);
-  public static final Duration DEFAULT_SLEEP_DURATION = Duration.ofSeconds(30);
+  public static final Duration DEFAULT_RETRY_SLEEP_DURATION = Duration.ofSeconds(30);
+  public static final double DEFAULT_RETRY_FACTOR_INCREASE = 0.0;
+  public static final Duration DEFAULT_RETRY_SLEEP_DURATION_MAX = Duration.ofMinutes(3);
 
   public static final String RESOURCE_NAME_PREFIX = "terratest";
   // We may want this to be a test parameter. It has to match what is in the config or in the helm
@@ -283,7 +286,7 @@ public class ClientTestUtils {
   public static @Nullable <T> T getWithRetryOnException(SupplierWithException<T> supplier)
       throws Exception {
     return getWithRetryOnException(
-        supplier, DEFAULT_RETRY_TOTAL_DURATION, DEFAULT_SLEEP_DURATION, null);
+        supplier, DEFAULT_RETRY_TOTAL_DURATION, DEFAULT_RETRY_SLEEP_DURATION, null);
   }
 
   public static void runWithRetryOnException(Runnable fn) throws Exception {
@@ -336,6 +339,76 @@ public class ClientTestUtils {
       }
     }
     return result;
+  }
+
+  /**
+   * Get a result from a call that might throw an exception. If the supplier finishes, the result is
+   * returned. If the supplier continues to throw, when totalDuration has elapsed, this method will
+   * throw that exception.
+   *
+   * @param predicate - if evaluated true, then get the result; Otherwise, retry.
+   * @param supplier - code returning the result or throwing an exception
+   * @param totalDuration - total amount of time to retry
+   * @param initialSleepDuration - initial amount of time to sleep between retries
+   * @param factorIncrease - factor to increase the sleep time. The formula is: newSleepDuration =
+   *     sleepDuration + (factorIncrease * sleepDuration) The default of 0.0 results in a fixed
+   *     wait.
+   * @param sleepDurationMax = the maximum duration to expand the sleep time.
+   * @param <T> - type of result
+   * @return - result from supplier, if no exception
+   * @throws InterruptedException if the sleep is interrupted
+   */
+  public static <T> T getWithRetry(
+      Predicate<T> predicate,
+      SupplierWithException<T> supplier,
+      Duration totalDuration,
+      Duration initialSleepDuration,
+      double factorIncrease,
+      Duration sleepDurationMax)
+      throws Exception {
+
+    T result;
+    Instant endTime = Instant.now().plus(totalDuration);
+    Duration sleepDuration = initialSleepDuration;
+
+    while (true) {
+      result = supplier.get();
+      if (predicate.test(result)) {
+        break;
+      } else {
+        // If we are out of time
+        if (Instant.now().isAfter(endTime)) {
+          throw new Exception();
+        }
+        TimeUnit.MILLISECONDS.sleep(sleepDuration.toMillis());
+        long increaseMillis = (long) (factorIncrease * sleepDuration.toMillis());
+        sleepDuration = sleepDuration.plusMillis(increaseMillis);
+        if (sleepDuration.compareTo(sleepDurationMax) > 0) {
+          sleepDuration = sleepDurationMax;
+        }
+      }
+    }
+    return result;
+  }
+  /**
+   * Default version of getWithRetry. It retries all evaluated predicate failures and uses the
+   * default total duration and sleep duration.
+   *
+   * @param predicate - if evaluated true, then get the result; Otherwise, retry.
+   * @param supplier - code returning the result or throwing an exception
+   * @param <T> - type of result
+   * @return - result from supplier
+   * @throws InterruptedException if the sleep is interrupted
+   */
+  public static <T> T getWithRetry(Predicate<T> predicate, SupplierWithException<T> supplier)
+      throws Exception {
+    return getWithRetry(
+        predicate,
+        supplier,
+        DEFAULT_RETRY_TOTAL_DURATION,
+        DEFAULT_RETRY_SLEEP_DURATION,
+        DEFAULT_RETRY_FACTOR_INCREASE,
+        DEFAULT_RETRY_SLEEP_DURATION_MAX);
   }
 
   private static boolean isRetryable(

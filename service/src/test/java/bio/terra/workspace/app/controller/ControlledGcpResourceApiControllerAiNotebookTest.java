@@ -155,9 +155,11 @@ public class ControlledGcpResourceApiControllerAiNotebookTest extends BaseConnec
 
     // Wait until the notebook is stopped (or stopping).
     RetryUtils.getWithRetry(
-        state ->
-            state.getState().equals(com.google.cloud.notebooks.v1.Instance.State.STOPPED.toString())
-                || state.getState().equals(Instance.State.STOPPING.toString()),
+        instance ->
+            instance
+                    .getState()
+                    .equals(com.google.cloud.notebooks.v1.Instance.State.STOPPED.toString())
+                || instance.getState().equals(Instance.State.STOPPING.toString()),
         () -> crlService.getAIPlatformNotebooksCow().instances().get(instanceName).execute());
 
     var updatedNotebook =
