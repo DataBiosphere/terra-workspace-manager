@@ -170,7 +170,12 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
         "Other workspace user does not have access to a private notebook");
 
     // The user should be able to stop their notebook.
-    userNotebooks.projects().locations().instances().stop(instanceName, new StopInstanceRequest());
+    userNotebooks
+        .projects()
+        .locations()
+        .instances()
+        .stop(instanceName, new StopInstanceRequest())
+        .execute();
 
     // The user should not be able to directly delete their notebook.
     GoogleJsonResponseException directDeleteForbidden =
