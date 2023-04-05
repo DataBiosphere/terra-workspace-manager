@@ -97,10 +97,7 @@ public class SamService {
     // OkHttpClient objects manage their own thread pools, so it's much more performant to share one
     // across requests.
     ApiClient apiClient =
-        new ApiClient()
-            .setHttpClient(commonHttpClient)
-            .setBasePath(samConfig.getBasePath())
-            .setDebugging(true);
+        new ApiClient().setHttpClient(commonHttpClient).setBasePath(samConfig.getBasePath());
     apiClient.setAccessToken(accessToken);
     return apiClient;
   }
