@@ -9,7 +9,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import bio.terra.stairway.FlightDebugInfo;
@@ -33,8 +32,6 @@ import bio.terra.workspace.generated.model.ApiResourceLineage;
 import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
-import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
-import bio.terra.workspace.generated.model.ApiWsmPolicyPair;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -654,9 +651,6 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         /*policiesToAdd=*/ ImmutableList.of(PolicyFixtures.REGION_POLICY_USA),
         /*policiesToRemove=*/ null);
 
-    dumpWorkspaceRegionPolicies(workspaceId);
-    dumpWorkspaceRegionPolicies(workspaceId2);
-
     // Clone resource
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
     mockMvcUtils.cloneControlledBqDataset(
@@ -677,21 +671,6 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
     // Clean up: Delete policies
     mockMvcUtils.deletePolicies(userRequest, workspaceId);
     mockMvcUtils.deletePolicies(userRequest, workspaceId2);
-  }
-
-  private void dumpWorkspaceRegionPolicies(UUID workspaceId) throws Exception {
-    ApiWorkspaceDescription workspace =
-        mockMvcUtils.getWorkspace(
-            userAccessUtils.defaultUser().getAuthenticatedRequest(), workspaceId);
-    for (ApiWsmPolicyInput policy : workspace.getPolicies()) {
-      if (policy.getName().equals(PolicyFixtures.REGION_CONSTRAINT)) {
-        logger.info(
-            ">> REGION POLICY DUMP - workspace {} id {}", workspace.getUserFacingId(), workspaceId);
-        for (ApiWsmPolicyPair pair : policy.getAdditionalData()) {
-          logger.info(">> {} | {}", pair.getKey(), pair.getValue());
-        }
-      }
-    }
   }
 
   @Test
