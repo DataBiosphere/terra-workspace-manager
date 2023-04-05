@@ -553,10 +553,12 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         workspaceService.validateMcWorkspaceAndAction(userRequest, uuid, SamWorkspaceAction.WRITE);
 
     switch (cloudPlatform) {
+      case GCP -> workspaceService.createGcpCloudContext(workspace, jobId, userRequest, resultPath);
       case AZURE -> workspaceService.createAzureCloudContext(
           workspace, jobId, userRequest, resultPath);
       case AWS -> workspaceService.createAwsCloudContext(workspace, jobId, userRequest, resultPath);
-      default -> workspaceService.createGcpCloudContext(workspace, jobId, userRequest, resultPath);
+      default -> throw new FeatureNotSupportedException(
+          "Cloud context creation not supported for cloud platform " + cloudPlatform);
     }
 
     ApiCreateCloudContextResult response = fetchCreateCloudContextResult(jobId);

@@ -144,12 +144,6 @@ public class WorkspaceService {
       @Nullable UUID sourceWorkspaceUuid,
       CloningInstructions cloningInstructions,
       AuthenticatedUserRequest userRequest) {
-    String workspaceUuid = workspace.getWorkspaceId().toString();
-    String jobDescription =
-        String.format(
-            "Create workspace: name: '%s' id: '%s'  ",
-            workspace.getDisplayName().orElse(""), workspaceUuid);
-
     // Before launching the flight, confirm the workspace does not already exist. This isn't perfect
     // if two requests come in at nearly the same time, but it prevents launching a flight when a
     // workspace already exists.
@@ -157,10 +151,14 @@ public class WorkspaceService {
       throw new DuplicateWorkspaceException("Provided workspace ID is already in use");
     }
 
+    String workspaceUuid = workspace.getWorkspaceId().toString();
     JobBuilder createJob =
         jobService
             .newJob()
-            .description(jobDescription)
+            .description(
+                String.format(
+                    "Create workspace: name: '%s' id: '%s'  ",
+                    workspace.getDisplayName().orElse(""), workspaceUuid))
             .flightClass(WorkspaceCreateFlight.class)
             .request(workspace)
             .userRequest(userRequest)
@@ -370,11 +368,10 @@ public class WorkspaceService {
   /** Delete an existing workspace by ID. */
   @Traced
   public void deleteWorkspace(Workspace workspace, AuthenticatedUserRequest userRequest) {
-    String description = "Delete workspace " + workspace.getWorkspaceId();
     JobBuilder deleteJob =
         jobService
             .newJob()
-            .description(description)
+            .description("Delete workspace " + workspace.getWorkspaceId())
             .flightClass(WorkspaceDeleteFlight.class)
             .operationType(OperationType.DELETE)
             .workspaceId(workspace.getWorkspaceId().toString())
@@ -410,10 +407,6 @@ public class WorkspaceService {
       TpsPolicyInputs additionalPolicies,
       Workspace destinationWorkspace) {
     UUID workspaceUuid = sourceWorkspace.getWorkspaceId();
-    String jobDescription =
-        String.format(
-            "Clone workspace: name: '%s' id: '%s'  ",
-            sourceWorkspace.getDisplayName().orElse(""), workspaceUuid);
 
     // Get the enabled applications from the source workspace
     List<String> applicationIds =
@@ -437,7 +430,10 @@ public class WorkspaceService {
     // Remaining steps are an async flight.
     return jobService
         .newJob()
-        .description(jobDescription)
+        .description(
+            String.format(
+                "Clone workspace: name: '%s' id: '%s'  ",
+                sourceWorkspace.getDisplayName().orElse(""), workspaceUuid))
         .flightClass(CloneWorkspaceFlight.class)
         .userRequest(userRequest)
         .request(destinationWorkspace)
@@ -470,14 +466,12 @@ public class WorkspaceService {
           "Cannot create a GCP context in an environment where buffer service is disabled or not configured.");
     }
 
-    String jobDescription =
-        String.format(
-            "Create GCP cloud context for workspace: name: '%s' id: '%s'  ",
-            workspace.getDisplayName().orElse(""), workspace.getWorkspaceId());
-
     jobService
         .newJob()
-        .description(jobDescription)
+        .description(
+            String.format(
+                "Create GCP cloud context for workspace: name: '%s' id: '%s'  ",
+                workspace.getDisplayName().orElse(""), workspace.getWorkspaceId()))
         .jobId(jobId)
         .flightClass(CreateGcpContextFlightV2.class)
         .userRequest(userRequest)
@@ -517,7 +511,6 @@ public class WorkspaceService {
         .operationType(OperationType.CREATE)
         .flightClass(CreateAzureContextFlight.class)
         .userRequest(userRequest)
-        .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspace.getWorkspaceId().toString())
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
         .submit();
   }
@@ -546,7 +539,6 @@ public class WorkspaceService {
         .operationType(OperationType.CREATE)
         .flightClass(CreateAwsContextFlight.class)
         .userRequest(userRequest)
-        .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspace.getWorkspaceId().toString())
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
         .submit();
   }
@@ -554,14 +546,12 @@ public class WorkspaceService {
   /** Delete the GCP cloud context for the workspace. */
   @Traced
   public void deleteGcpCloudContext(Workspace workspace, AuthenticatedUserRequest userRequest) {
-    String jobDescription =
-        String.format(
-            "Delete GCP cloud context for workspace: name: '%s' id: '%s'  ",
-            workspace.getDisplayName().orElse(""), workspace.getWorkspaceId());
-
     jobService
         .newJob()
-        .description(jobDescription)
+        .description(
+            String.format(
+                "Delete GCP cloud context for workspace: name: '%s' id: '%s'  ",
+                workspace.getDisplayName().orElse(""), workspace.getWorkspaceId()))
         .flightClass(DeleteGcpContextFlight.class)
         .userRequest(userRequest)
         .operationType(OperationType.DELETE)
@@ -571,13 +561,14 @@ public class WorkspaceService {
 
   @Traced
   public void deleteAzureCloudContext(Workspace workspace, AuthenticatedUserRequest userRequest) {
-    String jobDescription =
-        String.format(
-            "Delete Azure cloud context for workspace: name: '%s' id: '%s'  ",
-            workspace.getDisplayName().orElse(""), workspace.getWorkspaceId());
+    features.azureEnabledCheck();
+
     jobService
         .newJob()
-        .description(jobDescription)
+        .description(
+            String.format(
+                "Delete Azure cloud context for workspace: name: '%s' id: '%s'  ",
+                workspace.getDisplayName().orElse(""), workspace.getWorkspaceId()))
         .flightClass(DeleteAzureContextFlight.class)
         .userRequest(userRequest)
         .operationType(OperationType.DELETE)
@@ -587,13 +578,14 @@ public class WorkspaceService {
 
   @Traced
   public void deleteAwsCloudContext(Workspace workspace, AuthenticatedUserRequest userRequest) {
-    String jobDescription =
-        String.format(
-            "Delete AWS cloud context for workspace: name: '%s' id: '%s'  ",
-            workspace.getDisplayName().orElse(""), workspace.getWorkspaceId());
+    features.awsEnabledCheck();
+
     jobService
         .newJob()
-        .description(jobDescription)
+        .description(
+            String.format(
+                "Delete AWS cloud context for workspace: name: '%s' id: '%s'  ",
+                workspace.getDisplayName().orElse(""), workspace.getWorkspaceId()))
         .flightClass(DeleteAwsContextFlight.class)
         .userRequest(userRequest)
         .operationType(OperationType.DELETE)

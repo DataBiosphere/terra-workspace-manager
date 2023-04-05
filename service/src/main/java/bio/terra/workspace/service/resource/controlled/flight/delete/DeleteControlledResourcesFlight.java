@@ -7,7 +7,9 @@ import bio.terra.stairway.Step;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
-import bio.terra.workspace.service.resource.controlled.flight.create.GetCloudContextStep;
+import bio.terra.workspace.service.resource.controlled.flight.create.GetAwsCloudContextStep;
+import bio.terra.workspace.service.resource.controlled.flight.create.GetAzureCloudContextStep;
+import bio.terra.workspace.service.resource.controlled.flight.create.GetGcpCloudContextStep;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
@@ -67,14 +69,17 @@ public class DeleteControlledResourcesFlight extends Flight {
             flightBeanBag.getResourceDao(), workspaceUuid, resource.getResourceId()));
 
     // Get the cloud context for the resource we are deleting
-    addStep(
-        new GetCloudContextStep(
-            workspaceUuid,
-            resource.getResourceType().getCloudPlatform(),
-            flightBeanBag.getGcpCloudContextService(),
-            flightBeanBag.getAzureCloudContextService(),
-            flightBeanBag.getAwsCloudContextService()),
-        cloudRetry);
+    switch (resource.getResourceType().getCloudPlatform()) {
+      case GCP -> addStep(
+          new GetGcpCloudContextStep(workspaceUuid, flightBeanBag.getGcpCloudContextService()),
+          cloudRetry);
+      case AZURE -> addStep(
+          new GetAzureCloudContextStep(workspaceUuid, flightBeanBag.getAzureCloudContextService()),
+          cloudRetry);
+      case AWS -> addStep(
+          new GetAwsCloudContextStep(workspaceUuid, flightBeanBag.getAwsCloudContextService()),
+          cloudRetry);
+    }
 
     // Delete the cloud resource. This has unique logic for each resource type. Depending on the
     // specifics of the resource type, this step may require the flight to run asynchronously.

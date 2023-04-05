@@ -13,13 +13,12 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureStorageA
 import bio.terra.workspace.service.resource.controlled.cloud.azure.BlobCopier;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.flight.clone.CheckControlledResourceAuthStep;
-import bio.terra.workspace.service.resource.controlled.flight.create.GetCloudContextStep;
+import bio.terra.workspace.service.resource.controlled.flight.create.GetAzureCloudContextStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
-import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -69,12 +68,8 @@ public class CloneControlledAzureStorageContainerResourceFlight extends Flight {
 
     // Get the cloud context and store it in the working map
     addStep(
-        new GetCloudContextStep(
-            destinationWorkspaceId,
-            CloudPlatform.AZURE,
-            flightBeanBag.getGcpCloudContextService(),
-            flightBeanBag.getAzureCloudContextService(),
-            flightBeanBag.getAwsCloudContextService()),
+        new GetAzureCloudContextStep(
+            destinationWorkspaceId, flightBeanBag.getAzureCloudContextService()),
         RetryRules.shortDatabase());
 
     // Flight plan

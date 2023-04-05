@@ -153,6 +153,7 @@ public class AwsCloudContextService {
 
     Metadata metadata = this.environment.getMetadata();
     return new AwsCloudContext(
+        metadata.getMajorVersion(),
         metadata.getOrganizationId(),
         metadata.getAccountId(),
         metadata.getTenantAlias(),
