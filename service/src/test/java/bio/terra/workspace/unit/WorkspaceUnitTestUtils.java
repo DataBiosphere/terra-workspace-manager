@@ -16,9 +16,6 @@ public class WorkspaceUnitTestUtils {
   /**
    * Creates a workspaces with a GCP cloud context and stores it in the database. Returns the
    * workspace id.
-   *
-   * <p>The {@link ResourceDao#createControlledResource(ControlledResource)} checks that a relevant
-   * cloud context exists before storing the resource.
    */
   public static UUID createWorkspaceWithGcpContext(WorkspaceDao workspaceDao) {
     UUID workspaceId = createWorkspaceWithoutGcpContext(workspaceDao);
