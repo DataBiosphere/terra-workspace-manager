@@ -36,6 +36,18 @@ public class AzureCloudContext {
     return azureResourceGroupId;
   }
 
+  public void setAzureTenantId(String azureTenantId) {
+    this.azureTenantId = azureTenantId;
+  }
+
+  public void setAzureSubscriptionId(String azureSubscriptionId) {
+    this.azureSubscriptionId = azureSubscriptionId;
+  }
+
+  public void setAzureResourceGroupId(String azureResourceGroupId) {
+    this.azureResourceGroupId = azureResourceGroupId;
+  }
+
   public ApiAzureContext toApi() {
     return new ApiAzureContext()
         .tenantId(azureTenantId)
