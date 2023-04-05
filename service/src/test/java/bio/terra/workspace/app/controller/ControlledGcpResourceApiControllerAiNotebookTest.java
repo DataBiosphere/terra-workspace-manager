@@ -5,18 +5,12 @@ import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEF
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_CREATED_AI_NOTEBOOK_MACHINE_TYPE;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertControlledResourceMetadata;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertResourceMetadata;
-import static bio.terra.workspace.common.utils.RetryUtils.DEFAULT_RETRY_FACTOR_INCREASE;
-import static bio.terra.workspace.common.utils.RetryUtils.DEFAULT_RETRY_SLEEP_DURATION;
-import static bio.terra.workspace.common.utils.RetryUtils.DEFAULT_RETRY_SLEEP_DURATION_MAX;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.cloudres.google.notebooks.InstanceName;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
-import bio.terra.workspace.common.utils.GcpUtils;
-import bio.terra.workspace.common.utils.GcpUtilsTest;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.RetryUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
@@ -36,14 +30,9 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.AcceleratorConfig;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants;
-
-import java.time.Duration;
+import com.google.cloud.notebooks.v1.Instance;
 import java.util.List;
 import java.util.UUID;
-
-import com.google.api.services.notebooks.v1.model.StopInstanceRequest;
-import com.google.cloud.notebooks.v1.GetInstanceRequest;
-import com.google.cloud.notebooks.v1.Instance;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
