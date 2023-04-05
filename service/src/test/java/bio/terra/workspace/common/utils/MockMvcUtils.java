@@ -72,6 +72,7 @@ import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
+import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.hamcrest.Matcher;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -2453,9 +2454,11 @@ public class MockMvcUtils {
             .sourceWorkspaceId(sourceWorkspaceId)
             .sourceResourceId(sourceResourceId));
 
-    String expectedLastUpdatedBy = samService.getUserStatusInfo(userRequest).getUserEmail();
-    String expectedLastUpdatedBySubjectId =
-        samService.getUserStatusInfo(userRequest).getUserSubjectId();
+    UserStatusInfo userStatusInfo = samService.getUserStatusInfo(userRequest);
+    String expectedLastUpdatedBy = userStatusInfo.getUserEmail();
+    String expectedLastUpdatedBySubjectId = userStatusInfo.getUserSubjectId();
+    logger.info(">>Expect last updated by {}", expectedLastUpdatedBy);
+
     assertResourceMetadata(
         actualMetadata,
         expectedCloudPlatform,
@@ -2468,6 +2471,7 @@ public class MockMvcUtils {
         expectedResourceLineage,
         expectedCreatedBy,
         expectedLastUpdatedBy);
+    // The CLONE activity log entry is keyed to the DESTINATION workspace for some reason!?
     assertLatestActivityLogChangeDetails(
         expectedWorkspaceId,
         expectedLastUpdatedBy,
