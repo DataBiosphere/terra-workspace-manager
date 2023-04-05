@@ -602,10 +602,11 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
               .map(
                   c ->
                       new ApiAwsContext()
-                          .awsOrganization(c.getAwsOrganization())
-                          .awsAccountNumber(c.getAwsAccountNumber())
-                          .tenantId(c.getTenantId())
-                          .terraEnvironment(c.getTerraEnvironment()))
+                          .majorVersion(c.getMajorVersion())
+                          .organizationId(c.getOrganizationId())
+                          .accountId(c.getAccountId())
+                          .tenantAlias(c.getTenantAlias())
+                          .environmentAlias(c.getEnvironmentAlias()))
               .orElse(null);
     }
 

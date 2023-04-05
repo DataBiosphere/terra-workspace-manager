@@ -12,53 +12,65 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 public class AwsCloudContext {
-  private String awsOrganization;
-  private String awsAccountNumber;
-  private String tenantId;
-  private String terraEnvironment;
+  private String majorVersion;
+  private String organizationId;
+  private String accountId;
+  private String tenantAlias;
+  private String environmentAlias;
 
   // Constructor for Jackson
   public AwsCloudContext() {}
 
   // Constructor for V1
   public AwsCloudContext(
-      String awsOrganization, String awsAccountNumber, String tenantId, String terraEnvironment) {
-    this.awsOrganization = awsOrganization;
-    this.awsAccountNumber = awsAccountNumber;
-    this.tenantId = tenantId;
-    this.terraEnvironment = terraEnvironment;
+      String majorVersion,
+      String organizationId,
+      String accountId,
+      String tenantAlias,
+      String environmentAlias) {
+    this.majorVersion = majorVersion;
+    this.organizationId = organizationId;
+    this.accountId = accountId;
+    this.tenantAlias = tenantAlias;
+    this.environmentAlias = environmentAlias;
   }
 
-  public String getAwsOrganization() {
-    return awsOrganization;
+  public String getMajorVersion() {
+    return majorVersion;
   }
 
-  public String getAwsAccountNumber() {
-    return awsAccountNumber;
+  public String getOrganizationId() {
+    return organizationId;
   }
 
-  public String getTenantId() {
-    return tenantId;
+  public String getAccountId() {
+    return accountId;
   }
 
-  public String getTerraEnvironment() {
-    return terraEnvironment;
+  public String getTenantAlias() {
+    return tenantAlias;
+  }
+
+  public String getEnvironmentAlias() {
+    return environmentAlias;
   }
 
   public ApiAwsContext toApi() {
     return new ApiAwsContext()
-        .awsOrganization(awsOrganization)
-        .awsAccountNumber(awsAccountNumber)
-        .tenantId(tenantId)
-        .terraEnvironment(terraEnvironment);
+        .majorVersion(majorVersion)
+        .organizationId(organizationId)
+        .accountId(accountId)
+        .tenantAlias(tenantAlias)
+        .environmentAlias(environmentAlias);
   }
 
   public static AwsCloudContext fromApi(ApiAwsContext awsContext) {
     return new AwsCloudContext(
-        awsContext.getAwsOrganization(),
-        awsContext.getAwsAccountNumber(),
-        awsContext.getTenantId(),
-        awsContext.getTerraEnvironment());
+        awsContext.getMajorVersion(),
+        awsContext.getOrganizationId(),
+        awsContext.getAccountId(),
+        awsContext.getTenantAlias(),
+        awsContext.getEnvironmentAlias());
   }
 
   @Override
@@ -74,20 +86,22 @@ public class AwsCloudContext {
     AwsCloudContext that = (AwsCloudContext) o;
 
     return new EqualsBuilder()
-        .append(awsOrganization, that.awsOrganization)
-        .append(awsAccountNumber, that.awsAccountNumber)
-        .append(tenantId, that.tenantId)
-        .append(terraEnvironment, that.terraEnvironment)
+        .append(majorVersion, that.majorVersion)
+        .append(organizationId, that.organizationId)
+        .append(accountId, that.accountId)
+        .append(tenantAlias, that.tenantAlias)
+        .append(environmentAlias, that.environmentAlias)
         .isEquals();
   }
 
   @Override
   public int hashCode() {
     return new HashCodeBuilder(17, 37)
-        .append(awsOrganization)
-        .append(awsAccountNumber)
-        .append(tenantId)
-        .append(terraEnvironment)
+        .append(majorVersion)
+        .append(organizationId)
+        .append(accountId)
+        .append(tenantAlias)
+        .append(environmentAlias)
         .toHashCode();
   }
 
@@ -106,10 +120,11 @@ public class AwsCloudContext {
       dbContext.validateVersion();
 
       return new AwsCloudContext(
-          dbContext.awsOrganization,
-          dbContext.awsAccountNumber,
-          dbContext.tenantId,
-          dbContext.terraEnvironment);
+          dbContext.majorVersion,
+          dbContext.organizationId,
+          dbContext.accountId,
+          dbContext.tenantAlias,
+          dbContext.environmentAlias);
 
     } catch (SerializationException e) {
       throw new InvalidSerializedVersionException("Invalid serialized version: " + e);
@@ -124,31 +139,35 @@ public class AwsCloudContext {
     private static final long AWS_CLOUD_CONTEXT_DB_VERSION = 1;
 
     public long version;
-    public String awsOrganization;
-    public String awsAccountNumber;
-    public String tenantId;
-    public String terraEnvironment;
+    public String majorVersion;
+    public String organizationId;
+    public String accountId;
+    public String tenantAlias;
+    public String environmentAlias;
 
     @JsonCreator
     public AwsCloudContextV1(
         @JsonProperty("version") long version,
-        @JsonProperty("awsOrganization") String awsOrganization,
-        @JsonProperty("awsAccountNumber") String awsAccountNumber,
-        @JsonProperty("tenantId") String tenantId,
-        @JsonProperty("terraEnvironment") String terraEnvironment) {
+        @JsonProperty("majorVersion") String majorVersion,
+        @JsonProperty("organizationId") String organizationId,
+        @JsonProperty("accountId") String accountId,
+        @JsonProperty("tenantAlias") String tenantAlias,
+        @JsonProperty("environmentAlias") String environmentAlias) {
       this.version = version;
-      this.awsOrganization = awsOrganization;
-      this.awsAccountNumber = awsAccountNumber;
-      this.tenantId = tenantId;
-      this.terraEnvironment = terraEnvironment;
+      this.majorVersion = majorVersion;
+      this.organizationId = organizationId;
+      this.accountId = accountId;
+      this.tenantAlias = tenantAlias;
+      this.environmentAlias = environmentAlias;
     }
 
     public AwsCloudContextV1(AwsCloudContext awsCloudContext) {
       this.version = AWS_CLOUD_CONTEXT_DB_VERSION | AWS_CLOUD_CONTEXT_DB_VERSION_MASK;
-      this.awsOrganization = awsCloudContext.awsOrganization;
-      this.awsAccountNumber = awsCloudContext.awsAccountNumber;
-      this.tenantId = awsCloudContext.tenantId;
-      this.terraEnvironment = awsCloudContext.terraEnvironment;
+      this.majorVersion = awsCloudContext.majorVersion;
+      this.organizationId = awsCloudContext.organizationId;
+      this.accountId = awsCloudContext.accountId;
+      this.tenantAlias = awsCloudContext.tenantAlias;
+      this.environmentAlias = awsCloudContext.environmentAlias;
     }
 
     public void validateVersion() {
