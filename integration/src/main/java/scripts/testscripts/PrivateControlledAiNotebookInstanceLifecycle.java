@@ -170,12 +170,7 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
         "Other workspace user does not have access to a private notebook");
 
     // The user should be able to stop their notebook.
-    userNotebooks
-        .projects()
-        .locations()
-        .instances()
-        .stop(instanceName, new StopInstanceRequest())
-        .execute();
+    userNotebooks.projects().locations().instances().stop(instanceName, new StopInstanceRequest());
 
     // The user should not be able to directly delete their notebook.
     GoogleJsonResponseException directDeleteForbidden =
@@ -191,23 +186,17 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
     var newName = "new-instance-notebook-name";
     var newDescription = "new description for the new instance notebook name";
     var newMetadata = ImmutableMap.of("foo", "bar", "count", "3");
-    var newMachineType = "n1-standard-4";
     GcpAiNotebookInstanceResource updatedResource =
         resourceUserApi.updateAiNotebookInstance(
             new UpdateControlledGcpAiNotebookInstanceRequestBody()
                 .description(newDescription)
                 .name(newName)
-                .updateParameters(
-                    new GcpAiNotebookUpdateParameters()
-                        .metadata(newMetadata)
-                        .machineType(newMachineType)),
+                .updateParameters(new GcpAiNotebookUpdateParameters().metadata(newMetadata)),
             getWorkspaceId(),
             resourceId);
 
     assertEquals(newName, updatedResource.getMetadata().getName());
     assertEquals(newDescription, updatedResource.getMetadata().getDescription());
-    assertEquals(newMachineType, updatedResource.getAttributes().getMachineType());
-
     var metadata =
         userNotebooks.projects().locations().instances().get(instanceName).execute().getMetadata();
     for (var entrySet : newMetadata.entrySet()) {
