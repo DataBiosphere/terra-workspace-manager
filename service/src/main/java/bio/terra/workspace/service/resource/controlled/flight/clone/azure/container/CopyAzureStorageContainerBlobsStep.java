@@ -55,9 +55,9 @@ public class CopyAzureStorageContainerBlobsStep implements Step {
                 ControlledAzureStorageContainerResource.class);
 
     List<String> prefixesToClone =
-        flightContext
-            .getWorkingMap()
-            .get(WorkspaceFlightMapKeys.ResourceKeys.PREFIXES_TO_CLONE, new TypeReference<>() {});
+        inputParameters.get(
+            WorkspaceFlightMapKeys.ControlledResourceKeys.PREFIXES_TO_CLONE,
+            new TypeReference<>() {});
 
     var sourceStorageData =
         azureStorageAccessService.getStorageAccountData(
