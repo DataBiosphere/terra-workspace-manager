@@ -28,8 +28,6 @@ public class GetGcpCloudContextStep implements Step {
     this.gcpCloudContextService = gcpCloudContextService;
   }
 
-  // Get the cloud context and store it in the working map
-
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {

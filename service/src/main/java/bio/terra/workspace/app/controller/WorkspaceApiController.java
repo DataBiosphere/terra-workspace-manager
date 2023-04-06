@@ -629,9 +629,11 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         workspaceService.validateMcWorkspaceAndAction(userRequest, uuid, SamWorkspaceAction.WRITE);
 
     switch (cloudPlatform) {
+      case GCP -> workspaceService.deleteGcpCloudContext(workspace, userRequest);
       case AZURE -> workspaceService.deleteAzureCloudContext(workspace, userRequest);
       case AWS -> workspaceService.deleteAwsCloudContext(workspace, userRequest);
-      default -> workspaceService.deleteGcpCloudContext(workspace, userRequest);
+      default -> throw new FeatureNotSupportedException(
+          "Cloud context deletion not supported for cloud platform " + cloudPlatform);
     }
 
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
