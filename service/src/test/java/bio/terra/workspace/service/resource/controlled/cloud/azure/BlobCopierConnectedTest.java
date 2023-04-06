@@ -127,7 +127,8 @@ public class BlobCopierConnectedTest extends BaseAzureConnectedTest {
     var folderWithThreeItems =
         new String[] {"folder/item1.txt", "folder/item2.txt", "folder/item3.txt"};
     return java.util.stream.Stream.of(
-        Arguments.of(new String[] {" "}, generateFilenames(1), new String[] {}),
+        Arguments.of(
+            new String[] {" ", "/", "it-blob", "/it-blob"}, generateFilenames(1), new String[] {}),
         Arguments.of(new String[] {"2", "5"}, sixItems, new String[] {sixItems[2], sixItems[5]}),
         Arguments.of(new String[] {"folder/"}, folderWithThreeItems, folderWithThreeItems),
         Arguments.of(
