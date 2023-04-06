@@ -65,8 +65,6 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
   private final String instanceId;
   private final String location;
   private final String projectId;
-  private final String machineType;
-  @Nullable private final AcceleratorConfig acceleratorConfig;
 
   @JsonCreator
   public ControlledAiNotebookInstanceResource(
@@ -75,32 +73,21 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
           WsmControlledResourceFields controlledResourceFields,
       @JsonProperty("instanceId") String instanceId,
       @JsonProperty("location") String location,
-      @JsonProperty("projectId") String projectId,
-      @JsonProperty("machineType") String machineType,
-      @Nullable @JsonProperty("acceleratorConfig") AcceleratorConfig acceleratorConfig) {
+      @JsonProperty("projectId") String projectId) {
     super(resourceFields, controlledResourceFields);
     this.instanceId = instanceId;
     this.location = location;
     this.projectId = projectId;
-    this.machineType = machineType;
-    this.acceleratorConfig = acceleratorConfig;
     validate();
   }
 
   // Constructor for the builder
   private ControlledAiNotebookInstanceResource(
-      ControlledResourceFields common,
-      String instanceId,
-      String location,
-      String projectId,
-      String machineType,
-      @Nullable AcceleratorConfig acceleratorConfig) {
+      ControlledResourceFields common, String instanceId, String location, String projectId) {
     super(common);
     this.instanceId = instanceId;
     this.location = location;
     this.projectId = projectId;
-    this.machineType = machineType;
-    this.acceleratorConfig = acceleratorConfig;
     validate();
   }
 
@@ -144,15 +131,6 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
   /** The GCP project id where the notebook is created */
   public String getProjectId() {
     return projectId;
-  }
-
-  public String getMachineType() {
-    return machineType;
-  }
-
-  @Nullable
-  public AcceleratorConfig getAcceleratorConfig() {
-    return acceleratorConfig;
   }
 
   // -- getters not included in serialization --
@@ -220,8 +198,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
             userRequest),
         gcpRetryRule);
     flight.addStep(
-        new UpdateAiNotebookResourceAttributesDuringCreationStep(
-            this, flightBeanBag.getResourceDao()),
+        new UpdateNotebookResourceLocationAttributesStep(this, flightBeanBag.getResourceDao()),
         shortDatabaseRetryRule);
     flight.addStep(
         new UpdateControlledResourceRegionStep(flightBeanBag.getResourceDao(), getResourceId()),
@@ -250,24 +227,13 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
             flightBeanBag.getGcpCloudContextService()),
         gcpRetry);
 
-    // Update the AI notebook's metadata attributes in the cloud, and
-    // update the machineType and acceleratorConfig in the database.
+    // Update the AI notebook's attributes.
     flight.addStep(
         new UpdateAiNotebookAttributesStep(
             aiNotebookResource,
             flightBeanBag.getCrlService(),
-            flightBeanBag.getGcpCloudContextService(),
-            flightBeanBag.getResourceDao()),
+            flightBeanBag.getGcpCloudContextService()),
         gcpRetry);
-
-    // Checks if the notebook is stopped, and calculates the effective updates for future steps.
-    flight.addStep(
-        new CheckAiNotebookStoppedForGpuAndCpuUpdateStep(
-            aiNotebookResource, flightBeanBag.getCrlService()),
-        gcpRetry);
-
-    // Update the CPU and GPU attributes in the cloud.
-    flight.addStep(new UpdateAiNotebookCpuAndGpuStep(aiNotebookResource), gcpRetry);
   }
 
   public InstanceName toInstanceName(String workspaceProjectId) {
@@ -292,20 +258,13 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
     return new ApiGcpAiNotebookInstanceAttributes()
         .projectId(projectId)
         .location(getLocation())
-        .instanceId(getInstanceId())
-        .acceleratorConfig(AcceleratorConfig.toApiAcceleratorConfig(getAcceleratorConfig()))
-        .machineType(getMachineType());
+        .instanceId(getInstanceId());
   }
 
   @Override
   public String attributesToJson() {
     return DbSerDes.toJson(
-        new ControlledAiNotebookInstanceAttributes(
-            getInstanceId(),
-            getLocation(),
-            getProjectId(),
-            getMachineType(),
-            getAcceleratorConfig()));
+        new ControlledAiNotebookInstanceAttributes(getInstanceId(), getLocation(), getProjectId()));
   }
 
   @Override
@@ -366,8 +325,6 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
     private String instanceId;
     private String location;
     private String projectId;
-    private String machineType;
-    @Nullable private AcceleratorConfig acceleratorConfig;
 
     public Builder common(ControlledResourceFields common) {
       this.common = common;
@@ -389,19 +346,8 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
       return this;
     }
 
-    public Builder machineType(String machineType) {
-      this.machineType = machineType;
-      return this;
-    }
-
-    public Builder acceleratorConfig(@Nullable AcceleratorConfig acceleratorConfig) {
-      this.acceleratorConfig = acceleratorConfig;
-      return this;
-    }
-
     public ControlledAiNotebookInstanceResource build() {
-      return new ControlledAiNotebookInstanceResource(
-          common, instanceId, location, projectId, machineType, acceleratorConfig);
+      return new ControlledAiNotebookInstanceResource(common, instanceId, location, projectId);
     }
   }
 }
