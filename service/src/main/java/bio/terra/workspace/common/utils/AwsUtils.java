@@ -87,10 +87,7 @@ public class AwsUtils {
                 .region(Region.AWS_GLOBAL)
                 .build())
         .staleTime(staleTime)
-        .refreshRequest(
-            () -> {
-              return createRefreshRequest(roleArn, duration, jwtAudience);
-            })
+        .refreshRequest(() -> createRefreshRequest(roleArn, duration, jwtAudience))
         .build();
   }
 

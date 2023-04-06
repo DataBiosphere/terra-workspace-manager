@@ -19,6 +19,7 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
+import bio.terra.workspace.generated.model.ApiAwsContext;
 import bio.terra.workspace.generated.model.ApiAzureContext;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceRequest;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceResult;
@@ -63,10 +64,12 @@ import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.policy.model.PolicyExplainResult;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
+import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
+import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudContextHolder;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
@@ -102,6 +105,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   private final JobApiUtils jobApiUtils;
   private final GcpCloudContextService gcpCloudContextService;
   private final AzureCloudContextService azureCloudContextService;
+  private final AwsCloudContextService awsCloudContextService;
   private final PetSaService petSaService;
   private final TpsApiDispatch tpsApiDispatch;
   private final WorkspaceActivityLogDao workspaceActivityLogDao;
@@ -119,6 +123,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       JobApiUtils jobApiUtils,
       GcpCloudContextService gcpCloudContextService,
       AzureCloudContextService azureCloudContextService,
+      AwsCloudContextService awsCloudContextService,
       PetSaService petSaService,
       TpsApiDispatch tpsApiDispatch,
       WorkspaceActivityLogDao workspaceActivityLogDao,
@@ -131,6 +136,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     this.jobApiUtils = jobApiUtils;
     this.gcpCloudContextService = gcpCloudContextService;
     this.azureCloudContextService = azureCloudContextService;
+    this.awsCloudContextService = awsCloudContextService;
     this.petSaService = petSaService;
     this.tpsApiDispatch = tpsApiDispatch;
     this.workspaceActivityLogDao = workspaceActivityLogDao;
@@ -264,6 +270,12 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .map(AzureCloudContext::toApi)
             .orElse(null);
 
+    ApiAwsContext awsContext =
+        awsCloudContextService
+            .getAwsCloudContext(workspaceUuid)
+            .map(AwsCloudContext::toApi)
+            .orElse(null);
+
     List<ApiWsmPolicyInput> workspacePolicies = null;
     if (featureConfiguration.isTpsEnabled()) {
       tpsApiDispatch.createPaoIfNotExist(workspaceUuid);
@@ -293,6 +305,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         .stage(workspace.getWorkspaceStage().toApiModel())
         .gcpContext(gcpContext)
         .azureContext(azureContext)
+        .awsContext(awsContext)
         .createdDate(workspace.createdDate())
         .createdBy(workspace.createdByEmail())
         .lastUpdatedDate(
@@ -539,10 +552,13 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     Workspace workspace =
         workspaceService.validateMcWorkspaceAndAction(userRequest, uuid, SamWorkspaceAction.WRITE);
 
-    if (body.getCloudPlatform() == ApiCloudPlatform.AZURE) {
-      workspaceService.createAzureCloudContext(workspace, jobId, userRequest, resultPath);
-    } else {
-      workspaceService.createGcpCloudContext(workspace, jobId, userRequest, resultPath);
+    switch (cloudPlatform) {
+      case GCP -> workspaceService.createGcpCloudContext(workspace, jobId, userRequest, resultPath);
+      case AZURE -> workspaceService.createAzureCloudContext(
+          workspace, jobId, userRequest, resultPath);
+      case AWS -> workspaceService.createAwsCloudContext(workspace, jobId, userRequest, resultPath);
+      default -> throw new FeatureNotSupportedException(
+          "Cloud context creation not supported for cloud platform " + cloudPlatform);
     }
 
     ApiCreateCloudContextResult response = fetchCreateCloudContextResult(jobId);
@@ -565,6 +581,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
     ApiGcpContext gcpContext = null;
     ApiAzureContext azureContext = null;
+    ApiAwsContext awsContext = null;
 
     if (jobResult.getJobReport().getStatus().equals(StatusEnum.SUCCEEDED)) {
       gcpContext =
@@ -581,13 +598,26 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
                           .subscriptionId(c.getAzureSubscriptionId())
                           .resourceGroupId(c.getAzureResourceGroupId()))
               .orElse(null);
+
+      awsContext =
+          Optional.ofNullable(jobResult.getResult().getAwsCloudContext())
+              .map(
+                  c ->
+                      new ApiAwsContext()
+                          .majorVersion(c.getMajorVersion())
+                          .organizationId(c.getOrganizationId())
+                          .accountId(c.getAccountId())
+                          .tenantAlias(c.getTenantAlias())
+                          .environmentAlias(c.getEnvironmentAlias()))
+              .orElse(null);
     }
 
     return new ApiCreateCloudContextResult()
         .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getApiErrorReport())
         .gcpContext(gcpContext)
-        .azureContext(azureContext);
+        .azureContext(azureContext)
+        .awsContext(awsContext);
   }
 
   @Traced
@@ -598,10 +628,12 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     Workspace workspace =
         workspaceService.validateMcWorkspaceAndAction(userRequest, uuid, SamWorkspaceAction.WRITE);
 
-    if (cloudPlatform == ApiCloudPlatform.AZURE) {
-      workspaceService.deleteAzureCloudContext(workspace, userRequest);
-    } else {
-      workspaceService.deleteGcpCloudContext(workspace, userRequest);
+    switch (cloudPlatform) {
+      case GCP -> workspaceService.deleteGcpCloudContext(workspace, userRequest);
+      case AZURE -> workspaceService.deleteAzureCloudContext(workspace, userRequest);
+      case AWS -> workspaceService.deleteAwsCloudContext(workspace, userRequest);
+      default -> throw new FeatureNotSupportedException(
+          "Cloud context deletion not supported for cloud platform " + cloudPlatform);
     }
 
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
