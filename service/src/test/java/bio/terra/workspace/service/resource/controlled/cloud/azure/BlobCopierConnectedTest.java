@@ -104,21 +104,21 @@ public class BlobCopierConnectedTest extends BaseAzureConnectedTest {
 
   @ParameterizedTest
   @MethodSource("getPrefixesToCopyAllFiles")
-  void copyAllBlobs(@Nullable String[] prefixesToCopy, String[] blobNames) {
+  void copyAllBlobs(@Nullable List<String> prefixesToCopy, String[] blobNames) {
     assertCopyBlobs(prefixesToCopy, blobNames, blobNames);
   }
 
   private static java.util.stream.Stream<Arguments> getPrefixesToCopyAllFiles() {
     return java.util.stream.Stream.of(
         Arguments.of(null, generateFilenames(6)),
-        Arguments.of(new String[] {}, generateFilenames(3)),
-        Arguments.of(new String[] {""}, generateFilenames(2)),
-        Arguments.of(new String[] {"0/", "1/", "2/", "3/", "4/"}, generateFilenames(5)));
+        Arguments.of(List.of(), generateFilenames(3)),
+        Arguments.of(List.of(""), generateFilenames(2)),
+        Arguments.of(List.of("0/", "1/", "2/", "3/", "4/"), generateFilenames(5)));
   }
 
   @ParameterizedTest
   @MethodSource("getPrefixesToCopySomeFiles")
-  void copyBlobsWithPrefix(String[] prefixesToCopy, String[] allNames, String[] copiedNames) {
+  void copyBlobsWithPrefix(List<String> prefixesToCopy, String[] allNames, String[] copiedNames) {
     assertCopyBlobs(prefixesToCopy, allNames, copiedNames);
   }
 
@@ -128,16 +128,17 @@ public class BlobCopierConnectedTest extends BaseAzureConnectedTest {
         new String[] {"folder/item1.txt", "folder/item2.txt", "folder/item3.txt"};
     return java.util.stream.Stream.of(
         Arguments.of(
-            new String[] {" ", "/", "it-blob", "/it-blob"}, generateFilenames(1), new String[] {}),
-        Arguments.of(new String[] {"2", "5"}, sixItems, new String[] {sixItems[2], sixItems[5]}),
-        Arguments.of(new String[] {"folder/"}, folderWithThreeItems, folderWithThreeItems),
+            List.of(" ", "/", "it-blob", "/it-blob"), generateFilenames(1), new String[] {}),
+        Arguments.of(List.of("2", "5"), sixItems, new String[] {sixItems[2], sixItems[5]}),
+        Arguments.of(List.of("folder/"), folderWithThreeItems, folderWithThreeItems),
         Arguments.of(
-            new String[] {"folder/item2", "folder/item1.txt"},
+            List.of("folder/item2", "folder/item1.txt"),
             folderWithThreeItems,
             new String[] {folderWithThreeItems[0], folderWithThreeItems[1]}));
   }
 
-  private void assertCopyBlobs(String[] prefixesToCopy, String[] allNames, String[] copiedNames) {
+  private void assertCopyBlobs(
+      List<String> prefixesToCopy, String[] allNames, String[] copiedNames) {
     // upload blob to source container
     var sourceContainerClient =
         azureStorageAccessService.buildBlobContainerClient(sourceContainer, storageAcct);

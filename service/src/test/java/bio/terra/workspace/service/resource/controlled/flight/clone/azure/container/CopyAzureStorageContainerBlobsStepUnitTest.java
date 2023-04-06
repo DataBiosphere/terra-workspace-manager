@@ -18,10 +18,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.BlobCopierRes
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.azure.core.util.polling.LongRunningOperationStatus;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -33,7 +30,7 @@ public class CopyAzureStorageContainerBlobsStepUnitTest extends BaseAzureUnitTes
   @Mock private ControlledAzureStorageContainerResource sourceContainer;
   @Mock private FlightContext flightContext;
 
-  private final String[] clonePrefixes = {"analyses/"};
+  private final List<String> clonePrefixes = new ArrayList<>(List.of("analyses/"));
 
   private final AuthenticatedUserRequest userRequest =
       new AuthenticatedUserRequest().email("example@example.com").token(Optional.of("fake-token"));

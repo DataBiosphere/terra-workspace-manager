@@ -500,7 +500,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             body.getDescription(),
             body.getName(),
             body.getCloningInstructions(),
-            body.getPrefixesToClone().toArray(new String[0]));
+            body.getPrefixesToClone());
 
     final ApiCloneControlledAzureStorageContainerResult result =
         fetchCloneAzureContainerResult(jobId);

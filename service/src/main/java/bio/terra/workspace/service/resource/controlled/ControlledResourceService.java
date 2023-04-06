@@ -203,7 +203,7 @@ public class ControlledResourceService {
       @Nullable String destinationDescription,
       @Nullable String destinationContainerName,
       @Nullable ApiCloningInstructionsEnum cloningInstructionsOverride,
-      @Nullable String[] prefixesToClone) {
+      @Nullable List<String> prefixesToClone) {
     final ControlledResource sourceContainer =
         getControlledResource(sourceWorkspaceId, sourceResourceId);
 

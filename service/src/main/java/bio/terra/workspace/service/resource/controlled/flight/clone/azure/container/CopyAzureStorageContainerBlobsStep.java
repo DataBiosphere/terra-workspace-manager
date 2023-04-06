@@ -12,6 +12,8 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureStorageA
 import bio.terra.workspace.service.resource.controlled.cloud.azure.BlobCopier;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import com.fasterxml.jackson.core.type.TypeReference;
+import java.util.List;
 import org.springframework.http.HttpStatus;
 
 public class CopyAzureStorageContainerBlobsStep implements Step {
@@ -52,10 +54,10 @@ public class CopyAzureStorageContainerBlobsStep implements Step {
                 WorkspaceFlightMapKeys.ControlledResourceKeys.CLONED_RESOURCE_DEFINITION,
                 ControlledAzureStorageContainerResource.class);
 
-    String[] prefixesToClone =
+    List<String> prefixesToClone =
         flightContext
             .getWorkingMap()
-            .get(WorkspaceFlightMapKeys.ResourceKeys.PREFIXES_TO_CLONE, String[].class);
+            .get(WorkspaceFlightMapKeys.ResourceKeys.PREFIXES_TO_CLONE, new TypeReference<>() {});
 
     var sourceStorageData =
         azureStorageAccessService.getStorageAccountData(

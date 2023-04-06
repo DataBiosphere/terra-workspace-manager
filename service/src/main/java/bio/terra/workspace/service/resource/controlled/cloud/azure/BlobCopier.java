@@ -11,7 +11,7 @@ import com.azure.storage.blob.models.BlobCopyInfo;
 import com.azure.storage.blob.models.BlobItem;
 import com.azure.storage.blob.options.BlobBeginCopyOptions;
 import java.time.Duration;
-import java.util.Arrays;
+import java.util.List;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +41,7 @@ public class BlobCopier {
   public BlobCopierResult copyBlobs(
       StorageData sourceStorageData,
       StorageData destStorageData,
-      @Nullable String[] prefixesToCopy) {
+      @Nullable List<String> prefixesToCopy) {
     var sourceBlobContainerClient =
         storageAccessService.buildBlobContainerClient(sourceStorageData);
     var destinationBlobContainerClient =
@@ -49,14 +49,14 @@ public class BlobCopier {
 
     // Directories are presented as zero-length blobs, filter these out as they are not
     // copy-able. Also filter out blobs that should not be copied if `prefixToCopy` was specified.
-    var copyAllBlobs = prefixesToCopy == null || prefixesToCopy.length == 0;
+    var copyAllBlobs = prefixesToCopy == null || prefixesToCopy.size() == 0;
     var blobItems =
         sourceBlobContainerClient.listBlobs().stream()
             .filter(
                 blobItem ->
                     blobItem.getProperties().getContentLength() > 0
                         && (copyAllBlobs
-                            || Arrays.asList(prefixesToCopy).stream()
+                            || prefixesToCopy.stream()
                                 .anyMatch(prefix -> blobItem.getName().startsWith(prefix))));
 
     var blobPollers =
