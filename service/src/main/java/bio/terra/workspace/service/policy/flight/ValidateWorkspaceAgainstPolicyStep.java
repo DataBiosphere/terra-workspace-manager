@@ -5,6 +5,7 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
@@ -43,9 +44,10 @@ public class ValidateWorkspaceAgainstPolicyStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     final TpsPaoGetResult effectivePolicies =
-        flightContext
-            .getWorkingMap()
-            .get(WorkspaceFlightMapKeys.EFFECTIVE_POLICIES, TpsPaoGetResult.class);
+        FlightUtils.getRequired(
+            flightContext.getWorkingMap(),
+            WorkspaceFlightMapKeys.EFFECTIVE_POLICIES,
+            TpsPaoGetResult.class);
 
     if (cloudPlatform != CloudPlatform.GCP) {
       // We can only validate GCP right now. We'll need to add other platforms
@@ -68,13 +70,18 @@ public class ValidateWorkspaceAgainstPolicyStep implements Step {
         continue;
       }
       if (!validRegions.contains(existingResource.getRegion().toLowerCase())) {
-        throw new PolicyConflictException("Workspace contains resources in violation of policy.");
+        throw new PolicyConflictException(
+            String.format(
+                "Workspace contains resources in region '%s' in violation of policy.",
+                existingResource.getRegion()));
       }
     }
 
     if (destinationLocation != null && !validRegions.contains(destinationLocation.toLowerCase())) {
       throw new PolicyConflictException(
-          "The specified destination location violates region policies");
+          String.format(
+              "The specified destination location '%s' violates region policies",
+              destinationLocation));
     }
 
     return StepResult.getStepResultSuccess();
