@@ -115,6 +115,7 @@ public final class WorkspaceFlightMapKeys {
     public static final String RESOURCE = "resource";
     public static final String DESTINATION_RESOURCE = "destinationResource";
     public static final String CLONING_INSTRUCTIONS = "cloningInstructions";
+    public static final String PREFIXES_TO_CLONE = "prefixesToClone";
     public static final String RESOURCE_STATE_RULE = "resourceStateRule";
     public static final String RESOURCE_STATE_CHANGED = "resourceStateChanged";
     public static final String UPDATE_PARAMETERS = "updateParameters";

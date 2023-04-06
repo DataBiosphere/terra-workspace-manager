@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.azure.container;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -18,10 +18,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.BlobCopierRes
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.azure.core.util.polling.LongRunningOperationStatus;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -32,6 +29,8 @@ public class CopyAzureStorageContainerBlobsStepUnitTest extends BaseAzureUnitTes
   @Mock private ResourceDao resourceDao;
   @Mock private ControlledAzureStorageContainerResource sourceContainer;
   @Mock private FlightContext flightContext;
+
+  private final List<String> clonePrefixes = new ArrayList<>(List.of("analyses/"));
 
   private final AuthenticatedUserRequest userRequest =
       new AuthenticatedUserRequest().email("example@example.com").token(Optional.of("fake-token"));
@@ -52,6 +51,9 @@ public class CopyAzureStorageContainerBlobsStepUnitTest extends BaseAzureUnitTes
     workingMap.put(
         WorkspaceFlightMapKeys.ControlledResourceKeys.CLONED_RESOURCE_DEFINITION,
         destinationContainer);
+
+    workingMap.put(WorkspaceFlightMapKeys.ResourceKeys.PREFIXES_TO_CLONE, clonePrefixes);
+
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);
   }
@@ -64,7 +66,7 @@ public class CopyAzureStorageContainerBlobsStepUnitTest extends BaseAzureUnitTes
             azureStorageAccessService, sourceContainer, resourceDao, userRequest, copier);
     var copyResult =
         new BlobCopierResult(Map.of(LongRunningOperationStatus.SUCCESSFULLY_COMPLETED, List.of()));
-    when(copier.copyBlobs(any(), any())).thenReturn(copyResult);
+    when(copier.copyBlobs(any(), any(), eq(clonePrefixes))).thenReturn(copyResult);
 
     var result = copyBlobsStep.doStep(flightContext);
 
@@ -84,7 +86,7 @@ public class CopyAzureStorageContainerBlobsStepUnitTest extends BaseAzureUnitTes
                 List.of(),
                 LongRunningOperationStatus.FAILED,
                 List.of()));
-    when(copier.copyBlobs(any(), any())).thenReturn(errorCopyResult);
+    when(copier.copyBlobs(any(), any(), eq(clonePrefixes))).thenReturn(errorCopyResult);
 
     var result = copyBlobsStep.doStep(flightContext);
 
