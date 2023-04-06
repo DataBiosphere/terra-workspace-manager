@@ -1,10 +1,11 @@
 package bio.terra.workspace.service.workspace;
 
 import bio.terra.aws.resource.discovery.Environment;
+import bio.terra.aws.resource.discovery.EnvironmentDiscovery;
 import bio.terra.aws.resource.discovery.Metadata;
 import bio.terra.workspace.app.configuration.external.AwsConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
-import bio.terra.workspace.common.exception.FeatureNotSupportedException;
+import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
@@ -19,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 
 /**
  * This service provides methods for managing AWS cloud context. These methods do not perform any
@@ -29,41 +31,18 @@ public class AwsCloudContextService {
   private static final Logger logger = LoggerFactory.getLogger(AwsCloudContextService.class);
 
   private final WorkspaceDao workspaceDao;
-  private final AwsConfiguration awsConfiguration;
-  private final Environment environment;
+  private final EnvironmentDiscovery environmentDiscovery;
 
   @Autowired
   public AwsCloudContextService(
       WorkspaceDao workspaceDao,
       FeatureConfiguration featureConfiguration,
-      AwsConfiguration awsConfiguration)
-      throws IOException {
+      AwsConfiguration awsConfiguration) {
     this.workspaceDao = workspaceDao;
-    this.awsConfiguration = awsConfiguration;
-
-    Environment configEnvironment = null;
-    if (featureConfiguration.isAwsEnabled()) {
-      configEnvironment =
-          AwsUtils.createEnvironmentDiscovery(awsConfiguration).discoverEnvironment();
-      verifyEnvironment(configEnvironment);
-    }
-
-    this.environment = configEnvironment;
-  }
-
-  private void verifyEnvironment(Environment configEnvironment) {
-    String error = null;
-    if (configEnvironment == null) {
-      error = "environment null";
-    } else if (configEnvironment.getMetadata() == null) {
-      error = "environment.metadata null";
-    } else if (configEnvironment.getSupportedRegions().isEmpty()) {
-      error = "environment.landingZones empty";
-    }
-
-    if (error != null) {
-      throw new InvalidApplicationConfigException("AWS configuration error: " + error);
-    }
+    this.environmentDiscovery =
+        featureConfiguration.isAwsEnabled()
+            ? AwsUtils.createEnvironmentDiscovery(awsConfiguration)
+            : null;
   }
 
   /**
@@ -146,17 +125,37 @@ public class AwsCloudContextService {
    *
    * @return AWS cloud context
    */
-  public @NotNull AwsCloudContext getCloudContextFromConfiguration() {
-    if (environment == null) {
-      throw new FeatureNotSupportedException("AWS environment not configured");
-    }
-
-    Metadata metadata = this.environment.getMetadata();
+  public @NotNull AwsCloudContext getCloudContext() {
+    Environment environment = discoverEnvironment();
+    Metadata metadata = environment.getMetadata();
     return new AwsCloudContext(
         metadata.getMajorVersion(),
         metadata.getOrganizationId(),
         metadata.getAccountId(),
         metadata.getTenantAlias(),
         metadata.getEnvironmentAlias());
+  }
+
+  /**
+   * Discover environment & return a verified environment
+   *
+   * @return AWS cloud context
+   */
+  public Environment discoverEnvironment() throws IllegalArgumentException, InternalLogicException {
+    try {
+      Assert.notNull(this.environmentDiscovery, "environmentDiscovery not configured");
+
+      Environment environment = environmentDiscovery.discoverEnvironment();
+      Assert.notNull(environment, "environment null");
+      Assert.notNull(environment.getMetadata(), "environment.metadata null");
+      Assert.notEmpty(environment.getSupportedRegions(), "environment.landingZones empty");
+
+      return environment;
+
+    } catch (IllegalArgumentException e) {
+      throw new InvalidApplicationConfigException("AWS configuration error: " + e.getMessage());
+    } catch (IOException e) {
+      throw new InternalLogicException("AWS discover environment error", e);
+    }
   }
 }
