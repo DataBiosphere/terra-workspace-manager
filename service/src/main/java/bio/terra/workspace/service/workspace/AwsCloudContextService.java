@@ -16,8 +16,6 @@ import io.opencensus.contrib.spring.aop.Traced;
 import java.io.IOException;
 import java.util.*;
 import javax.validation.constraints.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
@@ -28,8 +26,6 @@ import org.springframework.util.Assert;
  */
 @Component
 public class AwsCloudContextService {
-  private static final Logger logger = LoggerFactory.getLogger(AwsCloudContextService.class);
-
   private final WorkspaceDao workspaceDao;
   private final EnvironmentDiscovery environmentDiscovery;
 
@@ -121,11 +117,11 @@ public class AwsCloudContextService {
   }
 
   /**
-   * Return the AWS cloud context for current environment
+   * Return a new AWS cloud context for discovered environment
    *
    * @return AWS cloud context
    */
-  public @NotNull AwsCloudContext getCloudContext() {
+  public @NotNull AwsCloudContext getCloudContextFromConfiguration() {
     Environment environment = discoverEnvironment();
     Metadata metadata = environment.getMetadata();
     return new AwsCloudContext(
@@ -139,9 +135,10 @@ public class AwsCloudContextService {
   /**
    * Discover environment & return a verified environment
    *
-   * @return AWS cloud context
+   * @return AWS environment
    */
-  public Environment discoverEnvironment() throws IllegalArgumentException, InternalLogicException {
+  public @NotNull Environment discoverEnvironment()
+      throws IllegalArgumentException, InternalLogicException {
     try {
       Assert.notNull(this.environmentDiscovery, "environmentDiscovery not configured");
 
