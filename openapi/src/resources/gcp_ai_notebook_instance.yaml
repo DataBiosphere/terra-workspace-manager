@@ -5,7 +5,7 @@ components:
         AI Notebook instance properties included in post-creation, get, and update. Others must be
         retrieved from GCP using the specification.
       type: object
-      required: [projectId, location, instanceId, machineType]
+      required: [projectId, location, instanceId]
       properties:
         projectId:
           description: The GCP project id for the project containing the notebook instance.
@@ -16,10 +16,6 @@ components:
         instanceId:
           description: An instance id unique to this project and location.
           type: string
-        machineType:
-          $ref: '#/components/schemas/GcpAiNotebookInstanceMachineType'
-        acceleratorConfig:
-          $ref: '#/components/schemas/GcpAiNotebookInstanceAcceleratorConfig'
 
     GcpAiNotebookInstanceResource:
       type: object
