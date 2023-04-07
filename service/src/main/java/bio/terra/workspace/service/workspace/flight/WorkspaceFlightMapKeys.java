@@ -72,6 +72,7 @@ public final class WorkspaceFlightMapKeys {
     public static final String LOCATION = "location";
     public static final String RESOURCE_ID_TO_CLONE_RESULT = "resourceIdToCloneResult";
     public static final String RESOURCES_TO_CLONE = "resourcesToClone";
+    public static final String PREFIXES_TO_CLONE = "prefixesToClone";
     public static final String CONTROLLED_RESOURCES_TO_DELETE = "controlledResourcesToDelete";
     public static final String SOURCE_CLONE_INPUTS = "sourceCloneInputs";
     public static final String SOURCE_WORKSPACE_ID = "sourceWorkspaceId";
@@ -116,7 +117,6 @@ public final class WorkspaceFlightMapKeys {
     public static final String RESOURCE = "resource";
     public static final String DESTINATION_RESOURCE = "destinationResource";
     public static final String CLONING_INSTRUCTIONS = "cloningInstructions";
-    public static final String PREFIXES_TO_CLONE = "prefixesToClone";
     public static final String RESOURCE_STATE_RULE = "resourceStateRule";
     public static final String RESOURCE_STATE_CHANGED = "resourceStateChanged";
     public static final String UPDATE_PARAMETERS = "updateParameters";

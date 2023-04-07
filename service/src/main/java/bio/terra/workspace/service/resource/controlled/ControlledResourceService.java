@@ -240,7 +240,7 @@ public class ControlledResourceService {
                 Optional.ofNullable(cloningInstructionsOverride)
                     .map(CloningInstructions::fromApiModel)
                     .orElse(sourceContainer.getCloningInstructions()))
-            .addParameter(ResourceKeys.PREFIXES_TO_CLONE, prefixesToClone);
+            .addParameter(ControlledResourceKeys.PREFIXES_TO_CLONE, prefixesToClone);
     return jobBuilder.submit();
   }
 

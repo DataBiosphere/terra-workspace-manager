@@ -43,6 +43,8 @@ public class CopyAzureStorageContainerBlobsStepUnitTest extends BaseAzureUnitTes
     inputParameters.put(
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
         destinationWorkspaceId);
+    inputParameters.put(
+        WorkspaceFlightMapKeys.ControlledResourceKeys.PREFIXES_TO_CLONE, clonePrefixes);
 
     var destinationContainer =
         ControlledResourceFixtures.getAzureStorageContainer("sc-" + UUID.randomUUID());
@@ -51,8 +53,6 @@ public class CopyAzureStorageContainerBlobsStepUnitTest extends BaseAzureUnitTes
     workingMap.put(
         WorkspaceFlightMapKeys.ControlledResourceKeys.CLONED_RESOURCE_DEFINITION,
         destinationContainer);
-
-    workingMap.put(WorkspaceFlightMapKeys.ResourceKeys.PREFIXES_TO_CLONE, clonePrefixes);
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);
