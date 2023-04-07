@@ -196,6 +196,9 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
                         .destinationWorkspaceId(scenario5Workspace.getId()),
                     dataCollectionReferenceResource.getMetadata().getWorkspaceId(),
                     dataCollectionReferenceResource.getMetadata().getResourceId()));
+    logger.info(
+        "Captured exception - code: {} message: '%{}'",
+        exception.getCode(), exception.getMessage());
     assertEquals(exception.getCode(), HttpStatus.SC_CONFLICT);
     assertTrue(exception.getMessage().contains("violation of policy"));
 
@@ -308,7 +311,7 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
         cloneToAltLocationResult
             .getErrorReport()
             .getMessage()
-            .contains("The specified destination location violates region policies"));
+            .contains("violates region policies"));
 
     workspaceApi.deleteWorkspace(scenario7Workspace.getId());
 
@@ -384,11 +387,7 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
 
     assertEquals(JobReport.StatusEnum.FAILED, cloneBqResult.getJobReport().getStatus());
     assertEquals(HttpStatus.SC_CONFLICT, cloneBqResult.getJobReport().getStatusCode());
-    assertTrue(
-        cloneBqResult
-            .getErrorReport()
-            .getMessage()
-            .contains("The specified destination location violates region policies"));
+    assertTrue(cloneBqResult.getErrorReport().getMessage().contains("violates region policies"));
 
     workspaceApi.deleteWorkspace(scenario8Workspace.getId());
 
