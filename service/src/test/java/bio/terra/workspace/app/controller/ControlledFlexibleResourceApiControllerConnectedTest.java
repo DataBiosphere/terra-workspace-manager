@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.MockMvc;
 
-@Tag("connected")
+@Tag("connectedPlus")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class ControlledFlexibleResourceApiControllerConnectedTest extends BaseConnectedTest {
   private static final Logger logger =
