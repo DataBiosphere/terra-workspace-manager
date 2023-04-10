@@ -41,7 +41,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-@Tag("connected")
+@Tag("connectedPlus")
 @TestInstance(Lifecycle.PER_CLASS)
 public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
 
