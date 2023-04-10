@@ -62,6 +62,9 @@ public class RemoveUserFromWorkspaceFlight extends Flight {
         new RemoveUserFromSamStep(
             workspaceUuid, roleToRemove, userToRemove, appContext.getSamService(), userRequest),
         samRetry);
+    // From this point on, if the user is removing themselves from the workspace, their userRequest
+    // may no longer have permissions in Sam. To handle this, all later steps use WSM's credentials
+    // instead.
     addStep(
         new CheckUserStillInWorkspaceStep(workspaceUuid, userToRemove, appContext.getSamService()),
         samRetry);
