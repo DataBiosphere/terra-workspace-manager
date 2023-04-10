@@ -7,6 +7,7 @@ import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.app.configuration.external.GitRepoReferencedResourceConfiguration;
+import bio.terra.workspace.common.exception.FeatureNotSupportedException;
 import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.db.exception.FieldSizeExceededException;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
@@ -201,9 +202,11 @@ public class ResourceValidationUtils {
   public static void validateRegionAgainstPolicy(
       TpsApiDispatch tpsApiDispatch, UUID workspaceUuid, String region, CloudPlatform platform) {
     switch (platform) {
-      case AZURE -> validateRegion(tpsApiDispatch, workspaceUuid, region, platform);
       case GCP -> validateRegion(
           tpsApiDispatch, workspaceUuid, GcpUtils.parseRegion(region), platform);
+      case AZURE -> validateRegion(tpsApiDispatch, workspaceUuid, region, platform);
+      case AWS -> throw new FeatureNotSupportedException(
+          "validateRegionAgainstPolicy.AWS not supported");
       case ANY -> {
         // Flexible resources are not stored on the cloud. Thus, they have no region policies.
       }

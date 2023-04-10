@@ -93,6 +93,7 @@ public final class ControllerValidationUtils {
     switch (platform) {
       case GCP:
       case AZURE:
+      case AWS:
         break;
       default:
         throw new CloudPlatformNotImplementedException(

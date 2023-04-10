@@ -1,13 +1,9 @@
 package bio.terra.workspace.app.controller;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_AI_NOTEBOOK_ACCELERATOR_CONFIG;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_AI_NOTEBOOK_MACHINE_TYPE_ALLOWING_ACCELERATOR_CONFIG;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_CREATED_AI_NOTEBOOK_MACHINE_TYPE;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertControlledResourceMetadata;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertResourceMetadata;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import bio.terra.cloudres.google.notebooks.InstanceName;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
@@ -25,13 +21,10 @@ import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiResourceLineage;
 import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
-import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.AcceleratorConfig;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants;
 import java.util.List;
 import java.util.UUID;
-import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -46,14 +39,13 @@ import org.springframework.test.web.servlet.MockMvc;
 // Per-class lifecycle on this test to allow a shared workspace object across tests, which saves
 // time creating and deleting GCP contexts.
 
-@Tag("connected")
+@Tag("connectedPlus")
 @TestInstance(Lifecycle.PER_CLASS)
 public class ControlledGcpResourceApiControllerAiNotebookTest extends BaseConnectedTest {
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
   @Autowired UserAccessUtils userAccessUtils;
   @Autowired JobService jobService;
-  @Autowired CrlService crlService;
 
   private UUID workspaceId;
 
@@ -122,69 +114,6 @@ public class ControlledGcpResourceApiControllerAiNotebookTest extends BaseConnec
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
         List.of(WorkspaceConstants.Properties.DEFAULT_RESOURCE_LOCATION));
-  }
-
-  @Test
-  public void createAiNotebookInstance_populates_machineType_inGetResponse() throws Exception {
-    ApiGcpAiNotebookInstanceResource notebook =
-        mockMvcUtils
-            .createAiNotebookInstance(userAccessUtils.defaultUserAuthRequest(), workspaceId, null)
-            .getAiNotebookInstance();
-    assertEquals(
-        DEFAULT_CREATED_AI_NOTEBOOK_MACHINE_TYPE, notebook.getAttributes().getMachineType());
-  }
-
-  @Test
-  public void updateAiNotebookInstance_machineTypeAndAcceleratorConfig() throws Exception {
-    ApiGcpAiNotebookInstanceResource notebook =
-        mockMvcUtils
-            .createAiNotebookInstance(userAccessUtils.defaultUserAuthRequest(), workspaceId, null)
-            .getAiNotebookInstance();
-
-    InstanceName instanceName =
-        InstanceName.builder()
-            .projectId(notebook.getAttributes().getProjectId())
-            .location(notebook.getAttributes().getLocation())
-            .instanceId(notebook.getAttributes().getInstanceId())
-            .build();
-
-    // Stop the notebook so the CPU and GPU can be updated.
-    crlService.getAIPlatformNotebooksCow().instances().stop(instanceName).execute();
-
-    var updatedNotebook =
-        mockMvcUtils.updateAiNotebookInstance(
-            userAccessUtils.defaultUserAuthRequest(),
-            workspaceId,
-            notebook.getMetadata().getResourceId(),
-            DEFAULT_AI_NOTEBOOK_MACHINE_TYPE_ALLOWING_ACCELERATOR_CONFIG,
-            AcceleratorConfig.toApiAcceleratorConfig(DEFAULT_AI_NOTEBOOK_ACCELERATOR_CONFIG));
-
-    assertEquals(
-        DEFAULT_AI_NOTEBOOK_MACHINE_TYPE_ALLOWING_ACCELERATOR_CONFIG,
-        updatedNotebook.getAttributes().getMachineType());
-    assertEquals(
-        DEFAULT_AI_NOTEBOOK_ACCELERATOR_CONFIG.type(),
-        updatedNotebook.getAttributes().getAcceleratorConfig().getType());
-    assertEquals(
-        DEFAULT_AI_NOTEBOOK_ACCELERATOR_CONFIG.coreCount(),
-        updatedNotebook.getAttributes().getAcceleratorConfig().getCoreCount());
-  }
-
-  @Test
-  public void updateAiNotebookInstance_notStopped_throws() throws Exception {
-    ApiGcpAiNotebookInstanceResource notebook =
-        mockMvcUtils
-            .createAiNotebookInstance(userAccessUtils.defaultUserAuthRequest(), workspaceId, null)
-            .getAiNotebookInstance();
-
-    // By default, the notebook will be running (i.e., not stopping or stopped).
-    mockMvcUtils.updateAiNotebookInstanceAndExpect(
-        userAccessUtils.defaultUserAuthRequest(),
-        workspaceId,
-        notebook.getMetadata().getResourceId(),
-        DEFAULT_AI_NOTEBOOK_MACHINE_TYPE_ALLOWING_ACCELERATOR_CONFIG,
-        AcceleratorConfig.toApiAcceleratorConfig(DEFAULT_AI_NOTEBOOK_ACCELERATOR_CONFIG),
-        HttpStatus.SC_CONFLICT);
   }
 
   @Test

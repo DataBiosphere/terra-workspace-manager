@@ -59,8 +59,7 @@ public class RetryUtils {
           throw e;
         }
         logger.info(
-            "Exception (class: {}) \"{}\". Waiting {} seconds. End time is {}",
-            e.getClass(),
+            "Exception \"{}\". Waiting {} seconds. End time is {}",
             e.getMessage(),
             sleepDuration.toSeconds(),
             endTime);

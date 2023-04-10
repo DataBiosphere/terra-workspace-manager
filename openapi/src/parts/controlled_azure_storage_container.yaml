@@ -154,6 +154,11 @@ components:
           format: uuid
         cloningInstructions:
           $ref: "#/components/schemas/CloningInstructionsEnum"
+        prefixesToClone:
+          description: if a non-empty value is specified, cloning will be limited to the blobs that start with a prefix in this array
+          type: array
+          items:
+            type: string
         name:
           $ref: "#/components/schemas/Name"
         description:

@@ -448,10 +448,8 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         projectId2,
         gotResource.getAttributes().getDatasetId(),
         EUROPE_LOCATION,
-        // TODO(PF-2269): Change to DEFAULT_TABLE_LIFETIME after PF-2269 is fixed
-        /*defaultTableLifetime*/ null,
-        // TODO(PF-2269): Change to DEFAULT_PARTITION_LIFETIME after PF-2269 is fixed
-        /*defaultPartitionLifetime*/ null);
+        DEFAULT_TABLE_LIFETIME,
+        DEFAULT_PARTITION_LIFETIME);
     mockMvcUtils.deleteBqDataset(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId2,
@@ -514,10 +512,8 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         projectId,
         gotResource.getAttributes().getDatasetId(),
         EUROPE_LOCATION,
-        // TODO(PF-2269): Change to DEFAULT_TABLE_LIFETIME after PF-2269 is fixed
-        /*defaultTableLifetime*/ null,
-        // TODO(PF-2269): Change to DEFAULT_PARTITION_LIFETIME after PF-2269 is fixed
-        /*defaultPartitionLifetime*/ null);
+        DEFAULT_TABLE_LIFETIME,
+        DEFAULT_PARTITION_LIFETIME);
   }
 
   @Disabled("PF-2639 Need BigQuery Data Transfer service API enabled")
@@ -576,10 +572,8 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         projectId2,
         gotResource.getAttributes().getDatasetId(),
         EUROPE_LOCATION,
-        // TODO(PF-2269): Change to DEFAULT_TABLE_LIFETIME after PF-2269 is fixed
-        /*defaultTableLifetime*/ null,
-        // TODO(PF-2269): Change to DEFAULT_PARTITION_LIFETIME after PF-2269 is fixed
-        /*defaultPartitionLifetime*/ null);
+        DEFAULT_TABLE_LIFETIME,
+        DEFAULT_PARTITION_LIFETIME);
   }
 
   @Test

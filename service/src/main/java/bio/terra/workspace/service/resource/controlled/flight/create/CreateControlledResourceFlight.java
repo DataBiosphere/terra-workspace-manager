@@ -15,6 +15,7 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
+import java.util.UUID;
 
 /**
  * Flight for creation of a controlled resource. Some steps are resource-type-agnostic, and others
@@ -69,13 +70,18 @@ public class CreateControlledResourceFlight extends Flight {
             userRequest));
 
     // Get the cloud context and store it in the working map
-    addStep(
-        new GetCloudContextStep(
-            resource.getWorkspaceId(),
-            resource.getResourceType().getCloudPlatform(),
-            flightBeanBag.getGcpCloudContextService(),
-            flightBeanBag.getAzureCloudContextService()),
-        dbRetryRule);
+    UUID workspaceUuid = resource.getWorkspaceId();
+    switch (resource.getResourceType().getCloudPlatform()) {
+      case GCP -> addStep(
+          new GetGcpCloudContextStep(workspaceUuid, flightBeanBag.getGcpCloudContextService()),
+          dbRetryRule);
+      case AZURE -> addStep(
+          new GetAzureCloudContextStep(workspaceUuid, flightBeanBag.getAzureCloudContextService()),
+          dbRetryRule);
+      case AWS -> addStep(
+          new GetAwsCloudContextStep(workspaceUuid, flightBeanBag.getAwsCloudContextService()),
+          dbRetryRule);
+    }
 
     // Tell the resource to make its specific steps
     resource.addCreateSteps(this, petSaEmail, userRequest, flightBeanBag);

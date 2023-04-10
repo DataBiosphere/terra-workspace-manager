@@ -32,6 +32,7 @@ public final class WorkspaceFlightMapKeys {
     public static final String PRIVATE_RESOURCE_IAM_ROLE = "privateResourceIamRole";
     public static final String GCP_CLOUD_CONTEXT = "gcpCloudContext";
     public static final String AZURE_CLOUD_CONTEXT = "azureCloudContext";
+    public static final String AWS_CLOUD_CONTEXT = "awsCloudContext";
     public static final String PREVIOUS_UPDATE_PARAMETERS = "previousUpdateParameters";
     public static final String CREATE_RESOURCE_REGION = "createResourceRegion";
 
@@ -55,9 +56,6 @@ public final class WorkspaceFlightMapKeys {
     public static final String CREATE_NOTEBOOK_SUBNETWORK_NAME = "createNotebookSubnetworkName";
     public static final String NOTEBOOK_PET_SERVICE_ACCOUNT = "notebookPetServiceAccount";
 
-    public static final String PREVIOUS_MACHINE_TYPE = "previousMachineType";
-    public static final String PREVIOUS_ACCELERATOR_CONFIG = "previousAcceleratorConfig";
-
     // Cloning Keys
     public static final String CLONE_ALL_RESOURCES_FLIGHT_ID = "cloneAllResourcesFlightId";
     public static final String CLONE_DEFINITION_RESULT = "cloneDefinitionResult";
@@ -74,6 +72,7 @@ public final class WorkspaceFlightMapKeys {
     public static final String LOCATION = "location";
     public static final String RESOURCE_ID_TO_CLONE_RESULT = "resourceIdToCloneResult";
     public static final String RESOURCES_TO_CLONE = "resourcesToClone";
+    public static final String PREFIXES_TO_CLONE = "prefixesToClone";
     public static final String CONTROLLED_RESOURCES_TO_DELETE = "controlledResourcesToDelete";
     public static final String SOURCE_CLONE_INPUTS = "sourceCloneInputs";
     public static final String SOURCE_WORKSPACE_ID = "sourceWorkspaceId";
