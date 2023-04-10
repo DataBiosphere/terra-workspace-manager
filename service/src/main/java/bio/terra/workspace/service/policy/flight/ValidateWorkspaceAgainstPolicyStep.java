@@ -69,6 +69,8 @@ public class ValidateWorkspaceAgainstPolicyStep implements Step {
         // Some resources don't have regions. IE: Git repos.
         continue;
       }
+      // NOTE: part of this message text is validated in the integration tests.
+      // If you change the text, check its usage in integration.
       if (!validRegions.contains(existingResource.getRegion().toLowerCase())) {
         throw new PolicyConflictException(
             String.format(
