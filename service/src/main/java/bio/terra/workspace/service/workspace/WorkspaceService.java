@@ -2,6 +2,7 @@ package bio.terra.workspace.service.workspace;
 
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.SOURCE_WORKSPACE_ID;
 
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
@@ -558,6 +559,10 @@ public class WorkspaceService {
    * Remove a workspace role from a user. This will also remove a user from their private resources
    * if they are no longer a member of the workspace (i.e. have no other roles) after role removal.
    *
+   * <p>This method uses WSM's SA credentials to remove users from a workspace. You must validate
+   * that the calling user is a workspace owner before calling this method, preferably in the
+   * controller layer.
+   *
    * @param workspace Workspace to remove user's role from
    * @param role Role to remove
    * @param rawUserEmail Email identifier of user whose role is being removed
@@ -585,6 +590,14 @@ public class WorkspaceService {
             .toList();
     if (!roleMembers.contains(targetUserEmail)) {
       return;
+    }
+    // Additionally, validate that the user is not removing themselves as the sole owner. WSM does
+    // not allow users to abandon resources this way.
+    if (role.equals(WsmIamRole.OWNER)
+        && roleMembers.size() == 1
+        && roleMembers.get(0).equals(targetUserEmail)) {
+      throw new BadRequestException(
+          "You may not remove yourself as the sole workspace owner. Grant another user the workspace owner role before removing yourself.");
     }
     jobService
         .newJob()
