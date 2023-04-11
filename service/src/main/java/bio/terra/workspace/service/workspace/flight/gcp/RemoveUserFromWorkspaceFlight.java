@@ -42,11 +42,6 @@ public class RemoveUserFromWorkspaceFlight extends Flight {
             : null;
 
     // Flight plan:
-    // 0. (Pre-flight): Validate that the user is directly granted the specified workspace role.
-    //  WSM does not manage groups, so users with indirect group-based access cannot be removed
-    //  via this flight.
-    // 0. (Pre-flight): Validate that the user is not removing themselves as the only owner. WSM
-    //  does not allow users to abandon workspaces this way.
     // 1. Remove role from user, if one is specified. This flight also runs periodically to clean up
     // abandoned private resources, in which case the user is already out of the workspace.
     // 2. Check with Sam whether the user is still in the workspace (i.e. can still read in the
@@ -58,10 +53,12 @@ public class RemoveUserFromWorkspaceFlight extends Flight {
     // 5. Revoke the user's permission to use their pet SA in this workspace.
     RetryRule samRetry = RetryRules.shortExponential();
     RetryRule dbRetry = RetryRules.shortDatabase();
-    addStep(
-        new RemoveUserFromSamStep(
-            workspaceUuid, roleToRemove, userToRemove, appContext.getSamService(), userRequest),
-        samRetry);
+    if (roleToRemove != null) {
+      addStep(
+          new RemoveUserFromSamStep(
+              workspaceUuid, roleToRemove, userToRemove, appContext.getSamService(), userRequest),
+          samRetry);
+    }
     // From this point on, if the user is removing themselves from the workspace, their userRequest
     // may no longer have permissions in Sam. To handle this, all later steps use WSM's credentials
     // instead.

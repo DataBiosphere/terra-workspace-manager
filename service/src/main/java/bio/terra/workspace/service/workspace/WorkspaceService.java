@@ -2,7 +2,6 @@ package bio.terra.workspace.service.workspace;
 
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.SOURCE_WORKSPACE_ID;
 
-import bio.terra.common.exception.BadRequestException;
 import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
@@ -616,28 +615,6 @@ public class WorkspaceService {
       AuthenticatedUserRequest executingUserRequest) {
     // GCP always uses lowercase email identifiers, so we do the same here.
     String targetUserEmail = rawUserEmail.toLowerCase();
-    // Before launching the flight, validate that the user being removed is a direct member of the
-    // specified role. Users may also be added to a workspace via managed groups, but WSM does not
-    // control membership of those groups, and so cannot remove them here.
-    List<String> roleMembers =
-        samService
-            .listUsersWithWorkspaceRole(workspace.getWorkspaceId(), role, executingUserRequest)
-            .stream()
-            // SAM does not always use lowercase emails, so lowercase everything here before the
-            // contains check below
-            .map(String::toLowerCase)
-            .toList();
-    if (!roleMembers.contains(targetUserEmail)) {
-      return;
-    }
-    // Additionally, validate that the user is not removing themselves as the sole owner. WSM does
-    // not allow users to abandon resources this way.
-    if (role.equals(WsmIamRole.OWNER)
-        && roleMembers.size() == 1
-        && roleMembers.get(0).equals(targetUserEmail)) {
-      throw new BadRequestException(
-          "You may not remove yourself as the sole workspace owner. Grant another user the workspace owner role before removing yourself.");
-    }
     jobService
         .newJob()
         .description(
