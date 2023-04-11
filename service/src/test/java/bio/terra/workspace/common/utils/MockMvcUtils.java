@@ -2559,13 +2559,25 @@ public class MockMvcUtils {
   public void removeRole(
       AuthenticatedUserRequest userRequest, UUID workspaceId, WsmIamRole role, String memberEmail)
       throws Exception {
-    mockMvc
-        .perform(
-            addAuth(
-                delete(
-                    String.format(REMOVE_ROLE_PATH_FORMAT, workspaceId, role.name(), memberEmail)),
-                userRequest))
+    removeRoleInternal(userRequest, workspaceId, role, memberEmail)
         .andExpect(status().is(HttpStatus.SC_NO_CONTENT));
+  }
+
+  public void removeRoleExpectBadRequest(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, WsmIamRole role, String memberEmail)
+      throws Exception {
+    removeRoleInternal(userRequest, workspaceId, role, memberEmail)
+        .andExpect(status().is(HttpStatus.SC_BAD_REQUEST));
+  }
+
+  private ResultActions removeRoleInternal(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, WsmIamRole role, String memberEmail)
+      throws Exception {
+    var request = new ApiGrantRoleRequestBody().memberEmail(memberEmail);
+    return mockMvc.perform(
+        addAuth(
+            delete(String.format(REMOVE_ROLE_PATH_FORMAT, workspaceId, role.name(), memberEmail)),
+            userRequest));
   }
 
   public void assertProperties(List<ApiProperty> expected, List<ApiProperty> actual) {

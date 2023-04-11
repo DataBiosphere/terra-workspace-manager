@@ -6,6 +6,7 @@ import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.flight.CheckUserStillInWorkspaceStep;
@@ -15,6 +16,7 @@ import bio.terra.workspace.service.workspace.flight.ReleasePrivateResourceCleanu
 import bio.terra.workspace.service.workspace.flight.RemovePrivateResourceAccessStep;
 import bio.terra.workspace.service.workspace.flight.RemoveUserFromSamStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import java.util.Optional;
 import java.util.UUID;
 
 public class RemoveUserFromWorkspaceFlight extends Flight {
@@ -28,6 +30,10 @@ public class RemoveUserFromWorkspaceFlight extends Flight {
         UUID.fromString(inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
     AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
+    SamService samService = appContext.getSamService();
+    String wsmSaToken = samService.getWsmServiceAccountToken();
+    AuthenticatedUserRequest wsmSaRequest =
+        new AuthenticatedUserRequest().token(Optional.of(wsmSaToken));
     String userToRemove = inputParameters.get(WorkspaceFlightMapKeys.USER_TO_REMOVE, String.class);
     WsmIamRole roleToRemove =
         inputParameters.get(WorkspaceFlightMapKeys.ROLE_TO_REMOVE, String.class) != null
@@ -36,9 +42,6 @@ public class RemoveUserFromWorkspaceFlight extends Flight {
             : null;
 
     // Flight plan:
-    // 0. (Pre-flight): Validate that the user is directly granted the specified workspace role.
-    //  WSM does not manage groups, so users with indirect group-based access cannot be removed
-    //  via this flight.
     // 1. Remove role from user, if one is specified. This flight also runs periodically to clean up
     // abandoned private resources, in which case the user is already out of the workspace.
     // 2. Check with Sam whether the user is still in the workspace (i.e. can still read in the
@@ -50,13 +53,17 @@ public class RemoveUserFromWorkspaceFlight extends Flight {
     // 5. Revoke the user's permission to use their pet SA in this workspace.
     RetryRule samRetry = RetryRules.shortExponential();
     RetryRule dbRetry = RetryRules.shortDatabase();
+    if (roleToRemove != null) {
+      addStep(
+          new RemoveUserFromSamStep(
+              workspaceUuid, roleToRemove, userToRemove, appContext.getSamService(), userRequest),
+          samRetry);
+    }
+    // From this point on, if the user is removing themselves from the workspace, their userRequest
+    // may no longer have permissions in Sam. To handle this, all later steps use WSM's credentials
+    // instead.
     addStep(
-        new RemoveUserFromSamStep(
-            workspaceUuid, roleToRemove, userToRemove, appContext.getSamService(), userRequest),
-        samRetry);
-    addStep(
-        new CheckUserStillInWorkspaceStep(
-            workspaceUuid, userToRemove, appContext.getSamService(), userRequest),
+        new CheckUserStillInWorkspaceStep(workspaceUuid, userToRemove, appContext.getSamService()),
         samRetry);
     addStep(
         new ClaimUserPrivateResourcesStep(
@@ -64,7 +71,7 @@ public class RemoveUserFromWorkspaceFlight extends Flight {
             userToRemove,
             appContext.getResourceDao(),
             appContext.getSamService(),
-            userRequest),
+            wsmSaRequest),
         samRetry);
     addStep(
         new RemovePrivateResourceAccessStep(userToRemove, appContext.getSamService()), samRetry);
@@ -78,7 +85,7 @@ public class RemoveUserFromWorkspaceFlight extends Flight {
             userToRemove,
             appContext.getPetSaService(),
             appContext.getGcpCloudContextService(),
-            userRequest),
+            wsmSaRequest),
         RetryRules.cloud());
     addStep(
         new ReleasePrivateResourceCleanupClaimsStep(

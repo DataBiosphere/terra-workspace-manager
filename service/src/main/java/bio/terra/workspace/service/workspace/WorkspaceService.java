@@ -597,6 +597,10 @@ public class WorkspaceService {
    * Remove a workspace role from a user. This will also remove a user from their private resources
    * if they are no longer a member of the workspace (i.e. have no other roles) after role removal.
    *
+   * <p>This method uses WSM's SA credentials to remove users from a workspace. You must validate
+   * that the calling user is a workspace owner before calling this method, preferably in the
+   * controller layer.
+   *
    * @param workspace Workspace to remove user's role from
    * @param role Role to remove
    * @param rawUserEmail Email identifier of user whose role is being removed
@@ -611,20 +615,6 @@ public class WorkspaceService {
       AuthenticatedUserRequest executingUserRequest) {
     // GCP always uses lowercase email identifiers, so we do the same here.
     String targetUserEmail = rawUserEmail.toLowerCase();
-    // Before launching the flight, validate that the user being removed is a direct member of the
-    // specified role. Users may also be added to a workspace via managed groups, but WSM does not
-    // control membership of those groups, and so cannot remove them here.
-    List<String> roleMembers =
-        samService
-            .listUsersWithWorkspaceRole(workspace.getWorkspaceId(), role, executingUserRequest)
-            .stream()
-            // SAM does not always use lowercase emails, so lowercase everything here before the
-            // contains check below
-            .map(String::toLowerCase)
-            .toList();
-    if (!roleMembers.contains(targetUserEmail)) {
-      return;
-    }
     jobService
         .newJob()
         .description(

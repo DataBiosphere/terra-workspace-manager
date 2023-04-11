@@ -565,6 +565,40 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
         userAccessUtils.defaultUserAuthRequest(), workspace.getId(), usRegion);
   }
 
+  @Test
+  public void workspaceOwnerCannotAbandonWorkspace() throws Exception {
+    // Default user should be the only workspace owner, and so should not be able to remove
+    // themselves.
+    mockMvcUtils.removeRoleExpectBadRequest(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspace.getId(),
+        WsmIamRole.OWNER,
+        userAccessUtils.getDefaultUserEmail());
+    // After adding a second user, they should be able to remove themselves.
+    mockMvcUtils.grantRole(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspace.getId(),
+        WsmIamRole.OWNER,
+        userAccessUtils.getSecondUserEmail());
+    mockMvcUtils.removeRole(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspace.getId(),
+        WsmIamRole.OWNER,
+        userAccessUtils.getDefaultUserEmail());
+    // Reset workspace to starting setup, where default user is an owner and secondary user has no
+    // role.
+    mockMvcUtils.grantRole(
+        userAccessUtils.secondUserAuthRequest(),
+        workspace.getId(),
+        WsmIamRole.OWNER,
+        userAccessUtils.getDefaultUserEmail());
+    mockMvcUtils.removeRole(
+        userAccessUtils.secondUserAuthRequest(),
+        workspace.getId(),
+        WsmIamRole.OWNER,
+        userAccessUtils.getSecondUserEmail());
+  }
+
   private ApiWorkspaceDescription getWorkspace(AuthenticatedUserRequest request, UUID id)
       throws Exception {
     return getWorkspace(request, id, /*minimumHighestRole=*/ Optional.empty());
