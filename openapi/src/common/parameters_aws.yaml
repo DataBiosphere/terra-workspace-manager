@@ -1,0 +1,28 @@
+# Common AWS parameters
+# These parameters should be referenced from the source like this:
+#  $ref: '#/components/parameters/<item-you-want>
+components:
+  parameters:
+    AwsConsoleSessionDuration:
+      name: sessionDuration
+      in: query
+      description: Duration for console session access to controlled AWS resource
+      required: true
+      schema:
+        $ref: '#/components/schemas/AwsConsoleSessionDuration'
+
+    AwsCredentialDuration:
+      name: credentialDuration
+      in: query
+      description: Duration for credential to access controlled AWS resource
+      required: true
+      schema:
+        $ref: '#/components/schemas/AwsCredentialDuration'
+
+    AwsCredentialAccessScope:
+      name: accessScope
+      in: query
+      description: Access to request for an AWS credential or Console URL
+      required: true
+      schema:
+        $ref: '#/components/schemas/AwsCredentialAccessScope'

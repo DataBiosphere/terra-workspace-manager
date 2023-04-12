@@ -1,0 +1,161 @@
+paths:
+  /api/workspaces/v1/{workspaceId}/resources/controlled/aws/s3StorageFolder:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Create a new controlled AWS S3 Storage Folder
+      operationId: createAwsS3StorageFolder
+      tags: [ControlledAwsResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateControlledAwsS3StorageFolderRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CreatedControlledAwsS3StorageFolderResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/aws/s3StorageFolder/{resourceId}:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Get a controlled AWS S3 Storage Folder resource
+      operationId: getAwsS3StorageFolder
+      tags: [ControlledAwsResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/GetControlledAwsS3StorageFolderResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Delete controlled AWS S3 Storage Folder resource
+      operationId: deleteAwsS3StorageFolder
+      tags: [ ControlledAwsResource ]
+      responses:
+        '200':
+          description: Success
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/aws/s3StorageFolder/{resourceId}/consoleLink:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
+    - $ref: '#/components/parameters/AwsCredentialAccessScope'
+    - $ref: '#/components/parameters/AwsConsoleSessionDuration'
+    get:
+      summary: Get a link to manage this S3 Storage Folder in the AWS S3 Console
+      operationId: getAwsS3StorageFolderConsoleLink
+      tags: [ControlledAwsResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/GetControlledAwsS3StorageFolderConsoleLinkResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/aws/s3StorageFolder/{resourceId}/credential:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
+    - $ref: '#/components/parameters/AwsCredentialAccessScope'
+    - $ref: '#/components/parameters/AwsCredentialDuration'
+    get:
+      summary: Get a credential to access this S3 Storage Folder in the AWS CLI or SDK
+      operationId: getAwsS3StorageFolderCredential
+      tags: [ControlledAwsResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/GetControlledAwsS3StorageFolderCredentialResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+components:
+  schemas:
+    CreatedControlledAwsS3StorageFolder:
+      description: Response Payload for requesting a new controlled AWS S3 Storage Folder.
+      type: object
+      required: [resourceId, AwsS3StorageFolder]
+      properties:
+        resourceId:
+          description: UUID of a newly-created resource.
+          type: string
+          format: uuid
+        AwsS3StorageFolder:
+          $ref: '#/components/schemas/AwsS3StorageFolderResource'
+
+    CreateControlledAwsS3StorageFolderRequestBody:
+      description: Payload for requesting a new controlled AWS S3 Storage Folder resource.
+      type: object
+      required: [common, AwsS3StorageFolder]
+      properties:
+        common:
+          $ref: '#/components/schemas/ControlledResourceCommonFields'
+        AwsS3StorageFolder:
+          $ref: '#/components/schemas/AwsS3StorageFolderCreationParameters'
+
+    AwsS3StorageFolderCreationParameters:
+      description: >-
+        S3 Storage Folder specific properties to be set on creation. These are a subset of the
+        values accepted by the AWS Storage API.
+      type: object
+      properties:
+        region:
+          description: A valid S3 Storage Folder region per https://docs.aws.amazon.com/general/latest/gr/s3.html.
+          type: string
+        seed:
+          description: Seed S3 Storage Folder with sample data.
+          type: boolean
+          default: false
+
+  responses:
+    CreatedControlledAwsS3StorageFolderResponse:
+      description: Response to Create controlled AWS S3 Storage Folder
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreatedControlledAwsS3StorageFolder'
+
+    GetControlledAwsS3StorageFolderResponse:
+      description: Response to get S3 Storage Folder
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AwsS3StorageFolderResource'
+
+    GetControlledAwsS3StorageFolderConsoleLinkResponse:
+      description: Response to get S3 Storage Folder link
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AwsConsoleLink'
+
+    GetControlledAwsS3StorageFolderCredentialResponse:
+      description: Response to get S3 Storage Folder credential
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AwsCredential'
