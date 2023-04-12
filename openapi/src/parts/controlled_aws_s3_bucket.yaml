@@ -126,10 +126,6 @@ components:
         region:
           description: A valid S3 Storage Folder region per https://docs.aws.amazon.com/general/latest/gr/s3.html.
           type: string
-        seed:
-          description: Seed S3 Storage Folder with sample data.
-          type: boolean
-          default: false
 
   responses:
     CreatedControlledAwsS3StorageFolderResponse:

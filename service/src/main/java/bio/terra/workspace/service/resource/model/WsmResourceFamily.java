@@ -50,6 +50,11 @@ public enum WsmResourceFamily {
       ApiResourceType.AZURE_BATCH_POOL,
       null,
       WsmResourceType.CONTROLLED_AZURE_BATCH_POOL),
+  AWS_S3_STORAGE_FOLDER(
+      "AWS_S3_STORAGE_FOLDER",
+      ApiResourceType.AWS_S3_STORAGE_FOLDER,
+      null,
+      WsmResourceType.CONTROLLED_AWS_S3_STORAGE_FOLDER),
   GIT_REPO("GIT_REPO", ApiResourceType.GIT_REPO, WsmResourceType.REFERENCED_ANY_GIT_REPO, null),
   TERRA_WORKSPACE(
       "TERRA_WORKSPACE",

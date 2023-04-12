@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.controlled.cloud.azure.disk;
+package bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolder;
 
 import bio.terra.workspace.common.exception.FeatureNotSupportedException;
 import bio.terra.workspace.db.DbSerDes;
@@ -7,14 +7,16 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResourceF
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
 import java.util.UUID;
-import javax.annotation.Nullable;
+import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.Nullable;
 
-public class ControlledAzureDiskHandler implements WsmResourceHandler {
-  private static ControlledAzureDiskHandler theHandler;
+public class ControlledAwsS3StorageFolderHandler implements WsmResourceHandler {
 
-  public static ControlledAzureDiskHandler getHandler() {
+  private static ControlledAwsS3StorageFolderHandler theHandler;
+
+  public static ControlledAwsS3StorageFolderHandler getHandler() {
     if (theHandler == null) {
-      theHandler = new ControlledAzureDiskHandler();
+      theHandler = new ControlledAwsS3StorageFolderHandler();
     }
     return theHandler;
   }
@@ -22,16 +24,15 @@ public class ControlledAzureDiskHandler implements WsmResourceHandler {
   /** {@inheritDoc} */
   @Override
   public WsmResource makeResourceFromDb(DbResource dbResource) {
-    ControlledAzureDiskAttributes attributes =
-        DbSerDes.fromJson(dbResource.getAttributes(), ControlledAzureDiskAttributes.class);
+    ControlledAwsS3StorageFolderAttributes attributes =
+        DbSerDes.fromJson(dbResource.getAttributes(), ControlledAwsS3StorageFolderAttributes.class);
 
-    return ControlledAzureDiskResource.builder()
-        .diskName(attributes.getDiskName())
-        .size(attributes.getSize())
-        .common(new ControlledResourceFields(dbResource, attributes.getRegion()))
-        .build();
+    return new ControlledAwsS3StorageFolderResource(dbResource,
+        attributes.getS3BucketName(),
+        attributes.getPrefix());
   }
 
+  @Override
   public String generateCloudName(@Nullable UUID workspaceUuid, String resourceName) {
     throw new FeatureNotSupportedException("Generate cloud name feature is not implemented yet");
   }
