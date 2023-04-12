@@ -15,6 +15,7 @@ import bio.terra.workspace.service.workspace.flight.MarkPrivateResourcesAbandone
 import bio.terra.workspace.service.workspace.flight.ReleasePrivateResourceCleanupClaimsStep;
 import bio.terra.workspace.service.workspace.flight.RemovePrivateResourceAccessStep;
 import bio.terra.workspace.service.workspace.flight.RemoveUserFromSamStep;
+import bio.terra.workspace.service.workspace.flight.ValidateUserRoleStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import java.util.Optional;
 import java.util.UUID;
@@ -42,39 +43,39 @@ public class RemoveUserFromWorkspaceFlight extends Flight {
             : null;
 
     // Flight plan:
-    // 1. Remove role from user, if one is specified. This flight also runs periodically to clean up
+    // 1. Validate the user directly has the specified role in this workspace. Users may have a role
+    //  via group membership, and WSM cannot remove this. Additionally, validate that a user is not
+    //  removing themselves as the sole owner of a workspace.
+    // 2. Remove role from user, if one is specified. This flight also runs periodically to clean up
     // abandoned private resources, in which case the user is already out of the workspace.
-    // 2. Check with Sam whether the user is still in the workspace (i.e. can still read in the
+    // 3. Check with Sam whether the user is still in the workspace (i.e. can still read in the
     //  workspace) via other roles or groups. If so, we do not need to clean up their private
     //  resources, and can skip the rest of the flight.
-    // 3. If the user is fully removed from the workspace, build a list of their private resources
+    // 4. If the user is fully removed from the workspace, build a list of their private resources
     //  by reading WSM's DB.
-    // 4. Remove the user from all roles on those private resources.
-    // 5. Revoke the user's permission to use their pet SA in this workspace.
+    // 5. Remove the user from all roles on those private resources.
+    // 6. Revoke the user's permission to use their pet SA in this workspace.
     RetryRule samRetry = RetryRules.shortExponential();
     RetryRule dbRetry = RetryRules.shortDatabase();
     if (roleToRemove != null) {
       addStep(
+          new ValidateUserRoleStep(
+              workspaceUuid, roleToRemove, userToRemove, samService, userRequest),
+          samRetry);
+      addStep(
           new RemoveUserFromSamStep(
-              workspaceUuid, roleToRemove, userToRemove, appContext.getSamService(), userRequest),
+              workspaceUuid, roleToRemove, userToRemove, samService, userRequest),
           samRetry);
     }
     // From this point on, if the user is removing themselves from the workspace, their userRequest
     // may no longer have permissions in Sam. To handle this, all later steps use WSM's credentials
     // instead.
-    addStep(
-        new CheckUserStillInWorkspaceStep(workspaceUuid, userToRemove, appContext.getSamService()),
-        samRetry);
+    addStep(new CheckUserStillInWorkspaceStep(workspaceUuid, userToRemove, samService), samRetry);
     addStep(
         new ClaimUserPrivateResourcesStep(
-            workspaceUuid,
-            userToRemove,
-            appContext.getResourceDao(),
-            appContext.getSamService(),
-            wsmSaRequest),
+            workspaceUuid, userToRemove, appContext.getResourceDao(), samService, wsmSaRequest),
         samRetry);
-    addStep(
-        new RemovePrivateResourceAccessStep(userToRemove, appContext.getSamService()), samRetry);
+    addStep(new RemovePrivateResourceAccessStep(userToRemove, samService), samRetry);
     addStep(
         new MarkPrivateResourcesAbandonedStep(
             workspaceUuid, userToRemove, appContext.getResourceDao()),
