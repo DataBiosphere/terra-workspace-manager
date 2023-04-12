@@ -1,7 +1,7 @@
 // Build Script Classpath
 buildscript {
     ext {
-        springBootVersion = '2.7.9'
+        springBootVersion = '2.7.10'
     }
 }
 
