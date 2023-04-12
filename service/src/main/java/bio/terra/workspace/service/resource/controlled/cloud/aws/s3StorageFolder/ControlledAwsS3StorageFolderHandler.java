@@ -3,11 +3,9 @@ package bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolde
 import bio.terra.workspace.common.exception.FeatureNotSupportedException;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
-import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
 import java.util.UUID;
-import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
 public class ControlledAwsS3StorageFolderHandler implements WsmResourceHandler {
@@ -27,9 +25,8 @@ public class ControlledAwsS3StorageFolderHandler implements WsmResourceHandler {
     ControlledAwsS3StorageFolderAttributes attributes =
         DbSerDes.fromJson(dbResource.getAttributes(), ControlledAwsS3StorageFolderAttributes.class);
 
-    return new ControlledAwsS3StorageFolderResource(dbResource,
-        attributes.getS3BucketName(),
-        attributes.getPrefix());
+    return new ControlledAwsS3StorageFolderResource(
+        dbResource, attributes.getS3BucketName(), attributes.getPrefix());
   }
 
   @Override

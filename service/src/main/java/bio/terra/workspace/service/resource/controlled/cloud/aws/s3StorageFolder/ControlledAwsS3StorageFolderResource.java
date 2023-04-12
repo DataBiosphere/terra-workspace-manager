@@ -12,8 +12,8 @@ import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
-import bio.terra.workspace.generated.model.ApiAwsS3StorageFolderAttributes
-import bio.terra.workspace.generated.model.ApiAwsS3StorageFolderCreationParameters
+import bio.terra.workspace.generated.model.ApiAwsS3StorageFolderAttributes;
+import bio.terra.workspace.generated.model.ApiAwsS3StorageFolderCreationParameters;
 import bio.terra.workspace.generated.model.ApiAwsS3StorageFolderResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -30,9 +30,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.List;
 import java.util.Optional;
-import software.amazon.awssdk.regions.Region;
 
 public class ControlledAwsS3StorageFolderResource extends ControlledResource {
   private final String s3BucketName;
@@ -42,7 +40,7 @@ public class ControlledAwsS3StorageFolderResource extends ControlledResource {
   public ControlledAwsS3StorageFolderResource(
       @JsonProperty("wsmResourceFields") WsmResourceFields resourceFields,
       @JsonProperty("wsmControlledResourceFields")
-      WsmControlledResourceFields controlledResourceFields,
+          WsmControlledResourceFields controlledResourceFields,
       @JsonProperty("s3BucketName") String s3BucketName,
       @JsonProperty("prefix") String prefix) {
     super(resourceFields, controlledResourceFields);
@@ -59,7 +57,8 @@ public class ControlledAwsS3StorageFolderResource extends ControlledResource {
     validate();
   }
 
-  public ControlledAwsS3StorageFolderResource(DbResource dbResource, String s3BucketName, String prefix) {
+  public ControlledAwsS3StorageFolderResource(
+      DbResource dbResource, String s3BucketName, String prefix) {
     super(dbResource);
     this.s3BucketName = s3BucketName;
     this.prefix = prefix;
@@ -132,11 +131,8 @@ public class ControlledAwsS3StorageFolderResource extends ControlledResource {
       FlightBeanBag flightBeanBag) {
     RetryRule cloudRetry = RetryRules.cloud();
 
-    // TODO-Dex
-   // flight.addStep(new ValidateAwsS3BucketCreationStep(this), cloudRetry);
-   // flight.addStep(new CreateAwsS3BucketStep(this), cloudRetry);
+    AwsConfiguration awsConfiguration = flightBeanBag.getAwsConfig();
 
-    // Check if the user requested that the bucket be seeded with sample data.
     ApiAwsS3StorageFolderCreationParameters creationParameters =
         flight
             .getInputParameters()
@@ -144,14 +140,19 @@ public class ControlledAwsS3StorageFolderResource extends ControlledResource {
                 WorkspaceFlightMapKeys.ControlledResourceKeys.CREATION_PARAMETERS,
                 ApiAwsS3StorageFolderCreationParameters.class);
 
-    if (creationParameters != null && creationParameters.isSeed()) {
-      // Check that we actually have example data to seed with.
-      List<AwsConfiguration.AwsS3BucketSeedFile> seedFiles =
-          flightBeanBag.getAwsConfiguration().getBucketSeedFiles();
-      if (seedFiles != null && !seedFiles.isEmpty()) {
-        flight.addStep(new SeedAwsS3BucketStep(seedFiles, this), cloudRetry);
-      }
-    }
+    // TODO: get default region from user profile
+
+    // TODO-Dex: validate creationParameters: Name & region
+    // TODO-Dex: validate folder exists
+
+    // Discovery discovery = awsConfiguration.getDiscovery();
+
+    // flight.addStep(new ValidateAwsS3BucketCreationStep(this), cloudRetry);
+    // flight.addStep(new CreateAwsS3BucketStep(this), cloudRetry);
+
+    // throw new MissingRequiredFieldException(
+    //  "Missing required field datasetName for BigQuery dataset");
+
   }
 
   /** {@inheritDoc} */
@@ -169,8 +170,7 @@ public class ControlledAwsS3StorageFolderResource extends ControlledResource {
   public ApiAwsS3StorageFolderAttributes toApiAttributes() {
     return new ApiAwsS3StorageFolderAttributes()
         .s3BucketName(getS3BucketName())
-        .prefix(getPrefix())
-        .region(getRegion());
+        .prefix(getPrefix());
   }
 
   public ApiAwsS3StorageFolderResource toApiResource() {
@@ -201,10 +201,12 @@ public class ControlledAwsS3StorageFolderResource extends ControlledResource {
       throw new InconsistentFieldsException("Expected CONTROLLED_AWS_S3_STORAGE_FOLDER");
     }
     if (getPrefix() == null) {
-      throw new MissingRequiredFieldException("Missing required field prefix for ControlledAwsS3StorageFolderResource.");
+      throw new MissingRequiredFieldException(
+          "Missing required field prefix for ControlledAwsS3StorageFolderResource.");
     }
     if (getRegion() == null) {
-      throw new MissingRequiredFieldException("Missing required field region for ControlledAwsS3StorageFolderResource.");
+      throw new MissingRequiredFieldException(
+          "Missing required field region for ControlledAwsS3StorageFolderResource.");
     }
 
     // TODO-Dex

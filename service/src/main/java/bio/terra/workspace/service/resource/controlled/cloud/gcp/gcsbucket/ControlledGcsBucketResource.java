@@ -223,7 +223,8 @@ public class ControlledGcsBucketResource extends ControlledResource {
       throw new InconsistentFieldsException("Expected controlled GCP GCS_BUCKET");
     }
     if (getBucketName() == null) {
-      throw new MissingRequiredFieldException("Missing required field bucketName for ControlledGcsBucket.");
+      throw new MissingRequiredFieldException(
+          "Missing required field bucketName for ControlledGcsBucket.");
     }
     // Allow underscore bucket name to be backward compatible. The database contains bucket with
     // underscore bucketname.

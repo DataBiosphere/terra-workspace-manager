@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolder;
 
 import bio.terra.stairway.FlightContext;
+import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
@@ -10,17 +11,18 @@ import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DeleteAwsS3StorageFolderStep implements Step {
-  private static final Logger logger = LoggerFactory.getLogger(DeleteAwsS3StorageFolderStep.class);
+public class CreateAwsS3StorageFolderStep implements Step {
+  private static final Logger logger = LoggerFactory.getLogger(CreateAwsS3StorageFolderStep.class);
   private final ControlledAwsS3StorageFolderResource resource;
 
-  public DeleteAwsS3StorageFolderStep(ControlledAwsS3StorageFolderResource resource) {
+  public CreateAwsS3StorageFolderStep(ControlledAwsS3StorageFolderResource resource) {
     this.resource = resource;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
+    FlightMap inputParameters = flightContext.getInputParameters();
 
     final AwsCloudContext awsCloudContext =
         FlightUtils.getRequired(
