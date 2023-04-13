@@ -4,39 +4,39 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.common.utils.FlightUtils;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import bio.terra.workspace.service.workspace.model.AwsCloudContext;
+import bio.terra.workspace.common.utils.AwsUtils;
+import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
 
 public class DeleteAwsS3StorageFolderStep implements Step {
   private static final Logger logger = LoggerFactory.getLogger(DeleteAwsS3StorageFolderStep.class);
   private final ControlledAwsS3StorageFolderResource resource;
 
-  public DeleteAwsS3StorageFolderStep(ControlledAwsS3StorageFolderResource resource) {
+  private final AwsCloudContextService awsCloudContextService;
+
+  public DeleteAwsS3StorageFolderStep(
+      ControlledAwsS3StorageFolderResource resource,
+      AwsCloudContextService awsCloudContextService) {
     this.resource = resource;
+    this.awsCloudContextService = awsCloudContextService;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
+    AwsCredentialsProvider credentialsProvider =
+        AwsUtils.createWsmCredentialProvider(
+            awsCloudContextService.getRequiredAuthentication(),
+            awsCloudContextService.discoverEnvironment());
 
-    final AwsCloudContext awsCloudContext =
-        FlightUtils.getRequired(
-            flightContext.getWorkingMap(),
-            ControlledResourceKeys.AWS_CLOUD_CONTEXT,
-            AwsCloudContext.class);
-
-    /*
-    Credentials awsCredentials = MultiCloudUtils.assumeAwsServiceRoleFromGcp(awsCloudContext);
-    AwsUtils.deleteFolder(
-        awsCredentials,
+    AwsUtils.deleteS3Folder(
+        credentialsProvider,
         Region.of(resource.getRegion()),
         resource.getS3BucketName(),
         resource.getPrefix());
-    // TODO-Dex
-     */
 
     return StepResult.getStepResultSuccess();
   }

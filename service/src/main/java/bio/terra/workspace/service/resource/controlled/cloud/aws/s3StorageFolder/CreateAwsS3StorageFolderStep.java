@@ -2,7 +2,6 @@ package bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolde
 
 import bio.terra.common.iam.SamUser;
 import bio.terra.stairway.FlightContext;
-import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
@@ -32,15 +31,13 @@ public class CreateAwsS3StorageFolderStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    FlightMap inputParameters = flightContext.getInputParameters();
-
     AwsCredentialsProvider credentialsProvider =
         AwsUtils.createWsmCredentialProvider(
             awsCloudContextService.getRequiredAuthentication(),
             awsCloudContextService.discoverEnvironment());
 
-    // AwsCloudContext awsCloudContext =
-    //   flightContext.getWorkingMap().get(AWS_CLOUD_CONTEXT, AwsCloudContext.class);
+    // TODO-Dex add tags
+    // FlightMap inputParameters = flightContext.getInputParameters();
     SamUser samUser = null; // inputParameters.get(WorkspaceFlightMapKeys.SAM_USER, SamUser.class);
 
     Collection<Tag> tags = new HashSet<>();
@@ -57,11 +54,16 @@ public class CreateAwsS3StorageFolderStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    logger.error(
-        "Cannot undo delete of AWS S3 Storage Folder resource {} in workspace {}.",
-        resource.getResourceId(),
-        resource.getWorkspaceId());
-    // Surface whatever error caused Stairway to begin undoing.
-    return flightContext.getResult();
+    AwsCredentialsProvider credentialsProvider =
+        AwsUtils.createWsmCredentialProvider(
+            awsCloudContextService.getRequiredAuthentication(),
+            awsCloudContextService.discoverEnvironment());
+
+    AwsUtils.deleteS3Folder(
+        credentialsProvider,
+        Region.of(resource.getRegion()),
+        resource.getS3BucketName(),
+        resource.getPrefix());
+    return StepResult.getStepResultSuccess();
   }
 }

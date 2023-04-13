@@ -123,9 +123,6 @@ components:
         values accepted by the AWS Storage API.
       type: object
       properties:
-        name:
-          description: A valid S3 object name per https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html
-          type: string
         region:
           description: A valid S3 Storage Folder region per https://docs.aws.amazon.com/general/latest/gr/s3.html.
           type: string

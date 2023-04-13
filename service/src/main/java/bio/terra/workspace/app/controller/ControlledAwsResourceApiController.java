@@ -35,18 +35,19 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
 import software.amazon.awssdk.regions.Region;
 
+@Controller
 public class ControlledAwsResourceApiController extends ControlledResourceControllerBase
     implements ControlledAwsResourceApi {
 
   private final Logger logger = LoggerFactory.getLogger(ControlledAwsResourceApiController.class);
 
-  // TODO: Move up to base class
+  // TODO-Dex: Move up to base class
   private final FeatureConfiguration features;
   private final WorkspaceService workspaceService;
   private final ControlledResourceService controlledResourceService;
-
   private final ControlledResourceMetadataManager controlledResourceMetadataManager;
   private final JobApiUtils jobApiUtils;
   private final JobService jobService;
@@ -97,22 +98,31 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
 
     ApiAwsS3StorageFolderCreationParameters creationParameters = body.getAwsS3StorageFolder();
 
-    // validate prefix name TODO-Dex
-
-    // validate region
     Region requestedRegion;
     LandingZone landingZone;
     try {
-      requestedRegion = Region.of(creationParameters.getRegion());
+      String prefixName = commonFields.getName();
+      if (prefixName.isEmpty() || prefixName.length() > 1024) {
+        throw new BadRequestException(
+            String.format(
+                "Resource length name must be between 1 and 1024 chars",
+                creationParameters.getRegion()));
+      }
 
+      requestedRegion = Region.of(creationParameters.getRegion());
       landingZone =
           awsCloudContextService
               .getLandingZone(awsCloudContext, requestedRegion)
-              .orElseThrow(IllegalArgumentException::new);
+              .orElseThrow(
+                  () -> {
+                    throw new BadRequestException(
+                        String.format(
+                            "Unsupported AWS region: '%s'.", creationParameters.getRegion()));
+                  });
 
     } catch (IllegalArgumentException e) {
       throw new BadRequestException(
-          String.format("Region '%s' is not a valid AWS region.", creationParameters.getRegion()));
+          String.format("Invalid AWS region: '%s'.", creationParameters.getRegion()));
     }
 
     ControlledAwsS3StorageFolderResource resource =

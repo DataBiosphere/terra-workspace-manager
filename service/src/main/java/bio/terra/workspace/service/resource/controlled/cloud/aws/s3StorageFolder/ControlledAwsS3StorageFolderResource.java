@@ -139,7 +139,9 @@ public class ControlledAwsS3StorageFolderResource extends ControlledResource {
   /** {@inheritDoc} */
   @Override
   public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
-    flight.addStep(new DeleteAwsS3StorageFolderStep(this), RetryRules.cloud());
+    flight.addStep(
+        new DeleteAwsS3StorageFolderStep(this, flightBeanBag.getAwsCloudContextService()),
+        RetryRules.cloud());
   }
 
   /** {@inheritDoc} */
