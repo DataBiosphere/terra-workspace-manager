@@ -14,7 +14,6 @@ import software.amazon.awssdk.regions.Region;
 public class DeleteAwsS3StorageFolderStep implements Step {
   private static final Logger logger = LoggerFactory.getLogger(DeleteAwsS3StorageFolderStep.class);
   private final ControlledAwsS3StorageFolderResource resource;
-
   private final AwsCloudContextService awsCloudContextService;
 
   public DeleteAwsS3StorageFolderStep(

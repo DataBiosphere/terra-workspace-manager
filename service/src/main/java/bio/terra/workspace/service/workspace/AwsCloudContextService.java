@@ -46,6 +46,7 @@ public class AwsCloudContextService {
             : null;
   }
 
+  /** Returns authentication from configuration */
   public Authentication getRequiredAuthentication() {
     if (awsConfiguration == null) {
       throw new InvalidApplicationConfigException("AWS configuration not initialized");

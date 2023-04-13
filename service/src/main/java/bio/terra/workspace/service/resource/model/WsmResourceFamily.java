@@ -53,7 +53,7 @@ public enum WsmResourceFamily {
   AWS_S3_STORAGE_FOLDER(
       "AWS_S3_STORAGE_FOLDER",
       ApiResourceType.AWS_S3_STORAGE_FOLDER,
-      null,
+      null, // TODO(TERRA-195) add support for referenced buckets
       WsmResourceType.CONTROLLED_AWS_S3_STORAGE_FOLDER),
   GIT_REPO("GIT_REPO", ApiResourceType.GIT_REPO, WsmResourceType.REFERENCED_ANY_GIT_REPO, null),
   TERRA_WORKSPACE(

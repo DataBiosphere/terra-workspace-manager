@@ -3,7 +3,6 @@ package bio.terra.workspace.app.controller;
 import bio.terra.aws.resource.discovery.LandingZone;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
-import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.ControlledAwsResourceApi;
 import bio.terra.workspace.generated.model.ApiAwsConsoleLink;
@@ -17,7 +16,6 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
-import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolder.ControlledAwsS3StorageFolderResource;
@@ -44,13 +42,11 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
 
   private final Logger logger = LoggerFactory.getLogger(ControlledAwsResourceApiController.class);
 
-  // TODO-Dex: Move up to base class
+  // TODO(TERRA-304): Move up to base class
   private final FeatureConfiguration features;
   private final WorkspaceService workspaceService;
   private final ControlledResourceService controlledResourceService;
   private final ControlledResourceMetadataManager controlledResourceMetadataManager;
-  private final JobApiUtils jobApiUtils;
-  private final JobService jobService;
 
   private final AwsCloudContextService awsCloudContextService;
 
@@ -58,21 +54,17 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
   public ControlledAwsResourceApiController(
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request,
-      ControlledResourceService controlledResourceService,
       SamService samService,
       FeatureConfiguration features,
       WorkspaceService workspaceService,
-      AwsCloudContextService awsCloudContextService,
+      ControlledResourceService controlledResourceService,
       ControlledResourceMetadataManager controlledResourceMetadataManager,
-      JobApiUtils jobApiUtils,
-      JobService jobService) {
+      AwsCloudContextService awsCloudContextService) {
     super(authenticatedUserRequestFactory, request, controlledResourceService, samService);
     this.features = features;
     this.workspaceService = workspaceService;
     this.controlledResourceService = controlledResourceService;
     this.controlledResourceMetadataManager = controlledResourceMetadataManager;
-    this.jobApiUtils = jobApiUtils;
-    this.jobService = jobService;
 
     this.awsCloudContextService = awsCloudContextService;
   }
@@ -103,10 +95,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     try {
       String prefixName = commonFields.getName();
       if (prefixName.isEmpty() || prefixName.length() > 1024) {
-        throw new BadRequestException(
-            String.format(
-                "Resource length name must be between 1 and 1024 chars",
-                creationParameters.getRegion()));
+        throw new BadRequestException("Resource length name must be between 1 and 1024 chars");
       }
 
       requestedRegion = Region.of(creationParameters.getRegion());

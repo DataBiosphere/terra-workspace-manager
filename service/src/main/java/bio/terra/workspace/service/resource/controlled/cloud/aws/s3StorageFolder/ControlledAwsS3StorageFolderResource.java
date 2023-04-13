@@ -15,7 +15,6 @@ import bio.terra.workspace.generated.model.ApiAwsS3StorageFolderAttributes;
 import bio.terra.workspace.generated.model.ApiAwsS3StorageFolderResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.model.*;
@@ -127,12 +126,9 @@ public class ControlledAwsS3StorageFolderResource extends ControlledResource {
       AuthenticatedUserRequest userRequest,
       FlightBeanBag flightBeanBag) {
     RetryRule cloudRetry = RetryRules.cloud();
-    // TODO: get default region from user profile
     flight.addStep(
-        new ValidateAwsS3StorageFolderCreationStep(this, flightBeanBag.getAwsCloudContextService()),
-        cloudRetry);
-    flight.addStep(
-        new CreateAwsS3StorageFolderStep(this, flightBeanBag.getAwsCloudContextService()),
+        new CreateAwsS3StorageFolderStep(
+            this, flightBeanBag.getAwsCloudContextService(), userRequest),
         cloudRetry);
   }
 
@@ -183,6 +179,10 @@ public class ControlledAwsS3StorageFolderResource extends ControlledResource {
         || getStewardshipType() != StewardshipType.CONTROLLED) {
       throw new InconsistentFieldsException("Expected CONTROLLED_AWS_S3_STORAGE_FOLDER");
     }
+    if (getS3BucketName() == null) {
+      throw new MissingRequiredFieldException(
+          "Missing required field s3BucketName for ControlledAwsS3StorageFolderResource.");
+    }
     if (getPrefix() == null) {
       throw new MissingRequiredFieldException(
           "Missing required field prefix for ControlledAwsS3StorageFolderResource.");
@@ -191,9 +191,6 @@ public class ControlledAwsS3StorageFolderResource extends ControlledResource {
       throw new MissingRequiredFieldException(
           "Missing required field region for ControlledAwsS3StorageFolderResource.");
     }
-
-    // TODO-Dex
-    ResourceValidationUtils.validateBucketNameAllowsUnderscore(prefix);
   }
 
   public static class Builder {

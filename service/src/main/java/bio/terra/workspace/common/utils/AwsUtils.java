@@ -5,7 +5,10 @@ import bio.terra.aws.resource.discovery.Environment;
 import bio.terra.aws.resource.discovery.EnvironmentDiscovery;
 import bio.terra.aws.resource.discovery.S3EnvironmentDiscovery;
 import bio.terra.common.exception.ApiException;
-import bio.terra.common.iam.SamUser;
+import bio.terra.common.exception.BadRequestException;
+import bio.terra.common.exception.ErrorReportException;
+import bio.terra.common.exception.NotFoundException;
+import bio.terra.common.exception.UnauthorizedException;
 import bio.terra.workspace.app.configuration.external.AwsConfiguration;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.time.Duration;
@@ -13,10 +16,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
-import javax.validation.constraints.NotNull;
 import liquibase.repackaged.org.apache.commons.collections4.ListUtils;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -123,6 +125,8 @@ public class AwsUtils {
    *
    * <p>Calls {@link #createAssumeRoleWithGcpCredentialsProvider} to get a long-lived {@link
    * AwsCredentialsProvider} instance to authenticate as the TerraDiscovery IAM Role.
+   *
+   * @param awsConfiguration an {@link AwsConfiguration}
    */
   private static AwsCredentialsProvider createDiscoveryCredentialsProvider(
       AwsConfiguration awsConfiguration) {
@@ -203,26 +207,39 @@ public class AwsUtils {
         authentication.getGoogleJwtAudience());
   }
 
-  // TODO-Dex add function comments
-  public static void appendResourceTags(
-      @NotNull Collection<Tag> tags, SamUser samUser, UUID workspaceUuid) {
-    if (samUser != null) {
-      tags.add(Tag.builder().key("user_email").value(samUser.getEmail()).build());
-      tags.add(Tag.builder().key("user_id").value(samUser.getSubjectId()).build());
-    }
-
-    if (workspaceUuid != null) {
-      tags.add(Tag.builder().key("ws_id").value(workspaceUuid.toString()).build());
-    }
-  }
-
-  // TODO-Dex add function comments
+  // TODO(TERRA-304) use CRL functions
   private static S3Client getS3Client(
       AwsCredentialsProvider awsCredentialsProvider, Region region) {
     return S3Client.builder().region(region).credentialsProvider(awsCredentialsProvider).build();
   }
 
-  // TODO-Dex add function comments
+  /**
+   * Check if AWS S3 storage object exists with given prefix as a folder
+   *
+   * @param awsCredentialsProvider {@link AwsCredentialsProvider}
+   * @param region {@link Region}
+   * @param bucketName S3 bucket name
+   * @param folder folder name (key)
+   */
+  public static boolean checkS3FolderExists(
+      AwsCredentialsProvider awsCredentialsProvider,
+      Region region,
+      String bucketName,
+      String folder) {
+    String folderKey = folder.endsWith("/") ? folder : String.format("%s/", folder);
+    return CollectionUtils.isNotEmpty(
+        getS3ObjectKeysByPrefix(awsCredentialsProvider, region, bucketName, folderKey, 1));
+  }
+
+  /**
+   * Create AWS S3 storage object (as a folder)
+   *
+   * @param awsCredentialsProvider {@link AwsCredentialsProvider}
+   * @param region {@link Region}
+   * @param bucketName S3 bucket name
+   * @param folder folder name (key)
+   * @param tags collection of {@link Tag} to be attached to the folder
+   */
   public static void createS3Folder(
       AwsCredentialsProvider awsCredentialsProvider,
       Region region,
@@ -234,7 +251,14 @@ public class AwsUtils {
     putS3Object(awsCredentialsProvider, region, bucketName, folderKey, "", tags);
   }
 
-  // TODO-Dex add function comments
+  /**
+   * Delete AWS S3 storage objects (as a folder) including all objects under it
+   *
+   * @param awsCredentialsProvider {@link AwsCredentialsProvider}
+   * @param region {@link Region}
+   * @param bucketName S3 bucket name
+   * @param folder folder name (key)
+   */
   public static void deleteS3Folder(
       AwsCredentialsProvider awsCredentialsProvider,
       Region region,
@@ -247,52 +271,15 @@ public class AwsUtils {
     deleteS3Objects(awsCredentialsProvider, region, bucketName, objectKeys);
   }
 
-  // TODO-Dex add function comments
-  public static List<String> getS3ObjectKeysByPrefix(
-      AwsCredentialsProvider awsCredentialsProvider,
-      Region region,
-      String bucketName,
-      String prefix,
-      int limit) {
-    try {
-      S3Client s3 = getS3Client(awsCredentialsProvider, region);
-
-      ListObjectsV2Request.Builder requestBuilder =
-          ListObjectsV2Request.builder().bucket(bucketName).prefix(prefix).delimiter("/");
-
-      int limitRemaining = limit;
-      String continuationToken = null;
-      List<String> objectKeys = new ArrayList<>();
-      while (limitRemaining > 0) {
-        int curLimit = Math.min(MAX_OBJECTS_PER_S3_REQUEST, limitRemaining);
-        limitRemaining -= curLimit;
-
-        ListObjectsV2Response listResponse =
-            s3.listObjectsV2(
-                requestBuilder.continuationToken(continuationToken).maxKeys(curLimit).build());
-
-        SdkHttpResponse httpResponse = listResponse.sdkHttpResponse();
-        if (!httpResponse.isSuccessful()) {
-          throw new ApiException(
-              "Error listing storage objects, "
-                  + httpResponse.statusText().orElse(String.valueOf(httpResponse.statusCode())));
-        }
-
-        objectKeys.addAll(listResponse.contents().stream().map(S3Object::key).toList());
-        if (!listResponse.isTruncated()) {
-          break; // ignore limitRemaining if there are no more results
-        }
-        continuationToken = listResponse.continuationToken();
-      }
-      return objectKeys;
-
-    } catch (SdkException e) {
-      // checkException(e); TODO-Dex
-      throw new ApiException("Error listing storage objects", e);
-    }
-  }
-
-  // TODO-Dex add function comments
+  /**
+   * Create AWS S3 storage object
+   *
+   * @param awsCredentialsProvider {@link AwsCredentialsProvider}
+   * @param region {@link Region}
+   * @param bucketName S3 bucket name
+   * @param key object (key)
+   * @param tags collection of {@link Tag} to be attached to the folder
+   */
   public static void putS3Object(
       AwsCredentialsProvider awsCredentialsProvider,
       Region region,
@@ -336,11 +323,72 @@ public class AwsUtils {
       }
 
     } catch (SdkException e) {
-      // checkException(e); TODO-Dex
+      checkException(e);
       throw new ApiException("Error creating storage object", e);
     }
   }
 
+  /**
+   * Get a list of all objects (key) with given common prefix
+   *
+   * @param awsCredentialsProvider {@link AwsCredentialsProvider}
+   * @param region {@link Region}
+   * @param bucketName S3 bucket name
+   * @param prefix common prefix
+   * @param limit max count of results
+   */
+  public static List<String> getS3ObjectKeysByPrefix(
+      AwsCredentialsProvider awsCredentialsProvider,
+      Region region,
+      String bucketName,
+      String prefix,
+      int limit) {
+    try {
+      S3Client s3 = getS3Client(awsCredentialsProvider, region);
+
+      ListObjectsV2Request.Builder requestBuilder =
+          ListObjectsV2Request.builder().bucket(bucketName).prefix(prefix).delimiter("/");
+
+      int limitRemaining = limit;
+      String continuationToken = null;
+      List<String> objectKeys = new ArrayList<>();
+      while (limitRemaining > 0) {
+        int curLimit = Math.min(MAX_OBJECTS_PER_S3_REQUEST, limitRemaining);
+        limitRemaining -= curLimit;
+
+        ListObjectsV2Response listResponse =
+            s3.listObjectsV2(
+                requestBuilder.continuationToken(continuationToken).maxKeys(curLimit).build());
+
+        SdkHttpResponse httpResponse = listResponse.sdkHttpResponse();
+        if (!httpResponse.isSuccessful()) {
+          throw new ApiException(
+              "Error listing storage objects, "
+                  + httpResponse.statusText().orElse(String.valueOf(httpResponse.statusCode())));
+        }
+
+        objectKeys.addAll(listResponse.contents().stream().map(S3Object::key).toList());
+        if (!listResponse.isTruncated()) {
+          break; // ignore limitRemaining if there are no more results
+        }
+        continuationToken = listResponse.continuationToken();
+      }
+      return objectKeys;
+
+    } catch (SdkException e) {
+      checkException(e);
+      throw new ApiException("Error listing storage objects", e);
+    }
+  }
+
+  /**
+   * Delete AWS S3 storage objects by their keys
+   *
+   * @param awsCredentialsProvider {@link AwsCredentialsProvider}
+   * @param region {@link Region}
+   * @param bucketName S3 bucket name
+   * @param keys list of objects (keys)
+   */
   public static void deleteS3Objects(
       AwsCredentialsProvider awsCredentialsProvider,
       Region region,
@@ -383,8 +431,28 @@ public class AwsUtils {
               });
 
     } catch (SdkException e) {
-      // checkException(e); TODO-Dex
+      checkException(e);
       throw new ApiException("Error deleting storage objects", e);
+    }
+  }
+
+  private static void checkException(Exception ex)
+      throws NotFoundException, UnauthorizedException, BadRequestException {
+    if (ex instanceof SdkException) {
+      String message = ex.getMessage();
+      if (message.contains("ResourceNotFoundException") || message.contains("RecordNotFound")) {
+        throw new NotFoundException("Resource deleted or no longer accessible", ex);
+
+      } else if (message.contains("not authorized to perform")) {
+        throw new UnauthorizedException(
+            "Error performing resource operation, check the name / permissions and retry", ex);
+
+      } else if (message.contains("Unable to transition to")) {
+        throw new BadRequestException("Unable to perform resource lifecycle operation", ex);
+      }
+
+    } else if (ex instanceof ErrorReportException) {
+      throw (ErrorReportException) ex;
     }
   }
 }
