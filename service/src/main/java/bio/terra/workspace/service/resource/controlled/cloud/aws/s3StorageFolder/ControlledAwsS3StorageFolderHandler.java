@@ -13,9 +13,6 @@ public class ControlledAwsS3StorageFolderHandler implements WsmResourceHandler {
   private static ControlledAwsS3StorageFolderHandler theHandler;
 
   public static ControlledAwsS3StorageFolderHandler getHandler() {
-    if (theHandler == null) {
-      theHandler = new ControlledAwsS3StorageFolderHandler();
-    }
     return theHandler;
   }
 

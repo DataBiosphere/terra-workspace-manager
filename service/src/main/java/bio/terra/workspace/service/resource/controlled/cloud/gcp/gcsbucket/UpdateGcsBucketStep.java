@@ -45,9 +45,9 @@ public class UpdateGcsBucketStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    final FlightMap inputMap = flightContext.getInputParameters();
+    final FlightMap inputParameters = flightContext.getInputParameters();
     final ApiGcpGcsBucketUpdateParameters updateParameters =
-        inputMap.get(UPDATE_PARAMETERS, ApiGcpGcsBucketUpdateParameters.class);
+        inputParameters.get(UPDATE_PARAMETERS, ApiGcpGcsBucketUpdateParameters.class);
 
     return updateBucket(updateParameters);
   }

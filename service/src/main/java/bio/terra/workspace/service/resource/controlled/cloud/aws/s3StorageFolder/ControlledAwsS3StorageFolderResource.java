@@ -5,7 +5,6 @@ import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.stairway.RetryRule;
-import bio.terra.workspace.app.configuration.external.AwsConfiguration;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.db.DbSerDes;
@@ -13,7 +12,6 @@ import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
 import bio.terra.workspace.generated.model.ApiAwsS3StorageFolderAttributes;
-import bio.terra.workspace.generated.model.ApiAwsS3StorageFolderCreationParameters;
 import bio.terra.workspace.generated.model.ApiAwsS3StorageFolderResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -26,7 +24,6 @@ import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -130,29 +127,13 @@ public class ControlledAwsS3StorageFolderResource extends ControlledResource {
       AuthenticatedUserRequest userRequest,
       FlightBeanBag flightBeanBag) {
     RetryRule cloudRetry = RetryRules.cloud();
-
-    AwsConfiguration awsConfiguration = flightBeanBag.getAwsConfig();
-
-    ApiAwsS3StorageFolderCreationParameters creationParameters =
-        flight
-            .getInputParameters()
-            .get(
-                WorkspaceFlightMapKeys.ControlledResourceKeys.CREATION_PARAMETERS,
-                ApiAwsS3StorageFolderCreationParameters.class);
-
     // TODO: get default region from user profile
-
-    // TODO-Dex: validate creationParameters: Name & region
-    // TODO-Dex: validate folder exists
-
-    // Discovery discovery = awsConfiguration.getDiscovery();
-
-    // flight.addStep(new ValidateAwsS3BucketCreationStep(this), cloudRetry);
-    // flight.addStep(new CreateAwsS3BucketStep(this), cloudRetry);
-
-    // throw new MissingRequiredFieldException(
-    //  "Missing required field datasetName for BigQuery dataset");
-
+    flight.addStep(
+        new ValidateAwsS3StorageFolderCreationStep(this, flightBeanBag.getAwsCloudContextService()),
+        cloudRetry);
+    flight.addStep(
+        new CreateAwsS3StorageFolderStep(this, flightBeanBag.getAwsCloudContextService()),
+        cloudRetry);
   }
 
   /** {@inheritDoc} */

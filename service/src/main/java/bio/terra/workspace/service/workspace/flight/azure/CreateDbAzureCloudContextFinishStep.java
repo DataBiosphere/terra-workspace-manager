@@ -5,7 +5,6 @@ import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKey
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
-import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
@@ -18,15 +17,11 @@ import org.springframework.http.HttpStatus;
 public class CreateDbAzureCloudContextFinishStep implements Step {
   private final UUID workspaceUuid;
   private final AzureCloudContextService azureCloudContextService;
-  private final FeatureConfiguration featureConfiguration;
 
   public CreateDbAzureCloudContextFinishStep(
-      UUID workspaceUuid,
-      AzureCloudContextService azureCloudContextService,
-      FeatureConfiguration featureConfiguration) {
+      UUID workspaceUuid, AzureCloudContextService azureCloudContextService) {
     this.workspaceUuid = workspaceUuid;
     this.azureCloudContextService = azureCloudContextService;
-    this.featureConfiguration = featureConfiguration;
   }
 
   @Override

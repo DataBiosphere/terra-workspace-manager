@@ -4,20 +4,34 @@ import bio.terra.aws.resource.discovery.CachedEnvironmentDiscovery;
 import bio.terra.aws.resource.discovery.Environment;
 import bio.terra.aws.resource.discovery.EnvironmentDiscovery;
 import bio.terra.aws.resource.discovery.S3EnvironmentDiscovery;
+import bio.terra.common.exception.ApiException;
+import bio.terra.common.iam.SamUser;
 import bio.terra.workspace.app.configuration.external.AwsConfiguration;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.time.Duration;
+import java.util.Collection;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import javax.validation.constraints.NotNull;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.oauth2.jwt.JwtDecoders;
 import software.amazon.awssdk.arns.Arn;
 import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.core.exception.SdkException;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.http.SdkHttpResponse;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.Tagging;
 import software.amazon.awssdk.services.sts.StsClient;
 import software.amazon.awssdk.services.sts.auth.StsAssumeRoleWithWebIdentityCredentialsProvider;
 import software.amazon.awssdk.services.sts.model.AssumeRoleWithWebIdentityRequest;
+import software.amazon.awssdk.services.sts.model.Tag;
 
 public class AwsUtils {
   private static final Logger logger = LoggerFactory.getLogger(AwsUtils.class);
@@ -76,9 +90,9 @@ public class AwsUtils {
    *     stale and refreshed
    * @param jwtAudience target audience to pass when calling {@link GcpUtils#getWsmSaJwt} at token
    *     refresh time
-   * @return
+   * @return AwsCredentialsProvider
    */
-  public static AwsCredentialsProvider createAssumeRoleWithGcpCredentialsProvider(
+  private static AwsCredentialsProvider createAssumeRoleWithGcpCredentialsProvider(
       Arn roleArn, Duration duration, Duration staleTime, String jwtAudience) {
     return StsAssumeRoleWithWebIdentityCredentialsProvider.builder()
         .stsClient(
@@ -126,7 +140,7 @@ public class AwsUtils {
    *
    * @param awsConfiguration Spring configuration object containing required parameters (as
    *     described above)
-   * @return
+   * @return EnvironmentDiscovery
    */
   public static EnvironmentDiscovery createEnvironmentDiscovery(AwsConfiguration awsConfiguration) {
     AwsConfiguration.Discovery discoveryConfig = awsConfiguration.getDiscovery();
@@ -163,19 +177,93 @@ public class AwsUtils {
    * lifetime of the passed {@link Environment} object, and these lifetimes should roughly
    * correspond to a single API call or Stairway flight.
    *
-   * @param awsConfiguration an {@link AwsConfiguration} Spring configuration object containing AWS
-   *     runtime configuration parameters
+   * @param authentication an {@link AwsConfiguration.Authentication} AwS authentication config
    * @param environment a discovered {@link Environment} object corresponding to the AWS Environment
    *     to obtain Terra Workspace Manager IAM Role credentials for
-   * @return
+   * @return AwsCredentialsProvider
    */
   public static AwsCredentialsProvider createWsmCredentialProvider(
-      AwsConfiguration awsConfiguration, Environment environment) {
-    AwsConfiguration.Authentication authenticationConfig = awsConfiguration.getAuthentication();
+      AwsConfiguration.Authentication authentication, Environment environment) {
     return createAssumeRoleWithGcpCredentialsProvider(
         environment.getWorkspaceManagerRoleArn(),
-        Duration.ofSeconds(authenticationConfig.getCredentialLifetimeSeconds()),
-        Duration.ofSeconds(authenticationConfig.getCredentialStaleTimeSeconds()),
-        authenticationConfig.getGoogleJwtAudience());
+        Duration.ofSeconds(authentication.getCredentialLifetimeSeconds()),
+        Duration.ofSeconds(authentication.getCredentialStaleTimeSeconds()),
+        authentication.getGoogleJwtAudience());
+  }
+
+  public static void appendResourceTags(
+      @NotNull Collection<Tag> tags, SamUser samUser, UUID workspaceUuid) {
+    if (samUser != null) {
+      tags.add(Tag.builder().key("user_email").value(samUser.getEmail()).build());
+      tags.add(Tag.builder().key("user_id").value(samUser.getSubjectId()).build());
+    }
+
+    if (workspaceUuid != null) {
+      tags.add(Tag.builder().key("ws_id").value(workspaceUuid.toString()).build());
+    }
+  }
+
+  private static S3Client getS3Client(
+      AwsCredentialsProvider awsCredentialsProvider, Region region) {
+    return S3Client.builder().region(region).credentialsProvider(awsCredentialsProvider).build();
+  }
+
+  public static void createS3Folder(
+      AwsCredentialsProvider awsCredentialsProvider,
+      Region region,
+      String bucketName,
+      String folder,
+      Collection<Tag> tags) {
+    // Creating a "folder" requires writing an empty object ending with the delimiter ('/').
+    String folderKey = folder.endsWith("/") ? folder : String.format("%s/", folder);
+    putS3Object(awsCredentialsProvider, region, bucketName, folderKey, "", tags);
+  }
+
+  public static void putS3Object(
+      AwsCredentialsProvider awsCredentialsProvider,
+      Region region,
+      String bucketName,
+      String key,
+      String content,
+      Collection<Tag> tags) {
+    try {
+      S3Client s3Client = getS3Client(awsCredentialsProvider, region);
+
+      logger.info(
+          "Creating S3 object with name '{}', key '{}' and {} content.",
+          bucketName,
+          key,
+          StringUtils.isEmpty(content) ? "(empty)" : "");
+
+      Set<software.amazon.awssdk.services.s3.model.Tag> s3Tags =
+          tags.stream()
+              .map(
+                  stsTag ->
+                      software.amazon.awssdk.services.s3.model.Tag.builder()
+                          .key(stsTag.key())
+                          .value(stsTag.value())
+                          .build())
+              .collect(Collectors.toSet());
+
+      PutObjectRequest.Builder requestBuilder =
+          PutObjectRequest.builder()
+              .bucket(bucketName)
+              .key(key)
+              .tagging(Tagging.builder().tagSet(s3Tags).build());
+
+      SdkHttpResponse httpResponse =
+          s3Client
+              .putObject(requestBuilder.build(), RequestBody.fromString(content))
+              .sdkHttpResponse();
+      if (!httpResponse.isSuccessful()) {
+        throw new ApiException(
+            "Error creating storage object, "
+                + httpResponse.statusText().orElse(String.valueOf(httpResponse.statusCode())));
+      }
+
+    } catch (SdkException e) {
+      // checkException(e); TODO-Dex
+      throw new ApiException("Error creating storage object", e);
+    }
   }
 }
