@@ -50,7 +50,7 @@ public class AwsUtils {
 
   private static final int MAX_ROLE_SESSION_NAME_LENGTH = 64;
 
-  private static final int MAX_OBJECTS_PER_S3_REQUEST = 1000;
+  private static final int MAX_RESULTS_PER_REQUEST_S3 = 1000;
 
   /**
    * Truncate a passed string for use as an STS session name
@@ -214,33 +214,33 @@ public class AwsUtils {
   }
 
   /**
-   * Check if AWS S3 storage object exists with given prefix as a folder
+   * Check if AWS storage object exists with given prefix as a folder
    *
    * @param awsCredentialsProvider {@link AwsCredentialsProvider}
    * @param region {@link Region}
-   * @param bucketName S3 bucket name
+   * @param bucketName bucket name
    * @param folder folder name (key)
    */
-  public static boolean checkS3FolderExists(
+  public static boolean checkFolderExists(
       AwsCredentialsProvider awsCredentialsProvider,
       Region region,
       String bucketName,
       String folder) {
     String folderKey = folder.endsWith("/") ? folder : String.format("%s/", folder);
     return CollectionUtils.isNotEmpty(
-        getS3ObjectKeysByPrefix(awsCredentialsProvider, region, bucketName, folderKey, 1));
+        getObjectKeysByPrefix(awsCredentialsProvider, region, bucketName, folderKey, 1));
   }
 
   /**
-   * Create AWS S3 storage object (as a folder)
+   * Create AWS storage object (as a folder)
    *
    * @param awsCredentialsProvider {@link AwsCredentialsProvider}
    * @param region {@link Region}
-   * @param bucketName S3 bucket name
+   * @param bucketName bucket name
    * @param folder folder name (key)
    * @param tags collection of {@link Tag} to be attached to the folder
    */
-  public static void createS3Folder(
+  public static void createFolder(
       AwsCredentialsProvider awsCredentialsProvider,
       Region region,
       String bucketName,
@@ -248,39 +248,39 @@ public class AwsUtils {
       Collection<Tag> tags) {
     // Creating a "folder" requires writing an empty object ending with the delimiter ('/').
     String folderKey = folder.endsWith("/") ? folder : String.format("%s/", folder);
-    putS3Object(awsCredentialsProvider, region, bucketName, folderKey, "", tags);
+    putObject(awsCredentialsProvider, region, bucketName, folderKey, "", tags);
   }
 
   /**
-   * Delete AWS S3 storage objects (as a folder) including all objects under it
+   * Delete AWS storage objects (as a folder) including all objects under it
    *
    * @param awsCredentialsProvider {@link AwsCredentialsProvider}
    * @param region {@link Region}
-   * @param bucketName S3 bucket name
+   * @param bucketName bucket name
    * @param folder folder name (key)
    */
-  public static void deleteS3Folder(
+  public static void deleteFolder(
       AwsCredentialsProvider awsCredentialsProvider,
       Region region,
       String bucketName,
       String folder) {
     String folderKey = folder.endsWith("/") ? folder : String.format("%s/", folder);
     List<String> objectKeys =
-        getS3ObjectKeysByPrefix(
+        getObjectKeysByPrefix(
             awsCredentialsProvider, region, bucketName, folderKey, Integer.MAX_VALUE);
-    deleteS3Objects(awsCredentialsProvider, region, bucketName, objectKeys);
+    deleteObjects(awsCredentialsProvider, region, bucketName, objectKeys);
   }
 
   /**
-   * Create AWS S3 storage object
+   * Create AWS storage object
    *
    * @param awsCredentialsProvider {@link AwsCredentialsProvider}
    * @param region {@link Region}
-   * @param bucketName S3 bucket name
+   * @param bucketName bucket name
    * @param key object (key)
    * @param tags collection of {@link Tag} to be attached to the folder
    */
-  public static void putS3Object(
+  public static void putObject(
       AwsCredentialsProvider awsCredentialsProvider,
       Region region,
       String bucketName,
@@ -291,7 +291,7 @@ public class AwsUtils {
       S3Client s3Client = getS3Client(awsCredentialsProvider, region);
 
       logger.info(
-          "Creating S3 object with name '{}', key '{}' and {} content.",
+          "Creating object with name '{}', key '{}' and {} content.",
           bucketName,
           key,
           StringUtils.isEmpty(content) ? "(empty)" : "");
@@ -333,18 +333,18 @@ public class AwsUtils {
    *
    * @param awsCredentialsProvider {@link AwsCredentialsProvider}
    * @param region {@link Region}
-   * @param bucketName S3 bucket name
+   * @param bucketName bucket name
    * @param prefix common prefix
    * @param limit max count of results
    */
-  public static List<String> getS3ObjectKeysByPrefix(
+  public static List<String> getObjectKeysByPrefix(
       AwsCredentialsProvider awsCredentialsProvider,
       Region region,
       String bucketName,
       String prefix,
       int limit) {
     try {
-      S3Client s3 = getS3Client(awsCredentialsProvider, region);
+      S3Client s3Client = getS3Client(awsCredentialsProvider, region);
 
       ListObjectsV2Request.Builder requestBuilder =
           ListObjectsV2Request.builder().bucket(bucketName).prefix(prefix).delimiter("/");
@@ -353,11 +353,11 @@ public class AwsUtils {
       String continuationToken = null;
       List<String> objectKeys = new ArrayList<>();
       while (limitRemaining > 0) {
-        int curLimit = Math.min(MAX_OBJECTS_PER_S3_REQUEST, limitRemaining);
+        int curLimit = Math.min(MAX_RESULTS_PER_REQUEST_S3, limitRemaining);
         limitRemaining -= curLimit;
 
         ListObjectsV2Response listResponse =
-            s3.listObjectsV2(
+            s3Client.listObjectsV2(
                 requestBuilder.continuationToken(continuationToken).maxKeys(curLimit).build());
 
         SdkHttpResponse httpResponse = listResponse.sdkHttpResponse();
@@ -382,14 +382,14 @@ public class AwsUtils {
   }
 
   /**
-   * Delete AWS S3 storage objects by their keys
+   * Delete AWS storage objects by their keys
    *
    * @param awsCredentialsProvider {@link AwsCredentialsProvider}
    * @param region {@link Region}
-   * @param bucketName S3 bucket name
+   * @param bucketName bucket name
    * @param keys list of objects (keys)
    */
-  public static void deleteS3Objects(
+  public static void deleteObjects(
       AwsCredentialsProvider awsCredentialsProvider,
       Region region,
       String bucketName,
@@ -400,7 +400,7 @@ public class AwsUtils {
       DeleteObjectsRequest.Builder deleteRequestBuilder =
           DeleteObjectsRequest.builder().bucket(bucketName);
 
-      ListUtils.partition(keys, MAX_OBJECTS_PER_S3_REQUEST)
+      ListUtils.partition(keys, MAX_RESULTS_PER_REQUEST_S3)
           .forEach(
               keysList -> {
                 logger.info("Deleting storage objects with keys {}.", keysList);
@@ -426,8 +426,7 @@ public class AwsUtils {
                 }
                 deleteResponse
                     .errors()
-                    .forEach(
-                        s3Error -> logger.warn("Failed to delete storage objects: {}", s3Error));
+                    .forEach(err -> logger.warn("Failed to delete storage objects: {}", err));
               });
 
     } catch (SdkException e) {

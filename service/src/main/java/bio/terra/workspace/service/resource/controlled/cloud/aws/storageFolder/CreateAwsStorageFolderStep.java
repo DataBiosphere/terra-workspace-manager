@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolder;
+package bio.terra.workspace.service.resource.controlled.cloud.aws.storageFolder;
 
 import bio.terra.common.exception.ConflictException;
 import bio.terra.stairway.FlightContext;
@@ -18,14 +18,14 @@ import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sts.model.Tag;
 
-public class CreateAwsS3StorageFolderStep implements Step {
-  private static final Logger logger = LoggerFactory.getLogger(CreateAwsS3StorageFolderStep.class);
-  private final ControlledAwsS3StorageFolderResource resource;
+public class CreateAwsStorageFolderStep implements Step {
+  private static final Logger logger = LoggerFactory.getLogger(CreateAwsStorageFolderStep.class);
+  private final ControlledAwsStorageFolderResource resource;
   private final AwsCloudContextService awsCloudContextService;
   private final AuthenticatedUserRequest userRequest;
 
-  public CreateAwsS3StorageFolderStep(
-      ControlledAwsS3StorageFolderResource resource,
+  public CreateAwsStorageFolderStep(
+      ControlledAwsStorageFolderResource resource,
       AwsCloudContextService awsCloudContextService,
       AuthenticatedUserRequest userRequest) {
     this.resource = resource;
@@ -41,17 +41,17 @@ public class CreateAwsS3StorageFolderStep implements Step {
             awsCloudContextService.getRequiredAuthentication(),
             awsCloudContextService.discoverEnvironment());
 
-    if (AwsUtils.checkS3FolderExists(
+    if (AwsUtils.checkFolderExists(
         credentialsProvider,
         Region.of(resource.getRegion()),
-        resource.getS3BucketName(),
+        resource.getBucketName(),
         resource.getPrefix())) {
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL,
           new ConflictException(
               String.format(
                   "Prefix '%s/' already exists in bucket '%s'.",
-                  resource.getS3BucketName(), resource.getPrefix())));
+                  resource.getBucketName(), resource.getPrefix())));
     }
 
     Set<Tag> tags =
@@ -61,10 +61,10 @@ public class CreateAwsS3StorageFolderStep implements Step {
                 Tag.builder().key("ws_id").value(resource.getWorkspaceId().toString()).build())
             .collect(Collectors.toSet());
 
-    AwsUtils.createS3Folder(
+    AwsUtils.createFolder(
         credentialsProvider,
         Region.of(resource.getRegion()),
-        resource.getS3BucketName(),
+        resource.getBucketName(),
         resource.getPrefix(),
         tags);
     return StepResult.getStepResultSuccess();
@@ -77,10 +77,10 @@ public class CreateAwsS3StorageFolderStep implements Step {
             awsCloudContextService.getRequiredAuthentication(),
             awsCloudContextService.discoverEnvironment());
 
-    AwsUtils.deleteS3Folder(
+    AwsUtils.deleteFolder(
         credentialsProvider,
         Region.of(resource.getRegion()),
-        resource.getS3BucketName(),
+        resource.getBucketName(),
         resource.getPrefix());
     return StepResult.getStepResultSuccess();
   }

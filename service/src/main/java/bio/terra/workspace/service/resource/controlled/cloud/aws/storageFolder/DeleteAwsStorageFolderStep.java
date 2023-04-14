@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolder;
+package bio.terra.workspace.service.resource.controlled.cloud.aws.storageFolder;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
@@ -11,14 +11,13 @@ import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 
-public class DeleteAwsS3StorageFolderStep implements Step {
-  private static final Logger logger = LoggerFactory.getLogger(DeleteAwsS3StorageFolderStep.class);
-  private final ControlledAwsS3StorageFolderResource resource;
+public class DeleteAwsStorageFolderStep implements Step {
+  private static final Logger logger = LoggerFactory.getLogger(DeleteAwsStorageFolderStep.class);
+  private final ControlledAwsStorageFolderResource resource;
   private final AwsCloudContextService awsCloudContextService;
 
-  public DeleteAwsS3StorageFolderStep(
-      ControlledAwsS3StorageFolderResource resource,
-      AwsCloudContextService awsCloudContextService) {
+  public DeleteAwsStorageFolderStep(
+      ControlledAwsStorageFolderResource resource, AwsCloudContextService awsCloudContextService) {
     this.resource = resource;
     this.awsCloudContextService = awsCloudContextService;
   }
@@ -31,10 +30,10 @@ public class DeleteAwsS3StorageFolderStep implements Step {
             awsCloudContextService.getRequiredAuthentication(),
             awsCloudContextService.discoverEnvironment());
 
-    AwsUtils.deleteS3Folder(
+    AwsUtils.deleteFolder(
         credentialsProvider,
         Region.of(resource.getRegion()),
-        resource.getS3BucketName(),
+        resource.getBucketName(),
         resource.getPrefix());
 
     return StepResult.getStepResultSuccess();
@@ -43,7 +42,7 @@ public class DeleteAwsS3StorageFolderStep implements Step {
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     logger.error(
-        "Cannot undo delete of AWS S3 Storage Folder resource {} in workspace {}.",
+        "Cannot undo delete of AWS Storage Folder resource {} in workspace {}.",
         resource.getResourceId(),
         resource.getWorkspaceId());
     // Surface whatever error caused Stairway to begin undoing.

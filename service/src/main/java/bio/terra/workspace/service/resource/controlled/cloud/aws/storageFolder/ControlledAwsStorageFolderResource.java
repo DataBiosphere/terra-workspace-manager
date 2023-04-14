@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolder;
+package bio.terra.workspace.service.resource.controlled.cloud.aws.storageFolder;
 
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.BadRequestException;
@@ -11,8 +11,8 @@ import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
-import bio.terra.workspace.generated.model.ApiAwsS3StorageFolderAttributes;
-import bio.terra.workspace.generated.model.ApiAwsS3StorageFolderResource;
+import bio.terra.workspace.generated.model.ApiAwsStorageFolderAttributes;
+import bio.terra.workspace.generated.model.ApiAwsStorageFolderResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
@@ -28,41 +28,41 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Optional;
 
-public class ControlledAwsS3StorageFolderResource extends ControlledResource {
-  private final String s3BucketName;
+public class ControlledAwsStorageFolderResource extends ControlledResource {
+  private final String bucketName;
   private final String prefix;
 
   @JsonCreator
-  public ControlledAwsS3StorageFolderResource(
+  public ControlledAwsStorageFolderResource(
       @JsonProperty("wsmResourceFields") WsmResourceFields resourceFields,
       @JsonProperty("wsmControlledResourceFields")
           WsmControlledResourceFields controlledResourceFields,
-      @JsonProperty("s3BucketName") String s3BucketName,
+      @JsonProperty("bucketName") String bucketName,
       @JsonProperty("prefix") String prefix) {
     super(resourceFields, controlledResourceFields);
-    this.s3BucketName = s3BucketName;
+    this.bucketName = bucketName;
     this.prefix = prefix;
     validate();
   }
 
-  private ControlledAwsS3StorageFolderResource(
-      ControlledResourceFields common, String s3BucketName, String prefix) {
+  private ControlledAwsStorageFolderResource(
+      ControlledResourceFields common, String bucketName, String prefix) {
     super(common);
-    this.s3BucketName = s3BucketName;
+    this.bucketName = bucketName;
     this.prefix = prefix;
     validate();
   }
 
-  public ControlledAwsS3StorageFolderResource(
-      DbResource dbResource, String s3BucketName, String prefix) {
+  public ControlledAwsStorageFolderResource(
+      DbResource dbResource, String bucketName, String prefix) {
     super(dbResource);
-    this.s3BucketName = s3BucketName;
+    this.bucketName = bucketName;
     this.prefix = prefix;
     validate();
   }
 
-  public static ControlledAwsS3StorageFolderResource.Builder builder() {
-    return new ControlledAwsS3StorageFolderResource.Builder();
+  public static ControlledAwsStorageFolderResource.Builder builder() {
+    return new ControlledAwsStorageFolderResource.Builder();
   }
 
   /** {@inheritDoc} */
@@ -86,8 +86,8 @@ public class ControlledAwsS3StorageFolderResource extends ControlledResource {
     return super.getWsmControlledResourceFields();
   }
 
-  public String getS3BucketName() {
-    return s3BucketName;
+  public String getBucketName() {
+    return bucketName;
   }
 
   public String getPrefix() {
@@ -99,13 +99,13 @@ public class ControlledAwsS3StorageFolderResource extends ControlledResource {
   @Override
   @JsonIgnore
   public WsmResourceType getResourceType() {
-    return WsmResourceType.CONTROLLED_AWS_S3_STORAGE_FOLDER;
+    return WsmResourceType.CONTROLLED_AWS_STORAGE_FOLDER;
   }
 
   @Override
   @JsonIgnore
   public WsmResourceFamily getResourceFamily() {
-    return WsmResourceFamily.AWS_S3_STORAGE_FOLDER;
+    return WsmResourceFamily.AWS_STORAGE_FOLDER;
   }
 
   /** {@inheritDoc} */
@@ -127,7 +127,7 @@ public class ControlledAwsS3StorageFolderResource extends ControlledResource {
       FlightBeanBag flightBeanBag) {
     RetryRule cloudRetry = RetryRules.cloud();
     flight.addStep(
-        new CreateAwsS3StorageFolderStep(
+        new CreateAwsStorageFolderStep(
             this, flightBeanBag.getAwsCloudContextService(), userRequest),
         cloudRetry);
   }
@@ -136,7 +136,7 @@ public class ControlledAwsS3StorageFolderResource extends ControlledResource {
   @Override
   public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
     flight.addStep(
-        new DeleteAwsS3StorageFolderStep(this, flightBeanBag.getAwsCloudContextService()),
+        new DeleteAwsStorageFolderStep(this, flightBeanBag.getAwsCloudContextService()),
         RetryRules.cloud());
   }
 
@@ -146,14 +146,12 @@ public class ControlledAwsS3StorageFolderResource extends ControlledResource {
     throw new ApiException("addUpdateSteps NotImplemented");
   }
 
-  public ApiAwsS3StorageFolderAttributes toApiAttributes() {
-    return new ApiAwsS3StorageFolderAttributes()
-        .s3BucketName(getS3BucketName())
-        .prefix(getPrefix());
+  public ApiAwsStorageFolderAttributes toApiAttributes() {
+    return new ApiAwsStorageFolderAttributes().bucketName(getBucketName()).prefix(getPrefix());
   }
 
-  public ApiAwsS3StorageFolderResource toApiResource() {
-    return new ApiAwsS3StorageFolderResource()
+  public ApiAwsStorageFolderResource toApiResource() {
+    return new ApiAwsStorageFolderResource()
         .metadata(super.toApiMetadata())
         .attributes(toApiAttributes());
   }
@@ -161,41 +159,41 @@ public class ControlledAwsS3StorageFolderResource extends ControlledResource {
   @Override
   public String attributesToJson() {
     return DbSerDes.toJson(
-        new ControlledAwsS3StorageFolderAttributes(getS3BucketName(), getPrefix(), getRegion()));
+        new ControlledAwsStorageFolderAttributes(getBucketName(), getPrefix(), getRegion()));
   }
 
   @Override
   public ApiResourceAttributesUnion toApiAttributesUnion() {
     ApiResourceAttributesUnion union = new ApiResourceAttributesUnion();
-    union.awsS3StorageFolder(toApiAttributes());
+    union.awsStorageFolder(toApiAttributes());
     return union;
   }
 
   @Override
   public void validate() {
     super.validate();
-    if (getResourceType() != WsmResourceType.CONTROLLED_AWS_S3_STORAGE_FOLDER
-        || getResourceFamily() != WsmResourceFamily.AWS_S3_STORAGE_FOLDER
+    if (getResourceType() != WsmResourceType.CONTROLLED_AWS_STORAGE_FOLDER
+        || getResourceFamily() != WsmResourceFamily.AWS_STORAGE_FOLDER
         || getStewardshipType() != StewardshipType.CONTROLLED) {
-      throw new InconsistentFieldsException("Expected CONTROLLED_AWS_S3_STORAGE_FOLDER");
+      throw new InconsistentFieldsException("Expected CONTROLLED_AWS_STORAGE_FOLDER");
     }
-    if (getS3BucketName() == null) {
+    if (getBucketName() == null) {
       throw new MissingRequiredFieldException(
-          "Missing required field s3BucketName for ControlledAwsS3StorageFolderResource.");
+          "Missing required field bucketName for ControlledAwsStorageFolderResource.");
     }
     if (getPrefix() == null) {
       throw new MissingRequiredFieldException(
-          "Missing required field prefix for ControlledAwsS3StorageFolderResource.");
+          "Missing required field prefix for ControlledAwsStorageFolderResource.");
     }
     if (getRegion() == null) {
       throw new MissingRequiredFieldException(
-          "Missing required field region for ControlledAwsS3StorageFolderResource.");
+          "Missing required field region for ControlledAwsStorageFolderResource.");
     }
   }
 
   public static class Builder {
     private ControlledResourceFields common;
-    private String s3BucketName;
+    private String bucketName;
     private String prefix;
 
     public Builder common(ControlledResourceFields common) {
@@ -203,8 +201,8 @@ public class ControlledAwsS3StorageFolderResource extends ControlledResource {
       return this;
     }
 
-    public Builder s3BucketName(String s3BucketName) {
-      this.s3BucketName = s3BucketName;
+    public Builder bucketName(String bucketName) {
+      this.bucketName = bucketName;
       return this;
     }
 
@@ -213,8 +211,8 @@ public class ControlledAwsS3StorageFolderResource extends ControlledResource {
       return this;
     }
 
-    public ControlledAwsS3StorageFolderResource build() {
-      return new ControlledAwsS3StorageFolderResource(common, s3BucketName, prefix);
+    public ControlledAwsStorageFolderResource build() {
+      return new ControlledAwsStorageFolderResource(common, bucketName, prefix);
     }
   }
 }

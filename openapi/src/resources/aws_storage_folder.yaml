@@ -1,18 +1,18 @@
 components:
   schemas:
-    AwsS3StorageFolderAttributes:
+    AwsStorageFolderAttributes:
       description: >-
-        S3 Storage Folder properties included in post-creation get.
+        AWS S3 Storage Folder properties included in post-creation get.
       type: object
       properties:
-        s3BucketName:
+        bucketName:
           description: The name of the S3 bucket in which the Terra Storage Folder was allocated.
           type: string
         prefix:
           description: The prefix within the S3 bucket.
           type: string
 
-    AwsS3StorageFolderResource:
+    AwsStorageFolderResource:
       type: object
       description: Description of an AWS S3 Storage Folder.
       required: [ metadata, attributes ]
@@ -21,4 +21,4 @@ components:
           description: the resource metadata common to all resources
           $ref: '#/components/schemas/ResourceMetadata'
         attributes:
-          $ref: '#/components/schemas/AwsS3StorageFolderAttributes'
+          $ref: '#/components/schemas/AwsStorageFolderAttributes'
