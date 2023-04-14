@@ -483,7 +483,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         userRequest, workspaceId, body.getDestinationWorkspaceId(), resourceId);
     if (CloningInstructions.isReferenceClone(body.getCloningInstructions())) {
       throw new ValidationException(
-          "Copying azure storage containers by `reference is not supported");
+          "Copying azure storage containers by reference is not supported");
     }
 
     var jobId =
