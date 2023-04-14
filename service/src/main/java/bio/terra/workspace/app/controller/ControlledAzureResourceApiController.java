@@ -12,7 +12,7 @@ import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
-import bio.terra.workspace.common.utils.AzureVmUtils;
+import bio.terra.workspace.common.utils.AzureUtils;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.ControlledAzureResourceApi;
 import bio.terra.workspace.generated.model.ApiAzureDiskResource;
@@ -166,9 +166,9 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     features.azureEnabledCheck();
 
     ControllerValidationUtils.validateIpAddressRange(sasIpRange);
-    ControllerValidationUtils.validateSasExpirationDuration(
+    AzureUtils.validateSasExpirationDuration(
         sasExpirationDuration, azureConfiguration.getSasTokenExpiryTimeMaximumMinutesOffset());
-    ControllerValidationUtils.validateSasBlobName(sasBlobName);
+    AzureUtils.validateSasBlobName(sasBlobName);
     SasPermissionsHelper.validateSasPermissionString(sasPermissions);
 
     OffsetDateTime startTime =
@@ -271,7 +271,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         .common(commonFields)
         .vmName(creationParameters.getName())
         .vmSize(creationParameters.getVmSize())
-        .vmImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
+        .vmImage(AzureUtils.getVmImageData(creationParameters.getVmImage()))
         .diskId(creationParameters.getDiskId())
         .build();
   }

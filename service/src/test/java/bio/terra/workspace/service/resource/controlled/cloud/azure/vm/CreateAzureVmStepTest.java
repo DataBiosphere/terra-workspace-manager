@@ -17,7 +17,7 @@ import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseAzureUnitTest;
 import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
-import bio.terra.workspace.common.utils.AzureVmUtils;
+import bio.terra.workspace.common.utils.AzureUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.service.crl.CrlService;
@@ -345,7 +345,7 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
             .setNetwork(mockNetwork)
             .setSubnetName(STUB_SUBNET_NAME)
             .setImage(
-                AzureVmUtils.getImageData(
+                AzureUtils.getVmImageData(
                     ControlledResourceFixtures.getAzureVmCreationParameters().getVmImage()))
             .build();
 
