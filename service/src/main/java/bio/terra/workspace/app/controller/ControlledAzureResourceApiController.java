@@ -73,39 +73,37 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     implements ControlledAzureResourceApi {
   private final Logger logger = LoggerFactory.getLogger(ControlledAzureResourceApiController.class);
 
-  private final ControlledResourceService controlledResourceService;
-  private final AzureStorageAccessService azureControlledStorageResourceService;
-  private final JobService jobService;
-  private final JobApiUtils jobApiUtils;
-  private final FeatureConfiguration features;
-  private final AzureConfiguration azureConfiguration;
   private final WorkspaceService workspaceService;
-  private final ControlledResourceMetadataManager controlledResourceMetadataManager;
+  private final AzureConfiguration azureConfiguration;
+  private final AzureStorageAccessService azureControlledStorageResourceService;
   private final LandingZoneApiDispatch landingZoneApiDispatch;
 
   @Autowired
   public ControlledAzureResourceApiController(
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
-      ControlledResourceService controlledResourceService,
-      AzureStorageAccessService azureControlledStorageResourceService,
+      HttpServletRequest request,
       SamService samService,
+      FeatureConfiguration features,
       JobService jobService,
       JobApiUtils jobApiUtils,
-      HttpServletRequest request,
-      FeatureConfiguration features,
-      AzureConfiguration azureConfiguration,
-      WorkspaceService workspaceService,
+      ControlledResourceService controlledResourceService,
       ControlledResourceMetadataManager controlledResourceMetadataManager,
+      WorkspaceService workspaceService,
+      AzureConfiguration azureConfiguration,
+      AzureStorageAccessService azureControlledStorageResourceService,
       LandingZoneApiDispatch landingZoneApiDispatch) {
-    super(authenticatedUserRequestFactory, request, controlledResourceService, samService);
-    this.controlledResourceService = controlledResourceService;
-    this.azureControlledStorageResourceService = azureControlledStorageResourceService;
-    this.jobService = jobService;
-    this.jobApiUtils = jobApiUtils;
-    this.features = features;
-    this.azureConfiguration = azureConfiguration;
+    super(
+        authenticatedUserRequestFactory,
+        request,
+        samService,
+        features,
+        jobService,
+        jobApiUtils,
+        controlledResourceService,
+        controlledResourceMetadataManager);
     this.workspaceService = workspaceService;
-    this.controlledResourceMetadataManager = controlledResourceMetadataManager;
+    this.azureConfiguration = azureConfiguration;
+    this.azureControlledStorageResourceService = azureControlledStorageResourceService;
     this.landingZoneApiDispatch = landingZoneApiDispatch;
   }
 
@@ -485,7 +483,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         userRequest, workspaceId, body.getDestinationWorkspaceId(), resourceId);
     if (CloningInstructions.isReferenceClone(body.getCloningInstructions())) {
       throw new ValidationException(
-          "Copying azure storage containers by reference is not supported");
+          "Copying azure storage containers by `reference is not supported");
     }
 
     var jobId =

@@ -1,5 +1,7 @@
 package bio.terra.workspace.app.controller;
 
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
+import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.generated.controller.ControlledFlexibleResourceApi;
 import bio.terra.workspace.generated.model.ApiCloneControlledFlexibleResourceRequest;
 import bio.terra.workspace.generated.model.ApiCloneControlledFlexibleResourceResult;
@@ -12,6 +14,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
@@ -43,22 +46,30 @@ import org.springframework.stereotype.Controller;
 @Controller
 public class ControlledFlexibleResourceApiController extends ControlledResourceControllerBase
     implements ControlledFlexibleResourceApi {
-
   private final Logger logger =
       LoggerFactory.getLogger(ControlledFlexibleResourceApiController.class);
   private final WsmResourceService wsmResourceService;
-  private final ControlledResourceMetadataManager controlledResourceMetadataManager;
 
   @Autowired
   public ControlledFlexibleResourceApiController(
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request,
-      ControlledResourceService controlledResourceService,
       SamService samService,
+      FeatureConfiguration features,
+      JobService jobService,
+      JobApiUtils jobApiUtils,
+      ControlledResourceService controlledResourceService,
       ControlledResourceMetadataManager controlledResourceMetadataManager,
       WsmResourceService wsmResourceService) {
-    super(authenticatedUserRequestFactory, request, controlledResourceService, samService);
-    this.controlledResourceMetadataManager = controlledResourceMetadataManager;
+    super(
+        authenticatedUserRequestFactory,
+        request,
+        samService,
+        features,
+        jobService,
+        jobApiUtils,
+        controlledResourceService,
+        controlledResourceMetadataManager);
     this.wsmResourceService = wsmResourceService;
   }
 
@@ -91,7 +102,7 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
         FlexResourceCreationParameters.fromApiCreationParameters(body.getFlexibleResource());
 
     ControlledFlexibleResource createdFlexibleResource =
-        getControlledResourceService()
+        controlledResourceService
             .createControlledResourceSync(
                 resource, commonFields.getIamRole(), userRequest, creationParameters)
             .castByEnum(WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE);
@@ -139,7 +150,7 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
     wsmResourceService.updateResource(
         userRequest, flexibleResource, commonUpdateParameters, decodedData);
     ControlledFlexibleResource updatedResource =
-        getControlledResourceService()
+        controlledResourceService
             .getControlledResource(workspaceUuid, resourceId)
             .castByEnum(WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE);
     return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
@@ -158,8 +169,7 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
         "Deleting controlled flexible resource {} in workspace {}",
         resourceId.toString(),
         workspaceUuid.toString());
-    getControlledResourceService()
-        .deleteControlledResourceSync(workspaceUuid, resourceId, userRequest);
+    controlledResourceService.deleteControlledResourceSync(workspaceUuid, resourceId, userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -197,7 +207,7 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
     }
 
     ControlledResource sourceFlexResource =
-        getControlledResourceService().getControlledResource(workspaceUuid, resourceId);
+        controlledResourceService.getControlledResource(workspaceUuid, resourceId);
 
     CloningInstructions effectiveCloningInstructions =
         Optional.ofNullable(body.getCloningInstructions())
@@ -220,16 +230,15 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
 
     // Otherwise start a flight to clone the flex resource.
     ControlledFlexibleResource clonedFlexResource =
-        getControlledResourceService()
-            .cloneFlexResource(
-                workspaceUuid,
-                resourceId,
-                body.getDestinationWorkspaceId(),
-                UUID.randomUUID(),
-                userRequest,
-                body.getName(),
-                body.getDescription(),
-                body.getCloningInstructions());
+        controlledResourceService.cloneFlexResource(
+            workspaceUuid,
+            resourceId,
+            body.getDestinationWorkspaceId(),
+            UUID.randomUUID(),
+            userRequest,
+            body.getName(),
+            body.getDescription(),
+            body.getCloningInstructions());
 
     ApiCloneControlledFlexibleResourceResult result =
         new ApiCloneControlledFlexibleResourceResult()
