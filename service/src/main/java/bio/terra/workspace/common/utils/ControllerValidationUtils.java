@@ -127,9 +127,9 @@ public final class ControllerValidationUtils {
   }
 
   /**
-   * Validate the format of an ipAddress or range of addresses for Azure SAS tokens. We can't do
-   * this directly in the generated spring code yet, because the swagger codegen plugin doesn't
-   * support the use of oneOf in schema generation.
+   * Validate the format of an ipAddress or range of addresses. We can't do this directly in the
+   * generated spring code yet, because the swagger codegen plugin doesn't support the use of oneOf
+   * in schema generation.
    *
    * @param ipRange a single ip address, or a range of ip addresses separated by a dash ('-')
    */
@@ -143,51 +143,6 @@ public final class ControllerValidationUtils {
       if (!validator.isValid(address)) {
         throw new ValidationException("Invalid ip address or ip address range: " + ipRange);
       }
-    }
-  }
-
-  /**
-   * Validate that the expiration duration (in seconds) is between 1 and the maximum allowed
-   * duration (in minutes).
-   *
-   * @param sasExpirationDuration user-specified duration in seconds (note that null is allowed)
-   * @param maxDurationMinutes maximum allowed duration in minutes
-   * @throws ValidationException if sasExpiration is not positive or is greater than maximum allowed
-   *     duration. Does not throw an exception if sasExpiration is null.
-   */
-  public static void validateSasExpirationDuration(
-      @Nullable Long sasExpirationDuration, Long maxDurationMinutes) {
-    if (sasExpirationDuration == null) {
-      return;
-    }
-    if (sasExpirationDuration <= 0) {
-      throw new ValidationException(
-          "sasExpirationDuration must be positive: " + sasExpirationDuration);
-    }
-    long maxDurationSeconds = 60 * maxDurationMinutes;
-    if (sasExpirationDuration > maxDurationSeconds) {
-      throw new ValidationException(
-          String.format(
-              "sasExpirationDuration cannot be greater than allowed maximum (%d): %d",
-              maxDurationSeconds, sasExpirationDuration));
-    }
-  }
-
-  /**
-   * Validate an azure blob name. Blob name may be a string or null, and must be > 1 char and < 1024
-   * chars in length.
-   *
-   * @param blobName Blob name to validate, or null.
-   */
-  public static void validateSasBlobName(@Nullable String blobName) {
-    if (blobName == null) {
-      return;
-    }
-    if (blobName.isEmpty()) {
-      throw new ValidationException("Blob name may not be empty");
-    }
-    if (blobName.length() > 1024) {
-      throw new ValidationException("Blob name must be <= 1024 chars");
     }
   }
 

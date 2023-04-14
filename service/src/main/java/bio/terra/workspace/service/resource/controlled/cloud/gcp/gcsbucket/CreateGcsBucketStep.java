@@ -45,10 +45,11 @@ public class CreateGcsBucketStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    FlightMap inputMap = flightContext.getInputParameters();
-    FlightUtils.validateRequiredEntries(inputMap, ControlledResourceKeys.CREATION_PARAMETERS);
+    FlightMap inputParameters = flightContext.getInputParameters();
+    FlightUtils.validateRequiredEntries(
+        inputParameters, ControlledResourceKeys.CREATION_PARAMETERS);
     ApiGcpGcsBucketCreationParameters creationParameters =
-        inputMap.get(
+        inputParameters.get(
             ControlledResourceKeys.CREATION_PARAMETERS, ApiGcpGcsBucketCreationParameters.class);
     String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
 

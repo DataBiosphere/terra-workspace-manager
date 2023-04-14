@@ -5,6 +5,7 @@ import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertM
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesDeleteRequestBody;
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesUpdateRequestBody;
 
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
@@ -38,29 +39,25 @@ import org.springframework.stereotype.Controller;
 
 @Controller
 public class FolderApiController extends ControllerBase implements FolderApi {
-
-  private final FolderService folderService;
   private final WorkspaceService workspaceService;
-  private final JobApiUtils jobApiUtils;
-  private final JobService jobService;
   private final WorkspaceActivityLogService workspaceActivityLogService;
+  private final FolderService folderService;
 
   @Autowired
   public FolderApiController(
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request,
       SamService samService,
-      FolderService folderService,
-      WorkspaceService workspaceService,
-      JobApiUtils jobApiUtils,
+      FeatureConfiguration features,
       JobService jobService,
-      WorkspaceActivityLogService workspaceActivityLogService) {
-    super(authenticatedUserRequestFactory, request, samService);
-    this.folderService = folderService;
+      JobApiUtils jobApiUtils,
+      WorkspaceService workspaceService,
+      WorkspaceActivityLogService workspaceActivityLogService,
+      FolderService folderService) {
+    super(authenticatedUserRequestFactory, request, samService, features, jobService, jobApiUtils);
     this.workspaceService = workspaceService;
-    this.jobApiUtils = jobApiUtils;
-    this.jobService = jobService;
     this.workspaceActivityLogService = workspaceActivityLogService;
+    this.folderService = folderService;
   }
 
   @Traced

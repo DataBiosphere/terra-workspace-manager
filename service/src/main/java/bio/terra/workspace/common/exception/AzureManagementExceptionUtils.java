@@ -1,4 +1,4 @@
-package bio.terra.workspace.common.utils;
+package bio.terra.workspace.common.exception;
 
 import bio.terra.stairway.StepStatus;
 import com.azure.core.management.exception.ManagementException;
@@ -7,13 +7,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 
 /**
- * Parses the Azure ManagementException code for the reason of the failure.
+ * Parses the AzureManagementException code for the reason of the failure.
  *
  * <p>Azure error codes can be found here:
  * https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/common-deployment-errors
  * and https://docs.microsoft.com/en-us/rest/api/storageservices/blob-service-error-codes
  */
-public class ManagementExceptionUtils {
+public class AzureManagementExceptionUtils {
 
   public static final String RESOURCE_NOT_FOUND = "ResourceNotFound";
   public static final String CONTAINER_NOT_FOUND = "ContainerNotFound";

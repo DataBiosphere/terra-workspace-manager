@@ -63,10 +63,10 @@ public class CreateBigQueryDatasetStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    FlightMap inputMap = flightContext.getInputParameters();
+    FlightMap inputParameters = flightContext.getInputParameters();
     var resource =
         FlightUtils.getRequired(
-            inputMap,
+            inputParameters,
             WorkspaceFlightMapKeys.ResourceKeys.RESOURCE,
             ControlledBigQueryDatasetResource.class);
 

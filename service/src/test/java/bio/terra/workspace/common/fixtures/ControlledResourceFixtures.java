@@ -4,7 +4,7 @@ import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertM
 import static bio.terra.workspace.connected.AzureConnectedTestUtils.getAzureName;
 
 import bio.terra.stairway.ShortUUID;
-import bio.terra.workspace.common.utils.AzureVmUtils;
+import bio.terra.workspace.common.utils.AzureUtils;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.db.ResourceDao;
@@ -366,7 +366,7 @@ public class ControlledResourceFixtures {
         .common(makeDefaultControlledResourceFieldsBuilder().build())
         .vmName(creationParameters.getName())
         .vmSize(creationParameters.getVmSize())
-        .vmImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
+        .vmImage(AzureUtils.getVmImageData(creationParameters.getVmImage()))
         .diskId(creationParameters.getDiskId())
         .build();
   }
@@ -659,7 +659,7 @@ public class ControlledResourceFixtures {
                 .build())
         .vmName(creationParameters.getName())
         .vmSize(creationParameters.getVmSize())
-        .vmImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
+        .vmImage(AzureUtils.getVmImageData(creationParameters.getVmImage()))
         .diskId(diskResourceId);
   }
 

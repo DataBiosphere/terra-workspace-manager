@@ -1,5 +1,7 @@
 package bio.terra.workspace.app.controller;
 
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
+import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.app.controller.shared.PropertiesUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.controller.ReferencedGcpResourceApi;
@@ -35,6 +37,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
+import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -71,29 +74,31 @@ import org.springframework.stereotype.Controller;
 @Controller
 public class ReferencedGcpResourceController extends ControllerBase
     implements ReferencedGcpResourceApi {
-
-  private final ReferencedResourceService referencedResourceService;
-  private final WorkspaceDao workspaceDao;
   private final WorkspaceService workspaceService;
-  private final ResourceValidationUtils validationUtils;
+  private final WorkspaceDao workspaceDao;
   private final WsmResourceService wsmResourceService;
+  private final ReferencedResourceService referencedResourceService;
+  private final ResourceValidationUtils validationUtils;
 
   @Autowired
   public ReferencedGcpResourceController(
-      ReferencedResourceService referencedResourceService,
-      WorkspaceDao workspaceDao,
-      WorkspaceService workspaceService,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
-      ResourceValidationUtils validationUtils,
       HttpServletRequest request,
       SamService samService,
-      WsmResourceService wsmResourceService) {
-    super(authenticatedUserRequestFactory, request, samService);
-    this.referencedResourceService = referencedResourceService;
-    this.workspaceDao = workspaceDao;
+      FeatureConfiguration features,
+      JobService jobService,
+      JobApiUtils jobApiUtils,
+      WorkspaceService workspaceService,
+      WorkspaceDao workspaceDao,
+      WsmResourceService wsmResourceService,
+      ReferencedResourceService referencedResourceService,
+      ResourceValidationUtils validationUtils) {
+    super(authenticatedUserRequestFactory, request, samService, features, jobService, jobApiUtils);
     this.workspaceService = workspaceService;
-    this.validationUtils = validationUtils;
+    this.workspaceDao = workspaceDao;
     this.wsmResourceService = wsmResourceService;
+    this.referencedResourceService = referencedResourceService;
+    this.validationUtils = validationUtils;
   }
 
   // -- GCS Bucket object -- //

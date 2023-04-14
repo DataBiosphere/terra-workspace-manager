@@ -42,9 +42,9 @@ public class UpdateAiNotebookAttributesStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    final FlightMap inputMap = context.getInputParameters();
+    final FlightMap inputParameters = context.getInputParameters();
     final ApiGcpAiNotebookUpdateParameters updateParameters =
-        inputMap.get(UPDATE_PARAMETERS, ApiGcpAiNotebookUpdateParameters.class);
+        inputParameters.get(UPDATE_PARAMETERS, ApiGcpAiNotebookUpdateParameters.class);
     if (updateParameters == null) {
       return StepResult.getStepResultSuccess();
     }

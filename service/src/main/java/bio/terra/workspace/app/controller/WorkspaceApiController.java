@@ -16,7 +16,6 @@ import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.db.ResourceDao;
-import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
 import bio.terra.workspace.generated.model.ApiAwsContext;
@@ -101,16 +100,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 public class WorkspaceApiController extends ControllerBase implements WorkspaceApi {
   private static final Logger logger = LoggerFactory.getLogger(WorkspaceApiController.class);
   private final WorkspaceService workspaceService;
-  private final JobService jobService;
-  private final JobApiUtils jobApiUtils;
+  private final WorkspaceActivityLogService workspaceActivityLogService;
   private final GcpCloudContextService gcpCloudContextService;
   private final AzureCloudContextService azureCloudContextService;
   private final AwsCloudContextService awsCloudContextService;
   private final PetSaService petSaService;
   private final TpsApiDispatch tpsApiDispatch;
-  private final WorkspaceActivityLogDao workspaceActivityLogDao;
-  private final FeatureConfiguration featureConfiguration;
-  private final WorkspaceActivityLogService workspaceActivityLogService;
   private final ResourceDao resourceDao;
 
   @Autowired
@@ -118,29 +113,24 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request,
       SamService samService,
-      WorkspaceService workspaceService,
+      FeatureConfiguration features,
       JobService jobService,
       JobApiUtils jobApiUtils,
+      WorkspaceService workspaceService,
+      WorkspaceActivityLogService workspaceActivityLogService,
       GcpCloudContextService gcpCloudContextService,
       AzureCloudContextService azureCloudContextService,
       AwsCloudContextService awsCloudContextService,
       PetSaService petSaService,
       TpsApiDispatch tpsApiDispatch,
-      WorkspaceActivityLogDao workspaceActivityLogDao,
-      FeatureConfiguration featureConfiguration,
-      WorkspaceActivityLogService workspaceActivityLogService,
       ResourceDao resourceDao) {
-    super(authenticatedUserRequestFactory, request, samService);
+    super(authenticatedUserRequestFactory, request, samService, features, jobService, jobApiUtils);
     this.workspaceService = workspaceService;
-    this.jobService = jobService;
-    this.jobApiUtils = jobApiUtils;
     this.gcpCloudContextService = gcpCloudContextService;
     this.azureCloudContextService = azureCloudContextService;
     this.awsCloudContextService = awsCloudContextService;
     this.petSaService = petSaService;
     this.tpsApiDispatch = tpsApiDispatch;
-    this.workspaceActivityLogDao = workspaceActivityLogDao;
-    this.featureConfiguration = featureConfiguration;
     this.workspaceActivityLogService = workspaceActivityLogService;
     this.resourceDao = resourceDao;
   }
@@ -183,7 +173,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     // Validate that this workspace can have policies attached, if necessary.
     TpsPolicyInputs policies = null;
     if (body.getPolicies() != null) {
-      if (!featureConfiguration.isTpsEnabled()) {
+      if (!features.isTpsEnabled()) {
         throw new FeatureNotSupportedException(
             "TPS is not enabled on this instance of Workspace Manager, do not specify the policy field of a CreateWorkspace request.");
       }
@@ -277,7 +267,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .orElse(null);
 
     List<ApiWsmPolicyInput> workspacePolicies = null;
-    if (featureConfiguration.isTpsEnabled()) {
+    if (features.isTpsEnabled()) {
       tpsApiDispatch.createPaoIfNotExist(workspaceUuid);
       TpsPaoGetResult workspacePao = tpsApiDispatch.getPao(workspaceUuid);
       workspacePolicies = TpsApiConversionUtils.apiEffectivePolicyListFromTpsPao(workspacePao);
@@ -401,7 +391,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
     workspaceService.validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.WRITE);
 
-    featureConfiguration.tpsEnabledCheck();
+    features.tpsEnabledCheck();
     TpsPolicyInputs adds = TpsApiConversionUtils.tpsFromApiTpsPolicyInputs(body.getAddAttributes());
     TpsPolicyInputs removes =
         TpsApiConversionUtils.tpsFromApiTpsPolicyInputs(body.getRemoveAttributes());
