@@ -59,14 +59,6 @@ public class ControlledResourceControllerBase extends ControllerBase {
     this.controlledResourceMetadataManager = controlledResourceMetadataManager;
   }
 
-  public ControlledResourceService getControlledResourceService1() {
-    return controlledResourceService;
-  }
-
-  public ControlledResourceMetadataManager getControlledResourceMetadataManager1() {
-    return controlledResourceMetadataManager;
-  }
-
   public ControlledResourceFields toCommonFields(
       UUID workspaceUuid,
       ApiControlledResourceCommonFields apiCommonFields,

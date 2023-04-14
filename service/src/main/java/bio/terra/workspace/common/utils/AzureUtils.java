@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
-/** Various utilities for validating requests in Azure VM Controllers. */
+/** Various utilities for validating requests in Azure Controllers. */
 public final class AzureUtils {
 
   /**
