@@ -40,7 +40,7 @@ paths:
     delete:
       summary: Delete controlled AWS S3 Storage Folder resource
       operationId: deleteAwsS3StorageFolder
-      tags: [ ControlledAwsResource ]
+      tags: [ControlledAwsResource]
       responses:
         '200':
           description: Success

@@ -43,7 +43,6 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
 
   private final Logger logger = LoggerFactory.getLogger(ControlledAwsResourceApiController.class);
 
-  // TODO(TERRA-304): Move up to base class
   private final WorkspaceService workspaceService;
   private final AwsCloudContextService awsCloudContextService;
 

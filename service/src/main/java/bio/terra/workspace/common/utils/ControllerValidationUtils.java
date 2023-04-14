@@ -16,8 +16,6 @@ import org.apache.commons.validator.routines.InetAddressValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-// TODO(TERRA-304) move azure utils to a new class
-
 /** Various utilities for validating requests in Controllers. */
 public final class ControllerValidationUtils {
 
@@ -99,7 +97,7 @@ public final class ControllerValidationUtils {
         break;
       default:
         throw new CloudPlatformNotImplementedException(
-            "Invalid cloud platform. Currently, only AZURE and GCP are supported.");
+            "Invalid cloud platform. Currently, only GCP, AZURE and AWS are supported.");
     }
   }
 

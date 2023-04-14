@@ -207,7 +207,7 @@ public class AwsUtils {
         authentication.getGoogleJwtAudience());
   }
 
-  // TODO(TERRA-304) use CRL functions
+  // TODO(TERRA-498) use CRL functions
   private static S3Client getS3Client(
       AwsCredentialsProvider awsCredentialsProvider, Region region) {
     return S3Client.builder().region(region).credentialsProvider(awsCredentialsProvider).build();
