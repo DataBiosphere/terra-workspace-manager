@@ -4,6 +4,8 @@ import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertA
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesDeleteRequestBody;
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesUpdateRequestBody;
 
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
+import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.ResourceApi;
 import bio.terra.workspace.generated.model.ApiProperty;
@@ -17,6 +19,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.model.StewardshipType;
@@ -40,28 +43,25 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 public class ResourceApiController extends ControllerBase implements ResourceApi {
-
   private final WsmResourceService resourceService;
   private final WorkspaceService workspaceService;
   private final ReferencedResourceService referencedResourceService;
 
-  private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
-  private final HttpServletRequest request;
-
   @Autowired
   public ResourceApiController(
-      WsmResourceService resourceService,
-      WorkspaceService workspaceService,
-      ReferencedResourceService referencedResourceService,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request,
-      SamService samService) {
-    super(authenticatedUserRequestFactory, request, samService);
+      SamService samService,
+      FeatureConfiguration features,
+      JobService jobService,
+      JobApiUtils jobApiUtils,
+      WsmResourceService resourceService,
+      WorkspaceService workspaceService,
+      ReferencedResourceService referencedResourceService) {
+    super(authenticatedUserRequestFactory, request, samService, features, jobService, jobApiUtils);
     this.resourceService = resourceService;
     this.workspaceService = workspaceService;
     this.referencedResourceService = referencedResourceService;
-    this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
-    this.request = request;
   }
 
   @Traced

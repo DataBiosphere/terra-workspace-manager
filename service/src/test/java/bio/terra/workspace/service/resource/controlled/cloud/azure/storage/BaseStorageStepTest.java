@@ -6,7 +6,7 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseAzureUnitTest;
-import bio.terra.workspace.common.utils.ManagementExceptionUtils;
+import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
@@ -36,7 +36,7 @@ public class BaseStorageStepTest extends BaseAzureUnitTest {
           "Resource was not found.",
           /*response=*/ null,
           new ManagementError(
-              ManagementExceptionUtils.RESOURCE_NOT_FOUND, "Resource was not found."));
+              AzureManagementExceptionUtils.RESOURCE_NOT_FOUND, "Resource was not found."));
 
   @BeforeEach
   public void setup() {

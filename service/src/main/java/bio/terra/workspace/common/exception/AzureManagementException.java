@@ -1,4 +1,4 @@
-package bio.terra.workspace.common.utils;
+package bio.terra.workspace.common.exception;
 
 import bio.terra.common.exception.ErrorReportException;
 import com.azure.core.management.exception.ManagementException;
@@ -18,6 +18,6 @@ public class AzureManagementException extends ErrorReportException {
   }
 
   public AzureManagementException(ManagementException cause) {
-    super(cause, ManagementExceptionUtils.getHttpStatus(cause).orElse(null));
+    super(cause, AzureManagementExceptionUtils.getHttpStatus(cause).orElse(null));
   }
 }

@@ -1,6 +1,8 @@
 package bio.terra.workspace.app.controller;
 
 import bio.terra.common.exception.ValidationException;
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
+import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
@@ -13,6 +15,7 @@ import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateUserRole;
@@ -29,14 +32,23 @@ public class ControllerBase {
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final HttpServletRequest request;
   private final SamService samService;
+  protected final FeatureConfiguration features;
+  protected final JobService jobService;
+  protected final JobApiUtils jobApiUtils;
 
   public ControllerBase(
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request,
-      SamService samService) {
+      SamService samService,
+      FeatureConfiguration features,
+      JobService jobService,
+      JobApiUtils jobApiUtils) {
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.request = request;
     this.samService = samService;
+    this.features = features;
+    this.jobService = jobService;
+    this.jobApiUtils = jobApiUtils;
   }
 
   public SamService getSamService() {

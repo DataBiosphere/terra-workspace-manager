@@ -8,7 +8,7 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
-import bio.terra.workspace.common.utils.ManagementExceptionUtils;
+import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
@@ -64,7 +64,8 @@ public class CreateAzureDiskStep implements Step {
     } catch (ManagementException e) {
       // Stairway steps may run multiple times, so we may already have created this resource. In all
       // other cases, surface the exception and attempt to retry.
-      if (ManagementExceptionUtils.isExceptionCode(e, ManagementExceptionUtils.CONFLICT)) {
+      if (AzureManagementExceptionUtils.isExceptionCode(
+          e, AzureManagementExceptionUtils.CONFLICT)) {
         logger.info(
             "Azure Disk {} in managed resource group {} already exists",
             resource.getDiskName(),
@@ -92,8 +93,8 @@ public class CreateAzureDiskStep implements Step {
               azureCloudContext.getAzureResourceGroupId(), resource.getDiskName());
     } catch (ManagementException e) {
       // Stairway steps may run multiple times, so we may already have deleted this resource.
-      if (ManagementExceptionUtils.isExceptionCode(
-          e, ManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
+      if (AzureManagementExceptionUtils.isExceptionCode(
+          e, AzureManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
         logger.info(
             "Azure Disk {} in managed resource group {} already deleted",
             resource.getDiskName(),

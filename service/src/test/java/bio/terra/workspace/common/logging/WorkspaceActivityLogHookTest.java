@@ -544,13 +544,14 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   private class FakeFlightContext implements FlightContext {
 
     private final String flightClassName;
-    private final FlightMap inputParams;
+    private final FlightMap inputParameters;
     private final FlightStatus status;
 
-    FakeFlightContext(String flightClassName, FlightMap inputMap, FlightStatus flightStatus) {
+    FakeFlightContext(
+        String flightClassName, FlightMap inputParameters, FlightStatus flightStatus) {
       this.flightClassName = flightClassName;
-      inputParams = inputMap;
-      status = flightStatus;
+      this.inputParameters = inputParameters;
+      this.status = flightStatus;
     }
 
     @Override
@@ -570,7 +571,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
 
     @Override
     public FlightMap getInputParameters() {
-      return inputParams;
+      return inputParameters;
     }
 
     @Override

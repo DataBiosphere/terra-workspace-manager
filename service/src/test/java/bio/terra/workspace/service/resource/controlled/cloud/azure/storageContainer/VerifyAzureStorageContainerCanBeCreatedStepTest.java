@@ -13,8 +13,8 @@ import bio.terra.landingzone.db.exception.LandingZoneNotFoundException;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
+import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
-import bio.terra.workspace.common.utils.ManagementExceptionUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.generated.model.ApiAzureStorageContainerCreationParameters;
@@ -55,7 +55,7 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
           "Resource was not found.",
           /*response=*/ null,
           new ManagementError(
-              ManagementExceptionUtils.CONTAINER_NOT_FOUND, "Container was not found."));
+              AzureManagementExceptionUtils.CONTAINER_NOT_FOUND, "Container was not found."));
 
   private VerifyAzureStorageContainerCanBeCreatedStep verifyCanBeCreatedStep;
 

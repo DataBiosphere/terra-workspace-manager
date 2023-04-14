@@ -63,36 +63,4 @@ public class ControllerValidationUtilsTest extends BaseUnitTest {
   void userFacingIdCanStartWithNumber() {
     ControllerValidationUtils.validateUserFacingId("1000-genomes");
   }
-
-  @Test
-  void validatingValidSasExpirationDurations() {
-    ControllerValidationUtils.validateSasExpirationDuration(1L, 10L);
-    ControllerValidationUtils.validateSasExpirationDuration(3600L, 60L);
-    ControllerValidationUtils.validateSasExpirationDuration(null, 60L);
-  }
-
-  @Test
-  void validatingInvalidSasExpirationDurations() {
-    assertThrows(
-        ValidationException.class,
-        () -> ControllerValidationUtils.validateSasExpirationDuration(0L, 10L));
-    assertThrows(
-        ValidationException.class,
-        () -> ControllerValidationUtils.validateSasExpirationDuration(-5L, 10L));
-    assertThrows(
-        ValidationException.class,
-        () -> ControllerValidationUtils.validateSasExpirationDuration(3601L, 60L));
-  }
-
-  @Test
-  void validateSasBlobName() {
-    ControllerValidationUtils.validateSasBlobName(null);
-    ControllerValidationUtils.validateSasBlobName("hello");
-    assertThrows(
-        ValidationException.class, () -> ControllerValidationUtils.validateSasBlobName(""));
-    String largeString = "a".repeat(1025);
-    assertThrows(
-        ValidationException.class,
-        () -> ControllerValidationUtils.validateSasBlobName(largeString));
-  }
 }

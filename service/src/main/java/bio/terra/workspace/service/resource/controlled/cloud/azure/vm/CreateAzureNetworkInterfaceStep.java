@@ -11,8 +11,8 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
-import bio.terra.workspace.common.utils.AzureManagementException;
-import bio.terra.workspace.common.utils.ManagementExceptionUtils;
+import bio.terra.workspace.common.exception.AzureManagementException;
+import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.crl.CrlService;
@@ -91,7 +91,7 @@ public class CreateAzureNetworkInterfaceStep implements Step {
 
     } catch (ManagementException e) {
       return switch (e.getValue().getCode()) {
-        case ManagementExceptionUtils.CONFLICT -> {
+        case AzureManagementExceptionUtils.CONFLICT -> {
           logger.info(
               "Azure Network Interface {} in managed resource group {} already exists",
               networkInterfaceName,
@@ -100,7 +100,7 @@ public class CreateAzureNetworkInterfaceStep implements Step {
         }
 
         default -> new StepResult(
-            ManagementExceptionUtils.maybeRetryStatus(e), new AzureManagementException(e));
+            AzureManagementExceptionUtils.maybeRetryStatus(e), new AzureManagementException(e));
       };
     }
     return StepResult.getStepResultSuccess();

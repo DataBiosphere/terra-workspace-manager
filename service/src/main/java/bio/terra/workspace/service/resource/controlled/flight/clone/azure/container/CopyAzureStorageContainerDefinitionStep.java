@@ -9,9 +9,9 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.IamRoleUtils;
-import bio.terra.workspace.common.utils.ManagementExceptionUtils;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.generated.model.ApiAzureStorageContainerCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -170,9 +170,10 @@ public class CopyAzureStorageContainerDefinitionStep implements Step {
           clonedContainer.getResourceId());
       return StepResult.getStepResultSuccess();
     } catch (ManagementException e) {
-      if (ManagementExceptionUtils.isExceptionCode(e, ManagementExceptionUtils.RESOURCE_NOT_FOUND)
-          || ManagementExceptionUtils.isExceptionCode(
-              e, ManagementExceptionUtils.CONTAINER_NOT_FOUND)) {
+      if (AzureManagementExceptionUtils.isExceptionCode(
+              e, AzureManagementExceptionUtils.RESOURCE_NOT_FOUND)
+          || AzureManagementExceptionUtils.isExceptionCode(
+              e, AzureManagementExceptionUtils.CONTAINER_NOT_FOUND)) {
         logger.info(
             "Container with ID {} not found in Azure, assuming it was previously removed. Result from Azure = {}",
             clonedContainer.getResourceId(),

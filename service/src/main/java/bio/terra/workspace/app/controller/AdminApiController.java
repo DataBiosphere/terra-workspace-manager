@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.controller;
 
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.generated.controller.AdminApi;
 import bio.terra.workspace.generated.model.ApiJobResult;
@@ -9,7 +10,6 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import io.opencensus.contrib.spring.aop.Traced;
 import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,24 +19,18 @@ import org.springframework.stereotype.Controller;
 @Controller
 public class AdminApiController extends ControllerBase implements AdminApi {
   private final AdminService adminService;
-  private final JobApiUtils jobApiUtils;
-  private final JobService jobService;
-  private final ControlledResourceService controlledResourceService;
 
   @Autowired
   public AdminApiController(
-      AdminService adminService,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request,
+      FeatureConfiguration features,
       SamService samService,
-      JobApiUtils jobApiUtils,
       JobService jobService,
-      ControlledResourceService controlledResourceService) {
-    super(authenticatedUserRequestFactory, request, samService);
+      JobApiUtils jobApiUtils,
+      AdminService adminService) {
+    super(authenticatedUserRequestFactory, request, samService, features, jobService, jobApiUtils);
     this.adminService = adminService;
-    this.jobApiUtils = jobApiUtils;
-    this.jobService = jobService;
-    this.controlledResourceService = controlledResourceService;
   }
 
   @Traced
