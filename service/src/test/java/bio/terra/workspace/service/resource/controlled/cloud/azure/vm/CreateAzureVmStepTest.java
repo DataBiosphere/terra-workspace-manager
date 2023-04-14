@@ -15,9 +15,9 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseAzureUnitTest;
+import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.utils.AzureVmUtils;
-import bio.terra.workspace.common.utils.ManagementExceptionUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.service.crl.CrlService;
@@ -405,7 +405,7 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
             "error",
             mockResponse,
             new ManagementError(
-                ManagementExceptionUtils.VM_EXTENSION_PROVISIONING_ERROR, "VM error"));
+                AzureManagementExceptionUtils.VM_EXTENSION_PROVISIONING_ERROR, "VM error"));
     when(mockVmStage12.create(any(Context.class))).thenThrow(vmExtensionException);
 
     final StepResult stepResult = createAzureVmStep.doStep(mockFlightContext);
@@ -437,7 +437,7 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
         new ManagementException(
             "error",
             mockResponse,
-            new ManagementError(ManagementExceptionUtils.RESOURCE_NOT_FOUND, "Not found"));
+            new ManagementError(AzureManagementExceptionUtils.RESOURCE_NOT_FOUND, "Not found"));
     when(mockVmStage12.create(any(Context.class))).thenThrow(notFoundException);
 
     final StepResult stepResult = createAzureVmStep.doStep(mockFlightContext);

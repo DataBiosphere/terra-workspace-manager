@@ -9,7 +9,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
-import bio.terra.workspace.common.utils.ManagementExceptionUtils;
+import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.crl.CrlService;
@@ -141,8 +141,8 @@ public class VerifyAzureStorageContainerCanBeCreatedStep implements Step {
                   resource.getStorageContainerName(), storageAccountName)));
 
     } catch (ManagementException e) {
-      if (ManagementExceptionUtils.isExceptionCode(
-          e, ManagementExceptionUtils.CONTAINER_NOT_FOUND)) {
+      if (AzureManagementExceptionUtils.isExceptionCode(
+          e, AzureManagementExceptionUtils.CONTAINER_NOT_FOUND)) {
         return StepResult.getStepResultSuccess();
       }
       logger.warn(

@@ -8,7 +8,7 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
-import bio.terra.workspace.common.utils.ManagementExceptionUtils;
+import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.exception.UserAssignedManagedIdentityNotFoundException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
@@ -142,8 +142,8 @@ public class CreateAzureBatchPoolStep implements Step {
           resource.getId(),
           batchAccountName);
     } catch (ManagementException e) {
-      if (ManagementExceptionUtils.isExceptionCode(
-          e, ManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
+      if (AzureManagementExceptionUtils.isExceptionCode(
+          e, AzureManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
         logger.info(
             "Azure Batch Pool '{}' in batch account '{}' already deleted",
             resource.getId(),

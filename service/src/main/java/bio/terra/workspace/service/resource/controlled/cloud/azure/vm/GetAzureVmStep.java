@@ -6,7 +6,7 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
-import bio.terra.workspace.common.utils.ManagementExceptionUtils;
+import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -44,8 +44,8 @@ public class GetAzureVmStep implements Step {
                   "An Azure VM with name %s already exists in resource group %s",
                   azureCloudContext.getAzureResourceGroupId(), resource.getVmName())));
     } catch (ManagementException e) {
-      if (ManagementExceptionUtils.isExceptionCode(
-          e, ManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
+      if (AzureManagementExceptionUtils.isExceptionCode(
+          e, AzureManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
         return StepResult.getStepResultSuccess();
       }
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
