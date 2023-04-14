@@ -35,6 +35,6 @@ public class ControlledAzureVmHandler implements WsmResourceHandler {
   }
 
   public String generateCloudName(@Nullable UUID workspaceUuid, String resourceName) {
-    throw new FeatureNotSupportedException("This generate cloud name feature is not implement yet");
+    throw new FeatureNotSupportedException("Generate cloud name feature is not implemented yet");
   }
 }

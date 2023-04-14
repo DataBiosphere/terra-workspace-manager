@@ -64,7 +64,7 @@ public class CreateAzureContextFlight extends Flight {
     // update the DB row filling in the cloud context
     addStep(
         new CreateDbAzureCloudContextFinishStep(
-            workspaceUuid, appContext.getAzureCloudContextService(), featureConfiguration),
+            workspaceUuid, appContext.getAzureCloudContextService()),
         dbRetry);
   }
 }

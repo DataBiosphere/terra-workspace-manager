@@ -54,10 +54,11 @@ public class CreateAzureVmStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    FlightMap inputMap = context.getInputParameters();
-    FlightUtils.validateRequiredEntries(inputMap, ControlledResourceKeys.CREATION_PARAMETERS);
+    FlightMap inputParameters = context.getInputParameters();
+    FlightUtils.validateRequiredEntries(
+        inputParameters, ControlledResourceKeys.CREATION_PARAMETERS);
     var creationParameters =
-        inputMap.get(
+        inputParameters.get(
             ControlledResourceKeys.CREATION_PARAMETERS, ApiAzureVmCreationParameters.class);
 
     final AzureCloudContext azureCloudContext =
