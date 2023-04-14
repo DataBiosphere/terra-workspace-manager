@@ -53,26 +53,6 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{workspaceId}/resources/controlled/aws/s3StorageFolder/{resourceId}/consoleLink:
-    parameters:
-    - $ref: '#/components/parameters/WorkspaceId'
-    - $ref: '#/components/parameters/ResourceId'
-    - $ref: '#/components/parameters/AwsCredentialAccessScope'
-    - $ref: '#/components/parameters/AwsConsoleSessionDuration'
-    get:
-      summary: Get a link to manage this S3 Storage Folder in the AWS S3 Console
-      operationId: getAwsS3StorageFolderConsoleLink
-      tags: [ControlledAwsResource]
-      responses:
-        '200':
-          $ref: '#/components/responses/GetControlledAwsS3StorageFolderConsoleLinkResponse'
-        '403':
-          $ref: '#/components/responses/PermissionDenied'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/ServerError'
-
   /api/workspaces/v1/{workspaceId}/resources/controlled/aws/s3StorageFolder/{resourceId}/credential:
     parameters:
     - $ref: '#/components/parameters/WorkspaceId'
@@ -141,13 +121,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/AwsS3StorageFolderResource'
-
-    GetControlledAwsS3StorageFolderConsoleLinkResponse:
-      description: Response to get S3 Storage Folder link
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/AwsConsoleLink'
 
     GetControlledAwsS3StorageFolderCredentialResponse:
       description: Response to get S3 Storage Folder credential

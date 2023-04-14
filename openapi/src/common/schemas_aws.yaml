@@ -3,12 +3,6 @@
 #  $ref: '#/components/schemas/<item-you-want>
 components:
   schemas:
-    AwsConsoleSessionDuration:
-      type: integer
-      minimum: 900
-      maximum: 43200
-      default: 900
-
     AwsCredentialDuration:
       type: integer
       minimum: 900
@@ -19,19 +13,10 @@ components:
       type: string
       enum: [ 'READ_ONLY', 'WRITE_READ' ]
 
-    AwsConsoleLink:
-      description: Link to access bucket in AWS Console.
-      type: object
-      properties:
-        url:
-          type: string
-
     AwsCredential:
       description: AWS CLI/SDK-compatible credential to use to access a bucket
       type: object
       properties:
-        Version:
-          type: integer
         AccessKeyId:
           type: string
         SecretAccessKey:

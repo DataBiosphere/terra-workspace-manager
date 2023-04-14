@@ -3,14 +3,6 @@
 #  $ref: '#/components/parameters/<item-you-want>
 components:
   parameters:
-    AwsConsoleSessionDuration:
-      name: sessionDuration
-      in: query
-      description: Duration for console session access to controlled AWS resource
-      required: true
-      schema:
-        $ref: '#/components/schemas/AwsConsoleSessionDuration'
-
     AwsCredentialDuration:
       name: credentialDuration
       in: query
