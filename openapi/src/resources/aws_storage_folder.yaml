@@ -11,6 +11,9 @@ components:
         prefix:
           description: The prefix within the S3 bucket.
           type: string
+        region:
+          description: A valid S3 Storage Folder region per https://docs.aws.amazon.com/general/latest/gr/s3.html.
+          type: string
 
     AwsStorageFolderResource:
       type: object
