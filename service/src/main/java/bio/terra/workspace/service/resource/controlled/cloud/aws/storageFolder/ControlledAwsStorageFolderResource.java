@@ -147,7 +147,10 @@ public class ControlledAwsStorageFolderResource extends ControlledResource {
   }
 
   public ApiAwsStorageFolderAttributes toApiAttributes() {
-    return new ApiAwsStorageFolderAttributes().bucketName(getBucketName()).prefix(getPrefix()).region(getRegion());
+    return new ApiAwsStorageFolderAttributes()
+        .bucketName(getBucketName())
+        .prefix(getPrefix())
+        .region(getRegion());
   }
 
   public ApiAwsStorageFolderResource toApiResource() {
