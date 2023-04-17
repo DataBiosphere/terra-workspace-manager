@@ -52,7 +52,7 @@ public class WorkspaceApplicationApiController implements WorkspaceApplicationAp
   public ResponseEntity<ApiWorkspaceApplicationDescription> disableWorkspaceApplication(
       @PathVariable("workspaceId") UUID workspaceUuid,
       @PathVariable("applicationId") String applicationId) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     Workspace workspace =
         workspaceService.validateMcWorkspaceAndAction(
             userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.OWN);
@@ -67,7 +67,7 @@ public class WorkspaceApplicationApiController implements WorkspaceApplicationAp
   public ResponseEntity<ApiWorkspaceApplicationDescription> enableWorkspaceApplication(
       @PathVariable("workspaceId") UUID workspaceUuid,
       @PathVariable("applicationId") String applicationId) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     Workspace workspace =
         workspaceService.validateMcWorkspaceAndAction(
             userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.OWN);
@@ -82,7 +82,7 @@ public class WorkspaceApplicationApiController implements WorkspaceApplicationAp
   public ResponseEntity<ApiWorkspaceApplicationDescription> getWorkspaceApplication(
       @PathVariable("workspaceId") UUID workspaceUuid,
       @PathVariable("applicationId") String applicationId) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     Workspace workspace =
         workspaceService.validateMcWorkspaceAndAction(
             userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
@@ -97,7 +97,7 @@ public class WorkspaceApplicationApiController implements WorkspaceApplicationAp
       @PathVariable("workspaceId") UUID workspaceUuid,
       @Valid @RequestParam(value = "offset", required = false, defaultValue = "0") Integer offset,
       @Valid @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControllerValidationUtils.validatePaginationParams(offset, limit);
     Workspace workspace =
         workspaceService.validateMcWorkspaceAndAction(

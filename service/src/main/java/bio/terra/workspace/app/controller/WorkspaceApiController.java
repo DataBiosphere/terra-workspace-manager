@@ -139,7 +139,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   @Override
   public ResponseEntity<ApiCreatedWorkspace> createWorkspace(
       @RequestBody ApiCreateWorkspaceRequestBody body) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
 
     try {
       workspaceService.getWorkspace(body.getId());
@@ -209,7 +209,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   @Override
   public ResponseEntity<ApiWorkspaceDescriptionList> listWorkspaces(
       Integer offset, Integer limit, ApiIamRole minimumHighestRole) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     logger.info("Listing workspaces for {}", userRequest.getEmail());
     ControllerValidationUtils.validatePaginationParams(offset, limit);
     // Can't set default in yaml (https://stackoverflow.com/a/68542868/6447189), so set here.
@@ -314,7 +314,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   @Override
   public ResponseEntity<ApiWorkspaceDescription> getWorkspace(
       @PathVariable("workspaceId") UUID uuid, ApiIamRole minimumHighestRole) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     logger.info("Getting workspace {} for {}", uuid, userRequest.getEmail());
     // Can't set default in yaml (https://stackoverflow.com/a/68542868/6447189), so set here.
     if (minimumHighestRole == null) {
@@ -334,7 +334,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   @Override
   public ResponseEntity<ApiWorkspaceDescription> getWorkspaceByUserFacingId(
       @PathVariable("workspaceUserFacingId") String userFacingId, ApiIamRole minimumHighestRole) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     logger.info("Getting workspace {} for {}", userFacingId, userRequest.getEmail());
     // Can't set default in yaml (https://stackoverflow.com/a/68542868/6447189), so set here.
     if (minimumHighestRole == null) {
@@ -359,7 +359,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   public ResponseEntity<ApiWorkspaceDescription> updateWorkspace(
       @PathVariable("workspaceId") UUID workspaceUuid,
       @RequestBody ApiUpdateWorkspaceRequestBody body) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     logger.info("Updating workspace {} for {}", workspaceUuid, userRequest.getEmail());
 
     if (body.getUserFacingId() != null) {
@@ -386,7 +386,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   @Override
   public ResponseEntity<ApiWsmPolicyUpdateResult> updatePolicies(
       @PathVariable("workspaceId") UUID workspaceId, @RequestBody ApiWsmPolicyUpdateRequest body) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     logger.info("Updating workspace policies {} for {}", workspaceId, userRequest.getEmail());
 
     workspaceService.validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.WRITE);
@@ -422,7 +422,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   @Traced
   @Override
   public ResponseEntity<Void> deleteWorkspace(@PathVariable("workspaceId") UUID uuid) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     logger.info("Deleting workspace {} for {}", uuid, userRequest.getEmail());
     Workspace workspace =
         workspaceService.validateWorkspaceAndAction(userRequest, uuid, SamWorkspaceAction.DELETE);
@@ -436,7 +436,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   @Override
   public ResponseEntity<Void> deleteWorkspaceProperties(
       @PathVariable("workspaceId") UUID workspaceUuid, @RequestBody List<String> propertyKeys) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamWorkspaceAction.DELETE);
     validatePropertiesDeleteRequestBody(propertyKeys);
@@ -453,7 +453,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   @Override
   public ResponseEntity<Void> updateWorkspaceProperties(
       @PathVariable("workspaceId") UUID workspaceUuid, @RequestBody List<ApiProperty> properties) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamWorkspaceAction.WRITE);
     validatePropertiesUpdateRequestBody(properties);
@@ -506,7 +506,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       throw new InvalidRoleException(
           "Users cannot remove role APPLICATION. Use application registration instead.");
     }
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     Workspace workspace =
         workspaceService.validateMcWorkspaceAndAction(userRequest, uuid, SamWorkspaceAction.OWN);
     workspaceService.removeWorkspaceRoleFromUser(
@@ -536,7 +536,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       UUID uuid, @Valid ApiCreateCloudContextRequest body) {
     ApiCloudPlatform cloudPlatform = body.getCloudPlatform();
     ControllerValidationUtils.validateCloudPlatform(cloudPlatform);
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     String jobId = body.getJobControl().getId();
     String resultPath = getAsyncResultEndpoint(jobId);
     Workspace workspace =
@@ -559,7 +559,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   @Override
   public ResponseEntity<ApiCreateCloudContextResult> getCreateCloudContextResult(
       UUID uuid, String jobId) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     jobService.verifyUserAccess(jobId, userRequest, uuid);
     ApiCreateCloudContextResult response = fetchCreateCloudContextResult(jobId);
     return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
@@ -613,7 +613,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   @Traced
   @Override
   public ResponseEntity<Void> deleteCloudContext(UUID uuid, ApiCloudPlatform cloudPlatform) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControllerValidationUtils.validateCloudPlatform(cloudPlatform);
     Workspace workspace =
         workspaceService.validateMcWorkspaceAndAction(userRequest, uuid, SamWorkspaceAction.WRITE);
@@ -632,7 +632,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   @Traced
   @Override
   public ResponseEntity<Void> enablePet(UUID workspaceUuid) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     // TODO(PF-1007): This would be a nice use for an authorized workspace ID.
     // Validate that the user is a workspace member, as enablePetServiceAccountImpersonation does
     // not authenticate.
@@ -739,7 +739,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   @Traced
   @Override
   public ResponseEntity<ApiRegions> listValidRegions(UUID workspaceId, ApiCloudPlatform platform) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.READ);
 
     List<String> regions =
@@ -754,7 +754,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   @Override
   public ResponseEntity<ApiWsmPolicyExplainResult> explainPolicies(
       UUID workspaceId, Integer depth) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.READ);
     PolicyExplainResult explainResult =
         tpsApiDispatch.explain(workspaceId, depth, workspaceService, userRequest);
@@ -770,7 +770,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     tpsApiDispatch.createPaoIfNotExist(sourceWorkspaceId);
     tpsApiDispatch.createPaoIfNotExist(targetWorkspaceId);
 
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, targetWorkspaceId, SamWorkspaceAction.READ);
     TpsPaoUpdateResult dryRunResults =
