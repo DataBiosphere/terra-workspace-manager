@@ -164,8 +164,7 @@ components:
             a ShortUUID, or other globally unique identifier.
           type: string
         # TODO: In the future, notification configuration will also be part of JobControl.
-  
-      
+
     ManagedBy:
       type: string
       description: Specifies the controller of the resource, workspace users or an application
@@ -343,3 +342,18 @@ components:
       items:
         uniqueItems: true
         type: string
+
+    DeleteControlledResourceRequestBody:
+      type: object
+      required: [ jobControl ]
+      properties:
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+
+    DeleteControlledResourceResult:
+      type: object
+      properties:
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'

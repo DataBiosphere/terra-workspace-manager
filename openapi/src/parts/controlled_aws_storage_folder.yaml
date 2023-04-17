@@ -37,19 +37,47 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
-    delete:
-      summary: Delete controlled AWS S3 Storage Folder resource
+    post:
+      summary: Delete controlled AWS S3 Storage Folder resource asynchronously.
       operationId: deleteAwsStorageFolder
       tags: [ControlledAwsResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteControlledResourceRequestBody'
       responses:
         '200':
-          description: Success
+          $ref: '#/components/responses/DeleteControlledResourceResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledResourceResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '404':
           $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/aws/storageFolder/delete-result/{jobId}:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about an AWS S3 Storage Folder deletion job.
+      operationId: getDeleteAwsStorageFolderResult
+      tags: [ ControlledAwsResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledResourceResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledResourceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
         '500':
           $ref: '#/components/responses/ServerError'
 

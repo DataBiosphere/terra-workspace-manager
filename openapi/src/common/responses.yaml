@@ -44,3 +44,10 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/JobResult'
+
+    DeleteControlledResourceResponse:
+      description: Response Payload for deleting a controlled resource
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DeleteControlledResourceResult'
