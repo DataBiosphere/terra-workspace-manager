@@ -15,7 +15,9 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,6 +47,21 @@ public class DeleteControlledAzureResourcesStep implements Step {
     this.userRequest = userRequest;
   }
 
+  /** Delete all resources instances of the specified type, returning all remaining resources. */
+  private List<ControlledResource> deleteResourcesOfType(
+      List<ControlledResource> allResources, WsmResourceType type) {
+    Map<Boolean, List<ControlledResource>> partitionedResources =
+        allResources.stream()
+            .collect(Collectors.partitioningBy(cr -> cr.getResourceType() == type));
+
+    for (ControlledResource vm : partitionedResources.get(true)) {
+      controlledResourceService.deleteControlledResourceSync(
+          workspaceUuid, vm.getResourceId(), userRequest);
+    }
+
+    return partitionedResources.get(false);
+  }
+
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
@@ -71,20 +88,13 @@ public class DeleteControlledAzureResourcesStep implements Step {
 
     // Delete VMs first because they use other resources like disks, networks, etc.
     controlledResourceList =
-        controlledResourceService.deleteControlledResourceSyncOfType(
-            workspaceUuid,
-            controlledResourceList,
-            WsmResourceType.CONTROLLED_AZURE_VM,
-            userRequest);
+        deleteResourcesOfType(controlledResourceList, WsmResourceType.CONTROLLED_AZURE_VM);
 
     // Delete storage containers so that Sam resources are properly deleted (before storage accounts
     // are deleted).
     controlledResourceList =
-        controlledResourceService.deleteControlledResourceSyncOfType(
-            workspaceUuid,
-            controlledResourceList,
-            WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER,
-            userRequest);
+        deleteResourcesOfType(
+            controlledResourceList, WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
 
     // Delete all remaining resources
     for (ControlledResource resource : controlledResourceList) {
