@@ -46,8 +46,6 @@ public class DeleteControlledAwsResourcesStep implements Step {
         resourceDao.listControlledResources(workspaceUuid, CloudPlatform.AWS);
     // TODO(TERRA-279): check permissions to delete
 
-    // TODO(TERRA-320) delete notebooks first, since they may be using underlying S3 folders
-
     // Delete storage folders so that Sam resources are properly deleted
     controlledResourceList =
         controlledResourceService.deleteControlledResourceSyncOfType(

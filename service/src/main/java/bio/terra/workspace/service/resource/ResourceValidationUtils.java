@@ -203,10 +203,7 @@ public class ResourceValidationUtils {
     switch (platform) {
       case GCP -> validateRegion(
           tpsApiDispatch, workspaceUuid, GcpUtils.parseRegion(region), platform);
-      case AZURE -> validateRegion(tpsApiDispatch, workspaceUuid, region, platform);
-      case AWS -> {
-        // TODO(TERRA-496) check if user has access to landing zone / region
-      }
+      case AZURE, AWS -> validateRegion(tpsApiDispatch, workspaceUuid, region, platform);
       case ANY -> {
         // Flexible resources are not stored on the cloud. Thus, they have no region policies.
       }

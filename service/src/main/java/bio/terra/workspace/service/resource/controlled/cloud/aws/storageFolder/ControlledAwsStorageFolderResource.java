@@ -126,6 +126,10 @@ public class ControlledAwsStorageFolderResource extends ControlledResource {
       AuthenticatedUserRequest userRequest,
       FlightBeanBag flightBeanBag) {
     RetryRule cloudRetry = RetryRules.cloud();
+
+    flight.addStep(
+        new ValidateAwsStorageFolderCreateStep(this, flightBeanBag.getAwsCloudContextService()),
+        cloudRetry);
     flight.addStep(
         new CreateAwsStorageFolderStep(
             this, flightBeanBag.getAwsCloudContextService(), userRequest),
