@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.workspace.flight.azure;
+package bio.terra.workspace.service.workspace.flight.aws;
 
 import bio.terra.common.exception.ForbiddenException;
 import bio.terra.stairway.FlightContext;
@@ -17,17 +17,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A step to delete all controlled Azure resources in a workspace. This reads the list of controlled
- * Azure resources in a workspace from the WSM database.
+ * A step to delete all controlled AWS resources in a workspace. This reads the list of controlled
+ * AWS resources in a workspace from the WSM database.
  */
-public class DeleteControlledAzureResourcesStep implements Step {
+public class DeleteControlledAwsResourcesStep implements Step {
 
-  private final Logger logger = LoggerFactory.getLogger(DeleteControlledAzureResourcesStep.class);
+  private final Logger logger = LoggerFactory.getLogger(DeleteControlledAwsResourcesStep.class);
   private final ControlledResourceService controlledResourceService;
   private final UUID workspaceUuid;
   private final AuthenticatedUserRequest userRequest;
 
-  public DeleteControlledAzureResourcesStep(
+  public DeleteControlledAwsResourcesStep(
       ControlledResourceService controlledResourceService,
       UUID workspaceUuid,
       AuthenticatedUserRequest userRequest) {
@@ -39,30 +39,24 @@ public class DeleteControlledAzureResourcesStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
+
     List<ControlledResource> controlledResourceList;
     try {
       controlledResourceList =
           controlledResourceService.getControlledResourceWithAuthCheck(
-              workspaceUuid, CloudPlatform.AZURE, userRequest);
+              workspaceUuid, CloudPlatform.AWS, userRequest);
     } catch (ForbiddenException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
     }
 
-    // Delete VMs first because they use other resources like disks, networks, etc.
-    controlledResourceList =
-        controlledResourceService.deleteControlledResourceSyncOfType(
-            workspaceUuid,
-            controlledResourceList,
-            WsmResourceType.CONTROLLED_AZURE_VM,
-            userRequest);
+    // TODO(TERRA-320) delete notebooks first, since they may be using underlying S3 folders
 
-    // Delete storage containers so that Sam resources are properly deleted (before storage accounts
-    // are deleted).
+    // Delete storage folders so that Sam resources are properly deleted
     controlledResourceList =
         controlledResourceService.deleteControlledResourceSyncOfType(
             workspaceUuid,
             controlledResourceList,
-            WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER,
+            WsmResourceType.CONTROLLED_AWS_STORAGE_FOLDER,
             userRequest);
 
     // Delete all remaining resources
@@ -70,6 +64,7 @@ public class DeleteControlledAzureResourcesStep implements Step {
       controlledResourceService.deleteControlledResourceSync(
           workspaceUuid, resource.getResourceId(), userRequest);
     }
+
     return StepResult.getStepResultSuccess();
   }
 
@@ -78,7 +73,7 @@ public class DeleteControlledAzureResourcesStep implements Step {
     // Resource deletion can't be undone, so this just surfaces the error from the DO direction
     // instead.
     logger.error(
-        "Unable to undo deletion of controlled Azure resources for workspace {}", workspaceUuid);
+        "Unable to undo deletion of controlled AWS resources for workspace {}", workspaceUuid);
     return flightContext.getResult();
   }
 }

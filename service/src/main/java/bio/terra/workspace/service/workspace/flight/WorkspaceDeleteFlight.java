@@ -8,6 +8,8 @@ import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.workspace.flight.aws.DeleteAwsContextStep;
+import bio.terra.workspace.service.workspace.flight.aws.DeleteControlledAwsResourcesStep;
 import bio.terra.workspace.service.workspace.flight.azure.DeleteAzureContextStep;
 import bio.terra.workspace.service.workspace.flight.azure.DeleteControlledAzureResourcesStep;
 import bio.terra.workspace.service.workspace.flight.gcp.DeleteGcpProjectStep;
@@ -38,16 +40,7 @@ public class WorkspaceDeleteFlight extends Flight {
     RetryRule cloudRetryRule = RetryRules.cloudLongRunning();
     RetryRule terraRetryRule = RetryRules.shortExponential();
 
-    // In Azure, we need to explicitly delete the controlled resources as there is no containing
-    // object (like a GCP project) that we can delete which will also delete all resources
-    addStep(
-        new DeleteControlledAzureResourcesStep(
-            appContext.getResourceDao(),
-            appContext.getControlledResourceService(),
-            appContext.getSamService(),
-            workspaceUuid,
-            userRequest));
-
+    // GCP
     // We delete controlled resources from the Sam, but do not need to explicitly delete the
     // actual cloud objects or entries in WSM DB. GCP handles the cleanup when we delete the
     // containing project, and we cascade workspace deletion to resources in the DB.
@@ -62,9 +55,27 @@ public class WorkspaceDeleteFlight extends Flight {
         new DeleteGcpProjectStep(
             appContext.getCrlService(), appContext.getGcpCloudContextService()),
         cloudRetryRule);
+
+    // Azure
+    // In Azure, we need to explicitly delete the controlled resources as there is no containing
+    // object (like a GCP project) that we can delete which will also delete all resources
+    addStep(
+        new DeleteControlledAzureResourcesStep(
+            appContext.getControlledResourceService(), workspaceUuid, userRequest));
     addStep(
         new DeleteAzureContextStep(appContext.getAzureCloudContextService(), workspaceUuid),
         cloudRetryRule);
+
+    // AWS
+    // In Azure, we need to explicitly delete the controlled resources as there is no containing
+    // object (like a GCP project) that we can delete which will also delete all resources
+    addStep(
+        new DeleteControlledAwsResourcesStep(
+            appContext.getControlledResourceService(), workspaceUuid, userRequest));
+    addStep(
+        new DeleteAwsContextStep(appContext.getAwsCloudContextService(), workspaceUuid),
+        cloudRetryRule);
+
     // Workspace authz is handled differently depending on whether WSM owns the underlying Sam
     // resource or not, as indicated by the workspace stage enum.
     switch (workspaceStage) {
