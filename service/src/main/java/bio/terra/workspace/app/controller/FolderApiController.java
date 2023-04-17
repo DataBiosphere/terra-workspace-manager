@@ -63,7 +63,7 @@ public class FolderApiController extends ControllerBase implements FolderApi {
   @Traced
   @Override
   public ResponseEntity<ApiFolder> createFolder(UUID workspaceId, ApiCreateFolderRequestBody body) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceId, SamConstants.SamWorkspaceAction.WRITE);
     var folderId = UUID.randomUUID();
@@ -92,7 +92,7 @@ public class FolderApiController extends ControllerBase implements FolderApi {
   @Override
   public ResponseEntity<ApiFolder> updateFolder(
       UUID workspaceId, UUID folderId, ApiUpdateFolderRequestBody body) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceId, SamConstants.SamWorkspaceAction.WRITE);
     Folder folder =
@@ -115,7 +115,7 @@ public class FolderApiController extends ControllerBase implements FolderApi {
   @Traced
   @Override
   public ResponseEntity<ApiFolder> getFolder(UUID workspaceId, UUID folderId) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
 
@@ -126,7 +126,7 @@ public class FolderApiController extends ControllerBase implements FolderApi {
   @Traced
   @Override
   public ResponseEntity<ApiFolderList> listFolders(UUID workspaceId) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
 
@@ -141,7 +141,7 @@ public class FolderApiController extends ControllerBase implements FolderApi {
   @Traced
   @Override
   public ResponseEntity<ApiJobResult> deleteFolderAsync(UUID workspaceId, UUID folderId) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
 
     // If requester is writer and folder has private resources (not owned by requester), requester
     // won't have permission to delete private resources. That access control check is done in
@@ -157,7 +157,7 @@ public class FolderApiController extends ControllerBase implements FolderApi {
   @Override
   public ResponseEntity<ApiJobResult> getDeleteFolderResult(
       UUID workspaceId, UUID folderId, String jobId) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     jobService.verifyUserAccess(jobId, userRequest, workspaceId);
     ApiJobResult response = jobApiUtils.fetchJobResult(jobId);
     return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
@@ -167,7 +167,7 @@ public class FolderApiController extends ControllerBase implements FolderApi {
   @Override
   public ResponseEntity<Void> updateFolderProperties(
       UUID workspaceUuid, UUID folderUuid, List<ApiProperty> properties) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
 
@@ -188,7 +188,7 @@ public class FolderApiController extends ControllerBase implements FolderApi {
   @Override
   public ResponseEntity<Void> deleteFolderProperties(
       UUID workspaceUuid, UUID folderUuid, List<String> propertyKeys) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     validatePropertiesDeleteRequestBody(propertyKeys);
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
