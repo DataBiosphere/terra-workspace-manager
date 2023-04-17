@@ -493,7 +493,7 @@ public class ControlledResourceService {
    * @param userRequest the user request
    * @return list of controlled resources, after deleting those of specified type
    */
-  public @NotNull List<ControlledResource> deleteControlledResourceSyncOfType(
+  public List<ControlledResource> deleteControlledResourceSyncOfType(
       UUID workspaceUuid,
       @NotNull List<ControlledResource> allResources,
       WsmResourceType type,

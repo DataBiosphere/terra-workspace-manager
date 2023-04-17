@@ -3,13 +3,13 @@
 #  $ref: '#/components/parameters/<item-you-want>
 components:
   parameters:
-    AwsCredentialDuration:
-      name: credentialDuration
+    AwsCredentialDurationSeconds:
+      name: credentialDurationSeconds
       in: query
-      description: Duration for credential to access controlled AWS resource
+      description: Duration for credential to access controlled AWS resource in seconds
       required: true
       schema:
-        $ref: '#/components/schemas/AwsCredentialDuration'
+        $ref: '#/components/schemas/AwsCredentialDurationSeconds'
 
     AwsCredentialAccessScope:
       name: accessScope

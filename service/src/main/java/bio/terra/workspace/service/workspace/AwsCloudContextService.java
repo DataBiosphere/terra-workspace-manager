@@ -134,7 +134,7 @@ public class AwsCloudContextService {
    *
    * @return AWS cloud context
    */
-  public @NotNull AwsCloudContext getCloudContext() {
+  public AwsCloudContext getCloudContext() {
     return getCloudContext(discoverEnvironment());
   }
 
@@ -144,7 +144,7 @@ public class AwsCloudContextService {
    * @param environment AWS environment
    * @return AWS cloud context
    */
-  public @NotNull AwsCloudContext getCloudContext(@NotNull Environment environment) {
+  public AwsCloudContext getCloudContext(@NotNull Environment environment) {
     Metadata metadata = environment.getMetadata();
     return new AwsCloudContext(
         metadata.getMajorVersion(),
@@ -159,8 +159,7 @@ public class AwsCloudContextService {
    *
    * @return AWS environment
    */
-  public @NotNull Environment discoverEnvironment()
-      throws IllegalArgumentException, InternalLogicException {
+  public Environment discoverEnvironment() throws IllegalArgumentException, InternalLogicException {
     try {
       if (this.environmentDiscovery == null) {
         throw new InvalidApplicationConfigException("AWS environmentDiscovery not initialized");
@@ -180,8 +179,7 @@ public class AwsCloudContextService {
    * @return AWS landing zone, if supported for the Cloud context region
    * @throws StaleConfigurationException StaleConfigurationException
    */
-  public Optional<LandingZone> getLandingZone(
-      @NotNull AwsCloudContext awsCloudContext, @NotNull Region region) {
+  public Optional<LandingZone> getLandingZone(AwsCloudContext awsCloudContext, Region region) {
     Environment environment = discoverEnvironment();
 
     AwsCloudContext awsCloudContextFromEnv = getCloudContext(environment);

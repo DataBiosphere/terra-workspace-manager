@@ -3,18 +3,17 @@
 #  $ref: '#/components/schemas/<item-you-want>
 components:
   schemas:
-    AwsCredentialDuration:
+    AwsCredentialDurationSeconds:
       type: integer
       minimum: 900
       maximum: 3600
-      default: 900
 
     AwsCredentialAccessScope:
       type: string
       enum: [ 'READ_ONLY', 'WRITE_READ' ]
 
     AwsCredential:
-      description: AWS CLI/SDK-compatible credential to use to access a bucket
+      description: AWS CLI/SDK-compatible credential to access AWS resources
       type: object
       properties:
         AccessKeyId:

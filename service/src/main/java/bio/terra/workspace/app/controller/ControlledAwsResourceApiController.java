@@ -20,6 +20,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.resource.AwsResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.storageFolder.ControlledAwsStorageFolderResource;
@@ -79,7 +80,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
       UUID workspaceUuid, @Valid ApiCreateControlledAwsStorageFolderRequestBody body) {
     features.awsEnabledCheck();
 
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledResourceFields commonFields =
         toCommonFields(
             workspaceUuid,
@@ -97,10 +98,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     Region requestedRegion;
     LandingZone landingZone;
     try {
-      String prefixName = commonFields.getName();
-      if (prefixName.isEmpty() || prefixName.length() > 1024) {
-        throw new BadRequestException("Resource length name must be between 1 and 1024 chars");
-      }
+      AwsResourceValidationUtils.validateAwsStorageFolderName(commonFields.getName());
 
       requestedRegion = Region.of(creationParameters.getRegion());
       landingZone =
@@ -148,7 +146,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
   @Override
   public ResponseEntity<ApiAwsStorageFolderResource> getAwsStorageFolder(
       UUID workspaceUuid, UUID resourceId) {
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledAwsStorageFolderResource resource =
         controlledResourceMetadataManager
             .validateControlledResourceAndAction(
@@ -163,7 +161,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
   @Override
   public ResponseEntity<ApiDeleteControlledResourceResult> deleteAwsStorageFolder(
       UUID workspaceUuid, UUID resourceId, @Valid ApiDeleteControlledResourceRequestBody body) {
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     controlledResourceMetadataManager.validateControlledResourceAndAction(
         userRequest,
         workspaceUuid,
@@ -188,7 +186,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
   @Override
   public ResponseEntity<ApiDeleteControlledResourceResult> getDeleteAwsStorageFolderResult(
       UUID workspaceUuid, String jobId) {
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
     ApiDeleteControlledResourceResult result = fetchStorageFolderDeleteResult(jobId);
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));

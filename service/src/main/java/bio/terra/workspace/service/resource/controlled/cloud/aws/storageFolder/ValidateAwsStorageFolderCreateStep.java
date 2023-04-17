@@ -39,7 +39,7 @@ public class ValidateAwsStorageFolderCreateStep implements Step {
           new ConflictException(
               String.format(
                   "Prefix '%s/' already exists in bucket '%s'.",
-                  resource.getBucketName(), resource.getPrefix())));
+                  resource.getPrefix(), resource.getBucketName())));
     }
     return StepResult.getStepResultSuccess();
   }
