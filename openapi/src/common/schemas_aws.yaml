@@ -25,3 +25,18 @@ components:
         Expiration:
           type: string
           format: date-time
+
+    DeleteControlledAwsResourceRequestBody:
+      type: object
+      required: [ jobControl ]
+      properties:
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+
+    DeleteControlledAwsResourceResult:
+      type: object
+      properties:
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'

@@ -46,12 +46,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DeleteControlledResourceRequestBody'
+              $ref: '#/components/schemas/DeleteControlledAwsResourceRequestBody'
       responses:
         '200':
-          $ref: '#/components/responses/DeleteControlledResourceResponse'
+          $ref: '#/components/responses/DeleteControlledAwsResourceResponse'
         '202':
-          $ref: '#/components/responses/DeleteControlledResourceResponse'
+          $ref: '#/components/responses/DeleteControlledAwsResourceResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '403':
@@ -71,9 +71,9 @@ paths:
       tags: [ ControlledAwsResource ]
       responses:
         '200':
-          $ref: '#/components/responses/DeleteControlledResourceResponse'
+          $ref: '#/components/responses/DeleteControlledAwsResourceResponse'
         '202':
-          $ref: '#/components/responses/DeleteControlledResourceResponse'
+          $ref: '#/components/responses/DeleteControlledAwsResourceResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '403':

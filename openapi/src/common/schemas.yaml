@@ -342,18 +342,3 @@ components:
       items:
         uniqueItems: true
         type: string
-
-    DeleteControlledResourceRequestBody:
-      type: object
-      required: [ jobControl ]
-      properties:
-        jobControl:
-          $ref: '#/components/schemas/JobControl'
-
-    DeleteControlledResourceResult:
-      type: object
-      properties:
-        jobReport:
-          $ref: '#/components/schemas/JobReport'
-        errorReport:
-          $ref: '#/components/schemas/ErrorReport'

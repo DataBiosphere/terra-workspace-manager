@@ -12,8 +12,8 @@ import bio.terra.workspace.generated.model.ApiAwsStorageFolderCreationParameters
 import bio.terra.workspace.generated.model.ApiAwsStorageFolderResource;
 import bio.terra.workspace.generated.model.ApiCreateControlledAwsStorageFolderRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedControlledAwsStorageFolder;
-import bio.terra.workspace.generated.model.ApiDeleteControlledResourceRequestBody;
-import bio.terra.workspace.generated.model.ApiDeleteControlledResourceResult;
+import bio.terra.workspace.generated.model.ApiDeleteControlledAwsResourceRequestBody;
+import bio.terra.workspace.generated.model.ApiDeleteControlledAwsResourceResult;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
@@ -159,8 +159,8 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
   }
 
   @Override
-  public ResponseEntity<ApiDeleteControlledResourceResult> deleteAwsStorageFolder(
-      UUID workspaceUuid, UUID resourceId, @Valid ApiDeleteControlledResourceRequestBody body) {
+  public ResponseEntity<ApiDeleteControlledAwsResourceResult> deleteAwsStorageFolder(
+      UUID workspaceUuid, UUID resourceId, @Valid ApiDeleteControlledAwsResourceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     controlledResourceMetadataManager.validateControlledResourceAndAction(
         userRequest,
@@ -179,23 +179,23 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
             resourceId,
             getAsyncResultEndpoint(jobControl.getId(), "delete-result"),
             userRequest);
-    ApiDeleteControlledResourceResult result = fetchStorageFolderDeleteResult(jobId);
+    ApiDeleteControlledAwsResourceResult result = fetchStorageFolderDeleteResult(jobId);
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
   }
 
   @Override
-  public ResponseEntity<ApiDeleteControlledResourceResult> getDeleteAwsStorageFolderResult(
+  public ResponseEntity<ApiDeleteControlledAwsResourceResult> getDeleteAwsStorageFolderResult(
       UUID workspaceUuid, String jobId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
-    ApiDeleteControlledResourceResult result = fetchStorageFolderDeleteResult(jobId);
+    ApiDeleteControlledAwsResourceResult result = fetchStorageFolderDeleteResult(jobId);
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
   }
 
-  private ApiDeleteControlledResourceResult fetchStorageFolderDeleteResult(String jobId) {
+  private ApiDeleteControlledAwsResourceResult fetchStorageFolderDeleteResult(String jobId) {
     JobApiUtils.AsyncJobResult<Void> jobResult =
         jobApiUtils.retrieveAsyncJobResult(jobId, Void.class);
-    return new ApiDeleteControlledResourceResult()
+    return new ApiDeleteControlledAwsResourceResult()
         .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getApiErrorReport());
   }

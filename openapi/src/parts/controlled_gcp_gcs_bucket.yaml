@@ -390,6 +390,7 @@ components:
           $ref: '#/components/schemas/JobReport'
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
+
     CloneReferencedGcpGcsBucketResourceResult:
       description: >-
         API result class for cloning a referenced GCS Bucket resource. Includes source workspace
