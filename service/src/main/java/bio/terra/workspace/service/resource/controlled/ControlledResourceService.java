@@ -54,14 +54,11 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -481,32 +478,6 @@ public class ControlledResourceService {
 
   public ControlledResource getControlledResource(UUID workspaceUuid, UUID resourceId) {
     return resourceDao.getResource(workspaceUuid, resourceId).castToControlledResource();
-  }
-
-  /**
-   * Synchronously delete all controlled resources instances of the specified type returning all
-   * remaining resources
-   *
-   * @param workspaceUuid workspace UUID
-   * @param allResources list of all controlled resources in the workspace
-   * @param type resource type to delete
-   * @param userRequest the user request
-   * @return list of controlled resources, after deleting those of specified type
-   */
-  public List<ControlledResource> deleteControlledResourceSyncOfType(
-      UUID workspaceUuid,
-      @NotNull List<ControlledResource> allResources,
-      WsmResourceType type,
-      AuthenticatedUserRequest userRequest) {
-    Map<Boolean, List<ControlledResource>> partitionedResources =
-        allResources.stream()
-            .collect(Collectors.partitioningBy(cr -> cr.getResourceType() == type));
-
-    for (ControlledResource cr : partitionedResources.get(true)) {
-      deleteControlledResourceSync(workspaceUuid, cr.getResourceId(), userRequest);
-    }
-
-    return partitionedResources.get(false);
   }
 
   /** Synchronously delete a controlled resource. */

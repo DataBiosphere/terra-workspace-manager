@@ -8,7 +8,6 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
-import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import java.util.List;
 import java.util.UUID;
@@ -46,15 +45,7 @@ public class DeleteControlledAwsResourcesStep implements Step {
         resourceDao.listControlledResources(workspaceUuid, CloudPlatform.AWS);
     // TODO(TERRA-279): check permissions to delete
 
-    // Delete storage folders so that Sam resources are properly deleted
-    controlledResourceList =
-        controlledResourceService.deleteControlledResourceSyncOfType(
-            workspaceUuid,
-            controlledResourceList,
-            WsmResourceType.CONTROLLED_AWS_STORAGE_FOLDER,
-            userRequest);
-
-    // Delete all remaining resources
+    // Delete all resources
     for (ControlledResource resource : controlledResourceList) {
       controlledResourceService.deleteControlledResourceSync(
           workspaceUuid, resource.getResourceId(), userRequest);
