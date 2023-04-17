@@ -170,16 +170,10 @@ class DeleteControlledAzureResourcesStepTest extends BaseAzureUnitTest {
 
     verify(mockControlledResourceService)
         .deleteControlledResourceSyncOfType(
-            workspaceId,
-            List.of(deleteMe),
-            WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER,
-            userRequest);
+            workspaceId, any(), WsmResourceType.CONTROLLED_AZURE_VM, userRequest);
 
     verify(mockControlledResourceService)
         .deleteControlledResourceSyncOfType(
-            workspaceId,
-            List.of(deleteMeToo),
-            WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER,
-            userRequest);
+            workspaceId, any(), WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER, userRequest);
   }
 }
