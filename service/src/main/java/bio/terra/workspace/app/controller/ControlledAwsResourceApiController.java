@@ -71,12 +71,6 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     this.awsCloudContextService = awsCloudContextService;
   }
 
-  private String getSamAction(ApiAwsCredentialAccessScope accessScope) {
-    return (accessScope == ApiAwsCredentialAccessScope.WRITE_READ)
-        ? SamConstants.SamControlledResourceActions.WRITE_ACTION
-        : SamConstants.SamControlledResourceActions.READ_ACTION;
-  }
-
   @Override
   public ResponseEntity<ApiCreatedControlledAwsStorageFolder> createAwsStorageFolder(
       UUID workspaceUuid, @Valid ApiCreateControlledAwsStorageFolderRequestBody body) {

@@ -180,17 +180,9 @@ public class ControlledAwsStorageFolderResource extends ControlledResource {
         || getStewardshipType() != StewardshipType.CONTROLLED) {
       throw new InconsistentFieldsException("Expected CONTROLLED_AWS_STORAGE_FOLDER");
     }
-    if (getBucketName() == null) {
+    if ((getBucketName() == null) || (getPrefix() == null) || (getRegion() == null)) {
       throw new MissingRequiredFieldException(
-          "Missing required field bucketName for ControlledAwsStorageFolderResource.");
-    }
-    if (getPrefix() == null) {
-      throw new MissingRequiredFieldException(
-          "Missing required field prefix for ControlledAwsStorageFolderResource.");
-    }
-    if (getRegion() == null) {
-      throw new MissingRequiredFieldException(
-          "Missing required field region for ControlledAwsStorageFolderResource.");
+          "Missing required field for ControlledAwsStorageFolderResource.");
     }
   }
 

@@ -89,7 +89,11 @@ class DeleteControlledAzureResourcesStepTest extends BaseAzureUnitTest {
 
     DeleteControlledAzureResourcesStep deleteControlledAzureResourcesStep =
         new DeleteControlledAzureResourcesStep(
-            mockControlledResourceService, workspaceId, userRequest);
+            mockResourceDao,
+            mockControlledResourceService,
+            mockSamService,
+            workspaceId,
+            userRequest);
 
     final StepResult result = deleteControlledAzureResourcesStep.doStep(mockFlightContext);
 
@@ -154,7 +158,11 @@ class DeleteControlledAzureResourcesStepTest extends BaseAzureUnitTest {
 
     DeleteControlledAzureResourcesStep deleteControlledAzureResourcesStep =
         new DeleteControlledAzureResourcesStep(
-            mockControlledResourceService, workspaceId, userRequest);
+            mockResourceDao,
+            mockControlledResourceService,
+            mockSamService,
+            workspaceId,
+            userRequest);
 
     final StepResult result = deleteControlledAzureResourcesStep.doStep(mockFlightContext);
 
