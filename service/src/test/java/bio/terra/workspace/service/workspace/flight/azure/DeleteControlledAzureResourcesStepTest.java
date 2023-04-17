@@ -23,6 +23,7 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import java.util.List;
 import java.util.Optional;
@@ -165,11 +166,20 @@ class DeleteControlledAzureResourcesStepTest extends BaseAzureUnitTest {
             userRequest);
 
     final StepResult result = deleteControlledAzureResourcesStep.doStep(mockFlightContext);
-
     assertThat(result, equalTo(StepResult.getStepResultSuccess()));
+
     verify(mockControlledResourceService)
-        .deleteControlledResourceSync(workspaceId, deleteMe.getResourceId(), userRequest);
+        .deleteControlledResourceSyncOfType(
+            workspaceId,
+            List.of(deleteMe),
+            WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER,
+            userRequest);
+
     verify(mockControlledResourceService)
-        .deleteControlledResourceSync(workspaceId, deleteMeToo.getResourceId(), userRequest);
+        .deleteControlledResourceSyncOfType(
+            workspaceId,
+            List.of(deleteMeToo),
+            WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER,
+            userRequest);
   }
 }
