@@ -25,7 +25,10 @@ public class DeleteAwsContextFlight extends Flight {
 
     addStep(
         new DeleteControlledAwsResourcesStep(
-            appContext.getControlledResourceService(), workspaceUuid, userRequest));
+            appContext.getResourceDao(),
+            appContext.getControlledResourceService(),
+            workspaceUuid,
+            userRequest));
 
     addStep(
         new DeleteAwsContextStep(appContext.getAwsCloudContextService(), workspaceUuid), retryRule);

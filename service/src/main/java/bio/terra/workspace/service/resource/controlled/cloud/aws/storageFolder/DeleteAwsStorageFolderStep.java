@@ -30,6 +30,8 @@ public class DeleteAwsStorageFolderStep implements Step {
             awsCloudContextService.getRequiredAuthentication(),
             awsCloudContextService.discoverEnvironment());
 
+    // TODO(TERRA-279): check permissions to delete
+
     AwsUtils.deleteFolder(
         credentialsProvider,
         Region.of(resource.getRegion()),

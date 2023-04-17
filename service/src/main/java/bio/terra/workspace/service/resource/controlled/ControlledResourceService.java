@@ -3,7 +3,6 @@ package bio.terra.workspace.service.resource.controlled;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE;
 
 import bio.terra.common.exception.BadRequestException;
-import bio.terra.common.exception.ForbiddenException;
 import bio.terra.common.exception.ServiceUnavailableException;
 import bio.terra.stairway.FlightState;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
@@ -20,7 +19,6 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
-import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
@@ -47,7 +45,6 @@ import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
-import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.WsmApplication;
@@ -484,40 +481,6 @@ public class ControlledResourceService {
 
   public ControlledResource getControlledResource(UUID workspaceUuid, UUID resourceId) {
     return resourceDao.getResource(workspaceUuid, resourceId).castToControlledResource();
-  }
-
-  /**
-   * Get all controlled resources in a workspace of given CloudPlatform Performs an authorization
-   * check to perform action
-   *
-   * @param workspaceUuid workspace UUID
-   * @param cloudPlatform Cloud platform
-   * @param userRequest the user request
-   * @return list of controlled resources
-   * @throws ForbiddenException if the user is not authorized for any of the controlled resources
-   * @throws InterruptedException InterruptedException
-   */
-  public @NotNull List<ControlledResource> getControlledResourceWithAuthCheck(
-      UUID workspaceUuid, CloudPlatform cloudPlatform, AuthenticatedUserRequest userRequest)
-      throws ForbiddenException, InterruptedException {
-    List<ControlledResource> controlledResourceList =
-        resourceDao.listControlledResources(workspaceUuid, cloudPlatform);
-    for (ControlledResource resource : controlledResourceList) {
-      if (!samService.isAuthorized(
-          userRequest,
-          resource.getCategory().getSamResourceName(),
-          resource.getResourceId().toString(),
-          SamConstants.SamControlledResourceActions.DELETE_ACTION)) {
-        throw new ForbiddenException(
-            String.format(
-                "User %s is not authorized to perform action %s on %s %s",
-                userRequest.getEmail(),
-                SamConstants.SamControlledResourceActions.DELETE_ACTION,
-                resource.getCategory().getSamResourceName(),
-                resource.getResourceId().toString()));
-      }
-    }
-    return controlledResourceList;
   }
 
   /**

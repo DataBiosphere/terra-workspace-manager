@@ -1,11 +1,10 @@
 package bio.terra.workspace.service.workspace.flight.aws;
 
-import bio.terra.common.exception.ForbiddenException;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
-import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
@@ -23,14 +22,17 @@ import org.slf4j.LoggerFactory;
 public class DeleteControlledAwsResourcesStep implements Step {
 
   private final Logger logger = LoggerFactory.getLogger(DeleteControlledAwsResourcesStep.class);
+  private final ResourceDao resourceDao;
   private final ControlledResourceService controlledResourceService;
   private final UUID workspaceUuid;
   private final AuthenticatedUserRequest userRequest;
 
   public DeleteControlledAwsResourcesStep(
+      ResourceDao resourceDao,
       ControlledResourceService controlledResourceService,
       UUID workspaceUuid,
       AuthenticatedUserRequest userRequest) {
+    this.resourceDao = resourceDao;
     this.controlledResourceService = controlledResourceService;
     this.workspaceUuid = workspaceUuid;
     this.userRequest = userRequest;
@@ -40,14 +42,9 @@ public class DeleteControlledAwsResourcesStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
 
-    List<ControlledResource> controlledResourceList;
-    try {
-      controlledResourceList =
-          controlledResourceService.getControlledResourceWithAuthCheck(
-              workspaceUuid, CloudPlatform.AWS, userRequest);
-    } catch (ForbiddenException e) {
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
-    }
+    List<ControlledResource> controlledResourceList =
+        resourceDao.listControlledResources(workspaceUuid, CloudPlatform.AWS);
+    // TODO(TERRA-279): check permissions to delete
 
     // TODO(TERRA-320) delete notebooks first, since they may be using underlying S3 folders
 

@@ -61,17 +61,24 @@ public class WorkspaceDeleteFlight extends Flight {
     // object (like a GCP project) that we can delete which will also delete all resources
     addStep(
         new DeleteControlledAzureResourcesStep(
-            appContext.getControlledResourceService(), workspaceUuid, userRequest));
+            appContext.getResourceDao(),
+            appContext.getControlledResourceService(),
+            appContext.getSamService(),
+            workspaceUuid,
+            userRequest));
     addStep(
         new DeleteAzureContextStep(appContext.getAzureCloudContextService(), workspaceUuid),
         cloudRetryRule);
 
     // AWS
-    // In Azure, we need to explicitly delete the controlled resources as there is no containing
+    // In AWS, we need to explicitly delete the controlled resources as there is no containing
     // object (like a GCP project) that we can delete which will also delete all resources
     addStep(
         new DeleteControlledAwsResourcesStep(
-            appContext.getControlledResourceService(), workspaceUuid, userRequest));
+            appContext.getResourceDao(),
+            appContext.getControlledResourceService(),
+            workspaceUuid,
+            userRequest));
     addStep(
         new DeleteAwsContextStep(appContext.getAwsCloudContextService(), workspaceUuid),
         cloudRetryRule);

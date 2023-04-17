@@ -6,7 +6,10 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
@@ -23,15 +26,21 @@ import org.slf4j.LoggerFactory;
 public class DeleteControlledAzureResourcesStep implements Step {
 
   private final Logger logger = LoggerFactory.getLogger(DeleteControlledAzureResourcesStep.class);
+  private final ResourceDao resourceDao;
   private final ControlledResourceService controlledResourceService;
+  private final SamService samService;
   private final UUID workspaceUuid;
   private final AuthenticatedUserRequest userRequest;
 
   public DeleteControlledAzureResourcesStep(
+      ResourceDao resourceDao,
       ControlledResourceService controlledResourceService,
+      SamService samService,
       UUID workspaceUuid,
       AuthenticatedUserRequest userRequest) {
+    this.resourceDao = resourceDao;
     this.controlledResourceService = controlledResourceService;
+    this.samService = samService;
     this.workspaceUuid = workspaceUuid;
     this.userRequest = userRequest;
   }
@@ -39,13 +48,25 @@ public class DeleteControlledAzureResourcesStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    List<ControlledResource> controlledResourceList;
-    try {
-      controlledResourceList =
-          controlledResourceService.getControlledResourceWithAuthCheck(
-              workspaceUuid, CloudPlatform.AZURE, userRequest);
-    } catch (ForbiddenException e) {
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
+
+    List<ControlledResource> controlledResourceList =
+        resourceDao.listControlledResources(workspaceUuid, CloudPlatform.AZURE);
+    for (ControlledResource resource : controlledResourceList) {
+      if (!samService.isAuthorized(
+          userRequest,
+          resource.getCategory().getSamResourceName(),
+          resource.getResourceId().toString(),
+          SamConstants.SamControlledResourceActions.DELETE_ACTION)) {
+        return new StepResult(
+            StepStatus.STEP_RESULT_FAILURE_FATAL,
+            new ForbiddenException(
+                String.format(
+                    "User %s is not authorized to perform action %s on %s %s",
+                    userRequest.getEmail(),
+                    SamConstants.SamControlledResourceActions.DELETE_ACTION,
+                    resource.getCategory().getSamResourceName(),
+                    resource.getResourceId().toString())));
+      }
     }
 
     // Delete VMs first because they use other resources like disks, networks, etc.
