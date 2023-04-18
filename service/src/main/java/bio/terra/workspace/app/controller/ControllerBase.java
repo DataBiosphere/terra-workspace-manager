@@ -1,6 +1,7 @@
 package bio.terra.workspace.app.controller;
 
 import bio.terra.common.exception.ValidationException;
+import bio.terra.common.iam.SamUser;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.exception.InternalLogicException;
@@ -57,6 +58,10 @@ public class ControllerBase {
 
   public AuthenticatedUserRequest getAuthenticatedInfo() {
     return authenticatedUserRequestFactory.from(request);
+  }
+
+  public SamUser getSamUser() {
+    return samService.getSamUser(request);
   }
 
   /**
