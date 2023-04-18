@@ -3,7 +3,6 @@ package bio.terra.workspace.service.iam;
 import bio.terra.cloudres.google.iam.ServiceAccountName;
 import bio.terra.common.exception.ForbiddenException;
 import bio.terra.common.exception.InternalServerErrorException;
-import bio.terra.common.iam.SamUserFactory;
 import bio.terra.common.sam.SamRetry;
 import bio.terra.common.sam.exception.SamExceptionFactory;
 import bio.terra.common.tracing.OkHttpClientTracingInterceptor;
@@ -76,17 +75,14 @@ public class SamService {
           "openid", "email", "profile", "https://www.googleapis.com/auth/cloud-platform");
   private static final Logger logger = LoggerFactory.getLogger(SamService.class);
   private final SamConfiguration samConfig;
-  private final SamUserFactory samUserFactory;
   private final OkHttpClient commonHttpClient;
 
   private final WorkspaceDao workspaceDao;
   private boolean wsmServiceAccountInitialized;
 
   @Autowired
-  public SamService(
-      SamConfiguration samConfig, SamUserFactory samUserFactory, WorkspaceDao workspaceDao) {
+  public SamService(SamConfiguration samConfig, WorkspaceDao workspaceDao) {
     this.samConfig = samConfig;
-    this.samUserFactory = samUserFactory;
     this.wsmServiceAccountInitialized = false;
     this.commonHttpClient =
         new ApiClient()
