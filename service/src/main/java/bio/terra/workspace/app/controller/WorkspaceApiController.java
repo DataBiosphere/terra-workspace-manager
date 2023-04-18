@@ -5,6 +5,8 @@ import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertM
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesDeleteRequestBody;
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesUpdateRequestBody;
 
+import bio.terra.policy.model.TpsPaoConflict;
+import bio.terra.policy.model.TpsPaoDescription;
 import bio.terra.policy.model.TpsPaoGetResult;
 import bio.terra.policy.model.TpsPaoUpdateResult;
 import bio.terra.policy.model.TpsPolicyInputs;
@@ -60,6 +62,7 @@ import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.policy.TpsApiConversionUtils;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
+import bio.terra.workspace.service.policy.TpsUtilities;
 import bio.terra.workspace.service.policy.model.PolicyExplainResult;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
@@ -776,6 +779,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     TpsPaoUpdateResult dryRunResults =
         tpsApiDispatch.mergePao(targetWorkspaceId, sourceWorkspaceId, TpsUpdateMode.DRY_RUN);
 
+    validateMergeGroups(targetWorkspaceId, sourceWorkspaceId, dryRunResults);
+
     List<UUID> resourceWithConflicts = new ArrayList<>();
 
     for (var platform : ApiCloudPlatform.values()) {
@@ -824,5 +829,49 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   private AuthenticatedUserRequest getCloningCredentials(UUID workspaceUuid) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     return petSaService.getWorkspacePetCredentials(workspaceUuid, userRequest).orElse(userRequest);
+  }
+
+  /**
+   * Check that group policies are not changed during a merge operation. TPS allows this, but WSM
+   * will need to enforce the Milestone 1 limitation of immutable groups. If groups change during a
+   * merge request, WSM will add a conflict in to the TpsPaoUpdateResult.
+   *
+   * @param targetWorkspaceId
+   * @param sourceWorkspaceId
+   * @param dryRunResults
+   */
+  private void validateMergeGroups(
+      UUID targetWorkspaceId, UUID sourceWorkspaceId, TpsPaoUpdateResult dryRunResults) {
+    TpsPaoGetResult targetPaoPreUpdate = tpsApiDispatch.getPao(targetWorkspaceId);
+
+    HashSet<String> priorGroups =
+        new HashSet<>(
+            TpsUtilities.getGroupConstraintsFromInputs(
+                targetPaoPreUpdate.getEffectiveAttributes()));
+    HashSet<String> mergedGroups =
+        new HashSet<>(
+            TpsUtilities.getGroupConstraintsFromInputs(
+                dryRunResults.getResultingPao().getEffectiveAttributes()));
+
+    if (!priorGroups.equals(mergedGroups)) {
+      var sourcePao = tpsApiDispatch.getPao(sourceWorkspaceId);
+      TpsPaoDescription targetDescription =
+          new TpsPaoDescription()
+              .objectId(targetWorkspaceId)
+              .component(targetPaoPreUpdate.getComponent())
+              .objectType(targetPaoPreUpdate.getObjectType());
+      TpsPaoDescription sourceDescription =
+          new TpsPaoDescription()
+              .objectId(sourceWorkspaceId)
+              .component(sourcePao.getComponent())
+              .objectType(sourcePao.getObjectType());
+
+      TpsPaoConflict conflict = new TpsPaoConflict();
+      conflict.setConflictPao(sourceDescription);
+      conflict.setTargetPao(targetDescription);
+      conflict.setNamespace(TpsUtilities.TERRA_NAMESPACE);
+      conflict.setName(TpsUtilities.GROUP_CONSTRAINT);
+      dryRunResults.addConflictsItem(conflict);
+    }
   }
 }
