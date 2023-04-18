@@ -42,7 +42,7 @@ public class JobsApiController implements JobsApi {
   @Traced
   @Override
   public ResponseEntity<ApiJobReport> retrieveJob(@PathVariable("jobId") String jobId) {
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     jobService.verifyUserAccess(jobId, userRequest);
     FlightState flightState = jobService.retrieveJob(jobId);
     ApiJobReport jobReport = jobApiUtils.mapFlightStateToApiJobReport(flightState);

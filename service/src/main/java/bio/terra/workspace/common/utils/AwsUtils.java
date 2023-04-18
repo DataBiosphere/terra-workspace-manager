@@ -6,7 +6,6 @@ import bio.terra.aws.resource.discovery.EnvironmentDiscovery;
 import bio.terra.aws.resource.discovery.S3EnvironmentDiscovery;
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.BadRequestException;
-import bio.terra.common.exception.ErrorReportException;
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.exception.UnauthorizedException;
 import bio.terra.common.iam.SamUser;
@@ -283,7 +282,7 @@ public class AwsUtils {
         .credentials();
   }
 
-  // TODO(TERRA-498) use CRL functions
+  // TODO(TERRA-498) Move all functions below this comment to CRL
   private static S3Client getS3Client(
       AwsCredentialsProvider awsCredentialsProvider, Region region) {
     return S3Client.builder().region(region).credentialsProvider(awsCredentialsProvider).build();
@@ -363,31 +362,31 @@ public class AwsUtils {
       String key,
       String content,
       Collection<Tag> tags) {
+    S3Client s3Client = getS3Client(awsCredentialsProvider, region);
+
+    logger.info(
+        "Creating object with name '{}', key '{}' and {} content.",
+        bucketName,
+        key,
+        StringUtils.isEmpty(content) ? "(empty)" : "");
+
+    Set<software.amazon.awssdk.services.s3.model.Tag> s3Tags =
+        tags.stream()
+            .map(
+                stsTag ->
+                    software.amazon.awssdk.services.s3.model.Tag.builder()
+                        .key(stsTag.key())
+                        .value(stsTag.value())
+                        .build())
+            .collect(Collectors.toSet());
+
+    PutObjectRequest.Builder requestBuilder =
+        PutObjectRequest.builder()
+            .bucket(bucketName)
+            .key(key)
+            .tagging(Tagging.builder().tagSet(s3Tags).build());
+
     try {
-      S3Client s3Client = getS3Client(awsCredentialsProvider, region);
-
-      logger.info(
-          "Creating object with name '{}', key '{}' and {} content.",
-          bucketName,
-          key,
-          StringUtils.isEmpty(content) ? "(empty)" : "");
-
-      Set<software.amazon.awssdk.services.s3.model.Tag> s3Tags =
-          tags.stream()
-              .map(
-                  stsTag ->
-                      software.amazon.awssdk.services.s3.model.Tag.builder()
-                          .key(stsTag.key())
-                          .value(stsTag.value())
-                          .build())
-              .collect(Collectors.toSet());
-
-      PutObjectRequest.Builder requestBuilder =
-          PutObjectRequest.builder()
-              .bucket(bucketName)
-              .key(key)
-              .tagging(Tagging.builder().tagSet(s3Tags).build());
-
       SdkHttpResponse httpResponse =
           s3Client
               .putObject(requestBuilder.build(), RequestBody.fromString(content))
@@ -419,15 +418,15 @@ public class AwsUtils {
       String bucketName,
       String prefix,
       int limit) {
+    S3Client s3Client = getS3Client(awsCredentialsProvider, region);
+
+    ListObjectsV2Request.Builder requestBuilder =
+        ListObjectsV2Request.builder().bucket(bucketName).prefix(prefix).delimiter("/");
+
+    int limitRemaining = limit;
+    String continuationToken = null;
+    List<String> objectKeys = new ArrayList<>();
     try {
-      S3Client s3Client = getS3Client(awsCredentialsProvider, region);
-
-      ListObjectsV2Request.Builder requestBuilder =
-          ListObjectsV2Request.builder().bucket(bucketName).prefix(prefix).delimiter("/");
-
-      int limitRemaining = limit;
-      String continuationToken = null;
-      List<String> objectKeys = new ArrayList<>();
       while (limitRemaining > 0) {
         int curLimit = Math.min(MAX_RESULTS_PER_REQUEST_S3, limitRemaining);
         limitRemaining -= curLimit;
@@ -470,12 +469,13 @@ public class AwsUtils {
       Region region,
       String bucketName,
       List<String> keys) {
+
+    S3Client s3Client = getS3Client(awsCredentialsProvider, region);
+
+    DeleteObjectsRequest.Builder deleteRequestBuilder =
+        DeleteObjectsRequest.builder().bucket(bucketName);
+
     try {
-      S3Client s3Client = getS3Client(awsCredentialsProvider, region);
-
-      DeleteObjectsRequest.Builder deleteRequestBuilder =
-          DeleteObjectsRequest.builder().bucket(bucketName);
-
       ListUtils.partition(keys, MAX_RESULTS_PER_REQUEST_S3)
           .forEach(
               keysList -> {
@@ -500,34 +500,30 @@ public class AwsUtils {
                               .statusText()
                               .orElse(String.valueOf(deleteHttpResponse.statusCode())));
                 }
+                // Errors with individual objects are captured here (including 404)
                 deleteResponse
                     .errors()
                     .forEach(err -> logger.warn("Failed to delete storage objects: {}", err));
               });
-
     } catch (SdkException e) {
+      // Bulk delete operation would not fail with NotFound error, overall op is idempotent
       checkException(e);
       throw new ApiException("Error deleting storage objects", e);
     }
   }
 
-  private static void checkException(Exception ex)
+  private static void checkException(SdkException ex)
       throws NotFoundException, UnauthorizedException, BadRequestException {
-    if (ex instanceof SdkException) {
-      String message = ex.getMessage();
-      if (message.contains("ResourceNotFoundException") || message.contains("RecordNotFound")) {
-        throw new NotFoundException("Resource deleted or no longer accessible", ex);
+    String message = ex.getMessage();
+    if (message.contains("ResourceNotFoundException") || message.contains("RecordNotFound")) {
+      throw new NotFoundException("Resource deleted or no longer accessible", ex);
 
-      } else if (message.contains("not authorized to perform")) {
-        throw new UnauthorizedException(
-            "Error performing resource operation, check the name / permissions and retry", ex);
+    } else if (message.contains("not authorized to perform")) {
+      throw new UnauthorizedException(
+          "Error performing resource operation, check the name / permissions and retry", ex);
 
-      } else if (message.contains("Unable to transition to")) {
-        throw new BadRequestException("Unable to perform resource lifecycle operation", ex);
-      }
-
-    } else if (ex instanceof ErrorReportException) {
-      throw (ErrorReportException) ex;
+    } else if (message.contains("Unable to transition to")) {
+      throw new BadRequestException("Unable to perform resource lifecycle operation", ex);
     }
   }
 }

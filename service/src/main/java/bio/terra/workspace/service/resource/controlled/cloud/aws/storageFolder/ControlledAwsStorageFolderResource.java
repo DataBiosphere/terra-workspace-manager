@@ -147,6 +147,7 @@ public class ControlledAwsStorageFolderResource extends ControlledResource {
   /** {@inheritDoc} */
   @Override
   public void addUpdateSteps(UpdateResourceFlight flight, FlightBeanBag flightBeanBag) {
+    // TODO(TERRA-315) Add support for UpdateAwsStorageFolder
     throw new ApiException("addUpdateSteps NotImplemented");
   }
 

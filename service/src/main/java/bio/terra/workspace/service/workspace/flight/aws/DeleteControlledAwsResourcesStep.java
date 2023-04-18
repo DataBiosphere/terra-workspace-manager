@@ -3,7 +3,9 @@ package bio.terra.workspace.service.workspace.flight.aws;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
+import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
@@ -40,10 +42,8 @@ public class DeleteControlledAwsResourcesStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-
     List<ControlledResource> controlledResourceList =
         resourceDao.listControlledResources(workspaceUuid, CloudPlatform.AWS);
-    // TODO(TERRA-279): check permissions to delete
 
     // Delete all resources
     for (ControlledResource resource : controlledResourceList) {
@@ -56,10 +56,9 @@ public class DeleteControlledAwsResourcesStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    // Resource deletion can't be undone, so this just surfaces the error from the DO direction
-    // instead.
-    logger.error(
-        "Unable to undo deletion of controlled AWS resources for workspace {}", workspaceUuid);
-    return flightContext.getResult();
+    return new StepResult(
+        StepStatus.STEP_RESULT_FAILURE_FATAL,
+        new InternalLogicException(
+            "Unable to undo deletion of controlled AWS resources for workspace " + workspaceUuid));
   }
 }

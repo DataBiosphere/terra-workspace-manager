@@ -66,7 +66,8 @@ public class DeleteGcpProjectStep implements Step {
     return flightContext.getResult();
   }
 
-  private Optional<GcpCloudContext> getContext(FlightContext flightContext) {
+  private Optional<GcpCloudContext> getContext(FlightContext flightContext)
+      throws InterruptedException {
     UUID workspaceUuid =
         UUID.fromString(
             flightContext

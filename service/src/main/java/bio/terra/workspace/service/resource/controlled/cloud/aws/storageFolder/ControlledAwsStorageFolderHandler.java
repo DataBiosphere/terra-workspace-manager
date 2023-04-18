@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.aws.storageFolder;
 
-import bio.terra.workspace.common.exception.FeatureNotSupportedException;
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.resource.model.WsmResource;
@@ -31,6 +31,7 @@ public class ControlledAwsStorageFolderHandler implements WsmResourceHandler {
 
   @Override
   public String generateCloudName(@Nullable UUID workspaceUuid, String resourceName) {
-    throw new FeatureNotSupportedException("Generate cloud name feature is not implemented yet");
+    throw new BadRequestException(
+        "generateCloudName not supported for AWS storage folder resources.");
   }
 }

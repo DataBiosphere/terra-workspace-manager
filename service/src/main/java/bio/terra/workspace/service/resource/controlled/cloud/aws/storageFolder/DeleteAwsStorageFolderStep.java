@@ -3,7 +3,9 @@ package bio.terra.workspace.service.resource.controlled.cloud.aws.storageFolder;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
+import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import org.slf4j.Logger;
@@ -30,8 +32,6 @@ public class DeleteAwsStorageFolderStep implements Step {
             awsCloudContextService.getRequiredAuthentication(),
             awsCloudContextService.discoverEnvironment());
 
-    // TODO(TERRA-279): check permissions to delete
-
     AwsUtils.deleteFolder(
         credentialsProvider,
         Region.of(resource.getRegion()),
@@ -43,11 +43,11 @@ public class DeleteAwsStorageFolderStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    logger.error(
-        "Cannot undo delete of AWS Storage Folder resource {} in workspace {}.",
-        resource.getResourceId(),
-        resource.getWorkspaceId());
-    // Surface whatever error caused Stairway to begin undoing.
-    return flightContext.getResult();
+    return new StepResult(
+        StepStatus.STEP_RESULT_FAILURE_FATAL,
+        new InternalLogicException(
+            String.format(
+                "Cannot undo delete of AWS Storage Folder resource %s in workspace %s.",
+                resource.getResourceId(), resource.getWorkspaceId())));
   }
 }

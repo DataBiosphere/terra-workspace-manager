@@ -164,7 +164,8 @@ components:
             a ShortUUID, or other globally unique identifier.
           type: string
         # TODO: In the future, notification configuration will also be part of JobControl.
-
+  
+      
     ManagedBy:
       type: string
       description: Specifies the controller of the resource, workspace users or an application

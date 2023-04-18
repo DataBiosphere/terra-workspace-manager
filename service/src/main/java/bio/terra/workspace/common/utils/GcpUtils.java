@@ -160,7 +160,8 @@ public class GcpUtils {
                       IdTokenProvider.Option.FORMAT_FULL, IdTokenProvider.Option.LICENSES_TRUE))
               .build();
 
-      return idTokenCredentials.refreshAccessToken().getTokenValue();
+      String tokenValue = idTokenCredentials.refreshAccessToken().getTokenValue();
+      return tokenValue;
     } catch (IOException e) {
       throw new SaCredentialsMissingException(
           "Unable to get WSM service account JWT. Ensure WSM is actually running as a service account");
