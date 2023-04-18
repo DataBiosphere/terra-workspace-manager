@@ -228,7 +228,7 @@ public class ControlledFlexibleResourceApiControllerConnectedTest extends BaseCo
 
   @Test
   public void clone_requesterNoWriteAccessOnDestWorkspace_throws403() throws Exception {
-    final AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     mockMvcUtils.grantRole(
         userRequest, workspaceId, WsmIamRole.READER, userAccessUtils.getSecondUserEmail());
     mockMvcUtils.grantRole(

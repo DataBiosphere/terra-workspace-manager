@@ -16,7 +16,6 @@ import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesList;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesPurposeGroup;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.resourcemanager.network.NetworkManager;
@@ -25,7 +24,6 @@ import com.azure.resourcemanager.network.models.Networks;
 import com.azure.resourcemanager.network.models.Subnet;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -60,9 +58,6 @@ public class CreateAzureNetworkInterfaceStepTest extends BaseAzureUnitTest {
   @Mock private Network armNetwork;
 
   @Mock private Subnet armSubnet;
-
-  private final AuthenticatedUserRequest USER_REQUEST =
-      new AuthenticatedUserRequest().token(Optional.of("some-token"));
 
   @BeforeEach
   void setUp() {
