@@ -9,14 +9,17 @@ import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.ErrorReportException;
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.exception.UnauthorizedException;
+import bio.terra.common.iam.SamUser;
 import bio.terra.workspace.app.configuration.external.AwsConfiguration;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import liquibase.repackaged.org.apache.commons.collections4.ListUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -26,6 +29,8 @@ import org.springframework.security.oauth2.jwt.JwtDecoders;
 import software.amazon.awssdk.arns.Arn;
 import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.http.SdkHttpResponse;
@@ -42,13 +47,16 @@ import software.amazon.awssdk.services.s3.model.S3Object;
 import software.amazon.awssdk.services.s3.model.Tagging;
 import software.amazon.awssdk.services.sts.StsClient;
 import software.amazon.awssdk.services.sts.auth.StsAssumeRoleWithWebIdentityCredentialsProvider;
+import software.amazon.awssdk.services.sts.model.AssumeRoleRequest;
 import software.amazon.awssdk.services.sts.model.AssumeRoleWithWebIdentityRequest;
+import software.amazon.awssdk.services.sts.model.Credentials;
 import software.amazon.awssdk.services.sts.model.Tag;
 
 public class AwsUtils {
   private static final Logger logger = LoggerFactory.getLogger(AwsUtils.class);
 
   private static final int MAX_ROLE_SESSION_NAME_LENGTH = 64;
+  private static final Duration MIN_ROLE_SESSION_TOKEN_DURATION = Duration.ofSeconds(900);
 
   private static final int MAX_RESULTS_PER_REQUEST_S3 = 1000;
 
@@ -62,6 +70,17 @@ public class AwsUtils {
     return (value.length() > MAX_ROLE_SESSION_NAME_LENGTH)
         ? value.substring(0, MAX_ROLE_SESSION_NAME_LENGTH - 1)
         : value;
+  }
+
+  private static StsClient getStsClient() {
+    return getStsClient(AnonymousCredentialsProvider.create());
+  }
+
+  private static StsClient getStsClient(AwsCredentialsProvider credentialsProvider) {
+    return StsClient.builder()
+        .credentialsProvider(credentialsProvider)
+        .region(Region.AWS_GLOBAL)
+        .build();
   }
 
   /**
@@ -106,14 +125,10 @@ public class AwsUtils {
    *     refresh time
    * @return AwsCredentialsProvider
    */
-  private static AwsCredentialsProvider createAssumeRoleWithGcpCredentialsProvider(
+  public static AwsCredentialsProvider createAssumeRoleWithGcpCredentialsProvider(
       Arn roleArn, Duration duration, Duration staleTime, String jwtAudience) {
     return StsAssumeRoleWithWebIdentityCredentialsProvider.builder()
-        .stsClient(
-            StsClient.builder()
-                .credentialsProvider(AnonymousCredentialsProvider.create())
-                .region(Region.AWS_GLOBAL)
-                .build())
+        .stsClient(getStsClient())
         .staleTime(staleTime)
         .refreshRequest(() -> createRefreshRequest(roleArn, duration, jwtAudience))
         .build();
@@ -205,6 +220,67 @@ public class AwsUtils {
         Duration.ofSeconds(authentication.getCredentialLifetimeSeconds()),
         Duration.ofSeconds(authentication.getCredentialStaleTimeSeconds()),
         authentication.getGoogleJwtAudience());
+  }
+
+  public static Credentials getAssumeServiceRoleCredentials(
+      AwsConfiguration.Authentication authentication, Environment environment, Duration duration) {
+    AssumeRoleWithWebIdentityRequest request =
+        createRefreshRequest(
+            environment.getWorkspaceManagerRoleArn(),
+            duration,
+            authentication.getGoogleJwtAudience());
+    logger.info(
+        "Assuming Service role ('{}') with session name `{}`, duration {} seconds.",
+        request.roleArn(),
+        request.roleSessionName(),
+        request.durationSeconds());
+
+    return getStsClient().assumeRoleWithWebIdentity(request).credentials();
+  }
+
+  public static Credentials getAssumeUserRoleCredentials(
+      AwsConfiguration.Authentication authentication,
+      Environment environment,
+      SamUser user,
+      Duration duration) {
+    Credentials serviceCredentials =
+        getAssumeServiceRoleCredentials(
+            authentication, environment, MIN_ROLE_SESSION_TOKEN_DURATION);
+    return assumeUserRoleFromServiceCredentials(environment, serviceCredentials, user, duration);
+  }
+
+  public static Credentials assumeUserRoleFromServiceCredentials(
+      Environment environment, Credentials serviceCredentials, SamUser user, Duration duration) {
+    Set<Tag> tags =
+        Stream.of(
+                Tag.builder().key("user_email").value(user.getEmail()).build(),
+                Tag.builder().key("user_id").value(user.getSubjectId()).build())
+            .collect(Collectors.toSet());
+
+    AssumeRoleRequest request =
+        AssumeRoleRequest.builder()
+            .durationSeconds((int) duration.toSeconds())
+            .roleArn(environment.getUserRoleArn().toString())
+            .roleSessionName(getRoleSessionName(user.getEmail()))
+            .tags(new HashSet<>(tags))
+            .build();
+
+    logger.info(
+        "Assuming User role ('{}') with session name `{}`, duration {} seconds, and tags: '{}'.",
+        request.roleArn(),
+        request.roleSessionName(),
+        request.durationSeconds(),
+        request.tags());
+
+    AwsSessionCredentials sessionCredentials =
+        AwsSessionCredentials.create(
+            serviceCredentials.accessKeyId(),
+            serviceCredentials.secretAccessKey(),
+            serviceCredentials.sessionToken());
+
+    return getStsClient(StaticCredentialsProvider.create(sessionCredentials))
+        .assumeRole(request)
+        .credentials();
   }
 
   // TODO(TERRA-498) use CRL functions

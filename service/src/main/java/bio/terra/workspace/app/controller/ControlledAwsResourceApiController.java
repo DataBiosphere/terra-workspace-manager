@@ -4,6 +4,7 @@ import bio.terra.aws.resource.discovery.LandingZone;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
+import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.ControlledAwsResourceApi;
 import bio.terra.workspace.generated.model.ApiAwsCredential;
@@ -29,10 +30,11 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
+import java.time.Duration;
+import java.time.ZoneOffset;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
-import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +42,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.sts.model.Credentials;
 
 @Controller
 public class ControlledAwsResourceApiController extends ControlledResourceControllerBase
@@ -73,6 +76,12 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
         controlledResourceMetadataManager);
     this.workspaceService = workspaceService;
     this.awsCloudContextService = awsCloudContextService;
+  }
+
+  private String getSamAction(ApiAwsCredentialAccessScope accessScope) {
+    return (accessScope == ApiAwsCredentialAccessScope.WRITE_READ)
+        ? SamConstants.SamControlledResourceActions.WRITE_ACTION
+        : SamConstants.SamControlledResourceActions.READ_ACTION;
   }
 
   @Override
@@ -206,6 +215,25 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
       UUID resourceId,
       ApiAwsCredentialAccessScope accessScope,
       Integer duration) {
-    throw new NotImplementedException("not implemented");
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    controlledResourceMetadataManager
+        .validateControlledResourceAndAction(
+            userRequest, workspaceUuid, resourceId, getSamAction(accessScope))
+        .castByEnum(WsmResourceType.CONTROLLED_AWS_STORAGE_FOLDER);
+
+    Credentials awsCredentials =
+        AwsUtils.getAssumeUserRoleCredentials(
+            awsCloudContextService.getRequiredAuthentication(),
+            awsCloudContextService.discoverEnvironment(),
+            getSamUser(),
+            Duration.ofSeconds(duration));
+
+    return new ResponseEntity<>(
+        new ApiAwsCredential()
+            .accessKeyId(awsCredentials.accessKeyId())
+            .secretAccessKey(awsCredentials.secretAccessKey())
+            .sessionToken(awsCredentials.sessionToken())
+            .expiration(awsCredentials.expiration().atOffset(ZoneOffset.UTC)),
+        HttpStatus.OK);
   }
 }
