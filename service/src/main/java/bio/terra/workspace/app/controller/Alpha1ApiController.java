@@ -75,7 +75,7 @@ public class Alpha1ApiController implements Alpha1Api {
     features.alpha1EnabledCheck();
 
     // Prepare the inputs
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControllerValidationUtils.validatePaginationParams(0, limit);
     ResourceValidationUtils.validateOptionalResourceName(name);
 

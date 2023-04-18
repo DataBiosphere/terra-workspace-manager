@@ -64,7 +64,7 @@ public class CloneControlledFlexibleResourceFlight extends Flight {
 
     FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
 
-    final AuthenticatedUserRequest userRequest =
+    AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
     // 1. The user access check is performed in the controller, but double-check for consistency.

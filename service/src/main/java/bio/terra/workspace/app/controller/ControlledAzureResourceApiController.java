@@ -119,7 +119,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       UUID workspaceUuid, ApiCreateControlledAzureDiskRequestBody body) {
     features.azureEnabledCheck();
 
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledResourceFields commonFields =
         toCommonFields(
             workspaceUuid,
@@ -197,7 +197,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       UUID workspaceUuid, @Valid ApiCreateControlledAzureStorageContainerRequestBody body) {
     features.azureEnabledCheck();
 
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final ControlledResourceFields commonFields =
         toCommonFields(
             workspaceUuid,
@@ -233,7 +233,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       UUID workspaceUuid, @Valid ApiCreateControlledAzureVmRequestBody body) {
     features.azureEnabledCheck();
 
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final ControlledResourceFields commonFields =
         toCommonFields(
             workspaceUuid,
@@ -280,7 +280,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       UUID workspaceUuid, String jobId) throws ApiException {
     features.azureEnabledCheck();
 
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
     ApiCreatedControlledAzureVmResult result = fetchCreateControlledAzureVmResult(jobId);
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
@@ -292,7 +292,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       UUID workspaceUuid, ApiCreateControlledAzureBatchPoolRequestBody body) {
     features.azureEnabledCheck();
 
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final ControlledResourceFields commonFields =
         toCommonFields(
             workspaceUuid,
@@ -341,7 +341,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       @PathVariable("workspaceId") UUID workspaceId, @PathVariable("resourceId") UUID resourceId) {
     features.azureEnabledCheck();
 
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     controlledResourceMetadataManager.validateControlledResourceAndAction(
         userRequest, workspaceId, resourceId, SamControlledResourceActions.DELETE_ACTION);
 
@@ -378,7 +378,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   @Traced
   @Override
   public ResponseEntity<ApiAzureDiskResource> getAzureDisk(UUID workspaceUuid, UUID resourceId) {
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     features.azureEnabledCheck();
     final ControlledAzureDiskResource resource =
         controlledResourceMetadataManager
@@ -391,7 +391,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   @Traced
   @Override
   public ResponseEntity<ApiAzureVmResource> getAzureVm(UUID workspaceUuid, UUID resourceId) {
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     features.azureEnabledCheck();
     final ControlledAzureVmResource resource =
         controlledResourceMetadataManager
@@ -406,7 +406,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   public ResponseEntity<ApiDeleteControlledAzureResourceResult> getDeleteAzureDiskResult(
       UUID workspaceUuid, String jobId) {
     features.azureEnabledCheck();
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
     return getJobDeleteResult(jobId);
   }
@@ -416,7 +416,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   public ResponseEntity<ApiDeleteControlledAzureResourceResult> getDeleteAzureVmResult(
       UUID workspaceUuid, String jobId) {
     features.azureEnabledCheck();
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
     return getJobDeleteResult(jobId);
   }
@@ -438,7 +438,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       String resourceName) {
     features.azureEnabledCheck();
 
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     controlledResourceMetadataManager.validateControlledResourceAndAction(
         userRequest, workspaceUuid, resourceId, SamControlledResourceActions.DELETE_ACTION);
     final ApiJobControl jobControl = body.getJobControl();
@@ -478,7 +478,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       UUID workspaceId, UUID resourceId, ApiCloneControlledAzureStorageContainerRequest body) {
     features.azureEnabledCheck();
 
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     controlledResourceMetadataManager.validateCloneAction(
         userRequest, workspaceId, body.getDestinationWorkspaceId(), resourceId);
     if (CloningInstructions.isReferenceClone(body.getCloningInstructions())) {
@@ -511,7 +511,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       getCloneAzureStorageContainerResult(UUID workspaceId, String jobId) {
     features.azureEnabledCheck();
 
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     jobService.verifyUserAccess(jobId, userRequest, workspaceId);
     ApiCloneControlledAzureStorageContainerResult result = fetchCloneAzureContainerResult(jobId);
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));

@@ -495,7 +495,7 @@ public class SamService {
       String iamResourceType, String resourceId, String action, String userToCheck)
       throws InterruptedException {
     String wsmSaToken = getWsmServiceAccountToken();
-    final AuthenticatedUserRequest wsmSaRequest =
+    AuthenticatedUserRequest wsmSaRequest =
         new AuthenticatedUserRequest().token(Optional.of(wsmSaToken));
     return userIsAuthorized(iamResourceType, resourceId, action, userToCheck, wsmSaRequest);
   }

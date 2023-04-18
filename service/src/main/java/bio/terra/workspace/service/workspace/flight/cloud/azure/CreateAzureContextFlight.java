@@ -27,7 +27,7 @@ public class CreateAzureContextFlight extends Flight {
 
     UUID workspaceUuid =
         UUID.fromString(inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
-    final AuthenticatedUserRequest userRequest =
+    AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
     RetryRule dbRetry = RetryRules.shortDatabase();

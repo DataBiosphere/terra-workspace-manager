@@ -72,7 +72,7 @@ public class ResourceApiController extends ControllerBase implements ResourceApi
       @Valid @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit,
       @Valid ApiResourceType resource,
       @Valid ApiStewardshipType stewardship) {
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControllerValidationUtils.validatePaginationParams(offset, limit);
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
@@ -95,7 +95,7 @@ public class ResourceApiController extends ControllerBase implements ResourceApi
   @Traced
   @Override
   public ResponseEntity<ApiResourceDescription> getResource(UUID workspaceUuid, UUID resourceUuid) {
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
 
@@ -108,7 +108,7 @@ public class ResourceApiController extends ControllerBase implements ResourceApi
   @Traced
   @Override
   public ResponseEntity<Boolean> checkReferenceAccess(UUID workspaceUuid, UUID resourceId) {
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
     boolean isValid = referencedResourceService.checkAccess(workspaceUuid, resourceId, userRequest);
@@ -119,7 +119,7 @@ public class ResourceApiController extends ControllerBase implements ResourceApi
   @Override
   public ResponseEntity<Void> updateResourceProperties(
       UUID workspaceUuid, UUID resourceUuid, List<ApiProperty> properties) {
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
 
@@ -135,7 +135,7 @@ public class ResourceApiController extends ControllerBase implements ResourceApi
   @Override
   public ResponseEntity<Void> deleteResourceProperties(
       UUID workspaceUuid, UUID resourceUuid, List<String> propertyKeys) {
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     validatePropertiesDeleteRequestBody(propertyKeys);
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);

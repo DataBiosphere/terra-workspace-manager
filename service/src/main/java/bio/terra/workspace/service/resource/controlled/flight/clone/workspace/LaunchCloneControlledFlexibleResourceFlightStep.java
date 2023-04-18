@@ -43,7 +43,7 @@ public class LaunchCloneControlledFlexibleResourceFlightStep implements Step {
         JobMapKeys.AUTH_USER_INFO.getKeyName(),
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID);
 
-    final AuthenticatedUserRequest userRequest =
+    AuthenticatedUserRequest userRequest =
         context
             .getInputParameters()
             .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);

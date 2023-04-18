@@ -40,7 +40,7 @@ public class DeleteSamResourceStep implements Step {
     ControlledResource resource = wsmResource.castToControlledResource();
     // deleteControlledResource already handles duplicate deletion, so we do not need to explicitly
     // handle it inside this step.
-    final AuthenticatedUserRequest userRequest =
+    AuthenticatedUserRequest userRequest =
         FlightUtils.getRequired(
             flightContext.getInputParameters(),
             JobMapKeys.AUTH_USER_INFO.getKeyName(),

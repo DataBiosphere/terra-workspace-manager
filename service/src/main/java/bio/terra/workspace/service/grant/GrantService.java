@@ -181,7 +181,7 @@ public class GrantService {
             expiredGrant.grantId(), expiredGrant.workspaceId());
 
     String wsmSaToken = samService.getWsmServiceAccountToken();
-    final AuthenticatedUserRequest wsmSaRequest =
+    AuthenticatedUserRequest wsmSaRequest =
         new AuthenticatedUserRequest().token(Optional.of(wsmSaToken));
 
     JobBuilder revokeJob =

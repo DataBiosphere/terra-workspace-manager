@@ -36,7 +36,7 @@ public class AdminApiController extends ControllerBase implements AdminApi {
   @Traced
   @Override
   public ResponseEntity<ApiJobResult> syncIamRoles(Boolean wetRun) {
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     SamRethrow.onInterrupted(
         () -> getSamService().checkAdminAuthz(userRequest),
         "check whether the user has admin access");
@@ -54,7 +54,7 @@ public class AdminApiController extends ControllerBase implements AdminApi {
   }
 
   private ResponseEntity<ApiJobResult> getApiJobResult(String jobId) {
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     SamRethrow.onInterrupted(
         () -> getSamService().checkAdminAuthz(userRequest),
         "check whether the user has admin access");

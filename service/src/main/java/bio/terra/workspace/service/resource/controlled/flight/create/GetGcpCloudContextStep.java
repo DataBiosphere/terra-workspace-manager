@@ -33,7 +33,7 @@ public class GetGcpCloudContextStep implements Step {
       throws InterruptedException, RetryException {
     FlightMap workingMap = flightContext.getWorkingMap();
     if (workingMap.get(GCP_CLOUD_CONTEXT, GcpCloudContext.class) == null) {
-      final AuthenticatedUserRequest userRequest =
+      AuthenticatedUserRequest userRequest =
           FlightUtils.getRequired(
               flightContext.getInputParameters(),
               JobMapKeys.AUTH_USER_INFO.getKeyName(),

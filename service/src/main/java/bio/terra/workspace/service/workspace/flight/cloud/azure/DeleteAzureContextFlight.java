@@ -17,7 +17,7 @@ public class DeleteAzureContextFlight extends Flight {
     FlightBeanBag appContext = FlightBeanBag.getFromObject(applicationContext);
     UUID workspaceUuid =
         UUID.fromString(inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
-    final AuthenticatedUserRequest userRequest =
+    AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
     RetryRule retryRule = RetryRules.cloudLongRunning();

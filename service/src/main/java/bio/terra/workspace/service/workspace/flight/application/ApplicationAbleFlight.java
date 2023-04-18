@@ -31,7 +31,7 @@ public class ApplicationAbleFlight extends Flight {
         WsmApplicationKeys.APPLICATION_ABLE_ENUM);
 
     // get data from inputs that steps need
-    final AuthenticatedUserRequest userRequest =
+    AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
     UUID workspaceUuid = inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
     List<String> applicationIdList =
