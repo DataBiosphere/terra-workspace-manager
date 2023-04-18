@@ -6,6 +6,7 @@ import bio.terra.aws.resource.discovery.Metadata;
 import bio.terra.workspace.app.configuration.external.AwsConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseAwsConnectedTest;
+import bio.terra.workspace.service.features.FeatureService;
 import java.io.IOException;
 import java.util.Optional;
 import org.junit.jupiter.api.Assertions;
@@ -23,7 +24,7 @@ import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
 public class AwsUtilsTest extends BaseAwsConnectedTest {
   private static final Logger logger = LoggerFactory.getLogger(AwsUtilsTest.class);
   @Autowired private AwsConfiguration awsConfiguration;
-  @Autowired private FeatureConfiguration featureConfiguration;
+  @Autowired private FeatureService featureService;
 
   private void logEnvironmentMetadata(Metadata metadata) {
     logger.info("AWS Environment Infrastructure Details:");
@@ -36,7 +37,7 @@ public class AwsUtilsTest extends BaseAwsConnectedTest {
 
   @Test
   void hello_bucket() throws IOException {
-    Assertions.assertDoesNotThrow(() -> featureConfiguration.awsEnabledCheck());
+    Assertions.assertDoesNotThrow(() -> featureService.awsEnabledCheck());
 
     // Log the AWS config
     logger.info("AWS Configuration: {}", awsConfiguration.toString());

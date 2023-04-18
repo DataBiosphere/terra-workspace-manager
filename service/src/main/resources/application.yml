@@ -57,6 +57,7 @@ spring:
           must-revalidate: true
         use-last-modified: false
       static-locations: classpath:/api/
+
 workspace:
   datarepo.instances:
     terra: ${env.urls.terra-datarepo}
@@ -154,6 +155,8 @@ terra.common:
   tracing:
     stackdriverExportEnabled: ${env.tracing.exportEnabled}
     samplingRate: ${env.tracing.samplingRate}
+  flagsmith:
+    enabled: false
 
 #Terra Landing Zone Service configuration
 landingzone:

@@ -8,6 +8,7 @@ import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.exceptions.InvalidApplicationConfigException;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
@@ -32,11 +33,11 @@ public class AwsCloudContextService {
   @Autowired
   public AwsCloudContextService(
       WorkspaceDao workspaceDao,
-      FeatureConfiguration featureConfiguration,
+      FeatureService featureService,
       AwsConfiguration awsConfiguration) {
     this.workspaceDao = workspaceDao;
     this.environmentDiscovery =
-        featureConfiguration.isAwsEnabled()
+        featureService.awsEnabled()
             ? AwsUtils.createEnvironmentDiscovery(awsConfiguration)
             : null;
   }
