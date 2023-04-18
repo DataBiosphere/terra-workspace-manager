@@ -23,7 +23,8 @@ public class ReferencedBigQueryDatasetHandler implements WsmResourceHandler {
     return new ReferencedBigQueryDatasetResource(dbResource);
   }
 
+  @Override
   public String generateCloudName(@Nullable UUID workspaceUuid, String resourceName) {
-    throw new BadRequestException("generateCloudName not supported for referenced resource.");
+    throw new BadRequestException("generateCloudName not supported for referenced resources.");
   }
 }

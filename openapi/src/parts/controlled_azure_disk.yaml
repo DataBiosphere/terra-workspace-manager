@@ -125,4 +125,3 @@ components:
           $ref: '#/components/schemas/ControlledResourceCommonFields'
         azureDisk:
           $ref: '#/components/schemas/AzureDiskCreationParameters'
-  

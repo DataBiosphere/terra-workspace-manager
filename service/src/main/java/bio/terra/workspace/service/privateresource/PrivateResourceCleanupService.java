@@ -146,7 +146,7 @@ public class PrivateResourceCleanupService {
             + " in workspace "
             + workspaceUserPair.getWorkspaceId().toString();
     String wsmSaToken = samService.getWsmServiceAccountToken();
-    AuthenticatedUserRequest wsmSaRequest =
+    final AuthenticatedUserRequest wsmSaRequest =
         new AuthenticatedUserRequest().token(Optional.of(wsmSaToken));
     JobBuilder userCleanupJob =
         jobService

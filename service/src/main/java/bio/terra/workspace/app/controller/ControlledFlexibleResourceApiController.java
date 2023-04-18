@@ -123,7 +123,7 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
       @Valid ApiUpdateControlledFlexibleResourceRequestBody body) {
     logger.info(
         "Updating flexible resource; resourceId {} workspaceId {}", resourceId, workspaceUuid);
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledFlexibleResource flexibleResource =
         controlledResourceMetadataManager
             .validateControlledResourceAndAction(
@@ -193,7 +193,7 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
   @Override
   public ResponseEntity<ApiCloneControlledFlexibleResourceResult> cloneFlexibleResource(
       UUID workspaceUuid, UUID resourceId, @Valid ApiCloneControlledFlexibleResourceRequest body) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
 
     // Do a permission check before validating the cloning instructions.
     // It's preferable to throw a permission error first.

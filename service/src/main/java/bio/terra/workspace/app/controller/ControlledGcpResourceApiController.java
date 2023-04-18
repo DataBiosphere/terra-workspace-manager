@@ -219,7 +219,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   @Override
   public ResponseEntity<ApiGcsBucketCloudName> generateGcpGcsBucketCloudName(
       UUID workspaceUuid, ApiGenerateGcpGcsBucketCloudNameRequestBody name) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamWorkspaceAction.READ);
     String generatedBucketName =
@@ -234,7 +234,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   public ResponseEntity<ApiGcpGcsBucketResource> updateGcsBucket(
       UUID workspaceUuid, UUID resourceId, @Valid ApiUpdateControlledGcpGcsBucketRequestBody body) {
     logger.info("Updating bucket resourceId {} workspaceUuid {}", resourceId, workspaceUuid);
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledGcsBucketResource bucketResource =
         controlledResourceMetadataManager
             .validateControlledResourceAndAction(
@@ -307,7 +307,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   @Override
   public ResponseEntity<ApiCloneControlledGcpGcsBucketResult> getCloneGcsBucketResult(
       UUID workspaceUuid, String jobId) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
     ApiCloneControlledGcpGcsBucketResult result = fetchCloneGcsBucketResult(jobId);
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
@@ -330,7 +330,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   @Override
   public ResponseEntity<ApiBqDatasetCloudId> generateBigQueryDatasetCloudId(
       UUID workspaceUuid, ApiGenerateGcpBigQueryDatasetCloudIDRequestBody name) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamWorkspaceAction.READ);
     String generatedCloudBqDatasetName =
@@ -480,7 +480,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   @Override
   public ResponseEntity<ApiCloneControlledGcpBigQueryDatasetResult> getCloneBigQueryDatasetResult(
       UUID workspaceUuid, String jobId) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
     ApiCloneControlledGcpBigQueryDatasetResult result = fetchCloneBigQueryDatasetResult(jobId);
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
@@ -489,7 +489,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   @Override
   public ResponseEntity<ApiCreatedControlledGcpAiNotebookInstanceResult> createAiNotebookInstance(
       UUID workspaceUuid, @Valid ApiCreateControlledGcpAiNotebookInstanceRequestBody body) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     Workspace workspace =
         workspaceService.validateWorkspaceAndAction(
             userRequest, workspaceUuid, ControllerValidationUtils.getSamAction(body.getCommon()));
@@ -537,7 +537,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   @Override
   public ResponseEntity<ApiAiNotebookCloudId> generateAiNotebookCloudInstanceId(
       UUID workspaceUuid, ApiGenerateGcpAiNotebookCloudIdRequestBody name) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamWorkspaceAction.READ);
     String generatedAiNotebookName =
@@ -553,7 +553,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
       UUID workspaceUuid,
       UUID resourceId,
       @Valid ApiUpdateControlledGcpAiNotebookInstanceRequestBody requestBody) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledAiNotebookInstanceResource resource =
         controlledResourceMetadataManager
             .validateControlledResourceAndAction(
@@ -575,7 +575,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   @Override
   public ResponseEntity<ApiCreatedControlledGcpAiNotebookInstanceResult>
       getCreateAiNotebookInstanceResult(UUID workspaceUuid, String jobId) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
     ApiCreatedControlledGcpAiNotebookInstanceResult result =
         fetchNotebookInstanceCreateResult(jobId);
@@ -604,7 +604,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
       UUID workspaceUuid,
       UUID resourceId,
       @Valid ApiDeleteControlledGcpAiNotebookInstanceRequest body) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     controlledResourceMetadataManager.validateControlledResourceAndAction(
         userRequest, workspaceUuid, resourceId, SamControlledResourceActions.DELETE_ACTION);
     ApiJobControl jobControl = body.getJobControl();
@@ -648,7 +648,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   @Override
   public ResponseEntity<ApiGcpAiNotebookInstanceResource> getAiNotebookInstance(
       UUID workspaceUuid, UUID resourceId) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledAiNotebookInstanceResource resource =
         controlledResourceMetadataManager
             .validateControlledResourceAndAction(

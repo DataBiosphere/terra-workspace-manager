@@ -27,7 +27,7 @@ public class WorkspaceDeleteFlight extends Flight {
 
     FlightBeanBag appContext = FlightBeanBag.getFromObject(applicationContext);
 
-    AuthenticatedUserRequest userRequest =
+    final AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
     UUID workspaceUuid =

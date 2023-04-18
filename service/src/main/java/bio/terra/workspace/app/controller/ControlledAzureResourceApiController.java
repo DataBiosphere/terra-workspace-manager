@@ -280,7 +280,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       UUID workspaceUuid, String jobId) throws ApiException {
     features.azureEnabledCheck();
 
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
     ApiCreatedControlledAzureVmResult result = fetchCreateControlledAzureVmResult(jobId);
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
@@ -511,7 +511,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       getCloneAzureStorageContainerResult(UUID workspaceId, String jobId) {
     features.azureEnabledCheck();
 
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     jobService.verifyUserAccess(jobId, userRequest, workspaceId);
     ApiCloneControlledAzureStorageContainerResult result = fetchCloneAzureContainerResult(jobId);
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));

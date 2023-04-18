@@ -30,7 +30,7 @@ public class CloneAllResourcesFlight extends Flight {
     List<ResourceCloneInputs> resourceCloneInputsList =
         inputParameters.get(ControlledResourceKeys.RESOURCES_TO_CLONE, new TypeReference<>() {});
 
-    AuthenticatedUserRequest userRequest =
+    final AuthenticatedUserRequest userRequest =
         FlightUtils.getRequired(
             inputParameters,
             JobMapKeys.AUTH_USER_INFO.getKeyName(),

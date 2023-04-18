@@ -106,7 +106,7 @@ public class GcpCloudSyncStep implements Step {
       // role on the project.
       if (features.isTemporaryGrantEnabled()) {
         // Get the user emails we are granting
-        AuthenticatedUserRequest petSaCredentials =
+        final AuthenticatedUserRequest petSaCredentials =
             flightContext
                 .getWorkingMap()
                 .get(WorkspaceFlightMapKeys.PET_SA_CREDENTIALS, AuthenticatedUserRequest.class);

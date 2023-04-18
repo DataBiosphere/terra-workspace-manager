@@ -55,7 +55,7 @@ public class CloneReferencedResourceFlight extends Flight {
             WorkspaceFlightMapKeys.ResourceKeys.CLONING_INSTRUCTIONS,
             CloningInstructions.class);
 
-    AuthenticatedUserRequest userRequest =
+    final AuthenticatedUserRequest userRequest =
         FlightUtils.getRequired(
             inputParameters,
             JobMapKeys.AUTH_USER_INFO.getKeyName(),

@@ -394,7 +394,6 @@ public class SamService {
           // WSM always uses UUIDs for workspace IDs, but this is not enforced in Sam and there are
           // old workspaces that don't use UUIDs. Any workspace with a non-UUID workspace ID is
           // ignored here.
-          continue;
         }
       }
     } catch (ApiException apiException) {
@@ -496,7 +495,7 @@ public class SamService {
       String iamResourceType, String resourceId, String action, String userToCheck)
       throws InterruptedException {
     String wsmSaToken = getWsmServiceAccountToken();
-    AuthenticatedUserRequest wsmSaRequest =
+    final AuthenticatedUserRequest wsmSaRequest =
         new AuthenticatedUserRequest().token(Optional.of(wsmSaToken));
     return userIsAuthorized(iamResourceType, resourceId, action, userToCheck, wsmSaRequest);
   }
@@ -1036,7 +1035,6 @@ public class SamService {
    */
   public List<ControlledResourceIamRole> getUserRolesOnPrivateResource(
       ControlledResource resource, String userEmail, AuthenticatedUserRequest userRequest) {
-
     try {
       ResourcesApi wsmSaResourceApi = samResourcesApi(getWsmServiceAccountToken());
       List<AccessPolicyResponseEntryV2> policyList =

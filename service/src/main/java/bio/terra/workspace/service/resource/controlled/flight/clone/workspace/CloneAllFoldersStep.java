@@ -50,7 +50,7 @@ public class CloneAllFoldersStep implements Step {
       logger.info("Source workspace {} doesn't have any folders to copy", sourceWorkspaceId);
       return StepResult.getStepResultSuccess();
     }
-    AuthenticatedUserRequest userRequest =
+    final AuthenticatedUserRequest userRequest =
         context
             .getInputParameters()
             .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);

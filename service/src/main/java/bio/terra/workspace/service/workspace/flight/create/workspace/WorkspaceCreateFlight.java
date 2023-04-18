@@ -26,7 +26,7 @@ public class WorkspaceCreateFlight extends Flight {
     FlightBeanBag appContext = FlightBeanBag.getFromObject(applicationContext);
 
     // get data from inputs that steps need
-    AuthenticatedUserRequest userRequest =
+    final AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
     Workspace workspace =
         FlightUtils.getRequired(inputParameters, JobMapKeys.REQUEST.getKeyName(), Workspace.class);

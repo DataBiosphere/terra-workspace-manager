@@ -171,7 +171,6 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-
 openapi:
 info:
 components:

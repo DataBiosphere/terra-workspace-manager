@@ -29,11 +29,11 @@ public class RemoveUserFromWorkspaceFlight extends Flight {
 
     UUID workspaceUuid =
         UUID.fromString(inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
-    AuthenticatedUserRequest userRequest =
+    final AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
     SamService samService = appContext.getSamService();
     String wsmSaToken = samService.getWsmServiceAccountToken();
-    AuthenticatedUserRequest wsmSaRequest =
+    final AuthenticatedUserRequest wsmSaRequest =
         new AuthenticatedUserRequest().token(Optional.of(wsmSaToken));
     String userToRemove = inputParameters.get(WorkspaceFlightMapKeys.USER_TO_REMOVE, String.class);
     WsmIamRole roleToRemove =

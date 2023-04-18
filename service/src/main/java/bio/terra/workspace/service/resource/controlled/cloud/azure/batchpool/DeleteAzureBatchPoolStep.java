@@ -99,7 +99,7 @@ public class DeleteAzureBatchPoolStep implements Step {
 
   private Optional<String> getBatchAccountName(
       AzureCloudContext azureCloudContext, FlightContext context, BatchManager batchManager) {
-    AuthenticatedUserRequest userRequest =
+    final AuthenticatedUserRequest userRequest =
         context
             .getInputParameters()
             .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);

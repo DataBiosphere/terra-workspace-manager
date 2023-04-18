@@ -23,7 +23,8 @@ public class ReferencedGcsBucketHandler implements WsmResourceHandler {
     return new ReferencedGcsBucketResource(dbResource);
   }
 
+  @Override
   public String generateCloudName(@Nullable UUID workspaceUuid, String resourceName) {
-    throw new BadRequestException("generateCloudName not supported for referenced resource.");
+    throw new BadRequestException("generateCloudName not supported for referenced resources.");
   }
 }

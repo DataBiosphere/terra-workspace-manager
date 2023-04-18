@@ -45,7 +45,7 @@ public class CreateGcpContextFlightV2 extends Flight {
 
     UUID workspaceUuid =
         UUID.fromString(inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
-    AuthenticatedUserRequest userRequest =
+    final AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
     RetryRule shortRetry = RetryRules.shortExponential();

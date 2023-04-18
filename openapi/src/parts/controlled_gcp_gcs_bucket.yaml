@@ -58,10 +58,7 @@ paths:
           $ref: '#/components/responses/ServerError'
     post:
       summary: |
-        Delete a controlled GCS bucket resource. This is async, because deleting the bucket and contents can
-        take a very long time. NOTE: this cannot be an HTTP DELETE, because something between generated code
-        and server behavior does not support delete operations with bodies. We require the body for the async
-        state, so this is a POST.
+        Delete a controlled GCS bucket resource asynchronously.
       operationId: deleteBucket
       tags: [ControlledGcpResource]
       requestBody:
@@ -362,6 +359,7 @@ components:
           type: string
         jobControl:
           $ref: '#/components/schemas/JobControl'
+
     ClonedControlledGcpGcsBucket:
       description: >-
         Response object for clone of a GCS Bucket. Destination workspace and
@@ -381,6 +379,7 @@ components:
           format: uuid
         bucket:
           $ref: "#/components/schemas/CreatedControlledGcpGcsBucket"
+
     CloneControlledGcpGcsBucketResult:
       description: >-
         API result class for cloning a GCS bucket.
@@ -392,6 +391,7 @@ components:
           $ref: '#/components/schemas/JobReport'
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
+
     CloneReferencedGcpGcsBucketResourceResult:
       description: >-
         API result class for cloning a referenced GCS Bucket resource. Includes source workspace
@@ -411,6 +411,7 @@ components:
           format: uuid
         resource:
           $ref: '#/components/schemas/GcpGcsBucketResource'
+
     DeleteControlledGcpGcsBucketRequest:
       type: object
       required: [ jobControl ]
@@ -445,7 +446,6 @@ components:
       properties:
         generatedBucketCloudName:
           type: string
-
 
   responses:
     CreatedControlledGcpGcsBucketResponse:

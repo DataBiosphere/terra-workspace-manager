@@ -596,7 +596,7 @@ public class ControlledResourceService {
           "#updateGcpControlledBigQueryDatasetsLifetimeAsync: workspace manager service account token is null");
       return null;
     }
-    AuthenticatedUserRequest wsmSaRequest =
+    final AuthenticatedUserRequest wsmSaRequest =
         new AuthenticatedUserRequest().token(Optional.of(wsmSaToken));
     return jobService
         .newJob()
