@@ -1,6 +1,6 @@
 components:
   schemas:
-    AwsStorageFolderAttributes:
+    AwsS3StorageFolderAttributes:
       description: >-
         AWS S3 Storage Folder properties included in post-creation get.
       type: object
@@ -12,7 +12,7 @@ components:
           description: The prefix within the S3 bucket.
           type: string
 
-    AwsStorageFolderResource:
+    AwsS3StorageFolderResource:
       type: object
       description: Description of an AWS S3 Storage Folder.
       required: [ metadata, attributes ]
@@ -21,4 +21,4 @@ components:
           description: the resource metadata common to all resources
           $ref: '#/components/schemas/ResourceMetadata'
         attributes:
-          $ref: '#/components/schemas/AwsStorageFolderAttributes'
+          $ref: '#/components/schemas/AwsS3StorageFolderAttributes'

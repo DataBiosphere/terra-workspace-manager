@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.controlled.cloud.aws.storageFolder;
+package bio.terra.workspace.service.resource.controlled.cloud.aws.s3storageFolder;
 
 import bio.terra.workspace.common.exception.FeatureNotSupportedException;
 import bio.terra.workspace.db.DbSerDes;
@@ -8,13 +8,13 @@ import bio.terra.workspace.service.resource.model.WsmResourceHandler;
 import java.util.UUID;
 import org.jetbrains.annotations.Nullable;
 
-public class ControlledAwsStorageFolderHandler implements WsmResourceHandler {
+public class ControlledAwsS3StorageFolderHandler implements WsmResourceHandler {
 
-  private static ControlledAwsStorageFolderHandler theHandler;
+  private static ControlledAwsS3StorageFolderHandler theHandler;
 
-  public static ControlledAwsStorageFolderHandler getHandler() {
+  public static ControlledAwsS3StorageFolderHandler getHandler() {
     if (theHandler == null) {
-      theHandler = new ControlledAwsStorageFolderHandler();
+      theHandler = new ControlledAwsS3StorageFolderHandler();
     }
     return theHandler;
   }
@@ -22,10 +22,10 @@ public class ControlledAwsStorageFolderHandler implements WsmResourceHandler {
   /** {@inheritDoc} */
   @Override
   public WsmResource makeResourceFromDb(DbResource dbResource) {
-    ControlledAwsStorageFolderAttributes attributes =
-        DbSerDes.fromJson(dbResource.getAttributes(), ControlledAwsStorageFolderAttributes.class);
+    ControlledAwsS3StorageFolderAttributes attributes =
+        DbSerDes.fromJson(dbResource.getAttributes(), ControlledAwsS3StorageFolderAttributes.class);
 
-    return new ControlledAwsStorageFolderResource(
+    return new ControlledAwsS3StorageFolderResource(
         dbResource, attributes.getBucketName(), attributes.getPrefix());
   }
 

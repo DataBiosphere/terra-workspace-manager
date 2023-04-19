@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.controlled.cloud.aws.storageFolder;
+package bio.terra.workspace.service.resource.controlled.cloud.aws.s3storageFolder;
 
 import bio.terra.common.exception.ConflictException;
 import bio.terra.stairway.FlightContext;
@@ -11,12 +11,12 @@ import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 
-public class ValidateAwsStorageFolderCreateStep implements Step {
-  private final ControlledAwsStorageFolderResource resource;
+public class ValidateAwsS3StorageFolderCreateStep implements Step {
+  private final ControlledAwsS3StorageFolderResource resource;
   private final AwsCloudContextService awsCloudContextService;
 
-  public ValidateAwsStorageFolderCreateStep(
-      ControlledAwsStorageFolderResource resource, AwsCloudContextService awsCloudContextService) {
+  public ValidateAwsS3StorageFolderCreateStep(
+      ControlledAwsS3StorageFolderResource resource, AwsCloudContextService awsCloudContextService) {
     this.resource = resource;
     this.awsCloudContextService = awsCloudContextService;
   }

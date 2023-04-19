@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.controlled.cloud.aws.storageFolder;
+package bio.terra.workspace.service.resource.controlled.cloud.aws.s3storageFolder;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
@@ -13,13 +13,13 @@ import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 
-public class DeleteAwsStorageFolderStep implements Step {
-  private static final Logger logger = LoggerFactory.getLogger(DeleteAwsStorageFolderStep.class);
-  private final ControlledAwsStorageFolderResource resource;
+public class DeleteAwsS3StorageFolderStep implements Step {
+  private static final Logger logger = LoggerFactory.getLogger(DeleteAwsS3StorageFolderStep.class);
+  private final ControlledAwsS3StorageFolderResource resource;
   private final AwsCloudContextService awsCloudContextService;
 
-  public DeleteAwsStorageFolderStep(
-      ControlledAwsStorageFolderResource resource, AwsCloudContextService awsCloudContextService) {
+  public DeleteAwsS3StorageFolderStep(
+      ControlledAwsS3StorageFolderResource resource, AwsCloudContextService awsCloudContextService) {
     this.resource = resource;
     this.awsCloudContextService = awsCloudContextService;
   }

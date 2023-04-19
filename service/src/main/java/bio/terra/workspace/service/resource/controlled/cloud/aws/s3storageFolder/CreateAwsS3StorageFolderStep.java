@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.controlled.cloud.aws.storageFolder;
+package bio.terra.workspace.service.resource.controlled.cloud.aws.s3storageFolder;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
@@ -14,13 +14,13 @@ import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sts.model.Tag;
 
-public class CreateAwsStorageFolderStep implements Step {
-  private final ControlledAwsStorageFolderResource resource;
+public class CreateAwsS3StorageFolderStep implements Step {
+  private final ControlledAwsS3StorageFolderResource resource;
   private final AwsCloudContextService awsCloudContextService;
   private final AuthenticatedUserRequest userRequest;
 
-  public CreateAwsStorageFolderStep(
-      ControlledAwsStorageFolderResource resource,
+  public CreateAwsS3StorageFolderStep(
+      ControlledAwsS3StorageFolderResource resource,
       AwsCloudContextService awsCloudContextService,
       AuthenticatedUserRequest userRequest) {
     this.resource = resource;

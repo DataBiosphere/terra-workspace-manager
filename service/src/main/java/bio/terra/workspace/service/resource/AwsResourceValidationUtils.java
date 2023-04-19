@@ -14,7 +14,7 @@ public class AwsResourceValidationUtils {
    * @param prefixName prefix name
    * @throws InvalidNameException invalid prefix name
    */
-  public static void validateAwsStorageFolderName(String prefixName) {
+  public static void validateAwsS3StorageFolderName(String prefixName) {
     int nameLength = prefixName.getBytes(StandardCharsets.UTF_8).length;
     if (nameLength < 1 || nameLength > 1024) {
       throw new InvalidNameException(
