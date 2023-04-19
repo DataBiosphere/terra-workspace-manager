@@ -141,8 +141,7 @@ public class AwsCloudContextService {
    *
    * @return AWS environment
    */
-  public Environment discoverEnvironment()
-      throws IllegalArgumentException, InternalLogicException {
+  public Environment discoverEnvironment() throws IllegalArgumentException, InternalLogicException {
     try {
       maybeInitializeEnvironmentDiscovery();
       Preconditions.checkNotNull(this.environmentDiscovery, "environmentDiscovery not configured");
