@@ -152,9 +152,7 @@ public class ControlledAwsStorageFolderResource extends ControlledResource {
   }
 
   public ApiAwsStorageFolderAttributes toApiAttributes() {
-    return new ApiAwsStorageFolderAttributes()
-        .bucketName(getBucketName())
-        .prefix(getPrefix());
+    return new ApiAwsStorageFolderAttributes().bucketName(getBucketName()).prefix(getPrefix());
   }
 
   public ApiAwsStorageFolderResource toApiResource() {
@@ -165,8 +163,7 @@ public class ControlledAwsStorageFolderResource extends ControlledResource {
 
   @Override
   public String attributesToJson() {
-    return DbSerDes.toJson(
-        new ControlledAwsStorageFolderAttributes(getBucketName(), getPrefix()));
+    return DbSerDes.toJson(new ControlledAwsStorageFolderAttributes(getBucketName(), getPrefix()));
   }
 
   @Override

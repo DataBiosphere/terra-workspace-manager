@@ -12,7 +12,7 @@ public class AwsResourceValidationUtils {
    * Validate AWS storage folder name.
    *
    * @param prefixName prefix name
-   * @throws InvalidNameException InvalidNameException
+   * @throws InvalidNameException invalid prefix name
    */
   public static void validateAwsStorageFolderName(String prefixName) {
     int nameLength = prefixName.getBytes(StandardCharsets.UTF_8).length;

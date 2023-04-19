@@ -1,7 +1,7 @@
 package bio.terra.workspace.app.controller;
 
 import bio.terra.aws.resource.discovery.LandingZone;
-import bio.terra.common.exception.BadRequestException;
+import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.utils.AwsUtils;
@@ -104,26 +104,17 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
         awsCloudContextService.getRequiredAwsCloudContext(workspaceUuid);
     ApiAwsStorageFolderCreationParameters creationParameters = body.getAwsStorageFolder();
 
-    Region requestedRegion;
-    LandingZone landingZone;
-    try {
-      AwsResourceValidationUtils.validateAwsStorageFolderName(commonFields.getName());
+    AwsResourceValidationUtils.validateAwsStorageFolderName(commonFields.getName());
 
-      requestedRegion = Region.of(creationParameters.getRegion());
-      landingZone =
-          awsCloudContextService
-              .getLandingZone(awsCloudContext, requestedRegion)
-              .orElseThrow(
-                  () -> {
-                    throw new BadRequestException(
-                        String.format(
-                            "Unsupported AWS region: '%s'.", creationParameters.getRegion()));
-                  });
-
-    } catch (IllegalArgumentException e) {
-      throw new BadRequestException(
-          String.format("Invalid AWS region: '%s'.", creationParameters.getRegion()));
-    }
+    LandingZone landingZone =
+        awsCloudContextService
+            .getLandingZone(awsCloudContext, Region.of(creationParameters.getRegion()))
+            .orElseThrow(
+                () -> {
+                  throw new ValidationException(
+                      String.format(
+                          "Unsupported AWS region: '%s'.", creationParameters.getRegion()));
+                });
 
     logger.info(
         "createAwsStorageFolder workspace: {}, bucketName: {}, prefix {}, region: {}",
@@ -139,7 +130,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
             .prefix(commonFields.getName())
             .build();
 
-      ControlledAwsStorageFolderResource createdBucket =
+    ControlledAwsStorageFolderResource createdBucket =
         controlledResourceService
             .createControlledResourceSync(
                 resource, commonFields.getIamRole(), userRequest, body.getAwsStorageFolder())
