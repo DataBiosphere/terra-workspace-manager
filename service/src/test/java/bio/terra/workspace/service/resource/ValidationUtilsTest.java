@@ -470,7 +470,7 @@ public class ValidationUtilsTest extends BaseUnitTest {
     var testRegions = List.of("us", "us-central1", "us-east1-a");
     UUID workspaceId = UUID.randomUUID();
 
-    final CloudPlatform cloudPlatform = CloudPlatform.GCP;
+    CloudPlatform cloudPlatform = CloudPlatform.GCP;
     when(mockTpsApiDispatch().listValidRegions(workspaceId, cloudPlatform))
         .thenReturn(List.of("US", "us-central1", "us-east1"));
 
@@ -488,7 +488,7 @@ public class ValidationUtilsTest extends BaseUnitTest {
     var testRegions = List.of(Region.US_EAST, Region.US_EAST2);
     UUID workspaceId = UUID.randomUUID();
 
-    final CloudPlatform cloudPlatform = CloudPlatform.AZURE;
+    CloudPlatform cloudPlatform = CloudPlatform.AZURE;
     when(mockTpsApiDispatch().listValidRegions(workspaceId, cloudPlatform))
         .thenReturn(testRegions.stream().map(Region::name).toList());
 

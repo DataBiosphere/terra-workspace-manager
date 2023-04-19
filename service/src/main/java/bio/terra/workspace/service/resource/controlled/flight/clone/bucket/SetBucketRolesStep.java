@@ -55,23 +55,23 @@ public class SetBucketRolesStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    final FlightMap workingMap = flightContext.getWorkingMap();
+    FlightMap workingMap = flightContext.getWorkingMap();
     FlightUtils.validateRequiredEntries(
         flightContext.getInputParameters(), ControlledResourceKeys.DESTINATION_WORKSPACE_ID);
 
     // Gather bucket inputs and store them in the working map for the next
     // step.
-    final BucketCloneInputs sourceInputs = getSourceInputs();
+    BucketCloneInputs sourceInputs = getSourceInputs();
     workingMap.put(ControlledResourceKeys.SOURCE_CLONE_INPUTS, sourceInputs);
 
-    final BucketCloneInputs destinationInputs = getDestinationInputs(flightContext);
+    BucketCloneInputs destinationInputs = getDestinationInputs(flightContext);
     workingMap.put(ControlledResourceKeys.DESTINATION_CLONE_INPUTS, destinationInputs);
 
-    final String controlPlaneProjectId = GcpUtils.getControlPlaneProjectId();
+    String controlPlaneProjectId = GcpUtils.getControlPlaneProjectId();
     workingMap.put(ControlledResourceKeys.CONTROL_PLANE_PROJECT_ID, controlPlaneProjectId);
 
     // Determine the Storage Transfer Service SA
-    final String storageTransferServiceSAEmail;
+    String storageTransferServiceSAEmail;
     try {
       storageTransferServiceSAEmail = getStorageTransferServiceSAEmail(controlPlaneProjectId);
     } catch (IOException e) {
@@ -108,9 +108,9 @@ public class SetBucketRolesStep implements Step {
   }
 
   private BucketCloneInputs getSourceInputs() {
-    final String sourceProjectId =
+    String sourceProjectId =
         gcpCloudContextService.getRequiredGcpProject(sourceBucket.getWorkspaceId());
-    final String sourceBucketName = sourceBucket.getBucketName();
+    String sourceBucketName = sourceBucket.getBucketName();
     return new BucketCloneInputs(
         sourceBucket.getWorkspaceId(), sourceProjectId, sourceBucketName, SOURCE_BUCKET_ROLE_NAMES);
   }
@@ -121,12 +121,12 @@ public class SetBucketRolesStep implements Step {
     // in a previous step. This is the effective destination bucket name that was either
     // user-supplied
     // or generated randomly.
-    final UUID workspaceUuid =
+    UUID workspaceUuid =
         flightContext
             .getInputParameters()
             .get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
-    final String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceUuid);
-    final String bucketName =
+    String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceUuid);
+    String bucketName =
         flightContext
             .getWorkingMap()
             .get(ControlledResourceKeys.DESTINATION_BUCKET_NAME, String.class);
@@ -134,7 +134,7 @@ public class SetBucketRolesStep implements Step {
         workspaceUuid, projectId, bucketName, DESTINATION_BUCKET_ROLE_NAMES);
   }
 
-  final String getStorageTransferServiceSAEmail(String controlPlaneProjectId) throws IOException {
+  String getStorageTransferServiceSAEmail(String controlPlaneProjectId) throws IOException {
     // Get the service account in the control plane project used by the transfer service to
     // perform the actual data transfer. It's named for and scoped to the project.
     return storagetransfer

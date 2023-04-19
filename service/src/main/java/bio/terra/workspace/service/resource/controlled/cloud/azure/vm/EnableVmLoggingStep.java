@@ -57,7 +57,7 @@ public class EnableVmLoggingStep implements Step {
     getDataCollectionRuleFromLandingZone()
         .ifPresent(
             dcr -> {
-              final String vmId =
+              String vmId =
                   context.getWorkingMap().get(AzureVmHelper.WORKING_MAP_VM_ID, String.class);
 
               addMonitorAgentToVm(context, vmId);
@@ -116,7 +116,7 @@ public class EnableVmLoggingStep implements Step {
   }
 
   private MonitorManager getMonitorManager(FlightContext context) {
-    final AzureCloudContext azureCloudContext =
+    AzureCloudContext azureCloudContext =
         context
             .getWorkingMap()
             .get(
@@ -126,7 +126,7 @@ public class EnableVmLoggingStep implements Step {
   }
 
   private ComputeManager getComputeManager(FlightContext context) {
-    final AzureCloudContext azureCloudContext =
+    AzureCloudContext azureCloudContext =
         context
             .getWorkingMap()
             .get(
@@ -138,8 +138,7 @@ public class EnableVmLoggingStep implements Step {
   private Optional<ApiAzureLandingZoneDeployedResource> getDataCollectionRuleFromLandingZone() {
     try {
       var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
-      final UUID lzId =
-          landingZoneApiDispatch.getLandingZoneId(bearerToken, resource.getWorkspaceId());
+      UUID lzId = landingZoneApiDispatch.getLandingZoneId(bearerToken, resource.getWorkspaceId());
 
       return listLandingZoneResources(bearerToken, lzId, ResourcePurpose.SHARED_RESOURCE).stream()
           .filter(r -> DATA_COLLECTION_RULES_TYPE.equalsIgnoreCase(r.getResourceType()))

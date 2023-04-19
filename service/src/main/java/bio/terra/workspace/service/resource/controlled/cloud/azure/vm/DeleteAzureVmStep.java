@@ -26,7 +26,7 @@ public class DeleteAzureVmStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException {
-    final AzureCloudContext azureCloudContext =
+    AzureCloudContext azureCloudContext =
         context
             .getWorkingMap()
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);

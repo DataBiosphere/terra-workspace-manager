@@ -70,7 +70,7 @@ public class FolderDao {
 
   @WriteTransaction
   public Folder createFolder(Folder folder) {
-    final String sql =
+    String sql =
         """
           INSERT INTO folder (workspace_id, id, display_name, description, parent_folder_id, properties, created_by_email)
           values (:workspace_id, :id, :display_name, :description, :parent_folder_id, :properties::jsonb, :created_by_email)
@@ -260,7 +260,7 @@ public class FolderDao {
   /** Delete all folders of a given workspaceId. */
   @WriteTransaction
   public boolean deleteAllFolders(UUID workspaceId) {
-    final String sql = "DELETE FROM folder WHERE workspace_id = :workspace_id";
+    String sql = "DELETE FROM folder WHERE workspace_id = :workspace_id";
     MapSqlParameterSource params =
         new MapSqlParameterSource().addValue("workspace_id", workspaceId.toString());
     int rowsAffected = jdbcTemplate.update(sql, params);
@@ -287,8 +287,7 @@ public class FolderDao {
    */
   @WriteTransaction
   public boolean deleteFoldersRecursive(UUID workspaceUuid, UUID folderId) {
-
-    final String sql =
+    String sql =
         """
         WITH RECURSIVE subfolders AS (
                 SELECT id,parent_folder_id
@@ -340,7 +339,7 @@ public class FolderDao {
   /** Update the properties column of a given folder in a given workspace. */
   private void storeFolderProperties(
       Map<String, String> properties, UUID workspaceUuid, UUID folderId) {
-    final String sql =
+    String sql =
         """
           UPDATE folder SET properties = cast(:properties AS jsonb)
           WHERE workspace_id = :workspace_id AND id = :folder_id

@@ -62,8 +62,8 @@ public class CreateTableCopyJobsStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    final FlightMap workingMap = flightContext.getWorkingMap();
-    final CloningInstructions effectiveCloningInstructions =
+    FlightMap workingMap = flightContext.getWorkingMap();
+    CloningInstructions effectiveCloningInstructions =
         flightContext
             .getInputParameters()
             .get(
@@ -74,42 +74,42 @@ public class CreateTableCopyJobsStep implements Step {
     }
 
     // Gather inputs
-    final DatasetCloneInputs sourceInputs = getSourceInputs();
+    DatasetCloneInputs sourceInputs = getSourceInputs();
     workingMap.put(ControlledResourceKeys.SOURCE_CLONE_INPUTS, sourceInputs);
 
-    final DatasetCloneInputs destinationInputs = getDestinationInputs(flightContext);
+    DatasetCloneInputs destinationInputs = getDestinationInputs(flightContext);
     workingMap.put(ControlledResourceKeys.DESTINATION_CLONE_INPUTS, destinationInputs);
 
-    final BigQueryCow bigQueryCow = crlService.createWsmSaBigQueryCow();
+    BigQueryCow bigQueryCow = crlService.createWsmSaBigQueryCow();
     // TODO(jaycarlton):  remove usage of this client when it's all in CRL PF-942
-    final Bigquery bigQueryClient = crlService.createWsmSaNakedBigQueryClient();
+    Bigquery bigQueryClient = crlService.createWsmSaNakedBigQueryClient();
     try {
       // Get a list of all tables in the source dataset
-      final TableList sourceTables =
+      TableList sourceTables =
           bigQueryCow
               .tables()
               .list(sourceInputs.getProjectId(), sourceInputs.getDatasetName())
               .execute();
       // Start a copy job for each source table
-      final Map<String, String> tableToJobId =
+      Map<String, String> tableToJobId =
           Optional.ofNullable(
                   workingMap.get(
                       ControlledResourceKeys.TABLE_TO_JOB_ID_MAP,
                       new TypeReference<Map<String, String>>() {}))
               .orElseGet(HashMap::new);
-      final List<Tables> tables =
+      List<Tables> tables =
           Optional.ofNullable(sourceTables.getTables()).orElse(Collections.emptyList());
       // Find the first table whose ID isn't a key in the map.
-      final Optional<Tables> tableMaybe =
+      Optional<Tables> tableMaybe =
           tables.stream()
               .filter(t -> null != t.getId() && !tableToJobId.containsKey(t.getId()))
               .findFirst();
       if (tableMaybe.isPresent()) {
-        final Tables table = tableMaybe.get();
+        Tables table = tableMaybe.get();
         checkStreamingBuffer(sourceInputs, bigQueryCow, table);
-        final Job inputJob = buildTableCopyJob(sourceInputs, destinationInputs, table);
+        Job inputJob = buildTableCopyJob(sourceInputs, destinationInputs, table);
         // bill the job to the destination project
-        final Job submittedJob =
+        Job submittedJob =
             bigQueryClient.jobs().insert(destinationInputs.getProjectId(), inputJob).execute();
 
         // Update the map, which will be persisted
@@ -139,7 +139,7 @@ public class CreateTableCopyJobsStep implements Step {
   // For now, we simply warn in the log if there's data that will be skipped.
   private void checkStreamingBuffer(
       DatasetCloneInputs sourceInputs, BigQueryCow bigQueryCow, Tables table) throws IOException {
-    final Table tableGetResponse =
+    Table tableGetResponse =
         bigQueryCow
             .tables()
             .get(
@@ -164,7 +164,7 @@ public class CreateTableCopyJobsStep implements Step {
 
   private static Job buildTableCopyJob(
       DatasetCloneInputs sourceInputs, DatasetCloneInputs destinationInputs, Tables table) {
-    final JobConfigurationTableCopy jobConfigurationTableCopy = new JobConfigurationTableCopy();
+    JobConfigurationTableCopy jobConfigurationTableCopy = new JobConfigurationTableCopy();
     // The source and destination table have the same table type.
     jobConfigurationTableCopy.setOperationType("COPY");
     // make new tables in empty destination dataset
@@ -176,12 +176,12 @@ public class CreateTableCopyJobsStep implements Step {
     jobConfigurationTableCopy.setSourceTable(buildTableReference(sourceInputs, table));
     jobConfigurationTableCopy.setDestinationTable(buildTableReference(destinationInputs, table));
 
-    final JobConfiguration jobConfiguration = new JobConfiguration();
+    JobConfiguration jobConfiguration = new JobConfiguration();
     jobConfiguration.setJobType("COPY");
     jobConfiguration.setCopy(jobConfigurationTableCopy);
     jobConfiguration.setJobTimeoutMs(COPY_JOB_TIMEOUT.toMillis());
 
-    final Job inputJob = new Job();
+    Job inputJob = new Job();
     inputJob.setConfiguration(jobConfiguration);
     return inputJob;
   }
@@ -190,12 +190,12 @@ public class CreateTableCopyJobsStep implements Step {
   private static String getTableName(String fqTableId) {
     // Since neither the project nor the dataset can contain periods, we can simply split on
     // the period character
-    final String[] parts = fqTableId.split("\\.");
+    String[] parts = fqTableId.split("\\.");
     return parts[1];
   }
 
   private static TableReference buildTableReference(DatasetCloneInputs inputs, Tables table) {
-    final TableReference sourceTableReference = new TableReference();
+    TableReference sourceTableReference = new TableReference();
     sourceTableReference.setProjectId(inputs.getProjectId());
     sourceTableReference.setDatasetId(inputs.getDatasetName());
     sourceTableReference.setTableId(getTableName(table.getId()));
@@ -203,21 +203,21 @@ public class CreateTableCopyJobsStep implements Step {
   }
 
   private DatasetCloneInputs getSourceInputs() {
-    final String sourceProjectId =
+    String sourceProjectId =
         gcpCloudContextService.getRequiredGcpProject(sourceDataset.getWorkspaceId());
-    final String sourceDatasetName = sourceDataset.getDatasetName();
+    String sourceDatasetName = sourceDataset.getDatasetName();
     return new DatasetCloneInputs(
         sourceDataset.getWorkspaceId(), sourceProjectId, sourceDatasetName);
   }
 
   private DatasetCloneInputs getDestinationInputs(FlightContext flightContext) {
-    final UUID destinationWorkspaceId =
+    UUID destinationWorkspaceId =
         flightContext
             .getInputParameters()
             .get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
-    final String destinationProjectId =
+    String destinationProjectId =
         gcpCloudContextService.getRequiredGcpProject(destinationWorkspaceId);
-    final String destinationDatasetName =
+    String destinationDatasetName =
         flightContext
             .getWorkingMap()
             .get(ControlledResourceKeys.DESTINATION_DATASET_NAME, String.class);

@@ -50,11 +50,11 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
   public void createAzureDiskControlledResource() throws InterruptedException {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
 
-    final ApiAzureDiskCreationParameters creationParameters =
+    ApiAzureDiskCreationParameters creationParameters =
         ControlledResourceFixtures.getAzureDiskCreationParameters();
 
     // TODO: make this application-private resource once the POC supports it
-    final UUID resourceId = UUID.randomUUID();
+    UUID resourceId = UUID.randomUUID();
     ControlledAzureDiskResource resource =
         ControlledAzureDiskResource.builder()
             .common(

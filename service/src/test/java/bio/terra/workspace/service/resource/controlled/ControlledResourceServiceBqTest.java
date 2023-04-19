@@ -533,7 +533,7 @@ public class ControlledResourceServiceBqTest extends BaseConnectedTest {
 
     try {
       // make an update request to set the table expiration time to an invalid value (<3600)
-      final ApiGcpBigQueryDatasetUpdateParameters updateParameters =
+      ApiGcpBigQueryDatasetUpdateParameters updateParameters =
           new ApiGcpBigQueryDatasetUpdateParameters()
               .defaultTableLifetime(3000L)
               .defaultPartitionLifetime(3601L);
@@ -551,7 +551,7 @@ public class ControlledResourceServiceBqTest extends BaseConnectedTest {
       validateBigQueryDatasetCloudMetadata(projectId, resource.getDatasetName(), null, null);
 
       // make another update request to set the partition expiration time to an invalid value (<0)
-      final ApiGcpBigQueryDatasetUpdateParameters updateParameters2 =
+      ApiGcpBigQueryDatasetUpdateParameters updateParameters2 =
           new ApiGcpBigQueryDatasetUpdateParameters()
               .defaultTableLifetime(3600L)
               .defaultPartitionLifetime(-2L);

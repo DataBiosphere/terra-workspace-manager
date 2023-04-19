@@ -67,7 +67,7 @@ public class JobApiUtils {
       // Job is complete, get the result
       JobService.JobResultOrException<T> resultOrException =
           jobService.retrieveJobResult(jobId, resultClass, typeReference);
-      final ApiErrorReport errorReport;
+      ApiErrorReport errorReport;
       if (jobReport.getStatus().equals(ApiJobReport.StatusEnum.FAILED)) {
         errorReport = ErrorReportUtils.buildApiErrorReport(resultOrException.getException());
       } else {

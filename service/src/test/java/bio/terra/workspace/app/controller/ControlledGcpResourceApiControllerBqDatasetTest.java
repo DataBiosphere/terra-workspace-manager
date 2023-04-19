@@ -431,7 +431,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         userAccessUtils.defaultUserAuthRequest());
 
     // Assert resource returned by get
-    final ApiGcpBigQueryDatasetResource gotResource =
+    ApiGcpBigQueryDatasetResource gotResource =
         mockMvcUtils.getControlledBqDataset(
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId2,
@@ -494,7 +494,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         userAccessUtils.defaultUserAuthRequest());
 
     // Assert resource returned by get
-    final ApiGcpBigQueryDatasetResource gotResource =
+    ApiGcpBigQueryDatasetResource gotResource =
         mockMvcUtils.getControlledBqDataset(
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId,
@@ -553,7 +553,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         userAccessUtils.defaultUserAuthRequest());
 
     // Assert resource returned by get
-    final ApiGcpBigQueryDatasetResource gotResource =
+    ApiGcpBigQueryDatasetResource gotResource =
         mockMvcUtils.getControlledBqDataset(
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId2,
@@ -607,7 +607,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         userAccessUtils.defaultUserAuthRequest());
 
     // Assert resource returned by get
-    final ApiGcpBigQueryDatasetResource gotResource =
+    ApiGcpBigQueryDatasetResource gotResource =
         mockMvcUtils.getReferencedBqDataset(
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId,

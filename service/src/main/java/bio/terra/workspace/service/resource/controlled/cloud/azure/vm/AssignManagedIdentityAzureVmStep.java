@@ -40,7 +40,7 @@ public class AssignManagedIdentityAzureVmStep implements Step {
     // Note we only assign the VM to a managed identity if the resource has an assigned user.
     // This step is a no-op otherwise.
     if (resource.getAssignedUser().isPresent()) {
-      final AzureCloudContext azureCloudContext =
+      AzureCloudContext azureCloudContext =
           context
               .getWorkingMap()
               .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
@@ -73,7 +73,7 @@ public class AssignManagedIdentityAzureVmStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    final AzureCloudContext azureCloudContext =
+    AzureCloudContext azureCloudContext =
         context
             .getWorkingMap()
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);

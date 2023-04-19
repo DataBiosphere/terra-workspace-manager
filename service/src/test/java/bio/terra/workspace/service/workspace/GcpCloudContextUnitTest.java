@@ -48,19 +48,18 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
 
   @Test
   void serdesTest() {
-    final String v2Json =
+    String v2Json =
         String.format(
             "{\"version\": 2, \"gcpProjectId\": \"%s\", \"samPolicyOwner\": \"%s\", \"samPolicyWriter\": \"%s\", \"samPolicyReader\": \"%s\", \"samPolicyApplication\": \"%s\" }",
             GCP_PROJECT_ID, POLICY_OWNER, POLICY_WRITER, POLICY_READER, POLICY_APPLICATION);
-    final String badV1Json =
-        String.format("{\"version\": 3, \"gcpProjectId\": \"%s\"}", GCP_PROJECT_ID);
-    final String badV2Json =
+    String badV1Json = String.format("{\"version\": 3, \"gcpProjectId\": \"%s\"}", GCP_PROJECT_ID);
+    String badV2Json =
         String.format(
             "{\"version\": 3, \"gcpProjectId\": \"%s\", \"samPolicyOwner\": \"%s\", \"samPolicyWriter\": \"%s\", \"samPolicyReader\": \"%s\", \"samPolicyApplication\": \"%s\" }",
             GCP_PROJECT_ID, POLICY_OWNER, POLICY_WRITER, POLICY_READER, POLICY_APPLICATION);
-    final String incompleteV2Json =
+    String incompleteV2Json =
         String.format("{\"version\": 2, \"gcpProjectId\": \"%s\"}", GCP_PROJECT_ID);
-    final String junkJson = "{\"foo\": 15, \"bar\": \"xyzzy\"}";
+    String junkJson = "{\"foo\": 15, \"bar\": \"xyzzy\"}";
 
     // Case 1: successful V1 deserialization
     GcpCloudContext goodV1 = GcpCloudContext.deserialize(V1_JSON);
@@ -133,7 +132,7 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
     workspaceDao.createWorkspace(workspace, /* applicationIds= */ null);
 
     // Create a cloud context in the database with a V1 format
-    final String flightId = UUID.randomUUID().toString();
+    String flightId = UUID.randomUUID().toString();
     workspaceDao.createCloudContextStart(workspaceUuid, CloudPlatform.GCP, flightId);
     workspaceDao.createCloudContextFinish(workspaceUuid, CloudPlatform.GCP, V1_JSON, flightId);
 
@@ -165,7 +164,7 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
     String projectId = "fake-project-id";
     GcpCloudContext fakeContext =
         new GcpCloudContext(projectId, "fakeOwner", "fakeWriter", "fakeReader", "fakeApplication");
-    final String flightId = UUID.randomUUID().toString();
+    String flightId = UUID.randomUUID().toString();
     workspaceDao.createCloudContextStart(workspaceUuid, CloudPlatform.GCP, flightId);
     workspaceDao.createCloudContextFinish(
         workspaceUuid, CloudPlatform.GCP, fakeContext.serialize(), flightId);

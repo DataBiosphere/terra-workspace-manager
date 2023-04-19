@@ -150,7 +150,7 @@ public class UpdateBigQueryDatasetStepTest extends BaseUnitTest {
                   CrlService.getBigQueryDataset(
                       eq(mockBigQueryCow), eq(PROJECT_ID), any(String.class)))
           .thenReturn(mockExistingDataset);
-      final StepResult result = updateBigQueryDatasetStep.doStep(mockFlightContext);
+      StepResult result = updateBigQueryDatasetStep.doStep(mockFlightContext);
       assertEquals(StepResult.getStepResultSuccess(), result);
       crlServiceMockedStatic.verify(
           () ->
@@ -202,11 +202,10 @@ public class UpdateBigQueryDatasetStepTest extends BaseUnitTest {
    */
   private void checkUpdateArgProperties(
       Integer defaultTableExpirationSec, Integer defaultPartitionExpirationSec) {
-    final Long defaultTableExpirationMS = datasetCaptor.getValue().getDefaultTableExpirationMs();
+    Long defaultTableExpirationMS = datasetCaptor.getValue().getDefaultTableExpirationMs();
     assertEquals(defaultTableExpirationSec * 1000, defaultTableExpirationMS);
 
-    final Long defaultPartitionExpirationMS =
-        datasetCaptor.getValue().getDefaultPartitionExpirationMs();
+    Long defaultPartitionExpirationMS = datasetCaptor.getValue().getDefaultPartitionExpirationMs();
     assertEquals(defaultPartitionExpirationSec * 1000, defaultPartitionExpirationMS);
   }
 }

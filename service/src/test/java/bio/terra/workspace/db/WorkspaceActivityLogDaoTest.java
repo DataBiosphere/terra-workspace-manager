@@ -357,11 +357,11 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
   }
 
   private String getChangeType(UUID workspaceId) {
-    final String sql =
+    String sql =
         "SELECT change_type"
             + " FROM workspace_activity_log WHERE workspace_id = :workspace_id"
             + " ORDER BY change_date DESC LIMIT 1";
-    final var params = new MapSqlParameterSource().addValue("workspace_id", workspaceId.toString());
+    var params = new MapSqlParameterSource().addValue("workspace_id", workspaceId.toString());
     return jdbcTemplate.queryForObject(sql, params, String.class);
   }
 }

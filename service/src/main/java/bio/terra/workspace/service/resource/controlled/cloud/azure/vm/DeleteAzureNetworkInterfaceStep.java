@@ -32,7 +32,7 @@ public class DeleteAzureNetworkInterfaceStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    final AzureCloudContext azureCloudContext =
+    AzureCloudContext azureCloudContext =
         context
             .getWorkingMap()
             .get(

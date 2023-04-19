@@ -59,7 +59,7 @@ public class ControlledAzureResourceApiControllerBatchPoolTest extends BaseAzure
 
   @Test
   public void createBatchPool400WithInconsistentUAMI() throws Exception {
-    final ApiControlledResourceCommonFields commonFields =
+    ApiControlledResourceCommonFields commonFields =
         ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi();
 
     var creationParameters =
@@ -69,7 +69,7 @@ public class ControlledAzureResourceApiControllerBatchPoolTest extends BaseAzure
         List.of(
             new ApiAzureBatchPoolUserAssignedIdentity().clientId(UUID.randomUUID()).name("name")));
 
-    final ApiCreateControlledAzureBatchPoolRequestBody batchPoolRequest =
+    ApiCreateControlledAzureBatchPoolRequestBody batchPoolRequest =
         new ApiCreateControlledAzureBatchPoolRequestBody()
             .common(commonFields)
             .azureBatchPool(creationParameters);
@@ -104,13 +104,13 @@ public class ControlledAzureResourceApiControllerBatchPoolTest extends BaseAzure
 
   @Test
   public void createBatchPoolWithRequiredParametersSuccess() throws Exception {
-    final ApiControlledResourceCommonFields commonFields =
+    ApiControlledResourceCommonFields commonFields =
         ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi();
 
     var creationParameters =
         ControlledResourceBatchPoolFixtures.createBatchPoolWithRequiredParameters();
 
-    final ApiCreateControlledAzureBatchPoolRequestBody batchPoolRequest =
+    ApiCreateControlledAzureBatchPoolRequestBody batchPoolRequest =
         new ApiCreateControlledAzureBatchPoolRequestBody()
             .common(commonFields)
             .azureBatchPool(creationParameters);

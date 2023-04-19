@@ -33,8 +33,8 @@ public class StoreMetadataStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    final FlightMap inputParameters = flightContext.getInputParameters();
-    final ControlledResource resource =
+    FlightMap inputParameters = flightContext.getInputParameters();
+    ControlledResource resource =
         inputParameters.get(ResourceKeys.RESOURCE, ControlledResource.class);
 
     resourceDao.createResourceFailure(

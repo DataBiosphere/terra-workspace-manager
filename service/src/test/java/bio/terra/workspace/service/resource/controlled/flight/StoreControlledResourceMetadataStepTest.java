@@ -56,13 +56,13 @@ public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
     ControlledGcsBucketResource bucketResource =
         ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
 
-    final FlightMap inputFlightMap = new FlightMap();
+    FlightMap inputFlightMap = new FlightMap();
     inputFlightMap.put(ResourceKeys.RESOURCE, bucketResource);
     inputFlightMap.makeImmutable();
 
     doReturn(inputFlightMap).when(mockFlightContext).getInputParameters();
 
-    final StepResult result = storeGoogleBucketMetadataStep.doStep(mockFlightContext);
+    StepResult result = storeGoogleBucketMetadataStep.doStep(mockFlightContext);
     assertThat(result, equalTo(StepResult.getStepResultSuccess()));
 
     WsmResource daoResource =

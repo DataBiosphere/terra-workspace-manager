@@ -310,7 +310,7 @@ public class ReferencedGcpResourceControllerGitRepoTest extends BaseConnectedTes
         userAccessUtils.defaultUserAuthRequest());
 
     // Assert resource returned by get
-    final ApiGitRepoResource gotResource =
+    ApiGitRepoResource gotResource =
         mockMvcUtils.getReferencedGitRepo(
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId,
@@ -343,7 +343,7 @@ public class ReferencedGcpResourceControllerGitRepoTest extends BaseConnectedTes
         userAccessUtils.defaultUserAuthRequest());
 
     // Assert resource returned by get
-    final ApiGitRepoResource gotResource =
+    ApiGitRepoResource gotResource =
         mockMvcUtils.getReferencedGitRepo(
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId2,

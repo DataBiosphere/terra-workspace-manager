@@ -186,7 +186,7 @@ public final class FlightUtils {
       Duration maxInterval,
       Duration maxWait)
       throws InterruptedException {
-    final Instant endTime = Instant.now().plus(maxWait);
+    Instant endTime = Instant.now().plus(maxWait);
     Duration sleepInterval = initialInterval;
     do {
       FlightState flightState = stairway.getFlightState(flightId);

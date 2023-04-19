@@ -257,7 +257,7 @@ public class ReferencedGcpResourceController extends ControllerBase
             .setDescription(body.getDescription())
             .setCloningInstructions(StewardshipType.REFERENCED, body.getCloningInstructions()),
         new ReferencedGcsBucketAttributes(body.getBucketName()));
-    final ReferencedGcsBucketResource updatedResource =
+    ReferencedGcsBucketResource updatedResource =
         referencedResourceService
             .getReferenceResource(workspaceUuid, resourceId)
             .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_BUCKET);
@@ -344,7 +344,7 @@ public class ReferencedGcpResourceController extends ControllerBase
             .setCloningInstructions(StewardshipType.REFERENCED, body.getCloningInstructions()),
         new ReferencedBigQueryDataTableAttributes(
             body.getProjectId(), body.getDatasetId(), body.getDataTableId()));
-    final ReferencedBigQueryDataTableResource updatedResource =
+    ReferencedBigQueryDataTableResource updatedResource =
         referencedResourceService
             .getReferenceResource(workspaceUuid, resourceId)
             .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
@@ -437,7 +437,7 @@ public class ReferencedGcpResourceController extends ControllerBase
             .setDescription(body.getDescription())
             .setCloningInstructions(StewardshipType.REFERENCED, body.getCloningInstructions()),
         new ReferencedBigQueryDatasetAttributes(body.getProjectId(), body.getDatasetId()));
-    final ReferencedBigQueryDatasetResource updatedResource =
+    ReferencedBigQueryDatasetResource updatedResource =
         referencedResourceService
             .getReferenceResource(workspaceUuid, resourceId)
             .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
@@ -560,16 +560,16 @@ public class ReferencedGcpResourceController extends ControllerBase
           CloningInstructions.fromApiModel(body.getCloningInstructions()));
     }
 
-    final ReferencedResource sourceReferencedResource =
+    ReferencedResource sourceReferencedResource =
         referencedResourceService.getReferenceResource(workspaceUuid, resourceId);
 
-    final CloningInstructions effectiveCloningInstructions =
+    CloningInstructions effectiveCloningInstructions =
         Optional.ofNullable(body.getCloningInstructions())
             .map(CloningInstructions::fromApiModel)
             .orElse(sourceReferencedResource.getCloningInstructions());
     if (!effectiveCloningInstructions.isReferenceClone()) {
       // Nothing to clone here
-      final var emptyResult =
+      var emptyResult =
           new ApiCloneReferencedGcpGcsObjectResourceResult()
               .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel())
               .sourceResourceId(sourceReferencedResource.getResourceId())
@@ -578,7 +578,7 @@ public class ReferencedGcpResourceController extends ControllerBase
       return new ResponseEntity<>(emptyResult, HttpStatus.OK);
     }
     // Clone the reference
-    final ReferencedGcsObjectResource clonedReferencedResource =
+    ReferencedGcsObjectResource clonedReferencedResource =
         referencedResourceService
             .cloneReferencedResource(
                 sourceReferencedResource,
@@ -595,7 +595,7 @@ public class ReferencedGcpResourceController extends ControllerBase
             .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_OBJECT);
 
     // Build the correct response type
-    final var result =
+    var result =
         new ApiCloneReferencedGcpGcsObjectResourceResult()
             .resource(clonedReferencedResource.toApiResource())
             .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
@@ -621,16 +621,16 @@ public class ReferencedGcpResourceController extends ControllerBase
           CloningInstructions.fromApiModel(body.getCloningInstructions()));
     }
 
-    final ReferencedResource sourceReferencedResource =
+    ReferencedResource sourceReferencedResource =
         referencedResourceService.getReferenceResource(workspaceUuid, resourceId);
 
-    final CloningInstructions effectiveCloningInstructions =
+    CloningInstructions effectiveCloningInstructions =
         Optional.ofNullable(body.getCloningInstructions())
             .map(CloningInstructions::fromApiModel)
             .orElse(sourceReferencedResource.getCloningInstructions());
     if (!effectiveCloningInstructions.isReferenceClone()) {
       // Nothing to clone here
-      final var emptyResult =
+      var emptyResult =
           new ApiCloneReferencedGcpGcsBucketResourceResult()
               .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel())
               .sourceResourceId(sourceReferencedResource.getResourceId())
@@ -640,7 +640,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     }
 
     // Clone the reference
-    final ReferencedGcsBucketResource clonedReferencedResource =
+    ReferencedGcsBucketResource clonedReferencedResource =
         referencedResourceService
             .cloneReferencedResource(
                 sourceReferencedResource,
@@ -657,7 +657,7 @@ public class ReferencedGcpResourceController extends ControllerBase
             .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_BUCKET);
 
     // Build the correct response type
-    final var result =
+    var result =
         new ApiCloneReferencedGcpGcsBucketResourceResult()
             .resource(clonedReferencedResource.toApiResource())
             .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
@@ -684,16 +684,16 @@ public class ReferencedGcpResourceController extends ControllerBase
           CloningInstructions.fromApiModel(body.getCloningInstructions()));
     }
 
-    final ReferencedResource sourceReferencedResource =
+    ReferencedResource sourceReferencedResource =
         referencedResourceService.getReferenceResource(workspaceUuid, resourceId);
 
-    final CloningInstructions effectiveCloningInstructions =
+    CloningInstructions effectiveCloningInstructions =
         Optional.ofNullable(body.getCloningInstructions())
             .map(CloningInstructions::fromApiModel)
             .orElse(sourceReferencedResource.getCloningInstructions());
     if (!effectiveCloningInstructions.isReferenceClone()) {
       // Nothing to clone here
-      final var emptyResult =
+      var emptyResult =
           new ApiCloneReferencedGcpBigQueryDataTableResourceResult()
               .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel())
               .sourceResourceId(sourceReferencedResource.getResourceId())
@@ -702,7 +702,7 @@ public class ReferencedGcpResourceController extends ControllerBase
       return new ResponseEntity<>(emptyResult, HttpStatus.OK);
     }
     // Clone the reference
-    final ReferencedBigQueryDataTableResource clonedReferencedResource =
+    ReferencedBigQueryDataTableResource clonedReferencedResource =
         referencedResourceService
             .cloneReferencedResource(
                 sourceReferencedResource,
@@ -719,7 +719,7 @@ public class ReferencedGcpResourceController extends ControllerBase
             .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
 
     // Build the correct response type
-    final var result =
+    var result =
         new ApiCloneReferencedGcpBigQueryDataTableResourceResult()
             .resource(clonedReferencedResource.toApiResource())
             .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
@@ -746,16 +746,16 @@ public class ReferencedGcpResourceController extends ControllerBase
           CloningInstructions.fromApiModel(body.getCloningInstructions()));
     }
 
-    final ReferencedResource sourceReferencedResource =
+    ReferencedResource sourceReferencedResource =
         referencedResourceService.getReferenceResource(workspaceUuid, resourceId);
 
-    final CloningInstructions effectiveCloningInstructions =
+    CloningInstructions effectiveCloningInstructions =
         Optional.ofNullable(body.getCloningInstructions())
             .map(CloningInstructions::fromApiModel)
             .orElse(sourceReferencedResource.getCloningInstructions());
     if (!effectiveCloningInstructions.isReferenceClone()) {
       // Nothing to clone here
-      final var emptyResult =
+      var emptyResult =
           new ApiCloneReferencedGcpBigQueryDatasetResourceResult()
               .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel())
               .sourceResourceId(sourceReferencedResource.getResourceId())
@@ -765,7 +765,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     }
 
     // Clone the reference
-    final ReferencedBigQueryDatasetResource clonedReferencedResource =
+    ReferencedBigQueryDatasetResource clonedReferencedResource =
         referencedResourceService
             .cloneReferencedResource(
                 sourceReferencedResource,
@@ -782,7 +782,7 @@ public class ReferencedGcpResourceController extends ControllerBase
             .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
 
     // Build the correct response type
-    final var result =
+    var result =
         new ApiCloneReferencedGcpBigQueryDatasetResourceResult()
             .resource(clonedReferencedResource.toApiResource())
             .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
@@ -809,16 +809,16 @@ public class ReferencedGcpResourceController extends ControllerBase
           CloningInstructions.fromApiModel(body.getCloningInstructions()));
     }
 
-    final ReferencedResource sourceReferencedResource =
+    ReferencedResource sourceReferencedResource =
         referencedResourceService.getReferenceResource(workspaceUuid, resourceId);
 
-    final CloningInstructions effectiveCloningInstructions =
+    CloningInstructions effectiveCloningInstructions =
         Optional.ofNullable(body.getCloningInstructions())
             .map(CloningInstructions::fromApiModel)
             .orElse(sourceReferencedResource.getCloningInstructions());
     if (!effectiveCloningInstructions.isReferenceClone()) {
       // Nothing to clone here
-      final var emptyResult =
+      var emptyResult =
           new ApiCloneReferencedGcpDataRepoSnapshotResourceResult()
               .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel())
               .sourceResourceId(sourceReferencedResource.getResourceId())
@@ -828,7 +828,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     }
 
     // Clone the reference
-    final ReferencedDataRepoSnapshotResource clonedReferencedResource =
+    ReferencedDataRepoSnapshotResource clonedReferencedResource =
         referencedResourceService
             .cloneReferencedResource(
                 sourceReferencedResource,
@@ -845,7 +845,7 @@ public class ReferencedGcpResourceController extends ControllerBase
             .castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
 
     // Build the correct response type
-    final var result =
+    var result =
         new ApiCloneReferencedGcpDataRepoSnapshotResourceResult()
             .resource(clonedReferencedResource.toApiResource())
             .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
@@ -964,16 +964,16 @@ public class ReferencedGcpResourceController extends ControllerBase
           CloningInstructions.fromApiModel(body.getCloningInstructions()));
     }
 
-    final ReferencedResource sourceReferencedResource =
+    ReferencedResource sourceReferencedResource =
         referencedResourceService.getReferenceResource(workspaceUuid, resourceId);
 
-    final CloningInstructions effectiveCloningInstructions =
+    CloningInstructions effectiveCloningInstructions =
         Optional.ofNullable(body.getCloningInstructions())
             .map(CloningInstructions::fromApiModel)
             .orElse(sourceReferencedResource.getCloningInstructions());
     if (!effectiveCloningInstructions.isReferenceClone()) {
       // Nothing to clone here
-      final var emptyResult =
+      var emptyResult =
           new ApiCloneReferencedGitRepoResourceResult()
               .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel())
               .sourceResourceId(sourceReferencedResource.getResourceId())
@@ -982,7 +982,7 @@ public class ReferencedGcpResourceController extends ControllerBase
       return new ResponseEntity<>(emptyResult, HttpStatus.OK);
     }
     // Clone the reference
-    final ReferencedGitRepoResource clonedReferencedResource =
+    ReferencedGitRepoResource clonedReferencedResource =
         referencedResourceService
             .cloneReferencedResource(
                 sourceReferencedResource,

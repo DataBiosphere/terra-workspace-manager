@@ -167,7 +167,7 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
 
   @Override
   public void addUpdateSteps(UpdateResourceFlight flight, FlightBeanBag flightBeanBag) {
-    final RetryRule gcpRetryRule = RetryRules.cloud();
+    RetryRule gcpRetryRule = RetryRules.cloud();
     flight.addStep(new UpdateBigQueryDatasetStep(flightBeanBag.getCrlService()), gcpRetryRule);
   }
 
@@ -200,7 +200,7 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
             description,
             createdByEmail);
 
-    final ReferencedBigQueryDatasetResource.Builder resultBuilder =
+    ReferencedBigQueryDatasetResource.Builder resultBuilder =
         ReferencedBigQueryDatasetResource.builder()
             .wsmResourceFields(wsmResourceFields)
             .projectId(getProjectId())

@@ -56,7 +56,7 @@ public class WsmResourceService {
             "Update resource - type %s; id %s; name %s",
             resource.getResourceType(), resource.getResourceId(), resource.getName());
 
-    final JobBuilder jobBuilder =
+    JobBuilder jobBuilder =
         jobService
             .newJob()
             .description(jobDescription)

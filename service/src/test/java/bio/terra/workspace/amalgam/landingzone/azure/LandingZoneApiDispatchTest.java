@@ -303,7 +303,7 @@ public class LandingZoneApiDispatchTest extends BaseAzureUnitTest {
   }
 
   private void setupLandingZoneResources() {
-    final List<LandingZoneResource> listSubnets1 =
+    List<LandingZoneResource> listSubnets1 =
         List.of(
             LandingZoneResource.builder()
                 .resourceName("fooSubnet11")
@@ -321,7 +321,7 @@ public class LandingZoneApiDispatchTest extends BaseAzureUnitTest {
                 .region("fooRegion1")
                 .build());
 
-    final List<LandingZoneResource> listResources1 =
+    List<LandingZoneResource> listResources1 =
         List.of(
             LandingZoneResource.builder()
                 .resourceId("Id31")

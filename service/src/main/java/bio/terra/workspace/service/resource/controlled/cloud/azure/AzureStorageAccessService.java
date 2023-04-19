@@ -79,7 +79,7 @@ public class AzureStorageAccessService {
       UUID storageContainerUuid,
       String samResourceName,
       String desiredPermissions) {
-    final List<String> containerActions =
+    List<String> containerActions =
         SamRethrow.onInterrupted(
             () ->
                 samService.listResourceActions(
@@ -298,7 +298,7 @@ public class AzureStorageAccessService {
       UUID workspaceUuid, UUID storageContainerUuid, AuthenticatedUserRequest userRequest) {
     // Creating an AzureStorageContainerSasToken requires checking the user's access to both the
     // storage container and storage account resource
-    final ControlledAzureStorageContainerResource storageContainerResource =
+    ControlledAzureStorageContainerResource storageContainerResource =
         controlledResourceMetadataManager
             .validateControlledResourceAndAction(
                 userRequest,

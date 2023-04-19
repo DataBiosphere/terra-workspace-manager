@@ -30,7 +30,7 @@ public final class StorageTransferServiceUtils {
       Storagetransfer storageTransferService, String transferJobName, String controlPlaneProjectId)
       throws IOException {
     // If there's no job  to delete, return early
-    final TransferJob existingTransferJob =
+    TransferJob existingTransferJob =
         getTransferJob(storageTransferService, transferJobName, controlPlaneProjectId);
     if (existingTransferJob == null) {
       logger.info(
@@ -39,13 +39,13 @@ public final class StorageTransferServiceUtils {
           controlPlaneProjectId);
       return;
     }
-    final TransferJob patchedTransferJob = new TransferJob().setStatus(DELETED_STATUS);
-    final UpdateTransferJobRequest updateTransferJobRequest =
+    TransferJob patchedTransferJob = new TransferJob().setStatus(DELETED_STATUS);
+    UpdateTransferJobRequest updateTransferJobRequest =
         new UpdateTransferJobRequest()
             .setUpdateTransferJobFieldMask("status")
             .setTransferJob(patchedTransferJob)
             .setProjectId(controlPlaneProjectId);
-    final TransferJob deletedTransferJob =
+    TransferJob deletedTransferJob =
         storageTransferService
             .transferJobs()
             .patch(transferJobName, updateTransferJobRequest)
@@ -64,9 +64,9 @@ public final class StorageTransferServiceUtils {
   public static StepResult deleteTransferJobStepImpl(
       FlightContext flightContext, Storagetransfer storagetransfer) {
     try {
-      final String transferJobName =
+      String transferJobName =
           createTransferJobName(flightContext.getFlightId()); // might not be in map yet
-      final String controlPlaneProjectId =
+      String controlPlaneProjectId =
           flightContext
               .getWorkingMap()
               .get(ControlledResourceKeys.CONTROL_PLANE_PROJECT_ID, String.class);

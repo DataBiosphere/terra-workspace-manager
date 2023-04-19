@@ -61,13 +61,13 @@ public class CreateAzureVmStep implements Step {
         inputParameters.get(
             ControlledResourceKeys.CREATION_PARAMETERS, ApiAzureVmCreationParameters.class);
 
-    final AzureCloudContext azureCloudContext =
+    AzureCloudContext azureCloudContext =
         context
             .getWorkingMap()
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
     ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
 
-    final Optional<ControlledAzureDiskResource> diskResource =
+    Optional<ControlledAzureDiskResource> diskResource =
         Optional.ofNullable(resource.getDiskId())
             .map(
                 diskId ->
@@ -75,7 +75,7 @@ public class CreateAzureVmStep implements Step {
                         .getResource(resource.getWorkspaceId(), diskId)
                         .castByEnum(WsmResourceType.CONTROLLED_AZURE_DISK));
 
-    final String subnetName =
+    String subnetName =
         context.getWorkingMap().get(AzureVmHelper.WORKING_MAP_SUBNET_NAME, String.class);
 
     try {
@@ -185,7 +185,7 @@ public class CreateAzureVmStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    final AzureCloudContext azureCloudContext =
+    AzureCloudContext azureCloudContext =
         context
             .getWorkingMap()
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);

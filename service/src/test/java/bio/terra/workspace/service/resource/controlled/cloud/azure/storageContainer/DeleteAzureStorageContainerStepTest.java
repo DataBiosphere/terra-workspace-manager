@@ -103,7 +103,7 @@ public class DeleteAzureStorageContainerStepTest extends BaseStorageStepTest {
     when(mockStorageAccounts.getById(sharedAccountId)).thenReturn(mockStorageAccount);
 
     // act
-    final StepResult stepResult = deleteAzureStorageContainerStep.doStep(mockFlightContext);
+    StepResult stepResult = deleteAzureStorageContainerStep.doStep(mockFlightContext);
 
     assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
 
@@ -133,7 +133,7 @@ public class DeleteAzureStorageContainerStepTest extends BaseStorageStepTest {
                     + "Please check that the landing zone deployment is complete."));
 
     // act
-    final StepResult stepResult = deleteAzureStorageContainerStep.doStep(mockFlightContext);
+    StepResult stepResult = deleteAzureStorageContainerStep.doStep(mockFlightContext);
 
     assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));
     assertThat(stepResult.getException().get(), instanceOf(LandingZoneNotFoundException.class));
@@ -153,7 +153,7 @@ public class DeleteAzureStorageContainerStepTest extends BaseStorageStepTest {
         .thenReturn(Optional.empty());
 
     // act
-    final StepResult stepResult = deleteAzureStorageContainerStep.doStep(mockFlightContext);
+    StepResult stepResult = deleteAzureStorageContainerStep.doStep(mockFlightContext);
 
     assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));
     assertThat(stepResult.getException().get(), instanceOf(ResourceNotFoundException.class));

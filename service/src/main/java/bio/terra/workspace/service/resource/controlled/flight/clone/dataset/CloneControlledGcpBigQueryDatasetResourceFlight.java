@@ -105,7 +105,7 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
             sourceResource.getWorkspaceId(),
             sourceResource.getResourceId()));
 
-    final ControlledBigQueryDatasetResource sourceDataset =
+    ControlledBigQueryDatasetResource sourceDataset =
         sourceResource.castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
 
     if (CloningInstructions.COPY_REFERENCE == resolvedCloningInstructions

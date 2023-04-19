@@ -59,7 +59,7 @@ public class CreateAzureNetworkInterfaceStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    final AzureCloudContext azureCloudContext =
+    AzureCloudContext azureCloudContext =
         context
             .getWorkingMap()
             .get(
@@ -108,8 +108,7 @@ public class CreateAzureNetworkInterfaceStep implements Step {
 
   NetworkSubnetPair getNetworkResourcesFromLandingZone(NetworkManager networkManager) {
     var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
-    final UUID lzId =
-        landingZoneApiDispatch.getLandingZoneId(bearerToken, resource.getWorkspaceId());
+    UUID lzId = landingZoneApiDispatch.getLandingZoneId(bearerToken, resource.getWorkspaceId());
 
     ApiAzureLandingZoneDeployedResource lzResource =
         listSubnetsWithParentVNetByPurpose(
@@ -137,7 +136,7 @@ public class CreateAzureNetworkInterfaceStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    final AzureCloudContext azureCloudContext =
+    AzureCloudContext azureCloudContext =
         context
             .getWorkingMap()
             .get(

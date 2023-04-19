@@ -214,8 +214,8 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
             .spendProfileId(new SpendProfileId(SPEND_PROFILE_ID))
             .build();
 
-    final String destinationLocation = "us-east1";
-    final String cloneJobId =
+    String destinationLocation = "us-east1";
+    String cloneJobId =
         workspaceService.cloneWorkspace(
             sourceWorkspace,
             userAccessUtils.defaultUserAuthRequest(),
@@ -223,14 +223,14 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
             /*additionalPolicies=*/ null,
             destinationWorkspace);
     jobService.waitForJob(cloneJobId);
-    final JobResultOrException<ApiClonedWorkspace> cloneResultOrException =
+    JobResultOrException<ApiClonedWorkspace> cloneResultOrException =
         jobService.retrieveJobResult(cloneJobId, ApiClonedWorkspace.class);
     assertNull(cloneResultOrException.getException());
-    final ApiClonedWorkspace cloneResult = cloneResultOrException.getResult();
+    ApiClonedWorkspace cloneResult = cloneResultOrException.getResult();
     assertEquals(destinationWorkspace.getWorkspaceId(), cloneResult.getDestinationWorkspaceId());
     assertThat(cloneResult.getResources(), hasSize(1));
 
-    final ApiResourceCloneDetails bucketCloneDetails = cloneResult.getResources().get(0);
+    ApiResourceCloneDetails bucketCloneDetails = cloneResult.getResources().get(0);
     assertEquals(ApiCloneResourceResult.SUCCEEDED, bucketCloneDetails.getResult());
     assertNull(bucketCloneDetails.getErrorMessage());
     assertEquals(ApiResourceType.GCS_BUCKET, bucketCloneDetails.getResourceType());
@@ -238,7 +238,7 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
         bucketResource.getMetadata().getResourceId(), bucketCloneDetails.getSourceResourceId());
 
     // destination WS should exist
-    final Workspace retrievedDestinationWorkspace =
+    Workspace retrievedDestinationWorkspace =
         workspaceService.getWorkspace(destinationWorkspace.getWorkspaceId());
     assertEquals(
         "Destination Workspace", retrievedDestinationWorkspace.getDisplayName().orElseThrow());
@@ -317,7 +317,7 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
             .spendProfileId(new SpendProfileId(SPEND_PROFILE_ID))
             .build();
 
-    final String destinationLocation = "us-east1";
+    String destinationLocation = "us-east1";
     // Retry undo steps once and fail at the end of the flight.
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(CloneAllFoldersStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);

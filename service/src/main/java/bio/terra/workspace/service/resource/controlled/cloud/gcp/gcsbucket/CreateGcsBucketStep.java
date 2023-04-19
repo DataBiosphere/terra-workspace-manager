@@ -167,7 +167,7 @@ public class CreateGcsBucketStep implements Step {
     // flight.
     Optional<Bucket> existingBucket = getBucket(resource.getBucketName());
     if (existingBucket.isPresent() && bucketInProject(existingBucket.get(), projectId)) {
-      final StorageCow storageCow = crlService.createStorageCow(projectId);
+      StorageCow storageCow = crlService.createStorageCow(projectId);
       storageCow.delete(resource.getBucketName());
     }
     return StepResult.getStepResultSuccess();

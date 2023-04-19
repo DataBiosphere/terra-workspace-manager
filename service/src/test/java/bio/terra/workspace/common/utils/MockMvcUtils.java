@@ -2533,13 +2533,13 @@ public class MockMvcUtils {
    * non-update change_type such as `GRANT_WORKSPACE_ROLE` and `REMOVE_WORKSPACE_ROLE`.
    */
   private ActivityLogChangeDetails getLastChangeDetails(UUID workspaceId, String changeSubjectId) {
-    final String sql =
+    String sql =
         """
             SELECT * FROM workspace_activity_log
             WHERE workspace_id = :workspace_id AND change_subject_id=:change_subject_id
             ORDER BY change_date DESC LIMIT 1
         """;
-    final var params =
+    var params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
             .addValue("change_subject_id", changeSubjectId);

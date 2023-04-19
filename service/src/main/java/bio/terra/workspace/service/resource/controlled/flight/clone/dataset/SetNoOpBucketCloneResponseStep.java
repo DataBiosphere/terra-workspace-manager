@@ -21,7 +21,7 @@ public class SetNoOpBucketCloneResponseStep implements Step {
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     // nothing further to do here or on following steps
     // Build an empty response object
-    final ApiClonedControlledGcpBigQueryDataset noOpResult =
+    ApiClonedControlledGcpBigQueryDataset noOpResult =
         new ApiClonedControlledGcpBigQueryDataset()
             .dataset(null)
             .sourceWorkspaceId(sourceDataset.getWorkspaceId())

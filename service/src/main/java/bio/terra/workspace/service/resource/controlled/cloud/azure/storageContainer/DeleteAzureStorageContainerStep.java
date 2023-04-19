@@ -51,12 +51,12 @@ public class DeleteAzureStorageContainerStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException {
-    final AzureCloudContext azureCloudContext =
+    AzureCloudContext azureCloudContext =
         context
             .getWorkingMap()
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
 
-    final StorageManager manager = crlService.getStorageManager(azureCloudContext, azureConfig);
+    StorageManager manager = crlService.getStorageManager(azureCloudContext, azureConfig);
 
     try {
       String storageAccountName;

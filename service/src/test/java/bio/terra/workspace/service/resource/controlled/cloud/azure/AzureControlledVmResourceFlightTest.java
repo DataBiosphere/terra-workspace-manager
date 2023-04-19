@@ -85,7 +85,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
   public void createAndDeleteAzureVmControlledResource() throws InterruptedException {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
 
-    final ApiAzureVmCreationParameters creationParameters =
+    ApiAzureVmCreationParameters creationParameters =
         ControlledResourceFixtures.getAzureVmCreationParameters();
 
     // TODO: make this application-private resource once the POC supports it
@@ -106,7 +106,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
 
     ComputeManager computeManager = azureTestUtils.getComputeManager();
 
-    final VirtualMachine resolvedVm = getVirtualMachine(creationParameters, computeManager);
+    VirtualMachine resolvedVm = getVirtualMachine(creationParameters, computeManager);
 
     // Submit a VM deletion flight.
     FlightState deleteFlightState =
@@ -138,11 +138,11 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
       throws InterruptedException {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
 
-    final ApiAzureVmCreationParameters creationParameters =
+    ApiAzureVmCreationParameters creationParameters =
         ControlledResourceFixtures.getAzureVmCreationParametersWithCustomScriptExtension();
 
     // TODO: make this application-private resource once the POC supports it
-    final UUID resourceId = UUID.randomUUID();
+    UUID resourceId = UUID.randomUUID();
     ControlledAzureVmResource resource =
         ControlledAzureVmResource.builder()
             .common(
@@ -173,7 +173,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
 
     ComputeManager computeManager = azureTestUtils.getComputeManager();
 
-    final VirtualMachine resolvedVm = getVirtualMachine(creationParameters, computeManager);
+    VirtualMachine resolvedVm = getVirtualMachine(creationParameters, computeManager);
 
     // Submit a VM deletion flight.
     FlightState deleteFlightState =
@@ -205,10 +205,10 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
       throws InterruptedException {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
 
-    final ApiAzureVmCreationParameters creationParameters =
+    ApiAzureVmCreationParameters creationParameters =
         ControlledResourceFixtures.getInvalidAzureVmCreationParameters();
 
-    final UUID resourceId = UUID.randomUUID();
+    UUID resourceId = UUID.randomUUID();
     ControlledAzureVmResource vmResource =
         ControlledAzureVmResource.builder()
             .common(
@@ -291,11 +291,11 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
       throws InterruptedException {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
 
-    final ApiAzureVmCreationParameters creationParameters =
+    ApiAzureVmCreationParameters creationParameters =
         ControlledResourceFixtures.getAzureVmCreationParametersWithEphemeralOsDiskAndCustomData();
 
     // TODO: make this application-private resource once the POC supports it
-    final UUID resourceId = UUID.randomUUID();
+    UUID resourceId = UUID.randomUUID();
     ControlledAzureVmResource resource =
         ControlledAzureVmResource.builder()
             .common(
@@ -324,7 +324,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
 
     ComputeManager computeManager = azureTestUtils.getComputeManager();
 
-    final VirtualMachine resolvedVm = getVirtualMachine(creationParameters, computeManager);
+    VirtualMachine resolvedVm = getVirtualMachine(creationParameters, computeManager);
 
     // Submit a VM deletion flight.
     FlightState deleteFlightState =
@@ -405,7 +405,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
 
   private ControlledAzureDiskResource createDisk(
       UUID workspaceUuid, AuthenticatedUserRequest userRequest) throws InterruptedException {
-    final ApiAzureDiskCreationParameters creationParameters =
+    ApiAzureDiskCreationParameters creationParameters =
         ControlledResourceFixtures.getAzureDiskCreationParameters();
 
     // TODO: make this application-private resource once the POC supports it

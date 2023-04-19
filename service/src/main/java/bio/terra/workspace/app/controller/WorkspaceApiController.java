@@ -665,7 +665,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     // Clone is creating the destination workspace so unlike other clone operations there's no
     // additional authz check for the destination. As long as the user is enabled in Sam, they can
     // create a new workspace.
-    final Workspace sourceWorkspace =
+    Workspace sourceWorkspace =
         workspaceService.validateWorkspaceAndAction(
             petRequest, workspaceUuid, SamWorkspaceAction.READ);
 
@@ -692,7 +692,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     // Construct the target workspace object from the inputs
     // Policies are cloned in the flight instead of here so that they get cleaned appropriately if
     // the flight fails.
-    final Workspace destinationWorkspace =
+    Workspace destinationWorkspace =
         Workspace.builder()
             .workspaceId(destinationWorkspaceId)
             .userFacingId(destinationUserFacingId)
@@ -704,7 +704,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .createdByEmail(getSamService().getUserEmailFromSamAndRethrowOnInterrupt(petRequest))
             .build();
 
-    final String jobId =
+    String jobId =
         workspaceService.cloneWorkspace(
             sourceWorkspace,
             petRequest,
@@ -712,8 +712,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             TpsApiConversionUtils.tpsFromApiTpsPolicyInputs(body.getAdditionalPolicies()),
             destinationWorkspace);
 
-    final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId);
-    final ApiClonedWorkspace clonedWorkspaceStub =
+    ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId);
+    ApiClonedWorkspace clonedWorkspaceStub =
         new ApiClonedWorkspace()
             .destinationWorkspaceId(destinationWorkspaceId)
             .destinationUserFacingId(destinationUserFacingId)
@@ -735,7 +735,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       UUID workspaceUuid, String jobId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
-    final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId);
+    ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId);
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
   }
 

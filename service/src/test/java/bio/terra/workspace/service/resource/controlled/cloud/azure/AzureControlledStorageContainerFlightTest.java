@@ -60,8 +60,8 @@ public class AzureControlledStorageContainerFlightTest extends BaseAzureConnecte
 
     // Submit a storage container creation flight and then verify the resource exists in the
     // workspace.
-    final UUID sharedContainerResourceId = UUID.randomUUID();
-    final String storageContainerName = ControlledResourceFixtures.uniqueBucketName();
+    UUID sharedContainerResourceId = UUID.randomUUID();
+    String storageContainerName = ControlledResourceFixtures.uniqueBucketName();
     ControlledAzureStorageContainerResource sharedContainerResource =
         ControlledResourceFixtures.getAzureStorageContainer(
             workspaceUuid,

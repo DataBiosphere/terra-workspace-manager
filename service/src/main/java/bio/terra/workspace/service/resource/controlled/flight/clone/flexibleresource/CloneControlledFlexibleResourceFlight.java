@@ -45,12 +45,12 @@ public class CloneControlledFlexibleResourceFlight extends Flight {
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_ID,
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID);
 
-    final ControlledFlexibleResource sourceFlexResource =
+    ControlledFlexibleResource sourceFlexResource =
         Preconditions.checkNotNull(
             inputParameters.get(
                 WorkspaceFlightMapKeys.ResourceKeys.RESOURCE, ControlledFlexibleResource.class));
 
-    final CloningInstructions resolvedCloningInstructions =
+    CloningInstructions resolvedCloningInstructions =
         Optional.ofNullable(
                 inputParameters.get(
                     WorkspaceFlightMapKeys.ResourceKeys.CLONING_INSTRUCTIONS,
@@ -87,7 +87,7 @@ public class CloneControlledFlexibleResourceFlight extends Flight {
 
     // 4. Merge policies
     if (mergePolicies) {
-      final UUID destinationWorkspaceId =
+      UUID destinationWorkspaceId =
           inputParameters.get(
               WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
       addStep(

@@ -43,13 +43,13 @@ public class VerifyAzureBatchPoolCanBeCreatedStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    final AzureCloudContext azureCloudContext =
+    AzureCloudContext azureCloudContext =
         context
             .getWorkingMap()
             .get(
                 WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_CLOUD_CONTEXT,
                 AzureCloudContext.class);
-    final BatchManager batchManager = crlService.getBatchManager(azureCloudContext, azureConfig);
+    BatchManager batchManager = crlService.getBatchManager(azureCloudContext, azureConfig);
 
     return validateBatchAccountExists(azureCloudContext, context, batchManager);
   }

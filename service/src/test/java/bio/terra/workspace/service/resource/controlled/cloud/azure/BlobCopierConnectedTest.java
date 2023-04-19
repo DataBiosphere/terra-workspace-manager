@@ -167,7 +167,7 @@ public class BlobCopierConnectedTest extends BaseAzureConnectedTest {
   }
 
   private static String generateAzureResourceName(String tag) {
-    final String id = UUID.randomUUID().toString().substring(0, 6);
+    String id = UUID.randomUUID().toString().substring(0, 6);
     return String.format("it%s%s", tag, id);
   }
 

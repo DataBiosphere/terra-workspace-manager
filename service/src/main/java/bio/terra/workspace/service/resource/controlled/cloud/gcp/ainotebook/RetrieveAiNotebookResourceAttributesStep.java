@@ -35,7 +35,7 @@ public class RetrieveAiNotebookResourceAttributesStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    final FlightMap workingMap = context.getWorkingMap();
+    FlightMap workingMap = context.getWorkingMap();
     String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
     InstanceName instanceName = resource.toInstanceName(projectId);
     AIPlatformNotebooksCow notebooksCow = crlService.getAIPlatformNotebooksCow();

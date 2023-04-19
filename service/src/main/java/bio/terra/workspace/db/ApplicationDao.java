@@ -93,7 +93,7 @@ public class ApplicationDao {
    */
   @ReadTransaction
   public boolean applicationInUse(String applicationId) {
-    final String sql = "SELECT COUNT(*) FROM resource WHERE associated_app = :application_id";
+    String sql = "SELECT COUNT(*) FROM resource WHERE associated_app = :application_id";
 
     MapSqlParameterSource params =
         new MapSqlParameterSource().addValue("application_id", applicationId);
@@ -104,7 +104,7 @@ public class ApplicationDao {
 
   @WriteTransaction
   public void createApplication(WsmApplication app) {
-    final String sql =
+    String sql =
         "INSERT INTO application "
             + "(application_id, display_name, description, service_account, state)"
             + " VALUES "
@@ -132,12 +132,11 @@ public class ApplicationDao {
   @WriteTransaction
   public WsmWorkspaceApplication disableWorkspaceApplication(
       UUID workspaceUuid, String applicationId) {
-
     // Validate that the application exists; workspace is validated in layers above this
     getApplicationOrThrow(applicationId);
 
     // It is an error to have application resources in the workspace if we are disabling it.
-    final String countAppUsesSql =
+    String countAppUsesSql =
         "SELECT COUNT(*) FROM resource"
             + " WHERE associated_app = :application_id AND workspace_id = :workspace_id";
 
@@ -153,7 +152,7 @@ public class ApplicationDao {
     }
 
     // No uses, so we disable
-    final String sql =
+    String sql =
         "DELETE FROM enabled_application"
             + " WHERE workspace_id = :workspace_id AND application_id = :application_id";
 
@@ -182,7 +181,6 @@ public class ApplicationDao {
   @WriteTransaction
   public WsmWorkspaceApplication enableWorkspaceApplication(
       UUID workspaceUuid, String applicationId) {
-
     WsmApplication application = getApplicationOrThrow(applicationId);
     if (application.getState() != WsmApplicationState.OPERATING) {
       throw new InvalidApplicationStateException(
@@ -225,8 +223,7 @@ public class ApplicationDao {
 
   private WsmWorkspaceApplication enableWorkspaceApplicationWorker(
       UUID workspaceUuid, String applicationId) {
-
-    final String sql =
+    String sql =
         "INSERT INTO enabled_application (workspace_id, application_id)"
             + " VALUES (:workspace_id, :application_id)";
 
@@ -264,8 +261,7 @@ public class ApplicationDao {
   @ReadTransaction
   public List<WsmWorkspaceApplication> listWorkspaceApplications(
       UUID workspaceUuid, int offset, int limit) {
-
-    final String sql = WORKSPACE_APPLICATION_QUERY + " OFFSET :offset LIMIT :limit";
+    String sql = WORKSPACE_APPLICATION_QUERY + " OFFSET :offset LIMIT :limit";
 
     var params =
         new MapSqlParameterSource()
@@ -296,7 +292,7 @@ public class ApplicationDao {
   // internal workspace application lookup
   private WsmWorkspaceApplication getWorkspaceApplicationWorker(
       UUID workspaceUuid, String applicationId) {
-    final String sql = WORKSPACE_APPLICATION_QUERY + " WHERE A.application_id = :application_id";
+    String sql = WORKSPACE_APPLICATION_QUERY + " WHERE A.application_id = :application_id";
 
     var params =
         new MapSqlParameterSource()
@@ -329,7 +325,7 @@ public class ApplicationDao {
 
   // internal application lookup
   private WsmApplication getApplicationOrThrow(String applicationId) {
-    final String sql = APPLICATION_QUERY + " WHERE application_id = :application_id";
+    String sql = APPLICATION_QUERY + " WHERE application_id = :application_id";
 
     var params = new MapSqlParameterSource().addValue("application_id", applicationId);
 
@@ -344,7 +340,7 @@ public class ApplicationDao {
 
   @ReadTransaction
   public WsmApplication getApplicationByEmail(String email) {
-    final String sql = APPLICATION_QUERY + " WHERE service_account = :email";
+    String sql = APPLICATION_QUERY + " WHERE service_account = :email";
     var params = new MapSqlParameterSource().addValue("email", StringUtils.lowerCase(email));
 
     try {
@@ -358,7 +354,7 @@ public class ApplicationDao {
   /** @return List of all applications in the database */
   @ReadTransaction
   public List<WsmApplication> listApplications() {
-    final String sql =
+    String sql =
         "SELECT application_id, display_name, description, service_account, state"
             + " FROM application";
     return jdbcTemplate.query(sql, APPLICATION_ROW_MAPPER);
@@ -371,7 +367,7 @@ public class ApplicationDao {
    */
   @WriteTransaction
   public void updateApplication(WsmApplication app) {
-    final String sql =
+    String sql =
         "UPDATE application SET"
             + " display_name = :display_name,"
             + " description = :description,"

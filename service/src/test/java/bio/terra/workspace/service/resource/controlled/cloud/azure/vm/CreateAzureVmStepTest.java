@@ -304,10 +304,10 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
 
   @Test
   void createVm() throws InterruptedException {
-    final ApiAzureVmCreationParameters creationParameters =
+    ApiAzureVmCreationParameters creationParameters =
         ControlledResourceFixtures.getAzureVmCreationParameters();
 
-    final FlightMap creationParametersFlightMap = new FlightMap();
+    FlightMap creationParametersFlightMap = new FlightMap();
     creationParametersFlightMap.put(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
     creationParametersFlightMap.makeImmutable();
     when(mockFlightContext.getInputParameters()).thenReturn(creationParametersFlightMap);
@@ -319,7 +319,7 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
             ControlledResourceFixtures.getAzureVm(creationParameters),
             mockResourceDao);
 
-    final StepResult stepResult = createAzureVmStep.doStep(mockFlightContext);
+    StepResult stepResult = createAzureVmStep.doStep(mockFlightContext);
 
     // Verify step returns success
     assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
@@ -354,10 +354,10 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
 
   @Test
   void createVm_alreadyExists() throws InterruptedException {
-    final ApiAzureVmCreationParameters creationParameters =
+    ApiAzureVmCreationParameters creationParameters =
         ControlledResourceFixtures.getAzureVmCreationParameters();
 
-    final FlightMap creationParametersFlightMap = new FlightMap();
+    FlightMap creationParametersFlightMap = new FlightMap();
     creationParametersFlightMap.put(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
     creationParametersFlightMap.makeImmutable();
     when(mockFlightContext.getInputParameters()).thenReturn(creationParametersFlightMap);
@@ -372,7 +372,7 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
     // Stub creation to throw Conflict exception.
     when(mockVmStage12.create(any(Context.class))).thenThrow(mockException);
 
-    final StepResult stepResult = createAzureVmStep.doStep(mockFlightContext);
+    StepResult stepResult = createAzureVmStep.doStep(mockFlightContext);
 
     // Verify step still returns success
     assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
@@ -380,10 +380,10 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
 
   @Test
   void createVm_VmExtensionProvisioningError() throws InterruptedException {
-    final ApiAzureVmCreationParameters creationParameters =
+    ApiAzureVmCreationParameters creationParameters =
         ControlledResourceFixtures.getAzureVmCreationParameters();
 
-    final FlightMap creationParametersFlightMap = new FlightMap();
+    FlightMap creationParametersFlightMap = new FlightMap();
     creationParametersFlightMap.put(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
     creationParametersFlightMap.makeImmutable();
     when(mockFlightContext.getInputParameters()).thenReturn(creationParametersFlightMap);
@@ -408,17 +408,17 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
                 AzureManagementExceptionUtils.VM_EXTENSION_PROVISIONING_ERROR, "VM error"));
     when(mockVmStage12.create(any(Context.class))).thenThrow(vmExtensionException);
 
-    final StepResult stepResult = createAzureVmStep.doStep(mockFlightContext);
+    StepResult stepResult = createAzureVmStep.doStep(mockFlightContext);
 
     assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));
   }
 
   @Test
   void createVm_ResourceNotFound() throws InterruptedException {
-    final ApiAzureVmCreationParameters creationParameters =
+    ApiAzureVmCreationParameters creationParameters =
         ControlledResourceFixtures.getAzureVmCreationParameters();
 
-    final FlightMap creationParametersFlightMap = new FlightMap();
+    FlightMap creationParametersFlightMap = new FlightMap();
     creationParametersFlightMap.put(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
     creationParametersFlightMap.makeImmutable();
     when(mockFlightContext.getInputParameters()).thenReturn(creationParametersFlightMap);
@@ -440,17 +440,17 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
             new ManagementError(AzureManagementExceptionUtils.RESOURCE_NOT_FOUND, "Not found"));
     when(mockVmStage12.create(any(Context.class))).thenThrow(notFoundException);
 
-    final StepResult stepResult = createAzureVmStep.doStep(mockFlightContext);
+    StepResult stepResult = createAzureVmStep.doStep(mockFlightContext);
 
     assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));
   }
 
   @Test
   void createVm_generic4xxException() throws InterruptedException {
-    final ApiAzureVmCreationParameters creationParameters =
+    ApiAzureVmCreationParameters creationParameters =
         ControlledResourceFixtures.getAzureVmCreationParameters();
 
-    final FlightMap creationParametersFlightMap = new FlightMap();
+    FlightMap creationParametersFlightMap = new FlightMap();
     creationParametersFlightMap.put(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
     creationParametersFlightMap.makeImmutable();
     when(mockFlightContext.getInputParameters()).thenReturn(creationParametersFlightMap);
@@ -477,7 +477,7 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
 
   @Test
   void deleteVm() throws InterruptedException {
-    final ApiAzureVmCreationParameters creationParameters =
+    ApiAzureVmCreationParameters creationParameters =
         ControlledResourceFixtures.getAzureVmCreationParameters();
 
     var createAzureVmStep =
@@ -487,7 +487,7 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
             ControlledResourceFixtures.getAzureVm(creationParameters),
             mockResourceDao);
 
-    final StepResult stepResult = createAzureVmStep.undoStep(mockFlightContext);
+    StepResult stepResult = createAzureVmStep.undoStep(mockFlightContext);
 
     // Verify step returns success
     assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));

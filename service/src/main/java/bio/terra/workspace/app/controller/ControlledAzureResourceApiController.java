@@ -108,7 +108,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   }
 
   private String getLandingZoneRegion(AuthenticatedUserRequest userRequest, UUID workspaceUuid) {
-    final BearerToken token = new BearerToken(userRequest.getRequiredToken());
+    BearerToken token = new BearerToken(userRequest.getRequiredToken());
     var lzId = landingZoneApiDispatch.getLandingZoneId(token, workspaceUuid);
     return landingZoneApiDispatch.getAzureLandingZoneRegion(token, lzId);
   }
@@ -138,7 +138,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .build();
 
     // TODO: make createDisk call async once we have things working e2e
-    final ControlledAzureDiskResource createdDisk =
+    ControlledAzureDiskResource createdDisk =
         controlledResourceService
             .createControlledResourceSync(
                 resource, commonFields.getIamRole(), userRequest, body.getAzureDisk())
@@ -198,7 +198,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     features.azureEnabledCheck();
 
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    final ControlledResourceFields commonFields =
+    ControlledResourceFields commonFields =
         toCommonFields(
             workspaceUuid,
             body.getCommon(),
@@ -214,7 +214,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .storageContainerName(body.getAzureStorageContainer().getStorageContainerName())
             .build();
 
-    final ControlledAzureStorageContainerResource createdStorageContainer =
+    ControlledAzureStorageContainerResource createdStorageContainer =
         controlledResourceService
             .createControlledResourceSync(
                 resource, commonFields.getIamRole(), userRequest, body.getAzureStorageContainer())
@@ -234,7 +234,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     features.azureEnabledCheck();
 
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    final ControlledResourceFields commonFields =
+    ControlledResourceFields commonFields =
         toCommonFields(
             workspaceUuid,
             body.getCommon(),
@@ -248,7 +248,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     ControlledAzureVmResource resource =
         buildControlledAzureVmResource(body.getAzureVm(), commonFields);
 
-    final String jobId =
+    String jobId =
         controlledResourceService.createAzureVm(
             resource,
             body.getAzureVm(),
@@ -257,7 +257,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             getAsyncResultEndpoint(body.getJobControl().getId(), "create-result"),
             userRequest);
 
-    final ApiCreatedControlledAzureVmResult result = fetchCreateControlledAzureVmResult(jobId);
+    ApiCreatedControlledAzureVmResult result = fetchCreateControlledAzureVmResult(jobId);
 
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
@@ -293,7 +293,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     features.azureEnabledCheck();
 
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    final ControlledResourceFields commonFields =
+    ControlledResourceFields commonFields =
         toCommonFields(
             workspaceUuid,
             body.getCommon(),
@@ -322,7 +322,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .metadata(mapListOfMetadataItems(body.getAzureBatchPool().getMetadata()))
             .build();
 
-    final ControlledAzureBatchPoolResource createdBatchPool =
+    ControlledAzureBatchPoolResource createdBatchPool =
         controlledResourceService
             .createControlledResourceSync(
                 resource, commonFields.getIamRole(), userRequest, body.getAzureBatchPool())
@@ -380,7 +380,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   public ResponseEntity<ApiAzureDiskResource> getAzureDisk(UUID workspaceUuid, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     features.azureEnabledCheck();
-    final ControlledAzureDiskResource resource =
+    ControlledAzureDiskResource resource =
         controlledResourceMetadataManager
             .validateControlledResourceAndAction(
                 userRequest, workspaceUuid, resourceId, SamControlledResourceActions.READ_ACTION)
@@ -393,7 +393,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   public ResponseEntity<ApiAzureVmResource> getAzureVm(UUID workspaceUuid, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     features.azureEnabledCheck();
-    final ControlledAzureVmResource resource =
+    ControlledAzureVmResource resource =
         controlledResourceMetadataManager
             .validateControlledResourceAndAction(
                 userRequest, workspaceUuid, resourceId, SamControlledResourceActions.READ_ACTION)
@@ -422,7 +422,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   }
 
   private ResponseEntity<ApiDeleteControlledAzureResourceResult> getJobDeleteResult(String jobId) {
-    final JobApiUtils.AsyncJobResult<Void> jobResult =
+    JobApiUtils.AsyncJobResult<Void> jobResult =
         jobApiUtils.retrieveAsyncJobResult(jobId, Void.class);
     var response =
         new ApiDeleteControlledAzureResourceResult()
@@ -441,13 +441,13 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     controlledResourceMetadataManager.validateControlledResourceAndAction(
         userRequest, workspaceUuid, resourceId, SamControlledResourceActions.DELETE_ACTION);
-    final ApiJobControl jobControl = body.getJobControl();
+    ApiJobControl jobControl = body.getJobControl();
     logger.info(
         "delete {}({}) from workspace {}",
         resourceName,
         resourceId.toString(),
         workspaceUuid.toString());
-    final String jobId =
+    String jobId =
         controlledResourceService.deleteControlledResourceAsync(
             jobControl,
             workspaceUuid,
@@ -458,7 +458,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   }
 
   private ApiCreatedControlledAzureVmResult fetchCreateControlledAzureVmResult(String jobId) {
-    final JobApiUtils.AsyncJobResult<ControlledAzureVmResource> jobResult =
+    JobApiUtils.AsyncJobResult<ControlledAzureVmResource> jobResult =
         jobApiUtils.retrieveAsyncJobResult(jobId, ControlledAzureVmResource.class);
 
     ApiAzureVmResource apiResource = null;
@@ -500,8 +500,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             body.getCloningInstructions(),
             body.getPrefixesToClone());
 
-    final ApiCloneControlledAzureStorageContainerResult result =
-        fetchCloneAzureContainerResult(jobId);
+    ApiCloneControlledAzureStorageContainerResult result = fetchCloneAzureContainerResult(jobId);
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
   }
 

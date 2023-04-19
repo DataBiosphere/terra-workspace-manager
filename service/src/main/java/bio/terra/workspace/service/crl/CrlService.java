@@ -154,8 +154,8 @@ public class CrlService {
   public ComputeManager getComputeManager(
       AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
     assertCrlInUse();
-    final var azureCreds = getManagedAppCredentials(azureConfig);
-    final var azureProfile = getAzureProfile(azureCloudContext);
+    var azureCreds = getManagedAppCredentials(azureConfig);
+    var azureProfile = getAzureProfile(azureCloudContext);
 
     // We must use FQDN because there are two `Defaults` symbols imported otherwise.
     return bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
@@ -167,8 +167,8 @@ public class CrlService {
   public RelayManager getRelayManager(
       AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
     assertCrlInUse();
-    final var azureCreds = getManagedAppCredentials(azureConfig);
-    final var azureProfile = getAzureProfile(azureCloudContext);
+    var azureCreds = getManagedAppCredentials(azureConfig);
+    var azureProfile = getAzureProfile(azureCloudContext);
     return bio.terra.cloudres.azure.resourcemanager.relay.Defaults.crlConfigure(
             clientConfig, RelayManager.configure())
         .authenticate(azureCreds, azureProfile);
@@ -178,8 +178,8 @@ public class CrlService {
   public StorageManager getStorageManager(
       AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
     assertCrlInUse();
-    final var azureCreds = getManagedAppCredentials(azureConfig);
-    final var azureProfile = getAzureProfile(azureCloudContext);
+    var azureCreds = getManagedAppCredentials(azureConfig);
+    var azureProfile = getAzureProfile(azureCloudContext);
     return bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
             clientConfig, StorageManager.configure())
         .authenticate(azureCreds, azureProfile);
@@ -188,8 +188,8 @@ public class CrlService {
   public BatchManager getBatchManager(
       AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
     assertCrlInUse();
-    final var azureCreds = getManagedAppCredentials(azureConfig);
-    final var azureProfile = getAzureProfile(azureCloudContext);
+    var azureCreds = getManagedAppCredentials(azureConfig);
+    var azureProfile = getAzureProfile(azureCloudContext);
 
     return bio.terra.cloudres.azure.resourcemanager.batch.Defaults.crlConfigure(
             clientConfig, BatchManager.configure())
@@ -200,8 +200,8 @@ public class CrlService {
   public ResourceManager getResourceManager(
       AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
     assertCrlInUse();
-    final var azureCreds = getManagedAppCredentials(azureConfig);
-    final var azureProfile = getAzureProfile(azureCloudContext);
+    var azureCreds = getManagedAppCredentials(azureConfig);
+    var azureProfile = getAzureProfile(azureCloudContext);
     return bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
             clientConfig, ResourceManager.configure())
         .authenticate(azureCreds, azureProfile)
@@ -212,8 +212,8 @@ public class CrlService {
   public MsiManager getMsiManager(
       AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
     assertCrlInUse();
-    final var azureCreds = getManagedAppCredentials(azureConfig);
-    final var azureProfile = getAzureProfile(azureCloudContext);
+    var azureCreds = getManagedAppCredentials(azureConfig);
+    var azureProfile = getAzureProfile(azureCloudContext);
     return bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
             clientConfig, MsiManager.configure())
         .authenticate(azureCreds, azureProfile);
@@ -223,8 +223,8 @@ public class CrlService {
   public MonitorManager getMonitorManager(
       AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
     assertCrlInUse();
-    final var azureCreds = getManagedAppCredentials(azureConfig);
-    final var azureProfile = getAzureProfile(azureCloudContext);
+    var azureCreds = getManagedAppCredentials(azureConfig);
+    var azureProfile = getAzureProfile(azureCloudContext);
     return bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
             clientConfig, MonitorManager.configure())
         .authenticate(azureCreds, azureProfile);
@@ -439,8 +439,7 @@ public class CrlService {
   public boolean canReadGcsBucket(String bucketName, AuthenticatedUserRequest userRequest) {
     // Note that some roles grant "get" permissions but not "list", and vice-versa. Either can be
     // used to read a bucket's contents, so here we only check that the user has at least one.
-    final List<String> readPermissions =
-        ImmutableList.of("storage.objects.get", "storage.objects.list");
+    List<String> readPermissions = ImmutableList.of("storage.objects.get", "storage.objects.list");
     try {
       StorageCow storage = createStorageCow(null, userRequest);
       List<Boolean> hasPermissionsList = storage.testIamPermissions(bucketName, readPermissions);

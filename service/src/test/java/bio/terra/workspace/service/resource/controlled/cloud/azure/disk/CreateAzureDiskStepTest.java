@@ -88,7 +88,7 @@ public class CreateAzureDiskStepTest extends BaseAzureUnitTest {
 
   @Test
   void createDisk() throws InterruptedException {
-    final ApiAzureDiskCreationParameters creationParameters =
+    ApiAzureDiskCreationParameters creationParameters =
         ControlledResourceFixtures.getAzureDiskCreationParameters();
 
     var createAzureDiskStep =
@@ -100,7 +100,7 @@ public class CreateAzureDiskStepTest extends BaseAzureUnitTest {
                 ControlledResourceFixtures.DEFAULT_AZURE_RESOURCE_REGION,
                 creationParameters.getSize()));
 
-    final StepResult stepResult = createAzureDiskStep.doStep(mockFlightContext);
+    StepResult stepResult = createAzureDiskStep.doStep(mockFlightContext);
 
     // Verify step returns success
     assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
@@ -130,7 +130,7 @@ public class CreateAzureDiskStepTest extends BaseAzureUnitTest {
 
   @Test
   public void createDisk_alreadyExists() throws InterruptedException {
-    final ApiAzureDiskCreationParameters creationParameters =
+    ApiAzureDiskCreationParameters creationParameters =
         ControlledResourceFixtures.getAzureDiskCreationParameters();
 
     CreateAzureDiskStep createAzureDiskStep =
@@ -145,7 +145,7 @@ public class CreateAzureDiskStepTest extends BaseAzureUnitTest {
     // Stub creation to throw Conflict exception.
     when(mockDiskStage7.create(any(Context.class))).thenThrow(mockException);
 
-    final StepResult stepResult = createAzureDiskStep.doStep(mockFlightContext);
+    StepResult stepResult = createAzureDiskStep.doStep(mockFlightContext);
 
     // Verify step still returns success
     assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
@@ -153,7 +153,7 @@ public class CreateAzureDiskStepTest extends BaseAzureUnitTest {
 
   @Test
   public void deleteDisk() throws InterruptedException {
-    final ApiAzureDiskCreationParameters creationParameters =
+    ApiAzureDiskCreationParameters creationParameters =
         ControlledResourceFixtures.getAzureDiskCreationParameters();
 
     CreateAzureDiskStep createAzureDiskStep =
@@ -165,7 +165,7 @@ public class CreateAzureDiskStepTest extends BaseAzureUnitTest {
                 ControlledResourceFixtures.DEFAULT_AZURE_RESOURCE_REGION,
                 creationParameters.getSize()));
 
-    final StepResult stepResult = createAzureDiskStep.undoStep(mockFlightContext);
+    StepResult stepResult = createAzureDiskStep.undoStep(mockFlightContext);
 
     // Verify step returns success
     assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));

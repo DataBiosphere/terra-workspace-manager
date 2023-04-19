@@ -54,7 +54,7 @@ public final class CreateStorageTransferServiceJobStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    final FlightMap workingMap = flightContext.getWorkingMap();
+    FlightMap workingMap = flightContext.getWorkingMap();
     FlightUtils.validateRequiredEntries(
         workingMap,
         ControlledResourceKeys.SOURCE_CLONE_INPUTS,
@@ -62,20 +62,20 @@ public final class CreateStorageTransferServiceJobStep implements Step {
         ControlledResourceKeys.CONTROL_PLANE_PROJECT_ID,
         ControlledResourceKeys.STORAGE_TRANSFER_SERVICE_SA_EMAIL);
     // Get source & destination bucket input values
-    final BucketCloneInputs sourceInputs =
+    BucketCloneInputs sourceInputs =
         workingMap.get(ControlledResourceKeys.SOURCE_CLONE_INPUTS, BucketCloneInputs.class);
-    final BucketCloneInputs destinationInputs =
+    BucketCloneInputs destinationInputs =
         workingMap.get(ControlledResourceKeys.DESTINATION_CLONE_INPUTS, BucketCloneInputs.class);
     logger.info(
         "Starting data copy from source bucket \n\t{}\nto destination\n\t{}",
         sourceInputs,
         destinationInputs);
 
-    final String transferJobName =
+    String transferJobName =
         StorageTransferServiceUtils.createTransferJobName(flightContext.getFlightId());
     workingMap.put(ControlledResourceKeys.STORAGE_TRANSFER_JOB_NAME, transferJobName);
 
-    final String controlPlaneProjectId =
+    String controlPlaneProjectId =
         workingMap.get(ControlledResourceKeys.CONTROL_PLANE_PROJECT_ID, String.class);
     logger.info(
         "Creating transfer job named {} in project {}", transferJobName, controlPlaneProjectId);
@@ -83,7 +83,7 @@ public final class CreateStorageTransferServiceJobStep implements Step {
     // Look up the transfer job by name. If it's found, it means we are restarting this step and
     // the job either has an operation in progress or completed (possibly failed).
     try {
-      final TransferJob existingTransferJob =
+      TransferJob existingTransferJob =
           storagetransfer.transferJobs().get(transferJobName, controlPlaneProjectId).execute();
       if (null != existingTransferJob) {
         logger.info(
@@ -102,7 +102,7 @@ public final class CreateStorageTransferServiceJobStep implements Step {
     // TODO(PF-888): understand what happens when the source bucket is requester pays. We don't
     //   support requester pays right now for controlled gcs buckets, but it might be set on a
     //   referenced bucket.
-    final String transferServiceSAEmail =
+    String transferServiceSAEmail =
         workingMap.get(ControlledResourceKeys.STORAGE_TRANSFER_SERVICE_SA_EMAIL, String.class);
     logger.debug("Storage Transfer Service SA: {}", transferServiceSAEmail);
 
@@ -121,7 +121,7 @@ public final class CreateStorageTransferServiceJobStep implements Step {
       String transferJobName,
       String controlPlaneProjectId)
       throws IOException {
-    final TransferJob transferJobInput =
+    TransferJob transferJobInput =
         new TransferJob()
             .setName(transferJobName)
             .setDescription(TRANSFER_JOB_DESCRIPTION)
@@ -131,7 +131,7 @@ public final class CreateStorageTransferServiceJobStep implements Step {
                 createTransferSpec(sourceInputs.getBucketName(), destinationInputs.getBucketName()))
             .setStatus(ENABLED_STATUS);
     // Create the TransferJob for the associated schedule and spec in the correct project.
-    final TransferJob transferJobOutput =
+    TransferJob transferJobOutput =
         storagetransfer.transferJobs().create(transferJobInput).execute();
     logger.debug("Created transfer job {}", transferJobOutput);
   }
@@ -140,10 +140,10 @@ public final class CreateStorageTransferServiceJobStep implements Step {
   // previous step's undo method.
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    final FlightMap workingMap = flightContext.getWorkingMap();
-    final String transferJobName =
+    FlightMap workingMap = flightContext.getWorkingMap();
+    String transferJobName =
         workingMap.get(ControlledResourceKeys.STORAGE_TRANSFER_JOB_NAME, String.class);
-    final String controlPlaneProjectId =
+    String controlPlaneProjectId =
         workingMap.get(ControlledResourceKeys.CONTROL_PLANE_PROJECT_ID, String.class);
 
     TransferJob transferJob;
@@ -186,8 +186,8 @@ public final class CreateStorageTransferServiceJobStep implements Step {
    * @return schedule object for the transfer job
    */
   private Schedule createScheduleRunOnceNow() {
-    final OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
-    final Date runDate =
+    OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+    Date runDate =
         new Date().setYear(now.getYear()).setMonth(now.getMonthValue()).setDay(now.getDayOfMonth());
     // From the Javadoc: "If `schedule_end_date` and schedule_start_date are the same and
     // in the future relative to UTC, the transfer is executed only one time."

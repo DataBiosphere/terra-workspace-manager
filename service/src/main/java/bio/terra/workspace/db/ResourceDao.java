@@ -299,8 +299,8 @@ public class ResourceDao {
     boolean includeReferenced = (stewardshipType == null || stewardshipType == REFERENCED);
     boolean includeControlled = (stewardshipType == null || stewardshipType == CONTROLLED);
 
-    final String referencedPhrase = "stewardship_type = :referenced_resource";
-    final String controlledPhrase = "stewardship_type = :controlled_resource";
+    String referencedPhrase = "stewardship_type = :referenced_resource";
+    String controlledPhrase = "stewardship_type = :controlled_resource";
 
     sb.append(" AND ");
     if (includeReferenced && includeControlled) {
@@ -330,7 +330,7 @@ public class ResourceDao {
    */
   @ReadTransaction
   public boolean workspaceRequiresLinkReferences(UUID workspaceUuid) {
-    final String sql =
+    String sql =
         """
       SELECT COUNT(*) FROM resource
       WHERE workspace_id = :workspace_id AND cloning_instructions = :cloning_instructions
@@ -519,9 +519,9 @@ public class ResourceDao {
    */
   @ReadTransaction
   public WsmResource getResource(UUID workspaceUuid, UUID resourceId) {
-    final String sql = RESOURCE_SELECT_SQL + " AND resource_id = :resource_id";
+    String sql = RESOURCE_SELECT_SQL + " AND resource_id = :resource_id";
 
-    final var params =
+    var params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceUuid.toString())
             .addValue("resource_id", resourceId.toString());
@@ -538,9 +538,9 @@ public class ResourceDao {
    */
   @ReadTransaction
   public WsmResource getResourceByName(UUID workspaceUuid, String name) {
-    final String sql = RESOURCE_SELECT_SQL + " AND name = :name";
+    String sql = RESOURCE_SELECT_SQL + " AND name = :name";
 
-    final var params =
+    var params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceUuid.toString())
             .addValue("name", name);
@@ -998,7 +998,7 @@ public class ResourceDao {
 
   private boolean cloudContextExists(UUID workspaceUuid, CloudPlatform cloudPlatform) {
     // Check existence of the cloud context for this workspace
-    final String sql =
+    String sql =
         """
       SELECT COUNT(*) FROM cloud_context
       WHERE workspace_id = :workspace_id AND cloud_platform = :cloud_platform
@@ -1057,7 +1057,7 @@ public class ResourceDao {
   @WriteTransaction
   public void setPrivateResourceState(
       ControlledResource resource, PrivateResourceState privateResourceState) {
-    final String sql =
+    String sql =
         """
           UPDATE resource SET private_resource_state = :private_resource_state
           WHERE workspace_id = :workspace_id
@@ -1081,7 +1081,7 @@ public class ResourceDao {
   @WriteTransaction
   public void setPrivateResourcesStateForWorkspaceUser(
       UUID workspaceUuid, String userEmail, PrivateResourceState state) {
-    final String sql =
+    String sql =
         """
           UPDATE resource SET private_resource_state = :private_resource_state
           WHERE workspace_id = :workspace_id AND assigned_user = :user_email
@@ -1104,7 +1104,7 @@ public class ResourceDao {
    */
   @ReadTransaction
   public boolean resourceExists(UUID workspaceUuid, UUID resourceId) {
-    final String sql =
+    String sql =
         """
             SELECT COUNT(1) FROM resource
             WHERE workspace_id = :workspace_id AND resource_id = :resource_id
@@ -1120,7 +1120,7 @@ public class ResourceDao {
 
   @ReadTransaction
   public boolean resourceExists(UUID workspaceUuid, String name) {
-    final String sql =
+    String sql =
         """
                 SELECT COUNT(1) FROM resource
                 WHERE workspace_id = :workspace_id AND name = :name
@@ -1134,7 +1134,7 @@ public class ResourceDao {
   }
 
   private void storeResource(WsmResource resource, String flightId, WsmResourceState state) {
-    final String sql =
+    String sql =
         """
         INSERT INTO resource (workspace_id, cloud_platform, resource_id, name, description,
           stewardship_type, exact_resource_type, resource_type, cloning_instructions, attributes,
@@ -1147,7 +1147,7 @@ public class ResourceDao {
           :private_resource_state, :resource_lineage::jsonb, :properties::jsonb, :created_by_email, :region,
           :state, :flight_id);
         """;
-    final var params =
+    var params =
         new MapSqlParameterSource()
             .addValue("workspace_id", resource.getWorkspaceId().toString())
             .addValue("cloud_platform", resource.getResourceType().getCloudPlatform().toString())
@@ -1234,7 +1234,7 @@ public class ResourceDao {
   /** Update the properties column of a given resource in a given workspace. */
   private void storeResourceProperties(
       Map<String, String> properties, UUID workspaceUuid, UUID resourceUuid) {
-    final String sql =
+    String sql =
         """
           UPDATE resource SET properties = cast(:properties AS jsonb)
           WHERE workspace_id = :workspace_id AND resource_id = :resource_id
@@ -1294,7 +1294,7 @@ public class ResourceDao {
   }
 
   private DbResource getDbResourceFromIds(UUID workspaceUuid, UUID resourceId) {
-    final String sql = RESOURCE_SELECT_SQL + " AND resource_id = :resource_id";
+    String sql = RESOURCE_SELECT_SQL + " AND resource_id = :resource_id";
     var params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceUuid.toString())

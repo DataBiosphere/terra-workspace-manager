@@ -243,7 +243,7 @@ public class SamService {
    */
   private void initializeWsmServiceAccount() throws InterruptedException {
     if (!wsmServiceAccountInitialized) {
-      final String wsmAccessToken;
+      String wsmAccessToken;
       try {
         wsmAccessToken = getWsmServiceAccountToken();
       } catch (InternalServerErrorException e) {
@@ -515,7 +515,7 @@ public class SamService {
       AuthenticatedUserRequest userRequest, String type, String uuid, String action)
       throws InterruptedException {
     boolean isAuthorized = isAuthorized(userRequest, type, uuid, action);
-    final String userEmail = getUserEmailFromSam(userRequest);
+    String userEmail = getUserEmailFromSam(userRequest);
     if (!isAuthorized)
       throw new ForbiddenException(
           String.format(
@@ -533,7 +533,7 @@ public class SamService {
   @Traced
   public void checkAdminAuthz(AuthenticatedUserRequest userRequest) throws InterruptedException {
     boolean isAuthorized = isAdmin(userRequest);
-    final String userEmail = getUserEmailFromSam(userRequest);
+    String userEmail = getUserEmailFromSam(userRequest);
     if (!isAuthorized)
       throw new ForbiddenException(
           String.format("User %s is not authorized to perform admin action", userEmail));

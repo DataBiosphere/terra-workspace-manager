@@ -43,12 +43,12 @@ public class DeleteGcsBucketStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext) throws InterruptedException {
     int deleteTries = 0;
-    final GcpCloudContext gcpCloudContext =
+    GcpCloudContext gcpCloudContext =
         FlightUtils.getRequired(
             flightContext.getWorkingMap(),
             ControlledResourceKeys.GCP_CLOUD_CONTEXT,
             GcpCloudContext.class);
-    final StorageCow storageCow = crlService.createStorageCow(gcpCloudContext.getGcpProjectId());
+    StorageCow storageCow = crlService.createStorageCow(gcpCloudContext.getGcpProjectId());
 
     // If the bucket is already deleted (e.g. this step is being retried), storageCow.get() will
     // return null.

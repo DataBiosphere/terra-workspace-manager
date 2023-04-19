@@ -115,7 +115,7 @@ public class AssignAndRemoveManagedIdentityAzureVmStepTest extends BaseAzureUnit
         new AssignManagedIdentityAzureVmStep(
             mockAzureConfig, mockCrlService, mockSamService, mockAzureVmResource);
 
-    final StepResult stepResult = assignManagedIdentityAzureVmStep.doStep(mockFlightContext);
+    StepResult stepResult = assignManagedIdentityAzureVmStep.doStep(mockFlightContext);
 
     // Verify step returns success
     assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
@@ -139,7 +139,7 @@ public class AssignAndRemoveManagedIdentityAzureVmStepTest extends BaseAzureUnit
         Set.of(STUB_STRING_PET_MANAGED_IDENTITY, STUB_STRING_OTHER_MANAGED_IDENTITY);
     when(mockVm.userAssignedManagedServiceIdentityIds()).thenReturn(userAssignedManagedIdentities);
 
-    final StepResult stepResult = assignManagedIdentityAzureVmStep.doStep(mockFlightContext);
+    StepResult stepResult = assignManagedIdentityAzureVmStep.doStep(mockFlightContext);
 
     // Verify step returns success
     assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
@@ -163,7 +163,7 @@ public class AssignAndRemoveManagedIdentityAzureVmStepTest extends BaseAzureUnit
 
     when(mockAzureVmResource.getAssignedUser()).thenReturn(Optional.empty());
 
-    final StepResult stepResult = assignManagedIdentityAzureVmStep.doStep(mockFlightContext);
+    StepResult stepResult = assignManagedIdentityAzureVmStep.doStep(mockFlightContext);
 
     // Verify step returns success
     assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
@@ -186,7 +186,7 @@ public class AssignAndRemoveManagedIdentityAzureVmStepTest extends BaseAzureUnit
     when(mockVmStageUpdate1.withoutUserAssignedManagedServiceIdentity(anyString()))
         .thenReturn(mockVmStageUpdate3);
 
-    final StepResult stepResult = assignManagedIdentityAzureVmStep.undoStep(mockFlightContext);
+    StepResult stepResult = assignManagedIdentityAzureVmStep.undoStep(mockFlightContext);
 
     // Verify undo step returns success
     assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
@@ -207,7 +207,7 @@ public class AssignAndRemoveManagedIdentityAzureVmStepTest extends BaseAzureUnit
     Set<String> userAssignedManagedIdentities = Set.of();
     when(mockVm.userAssignedManagedServiceIdentityIds()).thenReturn(userAssignedManagedIdentities);
 
-    final StepResult stepResult = assignManagedIdentityAzureVmStep.undoStep(mockFlightContext);
+    StepResult stepResult = assignManagedIdentityAzureVmStep.undoStep(mockFlightContext);
 
     // Verify step returns success
     assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
@@ -227,7 +227,7 @@ public class AssignAndRemoveManagedIdentityAzureVmStepTest extends BaseAzureUnit
         new RemoveManagedIdentitiesAzureVmStep(
             mockAzureConfig, mockCrlService, mockAzureVmResource);
 
-    final StepResult stepResult = removeManagedIdentitiesAzureVmStep.doStep(mockFlightContext);
+    StepResult stepResult = removeManagedIdentitiesAzureVmStep.doStep(mockFlightContext);
 
     // Verify step returns success
     assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
@@ -249,7 +249,7 @@ public class AssignAndRemoveManagedIdentityAzureVmStepTest extends BaseAzureUnit
         new RemoveManagedIdentitiesAzureVmStep(
             mockAzureConfig, mockCrlService, mockAzureVmResource);
 
-    final StepResult stepResult = removeManagedIdentitiesAzureVmStep.doStep(mockFlightContext);
+    StepResult stepResult = removeManagedIdentitiesAzureVmStep.doStep(mockFlightContext);
 
     // Verify step returns success
     assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
@@ -270,7 +270,7 @@ public class AssignAndRemoveManagedIdentityAzureVmStepTest extends BaseAzureUnit
         new RemoveManagedIdentitiesAzureVmStep(
             mockAzureConfig, mockCrlService, mockAzureVmResource);
 
-    final StepResult stepResult = removeManagedIdentitiesAzureVmStep.doStep(mockFlightContext);
+    StepResult stepResult = removeManagedIdentitiesAzureVmStep.doStep(mockFlightContext);
 
     // Verify step returns success
     assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));

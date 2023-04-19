@@ -325,7 +325,7 @@ public class ReferencedGcpResourceControllerBqTableTest extends BaseConnectedTes
         userAccessUtils.defaultUserAuthRequest());
 
     // Assert resource returned by get
-    final ApiGcpBigQueryDataTableResource gotResource =
+    ApiGcpBigQueryDataTableResource gotResource =
         mockMvcUtils.getReferencedBqTable(
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId,
@@ -359,7 +359,7 @@ public class ReferencedGcpResourceControllerBqTableTest extends BaseConnectedTes
         userAccessUtils.defaultUserAuthRequest());
 
     // Assert resource returned by get
-    final ApiGcpBigQueryDataTableResource gotResource =
+    ApiGcpBigQueryDataTableResource gotResource =
         mockMvcUtils.getReferencedBqTable(
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId2,

@@ -27,7 +27,7 @@ public class RemoveBucketRolesStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    final FlightMap workingMap = flightContext.getWorkingMap();
+    FlightMap workingMap = flightContext.getWorkingMap();
     bucketCloneRolesService.removeAllAddedBucketRoles(workingMap);
     return StepResult.getStepResultSuccess();
   }

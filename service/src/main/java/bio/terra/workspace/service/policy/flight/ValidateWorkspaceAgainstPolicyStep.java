@@ -43,7 +43,7 @@ public class ValidateWorkspaceAgainstPolicyStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    final TpsPaoGetResult effectivePolicies =
+    TpsPaoGetResult effectivePolicies =
         FlightUtils.getRequired(
             flightContext.getWorkingMap(),
             WorkspaceFlightMapKeys.EFFECTIVE_POLICIES,

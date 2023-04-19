@@ -45,8 +45,8 @@ public class UpdateGcsBucketStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    final FlightMap inputParameters = flightContext.getInputParameters();
-    final ApiGcpGcsBucketUpdateParameters updateParameters =
+    FlightMap inputParameters = flightContext.getInputParameters();
+    ApiGcpGcsBucketUpdateParameters updateParameters =
         inputParameters.get(UPDATE_PARAMETERS, ApiGcpGcsBucketUpdateParameters.class);
 
     return updateBucket(updateParameters);
@@ -55,8 +55,8 @@ public class UpdateGcsBucketStep implements Step {
   // Restore the previous values of the update parameters
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    final FlightMap workingMap = flightContext.getWorkingMap();
-    final ApiGcpGcsBucketUpdateParameters previousUpdateParameters =
+    FlightMap workingMap = flightContext.getWorkingMap();
+    ApiGcpGcsBucketUpdateParameters previousUpdateParameters =
         workingMap.get(PREVIOUS_UPDATE_PARAMETERS, ApiGcpGcsBucketUpdateParameters.class);
 
     return updateBucket(previousUpdateParameters);
@@ -68,11 +68,11 @@ public class UpdateGcsBucketStep implements Step {
       logger.info("No update parameters supplied, so no changes to make.");
       return StepResult.getStepResultSuccess();
     }
-    final String projectId =
+    String projectId =
         gcpCloudContextService.getRequiredGcpProject(bucketResource.getWorkspaceId());
-    final StorageCow storageCow = crlService.createStorageCow(projectId);
+    StorageCow storageCow = crlService.createStorageCow(projectId);
 
-    final BucketCow existingBucketCow = storageCow.get(bucketResource.getBucketName());
+    BucketCow existingBucketCow = storageCow.get(bucketResource.getBucketName());
     if (existingBucketCow == null) {
       IllegalStateException isEx =
           new IllegalStateException(
@@ -80,17 +80,16 @@ public class UpdateGcsBucketStep implements Step {
       logger.error("No bucket found to update with name {}.", bucketResource.getBucketName(), isEx);
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, isEx);
     }
-    final List<LifecycleRule> gcsLifecycleRules =
-        toGcsApiRulesList(updateParameters.getLifecycle());
+    List<LifecycleRule> gcsLifecycleRules = toGcsApiRulesList(updateParameters.getLifecycle());
     // An empty array will clear all rules. A null array will take no effect. A populated array will
     // clear then set rules
-    final boolean doReplaceLifecycleRules = gcsLifecycleRules != null;
+    boolean doReplaceLifecycleRules = gcsLifecycleRules != null;
 
     // Lifecycle rules need to be cleared before being set. We should only do this if
     // we have changes.
-    final BucketCow.Builder bucketCowBuilder;
+    BucketCow.Builder bucketCowBuilder;
     if (doReplaceLifecycleRules) {
-      final var deleteBuilder = existingBucketCow.toBuilder();
+      var deleteBuilder = existingBucketCow.toBuilder();
       deleteBuilder.deleteLifecycleRules();
       var clearedRulesBucket = deleteBuilder.build().update();
       // do separate update to set the lifecycle rules
@@ -101,8 +100,8 @@ public class UpdateGcsBucketStep implements Step {
       bucketCowBuilder = existingBucketCow.toBuilder();
     }
 
-    final StorageClass gcsStorageClass = toGcsApi(updateParameters.getDefaultStorageClass());
-    final boolean replaceStorageClass = gcsStorageClass != null;
+    StorageClass gcsStorageClass = toGcsApi(updateParameters.getDefaultStorageClass());
+    boolean replaceStorageClass = gcsStorageClass != null;
 
     if (replaceStorageClass) {
       bucketCowBuilder.setStorageClass(gcsStorageClass);

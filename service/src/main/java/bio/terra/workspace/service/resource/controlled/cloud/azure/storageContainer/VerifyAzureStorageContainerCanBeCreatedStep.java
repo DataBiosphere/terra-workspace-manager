@@ -60,12 +60,11 @@ public class VerifyAzureStorageContainerCanBeCreatedStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    final AzureCloudContext azureCloudContext =
+    AzureCloudContext azureCloudContext =
         context
             .getWorkingMap()
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
-    final StorageManager storageManager =
-        crlService.getStorageManager(azureCloudContext, azureConfig);
+    StorageManager storageManager = crlService.getStorageManager(azureCloudContext, azureConfig);
 
     StepResult stepResult = validateStorageAccountExists(context, storageManager);
     if (!stepResult.isSuccess()) {
@@ -124,7 +123,7 @@ public class VerifyAzureStorageContainerCanBeCreatedStep implements Step {
   private StepResult validateStorageContainerDoesntExist(
       FlightContext context, AzureCloudContext azureCloudContext, StorageManager storageManager) {
     try {
-      final String storageAccountName =
+      String storageAccountName =
           context.getWorkingMap().get(ControlledResourceKeys.STORAGE_ACCOUNT_NAME, String.class);
 
       storageManager

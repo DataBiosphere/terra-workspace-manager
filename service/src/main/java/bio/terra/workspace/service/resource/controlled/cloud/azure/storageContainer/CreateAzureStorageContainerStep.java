@@ -36,16 +36,15 @@ public class CreateAzureStorageContainerStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    final AzureCloudContext azureCloudContext =
+    AzureCloudContext azureCloudContext =
         context
             .getWorkingMap()
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
-    final StorageManager storageManager =
-        crlService.getStorageManager(azureCloudContext, azureConfig);
+    StorageManager storageManager = crlService.getStorageManager(azureCloudContext, azureConfig);
 
     // The storage account name is stored by VerifyAzureStorageContainerCanBeCreated.
     // It can be workspace managed storage account or landing zone shared storage account
-    final String storageAccountName =
+    String storageAccountName =
         context.getWorkingMap().get(ControlledResourceKeys.STORAGE_ACCOUNT_NAME, String.class);
     if (storageAccountName == null) {
       logger.error(
@@ -92,13 +91,12 @@ public class CreateAzureStorageContainerStep implements Step {
    */
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    final AzureCloudContext azureCloudContext =
+    AzureCloudContext azureCloudContext =
         context
             .getWorkingMap()
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
-    final StorageManager storageManager =
-        crlService.getStorageManager(azureCloudContext, azureConfig);
-    final String storageAccountName =
+    StorageManager storageManager = crlService.getStorageManager(azureCloudContext, azureConfig);
+    String storageAccountName =
         context.getWorkingMap().get(ControlledResourceKeys.STORAGE_ACCOUNT_NAME, String.class);
     if (storageAccountName == null) {
       logger.warn(

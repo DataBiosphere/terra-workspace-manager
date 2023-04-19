@@ -153,11 +153,11 @@ public class ControlledResourceService {
       @Nullable String destinationBucketName,
       @Nullable String destinationLocation,
       @Nullable ApiCloningInstructionsEnum cloningInstructionsOverride) {
-    final ControlledResource sourceBucketResource =
+    ControlledResource sourceBucketResource =
         getControlledResource(sourceWorkspaceId, sourceResourceId);
 
     // Write access to the target workspace will be established in the create flight
-    final String jobDescription =
+    String jobDescription =
         String.format(
             "Clone controlled resource %s; id %s; name %s",
             sourceBucketResource.getResourceType(),
@@ -167,7 +167,7 @@ public class ControlledResourceService {
     // If TPS is enabled, then we want to merge policies when cloning a bucket
     boolean mergePolicies = features.isTpsEnabled();
 
-    final JobBuilder jobBuilder =
+    JobBuilder jobBuilder =
         jobService
             .newJob()
             .description(jobDescription)
@@ -204,11 +204,10 @@ public class ControlledResourceService {
       @Nullable String destinationContainerName,
       @Nullable ApiCloningInstructionsEnum cloningInstructionsOverride,
       @Nullable List<String> prefixesToClone) {
-    final ControlledResource sourceContainer =
-        getControlledResource(sourceWorkspaceId, sourceResourceId);
+    ControlledResource sourceContainer = getControlledResource(sourceWorkspaceId, sourceResourceId);
 
     // Write access to the target workspace will be established in the create flight
-    final String jobDescription =
+    String jobDescription =
         String.format(
             "Clone controlled resource %s; id %s; name %s",
             sourceContainer.getResourceType(),
@@ -218,7 +217,7 @@ public class ControlledResourceService {
     // If TPS is enabled, then we want to merge policies when cloning a container
     boolean mergePolicies = features.isTpsEnabled();
 
-    final JobBuilder jobBuilder =
+    JobBuilder jobBuilder =
         jobService
             .newJob()
             .description(jobDescription)
@@ -264,15 +263,15 @@ public class ControlledResourceService {
       @Nullable String destinationResourceName,
       @Nullable String destinationDescription,
       @Nullable ApiCloningInstructionsEnum cloningInstructionsOverride) {
-    final ControlledResource sourceFlexResource =
+    ControlledResource sourceFlexResource =
         getControlledResource(sourceWorkspaceId, sourceResourceId);
 
-    final String jobDescription =
+    String jobDescription =
         String.format(
             "Clone controlled flex resource id %s; name %s",
             sourceResourceId, sourceFlexResource.getName());
 
-    final CloningInstructions effectiveCloningInstructions =
+    CloningInstructions effectiveCloningInstructions =
         Optional.ofNullable(cloningInstructionsOverride)
             .map(CloningInstructions::fromApiModel)
             .orElse(sourceFlexResource.getCloningInstructions());
@@ -280,7 +279,7 @@ public class ControlledResourceService {
     // If TPS is enabled, then we want to merge policies when cloning a flex resource.
     boolean mergePolicies = features.isTpsEnabled();
 
-    final JobBuilder jobBuilder =
+    JobBuilder jobBuilder =
         jobService
             .newJob()
             .description(jobDescription)
@@ -330,13 +329,13 @@ public class ControlledResourceService {
       @Nullable String destinationDatasetName,
       @Nullable String destinationLocation,
       @Nullable ApiCloningInstructionsEnum cloningInstructionsOverride) {
-    final ControlledResource sourceDatasetResource =
+    ControlledResource sourceDatasetResource =
         getControlledResource(sourceWorkspaceId, sourceResourceId);
     // Authorization check is handled as the first flight step rather than before the flight, as
     // this flight is re-used for cloneWorkspace.
 
     // Write access to the target workspace will be established in the create flight
-    final String jobDescription =
+    String jobDescription =
         String.format(
             "Clone controlled resource %s; id %s; name %s",
             sourceDatasetResource.getResourceType(),
@@ -346,7 +345,7 @@ public class ControlledResourceService {
     // If TPS is enabled, then we want to merge policies when cloning a bucket
     boolean mergePolicies = features.isTpsEnabled();
 
-    final JobBuilder jobBuilder =
+    JobBuilder jobBuilder =
         jobService
             .newJob()
             .description(jobDescription)
@@ -423,7 +422,7 @@ public class ControlledResourceService {
       @Nullable String resultPath,
       AuthenticatedUserRequest userRequest) {
 
-    final String jobDescription =
+    String jobDescription =
         String.format(
             "Create controlled resource %s; id %s; name %s",
             resource.getResourceType(), resource.getResourceId(), resource.getName());
@@ -621,7 +620,7 @@ public class ControlledResourceService {
       String resultPath,
       AuthenticatedUserRequest userRequest) {
     WsmResource resource = resourceDao.getResource(workspaceUuid, resourceId);
-    final String jobDescription = "Delete controlled resource; id: " + resourceId;
+    String jobDescription = "Delete controlled resource; id: " + resourceId;
 
     List<WsmResource> resourceToDelete = new ArrayList<>();
     resourceToDelete.add(resource);

@@ -42,8 +42,8 @@ public class UpdateAiNotebookAttributesStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    final FlightMap inputParameters = context.getInputParameters();
-    final ApiGcpAiNotebookUpdateParameters updateParameters =
+    FlightMap inputParameters = context.getInputParameters();
+    ApiGcpAiNotebookUpdateParameters updateParameters =
         inputParameters.get(UPDATE_PARAMETERS, ApiGcpAiNotebookUpdateParameters.class);
     if (updateParameters == null) {
       return StepResult.getStepResultSuccess();
@@ -63,8 +63,8 @@ public class UpdateAiNotebookAttributesStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    final FlightMap workingMap = context.getWorkingMap();
-    final ApiGcpAiNotebookUpdateParameters prevParameters =
+    FlightMap workingMap = context.getWorkingMap();
+    ApiGcpAiNotebookUpdateParameters prevParameters =
         workingMap.get(PREVIOUS_UPDATE_PARAMETERS, ApiGcpAiNotebookUpdateParameters.class);
     var projectId = cloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
     try {

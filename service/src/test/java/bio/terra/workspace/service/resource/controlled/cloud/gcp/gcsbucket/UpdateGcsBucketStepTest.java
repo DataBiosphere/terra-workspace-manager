@@ -59,12 +59,12 @@ public class UpdateGcsBucketStepTest extends BaseUnitTest {
 
   @BeforeEach
   public void setup() {
-    final FlightMap inputParameters = new FlightMap();
+    FlightMap inputParameters = new FlightMap();
     inputParameters.put(
         WorkspaceFlightMapKeys.ResourceKeys.UPDATE_PARAMETERS, BUCKET_UPDATE_PARAMETERS_1);
     doReturn(inputParameters).when(mockFlightContext).getInputParameters();
 
-    final FlightMap workingMap = new FlightMap();
+    FlightMap workingMap = new FlightMap();
     workingMap.put(ControlledResourceKeys.PREVIOUS_UPDATE_PARAMETERS, BUCKET_UPDATE_PARAMETERS_2);
     doReturn(workingMap).when(mockFlightContext).getWorkingMap();
 
@@ -82,7 +82,7 @@ public class UpdateGcsBucketStepTest extends BaseUnitTest {
     doReturn(mockBuiltBucketCow).when(mockBucketCowBuilder).build();
     doReturn(mockBuiltBucketCow).when(mockBuiltBucketCow).update();
     doReturn(mockBucketCowBuilder).when(mockBuiltBucketCow).toBuilder();
-    final ControlledGcsBucketResource bucketResource =
+    ControlledGcsBucketResource bucketResource =
         ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(null).build();
     doReturn(PROJECT_ID)
         .when(mockGcpCloudContextService)
@@ -94,18 +94,18 @@ public class UpdateGcsBucketStepTest extends BaseUnitTest {
 
   @Test
   public void testDoStep() throws InterruptedException, RetryException {
-    final StepResult result = updateGcsBucketStep.doStep(mockFlightContext);
+    StepResult result = updateGcsBucketStep.doStep(mockFlightContext);
     verify(mockBuiltBucketCow, times(2)).update();
 
     assertEquals(StepResult.getStepResultSuccess(), result);
-    final StorageClass storageClass = storageClassCaptor.getValue();
+    StorageClass storageClass = storageClassCaptor.getValue();
     assertEquals(StorageClass.STANDARD, storageClass);
 
-    final List<LifecycleRule> rules = lifecycleRulesCaptor.getValue();
+    List<LifecycleRule> rules = lifecycleRulesCaptor.getValue();
     assertThat(rules, hasSize(2));
     assertEquals(DeleteLifecycleAction.TYPE, rules.get(0).getAction().getActionType());
 
-    final LifecycleCondition rule1condition = rules.get(0).getCondition();
+    LifecycleCondition rule1condition = rules.get(0).getCondition();
     assertEquals(31, rule1condition.getAge());
 
     // TODO: [PF-933] This (and all other date checks in this test) work around the fact that
@@ -141,22 +141,22 @@ public class UpdateGcsBucketStepTest extends BaseUnitTest {
 
   @Test
   public void testUndoStep() throws InterruptedException, RetryException {
-    final StepResult result = updateGcsBucketStep.undoStep(mockFlightContext);
+    StepResult result = updateGcsBucketStep.undoStep(mockFlightContext);
     verify(mockBuiltBucketCow, times(2)).update();
     assertEquals(StepResult.getStepResultSuccess(), result);
 
-    final StorageClass storageClass = storageClassCaptor.getValue();
+    StorageClass storageClass = storageClassCaptor.getValue();
     assertEquals(StorageClass.NEARLINE, storageClass);
 
-    final List<LifecycleRule> rules = lifecycleRulesCaptor.getValue();
+    List<LifecycleRule> rules = lifecycleRulesCaptor.getValue();
     assertThat(rules, hasSize(1));
 
-    final LifecycleAction action = rules.get(0).getAction();
+    LifecycleAction action = rules.get(0).getAction();
     assertEquals(SetStorageClassLifecycleAction.TYPE, action.getActionType());
     assertEquals(
         StorageClass.COLDLINE, ((SetStorageClassLifecycleAction) action).getStorageClass());
 
-    final LifecycleCondition condition = rules.get(0).getCondition();
+    LifecycleCondition condition = rules.get(0).getCondition();
     assertEquals(45, condition.getAge());
     assertEquals(
         toGoogleDateTime(OFFSET_DATE_TIME_2).getValue(), condition.getCreatedBefore().getValue());

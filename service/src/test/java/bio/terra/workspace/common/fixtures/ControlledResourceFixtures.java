@@ -75,7 +75,7 @@ public class ControlledResourceFixtures {
                   .createdBefore(OffsetDateTime.parse("2007-01-03T00:00:00.00Z"))
                   .addMatchesStorageClassItem(ApiGcpGcsBucketDefaultStorageClass.STANDARD));
   // list must not be immutable if deserialization is to work
-  static final List<ApiGcpGcsBucketLifecycleRule> LIFECYCLE_RULES =
+  public static final List<ApiGcpGcsBucketLifecycleRule> LIFECYCLE_RULES =
       new ArrayList<>(List.of(LIFECYCLE_RULE_1, LIFECYCLE_RULE_2));
   public static final String BUCKET_NAME_PREFIX = "my-bucket";
   public static final String AZURE_NAME_PREFIX = "az";
@@ -188,11 +188,11 @@ public class ControlledResourceFixtures {
   }
 
   public static ApiAzureVmCustomScriptExtension getAzureVmCustomScriptExtension() {
-    final String[] customScriptFileUri =
+    String[] customScriptFileUri =
         new String[] {
           "https://raw.githubusercontent.com/DataBiosphere/leonardo/TOAZ-83-dummy-script/http/src/main/resources/init-resources/msdsvmcontent/dummy_script.sh"
         };
-    final String commandToExecute = "bash dummy_script.sh hello";
+    String commandToExecute = "bash dummy_script.sh hello";
 
     var publicSettings =
         Arrays.asList(

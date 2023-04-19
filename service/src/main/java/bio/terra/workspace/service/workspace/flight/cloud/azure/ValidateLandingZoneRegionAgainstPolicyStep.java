@@ -31,7 +31,7 @@ public class ValidateLandingZoneRegionAgainstPolicyStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    final BearerToken bearerToken = new BearerToken(userRequest.getRequiredToken());
+    BearerToken bearerToken = new BearerToken(userRequest.getRequiredToken());
     var landingZoneId = landingZoneApiDispatch.getLandingZoneId(bearerToken, workspaceUuid);
     ResourceValidationUtils.validateRegionAgainstPolicy(
         tpsApiDispatch,

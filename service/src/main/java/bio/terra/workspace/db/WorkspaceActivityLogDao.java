@@ -82,7 +82,7 @@ public class WorkspaceActivityLogDao {
       throw new UnknownFlightOperationTypeException(
           String.format("Flight operation type is unknown in workspace %s", workspaceId));
     }
-    final String sql =
+    String sql =
         """
             INSERT INTO workspace_activity_log (
               workspace_id, change_date, change_type, actor_email, actor_subject_id,
@@ -90,7 +90,7 @@ public class WorkspaceActivityLogDao {
             VALUES (:workspace_id, :change_date, :change_type, :actor_email, :actor_subject_id,
               :change_subject_id, :change_subject_type)
         """;
-    final var params =
+    var params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
             .addValue("change_date", Instant.now().atOffset(ZoneOffset.UTC))
@@ -114,7 +114,7 @@ public class WorkspaceActivityLogDao {
   @Traced
   @ReadTransaction
   public Optional<ActivityLogChangeDetails> getLastUpdatedDetails(UUID workspaceId) {
-    final String sql =
+    String sql =
         """
             SELECT change_date, actor_email, actor_subject_id, change_subject_id, change_subject_type, change_type
             FROM workspace_activity_log
@@ -123,7 +123,7 @@ public class WorkspaceActivityLogDao {
             LIMIT 1
         """;
 
-    final var params =
+    var params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
             .addValue("change_type", NON_UPDATE_TYPE_OPERATION);
@@ -137,7 +137,7 @@ public class WorkspaceActivityLogDao {
   @ReadTransaction
   public Optional<ActivityLogChangeDetails> getLastUpdatedDetails(
       UUID workspaceId, String changeSubjectId) {
-    final String sql =
+    String sql =
         """
             SELECT change_date, actor_email, actor_subject_id, change_subject_id, change_subject_type, change_type
             FROM workspace_activity_log
@@ -146,7 +146,7 @@ public class WorkspaceActivityLogDao {
             LIMIT 1
         """;
 
-    final var params =
+    var params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
             .addValue("change_subject_id", changeSubjectId);

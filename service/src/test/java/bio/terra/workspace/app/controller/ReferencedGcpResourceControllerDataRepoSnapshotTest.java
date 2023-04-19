@@ -315,7 +315,7 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotTest extends BaseCon
         userAccessUtils.defaultUserAuthRequest());
 
     // Assert resource returned by get
-    final ApiDataRepoSnapshotResource gotResource =
+    ApiDataRepoSnapshotResource gotResource =
         mockMvcUtils.getReferencedDataRepoSnapshot(
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId,
@@ -350,7 +350,7 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotTest extends BaseCon
         userAccessUtils.defaultUserAuthRequest());
 
     // Assert resource returned by get
-    final ApiDataRepoSnapshotResource gotResource =
+    ApiDataRepoSnapshotResource gotResource =
         mockMvcUtils.getReferencedDataRepoSnapshot(
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId2,

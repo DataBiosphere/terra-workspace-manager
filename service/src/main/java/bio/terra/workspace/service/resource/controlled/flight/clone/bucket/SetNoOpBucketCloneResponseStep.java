@@ -27,7 +27,7 @@ public class SetNoOpBucketCloneResponseStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    final ApiClonedControlledGcpGcsBucket noOpResult =
+    ApiClonedControlledGcpGcsBucket noOpResult =
         new ApiClonedControlledGcpGcsBucket()
             .effectiveCloningInstructions(ApiCloningInstructionsEnum.NOTHING)
             .bucket(null)

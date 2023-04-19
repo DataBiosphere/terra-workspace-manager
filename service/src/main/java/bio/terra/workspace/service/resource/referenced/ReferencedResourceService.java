@@ -157,7 +157,7 @@ public class ReferencedResourceService {
                 email)
             .castToReferencedResource();
 
-    final String jobDescription =
+    String jobDescription =
         String.format(
             "Clone referenced resource %s; id %s; name %s",
             sourceReferencedResource.getResourceType(), destinationResourceId, name);
@@ -165,7 +165,7 @@ public class ReferencedResourceService {
     // If TPS is enabled, then we want to merge policies when cloning a bucket
     boolean mergePolicies = features.isTpsEnabled();
 
-    final JobBuilder jobBuilder =
+    JobBuilder jobBuilder =
         jobService
             .newJob()
             .description(jobDescription)

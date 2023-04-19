@@ -185,7 +185,7 @@ public class ControlledFlexibleResourceApiControllerConnectedTest extends BaseCo
         userAccessUtils.getDefaultUserEmail());
 
     // Assert resource returned by get
-    final ApiFlexibleResource gotResource =
+    ApiFlexibleResource gotResource =
         mockMvcUtils.getFlexibleResource(
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId2,

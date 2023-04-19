@@ -49,7 +49,7 @@ public class CreateAzureBatchPoolStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    final AzureCloudContext azureCloudContext =
+    AzureCloudContext azureCloudContext =
         context
             .getWorkingMap()
             .get(
@@ -60,7 +60,7 @@ public class CreateAzureBatchPoolStep implements Step {
 
     // The batch account name is stored by VerifyAzureBatchPoolCanBeCreated.
     // It can be landing zone shared batch account only
-    final String batchAccountName =
+    String batchAccountName =
         context
             .getWorkingMap()
             .get(WorkspaceFlightMapKeys.ControlledResourceKeys.BATCH_ACCOUNT_NAME, String.class);
@@ -114,7 +114,7 @@ public class CreateAzureBatchPoolStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    final AzureCloudContext azureCloudContext =
+    AzureCloudContext azureCloudContext =
         context
             .getWorkingMap()
             .get(
@@ -122,7 +122,7 @@ public class CreateAzureBatchPoolStep implements Step {
                 AzureCloudContext.class);
     BatchManager batchManager = crlService.getBatchManager(azureCloudContext, azureConfig);
 
-    final String batchAccountName =
+    String batchAccountName =
         context
             .getWorkingMap()
             .get(WorkspaceFlightMapKeys.ControlledResourceKeys.BATCH_ACCOUNT_NAME, String.class);

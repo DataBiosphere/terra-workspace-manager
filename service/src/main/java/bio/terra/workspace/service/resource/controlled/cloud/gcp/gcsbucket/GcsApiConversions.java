@@ -159,7 +159,7 @@ public class GcsApiConversions {
   }
 
   public static ApiGcpGcsBucketLifecycleRuleAction toWsmApi(LifecycleAction action) {
-    final ApiGcpGcsBucketLifecycleRuleActionType actionType = toWsmApi(action.getActionType());
+    ApiGcpGcsBucketLifecycleRuleActionType actionType = toWsmApi(action.getActionType());
     ApiGcpGcsBucketDefaultStorageClass storageClass =
         getStorageClass(action).map(GcsApiConversions::toWsmApi).orElse(null);
     return new ApiGcpGcsBucketLifecycleRuleAction().storageClass(storageClass).type(actionType);
@@ -184,7 +184,7 @@ public class GcsApiConversions {
    * @return - storage class for the action, if it exists.
    */
   public static Optional<StorageClass> getStorageClass(LifecycleAction lifecycleAction) {
-    final String actionType = lifecycleAction.getActionType();
+    String actionType = lifecycleAction.getActionType();
     switch (actionType) {
       case DeleteLifecycleAction.TYPE:
         return Optional.empty(); // Delete action has no storage class
@@ -204,7 +204,7 @@ public class GcsApiConversions {
   }
 
   public static LifecycleCondition toGcsApi(ApiGcpGcsBucketLifecycleRuleCondition condition) {
-    final var resultBuilder = LifecycleCondition.newBuilder();
+    var resultBuilder = LifecycleCondition.newBuilder();
 
     resultBuilder.setAge(condition.getAge());
     // This DateTime object doesn't include a time in the BucketInfo structure

@@ -96,7 +96,7 @@ class DeleteControlledAzureResourcesStepTest extends BaseAzureUnitTest {
             workspaceId,
             userRequest);
 
-    final StepResult result = deleteControlledAzureResourcesStep.doStep(mockFlightContext);
+    StepResult result = deleteControlledAzureResourcesStep.doStep(mockFlightContext);
 
     // Step is expected to fail and no resources should be deleted
     assertThat(result.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));
@@ -165,7 +165,7 @@ class DeleteControlledAzureResourcesStepTest extends BaseAzureUnitTest {
             workspaceId,
             userRequest);
 
-    final StepResult result = deleteControlledAzureResourcesStep.doStep(mockFlightContext);
+    StepResult result = deleteControlledAzureResourcesStep.doStep(mockFlightContext);
 
     assertThat(result, equalTo(StepResult.getStepResultSuccess()));
     verify(mockControlledResourceService)

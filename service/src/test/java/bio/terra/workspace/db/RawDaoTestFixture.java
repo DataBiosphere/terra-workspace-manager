@@ -78,7 +78,7 @@ public class RawDaoTestFixture {
       String associatedApp,
       String assignedUser,
       String privateResourceState) {
-    final String sql =
+    String sql =
         "INSERT INTO resource (workspace_id, cloud_platform, resource_id, name, description, stewardship_type,"
             + " exact_resource_type, resource_type, cloning_instructions, attributes,"
             + " access_scope, managed_by, associated_app, assigned_user, private_resource_state)"
@@ -86,7 +86,7 @@ public class RawDaoTestFixture {
             + " :exact_resource_type, :resource_type, :cloning_instructions, cast(:attributes AS jsonb),"
             + " :access_scope, :managed_by, :associated_app, :assigned_user, :private_resource_state)";
 
-    final var params =
+    var params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceUuid)
             .addValue("cloud_platform", cloudPlatform)
@@ -122,13 +122,13 @@ public class RawDaoTestFixture {
       OffsetDateTime timestamp,
       String changeSubjectId,
       ActivityLogChangedTarget changedTarget) {
-    final String sql =
+    String sql =
         """
             INSERT INTO workspace_activity_log (workspace_id, change_date, change_type, actor_email, actor_subject_id,
             change_subject_id, change_subject_type)
             VALUES (:workspace_id, :change_date, :change_type, :actor_email, :actor_subject_id, :change_subject_id, :change_subject_type)
         """;
-    final var params =
+    var params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
             .addValue("change_date", timestamp)
@@ -149,7 +149,7 @@ public class RawDaoTestFixture {
         WHERE workspace_id = :workspace_id AND change_subject_id in (:change_subject_ids)
         ORDER BY change_date DESC
       """;
-    final var params =
+    var params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
             .addValue("change_subject_ids", changeSubjects);

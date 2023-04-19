@@ -121,7 +121,7 @@ public class AzureConnectedTestUtils {
   }
 
   public static String getAzureName(String tag) {
-    final String id = UUID.randomUUID().toString().substring(0, 6);
+    String id = UUID.randomUUID().toString().substring(0, 6);
     return String.format("wsm-integ-%s-%s", tag, id);
   }
 }

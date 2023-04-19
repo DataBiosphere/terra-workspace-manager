@@ -106,7 +106,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     when(mockSamService.isAuthorized(
             any(), eq(SamResource.SPEND_PROFILE), any(), eq(SamSpendProfileAction.LINK)))
         .thenReturn(true);
-    final String policyGroup = "terra-workspace-manager-test-group@googlegroups.com";
+    String policyGroup = "terra-workspace-manager-test-group@googlegroups.com";
     // Return a valid Google group for cloud sync, as Google validates groups added to GCP projects.
     when(mockSamService.syncWorkspacePolicy(any(), any(), any())).thenReturn(policyGroup);
 

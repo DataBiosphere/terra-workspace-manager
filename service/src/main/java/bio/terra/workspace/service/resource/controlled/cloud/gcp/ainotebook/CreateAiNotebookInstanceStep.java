@@ -101,7 +101,7 @@ public class CreateAiNotebookInstanceStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    final GcpCloudContext gcpCloudContext =
+    GcpCloudContext gcpCloudContext =
         flightContext
             .getWorkingMap()
             .get(ControlledResourceKeys.GCP_CLOUD_CONTEXT, GcpCloudContext.class);
@@ -268,7 +268,7 @@ public class CreateAiNotebookInstanceStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    final GcpCloudContext gcpCloudContext =
+    GcpCloudContext gcpCloudContext =
         flightContext
             .getWorkingMap()
             .get(ControlledResourceKeys.GCP_CLOUD_CONTEXT, GcpCloudContext.class);

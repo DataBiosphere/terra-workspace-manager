@@ -90,7 +90,7 @@ public class WorkspaceDao {
    */
   @WriteTransaction
   public UUID createWorkspace(Workspace workspace, @Nullable List<String> applicationIds) {
-    final String sql =
+    String sql =
         """
             INSERT INTO workspace (workspace_id, user_facing_id, display_name, description,
             spend_profile, properties, workspace_stage, created_by_email)
@@ -98,7 +98,7 @@ public class WorkspaceDao {
             cast(:properties AS jsonb), :workspace_stage, :created_by_email)
         """;
 
-    final UUID workspaceUuid = workspace.getWorkspaceId();
+    UUID workspaceUuid = workspace.getWorkspaceId();
     // validateUserFacingId() is called in controller. Also call here to be safe (eg see bug
     // PF-1616).
     ControllerValidationUtils.validateUserFacingId(workspace.getUserFacingId());
@@ -161,7 +161,7 @@ public class WorkspaceDao {
    */
   @WriteTransaction
   public boolean deleteWorkspace(UUID workspaceUuid) {
-    final String sql = "DELETE FROM workspace WHERE workspace_id = :id";
+    String sql = "DELETE FROM workspace WHERE workspace_id = :id";
 
     MapSqlParameterSource params =
         new MapSqlParameterSource().addValue("id", workspaceUuid.toString());
@@ -307,7 +307,7 @@ public class WorkspaceDao {
     for (String key : propertyKeys) {
       properties.remove(key);
     }
-    final String sql =
+    String sql =
         "UPDATE workspace SET properties = cast(:properties AS jsonb) WHERE workspace_id = :id";
 
     var params = new MapSqlParameterSource();
@@ -338,7 +338,7 @@ public class WorkspaceDao {
     Map<String, String> properties =
         result == null ? new HashMap<>() : DbSerDes.jsonToProperties(result);
     properties.putAll(propertyMap);
-    final String sql =
+    String sql =
         "UPDATE workspace SET properties = cast(:properties AS jsonb) WHERE workspace_id = :id";
 
     var params = new MapSqlParameterSource();
@@ -383,8 +383,8 @@ public class WorkspaceDao {
   @WriteTransaction
   public void createCloudContextStart(
       UUID workspaceUuid, CloudPlatform cloudPlatform, String flightId) {
-    final String platform = cloudPlatform.toSql();
-    final String sql =
+    String platform = cloudPlatform.toSql();
+    String sql =
         "INSERT INTO cloud_context (workspace_id, cloud_platform, creating_flight)"
             + " VALUES (:workspace_id, :cloud_platform, :creating_flight)";
     MapSqlParameterSource params =
@@ -535,7 +535,7 @@ public class WorkspaceDao {
    */
   private void deleteCloudContextWorker(
       UUID workspaceUuid, CloudPlatform cloudPlatform, @Nullable String creatingFlightId) {
-    final String platform = cloudPlatform.toSql();
+    String platform = cloudPlatform.toSql();
     String sql =
         "DELETE FROM cloud_context "
             + "WHERE workspace_id = :workspace_id"

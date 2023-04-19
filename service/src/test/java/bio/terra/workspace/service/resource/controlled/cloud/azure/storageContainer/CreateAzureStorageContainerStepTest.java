@@ -35,7 +35,7 @@ public class CreateAzureStorageContainerStepTest extends BaseStorageStepTest {
   @Mock private BlobContainer mockStorageContainer;
 
   private final String storageAccountName = ControlledResourceFixtures.uniqueStorageAccountName();
-  final ApiAzureStorageContainerCreationParameters creationParameters =
+  private final ApiAzureStorageContainerCreationParameters creationParameters =
       ControlledResourceFixtures.getAzureStorageContainerCreationParameters();
   private final ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
   private final ManagementException containerNotFoundException =

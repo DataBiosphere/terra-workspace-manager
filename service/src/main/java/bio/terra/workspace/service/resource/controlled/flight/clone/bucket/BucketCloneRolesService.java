@@ -47,11 +47,14 @@ public class BucketCloneRolesService {
    * bucket details from the working map along with the correct project ID and remove the roles.
    */
   public void removeAllAddedBucketRoles(FlightMap workingMap) throws InterruptedException {
-    final @Nullable BucketCloneInputs sourceInputs =
+    @Nullable
+    BucketCloneInputs sourceInputs =
         workingMap.get(ControlledResourceKeys.SOURCE_CLONE_INPUTS, BucketCloneInputs.class);
-    final @Nullable BucketCloneInputs destinationInputs =
+    @Nullable
+    BucketCloneInputs destinationInputs =
         workingMap.get(ControlledResourceKeys.DESTINATION_CLONE_INPUTS, BucketCloneInputs.class);
-    final @Nullable String transferServiceSAEmail =
+    @Nullable
+    String transferServiceSAEmail =
         workingMap.get(ControlledResourceKeys.STORAGE_TRANSFER_SERVICE_SA_EMAIL, String.class);
 
     if (!Strings.isNullOrEmpty(transferServiceSAEmail)) {
@@ -88,18 +91,17 @@ public class BucketCloneRolesService {
       // No-op
       return;
     }
-    final StorageCow storageCow = crlService.createStorageCow(inputs.getProjectId());
-    final Identity saIdentity = Identity.serviceAccount(transferServiceSAEmail);
+    StorageCow storageCow = crlService.createStorageCow(inputs.getProjectId());
+    Identity saIdentity = Identity.serviceAccount(transferServiceSAEmail);
 
-    final Policy.Builder policyBuilder =
-        storageCow.getIamPolicy(inputs.getBucketName()).toBuilder();
+    Policy.Builder policyBuilder = storageCow.getIamPolicy(inputs.getBucketName()).toBuilder();
     for (String roleName : roles) {
       switch (operation) {
         case ADD -> policyBuilder.addIdentity(Role.of(roleName), saIdentity);
         case REMOVE -> policyBuilder.removeIdentity(Role.of(roleName), saIdentity);
       }
     }
-    final Policy newPolicy = policyBuilder.build();
+    Policy newPolicy = policyBuilder.build();
     Policy updatedPolicy = storageCow.setIamPolicy(inputs.getBucketName(), newPolicy);
 
     for (int i = 1; i <= MAX_RETRY_ATTEMPTS; i++) {

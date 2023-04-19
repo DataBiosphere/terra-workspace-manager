@@ -107,7 +107,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
       throws Exception {
     var creationParameters = ControlledResourceFixtures.getAzureDiskCreationParameters();
 
-    final UUID id = UUID.randomUUID();
+    UUID id = UUID.randomUUID();
     var azureResource =
         ControlledAzureDiskResource.builder()
             .common(

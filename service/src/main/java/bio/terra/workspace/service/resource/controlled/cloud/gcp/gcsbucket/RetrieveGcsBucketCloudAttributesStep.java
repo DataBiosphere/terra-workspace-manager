@@ -53,14 +53,14 @@ public class RetrieveGcsBucketCloudAttributesStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    final FlightMap workingMap = flightContext.getWorkingMap();
-    final String projectId =
+    FlightMap workingMap = flightContext.getWorkingMap();
+    String projectId =
         gcpCloudContextService.getRequiredGcpProject(bucketResource.getWorkspaceId());
     // get the storage cow
-    final StorageCow storageCow = crlService.createStorageCow(projectId);
+    StorageCow storageCow = crlService.createStorageCow(projectId);
 
     // get the existing bucket cow
-    final BucketCow existingBucketCow = storageCow.get(bucketResource.getBucketName());
+    BucketCow existingBucketCow = storageCow.get(bucketResource.getBucketName());
     if (existingBucketCow == null) {
       logger.error(
           "Can't construct COW for pre-existing bucket {}", bucketResource.getBucketName());
@@ -68,7 +68,7 @@ public class RetrieveGcsBucketCloudAttributesStep implements Step {
     }
 
     // get the attributes
-    final BucketInfo existingBucketInfo = existingBucketCow.getBucketInfo();
+    BucketInfo existingBucketInfo = existingBucketCow.getBucketInfo();
     switch (retrievalMode) {
       case UPDATE_PARAMETERS -> workingMap.put(
           ControlledResourceKeys.PREVIOUS_UPDATE_PARAMETERS,

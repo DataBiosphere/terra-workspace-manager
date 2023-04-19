@@ -36,7 +36,7 @@ public class DeleteAiNotebookInstanceStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    final GcpCloudContext gcpCloudContext =
+    GcpCloudContext gcpCloudContext =
         flightContext
             .getWorkingMap()
             .get(ControlledResourceKeys.GCP_CLOUD_CONTEXT, GcpCloudContext.class);

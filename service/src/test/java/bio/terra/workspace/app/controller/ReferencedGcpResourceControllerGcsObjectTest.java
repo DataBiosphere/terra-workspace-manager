@@ -316,7 +316,7 @@ public class ReferencedGcpResourceControllerGcsObjectTest extends BaseConnectedT
         userAccessUtils.defaultUserAuthRequest());
 
     // Assert resource returned by get
-    final ApiGcpGcsObjectResource gotResource =
+    ApiGcpGcsObjectResource gotResource =
         mockMvcUtils.getReferencedGcsObject(
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId,
@@ -350,7 +350,7 @@ public class ReferencedGcpResourceControllerGcsObjectTest extends BaseConnectedT
         userAccessUtils.defaultUserAuthRequest());
 
     // Assert resource returned by get
-    final ApiGcpGcsObjectResource gotResource =
+    ApiGcpGcsObjectResource gotResource =
         mockMvcUtils.getReferencedGcsObject(
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId2,

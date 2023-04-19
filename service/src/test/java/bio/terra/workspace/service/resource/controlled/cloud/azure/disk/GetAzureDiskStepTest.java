@@ -59,7 +59,7 @@ public class GetAzureDiskStepTest extends BaseAzureConnectedTest {
 
   @Test
   public void getDisk_doesNotExist() throws InterruptedException {
-    final ApiAzureDiskCreationParameters creationParameters =
+    ApiAzureDiskCreationParameters creationParameters =
         ControlledResourceFixtures.getAzureDiskCreationParameters();
 
     GetAzureDiskStep step =
@@ -75,7 +75,7 @@ public class GetAzureDiskStepTest extends BaseAzureConnectedTest {
             mockAzureCloudContext.getAzureResourceGroupId(), creationParameters.getName()))
         .thenThrow(mockException);
 
-    final StepResult stepResult = step.doStep(mockFlightContext);
+    StepResult stepResult = step.doStep(mockFlightContext);
 
     // Verify step returns success
     assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
@@ -83,7 +83,7 @@ public class GetAzureDiskStepTest extends BaseAzureConnectedTest {
 
   @Test
   public void getDisk_alreadyExists() throws InterruptedException {
-    final ApiAzureDiskCreationParameters creationParameters =
+    ApiAzureDiskCreationParameters creationParameters =
         ControlledResourceFixtures.getAzureDiskCreationParameters();
 
     GetAzureDiskStep step =
@@ -99,7 +99,7 @@ public class GetAzureDiskStepTest extends BaseAzureConnectedTest {
             mockAzureCloudContext.getAzureResourceGroupId(), creationParameters.getName()))
         .thenReturn(mockDisk);
 
-    final StepResult stepResult = step.doStep(mockFlightContext);
+    StepResult stepResult = step.doStep(mockFlightContext);
 
     // Verify step returns error
     assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));

@@ -34,10 +34,10 @@ public class ControlledGcsBucketResourceTest extends BaseUnitTest {
     ControlledGcsBucketResource gcsBucketResource =
         ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(null).build();
 
-    final ObjectMapper objectMapper = StairwayMapper.getObjectMapper();
-    final String serialized = objectMapper.writeValueAsString(gcsBucketResource);
+    ObjectMapper objectMapper = StairwayMapper.getObjectMapper();
+    String serialized = objectMapper.writeValueAsString(gcsBucketResource);
 
-    final ControlledGcsBucketResource deserialized =
+    ControlledGcsBucketResource deserialized =
         objectMapper.readValue(serialized, ControlledGcsBucketResource.class);
 
     assertTrue(deserialized.partialEqual(gcsBucketResource));

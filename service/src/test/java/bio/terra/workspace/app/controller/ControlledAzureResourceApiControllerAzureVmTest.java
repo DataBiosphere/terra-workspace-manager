@@ -62,11 +62,11 @@ public class ControlledAzureResourceApiControllerAzureVmTest extends BaseAzureUn
   public void createAzureVmWithoutDisk() throws Exception {
     UUID workspaceId = UUID.randomUUID();
 
-    final ApiControlledResourceCommonFields commonFields =
+    ApiControlledResourceCommonFields commonFields =
         ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi();
 
     var creationParameters = ControlledResourceFixtures.getAzureVmCreationParameters().diskId(null);
-    final ApiCreateControlledAzureVmRequestBody vmRequest =
+    ApiCreateControlledAzureVmRequestBody vmRequest =
         new ApiCreateControlledAzureVmRequestBody()
             .common(commonFields)
             .azureVm(creationParameters)

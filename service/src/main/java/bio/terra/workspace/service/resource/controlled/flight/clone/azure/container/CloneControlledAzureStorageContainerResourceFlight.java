@@ -59,7 +59,7 @@ public class CloneControlledAzureStorageContainerResourceFlight extends Flight {
                     CloningInstructions.class))
             .orElse(sourceResource.getCloningInstructions());
 
-    final ControlledAzureStorageContainerResource sourceContainer =
+    ControlledAzureStorageContainerResource sourceContainer =
         sourceResource.castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
     if (CloningInstructions.COPY_NOTHING == cloningInstructions) {
       addStep(new SetNoOpContainerCloneResponseStep(sourceContainer));

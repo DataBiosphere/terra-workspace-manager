@@ -64,8 +64,8 @@ public class AzureCloneWorkspaceTest extends BaseAzureConnectedTest {
   void cloneAzureWorkspaceWithContainer() {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
 
-    final UUID containerResourceId = UUID.randomUUID();
-    final String storageContainerName = ControlledResourceFixtures.uniqueBucketName();
+    UUID containerResourceId = UUID.randomUUID();
+    String storageContainerName = ControlledResourceFixtures.uniqueBucketName();
     ControlledAzureStorageContainerResource containerResource =
         ControlledAzureStorageContainerResource.builder()
             .common(
