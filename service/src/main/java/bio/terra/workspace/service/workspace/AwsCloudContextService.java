@@ -16,7 +16,6 @@ import com.google.common.base.Preconditions;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.io.IOException;
 import java.util.*;
-import javax.validation.constraints.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -126,7 +125,7 @@ public class AwsCloudContextService {
    *
    * @return AWS cloud context
    */
-  public @NotNull AwsCloudContext getCloudContextFromConfiguration() {
+  public AwsCloudContext getCloudContextFromConfiguration() {
     Environment environment = discoverEnvironment();
     Metadata metadata = environment.getMetadata();
     return new AwsCloudContext(
@@ -142,7 +141,7 @@ public class AwsCloudContextService {
    *
    * @return AWS environment
    */
-  public @NotNull Environment discoverEnvironment()
+  public Environment discoverEnvironment()
       throws IllegalArgumentException, InternalLogicException {
     try {
       maybeInitializeEnvironmentDiscovery();
