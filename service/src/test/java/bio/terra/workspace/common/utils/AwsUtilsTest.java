@@ -4,7 +4,6 @@ import bio.terra.aws.resource.discovery.Environment;
 import bio.terra.aws.resource.discovery.LandingZone;
 import bio.terra.aws.resource.discovery.Metadata;
 import bio.terra.workspace.app.configuration.external.AwsConfiguration;
-import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseAwsConnectedTest;
 import bio.terra.workspace.service.features.FeatureService;
 import java.io.IOException;

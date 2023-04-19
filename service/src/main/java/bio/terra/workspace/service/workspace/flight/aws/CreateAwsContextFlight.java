@@ -3,7 +3,6 @@ package bio.terra.workspace.service.workspace.flight.aws;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRule;
-import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.features.FeatureService;

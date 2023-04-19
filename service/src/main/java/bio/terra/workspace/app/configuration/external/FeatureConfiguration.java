@@ -15,7 +15,6 @@ public class FeatureConfiguration {
   private static final Logger logger = LoggerFactory.getLogger(FeatureConfiguration.class);
 
   private boolean azureEnabled;
-  private boolean awsEnabled;
   private boolean alpha1Enabled;
   private boolean tpsEnabled;
   private boolean bpmGcpEnabled;
@@ -29,10 +28,6 @@ public class FeatureConfiguration {
 
   public void setAzureEnabled(boolean azureEnabled) {
     this.azureEnabled = azureEnabled;
-  }
-
-  public void setAwsEnabled(boolean awsEnabled) {
-    this.awsEnabled = awsEnabled;
   }
 
   public boolean isAlpha1Enabled() {

@@ -4,7 +4,6 @@ import bio.terra.aws.resource.discovery.Environment;
 import bio.terra.aws.resource.discovery.EnvironmentDiscovery;
 import bio.terra.aws.resource.discovery.Metadata;
 import bio.terra.workspace.app.configuration.external.AwsConfiguration;
-import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -13,13 +12,13 @@ import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredExce
 import bio.terra.workspace.service.workspace.exceptions.InvalidApplicationConfigException;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
+import com.google.common.base.Preconditions;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.io.IOException;
 import java.util.*;
 import javax.validation.constraints.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.util.Assert;
 
 /**
  * This service provides methods for managing AWS cloud context. These methods do not perform any
@@ -27,19 +26,24 @@ import org.springframework.util.Assert;
  */
 @Component
 public class AwsCloudContextService {
+  private final AwsConfiguration awsConfiguration;
   private final WorkspaceDao workspaceDao;
-  private final EnvironmentDiscovery environmentDiscovery;
+  private final FeatureService featureService;
+  private EnvironmentDiscovery environmentDiscovery;
 
   @Autowired
   public AwsCloudContextService(
-      WorkspaceDao workspaceDao,
-      FeatureService featureService,
-      AwsConfiguration awsConfiguration) {
+      WorkspaceDao workspaceDao, FeatureService featureService, AwsConfiguration awsConfiguration) {
+    this.awsConfiguration = awsConfiguration;
     this.workspaceDao = workspaceDao;
+    this.featureService = featureService;
     this.environmentDiscovery =
-        featureService.awsEnabled()
-            ? AwsUtils.createEnvironmentDiscovery(awsConfiguration)
-            : null;
+        featureService.awsEnabled() ? AwsUtils.createEnvironmentDiscovery(awsConfiguration) : null;
+  }
+
+  private void maybeInitializeEnvironmentDiscovery() {
+    this.environmentDiscovery =
+        featureService.awsEnabled() ? AwsUtils.createEnvironmentDiscovery(awsConfiguration) : null;
   }
 
   /**
@@ -141,12 +145,14 @@ public class AwsCloudContextService {
   public @NotNull Environment discoverEnvironment()
       throws IllegalArgumentException, InternalLogicException {
     try {
-      Assert.notNull(this.environmentDiscovery, "environmentDiscovery not configured");
+      maybeInitializeEnvironmentDiscovery();
+      Preconditions.checkNotNull(this.environmentDiscovery, "environmentDiscovery not configured");
 
       Environment environment = environmentDiscovery.discoverEnvironment();
-      Assert.notNull(environment, "environment null");
-      Assert.notNull(environment.getMetadata(), "environment.metadata null");
-      Assert.notEmpty(environment.getSupportedRegions(), "environment.landingZones empty");
+      Preconditions.checkNotNull(environment, "environment null");
+      Preconditions.checkNotNull(environment.getMetadata(), "environment.metadata null");
+      Preconditions.checkState(
+          !environment.getSupportedRegions().isEmpty(), "environment.landingZones empty");
 
       return environment;
 

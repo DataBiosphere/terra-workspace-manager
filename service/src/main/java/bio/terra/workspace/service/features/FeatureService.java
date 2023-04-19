@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class FeatureService {
   private final FlagsmithService flagsmithService;
+
   @Autowired
   FeatureService(FlagsmithService flagsmithService) {
     this.flagsmithService = flagsmithService;
@@ -19,7 +20,7 @@ public class FeatureService {
 
   public void awsEnabledCheck() {
     if (!awsEnabled()) {
-      throw new FeatureNotSupportedException("AWS features are not enabled");
+      throw new FeatureNotSupportedException("AWS feature are not enabled");
     }
   }
 }
