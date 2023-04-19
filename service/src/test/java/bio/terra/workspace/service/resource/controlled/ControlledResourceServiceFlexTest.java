@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled;
 
+import static bio.terra.workspace.service.resource.model.CloningInstructions.COPY_NOTHING;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -18,6 +19,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresourc
 import bio.terra.workspace.service.resource.controlled.cloud.any.flight.update.UpdateControlledFlexibleResourceAttributesStep;
 import bio.terra.workspace.service.resource.flight.UpdateStartStep;
 import bio.terra.workspace.service.resource.model.CommonUpdateParameters;
+import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -123,8 +125,11 @@ public class ControlledResourceServiceFlexTest extends BaseConnectedTest {
             wsmResourceService.updateResource(
                 userAccessUtils.defaultUser().getAuthenticatedRequest(),
                 createdFlex,
-                new CommonUpdateParameters().setName(newName).setDescription(newDescription),
-                ControlledResourceFixtures.defaultFlexUpdateParameters()));
+                new CommonUpdateParameters()
+                    .setName(newName)
+                    .setDescription(newDescription)
+                    .setCloningInstructions(StewardshipType.CONTROLLED, COPY_NOTHING),
+                null));
 
     // check the properties stored in WSM were not updated
     ControlledFlexibleResource fetchedResource =
