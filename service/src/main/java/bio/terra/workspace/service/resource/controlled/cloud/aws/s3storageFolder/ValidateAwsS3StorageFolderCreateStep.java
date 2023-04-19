@@ -16,7 +16,8 @@ public class ValidateAwsS3StorageFolderCreateStep implements Step {
   private final AwsCloudContextService awsCloudContextService;
 
   public ValidateAwsS3StorageFolderCreateStep(
-      ControlledAwsS3StorageFolderResource resource, AwsCloudContextService awsCloudContextService) {
+      ControlledAwsS3StorageFolderResource resource,
+      AwsCloudContextService awsCloudContextService) {
     this.resource = resource;
     this.awsCloudContextService = awsCloudContextService;
   }

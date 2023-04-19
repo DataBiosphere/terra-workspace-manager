@@ -11,7 +11,6 @@ import bio.terra.common.exception.UnauthorizedException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.workspace.app.configuration.external.AwsConfiguration;
 import bio.terra.workspace.generated.model.ApiAwsCredentialAccessScope;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.s3storageFolder.ControlledAwsS3StorageFolderResource;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import io.opencensus.contrib.spring.aop.Traced;
@@ -73,8 +72,8 @@ public class AwsUtils {
         : value;
   }
 
-  public static void appendUserTags(Collection<Tag> tags, AuthenticatedUserRequest userRequest) {
-    tags.add(Tag.builder().key("UserID").value(userRequest.getSubjectId()).build());
+  public static void appendUserTags(Collection<Tag> tags, SamUser user) {
+    tags.add(Tag.builder().key("UserID").value(user.getSubjectId()).build());
   }
 
   public static void appendResourceTags(Collection<Tag> tags, AwsCloudContext awsCloudContext) {

@@ -2,6 +2,7 @@ package bio.terra.workspace.app.controller;
 
 import bio.terra.aws.resource.discovery.LandingZone;
 import bio.terra.common.exception.ValidationException;
+import bio.terra.common.iam.SamUser;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.utils.AwsUtils;
@@ -221,8 +222,9 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
             .getControlledResource(workspaceUuid, resourceId)
             .castByEnum(WsmResourceType.CONTROLLED_AWS_S3_STORAGE_FOLDER);
 
+    SamUser user = getSamUser();
     Collection<Tag> tags = new HashSet<>();
-    AwsUtils.appendUserTags(tags, userRequest);
+    AwsUtils.appendUserTags(tags, user);
     AwsUtils.appendPrincipalTags(tags, cloudContext, awsS3StorageFolderResource);
     AwsUtils.appendRoleTags(tags, accessScope);
 
@@ -230,7 +232,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
         AwsUtils.getAssumeUserRoleCredentials(
             awsCloudContextService.getRequiredAuthentication(),
             awsCloudContextService.discoverEnvironment(),
-            getSamUser(),
+            user,
             Duration.ofSeconds(duration),
             tags);
 

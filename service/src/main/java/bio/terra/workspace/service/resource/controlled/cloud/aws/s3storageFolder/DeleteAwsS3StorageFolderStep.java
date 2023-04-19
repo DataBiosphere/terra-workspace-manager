@@ -8,18 +8,16 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 
 public class DeleteAwsS3StorageFolderStep implements Step {
-  private static final Logger logger = LoggerFactory.getLogger(DeleteAwsS3StorageFolderStep.class);
   private final ControlledAwsS3StorageFolderResource resource;
   private final AwsCloudContextService awsCloudContextService;
 
   public DeleteAwsS3StorageFolderStep(
-      ControlledAwsS3StorageFolderResource resource, AwsCloudContextService awsCloudContextService) {
+      ControlledAwsS3StorageFolderResource resource,
+      AwsCloudContextService awsCloudContextService) {
     this.resource = resource;
     this.awsCloudContextService = awsCloudContextService;
   }

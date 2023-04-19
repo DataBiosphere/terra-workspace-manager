@@ -132,7 +132,10 @@ public class ControlledAwsS3StorageFolderResource extends ControlledResource {
         cloudRetry);
     flight.addStep(
         new CreateAwsS3StorageFolderStep(
-            this, flightBeanBag.getAwsCloudContextService(), userRequest),
+            this,
+            flightBeanBag.getAwsCloudContextService(),
+            userRequest,
+            flightBeanBag.getSamService()),
         cloudRetry);
   }
 
@@ -163,7 +166,8 @@ public class ControlledAwsS3StorageFolderResource extends ControlledResource {
 
   @Override
   public String attributesToJson() {
-    return DbSerDes.toJson(new ControlledAwsS3StorageFolderAttributes(getBucketName(), getPrefix()));
+    return DbSerDes.toJson(
+        new ControlledAwsS3StorageFolderAttributes(getBucketName(), getPrefix()));
   }
 
   @Override

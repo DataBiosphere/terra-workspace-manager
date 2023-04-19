@@ -3,6 +3,7 @@ package bio.terra.workspace.service.iam;
 import bio.terra.cloudres.google.iam.ServiceAccountName;
 import bio.terra.common.exception.ForbiddenException;
 import bio.terra.common.exception.InternalServerErrorException;
+import bio.terra.common.iam.BearerToken;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
 import bio.terra.common.sam.SamRetry;
@@ -168,16 +169,23 @@ public class SamService {
   }
 
   /**
-   * Fetch the email associated with user credentials directly from Sam. Unlike {@code
-   * getRequestUserEmail}, this will always call Sam to fetch an email and will never read it from
-   * the AuthenticatedUserRequest. This is important for calls made by pet service accounts, which
-   * will have a pet email in the AuthenticatedUserRequest, but Sam will return the owner's email.
+   * Fetch the email associated with user credentials directly from Sam. This will always call Sam
+   * to fetch an email and will never read it from the AuthenticatedUserRequest. This is important
+   * for calls made by pet service accounts, which will have a pet email in the
+   * AuthenticatedUserRequest, but Sam will return the owner's email.
    */
   public String getUserEmailFromSam(AuthenticatedUserRequest userRequest)
       throws InterruptedException {
     return getUserStatusInfo(userRequest).getUserEmail();
   }
 
+  /** Fetch the Sam user associated with AuthenticatedUserRequest. */
+  public SamUser getSamUser(AuthenticatedUserRequest userRequest) {
+    return samUserFactory.from(
+        new BearerToken(userRequest.getRequiredToken()), samConfig.getBasePath());
+  }
+
+  /** Fetch the Sam user associated with HttpServletRequest. */
   public SamUser getSamUser(HttpServletRequest request) {
     return samUserFactory.from(request, samConfig.getBasePath());
   }
