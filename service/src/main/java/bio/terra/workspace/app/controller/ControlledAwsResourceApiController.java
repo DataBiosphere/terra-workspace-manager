@@ -139,7 +139,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
             .prefix(commonFields.getName())
             .build();
 
-    final ControlledAwsStorageFolderResource createdBucket =
+      ControlledAwsStorageFolderResource createdBucket =
         controlledResourceService
             .createControlledResourceSync(
                 resource, commonFields.getIamRole(), userRequest, body.getAwsStorageFolder())
