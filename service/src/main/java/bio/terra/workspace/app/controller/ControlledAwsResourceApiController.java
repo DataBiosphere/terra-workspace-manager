@@ -32,6 +32,8 @@ import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import java.time.Duration;
 import java.time.ZoneOffset;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -43,6 +45,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sts.model.Credentials;
+import software.amazon.awssdk.services.sts.model.Tag;
 
 @Controller
 public class ControlledAwsResourceApiController extends ControlledResourceControllerBase
@@ -139,7 +142,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
             .prefix(commonFields.getName())
             .build();
 
-      ControlledAwsStorageFolderResource createdBucket =
+    ControlledAwsStorageFolderResource createdBucket =
         controlledResourceService
             .createControlledResourceSync(
                 resource, commonFields.getIamRole(), userRequest, body.getAwsStorageFolder())
@@ -215,18 +218,30 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
       UUID resourceId,
       ApiAwsCredentialAccessScope accessScope,
       Integer duration) {
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     controlledResourceMetadataManager
         .validateControlledResourceAndAction(
             userRequest, workspaceUuid, resourceId, getSamAction(accessScope))
         .castByEnum(WsmResourceType.CONTROLLED_AWS_STORAGE_FOLDER);
+
+    AwsCloudContext cloudContext = awsCloudContextService.getRequiredAwsCloudContext(workspaceUuid);
+    ControlledAwsStorageFolderResource awsStorageFolderResource =
+        controlledResourceService
+            .getControlledResource(workspaceUuid, resourceId)
+            .castByEnum(WsmResourceType.CONTROLLED_AWS_STORAGE_FOLDER);
+
+    Collection<Tag> tags = new HashSet<>();
+    AwsUtils.appendUserTags(tags, userRequest);
+    AwsUtils.appendPrincipalTags(tags, cloudContext, awsStorageFolderResource);
+    AwsUtils.appendRoleTags(tags, accessScope);
 
     Credentials awsCredentials =
         AwsUtils.getAssumeUserRoleCredentials(
             awsCloudContextService.getRequiredAuthentication(),
             awsCloudContextService.discoverEnvironment(),
             getSamUser(),
-            Duration.ofSeconds(duration));
+            Duration.ofSeconds(duration),
+            tags);
 
     return new ResponseEntity<>(
         new ApiAwsCredential()

@@ -7,9 +7,9 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import bio.terra.workspace.service.workspace.model.AwsCloudContext;
+import java.util.Collection;
+import java.util.HashSet;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sts.model.Tag;
@@ -31,17 +31,17 @@ public class CreateAwsStorageFolderStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
+    AwsCloudContext cloudContext =
+        awsCloudContextService.getRequiredAwsCloudContext(resource.getWorkspaceId());
+
     AwsCredentialsProvider credentialsProvider =
         AwsUtils.createWsmCredentialProvider(
             awsCloudContextService.getRequiredAuthentication(),
             awsCloudContextService.discoverEnvironment());
 
-    Set<Tag> tags =
-        Stream.of(
-                Tag.builder().key("user_email").value(userRequest.getEmail()).build(),
-                Tag.builder().key("user_id").value(userRequest.getSubjectId()).build(),
-                Tag.builder().key("ws_id").value(resource.getWorkspaceId().toString()).build())
-            .collect(Collectors.toSet());
+    Collection<Tag> tags = new HashSet<>();
+    AwsUtils.appendUserTags(tags, userRequest);
+    AwsUtils.appendResourceTags(tags, cloudContext);
 
     AwsUtils.createFolder(
         credentialsProvider,

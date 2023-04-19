@@ -7,8 +7,7 @@ public class ControlledAwsStorageFolderAttributes {
 
   @JsonCreator
   public ControlledAwsStorageFolderAttributes(
-      @JsonProperty("bucketName") String bucketName,
-      @JsonProperty("prefix") String prefix) {
+      @JsonProperty("bucketName") String bucketName, @JsonProperty("prefix") String prefix) {
     this.bucketName = bucketName;
     this.prefix = prefix;
   }

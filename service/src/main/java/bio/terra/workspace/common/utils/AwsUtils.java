@@ -10,15 +10,17 @@ import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.exception.UnauthorizedException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.workspace.app.configuration.external.AwsConfiguration;
+import bio.terra.workspace.generated.model.ApiAwsCredentialAccessScope;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.storageFolder.ControlledAwsStorageFolderResource;
+import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import liquibase.repackaged.org.apache.commons.collections4.ListUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -69,6 +71,33 @@ public class AwsUtils {
     return (value.length() > MAX_ROLE_SESSION_NAME_LENGTH)
         ? value.substring(0, MAX_ROLE_SESSION_NAME_LENGTH - 1)
         : value;
+  }
+
+  public static void appendUserTags(Collection<Tag> tags, AuthenticatedUserRequest userRequest) {
+    tags.add(Tag.builder().key("user_id").value(userRequest.getSubjectId()).build());
+  }
+
+  public static void appendResourceTags(Collection<Tag> tags, AwsCloudContext awsCloudContext) {
+    tags.add(Tag.builder().key("version").value(awsCloudContext.getMajorVersion()).build());
+    tags.add(Tag.builder().key("tenant").value(awsCloudContext.getTenantAlias()).build());
+    tags.add(Tag.builder().key("environment").value(awsCloudContext.getEnvironmentAlias()).build());
+  }
+
+  public static void appendPrincipalTags(
+      Collection<Tag> tags,
+      AwsCloudContext awsCloudContext,
+      ControlledAwsStorageFolderResource awsStorageFolderResource) {
+    tags.add(Tag.builder().key("version").value(awsCloudContext.getMajorVersion()).build());
+    tags.add(
+        Tag.builder().key("bucket_id").value(awsStorageFolderResource.getBucketName()).build());
+    tags.add(
+        Tag.builder().key("terra_bucket_id").value(awsStorageFolderResource.getPrefix()).build());
+  }
+
+  public static void appendRoleTags(Collection<Tag> tags, ApiAwsCredentialAccessScope accessScope) {
+    if (accessScope == ApiAwsCredentialAccessScope.WRITE_READ) {
+      tags.add(Tag.builder().key("ws_role").value("writer").build());
+    }
   }
 
   private static StsClient getStsClient() {
@@ -241,27 +270,27 @@ public class AwsUtils {
       AwsConfiguration.Authentication authentication,
       Environment environment,
       SamUser user,
-      Duration duration) {
+      Duration duration,
+      Collection<Tag> tags) {
     Credentials serviceCredentials =
         getAssumeServiceRoleCredentials(
             authentication, environment, MIN_ROLE_SESSION_TOKEN_DURATION);
-    return assumeUserRoleFromServiceCredentials(environment, serviceCredentials, user, duration);
+    return assumeUserRoleFromServiceCredentials(
+        environment, serviceCredentials, user, duration, tags);
   }
 
   public static Credentials assumeUserRoleFromServiceCredentials(
-      Environment environment, Credentials serviceCredentials, SamUser user, Duration duration) {
-    Set<Tag> tags =
-        Stream.of(
-                Tag.builder().key("user_email").value(user.getEmail()).build(),
-                Tag.builder().key("user_id").value(user.getSubjectId()).build())
-            .collect(Collectors.toSet());
-
+      Environment environment,
+      Credentials serviceCredentials,
+      SamUser user,
+      Duration duration,
+      Collection<Tag> tags) {
     AssumeRoleRequest request =
         AssumeRoleRequest.builder()
             .durationSeconds((int) duration.toSeconds())
             .roleArn(environment.getUserRoleArn().toString())
             .roleSessionName(getRoleSessionName(user.getEmail()))
-            .tags(new HashSet<>(tags))
+            .tags(tags)
             .build();
 
     logger.info(
