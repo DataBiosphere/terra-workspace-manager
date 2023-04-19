@@ -95,9 +95,11 @@ public class AwsUtils {
   }
 
   public static void appendRoleTags(Collection<Tag> tags, ApiAwsCredentialAccessScope accessScope) {
-    if (accessScope == ApiAwsCredentialAccessScope.WRITE_READ) {
-      tags.add(Tag.builder().key("WorkspaceRole").value("writer").build());
-    }
+    tags.add(
+        Tag.builder()
+            .key("WorkspaceRole")
+            .value((accessScope == ApiAwsCredentialAccessScope.WRITE_READ) ? "writer" : "reader")
+            .build());
   }
 
   private static StsClient getStsClient() {
