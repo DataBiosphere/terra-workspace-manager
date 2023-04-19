@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.crl;
 
+import bio.terra.cloudres.aws.bucket.S3BucketCow;
 import bio.terra.cloudres.common.ClientConfig;
 import bio.terra.cloudres.common.cleanup.CleanupConfig;
 import bio.terra.cloudres.google.api.services.common.Defaults;
@@ -14,12 +15,14 @@ import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.CrlConfiguration;
+import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.service.crl.exception.CrlInternalException;
 import bio.terra.workspace.service.crl.exception.CrlNotInUseException;
 import bio.terra.workspace.service.crl.exception.CrlSecurityException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
+import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.credential.TokenCredential;
 import com.azure.core.management.AzureEnvironment;
@@ -56,6 +59,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 
 @Component
 public class CrlService {
@@ -67,6 +71,7 @@ public class CrlService {
 
   private final ClientConfig clientConfig;
   private final CrlConfiguration crlConfig;
+  private final AwsCloudContextService awsCloudContextService;
   private final AIPlatformNotebooksCow crlNotebooksCow;
   private final CloudResourceManagerCow crlResourceManagerCow;
   private final CloudBillingClientCow crlBillingClientCow;
@@ -75,8 +80,9 @@ public class CrlService {
   private final ServiceUsageCow crlServiceUsageCow;
 
   @Autowired
-  public CrlService(CrlConfiguration crlConfig) {
+  public CrlService(CrlConfiguration crlConfig, AwsCloudContextService awsCloudContextService) {
     this.crlConfig = crlConfig;
+    this.awsCloudContextService = awsCloudContextService;
 
     if (crlConfig.getUseCrl()) {
       GoogleCredentials creds = getApplicationCredentials();
@@ -467,6 +473,20 @@ public class CrlService {
               "Error while trying to access GCS blob %s in bucket %s", objectName, bucketName),
           e);
     }
+  }
+
+  public S3BucketCow createS3BucketCow(String region) {
+    assertCrlInUse();
+    AwsCredentialsProvider credentialsProvider =
+        AwsUtils.createWsmCredentialProvider(
+            awsCloudContextService.getRequiredAuthentication(),
+            awsCloudContextService.discoverEnvironment());
+    return S3BucketCow.create(clientConfig, credentialsProvider, region);
+  }
+
+  public S3BucketCow createS3BucketCow(AwsCredentialsProvider credentialsProvider, String region) {
+    assertCrlInUse();
+    return S3BucketCow.create(clientConfig, credentialsProvider, region);
   }
 
   private ServiceAccountCredentials getJanitorCredentials(String serviceAccountPath) {

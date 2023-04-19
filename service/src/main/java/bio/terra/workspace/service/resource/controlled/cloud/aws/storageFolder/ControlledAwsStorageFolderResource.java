@@ -128,11 +128,13 @@ public class ControlledAwsStorageFolderResource extends ControlledResource {
     RetryRule cloudRetry = RetryRules.cloud();
 
     flight.addStep(
-        new ValidateAwsStorageFolderCreateStep(this, flightBeanBag.getAwsCloudContextService()),
-        cloudRetry);
+        new ValidateAwsStorageFolderCreateStep(this, flightBeanBag.getCrlService()), cloudRetry);
     flight.addStep(
         new CreateAwsStorageFolderStep(
-            this, flightBeanBag.getAwsCloudContextService(), userRequest),
+            this,
+            flightBeanBag.getAwsCloudContextService(),
+            flightBeanBag.getCrlService(),
+            userRequest),
         cloudRetry);
   }
 
@@ -140,8 +142,7 @@ public class ControlledAwsStorageFolderResource extends ControlledResource {
   @Override
   public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
     flight.addStep(
-        new DeleteAwsStorageFolderStep(this, flightBeanBag.getAwsCloudContextService()),
-        RetryRules.cloud());
+        new DeleteAwsStorageFolderStep(this, flightBeanBag.getCrlService()), RetryRules.cloud());
   }
 
   /** {@inheritDoc} */
