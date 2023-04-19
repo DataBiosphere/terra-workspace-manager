@@ -74,29 +74,29 @@ public class AwsUtils {
   }
 
   public static void appendUserTags(Collection<Tag> tags, AuthenticatedUserRequest userRequest) {
-    tags.add(Tag.builder().key("user_id").value(userRequest.getSubjectId()).build());
+    tags.add(Tag.builder().key("UserID").value(userRequest.getSubjectId()).build());
   }
 
   public static void appendResourceTags(Collection<Tag> tags, AwsCloudContext awsCloudContext) {
-    tags.add(Tag.builder().key("version").value(awsCloudContext.getMajorVersion()).build());
-    tags.add(Tag.builder().key("tenant").value(awsCloudContext.getTenantAlias()).build());
-    tags.add(Tag.builder().key("environment").value(awsCloudContext.getEnvironmentAlias()).build());
+    tags.add(Tag.builder().key("Version").value(awsCloudContext.getMajorVersion()).build());
+    tags.add(Tag.builder().key("Tenant").value(awsCloudContext.getTenantAlias()).build());
+    tags.add(Tag.builder().key("Environment").value(awsCloudContext.getEnvironmentAlias()).build());
   }
 
   public static void appendPrincipalTags(
       Collection<Tag> tags,
       AwsCloudContext awsCloudContext,
       ControlledAwsStorageFolderResource awsStorageFolderResource) {
-    tags.add(Tag.builder().key("version").value(awsCloudContext.getMajorVersion()).build());
+    tags.add(Tag.builder().key("Version").value(awsCloudContext.getMajorVersion()).build());
     tags.add(
-        Tag.builder().key("bucket_id").value(awsStorageFolderResource.getBucketName()).build());
+        Tag.builder().key("S3BucketID").value(awsStorageFolderResource.getBucketName()).build());
     tags.add(
-        Tag.builder().key("terra_bucket_id").value(awsStorageFolderResource.getPrefix()).build());
+        Tag.builder().key("TerraBucketID").value(awsStorageFolderResource.getPrefix()).build());
   }
 
   public static void appendRoleTags(Collection<Tag> tags, ApiAwsCredentialAccessScope accessScope) {
     if (accessScope == ApiAwsCredentialAccessScope.WRITE_READ) {
-      tags.add(Tag.builder().key("ws_role").value("writer").build());
+      tags.add(Tag.builder().key("WorkspaceRole").value("writer").build());
     }
   }
 
