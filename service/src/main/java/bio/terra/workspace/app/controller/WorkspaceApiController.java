@@ -779,7 +779,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     TpsPaoUpdateResult dryRunResults =
         tpsApiDispatch.mergePao(targetWorkspaceId, sourceWorkspaceId, TpsUpdateMode.DRY_RUN);
 
-    validateMergeGroups(targetWorkspaceId, sourceWorkspaceId, dryRunResults);
+    addAnyGroupMergeConflicts(targetWorkspaceId, sourceWorkspaceId, dryRunResults);
 
     List<UUID> resourceWithConflicts = new ArrayList<>();
 
@@ -840,7 +840,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
    * @param sourceWorkspaceId
    * @param dryRunResults
    */
-  private void validateMergeGroups(
+  private void addAnyGroupMergeConflicts(
       UUID targetWorkspaceId, UUID sourceWorkspaceId, TpsPaoUpdateResult dryRunResults) {
     TpsPaoGetResult targetPaoPreUpdate = tpsApiDispatch.getPao(targetWorkspaceId);
 
