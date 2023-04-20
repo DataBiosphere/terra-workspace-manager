@@ -42,7 +42,9 @@ public class AwsCloudContextService {
 
   private void initializeEnvironmentDiscovery() {
     this.environmentDiscovery =
-        (environmentDiscovery == null && featureService.awsEnabled()) ? AwsUtils.createEnvironmentDiscovery(awsConfiguration) : null;
+        (environmentDiscovery == null && featureService.awsEnabled())
+            ? AwsUtils.createEnvironmentDiscovery(awsConfiguration)
+            : null;
   }
 
   /**
