@@ -2,13 +2,13 @@
 #
 # Default post startup script for GCP notebooks.
 # GCP Notebook post startup scrips are run only when the instance is first created.
+# The post-startup script runs as root.
 #
 # How to test changes to this file:
 # - gsutil cp service/src/main/java/bio/terra/workspace/service/resource/controlled/cloud/gcp/ainotebook/post-startup.sh gs://MYBUCKET
 # - terra resource create gcp-notebook --post-startup-script=gs://MYBUCKET/post-startup.sh --name="test_post_startup"
 #
-# To test a single line, run with "sudo" in notebook. Post-startup script runs
-# as root.
+# To test a single line, run with "sudo" in notebook.
 #
 # Please also make sure integration test `PrivateControlledAiNotebookInstancePostStartup` passes. Refer to
 # https://github.com/DataBiosphere/terra-workspace-manager/tree/main/integration#Run-nightly-only-test-suite-locally
@@ -105,16 +105,17 @@ sudo -u "${JUPYTER_USER}" sh -c "/opt/conda/bin/nbstripout --install --global"
 export NXF_VER=21.05.0-edge
 export NXF_MODE=google
 
-sudo apt-get update
+# The apt package index may not be clean when we run; resynchronize
+apt-get update
 
 #########################################################
 # Install required JDK and set it as default (debian)
 #########################################################
 function install_java() {
   curl -Os https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.deb
-  sudo apt-get install -y ./jdk-17_linux-x64_bin.deb
-  sudo update-alternatives --install /usr/bin/java java /usr/lib/jvm/jdk-17/bin/java 1
-  sudo update-alternatives --set java /usr/lib/jvm/jdk-17/bin/java
+  apt-get install -y ./jdk-17_linux-x64_bin.deb
+  update-alternatives --install /usr/bin/java java /usr/lib/jvm/jdk-17/bin/java 1
+  update-alternatives --set java /usr/lib/jvm/jdk-17/bin/java
 }
 
 if [[ -n "$(which java)" ]];
@@ -133,13 +134,14 @@ else
   install_java
 fi
 
+# Download Nextflow and install it
 sudo -u "${JUPYTER_USER}" sh -c "curl -s https://get.nextflow.io | bash"
-sudo mv nextflow /usr/bin/nextflow
+mv nextflow /usr/bin/nextflow
 
-# Install cromwell
+# Download Cromwell and install it
 readonly CROMWELL_LATEST_VERSION="81"
-sudo -u "${JUPYTER_USER}" sh -c "curl -LO https://github.com/broadinstitute/cromwell/releases/download/${CROMWELL_LATEST_VERSION}/cromwell-${CROMWELL_LATEST_VERSION}.jar"
-sudo mv "cromwell-${CROMWELL_LATEST_VERSION}.jar" "/usr/share/java/"
+curl -LO "https://github.com/broadinstitute/cromwell/releases/download/${CROMWELL_LATEST_VERSION}/cromwell-${CROMWELL_LATEST_VERSION}.jar"
+mv "cromwell-${CROMWELL_LATEST_VERSION}.jar" "/usr/share/java/"
 
 # Set a variable for the user in the bash_profile
 cat << EOF >> "/home/${JUPYTER_USER}/.bash_profile"
@@ -148,15 +150,15 @@ cat << EOF >> "/home/${JUPYTER_USER}/.bash_profile"
 export CROMWELL_JAR='/usr/share/java/cromwell-${CROMWELL_LATEST_VERSION}.jar'
 EOF
 
-#Install cromshell
-sudo apt-get -y install mailutils
-sudo -u "${JUPYTER_USER}" sh -c "curl -s https://raw.githubusercontent.com/broadinstitute/cromshell/master/cromshell > cromshell"
-sudo -u "${JUPYTER_USER}" sh -c "chmod +x cromshell"
-sudo mv cromshell /usr/bin/cromshell
+# Download cromshell and install it
+apt-get -y install mailutils
+curl -Os https://raw.githubusercontent.com/broadinstitute/cromshell/master/cromshell
+chmod +x cromshell
+mv cromshell /usr/bin/cromshell
 
 # Install & configure the Terra CLI
 sudo -u "${JUPYTER_USER}" sh -c "curl -L https://github.com/DataBiosphere/terra-cli/releases/latest/download/download-install.sh | bash"
-sudo cp terra /usr/bin/terra
+cp terra /usr/bin/terra
 # Set browser manual login since that's the only login supported from an GCP Notebook VM.
 sudo -u "${JUPYTER_USER}" sh -c "terra config set browser MANUAL"
 # Set the CLI terra server based on the terra server that created the GCP notebook retrieved from
@@ -169,7 +171,7 @@ fi
 # Log in with app-default-credentials
 sudo -u "${JUPYTER_USER}" sh -c "terra auth login --mode=APP_DEFAULT_CREDENTIALS"
 # Generate the bash completion scripot
-sudo -u "${JUPYTER_USER}" sh -c "terra generate-completion" | sudo tee /etc/bash_completion.d/terra > /dev/null
+sudo -u "${JUPYTER_USER}" sh -c "terra generate-completion" > /etc/bash_completion.d/terra
 
 ####################################
 # Shell and notebook environment
@@ -291,7 +293,7 @@ sudo -u "$JUPYTER_USER" sh -c 'terra git clone --all'
 # Setup gitignore to avoid accidental checkin of data.
 readonly GIT_IGNORE="/home/${JUPYTER_USER}/gitignore_global"
 
-cat <<EOF | sudo -E -u jupyter tee "${GIT_IGNORE}"
+cat <<EOF | sudo --preserve-env -u "${JUPYTER_USER}" tee "${GIT_IGNORE}"
 # By default, all files should be ignored by git.
 # We want to be sure to exclude files containing data such as CSVs and images such as PNGs.
 *.*
@@ -324,4 +326,4 @@ set_guest_attributes "${STATUS_ATTRIBUTE}" "COMPLETE"
 ####################################
 # Restart kernel so environment variables work in notebook. See PF-2178.
 ####################################
-sudo systemctl restart jupyter.service
+systemctl restart jupyter.service
