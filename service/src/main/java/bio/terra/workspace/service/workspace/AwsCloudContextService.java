@@ -2,9 +2,12 @@ package bio.terra.workspace.service.workspace;
 
 import bio.terra.aws.resource.discovery.Environment;
 import bio.terra.aws.resource.discovery.EnvironmentDiscovery;
+import bio.terra.aws.resource.discovery.LandingZone;
 import bio.terra.aws.resource.discovery.Metadata;
 import bio.terra.workspace.app.configuration.external.AwsConfiguration;
+import bio.terra.workspace.app.configuration.external.AwsConfiguration.Authentication;
 import bio.terra.workspace.common.exception.InternalLogicException;
+import bio.terra.workspace.common.exception.StaleConfigurationException;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.features.FeatureService;
@@ -12,12 +15,12 @@ import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredExce
 import bio.terra.workspace.service.workspace.exceptions.InvalidApplicationConfigException;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
-import com.google.common.base.Preconditions;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.io.IOException;
 import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import software.amazon.awssdk.regions.Region;
 
 /**
  * This service provides methods for managing AWS cloud context. These methods do not perform any
@@ -28,6 +31,8 @@ public class AwsCloudContextService {
   private final AwsConfiguration awsConfiguration;
   private final WorkspaceDao workspaceDao;
   private final FeatureService featureService;
+  private final AwsConfiguration awsConfiguration;
+  
   private EnvironmentDiscovery environmentDiscovery;
 
   @Autowired
@@ -39,11 +44,12 @@ public class AwsCloudContextService {
     initializeEnvironmentDiscovery();
   }
 
-  private void initializeEnvironmentDiscovery() {
-    this.environmentDiscovery =
-        (environmentDiscovery == null && featureService.awsEnabled())
-            ? AwsUtils.createEnvironmentDiscovery(awsConfiguration)
-            : null;
+  /** Returns authentication from configuration */
+  public Authentication getRequiredAuthentication() {
+    if (awsConfiguration == null) {
+      throw new InvalidApplicationConfigException("AWS configuration not initialized");
+    }
+    return awsConfiguration.getAuthentication();
   }
 
   /**
@@ -126,8 +132,17 @@ public class AwsCloudContextService {
    *
    * @return AWS cloud context
    */
-  public AwsCloudContext getCloudContextFromConfiguration() {
-    Environment environment = discoverEnvironment();
+  public AwsCloudContext getCloudContext() {
+    return getCloudContext(discoverEnvironment());
+  }
+
+  /**
+   * Return a new AWS cloud context for discovered environment
+   *
+   * @param environment AWS environment
+   * @return AWS cloud context
+   */
+  public AwsCloudContext getCloudContext(@NotNull Environment environment) {
     Metadata metadata = environment.getMetadata();
     return new AwsCloudContext(
         metadata.getMajorVersion(),
@@ -145,20 +160,41 @@ public class AwsCloudContextService {
   public Environment discoverEnvironment() throws IllegalArgumentException, InternalLogicException {
     try {
       initializeEnvironmentDiscovery();
-      Preconditions.checkNotNull(this.environmentDiscovery, "environmentDiscovery not configured");
-
-      Environment environment = environmentDiscovery.discoverEnvironment();
-      Preconditions.checkNotNull(environment, "environment null");
-      Preconditions.checkNotNull(environment.getMetadata(), "environment.metadata null");
-      Preconditions.checkState(
-          !environment.getSupportedRegions().isEmpty(), "environment.landingZones empty");
-
-      return environment;
-
-    } catch (IllegalArgumentException e) {
-      throw new InvalidApplicationConfigException("AWS configuration error: " + e.getMessage());
+      
+      if (this.environmentDiscovery == null) {
+        throw new InvalidApplicationConfigException("AWS environmentDiscovery not initialized");
+      }
+      return environmentDiscovery.discoverEnvironment();
     } catch (IOException e) {
       throw new InternalLogicException("AWS discover environment error", e);
     }
+  }
+
+  /**
+   * Return the landing zone to for the given cloud context's region
+   *
+   * @param awsCloudContext AWS cloud context
+   * @param region AWS region
+   * @return AWS landing zone, if supported for the Cloud context region
+   * @throws StaleConfigurationException StaleConfigurationException
+   */
+  public Optional<LandingZone> getLandingZone(AwsCloudContext awsCloudContext, Region region) {
+    Environment environment = discoverEnvironment();
+
+    AwsCloudContext awsCloudContextFromEnv = getCloudContext(environment);
+    if (!awsCloudContext.equals(awsCloudContextFromEnv)) {
+      throw new StaleConfigurationException(
+          String.format(
+              "AWS cloud context expected %s, actual %s", awsCloudContext, awsCloudContextFromEnv));
+    }
+
+    return environment.getLandingZone(region);
+  }
+  
+  private void initializeEnvironmentDiscovery() {
+    this.environmentDiscovery =
+        (environmentDiscovery == null && featureService.awsEnabled())
+            ? AwsUtils.createEnvironmentDiscovery(awsConfiguration)
+            : null;
   }
 }

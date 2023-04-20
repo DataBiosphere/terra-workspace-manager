@@ -496,6 +496,32 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
   @Test
   @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
+  public void mergeCheck_nonMatchingGroups() throws Exception {
+    var userRequest = userAccessUtils.defaultUserAuthRequest();
+    UUID targetWorkspaceId = null;
+    UUID sourceWorkspaceId = null;
+    try {
+      targetWorkspaceId =
+          mockMvcUtils.createWorkspaceWithGroupConstraint(
+              userRequest, PolicyFixtures.DEFAULT_GROUP);
+      sourceWorkspaceId =
+          mockMvcUtils.createWorkspaceWithGroupConstraint(userRequest, PolicyFixtures.ALT_GROUP);
+
+      ApiWsmPolicyMergeCheckResult result =
+          mergeCheck(userRequest, targetWorkspaceId, sourceWorkspaceId);
+
+      assertEquals(1, result.getConflicts().size());
+      assertEquals(0, result.getResourcesWithConflict().size());
+      assertEquals(PolicyFixtures.NAMESPACE, result.getConflicts().get(0).getNamespace());
+      assertEquals(PolicyFixtures.GROUP_CONSTRAINT, result.getConflicts().get(0).getName());
+    } finally {
+      mockMvcUtils.deleteWorkspace(userRequest, targetWorkspaceId);
+      mockMvcUtils.deleteWorkspace(userRequest, sourceWorkspaceId);
+    }
+  }
+
+  @Test
+  @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
   public void updatePolicies_tpsEnabledAndPolicyUpdated() throws Exception {
     ApiWorkspaceDescription workspaceWithoutPolicy =
         mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());

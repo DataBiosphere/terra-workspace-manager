@@ -169,7 +169,7 @@ fi
 # Log in with app-default-credentials
 sudo -u "${JUPYTER_USER}" sh -c "terra auth login --mode=APP_DEFAULT_CREDENTIALS"
 # Generate the bash completion scripot
-sudo -u "${JUPYTER_USER}" sh -c "terra generate-completion | sudo tee /etc/bash_completion.d/terra" > /dev/null
+sudo -u "${JUPYTER_USER}" sh -c "terra generate-completion" | sudo tee /etc/bash_completion.d/terra > /dev/null
 
 ####################################
 # Shell and notebook environment

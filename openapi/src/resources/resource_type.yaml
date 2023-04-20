@@ -15,6 +15,7 @@ components:
         - AZURE_VM
         - AZURE_STORAGE_CONTAINER
         - AZURE_BATCH_POOL
+        - AWS_S3_STORAGE_FOLDER
         - GIT_REPO
         - TERRA_WORKSPACE
         - FLEXIBLE_RESOURCE
@@ -46,6 +47,8 @@ components:
           $ref: '#/components/schemas/AzureVmAttributes'
         azureBatchPool:
           $ref: '#/components/schemas/AzureBatchPoolAttributes'
+        awsS3StorageFolder:
+          $ref: '#/components/schemas/AwsS3StorageFolderAttributes'
         gitRepo:
           $ref: '#/components/schemas/GitRepoAttributes'
         terraWorkspace:
@@ -80,6 +83,8 @@ components:
           $ref: '#/components/schemas/AzureStorageContainerResource'
         azureBatchPool:
           $ref: '#/components/schemas/AzureBatchPoolResource'
+        awsS3StorageFolder:
+          $ref: '#/components/schemas/AwsS3StorageFolderAttributes'
         gitRepo:
           $ref: '#/components/schemas/GitRepoResource'
         terraWorkspace:
