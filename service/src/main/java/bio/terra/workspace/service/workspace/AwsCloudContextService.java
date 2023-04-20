@@ -40,9 +40,9 @@ public class AwsCloudContextService {
         featureService.awsEnabled() ? AwsUtils.createEnvironmentDiscovery(awsConfiguration) : null;
   }
 
-  private void maybeInitializeEnvironmentDiscovery() {
+  private void initializeEnvironmentDiscovery() {
     this.environmentDiscovery =
-        featureService.awsEnabled() ? AwsUtils.createEnvironmentDiscovery(awsConfiguration) : null;
+        (environmentDiscovery == null && featureService.awsEnabled()) ? AwsUtils.createEnvironmentDiscovery(awsConfiguration) : null;
   }
 
   /**
@@ -143,7 +143,7 @@ public class AwsCloudContextService {
    */
   public Environment discoverEnvironment() throws IllegalArgumentException, InternalLogicException {
     try {
-      maybeInitializeEnvironmentDiscovery();
+      initializeEnvironmentDiscovery();
       Preconditions.checkNotNull(this.environmentDiscovery, "environmentDiscovery not configured");
 
       Environment environment = environmentDiscovery.discoverEnvironment();
