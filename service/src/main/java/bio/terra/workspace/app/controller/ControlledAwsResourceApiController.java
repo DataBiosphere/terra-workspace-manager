@@ -240,8 +240,11 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
             Duration.ofSeconds(duration),
             tags);
 
+    // version: 1 as per
+    // https://docs.aws.amazon.com/sdkref/latest/guide/feature-process-credentials.html#feature-process-credentials-output
     return new ResponseEntity<>(
         new ApiAwsCredential()
+            .version(1)
             .accessKeyId(awsCredentials.accessKeyId())
             .secretAccessKey(awsCredentials.secretAccessKey())
             .sessionToken(awsCredentials.sessionToken())

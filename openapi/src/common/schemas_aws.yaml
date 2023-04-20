@@ -16,6 +16,8 @@ components:
       description: AWS CLI/SDK-compatible credential to access AWS resources
       type: object
       properties:
+        Version:
+          type: integer
         AccessKeyId:
           type: string
         SecretAccessKey:
