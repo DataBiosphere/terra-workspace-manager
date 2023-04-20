@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 /** A collection of static validation functions specific to AWS */
 @Component
 public class AwsResourceValidationUtils {
-  @VisibleForTesting
   static final Pattern s3ObjectDisallowedChars = Pattern.compile("[{}^%`<>~#|@*+\\[\\]\"\'\\\\/]");
 
   /**
