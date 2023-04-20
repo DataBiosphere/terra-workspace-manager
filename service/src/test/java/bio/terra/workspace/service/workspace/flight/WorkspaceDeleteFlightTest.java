@@ -8,6 +8,8 @@ import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.workspace.flight.aws.DeleteAwsContextStep;
+import bio.terra.workspace.service.workspace.flight.aws.DeleteControlledAwsResourcesStep;
 import bio.terra.workspace.service.workspace.flight.azure.DeleteAzureContextStep;
 import bio.terra.workspace.service.workspace.flight.azure.DeleteControlledAzureResourcesStep;
 import bio.terra.workspace.service.workspace.flight.gcp.DeleteGcpProjectStep;
@@ -37,13 +39,15 @@ public class WorkspaceDeleteFlightTest {
 
     var flight = new WorkspaceDeleteFlight(flightMap, context);
     var steps = flight.getSteps();
-    assertEquals(6, steps.size());
+    assertEquals(8, steps.size());
     assertEquals(DeleteControlledAzureResourcesStep.class, steps.get(0).getClass());
-    assertEquals(DeleteControlledSamResourcesStep.class, steps.get(1).getClass());
-    assertEquals(DeleteGcpProjectStep.class, steps.get(2).getClass());
-    assertEquals(EnsureNoWorkspaceChildrenStep.class, steps.get(3).getClass());
-    assertEquals(DeleteAzureContextStep.class, steps.get(4).getClass());
-    assertEquals(DeleteWorkspaceStateStep.class, steps.get(5).getClass());
+    assertEquals(DeleteControlledAwsResourcesStep.class, steps.get(1).getClass());
+    assertEquals(DeleteControlledSamResourcesStep.class, steps.get(2).getClass());
+    assertEquals(DeleteGcpProjectStep.class, steps.get(3).getClass());
+    assertEquals(EnsureNoWorkspaceChildrenStep.class, steps.get(4).getClass());
+    assertEquals(DeleteAzureContextStep.class, steps.get(5).getClass());
+    assertEquals(DeleteAwsContextStep.class, steps.get(6).getClass());
+    assertEquals(DeleteWorkspaceStateStep.class, steps.get(7).getClass());
   }
 
   @Test
@@ -60,15 +64,17 @@ public class WorkspaceDeleteFlightTest {
 
     var flight = new WorkspaceDeleteFlight(flightMap, context);
     var steps = flight.getSteps();
-    assertEquals(8, steps.size());
+    assertEquals(10, steps.size());
     assertEquals(DeleteControlledAzureResourcesStep.class, steps.get(0).getClass());
-    assertEquals(DeleteControlledSamResourcesStep.class, steps.get(1).getClass());
-    assertEquals(DeleteGcpProjectStep.class, steps.get(2).getClass());
-    assertEquals(EnsureNoWorkspaceChildrenStep.class, steps.get(3).getClass());
-    assertEquals(DeleteAzureContextStep.class, steps.get(4).getClass());
-    assertEquals(DeleteWorkspacePoliciesStep.class, steps.get(5).getClass());
-    assertEquals(DeleteWorkspaceAuthzStep.class, steps.get(6).getClass());
-    assertEquals(DeleteWorkspaceStateStep.class, steps.get(7).getClass());
+    assertEquals(DeleteControlledAwsResourcesStep.class, steps.get(1).getClass());
+    assertEquals(DeleteControlledSamResourcesStep.class, steps.get(2).getClass());
+    assertEquals(DeleteGcpProjectStep.class, steps.get(3).getClass());
+    assertEquals(EnsureNoWorkspaceChildrenStep.class, steps.get(4).getClass());
+    assertEquals(DeleteAzureContextStep.class, steps.get(5).getClass());
+    assertEquals(DeleteAwsContextStep.class, steps.get(6).getClass());
+    assertEquals(DeleteWorkspacePoliciesStep.class, steps.get(7).getClass());
+    assertEquals(DeleteWorkspaceAuthzStep.class, steps.get(8).getClass());
+    assertEquals(DeleteWorkspaceStateStep.class, steps.get(9).getClass());
   }
 
   @Test
@@ -85,13 +91,15 @@ public class WorkspaceDeleteFlightTest {
 
     var flight = new WorkspaceDeleteFlight(flightMap, context);
     var steps = flight.getSteps();
-    assertEquals(7, steps.size());
+    assertEquals(9, steps.size());
     assertEquals(DeleteControlledAzureResourcesStep.class, steps.get(0).getClass());
-    assertEquals(DeleteControlledSamResourcesStep.class, steps.get(1).getClass());
-    assertEquals(DeleteGcpProjectStep.class, steps.get(2).getClass());
-    assertEquals(EnsureNoWorkspaceChildrenStep.class, steps.get(3).getClass());
-    assertEquals(DeleteAzureContextStep.class, steps.get(4).getClass());
-    assertEquals(DeleteWorkspaceAuthzStep.class, steps.get(5).getClass());
-    assertEquals(DeleteWorkspaceStateStep.class, steps.get(6).getClass());
+    assertEquals(DeleteControlledAwsResourcesStep.class, steps.get(1).getClass());
+    assertEquals(DeleteControlledSamResourcesStep.class, steps.get(2).getClass());
+    assertEquals(DeleteGcpProjectStep.class, steps.get(3).getClass());
+    assertEquals(EnsureNoWorkspaceChildrenStep.class, steps.get(4).getClass());
+    assertEquals(DeleteAzureContextStep.class, steps.get(5).getClass());
+    assertEquals(DeleteAwsContextStep.class, steps.get(6).getClass());
+    assertEquals(DeleteWorkspaceAuthzStep.class, steps.get(7).getClass());
+    assertEquals(DeleteWorkspaceStateStep.class, steps.get(8).getClass());
   }
 }
