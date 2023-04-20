@@ -155,8 +155,6 @@ terra.common:
   tracing:
     stackdriverExportEnabled: ${env.tracing.exportEnabled}
     samplingRate: ${env.tracing.samplingRate}
-  flagsmith:
-    enabled: false
 
 #Terra Landing Zone Service configuration
 landingzone:
