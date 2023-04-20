@@ -9,6 +9,7 @@ import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
@@ -70,6 +71,7 @@ public class WorkspaceService {
   private final BufferServiceConfiguration bufferServiceConfiguration;
   private final StageService stageService;
   private final FeatureConfiguration features;
+  private final FeatureService featureService;
   private final ResourceDao resourceDao;
   private final WorkspaceActivityLogService workspaceActivityLogService;
 
@@ -82,6 +84,7 @@ public class WorkspaceService {
       BufferServiceConfiguration bufferServiceConfiguration,
       StageService stageService,
       FeatureConfiguration features,
+      FeatureService featureService,
       ResourceDao resourceDao,
       WorkspaceActivityLogService workspaceActivityLogService) {
     this.jobService = jobService;
@@ -91,6 +94,7 @@ public class WorkspaceService {
     this.bufferServiceConfiguration = bufferServiceConfiguration;
     this.stageService = stageService;
     this.features = features;
+    this.featureService = featureService;
     this.resourceDao = resourceDao;
     this.workspaceActivityLogService = workspaceActivityLogService;
   }
@@ -529,7 +533,7 @@ public class WorkspaceService {
       String jobId,
       AuthenticatedUserRequest userRequest,
       @Nullable String resultPath) {
-    features.awsEnabledCheck();
+    featureService.awsEnabledCheck();
 
     jobService
         .newJob()
@@ -578,7 +582,7 @@ public class WorkspaceService {
 
   @Traced
   public void deleteAwsCloudContext(Workspace workspace, AuthenticatedUserRequest userRequest) {
-    features.awsEnabledCheck();
+    featureService.awsEnabledCheck();
 
     jobService
         .newJob()

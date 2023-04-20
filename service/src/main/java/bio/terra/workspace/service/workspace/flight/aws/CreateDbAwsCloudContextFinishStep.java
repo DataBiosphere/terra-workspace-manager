@@ -22,7 +22,7 @@ public class CreateDbAwsCloudContextFinishStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext flightContext) throws InterruptedException {
-    AwsCloudContext awsCloudContext = awsCloudContextService.getCloudContextFromConfiguration();
+    AwsCloudContext awsCloudContext = awsCloudContextService.getCloudContext();
 
     // Create the cloud context; throws if the context already exists.
     awsCloudContextService.createAwsCloudContextFinish(

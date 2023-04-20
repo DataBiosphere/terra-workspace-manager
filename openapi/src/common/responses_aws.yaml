@@ -1,0 +1,11 @@
+# Common AWS responses
+# These responses should be referenced from the source like this:
+#  $ref: '#/components/responses/<item-you-want>
+components:
+  responses:
+    DeleteControlledAwsResourceResponse:
+      description: Response Payload for deleting AWS controlled resources
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DeleteControlledAwsResourceResult'

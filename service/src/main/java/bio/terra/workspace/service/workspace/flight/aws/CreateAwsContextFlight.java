@@ -3,7 +3,6 @@ package bio.terra.workspace.service.workspace.flight.aws;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRule;
-import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
@@ -17,8 +16,7 @@ public class CreateAwsContextFlight extends Flight {
 
     // Sanity check to make sure AWS is enabled before kicking off flight
     FlightBeanBag appContext = FlightBeanBag.getFromObject(applicationContext);
-    FeatureConfiguration featureConfiguration = appContext.getFeatureConfiguration();
-    featureConfiguration.awsEnabledCheck();
+    appContext.getFeatureService().awsEnabledCheck();
 
     UUID workspaceUuid =
         UUID.fromString(

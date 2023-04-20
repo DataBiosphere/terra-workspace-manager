@@ -3,6 +3,9 @@ package bio.terra.workspace.service.iam;
 import bio.terra.cloudres.google.iam.ServiceAccountName;
 import bio.terra.common.exception.ForbiddenException;
 import bio.terra.common.exception.InternalServerErrorException;
+import bio.terra.common.iam.BearerToken;
+import bio.terra.common.iam.SamUser;
+import bio.terra.common.iam.SamUserFactory;
 import bio.terra.common.sam.SamRetry;
 import bio.terra.common.sam.exception.SamExceptionFactory;
 import bio.terra.common.tracing.OkHttpClientTracingInterceptor;
@@ -34,6 +37,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import javax.servlet.http.HttpServletRequest;
 import okhttp3.OkHttpClient;
 import org.broadinstitute.dsde.workbench.client.sam.ApiClient;
 import org.broadinstitute.dsde.workbench.client.sam.ApiException;
@@ -75,14 +79,16 @@ public class SamService {
           "openid", "email", "profile", "https://www.googleapis.com/auth/cloud-platform");
   private static final Logger logger = LoggerFactory.getLogger(SamService.class);
   private final SamConfiguration samConfig;
+  private final SamUserFactory samUserFactory;
   private final OkHttpClient commonHttpClient;
-
   private final WorkspaceDao workspaceDao;
   private boolean wsmServiceAccountInitialized;
 
   @Autowired
-  public SamService(SamConfiguration samConfig, WorkspaceDao workspaceDao) {
+  public SamService(
+      SamConfiguration samConfig, SamUserFactory samUserFactory, WorkspaceDao workspaceDao) {
     this.samConfig = samConfig;
+    this.samUserFactory = samUserFactory;
     this.wsmServiceAccountInitialized = false;
     this.commonHttpClient =
         new ApiClient()
@@ -163,14 +169,25 @@ public class SamService {
   }
 
   /**
-   * Fetch the email associated with user credentials directly from Sam. Unlike {@code
-   * getRequestUserEmail}, this will always call Sam to fetch an email and will never read it from
-   * the AuthenticatedUserRequest. This is important for calls made by pet service accounts, which
-   * will have a pet email in the AuthenticatedUserRequest, but Sam will return the owner's email.
+   * Fetch the email associated with user credentials directly from Sam. This will always call Sam
+   * to fetch an email and will never read it from the AuthenticatedUserRequest. This is important
+   * for calls made by pet service accounts, which will have a pet email in the
+   * AuthenticatedUserRequest, but Sam will return the owner's email.
    */
   public String getUserEmailFromSam(AuthenticatedUserRequest userRequest)
       throws InterruptedException {
     return getUserStatusInfo(userRequest).getUserEmail();
+  }
+
+  /** Fetch the Sam user associated with AuthenticatedUserRequest. */
+  public SamUser getSamUser(AuthenticatedUserRequest userRequest) {
+    return samUserFactory.from(
+        new BearerToken(userRequest.getRequiredToken()), samConfig.getBasePath());
+  }
+
+  /** Fetch the Sam user associated with HttpServletRequest. */
+  public SamUser getSamUser(HttpServletRequest request) {
+    return samUserFactory.from(request, samConfig.getBasePath());
   }
 
   /** Fetch the user status info associated with the user credentials directly from Sam. */
@@ -587,7 +604,7 @@ public class SamService {
   /**
    * Wrapper around the Sam client to remove a role from the provided user on a controlled resource.
    *
-   * <p>Similar to {@removeWorkspaceRole}, but for controlled resources. This should only be
+   * <p>Similar to {@link #removeWorkspaceRole}, but for controlled resources. This should only be
    * necessary for private resources, as users do not have individual roles on shared resources.
    *
    * <p>This call to Sam is made as the WSM SA, as users do not have permission to directly modify
@@ -1016,8 +1033,7 @@ public class SamService {
    *     a workspace owner to ensure the WSM SA is being used on a user's behalf correctly.
    */
   public List<ControlledResourceIamRole> getUserRolesOnPrivateResource(
-      ControlledResource resource, String userEmail, AuthenticatedUserRequest userRequest)
-      throws InterruptedException {
+      ControlledResource resource, String userEmail, AuthenticatedUserRequest userRequest) {
 
     try {
       ResourcesApi wsmSaResourceApi = samResourcesApi(getWsmServiceAccountToken());

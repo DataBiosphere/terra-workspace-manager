@@ -14,6 +14,7 @@ import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.buffer.BufferService;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.datarepo.DataRepoService;
+import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.grant.GrantService;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
@@ -60,6 +61,7 @@ public class FlightBeanBag {
   private final CrlService crlService;
   private final DataRepoService dataRepoService;
   private final FeatureConfiguration featureConfiguration;
+  private final FeatureService featureService;
   private final FolderDao folderDao;
   private final GrantDao grantDao;
   private final GrantService grantService;
@@ -96,6 +98,7 @@ public class FlightBeanBag {
       CrlService crlService,
       DataRepoService dataRepoService,
       FeatureConfiguration featureConfiguration,
+      FeatureService featureService,
       FolderDao folderDao,
       GrantDao grantDao,
       GrantService grantService,
@@ -128,6 +131,7 @@ public class FlightBeanBag {
     this.crlService = crlService;
     this.dataRepoService = dataRepoService;
     this.featureConfiguration = featureConfiguration;
+    this.featureService = featureService;
     this.folderDao = folderDao;
     this.grantDao = grantDao;
     this.grantService = grantService;
@@ -205,6 +209,10 @@ public class FlightBeanBag {
 
   public FeatureConfiguration getFeatureConfiguration() {
     return featureConfiguration;
+  }
+
+  public FeatureService getFeatureService() {
+    return featureService;
   }
 
   public GrantDao getGrantDao() {
