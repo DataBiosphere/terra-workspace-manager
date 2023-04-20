@@ -275,6 +275,21 @@ public class SamService {
     }
   }
 
+  public List<FullyQualifiedResourceId> getWorkspaceChildResources(
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId
+  ) throws InterruptedException {
+    var resourceApi = samResourcesApi(userRequest.getRequiredToken());
+    try {
+      return SamRetry.retry(
+          () -> resourceApi.listResourceChildren("workspace", workspaceId.toString())
+      );
+    } catch (ApiException apiException) {
+      throw SamExceptionFactory.create("Error checking resource permission in Sam", apiException);
+    }
+
+  }
+
   /**
    * Wrapper around the Sam client to create a workspace resource in Sam.
    *
