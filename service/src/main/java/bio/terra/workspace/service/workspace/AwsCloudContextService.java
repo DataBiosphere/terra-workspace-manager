@@ -36,8 +36,7 @@ public class AwsCloudContextService {
     this.awsConfiguration = awsConfiguration;
     this.workspaceDao = workspaceDao;
     this.featureService = featureService;
-    this.environmentDiscovery =
-        featureService.awsEnabled() ? AwsUtils.createEnvironmentDiscovery(awsConfiguration) : null;
+    initializeEnvironmentDiscovery();
   }
 
   private void initializeEnvironmentDiscovery() {
