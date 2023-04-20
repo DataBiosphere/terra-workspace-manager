@@ -1,18 +1,42 @@
 #!/bin/bash
 #
-# Default post startup script for GCP notebooks.
-# GCP Notebook post startup scrips are run only when the instance is first created.
-# The post-startup script runs as root.
+# Name: post-startup.sh
+#
+# Description
+#   Default post startup script for Google Cloud Vertex AI Workbench VM
+#   running JupyterLab.
+#
+# Exection details
+#   The post-startup script runs on Vertex AI notebook VMs during *instance creation*;
+#   it is not run on every instance start.
+#
+#   *** The post-startup script runs as root. ***
+#
+#   The startup script is executed from /opt/c2d/scripts/97-run-post-startup-script.sh
+#   which will:
+#     1- Get the GCS path from VM metadata (instance/attributes/post-startup-script)
+#     2- Download it to /opt/c2d/post_start.sh
+#     3- Execute /opt/c2d/post_start.sh
+#     4- Set the VM guest attribute "notebooks/handle_post_startup_script" to "DONE"
+#
+#   Note that the guest attribute is set to DONE whether the script runs successfully or not.
 #
 # How to test changes to this file:
-# - gsutil cp service/src/main/java/bio/terra/workspace/service/resource/controlled/cloud/gcp/ainotebook/post-startup.sh gs://MYBUCKET
-# - terra resource create gcp-notebook --post-startup-script=gs://MYBUCKET/post-startup.sh --name="test_post_startup"
+#   Copy this file to a GCS bucket:
+#   - gsutil cp service/src/main/java/bio/terra/workspace/service/resource/controlled/cloud/gcp/ainotebook/post-startup.sh gs://MYBUCKET
 #
-# To test a single line, run with "sudo" in notebook.
+#   Create a new VM:
+#   - terra resource create gcp-notebook \
+#       --name="test_post_startup" \
+#       --post-startup-script=gs://MYBUCKET/post-startup.sh
 #
-# Please also make sure integration test `PrivateControlledAiNotebookInstancePostStartup` passes. Refer to
-# https://github.com/DataBiosphere/terra-workspace-manager/tree/main/integration#Run-nightly-only-test-suite-locally
-# for instruction on how to run the test.
+#   To test a new command in this script, be sure to run with "sudo" in a JupyterLab Terminal.
+#
+# Integration Tests
+#   Please also make sure integration test `PrivateControlledAiNotebookInstancePostStartup` passes. Refer to
+#   https://github.com/DataBiosphere/terra-workspace-manager/tree/main/integration#Run-nightly-only-test-suite-locally
+#   for instruction on how to run the test.
+#
 
 set -o errexit
 set -o nounset
