@@ -15,7 +15,6 @@ public class FeatureConfiguration {
   private static final Logger logger = LoggerFactory.getLogger(FeatureConfiguration.class);
 
   private boolean azureEnabled;
-  private boolean awsEnabled;
   private boolean alpha1Enabled;
   private boolean tpsEnabled;
   private boolean bpmGcpEnabled;
@@ -29,14 +28,6 @@ public class FeatureConfiguration {
 
   public void setAzureEnabled(boolean azureEnabled) {
     this.azureEnabled = azureEnabled;
-  }
-
-  public boolean isAwsEnabled() {
-    return awsEnabled;
-  }
-
-  public void setAwsEnabled(boolean awsEnabled) {
-    this.awsEnabled = awsEnabled;
   }
 
   public boolean isAlpha1Enabled() {
@@ -94,12 +85,6 @@ public class FeatureConfiguration {
     }
   }
 
-  public void awsEnabledCheck() {
-    if (!isAwsEnabled()) {
-      throw new FeatureNotSupportedException("AWS features are not enabled");
-    }
-  }
-
   public void alpha1EnabledCheck() {
     if (!isAlpha1Enabled()) {
       throw new FeatureNotSupportedException("Alpha1 features are not supported");
@@ -119,7 +104,6 @@ public class FeatureConfiguration {
    */
   public void logFeatures() {
     logger.info("Feature: azure-enabled: {}", isAzureEnabled());
-    logger.info("Feature: aws-enabled: {}", isAwsEnabled());
     logger.info("Feature: alpha1-enabled: {}", isAlpha1Enabled());
     logger.info("Feature: tps-enabled: {}", isTpsEnabled());
     logger.info("Feature: bpm-gcp-enabled: {}", isBpmGcpEnabled());

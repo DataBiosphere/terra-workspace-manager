@@ -17,6 +17,7 @@ import bio.terra.workspace.generated.model.ApiCreatedControlledAwsS3StorageFolde
 import bio.terra.workspace.generated.model.ApiDeleteControlledAwsResourceRequestBody;
 import bio.terra.workspace.generated.model.ApiDeleteControlledAwsResourceResult;
 import bio.terra.workspace.generated.model.ApiJobControl;
+import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
@@ -54,6 +55,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
 
   private final Logger logger = LoggerFactory.getLogger(ControlledAwsResourceApiController.class);
 
+  private final FeatureService featureService;
   private final WorkspaceService workspaceService;
   private final AwsCloudContextService awsCloudContextService;
 
@@ -62,7 +64,8 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request,
       SamService samService,
-      FeatureConfiguration features,
+      FeatureConfiguration featureConfiguration,
+      FeatureService featureService,
       JobService jobService,
       JobApiUtils jobApiUtils,
       ControlledResourceService controlledResourceService,
@@ -73,11 +76,12 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
         authenticatedUserRequestFactory,
         request,
         samService,
-        features,
+        featureConfiguration,
         jobService,
         jobApiUtils,
         controlledResourceService,
         controlledResourceMetadataManager);
+    this.featureService = featureService;
     this.workspaceService = workspaceService;
     this.awsCloudContextService = awsCloudContextService;
   }
@@ -91,7 +95,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
   @Override
   public ResponseEntity<ApiCreatedControlledAwsS3StorageFolder> createAwsS3StorageFolder(
       UUID workspaceUuid, @Valid ApiCreateControlledAwsS3StorageFolderRequestBody body) {
-    features.awsEnabledCheck();
+    featureService.awsEnabledCheck();
 
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledResourceFields commonFields =

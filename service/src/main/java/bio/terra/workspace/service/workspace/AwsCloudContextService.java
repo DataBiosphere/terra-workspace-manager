@@ -6,19 +6,19 @@ import bio.terra.aws.resource.discovery.LandingZone;
 import bio.terra.aws.resource.discovery.Metadata;
 import bio.terra.workspace.app.configuration.external.AwsConfiguration;
 import bio.terra.workspace.app.configuration.external.AwsConfiguration.Authentication;
-import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.exception.StaleConfigurationException;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.exceptions.InvalidApplicationConfigException;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.io.IOException;
-import java.util.*;
-import javax.validation.constraints.NotNull;
+import java.util.Optional;
+import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.regions.Region;
@@ -29,21 +29,19 @@ import software.amazon.awssdk.regions.Region;
  */
 @Component
 public class AwsCloudContextService {
-  private final WorkspaceDao workspaceDao;
   private final AwsConfiguration awsConfiguration;
-  private final EnvironmentDiscovery environmentDiscovery;
+  private final WorkspaceDao workspaceDao;
+  private final FeatureService featureService;
+
+  private EnvironmentDiscovery environmentDiscovery;
 
   @Autowired
   public AwsCloudContextService(
-      WorkspaceDao workspaceDao,
-      FeatureConfiguration featureConfiguration,
-      AwsConfiguration awsConfiguration) {
-    this.workspaceDao = workspaceDao;
+      WorkspaceDao workspaceDao, FeatureService featureService, AwsConfiguration awsConfiguration) {
     this.awsConfiguration = awsConfiguration;
-    this.environmentDiscovery =
-        featureConfiguration.isAwsEnabled()
-            ? AwsUtils.createEnvironmentDiscovery(awsConfiguration)
-            : null;
+    this.workspaceDao = workspaceDao;
+    this.featureService = featureService;
+    initializeEnvironmentDiscovery();
   }
 
   /** Returns authentication from configuration */
@@ -144,7 +142,7 @@ public class AwsCloudContextService {
    * @param environment AWS environment
    * @return AWS cloud context
    */
-  public AwsCloudContext getCloudContext(@NotNull Environment environment) {
+  public AwsCloudContext getCloudContext(Environment environment) {
     Metadata metadata = environment.getMetadata();
     return new AwsCloudContext(
         metadata.getMajorVersion(),
@@ -161,11 +159,12 @@ public class AwsCloudContextService {
    */
   public Environment discoverEnvironment() throws IllegalArgumentException, InternalLogicException {
     try {
+      initializeEnvironmentDiscovery();
+
       if (this.environmentDiscovery == null) {
         throw new InvalidApplicationConfigException("AWS environmentDiscovery not initialized");
       }
       return environmentDiscovery.discoverEnvironment();
-
     } catch (IOException e) {
       throw new InternalLogicException("AWS discover environment error", e);
     }
@@ -190,5 +189,12 @@ public class AwsCloudContextService {
     }
 
     return environment.getLandingZone(region);
+  }
+
+  private void initializeEnvironmentDiscovery() {
+    this.environmentDiscovery =
+        (environmentDiscovery == null && featureService.awsEnabled())
+            ? AwsUtils.createEnvironmentDiscovery(awsConfiguration)
+            : null;
   }
 }
