@@ -49,12 +49,18 @@ public class ControlledResourceControllerBase extends ControllerBase {
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request,
       SamService samService,
-      FeatureConfiguration features,
+      FeatureConfiguration featureConfiguration,
       JobService jobService,
       JobApiUtils jobApiUtils,
       ControlledResourceService controlledResourceService,
       ControlledResourceMetadataManager controlledResourceMetadataManager) {
-    super(authenticatedUserRequestFactory, request, samService, features, jobService, jobApiUtils);
+    super(
+        authenticatedUserRequestFactory,
+        request,
+        samService,
+        featureConfiguration,
+        jobService,
+        jobApiUtils);
     this.controlledResourceService = controlledResourceService;
     this.controlledResourceMetadataManager = controlledResourceMetadataManager;
   }

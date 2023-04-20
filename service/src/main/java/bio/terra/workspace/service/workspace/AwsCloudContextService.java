@@ -17,7 +17,8 @@ import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.io.IOException;
-import java.util.*;
+import java.util.Optional;
+import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.regions.Region;
@@ -31,8 +32,7 @@ public class AwsCloudContextService {
   private final AwsConfiguration awsConfiguration;
   private final WorkspaceDao workspaceDao;
   private final FeatureService featureService;
-  private final AwsConfiguration awsConfiguration;
-  
+
   private EnvironmentDiscovery environmentDiscovery;
 
   @Autowired
@@ -142,7 +142,7 @@ public class AwsCloudContextService {
    * @param environment AWS environment
    * @return AWS cloud context
    */
-  public AwsCloudContext getCloudContext(@NotNull Environment environment) {
+  public AwsCloudContext getCloudContext(Environment environment) {
     Metadata metadata = environment.getMetadata();
     return new AwsCloudContext(
         metadata.getMajorVersion(),
@@ -160,7 +160,7 @@ public class AwsCloudContextService {
   public Environment discoverEnvironment() throws IllegalArgumentException, InternalLogicException {
     try {
       initializeEnvironmentDiscovery();
-      
+
       if (this.environmentDiscovery == null) {
         throw new InvalidApplicationConfigException("AWS environmentDiscovery not initialized");
       }
@@ -190,7 +190,7 @@ public class AwsCloudContextService {
 
     return environment.getLandingZone(region);
   }
-  
+
   private void initializeEnvironmentDiscovery() {
     this.environmentDiscovery =
         (environmentDiscovery == null && featureService.awsEnabled())
