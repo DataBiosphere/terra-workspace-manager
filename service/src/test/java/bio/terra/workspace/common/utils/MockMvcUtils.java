@@ -711,6 +711,20 @@ public class MockMvcUtils {
     return workspace.getId();
   }
 
+  public UUID createWorkspaceWithGroupConstraint(
+      AuthenticatedUserRequest userRequest, String groupName) throws Exception {
+    ApiWsmPolicyInputs groupPolicy =
+        new ApiWsmPolicyInputs()
+            .addInputsItem(
+                new ApiWsmPolicyInput()
+                    .namespace(PolicyFixtures.NAMESPACE)
+                    .name(PolicyFixtures.GROUP_CONSTRAINT)
+                    .addAdditionalDataItem(
+                        new ApiWsmPolicyPair().key(PolicyFixtures.GROUP).value(groupName)));
+    ApiCreatedWorkspace workspace = createWorkspaceWithPolicy(userRequest, groupPolicy);
+    return workspace.getId();
+  }
+
   public UUID createWorkspaceWithRegionConstraintAndCloudContext(
       AuthenticatedUserRequest userRequest, String regionName) throws Exception {
     UUID resultWorkspaceId = createWorkspaceWithRegionConstraint(userRequest, regionName);
