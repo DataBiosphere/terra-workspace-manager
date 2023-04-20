@@ -12,13 +12,13 @@ import bio.terra.workspace.service.workspace.flight.azure.DeleteAzureContextStep
 import bio.terra.workspace.service.workspace.flight.azure.DeleteControlledAzureResourcesStep;
 import bio.terra.workspace.service.workspace.flight.gcp.DeleteGcpProjectStep;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import org.junit.jupiter.api.Test;
+import java.util.UUID;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.util.UUID;
-
+// This doesn't extend BaseUnitTest because we don't need BaseUnitTestMocks
 @Tag("unit")
 @ActiveProfiles({"unit-test"})
 public class WorkspaceDeleteFlightTest {

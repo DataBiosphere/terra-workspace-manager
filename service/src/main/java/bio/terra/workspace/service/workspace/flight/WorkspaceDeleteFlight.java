@@ -62,7 +62,8 @@ public class WorkspaceDeleteFlight extends Flight {
             appContext.getCrlService(), appContext.getGcpCloudContextService()),
         cloudRetryRule);
 
-    addStep(new EnsureNoWorkspaceChildrenStep(appContext.getSamService(), userRequest, workspaceUuid));
+    addStep(
+        new EnsureNoWorkspaceChildrenStep(appContext.getSamService(), userRequest, workspaceUuid));
 
     addStep(
         new DeleteAzureContextStep(appContext.getAzureCloudContextService(), workspaceUuid),
@@ -73,9 +74,9 @@ public class WorkspaceDeleteFlight extends Flight {
   }
 
   /**
-   * Adds steps to delete sam resources owned by WSM
-   * Workspace authz is handled differently depending on whether WSM owns the underlying Sam resource or not,
-   * as indicated by the workspace stage enum.
+   * Adds steps to delete sam resources owned by WSM Workspace authz is handled differently
+   * depending on whether WSM owns the underlying Sam resource or not, as indicated by the workspace
+   * stage enum.
    */
   protected void addOauthZSteps(
       FlightBeanBag context,
@@ -84,21 +85,26 @@ public class WorkspaceDeleteFlight extends Flight {
       UUID workspaceId,
       RetryRule retryRule) {
 
-    WorkspaceStage stage = WorkspaceStage.valueOf(parameters.get(WorkspaceFlightMapKeys.WORKSPACE_STAGE, String.class));
+    WorkspaceStage stage =
+        WorkspaceStage.valueOf(
+            parameters.get(WorkspaceFlightMapKeys.WORKSPACE_STAGE, String.class));
 
     switch (stage) {
       case MC_WORKSPACE:
         if (context.getFeatureConfiguration().isTpsEnabled()) {
-          addStep(new DeleteWorkspacePoliciesStep(context.getTpsApiDispatch(), request, workspaceId), retryRule);
+          addStep(
+              new DeleteWorkspacePoliciesStep(context.getTpsApiDispatch(), request, workspaceId),
+              retryRule);
         }
-        addStep(new DeleteWorkspaceAuthzStep(context.getSamService(), request, workspaceId), retryRule);
+        addStep(
+            new DeleteWorkspaceAuthzStep(context.getSamService(), request, workspaceId), retryRule);
         break;
       case RAWLS_WORKSPACE:
         // Do nothing, since WSM does not own the Sam resource.
         break;
       default:
-        throw new InternalLogicException("Unknown workspace stage during deletion: " + stage.name());
+        throw new InternalLogicException(
+            "Unknown workspace stage during deletion: " + stage.name());
     }
   }
-
 }
