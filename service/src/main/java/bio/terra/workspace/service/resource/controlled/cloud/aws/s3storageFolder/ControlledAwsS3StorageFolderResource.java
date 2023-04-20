@@ -115,6 +115,7 @@ public class ControlledAwsS3StorageFolderResource extends ControlledResource {
     return Optional.of(
         new UniquenessCheckAttributes()
             .uniquenessScope(UniquenessScope.GLOBAL)
+            .addParameter("bucketName", bucketName)
             .addParameter("prefix", prefix));
   }
 
