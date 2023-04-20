@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.resource;
 
 import bio.terra.workspace.service.resource.exception.InvalidNameException;
-import com.google.common.annotations.VisibleForTesting;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
 import org.springframework.stereotype.Component;
@@ -9,7 +8,6 @@ import org.springframework.stereotype.Component;
 /** A collection of static validation functions specific to AWS */
 @Component
 public class AwsResourceValidationUtils {
-  @VisibleForTesting
   static final Pattern s3ObjectDisallowedChars = Pattern.compile("[{}^%`<>~#|@*+\\[\\]\"\'\\\\/]");
 
   /**
