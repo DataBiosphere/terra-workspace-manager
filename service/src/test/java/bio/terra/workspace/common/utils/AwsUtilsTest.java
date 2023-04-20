@@ -52,7 +52,7 @@ public class AwsUtilsTest extends BaseAwsConnectedTest {
     // This lifetime should track that of the discovered environment where possible (stale
     // credentials will get refreshed under the hood).
     AwsCredentialsProvider awsCredentialsProvider =
-        AwsUtils.createWsmCredentialProvider(awsConfiguration, environment);
+        AwsUtils.createWsmCredentialProvider(awsConfiguration.getAuthentication(), environment);
 
     // Log details about the discovered environment.
     logEnvironmentMetadata(environment.getMetadata());

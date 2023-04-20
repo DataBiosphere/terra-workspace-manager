@@ -1,0 +1,42 @@
+# Common AWS schemas
+# These schemas should be referenced from the source like this:
+#  $ref: '#/components/schemas/<item-you-want>
+components:
+  schemas:
+    AwsCredentialDurationSeconds:
+      type: integer
+      minimum: 900
+      maximum: 3600
+
+    AwsCredentialAccessScope:
+      type: string
+      enum: [ 'READ_ONLY', 'WRITE_READ' ]
+
+    AwsCredential:
+      description: AWS CLI/SDK-compatible credential to access AWS resources
+      type: object
+      properties:
+        AccessKeyId:
+          type: string
+        SecretAccessKey:
+          type: string
+        SessionToken:
+          type: string
+        Expiration:
+          type: string
+          format: date-time
+
+    DeleteControlledAwsResourceRequestBody:
+      type: object
+      required: [ jobControl ]
+      properties:
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+
+    DeleteControlledAwsResourceResult:
+      type: object
+      properties:
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
