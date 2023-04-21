@@ -41,7 +41,6 @@ public class AwsCloudContextService {
     this.awsConfiguration = awsConfiguration;
     this.workspaceDao = workspaceDao;
     this.featureService = featureService;
-    initializeEnvironmentDiscovery();
   }
 
   /** Returns authentication from configuration */
@@ -191,7 +190,7 @@ public class AwsCloudContextService {
     return environment.getLandingZone(region);
   }
 
-  private void initializeEnvironmentDiscovery() {
+  private synchronized void initializeEnvironmentDiscovery() {
     if (environmentDiscovery == null && featureService.awsEnabled()) {
       environmentDiscovery = AwsUtils.createEnvironmentDiscovery(awsConfiguration);
     }
