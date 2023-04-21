@@ -15,7 +15,6 @@ import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredExce
 import bio.terra.workspace.service.workspace.exceptions.InvalidApplicationConfigException;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
-import com.google.common.base.Preconditions;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.io.IOException;
 import java.util.Optional;
@@ -159,7 +158,7 @@ public class AwsCloudContextService {
    */
   public Environment discoverEnvironment() throws IllegalArgumentException, InternalLogicException {
     try {
-      Preconditions.checkState(featureService.awsEnabled(), "AWS features are not available");
+      featureService.awsEnabledCheck();
       initializeEnvironmentDiscovery();
 
       if (this.environmentDiscovery == null) {
