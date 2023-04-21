@@ -81,7 +81,7 @@ public class WorkspaceDeleteFlight extends Flight {
     addStep(
         new DeleteAwsContextStep(appContext.getAwsCloudContextService(), workspaceUuid),
         cloudRetryRule);
-    addOauthZSteps(appContext, inputParameters, userRequest, workspaceUuid, terraRetryRule);
+    addAuthZSteps(appContext, inputParameters, userRequest, workspaceUuid, terraRetryRule);
     addStep(
         new DeleteWorkspaceStateStep(appContext.getWorkspaceDao(), workspaceUuid), terraRetryRule);
   }
@@ -91,7 +91,7 @@ public class WorkspaceDeleteFlight extends Flight {
    * depending on whether WSM owns the underlying Sam resource or not, as indicated by the workspace
    * stage enum.
    */
-  protected void addOauthZSteps(
+  protected void addAuthZSteps(
       FlightBeanBag context,
       FlightMap parameters,
       AuthenticatedUserRequest request,
