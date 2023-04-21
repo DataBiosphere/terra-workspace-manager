@@ -125,10 +125,6 @@ set_guest_attributes "${STATUS_ATTRIBUTE}" "STARTED"
 # Install nbstripout for the jupyter user in all git repositories.
 sudo -u "${JUPYTER_USER}" sh -c "/opt/conda/bin/nbstripout --install --global"
 
-# Install Nextflow. Use an edge release that allows overriding the default compute engine SA and VPC network
-export NXF_VER=21.05.0-edge
-export NXF_MODE=google
-
 # The apt package index may not be clean when we run; resynchronize
 apt-get update
 
