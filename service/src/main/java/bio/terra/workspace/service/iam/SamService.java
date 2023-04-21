@@ -299,7 +299,8 @@ public class SamService {
       return SamRetry.retry(
           () -> resourceApi.listResourceChildren("workspace", workspaceId.toString()));
     } catch (ApiException apiException) {
-      throw SamExceptionFactory.create("Error retrieving workspace child resources in Sam", apiException);
+      throw SamExceptionFactory.create(
+          "Error retrieving workspace child resources in Sam", apiException);
     }
   }
 
