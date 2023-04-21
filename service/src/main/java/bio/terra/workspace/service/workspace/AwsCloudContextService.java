@@ -41,7 +41,6 @@ public class AwsCloudContextService {
     this.awsConfiguration = awsConfiguration;
     this.workspaceDao = workspaceDao;
     this.featureService = featureService;
-    initializeEnvironmentDiscovery();
   }
 
   /** Returns authentication from configuration */
@@ -159,6 +158,7 @@ public class AwsCloudContextService {
    */
   public Environment discoverEnvironment() throws IllegalArgumentException, InternalLogicException {
     try {
+      featureService.awsEnabledCheck();
       initializeEnvironmentDiscovery();
 
       if (this.environmentDiscovery == null) {
@@ -191,10 +191,9 @@ public class AwsCloudContextService {
     return environment.getLandingZone(region);
   }
 
-  private void initializeEnvironmentDiscovery() {
-    this.environmentDiscovery =
-        (environmentDiscovery == null && featureService.awsEnabled())
-            ? AwsUtils.createEnvironmentDiscovery(awsConfiguration)
-            : null;
+  private synchronized void initializeEnvironmentDiscovery() {
+    if (environmentDiscovery == null) {
+      environmentDiscovery = AwsUtils.createEnvironmentDiscovery(awsConfiguration);
+    }
   }
 }
