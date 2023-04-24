@@ -26,12 +26,17 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.AwsResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.AwsResourceConstant;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.s3storageFolder.ControlledAwsS3StorageFolderResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
+import bio.terra.workspace.service.workspace.model.Workspace;
+import bio.terra.workspace.service.workspace.model.WorkspaceConstants;
+import com.google.common.base.Strings;
 import java.time.Duration;
 import java.time.ZoneOffset;
 import java.util.Collection;
@@ -92,6 +97,16 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
         : SamConstants.SamControlledResourceActions.READ_ACTION;
   }
 
+  private String getResourceRegion(Workspace workspace, String requestedRegion) {
+    return Strings.isNullOrEmpty(requestedRegion)
+        ? workspace
+        .getProperties()
+        .getOrDefault(
+            WorkspaceConstants.Properties.DEFAULT_RESOURCE_LOCATION,
+            AwsResourceConstant.DEFAULT_REGION)
+        : requestedRegion;
+  }
+
   @Override
   public ResponseEntity<ApiCreatedControlledAwsS3StorageFolder> createAwsS3StorageFolder(
       UUID workspaceUuid, @Valid ApiCreateControlledAwsS3StorageFolderRequestBody body) {
@@ -105,31 +120,30 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
             body.getAwsS3StorageFolder().getRegion(),
             userRequest,
             WsmResourceType.CONTROLLED_AWS_S3_STORAGE_FOLDER);
-    workspaceService.validateMcWorkspaceAndAction(
+    Workspace workspace = workspaceService.validateMcWorkspaceAndAction(
         userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
+
+    AwsResourceValidationUtils.validateAwsS3StorageFolderName(commonFields.getName());
+    String region = getResourceRegion(workspace, body.getAwsS3StorageFolder().getRegion());
 
     AwsCloudContext awsCloudContext =
         awsCloudContextService.getRequiredAwsCloudContext(workspaceUuid);
-    ApiAwsS3StorageFolderCreationParameters creationParameters = body.getAwsS3StorageFolder();
-
-    AwsResourceValidationUtils.validateAwsS3StorageFolderName(commonFields.getName());
 
     LandingZone landingZone =
         awsCloudContextService
-            .getLandingZone(awsCloudContext, Region.of(creationParameters.getRegion()))
+            .getLandingZone(awsCloudContext, Region.of(region))
             .orElseThrow(
                 () -> {
                   throw new ValidationException(
                       String.format(
-                          "Unsupported AWS region: '%s'.", creationParameters.getRegion()));
+                          "Unsupported AWS region: '%s'.", region));
                 });
 
     logger.info(
         "createAwsS3StorageFolder workspace: {}, bucketName: {}, prefix {}, region: {}",
         workspaceUuid.toString(),
         landingZone.getStorageBucket().name(),
-        commonFields.getName(),
-        creationParameters.getRegion());
+        commonFields.getName(), region);
 
     ControlledAwsS3StorageFolderResource resource =
         ControlledAwsS3StorageFolderResource.builder()
@@ -219,6 +233,8 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
         .validateControlledResourceAndAction(
             userRequest, workspaceUuid, resourceId, getSamAction(accessScope))
         .castByEnum(WsmResourceType.CONTROLLED_AWS_S3_STORAGE_FOLDER);
+
+    AwsResourceValidationUtils.validateAwsCredentialDurationSecond(duration);
 
     AwsCloudContext cloudContext = awsCloudContextService.getRequiredAwsCloudContext(workspaceUuid);
     ControlledAwsS3StorageFolderResource awsS3StorageFolderResource =
