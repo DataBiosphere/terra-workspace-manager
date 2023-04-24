@@ -68,6 +68,10 @@ components:
           uniqueItems: true
           items:
             $ref: '#/components/schemas/WsmPolicyObjectId'
+        createdDate:
+          type: string
+        lastUpdatedDate:
+          type: string
 
     WsmPolicyInputs:
       type: object
@@ -239,6 +243,10 @@ components:
         properties:
           description: The properties of the policy object. Empty if no access.
           $ref: '#/components/schemas/Properties'
+        createdDate:
+          type: string
+        lastUpdatedDate:
+          type: string
 
     WsmPolicyExplainResult:
       type: object
