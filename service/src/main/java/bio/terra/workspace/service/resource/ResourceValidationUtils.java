@@ -40,7 +40,7 @@ import org.springframework.stereotype.Component;
 /** A collection of static validation functions */
 @Component
 public class ResourceValidationUtils {
-
+  // TODO(TERRA-503) Move Cloud specific functions to separate file
   private static final Logger logger = LoggerFactory.getLogger(ResourceValidationUtils.class);
 
   /**
