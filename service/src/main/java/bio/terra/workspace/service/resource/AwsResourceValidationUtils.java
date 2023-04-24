@@ -25,4 +25,20 @@ public class AwsResourceValidationUtils {
               s3ObjectDisallowedChars.pattern()));
     }
   }
+
+
+  /**
+   * Validate AWS credential duration.
+   *
+   * @param duration duration in seconds
+   * @throws InvalidNameException invalid duration
+   */
+  public static void validateAwsCredentialDurationSecond(int duration) {
+    if (duration < 900 || duration > 3600 ) {
+      throw new InvalidNameException(
+              "credential duration must be between 900 & 3600 seconds");
+    }
+  }
+
+
 }
