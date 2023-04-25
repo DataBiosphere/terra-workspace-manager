@@ -31,7 +31,9 @@ import bio.terra.workspace.service.resource.controlled.ControlledResourceService
 import bio.terra.workspace.service.resource.controlled.cloud.aws.AwsResourceConstant;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.s3storageFolder.ControlledAwsS3StorageFolderHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.s3storageFolder.ControlledAwsS3StorageFolderResource;
+import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
+import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -47,6 +49,7 @@ import java.util.HashSet;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -136,19 +139,24 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     featureService.awsEnabledCheck();
 
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    Workspace workspace =
+        workspaceService.validateMcWorkspaceAndAction(
+            userRequest,
+            workspaceUuid,
+            ControllerValidationUtils.samCreateAction(
+                AccessScopeType.fromApi(body.getCommon().getAccessScope()),
+                ManagedByType.fromApi(body.getCommon().getManagedBy())));
+
+    AwsResourceValidationUtils.validateAwsS3StorageFolderName(body.getCommon().getName());
+    String region =
+        getResourceRegion(workspace, StringUtils.trim(body.getAwsS3StorageFolder().getRegion()));
     ControlledResourceFields commonFields =
         toCommonFields(
             workspaceUuid,
             body.getCommon(),
-            body.getAwsS3StorageFolder().getRegion(),
+            region,
             userRequest,
             WsmResourceType.CONTROLLED_AWS_S3_STORAGE_FOLDER);
-    Workspace workspace =
-        workspaceService.validateMcWorkspaceAndAction(
-            userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
-
-    AwsResourceValidationUtils.validateAwsS3StorageFolderName(commonFields.getName());
-    String region = getResourceRegion(workspace, body.getAwsS3StorageFolder().getRegion());
 
     AwsCloudContext awsCloudContext =
         awsCloudContextService.getRequiredAwsCloudContext(workspaceUuid);
