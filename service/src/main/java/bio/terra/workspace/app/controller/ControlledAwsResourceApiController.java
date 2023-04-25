@@ -10,25 +10,27 @@ import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.ControlledAwsResourceApi;
 import bio.terra.workspace.generated.model.ApiAwsCredential;
 import bio.terra.workspace.generated.model.ApiAwsCredentialAccessScope;
-import bio.terra.workspace.generated.model.ApiAwsS3StorageFolderCreationParameters;
+import bio.terra.workspace.generated.model.ApiAwsS3StorageFolderCloudName;
 import bio.terra.workspace.generated.model.ApiAwsS3StorageFolderResource;
 import bio.terra.workspace.generated.model.ApiCreateControlledAwsS3StorageFolderRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedControlledAwsS3StorageFolder;
 import bio.terra.workspace.generated.model.ApiDeleteControlledAwsResourceRequestBody;
 import bio.terra.workspace.generated.model.ApiDeleteControlledAwsResourceResult;
+import bio.terra.workspace.generated.model.ApiGenerateAwsS3StorageFolderCloudNameRequestBody;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.AwsResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.AwsResourceConstant;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.s3storageFolder.ControlledAwsS3StorageFolderHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.s3storageFolder.ControlledAwsS3StorageFolderResource;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
@@ -37,6 +39,7 @@ import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants;
 import com.google.common.base.Strings;
+import io.opencensus.contrib.spring.aop.Traced;
 import java.time.Duration;
 import java.time.ZoneOffset;
 import java.util.Collection;
@@ -100,13 +103,33 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
   private String getResourceRegion(Workspace workspace, String requestedRegion) {
     return Strings.isNullOrEmpty(requestedRegion)
         ? workspace
-        .getProperties()
-        .getOrDefault(
-            WorkspaceConstants.Properties.DEFAULT_RESOURCE_LOCATION,
-            AwsResourceConstant.DEFAULT_REGION)
+            .getProperties()
+            .getOrDefault(
+                WorkspaceConstants.Properties.DEFAULT_RESOURCE_LOCATION,
+                AwsResourceConstant.DEFAULT_REGION)
         : requestedRegion;
   }
 
+  @Traced
+  @Override
+  public ResponseEntity<ApiAwsS3StorageFolderCloudName> generateAwsS3StorageFolderCloudName(
+      UUID workspaceId, ApiGenerateAwsS3StorageFolderCloudNameRequestBody body) {
+    featureService.awsEnabledCheck();
+
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    workspaceService.validateMcWorkspaceAndAction(
+        userRequest, workspaceId, SamWorkspaceAction.READ);
+
+    String generatedCloudName =
+        ControlledAwsS3StorageFolderHandler.getHandler()
+            .generateCloudName(workspaceId, body.getAwsS3StorageFolderName());
+    return new ResponseEntity<>(
+        new ApiAwsS3StorageFolderCloudName()
+            .generatedAwsS3StorageFolderCloudName(generatedCloudName),
+        HttpStatus.OK);
+  }
+
+  @Traced
   @Override
   public ResponseEntity<ApiCreatedControlledAwsS3StorageFolder> createAwsS3StorageFolder(
       UUID workspaceUuid, @Valid ApiCreateControlledAwsS3StorageFolderRequestBody body) {
@@ -120,8 +143,9 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
             body.getAwsS3StorageFolder().getRegion(),
             userRequest,
             WsmResourceType.CONTROLLED_AWS_S3_STORAGE_FOLDER);
-    Workspace workspace = workspaceService.validateMcWorkspaceAndAction(
-        userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
+    Workspace workspace =
+        workspaceService.validateMcWorkspaceAndAction(
+            userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
 
     AwsResourceValidationUtils.validateAwsS3StorageFolderName(commonFields.getName());
     String region = getResourceRegion(workspace, body.getAwsS3StorageFolder().getRegion());
@@ -135,15 +159,15 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
             .orElseThrow(
                 () -> {
                   throw new ValidationException(
-                      String.format(
-                          "Unsupported AWS region: '%s'.", region));
+                      String.format("Unsupported AWS region: '%s'.", region));
                 });
 
     logger.info(
         "createAwsS3StorageFolder workspace: {}, bucketName: {}, prefix {}, region: {}",
         workspaceUuid.toString(),
         landingZone.getStorageBucket().name(),
-        commonFields.getName(), region);
+        commonFields.getName(),
+        region);
 
     ControlledAwsS3StorageFolderResource resource =
         ControlledAwsS3StorageFolderResource.builder()
@@ -158,13 +182,14 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
                 resource, commonFields.getIamRole(), userRequest, body.getAwsS3StorageFolder())
             .castByEnum(WsmResourceType.CONTROLLED_AWS_S3_STORAGE_FOLDER);
 
-    ApiCreatedControlledAwsS3StorageFolder response =
+    return new ResponseEntity<>(
         new ApiCreatedControlledAwsS3StorageFolder()
             .resourceId(createdBucket.getResourceId())
-            .awsS3StorageFolder(createdBucket.toApiResource());
-    return new ResponseEntity<>(response, HttpStatus.OK);
+            .awsS3StorageFolder(createdBucket.toApiResource()),
+        HttpStatus.OK);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiAwsS3StorageFolderResource> getAwsS3StorageFolder(
       UUID workspaceUuid, UUID resourceId) {
@@ -180,6 +205,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiDeleteControlledAwsResourceResult> deleteAwsS3StorageFolder(
       UUID workspaceUuid, UUID resourceId, @Valid ApiDeleteControlledAwsResourceRequestBody body) {
@@ -205,6 +231,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiDeleteControlledAwsResourceResult> getDeleteAwsS3StorageFolderResult(
       UUID workspaceUuid, String jobId) {
@@ -222,6 +249,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
         .errorReport(jobResult.getApiErrorReport());
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiAwsCredential> getAwsS3StorageFolderCredential(
       UUID workspaceUuid,

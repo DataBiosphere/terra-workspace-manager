@@ -26,7 +26,6 @@ public class AwsResourceValidationUtils {
     }
   }
 
-
   /**
    * Validate AWS credential duration.
    *
@@ -34,11 +33,8 @@ public class AwsResourceValidationUtils {
    * @throws InvalidNameException invalid duration
    */
   public static void validateAwsCredentialDurationSecond(int duration) {
-    if (duration < 900 || duration > 3600 ) {
-      throw new InvalidNameException(
-              "credential duration must be between 900 & 3600 seconds");
+    if (duration < 900 || duration > 3600) {
+      throw new InvalidNameException("credential duration must be between 900 & 3600 seconds");
     }
   }
-
-
 }
