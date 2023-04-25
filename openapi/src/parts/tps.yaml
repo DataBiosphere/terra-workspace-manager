@@ -69,8 +69,10 @@ components:
           items:
             $ref: '#/components/schemas/WsmPolicyObjectId'
         createdDate:
+          description: ISO 8601 format date-time of when TPS created the policy
           type: string
         lastUpdatedDate:
+          description: ISO 8601 format date-time of the last update of the effective policy
           type: string
 
     WsmPolicyInputs:
@@ -244,8 +246,10 @@ components:
           description: The properties of the policy object. Empty if no access.
           $ref: '#/components/schemas/Properties'
         createdDate:
+          description: ISO 8601 format date-time of when TPS created the policy
           type: string
         lastUpdatedDate:
+          description: ISO 8601 format date-time of the last update of the effective policy
           type: string
 
     WsmPolicyExplainResult:
