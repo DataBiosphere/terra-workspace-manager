@@ -47,7 +47,7 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstants;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetHandler;
@@ -160,7 +160,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .getProperties()
             .getOrDefault(
                 WorkspaceConstants.Properties.DEFAULT_RESOURCE_LOCATION,
-                GcpResourceConstant.DEFAULT_REGION)
+                GcpResourceConstants.DEFAULT_REGION)
         : requestedLocation;
   }
 

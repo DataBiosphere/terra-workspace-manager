@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.aws.s3storageFolde
 
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.AwsResourceConstants;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
 import com.google.common.base.CharMatcher;
@@ -11,7 +12,6 @@ import org.jetbrains.annotations.Nullable;
 
 public class ControlledAwsS3StorageFolderHandler implements WsmResourceHandler {
 
-  private static final int MAX_FOLDER_NAME_LENGTH = 1024;
   private static ControlledAwsS3StorageFolderHandler theHandler;
 
   public static ControlledAwsS3StorageFolderHandler getHandler() {
@@ -41,8 +41,8 @@ public class ControlledAwsS3StorageFolderHandler implements WsmResourceHandler {
   @Override
   public String generateCloudName(@Nullable UUID workspaceUuid, String storageFolderName) {
     String generatedName =
-        storageFolderName.length() > MAX_FOLDER_NAME_LENGTH
-            ? storageFolderName.substring(0, MAX_FOLDER_NAME_LENGTH)
+        storageFolderName.length() > AwsResourceConstants.MAX_S3_STORAGE_FOLDER_NAME_LENGTH
+            ? storageFolderName.substring(0, AwsResourceConstants.MAX_S3_STORAGE_FOLDER_NAME_LENGTH)
             : storageFolderName;
 
     // The regular expression only allow legal character combinations containing

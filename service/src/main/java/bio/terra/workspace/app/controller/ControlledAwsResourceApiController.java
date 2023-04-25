@@ -28,7 +28,7 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.AwsResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
-import bio.terra.workspace.service.resource.controlled.cloud.aws.AwsResourceConstant;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.AwsResourceConstants;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.s3storageFolder.ControlledAwsS3StorageFolderHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.s3storageFolder.ControlledAwsS3StorageFolderResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
@@ -109,7 +109,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
             .getProperties()
             .getOrDefault(
                 WorkspaceConstants.Properties.DEFAULT_RESOURCE_LOCATION,
-                AwsResourceConstant.DEFAULT_REGION)
+                AwsResourceConstants.DEFAULT_REGION)
         : requestedRegion;
   }
 
