@@ -238,7 +238,6 @@ public class ControlledAzureVmResource extends ControlledResource {
           "Missing required valid vmImage field for ControlledAzureVm.");
     }
     ResourceValidationUtils.validateAzureIPorSubnetName(getVmName());
-//    ResourceValidationUtils.validateAzureVmSize(getVmSize());
   }
 
   @Override
