@@ -87,11 +87,11 @@ public class WorkspaceDeleteFlight extends Flight {
   }
 
   /**
-   * Adds steps to delete sam resources owned by WSM Workspace authz is handled differently
+   * Adds steps to delete sam resources owned by WSM. Workspace authz is handled differently
    * depending on whether WSM owns the underlying Sam resource or not, as indicated by the workspace
    * stage enum.
    */
-  protected void addAuthZSteps(
+  private void addAuthZSteps(
       FlightBeanBag context,
       FlightMap parameters,
       AuthenticatedUserRequest request,
