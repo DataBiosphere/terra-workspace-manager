@@ -2,6 +2,7 @@ package bio.terra.workspace.common.utils;
 
 import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
+import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceCategory;
@@ -116,6 +117,12 @@ public final class ControllerValidationUtils {
   }
 
   /** Return the appropriate IAM action for creating the specified controlled resource in Sam. */
+  public static String getSamAction(ApiControlledResourceCommonFields common) {
+    return samCreateAction(
+        AccessScopeType.fromApi(common.getAccessScope()),
+        ManagedByType.fromApi(common.getManagedBy()));
+  }
+
   public static String samCreateAction(ControlledResourceFields commonFields) {
     return samCreateAction(commonFields.getAccessScope(), commonFields.getManagedBy());
   }

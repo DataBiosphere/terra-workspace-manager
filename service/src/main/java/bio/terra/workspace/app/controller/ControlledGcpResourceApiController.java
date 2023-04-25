@@ -13,7 +13,6 @@ import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketRequest
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketResult;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpBigQueryDataset;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
-import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpAiNotebookInstanceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpBigQueryDatasetRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpGcsBucketRequestBody;
@@ -48,16 +47,14 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstants;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
-import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
-import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.CommonUpdateParameters;
 import bio.terra.workspace.service.resource.model.StewardshipType;
@@ -123,7 +120,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     Workspace workspace =
         workspaceService.validateMcWorkspaceAndAction(
-            userRequest, workspaceUuid, getSamAction(body.getCommon()));
+            userRequest, workspaceUuid, ControllerValidationUtils.getSamAction(body.getCommon()));
     String resourceLocation = getResourceLocation(workspace, body.getGcsBucket().getLocation());
     ControlledResourceFields commonFields =
         toCommonFields(
@@ -163,7 +160,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .getProperties()
             .getOrDefault(
                 WorkspaceConstants.Properties.DEFAULT_RESOURCE_LOCATION,
-                GcpResourceConstant.DEFAULT_REGION)
+                GcpResourceConstants.DEFAULT_REGION)
         : requestedLocation;
   }
 
@@ -378,7 +375,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     Workspace workspace =
         workspaceService.validateWorkspaceAndAction(
-            userRequest, workspaceUuid, getSamAction(body.getCommon()));
+            userRequest, workspaceUuid, ControllerValidationUtils.getSamAction(body.getCommon()));
     String resourceLocation = getResourceLocation(workspace, body.getDataset().getLocation());
     ControlledResourceFields commonFields =
         toCommonFields(
@@ -418,12 +415,6 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .resourceId(resourceId)
             .bigQueryDataset(createdDataset.toApiResource());
     return new ResponseEntity<>(response, HttpStatus.OK);
-  }
-
-  private String getSamAction(ApiControlledResourceCommonFields common) {
-    return ControllerValidationUtils.samCreateAction(
-        AccessScopeType.fromApi(common.getAccessScope()),
-        ManagedByType.fromApi(common.getManagedBy()));
   }
 
   @Override
@@ -501,7 +492,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     Workspace workspace =
         workspaceService.validateWorkspaceAndAction(
-            userRequest, workspaceUuid, getSamAction(body.getCommon()));
+            userRequest, workspaceUuid, ControllerValidationUtils.getSamAction(body.getCommon()));
     String resourceLocation =
         getResourceLocation(workspace, body.getAiNotebookInstance().getLocation());
     ControlledResourceFields commonFields =

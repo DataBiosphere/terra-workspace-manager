@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Super class for controllers containing common code. The code in here requires the @Autowired
@@ -80,7 +81,7 @@ public class ControlledResourceControllerBase extends ControllerBase {
 
     if (!WSM_RESOURCE_WITHOUT_REGION_IN_CREATION_PARAMS.contains(wsmResourceType)) {
       checkArgument(
-          region != null,
+          StringUtils.isNotEmpty(region),
           "Controlled resource must have an associated region specified"
               + "on creation except for Azure storage containers, Azure VMs, Azure batch pools, "
               + "Vertex AI notebooks, and Flexible resources");

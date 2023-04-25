@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 
-import static bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant.DEFAULT_ZONE;
+import static bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstants.DEFAULT_ZONE;
 
 import bio.terra.cloudres.google.notebooks.InstanceName;
 import bio.terra.common.exception.BadRequestException;

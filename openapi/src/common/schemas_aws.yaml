@@ -3,6 +3,14 @@
 #  $ref: '#/components/schemas/<item-you-want>
 components:
   schemas:
+    AwsS3StorageFolderCloudName:
+      description: A valid object name per https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html.
+      type: object
+      required: [ generatedAwsS3StorageFolderCloudName ]
+      properties:
+        generatedAwsS3StorageFolderCloudName:
+          type: string
+
     AwsCredentialDurationSeconds:
       type: integer
       minimum: 900
