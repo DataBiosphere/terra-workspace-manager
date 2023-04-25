@@ -349,6 +349,8 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     assertEquals(workspace.getId(), source.getObjectId());
     assertFalse(source.isDeleted());
     assertEquals(0, result.getExplanation().size());
+    assertNotNull(source.getCreatedDate());
+    assertNotNull(source.getLastUpdatedDate());
   }
 
   @Test
