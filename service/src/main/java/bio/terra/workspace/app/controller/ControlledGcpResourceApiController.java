@@ -134,7 +134,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .bucketName(
                 StringUtils.isEmpty(body.getGcsBucket().getName())
                     ? ControlledGcsBucketHandler.getHandler()
-                        .generateCloudName(commonFields.getWorkspaceId(), commonFields.getName())
+                        .generateCloudName(workspaceUuid, commonFields.getName())
                     : body.getGcsBucket().getName())
             .common(commonFields)
             .build();
