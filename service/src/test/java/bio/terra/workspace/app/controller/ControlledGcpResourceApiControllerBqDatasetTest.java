@@ -50,7 +50,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -457,7 +456,6 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         /*isControlled=*/ StewardshipType.REFERENCED);
   }
 
-  @Disabled("PF-2639 Need BigQuery Data Transfer service API enabled")
   @Test
   void clone_copyResource_sameWorkspace() throws Exception {
     // Source resource is in us-west4
@@ -516,7 +514,6 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         DEFAULT_PARTITION_LIFETIME);
   }
 
-  @Disabled("PF-2639 Need BigQuery Data Transfer service API enabled")
   @Test
   void clone_copyResource_differentWorkspace() throws Exception {
     // Source resource is in us-west4
