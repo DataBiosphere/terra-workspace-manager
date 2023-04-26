@@ -7,7 +7,7 @@ import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstants;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.flight.gcp.CreateGcpContextFlightV2;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
@@ -198,7 +198,7 @@ public class GcpCloudContextService {
             WorkspaceConstants.Properties.DEFAULT_RESOURCE_LOCATION,
             getGcpCloudContext(workspace.getWorkspaceId())
                 .map(GcpCloudContext::getGcpDefaultZone)
-                .orElse(GcpResourceConstant.DEFAULT_ZONE));
+                .orElse(GcpResourceConstants.DEFAULT_ZONE));
   }
 
   /**

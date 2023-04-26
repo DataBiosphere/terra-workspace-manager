@@ -64,7 +64,7 @@ import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants;
-import com.google.api.client.util.Strings;
+import com.google.common.base.Strings;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.Optional;
 import java.util.UUID;
