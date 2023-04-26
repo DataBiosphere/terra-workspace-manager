@@ -29,8 +29,8 @@ import bio.terra.workspace.service.resource.referenced.ReferencedResourceService
 import bio.terra.workspace.service.spendprofile.SpendProfileService;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
-import bio.terra.workspace.service.workspace.CloudSyncRoleMapping;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import bio.terra.workspace.service.workspace.GcpCloudSyncRoleMapping;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import com.google.api.services.storagetransfer.v1.Storagetransfer;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,7 +55,7 @@ public class FlightBeanBag {
   private final BucketCloneRolesService bucketCloneRolesService;
   private final BufferService bufferService;
   private final CliConfiguration cliConfiguration;
-  private final CloudSyncRoleMapping cloudSyncRoleMapping;
+  private final GcpCloudSyncRoleMapping gcpCloudSyncRoleMapping;
   private final ControlledResourceMetadataManager controlledResourceMetadataManager;
   private final ControlledResourceService controlledResourceService;
   private final CrlService crlService;
@@ -92,7 +92,7 @@ public class FlightBeanBag {
       BucketCloneRolesService bucketCloneRolesService,
       BufferService bufferService,
       CliConfiguration cliConfiguration,
-      CloudSyncRoleMapping cloudSyncRoleMapping,
+      GcpCloudSyncRoleMapping gcpCloudSyncRoleMapping,
       ControlledResourceMetadataManager controlledResourceMetadataManager,
       ControlledResourceService controlledResourceService,
       CrlService crlService,
@@ -125,7 +125,7 @@ public class FlightBeanBag {
     this.bucketCloneRolesService = bucketCloneRolesService;
     this.bufferService = bufferService;
     this.cliConfiguration = cliConfiguration;
-    this.cloudSyncRoleMapping = cloudSyncRoleMapping;
+    this.gcpCloudSyncRoleMapping = gcpCloudSyncRoleMapping;
     this.controlledResourceMetadataManager = controlledResourceMetadataManager;
     this.controlledResourceService = controlledResourceService;
     this.crlService = crlService;
@@ -191,8 +191,8 @@ public class FlightBeanBag {
     return controlledResourceMetadataManager;
   }
 
-  public CloudSyncRoleMapping getCloudSyncRoleMapping() {
-    return cloudSyncRoleMapping;
+  public GcpCloudSyncRoleMapping getCloudSyncRoleMapping() {
+    return gcpCloudSyncRoleMapping;
   }
 
   public ControlledResourceService getControlledResourceService() {

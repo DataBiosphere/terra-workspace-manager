@@ -15,16 +15,16 @@ import bio.terra.workspace.service.resource.controlled.flight.create.CreateContr
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.flight.UpdateResourceFlight;
 import bio.terra.workspace.service.resource.referenced.flight.clone.CloneReferencedResourceFlight;
-import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
-import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.flight.application.able.ApplicationAbleFlight;
-import bio.terra.workspace.service.workspace.flight.aws.CreateAwsContextFlight;
-import bio.terra.workspace.service.workspace.flight.aws.DeleteAwsContextFlight;
-import bio.terra.workspace.service.workspace.flight.azure.CreateAzureContextFlight;
-import bio.terra.workspace.service.workspace.flight.azure.DeleteAzureContextFlight;
-import bio.terra.workspace.service.workspace.flight.gcp.CreateGcpContextFlightV2;
-import bio.terra.workspace.service.workspace.flight.gcp.DeleteGcpContextFlight;
-import bio.terra.workspace.service.workspace.flight.gcp.RemoveUserFromWorkspaceFlight;
+import bio.terra.workspace.service.workspace.flight.cloud.aws.CreateAwsContextFlight;
+import bio.terra.workspace.service.workspace.flight.cloud.aws.DeleteAwsContextFlight;
+import bio.terra.workspace.service.workspace.flight.cloud.azure.CreateAzureContextFlight;
+import bio.terra.workspace.service.workspace.flight.cloud.azure.DeleteAzureContextFlight;
+import bio.terra.workspace.service.workspace.flight.cloud.gcp.CreateGcpContextFlightV2;
+import bio.terra.workspace.service.workspace.flight.cloud.gcp.DeleteGcpContextFlight;
+import bio.terra.workspace.service.workspace.flight.cloud.gcp.RemoveUserFromWorkspaceFlight;
+import bio.terra.workspace.service.workspace.flight.create.workspace.WorkspaceCreateFlight;
+import bio.terra.workspace.service.workspace.flight.delete.workspace.WorkspaceDeleteFlight;
 import java.util.Arrays;
 
 /**

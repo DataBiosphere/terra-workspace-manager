@@ -20,6 +20,7 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.exception.RegionNotAllowedException;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.flight.cloud.azure.CreateAzureContextFlight;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import com.azure.core.management.Region;
