@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 public class AwsResourceValidationUtils {
   static final Pattern s3ObjectDisallowedChars = Pattern.compile("[{}^%`<>~#|@*+\\[\\]\"\'\\\\/]");
 
-  // TODO(TERRA-523) Is this validation needed for resource name?
   /**
    * Validate AWS storage folder name.
    *

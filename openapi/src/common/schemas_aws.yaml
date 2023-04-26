@@ -4,7 +4,7 @@
 components:
   schemas:
     AwsS3StorageFolderCloudName:
-      description: A valid object name per https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html.
+      description: A valid folder name per https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html.
       type: object
       required: [ generatedAwsS3StorageFolderCloudName ]
       properties:

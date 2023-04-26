@@ -147,9 +147,17 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
                 AccessScopeType.fromApi(body.getCommon().getAccessScope()),
                 ManagedByType.fromApi(body.getCommon().getManagedBy())));
 
-    AwsResourceValidationUtils.validateAwsS3StorageFolderName(body.getCommon().getName());
+    String folderName = body.getAwsS3StorageFolder().getFolderName();
+    if (StringUtils.isEmpty(folderName)) {
+      folderName =
+          ControlledAwsS3StorageFolderHandler.getHandler()
+              .generateCloudName(workspaceUuid, body.getCommon().getName());
+    }
+    AwsResourceValidationUtils.validateAwsS3StorageFolderName(folderName);
+
     String region =
         getResourceRegion(workspace, StringUtils.trim(body.getAwsS3StorageFolder().getRegion()));
+
     ControlledResourceFields commonFields =
         toCommonFields(
             workspaceUuid,
@@ -181,7 +189,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
         ControlledAwsS3StorageFolderResource.builder()
             .common(commonFields)
             .bucketName(landingZone.getStorageBucket().name())
-            .prefix(commonFields.getName())
+            .prefix(folderName)
             .build();
 
     ControlledAwsS3StorageFolderResource createdBucket =
