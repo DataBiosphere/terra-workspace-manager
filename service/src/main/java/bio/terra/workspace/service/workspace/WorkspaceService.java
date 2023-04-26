@@ -20,7 +20,7 @@ import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstants;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneWorkspaceFlight;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.stage.StageService;
@@ -29,7 +29,6 @@ import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceExcept
 import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.aws.CreateAwsContextFlight;
 import bio.terra.workspace.service.workspace.flight.aws.DeleteAwsContextFlight;
 import bio.terra.workspace.service.workspace.flight.azure.CreateAzureContextFlight;
@@ -449,7 +448,7 @@ public class WorkspaceService {
             SOURCE_WORKSPACE_ID, sourceWorkspace.getWorkspaceId()) // TODO: remove this duplication
         .addParameter(
             WorkspaceFlightMapKeys.GCP_DEFAULT_ZONE,
-            Optional.ofNullable(location).orElse(GcpResourceConstant.DEFAULT_ZONE))
+            Optional.ofNullable(location).orElse(GcpResourceConstants.DEFAULT_ZONE))
         .submit();
   }
 
@@ -491,7 +490,7 @@ public class WorkspaceService {
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
         .addParameter(
             WorkspaceFlightMapKeys.GCP_DEFAULT_ZONE,
-            Optional.ofNullable(defaultZone).orElse(GcpResourceConstant.DEFAULT_ZONE))
+            Optional.ofNullable(defaultZone).orElse(GcpResourceConstants.DEFAULT_ZONE))
         .submit();
   }
 

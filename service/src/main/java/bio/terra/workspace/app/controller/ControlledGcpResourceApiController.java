@@ -63,6 +63,8 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
+import bio.terra.workspace.service.workspace.model.WorkspaceConstants;
+import com.google.api.client.util.Strings;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.Optional;
 import java.util.UUID;
@@ -379,8 +381,6 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     Workspace workspace =
         workspaceService.validateWorkspaceAndAction(
             userRequest, workspaceUuid, ControllerValidationUtils.getSamAction(body.getCommon()));
-    String resourceLocation = getResourceLocation(workspace, body.getDataset().getLocation());
-            userRequest, workspaceUuid, getSamAction(body.getCommon()));
     // Big Query datasets are regional resources
     String resourceLocation =
         GcpUtils.extractRegionFromLocation(
