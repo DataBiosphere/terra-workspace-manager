@@ -1,7 +1,98 @@
 # Workspace paths
 paths:
+  /api/workspaces/v2:
+    post:
+      summary: Create a new workspace and cloud context
+      operationId: createWorkspaceV2
+      tags: [Workspace]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorkspaceV2RequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CreateWorkspaceV2Response'
+        '202':
+          $ref: '#/components/responses/CreateWorkspaceV2Response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/NotFound'
+
+  /api/workspaces/v2/create-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Get the result of a async job to create a workspace and cloud context
+      operationId: getCreateWorkspaceV2
+      tags: [Workspace]
+      responses:
+        '200':
+          $ref: '#/components/responses/CreateWorkspaceV2Response'
+        '202':
+          $ref: '#/components/responses/CreateWorkspaceV2Response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v2/{workspaceId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    delete:
+      summary: Delete a Workspace.
+      operationId: deleteWorkspaceV2
+      tags: [Workspace]
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteWorkspaceV2Response'
+        '202':
+          $ref: '#/components/responses/DeleteWorkspaceV2Response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v2/delete-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Get the result of a async job to create a workspace and cloud context
+      operationId: getDeleteWorkspaceV2
+      tags: [Workspace]
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteWorkspaceV2Response'
+        '202':
+          $ref: '#/components/responses/DeleteWorkspaceV2Response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   /api/workspaces/v1:
     post:
+      deprecated: true
       summary: Create a new Workspace.
       operationId: createWorkspace
       tags: [Workspace]
@@ -88,6 +179,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
     delete:
+      deprecated: true
       summary: Delete a Workspace.
       operationId: deleteWorkspace
       tags: [Workspace]
@@ -305,7 +397,7 @@ paths:
               $ref: '#/components/schemas/PropertyKeys'
       responses:
         '204':
-          description: properties delete sucessfully
+          description: properties delete successfully
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '404':
@@ -408,6 +500,20 @@ components:
           schema:
             $ref: '#/components/schemas/CloneWorkspaceResult'
 
+    CreateWorkspaceV2Response:
+      description: Job is complete (succeeded or failed)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreateWorkspaceV2Result'
+
+    DeleteWorkspaceV2Response:
+      description: Job is complete (succeeded or failed)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DeleteWorkspaceV2Result'
+
   schemas:
     ClonedWorkspace:
       description: >-
@@ -470,6 +576,74 @@ components:
             additional policies create a conflict with the existing workspace,
             cloning will fail.
           $ref: '#/components/schemas/WsmPolicyInputs'
+
+    CreateWorkspaceV2RequestBody:
+      type: object
+      required: [id]
+      properties:
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+        id:
+          description: The ID of the workspace
+          type: string
+          format: uuid
+        userFacingId:
+          $ref: '#/components/schemas/UserFacingId'
+        displayName:
+          description: The human readable name of the workspace
+          type: string
+        description:
+          description: A description of the workspace
+          type: string
+        policies:
+          $ref: '#/components/schemas/WsmPolicyInputs'
+        stage:
+          $ref: '#/components/schemas/WorkspaceStageModel'
+        properties:
+          $ref: '#/components/schemas/Properties'
+        applicationIds:
+          description: List of application ids to enable for this workspace
+          type: array
+          items:
+            type: string
+        cloudContextSpec:
+          $ref: '#/components/schemas/CreateCloudContextSpec'
+
+    CreateWorkspaceV2Result:
+      type: object
+      description: |
+        The result of a call to create a workspace with an optional cloud context for a
+        workspace. Contains a JobReport detailing the async operation, and zero or more of
+        GcpContext, AzureContext or AwsContext (if operation complete) or an ErrorReport
+        detailing an error.
+      required: [jobReport, id]
+      properties:
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+        id:
+          description: UUID of a newly-created workspace
+          type: string
+          format: uuid
+        gcpContext:
+          $ref: '#/components/schemas/GcpContext'
+        azureContext:
+          $ref: '#/components/schemas/AzureContext'
+        awsContext:
+          $ref: '#/components/schemas/AwsContext'
+
+    DeleteWorkspaceV2Result:
+      type: object
+      description: |
+        The result of a call to delete a workspace cascading to delete all cloud contexts
+        contains a JobReport detailing the async operation
+      required: [jobReport]
+      properties:
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
 
     ResourceCloneDetails:
       description: >-

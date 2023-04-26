@@ -125,8 +125,21 @@ components:
       properties:
         cloudPlatform:
           $ref: '#/components/schemas/CloudPlatform'
+        spendProfile:
+          description: ID of provided spend profile
+          type: string
         jobControl:
           $ref: '#/components/schemas/JobControl'
+
+    CreateCloudContextSpec:
+      type: object
+      required: [ cloudPlatform ]
+      properties:
+        cloudPlatform:
+          $ref: '#/components/schemas/CloudPlatform'
+        spendProfile:
+          description: ID of a spend profile
+          type: string
 
     CreateCloudContextResult:
       type: object
