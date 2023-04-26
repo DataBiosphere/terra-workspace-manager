@@ -40,7 +40,7 @@ import org.springframework.stereotype.Component;
 /** A collection of static validation functions */
 @Component
 public class ResourceValidationUtils {
-
+  // TODO(TERRA-114) Move Cloud specific functions to separate file
   private static final Logger logger = LoggerFactory.getLogger(ResourceValidationUtils.class);
 
   /**
@@ -201,8 +201,9 @@ public class ResourceValidationUtils {
   public static void validateRegionAgainstPolicy(
       TpsApiDispatch tpsApiDispatch, UUID workspaceUuid, String region, CloudPlatform platform) {
     switch (platform) {
-      case AZURE -> validateRegion(tpsApiDispatch, workspaceUuid, region, platform);
       case GCP -> validateRegion(
+          tpsApiDispatch, workspaceUuid, GcpUtils.extractRegionFromLocation(region), platform);
+      case AZURE, AWS -> validateRegion(tpsApiDispatch, workspaceUuid, region, platform);
           tpsApiDispatch, workspaceUuid, GcpUtils.extractRegionFromLocation(region), platform);
       case ANY -> {
         // Flexible resources are not stored on the cloud. Thus, they have no region policies.

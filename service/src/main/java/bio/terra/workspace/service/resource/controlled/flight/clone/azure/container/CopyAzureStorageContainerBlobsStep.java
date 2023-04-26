@@ -12,6 +12,8 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureStorageA
 import bio.terra.workspace.service.resource.controlled.cloud.azure.BlobCopier;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import com.fasterxml.jackson.core.type.TypeReference;
+import java.util.List;
 import org.springframework.http.HttpStatus;
 
 public class CopyAzureStorageContainerBlobsStep implements Step {
@@ -52,6 +54,11 @@ public class CopyAzureStorageContainerBlobsStep implements Step {
                 WorkspaceFlightMapKeys.ControlledResourceKeys.CLONED_RESOURCE_DEFINITION,
                 ControlledAzureStorageContainerResource.class);
 
+    List<String> prefixesToClone =
+        inputParameters.get(
+            WorkspaceFlightMapKeys.ControlledResourceKeys.PREFIXES_TO_CLONE,
+            new TypeReference<>() {});
+
     var sourceStorageData =
         azureStorageAccessService.getStorageAccountData(
             sourceContainer.getWorkspaceId(), sourceContainer.getResourceId(), userRequest);
@@ -61,7 +68,7 @@ public class CopyAzureStorageContainerBlobsStep implements Step {
             destinationContainer.getResourceId(),
             userRequest);
 
-    var results = blobCopier.copyBlobs(sourceStorageData, destStorageData);
+    var results = blobCopier.copyBlobs(sourceStorageData, destStorageData, prefixesToClone);
     if (results.anyFailures()) {
       FlightUtils.setErrorResponse(
           flightContext, "Blobs failed to copy", HttpStatus.INTERNAL_SERVER_ERROR);

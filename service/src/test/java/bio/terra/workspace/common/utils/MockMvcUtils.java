@@ -166,6 +166,7 @@ import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
+import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.hamcrest.Matcher;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -707,6 +708,20 @@ public class MockMvcUtils {
                     .addAdditionalDataItem(
                         new ApiWsmPolicyPair().key(PolicyFixtures.REGION).value(regionName)));
     ApiCreatedWorkspace workspace = createWorkspaceWithPolicy(userRequest, regionPolicy);
+    return workspace.getId();
+  }
+
+  public UUID createWorkspaceWithGroupConstraint(
+      AuthenticatedUserRequest userRequest, String groupName) throws Exception {
+    ApiWsmPolicyInputs groupPolicy =
+        new ApiWsmPolicyInputs()
+            .addInputsItem(
+                new ApiWsmPolicyInput()
+                    .namespace(PolicyFixtures.NAMESPACE)
+                    .name(PolicyFixtures.GROUP_CONSTRAINT)
+                    .addAdditionalDataItem(
+                        new ApiWsmPolicyPair().key(PolicyFixtures.GROUP).value(groupName)));
+    ApiCreatedWorkspace workspace = createWorkspaceWithPolicy(userRequest, groupPolicy);
     return workspace.getId();
   }
 
@@ -2464,9 +2479,11 @@ public class MockMvcUtils {
             .sourceWorkspaceId(sourceWorkspaceId)
             .sourceResourceId(sourceResourceId));
 
-    String expectedLastUpdatedBy = samService.getUserStatusInfo(userRequest).getUserEmail();
-    String expectedLastUpdatedBySubjectId =
-        samService.getUserStatusInfo(userRequest).getUserSubjectId();
+    UserStatusInfo userStatusInfo = samService.getUserStatusInfo(userRequest);
+    String expectedLastUpdatedBy = userStatusInfo.getUserEmail();
+    String expectedLastUpdatedBySubjectId = userStatusInfo.getUserSubjectId();
+    logger.info(">>Expect last updated by {}", expectedLastUpdatedBy);
+
     assertResourceMetadata(
         actualMetadata,
         expectedCloudPlatform,
@@ -2479,6 +2496,7 @@ public class MockMvcUtils {
         expectedResourceLineage,
         expectedCreatedBy,
         expectedLastUpdatedBy);
+    // The CLONE activity log entry is keyed to the DESTINATION workspace for some reason!?
     assertLatestActivityLogChangeDetails(
         expectedWorkspaceId,
         expectedLastUpdatedBy,
@@ -2555,13 +2573,25 @@ public class MockMvcUtils {
   public void removeRole(
       AuthenticatedUserRequest userRequest, UUID workspaceId, WsmIamRole role, String memberEmail)
       throws Exception {
-    mockMvc
-        .perform(
-            addAuth(
-                delete(
-                    String.format(REMOVE_ROLE_PATH_FORMAT, workspaceId, role.name(), memberEmail)),
-                userRequest))
+    removeRoleInternal(userRequest, workspaceId, role, memberEmail)
         .andExpect(status().is(HttpStatus.SC_NO_CONTENT));
+  }
+
+  public void removeRoleExpectBadRequest(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, WsmIamRole role, String memberEmail)
+      throws Exception {
+    removeRoleInternal(userRequest, workspaceId, role, memberEmail)
+        .andExpect(status().is(HttpStatus.SC_BAD_REQUEST));
+  }
+
+  private ResultActions removeRoleInternal(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, WsmIamRole role, String memberEmail)
+      throws Exception {
+    var request = new ApiGrantRoleRequestBody().memberEmail(memberEmail);
+    return mockMvc.perform(
+        addAuth(
+            delete(String.format(REMOVE_ROLE_PATH_FORMAT, workspaceId, role.name(), memberEmail)),
+            userRequest));
   }
 
   public void assertProperties(List<ApiProperty> expected, List<ApiProperty> actual) {

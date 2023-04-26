@@ -85,7 +85,7 @@ public class ControlledAiNotebookHandler implements WsmResourceHandler {
     if (generatedName.length() == 0) {
       throw new BadRequestException(
           String.format(
-              "Cannot generate a valid AI notebook name from %s, it must contains"
+              "Cannot generate a valid AI notebook name from %s, it must contain"
                   + " alphanumerical characters.",
               aiNotebookName));
     }

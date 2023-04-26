@@ -7,10 +7,10 @@ import bio.terra.cloudres.azure.resourcemanager.compute.data.CreateVirtualMachin
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
-import bio.terra.workspace.common.utils.AzureManagementException;
-import bio.terra.workspace.common.utils.AzureVmUtils;
+import bio.terra.workspace.common.exception.AzureManagementException;
+import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
+import bio.terra.workspace.common.utils.AzureUtils;
 import bio.terra.workspace.common.utils.FlightUtils;
-import bio.terra.workspace.common.utils.ManagementExceptionUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.service.crl.CrlService;
@@ -54,10 +54,11 @@ public class CreateAzureVmStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    FlightMap inputMap = context.getInputParameters();
-    FlightUtils.validateRequiredEntries(inputMap, ControlledResourceKeys.CREATION_PARAMETERS);
+    FlightMap inputParameters = context.getInputParameters();
+    FlightUtils.validateRequiredEntries(
+        inputParameters, ControlledResourceKeys.CREATION_PARAMETERS);
     var creationParameters =
-        inputMap.get(
+        inputParameters.get(
             ControlledResourceKeys.CREATION_PARAMETERS, ApiAzureVmCreationParameters.class);
 
     final AzureCloudContext azureCloudContext =
@@ -139,7 +140,7 @@ public class CreateAzureVmStep implements Step {
                       .setNetwork(networkInterface.primaryIPConfiguration().getNetwork())
                       .setSubnetName(subnetName)
                       .setDisk(existingAzureDisk.orElse(null))
-                      .setImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
+                      .setImage(AzureUtils.getVmImageData(creationParameters.getVmImage()))
                       .build()));
 
       context.getWorkingMap().put(AzureVmHelper.WORKING_MAP_VM_ID, createdVm.id());
@@ -148,7 +149,7 @@ public class CreateAzureVmStep implements Step {
       // Stairway steps may run multiple times, so we may already have created this resource. In all
       // other cases, surface the exception and attempt to retry.
       return switch (e.getValue().getCode()) {
-        case ManagementExceptionUtils.CONFLICT -> {
+        case AzureManagementExceptionUtils.CONFLICT -> {
           logger.info(
               "Azure Vm {} in managed resource group {} already exists",
               resource.getVmName(),
@@ -156,7 +157,7 @@ public class CreateAzureVmStep implements Step {
           yield StepResult.getStepResultSuccess();
         }
 
-        case ManagementExceptionUtils.RESOURCE_NOT_FOUND -> {
+        case AzureManagementExceptionUtils.RESOURCE_NOT_FOUND -> {
           logger.error(
               "Either the disk, ip, or network passed into this createVm does not exist "
                   + String.format(
@@ -169,14 +170,14 @@ public class CreateAzureVmStep implements Step {
               StepStatus.STEP_RESULT_FAILURE_FATAL, new AzureManagementException(e));
         }
 
-        case ManagementExceptionUtils.VM_EXTENSION_PROVISIONING_ERROR -> {
+        case AzureManagementExceptionUtils.VM_EXTENSION_PROVISIONING_ERROR -> {
           logger.error("Error provisioning VM extension");
           yield new StepResult(
               StepStatus.STEP_RESULT_FAILURE_FATAL, new AzureManagementException(e));
         }
 
         default -> new StepResult(
-            ManagementExceptionUtils.maybeRetryStatus(e), new AzureManagementException(e));
+            AzureManagementExceptionUtils.maybeRetryStatus(e), new AzureManagementException(e));
       };
     }
     return StepResult.getStepResultSuccess();
@@ -227,13 +228,13 @@ public class CreateAzureVmStep implements Step {
               .withType(creationParameters.getCustomScriptExtension().getType())
               .withVersion(creationParameters.getCustomScriptExtension().getVersion())
               .withPublicSettings(
-                  AzureVmUtils.settingsFrom(
+                  AzureUtils.vmSettingsFrom(
                       creationParameters.getCustomScriptExtension().getPublicSettings()))
               .withProtectedSettings(
-                  AzureVmUtils.settingsFrom(
+                  AzureUtils.vmSettingsFrom(
                       creationParameters.getCustomScriptExtension().getProtectedSettings()))
               .withTags(
-                  AzureVmUtils.tagsFrom(creationParameters.getCustomScriptExtension().getTags()));
+                  AzureUtils.vmTagsFrom(creationParameters.getCustomScriptExtension().getTags()));
 
       if (creationParameters.getCustomScriptExtension().isMinorVersionAutoUpgrade()) {
         customScriptExtension.withMinorVersionAutoUpgrade();

@@ -1,8 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -389,9 +388,13 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
             storageContainerResource.getWorkspaceId(),
             storageContainerResource.getResourceId(),
             userRequest,
-            new SasTokenOptions(null, startTime, expiryTime, "foo/the/bar.baz", null));
+            new SasTokenOptions(null, startTime, expiryTime, blobName, null));
 
     assertValidToken(result.sasToken(), BlobContainerSasPermission.parse("racwdl"), true);
+    assertTrue(
+        result
+            .sasUrl()
+            .contains(storageContainerResource.getStorageContainerName() + "/" + blobName + "?"));
   }
 
   @Test

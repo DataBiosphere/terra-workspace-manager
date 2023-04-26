@@ -14,7 +14,6 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import java.util.Objects;
@@ -64,13 +63,7 @@ public class LaunchCreateCloudContextFlightStep implements Step {
     if (!flightAlreadyExists) {
       if (CloudPlatform.AZURE == cloudPlatform) {
         workspaceService.createAzureCloudContext(
-            destinationWorkspace,
-            cloudContextJobId,
-            userRequest,
-            null,
-            context
-                .getInputParameters()
-                .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class));
+            destinationWorkspace, cloudContextJobId, userRequest, null);
       } else {
         String gcpDefaultZone =
             Objects.requireNonNull(

@@ -108,6 +108,11 @@ public class CloneAllResourcesFlight extends Flight {
                     resourceCloneInputs.getDestinationResourceId(),
                     resourceCloneInputs.getDestinationFolderId()),
                 RetryRules.shortDatabase());
+            addStep(
+                new AwaitCloneControlledFlexibleResourceFlightStep(
+                    resource.castByEnum(WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE),
+                    resourceCloneInputs.getFlightId()),
+                RetryRules.shortDatabase());
           }
           case CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE ->
           // Can't throw in a flight constructor

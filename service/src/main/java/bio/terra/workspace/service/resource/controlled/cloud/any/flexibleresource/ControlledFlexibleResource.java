@@ -3,9 +3,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresour
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
-import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
-import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
 import bio.terra.workspace.generated.model.ApiFlexibleResource;
@@ -16,10 +14,10 @@ import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.cloud.any.flight.update.UpdateControlledFlexibleResourceAttributesStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
-import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.WsmControlledResourceFields;
+import bio.terra.workspace.service.resource.flight.UpdateResourceFlight;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
@@ -79,10 +77,12 @@ public class ControlledFlexibleResource extends ControlledResource {
 
   // -- getters used in serialization --
 
+  @Override
   public WsmResourceFields getWsmResourceFields() {
     return super.getWsmResourceFields();
   }
 
+  @Override
   public WsmControlledResourceFields getWsmControlledResourceFields() {
     return super.getWsmControlledResourceFields();
   }
@@ -134,16 +134,8 @@ public class ControlledFlexibleResource extends ControlledResource {
   public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {}
 
   @Override
-  public void addUpdateSteps(UpdateControlledResourceFlight flight, FlightBeanBag flightBeanBag) {
-    ControlledFlexibleResource resource =
-        getResourceFromFlightInputParameters(flight, WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE);
-    // Update the flex resource's attributes
-    RetryRule dbRetry = RetryRules.shortDatabase();
-    flight.addStep(
-        new UpdateControlledFlexibleResourceAttributesStep(
-            flightBeanBag.getResourceDao(),
-            resource.castByEnum(WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE)),
-        dbRetry);
+  public void addUpdateSteps(UpdateResourceFlight flight, FlightBeanBag flightBeanBag) {
+    flight.addStep(new UpdateControlledFlexibleResourceAttributesStep());
   }
 
   public ApiFlexibleResourceAttributes toApiAttributes() {

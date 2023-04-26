@@ -46,7 +46,7 @@ import org.springframework.test.web.servlet.MockMvc;
  * connecting when cloning a resource or a workspace containing a resource given different cloning
  * instructions: COPY_REFERENCE vs LINK_REFERENCE.
  */
-@Tag("connected")
+@Tag("connectedPlus")
 public class ReferencedResourceCloneTest extends BaseConnectedTest {
   private static final Logger logger = LoggerFactory.getLogger(ReferencedResourceCloneTest.class);
 

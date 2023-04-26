@@ -5,9 +5,7 @@ import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKey
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
-import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.utils.FlightUtils;
-import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
@@ -19,33 +17,23 @@ import org.springframework.http.HttpStatus;
 public class CreateDbAzureCloudContextFinishStep implements Step {
   private final UUID workspaceUuid;
   private final AzureCloudContextService azureCloudContextService;
-  private final FeatureConfiguration featureConfiguration;
 
   public CreateDbAzureCloudContextFinishStep(
-      UUID workspaceUuid,
-      AzureCloudContextService azureCloudContextService,
-      FeatureConfiguration featureConfiguration) {
+      UUID workspaceUuid, AzureCloudContextService azureCloudContextService) {
     this.workspaceUuid = workspaceUuid;
     this.azureCloudContextService = azureCloudContextService;
-    this.featureConfiguration = featureConfiguration;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext) throws InterruptedException {
     AzureCloudContext azureCloudContext;
-    if (featureConfiguration.isBpmAzureEnabled()) {
-      var spendProfile = flightContext.getWorkingMap().get(SPEND_PROFILE, SpendProfile.class);
-      azureCloudContext =
-          new AzureCloudContext(
-              spendProfile.tenantId().toString(),
-              spendProfile.subscriptionId().toString(),
-              spendProfile.managedResourceGroupId());
-    } else {
-      azureCloudContext =
-          flightContext
-              .getInputParameters()
-              .get(JobMapKeys.REQUEST.getKeyName(), AzureCloudContext.class);
-    }
+    var spendProfile = flightContext.getWorkingMap().get(SPEND_PROFILE, SpendProfile.class);
+    azureCloudContext =
+        new AzureCloudContext(
+            spendProfile.tenantId().toString(),
+            spendProfile.subscriptionId().toString(),
+            spendProfile.managedResourceGroupId());
+
     // Create the cloud context; throws if the context already exists.
     azureCloudContextService.createAzureCloudContextFinish(
         workspaceUuid, azureCloudContext, flightContext.getFlightId());

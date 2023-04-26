@@ -33,6 +33,7 @@ import bio.terra.workspace.generated.model.ApiResourceCloneDetails;
 import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.folder.model.Folder;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.JobResultOrException;
@@ -103,16 +104,16 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
   @Autowired private WorkspaceConnectedTestUtils workspaceConnectedTestUtils;
 
   private UUID workspaceId;
+  private String projectId;
   private UUID workspaceId2;
 
   @BeforeEach
   void setup() throws Exception {
     jobService.setFlightDebugInfoForTest(null);
     doReturn(true).when(mockDataRepoService).snapshotReadable(any(), any(), any());
-    workspaceId =
-        mockMvcUtils
-            .createWorkspaceWithCloudContext(userAccessUtils.defaultUserAuthRequest())
-            .getId();
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUser().getAuthenticatedRequest();
+    workspaceId = mockMvcUtils.createWorkspaceWithCloudContext(userRequest).getId();
+    projectId = gcpCloudContextService.getRequiredGcpProject(workspaceId);
     workspaceId2 = null;
   }
 
@@ -296,6 +297,7 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
     ControlledBigQueryDatasetResource resource =
         ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(
                 sourceWorkspace.getWorkspaceId())
+            .projectId(projectId)
             .datasetName("my_awesome_dataset")
             .build();
 

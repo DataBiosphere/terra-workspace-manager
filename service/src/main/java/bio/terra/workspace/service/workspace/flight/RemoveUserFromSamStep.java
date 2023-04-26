@@ -8,7 +8,6 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import java.util.UUID;
-import javax.annotation.Nullable;
 
 public class RemoveUserFromSamStep implements Step {
 
@@ -20,7 +19,7 @@ public class RemoveUserFromSamStep implements Step {
 
   public RemoveUserFromSamStep(
       UUID workspaceUuid,
-      @Nullable WsmIamRole roleToRemove,
+      WsmIamRole roleToRemove,
       String userToRemoveEmail,
       SamService samService,
       AuthenticatedUserRequest userRequest) {
@@ -35,9 +34,7 @@ public class RemoveUserFromSamStep implements Step {
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     // Sam returns a 204 regardless of whether the user was actually removed or not, so this step is
     // always idempotent.
-    if (roleToRemove != null) {
-      samService.removeWorkspaceRole(workspaceUuid, userRequest, roleToRemove, userToRemoveEmail);
-    }
+    samService.removeWorkspaceRole(workspaceUuid, userRequest, roleToRemove, userToRemoveEmail);
     return StepResult.getStepResultSuccess();
   }
 
@@ -45,9 +42,7 @@ public class RemoveUserFromSamStep implements Step {
   public StepResult undoStep(FlightContext context) throws InterruptedException {
     // Sam de-duplicates policy membership, so it's safe to restore roles that may not have been
     // removed in the DO step.
-    if (roleToRemove != null) {
-      samService.grantWorkspaceRole(workspaceUuid, userRequest, roleToRemove, userToRemoveEmail);
-    }
+    samService.grantWorkspaceRole(workspaceUuid, userRequest, roleToRemove, userToRemoveEmail);
     return StepResult.getStepResultSuccess();
   }
 }
