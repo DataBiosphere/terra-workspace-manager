@@ -15,7 +15,7 @@ import bio.terra.workspace.service.resource.controlled.flight.create.CreateContr
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.flight.UpdateResourceFlight;
 import bio.terra.workspace.service.resource.referenced.flight.clone.CloneReferencedResourceFlight;
-import bio.terra.workspace.service.workspace.flight.application.able.ApplicationAbleFlight;
+import bio.terra.workspace.service.workspace.flight.application.ApplicationAbleFlight;
 import bio.terra.workspace.service.workspace.flight.cloud.aws.CreateAwsContextFlight;
 import bio.terra.workspace.service.workspace.flight.cloud.aws.DeleteAwsContextFlight;
 import bio.terra.workspace.service.workspace.flight.cloud.azure.CreateAzureContextFlight;

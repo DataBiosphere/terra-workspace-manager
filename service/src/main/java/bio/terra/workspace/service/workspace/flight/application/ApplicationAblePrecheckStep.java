@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.workspace.flight.application.able;
+package bio.terra.workspace.service.workspace.flight.application;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
