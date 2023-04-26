@@ -94,7 +94,7 @@ public class RetrieveNetworkNameStep implements Step {
   }
 
   private void pickAndStoreNetwork(SubnetworkList subnetworks, FlightMap workingMap) {
-    if (subnetworks.getItems().isEmpty()) {
+    if (subnetworks.getItems() == null || subnetworks.getItems().isEmpty()) {
       throw new BadRequestException(
           String.format("No subnetworks available for location '%s'", resource.getLocation()));
     }
