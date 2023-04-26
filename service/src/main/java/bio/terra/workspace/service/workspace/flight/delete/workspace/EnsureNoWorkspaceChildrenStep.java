@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.workspace.flight;
+package bio.terra.workspace.service.workspace.flight.delete.workspace;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;

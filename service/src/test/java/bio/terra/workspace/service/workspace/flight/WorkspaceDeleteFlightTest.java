@@ -12,6 +12,7 @@ import bio.terra.workspace.service.workspace.flight.aws.DeleteAwsContextStep;
 import bio.terra.workspace.service.workspace.flight.aws.DeleteControlledAwsResourcesStep;
 import bio.terra.workspace.service.workspace.flight.azure.DeleteAzureContextStep;
 import bio.terra.workspace.service.workspace.flight.azure.DeleteControlledAzureResourcesStep;
+import bio.terra.workspace.service.workspace.flight.delete.workspace.EnsureNoWorkspaceChildrenStep;
 import bio.terra.workspace.service.workspace.flight.gcp.DeleteGcpProjectStep;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.UUID;
