@@ -228,20 +228,21 @@ public class JobService {
 
     List<EnumeratedJob> jobList = new ArrayList<>();
     for (FlightState state : flightEnumeration.getFlightStateList()) {
-      FlightMap inputMap = state.getInputParameters();
+      FlightMap inputParameters = state.getInputParameters();
       OperationType operationType =
-          (inputMap.containsKey(WorkspaceFlightMapKeys.OPERATION_TYPE))
-              ? inputMap.get(WorkspaceFlightMapKeys.OPERATION_TYPE, OperationType.class)
+          (inputParameters.containsKey(WorkspaceFlightMapKeys.OPERATION_TYPE))
+              ? inputParameters.get(WorkspaceFlightMapKeys.OPERATION_TYPE, OperationType.class)
               : OperationType.UNKNOWN;
 
       WsmResource wsmResource =
-          (inputMap.containsKey(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE))
-              ? inputMap.get(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE, new TypeReference<>() {})
+          (inputParameters.containsKey(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE))
+              ? inputParameters.get(
+                  WorkspaceFlightMapKeys.ResourceKeys.RESOURCE, new TypeReference<>() {})
               : null;
 
       String jobDescription =
-          (inputMap.containsKey(JobMapKeys.DESCRIPTION.getKeyName()))
-              ? inputMap.get(JobMapKeys.DESCRIPTION.getKeyName(), String.class)
+          (inputParameters.containsKey(JobMapKeys.DESCRIPTION.getKeyName()))
+              ? inputParameters.get(JobMapKeys.DESCRIPTION.getKeyName(), String.class)
               : StringUtils.EMPTY;
 
       EnumeratedJob enumeratedJob =

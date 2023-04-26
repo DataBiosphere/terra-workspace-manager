@@ -24,6 +24,7 @@ import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.google.cloud.storage.BucketInfo.LifecycleRule;
 import com.google.cloud.storage.BucketInfo.LifecycleRule.DeleteLifecycleAction;
@@ -59,7 +60,8 @@ public class UpdateGcsBucketStepTest extends BaseUnitTest {
   @BeforeEach
   public void setup() {
     final FlightMap inputParameters = new FlightMap();
-    inputParameters.put(ControlledResourceKeys.UPDATE_PARAMETERS, BUCKET_UPDATE_PARAMETERS_1);
+    inputParameters.put(
+        WorkspaceFlightMapKeys.ResourceKeys.UPDATE_PARAMETERS, BUCKET_UPDATE_PARAMETERS_1);
     doReturn(inputParameters).when(mockFlightContext).getInputParameters();
 
     final FlightMap workingMap = new FlightMap();

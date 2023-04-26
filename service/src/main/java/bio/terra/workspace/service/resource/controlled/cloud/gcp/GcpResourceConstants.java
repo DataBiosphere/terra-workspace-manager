@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp;
 
 /** Constants shared among resource types. */
-public class GcpResourceConstant {
+public class GcpResourceConstants {
 
   /** Default region of a resource. */
   public static final String DEFAULT_REGION = "us-central1";

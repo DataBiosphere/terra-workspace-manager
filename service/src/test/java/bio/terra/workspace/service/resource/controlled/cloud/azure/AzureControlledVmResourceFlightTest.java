@@ -12,7 +12,7 @@ import bio.terra.stairway.FlightStatus;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
-import bio.terra.workspace.common.utils.AzureVmUtils;
+import bio.terra.workspace.common.utils.AzureUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiAzureDiskCreationParameters;
@@ -157,7 +157,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
                     .build())
             .vmName(creationParameters.getName())
             .vmSize(creationParameters.getVmSize())
-            .vmImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
+            .vmImage(AzureUtils.getVmImageData(creationParameters.getVmImage()))
             .diskId(diskResource.getResourceId())
             .build();
 
@@ -223,7 +223,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
                     .build())
             .vmName(creationParameters.getName())
             .vmSize(creationParameters.getVmSize())
-            .vmImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
+            .vmImage(AzureUtils.getVmImageData(creationParameters.getVmImage()))
             .diskId(diskResource.getResourceId())
             .build();
 
@@ -310,7 +310,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
                     .build())
             .vmName(creationParameters.getName())
             .vmSize(creationParameters.getVmSize())
-            .vmImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
+            .vmImage(AzureUtils.getVmImageData(creationParameters.getVmImage()))
             .build();
 
     // Submit a VM creation flight and verify the resource exists in the workspace.

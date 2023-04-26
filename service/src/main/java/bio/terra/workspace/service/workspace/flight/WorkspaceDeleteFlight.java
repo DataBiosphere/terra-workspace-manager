@@ -8,6 +8,8 @@ import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.workspace.flight.aws.DeleteAwsContextStep;
+import bio.terra.workspace.service.workspace.flight.aws.DeleteControlledAwsResourcesStep;
 import bio.terra.workspace.service.workspace.flight.azure.DeleteAzureContextStep;
 import bio.terra.workspace.service.workspace.flight.azure.DeleteControlledAzureResourcesStep;
 import bio.terra.workspace.service.workspace.flight.gcp.DeleteGcpProjectStep;
@@ -25,9 +27,7 @@ public class WorkspaceDeleteFlight extends Flight {
 
     AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
-    WorkspaceStage workspaceStage =
-        WorkspaceStage.valueOf(
-            inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_STAGE, String.class));
+
     UUID workspaceUuid =
         UUID.fromString(inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
     // TODO: we still need the following steps once their features are supported:
@@ -38,8 +38,9 @@ public class WorkspaceDeleteFlight extends Flight {
     RetryRule cloudRetryRule = RetryRules.cloudLongRunning();
     RetryRule terraRetryRule = RetryRules.shortExponential();
 
-    // In Azure, we need to explicitly delete the controlled resources as there is no containing
-    // object (like a GCP project) that we can delete which will also delete all resources
+    // Delete resources before sam resources - In Azure & AWS, we need to explicitly delete the
+    // controlled resources as there is no containing object (like a GCP project) that we can delete
+    // which will also delete all resources
     addStep(
         new DeleteControlledAzureResourcesStep(
             appContext.getResourceDao(),
@@ -47,10 +48,17 @@ public class WorkspaceDeleteFlight extends Flight {
             appContext.getSamService(),
             workspaceUuid,
             userRequest));
+    addStep(
+        new DeleteControlledAwsResourcesStep(
+            appContext.getResourceDao(),
+            appContext.getControlledResourceService(),
+            workspaceUuid,
+            userRequest));
+    // GCP handles the cleanup when we delete the containing project, and we cascade
+    // workspace deletion to resources in the DB, hence do not need to explicitly delete the
+    // actual cloud objects or entries in WSM DB
 
-    // We delete controlled resources from the Sam, but do not need to explicitly delete the
-    // actual cloud objects or entries in WSM DB. GCP handles the cleanup when we delete the
-    // containing project, and we cascade workspace deletion to resources in the DB.
+    // Delete controlled resources from the Sam
     addStep(
         new DeleteControlledSamResourcesStep(
             appContext.getSamService(),
@@ -58,35 +66,58 @@ public class WorkspaceDeleteFlight extends Flight {
             workspaceUuid,
             /* cloudPlatform= */ null),
         terraRetryRule);
+
     addStep(
         new DeleteGcpProjectStep(
             appContext.getCrlService(), appContext.getGcpCloudContextService()),
         cloudRetryRule);
+
+    addStep(
+        new EnsureNoWorkspaceChildrenStep(appContext.getSamService(), userRequest, workspaceUuid));
+
     addStep(
         new DeleteAzureContextStep(appContext.getAzureCloudContextService(), workspaceUuid),
         cloudRetryRule);
-    // Workspace authz is handled differently depending on whether WSM owns the underlying Sam
-    // resource or not, as indicated by the workspace stage enum.
-    switch (workspaceStage) {
+    addStep(
+        new DeleteAwsContextStep(appContext.getAwsCloudContextService(), workspaceUuid),
+        cloudRetryRule);
+    addAuthZSteps(appContext, inputParameters, userRequest, workspaceUuid, terraRetryRule);
+    addStep(
+        new DeleteWorkspaceStateStep(appContext.getWorkspaceDao(), workspaceUuid), terraRetryRule);
+  }
+
+  /**
+   * Adds steps to delete sam resources owned by WSM. Workspace authz is handled differently
+   * depending on whether WSM owns the underlying Sam resource or not, as indicated by the workspace
+   * stage enum.
+   */
+  private void addAuthZSteps(
+      FlightBeanBag context,
+      FlightMap parameters,
+      AuthenticatedUserRequest request,
+      UUID workspaceId,
+      RetryRule retryRule) {
+
+    WorkspaceStage stage =
+        WorkspaceStage.valueOf(
+            parameters.get(WorkspaceFlightMapKeys.WORKSPACE_STAGE, String.class));
+
+    switch (stage) {
       case MC_WORKSPACE:
-        if (appContext.getFeatureConfiguration().isTpsEnabled()) {
+        if (context.getFeatureConfiguration().isTpsEnabled()) {
           addStep(
-              new DeleteWorkspacePoliciesStep(
-                  appContext.getTpsApiDispatch(), userRequest, workspaceUuid),
-              terraRetryRule);
+              new DeleteWorkspacePoliciesStep(context.getTpsApiDispatch(), request, workspaceId),
+              retryRule);
         }
         addStep(
-            new DeleteWorkspaceAuthzStep(appContext.getSamService(), userRequest, workspaceUuid),
-            terraRetryRule);
+            new DeleteWorkspaceAuthzStep(context.getSamService(), request, workspaceId), retryRule);
         break;
       case RAWLS_WORKSPACE:
         // Do nothing, since WSM does not own the Sam resource.
         break;
       default:
         throw new InternalLogicException(
-            "Unknown workspace stage during deletion: " + workspaceStage.name());
+            "Unknown workspace stage during deletion: " + stage.name());
     }
-    addStep(
-        new DeleteWorkspaceStateStep(appContext.getWorkspaceDao(), workspaceUuid), terraRetryRule);
   }
 }

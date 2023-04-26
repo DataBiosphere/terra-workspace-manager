@@ -12,7 +12,7 @@ import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
-import bio.terra.workspace.common.utils.AzureVmUtils;
+import bio.terra.workspace.common.utils.AzureUtils;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.ControlledAzureResourceApi;
 import bio.terra.workspace.generated.model.ApiAzureDiskResource;
@@ -73,39 +73,37 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     implements ControlledAzureResourceApi {
   private final Logger logger = LoggerFactory.getLogger(ControlledAzureResourceApiController.class);
 
-  private final ControlledResourceService controlledResourceService;
-  private final AzureStorageAccessService azureControlledStorageResourceService;
-  private final JobService jobService;
-  private final JobApiUtils jobApiUtils;
-  private final FeatureConfiguration features;
-  private final AzureConfiguration azureConfiguration;
   private final WorkspaceService workspaceService;
-  private final ControlledResourceMetadataManager controlledResourceMetadataManager;
+  private final AzureConfiguration azureConfiguration;
+  private final AzureStorageAccessService azureControlledStorageResourceService;
   private final LandingZoneApiDispatch landingZoneApiDispatch;
 
   @Autowired
   public ControlledAzureResourceApiController(
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
-      ControlledResourceService controlledResourceService,
-      AzureStorageAccessService azureControlledStorageResourceService,
+      HttpServletRequest request,
       SamService samService,
+      FeatureConfiguration featureConfiguration,
       JobService jobService,
       JobApiUtils jobApiUtils,
-      HttpServletRequest request,
-      FeatureConfiguration features,
-      AzureConfiguration azureConfiguration,
-      WorkspaceService workspaceService,
+      ControlledResourceService controlledResourceService,
       ControlledResourceMetadataManager controlledResourceMetadataManager,
+      WorkspaceService workspaceService,
+      AzureConfiguration azureConfiguration,
+      AzureStorageAccessService azureControlledStorageResourceService,
       LandingZoneApiDispatch landingZoneApiDispatch) {
-    super(authenticatedUserRequestFactory, request, controlledResourceService, samService);
-    this.controlledResourceService = controlledResourceService;
-    this.azureControlledStorageResourceService = azureControlledStorageResourceService;
-    this.jobService = jobService;
-    this.jobApiUtils = jobApiUtils;
-    this.features = features;
-    this.azureConfiguration = azureConfiguration;
+    super(
+        authenticatedUserRequestFactory,
+        request,
+        samService,
+        featureConfiguration,
+        jobService,
+        jobApiUtils,
+        controlledResourceService,
+        controlledResourceMetadataManager);
     this.workspaceService = workspaceService;
-    this.controlledResourceMetadataManager = controlledResourceMetadataManager;
+    this.azureConfiguration = azureConfiguration;
+    this.azureControlledStorageResourceService = azureControlledStorageResourceService;
     this.landingZoneApiDispatch = landingZoneApiDispatch;
   }
 
@@ -166,9 +164,9 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     features.azureEnabledCheck();
 
     ControllerValidationUtils.validateIpAddressRange(sasIpRange);
-    ControllerValidationUtils.validateSasExpirationDuration(
+    AzureUtils.validateSasExpirationDuration(
         sasExpirationDuration, azureConfiguration.getSasTokenExpiryTimeMaximumMinutesOffset());
-    ControllerValidationUtils.validateSasBlobName(sasBlobName);
+    AzureUtils.validateSasBlobName(sasBlobName);
     SasPermissionsHelper.validateSasPermissionString(sasPermissions);
 
     OffsetDateTime startTime =
@@ -271,7 +269,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         .common(commonFields)
         .vmName(creationParameters.getName())
         .vmSize(creationParameters.getVmSize())
-        .vmImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
+        .vmImage(AzureUtils.getVmImageData(creationParameters.getVmImage()))
         .diskId(creationParameters.getDiskId())
         .build();
   }
@@ -499,7 +497,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             body.getName(),
             body.getDescription(),
             body.getName(),
-            body.getCloningInstructions());
+            body.getCloningInstructions(),
+            body.getPrefixesToClone());
 
     final ApiCloneControlledAzureStorageContainerResult result =
         fetchCloneAzureContainerResult(jobId);

@@ -3,7 +3,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.GcsApiConversions.toGcsApi;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.GcsApiConversions.toGcsApiRulesList;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.PREVIOUS_UPDATE_PARAMETERS;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_PARAMETERS;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys.UPDATE_PARAMETERS;
 
 import bio.terra.cloudres.google.storage.BucketCow;
 import bio.terra.cloudres.google.storage.StorageCow;
@@ -45,9 +45,9 @@ public class UpdateGcsBucketStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    final FlightMap inputMap = flightContext.getInputParameters();
+    final FlightMap inputParameters = flightContext.getInputParameters();
     final ApiGcpGcsBucketUpdateParameters updateParameters =
-        inputMap.get(UPDATE_PARAMETERS, ApiGcpGcsBucketUpdateParameters.class);
+        inputParameters.get(UPDATE_PARAMETERS, ApiGcpGcsBucketUpdateParameters.class);
 
     return updateBucket(updateParameters);
   }

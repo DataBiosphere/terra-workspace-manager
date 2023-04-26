@@ -1,7 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset;
 
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATION_PARAMETERS;
-
 import bio.terra.cloudres.google.bigquery.BigQueryCow;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
@@ -10,11 +8,11 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
-import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
@@ -65,42 +63,46 @@ public class CreateBigQueryDatasetStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    FlightMap inputMap = flightContext.getInputParameters();
-    ApiGcpBigQueryDatasetCreationParameters creationParameters =
-        inputMap.get(CREATION_PARAMETERS, ApiGcpBigQueryDatasetCreationParameters.class);
-    FlightMap workingMap = flightContext.getWorkingMap();
-    FlightUtils.validateRequiredEntries(workingMap, ControlledResourceKeys.GCP_CLOUD_CONTEXT);
-    GcpCloudContext cloudContext =
-        workingMap.get(ControlledResourceKeys.GCP_CLOUD_CONTEXT, GcpCloudContext.class);
-    String projectId = cloudContext.getGcpProjectId();
+    FlightMap inputParameters = flightContext.getInputParameters();
+    var resource =
+        FlightUtils.getRequired(
+            inputParameters,
+            WorkspaceFlightMapKeys.ResourceKeys.RESOURCE,
+            ControlledBigQueryDatasetResource.class);
 
+    GcpCloudContext cloudContext =
+        FlightUtils.getRequired(
+            flightContext.getWorkingMap(),
+            ControlledResourceKeys.GCP_CLOUD_CONTEXT,
+            GcpCloudContext.class);
     List<Access> accessConfiguration = buildDatasetAccessConfiguration(cloudContext);
+
     DatasetReference datasetId =
         new DatasetReference()
-            .setProjectId(projectId)
+            .setProjectId(resource.getProjectId())
             .setDatasetId(
                 resource.getDatasetName() == null ? resource.getName() : resource.getDatasetName());
     Dataset datasetToCreate =
         new Dataset()
             .setDatasetReference(datasetId)
-            .setLocation(creationParameters.getLocation())
+            .setLocation(resource.getRegion())
             .setDefaultTableExpirationMs(
-                BigQueryApiConversions.toBqExpirationTime(
-                    creationParameters.getDefaultTableLifetime()))
+                BigQueryApiConversions.toBqExpirationTime(resource.getDefaultTableLifetime()))
             .setDefaultPartitionExpirationMs(
-                BigQueryApiConversions.toBqExpirationTime(
-                    creationParameters.getDefaultPartitionLifetime()))
+                BigQueryApiConversions.toBqExpirationTime(resource.getDefaultPartitionLifetime()))
             .setAccess(accessConfiguration);
 
     BigQueryCow bqCow = crlService.createWsmSaBigQueryCow();
     try {
-      bqCow.datasets().insert(projectId, datasetToCreate).execute();
+      bqCow.datasets().insert(resource.getProjectId(), datasetToCreate).execute();
     } catch (GoogleJsonResponseException e) {
       // Stairway steps may run multiple times, so we may already have created this resource. In all
       // other cases, surface the exception and attempt to retry.
       if (e.getStatusCode() == HttpStatus.SC_CONFLICT) {
         logger.info(
-            "BQ dataset {} in project {} already exists", resource.getDatasetName(), projectId);
+            "BQ dataset {} in project {} already exists",
+            resource.getDatasetName(),
+            resource.getProjectId());
         return StepResult.getStepResultSuccess();
       }
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);

@@ -13,6 +13,7 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
+import bio.terra.workspace.service.resource.flight.UpdateResourceFlight;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
@@ -149,6 +150,11 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
   @Override
   public ApiResourceAttributesUnion toApiAttributesUnion() {
     return new ApiResourceAttributesUnion().gcpBqDataTable(toApiAttributes());
+  }
+
+  @Override
+  public void addUpdateSteps(UpdateResourceFlight flight, FlightBeanBag flightBeanBag) {
+    flight.addStep(new UpdateBigQueryDataTableReferenceStep());
   }
 
   @Override

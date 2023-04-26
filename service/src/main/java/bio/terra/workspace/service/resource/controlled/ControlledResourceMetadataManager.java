@@ -4,23 +4,21 @@ import bio.terra.common.exception.ForbiddenException;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
+import bio.terra.workspace.db.exception.ResourceStateConflictException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
-import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.exception.ResourceIsBusyException;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.WsmApplication;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.UUID;
-import javax.annotation.Nullable;
 import org.apache.commons.codec.binary.StringUtils;
 import org.springframework.stereotype.Component;
 
@@ -47,31 +45,6 @@ public class ControlledResourceMetadataManager {
     this.samService = samService;
     this.workspaceService = workspaceService;
     this.applicationDao = applicationDao;
-  }
-  /**
-   * Update the name and description metadata fields of a controlled resource. These are only stored
-   * inside WSM, so this does not require any calls to clouds.
-   *
-   * @param workspaceUuid workspace of interest
-   * @param resourceId resource to update
-   * @param name name to change - may be null, in which case resource name will not be changed.
-   * @param description description to change - may be null, in which case resource description will
-   *     not be changed.
-   */
-  public void updateControlledResourceMetadata(
-      UUID workspaceUuid,
-      UUID resourceId,
-      @Nullable String name,
-      @Nullable String description,
-      @Nullable CloningInstructions cloningInstructions) {
-    // Name may be null if the user is not updating it in this request.
-    if (name != null) {
-      ResourceValidationUtils.validateResourceName(name);
-    }
-    // Description may also be null, but this validator accepts null descriptions.
-    ResourceValidationUtils.validateResourceDescriptionName(description);
-    resourceDao.updateResource(
-        workspaceUuid, resourceId, name, description, null, cloningInstructions);
   }
 
   /**
@@ -115,10 +88,14 @@ public class ControlledResourceMetadataManager {
             () -> samService.checkAuthz(userRequest, samName, resourceId.toString(), action),
             "checkAuthz");
         throw new ResourceIsBusyException(
-            "Another operation is running on the resource; wait and try again");
+            "Another operation is running on the resource; try again later");
 
       case BROKEN:
-        // If the resource is in the BROKEN state, then there may be no Sam resource. We do our
+        if (!SamControlledResourceActions.DELETE_ACTION.equals(action)) {
+          throw new ResourceStateConflictException(
+              "Delete is the only operation allowed on a resource in the broken state");
+        }
+        // For a resource in the BROKEN state, then there may be no Sam resource. We do our
         // best with what we know. We handle two cases:
         //  1. If the resource is an application resource, and the application is making
         //     the request, we go ahead and perform the operation.

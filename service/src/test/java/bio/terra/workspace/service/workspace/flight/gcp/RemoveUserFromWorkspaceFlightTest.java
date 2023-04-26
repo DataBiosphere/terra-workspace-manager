@@ -42,6 +42,7 @@ import bio.terra.workspace.service.workspace.flight.MarkPrivateResourcesAbandone
 import bio.terra.workspace.service.workspace.flight.ReleasePrivateResourceCleanupClaimsStep;
 import bio.terra.workspace.service.workspace.flight.RemovePrivateResourceAccessStep;
 import bio.terra.workspace.service.workspace.flight.RemoveUserFromSamStep;
+import bio.terra.workspace.service.workspace.flight.ValidateUserRoleStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.CloudContextHolder;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
@@ -144,6 +145,7 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
 
     // Run the "removeUser" flight to the very end, then undo it, retrying steps along the way.
     Map<String, StepStatus> retrySteps = new HashMap<>();
+    retrySteps.put(ValidateUserRoleStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(RemoveUserFromSamStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
         CheckUserStillInWorkspaceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);

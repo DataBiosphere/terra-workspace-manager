@@ -211,11 +211,17 @@ public class AzureStorageAccessService {
     }
 
     String token;
+    String resourceName;
     if (sasTokenOptions.blobName() != null) {
       var blobClient = blobContainerClient.getBlobClient(sasTokenOptions.blobName());
       token = blobClient.generateSas(sasValues);
+      resourceName =
+          storageData.storageContainerResource().getStorageContainerName()
+              + "/"
+              + sasTokenOptions.blobName();
     } else {
       token = blobContainerClient.generateSas(sasValues);
+      resourceName = storageData.storageContainerResource().getStorageContainerName();
     }
 
     logger.info(
@@ -231,7 +237,7 @@ public class AzureStorageAccessService {
             Locale.ROOT,
             "https://%s.blob.core.windows.net/%s?%s",
             storageData.storageAccountName(),
-            storageData.storageContainerResource().getStorageContainerName(),
+            resourceName,
             token));
   }
 

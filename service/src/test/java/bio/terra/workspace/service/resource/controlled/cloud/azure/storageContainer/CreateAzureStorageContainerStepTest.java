@@ -7,8 +7,8 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 import bio.terra.stairway.StepResult;
+import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
-import bio.terra.workspace.common.utils.ManagementExceptionUtils;
 import bio.terra.workspace.generated.model.ApiAzureStorageContainerCreationParameters;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.BaseStorageStepTest;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.resourcemanager.data.CreateStorageContainerRequestData;
@@ -43,7 +43,7 @@ public class CreateAzureStorageContainerStepTest extends BaseStorageStepTest {
           "Container was not found.",
           /*response=*/ null,
           new ManagementError(
-              ManagementExceptionUtils.CONTAINER_NOT_FOUND, "Container was not found."));
+              AzureManagementExceptionUtils.CONTAINER_NOT_FOUND, "Container was not found."));
 
   @BeforeEach
   public void setup() {

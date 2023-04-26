@@ -82,7 +82,7 @@ public class ControlledGcsBucketHandler implements WsmResourceHandler {
     if (generatedName.length() == 0) {
       throw new BadRequestException(
           String.format(
-              "Cannot generate a gcs bucket name from %s, it must contains"
+              "Cannot generate a gcs bucket name from %s, it must contain"
                   + " alphanumerical characters.",
               bucketName));
     }

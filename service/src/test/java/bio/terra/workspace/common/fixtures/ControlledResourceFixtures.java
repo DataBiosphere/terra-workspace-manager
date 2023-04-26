@@ -4,7 +4,7 @@ import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertM
 import static bio.terra.workspace.connected.AzureConnectedTestUtils.getAzureName;
 
 import bio.terra.stairway.ShortUUID;
-import bio.terra.workspace.common.utils.AzureVmUtils;
+import bio.terra.workspace.common.utils.AzureUtils;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.db.ResourceDao;
@@ -14,7 +14,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.Con
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstants;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource.Builder;
@@ -86,7 +86,7 @@ public class ControlledResourceFixtures {
   public static final ApiGcpGcsBucketCreationParameters GOOGLE_BUCKET_CREATION_PARAMETERS_MINIMAL =
       new ApiGcpGcsBucketCreationParameters()
           .name(TestUtils.appendRandomNumber(BUCKET_NAME_PREFIX))
-          .location(GcpResourceConstant.DEFAULT_REGION);
+          .location(GcpResourceConstants.DEFAULT_REGION);
   public static final String DEFAULT_AZURE_RESOURCE_REGION = Region.US_EAST2.name();
   public static final String TEST_AZURE_STORAGE_ACCOUNT_NAME = "teststgacctdonotdelete";
 
@@ -95,7 +95,7 @@ public class ControlledResourceFixtures {
     return new ApiGcpGcsBucketCreationParameters()
         .name(uniqueBucketName())
         .defaultStorageClass(ApiGcpGcsBucketDefaultStorageClass.STANDARD)
-        .location(GcpResourceConstant.DEFAULT_REGION)
+        .location(GcpResourceConstants.DEFAULT_REGION)
         .lifecycle(new ApiGcpGcsBucketLifecycle().rules(LIFECYCLE_RULES));
   }
 
@@ -366,7 +366,7 @@ public class ControlledResourceFixtures {
         .common(makeDefaultControlledResourceFieldsBuilder().build())
         .vmName(creationParameters.getName())
         .vmSize(creationParameters.getVmSize())
-        .vmImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
+        .vmImage(AzureUtils.getVmImageData(creationParameters.getVmImage()))
         .diskId(creationParameters.getDiskId())
         .build();
   }
@@ -445,7 +445,8 @@ public class ControlledResourceFixtures {
   }
 
   /**
-   * Make a bigquery builder with defaults filled in
+   * Make a bigquery builder with defaults filled in NOTE: when using this in a connected test, you
+   * MUST overwrite the project id. "my_project" won't work.
    *
    * @return resource builder
    */
@@ -658,7 +659,7 @@ public class ControlledResourceFixtures {
                 .build())
         .vmName(creationParameters.getName())
         .vmSize(creationParameters.getVmSize())
-        .vmImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
+        .vmImage(AzureUtils.getVmImageData(creationParameters.getVmImage()))
         .diskId(diskResourceId);
   }
 

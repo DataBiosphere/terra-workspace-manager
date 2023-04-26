@@ -5,6 +5,7 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
@@ -22,9 +23,9 @@ public class StoreMetadataStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    final FlightMap inputMap = flightContext.getInputParameters();
-    final ControlledResource resource =
-        inputMap.get(ResourceKeys.RESOURCE, ControlledResource.class);
+    ControlledResource resource =
+        FlightUtils.getRequired(
+            flightContext.getInputParameters(), ResourceKeys.RESOURCE, ControlledResource.class);
 
     resourceDao.createResourceStart(resource, flightContext.getFlightId());
     return StepResult.getStepResultSuccess();
@@ -32,9 +33,9 @@ public class StoreMetadataStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    final FlightMap inputMap = flightContext.getInputParameters();
+    final FlightMap inputParameters = flightContext.getInputParameters();
     final ControlledResource resource =
-        inputMap.get(ResourceKeys.RESOURCE, ControlledResource.class);
+        inputParameters.get(ResourceKeys.RESOURCE, ControlledResource.class);
 
     resourceDao.createResourceFailure(
         resource,

@@ -349,6 +349,8 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     assertEquals(workspace.getId(), source.getObjectId());
     assertFalse(source.isDeleted());
     assertEquals(0, result.getExplanation().size());
+    assertNotNull(source.getCreatedDate());
+    assertNotNull(source.getLastUpdatedDate());
   }
 
   @Test
@@ -496,6 +498,32 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
   @Test
   @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
+  public void mergeCheck_nonMatchingGroups() throws Exception {
+    var userRequest = userAccessUtils.defaultUserAuthRequest();
+    UUID targetWorkspaceId = null;
+    UUID sourceWorkspaceId = null;
+    try {
+      targetWorkspaceId =
+          mockMvcUtils.createWorkspaceWithGroupConstraint(
+              userRequest, PolicyFixtures.DEFAULT_GROUP);
+      sourceWorkspaceId =
+          mockMvcUtils.createWorkspaceWithGroupConstraint(userRequest, PolicyFixtures.ALT_GROUP);
+
+      ApiWsmPolicyMergeCheckResult result =
+          mergeCheck(userRequest, targetWorkspaceId, sourceWorkspaceId);
+
+      assertEquals(1, result.getConflicts().size());
+      assertEquals(0, result.getResourcesWithConflict().size());
+      assertEquals(PolicyFixtures.NAMESPACE, result.getConflicts().get(0).getNamespace());
+      assertEquals(PolicyFixtures.GROUP_CONSTRAINT, result.getConflicts().get(0).getName());
+    } finally {
+      mockMvcUtils.deleteWorkspace(userRequest, targetWorkspaceId);
+      mockMvcUtils.deleteWorkspace(userRequest, sourceWorkspaceId);
+    }
+  }
+
+  @Test
+  @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
   public void updatePolicies_tpsEnabledAndPolicyUpdated() throws Exception {
     ApiWorkspaceDescription workspaceWithoutPolicy =
         mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
@@ -563,6 +591,40 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     // clean up
     mockMvcUtils.removeRegionPolicy(
         userAccessUtils.defaultUserAuthRequest(), workspace.getId(), usRegion);
+  }
+
+  @Test
+  public void workspaceOwnerCannotAbandonWorkspace() throws Exception {
+    // Default user should be the only workspace owner, and so should not be able to remove
+    // themselves.
+    mockMvcUtils.removeRoleExpectBadRequest(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspace.getId(),
+        WsmIamRole.OWNER,
+        userAccessUtils.getDefaultUserEmail());
+    // After adding a second user, they should be able to remove themselves.
+    mockMvcUtils.grantRole(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspace.getId(),
+        WsmIamRole.OWNER,
+        userAccessUtils.getSecondUserEmail());
+    mockMvcUtils.removeRole(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspace.getId(),
+        WsmIamRole.OWNER,
+        userAccessUtils.getDefaultUserEmail());
+    // Reset workspace to starting setup, where default user is an owner and secondary user has no
+    // role.
+    mockMvcUtils.grantRole(
+        userAccessUtils.secondUserAuthRequest(),
+        workspace.getId(),
+        WsmIamRole.OWNER,
+        userAccessUtils.getDefaultUserEmail());
+    mockMvcUtils.removeRole(
+        userAccessUtils.secondUserAuthRequest(),
+        workspace.getId(),
+        WsmIamRole.OWNER,
+        userAccessUtils.getSecondUserEmail());
   }
 
   private ApiWorkspaceDescription getWorkspace(AuthenticatedUserRequest request, UUID id)

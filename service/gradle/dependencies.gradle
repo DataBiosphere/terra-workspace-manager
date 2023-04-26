@@ -33,7 +33,7 @@ dependencies {
   // Terra deps
   implementation group: "bio.terra", name: "datarepo-client", version: "1.41.0-SNAPSHOT"
   implementation group: "bio.terra", name:"billing-profile-manager-client", version: "0.1.29-SNAPSHOT"
-  implementation group: "bio.terra", name:"terra-policy-client", version:"0.2.44-SNAPSHOT"
+  implementation group: "bio.terra", name:"terra-policy-client", version:"0.2.50-SNAPSHOT"
   implementation group: "bio.terra", name:"terra-aws-resource-discovery", version:"v0.5.1-SNAPSHOT"
 
   // hk2 is required to use datarepo client, but not correctly exposed by the client
@@ -43,7 +43,7 @@ dependencies {
   implementation group: "io.opencensus", name: "opencensus-contrib-http-jaxrs", version: "0.28.3"
 
   // Get stairway via TCL
-  implementation("bio.terra:terra-common-lib:0.0.80-SNAPSHOT") {
+  implementation("bio.terra:terra-common-lib:0.0.86-SNAPSHOT") {
     exclude group: "org.broadinstitute.dsde.workbench", module: "sam-client_2.12"
   }
   implementation group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.13", version: "0.1-df5a43a"
@@ -53,10 +53,10 @@ dependencies {
   implementation group: "com.squareup.okhttp3", name: "logging-interceptor", version: "4.9.1"
 
   // Cloud Resource Library
-  implementation group: 'bio.terra', name: 'terra-cloud-resource-lib', version: "1.2.8-SNAPSHOT"
+  implementation group: 'bio.terra', name: 'terra-cloud-resource-lib', version: "1.2.12-SNAPSHOT"
 
   // Terra Landing Zone Service
-  implementation ('bio.terra:terra-landing-zone-service:0.0.38-SNAPSHOT') {
+  implementation ('bio.terra:terra-landing-zone-service:0.0.56-SNAPSHOT') {
     exclude group: "org.broadinstitute.dsde.workbench", module: "sam-client_2.12"
   }
 

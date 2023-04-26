@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.PREVIOUS_UPDATE_PARAMETERS;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_PARAMETERS;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys.UPDATE_PARAMETERS;
 
 import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
 import bio.terra.cloudres.google.notebooks.InstanceName;
@@ -42,9 +42,9 @@ public class UpdateAiNotebookAttributesStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    final FlightMap inputMap = context.getInputParameters();
+    final FlightMap inputParameters = context.getInputParameters();
     final ApiGcpAiNotebookUpdateParameters updateParameters =
-        inputMap.get(UPDATE_PARAMETERS, ApiGcpAiNotebookUpdateParameters.class);
+        inputParameters.get(UPDATE_PARAMETERS, ApiGcpAiNotebookUpdateParameters.class);
     if (updateParameters == null) {
       return StepResult.getStepResultSuccess();
     }

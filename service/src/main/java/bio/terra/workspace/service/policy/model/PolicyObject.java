@@ -13,7 +13,9 @@ public record PolicyObject(
     boolean deleted,
     boolean access,
     @Nullable String name,
-    Map<String, String> properties) {
+    Map<String, String> properties,
+    String createdDate,
+    String lastUpdatedDate) {
 
   public ApiWsmPolicyObject toApi() {
     var object =
@@ -22,7 +24,9 @@ public record PolicyObject(
             .objectType(objectType.toApi())
             .component(component.toApi())
             .access(access)
-            .deleted(deleted);
+            .deleted(deleted)
+            .createdDate(createdDate)
+            .lastUpdatedDate(lastUpdatedDate);
     if (access) {
       object.name(name).properties(PropertiesUtils.convertMapToApiProperties(properties));
     }

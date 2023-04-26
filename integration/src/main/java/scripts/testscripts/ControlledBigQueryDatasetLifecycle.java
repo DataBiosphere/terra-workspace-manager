@@ -53,7 +53,7 @@ import scripts.utils.MultiResourcesUtils;
 import scripts.utils.SamClientUtils;
 
 // TODO: This test no longer clones. Extend WorkspaceAllocateTestScriptBase instead of
-// GcpWorkspaceCloneTestScriptBase.
+//  GcpWorkspaceCloneTestScriptBase.
 public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScriptBase {
   private static final Logger logger =
       LoggerFactory.getLogger(ControlledBigQueryDatasetLifecycle.class);
