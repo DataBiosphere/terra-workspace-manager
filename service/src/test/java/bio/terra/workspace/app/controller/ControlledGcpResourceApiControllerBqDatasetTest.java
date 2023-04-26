@@ -457,7 +457,6 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         /*isControlled=*/ StewardshipType.REFERENCED);
   }
 
-  @Disabled("PF-2639 Need BigQuery Data Transfer service API enabled")
   @Test
   void clone_copyResource_sameWorkspace() throws Exception {
     // Source resource is in us-west4
@@ -516,7 +515,6 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         DEFAULT_PARTITION_LIFETIME);
   }
 
-  @Disabled("PF-2639 Need BigQuery Data Transfer service API enabled")
   @Test
   void clone_copyResource_differentWorkspace() throws Exception {
     // Source resource is in us-west4
