@@ -41,7 +41,7 @@ import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Tag("connectedPlus")
-public class WorkspaceDeleteFlightTest extends BaseConnectedTest {
+public class WorkspaceDeleteFlightConnectedTest extends BaseConnectedTest {
   /**
    * How long to wait for a delete context Stairway flight to complete before timing out the test.
    */
