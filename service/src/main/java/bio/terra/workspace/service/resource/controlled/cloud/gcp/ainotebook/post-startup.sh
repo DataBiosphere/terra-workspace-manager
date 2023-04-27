@@ -6,7 +6,7 @@
 #   Default post startup script for Google Cloud Vertex AI Workbench VM
 #   running JupyterLab.
 #
-# Exection details
+# Execution details
 #   The post-startup script runs on Vertex AI notebook VMs during *instance creation*;
 #   it is not run on every instance start.
 #
@@ -309,6 +309,44 @@ fi
 # Keep this as last thing in script. There will be integration test for git cloning (PF-1660). If this is last thing, then
 # integration test will ensure that everything in script worked.
 sudo -u "$JUPYTER_USER" sh -c 'terra git clone --all'
+
+################################
+# Setup instance startup service
+################################
+# The following steps are performed
+# 1. Mount terra workspace resources. This command requires system user home
+#    directories to be mounted. We run the startup service after
+#    jupyter.service to meet this requirement.
+
+# Create a script to be executed by the startup service.
+TERRA_SETUP_SCRIPT="${USER_TERRA_CONFIG_DIR}/setup-environment.sh"
+cat <<EOF >${TERRA_SETUP_SCRIPT}
+#!/bin/bash
+
+# Mount terra workspace resources
+/usr/bin/terra resource mount
+EOF
+chmod +x "${TERRA_SETUP_SCRIPT}"
+
+# Create a systemd service to run the script on instance startup.
+cat <<EOF >"/etc/systemd/system/terra-setup-environment.service"
+[Unit]
+Description=Configure environment for terra
+After=jupyter.service
+
+[Service]
+ExecStart=/home/jupyter/.terra/setup-environment.sh
+User=jupyter
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Enable and start the startup service
+sudo systemctl daemon-reload
+sudo systemctl enable terra-setup-environment.service
+sudo systemctl start terra-setup-environment.service
 
 # Setup gitignore to avoid accidental checkin of data.
 readonly GIT_IGNORE="/home/${JUPYTER_USER}/gitignore_global"
