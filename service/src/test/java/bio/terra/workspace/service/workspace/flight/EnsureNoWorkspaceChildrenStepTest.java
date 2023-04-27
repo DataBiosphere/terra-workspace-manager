@@ -8,6 +8,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.workspace.exceptions.ChildrenBlockingDeletionException;
+import bio.terra.workspace.service.workspace.flight.delete.workspace.EnsureNoWorkspaceChildrenStep;
 import java.util.List;
 import java.util.UUID;
 import org.broadinstitute.dsde.workbench.client.sam.model.FullyQualifiedResourceId;

@@ -17,18 +17,18 @@ import org.springframework.beans.factory.annotation.Autowired;
  */
 public class CloudSyncRoleMappingTest extends BaseUnitTest {
 
-  @Autowired CloudSyncRoleMapping cloudSyncRoleMapping;
+  @Autowired GcpCloudSyncRoleMapping gcpCloudSyncRoleMapping;
 
   @Test
   void writerPermissionsContainReaderPermissions() {
     assertThat(
-        cloudSyncRoleMapping
+        gcpCloudSyncRoleMapping
             .getCustomGcpProjectIamRoles()
             .get(WsmIamRole.READER)
             .getIncludedPermissions(),
         everyItem(
             in(
-                (cloudSyncRoleMapping
+                (gcpCloudSyncRoleMapping
                     .getCustomGcpProjectIamRoles()
                     .get(WsmIamRole.WRITER)
                     .getIncludedPermissions()))));
@@ -37,13 +37,13 @@ public class CloudSyncRoleMappingTest extends BaseUnitTest {
   @Test
   void applicationPermissionsContainWriterPermissions() {
     assertThat(
-        cloudSyncRoleMapping
+        gcpCloudSyncRoleMapping
             .getCustomGcpProjectIamRoles()
             .get(WsmIamRole.WRITER)
             .getIncludedPermissions(),
         everyItem(
             in(
-                (cloudSyncRoleMapping
+                (gcpCloudSyncRoleMapping
                     .getCustomGcpProjectIamRoles()
                     .get(WsmIamRole.APPLICATION)
                     .getIncludedPermissions()))));
@@ -52,13 +52,13 @@ public class CloudSyncRoleMappingTest extends BaseUnitTest {
   @Test
   void ownerPermissionsContainWriterPermissions() {
     assertThat(
-        cloudSyncRoleMapping
+        gcpCloudSyncRoleMapping
             .getCustomGcpProjectIamRoles()
             .get(WsmIamRole.WRITER)
             .getIncludedPermissions(),
         everyItem(
             in(
-                (cloudSyncRoleMapping
+                (gcpCloudSyncRoleMapping
                     .getCustomGcpProjectIamRoles()
                     .get(WsmIamRole.OWNER)
                     .getIncludedPermissions()))));
@@ -67,29 +67,29 @@ public class CloudSyncRoleMappingTest extends BaseUnitTest {
   @Test
   void getCustomGcpProjectIamRoles_dataprocDisabled() {
     assertThat(
-        cloudSyncRoleMapping.getAdditionalDataprocReaderPermissions(),
+        gcpCloudSyncRoleMapping.getAdditionalDataprocReaderPermissions(),
         everyItem(
             not(
                 in(
-                    (cloudSyncRoleMapping
+                    (gcpCloudSyncRoleMapping
                         .getCustomGcpProjectIamRoles()
                         .get(WsmIamRole.READER)
                         .getIncludedPermissions())))));
     assertThat(
-        cloudSyncRoleMapping.getAdditionalDataprocReaderPermissions(),
+        gcpCloudSyncRoleMapping.getAdditionalDataprocReaderPermissions(),
         everyItem(
             not(
                 in(
-                    (cloudSyncRoleMapping
+                    (gcpCloudSyncRoleMapping
                         .getCustomGcpProjectIamRoles()
                         .get(WsmIamRole.WRITER)
                         .getIncludedPermissions())))));
     assertThat(
-        cloudSyncRoleMapping.getAdditionalDataprocOwnerPermissions(),
+        gcpCloudSyncRoleMapping.getAdditionalDataprocOwnerPermissions(),
         everyItem(
             not(
                 in(
-                    (cloudSyncRoleMapping
+                    (gcpCloudSyncRoleMapping
                         .getCustomGcpProjectIamRoles()
                         .get(WsmIamRole.OWNER)
                         .getIncludedPermissions())))));
@@ -100,26 +100,26 @@ public class CloudSyncRoleMappingTest extends BaseUnitTest {
     Mockito.when(mockFeatureConfiguration().isDataprocEnabled()).thenReturn(true);
 
     assertThat(
-        cloudSyncRoleMapping.getAdditionalDataprocReaderPermissions(),
+        gcpCloudSyncRoleMapping.getAdditionalDataprocReaderPermissions(),
         everyItem(
             in(
-                (cloudSyncRoleMapping
+                (gcpCloudSyncRoleMapping
                     .getCustomGcpProjectIamRoles()
                     .get(WsmIamRole.READER)
                     .getIncludedPermissions()))));
     assertThat(
-        cloudSyncRoleMapping.getAdditionalDataprocReaderPermissions(),
+        gcpCloudSyncRoleMapping.getAdditionalDataprocReaderPermissions(),
         everyItem(
             in(
-                (cloudSyncRoleMapping
+                (gcpCloudSyncRoleMapping
                     .getCustomGcpProjectIamRoles()
                     .get(WsmIamRole.WRITER)
                     .getIncludedPermissions()))));
     assertThat(
-        cloudSyncRoleMapping.getAdditionalDataprocOwnerPermissions(),
+        gcpCloudSyncRoleMapping.getAdditionalDataprocOwnerPermissions(),
         everyItem(
             in(
-                (cloudSyncRoleMapping
+                (gcpCloudSyncRoleMapping
                     .getCustomGcpProjectIamRoles()
                     .get(WsmIamRole.OWNER)
                     .getIncludedPermissions()))));

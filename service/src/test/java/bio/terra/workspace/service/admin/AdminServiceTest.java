@@ -21,7 +21,7 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.CustomGcpIamRole;
-import bio.terra.workspace.service.workspace.CloudSyncRoleMapping;
+import bio.terra.workspace.service.workspace.GcpCloudSyncRoleMapping;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import com.google.api.services.iam.v1.model.Role;
@@ -52,7 +52,7 @@ public class AdminServiceTest extends BaseConnectedTest {
   @Autowired WorkspaceDao workspaceDao;
   @Autowired WorkspaceConnectedTestUtils connectedTestUtils;
   @Autowired UserAccessUtils userAccessUtils;
-  @Autowired CloudSyncRoleMapping cloudSyncRoleMapping;
+  @Autowired GcpCloudSyncRoleMapping gcpCloudSyncRoleMapping;
   @Autowired CrlService crlService;
   @Autowired WorkspaceActivityLogDao workspaceActivityLogDao;
 
@@ -115,7 +115,7 @@ public class AdminServiceTest extends BaseConnectedTest {
     for (String projectId : projectIds) {
       assertProjectReaderRoleMatchesExpected(
           projectId,
-          cloudSyncRoleMapping
+          gcpCloudSyncRoleMapping
               .getCustomGcpProjectIamRoles()
               .get(WsmIamRole.READER)
               .getIncludedPermissions());
@@ -152,7 +152,7 @@ public class AdminServiceTest extends BaseConnectedTest {
     for (String projectId : projectIds) {
       assertProjectReaderRoleMatchesExpected(
           projectId,
-          cloudSyncRoleMapping
+          gcpCloudSyncRoleMapping
               .getCustomGcpProjectIamRoles()
               .get(WsmIamRole.READER)
               .getIncludedPermissions());
