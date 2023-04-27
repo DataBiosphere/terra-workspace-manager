@@ -310,34 +310,34 @@ fi
 # integration test will ensure that everything in script worked.
 sudo -u "$JUPYTER_USER" sh -c 'terra git clone --all'
 
-################################
-# Setup instance startup service
-################################
-# Create a script to perform the following steps on instance startup:
+#############################
+# Setup instance boot service
+#############################
+# Create a script to perform the following steps every time the instance boots:
 # 1. Mount terra workspace resources. This command requires system user home
 #    directories to be mounted. We run the startup service after
 #    jupyter.service to meet this requirement.
 
-# Create the startup script
-readonly TERRA_SETUP_SCRIPT="${USER_TERRA_CONFIG_DIR}/setup-environment.sh"
-readonly TERRA_SETUP_SERVICE="/etc/systemd/system/terra-setup-environment.service"
+# Create the boot script
+readonly TERRA_BOOT_SCRIPT="${USER_TERRA_CONFIG_DIR}/instance-boot.sh"
+readonly TERRA_BOOT_SERVICE="/etc/systemd/system/terra-instance-boot.service"
 
-cat <<EOF >"${TERRA_SETUP_SCRIPT}"
+cat <<EOF >"${TERRA_BOOT_SCRIPT}"
 #!/bin/bash
 
 # Mount terra workspace resources
 /usr/bin/terra resource mount
 EOF
-chmod +x "${TERRA_SETUP_SCRIPT}"
+chmod +x "${TERRA_BOOT_SCRIPT}"
 
-# Create a systemd service to run the script on instance startup.
-cat <<EOF >"${TERRA_SETUP_SERVICE}"
+# Create a systemd service to run the boot script on system boot
+cat <<EOF >"${TERRA_BOOT_SERVICE}"
 [Unit]
 Description=Configure environment for terra
 After=jupyter.service
 
 [Service]
-ExecStart=${TERRA_SETUP_SCRIPT}
+ExecStart=${TERRA_BOOT_SCRIPT}
 User=${JUPYTER_USER}
 RemainAfterExit=yes
 
