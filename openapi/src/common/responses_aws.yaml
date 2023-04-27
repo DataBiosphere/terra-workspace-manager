@@ -8,7 +8,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/AwsSagemakerNotebookCloudName'
+            $ref: '#/components/schemas/AwsResourceCloudName'
 
     DeleteControlledAwsResourceResponse:
       description: Response Payload for deleting AWS controlled resources.

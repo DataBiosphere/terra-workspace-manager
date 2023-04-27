@@ -172,15 +172,6 @@ components:
           $ref: '#/components/schemas/AwsS3StorageFolderResource'
 
   responses:
-    GenerateAwsS3StorageFolderCloudNameResponse:
-      description: >-
-        Response to generate a AWS S3 Storage Folder resource cloud name,
-        as per https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/AwsResourceCloudName'
-
     CreateControlledAwsS3StorageFolderResponse:
       description: Response to create controlled AWS S3 Storage Folder resource.
       content:

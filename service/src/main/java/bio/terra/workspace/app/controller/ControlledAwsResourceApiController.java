@@ -10,13 +10,13 @@ import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.ControlledAwsResourceApi;
 import bio.terra.workspace.generated.model.ApiAwsCredential;
 import bio.terra.workspace.generated.model.ApiAwsCredentialAccessScope;
-import bio.terra.workspace.generated.model.ApiAwsS3StorageFolderCloudName;
+import bio.terra.workspace.generated.model.ApiAwsResourceCloudName;
 import bio.terra.workspace.generated.model.ApiAwsS3StorageFolderResource;
 import bio.terra.workspace.generated.model.ApiCreateControlledAwsS3StorageFolderRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedControlledAwsS3StorageFolder;
 import bio.terra.workspace.generated.model.ApiDeleteControlledAwsResourceRequestBody;
 import bio.terra.workspace.generated.model.ApiDeleteControlledAwsResourceResult;
-import bio.terra.workspace.generated.model.ApiGenerateAwsS3StorageFolderCloudNameRequestBody;
+import bio.terra.workspace.generated.model.ApiGenerateAwsResourceCloudNameRequestBody;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -115,8 +115,8 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
 
   @Traced
   @Override
-  public ResponseEntity<ApiAwsS3StorageFolderCloudName> generateAwsS3StorageFolderCloudName(
-      UUID workspaceId, ApiGenerateAwsS3StorageFolderCloudNameRequestBody body) {
+  public ResponseEntity<ApiAwsResourceCloudName> generateAwsS3StorageFolderCloudName(
+      UUID workspaceId, ApiGenerateAwsResourceCloudNameRequestBody body) {
     featureService.awsEnabledCheck();
 
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -125,11 +125,9 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
 
     String generatedCloudName =
         ControlledAwsS3StorageFolderHandler.getHandler()
-            .generateCloudName(workspaceId, body.getAwsS3StorageFolderName());
+            .generateCloudName(workspaceId, body.getAwsResourceName());
     return new ResponseEntity<>(
-        new ApiAwsS3StorageFolderCloudName()
-            .generatedAwsS3StorageFolderCloudName(generatedCloudName),
-        HttpStatus.OK);
+        new ApiAwsResourceCloudName().awsResourceCloudName(generatedCloudName), HttpStatus.OK);
   }
 
   @Traced

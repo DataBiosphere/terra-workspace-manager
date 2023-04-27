@@ -158,14 +158,6 @@ paths:
 
 components:
   schemas:
-    AwsSagemakerNotebookCloudName:
-      description: A valid notebook name per https://docs.aws.amazon.com/sagemaker/latest/dg/feature-store-quotas.html.
-      type: object
-      required: [ generatedAwsSagemakerNotebookCloudName ]
-      properties:
-        generatedAwsSagemakerNotebookCloudName:
-          type: string
-
     AwsSagemakerNotebookCreationParameters:
       description: >-
         Sagemaker Notebook specific properties to be set on creation. These are a subset of the
@@ -204,8 +196,6 @@ components:
           $ref: '#/components/schemas/AwsSagemakerNotebookResource'
 
   responses:
-
-
     CreateControlledAwsSagemakerNotebookResponse:
       description: Response to create controlled AWS Sagemaker Notebook instance resource.
       content:
