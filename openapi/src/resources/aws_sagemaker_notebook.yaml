@@ -1,7 +1,7 @@
 components:
   schemas:
-    AwsS3StorageFolderAttributes:
-      description: AWS S3 Storage Folder resource properties included in post-creation get.
+    AwsSagemakerNotebookAttributes: # TODO-Dex
+      description: AWS Sagemaker Notebook instance resource properties included in post-creation get.
       type: object
       properties:
         bucketName:
@@ -11,13 +11,13 @@ components:
           description: The prefix within the S3 bucket.
           type: string
 
-    AwsS3StorageFolderResource:
+    AwsSagemakerNotebookResource:
       type: object
-      description: Description of an AWS S3 Storage Folder resource.
+      description: Description of an AWS Sagemaker Notebook instance resource.
       required: [ metadata, attributes ]
       properties:
         metadata:
           description: the resource metadata common to all resources
           $ref: '#/components/schemas/ResourceMetadata'
         attributes:
-          $ref: '#/components/schemas/AwsS3StorageFolderAttributes'
+          $ref: '#/components/schemas/AwsSagemakerNotebookAttributes'

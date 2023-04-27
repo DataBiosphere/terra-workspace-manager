@@ -3,8 +3,15 @@
 #  $ref: '#/components/responses/<item-you-want>
 components:
   responses:
+    GenerateAwsResourceCloudNameResponse:
+      description: Response to generate a AWS resource cloud name.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AwsSagemakerNotebookCloudName'
+
     DeleteControlledAwsResourceResponse:
-      description: Response Payload for deleting AWS controlled resources
+      description: Response Payload for deleting AWS controlled resources.
       content:
         application/json:
           schema:

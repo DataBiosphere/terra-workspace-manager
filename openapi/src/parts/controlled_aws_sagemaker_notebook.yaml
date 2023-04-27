@@ -1,0 +1,228 @@
+paths:
+  /api/workspaces/v1/{workspaceId}/resources/controlled/aws/notebook/generateName:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Generate a cloud native controlled AWS Sagemaker Notebook instance name.
+      operationId: generateAwsSagemakerNotebookCloudName
+      tags: [ ControlledAwsResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateAwsResourceCloudNameRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/GenerateAwsResourceCloudNameResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/aws/notebook:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Create a new controlled AWS Sagemaker Notebook instance resource asynchronously.
+      operationId: createAwsSagemakerNotebook
+      tags: [ControlledAwsResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateControlledAwsSagemakerNotebookRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CreateControlledAwsSagemakerNotebookResponse'
+        '202':
+          $ref: '#/components/responses/CreateControlledAwsSagemakerNotebookResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/aws/notebook/create-result/{jobId}:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about an AWS Sagemaker Notebook instance resource creation job.
+      operationId: getCreateAwsSagemakerNotebookResult
+      tags: [ ControlledAwsResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/CreateControlledAwsSagemakerNotebookResponse'
+        '202':
+          $ref: '#/components/responses/CreateControlledAwsSagemakerNotebookResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/aws/notebook/{resourceId}:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Get a controlled AWS Sagemaker Notebook instance resource.
+      operationId: getAwsSagemakerNotebook
+      tags: [ControlledAwsResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/GetControlledAwsSagemakerNotebookResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: Delete controlled AWS Sagemaker Notebook instance resource asynchronously.
+      operationId: deleteAwsSagemakerNotebook
+      tags: [ControlledAwsResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteControlledAwsResourceRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledAwsResourceResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledAwsResourceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/aws/notebook/delete-result/{jobId}:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about an AWS Sagemaker Notebook instance resource deletion job.
+      operationId: getDeleteAwsSagemakerNotebookResult
+      tags: [ ControlledAwsResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledAwsResourceResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledAwsResourceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/aws/notebook/{resourceId}/credential:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
+    - $ref: '#/components/parameters/AwsCredentialAccessScope'
+    - $ref: '#/components/parameters/AwsCredentialDurationSeconds'
+    get:
+      summary: Get a credential to access this Sagemaker Notebook instance resource in the AWS CLI or SDK
+      operationId: getAwsSagemakerNotebookCredential
+      tags: [ControlledAwsResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/GetControlledAwsSagemakerNotebookCredentialResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+components:
+  schemas:
+    AwsSagemakerNotebookCloudName:
+      description: A valid notebook name per https://docs.aws.amazon.com/sagemaker/latest/dg/feature-store-quotas.html.
+      type: object
+      required: [ generatedAwsSagemakerNotebookCloudName ]
+      properties:
+        generatedAwsSagemakerNotebookCloudName:
+          type: string
+
+    AwsSagemakerNotebookCreationParameters:
+      description: >-
+        Sagemaker Notebook specific properties to be set on creation. These are a subset of the
+        values accepted by the AWS Sagemaker Notebook API.
+      type: object
+      properties: # TODO-Dex
+        instanceName:
+          description: A valid instance name per https://docs.aws.amazon.com/sagemaker/latest/dg/feature-store-quotas.html.
+          type: string
+        region:
+          description: A valid Sagemaker Notebook region per https://docs.aws.amazon.com/general/latest/gr/sagemaker.html.
+          type: string
+
+    CreateControlledAwsSagemakerNotebookRequestBody:
+      description: Payload for requesting a new controlled AWS Sagemaker Notebook instance resource.
+      type: object
+      required: [common, awsSagemakerNotebook]
+      properties:
+        common:
+          $ref: '#/components/schemas/ControlledResourceCommonFields'
+        awsSagemakerNotebook:
+          $ref: '#/components/schemas/AwsSagemakerNotebookCreationParameters'
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+
+    CreatedControlledAwsSagemakerNotebook:
+      description: Response Payload for requesting a new controlled AWS Sagemaker Notebook instance resource.
+      type: object
+      required: [resourceId, awsSagemakerNotebook]
+      properties:
+        resourceId:
+          description: UUID of a newly-created resource.
+          type: string
+          format: uuid
+        awsSagemakerNotebook:
+          $ref: '#/components/schemas/AwsSagemakerNotebookResource'
+
+  responses:
+
+
+    CreateControlledAwsSagemakerNotebookResponse:
+      description: Response to create controlled AWS Sagemaker Notebook instance resource.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreatedControlledAwsSagemakerNotebook'
+
+    GetControlledAwsSagemakerNotebookResponse:
+      description: Response to get AWS Sagemaker Notebook instance resource.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AwsSagemakerNotebookResource'
+
+    GetControlledAwsSagemakerNotebookCredentialResponse:
+      description: Response to get AWS Sagemaker Notebook instance resource credential.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AwsCredential'

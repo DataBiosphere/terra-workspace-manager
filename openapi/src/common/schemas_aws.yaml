@@ -3,14 +3,6 @@
 #  $ref: '#/components/schemas/<item-you-want>
 components:
   schemas:
-    AwsS3StorageFolderCloudName:
-      description: A valid folder name per https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html.
-      type: object
-      required: [ generatedAwsS3StorageFolderCloudName ]
-      properties:
-        generatedAwsS3StorageFolderCloudName:
-          type: string
-
     AwsCredentialDurationSeconds:
       type: integer
       minimum: 900
@@ -21,7 +13,7 @@ components:
       enum: [ 'READ_ONLY', 'WRITE_READ' ]
 
     AwsCredential:
-      description: AWS CLI/SDK-compatible credential to access AWS resources
+      description: AWS CLI/SDK-compatible credential to access AWS resources.
       type: object
       properties:
         Version:
@@ -35,6 +27,20 @@ components:
         Expiration:
           type: string
           format: date-time
+
+    AwsResourceCloudName:
+      type: object
+      required: [ awsResourceCloudName ]
+      properties:
+        awsResourceCloudName:
+          type: string
+
+    GenerateAwsResourceCloudNameRequestBody:
+      type: object
+      required: [ awsResourceName ]
+      properties:
+        awsResourceName:
+          type: string
 
     DeleteControlledAwsResourceRequestBody:
       type: object

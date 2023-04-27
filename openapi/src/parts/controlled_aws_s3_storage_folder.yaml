@@ -3,7 +3,7 @@ paths:
     parameters:
     - $ref: '#/components/parameters/WorkspaceId'
     post:
-      summary: Generate a cloud native controlled AWS S3 Storage Folder name
+      summary: Generate a cloud native controlled AWS S3 Storage Folder name.
       operationId: generateAwsS3StorageFolderCloudName
       tags: [ ControlledAwsResource ]
       requestBody:
@@ -11,12 +11,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/GenerateAwsS3StorageFolderCloudNameRequestBody'
+              $ref: '#/components/schemas/GenerateAwsResourceCloudNameRequestBody'
       responses:
         '200':
-          $ref: '#/components/responses/GenerateAwsS3StorageFolderCloudNameResponse'
+          $ref: '#/components/responses/GenerateAwsResourceCloudNameResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '403':
           $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
 
@@ -24,7 +28,7 @@ paths:
     parameters:
     - $ref: '#/components/parameters/WorkspaceId'
     post:
-      summary: Create a new controlled AWS S3 Storage Folder
+      summary: Create a new controlled AWS S3 Storage Folder resource.
       operationId: createAwsS3StorageFolder
       tags: [ControlledAwsResource]
       requestBody:
@@ -36,8 +40,12 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/CreateControlledAwsS3StorageFolderResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '403':
           $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
 
@@ -46,7 +54,7 @@ paths:
     - $ref: '#/components/parameters/WorkspaceId'
     - $ref: '#/components/parameters/ResourceId'
     get:
-      summary: Get a controlled AWS S3 Storage Folder resource
+      summary: Get a controlled AWS S3 Storage Folder resource.
       operationId: getAwsS3StorageFolder
       tags: [ControlledAwsResource]
       responses:
@@ -87,7 +95,7 @@ paths:
     - $ref: '#/components/parameters/WorkspaceId'
     - $ref: '#/components/parameters/JobId'
     get:
-      summary: Retrieve information about an AWS S3 Storage Folder deletion job.
+      summary: Retrieve information about an AWS S3 Storage Folder resource deletion job.
       operationId: getDeleteAwsS3StorageFolderResult
       tags: [ ControlledAwsResource ]
       responses:
@@ -99,6 +107,8 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '403':
           $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
 
@@ -109,12 +119,14 @@ paths:
     - $ref: '#/components/parameters/AwsCredentialAccessScope'
     - $ref: '#/components/parameters/AwsCredentialDurationSeconds'
     get:
-      summary: Get a credential to access this S3 Storage Folder in the AWS CLI or SDK
+      summary: Get a credential to access this S3 Storage Folder resource in the AWS CLI or SDK.
       operationId: getAwsS3StorageFolderCredential
       tags: [ControlledAwsResource]
       responses:
         '200':
           $ref: '#/components/responses/GetControlledAwsS3StorageFolderCredentialResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '404':
@@ -127,7 +139,7 @@ components:
     AwsS3StorageFolderCreationParameters:
       description: >-
         S3 Storage Folder specific properties to be set on creation. These are a subset of the
-        values accepted by the AWS Storage API.
+        values accepted by the AWS S3 Storage API.
       type: object
       properties:
         folderName:
@@ -137,59 +149,54 @@ components:
           description: A valid S3 Storage Folder region per https://docs.aws.amazon.com/general/latest/gr/s3.html.
           type: string
 
-    GenerateAwsS3StorageFolderCloudNameRequestBody:
-      type: object
-      required: [ awsS3StorageFolderName ]
-      properties:
-        awsS3StorageFolderName:
-          type: string
-
     CreateControlledAwsS3StorageFolderRequestBody:
       description: Payload for requesting a new controlled AWS S3 Storage Folder resource.
       type: object
-      required: [common, AwsS3StorageFolder]
+      required: [common, awsS3StorageFolder]
       properties:
         common:
           $ref: '#/components/schemas/ControlledResourceCommonFields'
-        AwsS3StorageFolder:
+        awsS3StorageFolder:
           $ref: '#/components/schemas/AwsS3StorageFolderCreationParameters'
 
     CreatedControlledAwsS3StorageFolder:
-      description: Response Payload for requesting a new controlled AWS S3 Storage Folder.
+      description: Response Payload for requesting a new controlled AWS S3 Storage Folder resource.
       type: object
-      required: [resourceId, AwsS3StorageFolder]
+      required: [resourceId, awsS3StorageFolder]
       properties:
         resourceId:
           description: UUID of a newly-created resource.
           type: string
           format: uuid
-        AwsS3StorageFolder:
+        awsS3StorageFolder:
           $ref: '#/components/schemas/AwsS3StorageFolderResource'
 
   responses:
     GenerateAwsS3StorageFolderCloudNameResponse:
-      description: Response to generate a AWS S3 Storage Folder cloud name
+      description: >-
+        Response to generate a AWS S3 Storage Folder resource cloud name,
+        as per https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/AwsS3StorageFolderCloudName'
+            $ref: '#/components/schemas/AwsResourceCloudName'
 
     CreateControlledAwsS3StorageFolderResponse:
-      description: Response to create controlled AWS S3 Storage Folder
+      description: Response to create controlled AWS S3 Storage Folder resource.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/CreatedControlledAwsS3StorageFolder'
 
     GetControlledAwsS3StorageFolderResponse:
-      description: Response to get AWS S3 Storage Folder
+      description: Response to get AWS S3 Storage Folder resource.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/AwsS3StorageFolderResource'
 
     GetControlledAwsS3StorageFolderCredentialResponse:
-      description: Response to get AWS S3 Storage Folder credential
+      description: Response to get AWS S3 Storage Folder resource credential.
       content:
         application/json:
           schema:

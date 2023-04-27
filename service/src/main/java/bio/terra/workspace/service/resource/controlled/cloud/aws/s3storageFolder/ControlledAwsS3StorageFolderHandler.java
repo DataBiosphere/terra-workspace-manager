@@ -39,11 +39,11 @@ public class ControlledAwsS3StorageFolderHandler implements WsmResourceHandler {
    * details, see https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html
    */
   @Override
-  public String generateCloudName(@Nullable UUID workspaceUuid, String storageFolderName) {
+  public String generateCloudName(@Nullable UUID workspaceUuid, String resourceName) {
     String generatedName =
-        storageFolderName.length() > AwsResourceConstants.MAX_S3_STORAGE_FOLDER_NAME_LENGTH
-            ? storageFolderName.substring(0, AwsResourceConstants.MAX_S3_STORAGE_FOLDER_NAME_LENGTH)
-            : storageFolderName;
+        resourceName.length() > AwsResourceConstants.MAX_S3_STORAGE_FOLDER_NAME_LENGTH
+            ? resourceName.substring(0, AwsResourceConstants.MAX_S3_STORAGE_FOLDER_NAME_LENGTH)
+            : resourceName;
 
     // The regular expression only allow legal character combinations containing
     // alphanumeric characters and one or more of "!-_.*'()". It trims any other combinations.
@@ -59,7 +59,7 @@ public class ControlledAwsS3StorageFolderHandler implements WsmResourceHandler {
           String.format(
               "Cannot generate a valid s3 storage folder name from %s, it must contain"
                   + " alphanumerical characters.",
-              storageFolderName));
+              resourceName));
     }
     return generatedName;
   }
