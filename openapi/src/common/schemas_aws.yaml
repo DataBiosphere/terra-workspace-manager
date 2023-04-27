@@ -3,6 +3,20 @@
 #  $ref: '#/components/schemas/<item-you-want>
 components:
   schemas:
+    AwsResourceCloudName:
+      type: object
+      required: [ awsResourceCloudName ]
+      properties:
+        awsResourceCloudName:
+          type: string
+
+    GenerateAwsResourceCloudNameRequestBody:
+      type: object
+      required: [ awsResourceName ]
+      properties:
+        awsResourceName:
+          type: string
+
     AwsCredentialDurationSeconds:
       type: integer
       minimum: 900
@@ -27,20 +41,6 @@ components:
         Expiration:
           type: string
           format: date-time
-
-    AwsResourceCloudName:
-      type: object
-      required: [ awsResourceCloudName ]
-      properties:
-        awsResourceCloudName:
-          type: string
-
-    GenerateAwsResourceCloudNameRequestBody:
-      type: object
-      required: [ awsResourceName ]
-      properties:
-        awsResourceName:
-          type: string
 
     DeleteControlledAwsResourceRequestBody:
       type: object
