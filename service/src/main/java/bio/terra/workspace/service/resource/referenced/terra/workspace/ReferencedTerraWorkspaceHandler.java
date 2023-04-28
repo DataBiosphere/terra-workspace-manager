@@ -23,6 +23,7 @@ public class ReferencedTerraWorkspaceHandler implements WsmResourceHandler {
     return new ReferencedTerraWorkspaceResource(dbResource);
   }
 
+  @Override
   public String generateCloudName(@Nullable UUID workspaceUuid, String resourceName) {
     throw new BadRequestException("generateCloudName not supported for referenced resource.");
   }

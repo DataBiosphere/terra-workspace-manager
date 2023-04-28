@@ -57,6 +57,7 @@ public class ControlledGcsBucketHandler implements WsmResourceHandler {
    * In addition, bucket names cannot begin with the "goog" prefix. For details, see
    * https://cloud.google.com/storage/docs/naming-buckets.
    */
+  @Override
   public String generateCloudName(UUID workspaceUuid, String bucketName) {
     Preconditions.checkNotNull(workspaceUuid);
 

@@ -56,10 +56,6 @@ public class ControllerBase {
     this.jobApiUtils = jobApiUtils;
   }
 
-  /*public SamService getSamService() {
-    return samService;
-  }*/
-
   public AuthenticatedUserRequest getAuthenticatedInfo() {
     return authenticatedUserRequestFactory.from(request);
   }

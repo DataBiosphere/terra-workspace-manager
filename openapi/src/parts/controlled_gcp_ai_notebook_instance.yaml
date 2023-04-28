@@ -62,11 +62,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
     post:
-      summary: |
-        Delete a controlled GCP AI Notebook instance resource. This is async, because deleting the
-        notebook instance can take ~5 minutes. NOTE: this cannot be an HTTP DELETE, because
-        something between generated code and server behavior does not support delete operations with
-        bodies. We require the body for the async state, so this is a POST.
+      summary: Delete a controlled GCP AI Notebook instance resource asynchronously.
       operationId: deleteAiNotebookInstance
       tags: [ ControlledGcpResource ]
       requestBody:
