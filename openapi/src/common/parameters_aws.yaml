@@ -4,9 +4,9 @@
 components:
   parameters:
     AwsCredentialDurationSeconds:
-      name: credentialDurationSeconds
+      name: durationSeconds
       in: query
-      description: Duration for credential to access controlled AWS resource in seconds
+      description: Duration for credential to access controlled AWS resource in seconds.
       required: true
       schema:
         $ref: '#/components/schemas/AwsCredentialDurationSeconds'
@@ -14,7 +14,7 @@ components:
     AwsCredentialAccessScope:
       name: accessScope
       in: query
-      description: Access to request for an AWS credential or Console URL
+      description: Access to request for an AWS credential or Console URL.
       required: true
       schema:
         $ref: '#/components/schemas/AwsCredentialAccessScope'

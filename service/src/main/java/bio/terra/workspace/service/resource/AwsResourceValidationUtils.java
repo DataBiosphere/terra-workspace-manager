@@ -12,7 +12,7 @@ public class AwsResourceValidationUtils {
   static final Pattern s3ObjectDisallowedChars = Pattern.compile("[{}^%`<>~#|@*+\\[\\]\"\'\\\\/]");
 
   /**
-   * Validate AWS storage folder name.
+   * Validate AWS Storage Folder name.
    *
    * @param prefixName prefix name
    * @throws InvalidNameException invalid prefix name

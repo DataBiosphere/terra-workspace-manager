@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ControlledAwsS3StorageFolderAttributes {
+  private final String bucketName;
+  private final String prefix;
 
   @JsonCreator
   public ControlledAwsS3StorageFolderAttributes(
@@ -11,9 +13,6 @@ public class ControlledAwsS3StorageFolderAttributes {
     this.bucketName = bucketName;
     this.prefix = prefix;
   }
-
-  private final String bucketName;
-  private final String prefix;
 
   public String getBucketName() {
     return bucketName;

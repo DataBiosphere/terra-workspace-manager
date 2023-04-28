@@ -84,7 +84,7 @@ components:
         azureBatchPool:
           $ref: '#/components/schemas/AzureBatchPoolResource'
         awsS3StorageFolder:
-          $ref: '#/components/schemas/AwsS3StorageFolderAttributes'
+          $ref: '#/components/schemas/AwsS3StorageFolderResource'
         gitRepo:
           $ref: '#/components/schemas/GitRepoResource'
         terraWorkspace:
