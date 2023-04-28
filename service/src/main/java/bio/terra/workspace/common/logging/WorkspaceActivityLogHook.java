@@ -35,6 +35,7 @@ import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
+import bio.terra.workspace.service.workspace.gcpcontextbackfill.GcpContextBackfillFlight;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -186,6 +187,8 @@ public class WorkspaceActivityLogHook implements StairwayHook {
       String subjectId) {
     if (SyncGcpIamRolesFlight.class.getName().equals(flightClassName)) {
       maybeLogForSyncGcpIamRolesFlight(context, operationType, userEmail, subjectId);
+    } else if (GcpContextBackfillFlight.class.getName().equals(flightClassName)) {
+      maybeLogGcpContextBackfillFlight(context, operationType, userEmail, subjectId);
     } else if (UpdateControlledBigQueryDatasetsLifetimeFlight.class
         .getName()
         .equals(flightClassName)) {
@@ -378,4 +381,28 @@ public class WorkspaceActivityLogHook implements StairwayHook {
               ActivityLogChangedTarget.RESOURCE));
     }
   }
+
+  private void maybeLogGcpContextBackfillFlight(
+    FlightContext context, OperationType operationType, String userEmail, String subjectId) {
+    if (!context.getFlightStatus().equals(FlightStatus.SUCCESS)) {
+      return;
+    }
+    List<String> backfillWorkspaceIdStrings =
+      Preconditions.checkNotNull(
+        context
+          .getInputParameters()
+          .get(UPDATED_WORKSPACES, new TypeReference<>() {}));
+
+    for (String workspaceIdString : backfillWorkspaceIdStrings) {
+      activityLogDao.writeActivity(
+        UUID.fromString(workspaceIdString),
+        new DbWorkspaceActivityLog(
+          userEmail,
+          subjectId,
+          operationType,
+          workspaceIdString,
+          ActivityLogChangedTarget.GCP_CLOUD_CONTEXT));
+    }
+  }
+
 }
