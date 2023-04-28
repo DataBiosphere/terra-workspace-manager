@@ -258,7 +258,13 @@ public class FolderServiceTest extends BaseConnectedTest {
     var fooFolderId = UUID.randomUUID();
     fooFolder = createFolder("foo", fooFolderId, null);
     referencedResourceService.createReferenceResource(
-        referencedBqTableInFoo, userAccessUtils.secondUserAuthRequest());
+        ReferencedBigQueryDataTableResource.builder()
+            .wsmResourceFields(createWsmResourceCommonFieldsWithFolderId(workspaceId, fooFolderId))
+            .projectId("my-gcp-project")
+            .datasetId("my_special_dataset")
+            .dataTableId("my_secret_table")
+            .build(),
+        userAccessUtils.secondUserAuthRequest());
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(
         DeleteReferencedResourcesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
