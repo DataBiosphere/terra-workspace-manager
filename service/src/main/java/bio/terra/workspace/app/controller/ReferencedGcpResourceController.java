@@ -33,6 +33,7 @@ import bio.terra.workspace.generated.model.ApiUpdateDataRepoSnapshotReferenceReq
 import bio.terra.workspace.generated.model.ApiUpdateGcsBucketObjectReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateGcsBucketReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateGitRepoReferenceRequestBody;
+import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
@@ -86,6 +87,7 @@ public class ReferencedGcpResourceController extends ControllerBase
       HttpServletRequest request,
       SamService samService,
       FeatureConfiguration features,
+      FeatureService featureService,
       JobService jobService,
       JobApiUtils jobApiUtils,
       WorkspaceService workspaceService,
@@ -93,7 +95,14 @@ public class ReferencedGcpResourceController extends ControllerBase
       WsmResourceService wsmResourceService,
       ReferencedResourceService referencedResourceService,
       ResourceValidationUtils validationUtils) {
-    super(authenticatedUserRequestFactory, request, samService, features, jobService, jobApiUtils);
+    super(
+        authenticatedUserRequestFactory,
+        request,
+        samService,
+        features,
+        featureService,
+        jobService,
+        jobApiUtils);
     this.workspaceService = workspaceService;
     this.workspaceDao = workspaceDao;
     this.wsmResourceService = wsmResourceService;
@@ -117,7 +126,7 @@ public class ReferencedGcpResourceController extends ControllerBase
                 getWsmResourceFields(
                     workspaceUuid,
                     body.getMetadata(),
-                    getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest)))
+                    samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest)))
             .bucketName(body.getFile().getBucketName())
             .objectName(body.getFile().getFileName())
             .build();
@@ -158,11 +167,11 @@ public class ReferencedGcpResourceController extends ControllerBase
   @Traced
   @Override
   public ResponseEntity<ApiGcpGcsObjectResource> updateBucketObjectReferenceResource(
-      UUID workspaceUuid, UUID resourceId, ApiUpdateGcsBucketObjectReferenceRequestBody body) {
+      UUID workspaceUuid, UUID resourceUuid, ApiUpdateGcsBucketObjectReferenceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ReferencedResource resource =
         referencedResourceService.validateReferencedResourceAndAction(
-            userRequest, workspaceUuid, resourceId, SamWorkspaceAction.UPDATE_REFERENCE);
+            userRequest, workspaceUuid, resourceUuid, SamWorkspaceAction.UPDATE_REFERENCE);
     wsmResourceService.updateResource(
         userRequest,
         resource,
@@ -173,19 +182,19 @@ public class ReferencedGcpResourceController extends ControllerBase
         new ReferencedGcsObjectAttributes(body.getBucketName(), body.getObjectName()));
     ReferencedGcsObjectResource updatedResource =
         referencedResourceService
-            .getReferenceResource(workspaceUuid, resourceId)
+            .getReferenceResource(workspaceUuid, resourceUuid)
             .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_OBJECT);
     return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
   @Traced
   @Override
-  public ResponseEntity<Void> deleteGcsObjectReference(UUID workspaceUuid, UUID resourceId) {
+  public ResponseEntity<Void> deleteGcsObjectReference(UUID workspaceUuid, UUID resourceUuid) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamWorkspaceAction.DELETE_REFERENCE);
     referencedResourceService.deleteReferenceResourceForResourceType(
-        workspaceUuid, resourceId, WsmResourceType.REFERENCED_GCP_GCS_OBJECT, userRequest);
+        workspaceUuid, resourceUuid, WsmResourceType.REFERENCED_GCP_GCS_OBJECT, userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -204,7 +213,7 @@ public class ReferencedGcpResourceController extends ControllerBase
                 getWsmResourceFields(
                     workspaceUuid,
                     body.getMetadata(),
-                    getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest)))
+                    samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest)))
             .bucketName(body.getBucket().getBucketName())
             .build();
 
@@ -242,13 +251,13 @@ public class ReferencedGcpResourceController extends ControllerBase
   @Traced
   @Override
   public ResponseEntity<ApiGcpGcsBucketResource> updateBucketReferenceResource(
-      UUID workspaceUuid, UUID resourceId, ApiUpdateGcsBucketReferenceRequestBody body) {
+      UUID workspaceUuid, UUID resourceUuid, ApiUpdateGcsBucketReferenceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamWorkspaceAction.UPDATE_REFERENCE);
     ReferencedResource resource =
         referencedResourceService.validateReferencedResourceAndAction(
-            userRequest, workspaceUuid, resourceId, SamWorkspaceAction.UPDATE_REFERENCE);
+            userRequest, workspaceUuid, resourceUuid, SamWorkspaceAction.UPDATE_REFERENCE);
     wsmResourceService.updateResource(
         userRequest,
         resource,
@@ -259,19 +268,19 @@ public class ReferencedGcpResourceController extends ControllerBase
         new ReferencedGcsBucketAttributes(body.getBucketName()));
     ReferencedGcsBucketResource updatedResource =
         referencedResourceService
-            .getReferenceResource(workspaceUuid, resourceId)
+            .getReferenceResource(workspaceUuid, resourceUuid)
             .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_BUCKET);
     return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
   @Traced
   @Override
-  public ResponseEntity<Void> deleteBucketReference(UUID workspaceUuid, UUID resourceId) {
+  public ResponseEntity<Void> deleteBucketReference(UUID workspaceUuid, UUID resourceUuid) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamWorkspaceAction.DELETE_REFERENCE);
     referencedResourceService.deleteReferenceResourceForResourceType(
-        workspaceUuid, resourceId, WsmResourceType.REFERENCED_GCP_GCS_BUCKET, userRequest);
+        workspaceUuid, resourceUuid, WsmResourceType.REFERENCED_GCP_GCS_BUCKET, userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -289,7 +298,7 @@ public class ReferencedGcpResourceController extends ControllerBase
                 getWsmResourceFields(
                     workspaceUuid,
                     body.getMetadata(),
-                    getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest)))
+                    samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest)))
             .projectId(body.getDataTable().getProjectId())
             .datasetId(body.getDataTable().getDatasetId())
             .dataTableId(body.getDataTable().getDataTableId())
@@ -330,11 +339,11 @@ public class ReferencedGcpResourceController extends ControllerBase
   @Traced
   @Override
   public ResponseEntity<ApiGcpBigQueryDataTableResource> updateBigQueryDataTableReferenceResource(
-      UUID workspaceUuid, UUID resourceId, ApiUpdateBigQueryDataTableReferenceRequestBody body) {
+      UUID workspaceUuid, UUID resourceUuid, ApiUpdateBigQueryDataTableReferenceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ReferencedResource resource =
         referencedResourceService.validateReferencedResourceAndAction(
-            userRequest, workspaceUuid, resourceId, SamWorkspaceAction.UPDATE_REFERENCE);
+            userRequest, workspaceUuid, resourceUuid, SamWorkspaceAction.UPDATE_REFERENCE);
     wsmResourceService.updateResource(
         userRequest,
         resource,
@@ -346,7 +355,7 @@ public class ReferencedGcpResourceController extends ControllerBase
             body.getProjectId(), body.getDatasetId(), body.getDataTableId()));
     ReferencedBigQueryDataTableResource updatedResource =
         referencedResourceService
-            .getReferenceResource(workspaceUuid, resourceId)
+            .getReferenceResource(workspaceUuid, resourceUuid)
             .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
     return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
@@ -354,13 +363,13 @@ public class ReferencedGcpResourceController extends ControllerBase
   @Traced
   @Override
   public ResponseEntity<Void> deleteBigQueryDataTableReference(
-      UUID workspaceUuid, UUID resourceId) {
+      UUID workspaceUuid, UUID resourceUuid) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamWorkspaceAction.DELETE_REFERENCE);
     referencedResourceService.deleteReferenceResourceForResourceType(
         workspaceUuid,
-        resourceId,
+        resourceUuid,
         WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE,
         userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -383,7 +392,7 @@ public class ReferencedGcpResourceController extends ControllerBase
                 getWsmResourceFields(
                     uuid,
                     body.getMetadata(),
-                    getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest)))
+                    samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest)))
             .projectId(body.getDataset().getProjectId())
             .datasetName(body.getDataset().getDatasetId())
             .build();
@@ -424,11 +433,11 @@ public class ReferencedGcpResourceController extends ControllerBase
   @Traced
   @Override
   public ResponseEntity<ApiGcpBigQueryDatasetResource> updateBigQueryDatasetReferenceResource(
-      UUID workspaceUuid, UUID resourceId, ApiUpdateBigQueryDatasetReferenceRequestBody body) {
+      UUID workspaceUuid, UUID resourceUuid, ApiUpdateBigQueryDatasetReferenceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ReferencedResource resource =
         referencedResourceService.validateReferencedResourceAndAction(
-            userRequest, workspaceUuid, resourceId, SamWorkspaceAction.UPDATE_REFERENCE);
+            userRequest, workspaceUuid, resourceUuid, SamWorkspaceAction.UPDATE_REFERENCE);
     wsmResourceService.updateResource(
         userRequest,
         resource,
@@ -439,19 +448,20 @@ public class ReferencedGcpResourceController extends ControllerBase
         new ReferencedBigQueryDatasetAttributes(body.getProjectId(), body.getDatasetId()));
     ReferencedBigQueryDatasetResource updatedResource =
         referencedResourceService
-            .getReferenceResource(workspaceUuid, resourceId)
+            .getReferenceResource(workspaceUuid, resourceUuid)
             .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
     return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
   @Traced
   @Override
-  public ResponseEntity<Void> deleteBigQueryDatasetReference(UUID workspaceUuid, UUID resourceId) {
+  public ResponseEntity<Void> deleteBigQueryDatasetReference(
+      UUID workspaceUuid, UUID resourceUuid) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamWorkspaceAction.DELETE_REFERENCE);
     referencedResourceService.deleteReferenceResourceForResourceType(
-        workspaceUuid, resourceId, WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET, userRequest);
+        workspaceUuid, resourceUuid, WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET, userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -471,7 +481,7 @@ public class ReferencedGcpResourceController extends ControllerBase
                 getWsmResourceFields(
                     uuid,
                     body.getMetadata(),
-                    getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest)))
+                    samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest)))
             .instanceName(body.getSnapshot().getInstanceName())
             .snapshotId(body.getSnapshot().getSnapshot())
             .build();
@@ -512,11 +522,11 @@ public class ReferencedGcpResourceController extends ControllerBase
   @Traced
   @Override
   public ResponseEntity<ApiDataRepoSnapshotResource> updateDataRepoSnapshotReferenceResource(
-      UUID workspaceUuid, UUID resourceId, ApiUpdateDataRepoSnapshotReferenceRequestBody body) {
+      UUID workspaceUuid, UUID resourceUuid, ApiUpdateDataRepoSnapshotReferenceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ReferencedResource resource =
         referencedResourceService.validateReferencedResourceAndAction(
-            userRequest, workspaceUuid, resourceId, SamWorkspaceAction.UPDATE_REFERENCE);
+            userRequest, workspaceUuid, resourceUuid, SamWorkspaceAction.UPDATE_REFERENCE);
     wsmResourceService.updateResource(
         userRequest,
         resource,
@@ -527,26 +537,30 @@ public class ReferencedGcpResourceController extends ControllerBase
         new ReferencedDataRepoSnapshotAttributes(body.getInstanceName(), body.getSnapshot()));
     ReferencedDataRepoSnapshotResource updatedResource =
         referencedResourceService
-            .getReferenceResource(workspaceUuid, resourceId)
+            .getReferenceResource(workspaceUuid, resourceUuid)
             .castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
     return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
   @Traced
   @Override
-  public ResponseEntity<Void> deleteDataRepoSnapshotReference(UUID workspaceUuid, UUID resourceId) {
+  public ResponseEntity<Void> deleteDataRepoSnapshotReference(
+      UUID workspaceUuid, UUID resourceUuid) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamWorkspaceAction.DELETE_REFERENCE);
     referencedResourceService.deleteReferenceResourceForResourceType(
-        workspaceUuid, resourceId, WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT, userRequest);
+        workspaceUuid,
+        resourceUuid,
+        WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT,
+        userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   @Traced
   @Override
   public ResponseEntity<ApiCloneReferencedGcpGcsObjectResourceResult> cloneGcpGcsObjectReference(
-      UUID workspaceUuid, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
+      UUID workspaceUuid, UUID resourceUuid, @Valid ApiCloneReferencedResourceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     // For cloning, we need to check that the caller has both read access to the source workspace
     // and write access to the destination workspace.
@@ -561,7 +575,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     }
 
     ReferencedResource sourceReferencedResource =
-        referencedResourceService.getReferenceResource(workspaceUuid, resourceId);
+        referencedResourceService.getReferenceResource(workspaceUuid, resourceUuid);
 
     CloningInstructions effectiveCloningInstructions =
         Optional.ofNullable(body.getCloningInstructions())
@@ -589,7 +603,7 @@ public class ReferencedGcpResourceController extends ControllerBase
                 /*destinationFolderId=*/ null,
                 body.getName(),
                 body.getDescription(),
-                getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
+                samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
                 effectiveCloningInstructions,
                 userRequest)
             .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_OBJECT);
@@ -607,7 +621,7 @@ public class ReferencedGcpResourceController extends ControllerBase
   @Traced
   @Override
   public ResponseEntity<ApiCloneReferencedGcpGcsBucketResourceResult> cloneGcpGcsBucketReference(
-      UUID workspaceUuid, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
+      UUID workspaceUuid, UUID resourceUuid, @Valid ApiCloneReferencedResourceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     // For cloning, we need to check that the caller has both read access to the source workspace
     // and write access to the destination workspace.
@@ -622,7 +636,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     }
 
     ReferencedResource sourceReferencedResource =
-        referencedResourceService.getReferenceResource(workspaceUuid, resourceId);
+        referencedResourceService.getReferenceResource(workspaceUuid, resourceUuid);
 
     CloningInstructions effectiveCloningInstructions =
         Optional.ofNullable(body.getCloningInstructions())
@@ -651,7 +665,7 @@ public class ReferencedGcpResourceController extends ControllerBase
                 /*destinationFolderId=*/ null,
                 body.getName(),
                 body.getDescription(),
-                getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
+                samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
                 effectiveCloningInstructions,
                 userRequest)
             .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_BUCKET);
@@ -670,7 +684,9 @@ public class ReferencedGcpResourceController extends ControllerBase
   @Override
   public ResponseEntity<ApiCloneReferencedGcpBigQueryDataTableResourceResult>
       cloneGcpBigQueryDataTableReference(
-          UUID workspaceUuid, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
+          UUID workspaceUuid,
+          UUID resourceUuid,
+          @Valid ApiCloneReferencedResourceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     // For cloning, we need to check that the caller has both read access to the source workspace
     // and write access to the destination workspace.
@@ -685,7 +701,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     }
 
     ReferencedResource sourceReferencedResource =
-        referencedResourceService.getReferenceResource(workspaceUuid, resourceId);
+        referencedResourceService.getReferenceResource(workspaceUuid, resourceUuid);
 
     CloningInstructions effectiveCloningInstructions =
         Optional.ofNullable(body.getCloningInstructions())
@@ -713,7 +729,7 @@ public class ReferencedGcpResourceController extends ControllerBase
                 /*destinationFolderId=*/ null,
                 body.getName(),
                 body.getDescription(),
-                getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
+                samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
                 effectiveCloningInstructions,
                 userRequest)
             .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
@@ -732,7 +748,9 @@ public class ReferencedGcpResourceController extends ControllerBase
   @Override
   public ResponseEntity<ApiCloneReferencedGcpBigQueryDatasetResourceResult>
       cloneGcpBigQueryDatasetReference(
-          UUID workspaceUuid, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
+          UUID workspaceUuid,
+          UUID resourceUuid,
+          @Valid ApiCloneReferencedResourceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     // For cloning, we need to check that the caller has both read access to the source workspace
     // and write access to the destination workspace.
@@ -747,7 +765,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     }
 
     ReferencedResource sourceReferencedResource =
-        referencedResourceService.getReferenceResource(workspaceUuid, resourceId);
+        referencedResourceService.getReferenceResource(workspaceUuid, resourceUuid);
 
     CloningInstructions effectiveCloningInstructions =
         Optional.ofNullable(body.getCloningInstructions())
@@ -776,7 +794,7 @@ public class ReferencedGcpResourceController extends ControllerBase
                 /*destinationFolderId=*/ null,
                 body.getName(),
                 body.getDescription(),
-                getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
+                samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
                 effectiveCloningInstructions,
                 userRequest)
             .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
@@ -795,7 +813,9 @@ public class ReferencedGcpResourceController extends ControllerBase
   @Override
   public ResponseEntity<ApiCloneReferencedGcpDataRepoSnapshotResourceResult>
       cloneGcpDataRepoSnapshotReference(
-          UUID workspaceUuid, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
+          UUID workspaceUuid,
+          UUID resourceUuid,
+          @Valid ApiCloneReferencedResourceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     // For cloning, we need to check that the caller has both read access to the source workspace
     // and write access to the destination workspace.
@@ -810,7 +830,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     }
 
     ReferencedResource sourceReferencedResource =
-        referencedResourceService.getReferenceResource(workspaceUuid, resourceId);
+        referencedResourceService.getReferenceResource(workspaceUuid, resourceUuid);
 
     CloningInstructions effectiveCloningInstructions =
         Optional.ofNullable(body.getCloningInstructions())
@@ -839,7 +859,7 @@ public class ReferencedGcpResourceController extends ControllerBase
                 /*destinationFolderId=*/ null,
                 body.getName(),
                 body.getDescription(),
-                getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
+                samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
                 effectiveCloningInstructions,
                 userRequest)
             .castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
@@ -870,7 +890,7 @@ public class ReferencedGcpResourceController extends ControllerBase
                 getWsmResourceFields(
                     workspaceUuid,
                     body.getMetadata(),
-                    getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest)))
+                    samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest)))
             .gitRepoUrl(body.getGitrepo().getGitRepoUrl())
             .build();
 
@@ -884,13 +904,13 @@ public class ReferencedGcpResourceController extends ControllerBase
   @Traced
   @Override
   public ResponseEntity<ApiGitRepoResource> getGitRepoReference(
-      UUID workspaceUuid, UUID resourceId) {
+      UUID workspaceUuid, UUID resourceUuid) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamWorkspaceAction.READ);
     ReferencedGitRepoResource referenceResource =
         referencedResourceService
-            .getReferenceResource(workspaceUuid, resourceId)
+            .getReferenceResource(workspaceUuid, resourceUuid)
             .castByEnum(WsmResourceType.REFERENCED_ANY_GIT_REPO);
     return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
@@ -912,11 +932,11 @@ public class ReferencedGcpResourceController extends ControllerBase
   @Traced
   @Override
   public ResponseEntity<ApiGitRepoResource> updateGitRepoReference(
-      UUID workspaceUuid, UUID resourceId, ApiUpdateGitRepoReferenceRequestBody body) {
+      UUID workspaceUuid, UUID resourceUuid, ApiUpdateGitRepoReferenceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ReferencedResource resource =
         referencedResourceService.validateReferencedResourceAndAction(
-            userRequest, workspaceUuid, resourceId, SamWorkspaceAction.UPDATE_REFERENCE);
+            userRequest, workspaceUuid, resourceUuid, SamWorkspaceAction.UPDATE_REFERENCE);
     String gitRepoUrl = body.getGitRepoUrl();
     if (gitRepoUrl != null) {
       validationUtils.validateGitRepoUri(gitRepoUrl);
@@ -931,26 +951,26 @@ public class ReferencedGcpResourceController extends ControllerBase
         new ReferencedGitRepoAttributes(gitRepoUrl));
     ReferencedGitRepoResource updatedResource =
         referencedResourceService
-            .getReferenceResource(workspaceUuid, resourceId)
+            .getReferenceResource(workspaceUuid, resourceUuid)
             .castByEnum(WsmResourceType.REFERENCED_ANY_GIT_REPO);
     return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
   @Traced
   @Override
-  public ResponseEntity<Void> deleteGitRepoReference(UUID workspaceUuid, UUID resourceId) {
+  public ResponseEntity<Void> deleteGitRepoReference(UUID workspaceUuid, UUID resourceUuid) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamWorkspaceAction.DELETE_REFERENCE);
     referencedResourceService.deleteReferenceResourceForResourceType(
-        workspaceUuid, resourceId, WsmResourceType.REFERENCED_ANY_GIT_REPO, userRequest);
+        workspaceUuid, resourceUuid, WsmResourceType.REFERENCED_ANY_GIT_REPO, userRequest);
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
   @Traced
   @Override
   public ResponseEntity<ApiCloneReferencedGitRepoResourceResult> cloneGitRepoReference(
-      UUID workspaceUuid, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
+      UUID workspaceUuid, UUID resourceUuid, @Valid ApiCloneReferencedResourceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     // For cloning, we need to check that the caller has both read access to the source workspace
     // and write access to the destination workspace.
@@ -965,7 +985,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     }
 
     ReferencedResource sourceReferencedResource =
-        referencedResourceService.getReferenceResource(workspaceUuid, resourceId);
+        referencedResourceService.getReferenceResource(workspaceUuid, resourceUuid);
 
     CloningInstructions effectiveCloningInstructions =
         Optional.ofNullable(body.getCloningInstructions())
@@ -993,7 +1013,7 @@ public class ReferencedGcpResourceController extends ControllerBase
                 /*destinationFolderId=*/ null,
                 body.getName(),
                 body.getDescription(),
-                getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
+                samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
                 effectiveCloningInstructions,
                 userRequest)
             .castByEnum(WsmResourceType.REFERENCED_ANY_GIT_REPO);
@@ -1029,7 +1049,7 @@ public class ReferencedGcpResourceController extends ControllerBase
                 getWsmResourceFields(
                     workspaceUuid,
                     body.getMetadata(),
-                    getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest)))
+                    samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest)))
             .referencedWorkspaceId(referencedWorkspaceId)
             .build();
 
@@ -1043,13 +1063,13 @@ public class ReferencedGcpResourceController extends ControllerBase
   @Traced
   @Override
   public ResponseEntity<ApiTerraWorkspaceResource> getTerraWorkspaceReference(
-      UUID workspaceUuid, UUID resourceId) {
+      UUID workspaceUuid, UUID resourceUuid) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamWorkspaceAction.READ);
     ReferencedTerraWorkspaceResource referenceResource =
         referencedResourceService
-            .getReferenceResource(workspaceUuid, resourceId)
+            .getReferenceResource(workspaceUuid, resourceUuid)
             .castByEnum(WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE);
     return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
@@ -1070,12 +1090,12 @@ public class ReferencedGcpResourceController extends ControllerBase
 
   @Traced
   @Override
-  public ResponseEntity<Void> deleteTerraWorkspaceReference(UUID workspaceUuid, UUID resourceId) {
+  public ResponseEntity<Void> deleteTerraWorkspaceReference(UUID workspaceUuid, UUID resourceUuid) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamWorkspaceAction.DELETE_REFERENCE);
     referencedResourceService.deleteReferenceResourceForResourceType(
-        workspaceUuid, resourceId, WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE, userRequest);
+        workspaceUuid, resourceUuid, WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE, userRequest);
     return new ResponseEntity<>(HttpStatus.OK);
   }
 

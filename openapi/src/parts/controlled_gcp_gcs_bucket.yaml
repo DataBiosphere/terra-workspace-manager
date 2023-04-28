@@ -57,8 +57,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
     post:
-      summary: |
-        Delete a controlled GCS bucket resource asynchronously.
+      summary: Delete a controlled GCS bucket resource asynchronously.
       operationId: deleteBucket
       tags: [ControlledGcpResource]
       requestBody:
@@ -230,6 +229,7 @@ components:
         - NEARLINE
         - COLDLINE
         - ARCHIVE
+
     GcpGcsBucketLifecycle:
       description: >-
         Options to control automatic deletion or storage class change for a bucket.

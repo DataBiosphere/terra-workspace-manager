@@ -62,8 +62,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
     post:
-      summary: |
-        Delete a controlled GCP AI Notebook instance resource asynchronously.
+      summary: Delete a controlled GCP AI Notebook instance resource asynchronously.
       operationId: deleteAiNotebookInstance
       tags: [ ControlledGcpResource ]
       requestBody:
