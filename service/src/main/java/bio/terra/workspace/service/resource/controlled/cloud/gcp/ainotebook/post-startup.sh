@@ -52,6 +52,26 @@ readonly MESSAGE_ATTRIBUTE="startup_script/message"
 readonly USER_TERRA_CONFIG_DIR="/home/${JUPYTER_USER}/.terra"
 readonly OUTPUT_FILE="${USER_TERRA_CONFIG_DIR}/post-startup-output.txt"
 
+# Variables relevant for 3rd party software that gets installed
+readonly REQ_JAVA_VERSION=17
+readonly JAVA_INSTALL_PATH="/usr/bin/java"
+
+readonly NEXTFLOW_INSTALL_PATH="/usr/bin/nextflow"
+
+readonly CROMWELL_LATEST_VERSION=81
+readonly CROMWELL_INSTALL_PATH="/usr/share/java/cromwell-${CROMWELL_LATEST_VERSION}.jar"
+
+readonly CROMSHELL_INSTALL_PATH="/usr/bin/cromshell"
+
+# Variables for Terra-specific code installed on the VM
+readonly TERRA_INSTALL_PATH="/usr/bin/terra"
+
+readonly TERRA_BOOT_SCRIPT="${USER_TERRA_CONFIG_DIR}/instance-boot.sh"
+readonly TERRA_BOOT_SERVICE="/etc/systemd/system/terra-instance-boot.service"
+
+# Location of gitignore configuration file for users
+readonly GIT_IGNORE="/home/${JUPYTER_USER}/gitignore_global"
+
 # Move to the /tmp directory to let any artifacts left behind by this script can be removed.
 cd /tmp || exit
 
@@ -134,7 +154,7 @@ apt-get update
 function install_java() {
   curl -Os https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.deb
   apt-get install -y ./jdk-17_linux-x64_bin.deb
-  update-alternatives --install /usr/bin/java java /usr/lib/jvm/jdk-17/bin/java 1
+  update-alternatives --install "${JAVA_INSTALL_PATH}" java /usr/lib/jvm/jdk-17/bin/java 1
   update-alternatives --set java /usr/lib/jvm/jdk-17/bin/java
 }
 
@@ -142,43 +162,42 @@ if [[ -n "$(which java)" ]];
 then
   # Get the current major version of Java: "11.0.12" => "11"
   readonly CUR_JAVA_VERSION="$(java -version 2>&1 | awk -F\" '{ split($2,a,"."); print a[1]}')"
-  if [[ "${CUR_JAVA_VERSION}" -lt 17 ]];
+  if [[ "${CUR_JAVA_VERSION}" -lt "${REQ_JAVA_VERSION}" ]];
   then
-    echo "Current Java version is ${CUR_JAVA_VERSION}, installing Java 17"
+    echo "Current Java version is ${CUR_JAVA_VERSION}, installing Java ${REQ_JAVA_VERSION}"
     install_java
   else
-    echo "Java 17 is installed"
+    echo "Java ${REQ_JAVA_VERSION} is installed"
   fi
 else
-  echo "Installing Java 17"
+  echo "Installing Java ${REQ_JAVA_VERSION}"
   install_java
 fi
 
 # Download Nextflow and install it
 sudo -u "${JUPYTER_USER}" sh -c "curl -s https://get.nextflow.io | bash"
-mv nextflow /usr/bin/nextflow
+mv nextflow "${NEXTFLOW_INSTALL_PATH}"
 
 # Download Cromwell and install it
-readonly CROMWELL_LATEST_VERSION="81"
 curl -LO "https://github.com/broadinstitute/cromwell/releases/download/${CROMWELL_LATEST_VERSION}/cromwell-${CROMWELL_LATEST_VERSION}.jar"
-mv "cromwell-${CROMWELL_LATEST_VERSION}.jar" "/usr/share/java/"
+mv "cromwell-${CROMWELL_LATEST_VERSION}.jar" "${CROMWELL_INSTALL_PATH}"
 
 # Set a variable for the user in the bash_profile
 cat << EOF >> "/home/${JUPYTER_USER}/.bash_profile"
 
 # Set a convenience variable pointing to the version-specific Cromwell JAR file
-export CROMWELL_JAR='/usr/share/java/cromwell-${CROMWELL_LATEST_VERSION}.jar'
+export CROMWELL_JAR='"${CROMWELL_INSTALL_PATH}"'
 EOF
 
 # Download cromshell and install it
 apt-get -y install mailutils
 curl -Os https://raw.githubusercontent.com/broadinstitute/cromshell/master/cromshell
 chmod +x cromshell
-mv cromshell /usr/bin/cromshell
+mv cromshell "${CROMSHELL_INSTALL_PATH}"
 
 # Install & configure the Terra CLI
 sudo -u "${JUPYTER_USER}" sh -c "curl -L https://github.com/DataBiosphere/terra-cli/releases/latest/download/download-install.sh | bash"
-cp terra /usr/bin/terra
+cp terra "${TERRA_INSTALL_PATH}"
 # Set browser manual login since that's the only login supported from an GCP Notebook VM.
 sudo -u "${JUPYTER_USER}" sh -c "terra config set browser MANUAL"
 # Set the CLI terra server based on the terra server that created the GCP notebook retrieved from
@@ -308,7 +327,7 @@ fi
 # to the git references, the corresponding git repo cloning will be skipped.
 # Keep this as last thing in script. There will be integration test for git cloning (PF-1660). If this is last thing, then
 # integration test will ensure that everything in script worked.
-sudo -u "$JUPYTER_USER" sh -c 'terra git clone --all'
+sudo -u "${JUPYTER_USER}" sh -c 'terra git clone --all'
 
 #############################
 # Setup instance boot service
@@ -319,9 +338,6 @@ sudo -u "$JUPYTER_USER" sh -c 'terra git clone --all'
 #    jupyter.service to meet this requirement.
 
 # Create the boot script
-readonly TERRA_BOOT_SCRIPT="${USER_TERRA_CONFIG_DIR}/instance-boot.sh"
-readonly TERRA_BOOT_SERVICE="/etc/systemd/system/terra-instance-boot.service"
-
 cat <<EOF >"${TERRA_BOOT_SCRIPT}"
 #!/bin/bash
 
@@ -346,12 +362,11 @@ WantedBy=multi-user.target
 EOF
 
 # Enable and start the startup service
-sudo systemctl daemon-reload
-sudo systemctl enable terra-setup-environment.service
-sudo systemctl start terra-setup-environment.service
+systemctl daemon-reload
+systemctl enable terra-instance-boot.service
+systemctl start terra-instance-boot.service
 
 # Setup gitignore to avoid accidental checkin of data.
-readonly GIT_IGNORE="/home/${JUPYTER_USER}/gitignore_global"
 
 cat <<EOF | sudo --preserve-env -u "${JUPYTER_USER}" tee "${GIT_IGNORE}"
 # By default, all files should be ignored by git.
@@ -370,7 +385,85 @@ cat <<EOF | sudo --preserve-env -u "${JUPYTER_USER}" tee "${GIT_IGNORE}"
 !LICENSE*
 EOF
 
-sudo -u "$JUPYTER_USER" sh -c "git config --global core.excludesfile ${GIT_IGNORE}"
+sudo -u "${JUPYTER_USER}" sh -c "git config --global core.excludesfile ${GIT_IGNORE}"
+
+####################################################################################
+# Run a set of tests that should be invariant to the workspace or user configuration
+####################################################################################
+
+# Test java (existence and version)
+
+echo "--  Checking if installed Java version is ${REQ_JAVA_VERSION} or higher"
+
+# Get the current major version of Java: "11.0.12" => "11"
+readonly INSTALLED_JAVA_VERSION="$("${JAVA_INSTALL_PATH}" -version 2>&1 | awk -F\" '{ split($2,a,"."); print a[1]}')"
+if [[ "${INSTALLED_JAVA_VERSION}" -lt ${REQ_JAVA_VERSION} ]]; then
+  >&2 echo "ERROR: Java version detected (${INSTALLED_JAVA_VERSION}) is less than required (${REQ_JAVA_VERSION})"
+  exit 1
+fi
+
+echo "SUCCESS: Java installed and version detected as ${INSTALLED_JAVA_VERSION}"
+
+# Test nextflow
+echo "--  Checking if Nextflow is properly installed"
+
+readonly INSTALLED_NEXTFLOW_VERSION="$("${NEXTFLOW_INSTALL_PATH}" -v | sed -e 's#nextflow version \(.*\)#\1#')"
+
+echo "SUCCESS: Nextflow installed and version detected as ${INSTALLED_NEXTFLOW_VERSION}"
+
+# Test Cromwell
+echo "--  Checking if installed Cromwell version is ${CROMWELL_LATEST_VERSION}"
+
+readonly INSTALLED_CROMWELL_VERSION="$(java -jar "${CROMWELL_INSTALL_PATH}" --version | sed -e 's#cromwell \(.*\)#\1#')"
+if [[ "${INSTALLED_CROMWELL_VERSION}" -ne ${CROMWELL_LATEST_VERSION} ]]; then
+  >&2 echo "ERROR: Cromwell version detected (${INSTALLED_CROMWELL_VERSION}) is not equal to expected (${CROMWELL_LATEST_VERSION})"
+  exit 1
+fi
+
+echo "SUCCESS: Cromwell installed and version detected as ${INSTALLED_CROMWELL_VERSION}"
+
+# Test Cromshell
+echo "--  Checking if Cromshell is properly installed"
+
+if [[ ! -e "${CROMSHELL_INSTALL_PATH}" ]]; then
+  >&2 echo "ERROR: Cromshell not found at ${CROMSHELL_INSTALL_PATH}"
+  exit 1
+fi
+if [[ ! -x "${CROMSHELL_INSTALL_PATH}" ]]; then
+  >&2 echo "ERROR: Cromshell not executable at ${CROMSHELL_INSTALL_PATH}"
+  exit 1
+fi
+
+echo "SUCCESS: Cromshell installed"
+
+# Test Terra
+echo "--  Checking if Terra CLI is properly installed"
+
+if [[ ! -e "${TERRA_INSTALL_PATH}" ]]; then
+  >&2 echo "ERROR: Terra CLI not found at ${TERRA_INSTALL_PATH}"
+  exit 1
+fi
+
+readonly INSTALLED_TERRA_VERSION="$(sudo -u "${JUPYTER_USER}" sh -c "${TERRA_INSTALL_PATH} version")"
+
+if [[ -z "${INSTALLED_TERRA_VERSION}" ]]; then
+  >&2 echo "ERROR: Terra CLI did not execute or did not return a version number"
+  exit 1
+fi
+
+echo "SUCCESS: Terra CLI installed and version detected as ${INSTALLED_TERRA_VERSION}"
+
+# GIT_IGNORE
+echo "--  Checking if gitignore is properly installed"
+
+readonly INSTALLED_GITIGNORE="$(sudo -u "${JUPYTER_USER}" sh -c "git config --global core.excludesfile")"
+
+if [[ "${INSTALLED_GITIGNORE}" != "${GIT_IGNORE}" ]]; then
+  >&2 echo "ERROR: gitignore not set up at ${GIT_IGNORE}"
+  exit 1
+fi
+
+echo "SUCCESS: Gitignore installed at ${INSTALLED_GITIGNORE}"
 
 # This block is for test only. If the notebook execute successfully down to
 # here, we knows that the script executed successfully.
