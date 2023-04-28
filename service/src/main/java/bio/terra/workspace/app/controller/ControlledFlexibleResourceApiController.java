@@ -10,6 +10,7 @@ import bio.terra.workspace.generated.model.ApiCreatedControlledFlexibleResource;
 import bio.terra.workspace.generated.model.ApiFlexibleResource;
 import bio.terra.workspace.generated.model.ApiFlexibleResourceUpdateParameters;
 import bio.terra.workspace.generated.model.ApiUpdateControlledFlexibleResourceRequestBody;
+import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
@@ -56,6 +57,7 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
       HttpServletRequest request,
       SamService samService,
       FeatureConfiguration features,
+      FeatureService featureService,
       JobService jobService,
       JobApiUtils jobApiUtils,
       ControlledResourceService controlledResourceService,
@@ -66,6 +68,7 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
         request,
         samService,
         features,
+        featureService,
         jobService,
         jobApiUtils,
         controlledResourceService,

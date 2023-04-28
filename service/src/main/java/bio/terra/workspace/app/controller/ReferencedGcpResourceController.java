@@ -33,6 +33,7 @@ import bio.terra.workspace.generated.model.ApiUpdateDataRepoSnapshotReferenceReq
 import bio.terra.workspace.generated.model.ApiUpdateGcsBucketObjectReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateGcsBucketReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateGitRepoReferenceRequestBody;
+import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
@@ -86,6 +87,7 @@ public class ReferencedGcpResourceController extends ControllerBase
       HttpServletRequest request,
       SamService samService,
       FeatureConfiguration features,
+      FeatureService featureService,
       JobService jobService,
       JobApiUtils jobApiUtils,
       WorkspaceService workspaceService,
@@ -93,7 +95,14 @@ public class ReferencedGcpResourceController extends ControllerBase
       WsmResourceService wsmResourceService,
       ReferencedResourceService referencedResourceService,
       ResourceValidationUtils validationUtils) {
-    super(authenticatedUserRequestFactory, request, samService, features, jobService, jobApiUtils);
+    super(
+        authenticatedUserRequestFactory,
+        request,
+        samService,
+        features,
+        featureService,
+        jobService,
+        jobApiUtils);
     this.workspaceService = workspaceService;
     this.workspaceDao = workspaceDao;
     this.wsmResourceService = wsmResourceService;

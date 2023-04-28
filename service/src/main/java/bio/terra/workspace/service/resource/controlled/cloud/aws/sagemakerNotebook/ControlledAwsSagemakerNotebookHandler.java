@@ -2,13 +2,10 @@ package bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakerNoteb
 
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
-import bio.terra.workspace.service.resource.controlled.cloud.aws.AwsResourceConstants;
-import bio.terra.workspace.service.resource.controlled.cloud.aws.s3storageFolder.ControlledAwsS3StorageFolderAttributes;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
-import com.google.common.base.CharMatcher;
 import java.util.UUID;
-import javax.ws.rs.BadRequestException;
+import org.apache.commons.lang3.NotImplementedException;
 import org.jetbrains.annotations.Nullable;
 
 public class ControlledAwsSagemakerNotebookHandler implements WsmResourceHandler {
@@ -25,14 +22,15 @@ public class ControlledAwsSagemakerNotebookHandler implements WsmResourceHandler
   /** {@inheritDoc} */
   @Override
   public WsmResource makeResourceFromDb(DbResource dbResource) {
-    ControlledAwsS3StorageFolderAttributes attributes =
-        DbSerDes.fromJson(dbResource.getAttributes(), ControlledAwsS3StorageFolderAttributes.class);
+    ControlledAwsSagemakerNotebookResource attributes =
+        DbSerDes.fromJson(dbResource.getAttributes(), ControlledAwsSagemakerNotebookResource.class);
 
-    return new ControlledAwsSagemakerNotebookResource(dbResource);
+    return new ControlledAwsSagemakerNotebookResource(
+        dbResource, attributes.getInstanceName(), attributes.getInstanceType());
   }
 
   /**
-   * Generate controlled AWS S3 Storage folder cloud name that meets the requirements for a valid
+   * Generate controlled AWS Sagemaker Notebook cloud name that meets the requirements for a valid
    * name.
    *
    * <p>Alphanumeric characters and certain special characters can be safely used in valid names For
@@ -40,27 +38,6 @@ public class ControlledAwsSagemakerNotebookHandler implements WsmResourceHandler
    */
   @Override
   public String generateCloudName(@Nullable UUID workspaceUuid, String resourceName) {
-    String generatedName =
-        resourceName.length() > AwsResourceConstants.MAX_S3_STORAGE_FOLDER_NAME_LENGTH
-            ? resourceName.substring(0, AwsResourceConstants.MAX_S3_STORAGE_FOLDER_NAME_LENGTH)
-            : resourceName;
-
-    // The regular expression only allow legal character combinations containing
-    // alphanumeric characters and one or more of "!-_.*'()". It trims any other combinations.
-    generatedName = generatedName.replaceAll("\\[", "").replaceAll("\\]", "");
-    generatedName =
-        CharMatcher.inRange('0', '9')
-            .or(CharMatcher.inRange('A', 'z'))
-            .or(CharMatcher.anyOf("!-_.*'()"))
-            .retainFrom(generatedName);
-
-    if (generatedName.length() == 0) {
-      throw new BadRequestException(
-          String.format(
-              "Cannot generate a valid s3 storage folder name from %s, it must contain"
-                  + " alphanumerical characters.",
-              resourceName));
-    }
-    return generatedName;
+    throw new NotImplementedException("TODO-Dex");
   }
 }

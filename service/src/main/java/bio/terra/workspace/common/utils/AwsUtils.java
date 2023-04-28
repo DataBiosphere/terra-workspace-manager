@@ -12,6 +12,8 @@ import bio.terra.common.iam.SamUser;
 import bio.terra.workspace.app.configuration.external.AwsConfiguration;
 import bio.terra.workspace.generated.model.ApiAwsCredentialAccessScope;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.s3storageFolder.ControlledAwsS3StorageFolderResource;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakerNotebook.ControlledAwsSagemakerNotebookResource;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.time.Duration;
@@ -91,6 +93,23 @@ public class AwsUtils {
         Tag.builder().key("S3BucketID").value(awsS3StorageFolderResource.getBucketName()).build());
     tags.add(
         Tag.builder().key("TerraBucketID").value(awsS3StorageFolderResource.getPrefix()).build());
+  }
+
+  public static <T extends ControlledResource> void appendPrincipalTags(
+      Collection<Tag> tags, AwsCloudContext awsCloudContext, T awsResource) {
+    tags.add(Tag.builder().key("Version").value(awsCloudContext.getMajorVersion()).build());
+
+    if (awsResource instanceof ControlledAwsS3StorageFolderResource) {
+      ControlledAwsS3StorageFolderResource resource =
+          (ControlledAwsS3StorageFolderResource) awsResource;
+      tags.add(Tag.builder().key("S3BucketID").value(resource.getBucketName()).build());
+      tags.add(Tag.builder().key("TerraBucketID").value(resource.getPrefix()).build());
+
+    } else if (awsResource instanceof ControlledAwsSagemakerNotebookResource) {
+      ControlledAwsSagemakerNotebookResource resource =
+          (ControlledAwsSagemakerNotebookResource) awsResource;
+      // TODO-Dex add tags
+    }
   }
 
   public static void appendRoleTags(Collection<Tag> tags, ApiAwsCredentialAccessScope accessScope) {

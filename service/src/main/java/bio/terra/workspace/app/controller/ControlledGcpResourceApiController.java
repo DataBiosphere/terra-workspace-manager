@@ -38,6 +38,7 @@ import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.generated.model.ApiUpdateControlledGcpAiNotebookInstanceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateControlledGcpBigQueryDatasetRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateControlledGcpGcsBucketRequestBody;
+import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
@@ -92,6 +93,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
       HttpServletRequest request,
       SamService samService,
       FeatureConfiguration features,
+      FeatureService featureService,
       JobService jobService,
       JobApiUtils jobApiUtils,
       ControlledResourceService controlledResourceService,
@@ -104,6 +106,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
         request,
         samService,
         features,
+        featureService,
         jobService,
         jobApiUtils,
         controlledResourceService,

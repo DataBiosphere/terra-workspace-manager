@@ -163,13 +163,18 @@ components:
         Sagemaker Notebook specific properties to be set on creation. These are a subset of the
         values accepted by the AWS Sagemaker Notebook API.
       type: object
-      properties: # TODO-Dex
+      properties:
         instanceName:
           description: A valid instance name per https://docs.aws.amazon.com/sagemaker/latest/dg/feature-store-quotas.html.
           type: string
+        instanceType:
+          description: A valid instance type per https://docs.aws.amazon.com/general/latest/gr/sagemaker.html
+          type: string
+          default: "ml.t2.medium"
         region:
           description: A valid Sagemaker Notebook region per https://docs.aws.amazon.com/general/latest/gr/sagemaker.html.
           type: string
+          default: "us-east-1"
 
     CreateControlledAwsSagemakerNotebookRequestBody:
       description: Payload for requesting a new controlled AWS Sagemaker Notebook instance resource.
@@ -183,15 +188,14 @@ components:
         jobControl:
           $ref: '#/components/schemas/JobControl'
 
-    CreatedControlledAwsSagemakerNotebook:
+    CreateControlledAwsSagemakerNotebookResult:
       description: Response Payload for requesting a new controlled AWS Sagemaker Notebook instance resource.
       type: object
-      required: [resourceId, awsSagemakerNotebook]
       properties:
-        resourceId:
-          description: UUID of a newly-created resource.
-          type: string
-          format: uuid
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
         awsSagemakerNotebook:
           $ref: '#/components/schemas/AwsSagemakerNotebookResource'
 
@@ -201,7 +205,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/CreatedControlledAwsSagemakerNotebook'
+            $ref: '#/components/schemas/CreateControlledAwsSagemakerNotebookResult'
 
     GetControlledAwsSagemakerNotebookResponse:
       description: Response to get AWS Sagemaker Notebook instance resource.

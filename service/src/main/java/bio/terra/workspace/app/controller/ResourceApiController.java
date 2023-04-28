@@ -15,6 +15,7 @@ import bio.terra.workspace.generated.model.ApiResourceList;
 import bio.terra.workspace.generated.model.ApiResourceMetadata;
 import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
+import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
@@ -53,12 +54,20 @@ public class ResourceApiController extends ControllerBase implements ResourceApi
       HttpServletRequest request,
       SamService samService,
       FeatureConfiguration features,
+      FeatureService featureService,
       JobService jobService,
       JobApiUtils jobApiUtils,
       WsmResourceService resourceService,
       WorkspaceService workspaceService,
       ReferencedResourceService referencedResourceService) {
-    super(authenticatedUserRequestFactory, request, samService, features, jobService, jobApiUtils);
+    super(
+        authenticatedUserRequestFactory,
+        request,
+        samService,
+        features,
+        featureService,
+        jobService,
+        jobApiUtils);
     this.resourceService = resourceService;
     this.workspaceService = workspaceService;
     this.referencedResourceService = referencedResourceService;

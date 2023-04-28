@@ -6,6 +6,7 @@ import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.app.controller.shared.PropertiesUtils;
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
+import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
@@ -51,6 +52,7 @@ public class ControlledResourceControllerBase extends ControllerBase {
       HttpServletRequest request,
       SamService samService,
       FeatureConfiguration featureConfiguration,
+      FeatureService featureService,
       JobService jobService,
       JobApiUtils jobApiUtils,
       ControlledResourceService controlledResourceService,
@@ -60,6 +62,7 @@ public class ControlledResourceControllerBase extends ControllerBase {
         request,
         samService,
         featureConfiguration,
+        featureService,
         jobService,
         jobApiUtils);
     this.controlledResourceService = controlledResourceService;

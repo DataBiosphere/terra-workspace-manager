@@ -31,24 +31,35 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Optional;
 
 public class ControlledAwsSagemakerNotebookResource extends ControlledResource {
-  // TODO-Dex add fields
+  private final String instanceName;
+  private final String instanceType;
 
   @JsonCreator
   public ControlledAwsSagemakerNotebookResource(
       @JsonProperty("wsmResourceFields") WsmResourceFields resourceFields,
       @JsonProperty("wsmControlledResourceFields")
-          WsmControlledResourceFields controlledResourceFields) {
+          WsmControlledResourceFields controlledResourceFields,
+      @JsonProperty("instanceName") String instanceName,
+      @JsonProperty("instanceType") String instanceType) {
     super(resourceFields, controlledResourceFields);
+    this.instanceName = instanceName;
+    this.instanceType = instanceType;
     validate();
   }
 
-  private ControlledAwsSagemakerNotebookResource(ControlledResourceFields common) {
+  private ControlledAwsSagemakerNotebookResource(
+      ControlledResourceFields common, String instanceName, String instanceType) {
     super(common);
+    this.instanceName = instanceName;
+    this.instanceType = instanceType;
     validate();
   }
 
-  public ControlledAwsSagemakerNotebookResource(DbResource dbResource) {
+  public ControlledAwsSagemakerNotebookResource(
+      DbResource dbResource, String instanceName, String instanceType) {
     super(dbResource);
+    this.instanceName = instanceName;
+    this.instanceType = instanceType;
     validate();
   }
 
@@ -77,7 +88,13 @@ public class ControlledAwsSagemakerNotebookResource extends ControlledResource {
     return super.getWsmControlledResourceFields();
   }
 
-  // TODO-Dex
+  public String getInstanceName() {
+    return instanceName;
+  }
+
+  public String getInstanceType() {
+    return instanceType;
+  }
 
   // -- getters not included in serialization --
 
@@ -126,8 +143,9 @@ public class ControlledAwsSagemakerNotebookResource extends ControlledResource {
   }
 
   public ApiAwsSagemakerNotebookAttributes toApiAttributes() {
-    // TODO-Dex
-    return new ApiAwsSagemakerNotebookAttributes();
+    return new ApiAwsSagemakerNotebookAttributes()
+        .instanceName(instanceName)
+        .instanceType(instanceType);
   }
 
   public ApiAwsSagemakerNotebookResource toApiResource() {
@@ -138,7 +156,8 @@ public class ControlledAwsSagemakerNotebookResource extends ControlledResource {
 
   @Override
   public String attributesToJson() {
-    return DbSerDes.toJson(new ControlledAwsSagemakerNotebookAttributes());
+    return DbSerDes.toJson(
+        new ControlledAwsSagemakerNotebookAttributes(instanceName, instanceType));
   }
 
   @Override
@@ -156,7 +175,7 @@ public class ControlledAwsSagemakerNotebookResource extends ControlledResource {
         || getStewardshipType() != StewardshipType.CONTROLLED) {
       throw new InconsistentFieldsException("Expected CONTROLLED_AWS_SAGEMAKER_NOTEBOOK");
     }
-    if ((getRegion() == null)) { // TODO-Dex
+    if ((instanceName == null) || (instanceType == null) || (getRegion() == null)) {
       throw new MissingRequiredFieldException(
           "Missing required field for ControlledAwsSagemakerNotebookResource.");
     }
@@ -164,14 +183,26 @@ public class ControlledAwsSagemakerNotebookResource extends ControlledResource {
 
   public static class Builder {
     private ControlledResourceFields common;
+    private String instanceName;
+    private String instanceType;
 
     public Builder common(ControlledResourceFields common) {
       this.common = common;
       return this;
     }
 
+    public Builder instanceName(String instanceName) {
+      this.instanceName = instanceName;
+      return this;
+    }
+
+    public Builder instanceType(String instanceType) {
+      this.instanceType = instanceType;
+      return this;
+    }
+
     public ControlledAwsSagemakerNotebookResource build() {
-      return new ControlledAwsSagemakerNotebookResource(common);
+      return new ControlledAwsSagemakerNotebookResource(common, instanceName, instanceType);
     }
   }
 }

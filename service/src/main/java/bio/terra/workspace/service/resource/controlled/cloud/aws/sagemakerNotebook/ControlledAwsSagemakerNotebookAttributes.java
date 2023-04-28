@@ -1,10 +1,25 @@
 package bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakerNotebook;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ControlledAwsSagemakerNotebookAttributes {
-  // TODO-Dex add properties and getter
+  private final String instanceName;
+  private final String instanceType;
 
   @JsonCreator
-  public ControlledAwsSagemakerNotebookAttributes() {}
+  public ControlledAwsSagemakerNotebookAttributes(
+      @JsonProperty("instanceName") String instanceName,
+      @JsonProperty("instanceType") String instanceType) {
+    this.instanceName = instanceName;
+    this.instanceType = instanceType;
+  }
+
+  public String getInstanceName() {
+    return instanceName;
+  }
+
+  public String getInstanceType() {
+    return instanceType;
+  }
 }

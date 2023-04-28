@@ -49,6 +49,7 @@ import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
 import bio.terra.workspace.generated.model.ApiWsmPolicyMergeCheckResult;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateRequest;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateResult;
+import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamRethrow;
@@ -117,6 +118,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       HttpServletRequest request,
       SamService samService,
       FeatureConfiguration features,
+      FeatureService featureService,
       JobService jobService,
       JobApiUtils jobApiUtils,
       WorkspaceService workspaceService,
@@ -127,7 +129,14 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       PetSaService petSaService,
       TpsApiDispatch tpsApiDispatch,
       ResourceDao resourceDao) {
-    super(authenticatedUserRequestFactory, request, samService, features, jobService, jobApiUtils);
+    super(
+        authenticatedUserRequestFactory,
+        request,
+        samService,
+        features,
+        featureService,
+        jobService,
+        jobApiUtils);
     this.workspaceService = workspaceService;
     this.gcpCloudContextService = gcpCloudContextService;
     this.azureCloudContextService = azureCloudContextService;

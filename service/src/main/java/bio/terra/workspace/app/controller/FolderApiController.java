@@ -16,6 +16,7 @@ import bio.terra.workspace.generated.model.ApiFolderList;
 import bio.terra.workspace.generated.model.ApiJobResult;
 import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiUpdateFolderRequestBody;
+import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.folder.FolderService;
 import bio.terra.workspace.service.folder.model.Folder;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -49,12 +50,20 @@ public class FolderApiController extends ControllerBase implements FolderApi {
       HttpServletRequest request,
       SamService samService,
       FeatureConfiguration features,
+      FeatureService featureService,
       JobService jobService,
       JobApiUtils jobApiUtils,
       WorkspaceService workspaceService,
       WorkspaceActivityLogService workspaceActivityLogService,
       FolderService folderService) {
-    super(authenticatedUserRequestFactory, request, samService, features, jobService, jobApiUtils);
+    super(
+        authenticatedUserRequestFactory,
+        request,
+        samService,
+        features,
+        featureService,
+        jobService,
+        jobApiUtils);
     this.workspaceService = workspaceService;
     this.workspaceActivityLogService = workspaceActivityLogService;
     this.folderService = folderService;

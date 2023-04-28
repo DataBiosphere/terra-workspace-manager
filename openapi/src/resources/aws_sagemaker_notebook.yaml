@@ -1,14 +1,14 @@
 components:
   schemas:
-    AwsSagemakerNotebookAttributes: # TODO-Dex
+    AwsSagemakerNotebookAttributes:
       description: AWS Sagemaker Notebook instance resource properties included in post-creation get.
       type: object
       properties:
-        bucketName:
-          description: The name of the S3 bucket in which the Terra Storage Folder was allocated.
+        instanceName:
+          description: The name of the Sagemaker Notebook instance
           type: string
-        prefix:
-          description: The prefix within the S3 bucket.
+        instanceType:
+          description: The type of the Sagemaker Notebook instance
           type: string
 
     AwsSagemakerNotebookResource:

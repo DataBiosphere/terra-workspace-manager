@@ -10,6 +10,7 @@ import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
+import bio.terra.workspace.generated.model.ApiAwsSagemakerNotebookCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
@@ -26,6 +27,7 @@ import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceSyncMapping.SyncMapping;
 import bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresource.ControlledFlexibleResource;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakerNotebook.ControlledAwsSagemakerNotebookResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpPolicyBuilder;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
@@ -59,6 +61,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
+import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -405,6 +408,19 @@ public class ControlledResourceService {
     String jobId = jobBuilder.submit();
     waitForResourceOrJob(resource.getWorkspaceId(), resource.getResourceId(), jobId);
     return jobId;
+  }
+
+  /**
+   * Starts a create controlled AWS Sagemaker Notebook instance resource job, returning the job id.
+   */
+  public String createAwsSagemakerNotebookInstance(
+      ControlledAwsSagemakerNotebookResource resource,
+      ApiAwsSagemakerNotebookCreationParameters creationParameters,
+      @Nullable ControlledResourceIamRole privateResourceIamRole,
+      @Nullable ApiJobControl jobControl,
+      String resultPath,
+      AuthenticatedUserRequest userRequest) {
+    throw new NotImplementedException("TODO-Dex");
   }
 
   /** Simpler interface for synchronous controlled resource creation */

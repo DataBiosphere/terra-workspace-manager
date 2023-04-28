@@ -148,6 +148,7 @@ components:
         region:
           description: A valid S3 Storage Folder region per https://docs.aws.amazon.com/general/latest/gr/s3.html.
           type: string
+          default: "us-east-1"
 
     CreateControlledAwsS3StorageFolderRequestBody:
       description: Payload for requesting a new controlled AWS S3 Storage Folder resource.

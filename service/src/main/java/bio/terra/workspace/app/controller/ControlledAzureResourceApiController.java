@@ -34,6 +34,7 @@ import bio.terra.workspace.generated.model.ApiDeleteControlledAzureResourceReque
 import bio.terra.workspace.generated.model.ApiDeleteControlledAzureResourceResult;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiJobReport;
+import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
@@ -84,6 +85,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       HttpServletRequest request,
       SamService samService,
       FeatureConfiguration featureConfiguration,
+      FeatureService featureService,
       JobService jobService,
       JobApiUtils jobApiUtils,
       ControlledResourceService controlledResourceService,
@@ -97,6 +99,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         request,
         samService,
         featureConfiguration,
+        featureService,
         jobService,
         jobApiUtils,
         controlledResourceService,

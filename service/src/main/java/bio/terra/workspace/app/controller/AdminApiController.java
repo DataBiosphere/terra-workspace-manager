@@ -5,6 +5,7 @@ import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.generated.controller.AdminApi;
 import bio.terra.workspace.generated.model.ApiJobResult;
 import bio.terra.workspace.service.admin.AdminService;
+import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamRethrow;
@@ -25,11 +26,19 @@ public class AdminApiController extends ControllerBase implements AdminApi {
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request,
       FeatureConfiguration features,
+      FeatureService featureService,
       SamService samService,
       JobService jobService,
       JobApiUtils jobApiUtils,
       AdminService adminService) {
-    super(authenticatedUserRequestFactory, request, samService, features, jobService, jobApiUtils);
+    super(
+        authenticatedUserRequestFactory,
+        request,
+        samService,
+        features,
+        featureService,
+        jobService,
+        jobApiUtils);
     this.adminService = adminService;
   }
 

@@ -4,7 +4,7 @@
 components:
   parameters:
     AwsCredentialDurationSeconds:
-      name: credentialDurationSeconds
+      name: durationSeconds
       in: query
       description: Duration for credential to access controlled AWS resource in seconds.
       required: true
