@@ -48,7 +48,7 @@ public class GcpContextBackfillFlight extends Flight {
     }
   }
 
-  public static class GcpContextBackfillStep implements Step {
+  private static class GcpContextBackfillStep implements Step {
     private static final Logger logger = LoggerFactory.getLogger(GcpContextBackfillStep.class);
     private final UUID workspaceId;
     private final WorkspaceDao workspaceDao;
@@ -83,7 +83,7 @@ public class GcpContextBackfillFlight extends Flight {
 
       // The context may have been back-filled before we got here
       if (context.getSamPolicyOwner().isEmpty()) {
-        logger.info("Found GCP cloud context already back-filled for workspace {}", workspaceId);
+        logger.info("Back-filling GCP cloud context for workspace {}", workspaceId);
         context.setSamPolicyOwner(
             samService.getWorkspacePolicy(workspaceId, WsmIamRole.OWNER, userRequest));
         context.setSamPolicyWriter(
@@ -93,6 +93,8 @@ public class GcpContextBackfillFlight extends Flight {
         context.setSamPolicyApplication(
             samService.getWorkspacePolicy(workspaceId, WsmIamRole.APPLICATION, userRequest));
         workspaceDao.updateCloudContext(workspaceId, CloudPlatform.GCP, context.serialize());
+      } else {
+        logger.info("Found GCP cloud context already back-filled for workspace {}", workspaceId);
       }
       return StepResult.getStepResultSuccess();
     }

@@ -383,26 +383,23 @@ public class WorkspaceActivityLogHook implements StairwayHook {
   }
 
   private void maybeLogGcpContextBackfillFlight(
-    FlightContext context, OperationType operationType, String userEmail, String subjectId) {
+      FlightContext context, OperationType operationType, String userEmail, String subjectId) {
     if (!context.getFlightStatus().equals(FlightStatus.SUCCESS)) {
       return;
     }
     List<String> backfillWorkspaceIdStrings =
-      Preconditions.checkNotNull(
-        context
-          .getInputParameters()
-          .get(UPDATED_WORKSPACES, new TypeReference<>() {}));
+        Preconditions.checkNotNull(
+            context.getInputParameters().get(UPDATED_WORKSPACES, new TypeReference<>() {}));
 
     for (String workspaceIdString : backfillWorkspaceIdStrings) {
       activityLogDao.writeActivity(
-        UUID.fromString(workspaceIdString),
-        new DbWorkspaceActivityLog(
-          userEmail,
-          subjectId,
-          operationType,
-          workspaceIdString,
-          ActivityLogChangedTarget.GCP_CLOUD_CONTEXT));
+          UUID.fromString(workspaceIdString),
+          new DbWorkspaceActivityLog(
+              userEmail,
+              subjectId,
+              operationType,
+              workspaceIdString,
+              ActivityLogChangedTarget.GCP_CLOUD_CONTEXT));
     }
   }
-
 }

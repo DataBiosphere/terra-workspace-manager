@@ -1,5 +1,10 @@
 package bio.terra.workspace.service.workspace.gcpcontextbackfill;
 
+import static bio.terra.workspace.common.BaseConnectedTest.BUFFER_SERVICE_DISABLED_ENVS_REG_EX;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
@@ -7,6 +12,8 @@ import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
+import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
@@ -14,15 +21,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertNull;
-
-import java.util.List;
-import java.util.UUID;
-
-import static bio.terra.workspace.common.BaseConnectedTest.BUFFER_SERVICE_DISABLED_ENVS_REG_EX;
 
 // TODO: PF-2694 - remove this backfill when propagated to all environments
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -42,24 +40,26 @@ public class GcpContextBackFillTest extends BaseConnectedTest {
   @BeforeAll
   public void setup() {
     workspaceId1 =
-      workspaceUtils
-        .createWorkspaceWithGcpContext(userAccessUtils.defaultUser().getAuthenticatedRequest())
-        .getWorkspaceId();
+        workspaceUtils
+            .createWorkspaceWithGcpContext(userAccessUtils.defaultUser().getAuthenticatedRequest())
+            .getWorkspaceId();
     workspaceString1 = workspaceId1.toString();
     workspaceId2 =
-      workspaceUtils
-        .createWorkspaceWithGcpContext(userAccessUtils.defaultUser().getAuthenticatedRequest())
-        .getWorkspaceId();
+        workspaceUtils
+            .createWorkspaceWithGcpContext(userAccessUtils.defaultUser().getAuthenticatedRequest())
+            .getWorkspaceId();
     workspaceString2 = workspaceId2.toString();
   }
 
   @AfterAll
   public void teardown() {
     if (workspaceId1 != null) {
-      workspaceUtils.deleteWorkspaceAndCloudContext(userAccessUtils.defaultUser().getAuthenticatedRequest(), workspaceId1);
+      workspaceUtils.deleteWorkspaceAndCloudContext(
+          userAccessUtils.defaultUser().getAuthenticatedRequest(), workspaceId1);
     }
     if (workspaceId2 != null) {
-      workspaceUtils.deleteWorkspaceAndCloudContext(userAccessUtils.defaultUser().getAuthenticatedRequest(), workspaceId2);
+      workspaceUtils.deleteWorkspaceAndCloudContext(
+          userAccessUtils.defaultUser().getAuthenticatedRequest(), workspaceId2);
     }
   }
 
@@ -101,14 +101,15 @@ public class GcpContextBackFillTest extends BaseConnectedTest {
   }
 
   private void clearContext(UUID workspaceId) {
-    GcpCloudContext context = workspaceDao.getCloudContext(workspaceId, CloudPlatform.GCP)
-      .map(GcpCloudContext::deserialize)
-      .orElseThrow();
+    GcpCloudContext context =
+        workspaceDao
+            .getCloudContext(workspaceId, CloudPlatform.GCP)
+            .map(GcpCloudContext::deserialize)
+            .orElseThrow();
     context.setSamPolicyApplication(null);
     context.setSamPolicyOwner(null);
     context.setSamPolicyReader(null);
     context.setSamPolicyWriter(null);
     workspaceDao.updateCloudContext(workspaceId, CloudPlatform.GCP, context.serialize());
   }
-
 }
