@@ -26,7 +26,6 @@ import org.mockito.Mockito;
 @ExtendWith(PactConsumerTestExt.class)
 public class ProfileApiTest {
 
-  // This will need to be set up with BPM
   static final String billingProfileId = "4a5afeaa-b3b2-fa51-8e4e-9dbf294b7837";
 
   @Pact(consumer = "wsm-consumer", provider = "bpm-provider")
@@ -73,7 +72,6 @@ public class ProfileApiTest {
         .body(billingProfileResponseShape)
         .toPact();
   }
-
 
   @Pact(consumer = "wsm-consumer", provider = "bpm-provider")
   public RequestResponsePact billingProfileUnAvailable(PactDslWithProvider builder) {
