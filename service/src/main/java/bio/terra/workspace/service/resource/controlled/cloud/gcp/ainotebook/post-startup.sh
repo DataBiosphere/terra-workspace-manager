@@ -346,9 +346,9 @@ WantedBy=multi-user.target
 EOF
 
 # Enable and start the startup service
-sudo systemctl daemon-reload
-sudo systemctl enable terra-setup-environment.service
-sudo systemctl start terra-setup-environment.service
+systemctl daemon-reload
+systemctl enable terra-instance-boot.service
+systemctl start terra-instance-boot.service
 
 # Setup gitignore to avoid accidental checkin of data.
 readonly GIT_IGNORE="/home/${JUPYTER_USER}/gitignore_global"
