@@ -28,12 +28,21 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.CustomGcpIamRol
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;
-import bio.terra.workspace.service.workspace.CloudSyncRoleMapping;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import bio.terra.workspace.service.workspace.GcpCloudSyncRoleMapping;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
-import bio.terra.workspace.service.workspace.flight.SyncSamGroupsStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.flight.cloud.gcp.CreateCustomGcpRolesStep;
+import bio.terra.workspace.service.workspace.flight.cloud.gcp.CreateDbGcpCloudContextFinishStep;
+import bio.terra.workspace.service.workspace.flight.cloud.gcp.CreateDbGcpCloudContextStartStep;
+import bio.terra.workspace.service.workspace.flight.cloud.gcp.CreateGcpContextFlightV2;
+import bio.terra.workspace.service.workspace.flight.cloud.gcp.CreatePetSaStep;
+import bio.terra.workspace.service.workspace.flight.cloud.gcp.GcpCloudSyncStep;
+import bio.terra.workspace.service.workspace.flight.cloud.gcp.GrantWsmRoleAdminStep;
+import bio.terra.workspace.service.workspace.flight.cloud.gcp.PullProjectFromPoolStep;
+import bio.terra.workspace.service.workspace.flight.cloud.gcp.SetProjectBillingStep;
+import bio.terra.workspace.service.workspace.flight.cloud.gcp.SyncSamGroupsStep;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import com.google.api.services.cloudresourcemanager.v3.model.Binding;
@@ -69,7 +78,7 @@ class CreateGcpContextFlightV2Test extends BaseConnectedTest {
 
   @Autowired private WorkspaceService workspaceService;
   @Autowired private WorkspaceConnectedTestUtils workspaceConnectedTestUtils;
-  @Autowired private CloudSyncRoleMapping cloudSyncRoleMapping;
+  @Autowired private GcpCloudSyncRoleMapping gcpCloudSyncRoleMapping;
   @Autowired private CrlService crl;
   @Autowired private JobService jobService;
   @Autowired private SpendConnectedTestUtils spendUtils;
@@ -302,7 +311,7 @@ class CreateGcpContextFlightV2Test extends BaseConnectedTest {
   private void assertRoleBindingInPolicy(
       WsmIamRole role, String groupEmail, Policy gcpPolicy, String projectId) {
     String expectedGcpRoleName =
-        cloudSyncRoleMapping
+        gcpCloudSyncRoleMapping
             .getCustomGcpProjectIamRoles()
             .get(role)
             .getFullyQualifiedRoleName(projectId);

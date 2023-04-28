@@ -138,7 +138,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     ApiJobControl jobControl = body.getJobControl();
 
     logger.info(
-        "deleteAwsResource workspace: {}, resourceId: {}",
+        "deleteAwsResource workspaceUuid: {}, resourceUuid: {}",
         workspaceUuid.toString(),
         resourceUuid.toString());
     String jobId =
@@ -306,6 +306,10 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
       UUID resourceUuid,
       @Valid ApiDeleteControlledAwsResourceRequestBody body) {
     return deleteAwsResource(workspaceUuid, resourceUuid, body);
+      UUID workspaceUuid,
+      UUID resourceUuid,
+      @Valid ApiDeleteControlledAwsResourceRequestBody body) {
+    return deleteAwsResource(workspaceUuid, resourceUuid, body);
   }
 
   @Traced
@@ -441,6 +445,9 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
 
   @Traced
   @Override
+  public ResponseEntity<ApiDeleteControlledAwsResourceResult> getDeleteAwsS3StorageFolderResult(
+      UUID workspaceUuid, String jobId) {
+    return getDeleteAwsResourceResult(workspaceUuid, jobId);
   public ResponseEntity<ApiCreateControlledAwsSagemakerNotebookResult>
       getCreateAwsSagemakerNotebookResult(UUID workspaceUuid, String jobId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();

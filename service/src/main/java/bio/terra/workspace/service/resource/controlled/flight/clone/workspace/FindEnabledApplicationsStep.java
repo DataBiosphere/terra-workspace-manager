@@ -7,7 +7,7 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
-import bio.terra.workspace.service.workspace.flight.application.able.AbleEnum;
+import bio.terra.workspace.service.workspace.flight.application.AbleEnum;
 import bio.terra.workspace.service.workspace.model.WsmWorkspaceApplication;
 import java.util.ArrayList;
 import java.util.List;

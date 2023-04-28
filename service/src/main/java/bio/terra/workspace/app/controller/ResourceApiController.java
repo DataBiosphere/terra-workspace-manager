@@ -116,11 +116,12 @@ public class ResourceApiController extends ControllerBase implements ResourceApi
 
   @Traced
   @Override
-  public ResponseEntity<Boolean> checkReferenceAccess(UUID workspaceUuid, UUID resourceId) {
+  public ResponseEntity<Boolean> checkReferenceAccess(UUID workspaceUuid, UUID resourceUuid) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
-    boolean isValid = referencedResourceService.checkAccess(workspaceUuid, resourceId, userRequest);
+    boolean isValid =
+        referencedResourceService.checkAccess(workspaceUuid, resourceUuid, userRequest);
     return new ResponseEntity<>(isValid, HttpStatus.OK);
   }
 

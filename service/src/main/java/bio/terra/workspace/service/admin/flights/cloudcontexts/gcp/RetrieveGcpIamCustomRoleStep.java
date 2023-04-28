@@ -8,7 +8,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.CustomGcpIamRole;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.CustomGcpIamRoleMapping;
-import bio.terra.workspace.service.workspace.CloudSyncRoleMapping;
+import bio.terra.workspace.service.workspace.GcpCloudSyncRoleMapping;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.iam.v1.model.Role;
 import java.io.IOException;
@@ -21,13 +21,13 @@ import org.slf4j.LoggerFactory;
 /** Step to retrieve IAM custom project and resource roles in GCP projects. */
 public class RetrieveGcpIamCustomRoleStep implements Step {
   private final Logger logger = LoggerFactory.getLogger(RetrieveGcpIamCustomRoleStep.class);
-  private final CloudSyncRoleMapping cloudSyncRoleMapping;
+  private final GcpCloudSyncRoleMapping gcpCloudSyncRoleMapping;
   private final IamCow iamCow;
   private final String projectId;
 
   public RetrieveGcpIamCustomRoleStep(
-      CloudSyncRoleMapping cloudSyncRoleMapping, IamCow iamCow, String projectId) {
-    this.cloudSyncRoleMapping = cloudSyncRoleMapping;
+      GcpCloudSyncRoleMapping gcpCloudSyncRoleMapping, IamCow iamCow, String projectId) {
+    this.gcpCloudSyncRoleMapping = gcpCloudSyncRoleMapping;
     this.iamCow = iamCow;
     this.projectId = projectId;
   }
@@ -35,7 +35,7 @@ public class RetrieveGcpIamCustomRoleStep implements Step {
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     Set<CustomGcpIamRole> customGcpIamRoles = new HashSet<>();
-    customGcpIamRoles.addAll(cloudSyncRoleMapping.getCustomGcpIamRoles());
+    customGcpIamRoles.addAll(gcpCloudSyncRoleMapping.getCustomGcpIamRoles());
     customGcpIamRoles.addAll(CustomGcpIamRoleMapping.CUSTOM_GCP_RESOURCE_IAM_ROLES.values());
     return retrieveCustomRoles(customGcpIamRoles, context);
   }

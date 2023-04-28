@@ -162,8 +162,8 @@ public enum WsmResourceType {
       StewardshipType.CONTROLLED,
       "CONTROLLED_AWS_SAGEMAKER_NOTEBOOK",
       ApiResourceType.AWS_SAGEMAKER_NOTEBOOK,
-      ControlledAwsSagemakerNotebookResource.class, // TODO-Dex
-      ControlledAwsSagemakerNotebookHandler::getHandler), // TODO-Dex
+      ControlledAwsSagemakerNotebookResource.class,
+      ControlledAwsSagemakerNotebookHandler::getHandler),
 
   // FLEXIBLE
   CONTROLLED_FLEXIBLE_RESOURCE(

@@ -47,8 +47,7 @@ public class AdminApiController extends ControllerBase implements AdminApi {
   public ResponseEntity<ApiJobResult> syncIamRoles(Boolean wetRun) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     SamRethrow.onInterrupted(
-        () -> getSamService().checkAdminAuthz(userRequest),
-        "check whether the user has admin access");
+        () -> samService.checkAdminAuthz(userRequest), "check whether the user has admin access");
 
     String jobId =
         adminService.syncIamRoleForAllGcpProjects(userRequest, Boolean.TRUE.equals(wetRun));
@@ -65,8 +64,7 @@ public class AdminApiController extends ControllerBase implements AdminApi {
   private ResponseEntity<ApiJobResult> getApiJobResult(String jobId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     SamRethrow.onInterrupted(
-        () -> getSamService().checkAdminAuthz(userRequest),
-        "check whether the user has admin access");
+        () -> samService.checkAdminAuthz(userRequest), "check whether the user has admin access");
     ApiJobResult response = jobApiUtils.fetchJobResult(jobId);
     return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
   }

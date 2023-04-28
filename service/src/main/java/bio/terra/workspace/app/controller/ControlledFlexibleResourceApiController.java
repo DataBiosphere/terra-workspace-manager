@@ -122,17 +122,17 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
   @Override
   public ResponseEntity<ApiFlexibleResource> updateFlexibleResource(
       UUID workspaceUuid,
-      UUID resourceId,
+      UUID resourceUuid,
       @Valid ApiUpdateControlledFlexibleResourceRequestBody body) {
     logger.info(
-        "Updating flexible resource; resourceId {} workspaceId {}", resourceId, workspaceUuid);
+        "Updating flexible resource; resourceId {} workspaceId {}", resourceUuid, workspaceUuid);
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledFlexibleResource flexibleResource =
         controlledResourceMetadataManager
             .validateControlledResourceAndAction(
                 userRequest,
                 workspaceUuid,
-                resourceId,
+                resourceUuid,
                 SamConstants.SamControlledResourceActions.EDIT_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE);
 
@@ -154,39 +154,40 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
         userRequest, flexibleResource, commonUpdateParameters, decodedData);
     ControlledFlexibleResource updatedResource =
         controlledResourceService
-            .getControlledResource(workspaceUuid, resourceId)
+            .getControlledResource(workspaceUuid, resourceUuid)
             .castByEnum(WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE);
     return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
   @Traced
   @Override
-  public ResponseEntity<Void> deleteFlexibleResource(UUID workspaceUuid, UUID resourceId) {
+  public ResponseEntity<Void> deleteFlexibleResource(UUID workspaceUuid, UUID resourceUuid) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     controlledResourceMetadataManager.validateControlledResourceAndAction(
         userRequest,
         workspaceUuid,
-        resourceId,
+        resourceUuid,
         SamConstants.SamControlledResourceActions.DELETE_ACTION);
     logger.info(
         "Deleting controlled flexible resource {} in workspace {}",
-        resourceId.toString(),
+        resourceUuid.toString(),
         workspaceUuid.toString());
-    controlledResourceService.deleteControlledResourceSync(workspaceUuid, resourceId, userRequest);
+    controlledResourceService.deleteControlledResourceSync(
+        workspaceUuid, resourceUuid, userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   @Traced
   @Override
   public ResponseEntity<ApiFlexibleResource> getFlexibleResource(
-      UUID workspaceUuid, UUID resourceId) {
+      UUID workspaceUuid, UUID resourceUuid) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledFlexibleResource resource =
         controlledResourceMetadataManager
             .validateControlledResourceAndAction(
                 userRequest,
                 workspaceUuid,
-                resourceId,
+                resourceUuid,
                 SamConstants.SamControlledResourceActions.READ_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
@@ -195,13 +196,15 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
   @Traced
   @Override
   public ResponseEntity<ApiCloneControlledFlexibleResourceResult> cloneFlexibleResource(
-      UUID workspaceUuid, UUID resourceId, @Valid ApiCloneControlledFlexibleResourceRequest body) {
+      UUID workspaceUuid,
+      UUID resourceUuid,
+      @Valid ApiCloneControlledFlexibleResourceRequest body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
 
     // Do a permission check before validating the cloning instructions.
     // It's preferable to throw a permission error first.
     controlledResourceMetadataManager.validateCloneAction(
-        userRequest, workspaceUuid, body.getDestinationWorkspaceId(), resourceId);
+        userRequest, workspaceUuid, body.getDestinationWorkspaceId(), resourceUuid);
 
     if (body.getCloningInstructions() != null) {
       ResourceValidationUtils.validateCloningInstructions(
@@ -210,7 +213,7 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
     }
 
     ControlledResource sourceFlexResource =
-        controlledResourceService.getControlledResource(workspaceUuid, resourceId);
+        controlledResourceService.getControlledResource(workspaceUuid, resourceUuid);
 
     CloningInstructions effectiveCloningInstructions =
         Optional.ofNullable(body.getCloningInstructions())
@@ -235,7 +238,7 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
     ControlledFlexibleResource clonedFlexResource =
         controlledResourceService.cloneFlexResource(
             workspaceUuid,
-            resourceId,
+            resourceUuid,
             body.getDestinationWorkspaceId(),
             UUID.randomUUID(),
             userRequest,

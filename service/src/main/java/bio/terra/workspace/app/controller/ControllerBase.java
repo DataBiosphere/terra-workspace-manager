@@ -33,7 +33,7 @@ import org.springframework.http.HttpStatus;
 public class ControllerBase {
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final HttpServletRequest request;
-  private final SamService samService;
+  protected final SamService samService;
   protected final FeatureConfiguration features;
   protected final FeatureService featureService;
   protected final JobService jobService;
@@ -54,10 +54,6 @@ public class ControllerBase {
     this.featureService = featureService;
     this.jobService = jobService;
     this.jobApiUtils = jobApiUtils;
-  }
-
-  public SamService getSamService() {
-    return samService;
   }
 
   public AuthenticatedUserRequest getAuthenticatedInfo() {

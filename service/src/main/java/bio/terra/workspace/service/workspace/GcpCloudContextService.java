@@ -5,7 +5,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
-import bio.terra.workspace.service.workspace.flight.gcp.CreateGcpContextFlightV2;
+import bio.terra.workspace.service.workspace.flight.cloud.gcp.CreateGcpContextFlightV2;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import io.opencensus.contrib.spring.aop.Traced;

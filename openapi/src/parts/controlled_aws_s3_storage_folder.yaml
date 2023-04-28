@@ -119,7 +119,7 @@ paths:
     - $ref: '#/components/parameters/AwsCredentialAccessScope'
     - $ref: '#/components/parameters/AwsCredentialDurationSeconds'
     get:
-      summary: Get a credential to access this S3 Storage Folder resource in the AWS CLI or SDK.
+      summary: Get a credential to access this S3 Storage Folder in the AWS CLI or SDK.
       operationId: getAwsS3StorageFolderCredential
       tags: [ControlledAwsResource]
       responses:

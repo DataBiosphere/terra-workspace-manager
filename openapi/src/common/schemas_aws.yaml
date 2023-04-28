@@ -4,6 +4,7 @@
 components:
   schemas:
     AwsResourceCloudName:
+      description: A valid cloud name for resource.
       type: object
       required: [ awsResourceCloudName ]
       properties:
@@ -16,6 +17,21 @@ components:
       properties:
         awsResourceName:
           type: string
+
+    DeleteControlledAwsResourceRequestBody:
+      type: object
+      required: [ jobControl ]
+      properties:
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+
+    DeleteControlledAwsResourceResult:
+      type: object
+      properties:
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
 
     AwsCredentialDurationSeconds:
       type: integer
@@ -41,18 +57,3 @@ components:
         Expiration:
           type: string
           format: date-time
-
-    DeleteControlledAwsResourceRequestBody:
-      type: object
-      required: [ jobControl ]
-      properties:
-        jobControl:
-          $ref: '#/components/schemas/JobControl'
-
-    DeleteControlledAwsResourceResult:
-      type: object
-      properties:
-        jobReport:
-          $ref: '#/components/schemas/JobReport'
-        errorReport:
-          $ref: '#/components/schemas/ErrorReport'

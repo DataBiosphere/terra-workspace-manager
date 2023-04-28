@@ -54,10 +54,10 @@ import bio.terra.workspace.service.resource.referenced.cloud.any.datareposnapsho
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateUserFacingIdException;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceException;
-import bio.terra.workspace.service.workspace.flight.CheckSamWorkspaceAuthzStep;
-import bio.terra.workspace.service.workspace.flight.CreateWorkspaceAuthzStep;
-import bio.terra.workspace.service.workspace.flight.CreateWorkspacePoliciesStep;
-import bio.terra.workspace.service.workspace.flight.CreateWorkspaceStep;
+import bio.terra.workspace.service.workspace.flight.create.workspace.CheckSamWorkspaceAuthzStep;
+import bio.terra.workspace.service.workspace.flight.create.workspace.CreateWorkspaceAuthzStep;
+import bio.terra.workspace.service.workspace.flight.create.workspace.CreateWorkspacePoliciesStep;
+import bio.terra.workspace.service.workspace.flight.create.workspace.CreateWorkspaceStep;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.fasterxml.jackson.databind.ObjectMapper;

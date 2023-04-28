@@ -205,7 +205,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .spendProfileId(spendProfileId.orElse(null))
             .workspaceStage(internalStage)
             .properties(convertApiPropertyToMap(body.getProperties()))
-            .createdByEmail(getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest))
+            .createdByEmail(samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest))
             .build();
     UUID createdWorkspaceUuid =
         workspaceService.createWorkspace(
@@ -397,11 +397,13 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   @Traced
   @Override
   public ResponseEntity<ApiWsmPolicyUpdateResult> updatePolicies(
-      @PathVariable("workspaceId") UUID workspaceId, @RequestBody ApiWsmPolicyUpdateRequest body) {
+      @PathVariable("workspaceId") UUID workspaceUuid,
+      @RequestBody ApiWsmPolicyUpdateRequest body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    logger.info("Updating workspace policies {} for {}", workspaceId, userRequest.getEmail());
+    logger.info("Updating workspace policies {} for {}", workspaceUuid, userRequest.getEmail());
 
-    workspaceService.validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.WRITE);
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceUuid, SamWorkspaceAction.WRITE);
 
     features.tpsEnabledCheck();
     TpsPolicyInputs adds = TpsApiConversionUtils.tpsFromApiTpsPolicyInputs(body.getAddAttributes());
@@ -409,21 +411,21 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         TpsApiConversionUtils.tpsFromApiTpsPolicyInputs(body.getRemoveAttributes());
     TpsUpdateMode updateMode = TpsApiConversionUtils.tpsFromApiTpsUpdateMode(body.getUpdateMode());
 
-    TpsPaoUpdateResult result = tpsApiDispatch.updatePao(workspaceId, adds, removes, updateMode);
+    TpsPaoUpdateResult result = tpsApiDispatch.updatePao(workspaceUuid, adds, removes, updateMode);
 
     if (Boolean.TRUE.equals(result.isUpdateApplied())) {
       workspaceActivityLogService.writeActivity(
           userRequest,
-          workspaceId,
+          workspaceUuid,
           OperationType.UPDATE,
-          workspaceId.toString(),
+          workspaceUuid.toString(),
           ActivityLogChangedTarget.POLICIES);
       logger.info(
-          "Finished updating workspace policies {} for {}", workspaceId, userRequest.getEmail());
+          "Finished updating workspace policies {} for {}", workspaceUuid, userRequest.getEmail());
     } else {
       logger.warn(
           "Workspace policies update failed to apply to {} for {}",
-          workspaceId,
+          workspaceUuid,
           userRequest.getEmail());
     }
 
@@ -491,12 +493,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     // No additional authz check as this is just a wrapper around a Sam endpoint.
     SamRethrow.onInterrupted(
         () ->
-            getSamService()
-                .grantWorkspaceRole(
-                    uuid,
-                    getAuthenticatedInfo(),
-                    WsmIamRole.fromApiModel(role),
-                    body.getMemberEmail()),
+            samService.grantWorkspaceRole(
+                uuid, getAuthenticatedInfo(), WsmIamRole.fromApiModel(role), body.getMemberEmail()),
         "grantWorkspaceRole");
     workspaceActivityLogService.writeActivity(
         getAuthenticatedInfo(),
@@ -532,8 +530,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     // No additional authz check as this is just a wrapper around a Sam endpoint.
     List<bio.terra.workspace.service.iam.model.RoleBinding> bindingList =
         SamRethrow.onInterrupted(
-            () -> getSamService().listRoleBindings(uuid, getAuthenticatedInfo()),
-            "listRoleBindings");
+            () -> samService.listRoleBindings(uuid, getAuthenticatedInfo()), "listRoleBindings");
     ApiRoleBindingList responseList = new ApiRoleBindingList();
     for (bio.terra.workspace.service.iam.model.RoleBinding roleBinding : bindingList) {
       responseList.add(
@@ -652,7 +649,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         userRequest, workspaceUuid, SamWorkspaceAction.READ);
     petSaService.enablePetServiceAccountImpersonation(
         workspaceUuid,
-        getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
+        samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
         userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
@@ -710,7 +707,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .displayName(Optional.ofNullable(body.getDisplayName()).orElse(generatedDisplayName))
             .description(body.getDescription())
             .properties(sourceWorkspace.getProperties())
-            .createdByEmail(getSamService().getUserEmailFromSamAndRethrowOnInterrupt(petRequest))
+            .createdByEmail(samService.getUserEmailFromSamAndRethrowOnInterrupt(petRequest))
             .build();
 
     final String jobId =
@@ -750,12 +747,15 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
   @Traced
   @Override
-  public ResponseEntity<ApiRegions> listValidRegions(UUID workspaceId, ApiCloudPlatform platform) {
+  public ResponseEntity<ApiRegions> listValidRegions(
+      UUID workspaceUuid, ApiCloudPlatform platform) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    workspaceService.validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.READ);
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceUuid, SamWorkspaceAction.READ);
 
     List<String> regions =
-        tpsApiDispatch.listValidRegions(workspaceId, CloudPlatform.fromApiCloudPlatform(platform));
+        tpsApiDispatch.listValidRegions(
+            workspaceUuid, CloudPlatform.fromApiCloudPlatform(platform));
 
     ApiRegions apiRegions = new ApiRegions();
     apiRegions.addAll(regions);
@@ -765,11 +765,12 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   @Traced
   @Override
   public ResponseEntity<ApiWsmPolicyExplainResult> explainPolicies(
-      UUID workspaceId, Integer depth) {
+      UUID workspaceUuid, Integer depth) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    workspaceService.validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.READ);
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceUuid, SamWorkspaceAction.READ);
     PolicyExplainResult explainResult =
-        tpsApiDispatch.explain(workspaceId, depth, workspaceService, userRequest);
+        tpsApiDispatch.explain(workspaceUuid, depth, workspaceService, userRequest);
 
     return new ResponseEntity<>(explainResult.toApi(), HttpStatus.OK);
   }

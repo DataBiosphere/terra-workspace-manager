@@ -40,12 +40,12 @@ import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.Clone
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneWorkspaceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.model.WsmResource;
-import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
-import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
-import bio.terra.workspace.service.workspace.flight.gcp.DeleteGcpContextFlight;
+import bio.terra.workspace.service.workspace.flight.cloud.gcp.DeleteGcpContextFlight;
+import bio.terra.workspace.service.workspace.flight.create.workspace.WorkspaceCreateFlight;
+import bio.terra.workspace.service.workspace.flight.delete.workspace.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.unit.WorkspaceUnitTestUtils;

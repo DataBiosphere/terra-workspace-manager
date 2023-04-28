@@ -664,4 +664,25 @@ public class WorkspaceDao {
 
     return jdbcTemplate.query(sql, params, WORKSPACE_USER_PAIR_ROW_MAPPER);
   }
+
+  // TODO: PF-2694 - remove backfill once propagated to all environments
+  /**
+   * Retrieve the list of workspace ids where GCP cloud context needs to be back-filled.
+   *
+   * @return list of workspace ids
+   */
+  @ReadTransaction
+  public List<String> getGcpContextBackfillWorkspaceList() {
+    String sql =
+        """
+      SELECT workspace_id FROM cloud_context
+      WHERE cloud_platform = :cloud_platform AND context->'samPolicyOwner' IS NULL
+      """;
+
+    MapSqlParameterSource params =
+        new MapSqlParameterSource().addValue("cloud_platform", CloudPlatform.GCP.toSql());
+
+    // Return the list of workspaces that need to be backfilled
+    return jdbcTemplate.query(sql, params, (rs, rowNum) -> rs.getString("workspace_id"));
+  }
 }

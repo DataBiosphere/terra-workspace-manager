@@ -65,6 +65,7 @@ public class ControlledAiNotebookHandler implements WsmResourceHandler {
    * with a lowercase alpha character, only alphanumerics and '-' of max length 63. I don't have a
    * documentation link, but gcloud will complain otherwise.
    */
+  @Override
   public String generateCloudName(@Nullable UUID workspaceUuid, String aiNotebookName) {
     String generatedName = aiNotebookName.toLowerCase();
     generatedName =

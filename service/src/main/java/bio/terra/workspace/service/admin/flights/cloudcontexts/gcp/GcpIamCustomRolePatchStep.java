@@ -10,7 +10,7 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.CustomGcpIamRole;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.CustomGcpIamRoleMapping;
-import bio.terra.workspace.service.workspace.CloudSyncRoleMapping;
+import bio.terra.workspace.service.workspace.GcpCloudSyncRoleMapping;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.iam.v1.model.CreateRoleRequest;
@@ -36,7 +36,7 @@ public class GcpIamCustomRolePatchStep implements Step {
   private boolean workspaceUpdated = false;
 
   public GcpIamCustomRolePatchStep(
-      CloudSyncRoleMapping cloudSyncRoleMapping,
+      GcpCloudSyncRoleMapping gcpCloudSyncRoleMapping,
       IamCow iamCow,
       UUID workspaceId,
       String projectId,
@@ -45,7 +45,7 @@ public class GcpIamCustomRolePatchStep implements Step {
     this.workspaceId = workspaceId;
     this.projectId = projectId;
     this.isWetRun = isWetRun;
-    customGcpIamRoles.addAll(cloudSyncRoleMapping.getCustomGcpIamRoles());
+    customGcpIamRoles.addAll(gcpCloudSyncRoleMapping.getCustomGcpIamRoles());
     customGcpIamRoles.addAll(CustomGcpIamRoleMapping.CUSTOM_GCP_RESOURCE_IAM_ROLES.values());
   }
 

@@ -255,9 +255,16 @@ public class FolderServiceTest extends BaseConnectedTest {
 
   @Test
   void deleteFolder_failsAtLastStep_throwsInvalidResultsStateException() {
-    fooFolder = createFolder("foo", FOO_FOLDER_ID, null);
+    var fooFolderId = UUID.randomUUID();
+    fooFolder = createFolder("foo", fooFolderId, null);
     referencedResourceService.createReferenceResource(
-        referencedBqTableInFoo, userAccessUtils.secondUserAuthRequest());
+        ReferencedBigQueryDataTableResource.builder()
+            .wsmResourceFields(createWsmResourceCommonFieldsWithFolderId(workspaceId, fooFolderId))
+            .projectId("my-gcp-project")
+            .datasetId("my_special_dataset")
+            .dataTableId("my_secret_table")
+            .build(),
+        userAccessUtils.secondUserAuthRequest());
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(
         DeleteReferencedResourcesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
@@ -267,7 +274,7 @@ public class FolderServiceTest extends BaseConnectedTest {
 
     var jobId =
         folderService.deleteFolder(
-            workspaceId, FOO_FOLDER_ID, userAccessUtils.defaultUserAuthRequest());
+            workspaceId, fooFolderId, userAccessUtils.defaultUserAuthRequest());
 
     jobService.waitForJob(jobId);
     // Service methods which wait for a flight to complete will throw an
@@ -277,7 +284,7 @@ public class FolderServiceTest extends BaseConnectedTest {
         InvalidResultStateException.class,
         () -> jobService.retrieveJobResult(jobId, Boolean.class));
     assertThrows(
-        FolderNotFoundException.class, () -> folderService.getFolder(workspaceId, FOO_FOLDER_ID));
+        FolderNotFoundException.class, () -> folderService.getFolder(workspaceId, fooFolderId));
     assertTrue(resourceDao.enumerateResources(workspaceId, null, null, 0, 100).isEmpty());
   }
 
