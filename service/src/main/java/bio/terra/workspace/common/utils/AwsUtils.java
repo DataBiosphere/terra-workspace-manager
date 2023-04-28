@@ -93,18 +93,6 @@ public class AwsUtils {
           (ControlledAwsS3StorageFolderResource) awsResource;
       tags.add(Tag.builder().key("S3BucketID").value(resource.getBucketName()).build());
       tags.add(Tag.builder().key("TerraBucketID").value(resource.getPrefix()).build());
-    }
-  }
-
-  public static <T extends ControlledResource> void appendPrincipalTags(
-      Collection<Tag> tags, AwsCloudContext awsCloudContext, T awsResource) {
-    tags.add(Tag.builder().key("Version").value(awsCloudContext.getMajorVersion()).build());
-
-    if (awsResource instanceof ControlledAwsS3StorageFolderResource) {
-      ControlledAwsS3StorageFolderResource resource =
-          (ControlledAwsS3StorageFolderResource) awsResource;
-      tags.add(Tag.builder().key("S3BucketID").value(resource.getBucketName()).build());
-      tags.add(Tag.builder().key("TerraBucketID").value(resource.getPrefix()).build());
 
     } else if (awsResource instanceof ControlledAwsSagemakerNotebookResource) {
       ControlledAwsSagemakerNotebookResource resource =
