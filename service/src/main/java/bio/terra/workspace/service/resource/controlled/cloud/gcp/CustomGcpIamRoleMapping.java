@@ -46,7 +46,13 @@ public class CustomGcpIamRoleMapping {
           "bigquery.tables.export",
           "bigquery.tables.getData",
           "bigquery.tables.list",
-          "bigquery.tables.get");
+          "bigquery.tables.get",
+          // Permissions of Service Account Token creator, required for bq data transfer service.
+          "iam.serviceAccounts.getAccessToken",
+          "iam.serviceAccounts.getOpenIdToken",
+          "iam.serviceAccounts.implicitDelegation",
+          "iam.serviceAccounts.signBlob",
+          "iam.serviceAccounts.signJwt");
   static final ImmutableList<String> BIG_QUERY_DATASET_WRITER_PERMISSIONS =
       new ImmutableList.Builder<String>()
           .addAll(BIG_QUERY_DATASET_READER_PERMISSIONS)
