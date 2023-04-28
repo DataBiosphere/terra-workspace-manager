@@ -126,6 +126,9 @@ public class CopyBigQueryDatasetDifferentRegionStep implements Step {
         if (!currentRun.getState().equals(TransferState.SUCCEEDED)) {
           String errorMessage = currentRun.getErrorStatus().getMessage();
           logger.warn("Job {} failed: {}", currentRunName, errorMessage);
+          if (errorMessage.contains("service account needs iam.serviceAccounts.getAccessToken permission")) {
+            return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, new RuntimeException(errorMessage));
+          }
           return new StepResult(
               StepStatus.STEP_RESULT_FAILURE_FATAL, new RuntimeException(errorMessage));
         }
