@@ -17,8 +17,6 @@ import bio.terra.workspace.service.spendprofile.SpendProfileService;
 import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,32 +30,50 @@ public class ProfileApiTest {
   static final String billingProfileId = "4a5afeaa-b3b2-fa51-8e4e-9dbf294b7837";
 
   @Pact(consumer = "wsm-consumer", provider = "bpm-provider")
-  public RequestResponsePact billingProfileAvailable(PactDslWithProvider builder) {
-    // Using the WSM version of this, instead of the BPM version,
-    // because what we care about is not what BPM sends, but that WSM can handle the value
-    var cloudPlatformStrings =
-        Stream.of(CloudPlatform.AZURE, CloudPlatform.GCP)
-            .map(CloudPlatform::toSql)
-            .collect(Collectors.joining("|"));
+  public RequestResponsePact existingAzureBillingProfile(PactDslWithProvider builder) {
     var billingProfileResponseShape =
         new PactDslJsonBody()
-            .stringMatcher("cloudPlatform", cloudPlatformStrings)
+            .stringValue("cloudPlatform", CloudPlatform.AZURE.toSql())
             .uuid("tenantId")
             .uuid("subscriptionId")
             .stringType("managedResourceGroupId")
-            .stringType("billingAccountId")
             .uuid("id");
     return builder
-        .given("an existing billing profile")
+        .given("an Azure billing profile")
         .uponReceiving("A request to retrieve a billing profile")
         .method("GET")
+        // azureProfileId will be replaced with the value specified in the BPM provider tests when
+        // the contract is
+        // run against it
         .pathFromProviderState(
-            "/api/profiles/v1/${profileId}", String.format("/api/profiles/v1/%s", billingProfileId))
+            "/api/profiles/v1/${azureProfileId}",
+            String.format("/api/profiles/v1/%s", billingProfileId))
         .willRespondWith()
         .status(200)
         .body(billingProfileResponseShape)
         .toPact();
   }
+
+  @Pact(consumer = "wsm-consumer", provider = "bpm-provider")
+  public RequestResponsePact existingGCPBillingProfile(PactDslWithProvider builder) {
+    var billingProfileResponseShape =
+        new PactDslJsonBody()
+            .stringValue("cloudPlatform", CloudPlatform.GCP.toSql())
+            .stringType("billingAccountId")
+            .uuid("id");
+    return builder
+        .given("a GCP billing profile")
+        .uponReceiving("A request to retrieve a billing profile")
+        .method("GET")
+        .pathFromProviderState(
+            "/api/profiles/v1/${gcpProfileId}",
+            String.format("/api/profiles/v1/%s", billingProfileId))
+        .willRespondWith()
+        .status(200)
+        .body(billingProfileResponseShape)
+        .toPact();
+  }
+
 
   @Pact(consumer = "wsm-consumer", provider = "bpm-provider")
   public RequestResponsePact billingProfileUnAvailable(PactDslWithProvider builder) {
@@ -72,8 +88,25 @@ public class ProfileApiTest {
   }
 
   @Test
-  @PactTestFor(pactMethod = "billingProfileAvailable")
-  public void testAuthorizingLinkingOfAnExistingProfile(MockServer mockServer) {
+  @PactTestFor(pactMethod = "existingAzureBillingProfile")
+  public void testAuthorizingLinkingOfAnAzureProfile(MockServer mockServer) {
+    var config = new SpendProfileConfiguration();
+
+    config.setBasePath(mockServer.getUrl());
+
+    var samService = Mockito.mock(SamService.class);
+
+    var userRequest = new AuthenticatedUserRequest();
+    userRequest.token(Optional.of("dummyValue"));
+    var spendProfileId = new SpendProfileId(billingProfileId);
+    var service = new SpendProfileService(samService, config);
+
+    service.authorizeLinking(spendProfileId, true, userRequest);
+  }
+
+  @Test
+  @PactTestFor(pactMethod = "existingGCPBillingProfile")
+  public void testAuthorizingLinkingOfGCPProfile(MockServer mockServer) {
     var config = new SpendProfileConfiguration();
 
     config.setBasePath(mockServer.getUrl());
