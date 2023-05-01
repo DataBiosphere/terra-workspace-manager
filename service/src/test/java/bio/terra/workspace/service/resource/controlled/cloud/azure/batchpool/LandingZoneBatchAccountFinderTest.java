@@ -4,6 +4,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -15,6 +16,7 @@ import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneNotFoundExceptio
 import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
+import bio.terra.workspace.service.workspace.WorkspaceService;
 import com.azure.resourcemanager.batch.models.DeploymentConfiguration;
 import com.azure.resourcemanager.batch.models.ImageReference;
 import com.azure.resourcemanager.batch.models.VirtualMachineConfiguration;
@@ -42,19 +44,21 @@ public class LandingZoneBatchAccountFinderTest extends BaseAzureConnectedTest {
                           .withPublisher("canonical")));
 
   @Mock LandingZoneApiDispatch mockLandingZoneApiDispatch;
+  @Mock WorkspaceService mockWorkspaceService;
 
   LandingZoneBatchAccountFinder landingZoneBatchAccountFinder;
 
   @BeforeEach
   public void setup() {
-    landingZoneBatchAccountFinder = new LandingZoneBatchAccountFinder(mockLandingZoneApiDispatch);
+    landingZoneBatchAccountFinder = new LandingZoneBatchAccountFinder(mockLandingZoneApiDispatch,
+        mockWorkspaceService);
   }
 
   @Test
   public void sharedLzBatchAccountFound() {
     ControlledAzureBatchPoolResource resource = buildDefaultResource();
 
-    when(mockLandingZoneApiDispatch.getLandingZoneId(any(), eq(resource.getWorkspaceId())))
+    when(mockLandingZoneApiDispatch.getLandingZoneId(any(), argThat(a -> a.getWorkspaceId().equals(resource.getWorkspaceId()))))
         .thenReturn(LANDING_ZONE_ID);
     var expectedResource =
         Optional.of(
@@ -69,7 +73,7 @@ public class LandingZoneBatchAccountFinderTest extends BaseAzureConnectedTest {
     assertTrue(lzResource.isPresent());
     assertThat(lzResource, equalTo(expectedResource));
     verify(mockLandingZoneApiDispatch, times(1))
-        .getLandingZoneId(eq(TOKEN), eq(resource.getWorkspaceId()));
+        .getLandingZoneId(eq(TOKEN), argThat(a -> a.getWorkspaceId().equals(resource.getWorkspaceId())));
     verify(mockLandingZoneApiDispatch, times(1))
         .getSharedBatchAccount(eq(TOKEN), eq(LANDING_ZONE_ID));
   }
@@ -78,7 +82,7 @@ public class LandingZoneBatchAccountFinderTest extends BaseAzureConnectedTest {
   public void sharedLzBatchAccountNotFound() {
     ControlledAzureBatchPoolResource resource = buildDefaultResource();
 
-    when(mockLandingZoneApiDispatch.getLandingZoneId(any(), eq(resource.getWorkspaceId())))
+    when(mockLandingZoneApiDispatch.getLandingZoneId(any(), argThat(a -> a.getWorkspaceId().equals(resource.getWorkspaceId()))))
         .thenReturn(LANDING_ZONE_ID);
     when(mockLandingZoneApiDispatch.getSharedBatchAccount(any(), eq(LANDING_ZONE_ID)))
         .thenReturn(Optional.empty());
@@ -88,7 +92,7 @@ public class LandingZoneBatchAccountFinderTest extends BaseAzureConnectedTest {
 
     assertTrue(lzResource.isEmpty());
     verify(mockLandingZoneApiDispatch, times(1))
-        .getLandingZoneId(eq(TOKEN), eq(resource.getWorkspaceId()));
+        .getLandingZoneId(eq(TOKEN), argThat(a -> a.getWorkspaceId().equals(resource.getWorkspaceId())));
     verify(mockLandingZoneApiDispatch, times(1))
         .getSharedBatchAccount(eq(TOKEN), eq(LANDING_ZONE_ID));
   }
@@ -98,7 +102,7 @@ public class LandingZoneBatchAccountFinderTest extends BaseAzureConnectedTest {
   public void sharedLzBatchAccountNotFoundFailure(Class<Exception> exceptionClass) {
     ControlledAzureBatchPoolResource resource = buildDefaultResource();
 
-    when(mockLandingZoneApiDispatch.getLandingZoneId(TOKEN, UUID.randomUUID()))
+    when(mockLandingZoneApiDispatch.getLandingZoneId(any(), any()))
         .thenThrow(exceptionClass);
 
     var batchAccount = landingZoneBatchAccountFinder.find("fakeToken", resource);

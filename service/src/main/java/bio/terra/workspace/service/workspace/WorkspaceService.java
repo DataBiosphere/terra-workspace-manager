@@ -684,22 +684,23 @@ public class WorkspaceService {
 
   private void validateWorkspaceConformsToPolicy(
       UUID workspaceId, TpsPaoGetResult policies, AuthenticatedUserRequest userRequest) {
-    validateWorkspaceConformsToRegionPolicy(workspaceId, policies, userRequest);
-    validateWorkspaceConformsToProtectedDataPolicy(workspaceId, policies, userRequest);
+    var workspace = getWorkspace(workspaceId);
+    validateWorkspaceConformsToRegionPolicy(workspace, policies, userRequest);
+    validateWorkspaceConformsToProtectedDataPolicy(workspace, policies, userRequest);
     // TODO group constraint
   }
 
   @VisibleForTesting
   void validateWorkspaceConformsToRegionPolicy(
-      UUID workspaceId, TpsPaoGetResult policies, AuthenticatedUserRequest userRequest) {
-    for (var cloudPlatform : workspaceDao.listCloudPlatforms(workspaceId)) {
+      Workspace workspace, TpsPaoGetResult policies, AuthenticatedUserRequest userRequest) {
+    for (var cloudPlatform : workspaceDao.listCloudPlatforms(workspace.workspaceId())) {
       var validRegions =
           ResourceValidationUtils.validateExistingResourceWithNewPolicy(
-              policies, workspaceId, tpsApiDispatch, cloudPlatform, resourceDao);
+              policies, workspace.workspaceId(), tpsApiDispatch, cloudPlatform, resourceDao);
 
       if (cloudPlatform.equals(CloudPlatform.AZURE)) {
         // the landing zone in azure is region specific
-        var lzRegion = landingZoneApiDispatch.getLandingZoneRegion(userRequest, workspaceId);
+        var lzRegion = landingZoneApiDispatch.getLandingZoneRegion(userRequest, workspace);
         if (validRegions.stream().filter(r -> r.equalsIgnoreCase(lzRegion)).findAny().isEmpty()) {
           throw new PolicyConflictException(
               "Workspace landing zone region %s is not one of %s"
@@ -711,15 +712,15 @@ public class WorkspaceService {
 
   @VisibleForTesting
   private void validateWorkspaceConformsToProtectedDataPolicy(
-      UUID workspaceId, TpsPaoGetResult policies, AuthenticatedUserRequest userRequest) {
+      Workspace workspace, TpsPaoGetResult policies, AuthenticatedUserRequest userRequest) {
     if (TpsUtilities.containsProtectedDataPolicy(policies.getEffectiveAttributes())) {
       workspaceDao
-          .getCloudContext(workspaceId, CloudPlatform.AZURE)
+          .getCloudContext(workspace.workspaceId(), CloudPlatform.AZURE)
           .orElseThrow(
               () -> new PolicyConflictException("Protected data policy only supported on Azure"));
 
       var lzDefinition =
-          landingZoneApiDispatch.getLandingZone(userRequest, workspaceId).getDefinition();
+          landingZoneApiDispatch.getLandingZone(userRequest, workspace).getDefinition();
       if (!azureConfiguration.getProtectedDataLandingZoneDefs().contains(lzDefinition)) {
         throw new PolicyConflictException(
             "Workspace landing zone type [%s] does not support protected data"

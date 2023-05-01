@@ -23,6 +23,7 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.BaseStorageStepTest;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
+import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.azure.core.management.exception.ManagementError;
 import com.azure.core.management.exception.ManagementException;
@@ -42,6 +43,7 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
   @Mock private LandingZoneApiDispatch mockLandingZoneApiDispatch;
   @Mock private AuthenticatedUserRequest mockUserRequest;
   @Mock private SamService mockSamSerivce;
+  @Mock private WorkspaceService mockWorkspaceService;
 
   private static final UUID LANDING_ZONE_ID =
       UUID.fromString("b2db9b47-fd0f-4ae9-b9b4-f675550b0291");
@@ -78,7 +80,7 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
             mockResourceDao,
             mockLandingZoneApiDispatch,
             mockSamSerivce,
-            storageContainerResource);
+            storageContainerResource, mockWorkspaceService);
   }
 
   @Test
@@ -121,7 +123,7 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
 
     when(mockUserRequest.getRequiredToken()).thenReturn("FAKE_TOKEN");
     // there are no landing zone association with azure cloud context
-    when(mockLandingZoneApiDispatch.getLandingZoneId(any(BearerToken.class), any(UUID.class)))
+    when(mockLandingZoneApiDispatch.getLandingZoneId(any(BearerToken.class), any()))
         .thenThrow(
             new IllegalStateException(
                 "Could not find a landing zone id for the given Azure context. "

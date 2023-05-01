@@ -68,7 +68,7 @@ public class LandingZoneApiDispatchTest extends BaseAzureUnitTest {
   void setupLandingZoneTests() {
     when(featureConfiguration.isAzureEnabled()).thenReturn(true);
     landingZoneApiDispatch =
-        new LandingZoneApiDispatch(landingZoneService, workspaceService, featureConfiguration);
+        new LandingZoneApiDispatch(landingZoneService, featureConfiguration);
   }
 
   @Test
@@ -90,7 +90,7 @@ public class LandingZoneApiDispatchTest extends BaseAzureUnitTest {
             eq(BEARER_TOKEN), eq(JOB_ID), any(LandingZoneRequest.class), any()))
         .thenReturn(createJobResult);
     landingZoneApiDispatch =
-        new LandingZoneApiDispatch(landingZoneService, workspaceService, featureConfiguration);
+        new LandingZoneApiDispatch(landingZoneService, featureConfiguration);
 
     ApiCreateLandingZoneResult response =
         landingZoneApiDispatch.createAzureLandingZone(BEARER_TOKEN, request, resultEndpoint);
@@ -118,7 +118,7 @@ public class LandingZoneApiDispatchTest extends BaseAzureUnitTest {
         .thenReturn(landingZoneList);
 
     landingZoneApiDispatch =
-        new LandingZoneApiDispatch(landingZoneService, workspaceService, featureConfiguration);
+        new LandingZoneApiDispatch(landingZoneService, featureConfiguration);
 
     assertThrows(
         LandingZoneInvalidInputException.class,
@@ -144,7 +144,7 @@ public class LandingZoneApiDispatchTest extends BaseAzureUnitTest {
         .thenReturn(createJobResult);
 
     landingZoneApiDispatch =
-        new LandingZoneApiDispatch(landingZoneService, workspaceService, featureConfiguration);
+        new LandingZoneApiDispatch(landingZoneService, featureConfiguration);
 
     var result =
         landingZoneApiDispatch.createAzureLandingZone(BEARER_TOKEN, request, resultEndpoint);
@@ -195,7 +195,7 @@ public class LandingZoneApiDispatchTest extends BaseAzureUnitTest {
             BEARER_TOKEN, LANDING_ZONE_ID, SubnetResourcePurpose.WORKSPACE_BATCH_SUBNET))
         .thenReturn(Collections.emptyList());
     landingZoneApiDispatch =
-        new LandingZoneApiDispatch(landingZoneService, workspaceService, featureConfiguration);
+        new LandingZoneApiDispatch(landingZoneService, featureConfiguration);
 
     ApiAzureLandingZoneResourcesList response =
         landingZoneApiDispatch.listAzureLandingZoneResourcesByPurpose(
@@ -226,7 +226,7 @@ public class LandingZoneApiDispatchTest extends BaseAzureUnitTest {
                     .createdDate(CREATED_DATE)
                     .build()));
     landingZoneApiDispatch =
-        new LandingZoneApiDispatch(landingZoneService, workspaceService, featureConfiguration);
+        new LandingZoneApiDispatch(landingZoneService, featureConfiguration);
     ApiAzureLandingZoneList response =
         landingZoneApiDispatch.listAzureLandingZones(BEARER_TOKEN, BILLING_PROFILE_ID);
 
@@ -265,7 +265,7 @@ public class LandingZoneApiDispatchTest extends BaseAzureUnitTest {
                     .createdDate(CREATED_DATE)
                     .build()));
     landingZoneApiDispatch =
-        new LandingZoneApiDispatch(landingZoneService, workspaceService, featureConfiguration);
+        new LandingZoneApiDispatch(landingZoneService, featureConfiguration);
     assertThrows(
         ConflictException.class,
         () -> landingZoneApiDispatch.listAzureLandingZones(BEARER_TOKEN, BILLING_PROFILE_ID));
@@ -291,7 +291,7 @@ public class LandingZoneApiDispatchTest extends BaseAzureUnitTest {
                     .createdDate(CREATED_DATE)
                     .build()));
     landingZoneApiDispatch =
-        new LandingZoneApiDispatch(landingZoneService, workspaceService, featureConfiguration);
+        new LandingZoneApiDispatch(landingZoneService, featureConfiguration);
     ApiAzureLandingZoneList response =
         landingZoneApiDispatch.listAzureLandingZones(BEARER_TOKEN, null);
 
@@ -346,7 +346,7 @@ public class LandingZoneApiDispatchTest extends BaseAzureUnitTest {
             BEARER_TOKEN, LANDING_ZONE_ID, ResourcePurpose.SHARED_RESOURCE))
         .thenReturn(listResources1);
     landingZoneApiDispatch =
-        new LandingZoneApiDispatch(landingZoneService, workspaceService, featureConfiguration);
+        new LandingZoneApiDispatch(landingZoneService, featureConfiguration);
   }
 
   @Test
@@ -363,7 +363,7 @@ public class LandingZoneApiDispatchTest extends BaseAzureUnitTest {
             eq(BEARER_TOKEN), eq(UUID.fromString(SPEND_PROFILE_ID.getId()))))
         .thenReturn(landingZoneList);
 
-    UUID landingZoneId = landingZoneApiDispatch.getLandingZoneId(BEARER_TOKEN, WORKSPACE_ID);
+    UUID landingZoneId = landingZoneApiDispatch.getLandingZoneId(BEARER_TOKEN, workspace);
 
     assertNotNull(landingZoneId);
     assertEquals(expectedLandingZoneId, landingZoneId);
@@ -377,7 +377,7 @@ public class LandingZoneApiDispatchTest extends BaseAzureUnitTest {
 
     assertThrows(
         LandingZoneNotFoundException.class,
-        () -> landingZoneApiDispatch.getLandingZoneId(BEARER_TOKEN, WORKSPACE_ID));
+        () -> landingZoneApiDispatch.getLandingZoneId(BEARER_TOKEN, workspace));
   }
 
   @Test
@@ -391,7 +391,7 @@ public class LandingZoneApiDispatchTest extends BaseAzureUnitTest {
 
     assertThrows(
         IllegalStateException.class,
-        () -> landingZoneApiDispatch.getLandingZoneId(BEARER_TOKEN, WORKSPACE_ID));
+        () -> landingZoneApiDispatch.getLandingZoneId(BEARER_TOKEN, workspace));
   }
 
   @Test

@@ -118,7 +118,7 @@ public class CloneControlledAzureStorageContainerResourceFlight extends Flight {
           new GetSharedStorageAccountStep(
               destinationWorkspaceId,
               flightBeanBag.getLandingZoneApiDispatch(),
-              flightBeanBag.getSamService()),
+              flightBeanBag.getSamService(), flightBeanBag.getWorkspaceService()),
           cloudRetry);
       addStep(
           new CopyAzureStorageContainerDefinitionStep(
@@ -138,7 +138,7 @@ public class CloneControlledAzureStorageContainerResourceFlight extends Flight {
                 flightBeanBag.getLandingZoneApiDispatch(),
                 flightBeanBag.getAzureCloudContextService(),
                 flightBeanBag.getFeatureConfiguration(),
-                flightBeanBag.getAzureConfig());
+                flightBeanBag.getAzureConfig(), flightBeanBag.getWorkspaceService());
         addStep(
             new CopyAzureStorageContainerBlobsStep(
                 azureStorageService,

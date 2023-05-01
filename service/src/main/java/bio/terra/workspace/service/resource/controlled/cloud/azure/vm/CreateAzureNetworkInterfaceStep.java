@@ -17,6 +17,7 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementException;
@@ -41,6 +42,7 @@ public class CreateAzureNetworkInterfaceStep implements Step {
   private final ResourceDao resourceDao;
   private final LandingZoneApiDispatch landingZoneApiDispatch;
   private final SamService samService;
+  private final WorkspaceService workspaceService;
 
   public CreateAzureNetworkInterfaceStep(
       AzureConfiguration azureConfig,
@@ -48,13 +50,15 @@ public class CreateAzureNetworkInterfaceStep implements Step {
       ControlledAzureVmResource resource,
       ResourceDao resourceDao,
       LandingZoneApiDispatch landingZoneApiDispatch,
-      SamService samService) {
+      SamService samService,
+      WorkspaceService workspaceService) {
     this.azureConfig = azureConfig;
     this.crlService = crlService;
     this.resource = resource;
     this.resourceDao = resourceDao;
     this.landingZoneApiDispatch = landingZoneApiDispatch;
     this.samService = samService;
+    this.workspaceService = workspaceService;
   }
 
   @Override
@@ -109,7 +113,7 @@ public class CreateAzureNetworkInterfaceStep implements Step {
   NetworkSubnetPair getNetworkResourcesFromLandingZone(NetworkManager networkManager) {
     var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
     final UUID lzId =
-        landingZoneApiDispatch.getLandingZoneId(bearerToken, resource.getWorkspaceId());
+        landingZoneApiDispatch.getLandingZoneId(bearerToken, workspaceService.getWorkspace(resource.getWorkspaceId()));
 
     ApiAzureLandingZoneDeployedResource lzResource =
         listSubnetsWithParentVNetByPurpose(

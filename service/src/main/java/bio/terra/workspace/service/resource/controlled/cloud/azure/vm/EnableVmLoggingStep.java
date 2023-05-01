@@ -13,6 +13,7 @@ import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.util.Context;
@@ -38,18 +39,21 @@ public class EnableVmLoggingStep implements Step {
   private final ControlledAzureVmResource resource;
   private final LandingZoneApiDispatch landingZoneApiDispatch;
   private final SamService samService;
+  private final WorkspaceService workspaceService;
 
   public EnableVmLoggingStep(
       AzureConfiguration azureConfig,
       CrlService crlService,
       ControlledAzureVmResource resource,
       LandingZoneApiDispatch landingZoneApiDispatch,
-      SamService samService) {
+      SamService samService,
+      WorkspaceService workspaceService) {
     this.azureConfig = azureConfig;
     this.crlService = crlService;
     this.resource = resource;
     this.landingZoneApiDispatch = landingZoneApiDispatch;
     this.samService = samService;
+    this.workspaceService = workspaceService;
   }
 
   @Override
@@ -139,7 +143,7 @@ public class EnableVmLoggingStep implements Step {
     try {
       var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
       final UUID lzId =
-          landingZoneApiDispatch.getLandingZoneId(bearerToken, resource.getWorkspaceId());
+          landingZoneApiDispatch.getLandingZoneId(bearerToken, workspaceService.getWorkspace(resource.getWorkspaceId()));
 
       return listLandingZoneResources(bearerToken, lzId, ResourcePurpose.SHARED_RESOURCE).stream()
           .filter(r -> DATA_COLLECTION_RULES_TYPE.equalsIgnoreCase(r.getResourceType()))

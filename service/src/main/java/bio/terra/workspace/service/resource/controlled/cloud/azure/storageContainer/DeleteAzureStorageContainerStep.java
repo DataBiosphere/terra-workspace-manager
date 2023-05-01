@@ -13,6 +13,7 @@ import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
+import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementException;
@@ -33,6 +34,7 @@ public class DeleteAzureStorageContainerStep implements Step {
   private final ResourceDao resourceDao;
   private final LandingZoneApiDispatch landingZoneApiDispatch;
   private final SamService samService;
+  private final WorkspaceService workspaceService;
 
   public DeleteAzureStorageContainerStep(
       AzureConfiguration azureConfig,
@@ -40,13 +42,15 @@ public class DeleteAzureStorageContainerStep implements Step {
       ResourceDao resourceDao,
       LandingZoneApiDispatch landingZoneApiDispatch,
       SamService samService,
-      ControlledAzureStorageContainerResource resource) {
+      ControlledAzureStorageContainerResource resource,
+      WorkspaceService workspaceService) {
     this.crlService = crlService;
     this.azureConfig = azureConfig;
     this.resource = resource;
     this.resourceDao = resourceDao;
     this.landingZoneApiDispatch = landingZoneApiDispatch;
     this.samService = samService;
+    this.workspaceService = workspaceService;
   }
 
   @Override
@@ -64,7 +68,7 @@ public class DeleteAzureStorageContainerStep implements Step {
         // Storage container was created based on landing zone shared storage account
         var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
         UUID landingZoneId =
-            landingZoneApiDispatch.getLandingZoneId(bearerToken, resource.getWorkspaceId());
+            landingZoneApiDispatch.getLandingZoneId(bearerToken, workspaceService.getWorkspace(resource.getWorkspaceId()));
         Optional<ApiAzureLandingZoneDeployedResource> sharedStorageAccount =
             landingZoneApiDispatch.getSharedStorageAccount(bearerToken, landingZoneId);
         if (sharedStorageAccount.isPresent()) {

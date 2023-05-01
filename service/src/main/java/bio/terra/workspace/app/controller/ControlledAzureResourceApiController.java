@@ -119,7 +119,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         toCommonFields(
             workspaceUuid,
             body.getCommon(),
-            landingZoneApiDispatch.getLandingZoneRegion(userRequest, workspaceUuid),
+            landingZoneApiDispatch.getLandingZoneRegion(userRequest, workspaceService.getWorkspace(workspaceUuid)),
             userRequest,
             WsmResourceType.CONTROLLED_AZURE_DISK);
     workspaceService.validateMcWorkspaceAndAction(
@@ -197,7 +197,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         toCommonFields(
             workspaceUuid,
             body.getCommon(),
-            landingZoneApiDispatch.getLandingZoneRegion(userRequest, workspaceUuid),
+            landingZoneApiDispatch.getLandingZoneRegion(userRequest, workspaceService.getWorkspace(workspaceUuid)),
             userRequest,
             WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
     workspaceService.validateMcWorkspaceAndAction(
@@ -233,7 +233,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         toCommonFields(
             workspaceUuid,
             body.getCommon(),
-            landingZoneApiDispatch.getLandingZoneRegion(userRequest, workspaceUuid),
+            landingZoneApiDispatch.getLandingZoneRegion(userRequest, workspaceService.getWorkspace(workspaceUuid)),
             userRequest,
             WsmResourceType.CONTROLLED_AZURE_VM);
     workspaceService.validateMcWorkspaceAndAction(
@@ -292,7 +292,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         toCommonFields(
             workspaceUuid,
             body.getCommon(),
-            landingZoneApiDispatch.getLandingZoneRegion(userRequest, workspaceUuid),
+            landingZoneApiDispatch.getLandingZoneRegion(userRequest, workspaceService.getWorkspace(workspaceUuid)),
             userRequest,
             WsmResourceType.CONTROLLED_AZURE_BATCH_POOL);
     workspaceService.validateMcWorkspaceAndAction(

@@ -35,7 +35,6 @@ import bio.terra.workspace.generated.model.ApiDeleteAzureLandingZoneRequestBody;
 import bio.terra.workspace.generated.model.ApiDeleteAzureLandingZoneResult;
 import bio.terra.workspace.generated.model.ApiResourceQuota;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import java.util.List;
 import java.util.Optional;
@@ -55,15 +54,12 @@ public class LandingZoneApiDispatch {
   private static final String AZURE_BATCH_ACCOUNT_RESOURCE_TYPE = "Microsoft.Batch/batchAccounts";
 
   private final LandingZoneService landingZoneService;
-  private final WorkspaceService workspaceService;
   private final FeatureConfiguration features;
 
   public LandingZoneApiDispatch(
       LandingZoneService landingZoneService,
-      WorkspaceService workspaceService,
       FeatureConfiguration features) {
     this.landingZoneService = landingZoneService;
-    this.workspaceService = workspaceService;
     this.features = features;
   }
 
@@ -262,8 +258,7 @@ public class LandingZoneApiDispatch {
         .landingZone(azureLandingZone);
   }
 
-  public UUID getLandingZoneId(BearerToken token, UUID workspaceId) {
-    Workspace workspace = workspaceService.getWorkspace(workspaceId);
+  public UUID getLandingZoneId(BearerToken token, Workspace workspace) {
     Optional<UUID> profileId = workspace.getSpendProfileId().map(sp -> UUID.fromString(sp.getId()));
 
     if (profileId.isEmpty()) {
@@ -388,16 +383,16 @@ public class LandingZoneApiDispatch {
         .findFirst();
   }
 
-  public String getLandingZoneRegion(AuthenticatedUserRequest userRequest, UUID workspaceUuid) {
+  public String getLandingZoneRegion(AuthenticatedUserRequest userRequest, Workspace workspace) {
     final BearerToken token = new BearerToken(userRequest.getRequiredToken());
-    var lzId = getLandingZoneId(token, workspaceUuid);
+    var lzId = getLandingZoneId(token, workspace);
     return getAzureLandingZoneRegion(token, lzId);
   }
 
   public ApiAzureLandingZone getLandingZone(
-      AuthenticatedUserRequest userRequest, UUID workspaceUuid) {
+      AuthenticatedUserRequest userRequest, Workspace workspace) {
     final BearerToken token = new BearerToken(userRequest.getRequiredToken());
-    var lzId = getLandingZoneId(token, workspaceUuid);
+    var lzId = getLandingZoneId(token, workspace);
     return getAzureLandingZone(token, lzId);
   }
 }
