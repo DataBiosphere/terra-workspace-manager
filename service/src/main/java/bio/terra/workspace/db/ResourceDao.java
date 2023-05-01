@@ -3,7 +3,6 @@ package bio.terra.workspace.db;
 import static bio.terra.workspace.service.resource.model.StewardshipType.CONTROLLED;
 import static bio.terra.workspace.service.resource.model.StewardshipType.REFERENCED;
 import static bio.terra.workspace.service.resource.model.StewardshipType.fromSql;
-import static bio.terra.workspace.service.resource.model.WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET;
 import static java.util.stream.Collectors.toList;
 
 import bio.terra.common.db.ReadTransaction;
@@ -16,8 +15,6 @@ import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.db.model.DbUpdater;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetAttributes;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
@@ -395,35 +392,6 @@ public class ResourceDao {
         .collect(Collectors.toList());
   }
 
-  // TODO (PF-2269): Clean this up once the back-fill is done in all Terra environments.
-  /**
-   * Returns a list of all controlled BigQuery datasets with empty default table lifetime and
-   * default partition lifetime.
-   */
-  @ReadTransaction
-  public List<ControlledBigQueryDatasetResource>
-      listControlledBigQueryDatasetsWithoutBothLifetime() {
-
-    String sql =
-        RESOURCE_SELECT_SQL_WITHOUT_WORKSPACE_ID
-            + " WHERE stewardship_type = :controlled_resource"
-            + " AND exact_resource_type = :controlled_gcp_big_query_dataset"
-            + " AND ((attributes -> 'defaultTableLifetime') IS NULL)"
-            + " AND ((attributes -> 'defaultPartitionLifetime') IS NULL)";
-    MapSqlParameterSource params =
-        new MapSqlParameterSource()
-            .addValue("controlled_resource", CONTROLLED.toSql())
-            .addValue("controlled_gcp_big_query_dataset", CONTROLLED_GCP_BIG_QUERY_DATASET.toSql());
-
-    List<DbResource> dbResources = jdbcTemplate.query(sql, params, DB_RESOURCE_ROW_MAPPER);
-    return dbResources.stream()
-        .map(this::constructResource)
-        .map(WsmResource::castToControlledResource)
-        .map(
-            r -> (ControlledBigQueryDatasetResource) r.castByEnum(CONTROLLED_GCP_BIG_QUERY_DATASET))
-        .collect(Collectors.toList());
-  }
-
   /**
    * Reads all private controlled resources assigned to a given user in a given workspace which are
    * not being cleaned up by other flights and marks them as being cleaned up by the current flight.
@@ -616,38 +584,6 @@ public class ResourceDao {
         "{} region for resource {}",
         (updated ? "Updated" : "No Update - did not find"),
         resourceId);
-
-    return updated;
-  }
-
-  // TODO (PF-2269): Clean this up once the back-fill is done in all Terra environments.
-  /**
-   * Update a BigQuery dataset's default table lifetime and default partition lifetime.
-   *
-   * @return whether the dataset's lifetimes are successfully updated.
-   */
-  @WriteTransaction
-  public boolean updateBigQueryDatasetDefaultTableAndPartitionLifetime(
-      ControlledBigQueryDatasetResource dataset,
-      @Nullable Long defaultTableLifetime,
-      @Nullable Long defaultPartitionLifetime) {
-    String newAttributes =
-        DbSerDes.toJson(
-            new ControlledBigQueryDatasetAttributes(
-                dataset.getDatasetName(),
-                dataset.getProjectId(),
-                defaultTableLifetime,
-                defaultPartitionLifetime));
-    boolean updated =
-        updateResource(
-            dataset.getWorkspaceId(), dataset.getResourceId(), null, null, newAttributes, null);
-
-    logger.info(
-        "{} resource {} default table lifetime to {} and default partition lifetime to {}.",
-        (updated ? "Updated" : "No Update - did not find"),
-        dataset.getResourceId(),
-        dataset.getDefaultTableLifetime(),
-        dataset.getDefaultPartitionLifetime());
 
     return updated;
   }
