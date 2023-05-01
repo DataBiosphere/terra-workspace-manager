@@ -8,6 +8,7 @@ public class TpsUtilities {
   public static final String TERRA_NAMESPACE = "terra";
   public static final String GROUP_CONSTRAINT = "group-constraint";
   public static final String GROUP_KEY = "group";
+  public static final String PROTECTED_DATA_POLICY_NAME = "protected-data";
 
   public static List<String> getGroupConstraintsFromInputs(TpsPolicyInputs inputs) {
     List<String> result = new ArrayList<>();
@@ -28,5 +29,14 @@ public class TpsUtilities {
     }
 
     return result;
+  }
+
+  public static boolean containsProtectedDataPolicy(TpsPolicyInputs inputs) {
+    if (inputs == null) return false;
+    return inputs.getInputs().stream()
+        .anyMatch(
+            input ->
+                input.getNamespace().equals(TERRA_NAMESPACE)
+                    && input.getName().equals(PROTECTED_DATA_POLICY_NAME));
   }
 }

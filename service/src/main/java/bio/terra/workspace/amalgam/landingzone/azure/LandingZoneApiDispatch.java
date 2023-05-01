@@ -34,6 +34,7 @@ import bio.terra.workspace.generated.model.ApiDeleteAzureLandingZoneJobResult;
 import bio.terra.workspace.generated.model.ApiDeleteAzureLandingZoneRequestBody;
 import bio.terra.workspace.generated.model.ApiDeleteAzureLandingZoneResult;
 import bio.terra.workspace.generated.model.ApiResourceQuota;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import java.util.List;
@@ -278,7 +279,7 @@ public class LandingZoneApiDispatch {
         .map(LandingZone::landingZoneId)
         .orElseThrow(
             () ->
-                new IllegalStateException(
+                new LandingZoneNotFoundException(
                     String.format(
                         "Could not find a landing zone for the given billing profile: '%s'. Please"
                             + " check that the landing zone deployment is complete"
@@ -385,5 +386,18 @@ public class LandingZoneApiDispatch {
         .flatMap(r -> r.getDeployedResources().stream())
         .filter(r -> StringUtils.equalsIgnoreCase(r.getResourceType(), resourceType))
         .findFirst();
+  }
+
+  public String getLandingZoneRegion(AuthenticatedUserRequest userRequest, UUID workspaceUuid) {
+    final BearerToken token = new BearerToken(userRequest.getRequiredToken());
+    var lzId = getLandingZoneId(token, workspaceUuid);
+    return getAzureLandingZoneRegion(token, lzId);
+  }
+
+  public ApiAzureLandingZone getLandingZone(
+      AuthenticatedUserRequest userRequest, UUID workspaceUuid) {
+    final BearerToken token = new BearerToken(userRequest.getRequiredToken());
+    var lzId = getLandingZoneId(token, workspaceUuid);
+    return getAzureLandingZone(token, lzId);
   }
 }

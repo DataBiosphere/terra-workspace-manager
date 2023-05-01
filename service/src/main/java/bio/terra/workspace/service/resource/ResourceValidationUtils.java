@@ -6,15 +6,21 @@ import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.common.exception.ValidationException;
+import bio.terra.policy.model.TpsComponent;
+import bio.terra.policy.model.TpsObjectType;
+import bio.terra.policy.model.TpsPaoGetResult;
 import bio.terra.workspace.app.configuration.external.GitRepoReferencedResourceConfiguration;
 import bio.terra.workspace.common.utils.GcpUtils;
+import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.exception.FieldSizeExceededException;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.resource.controlled.exception.RegionNotAllowedException;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.exception.InvalidNameException;
+import bio.terra.workspace.service.resource.exception.PolicyConflictException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
@@ -24,8 +30,10 @@ import com.google.common.collect.ImmutableList;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -207,6 +215,38 @@ public class ResourceValidationUtils {
         // Flexible resources are not stored on the cloud. Thus, they have no region policies.
       }
     }
+  }
+
+  /** @return list of valid regions */
+  public static Set<String> validateExistingResourceWithNewPolicy(
+      TpsPaoGetResult effectivePolicies,
+      UUID workspaceId,
+      TpsApiDispatch tpsApiDispatch,
+      CloudPlatform cloudPlatform,
+      ResourceDao resourceDao) {
+    HashSet<String> validRegions = new HashSet<>();
+    for (String validRegion :
+        tpsApiDispatch.listValidRegionsForPao(effectivePolicies, cloudPlatform)) {
+      validRegions.add(validRegion.toLowerCase());
+    }
+    List<ControlledResource> existingResources =
+        resourceDao.listControlledResources(workspaceId, cloudPlatform);
+
+    for (var existingResource : existingResources) {
+      if (existingResource.getRegion() == null) {
+        // Some resources don't have regions. IE: Git repos.
+        continue;
+      }
+      // NOTE: part of this message text is validated in the integration tests.
+      // If you change the text, check its usage in integration.
+      if (!validRegions.contains(existingResource.getRegion().toLowerCase())) {
+        throw new PolicyConflictException(
+            String.format(
+                "Workspace contains resources in region '%s' in violation of policy.",
+                existingResource.getRegion()));
+      }
+    }
+    return validRegions;
   }
 
   /** Validate whether the input URI is a valid GitHub Repo https uri. */
@@ -447,7 +487,7 @@ public class ResourceValidationUtils {
 
   public static void validateRegion(
       TpsApiDispatch tpsApiDispatch, UUID workspaceId, String region, CloudPlatform cloudPlatform) {
-    tpsApiDispatch.createPaoIfNotExist(workspaceId);
+    tpsApiDispatch.createPaoIfNotExist(workspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE);
 
     // Get the list of valid locations for this workspace from TPS. If there are no regional
     // constraints applied to the workspace, TPS should return all available regions.

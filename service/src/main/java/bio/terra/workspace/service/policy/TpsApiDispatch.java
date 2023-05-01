@@ -72,7 +72,11 @@ public class TpsApiDispatch {
 
   // -- Policy Attribute Object Interface --
   @Traced
-  public void createPao(UUID workspaceUuid, @Nullable TpsPolicyInputs policyInputs) {
+  public void createPao(
+      UUID objectId,
+      @Nullable TpsPolicyInputs policyInputs,
+      TpsComponent component,
+      TpsObjectType objectType) {
     features.tpsEnabledCheck();
     TpsPolicyInputs inputs = (policyInputs == null) ? new TpsPolicyInputs() : policyInputs;
 
@@ -80,9 +84,9 @@ public class TpsApiDispatch {
     try {
       tpsApi.createPao(
           new TpsPaoCreateRequest()
-              .objectId(workspaceUuid)
-              .component(TpsComponent.WSM)
-              .objectType(TpsObjectType.WORKSPACE)
+              .objectId(objectId)
+              .component(component)
+              .objectType(objectType)
               .attributes(inputs));
     } catch (ApiException e) {
       throw convertApiException(e);
@@ -93,13 +97,13 @@ public class TpsApiDispatch {
   // workspaces have an associated policy attribute object. This function creates
   // an empty one if it does not exist.
   @Traced
-  public void createPaoIfNotExist(UUID workspaceId) {
-    Optional<TpsPaoGetResult> pao = getPaoIfExists(workspaceId);
+  public void createPaoIfNotExist(UUID objectId, TpsComponent component, TpsObjectType objectType) {
+    Optional<TpsPaoGetResult> pao = getPaoIfExists(objectId);
     if (pao.isPresent()) {
       return;
     }
     // Workspace doesn't have a PAO, so create an empty one for it.
-    createPao(workspaceId, null);
+    createPao(objectId, null, component, objectType);
   }
 
   @Traced

@@ -9,12 +9,10 @@ import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
-import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.exception.PolicyConflictException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
-import java.util.HashSet;
-import java.util.List;
 import java.util.UUID;
 
 public class ValidateWorkspaceAgainstPolicyStep implements Step {
@@ -55,29 +53,9 @@ public class ValidateWorkspaceAgainstPolicyStep implements Step {
       return StepResult.getStepResultSuccess();
     }
 
-    // Validate the workspace controlled resources against any region policies.
-    HashSet<String> validRegions = new HashSet<>();
-    for (String validRegion :
-        tpsApiDispatch.listValidRegionsForPao(effectivePolicies, cloudPlatform)) {
-      validRegions.add(validRegion.toLowerCase());
-    }
-    List<ControlledResource> existingResources =
-        resourceDao.listControlledResources(workspaceId, cloudPlatform);
-
-    for (var existingResource : existingResources) {
-      if (existingResource.getRegion() == null) {
-        // Some resources don't have regions. IE: Git repos.
-        continue;
-      }
-      // NOTE: part of this message text is validated in the integration tests.
-      // If you change the text, check its usage in integration.
-      if (!validRegions.contains(existingResource.getRegion().toLowerCase())) {
-        throw new PolicyConflictException(
-            String.format(
-                "Workspace contains resources in region '%s' in violation of policy.",
-                existingResource.getRegion()));
-      }
-    }
+    var validRegions =
+        ResourceValidationUtils.validateExistingResourceWithNewPolicy(
+            effectivePolicies, workspaceId, tpsApiDispatch, cloudPlatform, resourceDao);
 
     if (destinationLocation != null && !validRegions.contains(destinationLocation.toLowerCase())) {
       throw new PolicyConflictException(

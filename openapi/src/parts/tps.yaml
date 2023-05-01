@@ -32,7 +32,7 @@ components:
     WsmPolicyComponent:
       type: string
       description: Enum representing a policy-bearing Terra component.
-      enum: [ 'WSM' ]
+      enum: [ 'BPM', 'TDR', 'WSM' ]
 
     WsmPolicyObjectId:
       description: |
@@ -45,7 +45,7 @@ components:
     WsmPolicyObjectType:
       type: string
       description: Enum representing an object type of a policy-bearing Terra component.
-      enum: [ 'workspace' ]
+      enum: [ 'billing-profile', 'dataset', 'snapshot', 'workspace' ]
 
     WsmPolicy:
       type: object
@@ -166,6 +166,16 @@ components:
           $ref: '#/components/schemas/WsmPolicyInputs'
         addAttributes:
           $ref: '#/components/schemas/WsmPolicyInputs'
+        updateMode:
+          $ref: '#/components/schemas/WsmPolicyUpdateMode'
+
+    WsmLinkPoliciesRequest:
+      description: Request with a policy object id
+      type: object
+      required: [ policyObjectId ]
+      properties:
+        policyObjectId:
+          $ref: '#/components/schemas/WsmPolicyDescription'
         updateMode:
           $ref: '#/components/schemas/WsmPolicyUpdateMode'
 

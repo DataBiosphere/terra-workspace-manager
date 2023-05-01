@@ -2,7 +2,13 @@ package bio.terra.workspace.service.workspace;
 
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.SOURCE_WORKSPACE_ID;
 
+import bio.terra.policy.model.TpsPaoDescription;
+import bio.terra.policy.model.TpsPaoGetResult;
+import bio.terra.policy.model.TpsPaoUpdateResult;
 import bio.terra.policy.model.TpsPolicyInputs;
+import bio.terra.policy.model.TpsUpdateMode;
+import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
+import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
@@ -20,7 +26,11 @@ import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
+import bio.terra.workspace.service.policy.TpsApiDispatch;
+import bio.terra.workspace.service.policy.TpsUtilities;
+import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneWorkspaceFlight;
+import bio.terra.workspace.service.resource.exception.PolicyConflictException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.exceptions.BufferServiceDisabledException;
@@ -36,9 +46,11 @@ import bio.terra.workspace.service.workspace.flight.cloud.gcp.DeleteGcpContextFl
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.RemoveUserFromWorkspaceFlight;
 import bio.terra.workspace.service.workspace.flight.create.workspace.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.delete.workspace.WorkspaceDeleteFlight;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceDescription;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
@@ -74,6 +86,9 @@ public class WorkspaceService {
   private final FeatureService featureService;
   private final ResourceDao resourceDao;
   private final WorkspaceActivityLogService workspaceActivityLogService;
+  private final TpsApiDispatch tpsApiDispatch;
+  private final LandingZoneApiDispatch landingZoneApiDispatch;
+  private final AzureConfiguration azureConfiguration;
 
   @Autowired
   public WorkspaceService(
@@ -86,7 +101,10 @@ public class WorkspaceService {
       FeatureConfiguration features,
       FeatureService featureService,
       ResourceDao resourceDao,
-      WorkspaceActivityLogService workspaceActivityLogService) {
+      WorkspaceActivityLogService workspaceActivityLogService,
+      TpsApiDispatch tpsApiDispatch,
+      LandingZoneApiDispatch landingZoneApiDispatch,
+      AzureConfiguration azureConfiguration) {
     this.jobService = jobService;
     this.applicationDao = applicationDao;
     this.workspaceDao = workspaceDao;
@@ -97,6 +115,9 @@ public class WorkspaceService {
     this.featureService = featureService;
     this.resourceDao = resourceDao;
     this.workspaceActivityLogService = workspaceActivityLogService;
+    this.tpsApiDispatch = tpsApiDispatch;
+    this.landingZoneApiDispatch = landingZoneApiDispatch;
+    this.azureConfiguration = azureConfiguration;
   }
 
   /** Create a workspace with the specified parameters. Returns workspaceID of the new workspace. */
@@ -632,5 +653,78 @@ public class WorkspaceService {
         .addParameter(WorkspaceFlightMapKeys.USER_TO_REMOVE, targetUserEmail)
         .addParameter(WorkspaceFlightMapKeys.ROLE_TO_REMOVE, role.name())
         .submitAndWait();
+  }
+
+  @Traced
+  public TpsPaoUpdateResult linkPolicies(
+      UUID workspaceId,
+      TpsPaoDescription sourcePaoId,
+      TpsUpdateMode tpsUpdateMode,
+      AuthenticatedUserRequest userRequest) {
+
+    tpsApiDispatch.createPaoIfNotExist(
+        sourcePaoId.getObjectId(), sourcePaoId.getComponent(), sourcePaoId.getObjectType());
+
+    TpsPaoUpdateResult dryRun =
+        tpsApiDispatch.linkPao(workspaceId, sourcePaoId.getObjectId(), TpsUpdateMode.DRY_RUN);
+
+    if (!dryRun.getConflicts().isEmpty() && tpsUpdateMode != TpsUpdateMode.DRY_RUN) {
+      throw new PolicyConflictException(
+          "Workspace policies conflict with source", dryRun.getConflicts());
+    }
+
+    validateWorkspaceConformsToPolicy(workspaceId, dryRun.getResultingPao(), userRequest);
+
+    if (tpsUpdateMode == TpsUpdateMode.DRY_RUN) {
+      return dryRun;
+    } else {
+      return tpsApiDispatch.linkPao(workspaceId, sourcePaoId.getObjectId(), tpsUpdateMode);
+    }
+  }
+
+  private void validateWorkspaceConformsToPolicy(
+      UUID workspaceId, TpsPaoGetResult policies, AuthenticatedUserRequest userRequest) {
+    validateWorkspaceConformsToRegionPolicy(workspaceId, policies, userRequest);
+    validateWorkspaceConformsToProtectedDataPolicy(workspaceId, policies, userRequest);
+    // TODO group constraint
+  }
+
+  @VisibleForTesting
+  void validateWorkspaceConformsToRegionPolicy(
+      UUID workspaceId, TpsPaoGetResult policies, AuthenticatedUserRequest userRequest) {
+    for (var cloudPlatform : workspaceDao.listCloudPlatforms(workspaceId)) {
+      var validRegions =
+          ResourceValidationUtils.validateExistingResourceWithNewPolicy(
+              policies, workspaceId, tpsApiDispatch, cloudPlatform, resourceDao);
+
+      if (cloudPlatform.equals(CloudPlatform.AZURE)) {
+        // the landing zone in azure is region specific
+        var lzRegion = landingZoneApiDispatch.getLandingZoneRegion(userRequest, workspaceId);
+        if (validRegions.stream().filter(r -> r.equalsIgnoreCase(lzRegion)).findAny().isEmpty()) {
+          throw new PolicyConflictException(
+              "Workspace landing zone region %s is not one of %s"
+                  .formatted(lzRegion, validRegions));
+        }
+      }
+    }
+  }
+
+  @VisibleForTesting
+  private void validateWorkspaceConformsToProtectedDataPolicy(
+      UUID workspaceId, TpsPaoGetResult policies, AuthenticatedUserRequest userRequest) {
+    if (TpsUtilities.containsProtectedDataPolicy(policies.getEffectiveAttributes())) {
+      workspaceDao
+          .getCloudContext(workspaceId, CloudPlatform.AZURE)
+          .orElseThrow(
+              () -> new PolicyConflictException("Protected data policy only supported on Azure"));
+
+      var lzDefinition =
+          landingZoneApiDispatch.getLandingZone(userRequest, workspaceId).getDefinition();
+      if (!azureConfiguration.getProtectedDataLandingZoneDefs().contains(lzDefinition)) {
+        throw new PolicyConflictException(
+            "Workspace landing zone type [%s] does not support protected data"
+                .formatted(lzDefinition));
+      }
+    }
   }
 }
