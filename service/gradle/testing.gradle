@@ -160,15 +160,11 @@ task awsConnectedTest(type: Test) {
   maxParallelForks = runnerThreads
 }
 
-// contract tests
-test {
-  systemProperties['pact.rootDir'] = "$buildDir/pacts"
-  systemProperties['pact.provider.version'] = "$project.version"
-}
-
-tasks.register("pactTests", Test) {
+task pactTests(type: Test) {
   useJUnitPlatform {
     includeTags "pact-test"
   }
+  environment.put('pact.rootDir', "$buildDir/pacts")
+  environment.put('pact.provider.version', "$project.version")
 }
 
