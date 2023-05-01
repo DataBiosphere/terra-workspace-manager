@@ -26,7 +26,10 @@ import org.mockito.Mockito;
 @ExtendWith(PactConsumerTestExt.class)
 public class ProfileApiTest {
 
-  static final String billingProfileId = "4a5afeaa-b3b2-fa51-8e4e-9dbf294b7837";
+  // The actual values of these are not significant.
+  // They will be replaced by provider-side values when the pact is verified
+  static final String dummyAzureProfileId = "4a5afeaa-b3b2-fa51-8e4e-9dbf294b7837";
+  static final String dummyGCPProfileId = "37bfb7e0-8261-4160-9ae7-882800d6464f";
 
   @Pact(consumer = "wsm-consumer", provider = "bpm-provider")
   public RequestResponsePact existingAzureBillingProfile(PactDslWithProvider builder) {
@@ -46,7 +49,7 @@ public class ProfileApiTest {
         // run against it
         .pathFromProviderState(
             "/api/profiles/v1/${azureProfileId}",
-            String.format("/api/profiles/v1/%s", billingProfileId))
+            String.format("/api/profiles/v1/%s", dummyAzureProfileId))
         .willRespondWith()
         .status(200)
         .body(billingProfileResponseShape)
@@ -66,7 +69,7 @@ public class ProfileApiTest {
         .method("GET")
         .pathFromProviderState(
             "/api/profiles/v1/${gcpProfileId}",
-            String.format("/api/profiles/v1/%s", billingProfileId))
+            String.format("/api/profiles/v1/%s", dummyGCPProfileId))
         .willRespondWith()
         .status(200)
         .body(billingProfileResponseShape)
@@ -79,7 +82,8 @@ public class ProfileApiTest {
         .uponReceiving("A request to retrieve a billing profile")
         .method("GET")
         .pathFromProviderState(
-            "/api/profiles/v1/${profileId}", String.format("/api/profiles/v1/%s", billingProfileId))
+            "/api/profiles/v1/${profileId}",
+            String.format("/api/profiles/v1/%s", dummyAzureProfileId))
         .willRespondWith()
         .status(403)
         .toPact();
@@ -96,7 +100,7 @@ public class ProfileApiTest {
 
     var userRequest = new AuthenticatedUserRequest();
     userRequest.token(Optional.of("dummyValue"));
-    var spendProfileId = new SpendProfileId(billingProfileId);
+    var spendProfileId = new SpendProfileId(dummyAzureProfileId);
     var service = new SpendProfileService(samService, config);
 
     service.authorizeLinking(spendProfileId, true, userRequest);
@@ -113,7 +117,7 @@ public class ProfileApiTest {
 
     var userRequest = new AuthenticatedUserRequest();
     userRequest.token(Optional.of("dummyValue"));
-    var spendProfileId = new SpendProfileId(billingProfileId);
+    var spendProfileId = new SpendProfileId(dummyGCPProfileId);
     var service = new SpendProfileService(samService, config);
 
     service.authorizeLinking(spendProfileId, true, userRequest);
@@ -130,7 +134,7 @@ public class ProfileApiTest {
 
     var userRequest = new AuthenticatedUserRequest();
     userRequest.token(Optional.of("dummyValue"));
-    var spendProfileId = new SpendProfileId(billingProfileId);
+    var spendProfileId = new SpendProfileId(dummyAzureProfileId);
     var service = new SpendProfileService(samService, config);
     assertThrows(
         SpendUnauthorizedException.class,
