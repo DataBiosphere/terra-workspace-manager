@@ -57,8 +57,7 @@ public class LandingZoneApiDispatch {
   private final FeatureConfiguration features;
 
   public LandingZoneApiDispatch(
-      LandingZoneService landingZoneService,
-      FeatureConfiguration features) {
+      LandingZoneService landingZoneService, FeatureConfiguration features) {
     this.landingZoneService = landingZoneService;
     this.features = features;
   }

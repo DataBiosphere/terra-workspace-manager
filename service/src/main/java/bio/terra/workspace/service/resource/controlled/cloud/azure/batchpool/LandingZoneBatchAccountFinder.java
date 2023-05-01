@@ -18,8 +18,8 @@ public class LandingZoneBatchAccountFinder {
   private final LandingZoneApiDispatch landingZoneApiDispatch;
   private final WorkspaceService workspaceService;
 
-  public LandingZoneBatchAccountFinder(LandingZoneApiDispatch landingZoneApiDispatch,
-      WorkspaceService workspaceService) {
+  public LandingZoneBatchAccountFinder(
+      LandingZoneApiDispatch landingZoneApiDispatch, WorkspaceService workspaceService) {
     this.landingZoneApiDispatch = landingZoneApiDispatch;
     this.workspaceService = workspaceService;
   }
@@ -29,7 +29,8 @@ public class LandingZoneBatchAccountFinder {
     try {
       UUID landingZoneId =
           landingZoneApiDispatch.getLandingZoneId(
-              new BearerToken(userRequestToken), workspaceService.getWorkspace(resource.getWorkspaceId()));
+              new BearerToken(userRequestToken),
+              workspaceService.getWorkspace(resource.getWorkspaceId()));
       Optional<ApiAzureLandingZoneDeployedResource> existingSharedBatchAccount =
           landingZoneApiDispatch.getSharedBatchAccount(
               new BearerToken(userRequestToken), landingZoneId);

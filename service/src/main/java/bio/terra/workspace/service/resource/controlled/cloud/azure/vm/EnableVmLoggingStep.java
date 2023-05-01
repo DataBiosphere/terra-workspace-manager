@@ -143,7 +143,8 @@ public class EnableVmLoggingStep implements Step {
     try {
       var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
       final UUID lzId =
-          landingZoneApiDispatch.getLandingZoneId(bearerToken, workspaceService.getWorkspace(resource.getWorkspaceId()));
+          landingZoneApiDispatch.getLandingZoneId(
+              bearerToken, workspaceService.getWorkspace(resource.getWorkspaceId()));
 
       return listLandingZoneResources(bearerToken, lzId, ResourcePurpose.SHARED_RESOURCE).stream()
           .filter(r -> DATA_COLLECTION_RULES_TYPE.equalsIgnoreCase(r.getResourceType()))

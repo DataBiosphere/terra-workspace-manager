@@ -76,7 +76,8 @@ public class CreateAzureNetworkInterfaceStepTest extends BaseAzureUnitTest {
             resource,
             resourceDao,
             landingZoneApiDispatch,
-            samService, mockWorkspaceService);
+            samService,
+            mockWorkspaceService);
     when(networkManager.networks()).thenReturn(networks);
     var subnets = new HashMap<String, Subnet>();
     subnets.put(STUB_SUBNET, armSubnet);
@@ -111,7 +112,8 @@ public class CreateAzureNetworkInterfaceStepTest extends BaseAzureUnitTest {
                         .resourceParentId(networkId.toString()))));
 
     when(resource.getWorkspaceId()).thenReturn(workspaceId);
-    when(landingZoneApiDispatch.getLandingZoneId(eq(bearerToken), argThat(a -> a.getWorkspaceId().equals(workspaceId))))
+    when(landingZoneApiDispatch.getLandingZoneId(
+            eq(bearerToken), argThat(a -> a.getWorkspaceId().equals(workspaceId))))
         .thenReturn(lzId);
     when(landingZoneApiDispatch.listAzureLandingZoneResourcesByPurpose(
             any(), eq(lzId), eq(SubnetResourcePurpose.WORKSPACE_COMPUTE_SUBNET)))

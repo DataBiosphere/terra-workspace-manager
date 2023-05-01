@@ -50,15 +50,16 @@ public class LandingZoneBatchAccountFinderTest extends BaseAzureConnectedTest {
 
   @BeforeEach
   public void setup() {
-    landingZoneBatchAccountFinder = new LandingZoneBatchAccountFinder(mockLandingZoneApiDispatch,
-        mockWorkspaceService);
+    landingZoneBatchAccountFinder =
+        new LandingZoneBatchAccountFinder(mockLandingZoneApiDispatch, mockWorkspaceService);
   }
 
   @Test
   public void sharedLzBatchAccountFound() {
     ControlledAzureBatchPoolResource resource = buildDefaultResource();
 
-    when(mockLandingZoneApiDispatch.getLandingZoneId(any(), argThat(a -> a.getWorkspaceId().equals(resource.getWorkspaceId()))))
+    when(mockLandingZoneApiDispatch.getLandingZoneId(
+            any(), argThat(a -> a.getWorkspaceId().equals(resource.getWorkspaceId()))))
         .thenReturn(LANDING_ZONE_ID);
     var expectedResource =
         Optional.of(
@@ -73,7 +74,8 @@ public class LandingZoneBatchAccountFinderTest extends BaseAzureConnectedTest {
     assertTrue(lzResource.isPresent());
     assertThat(lzResource, equalTo(expectedResource));
     verify(mockLandingZoneApiDispatch, times(1))
-        .getLandingZoneId(eq(TOKEN), argThat(a -> a.getWorkspaceId().equals(resource.getWorkspaceId())));
+        .getLandingZoneId(
+            eq(TOKEN), argThat(a -> a.getWorkspaceId().equals(resource.getWorkspaceId())));
     verify(mockLandingZoneApiDispatch, times(1))
         .getSharedBatchAccount(eq(TOKEN), eq(LANDING_ZONE_ID));
   }
@@ -82,7 +84,8 @@ public class LandingZoneBatchAccountFinderTest extends BaseAzureConnectedTest {
   public void sharedLzBatchAccountNotFound() {
     ControlledAzureBatchPoolResource resource = buildDefaultResource();
 
-    when(mockLandingZoneApiDispatch.getLandingZoneId(any(), argThat(a -> a.getWorkspaceId().equals(resource.getWorkspaceId()))))
+    when(mockLandingZoneApiDispatch.getLandingZoneId(
+            any(), argThat(a -> a.getWorkspaceId().equals(resource.getWorkspaceId()))))
         .thenReturn(LANDING_ZONE_ID);
     when(mockLandingZoneApiDispatch.getSharedBatchAccount(any(), eq(LANDING_ZONE_ID)))
         .thenReturn(Optional.empty());
@@ -92,7 +95,8 @@ public class LandingZoneBatchAccountFinderTest extends BaseAzureConnectedTest {
 
     assertTrue(lzResource.isEmpty());
     verify(mockLandingZoneApiDispatch, times(1))
-        .getLandingZoneId(eq(TOKEN), argThat(a -> a.getWorkspaceId().equals(resource.getWorkspaceId())));
+        .getLandingZoneId(
+            eq(TOKEN), argThat(a -> a.getWorkspaceId().equals(resource.getWorkspaceId())));
     verify(mockLandingZoneApiDispatch, times(1))
         .getSharedBatchAccount(eq(TOKEN), eq(LANDING_ZONE_ID));
   }
@@ -102,8 +106,7 @@ public class LandingZoneBatchAccountFinderTest extends BaseAzureConnectedTest {
   public void sharedLzBatchAccountNotFoundFailure(Class<Exception> exceptionClass) {
     ControlledAzureBatchPoolResource resource = buildDefaultResource();
 
-    when(mockLandingZoneApiDispatch.getLandingZoneId(any(), any()))
-        .thenThrow(exceptionClass);
+    when(mockLandingZoneApiDispatch.getLandingZoneId(any(), any())).thenThrow(exceptionClass);
 
     var batchAccount = landingZoneBatchAccountFinder.find("fakeToken", resource);
     assertTrue(batchAccount.isEmpty());

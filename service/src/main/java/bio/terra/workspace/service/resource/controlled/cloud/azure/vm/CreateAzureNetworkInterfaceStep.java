@@ -113,7 +113,8 @@ public class CreateAzureNetworkInterfaceStep implements Step {
   NetworkSubnetPair getNetworkResourcesFromLandingZone(NetworkManager networkManager) {
     var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
     final UUID lzId =
-        landingZoneApiDispatch.getLandingZoneId(bearerToken, workspaceService.getWorkspace(resource.getWorkspaceId()));
+        landingZoneApiDispatch.getLandingZoneId(
+            bearerToken, workspaceService.getWorkspace(resource.getWorkspaceId()));
 
     ApiAzureLandingZoneDeployedResource lzResource =
         listSubnetsWithParentVNetByPurpose(

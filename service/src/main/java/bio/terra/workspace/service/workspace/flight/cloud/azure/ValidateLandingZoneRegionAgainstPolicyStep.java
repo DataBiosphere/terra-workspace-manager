@@ -24,7 +24,8 @@ public class ValidateLandingZoneRegionAgainstPolicyStep implements Step {
       LandingZoneApiDispatch landingZoneApiDispatch,
       AuthenticatedUserRequest userRequest,
       TpsApiDispatch tpsApiDispatch,
-      UUID workspaceUuid, WorkspaceService workspaceService) {
+      UUID workspaceUuid,
+      WorkspaceService workspaceService) {
     this.landingZoneApiDispatch = landingZoneApiDispatch;
     this.userRequest = userRequest;
     this.tpsApiDispatch = tpsApiDispatch;
@@ -35,7 +36,9 @@ public class ValidateLandingZoneRegionAgainstPolicyStep implements Step {
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     final BearerToken bearerToken = new BearerToken(userRequest.getRequiredToken());
-    var landingZoneId = landingZoneApiDispatch.getLandingZoneId(bearerToken, workspaceService.getWorkspace(workspaceUuid));
+    var landingZoneId =
+        landingZoneApiDispatch.getLandingZoneId(
+            bearerToken, workspaceService.getWorkspace(workspaceUuid));
     ResourceValidationUtils.validateRegionAgainstPolicy(
         tpsApiDispatch,
         workspaceUuid,

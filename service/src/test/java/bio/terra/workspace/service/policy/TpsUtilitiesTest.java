@@ -14,23 +14,21 @@ public class TpsUtilitiesTest extends BaseUnitTest {
   @Test
   void testGetGroupConstraintsFromInputs() {
     var testGroup = "myGroup";
-    var results = TpsUtilities.getGroupConstraintsFromInputs(
-        new TpsPolicyInputs()
-            .addInputsItem(
-                new TpsPolicyInput()
-                    .namespace(TpsUtilities.TERRA_NAMESPACE)
-                    .name(TpsUtilities.GROUP_CONSTRAINT)
-                    .addAdditionalDataItem(new TpsPolicyPair()
-                        .key(TpsUtilities.GROUP_KEY)
-                        .value(testGroup)))
-            .addInputsItem(
-                new TpsPolicyInput()
-                    .namespace("not terra")
-                    .name(TpsUtilities.GROUP_CONSTRAINT)
-                    .addAdditionalDataItem(new TpsPolicyPair()
-                        .key(TpsUtilities.GROUP_KEY)
-                        .value(testGroup))
-            ));
+    var results =
+        TpsUtilities.getGroupConstraintsFromInputs(
+            new TpsPolicyInputs()
+                .addInputsItem(
+                    new TpsPolicyInput()
+                        .namespace(TpsUtilities.TERRA_NAMESPACE)
+                        .name(TpsUtilities.GROUP_CONSTRAINT)
+                        .addAdditionalDataItem(
+                            new TpsPolicyPair().key(TpsUtilities.GROUP_KEY).value(testGroup)))
+                .addInputsItem(
+                    new TpsPolicyInput()
+                        .namespace("not terra")
+                        .name(TpsUtilities.GROUP_CONSTRAINT)
+                        .addAdditionalDataItem(
+                            new TpsPolicyPair().key(TpsUtilities.GROUP_KEY).value(testGroup))));
 
     assertIterableEquals(List.of(testGroup), results);
   }
@@ -38,16 +36,15 @@ public class TpsUtilitiesTest extends BaseUnitTest {
   @Test
   void testGetGroupConstraintsFromInputs_empty() {
     var testGroup = "myGroup";
-    var results = TpsUtilities.getGroupConstraintsFromInputs(
-        new TpsPolicyInputs()
-            .addInputsItem(
-                new TpsPolicyInput()
-                    .namespace("not terra")
-                    .name(TpsUtilities.GROUP_CONSTRAINT)
-                    .addAdditionalDataItem(new TpsPolicyPair()
-                        .key(TpsUtilities.GROUP_KEY)
-                        .value(testGroup))
-            ));
+    var results =
+        TpsUtilities.getGroupConstraintsFromInputs(
+            new TpsPolicyInputs()
+                .addInputsItem(
+                    new TpsPolicyInput()
+                        .namespace("not terra")
+                        .name(TpsUtilities.GROUP_CONSTRAINT)
+                        .addAdditionalDataItem(
+                            new TpsPolicyPair().key(TpsUtilities.GROUP_KEY).value(testGroup))));
 
     assertIterableEquals(List.of(), results);
   }

@@ -23,7 +23,9 @@ public class GetSharedStorageAccountStep implements Step {
   private final WorkspaceService workspaceService;
 
   public GetSharedStorageAccountStep(
-      UUID workspaceId, LandingZoneApiDispatch landingZoneApiDispatch, SamService samService,
+      UUID workspaceId,
+      LandingZoneApiDispatch landingZoneApiDispatch,
+      SamService samService,
       WorkspaceService workspaceService) {
     this.workspaceId = workspaceId;
     this.landingZoneApiDispatch = landingZoneApiDispatch;
@@ -35,7 +37,9 @@ public class GetSharedStorageAccountStep implements Step {
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     try {
       var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
-      UUID landingZoneId = landingZoneApiDispatch.getLandingZoneId(bearerToken, workspaceService.getWorkspace(workspaceId));
+      UUID landingZoneId =
+          landingZoneApiDispatch.getLandingZoneId(
+              bearerToken, workspaceService.getWorkspace(workspaceId));
       Optional<ApiAzureLandingZoneDeployedResource> existingSharedStorageAccount =
           landingZoneApiDispatch.getSharedStorageAccount(bearerToken, landingZoneId);
       if (existingSharedStorageAccount.isPresent()) {

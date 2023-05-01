@@ -78,7 +78,8 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
             mockLandingZoneApiDispatch,
             mockAzureCloudContextService,
             mockFeatureConfiguration(),
-            mockAzureConfiguration, mockWorkspaceService);
+            mockAzureConfiguration,
+            mockWorkspaceService);
   }
 
   private ControlledAzureStorageContainerResource buildStorageContainerResource(
@@ -528,7 +529,8 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
                 eq(SamConstants.SamControlledResourceActions.READ_ACTION)))
         .thenReturn(storageContainerResource);
     when(mockLandingZoneApiDispatch.getLandingZoneId(
-            any(), argThat(a -> a.getWorkspaceId().equals(storageContainerResource.getWorkspaceId()))))
+            any(),
+            argThat(a -> a.getWorkspaceId().equals(storageContainerResource.getWorkspaceId()))))
         .thenReturn(landingZoneId);
     Optional<ApiAzureLandingZoneDeployedResource> lzSharedStorageAccount =
         lzSharedStorageAccountExists ? Optional.of(sharedStorageAccount) : Optional.empty();

@@ -80,7 +80,8 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
             mockResourceDao,
             mockLandingZoneApiDispatch,
             mockSamSerivce,
-            storageContainerResource, mockWorkspaceService);
+            storageContainerResource,
+            mockWorkspaceService);
   }
 
   @Test
