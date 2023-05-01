@@ -3,7 +3,6 @@ package bio.terra.workspace.unit;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
-import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
@@ -17,8 +16,8 @@ public class WorkspaceUnitTestUtils {
    * Creates a workspaces with a GCP cloud context and stores it in the database. Returns the
    * workspace id.
    *
-   * <p>The {@link ResourceDao#createControlledResource(ControlledResource)} checks that a relevant
-   * cloud context exists before storing the resource.
+   * <p>The {@link ResourceDao#createResourceStart} checks that a relevant cloud context exists
+   * before storing the resource.
    */
   public static UUID createWorkspaceWithGcpContext(WorkspaceDao workspaceDao) {
     UUID workspaceId = createWorkspaceWithoutGcpContext(workspaceDao);

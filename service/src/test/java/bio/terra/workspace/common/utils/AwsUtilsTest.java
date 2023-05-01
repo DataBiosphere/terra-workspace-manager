@@ -19,7 +19,7 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
 
-@Tag("awsConnected")
+@Tag("aws-connected")
 public class AwsUtilsTest extends BaseAwsConnectedTest {
   private static final Logger logger = LoggerFactory.getLogger(AwsUtilsTest.class);
   @Autowired private AwsConfiguration awsConfiguration;

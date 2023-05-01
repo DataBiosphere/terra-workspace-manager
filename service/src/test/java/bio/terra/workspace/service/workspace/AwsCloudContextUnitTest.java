@@ -9,10 +9,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.s3storageFolder.ControlledAwsS3StorageFolderResource;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.exceptions.InvalidSerializedVersionException;
@@ -109,11 +110,10 @@ public class AwsCloudContextUnitTest extends BaseUnitTest {
         workspaceUuid, CloudPlatform.AWS, fakeContext.serialize(), flightId);
 
     // Create a controlled resource in the DB
-    ControlledBigQueryDatasetResource bqDataset =
-        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid)
-            .projectId(projectId)
-            .build();
-    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, bqDataset);
+    // TODO(TERRA-470) create S3 folder
+    ControlledAwsS3StorageFolderResource s3Folder =
+        ControlledAwsResourceFixtures.makeDefaultControlledAwsS3StorageFolder(workspaceUuid);
+    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, s3Folder);
 
     // Also create a reference pointing to the same "cloud" resource
     // TODO(TERRA-195) Create a referenced S3 bucket
@@ -128,7 +128,7 @@ public class AwsCloudContextUnitTest extends BaseUnitTest {
     assertTrue(workspaceDao.getCloudContext(workspaceUuid, CloudPlatform.AWS).isEmpty());
     assertThrows(
         ResourceNotFoundException.class,
-        () -> resourceDao.getResource(workspaceUuid, bqDataset.getResourceId()));
+        () -> resourceDao.getResource(workspaceUuid, s3Folder.getResourceId()));
 
     // Verify the reference still exists, even though the underlying "cloud" resource was deleted
     // TODO(TERRA-195) Check that reference S3 bucket exists
