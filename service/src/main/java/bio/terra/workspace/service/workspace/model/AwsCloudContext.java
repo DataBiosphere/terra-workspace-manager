@@ -162,7 +162,7 @@ public class AwsCloudContext {
     }
 
     public AwsCloudContextV1(AwsCloudContext awsCloudContext) {
-      this.version = AWS_CLOUD_CONTEXT_DB_VERSION | AWS_CLOUD_CONTEXT_DB_VERSION_MASK;
+      this.version = getVersion();
       this.majorVersion = awsCloudContext.majorVersion;
       this.organizationId = awsCloudContext.organizationId;
       this.accountId = awsCloudContext.accountId;
@@ -171,10 +171,14 @@ public class AwsCloudContext {
     }
 
     public void validateVersion() {
-      if (this.version != (AWS_CLOUD_CONTEXT_DB_VERSION | AWS_CLOUD_CONTEXT_DB_VERSION_MASK)) {
+      if (this.version != getVersion()) {
         throw new InvalidSerializedVersionException(
             "Invalid serialized version of AwsCloudContextV1");
       }
+    }
+
+    public static long getVersion() {
+      return AWS_CLOUD_CONTEXT_DB_VERSION | AWS_CLOUD_CONTEXT_DB_VERSION_MASK;
     }
   }
 }
