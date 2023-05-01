@@ -5,39 +5,32 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudContextHolder;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 
-public class CreateDbAwsCloudContextFinishStep implements Step {
-  private final UUID workspaceUuid;
+public class MakeAwsCloudContextStep implements Step {
   private final AwsCloudContextService awsCloudContextService;
 
-  public CreateDbAwsCloudContextFinishStep(
-      UUID workspaceUuid, AwsCloudContextService awsCloudContextService) {
-    this.workspaceUuid = workspaceUuid;
+  public MakeAwsCloudContextStep(AwsCloudContextService awsCloudContextService) {
     this.awsCloudContextService = awsCloudContextService;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext) throws InterruptedException {
+    // AWS cloud context derives from the landing zone, so all we do it ask for the
+    // information and store the created cloud context in the map. The shared finish
+    // step will perform the database update.
     AwsCloudContext awsCloudContext = awsCloudContextService.getCloudContext();
-
-    // Create the cloud context; throws if the context already exists.
-    awsCloudContextService.createAwsCloudContextFinish(
-        workspaceUuid, awsCloudContext, flightContext.getFlightId());
-
-    CloudContextHolder cch = new CloudContextHolder();
-    cch.setAwsCloudContext(awsCloudContext);
-
-    FlightUtils.setResponse(flightContext, cch, HttpStatus.OK);
+    flightContext.getWorkingMap().put(WorkspaceFlightMapKeys.CLOUD_CONTEXT, awsCloudContext);
     return StepResult.getStepResultSuccess();
   }
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    // We do not undo anything here. The create step will delete the row, if need be.
+    // Read-only step - no undo
     return StepResult.getStepResultSuccess();
   }
 }

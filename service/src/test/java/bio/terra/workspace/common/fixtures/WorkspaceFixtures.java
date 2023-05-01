@@ -2,11 +2,17 @@ package bio.terra.workspace.common.fixtures;
 
 import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 
+import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiProperties;
 import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants.Properties;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
@@ -100,6 +106,19 @@ public class WorkspaceFixtures {
         .stage(stageModel)
         .spendProfile(DEFAULT_SPEND_PROFILE)
         .properties(properties);
+  }
+
+  public static FlightMap createCloudContextInputs(
+    UUID workspaceUuid,
+    AuthenticatedUserRequest userRequest,
+    CloudPlatform cloudPlatform,
+    SpendProfile spendProfile) {
+    FlightMap inputs = new FlightMap();
+    inputs.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
+    inputs.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
+    inputs.put(WorkspaceFlightMapKeys.CLOUD_PLATFORM, cloudPlatform);
+    inputs.put(WorkspaceFlightMapKeys.SPEND_PROFILE, spendProfile);
+    return inputs;
   }
 
   public static String getUserFacingId(UUID workspaceId) {

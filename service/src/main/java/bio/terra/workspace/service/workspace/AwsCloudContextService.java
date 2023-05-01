@@ -9,95 +9,82 @@ import bio.terra.workspace.app.configuration.external.AwsConfiguration.Authentic
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.exception.StaleConfigurationException;
 import bio.terra.workspace.common.utils.AwsUtils;
+import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.service.features.FeatureService;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.exceptions.InvalidApplicationConfigException;
+import bio.terra.workspace.service.workspace.flight.cloud.aws.MakeAwsCloudContextStep;
+import bio.terra.workspace.service.workspace.flight.create.cloudcontext.CreateCloudContextFlight;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
+import bio.terra.workspace.service.workspace.model.CloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.opencensus.contrib.spring.aop.Traced;
-import java.io.IOException;
-import java.util.Optional;
-import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.regions.Region;
+
+import javax.annotation.PostConstruct;
+import java.io.IOException;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * This service provides methods for managing AWS cloud context. These methods do not perform any
  * access control and operate directly against the {@link WorkspaceDao}
  */
+@SuppressFBWarnings(
+  value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD",
+  justification = "Enable both injection and static lookup")
 @Component
-public class AwsCloudContextService {
+public class AwsCloudContextService implements CloudContextService {
   private final AwsConfiguration awsConfiguration;
   private final WorkspaceDao workspaceDao;
   private final FeatureService featureService;
 
   private EnvironmentDiscovery environmentDiscovery;
 
+  private static AwsCloudContextService theService;
+
   @Autowired
   public AwsCloudContextService(
-      WorkspaceDao workspaceDao, FeatureService featureService, AwsConfiguration awsConfiguration) {
+    WorkspaceDao workspaceDao, FeatureService featureService, AwsConfiguration awsConfiguration) {
     this.awsConfiguration = awsConfiguration;
     this.workspaceDao = workspaceDao;
     this.featureService = featureService;
   }
 
-  /** Returns authentication from configuration */
+  // Set up static accessor for use by CloudPlatform
+  @PostConstruct
+  public void postConstruct() {
+    theService = this;
+  }
+
+  public static AwsCloudContextService getTheService() {
+    return theService;
+  }
+
+  @Override
+  public void addCreateCloudContextSteps(CreateCloudContextFlight flight, FlightBeanBag appContext, UUID workspaceUuid, AuthenticatedUserRequest userRequest) {
+    flight.addStep(new MakeAwsCloudContextStep(appContext.getAwsCloudContextService()));
+  }
+
+  @Override
+  public CloudContext makeCloudContextFromDb(DbCloudContext dbCloudContext) {
+    return AwsCloudContext.deserialize(dbCloudContext);
+  }
+
+  /**
+   * Returns authentication from configuration
+   */
   public Authentication getRequiredAuthentication() {
     if (awsConfiguration == null) {
       throw new InvalidApplicationConfigException("AWS configuration not initialized");
     }
     return awsConfiguration.getAuthentication();
-  }
-
-  /**
-   * Create an empty AWS cloud context in the database for a workspace. This is designed for use in
-   * the CreateDbAwsCloudContextStartStep flight and assumes that a later step will call {@link
-   * #createAwsCloudContextFinish}.
-   *
-   * @param workspaceUuid workspace id where the context is being created
-   * @param flightId flight doing the creating
-   */
-  public void createAwsCloudContextStart(UUID workspaceUuid, String flightId) {
-    workspaceDao.createCloudContextStart(workspaceUuid, CloudPlatform.AWS, flightId);
-  }
-
-  /**
-   * Complete creation of the AWS cloud context by filling in the context attributes. This is
-   * designed for use in createAwsContext flight and assumes that an earlier step has called {@link
-   * #createAwsCloudContextStart}.
-   *
-   * @param workspaceUuid workspace id of the context
-   * @param cloudContext {@link AwsCloudContext}
-   * @param flightId flight completing the creation
-   */
-  public void createAwsCloudContextFinish(
-      UUID workspaceUuid, AwsCloudContext cloudContext, String flightId) {
-    workspaceDao.createCloudContextFinish(
-        workspaceUuid, CloudPlatform.AWS, cloudContext.serialize(), flightId);
-  }
-
-  /**
-   * Delete the AWS cloud context for a workspace For details: {@link
-   * WorkspaceDao#deleteCloudContext(UUID, CloudPlatform)}
-   *
-   * @param workspaceUuid workspace of the cloud context
-   */
-  public void deleteAwsCloudContext(UUID workspaceUuid) {
-    workspaceDao.deleteCloudContext(workspaceUuid, CloudPlatform.AWS);
-  }
-
-  /**
-   * Delete a cloud context for the workspace validating the flight id. For details: {@link
-   * WorkspaceDao#deleteCloudContextWithFlightIdValidation(UUID, CloudPlatform, String)}
-   *
-   * @param workspaceUuid workspace of the cloud context
-   * @param flightId flight id making the delete request
-   */
-  public void deleteAwsCloudContextWithFlightIdValidation(UUID workspaceUuid, String flightId) {
-    workspaceDao.deleteCloudContextWithFlightIdValidation(
-        workspaceUuid, CloudPlatform.AWS, flightId);
   }
 
   /**
@@ -109,8 +96,8 @@ public class AwsCloudContextService {
   @Traced
   public Optional<AwsCloudContext> getAwsCloudContext(UUID workspaceUuid) {
     return workspaceDao
-        .getCloudContext(workspaceUuid, CloudPlatform.AWS)
-        .map(AwsCloudContext::deserialize);
+      .getCloudContext(workspaceUuid, CloudPlatform.AWS)
+      .map(AwsCloudContext::deserialize);
   }
 
   /**
@@ -122,8 +109,8 @@ public class AwsCloudContextService {
    */
   public AwsCloudContext getRequiredAwsCloudContext(UUID workspaceUuid) {
     return getAwsCloudContext(workspaceUuid)
-        .orElseThrow(
-            () -> new CloudContextRequiredException("Operation requires AWS cloud context"));
+      .orElseThrow(
+        () -> new CloudContextRequiredException("Operation requires AWS cloud context"));
   }
 
   /**
@@ -144,11 +131,12 @@ public class AwsCloudContextService {
   public static AwsCloudContext getCloudContext(Environment environment) {
     Metadata metadata = environment.getMetadata();
     return new AwsCloudContext(
-        metadata.getMajorVersion(),
-        metadata.getOrganizationId(),
-        metadata.getAccountId(),
-        metadata.getTenantAlias(),
-        metadata.getEnvironmentAlias());
+      metadata.getMajorVersion(),
+      metadata.getOrganizationId(),
+      metadata.getAccountId(),
+      metadata.getTenantAlias(),
+      metadata.getEnvironmentAlias(),
+      /*commonFields=*/ null);
   }
 
   /**
@@ -174,7 +162,7 @@ public class AwsCloudContextService {
    * Return the landing zone to for the given cloud context's region
    *
    * @param awsCloudContext {@link AwsCloudContext}
-   * @param region {@link Region}
+   * @param region          {@link Region}
    * @return AWS landing zone, if supported for the Cloud context region
    * @throws StaleConfigurationException StaleConfigurationException
    */
@@ -185,19 +173,19 @@ public class AwsCloudContextService {
   /**
    * Return the landing zone to for the given cloud context's region
    *
-   * @param environment {@link Environment}
+   * @param environment     {@link Environment}
    * @param awsCloudContext {@link AwsCloudContext}
-   * @param region {@link Region}
+   * @param region          {@link Region}
    * @return {@link LandingZone}, if supported for the Cloud context region
    * @throws StaleConfigurationException StaleConfigurationException
    */
   public static Optional<LandingZone> getLandingZone(
-      Environment environment, AwsCloudContext awsCloudContext, Region region) {
+    Environment environment, AwsCloudContext awsCloudContext, Region region) {
     AwsCloudContext awsCloudContextFromEnv = getCloudContext(environment);
     if (!awsCloudContext.equals(awsCloudContextFromEnv)) {
       throw new StaleConfigurationException(
-          String.format(
-              "AWS cloud context expected %s, actual %s", awsCloudContext, awsCloudContextFromEnv));
+        String.format(
+          "AWS cloud context expected %s, actual %s", awsCloudContext, awsCloudContextFromEnv));
     }
 
     return environment.getLandingZone(region);

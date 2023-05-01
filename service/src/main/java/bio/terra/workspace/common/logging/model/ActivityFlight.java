@@ -15,13 +15,8 @@ import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteContr
 import bio.terra.workspace.service.resource.flight.UpdateResourceFlight;
 import bio.terra.workspace.service.resource.referenced.flight.clone.CloneReferencedResourceFlight;
 import bio.terra.workspace.service.workspace.flight.application.ApplicationAbleFlight;
-import bio.terra.workspace.service.workspace.flight.cloud.aws.CreateAwsContextFlight;
-import bio.terra.workspace.service.workspace.flight.cloud.aws.DeleteAwsContextFlight;
-import bio.terra.workspace.service.workspace.flight.cloud.azure.CreateAzureContextFlight;
-import bio.terra.workspace.service.workspace.flight.cloud.azure.DeleteAzureContextFlight;
-import bio.terra.workspace.service.workspace.flight.cloud.gcp.CreateGcpContextFlightV2;
-import bio.terra.workspace.service.workspace.flight.cloud.gcp.DeleteGcpContextFlight;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.RemoveUserFromWorkspaceFlight;
+import bio.terra.workspace.service.workspace.flight.create.cloudcontext.CreateCloudContextFlight;
 import bio.terra.workspace.service.workspace.flight.create.workspace.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.delete.workspace.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.gcpcontextbackfill.GcpContextBackfillFlight;
@@ -37,6 +32,10 @@ public enum ActivityFlight {
       WorkspaceCreateFlight.class.getName(), ActivityLogChangedTarget.WORKSPACE),
   WORKSPACE_DELETE_FLIGHT(
       WorkspaceDeleteFlight.class.getName(), ActivityLogChangedTarget.WORKSPACE),
+
+  // Cloud context
+  CLOUD_CONTEXT_CREATE_FLIGHT(
+      CreateCloudContextFlight.class.getName(), ActivityLogChangedTarget.CLOUD_CONTEXT),
 
   // Resources
   ALL_RESOURCES_CLONE_FLIGHT(
@@ -67,10 +66,6 @@ public enum ActivityFlight {
   // GCP
   GCP_WORKSPACE_CLONE_FLIGHT(
       CloneWorkspaceFlight.class.getName(), ActivityLogChangedTarget.WORKSPACE),
-  GCP_CLOUD_CONTEXT_CREATE_FLIGHT(
-      CreateGcpContextFlightV2.class.getName(), ActivityLogChangedTarget.GCP_CLOUD_CONTEXT),
-  GCP_CLOUD_CONTEXT_DELETE_FLIGHT(
-      DeleteGcpContextFlight.class.getName(), ActivityLogChangedTarget.GCP_CLOUD_CONTEXT),
   SYNC_GCP_IAM_ROLES_FLIGHT(
       SyncGcpIamRolesFlight.class.getName(), ActivityLogChangedTarget.GCP_CLOUD_CONTEXT),
   CONTROLLED_GCS_BUCKET_CLONE_FLIGHT(
@@ -81,19 +76,9 @@ public enum ActivityFlight {
       ActivityLogChangedTarget.CONTROLLED_GCP_BIG_QUERY_DATASET),
 
   // AZURE
-  AZURE_CLOUD_CONTEXT_CREATE_FLIGHT(
-      CreateAzureContextFlight.class.getName(), ActivityLogChangedTarget.AZURE_CLOUD_CONTEXT),
-  AZURE_CLOUD_CONTEXT_DELETE_FLIGHT(
-      DeleteAzureContextFlight.class.getName(), ActivityLogChangedTarget.AZURE_CLOUD_CONTEXT),
   CONTROLLED_AZURE_STORAGE_CONTAINER_CLONE_FLIGHT(
       CloneControlledAzureStorageContainerResourceFlight.class.getName(),
       ActivityLogChangedTarget.CONTROLLED_AZURE_STORAGE_CONTAINER),
-
-  // AWS
-  AWS_CLOUD_CONTEXT_CREATE_FLIGHT(
-      CreateAwsContextFlight.class.getName(), ActivityLogChangedTarget.AWS_CLOUD_CONTEXT),
-  AWS_CLOUD_CONTEXT_DELETE_FLIGHT(
-      DeleteAwsContextFlight.class.getName(), ActivityLogChangedTarget.AWS_CLOUD_CONTEXT),
 
   // TODO: PF-2694 TEMPORARY BACKFILL
   GCP_CONTEXT_BACKFILL_FLIGHT(

@@ -135,7 +135,7 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
     // Create a cloud context in the database with a V1 format
     final String flightId = UUID.randomUUID().toString();
     workspaceDao.createCloudContextStart(workspaceUuid, CloudPlatform.GCP, flightId);
-    workspaceDao.createCloudContextFinish(workspaceUuid, CloudPlatform.GCP, V1_JSON, flightId);
+    workspaceDao.createCloudContextSuccess(workspaceUuid, CloudPlatform.GCP, V1_JSON, flightId);
 
     // Run the service call that should do the upgrade
     GcpCloudContext updatedContext =
@@ -167,7 +167,7 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
         new GcpCloudContext(projectId, "fakeOwner", "fakeWriter", "fakeReader", "fakeApplication");
     final String flightId = UUID.randomUUID().toString();
     workspaceDao.createCloudContextStart(workspaceUuid, CloudPlatform.GCP, flightId);
-    workspaceDao.createCloudContextFinish(
+    workspaceDao.createCloudContextSuccess(
         workspaceUuid, CloudPlatform.GCP, fakeContext.serialize(), flightId);
     // Create a controlled resource in the DB
     ControlledBigQueryDatasetResource bqDataset =

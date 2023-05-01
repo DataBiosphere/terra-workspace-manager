@@ -16,19 +16,19 @@ import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
-import bio.terra.workspace.service.workspace.flight.cloud.gcp.CreateGcpContextFlightV2;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.DeleteGcpContextFlight;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.DeleteGcpContextStep;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.DeleteGcpProjectStep;
+import bio.terra.workspace.service.workspace.flight.create.cloudcontext.CreateCloudContextFlight;
 import bio.terra.workspace.service.workspace.flight.delete.cloudcontext.DeleteControlledDbResourcesStep;
 import bio.terra.workspace.service.workspace.flight.delete.cloudcontext.DeleteControlledSamResourcesStep;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import java.time.Duration;
 import java.util.HashMap;
@@ -84,16 +84,16 @@ class DeleteGcpContextFlightTest extends BaseConnectedTest {
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void deleteContextDo() throws Exception {
-    FlightMap createParameters = new FlightMap();
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
-    createParameters.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
-    createParameters.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
+    FlightMap createParameters =
+      WorkspaceFixtures.createCloudContextInputs(
+        workspaceUuid, userRequest, CloudPlatform.GCP, spendUtils.defaultGcpSpendProfile());
 
     // Create the google context.
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
-            CreateGcpContextFlightV2.class,
+            CreateCloudContextFlight.class,
             createParameters,
             CREATION_FLIGHT_TIMEOUT,
             null);
@@ -144,16 +144,16 @@ class DeleteGcpContextFlightTest extends BaseConnectedTest {
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void deleteContextUndo() throws Exception {
-    FlightMap createParameters = new FlightMap();
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
-    createParameters.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
-    createParameters.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
+    FlightMap createParameters =
+      WorkspaceFixtures.createCloudContextInputs(
+        workspaceUuid, userRequest, CloudPlatform.GCP, spendUtils.defaultGcpSpendProfile());
 
     // Create the google context.
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
-            CreateGcpContextFlightV2.class,
+            CreateCloudContextFlight.class,
             createParameters,
             CREATION_FLIGHT_TIMEOUT,
             null);

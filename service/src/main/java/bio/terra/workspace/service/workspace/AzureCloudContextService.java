@@ -1,77 +1,81 @@
 package bio.terra.workspace.service.workspace;
 
+import bio.terra.stairway.RetryRule;
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
+import bio.terra.workspace.common.utils.FlightBeanBag;
+import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.db.model.DbCloudContext;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
+import bio.terra.workspace.service.workspace.flight.cloud.azure.ValidateLandingZoneRegionAgainstPolicyStep;
+import bio.terra.workspace.service.workspace.flight.cloud.azure.ValidateMRGStep;
+import bio.terra.workspace.service.workspace.flight.create.cloudcontext.CreateCloudContextFlight;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
+import bio.terra.workspace.service.workspace.model.CloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
+
 /**
  * This service provides methods for managing Azure cloud context. These methods do not perform any
  * access control and operate directly against the {@link WorkspaceDao}
  */
+@SuppressFBWarnings(
+  value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD",
+  justification = "Enable both injection and static lookup")
 @Component
-public class AzureCloudContextService {
+public class AzureCloudContextService implements CloudContextService {
+  private static AzureCloudContextService theService;
 
   private final WorkspaceDao workspaceDao;
+  private final FeatureConfiguration featureConfiguration;
 
   @Autowired
-  public AzureCloudContextService(WorkspaceDao workspaceDao) {
+  public AzureCloudContextService(
+    WorkspaceDao workspaceDao,
+    FeatureConfiguration featureConfiguration) {
     this.workspaceDao = workspaceDao;
+    this.featureConfiguration = featureConfiguration;
+
   }
 
-  /**
-   * Create an empty Azure cloud context in the database for a workspace. This is designed for use
-   * in the CreateDbAzureCloudContextStartStep flight and assumes that a later step will call {@link
-   * #createAzureCloudContextFinish}.
-   *
-   * @param workspaceUuid workspace id where the context is being created
-   * @param flightId flight doing the creating
-   */
-  public void createAzureCloudContextStart(UUID workspaceUuid, String flightId) {
-    workspaceDao.createCloudContextStart(workspaceUuid, CloudPlatform.AZURE, flightId);
+  // Set up static accessor for use by CloudPlatform
+  @PostConstruct
+  public void postConstruct() {
+    theService = this;
   }
 
-  /**
-   * Complete creation of the Azure cloud context by filling in the context attributes. This is
-   * designed for use in createAzureContext flight and assumes that an earlier step has called
-   * {@link #createAzureCloudContextStart}.
-   *
-   * @param workspaceUuid workspace id of the context
-   * @param cloudContext cloud context data
-   * @param flightId flight completing the creation
-   */
-  public void createAzureCloudContextFinish(
-      UUID workspaceUuid, AzureCloudContext cloudContext, String flightId) {
-    workspaceDao.createCloudContextFinish(
-        workspaceUuid, CloudPlatform.AZURE, cloudContext.serialize(), flightId);
+  public static AzureCloudContextService getTheService() {
+    return theService;
   }
 
-  /**
-   * Delete the Azure cloud context for a workspace For details: {@link
-   * WorkspaceDao#deleteCloudContext(UUID, CloudPlatform)}
-   *
-   * @param workspaceUuid workspace of the cloud context
-   */
-  public void deleteAzureCloudContext(UUID workspaceUuid) {
-    workspaceDao.deleteCloudContext(workspaceUuid, CloudPlatform.AZURE);
+  @Override
+  public void addCreateCloudContextSteps(CreateCloudContextFlight flight, FlightBeanBag appContext, UUID workspaceUuid, AuthenticatedUserRequest userRequest) {
+    if (featureConfiguration.isTpsEnabled()) {
+      flight.addStep(
+        new ValidateLandingZoneRegionAgainstPolicyStep(
+          appContext.getLandingZoneApiDispatch(),
+          userRequest,
+          appContext.getTpsApiDispatch(),
+          workspaceUuid));
+    }
+
+    // validate the MRG
+    flight.addStep(new ValidateMRGStep(appContext.getCrlService(), appContext.getAzureConfig()));
   }
 
-  /**
-   * Delete a cloud context for the workspace validating the flight id. For details: {@link
-   * WorkspaceDao#deleteCloudContextWithFlightIdValidation(UUID, CloudPlatform, String)}
-   *
-   * @param workspaceUuid workspace of the cloud context
-   * @param flightId flight id making the delete request
-   */
-  public void deleteAzureCloudContextWithFlightIdValidation(UUID workspaceUuid, String flightId) {
-    workspaceDao.deleteCloudContextWithFlightIdValidation(
-        workspaceUuid, CloudPlatform.AZURE, flightId);
+  @Override
+  public CloudContext makeCloudContextFromDb(DbCloudContext dbCloudContext) {
+    return null;
   }
+
 
   /**
    * Retrieve the optional Azure cloud context

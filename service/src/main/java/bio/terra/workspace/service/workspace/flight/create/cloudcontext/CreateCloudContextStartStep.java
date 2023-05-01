@@ -4,6 +4,8 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
+import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateCloudContextException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import java.util.UUID;
@@ -12,23 +14,31 @@ import java.util.UUID;
  * Stores the previously generated Google Project Id in the {@link WorkspaceDao} as the Google cloud
  * context for the workspace.
  */
-public class CreateDbCloudContextStartStep implements Step {
+public class CreateCloudContextStartStep implements Step {
   private final UUID workspaceUuid;
   private final WorkspaceDao workspaceDao;
   private final CloudPlatform cloudPlatform;
+  private final SpendProfile spendProfile;
+  private final WsmResourceStateRule wsmResourceStateRule;
 
-  public CreateDbCloudContextStartStep(
-      UUID workspaceUuid, WorkspaceDao workspaceDao, CloudPlatform cloudPlatform) {
+  public CreateCloudContextStartStep(
+    UUID workspaceUuid,
+    WorkspaceDao workspaceDao,
+    CloudPlatform cloudPlatform,
+    SpendProfile spendProfile,
+    WsmResourceStateRule wsmResourceStateRule) {
     this.workspaceUuid = workspaceUuid;
     this.workspaceDao = workspaceDao;
     this.cloudPlatform = cloudPlatform;
+    this.spendProfile = spendProfile;
+    this.wsmResourceStateRule = wsmResourceStateRule;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext) throws InterruptedException {
     try {
       workspaceDao.createCloudContextStart(
-          workspaceUuid, cloudPlatform, flightContext.getFlightId());
+          workspaceUuid, cloudPlatform, spendProfile.id(), flightContext.getFlightId());
     } catch (DuplicateCloudContextException e) {
       // On a retry or restart, we may have already started the cloud context create,
       // so we ignore the duplicate exception.
@@ -38,9 +48,13 @@ public class CreateDbCloudContextStartStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    // Delete the cloud context, but only if it is the one we created
-    workspaceDao.deleteCloudContextWithFlightIdValidation(
-        workspaceUuid, cloudPlatform, flightContext.getFlightId());
+    // Complete the context create in accordance with the state rule
+    workspaceDao.createCloudContextFailure(
+      workspaceUuid,
+      cloudPlatform,
+      flightContext.getFlightId(),
+      flightContext.getResult().getException().orElse(null),
+      wsmResourceStateRule);
     return StepResult.getStepResultSuccess();
   }
 }

@@ -31,6 +31,7 @@ public enum ActivityLogChangedTarget {
   USER,
   WORKSPACE,
   POLICIES,
+  CLOUD_CONTEXT,
 
   // Cloud specific
   GCP_CLOUD_CONTEXT,

@@ -18,11 +18,12 @@ import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteContr
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
-import bio.terra.workspace.service.workspace.flight.cloud.azure.CreateAzureContextFlight;
 import java.time.Duration;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
+
+import bio.terra.workspace.service.workspace.flight.create.cloudcontext.CreateCloudContextFlight;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -42,7 +43,7 @@ public class AzureConnectedTestUtils {
     FlightState createAzureContextFlightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
-            CreateAzureContextFlight.class,
+            CreateCloudContextFlight.class,
             azureTestUtils.createAzureContextInputParameters(workspaceUuid, userRequest),
             STAIRWAY_FLIGHT_TIMEOUT,
             null);

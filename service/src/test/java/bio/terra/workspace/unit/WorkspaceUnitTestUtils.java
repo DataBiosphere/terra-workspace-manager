@@ -56,7 +56,7 @@ public class WorkspaceUnitTestUtils {
       CloudPlatform cloudPlatform) {
     String flightId = UUID.randomUUID().toString();
     workspaceDao.createCloudContextStart(workspaceUuid, cloudPlatform, flightId);
-    workspaceDao.createCloudContextFinish(
+    workspaceDao.createCloudContextSuccess(
         workspaceUuid, cloudPlatform, new GcpCloudContext(projectId).serialize(), flightId);
   }
 

@@ -20,8 +20,9 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.exception.RegionNotAllowedException;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
-import bio.terra.workspace.service.workspace.flight.cloud.azure.CreateAzureContextFlight;
+import bio.terra.workspace.service.workspace.flight.create.cloudcontext.CreateCloudContextFlight;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import com.azure.core.management.Region;
 import java.time.Duration;
@@ -72,7 +73,13 @@ class CreateAzureContextFlightTest extends BaseAzureConnectedTest {
     assertTrue(azureCloudContextService.getAzureCloudContext(workspace.getWorkspaceId()).isEmpty());
 
     String jobId = UUID.randomUUID().toString();
-    workspaceService.createAzureCloudContext(workspace, jobId, userRequest, /* resultPath */ null);
+    workspaceService.createCloudContext(
+      workspace,
+      CloudPlatform.AZURE,
+      azureTestUtils.getSpendProfile(),
+      jobId,
+      userRequest,
+      /* resultPath */ null);
 
     // Wait for the job to complete
     FlightState flightState =
@@ -133,13 +140,17 @@ class CreateAzureContextFlightTest extends BaseAzureConnectedTest {
 
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     String jobId = UUID.randomUUID().toString();
-    workspaceService.createAzureCloudContext(workspace, jobId, userRequest, /* resultPath */ null);
+    workspaceService.createCloudContext(
+      workspace,
+      CloudPlatform.AZURE,
+      azureTestUtils.getSpendProfile(),
+      jobId,
+      userRequest,
+      /* resultPath */ null);
 
     // Wait for the job to complete
-    FlightState flightState =
-        StairwayTestUtils.pollUntilComplete(
-            jobId, jobService.getStairway(), Duration.ofSeconds(1), STAIRWAY_FLIGHT_TIMEOUT);
-    return flightState;
+    return StairwayTestUtils.pollUntilComplete(
+      jobId, jobService.getStairway(), Duration.ofSeconds(1), STAIRWAY_FLIGHT_TIMEOUT);
   }
 
   @Test
@@ -155,7 +166,7 @@ class CreateAzureContextFlightTest extends BaseAzureConnectedTest {
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
-            CreateAzureContextFlight.class,
+            CreateCloudContextFlight.class,
             azureTestUtils.createAzureContextInputParameters(
                 workspace.getWorkspaceId(), userRequest),
             STAIRWAY_FLIGHT_TIMEOUT,

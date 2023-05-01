@@ -25,10 +25,10 @@ import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
-import bio.terra.workspace.service.workspace.flight.cloud.azure.CreateAzureContextFlight;
 import bio.terra.workspace.service.workspace.flight.cloud.azure.DeleteAzureContextFlight;
 import bio.terra.workspace.service.workspace.flight.cloud.azure.DeleteAzureContextStep;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.DeleteGcpProjectStep;
+import bio.terra.workspace.service.workspace.flight.create.cloudcontext.CreateCloudContextFlight;
 import bio.terra.workspace.service.workspace.flight.delete.cloudcontext.DeleteControlledSamResourcesStep;
 import bio.terra.workspace.service.workspace.flight.delete.workspace.DeleteWorkspaceAuthzStep;
 import bio.terra.workspace.service.workspace.flight.delete.workspace.DeleteWorkspaceStateStep;
@@ -92,7 +92,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
-            CreateAzureContextFlight.class,
+            CreateCloudContextFlight.class,
             createParameters,
             CREATION_FLIGHT_TIMEOUT,
             null);

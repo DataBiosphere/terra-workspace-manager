@@ -23,6 +23,7 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
+import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
 import bio.terra.workspace.service.admin.flights.cloudcontexts.gcp.SyncGcpIamRolesFlight;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -296,7 +297,7 @@ public class WorkspaceActivityLogHook implements StairwayHook {
 
   private void maybeLogCloudContextDeletionFlight(
       CloudPlatform cloudPlatform, UUID workspaceUuid, String userEmail, String subjectId) {
-    Optional<String> cloudContext = workspaceDao.getCloudContext(workspaceUuid, cloudPlatform);
+    Optional<DbCloudContext> cloudContext = workspaceDao.getCloudContext(workspaceUuid, cloudPlatform);
     if (cloudContext.isEmpty()) {
       activityLogDao.writeActivity(
           workspaceUuid,

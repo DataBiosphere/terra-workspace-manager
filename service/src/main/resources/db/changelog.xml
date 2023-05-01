@@ -20,4 +20,5 @@
     <include file="changesets/20221205_add_region_column_to_resource.yaml" relativeToChangelogFile="true" />
     <include file="changesets/20230202_temporary_grant.yaml" relativeToChangelogFile="true" />
     <include file="changesets/20230222_states.yaml" relativeToChangelogFile="true" />
+    <include file="changesets/20230427_workspace_states.yaml" relativeToChangelogFile="true" />
 </databaseChangeLog>

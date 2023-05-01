@@ -1,6 +1,8 @@
 package bio.terra.workspace.service.workspace;
 
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.CLOUD_PLATFORM;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.SOURCE_WORKSPACE_ID;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.SPEND_PROFILE;
 
 import bio.terra.policy.model.TpsComponent;
 import bio.terra.policy.model.TpsObjectType;
@@ -30,20 +32,19 @@ import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneWorkspaceFlight;
 import bio.terra.workspace.service.resource.exception.PolicyConflictException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.stage.StageService;
-import bio.terra.workspace.service.workspace.exceptions.BufferServiceDisabledException;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import bio.terra.workspace.service.workspace.flight.cloud.aws.CreateAwsContextFlight;
 import bio.terra.workspace.service.workspace.flight.cloud.aws.DeleteAwsContextFlight;
-import bio.terra.workspace.service.workspace.flight.cloud.azure.CreateAzureContextFlight;
 import bio.terra.workspace.service.workspace.flight.cloud.azure.DeleteAzureContextFlight;
-import bio.terra.workspace.service.workspace.flight.cloud.gcp.CreateGcpContextFlightV2;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.DeleteGcpContextFlight;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.RemoveUserFromWorkspaceFlight;
+import bio.terra.workspace.service.workspace.flight.create.cloudcontext.CreateCloudContextFlight;
 import bio.terra.workspace.service.workspace.flight.create.workspace.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.delete.workspace.WorkspaceDeleteFlight;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceDescription;
@@ -465,100 +466,36 @@ public class WorkspaceService {
   }
 
   /**
-   * Process the request to create a GCP cloud context
-   *
-   * @param workspace workspace in which to create the context
-   * @param jobId caller-supplied job id of the async job
-   * @param userRequest user authentication info
-   * @param resultPath optional endpoint where the result of the completed job can be retrieved
+   * Create a cloud context
+   * @param workspace workspace where we want the context
+   * @param cloudPlatform cloud platform of the context
+   * @param spendProfile spend profile to use
+   * @param jobId job id to use for the flight
+   * @param userRequest user auth
+   * @param resultPath result path for async responses
    */
   @Traced
-  public void createGcpCloudContext(
+  public void createCloudContext(
       Workspace workspace,
+      CloudPlatform cloudPlatform,
+      SpendProfile spendProfile,
       String jobId,
       AuthenticatedUserRequest userRequest,
       @Nullable String resultPath) {
 
-    if (!bufferServiceConfiguration.getEnabled()) {
-      throw new BufferServiceDisabledException(
-          "Cannot create a GCP context in an environment where buffer service is disabled or not configured.");
-    }
-
     jobService
-        .newJob()
-        .description(
-            String.format(
-                "Create GCP cloud context for workspace: name: '%s' id: '%s'  ",
-                workspace.getDisplayName().orElse(""), workspace.getWorkspaceId()))
-        .jobId(jobId)
-        .flightClass(CreateGcpContextFlightV2.class)
-        .userRequest(userRequest)
-        .operationType(OperationType.CREATE)
-        .workspaceId(workspace.getWorkspaceId().toString())
-        .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
-        .submit();
-  }
-
-  @Traced
-  public void createGcpCloudContext(
-      Workspace workspace, String jobId, AuthenticatedUserRequest userRequest) {
-    createGcpCloudContext(workspace, jobId, userRequest, null);
-  }
-
-  /**
-   * Process the request to create a Azure cloud context
-   *
-   * @param workspace workspace in which to create the context
-   * @param jobId caller-supplied job id of the async job
-   * @param userRequest user authentication info
-   * @param resultPath optional endpoint where the result of the completed job can be retrieved
-   */
-  @Traced
-  public void createAzureCloudContext(
-      Workspace workspace,
-      String jobId,
-      AuthenticatedUserRequest userRequest,
-      @Nullable String resultPath) {
-    features.azureEnabledCheck();
-
-    jobService
-        .newJob()
-        .description("Create Azure Cloud Context " + workspace.getWorkspaceId())
-        .jobId(jobId)
-        .workspaceId(workspace.getWorkspaceId().toString())
-        .operationType(OperationType.CREATE)
-        .flightClass(CreateAzureContextFlight.class)
-        .userRequest(userRequest)
-        .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
-        .submit();
-  }
-
-  /**
-   * Process the request to create a AWS cloud context
-   *
-   * @param workspace workspace in which to create the context
-   * @param jobId caller-supplied job id of the async job
-   * @param userRequest user authentication info
-   * @param resultPath optional endpoint where the result of the completed job can be retrieved
-   */
-  @Traced
-  public void createAwsCloudContext(
-      Workspace workspace,
-      String jobId,
-      AuthenticatedUserRequest userRequest,
-      @Nullable String resultPath) {
-    featureService.awsEnabledCheck();
-
-    jobService
-        .newJob()
-        .description("Create AWS Cloud Context " + workspace.getWorkspaceId())
-        .jobId(jobId)
-        .workspaceId(workspace.getWorkspaceId().toString())
-        .operationType(OperationType.CREATE)
-        .flightClass(CreateAwsContextFlight.class)
-        .userRequest(userRequest)
-        .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
-        .submit();
+      .newJob()
+      .description(
+        String.format("Create %s Cloud Context for workspace %s", cloudPlatform.toString(), workspace.getWorkspaceId()))
+      .jobId(jobId)
+      .workspaceId(workspace.getWorkspaceId().toString())
+      .operationType(OperationType.CREATE)
+      .flightClass(CreateCloudContextFlight.class)
+      .userRequest(userRequest)
+      .addParameter(SPEND_PROFILE, spendProfile)
+      .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
+      .addParameter(CLOUD_PLATFORM, cloudPlatform)
+      .submit();
   }
 
   /** Delete the GCP cloud context for the workspace. */

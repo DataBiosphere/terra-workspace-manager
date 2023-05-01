@@ -73,6 +73,12 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
  * <p>Use this instead of WorkspaceApiControllerTest, if you want to use real
  * bio.terra.workspace.service.iam.SamService.
  */
+
+// TODO: PF-2694 authorization check of the billing profile moved to the controller
+//  where it is supposed to be. We need a test that exercises the user with no access to
+//  billing profile generates the correct error. That test is removed from
+//  CreateContextGcpFlightTest since it makes a direct call to workspaceService. We
+//  want to see a SpendUnauthorizedException (Forbidden)
 @Tag("connected")
 @TestInstance(Lifecycle.PER_CLASS)
 public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {

@@ -1,16 +1,31 @@
 package bio.terra.workspace.service.workspace;
 
+import bio.terra.stairway.RetryRule;
+import bio.terra.workspace.common.utils.FlightBeanBag;
+import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.db.model.DbCloudContext;
+import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
-import bio.terra.workspace.service.workspace.flight.cloud.gcp.CreateGcpContextFlightV2;
+import bio.terra.workspace.service.workspace.flight.cloud.gcp.CreateCustomGcpRolesStep;
+import bio.terra.workspace.service.workspace.flight.cloud.gcp.CreatePetSaStep;
+import bio.terra.workspace.service.workspace.flight.cloud.gcp.GcpCloudSyncStep;
+import bio.terra.workspace.service.workspace.flight.cloud.gcp.GenerateRbsRequestIdStep;
+import bio.terra.workspace.service.workspace.flight.cloud.gcp.GrantWsmRoleAdminStep;
+import bio.terra.workspace.service.workspace.flight.cloud.gcp.PullProjectFromPoolStep;
+import bio.terra.workspace.service.workspace.flight.cloud.gcp.SetProjectBillingStep;
+import bio.terra.workspace.service.workspace.flight.cloud.gcp.SyncSamGroupsStep;
+import bio.terra.workspace.service.workspace.flight.cloud.gcp.WaitForProjectPermissionsStep;
+import bio.terra.workspace.service.workspace.flight.create.cloudcontext.CreateCloudContextFlight;
+import bio.terra.workspace.service.workspace.model.CloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -19,65 +34,79 @@ import org.springframework.stereotype.Component;
  * do not perform any access control and operate directly against the {@link
  * bio.terra.workspace.db.WorkspaceDao}
  */
+@SuppressFBWarnings(
+  value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD",
+  justification = "Enable both injection and static lookup")
 @Component
-public class GcpCloudContextService {
+public class GcpCloudContextService implements CloudContextService {
+  private static GcpCloudContextService theService;
 
   private final WorkspaceDao workspaceDao;
-  private final SamService samService;
 
   @Autowired
-  public GcpCloudContextService(WorkspaceDao workspaceDao, SamService samService) {
+  public GcpCloudContextService(WorkspaceDao workspaceDao) {
     this.workspaceDao = workspaceDao;
-    this.samService = samService;
   }
 
-  /**
-   * Create an empty GCP cloud context in the database for a workspace. Supports {@link
-   * CreateGcpContextFlightV2} This is designed for use in the createGcpContext flight and assumes
-   * that a later step will call {@link #createGcpCloudContextFinish}.
-   *
-   * @param workspaceUuid workspace id where the context is being created
-   * @param flightId flight doing the creating
-   */
-  public void createGcpCloudContextStart(UUID workspaceUuid, String flightId) {
-    workspaceDao.createCloudContextStart(workspaceUuid, CloudPlatform.GCP, flightId);
+  // Set up static accessor for use by CloudPlatform
+  @PostConstruct
+  public void postConstruct() {
+    theService = this;
   }
 
-  /**
-   * Complete creation of the GCP cloud context by filling in the context attributes. This is
-   * designed for use in createGcpContext flight and assumes that an earlier step has called {@link
-   * #createGcpCloudContextStart}.
-   *
-   * @param workspaceUuid workspace id of the context
-   * @param cloudContext cloud context data
-   * @param flightId flight completing the creation
-   */
-  public void createGcpCloudContextFinish(
-      UUID workspaceUuid, GcpCloudContext cloudContext, String flightId) {
-    workspaceDao.createCloudContextFinish(
-        workspaceUuid, CloudPlatform.GCP, cloudContext.serialize(), flightId);
+  public static GcpCloudContextService getTheService() {
+    return theService;
   }
 
-  /**
-   * Delete the GCP cloud context for a workspace For details: {@link
-   * WorkspaceDao#deleteCloudContext(UUID, CloudPlatform)}
-   *
-   * @param workspaceUuid workspace of the cloud context
-   */
-  public void deleteGcpCloudContext(UUID workspaceUuid) {
-    workspaceDao.deleteCloudContext(workspaceUuid, CloudPlatform.GCP);
+  @Override
+  public void addCreateCloudContextSteps(
+    CreateCloudContextFlight flight,
+    FlightBeanBag appContext,
+    UUID workspaceUuid,
+    AuthenticatedUserRequest userRequest) {
+
+    GcpCloudSyncRoleMapping gcpCloudSyncRoleMapping = appContext.getCloudSyncRoleMapping();
+    CrlService crl = appContext.getCrlService();
+    RetryRule shortRetry = RetryRules.shortExponential();
+    RetryRule cloudRetry = RetryRules.cloud();
+    RetryRule bufferRetry = RetryRules.buffer();
+
+    // Allocate the GCP project from RBS by generating the id and then getting the project.
+    flight.addStep(new GenerateRbsRequestIdStep());
+    flight.addStep(
+      new PullProjectFromPoolStep(
+        appContext.getBufferService(), crl.getCloudResourceManagerCow()), bufferRetry);
+
+    // Configure the project for WSM
+    flight.addStep(new SetProjectBillingStep(crl.getCloudBillingClientCow()), cloudRetry);
+    flight.addStep(new GrantWsmRoleAdminStep(crl), shortRetry);
+    flight.addStep(new CreateCustomGcpRolesStep(gcpCloudSyncRoleMapping, crl.getIamCow()), shortRetry);
+    // Create the pet before sync'ing, so the proxy group is configured before we
+    // do the Sam sync and create the role-based Google groups. That eliminates
+    // one propagation case
+    flight.addStep(new CreatePetSaStep(appContext.getSamService(), userRequest), shortRetry);
+    flight.addStep(
+      new SyncSamGroupsStep(appContext.getSamService(), workspaceUuid, userRequest), shortRetry);
+
+    flight.addStep(
+      new GcpCloudSyncStep(
+        crl.getCloudResourceManagerCow(),
+        gcpCloudSyncRoleMapping,
+        appContext.getFeatureConfiguration(),
+        appContext.getSamService(),
+        appContext.getGrantService(),
+        userRequest,
+        workspaceUuid),
+      bufferRetry);
+
+    // Wait for the project permissions to propagate.
+    // The SLO is 99.5% of the time it finishes in under 7 minutes.
+    flight.addStep(new WaitForProjectPermissionsStep());
   }
 
-  /**
-   * Delete a cloud context for the workspace validating the flight id. For details: {@link
-   * WorkspaceDao#deleteCloudContextWithFlightIdValidation(UUID, CloudPlatform, String)}
-   *
-   * @param workspaceUuid workspace of the cloud context
-   * @param flightId flight id making the delete request
-   */
-  public void deleteGcpCloudContextWithCheck(UUID workspaceUuid, String flightId) {
-    workspaceDao.deleteCloudContextWithFlightIdValidation(
-        workspaceUuid, CloudPlatform.GCP, flightId);
+  @Override
+  public CloudContext makeCloudContextFromDb(DbCloudContext dbCloudContext) {
+    return GcpCloudContext.deserialize(dbCloudContext);
   }
 
   /**
@@ -105,26 +134,9 @@ public class GcpCloudContextService {
    */
   public GcpCloudContext getRequiredGcpCloudContext(
       UUID workspaceUuid, AuthenticatedUserRequest userRequest) throws InterruptedException {
-    GcpCloudContext context =
-        getGcpCloudContext(workspaceUuid)
+    return  getGcpCloudContext(workspaceUuid)
             .orElseThrow(
                 () -> new CloudContextRequiredException("Operation requires GCP cloud context"));
-
-    // TODO(PF-1666): Remove this once we've migrated off GcpCloudContext (V1).
-    // policyOwner is a good sentinel for knowing we need to update the cloud context and
-    // store the sync'd workspace policies.
-    if (context.getSamPolicyOwner().isEmpty()) {
-      context.setSamPolicyOwner(
-          samService.getWorkspacePolicy(workspaceUuid, WsmIamRole.OWNER, userRequest));
-      context.setSamPolicyWriter(
-          samService.getWorkspacePolicy(workspaceUuid, WsmIamRole.WRITER, userRequest));
-      context.setSamPolicyReader(
-          samService.getWorkspacePolicy(workspaceUuid, WsmIamRole.READER, userRequest));
-      context.setSamPolicyApplication(
-          samService.getWorkspacePolicy(workspaceUuid, WsmIamRole.APPLICATION, userRequest));
-      workspaceDao.updateCloudContext(workspaceUuid, CloudPlatform.GCP, context.serialize());
-    }
-    return context;
   }
 
   /**

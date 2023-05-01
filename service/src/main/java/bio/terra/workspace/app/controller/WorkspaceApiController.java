@@ -4,6 +4,7 @@ import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertA
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesDeleteRequestBody;
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesUpdateRequestBody;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.SPEND_PROFILE;
 
 import bio.terra.policy.model.TpsComponent;
 import bio.terra.policy.model.TpsObjectType;
@@ -13,9 +14,12 @@ import bio.terra.policy.model.TpsPaoGetResult;
 import bio.terra.policy.model.TpsPaoUpdateResult;
 import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.policy.model.TpsUpdateMode;
+import bio.terra.stairway.StepResult;
+import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.exception.FeatureNotSupportedException;
+import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
@@ -68,14 +72,19 @@ import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.policy.TpsUtilities;
 import bio.terra.workspace.service.policy.model.PolicyExplainResult;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
+import bio.terra.workspace.service.spendprofile.SpendProfileService;
+import bio.terra.workspace.service.spendprofile.exceptions.BillingProfileManagerServiceAPIException;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
 import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
+import bio.terra.workspace.service.workspace.model.CloudContext;
 import bio.terra.workspace.service.workspace.model.CloudContextHolder;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
@@ -113,6 +122,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   private final PetSaService petSaService;
   private final TpsApiDispatch tpsApiDispatch;
   private final ResourceDao resourceDao;
+  private final SpendProfileService spendProfileService;
 
   @Autowired
   public WorkspaceApiController(
@@ -130,15 +140,9 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       AwsCloudContextService awsCloudContextService,
       PetSaService petSaService,
       TpsApiDispatch tpsApiDispatch,
-      ResourceDao resourceDao) {
-    super(
-        authenticatedUserRequestFactory,
-        request,
-        samService,
-        features,
-        featureService,
-        jobService,
-        jobApiUtils);
+      ResourceDao resourceDao,
+      SpendProfileService spendProfileService) {
+    super(authenticatedUserRequestFactory, request, samService, features, featureService, jobService, jobApiUtils);
     this.workspaceService = workspaceService;
     this.gcpCloudContextService = gcpCloudContextService;
     this.azureCloudContextService = azureCloudContextService;
@@ -147,6 +151,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     this.tpsApiDispatch = tpsApiDispatch;
     this.workspaceActivityLogService = workspaceActivityLogService;
     this.resourceDao = resourceDao;
+    this.spendProfileService = spendProfileService;
   }
 
   @Traced
@@ -550,17 +555,30 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     String jobId = body.getJobControl().getId();
     String resultPath = getAsyncResultEndpoint(jobId);
+
+    // Authorize creation of context in the workspace
     Workspace workspace =
         workspaceService.validateMcWorkspaceAndAction(userRequest, uuid, SamWorkspaceAction.WRITE);
 
-    switch (cloudPlatform) {
-      case GCP -> workspaceService.createGcpCloudContext(workspace, jobId, userRequest, resultPath);
-      case AZURE -> workspaceService.createAzureCloudContext(
-          workspace, jobId, userRequest, resultPath);
-      case AWS -> workspaceService.createAwsCloudContext(workspace, jobId, userRequest, resultPath);
-      default -> throw new FeatureNotSupportedException(
-          "Cloud context creation not supported for cloud platform " + cloudPlatform);
-    }
+    // TODO: PF-2694 REST API part
+    //  When we make the REST API changes, the spend profile will come with the create cloud context
+    //  and we will take it from there. Only if missing, will we take it from the workspace. For this
+    //  part, we do the permission check using the workspace spend profile.
+    SpendProfileId spendProfileId =
+      workspace
+        .getSpendProfileId()
+        .orElseThrow(() -> MissingSpendProfileException.forWorkspace(workspace.workspaceId()));
+
+    // Authorize use of the spend profile
+    SpendProfile spendProfile = spendProfileService.authorizeLinking(spendProfileId, features.isBpmGcpEnabled(), userRequest);
+
+    workspaceService.createCloudContext(
+      workspace,
+      CloudPlatform.fromApiCloudPlatform(cloudPlatform),
+      spendProfile,
+      jobId,
+      userRequest,
+      resultPath);
 
     ApiCreateCloudContextResult response = fetchCreateCloudContextResult(jobId);
     return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
@@ -577,48 +595,45 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   }
 
   private ApiCreateCloudContextResult fetchCreateCloudContextResult(String jobId) {
-    JobApiUtils.AsyncJobResult<CloudContextHolder> jobResult =
-        jobApiUtils.retrieveAsyncJobResult(jobId, CloudContextHolder.class);
+    JobApiUtils.AsyncJobResult<CloudContext> jobResult =
+        jobApiUtils.retrieveAsyncJobResult(jobId, CloudContext.class);
 
-    ApiGcpContext gcpContext = null;
-    ApiAzureContext azureContext = null;
-    ApiAwsContext awsContext = null;
+    ApiGcpContext gcpApiContext = null;
+    ApiAzureContext azureApiContext = null;
+    ApiAwsContext awsApiContext = null;
 
     if (jobResult.getJobReport().getStatus().equals(StatusEnum.SUCCEEDED)) {
-      gcpContext =
-          Optional.ofNullable(jobResult.getResult().getGcpCloudContext())
-              .map(c -> new ApiGcpContext().projectId(c.getGcpProjectId()))
-              .orElse(null);
+      CloudContext cloudContext = jobResult.getResult();
+      if (cloudContext == null) {
+        // This is a bad state. We should never see the job succeed without the cloud
+        // context populated.
+        throw new InternalLogicException("Expected cloud context result, but found null");
+      }
 
-      azureContext =
-          Optional.ofNullable(jobResult.getResult().getAzureCloudContext())
-              .map(
-                  c ->
-                      new ApiAzureContext()
-                          .tenantId(c.getAzureTenantId())
-                          .subscriptionId(c.getAzureSubscriptionId())
-                          .resourceGroupId(c.getAzureResourceGroupId()))
-              .orElse(null);
-
-      awsContext =
-          Optional.ofNullable(jobResult.getResult().getAwsCloudContext())
-              .map(
-                  c ->
-                      new ApiAwsContext()
-                          .majorVersion(c.getMajorVersion())
-                          .organizationId(c.getOrganizationId())
-                          .accountId(c.getAccountId())
-                          .tenantAlias(c.getTenantAlias())
-                          .environmentAlias(c.getEnvironmentAlias()))
-              .orElse(null);
+      switch (cloudContext.getCloudPlatform()) {
+        case AWS -> {
+          AwsCloudContext awsCloudContext = cloudContext.castByEnum(CloudPlatform.AWS);
+          awsApiContext = awsCloudContext.toApi();
+        }
+        case AZURE -> {
+          AzureCloudContext azureCloudContext = cloudContext.castByEnum(CloudPlatform.AZURE);
+          azureApiContext = azureCloudContext.toApi();
+        }
+        case GCP -> {
+          GcpCloudContext gcpCloudContext = cloudContext.castByEnum(CloudPlatform.GCP);
+          gcpApiContext = gcpCloudContext.toApi();
+        }
+        default ->
+          throw new InternalLogicException("Invalid cloud platform returned");
+      }
     }
 
     return new ApiCreateCloudContextResult()
         .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getApiErrorReport())
-        .gcpContext(gcpContext)
-        .azureContext(azureContext)
-        .awsContext(awsContext);
+        .gcpContext(gcpApiContext)
+        .azureContext(azureApiContext)
+        .awsContext(awsApiContext);
   }
 
   @Traced

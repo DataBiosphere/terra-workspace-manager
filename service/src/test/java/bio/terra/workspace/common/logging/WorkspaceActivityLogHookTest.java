@@ -301,7 +301,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     workspaceDao.createWorkspace(buildMcWorkspace(workspaceUuid), /* applicationIds */ null);
     var flightId = UUID.randomUUID().toString();
     workspaceDao.createCloudContextStart(workspaceUuid, CloudPlatform.GCP, flightId);
-    workspaceDao.createCloudContextFinish(
+    workspaceDao.createCloudContextSuccess(
         workspaceUuid,
         CloudPlatform.GCP,
         "{\"version\": 1, \"gcpProjectId\": \"my-gcp-project-name-123\"}",
