@@ -60,17 +60,6 @@ jacoco {
     applyTo jacocoBootRun
 }
 
-test {
-    systemProperties['pact.rootDir'] = "$buildDir/pacts"
-    systemProperties['pact.provider.version'] = "$project.version"
-}
-
-tasks.register("pactTests", Test) {
-    useJUnitPlatform {
-        includeTags "pact-test"
-    }
-}
-
 sonar {
     properties {
         property 'sonar.projectName', 'terra-workspace-manager'

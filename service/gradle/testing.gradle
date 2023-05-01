@@ -159,3 +159,16 @@ task awsConnectedTest(type: Test) {
   finalizedBy tasks.combinedJaCoCoReport
   maxParallelForks = runnerThreads
 }
+
+// contract tests
+test {
+  systemProperties['pact.rootDir'] = "$buildDir/pacts"
+  systemProperties['pact.provider.version'] = "$project.version"
+}
+
+tasks.register("pactTests", Test) {
+  useJUnitPlatform {
+    includeTags "pact-test"
+  }
+}
+
