@@ -131,7 +131,7 @@ public class ResourceDao {
 
   private final NamedParameterJdbcTemplate jdbcTemplate;
   private final WorkspaceActivityLogDao workspaceActivityLogDao;
-  private final StateDao stateDao;
+  private final StateDbUtils stateDbUtils;
 
   // -- Common Resource Methods -- //
 
@@ -139,10 +139,10 @@ public class ResourceDao {
   public ResourceDao(
       NamedParameterJdbcTemplate jdbcTemplate,
       WorkspaceActivityLogDao workspaceActivityLogDao,
-      StateDao stateDao) {
+      StateDbUtils stateDbUtils) {
     this.jdbcTemplate = jdbcTemplate;
     this.workspaceActivityLogDao = workspaceActivityLogDao;
-    this.stateDao = stateDao;
+    this.stateDbUtils = stateDbUtils;
   }
 
   /**
@@ -158,7 +158,7 @@ public class ResourceDao {
   @WriteTransaction
   public void deleteResourceStart(UUID workspaceUuid, UUID resourceId, String flightId) {
     DbResource dbResource = getDbResourceFromIds(workspaceUuid, resourceId);
-    stateDao.updateState(
+    stateDbUtils.updateState(
         dbResource,
         /*expectedFlightId=*/ null,
         flightId,
@@ -176,7 +176,8 @@ public class ResourceDao {
   @WriteTransaction
   public void deleteResourceSuccess(UUID workspaceUuid, UUID resourceId) {
     DbResource dbResource = getDbResourceFromIds(workspaceUuid, resourceId);
-    if (!stateDao.isResourceInState(dbResource, WsmResourceState.NOT_EXISTS, /*flightId=*/ null)) {
+    if (!stateDbUtils.isResourceInState(
+        dbResource, WsmResourceState.NOT_EXISTS, /*flightId=*/ null)) {
       deleteResourceWorker(workspaceUuid, resourceId, /*resourceType=*/ null);
     }
   }
@@ -195,7 +196,7 @@ public class ResourceDao {
   public void deleteResourceFailure(
       UUID workspaceUuid, UUID resourceId, String flightId, @Nullable Exception exception) {
     DbResource dbResource = getDbResourceFromIds(workspaceUuid, resourceId);
-    stateDao.updateState(
+    stateDbUtils.updateState(
         dbResource, flightId, /*targetFlightId=*/ null, WsmResourceState.READY, exception);
   }
 
@@ -668,7 +669,7 @@ public class ResourceDao {
           String.format("Cannot find resource %s in workspace %s.", resourceId, workspaceUuid));
     }
 
-    stateDao.updateState(dbResource, null, flightId, WsmResourceState.UPDATING, null);
+    stateDbUtils.updateState(dbResource, null, flightId, WsmResourceState.UPDATING, null);
 
     DbUpdater dbUpdater =
         new DbUpdater(
@@ -728,13 +729,15 @@ public class ResourceDao {
     }
 
     DbResource dbResource = getDbResourceFromIds(workspaceUuid, resourceId);
-    stateDao.updateState(dbResource, flightId, /*flightId=*/ null, WsmResourceState.READY, null);
+    stateDbUtils.updateState(
+        dbResource, flightId, /*flightId=*/ null, WsmResourceState.READY, null);
   }
 
   @WriteTransaction
   public void updateResourceFailure(UUID workspaceUuid, UUID resourceId, String flightId) {
     DbResource dbResource = getDbResourceFromIds(workspaceUuid, resourceId);
-    stateDao.updateState(dbResource, flightId, /*flightId=*/ null, WsmResourceState.READY, null);
+    stateDbUtils.updateState(
+        dbResource, flightId, /*flightId=*/ null, WsmResourceState.READY, null);
   }
 
   // TODO: [PF-2269, PF-2556] this can go away when backfill
@@ -779,7 +782,7 @@ public class ResourceDao {
       throws DuplicateResourceException {
     DbResource dbResource =
         getDbResourceFromIds(resource.getWorkspaceId(), resource.getResourceId());
-    if (stateDao.isResourceInState(dbResource, WsmResourceState.CREATING, flightId)) {
+    if (stateDbUtils.isResourceInState(dbResource, WsmResourceState.CREATING, flightId)) {
       return; // It was a retry. We are done here
     }
 
@@ -810,7 +813,7 @@ public class ResourceDao {
   public WsmResource createResourceSuccess(WsmResource resource, String flightId) {
     DbResource dbResource =
         getDbResourceFromIds(resource.getWorkspaceId(), resource.getResourceId());
-    stateDao.updateState(
+    stateDbUtils.updateState(
         dbResource,
         flightId,
         /*targetFlightId=*/ null,
@@ -849,7 +852,7 @@ public class ResourceDao {
       case BROKEN_ON_FAILURE -> {
         DbResource dbResource =
             getDbResourceFromIds(resource.getWorkspaceId(), resource.getResourceId());
-        stateDao.updateState(
+        stateDbUtils.updateState(
             dbResource, flightId, /*flightId=*/ null, WsmResourceState.BROKEN, exception);
       }
       default -> throw new InternalLogicException("Invalid switch case");

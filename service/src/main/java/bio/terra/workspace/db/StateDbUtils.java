@@ -14,14 +14,17 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
 
-/** State DAO provides common methods for inspecting and updating state. */
+/**
+ * State DB Utils provides common methods for inspecting and updating state. These methods do not
+ * have transaction markings, because they are always called from DAOs that provide those markings.
+ */
 @Component
-public class StateDao {
-  private static final Logger logger = LoggerFactory.getLogger(StateDao.class);
+public class StateDbUtils {
+  private static final Logger logger = LoggerFactory.getLogger(StateDbUtils.class);
   private final NamedParameterJdbcTemplate jdbcTemplate;
 
   @Autowired
-  public StateDao(NamedParameterJdbcTemplate jdbcTemplate) {
+  public StateDbUtils(NamedParameterJdbcTemplate jdbcTemplate) {
     this.jdbcTemplate = jdbcTemplate;
   }
 
