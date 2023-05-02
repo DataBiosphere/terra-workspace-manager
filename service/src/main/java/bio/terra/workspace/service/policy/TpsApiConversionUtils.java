@@ -92,8 +92,8 @@ public class TpsApiConversionUtils {
     }
     return new ApiWsmPolicy()
         .objectId(tpsPao.getObjectId())
-        .component(tpsFromApiComponent(tpsPao.getComponent()))
-        .objectType(tpsFromApiObjectType(tpsPao.getObjectType()))
+        .component(apiFromTpsComponent(tpsPao.getComponent()))
+        .objectType(apiFromTpsObjectType(tpsPao.getObjectType()))
         .attributes(apiFromTpsPolicyInputs(tpsPao.getAttributes()))
         .effectiveAttributes(apiFromTpsPolicyInputs(tpsPao.getEffectiveAttributes()))
         .deleted(tpsPao.isDeleted())
@@ -119,15 +119,15 @@ public class TpsApiConversionUtils {
   public static ApiWsmPolicyDescription apiFromTpsPaoDescription(TpsPaoDescription tpsDescription) {
     return new ApiWsmPolicyDescription()
         .objectId(tpsDescription.getObjectId())
-        .component(tpsFromApiComponent(tpsDescription.getComponent()))
-        .objectType(tpsFromApiObjectType(tpsDescription.getObjectType()));
+        .component(apiFromTpsComponent(tpsDescription.getComponent()))
+        .objectType(apiFromTpsObjectType(tpsDescription.getObjectType()));
   }
 
-  public static ApiWsmPolicyComponent tpsFromApiComponent(TpsComponent tpsComponent) {
+  public static ApiWsmPolicyComponent apiFromTpsComponent(TpsComponent tpsComponent) {
     return ApiWsmPolicyComponent.fromValue(tpsComponent.getValue());
   }
 
-  public static ApiWsmPolicyObjectType tpsFromApiObjectType(TpsObjectType tpsObjectType) {
+  public static ApiWsmPolicyObjectType apiFromTpsObjectType(TpsObjectType tpsObjectType) {
     return ApiWsmPolicyObjectType.fromValue(tpsObjectType.getValue());
   }
 
