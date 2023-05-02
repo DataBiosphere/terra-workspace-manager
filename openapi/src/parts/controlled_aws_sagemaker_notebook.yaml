@@ -28,7 +28,9 @@ paths:
     parameters:
     - $ref: '#/components/parameters/WorkspaceId'
     post:
-      summary: Create a new controlled AWS Sagemaker Notebook instance resource asynchronously.
+      summary: |
+        Create a new controlled AWS Sagemaker Notebook instance resource. This 
+        is async, because the operation can take a few minutes.
       operationId: createAwsSagemakerNotebook
       tags: [ControlledAwsResource]
       requestBody:
@@ -89,7 +91,10 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
     post:
-      summary: Delete controlled AWS Sagemaker Notebook instance resource asynchronously.
+      summary: |
+        Delete a controlled AWS Sagemaker Notebook instance resource. This is async, 
+        because the operation can take a few minutes. OpenAPI does not support 
+        request body in DELETE, but async state requires it. Hence this is a POST.
       operationId: deleteAwsSagemakerNotebook
       tags: [ControlledAwsResource]
       requestBody:
