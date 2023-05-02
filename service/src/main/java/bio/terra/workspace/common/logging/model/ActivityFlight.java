@@ -4,7 +4,6 @@ import bio.terra.workspace.common.exception.UnknownFlightClassNameException;
 import bio.terra.workspace.service.admin.flights.cloudcontexts.gcp.SyncGcpIamRolesFlight;
 import bio.terra.workspace.service.folder.flights.DeleteFolderFlight;
 import bio.terra.workspace.service.grant.flight.RevokeTemporaryGrantFlight;
-import bio.terra.workspace.service.resource.controlled.flight.backfill.UpdateControlledBigQueryDatasetsLifetimeFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.CloneControlledAzureStorageContainerResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CloneControlledGcsBucketResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.CloneControlledGcpBigQueryDatasetResourceFlight;
@@ -25,6 +24,7 @@ import bio.terra.workspace.service.workspace.flight.cloud.gcp.DeleteGcpContextFl
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.RemoveUserFromWorkspaceFlight;
 import bio.terra.workspace.service.workspace.flight.create.workspace.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.delete.workspace.WorkspaceDeleteFlight;
+import bio.terra.workspace.service.workspace.gcpcontextbackfill.GcpContextBackfillFlight;
 import java.util.Arrays;
 
 /**
@@ -77,9 +77,6 @@ public enum ActivityFlight {
   CONTROLLED_BQ_DATASET_CLONE_FLIGHT(
       CloneControlledGcpBigQueryDatasetResourceFlight.class.getName(),
       ActivityLogChangedTarget.RESOURCE),
-  UPDATE_GCP_CONTROLLED_BQ_DATASETS_LIFETIME_FLIGHT(
-      UpdateControlledBigQueryDatasetsLifetimeFlight.class.getName(),
-      ActivityLogChangedTarget.RESOURCE),
 
   // AZURE
   AZURE_CLOUD_CONTEXT_CREATE_FLIGHT(
@@ -94,7 +91,11 @@ public enum ActivityFlight {
   AWS_CLOUD_CONTEXT_CREATE_FLIGHT(
       CreateAwsContextFlight.class.getName(), ActivityLogChangedTarget.AWS_CLOUD_CONTEXT),
   AWS_CLOUD_CONTEXT_DELETE_FLIGHT(
-      DeleteAwsContextFlight.class.getName(), ActivityLogChangedTarget.AWS_CLOUD_CONTEXT);
+      DeleteAwsContextFlight.class.getName(), ActivityLogChangedTarget.AWS_CLOUD_CONTEXT),
+
+  // TODO: PF-2694 TEMPORARY BACKFILL
+  GCP_CONTEXT_BACKFILL_FLIGHT(
+      GcpContextBackfillFlight.class.getName(), ActivityLogChangedTarget.GCP_CLOUD_CONTEXT);
 
   private final String flightClassName;
   private final ActivityLogChangedTarget changedTarget;

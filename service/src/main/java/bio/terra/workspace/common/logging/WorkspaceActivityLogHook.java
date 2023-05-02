@@ -3,7 +3,6 @@ package bio.terra.workspace.common.logging;
 import static bio.terra.workspace.common.utils.FlightUtils.getRequired;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.APPLICATION_IDS;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.FOLDER_ID;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.UPDATED_WORKSPACES;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.USER_TO_REMOVE;
@@ -28,20 +27,19 @@ import bio.terra.workspace.service.admin.flights.cloudcontexts.gcp.SyncGcpIamRol
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.resource.controlled.flight.backfill.UpdateControlledBigQueryDatasetsLifetimeFlight;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
+import bio.terra.workspace.service.workspace.gcpcontextbackfill.GcpContextBackfillFlight;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Preconditions;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -186,10 +184,8 @@ public class WorkspaceActivityLogHook implements StairwayHook {
       String subjectId) {
     if (SyncGcpIamRolesFlight.class.getName().equals(flightClassName)) {
       maybeLogForSyncGcpIamRolesFlight(context, operationType, userEmail, subjectId);
-    } else if (UpdateControlledBigQueryDatasetsLifetimeFlight.class
-        .getName()
-        .equals(flightClassName)) {
-      maybeLogUpdateControlledResourceFieldsFlight(context, operationType, userEmail, subjectId);
+    } else if (GcpContextBackfillFlight.class.getName().equals(flightClassName)) {
+      maybeLogGcpContextBackfillFlight(context, operationType, userEmail, subjectId);
     } else {
       throw new UnhandledActivityLogException(
           String.format(
@@ -353,29 +349,24 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     }
   }
 
-  private void maybeLogUpdateControlledResourceFieldsFlight(
+  private void maybeLogGcpContextBackfillFlight(
       FlightContext context, OperationType operationType, String userEmail, String subjectId) {
     if (!context.getFlightStatus().equals(FlightStatus.SUCCESS)) {
       return;
     }
-    FlightUtils.validateRequiredEntries(
-        context.getWorkingMap(), CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP);
-
-    Map<UUID, String> resourceIdToWorkspaceIdMap =
+    List<String> backfillWorkspaceIdStrings =
         Preconditions.checkNotNull(
-            context
-                .getWorkingMap()
-                .get(CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP, new TypeReference<>() {}));
+            context.getInputParameters().get(UPDATED_WORKSPACES, new TypeReference<>() {}));
 
-    for (Map.Entry<UUID, String> pair : resourceIdToWorkspaceIdMap.entrySet()) {
+    for (String workspaceIdString : backfillWorkspaceIdStrings) {
       activityLogDao.writeActivity(
-          UUID.fromString(pair.getValue()),
+          UUID.fromString(workspaceIdString),
           new DbWorkspaceActivityLog(
               userEmail,
               subjectId,
               operationType,
-              pair.getKey().toString(),
-              ActivityLogChangedTarget.RESOURCE));
+              workspaceIdString,
+              ActivityLogChangedTarget.GCP_CLOUD_CONTEXT));
     }
   }
 }
