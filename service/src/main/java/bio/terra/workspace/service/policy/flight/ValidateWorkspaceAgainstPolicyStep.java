@@ -13,6 +13,7 @@ import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.exception.PolicyConflictException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
+import java.util.ArrayList;
 import java.util.UUID;
 
 public class ValidateWorkspaceAgainstPolicyStep implements Step {
@@ -53,18 +54,25 @@ public class ValidateWorkspaceAgainstPolicyStep implements Step {
       return StepResult.getStepResultSuccess();
     }
 
-    var validRegions =
-        ResourceValidationUtils.validateExistingResourceWithNewPolicy(
-            effectivePolicies, workspaceId, tpsApiDispatch, cloudPlatform, resourceDao);
+    var validRegions = tpsApiDispatch.listValidRegionsForPao(effectivePolicies, cloudPlatform);
+
+    var validationErrors =
+        new ArrayList<>(
+            ResourceValidationUtils.validateExistingResourceRegions(
+                workspaceId, validRegions, cloudPlatform, resourceDao));
 
     if (destinationLocation != null && !validRegions.contains(destinationLocation.toLowerCase())) {
-      throw new PolicyConflictException(
+      validationErrors.add(
           String.format(
               "The specified destination location '%s' violates region policies",
               destinationLocation));
     }
 
-    return StepResult.getStepResultSuccess();
+    if (validationErrors.isEmpty()) {
+      return StepResult.getStepResultSuccess();
+    } else {
+      throw new PolicyConflictException(validationErrors);
+    }
   }
 
   @Override

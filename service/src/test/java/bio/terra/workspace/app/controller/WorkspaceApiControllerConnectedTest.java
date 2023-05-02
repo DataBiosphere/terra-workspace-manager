@@ -36,14 +36,18 @@ import bio.terra.workspace.generated.model.ApiIamRole;
 import bio.terra.workspace.generated.model.ApiMergeCheckRequest;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
+import bio.terra.workspace.generated.model.ApiWsmPolicyComponent;
+import bio.terra.workspace.generated.model.ApiWsmPolicyDescription;
 import bio.terra.workspace.generated.model.ApiWsmPolicyExplainResult;
 import bio.terra.workspace.generated.model.ApiWsmPolicyMergeCheckResult;
 import bio.terra.workspace.generated.model.ApiWsmPolicyObject;
+import bio.terra.workspace.generated.model.ApiWsmPolicyObjectType;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateMode;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateResult;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
+import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
@@ -83,6 +87,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @Autowired private UserAccessUtils userAccessUtils;
   @Autowired private NamedParameterJdbcTemplate jdbcTemplate;
   @Autowired private SamService samService;
+  @Autowired private TpsApiDispatch tpsApiDispatch;
 
   private ApiCreatedWorkspace workspace;
 
@@ -797,5 +802,41 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     assertThat(workspace.getCreatedBy(), not(emptyString()));
     assertNotNull(workspace.getLastUpdatedDate());
     assertThat(workspace.getLastUpdatedBy(), not(emptyString()));
+  }
+
+  @Test
+  @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
+  public void linkPolicies_tpsEnabledAndPolicyUpdated() throws Exception {
+    var snapshotId = UUID.randomUUID();
+    try {
+      ApiWsmPolicyUpdateResult result =
+          mockMvcUtils.linkPoliciesToSnapshot(
+              userAccessUtils.defaultUserAuthRequest(), workspace.getId(), snapshotId);
+
+      assertTrue(result.isUpdateApplied());
+      assertTrue(result.getResultingPolicy().getSourcesObjectIds().contains(snapshotId));
+    } finally {
+      tpsApiDispatch.deletePao(snapshotId);
+    }
+  }
+
+  @Test
+  @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
+  public void linkPolicies_noAccess_throws() throws Exception {
+    mockMvcUtils.grantRole(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspace.getId(),
+        WsmIamRole.DISCOVERER,
+        userAccessUtils.getSecondUserEmail());
+
+    mockMvcUtils.linkPoliciesExpect(
+        userAccessUtils.secondUserAuthRequest(),
+        workspace.getId(),
+        HttpStatus.SC_FORBIDDEN,
+        new ApiWsmPolicyDescription()
+            .objectId(UUID.randomUUID())
+            .component(ApiWsmPolicyComponent.TDR)
+            .objectType(ApiWsmPolicyObjectType.SNAPSHOT),
+        ApiWsmPolicyUpdateMode.DRY_RUN);
   }
 }

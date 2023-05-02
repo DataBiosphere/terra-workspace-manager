@@ -121,8 +121,12 @@ import bio.terra.workspace.generated.model.ApiUpdateGitRepoReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
+import bio.terra.workspace.generated.model.ApiWsmLinkPoliciesRequest;
+import bio.terra.workspace.generated.model.ApiWsmPolicyComponent;
+import bio.terra.workspace.generated.model.ApiWsmPolicyDescription;
 import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
 import bio.terra.workspace.generated.model.ApiWsmPolicyInputs;
+import bio.terra.workspace.generated.model.ApiWsmPolicyObjectType;
 import bio.terra.workspace.generated.model.ApiWsmPolicyPair;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateMode;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateRequest;
@@ -210,6 +214,8 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/properties";
   public static final String UPDATE_WORKSPACES_V1_POLICIES_PATH_FORMAT =
       "/api/workspaces/v1/%s/policies";
+  public static final String WORKSPACES_V1_LINK_POLICIES_PATH_FORMAT =
+      "/api/workspaces/v1/%s/policies/link";
   public static final String WORKSPACES_V1_EXPLAIN_POLICIES_PATH_FORMAT =
       "/api/workspaces/v1/%s/policies/explain";
   public static final String WORKSPACES_V1_MERGE_CHECK_POLICIES_PATH_FORMAT =
@@ -2971,5 +2977,44 @@ public class MockMvcUtils {
         new ApiPrivateResourceUser(),
         ApiPrivateResourceState.NOT_APPLICABLE,
         null);
+  }
+
+  public ApiWsmPolicyUpdateResult linkPoliciesToSnapshot(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID snapshotId) throws Exception {
+    var serializedResponse =
+        linkPoliciesExpect(
+                userRequest,
+                workspaceId,
+                HttpStatus.SC_OK,
+                new ApiWsmPolicyDescription()
+                    .objectId(snapshotId)
+                    .component(ApiWsmPolicyComponent.TDR)
+                    .objectType(ApiWsmPolicyObjectType.SNAPSHOT),
+                ApiWsmPolicyUpdateMode.FAIL_ON_CONFLICT)
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    return objectMapper.readValue(serializedResponse, ApiWsmPolicyUpdateResult.class);
+  }
+
+  public ResultActions linkPoliciesExpect(
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      int code,
+      ApiWsmPolicyDescription policyObjectId,
+      ApiWsmPolicyUpdateMode updateMode)
+      throws Exception {
+    var updateRequest =
+        new ApiWsmLinkPoliciesRequest().updateMode(updateMode).policyObjectId(policyObjectId);
+    return mockMvc
+        .perform(
+            addAuth(
+                post(String.format(WORKSPACES_V1_LINK_POLICIES_PATH_FORMAT, workspaceId))
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .characterEncoding("UTF-8")
+                    .content(objectMapper.writeValueAsString(updateRequest)),
+                userRequest))
+        .andExpect(status().is(code));
   }
 }

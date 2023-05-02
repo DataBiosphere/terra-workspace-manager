@@ -1,6 +1,8 @@
 package bio.terra.workspace.service.policy;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.policy.model.TpsPolicyInput;
 import bio.terra.policy.model.TpsPolicyInputs;
@@ -28,7 +30,7 @@ public class TpsUtilitiesTest extends BaseUnitTest {
                         .namespace("not terra")
                         .name(TpsUtilities.GROUP_CONSTRAINT)
                         .addAdditionalDataItem(
-                            new TpsPolicyPair().key(TpsUtilities.GROUP_KEY).value(testGroup))));
+                            new TpsPolicyPair().key(TpsUtilities.GROUP_KEY).value("other"))));
 
     assertIterableEquals(List.of(testGroup), results);
   }
@@ -53,5 +55,32 @@ public class TpsUtilitiesTest extends BaseUnitTest {
   void testGetGroupConstraintsFromInputs_null() {
     var results = TpsUtilities.getGroupConstraintsFromInputs(null);
     assertIterableEquals(List.of(), results);
+  }
+
+  @Test
+  void testContainsProtectedDataPolicy() {
+    assertTrue(
+        TpsUtilities.containsProtectedDataPolicy(
+            new TpsPolicyInputs()
+                .addInputsItem(
+                    new TpsPolicyInput()
+                        .namespace(TpsUtilities.TERRA_NAMESPACE)
+                        .name(TpsUtilities.PROTECTED_DATA_POLICY_NAME))));
+  }
+
+  @Test
+  void testContainsProtectedDataPolicy_missing() {
+    assertFalse(
+        TpsUtilities.containsProtectedDataPolicy(
+            new TpsPolicyInputs()
+                .addInputsItem(
+                    new TpsPolicyInput()
+                        .namespace("other")
+                        .name(TpsUtilities.PROTECTED_DATA_POLICY_NAME))));
+  }
+
+  @Test
+  void testContainsProtectedDataPolicy_null() {
+    assertFalse(TpsUtilities.containsProtectedDataPolicy(null));
   }
 }

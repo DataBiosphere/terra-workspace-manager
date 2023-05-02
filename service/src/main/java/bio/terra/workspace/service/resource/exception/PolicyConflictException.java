@@ -14,6 +14,10 @@ public class PolicyConflictException extends ConflictException {
     super(message, cause);
   }
 
+  public PolicyConflictException(List<String> causes) {
+    super("Policy violations exist", causes);
+  }
+
   public PolicyConflictException(String message, List<TpsPaoConflict> causes) {
     super(message, causes.stream().map(c -> c.getNamespace() + ':' + c.getName()).toList());
   }
