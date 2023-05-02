@@ -19,12 +19,13 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
 
 // TODO: PF-2694 - remove this backfill when propagated to all environments
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Tag("connected")
+@TestInstance(Lifecycle.PER_CLASS)
 public class GcpContextBackFillTest extends BaseConnectedTest {
   @Autowired WorkspaceDao workspaceDao;
   @Autowired GcpCloudContextBackfill gcpCloudContextBackfill;

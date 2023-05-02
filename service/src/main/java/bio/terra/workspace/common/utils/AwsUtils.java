@@ -315,8 +315,7 @@ public class AwsUtils {
   }
 
   // TODO(TERRA-498) Move all functions below this comment to CRL
-  private static S3Client getS3Client(
-      AwsCredentialsProvider awsCredentialsProvider, Region region) {
+  public static S3Client getS3Client(AwsCredentialsProvider awsCredentialsProvider, Region region) {
     return S3Client.builder().region(region).credentialsProvider(awsCredentialsProvider).build();
   }
 

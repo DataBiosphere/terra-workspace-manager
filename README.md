@@ -619,7 +619,7 @@ We currently have these workflows:
 
 | Workflow         | Triggers               | Work                                                                                                        |
 |------------------|------------------------|-------------------------------------------------------------------------------------------------------------|
-| _test_           | on PR and merge to dev | runs the unit, connected and azure tests                                                                    |
+| _test_           | on PR and merge to dev | runs the unit, connected, azureUnit, azureConnected and awsUnit tests                                       |
 | _pr-integration_ | on PR and merge to dev | runs the TestRunner-based integration test suite from the GHA host VM                                       |
 | _nightly-tests_  | nightly at 2am         | runs the TestRunner-based integration, perf, and resiliency test suites on the wsmtest personal environment |
 | _tag-publish_    | on merge to dev        | tags, version bumps, publishes client to artifactory, pushes image to GCR                                   |
@@ -660,8 +660,9 @@ The current inheritance for unit test base classes looks like this:
       - `BaseUnitTestMockDataRepoService` - adds one more mock; used in one unit test
       - `BaseUnitTestMockGcpCloudContextService` - adds one more mock; used by several tests
     - `BaseAzureUnitTest` - adds mocks shared by azure unit tests and enables the right test tags and profiles
+    - `BaseAwsUnitTest` - adds mocks shared by aws unit tests and enables the right test tags and profiles
 
-We keep the Azure tests separated from the general tests, because the Azure feature is not live in all environments.
+We keep the Azure & AWS tests separated from the general tests, because the Azure/AWS feature is not live in all environments.
 Those tests will not successfully run in those environments.
 
 ### Connected Tests
