@@ -30,11 +30,12 @@ public class DeleteAwsS3StorageFolderStep implements Step {
             awsCloudContextService.getRequiredAuthentication(),
             awsCloudContextService.discoverEnvironment());
 
-    AwsUtils.deleteFolder(
-        credentialsProvider,
-        Region.of(resource.getRegion()),
-        resource.getBucketName(),
-        resource.getPrefix());
+    AwsUtils.getInstance()
+        .deleteFolder(
+            credentialsProvider,
+            Region.of(resource.getRegion()),
+            resource.getBucketName(),
+            resource.getPrefix());
 
     return StepResult.getStepResultSuccess();
   }

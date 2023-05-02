@@ -27,6 +27,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.oauth2.jwt.JwtDecoders;
+import org.springframework.stereotype.Component;
 import software.amazon.awssdk.arns.Arn;
 import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
@@ -53,13 +54,24 @@ import software.amazon.awssdk.services.sts.model.AssumeRoleWithWebIdentityReques
 import software.amazon.awssdk.services.sts.model.Credentials;
 import software.amazon.awssdk.services.sts.model.Tag;
 
+@Component
 public class AwsUtils {
+
+  private static AwsUtils awsUtils = null;
   private static final Logger logger = LoggerFactory.getLogger(AwsUtils.class);
 
   private static final int MAX_ROLE_SESSION_NAME_LENGTH = 64;
   private static final Duration MIN_ROLE_SESSION_TOKEN_DURATION = Duration.ofSeconds(900);
 
   private static final int MAX_RESULTS_PER_REQUEST_S3 = 1000;
+
+  public static synchronized AwsUtils getInstance() {
+    if (awsUtils == null) {
+      awsUtils = new AwsUtils();
+    }
+
+    return awsUtils;
+  }
 
   /**
    * Truncate a passed string for use as an STS session name
@@ -315,7 +327,7 @@ public class AwsUtils {
   }
 
   // TODO(TERRA-498) Move all functions below this comment to CRL
-  public static S3Client getS3Client(AwsCredentialsProvider awsCredentialsProvider, Region region) {
+  public S3Client getS3Client(AwsCredentialsProvider awsCredentialsProvider, Region region) {
     return S3Client.builder().region(region).credentialsProvider(awsCredentialsProvider).build();
   }
 
@@ -327,7 +339,7 @@ public class AwsUtils {
    * @param bucketName bucket name
    * @param folder folder name (key)
    */
-  public static boolean checkFolderExists(
+  public boolean checkFolderExists(
       AwsCredentialsProvider awsCredentialsProvider,
       Region region,
       String bucketName,
@@ -346,7 +358,7 @@ public class AwsUtils {
    * @param folder folder name (key)
    * @param tags collection of {@link Tag} to be attached to the folder
    */
-  public static void createFolder(
+  public void createFolder(
       AwsCredentialsProvider awsCredentialsProvider,
       Region region,
       String bucketName,
@@ -365,7 +377,7 @@ public class AwsUtils {
    * @param bucketName bucket name
    * @param folder folder name (key)
    */
-  public static void deleteFolder(
+  public void deleteFolder(
       AwsCredentialsProvider awsCredentialsProvider,
       Region region,
       String bucketName,
@@ -386,7 +398,7 @@ public class AwsUtils {
    * @param key object (key)
    * @param tags collection of {@link Tag} to be attached to the folder
    */
-  public static void putObject(
+  public void putObject(
       AwsCredentialsProvider awsCredentialsProvider,
       Region region,
       String bucketName,
@@ -443,7 +455,7 @@ public class AwsUtils {
    * @param prefix common prefix
    * @param limit max count of results
    */
-  public static List<String> getObjectKeysByPrefix(
+  public List<String> getObjectKeysByPrefix(
       AwsCredentialsProvider awsCredentialsProvider,
       Region region,
       String bucketName,
@@ -495,7 +507,7 @@ public class AwsUtils {
    * @param bucketName bucket name
    * @param keys list of objects (keys)
    */
-  public static void deleteObjects(
+  public void deleteObjects(
       AwsCredentialsProvider awsCredentialsProvider,
       Region region,
       String bucketName,

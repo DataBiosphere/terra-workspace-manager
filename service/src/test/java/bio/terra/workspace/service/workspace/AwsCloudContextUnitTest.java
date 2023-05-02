@@ -32,9 +32,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
-import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import software.amazon.awssdk.arns.Arn;
@@ -64,6 +62,7 @@ public class AwsCloudContextUnitTest extends BaseUnitTest {
 
   // TODO-Dex move this to utils
   @MockBean private AwsCloudContextService awsCloudContextService;
+  @MockBean private AwsUtils awsUtils;
 
   @BeforeAll
   public void setup() {
@@ -139,14 +138,7 @@ public class AwsCloudContextUnitTest extends BaseUnitTest {
 
     setupCrlMocks();
 
-    try (MockedStatic<AwsUtils> awsUtilsMockedStatic = Mockito.mockStatic(AwsUtils.class)) {
-
-     awsUtilsMockedStatic
-          .when(() -> AwsUtils.deleteFolder(any(), any(), any(), any()))
-         .thenAnswer((Answer<Void>) invocation -> null);
-
-      workspaceService.deleteAwsCloudContext(workspace, USER_REQUEST);
-    }
+    workspaceService.deleteAwsCloudContext(workspace, USER_REQUEST);
 
     // try (MockedStatic<AwsUtils> mockAwsUtils = Mockito.mockStatic(AwsUtils.class)) {
 
@@ -179,24 +171,29 @@ public class AwsCloudContextUnitTest extends BaseUnitTest {
     Mockito.when(awsCloudContextService.getRequiredAuthentication()).thenReturn(authentication);
     Mockito.when(awsCloudContextService.discoverEnvironment()).thenReturn(mockEnvironment);
 
-     SdkHttpResponse sdkHttpResponse =
-         ((SdkHttpResponse.Builder) SdkHttpResponse.builder().statusCode(200)).build();
-     ListObjectsV2Response listResponse =
-         ((ListObjectsV2Response.Builder)
-                 ListObjectsV2Response.builder().sdkHttpResponse(sdkHttpResponse))
-             .build();
-     DeleteObjectsResponse deleteResponse =
-         ((DeleteObjectsResponse.Builder)
-                 DeleteObjectsResponse.builder().sdkHttpResponse(sdkHttpResponse))
-             .build();
+    SdkHttpResponse sdkHttpResponse =
+        ((SdkHttpResponse.Builder) SdkHttpResponse.builder().statusCode(200)).build();
+    ListObjectsV2Response listResponse =
+        ((ListObjectsV2Response.Builder)
+                ListObjectsV2Response.builder().sdkHttpResponse(sdkHttpResponse))
+            .build();
+    DeleteObjectsResponse deleteResponse =
+        ((DeleteObjectsResponse.Builder)
+                DeleteObjectsResponse.builder().sdkHttpResponse(sdkHttpResponse))
+            .build();
 
-   S3Client mockS3Client = Mockito.mock(S3Client.class, Mockito.RETURNS_DEEP_STUBS);
-     Mockito.when(mockS3Client.listObjectsV2(any(ListObjectsV2Request.class)))
-         .thenReturn(listResponse);
-     Mockito.when(mockS3Client.deleteObjects(any(DeleteObjectsRequest.class)))
-         .thenReturn(deleteResponse);
+    S3Client mockS3Client = Mockito.mock(S3Client.class, Mockito.RETURNS_DEEP_STUBS);
+    Mockito.when(mockS3Client.listObjectsV2(any(ListObjectsV2Request.class)))
+        .thenReturn(listResponse);
+    Mockito.when(mockS3Client.deleteObjects(any(DeleteObjectsRequest.class)))
+        .thenReturn(deleteResponse);
 
-/*
+    //AwsUtils mockAwsUtils = Mockito.mock(AwsUtils.class, Mockito.RETURNS_DEEP_STUBS);
+   // Mockito.when(mockAwsUtils.getInstance()).thenReturn(mockAwsUtils);
+    //Mockito.when(awsUtils.getS3Client(any(), any())).thenReturn(mockS3Client);
+    Mockito.doNothing().when(awsUtils).deleteFolder(any(), any(), any(), any());
+
+    /*
 
      MockedStatic<AwsUtils> mockAwsUtils = Mockito.mockStatic(AwsUtils.class);
      Mockito.doNothing().when(mockAwsUtils).

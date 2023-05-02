@@ -30,11 +30,12 @@ public class ValidateAwsS3StorageFolderCreateStep implements Step {
             awsCloudContextService.getRequiredAuthentication(),
             awsCloudContextService.discoverEnvironment());
 
-    if (AwsUtils.checkFolderExists(
-        credentialsProvider,
-        Region.of(resource.getRegion()),
-        resource.getBucketName(),
-        resource.getPrefix())) {
+    if (AwsUtils.getInstance()
+        .checkFolderExists(
+            credentialsProvider,
+            Region.of(resource.getRegion()),
+            resource.getBucketName(),
+            resource.getPrefix())) {
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL,
           new ConflictException(
