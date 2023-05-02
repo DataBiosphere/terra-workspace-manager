@@ -147,7 +147,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
   }
 
-  public ResponseEntity<ApiDeleteControlledAwsResourceResult> getDeleteAwsResourceResult(
+  private ResponseEntity<ApiDeleteControlledAwsResourceResult> getDeleteAwsResourceResult(
       UUID workspaceUuid, String jobId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
@@ -189,6 +189,8 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
         HttpStatus.OK);
   }
 
+  @Traced
+  @Override
   public ResponseEntity<ApiAwsResourceCloudName> generateAwsS3StorageFolderCloudName(
       UUID workspaceUuid, ApiGenerateAwsResourceCloudNameRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();

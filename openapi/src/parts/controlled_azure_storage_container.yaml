@@ -73,7 +73,10 @@ paths:
       parameters:
         - $ref: '#/components/parameters/WorkspaceId'
         - $ref: '#/components/parameters/ResourceId'
-      summary: Delete an Azure Storage Container
+      summary: |
+        Delete a controlled Azure Storage Container resource. This is async, 
+        because the operation can take a few minutes. OpenAPI does not support 
+        request body in DELETE, but async state requires it. Hence this is a POST.
       operationId: deleteAzureStorageContainer
       tags: [ControlledAzureResource]
       requestBody:

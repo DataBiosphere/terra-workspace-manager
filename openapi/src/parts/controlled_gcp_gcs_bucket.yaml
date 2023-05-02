@@ -57,7 +57,10 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
     post:
-      summary: Delete a controlled GCS bucket resource asynchronously.
+      summary: |
+        Delete a controlled GCS bucket resource. This is async, because the 
+        operation can take a few minutes. OpenAPI does not support request body 
+        in DELETE, but async state requires it. Hence this is a POST.
       operationId: deleteBucket
       tags: [ControlledGcpResource]
       requestBody:
