@@ -324,11 +324,13 @@ readonly TERRA_BOOT_SERVICE="/etc/systemd/system/terra-instance-boot.service"
 
 cat <<EOF >"${TERRA_BOOT_SCRIPT}"
 #!/bin/bash
+# This script is run on instance boot to configure the instance for terra.
 
 # Mount terra workspace resources
 /usr/bin/terra resource mount
 EOF
 chmod +x "${TERRA_BOOT_SCRIPT}"
+chown ${JUPYTER_USER}:${JUPYTER_USER} "${TERRA_BOOT_SCRIPT}"
 
 # Create a systemd service to run the boot script on system boot
 cat <<EOF >"${TERRA_BOOT_SERVICE}"
