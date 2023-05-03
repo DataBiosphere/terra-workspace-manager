@@ -30,9 +30,7 @@ public class CustomGcpIamRoleMapping {
           .add("storage.objects.create", "storage.objects.delete", "storage.objects.update")
           .build();
   static final ImmutableList<String> GCS_BUCKET_EDITOR_PERMISSIONS =
-      new ImmutableList.Builder<String>()
-          .addAll(GCS_BUCKET_WRITER_PERMISSIONS)
-          .build();
+      new ImmutableList.Builder<String>().addAll(GCS_BUCKET_WRITER_PERMISSIONS).build();
   static final ImmutableList<String> BIG_QUERY_DATASET_READER_PERMISSIONS =
       ImmutableList.of(
           "bigquery.datasets.get",
