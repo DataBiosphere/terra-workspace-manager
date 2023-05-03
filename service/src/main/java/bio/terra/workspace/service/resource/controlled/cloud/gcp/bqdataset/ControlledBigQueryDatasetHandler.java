@@ -13,6 +13,7 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.ws.rs.BadRequestException;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -71,10 +72,6 @@ public class ControlledBigQueryDatasetHandler implements WsmResourceHandler {
   @Override
   public String generateCloudName(@Nullable UUID workspaceUuid, String bqDatasetName) {
     String generatedName = bqDatasetName.replace("-", "_");
-    generatedName =
-        generatedName.length() > MAX_DATASET_NAME_LENGTH
-            ? generatedName.substring(0, MAX_DATASET_NAME_LENGTH)
-            : generatedName;
 
     // The regular expression only allow legal character combinations which start with alphanumeric
     //  letter, alphanumeric letter and underscore ("_") in the string, and alphanumeric letter at
@@ -86,6 +83,7 @@ public class ControlledBigQueryDatasetHandler implements WsmResourceHandler {
             .retainFrom(generatedName);
     // The name cannot start or end with dash("-")
     generatedName = CharMatcher.is('_').trimFrom(generatedName);
+
     if (generatedName.length() == 0) {
       throw new BadRequestException(
           String.format(
@@ -93,6 +91,6 @@ public class ControlledBigQueryDatasetHandler implements WsmResourceHandler {
                   + " alphanumerical characters.",
               bqDatasetName));
     }
-    return generatedName;
+    return StringUtils.truncate(generatedName, MAX_DATASET_NAME_LENGTH);
   }
 }

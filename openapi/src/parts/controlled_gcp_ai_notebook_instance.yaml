@@ -62,7 +62,10 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
     post:
-      summary: Delete a controlled GCP AI Notebook instance resource asynchronously.
+      summary: |
+        Delete a controlled GCP AI Notebook instance resource. This is async, 
+        because the operation can take ~5 minutes. OpenAPI does not support 
+        request body in DELETE, but async state requires it. Hence this is a POST.
       operationId: deleteAiNotebookInstance
       tags: [ ControlledGcpResource ]
       requestBody:

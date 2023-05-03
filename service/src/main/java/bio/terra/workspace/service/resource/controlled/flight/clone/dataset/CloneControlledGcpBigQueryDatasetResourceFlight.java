@@ -152,7 +152,8 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
                   flightBeanBag.getSamService(),
                   sourceDataset,
                   userRequest,
-                  flightBeanBag.getGcpCloudContextService()));
+                  flightBeanBag.getGcpCloudContextService()),
+              RetryRules.cloudLongRunning());
         } else {
           addStep(
               new CreateTableCopyJobsStep(

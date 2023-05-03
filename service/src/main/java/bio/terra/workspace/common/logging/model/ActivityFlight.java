@@ -4,7 +4,6 @@ import bio.terra.workspace.common.exception.UnknownFlightClassNameException;
 import bio.terra.workspace.service.admin.flights.cloudcontexts.gcp.SyncGcpIamRolesFlight;
 import bio.terra.workspace.service.folder.flights.DeleteFolderFlight;
 import bio.terra.workspace.service.grant.flight.RevokeTemporaryGrantFlight;
-import bio.terra.workspace.service.resource.controlled.flight.backfill.UpdateControlledBigQueryDatasetsLifetimeFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.CloneControlledAzureStorageContainerResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CloneControlledGcsBucketResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.CloneControlledGcpBigQueryDatasetResourceFlight;
@@ -77,9 +76,6 @@ public enum ActivityFlight {
       CloneControlledGcsBucketResourceFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
   CONTROLLED_BQ_DATASET_CLONE_FLIGHT(
       CloneControlledGcpBigQueryDatasetResourceFlight.class.getName(),
-      ActivityLogChangedTarget.RESOURCE),
-  UPDATE_GCP_CONTROLLED_BQ_DATASETS_LIFETIME_FLIGHT(
-      UpdateControlledBigQueryDatasetsLifetimeFlight.class.getName(),
       ActivityLogChangedTarget.RESOURCE),
 
   // AZURE

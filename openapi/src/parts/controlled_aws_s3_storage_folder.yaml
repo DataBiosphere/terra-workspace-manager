@@ -67,7 +67,10 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
     post:
-      summary: Delete controlled AWS S3 Storage Folder resource asynchronously.
+      summary: | 
+        Delete a controlled AWS S3 Storage resource. This is async, because the 
+        operation can take a few minutes. OpenAPI does not support request body 
+        in DELETE, but async state requires it. Hence this is a POST.
       operationId: deleteAwsS3StorageFolder
       tags: [ControlledAwsResource]
       requestBody:

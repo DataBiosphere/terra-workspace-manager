@@ -19,7 +19,6 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
-import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import java.net.URI;
@@ -257,6 +256,7 @@ public class ResourceValidationUtils {
     // connection endpoint: https://docs.aws.amazon.com/codecommit/latest/userguide/regions.html.
     return hostName.startsWith("git-codecommit.") && hostName.endsWith(".amazonaws.com");
   }
+
   /**
    * Validate GCS object name.
    *
@@ -442,17 +442,6 @@ public class ResourceValidationUtils {
       throw new InvalidReferenceException(
           "Invalid Azure Storage Container name. The name must be 3 to 63 alphanumeric lower case characters "
               + "or dashes, must start and end with a letter or number, and cannot contain consecutive dashes.");
-    }
-  }
-
-  public static void validateAzureVmSize(String vmSize) {
-    if (!VirtualMachineSizeTypes.values().stream()
-        .map(VirtualMachineSizeTypes::toString)
-        .toList()
-        .contains(vmSize)) {
-      logger.warn("Invalid Azure vmSize {}", vmSize);
-      throw new InvalidReferenceException(
-          "Invalid Azure vm size specified. See the class `com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes`");
     }
   }
 

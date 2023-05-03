@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.PostConstruct;
 import javax.ws.rs.BadRequestException;
+import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -67,22 +68,17 @@ public class ControlledAiNotebookHandler implements WsmResourceHandler {
    */
   @Override
   public String generateCloudName(@Nullable UUID workspaceUuid, String aiNotebookName) {
-    String generatedName = aiNotebookName.toLowerCase();
-    generatedName =
-        generatedName.length() > MAX_INSTANCE_NAME_LENGTH
-            ? generatedName.substring(0, MAX_INSTANCE_NAME_LENGTH)
-            : generatedName;
-
     // AI notebook name only allows numbers, dash("-"), and lower case letters.
-    generatedName =
+    String generatedName =
         CharMatcher.inRange('0', '9')
             .or(CharMatcher.inRange('a', 'z'))
             .or(CharMatcher.is('-'))
-            .retainFrom(generatedName);
+            .retainFrom(aiNotebookName.toLowerCase());
     // The name cannot start or end with dash("-")
     generatedName = CharMatcher.is('-').trimFrom(generatedName);
     // The name cannot start with number.
     generatedName = CharMatcher.inRange('0', '9').trimLeadingFrom(generatedName);
+
     if (generatedName.length() == 0) {
       throw new BadRequestException(
           String.format(
@@ -90,6 +86,6 @@ public class ControlledAiNotebookHandler implements WsmResourceHandler {
                   + " alphanumerical characters.",
               aiNotebookName));
     }
-    return generatedName;
+    return StringUtils.truncate(generatedName, MAX_INSTANCE_NAME_LENGTH);
   }
 }

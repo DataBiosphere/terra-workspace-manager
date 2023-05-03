@@ -20,13 +20,14 @@ import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 
 /**
  * This class is used to have a common structure to hold the database view of a resource. It
  * includes all possible fields for a reference or controlled resource and (currently) maps
  * one-to-one with the resource table.
  */
-public class DbResource {
+public class DbResource implements DbStateful {
   private UUID workspaceUuid;
   private CloudPlatform cloudPlatform;
   private UUID resourceId;
@@ -55,6 +56,29 @@ public class DbResource {
 
   private static final Supplier<RuntimeException> MISSING_REQUIRED_FIELD =
       () -> new MissingRequiredFieldsException("Missing required field");
+
+  @Override
+  public String makeSqlRowPredicate(MapSqlParameterSource params) {
+    params
+        .addValue("workspace_id", getWorkspaceId().toString())
+        .addValue("resource_id", getResourceId().toString());
+    return "workspace_id = :workspace_id AND resource_id = :resource_id";
+  }
+
+  @Override
+  public String getObjectTypeString() {
+    return "resource";
+  }
+
+  @Override
+  public String getObjectId() {
+    return getResourceId().toString();
+  }
+
+  @Override
+  public String getTableName() {
+    return "resource";
+  }
 
   public UUID getWorkspaceId() {
     return workspaceUuid;
@@ -245,6 +269,7 @@ public class DbResource {
     return lastUpdatedDate;
   }
 
+  @Override
   public WsmResourceState getState() {
     return state;
   }
@@ -254,6 +279,7 @@ public class DbResource {
     return this;
   }
 
+  @Override
   public String getFlightId() {
     return flightId;
   }

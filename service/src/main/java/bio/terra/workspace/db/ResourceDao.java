@@ -3,7 +3,6 @@ package bio.terra.workspace.db;
 import static bio.terra.workspace.service.resource.model.StewardshipType.CONTROLLED;
 import static bio.terra.workspace.service.resource.model.StewardshipType.REFERENCED;
 import static bio.terra.workspace.service.resource.model.StewardshipType.fromSql;
-import static bio.terra.workspace.service.resource.model.WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET;
 import static java.util.stream.Collectors.toList;
 
 import bio.terra.common.db.ReadTransaction;
@@ -11,13 +10,10 @@ import bio.terra.common.db.WriteTransaction;
 import bio.terra.common.exception.ErrorReportException;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
-import bio.terra.workspace.db.exception.ResourceStateConflictException;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.db.model.DbUpdater;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetAttributes;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
@@ -132,14 +128,18 @@ public class ResourceDao {
 
   private final NamedParameterJdbcTemplate jdbcTemplate;
   private final WorkspaceActivityLogDao workspaceActivityLogDao;
+  private final StateDbUtils stateDbUtils;
 
   // -- Common Resource Methods -- //
 
   @Autowired
   public ResourceDao(
-      NamedParameterJdbcTemplate jdbcTemplate, WorkspaceActivityLogDao workspaceActivityLogDao) {
+      NamedParameterJdbcTemplate jdbcTemplate,
+      WorkspaceActivityLogDao workspaceActivityLogDao,
+      StateDbUtils stateDbUtils) {
     this.jdbcTemplate = jdbcTemplate;
     this.workspaceActivityLogDao = workspaceActivityLogDao;
+    this.stateDbUtils = stateDbUtils;
   }
 
   /**
@@ -155,7 +155,7 @@ public class ResourceDao {
   @WriteTransaction
   public void deleteResourceStart(UUID workspaceUuid, UUID resourceId, String flightId) {
     DbResource dbResource = getDbResourceFromIds(workspaceUuid, resourceId);
-    updateState(
+    stateDbUtils.updateState(
         dbResource,
         /*expectedFlightId=*/ null,
         flightId,
@@ -173,7 +173,8 @@ public class ResourceDao {
   @WriteTransaction
   public void deleteResourceSuccess(UUID workspaceUuid, UUID resourceId) {
     DbResource dbResource = getDbResourceFromIds(workspaceUuid, resourceId);
-    if (!isResourceInState(dbResource, WsmResourceState.NOT_EXISTS, /*flightId=*/ null)) {
+    if (!stateDbUtils.isResourceInState(
+        dbResource, WsmResourceState.NOT_EXISTS, /*flightId=*/ null)) {
       deleteResourceWorker(workspaceUuid, resourceId, /*resourceType=*/ null);
     }
   }
@@ -192,7 +193,8 @@ public class ResourceDao {
   public void deleteResourceFailure(
       UUID workspaceUuid, UUID resourceId, String flightId, @Nullable Exception exception) {
     DbResource dbResource = getDbResourceFromIds(workspaceUuid, resourceId);
-    updateState(dbResource, flightId, /*targetFlightId=*/ null, WsmResourceState.READY, exception);
+    stateDbUtils.updateState(
+        dbResource, flightId, /*targetFlightId=*/ null, WsmResourceState.READY, exception);
   }
 
   /**
@@ -395,35 +397,6 @@ public class ResourceDao {
         .collect(Collectors.toList());
   }
 
-  // TODO (PF-2269): Clean this up once the back-fill is done in all Terra environments.
-  /**
-   * Returns a list of all controlled BigQuery datasets with empty default table lifetime and
-   * default partition lifetime.
-   */
-  @ReadTransaction
-  public List<ControlledBigQueryDatasetResource>
-      listControlledBigQueryDatasetsWithoutBothLifetime() {
-
-    String sql =
-        RESOURCE_SELECT_SQL_WITHOUT_WORKSPACE_ID
-            + " WHERE stewardship_type = :controlled_resource"
-            + " AND exact_resource_type = :controlled_gcp_big_query_dataset"
-            + " AND ((attributes -> 'defaultTableLifetime') IS NULL)"
-            + " AND ((attributes -> 'defaultPartitionLifetime') IS NULL)";
-    MapSqlParameterSource params =
-        new MapSqlParameterSource()
-            .addValue("controlled_resource", CONTROLLED.toSql())
-            .addValue("controlled_gcp_big_query_dataset", CONTROLLED_GCP_BIG_QUERY_DATASET.toSql());
-
-    List<DbResource> dbResources = jdbcTemplate.query(sql, params, DB_RESOURCE_ROW_MAPPER);
-    return dbResources.stream()
-        .map(this::constructResource)
-        .map(WsmResource::castToControlledResource)
-        .map(
-            r -> (ControlledBigQueryDatasetResource) r.castByEnum(CONTROLLED_GCP_BIG_QUERY_DATASET))
-        .collect(Collectors.toList());
-  }
-
   /**
    * Reads all private controlled resources assigned to a given user in a given workspace which are
    * not being cleaned up by other flights and marks them as being cleaned up by the current flight.
@@ -620,38 +593,6 @@ public class ResourceDao {
     return updated;
   }
 
-  // TODO (PF-2269): Clean this up once the back-fill is done in all Terra environments.
-  /**
-   * Update a BigQuery dataset's default table lifetime and default partition lifetime.
-   *
-   * @return whether the dataset's lifetimes are successfully updated.
-   */
-  @WriteTransaction
-  public boolean updateBigQueryDatasetDefaultTableAndPartitionLifetime(
-      ControlledBigQueryDatasetResource dataset,
-      @Nullable Long defaultTableLifetime,
-      @Nullable Long defaultPartitionLifetime) {
-    String newAttributes =
-        DbSerDes.toJson(
-            new ControlledBigQueryDatasetAttributes(
-                dataset.getDatasetName(),
-                dataset.getProjectId(),
-                defaultTableLifetime,
-                defaultPartitionLifetime));
-    boolean updated =
-        updateResource(
-            dataset.getWorkspaceId(), dataset.getResourceId(), null, null, newAttributes, null);
-
-    logger.info(
-        "{} resource {} default table lifetime to {} and default partition lifetime to {}.",
-        (updated ? "Updated" : "No Update - did not find"),
-        dataset.getResourceId(),
-        dataset.getDefaultTableLifetime(),
-        dataset.getDefaultPartitionLifetime());
-
-    return updated;
-  }
-
   @WriteTransaction
   public DbUpdater updateResourceStart(
       UUID workspaceUuid,
@@ -664,7 +605,7 @@ public class ResourceDao {
           String.format("Cannot find resource %s in workspace %s.", resourceId, workspaceUuid));
     }
 
-    updateState(dbResource, null, flightId, WsmResourceState.UPDATING, null);
+    stateDbUtils.updateState(dbResource, null, flightId, WsmResourceState.UPDATING, null);
 
     DbUpdater dbUpdater =
         new DbUpdater(
@@ -724,13 +665,15 @@ public class ResourceDao {
     }
 
     DbResource dbResource = getDbResourceFromIds(workspaceUuid, resourceId);
-    updateState(dbResource, flightId, /*flightId=*/ null, WsmResourceState.READY, null);
+    stateDbUtils.updateState(
+        dbResource, flightId, /*flightId=*/ null, WsmResourceState.READY, null);
   }
 
   @WriteTransaction
   public void updateResourceFailure(UUID workspaceUuid, UUID resourceId, String flightId) {
     DbResource dbResource = getDbResourceFromIds(workspaceUuid, resourceId);
-    updateState(dbResource, flightId, /*flightId=*/ null, WsmResourceState.READY, null);
+    stateDbUtils.updateState(
+        dbResource, flightId, /*flightId=*/ null, WsmResourceState.READY, null);
   }
 
   // TODO: [PF-2269, PF-2556] this can go away when backfill
@@ -775,7 +718,7 @@ public class ResourceDao {
       throws DuplicateResourceException {
     DbResource dbResource =
         getDbResourceFromIds(resource.getWorkspaceId(), resource.getResourceId());
-    if (isResourceInState(dbResource, WsmResourceState.CREATING, flightId)) {
+    if (stateDbUtils.isResourceInState(dbResource, WsmResourceState.CREATING, flightId)) {
       return; // It was a retry. We are done here
     }
 
@@ -806,7 +749,7 @@ public class ResourceDao {
   public WsmResource createResourceSuccess(WsmResource resource, String flightId) {
     DbResource dbResource =
         getDbResourceFromIds(resource.getWorkspaceId(), resource.getResourceId());
-    updateState(
+    stateDbUtils.updateState(
         dbResource,
         flightId,
         /*targetFlightId=*/ null,
@@ -845,139 +788,11 @@ public class ResourceDao {
       case BROKEN_ON_FAILURE -> {
         DbResource dbResource =
             getDbResourceFromIds(resource.getWorkspaceId(), resource.getResourceId());
-        updateState(dbResource, flightId, /*flightId=*/ null, WsmResourceState.BROKEN, exception);
+        stateDbUtils.updateState(
+            dbResource, flightId, /*flightId=*/ null, WsmResourceState.BROKEN, exception);
       }
       default -> throw new InternalLogicException("Invalid switch case");
     }
-  }
-
-  /**
-   * Check if the resource is already in the target state with the matching flight id. There are two
-   * cases. In the NOT_EXISTS case, we see if the resource is not there. In all other cases, we see
-   * if the resource is there in the expected state.
-   *
-   * @param dbResource fetched resource row or null
-   * @param state expected state on a retry
-   * @param flightId expected flightId on a retry
-   * @return true if the resource is in the expect state; false otherwise
-   */
-  private boolean isResourceInState(
-      @Nullable DbResource dbResource, WsmResourceState state, String flightId) {
-    if (dbResource == null) {
-      return (state == WsmResourceState.NOT_EXISTS && flightId == null);
-    }
-
-    return (dbResource.getState() == state
-        && StringUtils.equals(dbResource.getFlightId(), flightId));
-  }
-
-  /**
-   * Test that the dbResource and flight id are as expected, and that the transition to the target
-   * state is valid
-   *
-   * @param dbResource resource read in this transaction
-   * @param expectedFlightId what we expect the flightId to be
-   * @param targetState what we want to set the target state to be
-   * @return true if the transition is valid
-   */
-  private boolean isValidStateTransition(
-      @Nullable DbResource dbResource,
-      @Nullable String expectedFlightId,
-      WsmResourceState targetState) {
-    // No transitions from a non-existant resource
-    if (dbResource == null) {
-      logger.info("Resource state conflict: resource does not exist");
-      return false;
-    }
-
-    // If the state transition is allowed and the flight matches, then we allow
-    // the transition.
-    if (WsmResourceState.isValidTransition(dbResource.getState(), targetState)
-        && StringUtils.equals(dbResource.getFlightId(), expectedFlightId)) {
-      return true;
-    }
-
-    logger.info(
-        "Resource state conflict. Ws: {} Rs: {} CurrentState: {} TargetState: {}",
-        dbResource.getWorkspaceId(),
-        dbResource.getResourceId(),
-        dbResource.getState(),
-        targetState);
-    return false;
-  }
-
-  private void updateState(
-      @Nullable DbResource dbResource,
-      @Nullable String expectedFlightId,
-      @Nullable String targetFlightId,
-      WsmResourceState targetState,
-      @Nullable Exception exception) {
-    // If we are already in the target state, assume this is a retry and go on our merry way
-    if (isResourceInState(dbResource, targetState, targetFlightId)) {
-      return;
-    }
-
-    if (dbResource == null) {
-      throw new InternalLogicException("Unexpected database state - resource not found");
-    }
-
-    // Ensure valid state transition
-    if (!isValidStateTransition(dbResource, expectedFlightId, targetState)) {
-      throw new ResourceStateConflictException(
-          String.format(
-              "Resource is in state %s flightId %s; expected flightId %s; cannot transition to state %s flightId %s",
-              dbResource.getState(),
-              dbResource.getFlightId(),
-              expectedFlightId,
-              targetState,
-              targetFlightId));
-    }
-
-    // Normalize any exception into a serialized error report
-    String errorReport;
-    if (exception == null) {
-      errorReport = null;
-    } else if (exception instanceof ErrorReportException ex) {
-      errorReport = DbSerDes.toJson(ex);
-    } else {
-      errorReport =
-          DbSerDes.toJson(
-              new InternalLogicException(
-                  (exception.getMessage() == null ? "<no message>" : exception.getMessage())));
-    }
-
-    String sql =
-        """
-    UPDATE resource SET state = :new_state, flight_id = :new_flight_id, error = :error
-    WHERE workspace_id = :workspace_id AND resource_id = :resource_id
-    """;
-    if (expectedFlightId == null) {
-      sql = sql + " AND flight_id IS NULL";
-    } else {
-      sql = sql + " AND flight_id = :expected_flight_id";
-    }
-
-    var params =
-        new MapSqlParameterSource()
-            .addValue("workspace_id", dbResource.getWorkspaceId().toString())
-            .addValue("resource_id", dbResource.getResourceId().toString())
-            .addValue("new_state", targetState.toDb())
-            .addValue("new_flight_id", targetFlightId)
-            .addValue("expected_flight_id", expectedFlightId)
-            .addValue("error", DbSerDes.toJson(errorReport));
-
-    int rowsAffected = jdbcTemplate.update(sql, params);
-    if (rowsAffected != 1) {
-      throw new InternalLogicException("Unexpected database state - no row updated");
-    }
-
-    logger.info(
-        "Resource state change: Ws: {}; Rs: {}; New state {}; flightId {}; error {}",
-        dbResource.getWorkspaceId(),
-        dbResource.getResourceId(),
-        targetState,
-        targetFlightId,
-        errorReport);
   }
 
   /**

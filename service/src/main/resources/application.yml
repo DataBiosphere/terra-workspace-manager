@@ -150,7 +150,7 @@ terra.common:
     terminate-timeout: 30s
     tracing-enabled: true
     retention-check-interval: 1d
-    completed-flight-retention: 7d
+    completed-flight-retention: 90d
 
   tracing:
     stackdriverExportEnabled: ${env.tracing.exportEnabled}
