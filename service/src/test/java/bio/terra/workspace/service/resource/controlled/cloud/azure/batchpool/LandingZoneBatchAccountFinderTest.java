@@ -15,7 +15,6 @@ import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneNotFoundException;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
-import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import com.azure.resourcemanager.batch.models.DeploymentConfiguration;
@@ -134,7 +133,6 @@ public class LandingZoneBatchAccountFinderTest extends BaseAzureConnectedTest {
   }
 
   static Stream<Arguments> exceptionSupplier() {
-    return Stream.of(
-        Arguments.of(LandingZoneNotFoundException.class));
+    return Stream.of(Arguments.of(LandingZoneNotFoundException.class));
   }
 }

@@ -93,14 +93,12 @@ public class DeleteAzureStorageContainerStepTest extends BaseStorageStepTest {
     UUID landingZoneId = UUID.randomUUID();
     initDeleteValidationStep(Optional.empty());
 
-    when(mockLandingZoneApiDispatch.getLandingZoneId(any(), any()))
-        .thenReturn(landingZoneId);
+    when(mockLandingZoneApiDispatch.getLandingZoneId(any(), any())).thenReturn(landingZoneId);
     ApiAzureLandingZoneDeployedResource mockSharedStorageAccount =
         mock(ApiAzureLandingZoneDeployedResource.class);
     String sharedAccountId = UUID.randomUUID().toString();
     when(mockSharedStorageAccount.getResourceId()).thenReturn(sharedAccountId);
-    when(mockLandingZoneApiDispatch.getSharedStorageAccount(
-            any(), eq(landingZoneId)))
+    when(mockLandingZoneApiDispatch.getSharedStorageAccount(any(), eq(landingZoneId)))
         .thenReturn(Optional.of(mockSharedStorageAccount));
     String sharedStorageAccountName = "sharedStorageAccount";
     when(mockStorageAccount.name()).thenReturn(sharedStorageAccountName);
