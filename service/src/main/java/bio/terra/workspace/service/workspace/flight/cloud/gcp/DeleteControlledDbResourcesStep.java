@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.workspace.flight.delete.cloudcontext;
+package bio.terra.workspace.service.workspace.flight.cloud.gcp;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;

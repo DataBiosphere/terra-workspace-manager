@@ -121,6 +121,17 @@ public class WorkspaceFixtures {
     return inputs;
   }
 
+  public static FlightMap deleteCloudContextInputs(
+    UUID workspaceUuid,
+    AuthenticatedUserRequest userRequest,
+    CloudPlatform cloudPlatform) {
+    FlightMap inputs = new FlightMap();
+    inputs.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
+    inputs.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
+    inputs.put(WorkspaceFlightMapKeys.CLOUD_PLATFORM, cloudPlatform);
+    return inputs;
+  }
+
   public static String getUserFacingId(UUID workspaceId) {
     return String.format("user-facing-id-%s", workspaceId);
   }

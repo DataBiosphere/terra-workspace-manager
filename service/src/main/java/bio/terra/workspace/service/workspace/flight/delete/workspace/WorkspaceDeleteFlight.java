@@ -11,10 +11,9 @@ import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.cloud.aws.DeleteAwsContextStep;
 import bio.terra.workspace.service.workspace.flight.cloud.aws.DeleteControlledAwsResourcesStep;
-import bio.terra.workspace.service.workspace.flight.cloud.azure.DeleteAzureContextStep;
 import bio.terra.workspace.service.workspace.flight.cloud.azure.DeleteControlledAzureResourcesStep;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.DeleteGcpProjectStep;
-import bio.terra.workspace.service.workspace.flight.delete.cloudcontext.DeleteControlledSamResourcesStep;
+import bio.terra.workspace.service.workspace.flight.cloud.gcp.DeleteControlledSamResourcesStep;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.UUID;
 
@@ -39,6 +38,8 @@ public class WorkspaceDeleteFlight extends Flight {
 
     RetryRule cloudRetryRule = RetryRules.cloudLongRunning();
     RetryRule terraRetryRule = RetryRules.shortExponential();
+
+    // TODO: PF-2694 These steps need to be reworked
 
     // Delete resources before sam resources - In Azure & AWS, we need to explicitly delete the
     // controlled resources as there is no containing object (like a GCP project) that we can delete
@@ -77,9 +78,14 @@ public class WorkspaceDeleteFlight extends Flight {
     addStep(
         new EnsureNoWorkspaceChildrenStep(appContext.getSamService(), userRequest, workspaceUuid));
 
+// This step just does the DeleteCloudFinishStep.
+// I do not think need this at all, since we are deleting the workspace object.
+// but I am also thinking we should run these context deletes as separate flights.
+/*
     addStep(
         new DeleteAzureContextStep(appContext.getAzureCloudContextService(), workspaceUuid),
         cloudRetryRule);
+ */
     addStep(
         new DeleteAwsContextStep(appContext.getAwsCloudContextService(), workspaceUuid),
         cloudRetryRule);

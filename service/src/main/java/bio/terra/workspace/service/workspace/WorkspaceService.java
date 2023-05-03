@@ -37,12 +37,10 @@ import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import bio.terra.workspace.service.workspace.flight.cloud.aws.DeleteAwsContextFlight;
-import bio.terra.workspace.service.workspace.flight.cloud.azure.DeleteAzureContextFlight;
-import bio.terra.workspace.service.workspace.flight.cloud.gcp.DeleteGcpContextFlight;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.RemoveUserFromWorkspaceFlight;
 import bio.terra.workspace.service.workspace.flight.create.cloudcontext.CreateCloudContextFlight;
 import bio.terra.workspace.service.workspace.flight.create.workspace.WorkspaceCreateFlight;
+import bio.terra.workspace.service.workspace.flight.delete.cloudcontext.DeleteCloudContextFlight;
 import bio.terra.workspace.service.workspace.flight.delete.workspace.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
@@ -498,54 +496,21 @@ public class WorkspaceService {
       .submit();
   }
 
-  /** Delete the GCP cloud context for the workspace. */
+  /** Delete a cloud context for the workspace. */
   @Traced
-  public void deleteGcpCloudContext(Workspace workspace, AuthenticatedUserRequest userRequest) {
+  public void deleteCloudContext(Workspace workspace, CloudPlatform cloudPlatform, AuthenticatedUserRequest userRequest) {
     jobService
-        .newJob()
+      .newJob()
         .description(
-            String.format(
-                "Delete GCP cloud context for workspace: name: '%s' id: '%s'  ",
-                workspace.getDisplayName().orElse(""), workspace.getWorkspaceId()))
-        .flightClass(DeleteGcpContextFlight.class)
-        .userRequest(userRequest)
-        .operationType(OperationType.DELETE)
-        .workspaceId(workspace.getWorkspaceId().toString())
-        .submitAndWait();
-  }
-
-  @Traced
-  public void deleteAzureCloudContext(Workspace workspace, AuthenticatedUserRequest userRequest) {
-    features.azureEnabledCheck();
-
-    jobService
-        .newJob()
-        .description(
-            String.format(
-                "Delete Azure cloud context for workspace: name: '%s' id: '%s'  ",
-                workspace.getDisplayName().orElse(""), workspace.getWorkspaceId()))
-        .flightClass(DeleteAzureContextFlight.class)
-        .userRequest(userRequest)
-        .operationType(OperationType.DELETE)
-        .workspaceId(workspace.getWorkspaceId().toString())
-        .submitAndWait();
-  }
-
-  @Traced
-  public void deleteAwsCloudContext(Workspace workspace, AuthenticatedUserRequest userRequest) {
-    featureService.awsEnabledCheck();
-
-    jobService
-        .newJob()
-        .description(
-            String.format(
-                "Delete AWS cloud context for workspace: name: '%s' id: '%s'  ",
-                workspace.getDisplayName().orElse(""), workspace.getWorkspaceId()))
-        .flightClass(DeleteAwsContextFlight.class)
-        .userRequest(userRequest)
-        .operationType(OperationType.DELETE)
-        .workspaceId(workspace.getWorkspaceId().toString())
-        .submitAndWait();
+          String.format(
+            "Delete %s cloud context for workspace: name: '%s' id: '%s'  ",
+            cloudPlatform, workspace.getDisplayName().orElse(""), workspace.getWorkspaceId()))
+      .flightClass(DeleteCloudContextFlight.class)
+      .userRequest(userRequest)
+      .operationType(OperationType.DELETE)
+      .workspaceId(workspace.getWorkspaceId().toString())
+      .addParameter(CLOUD_PLATFORM, cloudPlatform)
+      .submitAndWait();
   }
 
   /**

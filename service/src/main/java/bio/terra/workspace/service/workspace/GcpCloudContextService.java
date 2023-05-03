@@ -10,6 +10,9 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.CreateCustomGcpRolesStep;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.CreatePetSaStep;
+import bio.terra.workspace.service.workspace.flight.cloud.gcp.DeleteControlledDbResourcesStep;
+import bio.terra.workspace.service.workspace.flight.cloud.gcp.DeleteControlledSamResourcesStep;
+import bio.terra.workspace.service.workspace.flight.cloud.gcp.DeleteGcpProjectStep;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.GcpCloudSyncStep;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.GenerateRbsRequestIdStep;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.GrantWsmRoleAdminStep;
@@ -18,6 +21,7 @@ import bio.terra.workspace.service.workspace.flight.cloud.gcp.SetProjectBillingS
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.SyncSamGroupsStep;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.WaitForProjectPermissionsStep;
 import bio.terra.workspace.service.workspace.flight.create.cloudcontext.CreateCloudContextFlight;
+import bio.terra.workspace.service.workspace.flight.delete.cloudcontext.DeleteCloudContextFlight;
 import bio.terra.workspace.service.workspace.model.CloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
@@ -105,9 +109,30 @@ public class GcpCloudContextService implements CloudContextService {
   }
 
   @Override
+  public void addDeleteCloudContextSteps(DeleteCloudContextFlight flight, FlightBeanBag appContext, UUID workspaceUuid, AuthenticatedUserRequest userRequest) {
+    RetryRule retryRule = RetryRules.cloudLongRunning();
+
+    // We delete controlled resources from Sam and WSM databases, but do not need to delete the
+    // actual cloud objects, as GCP handles the cleanup when we delete the containing project.
+    flight.addStep(
+      new DeleteControlledSamResourcesStep(
+        appContext.getSamService(), appContext.getResourceDao(), workspaceUuid, CloudPlatform.GCP),
+      retryRule);
+    flight.addStep(
+      new DeleteControlledDbResourcesStep(
+        appContext.getResourceDao(), workspaceUuid, CloudPlatform.GCP),
+      retryRule);
+    flight.addStep(
+      new DeleteGcpProjectStep(
+        appContext.getCrlService(), appContext.getGcpCloudContextService()),
+      retryRule);
+  }
+
+  @Override
   public CloudContext makeCloudContextFromDb(DbCloudContext dbCloudContext) {
     return GcpCloudContext.deserialize(dbCloudContext);
   }
+
 
   /**
    * Retrieve the optional GCP cloud context

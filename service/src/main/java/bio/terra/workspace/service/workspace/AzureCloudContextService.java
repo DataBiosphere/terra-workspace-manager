@@ -8,9 +8,11 @@ import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
+import bio.terra.workspace.service.workspace.flight.cloud.azure.DeleteControlledAzureResourcesStep;
 import bio.terra.workspace.service.workspace.flight.cloud.azure.ValidateLandingZoneRegionAgainstPolicyStep;
 import bio.terra.workspace.service.workspace.flight.cloud.azure.ValidateMRGStep;
 import bio.terra.workspace.service.workspace.flight.create.cloudcontext.CreateCloudContextFlight;
+import bio.terra.workspace.service.workspace.flight.delete.cloudcontext.DeleteCloudContextFlight;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
@@ -72,8 +74,19 @@ public class AzureCloudContextService implements CloudContextService {
   }
 
   @Override
+  public void addDeleteCloudContextSteps(DeleteCloudContextFlight flight, FlightBeanBag appContext, UUID workspaceUuid, AuthenticatedUserRequest userRequest) {
+    flight.addStep(
+      new DeleteControlledAzureResourcesStep(
+        appContext.getResourceDao(),
+        appContext.getControlledResourceService(),
+        appContext.getSamService(),
+        workspaceUuid,
+        userRequest));
+  }
+
+  @Override
   public CloudContext makeCloudContextFromDb(DbCloudContext dbCloudContext) {
-    return null;
+    return AzureCloudContext.deserialize(dbCloudContext);
   }
 
 
