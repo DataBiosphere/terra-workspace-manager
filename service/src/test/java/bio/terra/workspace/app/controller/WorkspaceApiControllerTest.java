@@ -331,6 +331,9 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
                 USER_REQUEST, ApiWorkspaceStageModel.RAWLS_WORKSPACE)
             .getId();
 
+    when(mockTpsApiDispatch().linkPao(any(), any(), any()))
+        .thenReturn(new TpsPaoUpdateResult().resultingPao(emptyWorkspacePao()).updateApplied(true));
+
     // Create some data repo references
     ApiDataRepoSnapshotResource snap1 =
         mockMvcUtils.createReferencedDataRepoSnapshot(
@@ -339,7 +342,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
             ApiCloningInstructionsEnum.REFERENCE,
             "snap1-resource-name",
             "snap1-instance-name",
-            "snap1-snapshot");
+            UUID.randomUUID().toString());
     ApiDataRepoSnapshotResource snap2 =
         mockMvcUtils.createReferencedDataRepoSnapshot(
             USER_REQUEST,
@@ -347,7 +350,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
             ApiCloningInstructionsEnum.REFERENCE,
             "snap2-resource-name",
             "snap2-instance-name",
-            "snap2-snapshot");
+            UUID.randomUUID().toString());
     ApiDataRepoSnapshotResource snap3 =
         mockMvcUtils.createReferencedDataRepoSnapshot(
             USER_REQUEST,
@@ -355,7 +358,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
             ApiCloningInstructionsEnum.NOTHING,
             "snap3-resource-name",
             "snap3-instance-name",
-            "snap3-snapshot");
+            UUID.randomUUID().toString());
 
     // Clone the rawls workspace into a destination rawls workspace
     // This relies on the mocked Sam check

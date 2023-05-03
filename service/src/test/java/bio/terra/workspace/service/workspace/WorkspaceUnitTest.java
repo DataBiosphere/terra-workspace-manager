@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -114,8 +115,9 @@ public class WorkspaceUnitTest extends BaseUnitTest {
     final UUID sourceId = UUID.randomUUID();
     when(mockTpsApiDispatch().linkPao(workspace.workspaceId(), sourceId, TpsUpdateMode.DRY_RUN))
         .thenReturn(new TpsPaoUpdateResult().conflicts(List.of()).updateApplied(false));
-    when(mockPolicyValidator.validateWorkspaceConformsToProtectedDataPolicy(any(), any(), any()))
-        .thenReturn(List.of("conflict"));
+    doThrow(new PolicyConflictException("conflict"))
+        .when(mockPolicyValidator)
+        .validateWorkspaceConformsToPolicy(any(), any(), any());
 
     assertThrows(
         PolicyConflictException.class,
