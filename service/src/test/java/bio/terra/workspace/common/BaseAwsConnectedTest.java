@@ -9,7 +9,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 
 /** Base class for AWS connected tests: connected to AWS */
-@Tag("aws-connected")
+@Tag("aws")
 @ActiveProfiles({"aws-test", "connected-test"})
 public class BaseAwsConnectedTest extends BaseTest {
   @MockBean private FlagsmithService flagsmithService;
