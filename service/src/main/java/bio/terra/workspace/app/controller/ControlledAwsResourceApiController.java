@@ -67,7 +67,6 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
 
   private final Logger logger = LoggerFactory.getLogger(ControlledAwsResourceApiController.class);
 
-  private final WorkspaceService workspaceService;
   private final AwsCloudContextService awsCloudContextService;
 
   @Autowired
@@ -94,7 +93,6 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
         controlledResourceService,
         controlledResourceMetadataManager,
         workspaceService);
-    this.workspaceService = workspaceService;
     this.awsCloudContextService = awsCloudContextService;
   }
 
