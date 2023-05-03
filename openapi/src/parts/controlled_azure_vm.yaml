@@ -135,7 +135,7 @@ components:
         ephemeralOSDisk:
           description: Whether or not to use an ephemeral OS disk and where to place it. https://docs.microsoft.com/en-us/azure/virtual-machines/ephemeral-os-disks
           type: string
-          enum: ['NONE', 'OS_CACHE', 'TMP_DISK']
+          enum: [ 'NONE', 'OS_CACHE', 'TMP_DISK' ]
         customData:
           description: Supply base64 encoded custom data for vm. https://docs.microsoft.com/en-us/azure/virtual-machines/custom-data
           type: string

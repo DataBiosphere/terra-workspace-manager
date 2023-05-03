@@ -566,7 +566,7 @@ components:
     IamRole:
       description: Enum containing all valid IAM roles on a Workspace
       type: string
-      enum: ['DISCOVERER', 'READER', 'WRITER', 'APPLICATION', 'OWNER']
+      enum: [ 'DISCOVERER', 'READER', 'WRITER', 'APPLICATION', 'OWNER' ]
 
     MergeCheckRequest:
       description: Request with a workspace id
@@ -687,5 +687,5 @@ components:
     WorkspaceStageModel:
       description: Enum for possible stages of a workspace along the Rawls migration path
       type: string
-      enum: ['RAWLS_WORKSPACE', 'MC_WORKSPACE']
+      enum: [ 'RAWLS_WORKSPACE', 'MC_WORKSPACE' ]
 

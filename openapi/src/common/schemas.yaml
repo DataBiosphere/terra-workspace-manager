@@ -6,12 +6,12 @@ components:
     AccessScope:
       type: string
       description: Specifies the resource as shared or private
-      enum: ['SHARED_ACCESS', 'PRIVATE_ACCESS']
+      enum: [ 'SHARED_ACCESS', 'PRIVATE_ACCESS' ]
 
     CloudPlatform:
       type: string
       description: Enum representing a cloud platform type.
-      enum: ['GCP', 'AZURE', 'AWS']
+      enum: [ 'GCP', 'AZURE', 'AWS' ]
 
     CloneReferencedResourceRequestBody:
       description: >-
@@ -60,7 +60,7 @@ components:
     ControlledResourceIamRole:
       description: Enum containing all IAM roles on controlled resources available to users
       type: string
-      enum: [ 'READER', 'WRITER', 'EDITOR']
+      enum: [ 'READER', 'WRITER', 'EDITOR' ]
   
     ControlledResourceMetadata:
       type: object
@@ -136,7 +136,7 @@ components:
         status:
           description: status of the job
           type: string
-          enum: [RUNNING, SUCCEEDED, FAILED]
+          enum: [ 'RUNNING', 'SUCCEEDED', 'FAILED' ]
         statusCode:
           description: HTTP code providing status of the job.
           type: integer
@@ -288,12 +288,12 @@ components:
     State:
       type: string
       description: WSM object state
-      enum: ['BROKEN', 'CREATING', 'DELETING', 'READY', 'UPDATING']
+      enum: [ 'BROKEN', 'CREATING', 'DELETING', 'READY', 'UPDATING' ]
 
     StewardshipType:
       description: Enum containing valid stewardship types. Used for enumeration
       type: string
-      enum: ['REFERENCED', 'CONTROLLED']
+      enum: [ 'REFERENCED', 'CONTROLLED' ]
 
     FolderId:
       description: Id of a given folder. Unique and immutable within a workspace.
