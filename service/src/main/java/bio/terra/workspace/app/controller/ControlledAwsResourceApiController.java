@@ -67,7 +67,6 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
   private final Logger logger = LoggerFactory.getLogger(ControlledAwsResourceApiController.class);
 
   private final FeatureService featureService;
-  private final WorkspaceService workspaceService;
   private final AwsCloudContextService awsCloudContextService;
 
   @Autowired
@@ -91,9 +90,9 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
         jobService,
         jobApiUtils,
         controlledResourceService,
-        controlledResourceMetadataManager);
+        controlledResourceMetadataManager,
+        workspaceService);
     this.featureService = featureService;
-    this.workspaceService = workspaceService;
     this.awsCloudContextService = awsCloudContextService;
   }
 
@@ -120,12 +119,13 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     featureService.awsEnabledCheck();
 
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    workspaceService.validateMcWorkspaceAndAction(
-        userRequest, workspaceId, SamWorkspaceAction.READ);
+    Workspace workspace =
+        workspaceService.validateMcWorkspaceAndAction(
+            userRequest, workspaceId, SamWorkspaceAction.READ);
 
     String generatedCloudName =
         ControlledAwsS3StorageFolderHandler.getHandler()
-            .generateCloudName(workspaceId, body.getAwsS3StorageFolderName());
+            .generateCloudName(workspace.getUserFacingId(), body.getAwsS3StorageFolderName());
     return new ResponseEntity<>(
         new ApiAwsS3StorageFolderCloudName()
             .generatedAwsS3StorageFolderCloudName(generatedCloudName),
@@ -151,7 +151,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     if (StringUtils.isEmpty(folderName)) {
       folderName =
           ControlledAwsS3StorageFolderHandler.getHandler()
-              .generateCloudName(workspaceUuid, body.getCommon().getName());
+              .generateCloudName(workspace.getUserFacingId(), body.getCommon().getName());
     }
     AwsResourceValidationUtils.validateAwsS3StorageFolderName(folderName);
 

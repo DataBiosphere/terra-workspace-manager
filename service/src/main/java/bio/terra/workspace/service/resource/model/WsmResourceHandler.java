@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource.model;
 import bio.terra.workspace.db.model.DbResource;
 import java.util.UUID;
 import javax.annotation.Nullable;
+import org.apache.commons.lang3.NotImplementedException;
 
 /**
  * Interface defining the common methods for processing per-resource handlers. Each resource type
@@ -23,10 +24,24 @@ public interface WsmResourceHandler {
   /**
    * Generate the resource cloud-native name for resource
    *
-   * @param workspaceUuid workspace UUID, when it is not null, the generated name will attach
-   *     workspace project id.
+   * @param workspaceUuid workspace UUID
    * @param resourceName resource name
    * @return cloud-native name
    */
-  String generateCloudName(@Nullable UUID workspaceUuid, String resourceName);
+  default String generateCloudName(@Nullable UUID workspaceUuid, String resourceName) {
+    throw new NotImplementedException(
+        "generateCloudName with workspaceUuid and resourceName not implemented");
+  }
+
+  /**
+   * Generate the resource cloud-native name for resource
+   *
+   * @param workspaceUserFacingId workspace UserFacingId
+   * @param resourceName resource name
+   * @return cloud-native name
+   */
+  default String generateCloudName(@Nullable String workspaceUserFacingId, String resourceName) {
+    throw new NotImplementedException(
+        "generateCloudName with workspaceUserFacingId and resourceName not implemented");
+  }
 }

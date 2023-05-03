@@ -6,8 +6,9 @@ import bio.terra.workspace.service.resource.controlled.cloud.aws.AwsResourceCons
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
 import com.google.common.base.CharMatcher;
-import java.util.UUID;
+import com.google.common.base.Preconditions;
 import javax.ws.rs.BadRequestException;
+import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
 public class ControlledAwsS3StorageFolderHandler implements WsmResourceHandler {
@@ -39,13 +40,12 @@ public class ControlledAwsS3StorageFolderHandler implements WsmResourceHandler {
    * details, see https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html
    */
   @Override
-  public String generateCloudName(@Nullable UUID workspaceUuid, String storageFolderName) {
-    String generatedName =
-        storageFolderName.length() > AwsResourceConstants.MAX_S3_STORAGE_FOLDER_NAME_LENGTH
-            ? storageFolderName.substring(0, AwsResourceConstants.MAX_S3_STORAGE_FOLDER_NAME_LENGTH)
-            : storageFolderName;
+  public String generateCloudName(
+      @Nullable String workspaceUserFacingId, String storageFolderName) {
+    Preconditions.checkArgument(StringUtils.isNotEmpty(workspaceUserFacingId));
+    String generatedName = storageFolderName + "-" + workspaceUserFacingId;
 
-    // The regular expression only allow legal character combinations containing
+    // The regular expression only allows legal character combinations containing
     // alphanumeric characters and one or more of "!-_.*'()". It trims any other combinations.
     generatedName = generatedName.replaceAll("\\[", "").replaceAll("\\]", "");
     generatedName =
@@ -61,6 +61,7 @@ public class ControlledAwsS3StorageFolderHandler implements WsmResourceHandler {
                   + " alphanumerical characters.",
               storageFolderName));
     }
-    return generatedName;
+    return StringUtils.truncate(
+        generatedName, AwsResourceConstants.MAX_S3_STORAGE_FOLDER_NAME_LENGTH);
   }
 }

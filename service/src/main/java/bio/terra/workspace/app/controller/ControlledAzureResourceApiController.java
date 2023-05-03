@@ -73,7 +73,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     implements ControlledAzureResourceApi {
   private final Logger logger = LoggerFactory.getLogger(ControlledAzureResourceApiController.class);
 
-  private final WorkspaceService workspaceService;
   private final AzureConfiguration azureConfiguration;
   private final AzureStorageAccessService azureControlledStorageResourceService;
   private final LandingZoneApiDispatch landingZoneApiDispatch;
@@ -100,8 +99,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         jobService,
         jobApiUtils,
         controlledResourceService,
-        controlledResourceMetadataManager);
-    this.workspaceService = workspaceService;
+        controlledResourceMetadataManager,
+        workspaceService);
     this.azureConfiguration = azureConfiguration;
     this.azureControlledStorageResourceService = azureControlledStorageResourceService;
     this.landingZoneApiDispatch = landingZoneApiDispatch;

@@ -257,6 +257,7 @@ public class ResourceValidationUtils {
     // connection endpoint: https://docs.aws.amazon.com/codecommit/latest/userguide/regions.html.
     return hostName.startsWith("git-codecommit.") && hostName.endsWith(".amazonaws.com");
   }
+
   /**
    * Validate GCS object name.
    *
