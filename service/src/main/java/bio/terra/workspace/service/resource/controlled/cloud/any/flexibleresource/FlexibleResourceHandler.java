@@ -34,6 +34,7 @@ public class FlexibleResourceHandler implements WsmResourceHandler {
         .build();
   }
 
+  @Override
   public String generateCloudName(@Nullable UUID workspaceUuid, String resourceName) {
     throw new BadRequestException("generateCloudName is not supported for flexible resources.");
   }

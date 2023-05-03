@@ -3,38 +3,20 @@
 #  $ref: '#/components/schemas/<item-you-want>
 components:
   schemas:
-    AwsS3StorageFolderCloudName:
-      description: A valid folder name per https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html.
+    AwsResourceCloudName:
+      description: A valid cloud name for resource.
       type: object
-      required: [ generatedAwsS3StorageFolderCloudName ]
+      required: [ awsResourceCloudName ]
       properties:
-        generatedAwsS3StorageFolderCloudName:
+        awsResourceCloudName:
           type: string
 
-    AwsCredentialDurationSeconds:
-      type: integer
-      minimum: 900
-      maximum: 3600
-
-    AwsCredentialAccessScope:
-      type: string
-      enum: [ 'READ_ONLY', 'WRITE_READ' ]
-
-    AwsCredential:
-      description: AWS CLI/SDK-compatible credential to access AWS resources
+    GenerateAwsResourceCloudNameRequestBody:
       type: object
+      required: [ awsResourceName ]
       properties:
-        Version:
-          type: integer
-        AccessKeyId:
+        awsResourceName:
           type: string
-        SecretAccessKey:
-          type: string
-        SessionToken:
-          type: string
-        Expiration:
-          type: string
-          format: date-time
 
     DeleteControlledAwsResourceRequestBody:
       type: object
@@ -50,3 +32,28 @@ components:
           $ref: '#/components/schemas/JobReport'
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
+
+    AwsCredentialDurationSeconds:
+      type: integer
+      minimum: 900
+      maximum: 3600
+
+    AwsCredentialAccessScope:
+      type: string
+      enum: [ 'READ_ONLY', 'WRITE_READ' ]
+
+    AwsCredential:
+      description: AWS CLI/SDK-compatible credential to access AWS resources.
+      type: object
+      properties:
+        Version:
+          type: integer
+        AccessKeyId:
+          type: string
+        SecretAccessKey:
+          type: string
+        SessionToken:
+          type: string
+        Expiration:
+          type: string
+          format: date-time

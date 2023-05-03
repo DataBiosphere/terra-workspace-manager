@@ -35,7 +35,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.MethodMode;
 
 class JobServiceTest extends BaseUnitTest {
-  private final AuthenticatedUserRequest testUser =
+  private final AuthenticatedUserRequest userRequest =
       new AuthenticatedUserRequest()
           .subjectId("StairwayUnit")
           .email("stairway@unit.com")
@@ -66,7 +66,7 @@ class JobServiceTest extends BaseUnitTest {
                 .jobId(testJobId)
                 .flightClass(JobServiceTestFlight.class)
                 .workspaceId(UUID.randomUUID().toString())
-                .userRequest(testUser)
+                .userRequest(userRequest)
                 .operationType(OperationType.DELETE));
   }
 
@@ -81,7 +81,7 @@ class JobServiceTest extends BaseUnitTest {
                 .description("description")
                 .jobId(testJobId)
                 .flightClass(JobServiceTestFlight.class)
-                .userRequest(testUser)
+                .userRequest(userRequest)
                 .workspaceId(UUID.randomUUID().toString())
                 .operationType(OperationType.DELETE));
   }
@@ -96,7 +96,7 @@ class JobServiceTest extends BaseUnitTest {
                 .description("description")
                 .jobId("test-job-id")
                 .flightClass(JobServiceTestFlight.class)
-                .userRequest(testUser)
+                .userRequest(userRequest)
                 .workspaceId(UUID.randomUUID().toString())
                 .submit());
   }
@@ -215,7 +215,7 @@ class JobServiceTest extends BaseUnitTest {
             .newJob()
             .description(description)
             .flightClass(JobServiceTestFlight.class)
-            .userRequest(testUser)
+            .userRequest(userRequest)
             .workspaceId(workspaceUuid.toString())
             .operationType(OperationType.CREATE)
             .submit();

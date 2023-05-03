@@ -84,7 +84,9 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
     post:
-      summary: Delete a folder asynchronously.
+      summary: |
+        Delete a folder asynchronously. OpenAPI does not support request body in 
+        DELETE, but async state requires it. Hence this is a POST.
       operationId: deleteFolderAsync
       tags: [Folder]
       responses:

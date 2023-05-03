@@ -43,69 +43,7 @@ import org.apache.commons.lang3.StringUtils;
  * the resource type.
  */
 public enum WsmResourceType {
-  CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE(
-      CloudPlatform.GCP,
-      StewardshipType.CONTROLLED,
-      "CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE",
-      ApiResourceType.AI_NOTEBOOK,
-      ControlledAiNotebookInstanceResource.class,
-      ControlledAiNotebookHandler::getHandler),
-
-  REFERENCED_ANY_DATA_REPO_SNAPSHOT(
-      CloudPlatform.ANY,
-      StewardshipType.REFERENCED,
-      "REFERENCED_ANY_DATA_REPO_SNAPSHOT",
-      ApiResourceType.DATA_REPO_SNAPSHOT,
-      ReferencedDataRepoSnapshotResource.class,
-      ReferencedDataRepoSnapshotHandler::getHandler),
-
-  REFERENCED_GCP_GCS_BUCKET(
-      CloudPlatform.GCP,
-      StewardshipType.REFERENCED,
-      "REFERENCED_GCP_GCS_BUCKET",
-      ApiResourceType.GCS_BUCKET,
-      ReferencedGcsBucketResource.class,
-      ReferencedGcsBucketHandler::getHandler),
-
-  CONTROLLED_GCP_GCS_BUCKET(
-      CloudPlatform.GCP,
-      StewardshipType.CONTROLLED,
-      "CONTROLLED_GCP_GCS_BUCKET",
-      ApiResourceType.GCS_BUCKET,
-      ControlledGcsBucketResource.class,
-      ControlledGcsBucketHandler::getHandler),
-
-  REFERENCED_GCP_GCS_OBJECT(
-      CloudPlatform.GCP,
-      StewardshipType.REFERENCED,
-      "REFERENCED_GCP_GCS_OBJECT",
-      ApiResourceType.GCS_OBJECT,
-      ReferencedGcsObjectResource.class,
-      ReferencedGcsObjectHandler::getHandler),
-
-  REFERENCED_GCP_BIG_QUERY_DATASET(
-      CloudPlatform.GCP,
-      StewardshipType.REFERENCED,
-      "REFERENCED_GCP_BIG_QUERY_DATASET",
-      ApiResourceType.BIG_QUERY_DATASET,
-      ReferencedBigQueryDatasetResource.class,
-      ReferencedBigQueryDatasetHandler::getHandler),
-
-  CONTROLLED_GCP_BIG_QUERY_DATASET(
-      CloudPlatform.GCP,
-      StewardshipType.CONTROLLED,
-      "CONTROLLED_GCP_BIG_QUERY_DATASET",
-      ApiResourceType.BIG_QUERY_DATASET,
-      ControlledBigQueryDatasetResource.class,
-      ControlledBigQueryDatasetHandler::getHandler),
-
-  REFERENCED_GCP_BIG_QUERY_DATA_TABLE(
-      CloudPlatform.GCP,
-      StewardshipType.REFERENCED,
-      "REFERENCED_GCP_BIG_QUERY_DATA_TABLE",
-      ApiResourceType.BIG_QUERY_DATA_TABLE,
-      ReferencedBigQueryDataTableResource.class,
-      ReferencedBigQueryDataTableHandler::getHandler),
+  // ANY
   REFERENCED_ANY_GIT_REPO(
       CloudPlatform.ANY,
       StewardshipType.REFERENCED,
@@ -120,6 +58,66 @@ public enum WsmResourceType {
       ApiResourceType.TERRA_WORKSPACE,
       ReferencedTerraWorkspaceResource.class,
       ReferencedTerraWorkspaceHandler::getHandler),
+  REFERENCED_ANY_DATA_REPO_SNAPSHOT(
+      CloudPlatform.ANY,
+      StewardshipType.REFERENCED,
+      "REFERENCED_ANY_DATA_REPO_SNAPSHOT",
+      ApiResourceType.DATA_REPO_SNAPSHOT,
+      ReferencedDataRepoSnapshotResource.class,
+      ReferencedDataRepoSnapshotHandler::getHandler),
+
+  // GCP
+  CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE(
+      CloudPlatform.GCP,
+      StewardshipType.CONTROLLED,
+      "CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE",
+      ApiResourceType.AI_NOTEBOOK,
+      ControlledAiNotebookInstanceResource.class,
+      ControlledAiNotebookHandler::getHandler),
+  REFERENCED_GCP_GCS_BUCKET(
+      CloudPlatform.GCP,
+      StewardshipType.REFERENCED,
+      "REFERENCED_GCP_GCS_BUCKET",
+      ApiResourceType.GCS_BUCKET,
+      ReferencedGcsBucketResource.class,
+      ReferencedGcsBucketHandler::getHandler),
+  CONTROLLED_GCP_GCS_BUCKET(
+      CloudPlatform.GCP,
+      StewardshipType.CONTROLLED,
+      "CONTROLLED_GCP_GCS_BUCKET",
+      ApiResourceType.GCS_BUCKET,
+      ControlledGcsBucketResource.class,
+      ControlledGcsBucketHandler::getHandler),
+  REFERENCED_GCP_GCS_OBJECT(
+      CloudPlatform.GCP,
+      StewardshipType.REFERENCED,
+      "REFERENCED_GCP_GCS_OBJECT",
+      ApiResourceType.GCS_OBJECT,
+      ReferencedGcsObjectResource.class,
+      ReferencedGcsObjectHandler::getHandler),
+  REFERENCED_GCP_BIG_QUERY_DATASET(
+      CloudPlatform.GCP,
+      StewardshipType.REFERENCED,
+      "REFERENCED_GCP_BIG_QUERY_DATASET",
+      ApiResourceType.BIG_QUERY_DATASET,
+      ReferencedBigQueryDatasetResource.class,
+      ReferencedBigQueryDatasetHandler::getHandler),
+  CONTROLLED_GCP_BIG_QUERY_DATASET(
+      CloudPlatform.GCP,
+      StewardshipType.CONTROLLED,
+      "CONTROLLED_GCP_BIG_QUERY_DATASET",
+      ApiResourceType.BIG_QUERY_DATASET,
+      ControlledBigQueryDatasetResource.class,
+      ControlledBigQueryDatasetHandler::getHandler),
+  REFERENCED_GCP_BIG_QUERY_DATA_TABLE(
+      CloudPlatform.GCP,
+      StewardshipType.REFERENCED,
+      "REFERENCED_GCP_BIG_QUERY_DATA_TABLE",
+      ApiResourceType.BIG_QUERY_DATA_TABLE,
+      ReferencedBigQueryDataTableResource.class,
+      ReferencedBigQueryDataTableHandler::getHandler),
+
+  // AZURE
   CONTROLLED_AZURE_DISK(
       CloudPlatform.AZURE,
       StewardshipType.CONTROLLED,
@@ -148,6 +146,8 @@ public enum WsmResourceType {
       ApiResourceType.AZURE_BATCH_POOL,
       ControlledAzureBatchPoolResource.class,
       ControlledAzureBatchPoolHandler::getHandler),
+
+  // AWS
   CONTROLLED_AWS_S3_STORAGE_FOLDER(
       CloudPlatform.AWS,
       StewardshipType.CONTROLLED,
@@ -155,6 +155,8 @@ public enum WsmResourceType {
       ApiResourceType.AWS_S3_STORAGE_FOLDER,
       ControlledAwsS3StorageFolderResource.class,
       ControlledAwsS3StorageFolderHandler::getHandler),
+
+  // FLEXIBLE
   CONTROLLED_FLEXIBLE_RESOURCE(
       CloudPlatform.ANY,
       StewardshipType.CONTROLLED,

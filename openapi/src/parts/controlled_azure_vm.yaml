@@ -61,7 +61,9 @@ paths:
           $ref: '#/components/responses/ServerError'
     post:
       summary: |
-        Delete an azure Vm
+        Delete a controlled Azure VM resource. This is async, because the 
+        operation can take a few minutes. OpenAPI does not support request body 
+        in DELETE, but async state requires it. Hence this is a POST.
       operationId: deleteAzureVm
       tags: [ControlledAzureResource]
       requestBody:

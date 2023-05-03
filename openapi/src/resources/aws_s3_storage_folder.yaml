@@ -1,8 +1,7 @@
 components:
   schemas:
     AwsS3StorageFolderAttributes:
-      description: >-
-        AWS S3 Storage Folder properties included in post-creation get.
+      description: AWS S3 Storage Folder resource properties included in post-creation get.
       type: object
       properties:
         bucketName:
@@ -14,7 +13,7 @@ components:
 
     AwsS3StorageFolderResource:
       type: object
-      description: Description of an AWS S3 Storage Folder.
+      description: Description of an AWS S3 Storage Folder resource.
       required: [ metadata, attributes ]
       properties:
         metadata:

@@ -34,6 +34,7 @@ import bio.terra.workspace.generated.model.ApiDeleteControlledAzureResourceReque
 import bio.terra.workspace.generated.model.ApiDeleteControlledAzureResourceResult;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiJobReport;
+import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
@@ -84,6 +85,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       HttpServletRequest request,
       SamService samService,
       FeatureConfiguration featureConfiguration,
+      FeatureService featureService,
       JobService jobService,
       JobApiUtils jobApiUtils,
       ControlledResourceService controlledResourceService,
@@ -97,6 +99,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         request,
         samService,
         featureConfiguration,
+        featureService,
         jobService,
         jobApiUtils,
         controlledResourceService,
@@ -219,10 +222,10 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .createControlledResourceSync(
                 resource, commonFields.getIamRole(), userRequest, body.getAzureStorageContainer())
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
-    UUID resourceId = createdStorageContainer.getResourceId();
+    UUID resourceUuid = createdStorageContainer.getResourceId();
     var response =
         new ApiCreatedControlledAzureStorageContainer()
-            .resourceId(resourceId)
+            .resourceId(resourceUuid)
             .azureStorageContainer(createdStorageContainer.toApiResource());
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
@@ -338,65 +341,67 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   @Traced
   @Override
   public ResponseEntity<Void> deleteAzureBatchPool(
-      @PathVariable("workspaceId") UUID workspaceId, @PathVariable("resourceId") UUID resourceId) {
+      @PathVariable("workspaceId") UUID workspaceUuid,
+      @PathVariable("resourceId") UUID resourceUuid) {
     features.azureEnabledCheck();
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     controlledResourceMetadataManager.validateControlledResourceAndAction(
-        userRequest, workspaceId, resourceId, SamControlledResourceActions.DELETE_ACTION);
+        userRequest, workspaceUuid, resourceUuid, SamControlledResourceActions.DELETE_ACTION);
 
     logger.info(
         "delete {}({}) from workspace {}",
         "Azure Batch Pool",
-        resourceId.toString(),
-        workspaceId.toString());
+        resourceUuid.toString(),
+        workspaceUuid.toString());
 
-    controlledResourceService.deleteControlledResourceSync(workspaceId, resourceId, userRequest);
+    controlledResourceService.deleteControlledResourceSync(
+        workspaceUuid, resourceUuid, userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   @Override
   public ResponseEntity<ApiDeleteControlledAzureResourceResult> deleteAzureStorageContainer(
-      UUID workspaceId, UUID resourceId, @Valid ApiDeleteControlledAzureResourceRequest body) {
-    return deleteHelper(workspaceId, resourceId, body, "Azure Storage Container");
+      UUID workspaceUuid, UUID resourceUuid, @Valid ApiDeleteControlledAzureResourceRequest body) {
+    return deleteHelper(workspaceUuid, resourceUuid, body, "Azure Storage Container");
   }
 
   @Traced
   @Override
   public ResponseEntity<ApiDeleteControlledAzureResourceResult> deleteAzureDisk(
-      UUID workspaceUuid, UUID resourceId, @Valid ApiDeleteControlledAzureResourceRequest body) {
-    return deleteHelper(workspaceUuid, resourceId, body, "Azure Disk");
+      UUID workspaceUuid, UUID resourceUuid, @Valid ApiDeleteControlledAzureResourceRequest body) {
+    return deleteHelper(workspaceUuid, resourceUuid, body, "Azure Disk");
   }
 
   @Traced
   @Override
   public ResponseEntity<ApiDeleteControlledAzureResourceResult> deleteAzureVm(
-      UUID workspaceUuid, UUID resourceId, @Valid ApiDeleteControlledAzureResourceRequest body) {
-    return deleteHelper(workspaceUuid, resourceId, body, "Azure VM");
+      UUID workspaceUuid, UUID resourceUuid, @Valid ApiDeleteControlledAzureResourceRequest body) {
+    return deleteHelper(workspaceUuid, resourceUuid, body, "Azure VM");
   }
 
   @Traced
   @Override
-  public ResponseEntity<ApiAzureDiskResource> getAzureDisk(UUID workspaceUuid, UUID resourceId) {
+  public ResponseEntity<ApiAzureDiskResource> getAzureDisk(UUID workspaceUuid, UUID resourceUuid) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     features.azureEnabledCheck();
     final ControlledAzureDiskResource resource =
         controlledResourceMetadataManager
             .validateControlledResourceAndAction(
-                userRequest, workspaceUuid, resourceId, SamControlledResourceActions.READ_ACTION)
+                userRequest, workspaceUuid, resourceUuid, SamControlledResourceActions.READ_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_DISK);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
   @Traced
   @Override
-  public ResponseEntity<ApiAzureVmResource> getAzureVm(UUID workspaceUuid, UUID resourceId) {
+  public ResponseEntity<ApiAzureVmResource> getAzureVm(UUID workspaceUuid, UUID resourceUuid) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     features.azureEnabledCheck();
     final ControlledAzureVmResource resource =
         controlledResourceMetadataManager
             .validateControlledResourceAndAction(
-                userRequest, workspaceUuid, resourceId, SamControlledResourceActions.READ_ACTION)
+                userRequest, workspaceUuid, resourceUuid, SamControlledResourceActions.READ_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_VM);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
@@ -433,25 +438,25 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
   private ResponseEntity<ApiDeleteControlledAzureResourceResult> deleteHelper(
       UUID workspaceUuid,
-      UUID resourceId,
+      UUID resourceUuid,
       @Valid ApiDeleteControlledAzureResourceRequest body,
       String resourceName) {
     features.azureEnabledCheck();
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     controlledResourceMetadataManager.validateControlledResourceAndAction(
-        userRequest, workspaceUuid, resourceId, SamControlledResourceActions.DELETE_ACTION);
+        userRequest, workspaceUuid, resourceUuid, SamControlledResourceActions.DELETE_ACTION);
     final ApiJobControl jobControl = body.getJobControl();
     logger.info(
         "delete {}({}) from workspace {}",
         resourceName,
-        resourceId.toString(),
+        resourceUuid.toString(),
         workspaceUuid.toString());
     final String jobId =
         controlledResourceService.deleteControlledResourceAsync(
             jobControl,
             workspaceUuid,
-            resourceId,
+            resourceUuid,
             getAsyncResultEndpoint(jobControl.getId(), "delete-result"),
             userRequest);
     return getJobDeleteResult(jobId);
@@ -475,12 +480,12 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   @Traced
   @Override
   public ResponseEntity<ApiCloneControlledAzureStorageContainerResult> cloneAzureStorageContainer(
-      UUID workspaceId, UUID resourceId, ApiCloneControlledAzureStorageContainerRequest body) {
+      UUID workspaceUuid, UUID resourceUuid, ApiCloneControlledAzureStorageContainerRequest body) {
     features.azureEnabledCheck();
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     controlledResourceMetadataManager.validateCloneAction(
-        userRequest, workspaceId, body.getDestinationWorkspaceId(), resourceId);
+        userRequest, workspaceUuid, body.getDestinationWorkspaceId(), resourceUuid);
     if (CloningInstructions.isReferenceClone(body.getCloningInstructions())) {
       throw new ValidationException(
           "Copying azure storage containers by reference is not supported");
@@ -488,8 +493,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
     var jobId =
         controlledResourceService.cloneAzureContainer(
-            workspaceId,
-            resourceId,
+            workspaceUuid,
+            resourceUuid,
             body.getDestinationWorkspaceId(),
             UUID.randomUUID(),
             body.getJobControl(),
@@ -508,11 +513,11 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   @Traced
   @Override
   public ResponseEntity<ApiCloneControlledAzureStorageContainerResult>
-      getCloneAzureStorageContainerResult(UUID workspaceId, String jobId) {
+      getCloneAzureStorageContainerResult(UUID workspaceUuid, String jobId) {
     features.azureEnabledCheck();
 
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    jobService.verifyUserAccess(jobId, userRequest, workspaceId);
+    jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
     ApiCloneControlledAzureStorageContainerResult result = fetchCloneAzureContainerResult(jobId);
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
   }
