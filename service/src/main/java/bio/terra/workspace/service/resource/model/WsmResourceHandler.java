@@ -1,9 +1,10 @@
 package bio.terra.workspace.service.resource.model;
 
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.db.model.DbResource;
 import java.util.UUID;
 import javax.annotation.Nullable;
-import org.apache.commons.lang3.NotImplementedException;
+import javax.validation.constraints.NotNull;
 
 /**
  * Interface defining the common methods for processing per-resource handlers. Each resource type
@@ -29,8 +30,8 @@ public interface WsmResourceHandler {
    * @return cloud-native name
    */
   default String generateCloudName(@Nullable UUID workspaceUuid, String resourceName) {
-    throw new NotImplementedException(
-        "generateCloudName with workspaceUuid and resourceName not implemented");
+    throw new BadRequestException(
+        "generateCloudName with workspaceUuid and resourceName not supported");
   }
 
   /**
@@ -40,8 +41,8 @@ public interface WsmResourceHandler {
    * @param resourceName resource name
    * @return cloud-native name
    */
-  default String generateCloudName(@Nullable String workspaceUserFacingId, String resourceName) {
-    throw new NotImplementedException(
-        "generateCloudName with workspaceUserFacingId and resourceName not implemented");
+  default String generateCloudName(@NotNull String workspaceUserFacingId, String resourceName) {
+    throw new BadRequestException(
+        "generateCloudName with workspaceUserFacingId and resourceName not supported");
   }
 }
