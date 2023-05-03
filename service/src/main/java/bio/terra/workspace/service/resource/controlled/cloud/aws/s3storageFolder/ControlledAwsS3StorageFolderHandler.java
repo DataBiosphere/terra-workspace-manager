@@ -47,7 +47,6 @@ public class ControlledAwsS3StorageFolderHandler implements WsmResourceHandler {
 
     // The regular expression only allows legal character combinations containing
     // alphanumeric characters and one or more of "!-_.*'()". It trims any other combinations.
-    // generatedName = generatedName.replaceAll("\\[", "").replaceAll("\\]", "");
     generatedName = CharMatcher.anyOf("{}^%`<>~#|@*+[]'\"\\").replaceFrom(generatedName, "");
     generatedName =
         CharMatcher.inRange('0', '9')
