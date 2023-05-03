@@ -189,7 +189,7 @@ components:
     CreateAzureLandingZoneRequestBody:
       description: Payload for requesting a new Azure landing zone.
       type: object
-      required: [definition, billingProfileId]
+      required: [ definition, billingProfileId ]
       properties:
         landingZoneId:
           description: The ID of the landing zone (optional). If omitted an ID will be auto-generated.
@@ -336,7 +336,7 @@ components:
 
     AzureLandingZoneDefinitionList:
       type: object
-      required: [landingzones]
+      required: [ landingzones ]
       properties:
         landingzones:
           description: A list of Azure landing zones definitions
@@ -346,7 +346,7 @@ components:
 
     AzureLandingZoneDefinition:
       type: object
-      required: [definition, name, description, version]
+      required: [ definition, name, description, version ]
       properties:
         definition:
           description: The name of the corresponding landing zone definition
@@ -375,7 +375,7 @@ components:
 
     AzureLandingZoneResourcesList:
       type: object
-      required: [resources]
+      required: [ resources ]
       properties:
         id:
           description: An identifier of a Azure landing zone.
@@ -392,7 +392,7 @@ components:
         The structure contains one landing zone purpose and a list of Azure deployed resources that
         are tagged with this purpose.
       type: object
-      required: [purpose,deployedResources]
+      required: [ purpose,deployedResources ]
       properties:
         purpose:
           description: Purpose tag value string.
@@ -407,7 +407,7 @@ components:
       description: |
         The landing zone identification information.
       type: object
-      required: [landingZoneId,billingProfileId]
+      required: [ landingZoneId, billingProfileId ]
       properties:
         landingZoneId:
           description: An identifier of a Azure landing zone.

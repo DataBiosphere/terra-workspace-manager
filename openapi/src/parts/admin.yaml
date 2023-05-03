@@ -6,7 +6,7 @@ paths:
       - $ref: '#/components/parameters/WetRun'
       summary: Sync custom IAM roles for all workspaces.
       operationId: syncIamRoles
-      tags: [Admin]
+      tags: [ Admin ]
       responses:
         '200':
           $ref: '#/components/responses/JobResultResponse'

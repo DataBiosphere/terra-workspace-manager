@@ -13,7 +13,7 @@ paths:
         These are presented sorted by ascending resource name. The offset and limit parameters allow paging
         through the results. You can also filter by a resource type and by a stewardship type.
       operationId: enumerateResources
-      tags: [Resource]
+      tags: [ Resource ]
       responses:
         '200':
           description: OK
@@ -38,7 +38,7 @@ paths:
       summary: |
         Retrieve a resource in a workspace.
       operationId: getResource
-      tags: [Resource]
+      tags: [ Resource ]
       responses:
         '200':
           description: OK
@@ -62,7 +62,7 @@ paths:
     get:
       summary: Check a user's access to a referenced resource
       operationId: checkReferenceAccess
-      tags: [Resource]
+      tags: [ Resource ]
       responses:
         '200':
           description: Whether the specified reference is accessible or not
@@ -128,7 +128,7 @@ components:
   schemas:
     ResourceDescription:
       type: object
-      required: [metadata, resourceAttributes]
+      required: [ metadata, resourceAttributes ]
       properties:
         metadata:
           description: the resource metadata common to all resources
@@ -139,7 +139,7 @@ components:
 
     ResourceList:
       type: object
-      required: [resources]
+      required: [ resources ]
       properties:
         resources:
           description: Enumerated list of controlled and referenced resources

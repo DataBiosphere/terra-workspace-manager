@@ -5,7 +5,7 @@ paths:
     post:
       summary: Create a new controlled Gcp AI Platform Notebook Instance
       operationId: createAiNotebookInstance
-      tags: [ControlledGcpResource]
+      tags: [ ControlledGcpResource ]
       requestBody:
         required: true
         content:
@@ -29,7 +29,7 @@ paths:
     get:
       summary: Retrieve information about a GCP AI Platform Notebook create instance job.
       operationId: getCreateAiNotebookInstanceResult
-      tags: [ControlledGcpResource]
+      tags: [ ControlledGcpResource ]
       responses:
         '200':
           $ref: '#/components/responses/CreatedControlledGcpAiNotebookInstanceResponse'
@@ -47,7 +47,7 @@ paths:
     get:
       summary: Get a controlled AI Notebook instance resource
       operationId: getAiNotebookInstance
-      tags: [ControlledGcpResource]
+      tags: [ ControlledGcpResource ]
       responses:
         '200':
           description: Response to get AI Notebook instance.
@@ -116,7 +116,7 @@ paths:
     get:
       summary: Retrieve information about a GCP AI Platform Notebook delete instance job.
       operationId: getDeleteAiNotebookInstanceResult
-      tags: [ControlledGcpResource]
+      tags: [ ControlledGcpResource ]
       responses:
         '200':
           $ref: '#/components/responses/DeleteControlledGcpAiNotebookInstanceResponse'
@@ -155,7 +155,7 @@ components:
     CreateControlledGcpAiNotebookInstanceRequestBody:
       description: Payload for requesting a new controlled GCS Api notebook instance.
       type: object
-      required: [common, aiNotebookInstance, jobControl]
+      required: [ common, aiNotebookInstance, jobControl ]
       properties:
         common:
           $ref: '#/components/schemas/ControlledResourceCommonFields'
@@ -179,7 +179,7 @@ components:
         AI Platform Notebook instance specific properties to be set on creation. These are a subset of the
         values accepted by the GCP AI Platforms API. See https://cloud.google.com/ai-platform/notebooks/docs/reference/rest/v1/projects.locations.instances/create
       type: object
-      required: [machineType]
+      required: [ machineType ]
       properties:
         instanceId:
           description: >-
@@ -257,7 +257,7 @@ components:
         configuration has enough vCPUs and memory to support the machineType you have selected.
         See https://cloud.google.com/ai-platform/notebooks/docs/reference/rest/v1/projects.locations.instances#AcceleratorConfig
       type: object
-      required: [type, coreCount]
+      required: [ type, coreCount ]
       properties:
         type:
           description: Type of this accelerator
@@ -274,7 +274,7 @@ components:
         directly on the VM. See
         https://cloud.google.com/ai-platform/notebooks/docs/reference/rest/v1/VmImage
       type: object
-      required: [projectId]
+      required: [ projectId ]
       properties:
         projectId:
           description: >-
@@ -297,7 +297,7 @@ components:
         notebook instance with the environment installed in a container. See
         https://cloud.google.com/ai-platform/notebooks/docs/reference/rest/v1/ContainerImage
       type: object
-      required: [repository]
+      required: [ repository ]
       properties:
         repository:
           description: >-

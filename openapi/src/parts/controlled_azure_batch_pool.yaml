@@ -573,7 +573,7 @@ components:
     CreateControlledAzureBatchPoolRequestBody:
       description: Payload for requesting a new controlled Azure Batch Pool resource.
       type: object
-      required: ["common", "azureBatchPool"]
+      required: [ common, azureBatchPool ]
       properties:
         common:
           $ref: '#/components/schemas/ControlledResourceCommonFields'

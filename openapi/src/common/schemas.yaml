@@ -18,7 +18,7 @@ components:
         Cloning options for referenced resources. If optional parameters are omitted,
         the source values will be used.
       type: object
-      required: [destinationWorkspaceId]
+      required: [ destinationWorkspaceId ]
       properties:
         cloningInstructions:
           $ref: '#/components/schemas/CloningInstructionsEnum'
@@ -112,7 +112,7 @@ components:
 
     ErrorReport:
       type: object
-      required: [message, statusCode, causes]
+      required: [ message, statusCode, causes ]
       properties:
         message:
           type: string
@@ -125,7 +125,7 @@ components:
 
     JobReport:
       type: object
-      required: [id, status, statusCode, resultURL]
+      required: [ id, status, statusCode, resultURL ]
       properties:
         id:
           description: caller-provided unique identifier for the job
@@ -156,7 +156,7 @@ components:
   
     JobControl:
       type: object
-      required: [id]
+      required: [ id ]
       properties:
         id:
           description: >-

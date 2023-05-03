@@ -6,7 +6,7 @@ paths:
     post:
       summary: Create a new GCS object reference in a workspace.
       operationId: createGcsObjectReference
-      tags: [ReferencedGcpResource]
+      tags: [ ReferencedGcpResource ]
       requestBody:
         required: true
         content:
@@ -32,7 +32,7 @@ paths:
     get:
       summary: Gets a reference to a GCS object from a workspace.
       operationId: getGcsObjectReference
-      tags: [ReferencedGcpResource]
+      tags: [ ReferencedGcpResource ]
       responses:
         '200':
           $ref: '#/components/responses/GcpGcsObjectReferenceResponse'
@@ -64,7 +64,7 @@ paths:
     delete:
       summary: Delete Gcp GCS object reference
       operationId: deleteGcsObjectReference
-      tags: [ReferencedGcpResource]
+      tags: [ ReferencedGcpResource ]
       responses:
         '204':
           description: OK
@@ -82,7 +82,7 @@ paths:
     post:
       summary: Clone a referenced GCS object resource
       operationId: cloneGcpGcsObjectReference
-      tags: [ReferencedGcpResource]
+      tags: [ ReferencedGcpResource ]
       requestBody:
         required: true
         content:
@@ -112,7 +112,7 @@ paths:
     get:
       summary: Gets a reference to a Gcp GCS object by name.
       operationId: getGcsObjectReferenceByName
-      tags: [ReferencedGcpResource]
+      tags: [ ReferencedGcpResource ]
       responses:
         '200':
           $ref: '#/components/responses/GcpGcsObjectReferenceResponse'

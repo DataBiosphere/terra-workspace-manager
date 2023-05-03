@@ -4,7 +4,7 @@ paths:
     post:
       summary: Create a new Workspace.
       operationId: createWorkspace
-      tags: [Workspace]
+      tags: [ Workspace ]
       requestBody:
         required: true
         content:
@@ -48,7 +48,7 @@ paths:
     get:
       summary: Get an existing Workspace.
       operationId: getWorkspace
-      tags: [Workspace]
+      tags: [ Workspace ]
       parameters:
       - $ref: '#/components/parameters/MinimumHighestRole'
       responses:
@@ -67,7 +67,7 @@ paths:
     patch:
       summary: Update an existing Workspace.
       operationId: updateWorkspace
-      tags: [Workspace]
+      tags: [ Workspace ]
       requestBody:
         required: true
         content:
@@ -90,7 +90,7 @@ paths:
     delete:
       summary: Delete a Workspace.
       operationId: deleteWorkspace
-      tags: [Workspace]
+      tags: [ Workspace ]
       responses:
         '204':
           description: Success
@@ -110,7 +110,7 @@ paths:
     get:
       summary: Get an existing Workspace by userFacingId.
       operationId: getWorkspaceByUserFacingId
-      tags: [Workspace]
+      tags: [ Workspace ]
       responses:
         '200':
           description: OK
@@ -131,7 +131,7 @@ paths:
     post:
       summary: Clone a workspace and its eligible resources
       operationId: cloneWorkspace
-      tags: [Workspace]
+      tags: [ Workspace ]
       requestBody:
         description: Details of workspace clone operation
         required: true
@@ -160,7 +160,7 @@ paths:
     get:
       summary: Retrieve information about a gcp bucket clone job.
       operationId: getCloneWorkspaceResult
-      tags: [Workspace]
+      tags: [ Workspace ]
       responses:
         '200':
           $ref: '#/components/responses/CloneWorkspaceResponse'
@@ -177,7 +177,7 @@ paths:
     patch:
       summary: Update policies for a workspace
       operationId: updatePolicies
-      tags: [Workspace]
+      tags: [ Workspace ]
       requestBody:
         required: true
         content:
@@ -208,7 +208,7 @@ paths:
     get:
       summary: Read all IAM roles and their members in a workspace.
       operationId: getRoles
-      tags: [Workspace]
+      tags: [ Workspace ]
       responses:
         '200':
           description: Response to list permissions calls
@@ -230,7 +230,7 @@ paths:
     post:
       summary: Grant an IAM role to a user or group.
       operationId: grantRole
-      tags: [Workspace]
+      tags: [ Workspace ]
       requestBody:
         required: true
         content:
@@ -255,7 +255,7 @@ paths:
     delete:
       summary: Remove an IAM role from a user or group.
       operationId: removeRole
-      tags: [Workspace]
+      tags: [ Workspace ]
       responses:
         '204':
           description: Role removed successfully
@@ -517,7 +517,7 @@ components:
 
     CreatedWorkspace:
       type: object
-      required: [id]
+      required: [ id ]
       properties:
         id:
           description: UUID of a newly-created workspace
@@ -526,7 +526,7 @@ components:
 
     CreateWorkspaceRequestBody:
       type: object
-      required: [id]
+      required: [ id ]
       properties:
         id:
           description: The ID of the workspace
@@ -558,7 +558,7 @@ components:
     GrantRoleRequestBody:
       description: The body for a request to grant a role to a single user.
       type: object
-      required: [memberEmail]
+      required: [ memberEmail ]
       properties:
         memberEmail:
           type: string
@@ -579,7 +579,7 @@ components:
     RoleBinding:
       description: A binding between an IAM role and users with that role
       type: object
-      required: [role]
+      required: [ role ]
       properties:
         role:
           $ref: '#/components/schemas/IamRole'
@@ -615,7 +615,7 @@ components:
 
     WorkspaceDescription:
       type: object
-      required: [id, userFacingId, highestRole, createdBy, lastUpdatedBy, createdDate, lastUpdatedDate]
+      required: [ id, userFacingId, highestRole, createdBy, lastUpdatedBy, createdDate, lastUpdatedDate ]
       properties:
         id:
           description: The ID of the workspace. Immutable.
