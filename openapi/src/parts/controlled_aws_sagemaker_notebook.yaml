@@ -184,7 +184,7 @@ components:
     CreateControlledAwsSagemakerNotebookRequestBody:
       description: Payload for requesting a new controlled AWS Sagemaker Notebook instance resource.
       type: object
-      required: [common, awsSagemakerNotebook]
+      required: [ common, awsSagemakerNotebook, jobControl ]
       properties:
         common:
           $ref: '#/components/schemas/ControlledResourceCommonFields'

@@ -97,7 +97,7 @@ public class AwsUtils {
     } else if (awsResource instanceof ControlledAwsSagemakerNotebookResource) {
       ControlledAwsSagemakerNotebookResource resource =
           (ControlledAwsSagemakerNotebookResource) awsResource;
-      // TODO-Dex add tags
+      // TODO(TERRA-550) Add sagemaker tags
     }
   }
 
