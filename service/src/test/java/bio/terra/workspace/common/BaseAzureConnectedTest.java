@@ -19,7 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 
-/** Base class for azure tests. Treat these as connected tests: connected to Azure */
+/** Base class for azure connected tests: connected to Azure */
 @ActiveProfiles({"azure-test", "connected-test"})
 public class BaseAzureConnectedTest extends BaseTest {
 

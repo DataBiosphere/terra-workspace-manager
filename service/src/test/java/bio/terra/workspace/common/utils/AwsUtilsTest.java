@@ -9,7 +9,6 @@ import bio.terra.workspace.service.features.FeatureService;
 import java.io.IOException;
 import java.util.Optional;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +18,6 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
 
-@Tag("awsConnected")
 public class AwsUtilsTest extends BaseAwsConnectedTest {
   private static final Logger logger = LoggerFactory.getLogger(AwsUtilsTest.class);
   @Autowired private AwsConfiguration awsConfiguration;

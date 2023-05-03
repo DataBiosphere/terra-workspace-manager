@@ -39,7 +39,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        gradleTask: [unitTest, connectedTest, azureUnitTest, azureConnectedTest]
+        gradleTask: [unitTest, connectedTest, azureUnitTest, azureConnectedTest, awsUnitTest]
 
     steps:
     - name: Checkout current code
