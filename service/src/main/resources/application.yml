@@ -137,7 +137,7 @@ workspace:
     sas-token-expiry-time-maximum-minutes-offset: 1440
     azure-monitor-linux-agent-version: "1.22"
     cors-allowed-origins:
-    protected-data-landing-zone-defs: []
+    protected-data-landing-zone-defs: ["ProtectedDataResourcesFactory"]
 
 terra.common:
   kubernetes:
