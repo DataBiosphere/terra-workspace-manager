@@ -124,9 +124,9 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
 
     when(mockUserRequest.getRequiredToken()).thenReturn("FAKE_TOKEN");
     // there are no landing zone association with azure cloud context
-    when(mockLandingZoneApiDispatch.getLandingZoneId(any(BearerToken.class), any()))
+    when(mockLandingZoneApiDispatch.getLandingZoneId(any(), any()))
         .thenThrow(
-            new IllegalStateException(
+            new LandingZoneNotFoundException(
                 "Could not find a landing zone id for the given Azure context. "
                     + "Please check that the landing zone deployment is complete."));
 

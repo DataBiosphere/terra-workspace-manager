@@ -2,7 +2,6 @@ package bio.terra.workspace.service.workspace;
 
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
@@ -14,14 +13,12 @@ import bio.terra.policy.model.TpsComponent;
 import bio.terra.policy.model.TpsObjectType;
 import bio.terra.policy.model.TpsPaoConflict;
 import bio.terra.policy.model.TpsPaoDescription;
-import bio.terra.policy.model.TpsPaoGetResult;
 import bio.terra.policy.model.TpsPaoUpdateResult;
 import bio.terra.policy.model.TpsUpdateMode;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.db.WorkspaceDao;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.policy.PolicyValidator;
 import bio.terra.workspace.service.resource.exception.PolicyConflictException;
@@ -30,7 +27,6 @@ import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,9 +38,6 @@ public class WorkspaceUnitTest extends BaseUnitTest {
   @MockBean private WorkspaceActivityLogService mockWorkspaceActivityLogService;
 
   @Autowired private WorkspaceService workspaceService;
-
-  private AuthenticatedUserRequest userRequest =
-      new AuthenticatedUserRequest("email", "id", Optional.of("token"));
 
   @Test
   void workspaceRequiredFields() {
@@ -58,36 +51,6 @@ public class WorkspaceUnitTest extends BaseUnitTest {
     assertThrows(
         MissingRequiredFieldsException.class,
         () -> Workspace.builder().workspaceStage(WorkspaceStage.MC_WORKSPACE).build());
-  }
-
-  @Test
-  void validateWorkspaceConformsToPolicy() {
-    // should not throw exception
-    workspaceService.validateWorkspaceConformsToPolicy(
-        WorkspaceFixtures.buildMcWorkspace(), new TpsPaoGetResult(), userRequest);
-  }
-
-  @Test
-  void validateWorkspaceConformsToPolicy_reportsErrors() {
-    final String protectedError = "protected";
-    final String regionError = "region";
-    final String groupError = "group";
-
-    when(mockPolicyValidator.validateWorkspaceConformsToProtectedDataPolicy(any(), any(), any()))
-        .thenReturn(List.of(protectedError));
-    when(mockPolicyValidator.validateWorkspaceConformsToRegionPolicy(any(), any(), any()))
-        .thenReturn(List.of(regionError));
-    when(mockPolicyValidator.validateWorkspaceConformsToGroupPolicy(any(), any(), any()))
-        .thenReturn(List.of(groupError));
-
-    var exception =
-        assertThrows(
-            PolicyConflictException.class,
-            () ->
-                workspaceService.validateWorkspaceConformsToPolicy(
-                    WorkspaceFixtures.buildMcWorkspace(), new TpsPaoGetResult(), userRequest));
-
-    assertIterableEquals(List.of(regionError, protectedError, groupError), exception.getCauses());
   }
 
   @Test

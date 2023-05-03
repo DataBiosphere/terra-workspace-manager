@@ -381,7 +381,7 @@ public class LandingZoneApiDispatchTest extends BaseAzureUnitTest {
         .thenReturn(Collections.emptyList());
 
     assertThrows(
-        IllegalStateException.class,
+        LandingZoneNotFoundException.class,
         () -> landingZoneApiDispatch.getLandingZoneId(BEARER_TOKEN, workspace));
   }
 

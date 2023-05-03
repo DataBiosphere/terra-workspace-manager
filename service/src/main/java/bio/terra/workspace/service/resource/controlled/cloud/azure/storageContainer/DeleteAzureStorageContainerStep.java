@@ -84,7 +84,7 @@ public class DeleteAzureStorageContainerStep implements Step {
                       "Shared storage account not found in landing zone. Landing zone ID='%s'.",
                       landingZoneId)));
         }
-      } catch (IllegalStateException illegalStateException) { // Thrown by landingZoneApiDispatch
+      } catch (LandingZoneNotFoundException lzne) { // Thrown by landingZoneApiDispatch
         return new StepResult(
             StepStatus.STEP_RESULT_FAILURE_FATAL,
             new LandingZoneNotFoundException(
@@ -114,7 +114,7 @@ public class DeleteAzureStorageContainerStep implements Step {
           ex.getValue().getCode(),
           ex);
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, ex);
-    } catch (IllegalStateException illegalStateException) { // Thrown by landingZoneApiDispatch
+    } catch (LandingZoneNotFoundException lzne) { // Thrown by landingZoneApiDispatch
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL,
           new LandingZoneNotFoundException(

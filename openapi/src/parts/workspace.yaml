@@ -202,37 +202,6 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{workspaceId}/policies/link:
-    parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-    post:
-      summary: Link policies for a workspace to another policy object
-      operationId: linkPolicies
-      tags: [Workspace]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/WsmLinkPoliciesRequest'
-      responses:
-        '200':
-          description: Policies successfully linked.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WsmPolicyUpdateResult'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '403':
-          $ref: '#/components/responses/PermissionDenied'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          $ref: '#/components/responses/Conflict'
-        '500':
-          $ref: '#/components/responses/ServerError'
-
   /api/workspaces/v1/{workspaceId}/roles:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'

@@ -55,7 +55,7 @@ public class GetSharedStorageAccountStep implements Step {
               String.format(
                   "Shared storage account not found in landing zone. Landing zone ID='%s'.",
                   landingZoneId)));
-    } catch (IllegalStateException illegalStateException) { // Thrown by landingZoneApiDispatch
+    } catch (LandingZoneNotFoundException lzne) { // Thrown by landingZoneApiDispatch
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL,
           new LandingZoneNotFoundException(

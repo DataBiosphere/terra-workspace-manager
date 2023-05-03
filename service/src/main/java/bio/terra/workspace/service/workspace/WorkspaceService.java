@@ -5,7 +5,6 @@ import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKey
 import bio.terra.policy.model.TpsComponent;
 import bio.terra.policy.model.TpsObjectType;
 import bio.terra.policy.model.TpsPaoDescription;
-import bio.terra.policy.model.TpsPaoGetResult;
 import bio.terra.policy.model.TpsPaoUpdateResult;
 import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.policy.model.TpsUpdateMode;
@@ -48,10 +47,8 @@ import bio.terra.workspace.service.workspace.flight.delete.workspace.WorkspaceDe
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceDescription;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import io.opencensus.contrib.spring.aop.Traced;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -670,7 +667,7 @@ public class WorkspaceService {
           "Workspace policies conflict with source", dryRun.getConflicts());
     }
 
-    validateWorkspaceConformsToPolicy(
+    policyValidator.validateWorkspaceConformsToPolicy(
         getWorkspace(workspaceId), dryRun.getResultingPao(), userRequest);
 
     if (tpsUpdateMode == TpsUpdateMode.DRY_RUN) {
@@ -687,24 +684,6 @@ public class WorkspaceService {
             ActivityLogChangedTarget.POLICIES);
       }
       return updateResult;
-    }
-  }
-
-  @VisibleForTesting
-  void validateWorkspaceConformsToPolicy(
-      Workspace workspace, TpsPaoGetResult policies, AuthenticatedUserRequest userRequest) {
-    var validationErrors = new ArrayList<String>();
-
-    validationErrors.addAll(
-        policyValidator.validateWorkspaceConformsToRegionPolicy(workspace, policies, userRequest));
-    validationErrors.addAll(
-        policyValidator.validateWorkspaceConformsToProtectedDataPolicy(
-            workspace, policies, userRequest));
-    validationErrors.addAll(
-        policyValidator.validateWorkspaceConformsToGroupPolicy(workspace, policies, userRequest));
-
-    if (!validationErrors.isEmpty()) {
-      throw new PolicyConflictException(validationErrors);
     }
   }
 }

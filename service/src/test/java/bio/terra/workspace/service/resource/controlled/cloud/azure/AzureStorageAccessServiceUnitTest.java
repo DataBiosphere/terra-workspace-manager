@@ -11,9 +11,11 @@ import static org.mockito.Mockito.when;
 
 import bio.terra.common.exception.ForbiddenException;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
+import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneNotFoundException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseAzureUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.SamConstants;
@@ -25,7 +27,7 @@ import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
-import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.model.Workspace;
 import com.azure.resourcemanager.storage.StorageManager;
 import com.azure.resourcemanager.storage.models.Endpoints;
 import com.azure.resourcemanager.storage.models.PublicEndpoints;
@@ -57,7 +59,6 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
   @MockBean private LandingZoneApiDispatch mockLandingZoneApiDispatch;
   @MockBean private AzureCloudContextService mockAzureCloudContextService;
   @MockBean private AzureConfiguration mockAzureConfiguration;
-  @MockBean private WorkspaceService mockWorkspaceService;
 
   private AzureStorageAccessService azureStorageAccessService;
 
@@ -79,7 +80,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
             mockAzureCloudContextService,
             mockFeatureConfiguration(),
             mockAzureConfiguration,
-            mockWorkspaceService);
+            mockWorkspaceService());
   }
 
   private ControlledAzureStorageContainerResource buildStorageContainerResource(
@@ -528,6 +529,8 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
                 eq(storageContainerResource.getResourceId()),
                 eq(SamConstants.SamControlledResourceActions.READ_ACTION)))
         .thenReturn(storageContainerResource);
+    when(mockWorkspaceService().getWorkspace(storageContainerResource.getWorkspaceId())).thenReturn(
+        WorkspaceFixtures.buildMcWorkspace(storageContainerResource.getWorkspaceId()));
     when(mockLandingZoneApiDispatch.getLandingZoneId(
             any(),
             argThat(a -> a.getWorkspaceId().equals(storageContainerResource.getWorkspaceId()))))

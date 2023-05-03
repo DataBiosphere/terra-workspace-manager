@@ -45,8 +45,7 @@ public class LandingZoneBatchAccountFinder {
                 landingZoneId));
       }
       return existingSharedBatchAccount;
-    } catch (IllegalStateException
-        | LandingZoneNotFoundException e) { // Thrown by landingZoneApiDispatch
+    } catch (LandingZoneNotFoundException e) { // Thrown by landingZoneApiDispatch
       logger.warn("Could not check existence of shared batch account. Error='{}'", e.getMessage());
       return Optional.empty();
     }

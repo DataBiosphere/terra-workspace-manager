@@ -1,5 +1,9 @@
 package bio.terra.workspace.app.controller;
 
+import bio.terra.policy.model.TpsComponent;
+import bio.terra.policy.model.TpsObjectType;
+import bio.terra.policy.model.TpsPaoDescription;
+import bio.terra.policy.model.TpsUpdateMode;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.app.controller.shared.PropertiesUtils;
@@ -41,6 +45,7 @@ import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceService;
+import bio.terra.workspace.service.resource.exception.PolicyConflictException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.CommonUpdateParameters;
 import bio.terra.workspace.service.resource.model.StewardshipType;
@@ -486,11 +491,29 @@ public class ReferencedGcpResourceController extends ControllerBase
             .snapshotId(body.getSnapshot().getSnapshot())
             .build();
 
-    ReferencedDataRepoSnapshotResource referenceResource =
-        referencedResourceService
-            .createReferenceResource(resource, userRequest)
-            .castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
-    return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
+    var linkPoliciesResults =
+        features.isTpsEnabled()
+            ? workspaceService.linkPolicies(
+                uuid,
+                new TpsPaoDescription()
+                    .objectId(UUID.fromString(resource.getSnapshotId()))
+                    .component(TpsComponent.TDR)
+                    .objectType(TpsObjectType.SNAPSHOT),
+                TpsUpdateMode.FAIL_ON_CONFLICT,
+                userRequest)
+            : null;
+
+    if (linkPoliciesResults == null || linkPoliciesResults.isUpdateApplied()) {
+      ReferencedDataRepoSnapshotResource referenceResource =
+          referencedResourceService
+              .createReferenceResource(resource, userRequest)
+              .castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
+      return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
+    } else {
+      // workspaceService.linkPolicies should have thrown an exception
+      throw new PolicyConflictException(
+          "unexpected policy conflict", linkPoliciesResults.getConflicts());
+    }
   }
 
   @Traced

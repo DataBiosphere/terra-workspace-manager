@@ -2,9 +2,13 @@ package bio.terra.workspace.service.policy;
 
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.defaultWorkspaceBuilder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import bio.terra.policy.model.TpsComponent;
@@ -16,10 +20,12 @@ import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.ApiAzureLandingZone;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.resource.exception.PolicyConflictException;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import java.util.Arrays;
@@ -38,6 +44,44 @@ public class PolicyValidatorTest extends BaseUnitTest {
   @MockBean private LandingZoneApiDispatch mockLandingZoneApiDispatch;
   @MockBean private WorkspaceDao mockWorkspaceDao;
   @MockBean private AzureConfiguration mockAzureConfiguration;
+
+  private AuthenticatedUserRequest userRequest =
+      new AuthenticatedUserRequest("email", "id", Optional.of("token"));
+
+  @Test
+  void validateWorkspaceConformsToPolicy() {
+    // should not throw exception
+    policyValidator.validateWorkspaceConformsToPolicy(
+        WorkspaceFixtures.buildMcWorkspace(), new TpsPaoGetResult(), userRequest);
+  }
+
+  @Test
+  void validateWorkspaceConformsToPolicy_reportsErrors() {
+    final String protectedError = "protected";
+    final String regionError = "region";
+    final String groupError = "group";
+
+    var mockPolicyValidator = spy(policyValidator);
+
+    doReturn(List.of(protectedError))
+        .when(mockPolicyValidator)
+        .validateWorkspaceConformsToProtectedDataPolicy(any(), any(), any());
+    doReturn(List.of(regionError))
+        .when(mockPolicyValidator)
+        .validateWorkspaceConformsToRegionPolicy(any(), any(), any());
+    doReturn(List.of(groupError))
+        .when(mockPolicyValidator)
+        .validateWorkspaceConformsToGroupPolicy(any(), any(), any());
+
+    var exception =
+        assertThrows(
+            PolicyConflictException.class,
+            () ->
+                mockPolicyValidator.validateWorkspaceConformsToPolicy(
+                    WorkspaceFixtures.buildMcWorkspace(), new TpsPaoGetResult(), userRequest));
+
+    assertIterableEquals(List.of(regionError, protectedError, groupError), exception.getCauses());
+  }
 
   @Test
   void validateWorkspaceConformsToRegionPolicy_valid() {

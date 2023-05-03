@@ -12,6 +12,7 @@ import bio.terra.landingzone.library.landingzones.deployment.SubnetResourcePurpo
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseAzureUnitTest;
+import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesList;
@@ -21,6 +22,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
+import bio.terra.workspace.service.workspace.model.Workspace;
 import com.azure.resourcemanager.network.NetworkManager;
 import com.azure.resourcemanager.network.models.Network;
 import com.azure.resourcemanager.network.models.Networks;
@@ -112,6 +114,8 @@ public class CreateAzureNetworkInterfaceStepTest extends BaseAzureUnitTest {
                         .resourceParentId(networkId.toString()))));
 
     when(resource.getWorkspaceId()).thenReturn(workspaceId);
+    when(mockWorkspaceService.getWorkspace(workspaceId))
+        .thenReturn(WorkspaceFixtures.buildMcWorkspace(workspaceId));
     when(landingZoneApiDispatch.getLandingZoneId(
             eq(bearerToken), argThat(a -> a.getWorkspaceId().equals(workspaceId))))
         .thenReturn(lzId);

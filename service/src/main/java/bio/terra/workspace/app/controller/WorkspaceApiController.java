@@ -46,7 +46,6 @@ import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
-import bio.terra.workspace.generated.model.ApiWsmLinkPoliciesRequest;
 import bio.terra.workspace.generated.model.ApiWsmPolicyExplainResult;
 import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
 import bio.terra.workspace.generated.model.ApiWsmPolicyMergeCheckResult;
@@ -434,29 +433,6 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
     ApiWsmPolicyUpdateResult apiResult = TpsApiConversionUtils.apiFromTpsUpdateResult(result);
     return new ResponseEntity<>(apiResult, HttpStatus.OK);
-  }
-
-  @Traced
-  @Override
-  public ResponseEntity<ApiWsmPolicyUpdateResult> linkPolicies(
-      UUID workspaceId, ApiWsmLinkPoliciesRequest linkPoliciesRequest) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    logger.info("Linking workspace policies {} for {}", workspaceId, userRequest.getEmail());
-
-    workspaceService.validateMcWorkspaceAndAction(
-        userRequest, workspaceId, SamWorkspaceAction.WRITE);
-
-    features.tpsEnabledCheck();
-
-    var result =
-        workspaceService.linkPolicies(
-            workspaceId,
-            TpsApiConversionUtils.tpsFromApiPaoDescription(linkPoliciesRequest.getPolicyObjectId()),
-            TpsApiConversionUtils.tpsFromApiTpsUpdateMode(linkPoliciesRequest.getUpdateMode()),
-            userRequest);
-
-    return new ResponseEntity<>(
-        TpsApiConversionUtils.apiFromTpsUpdateResult(result), HttpStatus.OK);
   }
 
   @Traced

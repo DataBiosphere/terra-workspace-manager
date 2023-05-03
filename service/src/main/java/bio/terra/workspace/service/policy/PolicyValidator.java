@@ -7,6 +7,7 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
+import bio.terra.workspace.service.resource.exception.PolicyConflictException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import java.util.ArrayList;
@@ -32,6 +33,23 @@ public class PolicyValidator {
     this.azureConfiguration = azureConfiguration;
     this.resourceDao = resourceDao;
     this.workspaceDao = workspaceDao;
+  }
+
+  /** throws PolicyConflictException if workspace does not conform to any policy */
+  public void validateWorkspaceConformsToPolicy(
+      Workspace workspace, TpsPaoGetResult policies, AuthenticatedUserRequest userRequest) {
+    var validationErrors = new ArrayList<String>();
+
+    validationErrors.addAll(
+        validateWorkspaceConformsToRegionPolicy(workspace, policies, userRequest));
+    validationErrors.addAll(
+        validateWorkspaceConformsToProtectedDataPolicy(workspace, policies, userRequest));
+    validationErrors.addAll(
+        validateWorkspaceConformsToGroupPolicy(workspace, policies, userRequest));
+
+    if (!validationErrors.isEmpty()) {
+      throw new PolicyConflictException(validationErrors);
+    }
   }
 
   /** @return validation errors */
