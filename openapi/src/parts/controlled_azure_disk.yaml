@@ -47,7 +47,9 @@ paths:
           $ref: '#/components/responses/ServerError'
     post:
       summary: |
-        Delete an azure Disk
+        Delete a controlled Azure Disk resource. This is async, because the 
+        operation can take a few minutes. OpenAPI does not support request body 
+        in DELETE, but async state requires it. Hence this is a POST.
       operationId: deleteAzureDisk
       tags: [ControlledAzureResource]
       requestBody:
@@ -125,4 +127,3 @@ components:
           $ref: '#/components/schemas/ControlledResourceCommonFields'
         azureDisk:
           $ref: '#/components/schemas/AzureDiskCreationParameters'
-  

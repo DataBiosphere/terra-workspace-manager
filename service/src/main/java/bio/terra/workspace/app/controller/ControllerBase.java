@@ -10,6 +10,7 @@ import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
 import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
+import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamRethrow;
@@ -32,8 +33,9 @@ import org.springframework.http.HttpStatus;
 public class ControllerBase {
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final HttpServletRequest request;
-  private final SamService samService;
+  protected final SamService samService;
   protected final FeatureConfiguration features;
+  protected final FeatureService featureService;
   protected final JobService jobService;
   protected final JobApiUtils jobApiUtils;
 
@@ -42,18 +44,16 @@ public class ControllerBase {
       HttpServletRequest request,
       SamService samService,
       FeatureConfiguration features,
+      FeatureService featureService,
       JobService jobService,
       JobApiUtils jobApiUtils) {
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.request = request;
     this.samService = samService;
     this.features = features;
+    this.featureService = featureService;
     this.jobService = jobService;
     this.jobApiUtils = jobApiUtils;
-  }
-
-  public SamService getSamService() {
-    return samService;
   }
 
   public AuthenticatedUserRequest getAuthenticatedInfo() {

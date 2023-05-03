@@ -8,16 +8,25 @@ import org.apache.commons.lang3.SerializationException;
 import org.apache.commons.lang3.StringUtils;
 
 public enum WsmResourceFamily {
-  AI_NOTEBOOK_INSTANCE(
-      "AI_NOTEBOOK_INSTANCE",
-      ApiResourceType.AI_NOTEBOOK,
-      null, // no reference type for notebooks,
-      WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE),
+  // ANY
+  GIT_REPO("GIT_REPO", ApiResourceType.GIT_REPO, WsmResourceType.REFERENCED_ANY_GIT_REPO, null),
+  TERRA_WORKSPACE(
+      "TERRA_WORKSPACE",
+      ApiResourceType.TERRA_WORKSPACE,
+      WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE,
+      null),
   DATA_REPO_SNAPSHOT(
       "DATA_REPO_SNAPSHOT",
       ApiResourceType.DATA_REPO_SNAPSHOT,
       WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT,
       null), // no controlled type for snapshots
+
+  // GCP
+  AI_NOTEBOOK_INSTANCE(
+      "AI_NOTEBOOK_INSTANCE",
+      ApiResourceType.AI_NOTEBOOK,
+      null, // no reference type for notebooks,
+      WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE),
   GCS_BUCKET(
       "GCS_BUCKET",
       ApiResourceType.GCS_BUCKET,
@@ -38,6 +47,8 @@ public enum WsmResourceFamily {
       ApiResourceType.BIG_QUERY_DATA_TABLE,
       WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE,
       null), // no controlled type for BQ data table
+
+  // AZURE
   AZURE_DISK("AZURE_DISK", ApiResourceType.AZURE_DISK, null, WsmResourceType.CONTROLLED_AZURE_DISK),
   AZURE_VM("AZURE_VM", ApiResourceType.AZURE_VM, null, WsmResourceType.CONTROLLED_AZURE_VM),
   AZURE_STORAGE_CONTAINER(
@@ -50,17 +61,15 @@ public enum WsmResourceFamily {
       ApiResourceType.AZURE_BATCH_POOL,
       null,
       WsmResourceType.CONTROLLED_AZURE_BATCH_POOL),
+
+  // AWS
   AWS_S3_STORAGE_FOLDER(
       "AWS_S3_STORAGE_FOLDER",
       ApiResourceType.AWS_S3_STORAGE_FOLDER,
       null, // TODO(TERRA-195) add support for referenced buckets
       WsmResourceType.CONTROLLED_AWS_S3_STORAGE_FOLDER),
-  GIT_REPO("GIT_REPO", ApiResourceType.GIT_REPO, WsmResourceType.REFERENCED_ANY_GIT_REPO, null),
-  TERRA_WORKSPACE(
-      "TERRA_WORKSPACE",
-      ApiResourceType.TERRA_WORKSPACE,
-      WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE,
-      null),
+
+  // FLEXIBLE
   FLEXIBLE_RESOURCE(
       "FLEXIBLE_RESOURCE",
       ApiResourceType.FLEXIBLE_RESOURCE,

@@ -75,7 +75,7 @@ public class ControlledResourceFixtures {
                   .createdBefore(OffsetDateTime.parse("2007-01-03T00:00:00.00Z"))
                   .addMatchesStorageClassItem(ApiGcpGcsBucketDefaultStorageClass.STANDARD));
   // list must not be immutable if deserialization is to work
-  static final List<ApiGcpGcsBucketLifecycleRule> LIFECYCLE_RULES =
+  public static final List<ApiGcpGcsBucketLifecycleRule> LIFECYCLE_RULES =
       new ArrayList<>(List.of(LIFECYCLE_RULE_1, LIFECYCLE_RULE_2));
   public static final String BUCKET_NAME_PREFIX = "my-bucket";
   public static final String AZURE_NAME_PREFIX = "az";

@@ -10,13 +10,13 @@ import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.ControlledAwsResourceApi;
 import bio.terra.workspace.generated.model.ApiAwsCredential;
 import bio.terra.workspace.generated.model.ApiAwsCredentialAccessScope;
-import bio.terra.workspace.generated.model.ApiAwsS3StorageFolderCloudName;
+import bio.terra.workspace.generated.model.ApiAwsResourceCloudName;
 import bio.terra.workspace.generated.model.ApiAwsS3StorageFolderResource;
 import bio.terra.workspace.generated.model.ApiCreateControlledAwsS3StorageFolderRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedControlledAwsS3StorageFolder;
 import bio.terra.workspace.generated.model.ApiDeleteControlledAwsResourceRequestBody;
 import bio.terra.workspace.generated.model.ApiDeleteControlledAwsResourceResult;
-import bio.terra.workspace.generated.model.ApiGenerateAwsS3StorageFolderCloudNameRequestBody;
+import bio.terra.workspace.generated.model.ApiGenerateAwsResourceCloudNameRequestBody;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -32,6 +32,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.aws.AwsResourceCons
 import bio.terra.workspace.service.resource.controlled.cloud.aws.s3storageFolder.ControlledAwsS3StorageFolderHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.s3storageFolder.ControlledAwsS3StorageFolderResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
@@ -66,7 +67,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
 
   private final Logger logger = LoggerFactory.getLogger(ControlledAwsResourceApiController.class);
 
-  private final FeatureService featureService;
+  private final WorkspaceService workspaceService;
   private final AwsCloudContextService awsCloudContextService;
 
   @Autowired
@@ -87,12 +88,12 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
         request,
         samService,
         featureConfiguration,
+        featureService,
         jobService,
         jobApiUtils,
         controlledResourceService,
-        controlledResourceMetadataManager,
-        workspaceService);
-    this.featureService = featureService;
+        controlledResourceMetadataManager);
+    this.workspaceService = workspaceService;
     this.awsCloudContextService = awsCloudContextService;
   }
 
@@ -112,24 +113,95 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
         : requestedRegion;
   }
 
+  private ApiDeleteControlledAwsResourceResult getAwsResourceDeleteResult(String jobId) {
+    JobApiUtils.AsyncJobResult<Void> jobResult =
+        jobApiUtils.retrieveAsyncJobResult(jobId, Void.class);
+    return new ApiDeleteControlledAwsResourceResult()
+        .jobReport(jobResult.getJobReport())
+        .errorReport(jobResult.getApiErrorReport());
+  }
+
+  private ResponseEntity<ApiDeleteControlledAwsResourceResult> deleteAwsResource(
+      UUID workspaceUuid, UUID resourceUuid, ApiDeleteControlledAwsResourceRequestBody body) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    controlledResourceMetadataManager.validateControlledResourceAndAction(
+        userRequest,
+        workspaceUuid,
+        resourceUuid,
+        SamConstants.SamControlledResourceActions.DELETE_ACTION);
+    ApiJobControl jobControl = body.getJobControl();
+
+    logger.info(
+        "deleteAwsResource workspace: {}, resourceUuid: {}",
+        workspaceUuid.toString(),
+        resourceUuid.toString());
+    String jobId =
+        controlledResourceService.deleteControlledResourceAsync(
+            jobControl,
+            workspaceUuid,
+            resourceUuid,
+            getAsyncResultEndpoint(jobControl.getId(), "delete-result"),
+            userRequest);
+
+    ApiDeleteControlledAwsResourceResult result = getAwsResourceDeleteResult(jobId);
+    return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
+  }
+
+  private ResponseEntity<ApiDeleteControlledAwsResourceResult> getDeleteAwsResourceResult(
+      UUID workspaceUuid, String jobId) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
+    ApiDeleteControlledAwsResourceResult result = getAwsResourceDeleteResult(jobId);
+    return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
+  }
+
+  private <T extends ControlledResource> ResponseEntity<ApiAwsCredential> getAwsResourceCredential(
+      UUID workspaceUuid,
+      ApiAwsCredentialAccessScope accessScope,
+      Integer durationSeconds,
+      T awsResource) {
+    AwsResourceValidationUtils.validateAwsCredentialDurationSecond(durationSeconds);
+
+    AwsCloudContext cloudContext = awsCloudContextService.getRequiredAwsCloudContext(workspaceUuid);
+    SamUser user = getSamUser();
+    Collection<Tag> tags = new HashSet<>();
+    AwsUtils.appendUserTags(tags, user);
+    AwsUtils.appendPrincipalTags(tags, cloudContext, awsResource);
+    AwsUtils.appendRoleTags(tags, accessScope);
+
+    Credentials awsCredentials =
+        AwsUtils.getAssumeUserRoleCredentials(
+            awsCloudContextService.getRequiredAuthentication(),
+            awsCloudContextService.discoverEnvironment(),
+            user,
+            Duration.ofSeconds(durationSeconds),
+            tags);
+
+    // version: 1 as per
+    // https://docs.aws.amazon.com/sdkref/latest/guide/feature-process-credentials.html#feature-process-credentials-output
+    return new ResponseEntity<>(
+        new ApiAwsCredential()
+            .version(1)
+            .accessKeyId(awsCredentials.accessKeyId())
+            .secretAccessKey(awsCredentials.secretAccessKey())
+            .sessionToken(awsCredentials.sessionToken())
+            .expiration(awsCredentials.expiration().atOffset(ZoneOffset.UTC)),
+        HttpStatus.OK);
+  }
+
   @Traced
   @Override
-  public ResponseEntity<ApiAwsS3StorageFolderCloudName> generateAwsS3StorageFolderCloudName(
-      UUID workspaceId, ApiGenerateAwsS3StorageFolderCloudNameRequestBody body) {
-    featureService.awsEnabledCheck();
-
+  public ResponseEntity<ApiAwsResourceCloudName> generateAwsS3StorageFolderCloudName(
+      UUID workspaceUuid, ApiGenerateAwsResourceCloudNameRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    Workspace workspace =
-        workspaceService.validateMcWorkspaceAndAction(
-            userRequest, workspaceId, SamWorkspaceAction.READ);
+    workspaceService.validateMcWorkspaceAndAction(
+        userRequest, workspaceUuid, SamWorkspaceAction.READ);
 
     String generatedCloudName =
         ControlledAwsS3StorageFolderHandler.getHandler()
-            .generateCloudName(workspace.getUserFacingId(), body.getAwsS3StorageFolderName());
+            .generateCloudName(workspaceUuid, body.getAwsResourceName());
     return new ResponseEntity<>(
-        new ApiAwsS3StorageFolderCloudName()
-            .generatedAwsS3StorageFolderCloudName(generatedCloudName),
-        HttpStatus.OK);
+        new ApiAwsResourceCloudName().awsResourceCloudName(generatedCloudName), HttpStatus.OK);
   }
 
   @Traced
@@ -151,7 +223,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     if (StringUtils.isEmpty(folderName)) {
       folderName =
           ControlledAwsS3StorageFolderHandler.getHandler()
-              .generateCloudName(workspace.getUserFacingId(), body.getCommon().getName());
+              .generateCloudName(workspaceUuid, body.getCommon().getName());
     }
     AwsResourceValidationUtils.validateAwsS3StorageFolderName(folderName);
 
@@ -208,14 +280,14 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
   @Traced
   @Override
   public ResponseEntity<ApiAwsS3StorageFolderResource> getAwsS3StorageFolder(
-      UUID workspaceUuid, UUID resourceId) {
+      UUID workspaceUuid, UUID resourceUuid) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledAwsS3StorageFolderResource resource =
         controlledResourceMetadataManager
             .validateControlledResourceAndAction(
                 userRequest,
                 workspaceUuid,
-                resourceId,
+                resourceUuid,
                 SamConstants.SamControlledResourceActions.READ_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_AWS_S3_STORAGE_FOLDER);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
@@ -224,91 +296,36 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
   @Traced
   @Override
   public ResponseEntity<ApiDeleteControlledAwsResourceResult> deleteAwsS3StorageFolder(
-      UUID workspaceUuid, UUID resourceId, @Valid ApiDeleteControlledAwsResourceRequestBody body) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    controlledResourceMetadataManager.validateControlledResourceAndAction(
-        userRequest,
-        workspaceUuid,
-        resourceId,
-        SamConstants.SamControlledResourceActions.DELETE_ACTION);
-    ApiJobControl jobControl = body.getJobControl();
-    logger.info(
-        "deleteAwsS3StorageFolder workspace: {}, resourceId: {}",
-        workspaceUuid.toString(),
-        resourceId.toString());
-    String jobId =
-        controlledResourceService.deleteControlledResourceAsync(
-            jobControl,
-            workspaceUuid,
-            resourceId,
-            getAsyncResultEndpoint(jobControl.getId(), "delete-result"),
-            userRequest);
-    ApiDeleteControlledAwsResourceResult result = fetchStorageFolderDeleteResult(jobId);
-    return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
+      UUID workspaceUuid,
+      UUID resourceUuid,
+      @Valid ApiDeleteControlledAwsResourceRequestBody body) {
+    return deleteAwsResource(workspaceUuid, resourceUuid, body);
   }
 
   @Traced
   @Override
   public ResponseEntity<ApiDeleteControlledAwsResourceResult> getDeleteAwsS3StorageFolderResult(
       UUID workspaceUuid, String jobId) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
-    ApiDeleteControlledAwsResourceResult result = fetchStorageFolderDeleteResult(jobId);
-    return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
-  }
-
-  private ApiDeleteControlledAwsResourceResult fetchStorageFolderDeleteResult(String jobId) {
-    JobApiUtils.AsyncJobResult<Void> jobResult =
-        jobApiUtils.retrieveAsyncJobResult(jobId, Void.class);
-    return new ApiDeleteControlledAwsResourceResult()
-        .jobReport(jobResult.getJobReport())
-        .errorReport(jobResult.getApiErrorReport());
+    return getDeleteAwsResourceResult(workspaceUuid, jobId);
   }
 
   @Traced
   @Override
   public ResponseEntity<ApiAwsCredential> getAwsS3StorageFolderCredential(
       UUID workspaceUuid,
-      UUID resourceId,
+      UUID resourceUuid,
       ApiAwsCredentialAccessScope accessScope,
-      Integer duration) {
+      Integer durationSeconds) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     controlledResourceMetadataManager
         .validateControlledResourceAndAction(
-            userRequest, workspaceUuid, resourceId, getSamAction(accessScope))
+            userRequest, workspaceUuid, resourceUuid, getSamAction(accessScope))
         .castByEnum(WsmResourceType.CONTROLLED_AWS_S3_STORAGE_FOLDER);
 
-    AwsResourceValidationUtils.validateAwsCredentialDurationSecond(duration);
-
-    AwsCloudContext cloudContext = awsCloudContextService.getRequiredAwsCloudContext(workspaceUuid);
-    ControlledAwsS3StorageFolderResource awsS3StorageFolderResource =
+    ControlledAwsS3StorageFolderResource resource =
         controlledResourceService
-            .getControlledResource(workspaceUuid, resourceId)
+            .getControlledResource(workspaceUuid, resourceUuid)
             .castByEnum(WsmResourceType.CONTROLLED_AWS_S3_STORAGE_FOLDER);
-
-    SamUser user = getSamUser();
-    Collection<Tag> tags = new HashSet<>();
-    AwsUtils.appendUserTags(tags, user);
-    AwsUtils.appendPrincipalTags(tags, cloudContext, awsS3StorageFolderResource);
-    AwsUtils.appendRoleTags(tags, accessScope);
-
-    Credentials awsCredentials =
-        AwsUtils.getAssumeUserRoleCredentials(
-            awsCloudContextService.getRequiredAuthentication(),
-            awsCloudContextService.discoverEnvironment(),
-            user,
-            Duration.ofSeconds(duration),
-            tags);
-
-    // version: 1 as per
-    // https://docs.aws.amazon.com/sdkref/latest/guide/feature-process-credentials.html#feature-process-credentials-output
-    return new ResponseEntity<>(
-        new ApiAwsCredential()
-            .version(1)
-            .accessKeyId(awsCredentials.accessKeyId())
-            .secretAccessKey(awsCredentials.secretAccessKey())
-            .sessionToken(awsCredentials.sessionToken())
-            .expiration(awsCredentials.expiration().atOffset(ZoneOffset.UTC)),
-        HttpStatus.OK);
+    return getAwsResourceCredential(workspaceUuid, accessScope, durationSeconds, resource);
   }
 }

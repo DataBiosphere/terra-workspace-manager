@@ -33,7 +33,7 @@ public class ControlledAwsS3StorageFolderHandler implements WsmResourceHandler {
   }
 
   /**
-   * Generate controlled AWS S3 Storage folder cloud name that meets the requirements for a valid
+   * Generate controlled AWS S3 Storage Folder cloud name that meets the requirements for a valid
    * name.
    *
    * <p>Alphanumeric characters and certain special characters can be safely used in valid names For
@@ -54,6 +54,7 @@ public class ControlledAwsS3StorageFolderHandler implements WsmResourceHandler {
             .or(CharMatcher.inRange('A', 'z'))
             .or(CharMatcher.anyOf("!-_.()"))
             .retainFrom(generatedName);
+
     if (generatedName.length() == 0) {
       throw new BadRequestException(
           String.format(

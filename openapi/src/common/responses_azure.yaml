@@ -4,7 +4,7 @@
 components:
   responses:
     DeleteControlledAzureResourceResponse:
-      description: Response Payload for deleting an azure ip
+      description: Response Payload for deleting an Azure controlled resource
       content:
         application/json:
           schema:

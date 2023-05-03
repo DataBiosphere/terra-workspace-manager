@@ -156,7 +156,7 @@ public class ControlledAwsS3StorageFolderResource extends ControlledResource {
   }
 
   public ApiAwsS3StorageFolderAttributes toApiAttributes() {
-    return new ApiAwsS3StorageFolderAttributes().bucketName(getBucketName()).prefix(getPrefix());
+    return new ApiAwsS3StorageFolderAttributes().bucketName(bucketName).prefix(prefix);
   }
 
   public ApiAwsS3StorageFolderResource toApiResource() {
@@ -167,8 +167,7 @@ public class ControlledAwsS3StorageFolderResource extends ControlledResource {
 
   @Override
   public String attributesToJson() {
-    return DbSerDes.toJson(
-        new ControlledAwsS3StorageFolderAttributes(getBucketName(), getPrefix()));
+    return DbSerDes.toJson(new ControlledAwsS3StorageFolderAttributes(bucketName, prefix));
   }
 
   @Override
@@ -186,7 +185,7 @@ public class ControlledAwsS3StorageFolderResource extends ControlledResource {
         || getStewardshipType() != StewardshipType.CONTROLLED) {
       throw new InconsistentFieldsException("Expected CONTROLLED_AWS_S3_STORAGE_FOLDER");
     }
-    if ((getBucketName() == null) || (getPrefix() == null) || (getRegion() == null)) {
+    if ((bucketName == null) || (prefix == null) || (getRegion() == null)) {
       throw new MissingRequiredFieldException(
           "Missing required field for ControlledAwsS3StorageFolderResource.");
     }
