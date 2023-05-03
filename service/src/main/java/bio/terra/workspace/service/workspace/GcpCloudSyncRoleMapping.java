@@ -71,6 +71,7 @@ public class GcpCloudSyncRoleMapping {
           "serviceusage.quotas.get",
           "serviceusage.services.get",
           "serviceusage.services.list",
+          "storage.buckets.get",
           "storage.buckets.list");
   private final List<String> projectWriterPermissions =
       new ImmutableList.Builder<String>()
