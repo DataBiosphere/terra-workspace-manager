@@ -169,16 +169,6 @@ components:
         updateMode:
           $ref: '#/components/schemas/WsmPolicyUpdateMode'
 
-    WsmLinkPoliciesRequest:
-      description: Request with a policy object id
-      type: object
-      required: [ policyObjectId ]
-      properties:
-        policyObjectId:
-          $ref: '#/components/schemas/WsmPolicyDescription'
-        updateMode:
-          $ref: '#/components/schemas/WsmPolicyUpdateMode'
-
     WsmPolicyUpdateResult:
       type: object
       required: [ updateApplied, conflicts ]

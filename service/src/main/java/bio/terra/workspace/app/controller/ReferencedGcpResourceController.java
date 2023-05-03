@@ -503,6 +503,8 @@ public class ReferencedGcpResourceController extends ControllerBase
                 userRequest)
             : null;
 
+    // note, if createReferenceResource below fails, policy changes made above will remain
+    // suggest using stairway for cleanup
     if (linkPoliciesResults == null || linkPoliciesResults.isUpdateApplied()) {
       ReferencedDataRepoSnapshotResource referenceResource =
           referencedResourceService
