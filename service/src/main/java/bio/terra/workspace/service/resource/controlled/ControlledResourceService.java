@@ -59,11 +59,12 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
-import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+// TODO: re-order functions by cloud platform
 
 /** CRUD methods for controlled objects. */
 @Component
@@ -408,19 +409,6 @@ public class ControlledResourceService {
     return jobId;
   }
 
-  /**
-   * Starts a create controlled AWS Sagemaker Notebook instance resource job, returning the job id.
-   */
-  public String createAwsSagemakerNotebookInstance(
-      ControlledAwsSagemakerNotebookResource resource,
-      ApiAwsSagemakerNotebookCreationParameters creationParameters,
-      @Nullable ControlledResourceIamRole privateResourceIamRole,
-      @Nullable ApiJobControl jobControl,
-      String resultPath,
-      AuthenticatedUserRequest userRequest) {
-    throw new NotImplementedException("TODO-Dex");
-  }
-
   /** Simpler interface for synchronous controlled resource creation */
   private JobBuilder commonCreationJobBuilder(
       ControlledResource resource,
@@ -659,5 +647,33 @@ public class ControlledResourceService {
     }
 
     throw new ServiceUnavailableException("Failed to make prompt progress on resource");
+  }
+
+  // AWS
+
+  /**
+   * Starts a create controlled AWS Sagemaker Notebook instance resource job, returning the job id.
+   */
+  public String createAwsSagemakerNotebookInstance(
+      ControlledAwsSagemakerNotebookResource resource,
+      ApiAwsSagemakerNotebookCreationParameters creationParameters,
+      @Nullable ControlledResourceIamRole privateResourceIamRole,
+      @Nullable ApiJobControl jobControl,
+      String resultPath,
+      AuthenticatedUserRequest userRequest) {
+    // Special check for notebooks: READER is not a useful role
+    if (privateResourceIamRole == ControlledResourceIamRole.READER) {
+      throw new BadRequestException(
+          "A private, controlled Notebook instance must have the writer or editor role or else it is not useful.");
+    }
+
+    JobBuilder jobBuilder =
+        commonCreationJobBuilder(
+            resource, privateResourceIamRole, jobControl, resultPath, userRequest);
+    jobBuilder.addParameter(ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS, creationParameters);
+
+    String jobId = jobBuilder.submit();
+    waitForResourceOrJob(resource.getWorkspaceId(), resource.getResourceId(), jobId);
+    return jobId;
   }
 }

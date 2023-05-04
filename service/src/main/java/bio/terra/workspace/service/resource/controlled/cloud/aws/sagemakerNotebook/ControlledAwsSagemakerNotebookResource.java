@@ -4,7 +4,6 @@ import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
-import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.db.DbSerDes;
@@ -15,7 +14,6 @@ import bio.terra.workspace.generated.model.ApiAwsSagemakerNotebookAttributes;
 import bio.terra.workspace.generated.model.ApiAwsSagemakerNotebookResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.resource.controlled.cloud.aws.s3storageFolder.DeleteAwsS3StorageFolderStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
@@ -126,15 +124,20 @@ public class ControlledAwsSagemakerNotebookResource extends ControlledResource {
       AuthenticatedUserRequest userRequest,
       FlightBeanBag flightBeanBag) {
     flight.addStep(
-        new CreateAwsSagemakerNotebookStep(this, flightBeanBag.getAwsCloudContextService(),userRequest,
-            flightBeanBag.getSamService()), RetryRules.cloud());
+        new CreateAwsSagemakerNotebookStep(
+            this,
+            flightBeanBag.getAwsCloudContextService(),
+            userRequest,
+            flightBeanBag.getSamService()),
+        RetryRules.cloud());
   }
 
   /** {@inheritDoc} */
   @Override
   public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
     flight.addStep(
-        new DeleteAwsSagemakerNotebookStep(this, flightBeanBag.getAwsCloudContextService()), RetryRules.cloud());
+        new DeleteAwsSagemakerNotebookStep(this, flightBeanBag.getAwsCloudContextService()),
+        RetryRules.cloud());
   }
 
   /** {@inheritDoc} */

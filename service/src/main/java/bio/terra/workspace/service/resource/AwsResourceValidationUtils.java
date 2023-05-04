@@ -4,13 +4,18 @@ import bio.terra.workspace.service.resource.controlled.cloud.aws.AwsResourceCons
 import bio.terra.workspace.service.resource.exception.InvalidNameException;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
-import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.stereotype.Component;
 
 /** A collection of static validation functions specific to AWS */
 @Component
 public class AwsResourceValidationUtils {
-  static final Pattern s3ObjectDisallowedChars = Pattern.compile("[{}^%`<>~#|@*+\\[\\]\"\'\\\\/]");
+  // https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html
+  protected static final Pattern s3ObjectDisallowedChars =
+      Pattern.compile("[{}^%`<>~#|@*+\\[\\]\"\'\\\\/]");
+
+  // https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_CreateNotebookInstance.html#sagemaker-CreateNotebookInstance-request-NotebookInstanceName
+  protected static final Pattern sagemakerInstanceNamePattern =
+      Pattern.compile("^[a-zA-Z0-9](-*[a-zA-Z0-9])*");
 
   /**
    * Validate AWS Storage Folder name.
@@ -25,7 +30,7 @@ public class AwsResourceValidationUtils {
         || s3ObjectDisallowedChars.matcher(prefixName).find()) {
       throw new InvalidNameException(
           String.format(
-              "storage folder names must contain any sequence of valid Unicode characters (excluding %s), of length 1-1024 bytes when UTF-8 encoded",
+              "Storage folder names must contain any sequence of valid Unicode characters (excluding %s), of length 1-1024 bytes when UTF-8 encoded",
               s3ObjectDisallowedChars.pattern()));
     }
   }
@@ -37,7 +42,13 @@ public class AwsResourceValidationUtils {
    * @throws InvalidNameException invalid instance name
    */
   public static void validateAwsSagemakerNotebookName(String instanceName) {
-    throw new NotImplementedException("TODO-Dex");
+    int nameLength = instanceName.getBytes(StandardCharsets.UTF_8).length;
+    if (nameLength < 1
+        || nameLength > AwsResourceConstants.MAX_SAGEMAKER_NOTEBOOK_INSTANCE_NAME_LENGTH
+        || !sagemakerInstanceNamePattern.matcher(instanceName).matches()) {
+      throw new InvalidNameException(
+          "Sagemaker instance names must contain any sequence alphabets, numbers and dashes (dash may not be first or last character), of length 1-64");
+    }
   }
 
   /**
@@ -49,7 +60,11 @@ public class AwsResourceValidationUtils {
   public static void validateAwsCredentialDurationSecond(int duration) {
     if (duration < AwsResourceConstants.MIN_CREDENTIAL_DURATION_SECONDS
         || duration > AwsResourceConstants.MAX_CREDENTIAL_DURATION_SECONDS) {
-      throw new InvalidNameException("credential duration must be between 900 & 3600 seconds");
+      throw new InvalidNameException(
+          String.format(
+              "Credential duration must be between %d & %d seconds",
+              AwsResourceConstants.MIN_CREDENTIAL_DURATION_SECONDS,
+              AwsResourceConstants.MAX_CREDENTIAL_DURATION_SECONDS));
     }
   }
 }

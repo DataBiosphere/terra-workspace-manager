@@ -199,7 +199,8 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
   public ResponseEntity<ApiAwsResourceCloudName> generateAwsS3StorageFolderCloudName(
       UUID workspaceUuid, ApiGenerateAwsResourceCloudNameRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    Workspace workspace = workspaceService.validateMcWorkspaceAndAction(
+    Workspace workspace =
+        workspaceService.validateMcWorkspaceAndAction(
             userRequest, workspaceUuid, SamWorkspaceAction.READ);
 
     String generatedCloudName =

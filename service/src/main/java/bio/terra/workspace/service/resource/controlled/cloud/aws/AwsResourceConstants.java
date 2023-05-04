@@ -13,4 +13,7 @@ public class AwsResourceConstants {
 
   /** Maximum length of a S3 storage folder name */
   public static final int MAX_S3_STORAGE_FOLDER_NAME_LENGTH = 1024;
+
+  /** Maximum length of a Sagemaker notebook instance name */
+  public static final int MAX_SAGEMAKER_NOTEBOOK_INSTANCE_NAME_LENGTH = 63;
 }

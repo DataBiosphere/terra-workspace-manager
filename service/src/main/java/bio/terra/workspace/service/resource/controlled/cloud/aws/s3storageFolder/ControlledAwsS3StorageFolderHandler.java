@@ -36,8 +36,8 @@ public class ControlledAwsS3StorageFolderHandler implements WsmResourceHandler {
    * Generate controlled AWS S3 Storage Folder cloud name that meets the requirements for a valid
    * name.
    *
-   * <p>Alphanumeric characters and certain special characters can be safely used in valid names For
-   * details, see https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html
+   * <p>Alphanumeric characters and certain special characters can be safely used in valid names.
+   * For details, see https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html
    */
   @Override
   public String generateCloudName(
