@@ -23,7 +23,7 @@ import com.google.common.collect.Table;
  */
 public class CustomGcpIamRoleMapping {
   static final ImmutableList<String> GCS_BUCKET_READER_PERMISSIONS =
-      ImmutableList.of("storage.objects.list", "storage.objects.get");
+      ImmutableList.of("storage.buckets.get", "storage.objects.list", "storage.objects.get");
   static final ImmutableList<String> GCS_BUCKET_WRITER_PERMISSIONS =
       new ImmutableList.Builder<String>()
           .addAll(GCS_BUCKET_READER_PERMISSIONS)
