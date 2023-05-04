@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.common.BaseUnitTest;
+import java.util.UUID;
 import liquibase.repackaged.org.apache.commons.text.RandomStringGenerator;
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +16,7 @@ public class ControlledBigQueryDatasetHandlerTest extends BaseUnitTest {
   public void generateDatasetName() {
     String datasetName = "yuhuyoyo";
     String generatedCloudName =
-        ControlledBigQueryDatasetHandler.getHandler().generateCloudName(null, datasetName);
+        ControlledBigQueryDatasetHandler.getHandler().generateCloudName((UUID) null, datasetName);
 
     assertEquals("yuhuyoyo", generatedCloudName);
   }
@@ -24,7 +25,7 @@ public class ControlledBigQueryDatasetHandlerTest extends BaseUnitTest {
   public void generateDatasetName_datasetNameHasDash_replaceWithUnderscore() {
     String datasetName = "yu-hu-yo-yo";
     String generatedCloudName =
-        ControlledBigQueryDatasetHandler.getHandler().generateCloudName(null, datasetName);
+        ControlledBigQueryDatasetHandler.getHandler().generateCloudName((UUID) null, datasetName);
 
     assertEquals("yu_hu_yo_yo", generatedCloudName);
   }
@@ -33,7 +34,7 @@ public class ControlledBigQueryDatasetHandlerTest extends BaseUnitTest {
   public void generateDatasetName_datasetNameHasStartingDash_removeStartingDash() {
     String datasetName = "-_yu-hu-yo-yo-_";
     String generatedCloudName =
-        ControlledBigQueryDatasetHandler.getHandler().generateCloudName(null, datasetName);
+        ControlledBigQueryDatasetHandler.getHandler().generateCloudName((UUID) null, datasetName);
 
     assertEquals("yu_hu_yo_yo", generatedCloudName);
   }
@@ -42,7 +43,7 @@ public class ControlledBigQueryDatasetHandlerTest extends BaseUnitTest {
   public void generateDatasetName_datasetNameHasEndingDash_removeEndingDash() {
     String datasetName = "yu-hu-yo-yo-";
     String generatedCloudName =
-        ControlledBigQueryDatasetHandler.getHandler().generateCloudName(null, datasetName);
+        ControlledBigQueryDatasetHandler.getHandler().generateCloudName((UUID) null, datasetName);
 
     assertEquals("yu_hu_yo_yo", generatedCloudName);
   }
@@ -57,7 +58,7 @@ public class ControlledBigQueryDatasetHandlerTest extends BaseUnitTest {
 
     String bucketName = generator.generate(2000);
     String generateCloudName =
-        ControlledBigQueryDatasetHandler.getHandler().generateCloudName(null, bucketName);
+        ControlledBigQueryDatasetHandler.getHandler().generateCloudName((UUID) null, bucketName);
 
     int maxNameLength = MAX_DATASET_NAME_LENGTH;
 

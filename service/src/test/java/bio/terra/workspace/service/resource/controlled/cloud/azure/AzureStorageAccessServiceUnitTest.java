@@ -19,8 +19,10 @@ import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.StorageAccountKeyProvider;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import com.azure.resourcemanager.storage.StorageManager;
 import com.azure.resourcemanager.storage.models.Endpoints;
@@ -429,6 +431,55 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
     assertTrue(
         result.sasToken().contains("sip=" + ipRange),
         "the SignedIP was added to the query parameters");
+  }
+
+  @Test
+  void createAzureStorageContainerSasToken_computesAuthHash() throws InterruptedException {
+    // build a custom container here instead of using the fixture method
+    // since randomly generated identifiers make the hash unstable for
+    // our assertions in this test
+    var storageContainerResource =
+        ControlledAzureStorageContainerResource.builder()
+            .common(
+                ControlledResourceFields.builder()
+                    .workspaceUuid(UUID.fromString("68f65410-cb18-4b5a-8518-0a5ef8065f72"))
+                    .resourceId(UUID.fromString("2d08d1a4-882d-4483-8c2c-c70b68b10be6"))
+                    .name("name")
+                    .cloningInstructions(CloningInstructions.COPY_NOTHING)
+                    .createdByEmail("example@example.com")
+                    .managedBy(ManagedByType.MANAGED_BY_USER)
+                    .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
+                    .build())
+            .storageContainerName("name")
+            .build();
+
+    when(mockSamService()
+            .listResourceActions(
+                userRequest,
+                storageContainerResource.getCategory().getSamResourceName(),
+                storageContainerResource.getResourceId().toString()))
+        .thenReturn(
+            List.of(
+                SamConstants.SamControlledResourceActions.READ_ACTION,
+                SamConstants.SamControlledResourceActions.WRITE_ACTION));
+    setupMocks(storageContainerResource, true);
+
+    var result =
+        azureStorageAccessService.createAzureStorageContainerSasToken(
+            storageContainerResource.getWorkspaceId(),
+            storageContainerResource.getResourceId(),
+            userRequest,
+            new SasTokenOptions(
+                null,
+                OffsetDateTime.parse(
+                    "2023-05-03T09:15:30-05:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+                OffsetDateTime.parse(
+                    "2023-05-03T10:15:30-05:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+                null,
+                null));
+
+    assertEquals(
+        "9FFE137AEB017B2BBF4E9DD724EEC987A4BE60321C0E54B279F8C558031DDE8B", result.sha256());
   }
 
   @Test

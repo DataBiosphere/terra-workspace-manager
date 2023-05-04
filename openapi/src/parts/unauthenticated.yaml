@@ -6,7 +6,7 @@ paths:
       security: []
       summary: Returns the operational status of the service
       operationId: serviceStatus
-      tags: [Unauthenticated]
+      tags: [ Unauthenticated ]
       responses:
         '200':
           description: Service can process requests
@@ -19,7 +19,7 @@ paths:
       security: []
       summary: Returns the deployed version of the service
       operationId: serviceVersion
-      tags: [Unauthenticated]
+      tags: [ Unauthenticated ]
       responses:
         '200':
           description: System version response
@@ -32,7 +32,7 @@ components:
   schemas:
     SystemVersion:
       type: object
-      required: [gitTag, gitHash, github, build]
+      required: [ gitTag, gitHash, github, build ]
       properties:
         gitTag:
           type: string

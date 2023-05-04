@@ -18,7 +18,7 @@ paths:
         Enumerate recent jobs run in a workspace. The enumeration includes both running
         and completed jobs. It is ordered by start time of the job.
       operationId: enumerateJobs
-      tags: [Alpha1]
+      tags: [ Alpha1 ]
       responses:
         '200':
           description: Listing of recent jobs

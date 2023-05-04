@@ -5,7 +5,7 @@ paths:
     post:
       summary: Create a new controlled Gcp bucket
       operationId: createBucket
-      tags: [ControlledGcpResource]
+      tags: [ ControlledGcpResource ]
       requestBody:
         required: true
         content:
@@ -27,7 +27,7 @@ paths:
     get:
       summary: Get a controlled GCS bucket resource
       operationId: getBucket
-      tags: [ControlledGcpResource]
+      tags: [ ControlledGcpResource ]
       responses:
         '200':
           $ref: '#/components/responses/GetControlledGcpGcsBucketResponse'
@@ -62,7 +62,7 @@ paths:
         operation can take a few minutes. OpenAPI does not support request body 
         in DELETE, but async state requires it. Hence this is a POST.
       operationId: deleteBucket
-      tags: [ControlledGcpResource]
+      tags: [ ControlledGcpResource ]
       requestBody:
         required: true
         content:
@@ -85,7 +85,7 @@ paths:
     post:
       summary: Generate a cloud native controlled Gcp bucket name
       operationId: generateGcpGcsBucketCloudName
-      tags: [ControlledGcpResource]
+      tags: [ ControlledGcpResource ]
       requestBody:
         required: true
         content:
@@ -107,7 +107,7 @@ paths:
     post:
       summary: Clone a GCS Bucket
       operationId: cloneGcsBucket
-      tags: [ControlledGcpResource]
+      tags: [ ControlledGcpResource ]
       requestBody:
         required: true
         content:
@@ -133,7 +133,7 @@ paths:
     get:
       summary: Retrieve information about a gcp bucket clone job.
       operationId: getCloneGcsBucketResult
-      tags: [ControlledGcpResource]
+      tags: [ ControlledGcpResource ]
       responses:
         '200':
           $ref: '#/components/responses/ClonedControlledGcpGcsBucketResponse'
@@ -151,7 +151,7 @@ paths:
     get:
       summary: Retrieve information about a gcp bucket deletion job.
       operationId: getDeleteBucketResult
-      tags: [ControlledGcpResource]
+      tags: [ ControlledGcpResource ]
       responses:
         '200':
           $ref: '#/components/responses/DeleteControlledGcpGcsBucketResponse'
@@ -167,7 +167,7 @@ components:
     CreatedControlledGcpGcsBucket:
       description: Response Payload for requesting a new controlled GCS bucket.
       type: object
-      required: [resourceId, gcpBucket]
+      required: [ resourceId, gcpBucket ]
       properties:
         resourceId:
           description: UUID of a newly-created resource.

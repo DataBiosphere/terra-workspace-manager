@@ -5,7 +5,7 @@ components:
         AI Notebook instance properties included in post-creation, get, and update. Others must be
         retrieved from GCP using the specification.
       type: object
-      required: [projectId, location, instanceId]
+      required: [ projectId, location, instanceId ]
       properties:
         projectId:
           description: The GCP project id for the project containing the notebook instance.

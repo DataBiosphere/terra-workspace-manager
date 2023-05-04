@@ -19,8 +19,6 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '403':
           $ref: '#/components/responses/PermissionDenied'
-        '404':
-          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
 
@@ -30,7 +28,7 @@ paths:
     post:
       summary: Create a new controlled AWS S3 Storage Folder resource.
       operationId: createAwsS3StorageFolder
-      tags: [ControlledAwsResource]
+      tags: [ ControlledAwsResource ]
       requestBody:
         required: true
         content:
@@ -44,8 +42,6 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '403':
           $ref: '#/components/responses/PermissionDenied'
-        '404':
-          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
 
@@ -56,7 +52,7 @@ paths:
     get:
       summary: Get a controlled AWS S3 Storage Folder resource.
       operationId: getAwsS3StorageFolder
-      tags: [ControlledAwsResource]
+      tags: [ ControlledAwsResource ]
       responses:
         '200':
           $ref: '#/components/responses/GetControlledAwsS3StorageFolderResponse'
@@ -72,7 +68,7 @@ paths:
         operation can take a few minutes. OpenAPI does not support request body 
         in DELETE, but async state requires it. Hence this is a POST.
       operationId: deleteAwsS3StorageFolder
-      tags: [ControlledAwsResource]
+      tags: [ ControlledAwsResource ]
       requestBody:
         required: true
         content:
@@ -124,7 +120,7 @@ paths:
     get:
       summary: Get a credential to access this S3 Storage Folder in the AWS CLI or SDK.
       operationId: getAwsS3StorageFolderCredential
-      tags: [ControlledAwsResource]
+      tags: [ ControlledAwsResource ]
       responses:
         '200':
           $ref: '#/components/responses/GetControlledAwsS3StorageFolderCredentialResponse'

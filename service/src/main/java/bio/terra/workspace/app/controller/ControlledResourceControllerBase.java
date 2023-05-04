@@ -19,6 +19,7 @@ import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateUserRole;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.workspace.WorkspaceService;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -32,6 +33,7 @@ import org.apache.commons.lang3.StringUtils;
 public class ControlledResourceControllerBase extends ControllerBase {
   protected final ControlledResourceService controlledResourceService;
   protected final ControlledResourceMetadataManager controlledResourceMetadataManager;
+  protected final WorkspaceService workspaceService;
 
   /**
    * The region field of these wsm resource type are filled during the creation flight because the
@@ -56,7 +58,8 @@ public class ControlledResourceControllerBase extends ControllerBase {
       JobService jobService,
       JobApiUtils jobApiUtils,
       ControlledResourceService controlledResourceService,
-      ControlledResourceMetadataManager controlledResourceMetadataManager) {
+      ControlledResourceMetadataManager controlledResourceMetadataManager,
+      WorkspaceService workspaceService) {
     super(
         authenticatedUserRequestFactory,
         request,
@@ -67,6 +70,7 @@ public class ControlledResourceControllerBase extends ControllerBase {
         jobApiUtils);
     this.controlledResourceService = controlledResourceService;
     this.controlledResourceMetadataManager = controlledResourceMetadataManager;
+    this.workspaceService = workspaceService;
   }
 
   public ControlledResourceFields toCommonFields(

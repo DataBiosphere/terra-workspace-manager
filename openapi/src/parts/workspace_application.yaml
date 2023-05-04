@@ -8,7 +8,7 @@ paths:
         - $ref: '#/components/parameters/Limit'
       summary: List all applications and whether they are enabled on a workspace
       operationId: listWorkspaceApplications
-      tags: [WorkspaceApplication]
+      tags: [ WorkspaceApplication ]
       responses:
         '200':
           description: OK
@@ -30,7 +30,7 @@ paths:
     get:
       summary: Get an application and its state in this workspace
       operationId: getWorkspaceApplication
-      tags: [WorkspaceApplication]
+      tags: [ WorkspaceApplication ]
       responses:
         '200':
           description: OK
@@ -52,7 +52,7 @@ paths:
     post:
       summary: Disable an application in a workspace
       operationId: disableWorkspaceApplication
-      tags: [WorkspaceApplication]
+      tags: [ WorkspaceApplication ]
       responses:
         '200':
           description: OK
@@ -74,7 +74,7 @@ paths:
     post:
       summary: Enable an application in a workspace
       operationId: enableWorkspaceApplication
-      tags: [WorkspaceApplication]
+      tags: [ WorkspaceApplication ]
       responses:
         '200':
           description: OK

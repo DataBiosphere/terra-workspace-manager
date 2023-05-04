@@ -31,7 +31,7 @@ paths:
     get:
       summary: Get a controlled Azure Disk resource
       operationId: getAzureDisk
-      tags: [ControlledAzureResource]
+      tags: [ ControlledAzureResource ]
       responses:
         '200':
           description: Response to get disk
@@ -51,7 +51,7 @@ paths:
         operation can take a few minutes. OpenAPI does not support request body 
         in DELETE, but async state requires it. Hence this is a POST.
       operationId: deleteAzureDisk
-      tags: [ControlledAzureResource]
+      tags: [ ControlledAzureResource ]
       requestBody:
         required: true
         content:
@@ -78,7 +78,7 @@ paths:
     get:
       summary: Retrieve information about an azure disk deletion job.
       operationId: getDeleteAzureDiskResult
-      tags: [ControlledAzureResource]
+      tags: [ ControlledAzureResource ]
       responses:
         '200':
           $ref: '#/components/responses/DeleteControlledAzureResourceResponse'

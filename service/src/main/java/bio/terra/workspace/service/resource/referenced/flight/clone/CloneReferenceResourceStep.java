@@ -7,12 +7,9 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import bio.terra.workspace.service.workspace.model.WsmCloneResourceResult;
-import bio.terra.workspace.service.workspace.model.WsmResourceCloneDetails;
 import org.springframework.http.HttpStatus;
 
 public class CloneReferenceResourceStep implements Step {
@@ -35,25 +32,10 @@ public class CloneReferenceResourceStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    WsmResourceCloneDetails cloneDetails =
-        new WsmResourceCloneDetails()
-            .setStewardshipType(StewardshipType.REFERENCED)
-            .setResourceType(sourceResource.getResourceType())
-            .setSourceResourceId(destinationResource.getResourceId())
-            .setName(destinationResource.getName())
-            .setDescription(destinationResource.getDescription());
-
-    cloneDetails
-        .setResourceType(destinationResource.getResourceType())
-        .setStewardshipType(destinationResource.getStewardshipType())
-        .setCloningInstructions(destinationResource.getCloningInstructions())
-        .setDestinationResourceId(destinationResource.getResourceId());
-
     try {
       var createdResource =
           referencedResourceService.createReferenceResourceForClone(destinationResource);
       FlightUtils.setResponse(context, createdResource, HttpStatus.OK);
-      cloneDetails.setResult(WsmCloneResourceResult.SUCCEEDED);
     } catch (Exception e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
     }

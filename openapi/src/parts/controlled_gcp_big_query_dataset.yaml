@@ -5,7 +5,7 @@ paths:
     post:
       summary: Create a new controlled BigQuery dataset
       operationId: createBigQueryDataset
-      tags: [ControlledGcpResource]
+      tags: [ ControlledGcpResource ]
       requestBody:
         required: true
         content:
@@ -102,7 +102,7 @@ paths:
     post:
       summary: Clone a BigQuery dataset
       operationId: cloneBigQueryDataset
-      tags: [ControlledGcpResource]
+      tags: [ ControlledGcpResource ]
       requestBody:
         required: true
         content:
@@ -128,7 +128,7 @@ paths:
     get:
       summary: Retrieve information about a gcp BigQuery dataset clone job.
       operationId: getCloneBigQueryDatasetResult
-      tags: [ControlledGcpResource]
+      tags: [ ControlledGcpResource ]
       responses:
         '200':
           $ref: '#/components/responses/CloneControlledGcpBigQueryDatasetResponse'
@@ -176,7 +176,7 @@ components:
         Values to assign to the cloned dataset for a given source dataset. Leave
         name and description null to take the source object's values.
       type: object
-      required: [destinationWorkspaceId, jobControl]
+      required: [ destinationWorkspaceId, jobControl ]
       properties:
         destinationWorkspaceId:
           description: ID of workspace to be cloned into
@@ -209,7 +209,7 @@ components:
     CreatedControlledGcpBigQueryDataset:
       description: Response Payload for requesting a new controlled BigQuery dataset.
       type: object
-      required: [resourceId, bigQueryDataset]
+      required: [ resourceId, bigQueryDataset ]
       properties:
         resourceId:
           description: UUID of a newly-created resource.
@@ -221,7 +221,7 @@ components:
     CreateControlledGcpBigQueryDatasetRequestBody:
       description: Payload for requesting a new controlled BigQuery dataset resource.
       type: object
-      required: [common, dataset]
+      required: [ common, dataset ]
       properties:
         common:
           $ref: '#/components/schemas/ControlledResourceCommonFields'
