@@ -4,7 +4,6 @@ import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertA
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesDeleteRequestBody;
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesUpdateRequestBody;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.SPEND_PROFILE;
 
 import bio.terra.policy.model.TpsComponent;
 import bio.terra.policy.model.TpsObjectType;
@@ -14,8 +13,6 @@ import bio.terra.policy.model.TpsPaoGetResult;
 import bio.terra.policy.model.TpsPaoUpdateResult;
 import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.policy.model.TpsUpdateMode;
-import bio.terra.stairway.StepResult;
-import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.exception.FeatureNotSupportedException;
@@ -75,7 +72,6 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.spendprofile.SpendProfileService;
-import bio.terra.workspace.service.spendprofile.exceptions.BillingProfileManagerServiceAPIException;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
@@ -85,7 +81,6 @@ import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudContext;
-import bio.terra.workspace.service.workspace.model.CloudContextHolder;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
@@ -182,6 +177,11 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     WorkspaceStage internalStage = WorkspaceStage.fromApiModel(requestStage);
     Optional<SpendProfileId> spendProfileId =
         Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::new);
+    // Validate that the caller has access to the spend profile, if it is provided
+    spendProfileId.ifPresent(
+        profileId ->
+            spendProfileService.authorizeLinking(
+                profileId, features.isBpmGcpEnabled(), userRequest));
 
     // ET uses userFacingId; CWB doesn't. Schema enforces that userFacingId must be set. CWB doesn't
     // pass userFacingId in request, so use id.
@@ -562,23 +562,26 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
     // TODO: PF-2694 REST API part
     //  When we make the REST API changes, the spend profile will come with the create cloud context
-    //  and we will take it from there. Only if missing, will we take it from the workspace. For this
+    //  and we will take it from there. Only if missing, will we take it from the workspace. For
+    // this
     //  part, we do the permission check using the workspace spend profile.
     SpendProfileId spendProfileId =
-      workspace
-        .getSpendProfileId()
-        .orElseThrow(() -> MissingSpendProfileException.forWorkspace(workspace.workspaceId()));
+        workspace
+            .getSpendProfileId()
+            .orElseThrow(() -> MissingSpendProfileException.forWorkspace(workspace.workspaceId()));
 
     // Authorize use of the spend profile
-    SpendProfile spendProfile = spendProfileService.authorizeLinking(spendProfileId, features.isBpmGcpEnabled(), userRequest);
+    SpendProfile spendProfile =
+        spendProfileService.authorizeLinking(
+            spendProfileId, features.isBpmGcpEnabled(), userRequest);
 
     workspaceService.createCloudContext(
-      workspace,
-      CloudPlatform.fromApiCloudPlatform(cloudPlatform),
-      spendProfile,
-      jobId,
-      userRequest,
-      resultPath);
+        workspace,
+        CloudPlatform.fromApiCloudPlatform(cloudPlatform),
+        spendProfile,
+        jobId,
+        userRequest,
+        resultPath);
 
     ApiCreateCloudContextResult response = fetchCreateCloudContextResult(jobId);
     return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
@@ -623,8 +626,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
           GcpCloudContext gcpCloudContext = cloudContext.castByEnum(CloudPlatform.GCP);
           gcpApiContext = gcpCloudContext.toApi();
         }
-        default ->
-          throw new InternalLogicException("Invalid cloud platform returned");
+        default -> throw new InternalLogicException("Invalid cloud platform returned");
       }
     }
 
@@ -645,9 +647,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         workspaceService.validateMcWorkspaceAndAction(userRequest, uuid, SamWorkspaceAction.WRITE);
 
     workspaceService.deleteCloudContext(
-      workspace,
-      CloudPlatform.fromApiCloudPlatform(cloudPlatform),
-      userRequest);
+        workspace, CloudPlatform.fromApiCloudPlatform(cloudPlatform), userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -690,6 +690,9 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
     Optional<SpendProfileId> spendProfileId =
         Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::new);
+    Optional<SpendProfile> spendProfile =
+        spendProfileId.map(
+            id -> spendProfileService.authorizeLinking(id, features.isBpmGcpEnabled(), petRequest));
 
     // Accept a target workspace id if one is provided. This allows Rawls to specify an
     // existing workspace id. WSM then creates the WSMspace supporting the Rawls workspace.
@@ -729,7 +732,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             petRequest,
             body.getLocation(),
             TpsApiConversionUtils.tpsFromApiTpsPolicyInputs(body.getAdditionalPolicies()),
-            destinationWorkspace);
+            destinationWorkspace,
+            spendProfile.orElse(null));
 
     final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId);
     final ApiClonedWorkspace clonedWorkspaceStub =

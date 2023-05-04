@@ -3,13 +3,9 @@ package bio.terra.workspace.service.workspace.flight.cloud.aws;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
-import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
-import bio.terra.workspace.service.workspace.model.CloudContextHolder;
-import java.util.UUID;
-import org.springframework.http.HttpStatus;
 
 public class MakeAwsCloudContextStep implements Step {
   private final AwsCloudContextService awsCloudContextService;

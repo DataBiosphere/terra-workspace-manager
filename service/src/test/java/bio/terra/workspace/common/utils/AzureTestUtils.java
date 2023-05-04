@@ -21,7 +21,6 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
-import bio.terra.workspace.service.workspace.flight.create.cloudcontext.CreateCloudContextFlight;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import com.azure.resourcemanager.compute.ComputeManager;
@@ -63,10 +62,13 @@ public class AzureTestUtils {
     return crlService.getStorageManager(getAzureCloudContext(), this.azureConfiguration);
   }
 
-  /** Create the FlightMap input parameters required for the {@link bio.terra.workspace.service.workspace.flight.create.cloudcontext.CreateCloudContextFlight}. */
-  public FlightMap createAzureContextInputParameters(UUID workspaceUuid, AuthenticatedUserRequest userRequest) {
-    return
-      WorkspaceFixtures.createCloudContextInputs(
+  /**
+   * Create the FlightMap input parameters required for the {@link
+   * bio.terra.workspace.service.workspace.flight.create.cloudcontext.CreateCloudContextFlight}.
+   */
+  public FlightMap createAzureContextInputParameters(
+      UUID workspaceUuid, AuthenticatedUserRequest userRequest) {
+    return WorkspaceFixtures.createCloudContextInputs(
         workspaceUuid, userRequest, CloudPlatform.AZURE, getSpendProfile());
   }
 

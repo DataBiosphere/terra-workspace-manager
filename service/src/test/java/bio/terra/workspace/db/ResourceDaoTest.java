@@ -37,6 +37,7 @@ import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
+import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,7 +67,7 @@ public class ResourceDaoTest extends BaseUnitTest {
 
   @AfterAll
   public void cleanUp() {
-    workspaceDao.deleteCloudContext(workspaceUuid, CloudPlatform.GCP);
+    WorkspaceUnitTestUtils.deleteGcpCloudContextInDatabase(workspaceDao, workspaceUuid);
     workspaceDao.deleteWorkspace(workspaceUuid);
   }
 
@@ -248,7 +249,7 @@ public class ResourceDaoTest extends BaseUnitTest {
     List<ControlledResource> listAfterDeletion =
         resourceDao.listControlledResources(workspaceUuid, CloudPlatform.GCP);
     assertTrue(listAfterDeletion.isEmpty());
-    workspaceDao.deleteCloudContext(workspaceUuid, CloudPlatform.GCP);
+    WorkspaceUnitTestUtils.deleteGcpCloudContextInDatabase(workspaceDao, workspaceUuid);
     workspaceDao.deleteWorkspace(workspaceUuid);
   }
 

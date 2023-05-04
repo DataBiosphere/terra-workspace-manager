@@ -8,9 +8,7 @@ import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.db.model.DbCloudContext;
-import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
-import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
@@ -82,31 +80,32 @@ public class WorkspaceDao {
 
   /** Base select query for reading a cloud context; no predicate */
   private static final String BASE_CLOUD_CONTEXT_SELECT_SQL =
-    """
+      """
         SELECT workspace_id, cloud_platform, spend_profile, context, state, flight_id, error
         FROM cloud_context
     """;
 
   /** SQL query for reading a cloud context */
   private static final String CLOUD_CONTEXT_SELECT_SQL =
-    BASE_CLOUD_CONTEXT_SELECT_SQL +
-        "WHERE workspace_id = :workspace_id AND cloud_platform = :cloud_platform";
+      BASE_CLOUD_CONTEXT_SELECT_SQL
+          + "WHERE workspace_id = :workspace_id AND cloud_platform = :cloud_platform";
 
   private static final RowMapper<DbCloudContext> CLOUD_CONTEXT_ROW_MAPPER =
-    (rs, rowNum) ->
-      new DbCloudContext()
-        .workspaceUuid(UUID.fromString(rs.getString("workspace_id")))
-        .cloudPlatform(CloudPlatform.fromSql(rs.getString("cloud_platform")))
-        .spendProfile(
-          Optional.ofNullable(rs.getString("spend_profile"))
-            .map(SpendProfileId::new)
-            .orElse(null))
-        .contextJson(rs.getString("context"))
-        .state(WsmResourceState.fromDb(rs.getString("state")))
-        .flightId(rs.getString("flight_id"))
-        .error(Optional.ofNullable(rs.getString("error"))
-          .map(errorJson -> DbSerDes.fromJson(errorJson, ErrorReportException.class))
-          .orElse(null));
+      (rs, rowNum) ->
+          new DbCloudContext()
+              .workspaceUuid(UUID.fromString(rs.getString("workspace_id")))
+              .cloudPlatform(CloudPlatform.fromSql(rs.getString("cloud_platform")))
+              .spendProfile(
+                  Optional.ofNullable(rs.getString("spend_profile"))
+                      .map(SpendProfileId::new)
+                      .orElse(null))
+              .contextJson(rs.getString("context"))
+              .state(WsmResourceState.fromDb(rs.getString("state")))
+              .flightId(rs.getString("flight_id"))
+              .error(
+                  Optional.ofNullable(rs.getString("error"))
+                      .map(errorJson -> DbSerDes.fromJson(errorJson, ErrorReportException.class))
+                      .orElse(null));
 
   private static final Logger logger = LoggerFactory.getLogger(WorkspaceDao.class);
   private final NamedParameterJdbcTemplate jdbcTemplate;
@@ -115,9 +114,7 @@ public class WorkspaceDao {
 
   @Autowired
   public WorkspaceDao(
-    ApplicationDao applicationDao,
-    NamedParameterJdbcTemplate jdbcTemplate,
-    StateDao stateDao) {
+      ApplicationDao applicationDao, NamedParameterJdbcTemplate jdbcTemplate, StateDao stateDao) {
     this.applicationDao = applicationDao;
     this.jdbcTemplate = jdbcTemplate;
     this.stateDao = stateDao;
@@ -430,10 +427,11 @@ public class WorkspaceDao {
   private @Nullable DbCloudContext getDbCloudContext(UUID workspaceUuid, CloudPlatform cloudPlatform) {
     try {
       var params =
-        new MapSqlParameterSource()
-          .addValue("workspace_id", workspaceUuid.toString())
-          .addValue("cloud_platform", cloudPlatform.toSql());
-      return jdbcTemplate.queryForObject(CLOUD_CONTEXT_SELECT_SQL, params, CLOUD_CONTEXT_ROW_MAPPER);
+          new MapSqlParameterSource()
+              .addValue("workspace_id", workspaceUuid.toString())
+              .addValue("cloud_platform", cloudPlatform.toSql());
+      return jdbcTemplate.queryForObject(
+          CLOUD_CONTEXT_SELECT_SQL, params, CLOUD_CONTEXT_ROW_MAPPER);
     } catch (EmptyResultDataAccessException e) {
       return null;
     }
@@ -445,8 +443,11 @@ public class WorkspaceDao {
    */
   @WriteTransaction
   public void createCloudContextStart(
-      UUID workspaceUuid, CloudPlatform cloudPlatform, SpendProfileId spendProfileId, String flightId)
-    throws DuplicateCloudContextException {
+      UUID workspaceUuid,
+      CloudPlatform cloudPlatform,
+      SpendProfileId spendProfileId,
+      String flightId)
+      throws DuplicateCloudContextException {
     DbCloudContext cloudContext = getDbCloudContext(workspaceUuid, cloudPlatform);
     if (stateDao.isResourceInState(cloudContext, WsmResourceState.CREATING, flightId)) {
       return; // It was a retry. We are done here
@@ -454,18 +455,18 @@ public class WorkspaceDao {
 
     final String platform = cloudPlatform.toSql();
     final String sql =
-      """
+        """
       INSERT INTO cloud_context (workspace_id, cloud_platform, spend_profile, creating_flight, state, flight_id, error)
       VALUES (:workspace_id, :cloud_platform, :spend_profile, :creating_flight, :state, :flight_id, NULL)
       """;
     var params =
         new MapSqlParameterSource()
-          .addValue("workspace_id", workspaceUuid.toString())
-          .addValue("cloud_platform", platform)
-          .addValue("spendProfile", spendProfileId.getId())
-          .addValue("creating_flight", flightId)
-          .addValue("state", WsmResourceState.CREATING.toDb())
-          .addValue("flight_id", flightId);
+            .addValue("workspace_id", workspaceUuid.toString())
+            .addValue("cloud_platform", platform)
+            .addValue("spendProfile", spendProfileId.getId())
+            .addValue("creating_flight", flightId)
+            .addValue("state", WsmResourceState.CREATING.toDb())
+            .addValue("flight_id", flightId);
     try {
       jdbcTemplate.update(sql, params);
       logger.info("Inserted record for {} cloud context for workspace {}", platform, workspaceUuid);
@@ -479,8 +480,8 @@ public class WorkspaceDao {
   }
 
   /**
-   * Success completion of the create cloud context - write the context. This transaction is run from a
-   * flight step, so we want it to be idempotent.
+   * Success completion of the create cloud context - write the context. This transaction is run
+   * from a flight step, so we want it to be idempotent.
    *
    * @param workspaceUuid workspaceUuid part of PK for lookup
    * @param cloudPlatform platform part of PK for lookup
@@ -490,28 +491,27 @@ public class WorkspaceDao {
   @WriteTransaction
   public void createCloudContextSuccess(
       UUID workspaceUuid, CloudPlatform cloudPlatform, @Nullable String context, String flightId) {
-    DbCloudContext cloudContext =
-      getDbCloudContext(workspaceUuid, cloudPlatform);
+    DbCloudContext cloudContext = getDbCloudContext(workspaceUuid, cloudPlatform);
     stateDao.updateState(
-      cloudContext,
-      flightId,
-      /*targetFlightId=*/ null,
-      WsmResourceState.READY,
-      /*exception=*/ null);
+        cloudContext,
+        flightId,
+        /*targetFlightId=*/ null,
+        WsmResourceState.READY,
+        /*exception=*/ null);
 
     // We do an additional update to store the context if it is provided.
     if (context != null) {
       String sql =
-        """
+          """
         UPDATE cloud_context SET context = :context
         WHERE workspace_id = :workspace_id AND cloud_platform = :cloud_platform"
         """;
 
       var params =
-        new MapSqlParameterSource()
-          .addValue("workspace_id", workspaceUuid.toString())
-          .addValue("cloud_platform", cloudPlatform.toSql())
-          .addValue("context", context);
+          new MapSqlParameterSource()
+              .addValue("workspace_id", workspaceUuid.toString())
+              .addValue("cloud_platform", cloudPlatform.toSql())
+              .addValue("context", context);
 
       int rowsAffected = jdbcTemplate.update(sql, params);
       if (rowsAffected != 1) {
@@ -522,8 +522,8 @@ public class WorkspaceDao {
   }
 
   /**
-   * Failed completion of a create. How we handle this case depends on the state rule. The
-   * rule is a configuration parameter that is typically an input parameter to flights.
+   * Failed completion of a create. How we handle this case depends on the state rule. The rule is a
+   * configuration parameter that is typically an input parameter to flights.
    *
    * <p>If the rule is DELETE_ON_FAILURE, then we delete the metadata.
    *
@@ -538,20 +538,19 @@ public class WorkspaceDao {
    */
   @WriteTransaction
   public void createCloudContextFailure(
-    UUID workspaceUuid,
-    CloudPlatform cloudPlatform,
-    String flightId,
-    @Nullable Exception exception,
-    WsmResourceStateRule resourceStateRule) {
+      UUID workspaceUuid,
+      CloudPlatform cloudPlatform,
+      String flightId,
+      @Nullable Exception exception,
+      WsmResourceStateRule resourceStateRule) {
 
     switch (resourceStateRule) {
-      case DELETE_ON_FAILURE ->
-        deleteCloudContextWorker(workspaceUuid, cloudPlatform, flightId);
+      case DELETE_ON_FAILURE -> deleteCloudContextWorker(workspaceUuid, cloudPlatform, flightId);
 
       case BROKEN_ON_FAILURE -> {
         DbCloudContext cloudContext = getDbCloudContext(workspaceUuid, cloudPlatform);
         stateDao.updateState(
-          cloudContext, flightId, /*flightId=*/ null, WsmResourceState.BROKEN, exception);
+            cloudContext, flightId, /*flightId=*/ null, WsmResourceState.BROKEN, exception);
       }
       default -> throw new InternalLogicException("Invalid switch case");
     }
@@ -582,10 +581,7 @@ public class WorkspaceDao {
    * @return number of rows updated
    */
   private int updateCloudContextWorker(
-      UUID workspaceUuid,
-      CloudPlatform cloudPlatform,
-      String context,
-      @Nullable String flightId) {
+      UUID workspaceUuid, CloudPlatform cloudPlatform, String context, @Nullable String flightId) {
     String sql =
         "UPDATE cloud_context "
             + " SET context = :context::json"
@@ -616,14 +612,15 @@ public class WorkspaceDao {
    * @param flightId flight id
    */
   @WriteTransaction
-  public void deleteCloudContextStart(UUID workspaceUuid, CloudPlatform cloudPlatform, String flightId) {
+  public void deleteCloudContextStart(
+      UUID workspaceUuid, CloudPlatform cloudPlatform, String flightId) {
     DbCloudContext cloudContext = getDbCloudContext(workspaceUuid, cloudPlatform);
     stateDao.updateState(
-      cloudContext,
-      /*expectedFlightId=*/ null,
-      flightId,
-      WsmResourceState.DELETING,
-      /*exception=*/ null);
+        cloudContext,
+        /*expectedFlightId=*/ null,
+        flightId,
+        WsmResourceState.DELETING,
+        /*exception=*/ null);
   }
 
   /**
@@ -634,10 +631,12 @@ public class WorkspaceDao {
    * @param cloudPlatform cloud platform of the cloud context
    */
   @WriteTransaction
-  public void deleteCloudContextSuccess(UUID workspaceUuid, CloudPlatform cloudPlatform) {
+  public void deleteCloudContextSuccess(
+      UUID workspaceUuid, CloudPlatform cloudPlatform, String flightId) {
     DbCloudContext cloudContext = getDbCloudContext(workspaceUuid, cloudPlatform);
-    if (!stateDao.isResourceInState(cloudContext, WsmResourceState.NOT_EXISTS, /*flightId=*/ null)) {
-      deleteCloudContextWorker(workspaceUuid, cloudPlatform, /*flightId=*/ null);
+    if (!stateDao.isResourceInState(
+        cloudContext, WsmResourceState.NOT_EXISTS, /*flightId=*/ null)) {
+      deleteCloudContextWorker(workspaceUuid, cloudPlatform, flightId);
     }
   }
 
@@ -653,10 +652,13 @@ public class WorkspaceDao {
    */
   @WriteTransaction
   public void deleteCloudContextFailure(
-    UUID workspaceUuid, CloudPlatform cloudPlatform, String flightId, @Nullable Exception exception) {
+      UUID workspaceUuid,
+      CloudPlatform cloudPlatform,
+      String flightId,
+      @Nullable Exception exception) {
     DbCloudContext cloudContext = getDbCloudContext(workspaceUuid, cloudPlatform);
     stateDao.updateState(
-      cloudContext, flightId, /*targetFlightId=*/ null, WsmResourceState.READY, exception);
+        cloudContext, flightId, /*targetFlightId=*/ null, WsmResourceState.READY, exception);
   }
 
   /**
@@ -664,8 +666,8 @@ public class WorkspaceDao {
    *
    * @param workspaceUuid workspace holding the context
    * @param cloudPlatform platform of the context
-   * @param flightId if non-null, then it is compared to the flight_id to make sure a
-   *     conflicting create does not delete a valid cloud context.
+   * @param flightId if non-null, then it is compared to the flight_id to make sure a conflicting
+   *     delete does not delete a valid cloud context.
    */
   private void deleteCloudContextWorker(
       UUID workspaceUuid, CloudPlatform cloudPlatform, @Nullable String flightId) {
@@ -709,28 +711,28 @@ public class WorkspaceDao {
   }
 
   /**
-   * Retrieve all non-BROKEN, non-DELETING, GCP cloud contexts. This is only used for
-   * back-filling custom roles on GCP projects of existing workspaces. See AdminService.
+   * Retrieve all non-BROKEN, non-DELETING, GCP cloud contexts. This is only used for back-filling
+   * custom roles on GCP projects of existing workspaces. See AdminService.
    *
    * @return a map of workspace id to GCP serialized cloud context
    */
   public ImmutableMap<UUID, DbCloudContext> getWorkspaceIdToGcpCloudContextMap() {
     String sql =
-      BASE_CLOUD_CONTEXT_SELECT_SQL +
-        "WHERE cloud_platform = :cloud_platform AND status != :broken AND status != :deleting";
+        BASE_CLOUD_CONTEXT_SELECT_SQL
+            + "WHERE cloud_platform = :cloud_platform AND status != :broken AND status != :deleting";
 
     MapSqlParameterSource params =
         new MapSqlParameterSource()
-          .addValue("cloud_platform", CloudPlatform.GCP.toSql())
-          .addValue("broken", WsmResourceState.BROKEN.toDb())
-          .addValue("deleting", WsmResourceState.DELETING.toDb());
+            .addValue("cloud_platform", CloudPlatform.GCP.toSql())
+            .addValue("broken", WsmResourceState.BROKEN.toDb())
+            .addValue("deleting", WsmResourceState.DELETING.toDb());
 
     List<DbCloudContext> dbCloudContexts =
         jdbcTemplate.query(sql, params, CLOUD_CONTEXT_ROW_MAPPER);
 
     return ImmutableMap.copyOf(
-      dbCloudContexts.stream()
-        .collect(Collectors.toMap(DbCloudContext::getWorkspaceId, Function.identity())));
+        dbCloudContexts.stream()
+            .collect(Collectors.toMap(DbCloudContext::getWorkspaceId, Function.identity())));
   }
 
   public static class WorkspaceUserPair {

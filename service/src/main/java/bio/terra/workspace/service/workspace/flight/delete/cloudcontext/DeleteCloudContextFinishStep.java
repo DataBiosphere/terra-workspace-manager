@@ -4,11 +4,9 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.db.ResourceDao;
-import java.util.UUID;
-
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,7 +18,8 @@ public class DeleteCloudContextFinishStep implements Step {
 
   private final Logger logger = LoggerFactory.getLogger(DeleteCloudContextFinishStep.class);
 
-  public DeleteCloudContextFinishStep(UUID workspaceUuid, WorkspaceDao workspaceDao, CloudPlatform cloudPlatform) {
+  public DeleteCloudContextFinishStep(
+      UUID workspaceUuid, WorkspaceDao workspaceDao, CloudPlatform cloudPlatform) {
     this.workspaceDao = workspaceDao;
     this.workspaceUuid = workspaceUuid;
     this.cloudPlatform = cloudPlatform;
@@ -29,14 +28,17 @@ public class DeleteCloudContextFinishStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    workspaceDao.deleteCloudContextSuccess(workspaceUuid, cloudPlatform);
+    workspaceDao.deleteCloudContextSuccess(
+        workspaceUuid, cloudPlatform, flightContext.getFlightId());
     return StepResult.getStepResultSuccess();
   }
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     logger.error(
-        "Cannot undo delete of WSM {} cloud context in workspace {}.", cloudPlatform, workspaceUuid);
+        "Cannot undo delete of WSM {} cloud context in workspace {}.",
+        cloudPlatform,
+        workspaceUuid);
     // Surface whatever error caused Stairway to begin undoing.
     return flightContext.getResult();
   }

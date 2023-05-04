@@ -22,11 +22,11 @@ public class CreateCloudContextStartStep implements Step {
   private final WsmResourceStateRule wsmResourceStateRule;
 
   public CreateCloudContextStartStep(
-    UUID workspaceUuid,
-    WorkspaceDao workspaceDao,
-    CloudPlatform cloudPlatform,
-    SpendProfile spendProfile,
-    WsmResourceStateRule wsmResourceStateRule) {
+      UUID workspaceUuid,
+      WorkspaceDao workspaceDao,
+      CloudPlatform cloudPlatform,
+      SpendProfile spendProfile,
+      WsmResourceStateRule wsmResourceStateRule) {
     this.workspaceUuid = workspaceUuid;
     this.workspaceDao = workspaceDao;
     this.cloudPlatform = cloudPlatform;
@@ -50,11 +50,11 @@ public class CreateCloudContextStartStep implements Step {
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     // Complete the context create in accordance with the state rule
     workspaceDao.createCloudContextFailure(
-      workspaceUuid,
-      cloudPlatform,
-      flightContext.getFlightId(),
-      flightContext.getResult().getException().orElse(null),
-      wsmResourceStateRule);
+        workspaceUuid,
+        cloudPlatform,
+        flightContext.getFlightId(),
+        flightContext.getResult().getException().orElse(null),
+        wsmResourceStateRule);
     return StepResult.getStepResultSuccess();
   }
 }

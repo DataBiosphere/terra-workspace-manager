@@ -109,10 +109,10 @@ public class WorkspaceFixtures {
   }
 
   public static FlightMap createCloudContextInputs(
-    UUID workspaceUuid,
-    AuthenticatedUserRequest userRequest,
-    CloudPlatform cloudPlatform,
-    SpendProfile spendProfile) {
+      UUID workspaceUuid,
+      AuthenticatedUserRequest userRequest,
+      CloudPlatform cloudPlatform,
+      SpendProfile spendProfile) {
     FlightMap inputs = new FlightMap();
     inputs.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
     inputs.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
@@ -122,9 +122,7 @@ public class WorkspaceFixtures {
   }
 
   public static FlightMap deleteCloudContextInputs(
-    UUID workspaceUuid,
-    AuthenticatedUserRequest userRequest,
-    CloudPlatform cloudPlatform) {
+      UUID workspaceUuid, AuthenticatedUserRequest userRequest, CloudPlatform cloudPlatform) {
     FlightMap inputs = new FlightMap();
     inputs.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
     inputs.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);

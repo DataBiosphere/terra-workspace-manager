@@ -74,12 +74,12 @@ class CreateAzureContextFlightTest extends BaseAzureConnectedTest {
 
     String jobId = UUID.randomUUID().toString();
     workspaceService.createCloudContext(
-      workspace,
-      CloudPlatform.AZURE,
-      azureTestUtils.getSpendProfile(),
-      jobId,
-      userRequest,
-      /* resultPath */ null);
+        workspace,
+        CloudPlatform.AZURE,
+        azureTestUtils.getSpendProfile(),
+        jobId,
+        userRequest,
+        /* resultPath */ null);
 
     // Wait for the job to complete
     FlightState flightState =
@@ -141,16 +141,16 @@ class CreateAzureContextFlightTest extends BaseAzureConnectedTest {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     String jobId = UUID.randomUUID().toString();
     workspaceService.createCloudContext(
-      workspace,
-      CloudPlatform.AZURE,
-      azureTestUtils.getSpendProfile(),
-      jobId,
-      userRequest,
-      /* resultPath */ null);
+        workspace,
+        CloudPlatform.AZURE,
+        azureTestUtils.getSpendProfile(),
+        jobId,
+        userRequest,
+        /* resultPath */ null);
 
     // Wait for the job to complete
     return StairwayTestUtils.pollUntilComplete(
-      jobId, jobService.getStairway(), Duration.ofSeconds(1), STAIRWAY_FLIGHT_TIMEOUT);
+        jobId, jobService.getStairway(), Duration.ofSeconds(1), STAIRWAY_FLIGHT_TIMEOUT);
   }
 
   @Test

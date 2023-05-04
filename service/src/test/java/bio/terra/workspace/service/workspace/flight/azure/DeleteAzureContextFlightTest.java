@@ -23,8 +23,6 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
-import bio.terra.workspace.service.workspace.flight.cloud.azure.DeleteAzureContextStep;
-import bio.terra.workspace.service.workspace.flight.cloud.azure.DeleteControlledAzureResourcesStep;
 import bio.terra.workspace.service.workspace.flight.create.cloudcontext.CreateCloudContextFlight;
 import bio.terra.workspace.service.workspace.flight.delete.cloudcontext.DeleteCloudContextFinishStep;
 import bio.terra.workspace.service.workspace.flight.delete.cloudcontext.DeleteCloudContextFlight;
@@ -142,15 +140,18 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
     createAzureContext(workspaceUuid, userRequest);
 
     // Delete the azure context.
-    FlightMap deleteParameters = WorkspaceFixtures.deleteCloudContextInputs(
-      workspaceUuid, userRequest, CloudPlatform.AZURE);
+    FlightMap deleteParameters =
+        WorkspaceFixtures.deleteCloudContextInputs(workspaceUuid, userRequest, CloudPlatform.AZURE);
 
     // Force each retryable step to be retried once to ensure proper behavior.
     Map<String, StepStatus> doFailures = new HashMap<>();
-    doFailures.put(DeleteCloudContextStartStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    doFailures.put(
+        DeleteCloudContextStartStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     // TODO: WOR-987 when this step is idempotent, re-enable this retry
-    // doFailures.put(DeleteControlledAzureResourcesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    doFailures.put(DeleteCloudContextFinishStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    // doFailures.put(DeleteControlledAzureResourcesStep.class.getName(),
+    // StepStatus.STEP_RESULT_FAILURE_RETRY);
+    doFailures.put(
+        DeleteCloudContextFinishStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().doStepFailures(doFailures).build();
 
     FlightState flightState =
@@ -171,8 +172,8 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
     createAzureContext(workspaceUuid, userRequest);
 
     // Delete the azure context.
-    FlightMap deleteParameters = WorkspaceFixtures.deleteCloudContextInputs(
-      workspaceUuid, userRequest, CloudPlatform.AZURE);
+    FlightMap deleteParameters =
+        WorkspaceFixtures.deleteCloudContextInputs(workspaceUuid, userRequest, CloudPlatform.AZURE);
 
     // Fail at the end of the flight to verify it can't be undone.
     FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().lastStepFailure(true).build();
@@ -196,8 +197,8 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
     assertTrue(azureCloudContextService.getAzureCloudContext(workspaceUuid).isEmpty());
 
     // Delete the azure context.
-    FlightMap deleteParameters = WorkspaceFixtures.deleteCloudContextInputs(
-      workspaceUuid, userRequest, CloudPlatform.AZURE);
+    FlightMap deleteParameters =
+        WorkspaceFixtures.deleteCloudContextInputs(workspaceUuid, userRequest, CloudPlatform.AZURE);
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
@@ -225,8 +226,8 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
     UUID resourceId = createAzureResource(mcWorkspaceUuid, userRequest);
 
     // Run the delete flight, retrying every retryable step once
-    FlightMap deleteParameters = WorkspaceFixtures.deleteCloudContextInputs(
-      workspaceUuid, userRequest, CloudPlatform.AZURE);
+    FlightMap deleteParameters =
+        WorkspaceFixtures.deleteCloudContextInputs(workspaceUuid, userRequest, CloudPlatform.AZURE);
 
     // TODO: PF-2694 - the structure of the workspace delete probably needs to change,
     //  so this test needs to change. Populate the proper workspace delete steps below.

@@ -422,7 +422,8 @@ public class WorkspaceService {
       AuthenticatedUserRequest userRequest,
       @Nullable String location,
       TpsPolicyInputs additionalPolicies,
-      Workspace destinationWorkspace) {
+      Workspace destinationWorkspace,
+      @Nullable SpendProfile spendProfile) {
     UUID workspaceUuid = sourceWorkspace.getWorkspaceId();
 
     // Get the enabled applications from the source workspace
@@ -460,11 +461,13 @@ public class WorkspaceService {
         .addParameter(
             SOURCE_WORKSPACE_ID, sourceWorkspace.getWorkspaceId()) // TODO: remove this duplication
         .addParameter(ControlledResourceKeys.LOCATION, location)
+        .addParameter(SPEND_PROFILE, spendProfile)
         .submit();
   }
 
   /**
    * Create a cloud context
+   *
    * @param workspace workspace where we want the context
    * @param cloudPlatform cloud platform of the context
    * @param spendProfile spend profile to use
@@ -482,35 +485,38 @@ public class WorkspaceService {
       @Nullable String resultPath) {
 
     jobService
-      .newJob()
-      .description(
-        String.format("Create %s Cloud Context for workspace %s", cloudPlatform.toString(), workspace.getWorkspaceId()))
-      .jobId(jobId)
-      .workspaceId(workspace.getWorkspaceId().toString())
-      .operationType(OperationType.CREATE)
-      .flightClass(CreateCloudContextFlight.class)
-      .userRequest(userRequest)
-      .addParameter(SPEND_PROFILE, spendProfile)
-      .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
-      .addParameter(CLOUD_PLATFORM, cloudPlatform)
-      .submit();
+        .newJob()
+        .description(
+            String.format(
+                "Create %s Cloud Context for workspace %s",
+                cloudPlatform.toString(), workspace.getWorkspaceId()))
+        .jobId(jobId)
+        .workspaceId(workspace.getWorkspaceId().toString())
+        .operationType(OperationType.CREATE)
+        .flightClass(CreateCloudContextFlight.class)
+        .userRequest(userRequest)
+        .addParameter(SPEND_PROFILE, spendProfile)
+        .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
+        .addParameter(CLOUD_PLATFORM, cloudPlatform)
+        .submit();
   }
 
   /** Delete a cloud context for the workspace. */
   @Traced
-  public void deleteCloudContext(Workspace workspace, CloudPlatform cloudPlatform, AuthenticatedUserRequest userRequest) {
+  public void deleteCloudContext(
+      Workspace workspace, CloudPlatform cloudPlatform, AuthenticatedUserRequest userRequest) {
     jobService
-      .newJob()
+        .newJob()
         .description(
-          String.format(
-            "Delete %s cloud context for workspace: name: '%s' id: '%s'  ",
-            cloudPlatform, workspace.getDisplayName().orElse(""), workspace.getWorkspaceId()))
-      .flightClass(DeleteCloudContextFlight.class)
-      .userRequest(userRequest)
-      .operationType(OperationType.DELETE)
-      .workspaceId(workspace.getWorkspaceId().toString())
-      .addParameter(CLOUD_PLATFORM, cloudPlatform)
-      .submitAndWait();
+            String.format(
+                "Delete %s cloud context for workspace: name: '%s' id: '%s'  ",
+                cloudPlatform, workspace.getDisplayName().orElse(""), workspace.getWorkspaceId()))
+        .flightClass(DeleteCloudContextFlight.class)
+        .userRequest(userRequest)
+        .operationType(OperationType.DELETE)
+        .workspaceId(workspace.getWorkspaceId().toString())
+        .addParameter(CLOUD_PLATFORM, cloudPlatform)
+        .submitAndWait();
   }
 
   /**

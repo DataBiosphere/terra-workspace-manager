@@ -10,40 +10,45 @@ import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.exception.StaleConfigurationException;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.common.utils.FlightBeanBag;
+import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.exceptions.InvalidApplicationConfigException;
+import bio.terra.workspace.service.workspace.flight.cloud.aws.DeleteControlledAwsResourcesStep;
 import bio.terra.workspace.service.workspace.flight.cloud.aws.MakeAwsCloudContextStep;
 import bio.terra.workspace.service.workspace.flight.create.cloudcontext.CreateCloudContextFlight;
+import bio.terra.workspace.service.workspace.flight.delete.cloudcontext.DeleteCloudContextFlight;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.opencensus.contrib.spring.aop.Traced;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-import software.amazon.awssdk.regions.Region;
-
-import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import software.amazon.awssdk.regions.Region;
 
 /**
  * This service provides methods for managing AWS cloud context. These methods do not perform any
  * access control and operate directly against the {@link WorkspaceDao}
  */
 @SuppressFBWarnings(
-  value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD",
-  justification = "Enable both injection and static lookup")
+    value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD",
+    justification = "Enable both injection and static lookup")
 @Component
 public class AwsCloudContextService implements CloudContextService {
   private final AwsConfiguration awsConfiguration;
   private final WorkspaceDao workspaceDao;
   private final FeatureService featureService;
+  private final ResourceDao resourceDao;
+  private final ControlledResourceService controlledResourceService;
 
   private EnvironmentDiscovery environmentDiscovery;
 
@@ -51,10 +56,16 @@ public class AwsCloudContextService implements CloudContextService {
 
   @Autowired
   public AwsCloudContextService(
-    WorkspaceDao workspaceDao, FeatureService featureService, AwsConfiguration awsConfiguration) {
+      WorkspaceDao workspaceDao,
+      FeatureService featureService,
+      AwsConfiguration awsConfiguration,
+      ResourceDao resourceDao,
+      ControlledResourceService controlledResourceService) {
     this.awsConfiguration = awsConfiguration;
     this.workspaceDao = workspaceDao;
     this.featureService = featureService;
+    this.resourceDao = resourceDao;
+    this.controlledResourceService = controlledResourceService;
   }
 
   // Set up static accessor for use by CloudPlatform
@@ -68,8 +79,23 @@ public class AwsCloudContextService implements CloudContextService {
   }
 
   @Override
-  public void addCreateCloudContextSteps(CreateCloudContextFlight flight, FlightBeanBag appContext, UUID workspaceUuid, AuthenticatedUserRequest userRequest) {
+  public void addCreateCloudContextSteps(
+      CreateCloudContextFlight flight,
+      FlightBeanBag appContext,
+      UUID workspaceUuid,
+      AuthenticatedUserRequest userRequest) {
     flight.addStep(new MakeAwsCloudContextStep(appContext.getAwsCloudContextService()));
+  }
+
+  @Override
+  public void addDeleteCloudContextSteps(
+      DeleteCloudContextFlight flight,
+      FlightBeanBag appContext,
+      UUID workspaceUuid,
+      AuthenticatedUserRequest userRequest) {
+    flight.addStep(
+        new DeleteControlledAwsResourcesStep(
+            resourceDao, controlledResourceService, workspaceUuid, userRequest));
   }
 
   @Override
@@ -131,12 +157,12 @@ public class AwsCloudContextService implements CloudContextService {
   public static AwsCloudContext getCloudContext(Environment environment) {
     Metadata metadata = environment.getMetadata();
     return new AwsCloudContext(
-      metadata.getMajorVersion(),
-      metadata.getOrganizationId(),
-      metadata.getAccountId(),
-      metadata.getTenantAlias(),
-      metadata.getEnvironmentAlias(),
-      /*commonFields=*/ null);
+        metadata.getMajorVersion(),
+        metadata.getOrganizationId(),
+        metadata.getAccountId(),
+        metadata.getTenantAlias(),
+        metadata.getEnvironmentAlias(),
+        /*commonFields=*/ null);
   }
 
   /**

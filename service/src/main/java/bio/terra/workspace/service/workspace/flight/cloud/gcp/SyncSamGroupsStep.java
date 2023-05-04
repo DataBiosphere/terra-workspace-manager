@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.workspace.flight.cloud.gcp;
 
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.GCP_PROJECT_ID;
+
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
@@ -9,13 +11,9 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
-import bio.terra.workspace.service.workspace.model.CloudContextHolder;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
-
 import java.util.HashMap;
 import java.util.UUID;
-
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.GCP_PROJECT_ID;
 
 /**
  * A {@code Step} which synchronizes Sam policies with google groups and stores the group names in
@@ -64,13 +62,13 @@ public class SyncSamGroupsStep implements Step {
     // the DB in the common end step of the flight.
     String projectId = flightContext.getWorkingMap().get(GCP_PROJECT_ID, String.class);
     GcpCloudContext context =
-      new GcpCloudContext(
-        projectId,
-        workspaceRoleGroupMap.get(WsmIamRole.OWNER),
-        workspaceRoleGroupMap.get(WsmIamRole.WRITER),
-        workspaceRoleGroupMap.get(WsmIamRole.READER),
-        workspaceRoleGroupMap.get(WsmIamRole.APPLICATION),
-        /*commonField=*/ null);
+        new GcpCloudContext(
+            projectId,
+            workspaceRoleGroupMap.get(WsmIamRole.OWNER),
+            workspaceRoleGroupMap.get(WsmIamRole.WRITER),
+            workspaceRoleGroupMap.get(WsmIamRole.READER),
+            workspaceRoleGroupMap.get(WsmIamRole.APPLICATION),
+            /*commonField=*/ null);
 
     workingMap.put(WorkspaceFlightMapKeys.CLOUD_CONTEXT, context);
 

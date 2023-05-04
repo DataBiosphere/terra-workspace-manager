@@ -15,8 +15,6 @@ import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
-
-import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -42,10 +40,9 @@ public class WorkspaceConnectedTestUtils {
 
     // With the advent of BPM use, the only safe way to get the SpendProfile is to
     // make the authorize request.
-    SpendProfile spendProfile = spendProfileService.authorizeLinking(
-      workspace.getSpendProfileId().orElseThrow(),
-      features.isBpmGcpEnabled(),
-      userRequest);
+    SpendProfile spendProfile =
+        spendProfileService.authorizeLinking(
+            workspace.getSpendProfileId().orElseThrow(), features.isBpmGcpEnabled(), userRequest);
 
     String gcpContextJobId = UUID.randomUUID().toString();
     workspaceService.createCloudContext(

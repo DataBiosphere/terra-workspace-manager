@@ -22,7 +22,6 @@ import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.CustomGcpIamRole;
 import bio.terra.workspace.service.workspace.GcpCloudSyncRoleMapping;
-import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import com.google.api.services.iam.v1.model.Role;
 import com.google.common.collect.ImmutableList;
@@ -80,7 +79,7 @@ public class AdminServiceTest extends BaseConnectedTest {
             .createWorkspaceWithGcpContext(userAccessUtils.defaultUserAuthRequest())
             .getWorkspaceId());
     projectIds =
-        workspaceDao.getWorkspaceIdToCloudContextMap(CloudPlatform.GCP).values().stream()
+        workspaceDao.getWorkspaceIdToGcpCloudContextMap().values().stream()
             .map(cloudContext -> GcpCloudContext.deserialize(cloudContext).getGcpProjectId())
             .toList();
   }

@@ -295,7 +295,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   void deleteGcpCloudContextFlightFails_cloudContextStillExist_notLogChangeDetails()
       throws InterruptedException {
     String fakeCloudContextJson =
-      "{\"version\": 2, \"gcpProjectId\": \"terra-wsm-t-clean-berry-5152\", \"samPolicyOwner\": \"policy-owner\", \"samPolicyReader\": \"policy-reader\", \"samPolicyWriter\": \"policy-writer\", \"samPolicyApplication\": \"policy-application\"}";
+        "{\"version\": 2, \"gcpProjectId\": \"terra-wsm-t-clean-berry-5152\", \"samPolicyOwner\": \"policy-owner\", \"samPolicyReader\": \"policy-reader\", \"samPolicyWriter\": \"policy-writer\", \"samPolicyApplication\": \"policy-application\"}";
 
     var workspace = WorkspaceFixtures.createDefaultMcWorkspace();
     var workspaceUuid = workspace.getWorkspaceId();
@@ -305,12 +305,10 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     workspaceDao.createWorkspace(buildMcWorkspace(workspaceUuid), /* applicationIds */ null);
     var flightId = UUID.randomUUID().toString();
     var spendProfileId = new SpendProfileId("fake-spend-profile-id");
-    workspaceDao.createCloudContextStart(workspaceUuid, CloudPlatform.GCP, spendProfileId, flightId);
+    workspaceDao.createCloudContextStart(
+        workspaceUuid, CloudPlatform.GCP, spendProfileId, flightId);
     workspaceDao.createCloudContextSuccess(
-      workspaceUuid,
-      CloudPlatform.GCP,
-      fakeCloudContextJson,
-      flightId);
+        workspaceUuid, CloudPlatform.GCP, fakeCloudContextJson, flightId);
 
     FlightMap inputParams = buildInputParams(workspaceUuid, DELETE);
     hook.endFlight(

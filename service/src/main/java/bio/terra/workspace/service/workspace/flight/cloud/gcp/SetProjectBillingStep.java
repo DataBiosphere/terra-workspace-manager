@@ -22,9 +22,10 @@ public class SetProjectBillingStep implements Step {
   public StepResult doStep(FlightContext flightContext) {
     FlightMap workingMap = flightContext.getWorkingMap();
     var spendProfile =
-      FlightUtils.getRequired(workingMap, WorkspaceFlightMapKeys.SPEND_PROFILE, SpendProfile.class);
+        FlightUtils.getRequired(
+            workingMap, WorkspaceFlightMapKeys.SPEND_PROFILE, SpendProfile.class);
     var projectId =
-      FlightUtils.getRequired(workingMap, WorkspaceFlightMapKeys.GCP_PROJECT_ID, String.class);
+        FlightUtils.getRequired(workingMap, WorkspaceFlightMapKeys.GCP_PROJECT_ID, String.class);
 
     ProjectBillingInfo setBilling =
         ProjectBillingInfo.newBuilder()

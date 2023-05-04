@@ -297,7 +297,8 @@ public class WorkspaceActivityLogHook implements StairwayHook {
 
   private void maybeLogCloudContextDeletionFlight(
       CloudPlatform cloudPlatform, UUID workspaceUuid, String userEmail, String subjectId) {
-    Optional<DbCloudContext> cloudContext = workspaceDao.getCloudContext(workspaceUuid, cloudPlatform);
+    Optional<DbCloudContext> cloudContext =
+        workspaceDao.getCloudContext(workspaceUuid, cloudPlatform);
     if (cloudContext.isEmpty()) {
       activityLogDao.writeActivity(
           workspaceUuid,

@@ -26,14 +26,15 @@ public class ValidateMRGStep implements Step {
   public StepResult doStep(FlightContext flightContext) throws InterruptedException {
     FlightMap workingMap = flightContext.getWorkingMap();
     var spendProfile =
-      FlightUtils.getRequired(workingMap, WorkspaceFlightMapKeys.SPEND_PROFILE, SpendProfile.class);
+        FlightUtils.getRequired(
+            workingMap, WorkspaceFlightMapKeys.SPEND_PROFILE, SpendProfile.class);
 
     AzureCloudContext azureCloudContext =
-      new AzureCloudContext(
-        spendProfile.tenantId().toString(),
-        spendProfile.subscriptionId().toString(),
-        spendProfile.managedResourceGroupId(),
-        /*commonFields=*/ null);
+        new AzureCloudContext(
+            spendProfile.tenantId().toString(),
+            spendProfile.subscriptionId().toString(),
+            spendProfile.managedResourceGroupId(),
+            /*commonFields=*/ null);
 
     try {
       ResourceManager resourceManager =

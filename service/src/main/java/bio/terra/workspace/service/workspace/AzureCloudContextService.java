@@ -1,9 +1,7 @@
 package bio.terra.workspace.service.workspace;
 
-import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.utils.FlightBeanBag;
-import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -20,18 +18,17 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import javax.annotation.PostConstruct;
 
 /**
  * This service provides methods for managing Azure cloud context. These methods do not perform any
  * access control and operate directly against the {@link WorkspaceDao}
  */
 @SuppressFBWarnings(
-  value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD",
-  justification = "Enable both injection and static lookup")
+    value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD",
+    justification = "Enable both injection and static lookup")
 @Component
 public class AzureCloudContextService implements CloudContextService {
   private static AzureCloudContextService theService;
@@ -41,11 +38,9 @@ public class AzureCloudContextService implements CloudContextService {
 
   @Autowired
   public AzureCloudContextService(
-    WorkspaceDao workspaceDao,
-    FeatureConfiguration featureConfiguration) {
+      WorkspaceDao workspaceDao, FeatureConfiguration featureConfiguration) {
     this.workspaceDao = workspaceDao;
     this.featureConfiguration = featureConfiguration;
-
   }
 
   // Set up static accessor for use by CloudPlatform
@@ -59,14 +54,18 @@ public class AzureCloudContextService implements CloudContextService {
   }
 
   @Override
-  public void addCreateCloudContextSteps(CreateCloudContextFlight flight, FlightBeanBag appContext, UUID workspaceUuid, AuthenticatedUserRequest userRequest) {
+  public void addCreateCloudContextSteps(
+      CreateCloudContextFlight flight,
+      FlightBeanBag appContext,
+      UUID workspaceUuid,
+      AuthenticatedUserRequest userRequest) {
     if (featureConfiguration.isTpsEnabled()) {
       flight.addStep(
-        new ValidateLandingZoneRegionAgainstPolicyStep(
-          appContext.getLandingZoneApiDispatch(),
-          userRequest,
-          appContext.getTpsApiDispatch(),
-          workspaceUuid));
+          new ValidateLandingZoneRegionAgainstPolicyStep(
+              appContext.getLandingZoneApiDispatch(),
+              userRequest,
+              appContext.getTpsApiDispatch(),
+              workspaceUuid));
     }
 
     // validate the MRG
@@ -74,21 +73,24 @@ public class AzureCloudContextService implements CloudContextService {
   }
 
   @Override
-  public void addDeleteCloudContextSteps(DeleteCloudContextFlight flight, FlightBeanBag appContext, UUID workspaceUuid, AuthenticatedUserRequest userRequest) {
+  public void addDeleteCloudContextSteps(
+      DeleteCloudContextFlight flight,
+      FlightBeanBag appContext,
+      UUID workspaceUuid,
+      AuthenticatedUserRequest userRequest) {
     flight.addStep(
-      new DeleteControlledAzureResourcesStep(
-        appContext.getResourceDao(),
-        appContext.getControlledResourceService(),
-        appContext.getSamService(),
-        workspaceUuid,
-        userRequest));
+        new DeleteControlledAzureResourcesStep(
+            appContext.getResourceDao(),
+            appContext.getControlledResourceService(),
+            appContext.getSamService(),
+            workspaceUuid,
+            userRequest));
   }
 
   @Override
   public CloudContext makeCloudContextFromDb(DbCloudContext dbCloudContext) {
     return AzureCloudContext.deserialize(dbCloudContext);
   }
-
 
   /**
    * Retrieve the optional Azure cloud context

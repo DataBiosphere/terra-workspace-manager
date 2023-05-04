@@ -1,5 +1,10 @@
 package bio.terra.workspace.service.workspace.flight.gcp;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
@@ -25,22 +30,16 @@ import bio.terra.workspace.service.workspace.flight.delete.cloudcontext.DeleteCl
 import bio.terra.workspace.service.workspace.flight.delete.cloudcontext.DeleteCloudContextStartStep;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
+import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import java.time.Duration;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Tag("connectedPlus")
 class DeleteGcpContextFlightTest extends BaseConnectedTest {
@@ -54,18 +53,12 @@ class DeleteGcpContextFlightTest extends BaseConnectedTest {
    */
   private static final Duration CREATION_FLIGHT_TIMEOUT = Duration.ofMinutes(20);
 
-  @Autowired
-  private WorkspaceService workspaceService;
-  @Autowired
-  private WorkspaceConnectedTestUtils workspaceConnectedTestUtils;
-  @Autowired
-  private JobService jobService;
-  @Autowired
-  private SpendConnectedTestUtils spendUtils;
-  @Autowired
-  private UserAccessUtils userAccessUtils;
-  @Autowired
-  private GcpCloudContextService gcpCloudContextService;
+  @Autowired private WorkspaceService workspaceService;
+  @Autowired private WorkspaceConnectedTestUtils workspaceConnectedTestUtils;
+  @Autowired private JobService jobService;
+  @Autowired private SpendConnectedTestUtils spendUtils;
+  @Autowired private UserAccessUtils userAccessUtils;
+  @Autowired private GcpCloudContextService gcpCloudContextService;
 
   private Workspace workspace;
   private UUID workspaceUuid;
@@ -75,12 +68,12 @@ class DeleteGcpContextFlightTest extends BaseConnectedTest {
     // Create a new workspace at the start of each test.
     UUID uuid = UUID.randomUUID();
     workspace =
-      WorkspaceFixtures.defaultWorkspaceBuilder(uuid)
-        .spendProfileId(spendUtils.defaultSpendId())
-        .build();
+        WorkspaceFixtures.defaultWorkspaceBuilder(uuid)
+            .spendProfileId(spendUtils.defaultSpendId())
+            .build();
     workspaceUuid =
-      workspaceService.createWorkspace(
-        workspace, null, null, userAccessUtils.defaultUserAuthRequest());
+        workspaceService.createWorkspace(
+            workspace, null, null, userAccessUtils.defaultUserAuthRequest());
   }
 
   @AfterEach
@@ -93,17 +86,17 @@ class DeleteGcpContextFlightTest extends BaseConnectedTest {
   void deleteContextDo() throws Exception {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     FlightMap createParameters =
-      WorkspaceFixtures.createCloudContextInputs(
-        workspaceUuid, userRequest, CloudPlatform.GCP, spendUtils.defaultGcpSpendProfile());
+        WorkspaceFixtures.createCloudContextInputs(
+            workspaceUuid, userRequest, CloudPlatform.GCP, spendUtils.defaultGcpSpendProfile());
 
     // Create the google context.
     FlightState flightState =
-      StairwayTestUtils.blockUntilFlightCompletes(
-        jobService.getStairway(),
-        CreateCloudContextFlight.class,
-        createParameters,
-        CREATION_FLIGHT_TIMEOUT,
-        null);
+        StairwayTestUtils.blockUntilFlightCompletes(
+            jobService.getStairway(),
+            CreateCloudContextFlight.class,
+            createParameters,
+            CREATION_FLIGHT_TIMEOUT,
+            null);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
 
     String projectId = gcpCloudContextService.getGcpProject(workspaceUuid).orElse(null);
@@ -116,34 +109,37 @@ class DeleteGcpContextFlightTest extends BaseConnectedTest {
     workspaceConnectedTestUtils.assertProjectIsActive(projectId);
 
     // Delete the GCP context.
-    FlightMap deleteParameters = WorkspaceFixtures.deleteCloudContextInputs(workspaceUuid, userRequest, CloudPlatform.GCP);
+    FlightMap deleteParameters =
+        WorkspaceFixtures.deleteCloudContextInputs(workspaceUuid, userRequest, CloudPlatform.GCP);
 
     // Force each step to be retried once to ensure proper behavior.
     Map<String, StepStatus> doFailures = new HashMap<>();
-    doFailures.put(DeleteCloudContextStartStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     doFailures.put(
-      DeleteControlledSamResourcesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+        DeleteCloudContextStartStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     doFailures.put(
-      DeleteControlledDbResourcesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+        DeleteControlledSamResourcesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    doFailures.put(
+        DeleteControlledDbResourcesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     doFailures.put(DeleteGcpProjectStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    doFailures.put(DeleteCloudContextFinishStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    doFailures.put(
+        DeleteCloudContextFinishStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().doStepFailures(doFailures).build();
 
     flightState =
-      StairwayTestUtils.blockUntilFlightCompletes(
-        jobService.getStairway(),
-        DeleteCloudContextFlight.class,
-        deleteParameters,
-        DELETION_FLIGHT_TIMEOUT,
-        debugInfo);
+        StairwayTestUtils.blockUntilFlightCompletes(
+            jobService.getStairway(),
+            DeleteCloudContextFlight.class,
+            deleteParameters,
+            DELETION_FLIGHT_TIMEOUT,
+            debugInfo);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
 
     assertTrue(gcpCloudContextService.getGcpCloudContext(workspaceUuid).isEmpty());
 
     // make sure required really requires
     assertThrows(
-      CloudContextRequiredException.class,
-      () -> gcpCloudContextService.getRequiredGcpProject(workspaceUuid));
+        CloudContextRequiredException.class,
+        () -> gcpCloudContextService.getRequiredGcpProject(workspaceUuid));
 
     workspaceConnectedTestUtils.assertProjectIsBeingDeleted(projectId);
   }
@@ -153,32 +149,33 @@ class DeleteGcpContextFlightTest extends BaseConnectedTest {
   void deleteContextUndo() throws Exception {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     FlightMap createParameters =
-      WorkspaceFixtures.createCloudContextInputs(
-        workspaceUuid, userRequest, CloudPlatform.GCP, spendUtils.defaultGcpSpendProfile());
+        WorkspaceFixtures.createCloudContextInputs(
+            workspaceUuid, userRequest, CloudPlatform.GCP, spendUtils.defaultGcpSpendProfile());
 
     // Create the GCP context.
     FlightState flightState =
-      StairwayTestUtils.blockUntilFlightCompletes(
-        jobService.getStairway(),
-        CreateCloudContextFlight.class,
-        createParameters,
-        CREATION_FLIGHT_TIMEOUT,
-        null);
+        StairwayTestUtils.blockUntilFlightCompletes(
+            jobService.getStairway(),
+            CreateCloudContextFlight.class,
+            createParameters,
+            CREATION_FLIGHT_TIMEOUT,
+            null);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
 
     // Delete the GCP context.
-    FlightMap deleteParameters = WorkspaceFixtures.deleteCloudContextInputs(workspaceUuid, userRequest, CloudPlatform.GCP);
+    FlightMap deleteParameters =
+        WorkspaceFixtures.deleteCloudContextInputs(workspaceUuid, userRequest, CloudPlatform.GCP);
 
     // Fail at the end of the flight to verify it can't be undone.
     FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().lastStepFailure(true).build();
 
     flightState =
-      StairwayTestUtils.blockUntilFlightCompletes(
-        jobService.getStairway(),
-        DeleteCloudContextFlight.class,
-        deleteParameters,
-        DELETION_FLIGHT_TIMEOUT,
-        debugInfo);
+        StairwayTestUtils.blockUntilFlightCompletes(
+            jobService.getStairway(),
+            DeleteCloudContextFlight.class,
+            deleteParameters,
+            DELETION_FLIGHT_TIMEOUT,
+            debugInfo);
     assertEquals(FlightStatus.FATAL, flightState.getFlightStatus());
 
     // Because this flight cannot be undone, the context should still be deleted even after undoing.
@@ -190,14 +187,15 @@ class DeleteGcpContextFlightTest extends BaseConnectedTest {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     assertTrue(gcpCloudContextService.getGcpCloudContext(workspaceUuid).isEmpty());
 
-    FlightMap deleteParameters = WorkspaceFixtures.deleteCloudContextInputs(workspaceUuid, userRequest, CloudPlatform.GCP);
+    FlightMap deleteParameters =
+        WorkspaceFixtures.deleteCloudContextInputs(workspaceUuid, userRequest, CloudPlatform.GCP);
     FlightState flightState =
-      StairwayTestUtils.blockUntilFlightCompletes(
-        jobService.getStairway(),
-        DeleteCloudContextFlight.class,
-        deleteParameters,
-        DELETION_FLIGHT_TIMEOUT,
-        null);
+        StairwayTestUtils.blockUntilFlightCompletes(
+            jobService.getStairway(),
+            DeleteCloudContextFlight.class,
+            deleteParameters,
+            DELETION_FLIGHT_TIMEOUT,
+            null);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
     assertTrue(gcpCloudContextService.getGcpCloudContext(workspaceUuid).isEmpty());
   }

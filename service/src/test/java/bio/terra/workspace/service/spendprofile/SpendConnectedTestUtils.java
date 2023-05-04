@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.spendprofile;
 
 import bio.terra.workspace.app.configuration.external.SpendProfileConfiguration;
-import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -11,21 +10,22 @@ public class SpendConnectedTestUtils {
 
   @Autowired private SpendProfileConfiguration spendConfig;
 
-
   private SpendProfile defaultSpendProfile;
 
   /**
    * Returns a {@link SpendProfile} that can be used to link to spend on cloud contexts.
    *
-   * <p>Note though that this SpendProfile will not work with an Azure CloudContext unless the
-   * call to BPM to obtain the spend profile is mocked. For an example, see
+   * <p>Note though that this SpendProfile will not work with an Azure CloudContext unless the call
+   * to BPM to obtain the spend profile is mocked. For an example, see
    * BaseAzureConnectedTest.initSpendProfileMock.
    */
   public SpendProfile defaultGcpSpendProfile() {
     if (defaultSpendProfile == null) {
-      SpendProfileConfiguration.SpendProfileModel defaultModel = spendConfig.getSpendProfiles().get(0);
-      defaultSpendProfile = SpendProfile.buildGcpSpendProfile(
-        new SpendProfileId(defaultModel.getId()), defaultModel.getBillingAccountId());
+      SpendProfileConfiguration.SpendProfileModel defaultModel =
+          spendConfig.getSpendProfiles().get(0);
+      defaultSpendProfile =
+          SpendProfile.buildGcpSpendProfile(
+              new SpendProfileId(defaultModel.getId()), defaultModel.getBillingAccountId());
     }
     return defaultSpendProfile;
   }

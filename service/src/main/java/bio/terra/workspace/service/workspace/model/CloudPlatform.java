@@ -3,15 +3,13 @@ package bio.terra.workspace.service.workspace.model;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
-import bio.terra.workspace.service.resource.model.WsmResourceHandler;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.CloudContextService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import java.util.function.Supplier;
 import org.apache.commons.lang3.SerializationException;
 import org.apache.commons.lang3.StringUtils;
-
-import java.util.function.Supplier;
 
 public enum CloudPlatform {
   GCP("GCP", ApiCloudPlatform.GCP, "gcp", GcpCloudContextService::getTheService),
@@ -26,10 +24,10 @@ public enum CloudPlatform {
   private final Supplier<CloudContextService> cloudContextServiceSupplier;
 
   CloudPlatform(
-    String dbString,
-    ApiCloudPlatform apiCloudPlatform,
-    String tpsString,
-    Supplier<CloudContextService> cloudContextServiceSupplier) {
+      String dbString,
+      ApiCloudPlatform apiCloudPlatform,
+      String tpsString,
+      Supplier<CloudContextService> cloudContextServiceSupplier) {
     this.dbString = dbString;
     this.apiCloudPlatform = apiCloudPlatform;
     this.tpsString = tpsString;

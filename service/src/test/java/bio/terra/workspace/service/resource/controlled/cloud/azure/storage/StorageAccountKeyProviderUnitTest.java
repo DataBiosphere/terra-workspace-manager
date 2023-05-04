@@ -27,7 +27,7 @@ public class StorageAccountKeyProviderUnitTest extends BaseUnitTest {
     var crlService = mock(CrlService.class);
     var storageManager = mock(StorageManager.class);
     var azureConfiguration = new AzureConfiguration();
-    var azureCloudContext = new AzureCloudContext("fake", "fake", "fake");
+    var azureCloudContext = new AzureCloudContext("fake", "fake", "fake", null);
     when(azureCloudContextService.getRequiredAzureCloudContext(any()))
         .thenReturn(azureCloudContext);
     when(crlService.getStorageManager(

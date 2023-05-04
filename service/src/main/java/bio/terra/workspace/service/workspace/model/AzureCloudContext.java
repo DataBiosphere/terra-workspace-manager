@@ -1,19 +1,14 @@
 package bio.terra.workspace.service.workspace.model;
 
-import bio.terra.common.exception.ErrorReportException;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.generated.model.ApiAzureContext;
-import bio.terra.workspace.service.resource.model.WsmResourceState;
-import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.exceptions.InvalidSerializedVersionException;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.jetbrains.annotations.Nullable;
 
 public class AzureCloudContext implements CloudContext {
@@ -24,10 +19,10 @@ public class AzureCloudContext implements CloudContext {
 
   @JsonCreator
   public AzureCloudContext(
-    @JsonProperty("azureTenantId") String azureTenantId,
-    @JsonProperty("azureSubscriptionId") String azureSubscriptionId,
-    @JsonProperty("azureResourceGroupId") String azureResourceGroupId,
-    @JsonProperty("commonFields") @Nullable CloudContextCommonFields commonFields) {
+      @JsonProperty("azureTenantId") String azureTenantId,
+      @JsonProperty("azureSubscriptionId") String azureSubscriptionId,
+      @JsonProperty("azureResourceGroupId") String azureResourceGroupId,
+      @JsonProperty("commonFields") @Nullable CloudContextCommonFields commonFields) {
     this.azureTenantId = azureTenantId;
     this.azureSubscriptionId = azureSubscriptionId;
     this.azureResourceGroupId = azureResourceGroupId;
@@ -60,8 +55,8 @@ public class AzureCloudContext implements CloudContext {
   @SuppressWarnings("unchecked")
   public <T> T castByEnum(CloudPlatform cloudPlatform) {
     if (cloudPlatform != getCloudPlatform()) {
-      throw new InternalLogicException(String
-        .format("Invalid cast from %s to %s", getCloudPlatform(), cloudPlatform));
+      throw new InternalLogicException(
+          String.format("Invalid cast from %s to %s", getCloudPlatform(), cloudPlatform));
     }
     return (T) this;
   }
@@ -77,7 +72,10 @@ public class AzureCloudContext implements CloudContext {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof AzureCloudContext that)) return false;
-    return Objects.equal(azureTenantId, that.azureTenantId) && Objects.equal(azureSubscriptionId, that.azureSubscriptionId) && Objects.equal(azureResourceGroupId, that.azureResourceGroupId) && Objects.equal(commonFields, that.commonFields);
+    return Objects.equal(azureTenantId, that.azureTenantId)
+        && Objects.equal(azureSubscriptionId, that.azureSubscriptionId)
+        && Objects.equal(azureResourceGroupId, that.azureResourceGroupId)
+        && Objects.equal(commonFields, that.commonFields);
   }
 
   @Override
@@ -85,7 +83,7 @@ public class AzureCloudContext implements CloudContext {
     return Objects.hashCode(azureTenantId, azureSubscriptionId, azureResourceGroupId, commonFields);
   }
 
-// -- serdes for the AzureCloudContext --
+  // -- serdes for the AzureCloudContext --
 
   @Override
   public String serialize() {
@@ -95,19 +93,20 @@ public class AzureCloudContext implements CloudContext {
   }
 
   public static AzureCloudContext deserialize(DbCloudContext dbCloudContext) {
-    AzureCloudContextV100 result = DbSerDes.fromJson(dbCloudContext.getContextJson(), AzureCloudContextV100.class);
+    AzureCloudContextV100 result =
+        DbSerDes.fromJson(dbCloudContext.getContextJson(), AzureCloudContextV100.class);
     if (result.version != AzureCloudContextV100.AZURE_CLOUD_CONTEXT_DB_VERSION) {
       throw new InvalidSerializedVersionException("Invalid serialized version");
     }
     return new AzureCloudContext(
-      result.azureTenantId,
-      result.azureSubscriptionId,
-      result.azureResourceGroupId,
-      new CloudContextCommonFields(
-        dbCloudContext.getSpendProfile(),
-        dbCloudContext.getState(),
-        dbCloudContext.getFlightId(),
-        dbCloudContext.getError()));
+        result.azureTenantId,
+        result.azureSubscriptionId,
+        result.azureResourceGroupId,
+        new CloudContextCommonFields(
+            dbCloudContext.getSpendProfile(),
+            dbCloudContext.getState(),
+            dbCloudContext.getFlightId(),
+            dbCloudContext.getError()));
   }
 
   @VisibleForTesting

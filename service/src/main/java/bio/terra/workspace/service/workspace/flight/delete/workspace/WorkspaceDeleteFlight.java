@@ -9,11 +9,10 @@ import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
-import bio.terra.workspace.service.workspace.flight.cloud.aws.DeleteAwsContextStep;
 import bio.terra.workspace.service.workspace.flight.cloud.aws.DeleteControlledAwsResourcesStep;
 import bio.terra.workspace.service.workspace.flight.cloud.azure.DeleteControlledAzureResourcesStep;
-import bio.terra.workspace.service.workspace.flight.cloud.gcp.DeleteGcpProjectStep;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.DeleteControlledSamResourcesStep;
+import bio.terra.workspace.service.workspace.flight.cloud.gcp.DeleteGcpProjectStep;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.UUID;
 
@@ -78,17 +77,17 @@ public class WorkspaceDeleteFlight extends Flight {
     addStep(
         new EnsureNoWorkspaceChildrenStep(appContext.getSamService(), userRequest, workspaceUuid));
 
-// This step just does the DeleteCloudFinishStep.
-// I do not think need this at all, since we are deleting the workspace object.
-// but I am also thinking we should run these context deletes as separate flights.
-/*
-    addStep(
-        new DeleteAzureContextStep(appContext.getAzureCloudContextService(), workspaceUuid),
-        cloudRetryRule);
- */
-    addStep(
-        new DeleteAwsContextStep(appContext.getAwsCloudContextService(), workspaceUuid),
-        cloudRetryRule);
+    // This step just does the DeleteCloudFinishStep.
+    // I do not think need this at all, since we are deleting the workspace object.
+    // but I am also thinking we should run these context deletes as separate flights.
+    /*
+       addStep(
+           new DeleteAzureContextStep(appContext.getAzureCloudContextService(), workspaceUuid),
+           cloudRetryRule);
+       addStep(
+           new DeleteAwsContextStep(appContext.getAwsCloudContextService(), workspaceUuid),
+           cloudRetryRule);
+    */
     addAuthZSteps(appContext, inputParameters, userRequest, workspaceUuid, terraRetryRule);
     addStep(
         new DeleteWorkspaceStateStep(appContext.getWorkspaceDao(), workspaceUuid), terraRetryRule);

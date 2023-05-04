@@ -7,9 +7,8 @@ import bio.terra.workspace.generated.model.ApiGcpContext;
 import bio.terra.workspace.service.workspace.exceptions.InvalidSerializedVersionException;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
-import javax.annotation.Nullable;
 import java.util.Optional;
+import javax.annotation.Nullable;
 
 public class GcpCloudContext implements CloudContext {
   private final String gcpProjectId;
@@ -21,12 +20,12 @@ public class GcpCloudContext implements CloudContext {
 
   @JsonCreator
   public GcpCloudContext(
-    @JsonProperty("gcpProjectId") String gcpProjectId,
-    @JsonProperty("samPolicyOwner") String samPolicyOwner,
-    @JsonProperty("samPolicyWriter") String samPolicyWriter,
-    @JsonProperty("samPolicyReader") String samPolicyReader,
-    @JsonProperty("samPolicyApplication") String samPolicyApplication,
-    @JsonProperty("commonFields") @Nullable CloudContextCommonFields commonFields) {
+      @JsonProperty("gcpProjectId") String gcpProjectId,
+      @JsonProperty("samPolicyOwner") String samPolicyOwner,
+      @JsonProperty("samPolicyWriter") String samPolicyWriter,
+      @JsonProperty("samPolicyReader") String samPolicyReader,
+      @JsonProperty("samPolicyApplication") String samPolicyApplication,
+      @JsonProperty("commonFields") @Nullable CloudContextCommonFields commonFields) {
     this.gcpProjectId = gcpProjectId;
     this.samPolicyOwner = samPolicyOwner;
     this.samPolicyWriter = samPolicyWriter;
@@ -69,8 +68,8 @@ public class GcpCloudContext implements CloudContext {
   @SuppressWarnings("unchecked")
   public <T> T castByEnum(CloudPlatform cloudPlatform) {
     if (cloudPlatform != getCloudPlatform()) {
-      throw new InternalLogicException(String
-        .format("Invalid cast from %s to %s", getCloudPlatform(), cloudPlatform));
+      throw new InternalLogicException(
+          String.format("Invalid cast from %s to %s", getCloudPlatform(), cloudPlatform));
     }
     return (T) this;
   }
@@ -83,39 +82,39 @@ public class GcpCloudContext implements CloudContext {
 
   public static GcpCloudContext deserialize(DbCloudContext dbCloudContext) {
     // Sanity check the input
-    if (dbCloudContext == null ||
-      dbCloudContext.getSpendProfile() == null ||
-      dbCloudContext.getCloudPlatform() != CloudPlatform.GCP) {
+    if (dbCloudContext == null
+        || dbCloudContext.getSpendProfile() == null
+        || dbCloudContext.getCloudPlatform() != CloudPlatform.GCP) {
       throw new InternalLogicException("Invalid GCP cloud context state");
     }
 
-    GcpCloudContextV2 v2Context = DbSerDes.fromJson(dbCloudContext.getContextJson(), GcpCloudContextV2.class);
+    GcpCloudContextV2 v2Context =
+        DbSerDes.fromJson(dbCloudContext.getContextJson(), GcpCloudContextV2.class);
     if (v2Context.version != GcpCloudContextV2.GCP_CLOUD_CONTEXT_DB_VERSION) {
       throw new InvalidSerializedVersionException("Invalid serialized version");
     }
-
 
     // If the set of fields is incomplete, this will deserialize and fill in nulls.
     // Those are valid in the GcpCloudContext, because it needs to model V1
     // contexts. However, we should not see nulls here, so we explicitly validate.
     if (v2Context.samPolicyOwner == null
-      || v2Context.samPolicyWriter == null
-      || v2Context.samPolicyReader == null
-      || v2Context.samPolicyApplication == null) {
+        || v2Context.samPolicyWriter == null
+        || v2Context.samPolicyReader == null
+        || v2Context.samPolicyApplication == null) {
       throw new InvalidSerializedVersionException("Serialized version missing data");
     }
 
     return new GcpCloudContext(
-      v2Context.gcpProjectId,
-      v2Context.samPolicyOwner,
-      v2Context.samPolicyWriter,
-      v2Context.samPolicyReader,
-      v2Context.samPolicyApplication,
-      new CloudContextCommonFields(
-        dbCloudContext.getSpendProfile(),
-        dbCloudContext.getState(),
-        dbCloudContext.getFlightId(),
-        dbCloudContext.getError()));
+        v2Context.gcpProjectId,
+        v2Context.samPolicyOwner,
+        v2Context.samPolicyWriter,
+        v2Context.samPolicyReader,
+        v2Context.samPolicyApplication,
+        new CloudContextCommonFields(
+            dbCloudContext.getSpendProfile(),
+            dbCloudContext.getState(),
+            dbCloudContext.getFlightId(),
+            dbCloudContext.getError()));
   }
 
   public ApiGcpContext toApi() {

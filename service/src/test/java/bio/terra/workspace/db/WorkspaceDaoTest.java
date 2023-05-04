@@ -1,6 +1,10 @@
 package bio.terra.workspace.db;
 
 import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
+import static bio.terra.workspace.unit.WorkspaceUnitTestUtils.POLICY_APPLICATION;
+import static bio.terra.workspace.unit.WorkspaceUnitTestUtils.POLICY_OWNER;
+import static bio.terra.workspace.unit.WorkspaceUnitTestUtils.POLICY_READER;
+import static bio.terra.workspace.unit.WorkspaceUnitTestUtils.POLICY_WRITER;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
@@ -9,12 +13,16 @@ import static org.hamcrest.core.IsNot.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
+import bio.terra.workspace.db.exception.ResourceStateConflictException;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
+import bio.terra.workspace.db.model.DbCloudContext;
+import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceException;
@@ -45,10 +53,6 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 class WorkspaceDaoTest extends BaseUnitTest {
   private static final String PROJECT_ID = "my-project1";
-  private static final String POLICY_OWNER = "policy-owner";
-  private static final String POLICY_WRITER = "policy-writer";
-  private static final String POLICY_READER = "policy-reader";
-  private static final String POLICY_APPLICATION = "policy-application";
 
   @Autowired private NamedParameterJdbcTemplate jdbcTemplate;
   @Autowired private WorkspaceDao workspaceDao;
@@ -150,22 +154,31 @@ class WorkspaceDaoTest extends BaseUnitTest {
     String project1 = "gcp-project-1";
     String project2 = "gcp-project-2";
     String project3 = "gcp-project-3";
-    String project4 = "azure-project";
     WorkspaceUnitTestUtils.createGcpCloudContextInDatabase(workspaceDao, workspace1, project1);
     WorkspaceUnitTestUtils.createGcpCloudContextInDatabase(workspaceDao, workspace2, project2);
     WorkspaceUnitTestUtils.createGcpCloudContextInDatabase(workspaceDao, workspace3, project3);
-    WorkspaceUnitTestUtils.createCloudContextInDatabase(
-        workspaceDao, workspace4, project4, CloudPlatform.AZURE);
 
-    Map<UUID, String> workspaceIdToGcpContextMap =
-        new HashMap<>(workspaceDao.getWorkspaceIdToCloudContextMap(CloudPlatform.GCP));
+    Map<UUID, DbCloudContext> workspaceIdToGcpContextMap =
+        new HashMap<>(workspaceDao.getWorkspaceIdToGcpCloudContextMap());
 
-    workspaceIdToGcpContextMap.replaceAll(
-        (k, v) -> GcpCloudContext.deserialize(v).getGcpProjectId());
-    assertEquals(project1, workspaceIdToGcpContextMap.get(workspace1));
-    assertEquals(project2, workspaceIdToGcpContextMap.get(workspace2));
-    assertEquals(project3, workspaceIdToGcpContextMap.get(workspace3));
-    assertFalse(workspaceIdToGcpContextMap.containsValue(project4));
+    GcpCloudContext context1 =
+        GcpCloudContext.deserialize(workspaceIdToGcpContextMap.get(workspace1));
+    GcpCloudContext context2 =
+        GcpCloudContext.deserialize(workspaceIdToGcpContextMap.get(workspace2));
+    GcpCloudContext context3 =
+        GcpCloudContext.deserialize(workspaceIdToGcpContextMap.get(workspace3));
+
+    assertContext(project1, context1);
+    assertContext(project2, context2);
+    assertContext(project3, context3);
+  }
+
+  private void assertContext(String projectId, GcpCloudContext cloudContext) {
+    assertEquals(projectId, cloudContext.getGcpProjectId());
+    assertEquals(CloudPlatform.GCP, cloudContext.getCloudPlatform());
+    assertEquals(WsmResourceState.READY, cloudContext.getCommonFields().state());
+    assertNull(cloudContext.getCommonFields().flightId());
+    assertNull(cloudContext.getCommonFields().error());
   }
 
   @Test
@@ -301,12 +314,28 @@ class WorkspaceDaoTest extends BaseUnitTest {
 
     @Test
     void createDeleteGcpCloudContext() {
-      String flightId = "flight-createdeletegcpcloudcontext";
-      gcpCloudContextService.createGcpCloudContextStart(workspaceUuid, flightId);
-      gcpCloudContextService.deleteGcpCloudContextWithCheck(workspaceUuid, "mismatched-flight-id");
+      // Run the normal case
+      WorkspaceUnitTestUtils.createGcpCloudContextInDatabase(
+          workspaceDao, workspaceUuid, PROJECT_ID);
+      WorkspaceUnitTestUtils.deleteGcpCloudContextInDatabase(workspaceDao, workspaceUuid);
 
-      GcpCloudContext gcpCloudContext = makeCloudContext();
-      gcpCloudContextService.createGcpCloudContextFinish(workspaceUuid, gcpCloudContext, flightId);
+      // Mismatched flight id
+      String flightId = UUID.randomUUID().toString();
+      workspaceDao.createCloudContextStart(
+          workspaceUuid, CloudPlatform.GCP, WorkspaceUnitTestUtils.SPEND_PROFILE_ID, flightId);
+
+      String gcpContextString = makeCloudContext().serialize();
+
+      // This should fail
+      assertThrows(
+          ResourceStateConflictException.class,
+          () ->
+              workspaceDao.createCloudContextSuccess(
+                  workspaceUuid, CloudPlatform.GCP, gcpContextString, "mismatched-flight-id"));
+
+      // This should succeed
+      workspaceDao.createCloudContextSuccess(
+          workspaceUuid, CloudPlatform.GCP, gcpContextString, flightId);
 
       Workspace workspace = workspaceDao.getWorkspace(workspaceUuid);
       Optional<GcpCloudContext> cloudContext =
@@ -318,14 +347,20 @@ class WorkspaceDaoTest extends BaseUnitTest {
       checkCloudContext(cloudContext);
 
       // delete with mismatched flight id - it should not delete
-      gcpCloudContextService.deleteGcpCloudContextWithCheck(workspaceUuid, "mismatched-flight-id");
+      workspaceDao.deleteCloudContextStart(workspaceUuid, CloudPlatform.GCP, flightId);
+      assertThrows(
+          ResourceStateConflictException.class,
+          () ->
+              workspaceDao.deleteCloudContextSuccess(
+                  workspaceUuid, CloudPlatform.GCP, "mismatched-flight-id"));
 
       // Make sure the context is still there
       cloudContext = gcpCloudContextService.getGcpCloudContext(workspaceUuid);
       checkCloudContext(cloudContext);
 
       // delete with no check - should delete
-      gcpCloudContextService.deleteGcpCloudContext(workspaceUuid);
+      workspaceDao.deleteCloudContextSuccess(workspaceUuid, CloudPlatform.GCP, null);
+
       cloudContext = gcpCloudContextService.getGcpCloudContext(workspaceUuid);
       assertTrue(cloudContext.isEmpty());
     }
@@ -337,11 +372,8 @@ class WorkspaceDaoTest extends BaseUnitTest {
 
     @Test
     void deleteWorkspaceWithCloudContext() {
-      String flightId = "flight-deleteworkspacewithcloudcontext";
-      gcpCloudContextService.createGcpCloudContextStart(workspaceUuid, flightId);
-      GcpCloudContext gcpCloudContext = makeCloudContext();
-      gcpCloudContextService.createGcpCloudContextFinish(workspaceUuid, gcpCloudContext, flightId);
-
+      WorkspaceUnitTestUtils.createGcpCloudContextInDatabase(
+          workspaceDao, workspaceUuid, PROJECT_ID);
       assertTrue(workspaceDao.deleteWorkspace(workspaceUuid));
       assertThrows(
           WorkspaceNotFoundException.class, () -> workspaceDao.getWorkspace(workspaceUuid));
@@ -350,19 +382,13 @@ class WorkspaceDaoTest extends BaseUnitTest {
     }
   }
 
-  @Test
-  void cloudTypeBackwardsCompatibility() {
-    assertEquals(CloudPlatform.GCP, CloudPlatform.valueOf("GCP"));
-    assertEquals("GCP", CloudPlatform.GCP.toString());
-  }
-
   private Workspace defaultWorkspace(UUID workspaceUuid) {
     return WorkspaceFixtures.buildWorkspace(workspaceUuid, WorkspaceStage.RAWLS_WORKSPACE);
   }
 
   private GcpCloudContext makeCloudContext() {
     return new GcpCloudContext(
-        PROJECT_ID, POLICY_OWNER, POLICY_WRITER, POLICY_READER, POLICY_APPLICATION);
+        PROJECT_ID, POLICY_OWNER, POLICY_WRITER, POLICY_READER, POLICY_APPLICATION, null);
   }
 
   private void checkCloudContext(Optional<GcpCloudContext> optionalContext) {

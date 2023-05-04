@@ -39,8 +39,8 @@ import org.springframework.stereotype.Component;
  * bio.terra.workspace.db.WorkspaceDao}
  */
 @SuppressFBWarnings(
-  value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD",
-  justification = "Enable both injection and static lookup")
+    value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD",
+    justification = "Enable both injection and static lookup")
 @Component
 public class GcpCloudContextService implements CloudContextService {
   private static GcpCloudContextService theService;
@@ -64,10 +64,10 @@ public class GcpCloudContextService implements CloudContextService {
 
   @Override
   public void addCreateCloudContextSteps(
-    CreateCloudContextFlight flight,
-    FlightBeanBag appContext,
-    UUID workspaceUuid,
-    AuthenticatedUserRequest userRequest) {
+      CreateCloudContextFlight flight,
+      FlightBeanBag appContext,
+      UUID workspaceUuid,
+      AuthenticatedUserRequest userRequest) {
 
     GcpCloudSyncRoleMapping gcpCloudSyncRoleMapping = appContext.getCloudSyncRoleMapping();
     CrlService crl = appContext.getCrlService();
@@ -78,30 +78,32 @@ public class GcpCloudContextService implements CloudContextService {
     // Allocate the GCP project from RBS by generating the id and then getting the project.
     flight.addStep(new GenerateRbsRequestIdStep());
     flight.addStep(
-      new PullProjectFromPoolStep(
-        appContext.getBufferService(), crl.getCloudResourceManagerCow()), bufferRetry);
+        new PullProjectFromPoolStep(
+            appContext.getBufferService(), crl.getCloudResourceManagerCow()),
+        bufferRetry);
 
     // Configure the project for WSM
     flight.addStep(new SetProjectBillingStep(crl.getCloudBillingClientCow()), cloudRetry);
     flight.addStep(new GrantWsmRoleAdminStep(crl), shortRetry);
-    flight.addStep(new CreateCustomGcpRolesStep(gcpCloudSyncRoleMapping, crl.getIamCow()), shortRetry);
+    flight.addStep(
+        new CreateCustomGcpRolesStep(gcpCloudSyncRoleMapping, crl.getIamCow()), shortRetry);
     // Create the pet before sync'ing, so the proxy group is configured before we
     // do the Sam sync and create the role-based Google groups. That eliminates
     // one propagation case
     flight.addStep(new CreatePetSaStep(appContext.getSamService(), userRequest), shortRetry);
     flight.addStep(
-      new SyncSamGroupsStep(appContext.getSamService(), workspaceUuid, userRequest), shortRetry);
+        new SyncSamGroupsStep(appContext.getSamService(), workspaceUuid, userRequest), shortRetry);
 
     flight.addStep(
-      new GcpCloudSyncStep(
-        crl.getCloudResourceManagerCow(),
-        gcpCloudSyncRoleMapping,
-        appContext.getFeatureConfiguration(),
-        appContext.getSamService(),
-        appContext.getGrantService(),
-        userRequest,
-        workspaceUuid),
-      bufferRetry);
+        new GcpCloudSyncStep(
+            crl.getCloudResourceManagerCow(),
+            gcpCloudSyncRoleMapping,
+            appContext.getFeatureConfiguration(),
+            appContext.getSamService(),
+            appContext.getGrantService(),
+            userRequest,
+            workspaceUuid),
+        bufferRetry);
 
     // Wait for the project permissions to propagate.
     // The SLO is 99.5% of the time it finishes in under 7 minutes.
@@ -109,30 +111,36 @@ public class GcpCloudContextService implements CloudContextService {
   }
 
   @Override
-  public void addDeleteCloudContextSteps(DeleteCloudContextFlight flight, FlightBeanBag appContext, UUID workspaceUuid, AuthenticatedUserRequest userRequest) {
+  public void addDeleteCloudContextSteps(
+      DeleteCloudContextFlight flight,
+      FlightBeanBag appContext,
+      UUID workspaceUuid,
+      AuthenticatedUserRequest userRequest) {
     RetryRule retryRule = RetryRules.cloudLongRunning();
 
     // We delete controlled resources from Sam and WSM databases, but do not need to delete the
     // actual cloud objects, as GCP handles the cleanup when we delete the containing project.
     flight.addStep(
-      new DeleteControlledSamResourcesStep(
-        appContext.getSamService(), appContext.getResourceDao(), workspaceUuid, CloudPlatform.GCP),
-      retryRule);
+        new DeleteControlledSamResourcesStep(
+            appContext.getSamService(),
+            appContext.getResourceDao(),
+            workspaceUuid,
+            CloudPlatform.GCP),
+        retryRule);
     flight.addStep(
-      new DeleteControlledDbResourcesStep(
-        appContext.getResourceDao(), workspaceUuid, CloudPlatform.GCP),
-      retryRule);
+        new DeleteControlledDbResourcesStep(
+            appContext.getResourceDao(), workspaceUuid, CloudPlatform.GCP),
+        retryRule);
     flight.addStep(
-      new DeleteGcpProjectStep(
-        appContext.getCrlService(), appContext.getGcpCloudContextService()),
-      retryRule);
+        new DeleteGcpProjectStep(
+            appContext.getCrlService(), appContext.getGcpCloudContextService()),
+        retryRule);
   }
 
   @Override
   public CloudContext makeCloudContextFromDb(DbCloudContext dbCloudContext) {
     return GcpCloudContext.deserialize(dbCloudContext);
   }
-
 
   /**
    * Retrieve the optional GCP cloud context
@@ -159,9 +167,9 @@ public class GcpCloudContextService implements CloudContextService {
    */
   public GcpCloudContext getRequiredGcpCloudContext(
       UUID workspaceUuid, AuthenticatedUserRequest userRequest) throws InterruptedException {
-    return  getGcpCloudContext(workspaceUuid)
-            .orElseThrow(
-                () -> new CloudContextRequiredException("Operation requires GCP cloud context"));
+    return getGcpCloudContext(workspaceUuid)
+        .orElseThrow(
+            () -> new CloudContextRequiredException("Operation requires GCP cloud context"));
   }
 
   /**
