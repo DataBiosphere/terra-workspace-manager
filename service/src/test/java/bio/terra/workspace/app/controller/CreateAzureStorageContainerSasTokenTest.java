@@ -43,7 +43,7 @@ public class CreateAzureStorageContainerSasTokenTest extends BaseAzureUnitTest {
     when(mockAzureStorageAccessService()
             .createAzureStorageContainerSasToken(
                 eq(workspaceId), eq(storageContainerId), any(), any()))
-        .thenReturn(new AzureSasBundle("sasToken", "sasUrl"));
+        .thenReturn(new AzureSasBundle("sasToken", "sasUrl", "abc123"));
   }
 
   @Test

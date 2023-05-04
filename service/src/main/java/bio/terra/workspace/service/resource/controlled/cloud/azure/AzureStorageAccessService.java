@@ -25,6 +25,8 @@ import com.azure.storage.blob.sas.BlobServiceSasSignatureValues;
 import com.azure.storage.common.StorageSharedKeyCredential;
 import com.azure.storage.common.sas.SasIpRange;
 import com.azure.storage.common.sas.SasProtocol;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Locale;
@@ -165,8 +167,9 @@ public class AzureStorageAccessService {
    *     SAS will expire 4) blobName - Requests access to a single blob in a container 5)
    *     permissions - Permissions associated with the SAS indicating what operations a client may
    *     perform on the resource
-   * @return A bundle of 1) a full Azure SAS URL, including the storage account hostname and 2) the
-   *     token query param fragment
+   * @return A bundle of 1) a full Azure SAS URL, including the storage account hostname 2) the
+   *     token query param fragment 3) the sha256 hash of the token's signature which may be used
+   *     for log correlation with Azure
    */
   public AzureSasBundle createAzureStorageContainerSasToken(
       UUID workspaceUuid,
@@ -224,12 +227,19 @@ public class AzureStorageAccessService {
       resourceName = storageData.storageContainerResource().getStorageContainerName();
     }
 
+    var sig = token.split("sig=")[1];
+    var sha256hex =
+        org.apache.commons.codec.digest.DigestUtils.sha256Hex(
+                URLDecoder.decode(sig, StandardCharsets.UTF_8))
+            .toUpperCase();
+
     logger.info(
-        "SAS token with expiry time of {} generated for user {} on container {} in workspace {}",
+        "SAS token with expiry time of {} generated for user {} on container {} in workspace {} [sha256 = {}]",
         sasTokenOptions.expiryTime(),
         userRequest.getEmail(),
         storageContainerUuid,
-        workspaceUuid);
+        workspaceUuid,
+        sha256hex);
 
     return new AzureSasBundle(
         token,
@@ -238,7 +248,8 @@ public class AzureStorageAccessService {
             "https://%s.blob.core.windows.net/%s?%s",
             storageData.storageAccountName(),
             resourceName,
-            token));
+            token),
+        sha256hex);
   }
 
   /**
@@ -291,8 +302,8 @@ public class AzureStorageAccessService {
    * @param workspaceUuid Workspace in which the container resides
    * @param storageContainerUuid WSM resource ID for the storage container
    * @param userRequest User request
-   * @throws IllegalStateException if no shared storage account is present
    * @return StorageData object
+   * @throws IllegalStateException if no shared storage account is present
    */
   public StorageData getStorageAccountData(
       UUID workspaceUuid, UUID storageContainerUuid, AuthenticatedUserRequest userRequest) {
