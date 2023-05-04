@@ -3,7 +3,7 @@ components:
     GcpBigQueryDatasetAttributes:
       description: Attributes of a BigQuery dataset
       type: object
-      required: [projectId, datasetId]
+      required: [ projectId, datasetId ]
       properties:
         projectId:
           type: string
@@ -13,7 +13,7 @@ components:
     GcpBigQueryDatasetResource:
       type: object
       description: A reference to a BigQuery dataset.
-      required: [metadata, attributes]
+      required: [ metadata, attributes ]
       properties:
         metadata:
           description: the resource metadata common to all resources

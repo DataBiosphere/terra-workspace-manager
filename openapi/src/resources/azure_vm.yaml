@@ -25,7 +25,7 @@ components:
     AzureVmResource:
       type: object
       description: Description of an Azure vm
-      required: [metadata, attributes]
+      required: [ metadata, attributes ]
       properties:
         metadata:
           description: the resource metadata common to all resources

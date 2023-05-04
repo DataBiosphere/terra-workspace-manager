@@ -5,7 +5,7 @@ paths:
     post:
       summary: Create a new controlled Azure Storage Container with private access
       operationId: createAzureStorageContainer
-      tags: [ControlledAzureResource]
+      tags: [ ControlledAzureResource ]
       requestBody:
         required: true
         content:
@@ -31,7 +31,7 @@ paths:
     post:
       summary: Clone an Azure Storage Container
       operationId: cloneAzureStorageContainer
-      tags: [ControlledAzureResource]
+      tags: [ ControlledAzureResource ]
       requestBody:
         required: true
         content:
@@ -78,7 +78,7 @@ paths:
         because the operation can take a few minutes. OpenAPI does not support 
         request body in DELETE, but async state requires it. Hence this is a POST.
       operationId: deleteAzureStorageContainer
-      tags: [ControlledAzureResource]
+      tags: [ ControlledAzureResource ]
       requestBody:
         required: true
         content:
@@ -106,7 +106,7 @@ paths:
     post:
       summary: Create a SAS token to access the storage container
       operationId: createAzureStorageContainerSasToken
-      tags: [ControlledAzureResource]
+      tags: [ ControlledAzureResource ]
       responses:
         '200':
           description: Response to create SAS token

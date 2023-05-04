@@ -6,7 +6,7 @@ paths:
     get:
       summary: Get the cloud location info.
       operationId: getLocationInfo
-      tags: [policy]
+      tags: [ policy ]
       responses:
         '200':
           description: Success
@@ -49,7 +49,7 @@ components:
 
     WsmPolicy:
       type: object
-      required: [objectId, component, objectType]
+      required: [ objectId, component, objectType ]
       properties:
         objectId:
           $ref: '#/components/schemas/WsmPolicyObjectId'
@@ -77,7 +77,7 @@ components:
 
     WsmPolicyInputs:
       type: object
-      required: [inputs]
+      required: [ inputs ]
       properties:
         inputs:
           type: array
@@ -86,7 +86,7 @@ components:
 
     WsmPolicyInput:
       type: object
-      required: [namespace, name]
+      required: [ namespace, name ]
       properties:
         namespace:
           description: Namespace of the policy input; e.g., 'terra'
@@ -124,7 +124,7 @@ components:
     WsmPolicyConflict:
       type: object
       description: Describes a policy conflict between two policies
-      required: [targetPolicy, conflictPolicy, namespace, name]
+      required: [ targetPolicy, conflictPolicy, namespace, name ]
       properties:
         namespace:
           description: Namespace of the conflicting policy; e.g., terra
@@ -160,7 +160,7 @@ components:
     WsmPolicyUpdateRequest:
       description: Update request body
       type: object
-      required: [updateMode]
+      required: [ updateMode ]
       properties:
         removeAttributes:
           $ref: '#/components/schemas/WsmPolicyInputs'
@@ -171,7 +171,7 @@ components:
 
     WsmPolicyUpdateResult:
       type: object
-      required: [updateApplied, conflicts]
+      required: [ updateApplied, conflicts ]
       properties:
         updateApplied:
           description: |
@@ -273,7 +273,7 @@ components:
     WsmPolicyLocation:
       description: TPS location object description.
       type: object
-      required: [name, description]
+      required: [ name, description ]
       properties:
         name:
           description: The location name

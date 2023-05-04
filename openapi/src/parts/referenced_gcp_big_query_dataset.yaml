@@ -5,7 +5,7 @@ paths:
     post:
       summary: Create a new BigQuery dataset reference in a workspace.
       operationId: createBigQueryDatasetReference
-      tags: [ReferencedGcpResource]
+      tags: [ ReferencedGcpResource ]
       requestBody:
         required: true
         content:
@@ -31,7 +31,7 @@ paths:
     get:
       summary: Gets a reference to a BigQuery dataset from a workspace.
       operationId: getBigQueryDatasetReference
-      tags: [ReferencedGcpResource]
+      tags: [ ReferencedGcpResource ]
       responses:
         '200':
           $ref: '#/components/responses/GcpBigQueryDatasetReferenceResponse'
@@ -63,7 +63,7 @@ paths:
     delete:
       summary: Delete BigQuery dataset reference
       operationId: deleteBigQueryDatasetReference
-      tags: [ReferencedGcpResource]
+      tags: [ ReferencedGcpResource ]
       responses:
         '204':
           description: OK
@@ -80,7 +80,7 @@ paths:
     post:
       summary: Clone a BigQuery Dataset
       operationId: cloneGcpBigQueryDatasetReference
-      tags: [ReferencedGcpResource]
+      tags: [ ReferencedGcpResource ]
       requestBody:
         required: true
         content:
@@ -105,7 +105,7 @@ paths:
     get:
       summary: Gets a reference to a BigQuery dataset by name.
       operationId: getBigQueryDatasetReferenceByName
-      tags: [ReferencedGcpResource]
+      tags: [ ReferencedGcpResource ]
       responses:
         '200':
           $ref: '#/components/responses/GcpBigQueryDatasetReferenceResponse'
@@ -121,7 +121,7 @@ components:
     CreateGcpBigQueryDatasetReferenceRequestBody:
       type: object
       description: A request to create a reference to a BigQuery dataset.
-      required: [metadata, dataset]
+      required: [ metadata, dataset ]
       properties:
         metadata:
           $ref: '#/components/schemas/ReferenceResourceCommonFields'

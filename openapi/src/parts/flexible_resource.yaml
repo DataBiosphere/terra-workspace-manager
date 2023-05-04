@@ -140,7 +140,7 @@ components:
     CreatedControlledFlexibleResource:
       description: Response payload for requesting a new controlled flexible resource.
       type: object
-      required: [resourceId, flexibleResource]
+      required: [ resourceId, flexibleResource ]
       properties:
         resourceId:
           description: UUID of newly-created resource.
@@ -151,7 +151,7 @@ components:
     CreateControlledFlexibleResourceRequestBody:
       description: Payload for requesting a new controlled flexible resource.
       type: object
-      required: [common, flexibleResource]
+      required: [ common, flexibleResource ]
       properties:
         common:
           $ref: '#/components/schemas/ControlledResourceCommonFields'

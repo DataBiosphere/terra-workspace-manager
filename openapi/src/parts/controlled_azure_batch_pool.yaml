@@ -232,7 +232,7 @@ components:
       description: |
         Determines what to do with a node and its running task(s) after it has been selected for deallocation.
       type: string
-      enum: ['Requeue', 'Terminate', 'TaskCompletion', 'RetainedData']
+      enum: [ 'Requeue', 'Terminate', 'TaskCompletion', 'RetainedData' ]
 
     AzureBatchPoolAutoScaleSettings:
       description: AutoScale settings for the pool.
@@ -404,7 +404,7 @@ components:
       description: |
         The action that should be taken for a specified IP address, subnet range or tag.
       type: string
-      enum: ['Allow', 'Deny']
+      enum: [ 'Allow', 'Deny' ]
 
     InboundEndpointProtocol:
       description: The protocol of the endpoint.
@@ -431,7 +431,7 @@ components:
       description: |
         Defines values for IpAddressProvisioningType.
       type: string
-      enum: ['BatchManaged', 'UserManaged', 'NoPublicIPAddresses']
+      enum: [ 'BatchManaged', 'UserManaged', 'NoPublicIPAddresses' ]
 
     AzureBatchPoolResourceFile:
       description: |
@@ -573,7 +573,7 @@ components:
     CreateControlledAzureBatchPoolRequestBody:
       description: Payload for requesting a new controlled Azure Batch Pool resource.
       type: object
-      required: ["common", "azureBatchPool"]
+      required: [ common, azureBatchPool ]
       properties:
         common:
           $ref: '#/components/schemas/ControlledResourceCommonFields'

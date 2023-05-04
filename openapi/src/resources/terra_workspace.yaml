@@ -4,7 +4,7 @@ components:
       description: >-
         Terra workspace attributes
       type: object
-      required: [referencedWorkspaceId]
+      required: [ referencedWorkspaceId ]
       properties:
         referencedWorkspaceId:
           description: UUID for the workspace that this resource points to
@@ -14,7 +14,7 @@ components:
     TerraWorkspaceResource:
       type: object
       description: A reference to a Terra workspace
-      required: [metadata, attributes]
+      required: [ metadata, attributes ]
       properties:
         metadata:
           description: the resource metadata common to all resources
