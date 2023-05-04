@@ -455,9 +455,9 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
 
     when(mockSamService()
             .listResourceActions(
-                ArgumentMatchers.eq(userRequest),
-                ArgumentMatchers.eq(storageContainerResource.getCategory().getSamResourceName()),
-                ArgumentMatchers.eq(storageContainerResource.getResourceId().toString())))
+                userRequest,
+                storageContainerResource.getCategory().getSamResourceName(),
+                storageContainerResource.getResourceId().toString()))
         .thenReturn(
             List.of(
                 SamConstants.SamControlledResourceActions.READ_ACTION,
