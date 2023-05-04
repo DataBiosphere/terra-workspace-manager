@@ -12,6 +12,7 @@ import bio.terra.common.iam.SamUser;
 import bio.terra.workspace.app.configuration.external.AwsConfiguration;
 import bio.terra.workspace.generated.model.ApiAwsCredentialAccessScope;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.s3storageFolder.ControlledAwsS3StorageFolderResource;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakerNotebook.ControlledAwsSagemakerNotebookResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import io.opencensus.contrib.spring.aop.Traced;
@@ -92,6 +93,11 @@ public class AwsUtils {
           (ControlledAwsS3StorageFolderResource) awsResource;
       tags.add(Tag.builder().key("S3BucketID").value(resource.getBucketName()).build());
       tags.add(Tag.builder().key("TerraBucketID").value(resource.getPrefix()).build());
+
+    } else if (awsResource instanceof ControlledAwsSagemakerNotebookResource) {
+      ControlledAwsSagemakerNotebookResource resource =
+          (ControlledAwsSagemakerNotebookResource) awsResource;
+      // TODO(TERRA-550) Add sagemaker tags
     }
   }
 

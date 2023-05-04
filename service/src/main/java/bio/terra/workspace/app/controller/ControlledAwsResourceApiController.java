@@ -12,12 +12,16 @@ import bio.terra.workspace.generated.model.ApiAwsCredential;
 import bio.terra.workspace.generated.model.ApiAwsCredentialAccessScope;
 import bio.terra.workspace.generated.model.ApiAwsResourceCloudName;
 import bio.terra.workspace.generated.model.ApiAwsS3StorageFolderResource;
+import bio.terra.workspace.generated.model.ApiAwsSagemakerNotebookResource;
 import bio.terra.workspace.generated.model.ApiCreateControlledAwsS3StorageFolderRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateControlledAwsSagemakerNotebookRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateControlledAwsSagemakerNotebookResult;
 import bio.terra.workspace.generated.model.ApiCreatedControlledAwsS3StorageFolder;
 import bio.terra.workspace.generated.model.ApiDeleteControlledAwsResourceRequestBody;
 import bio.terra.workspace.generated.model.ApiDeleteControlledAwsResourceResult;
 import bio.terra.workspace.generated.model.ApiGenerateAwsResourceCloudNameRequestBody;
 import bio.terra.workspace.generated.model.ApiJobControl;
+import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
@@ -31,6 +35,8 @@ import bio.terra.workspace.service.resource.controlled.ControlledResourceService
 import bio.terra.workspace.service.resource.controlled.cloud.aws.AwsResourceConstants;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.s3storageFolder.ControlledAwsS3StorageFolderHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.s3storageFolder.ControlledAwsS3StorageFolderResource;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakerNotebook.ControlledAwsSagemakerNotebookHandler;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakerNotebook.ControlledAwsSagemakerNotebookResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
@@ -131,7 +137,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     ApiJobControl jobControl = body.getJobControl();
 
     logger.info(
-        "deleteAwsResource workspace: {}, resourceUuid: {}",
+        "deleteAwsResource workspaceUuid: {}, resourceUuid: {}",
         workspaceUuid.toString(),
         resourceUuid.toString());
     String jobId =
@@ -193,8 +199,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
   public ResponseEntity<ApiAwsResourceCloudName> generateAwsS3StorageFolderCloudName(
       UUID workspaceUuid, ApiGenerateAwsResourceCloudNameRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    Workspace workspace =
-        workspaceService.validateMcWorkspaceAndAction(
+    Workspace workspace = workspaceService.validateMcWorkspaceAndAction(
             userRequest, workspaceUuid, SamWorkspaceAction.READ);
 
     String generatedCloudName =
@@ -326,6 +331,162 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
         controlledResourceService
             .getControlledResource(workspaceUuid, resourceUuid)
             .castByEnum(WsmResourceType.CONTROLLED_AWS_S3_STORAGE_FOLDER);
+    return getAwsResourceCredential(workspaceUuid, accessScope, durationSeconds, resource);
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiAwsResourceCloudName> generateAwsSagemakerNotebookCloudName(
+      UUID workspaceUuid, @Valid ApiGenerateAwsResourceCloudNameRequestBody body) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    workspaceService.validateMcWorkspaceAndAction(
+        userRequest, workspaceUuid, SamWorkspaceAction.READ);
+
+    String generatedCloudName =
+        ControlledAwsS3StorageFolderHandler.getHandler()
+            .generateCloudName(workspaceUuid, body.getAwsResourceName());
+    return new ResponseEntity<>(
+        new ApiAwsResourceCloudName().awsResourceCloudName(generatedCloudName), HttpStatus.OK);
+  }
+
+  private ApiCreateControlledAwsSagemakerNotebookResult getCreateAwsSagemakerNotebookResult(
+      String jobId) {
+    JobApiUtils.AsyncJobResult<ControlledAwsSagemakerNotebookResource> jobResult =
+        jobApiUtils.retrieveAsyncJobResult(jobId, ControlledAwsSagemakerNotebookResource.class);
+
+    ApiAwsSagemakerNotebookResource apiResource =
+        (jobResult.getJobReport().getStatus().equals(ApiJobReport.StatusEnum.SUCCEEDED))
+            ? jobResult.getResult().toApiResource()
+            : null;
+
+    return new ApiCreateControlledAwsSagemakerNotebookResult()
+        .jobReport(jobResult.getJobReport())
+        .errorReport(jobResult.getApiErrorReport())
+        .awsSagemakerNotebook(apiResource);
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiCreateControlledAwsSagemakerNotebookResult> createAwsSagemakerNotebook(
+      UUID workspaceUuid, @Valid ApiCreateControlledAwsSagemakerNotebookRequestBody body) {
+    featureService.awsEnabledCheck();
+
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    Workspace workspace =
+        workspaceService.validateMcWorkspaceAndAction(
+            userRequest,
+            workspaceUuid,
+            ControllerValidationUtils.samCreateAction(
+                AccessScopeType.fromApi(body.getCommon().getAccessScope()),
+                ManagedByType.fromApi(body.getCommon().getManagedBy())));
+
+    String instanceName = body.getAwsSagemakerNotebook().getInstanceName();
+    if (StringUtils.isEmpty(instanceName)) {
+      instanceName =
+          ControlledAwsSagemakerNotebookHandler.getHandler()
+              .generateCloudName(workspaceUuid, body.getCommon().getName());
+    }
+    AwsResourceValidationUtils.validateAwsSagemakerNotebookName(instanceName);
+
+    String region =
+        getResourceRegion(workspace, StringUtils.trim(body.getAwsSagemakerNotebook().getRegion()));
+
+    ControlledResourceFields commonFields =
+        toCommonFields(
+            workspaceUuid,
+            body.getCommon(),
+            region,
+            userRequest,
+            WsmResourceType.CONTROLLED_AWS_SAGEMAKER_NOTEBOOK);
+
+    AwsCloudContext awsCloudContext =
+        awsCloudContextService.getRequiredAwsCloudContext(workspaceUuid);
+
+    LandingZone landingZone =
+        awsCloudContextService
+            .getLandingZone(awsCloudContext, Region.of(region))
+            .orElseThrow(
+                () -> {
+                  throw new ValidationException(
+                      String.format("Unsupported AWS region: '%s'.", region));
+                });
+
+    ControlledAwsSagemakerNotebookResource resource =
+        ControlledAwsSagemakerNotebookResource.builder()
+            .common(commonFields)
+            .instanceName(body.getAwsSagemakerNotebook().getInstanceName())
+            .instanceType(body.getAwsSagemakerNotebook().getInstanceType())
+            .build();
+
+    logger.info(
+        "createAwsSagemakerNotebook workspace: {}, bucketName: {}, prefix {}, region: {}",
+        workspaceUuid.toString(),
+        landingZone.getStorageBucket().name(),
+        commonFields.getName(),
+        region);
+    String jobId =
+        controlledResourceService.createAwsSagemakerNotebookInstance(
+            resource,
+            body.getAwsSagemakerNotebook(),
+            commonFields.getIamRole(),
+            body.getJobControl(),
+            getAsyncResultEndpoint(body.getJobControl().getId(), "create-result"),
+            userRequest);
+
+    ApiCreateControlledAwsSagemakerNotebookResult result =
+        getCreateAwsSagemakerNotebookResult(jobId);
+    return new ResponseEntity<>(result, getAsyncResponseCode((result.getJobReport())));
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiAwsSagemakerNotebookResource> getAwsSagemakerNotebook(
+      UUID workspaceUuid, UUID resourceUuid) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ControlledAwsSagemakerNotebookResource resource =
+        controlledResourceMetadataManager
+            .validateControlledResourceAndAction(
+                userRequest,
+                workspaceUuid,
+                resourceUuid,
+                SamConstants.SamControlledResourceActions.READ_ACTION)
+            .castByEnum(WsmResourceType.CONTROLLED_AWS_SAGEMAKER_NOTEBOOK);
+    return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiDeleteControlledAwsResourceResult> deleteAwsSagemakerNotebook(
+      UUID workspaceUuid,
+      UUID resourceUuid,
+      @Valid ApiDeleteControlledAwsResourceRequestBody body) {
+    return deleteAwsResource(workspaceUuid, resourceUuid, body);
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiDeleteControlledAwsResourceResult> getDeleteAwsSagemakerNotebookResult(
+      UUID workspaceUuid, String jobId) {
+    return getDeleteAwsResourceResult(workspaceUuid, jobId);
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiAwsCredential> getAwsSagemakerNotebookCredential(
+      UUID workspaceUuid,
+      UUID resourceUuid,
+      ApiAwsCredentialAccessScope accessScope,
+      Integer durationSeconds) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    controlledResourceMetadataManager
+        .validateControlledResourceAndAction(
+            userRequest, workspaceUuid, resourceUuid, getSamAction(accessScope))
+        .castByEnum(WsmResourceType.CONTROLLED_AWS_SAGEMAKER_NOTEBOOK);
+
+    ControlledAwsSagemakerNotebookResource resource =
+        controlledResourceService
+            .getControlledResource(workspaceUuid, resourceUuid)
+            .castByEnum(WsmResourceType.CONTROLLED_AWS_SAGEMAKER_NOTEBOOK);
     return getAwsResourceCredential(workspaceUuid, accessScope, durationSeconds, resource);
   }
 }

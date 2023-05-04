@@ -4,6 +4,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.aws.AwsResourceCons
 import bio.terra.workspace.service.resource.exception.InvalidNameException;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
+import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.stereotype.Component;
 
 /** A collection of static validation functions specific to AWS */
@@ -27,6 +28,16 @@ public class AwsResourceValidationUtils {
               "storage folder names must contain any sequence of valid Unicode characters (excluding %s), of length 1-1024 bytes when UTF-8 encoded",
               s3ObjectDisallowedChars.pattern()));
     }
+  }
+
+  /**
+   * Validate AWS Sagemaker Notebook name.
+   *
+   * @param instanceName prefix name
+   * @throws InvalidNameException invalid instance name
+   */
+  public static void validateAwsSagemakerNotebookName(String instanceName) {
+    throw new NotImplementedException("TODO-Dex");
   }
 
   /**
