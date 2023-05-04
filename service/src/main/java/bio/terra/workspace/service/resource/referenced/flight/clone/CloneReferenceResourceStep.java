@@ -29,11 +29,6 @@ public class CloneReferenceResourceStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    resourceDao.deleteReferencedResourceForResourceType(
-        destinationResource.getWorkspaceId(),
-        destinationResource.getResourceId(),
-        destinationResource.getResourceType());
-
     return StepResult.getStepResultSuccess();
   }
 }
