@@ -4,6 +4,7 @@ import static bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebo
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import bio.terra.workspace.common.BaseUnitTest;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 public class ControlledAiNotebookHandlerTest extends BaseUnitTest {
@@ -12,62 +13,62 @@ public class ControlledAiNotebookHandlerTest extends BaseUnitTest {
   public void generateInstanceId() {
     String instanceName = "yuhuyoyo";
     String instanceId =
-        ControlledAiNotebookHandler.getHandler().generateCloudName(null, instanceName);
+        ControlledAiNotebookHandler.getHandler().generateCloudName((UUID) null, instanceName);
 
     assertEquals("yuhuyoyo", instanceId);
   }
 
   @Test
-  public void generateInstanceId_userIdHasUnderscore_removeUnderscores() {
+  public void generateInstanceId_instanceNameHasUnderscore_removeUnderscores() {
     String instanceName = "yu_hu_yo_yo";
     String instanceId =
-        ControlledAiNotebookHandler.getHandler().generateCloudName(null, instanceName);
+        ControlledAiNotebookHandler.getHandler().generateCloudName((UUID) null, instanceName);
 
     assertEquals("yuhuyoyo", instanceId);
   }
 
   @Test
-  public void generateInstanceId_userIdHasStartingUnderscore_removeStartingUnderscores() {
+  public void generateInstanceId_instanceNameHasStartingUnderscore_removeStartingUnderscores() {
     String instanceName = "___________________yu_hu_yo_yo";
     String instanceId =
-        ControlledAiNotebookHandler.getHandler().generateCloudName(null, instanceName);
+        ControlledAiNotebookHandler.getHandler().generateCloudName((UUID) null, instanceName);
 
     assertEquals("yuhuyoyo", instanceId);
   }
 
   @Test
-  public void generateInstanceId_userIdHasEndingUnderscore_removeEndingUnderscores() {
+  public void generateInstanceId_instanceNameHasEndingUnderscore_removeEndingUnderscores() {
     String instanceName = "yu_hu_yo_yo__________________";
     String instanceId =
-        ControlledAiNotebookHandler.getHandler().generateCloudName(null, instanceName);
+        ControlledAiNotebookHandler.getHandler().generateCloudName((UUID) null, instanceName);
 
     assertEquals("yuhuyoyo", instanceId);
   }
 
   @Test
-  public void generateInstanceId_userIdHasStartingNumbers_removeStartingNumbers() {
+  public void generateInstanceId_instanceNameHasStartingNumbers_removeStartingNumbers() {
     String instanceName = "1234_______yuhuyoyo";
     String instanceId =
-        ControlledAiNotebookHandler.getHandler().generateCloudName(null, instanceName);
+        ControlledAiNotebookHandler.getHandler().generateCloudName((UUID) null, instanceName);
 
     assertEquals("yuhuyoyo", instanceId);
   }
 
   @Test
-  public void generateInstanceId_userIdHasUppercase_toLowerCase() {
+  public void generateInstanceId_instanceNameHasUppercase_toLowerCase() {
     String instanceName = "YUHUYOYO";
     String instanceId =
-        ControlledAiNotebookHandler.getHandler().generateCloudName(null, instanceName);
+        ControlledAiNotebookHandler.getHandler().generateCloudName((UUID) null, instanceName);
 
     assertEquals("yuhuyoyo", instanceId);
   }
 
   @Test
-  public void generateInstanceId_userIdTooLong_trim() {
+  public void generateInstanceId_instanceNameTooLong_trim() {
     String instanceName =
         "yuhuyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyo";
     String instanceId =
-        ControlledAiNotebookHandler.getHandler().generateCloudName(null, instanceName);
+        ControlledAiNotebookHandler.getHandler().generateCloudName((UUID) null, instanceName);
 
     int maxNameLength = MAX_INSTANCE_NAME_LENGTH;
 

@@ -28,6 +28,7 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.CommonUpdateParameters;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.workspace.WorkspaceService;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.Optional;
 import java.util.UUID;
@@ -62,6 +63,7 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
       JobApiUtils jobApiUtils,
       ControlledResourceService controlledResourceService,
       ControlledResourceMetadataManager controlledResourceMetadataManager,
+      WorkspaceService workspaceService,
       WsmResourceService wsmResourceService) {
     super(
         authenticatedUserRequestFactory,
@@ -72,7 +74,8 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
         jobService,
         jobApiUtils,
         controlledResourceService,
-        controlledResourceMetadataManager);
+        controlledResourceMetadataManager,
+        workspaceService);
     this.wsmResourceService = wsmResourceService;
   }
 

@@ -83,7 +83,6 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     implements ControlledGcpResourceApi {
   private final Logger logger = LoggerFactory.getLogger(ControlledGcpResourceApiController.class);
 
-  private final WorkspaceService workspaceService;
   private final WsmResourceService wsmResourceService;
   private final GcpCloudContextService gcpCloudContextService;
 
@@ -110,8 +109,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
         jobService,
         jobApiUtils,
         controlledResourceService,
-        controlledResourceMetadataManager);
-    this.workspaceService = workspaceService;
+        controlledResourceMetadataManager,
+        workspaceService);
     this.wsmResourceService = wsmResourceService;
     this.gcpCloudContextService = gcpCloudContextService;
   }
