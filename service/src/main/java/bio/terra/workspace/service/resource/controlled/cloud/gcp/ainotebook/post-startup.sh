@@ -347,7 +347,7 @@ sudo -u "${JUPYTER_USER}" sh -c "mkdir -p ${USER_SSH_DIR} --mode 0700"
 # Get the user's SSH key from Terra, and if set, write it to the user's .ssh directory
 sudo -u "${JUPYTER_USER}" sh -c "\
   install --mode 0600 /dev/null ${USER_SSH_DIR}/id_rsa.tmp && \
-  terra user ssh-key get --include-private-key --format=JSON >> ${USER_SSH_DIR}/id_rsa.tmp"
+  terra user ssh-key get --include-private-key --format=JSON >> ${USER_SSH_DIR}/id_rsa.tmp || true"
 if [[ -s "${USER_SSH_DIR}/id_rsa.tmp" ]]; then
   sudo -u "${JUPYTER_USER}" sh -c "install --mode 0600 /dev/null ${USER_SSH_DIR}/id_rsa"
   sudo -u "${JUPYTER_USER}" sh -c "jq -r '.privateSshKey' ${USER_SSH_DIR}/id_rsa.tmp > ${USER_SSH_DIR}/id_rsa"
@@ -370,6 +370,8 @@ sudo -u "${JUPYTER_USER}" sh -c 'cd "${HOME}" && terra git clone --all'
 # 1. Mount terra workspace resources. This command requires system user home
 #    directories to be mounted. We run the startup service after
 #    jupyter.service to meet this requirement.
+
+echo "Setting up Terra boot script and service..."
 
 # Create the boot script
 cat <<EOF >"${TERRA_BOOT_SCRIPT}"
