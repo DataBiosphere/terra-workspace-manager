@@ -49,12 +49,10 @@ public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
     gcpCloudContextService.createGcpCloudContextFinish(
         workspaceUuid, new GcpCloudContext("fake-project"), "flight-testentersinfo");
 
-    StoreMetadataStep storeGoogleBucketMetadataStep =
-        new StoreMetadataStep(resourceDao, WsmResourceStateRule.DELETE_ON_FAILURE);
-
-    // Stub the flight map as of this step
     ControlledGcsBucketResource bucketResource =
         ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
+    StoreMetadataStep storeGoogleBucketMetadataStep =
+        new StoreMetadataStep(resourceDao, WsmResourceStateRule.DELETE_ON_FAILURE, bucketResource);
 
     final FlightMap inputFlightMap = new FlightMap();
     inputFlightMap.put(ResourceKeys.RESOURCE, bucketResource);

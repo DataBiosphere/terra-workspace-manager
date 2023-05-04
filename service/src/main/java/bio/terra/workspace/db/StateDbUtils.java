@@ -22,10 +22,13 @@ import org.springframework.stereotype.Component;
 public class StateDbUtils {
   private static final Logger logger = LoggerFactory.getLogger(StateDbUtils.class);
   private final NamedParameterJdbcTemplate jdbcTemplate;
+  private final WorkspaceActivityLogDao activityLogDao;
 
   @Autowired
-  public StateDbUtils(NamedParameterJdbcTemplate jdbcTemplate) {
+  public StateDbUtils(
+      NamedParameterJdbcTemplate jdbcTemplate, WorkspaceActivityLogDao workspaceActivityLogDao) {
     this.jdbcTemplate = jdbcTemplate;
+    this.activityLogDao = workspaceActivityLogDao;
   }
 
   /**
