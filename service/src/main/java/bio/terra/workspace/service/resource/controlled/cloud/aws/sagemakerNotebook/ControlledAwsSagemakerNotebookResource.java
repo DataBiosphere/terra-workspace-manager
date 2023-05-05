@@ -112,7 +112,10 @@ public class ControlledAwsSagemakerNotebookResource extends ControlledResource {
   @Override
   @JsonIgnore
   public Optional<UniquenessCheckAttributes> getUniquenessCheckAttributes() {
-    return Optional.of(new UniquenessCheckAttributes().uniquenessScope(UniquenessScope.GLOBAL));
+    return Optional.of(
+        new UniquenessCheckAttributes()
+            .uniquenessScope(UniquenessScope.GLOBAL)
+            .addParameter("instanceName", instanceName));
   }
 
   /** {@inheritDoc} */
