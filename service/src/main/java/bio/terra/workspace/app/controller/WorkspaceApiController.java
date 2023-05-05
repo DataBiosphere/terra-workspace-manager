@@ -687,11 +687,23 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         workspaceService.validateWorkspaceAndAction(
             petRequest, workspaceUuid, SamWorkspaceAction.READ);
 
-    Optional<SpendProfileId> spendProfileId =
+    // TODO: PF-2694 REST API part
+    //  When we make the REST API changes, the spend profile will come with the source cloud context
+    //  and we will take it from there. Only if missing, will we take it from the workspace. For
+    //  this part, we do the retrieval and permission check using the workspace spend profile.
+    Optional<SpendProfileId> spendProfileIdOptional =
         Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::new);
-    Optional<SpendProfile> spendProfile =
-        spendProfileId.map(
-            id -> spendProfileService.authorizeLinking(id, features.isBpmGcpEnabled(), petRequest));
+    SpendProfileId spendProfileId =
+        spendProfileIdOptional.orElse(
+            sourceWorkspace
+                .getSpendProfileId()
+                .orElseThrow(
+                    () ->
+                        MissingSpendProfileException.forWorkspace(sourceWorkspace.workspaceId())));
+
+    SpendProfile spendProfile =
+        spendProfileService.authorizeLinking(
+            spendProfileId, features.isBpmGcpEnabled(), petRequest);
 
     // Accept a target workspace id if one is provided. This allows Rawls to specify an
     // existing workspace id. WSM then creates the WSMspace supporting the Rawls workspace.
@@ -717,7 +729,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         Workspace.builder()
             .workspaceId(destinationWorkspaceId)
             .userFacingId(destinationUserFacingId)
-            .spendProfileId(spendProfileId.orElse(null))
+            .spendProfileId(spendProfileId)
             .workspaceStage(sourceWorkspace.getWorkspaceStage())
             .displayName(Optional.ofNullable(body.getDisplayName()).orElse(generatedDisplayName))
             .description(body.getDescription())
@@ -732,7 +744,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             body.getLocation(),
             TpsApiConversionUtils.tpsFromApiTpsPolicyInputs(body.getAdditionalPolicies()),
             destinationWorkspace,
-            spendProfile.orElse(null));
+            spendProfile);
 
     final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId);
     final ApiClonedWorkspace clonedWorkspaceStub =

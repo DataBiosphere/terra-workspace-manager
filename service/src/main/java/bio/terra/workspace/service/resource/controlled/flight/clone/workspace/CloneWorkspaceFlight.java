@@ -50,9 +50,9 @@ public class CloneWorkspaceFlight extends Flight {
             inputParameters,
             WorkspaceFlightMapKeys.ControlledResourceKeys.SOURCE_WORKSPACE_ID,
             UUID.class);
-    // Spend profile is nullable
     var spendProfile =
-        inputParameters.get(WorkspaceFlightMapKeys.SPEND_PROFILE, SpendProfile.class);
+        FlightUtils.getRequired(
+            inputParameters, WorkspaceFlightMapKeys.SPEND_PROFILE, SpendProfile.class);
 
     Workspace sourceWorkspace = flightBeanBag.getWorkspaceDao().getWorkspace(sourceWorkspaceId);
 

@@ -91,6 +91,7 @@ public class AzureCloneWorkspaceTest extends BaseAzureConnectedTest {
             .storageContainerName("storageContainerName"));
 
     UUID destUUID = UUID.randomUUID();
+
     destWorkspace =
         Workspace.builder()
             .workspaceId(destUUID)
@@ -99,6 +100,7 @@ public class AzureCloneWorkspaceTest extends BaseAzureConnectedTest {
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .createdByEmail(userRequest.getEmail())
             .build();
+
     String cloneJobId =
         workspaceService.cloneWorkspace(
             sourceWorkspace,
@@ -106,7 +108,7 @@ public class AzureCloneWorkspaceTest extends BaseAzureConnectedTest {
             /*location=*/ null,
             /*additionalPolicies=*/ null,
             destWorkspace,
-            /*spendProfile=*/ null);
+            azureTestUtils.getSpendProfile());
     jobService.waitForJob(cloneJobId);
 
     assertEquals(workspaceService.getWorkspace(destUUID), destWorkspace);

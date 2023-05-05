@@ -40,10 +40,7 @@ public class LaunchCreateCloudContextFlightStep implements Step {
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     validateRequiredEntries(
-        context.getInputParameters(),
-        ControlledResourceKeys.SOURCE_WORKSPACE_ID,
-        JobMapKeys.AUTH_USER_INFO.getKeyName(),
-        JobMapKeys.REQUEST.getKeyName());
+        context.getInputParameters(), ControlledResourceKeys.SOURCE_WORKSPACE_ID);
     validateRequiredEntries(context.getWorkingMap(), flightIdKey);
 
     FlightMap inputs = context.getInputParameters();
