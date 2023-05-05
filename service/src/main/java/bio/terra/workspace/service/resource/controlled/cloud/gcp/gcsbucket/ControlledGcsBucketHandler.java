@@ -76,7 +76,9 @@ public class ControlledGcsBucketHandler implements WsmResourceHandler {
             .or(CharMatcher.inRange('a', 'z'))
             .or(CharMatcher.is('-'))
             .retainFrom(generatedName);
-    // The name cannot start or end with dash("-")
+    // Truncate before trimming characters to ensure the name does not end with dash("-").
+    generatedName = StringUtils.truncate(generatedName, MAX_BUCKET_NAME_LENGTH);
+    // The name cannot start or end with dash("-").
     generatedName = CharMatcher.is('-').trimFrom(generatedName);
 
     if (generatedName.length() == 0) {
@@ -86,6 +88,6 @@ public class ControlledGcsBucketHandler implements WsmResourceHandler {
                   + " alphanumerical characters.",
               bucketName));
     }
-    return StringUtils.truncate(generatedName, MAX_BUCKET_NAME_LENGTH);
+    return generatedName;
   }
 }

@@ -6,6 +6,7 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResourceF
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.CharMatcher;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.Optional;
@@ -23,7 +24,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class ControlledAiNotebookHandler implements WsmResourceHandler {
 
-  private static final int MAX_INSTANCE_NAME_LENGTH = 63;
+  @VisibleForTesting public static final int MAX_INSTANCE_NAME_LENGTH = 63;
   private static ControlledAiNotebookHandler theHandler;
   private final GcpCloudContextService gcpCloudContextService;
 
@@ -74,10 +75,13 @@ public class ControlledAiNotebookHandler implements WsmResourceHandler {
             .or(CharMatcher.inRange('a', 'z'))
             .or(CharMatcher.is('-'))
             .retainFrom(aiNotebookName.toLowerCase());
-    // The name cannot start or end with dash("-")
-    generatedName = CharMatcher.is('-').trimFrom(generatedName);
-    // The name cannot start with number.
-    generatedName = CharMatcher.inRange('0', '9').trimLeadingFrom(generatedName);
+    // The name must start with a letter.
+    generatedName =
+        CharMatcher.inRange('0', '9').or(CharMatcher.is('-')).trimLeadingFrom(generatedName);
+    // Truncate before trimming characters to ensure the name does not end with dash("-").
+    generatedName = StringUtils.truncate(generatedName, MAX_INSTANCE_NAME_LENGTH);
+    // The name cannot end with dash("-").
+    generatedName = CharMatcher.is('-').trimTrailingFrom(generatedName);
 
     if (generatedName.length() == 0) {
       throw new BadRequestException(
@@ -86,6 +90,6 @@ public class ControlledAiNotebookHandler implements WsmResourceHandler {
                   + " alphanumerical characters.",
               aiNotebookName));
     }
-    return StringUtils.truncate(generatedName, MAX_INSTANCE_NAME_LENGTH);
+    return generatedName;
   }
 }
