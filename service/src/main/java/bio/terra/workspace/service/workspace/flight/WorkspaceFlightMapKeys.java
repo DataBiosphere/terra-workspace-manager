@@ -75,7 +75,7 @@ public final class WorkspaceFlightMapKeys {
     public static final String GCP_CLOUD_CONTEXT = "gcpCloudContext";
     public static final String CREATE_GCP_CLOUD_CONTEXT_FLIGHT_ID = "createGcpCloudContextFlightId";
 
-    // AZURE
+    // Azure
     public static final String AZURE_CLOUD_CONTEXT = "azureCloudContext";
     public static final String CREATE_AZURE_CLOUD_CONTEXT_FLIGHT_ID =
         "createAzureCloudContextFlightId";
