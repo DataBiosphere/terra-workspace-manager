@@ -71,6 +71,8 @@ readonly CROMSHELL_INSTALL_PATH="/usr/bin/cromshell"
 # Variables for Terra-specific code installed on the VM
 readonly TERRA_INSTALL_PATH="/usr/bin/terra"
 
+readonly TERRA_GIT_REPOS_DIR="${USER_HOME_DIR}/repos"
+
 readonly TERRA_BOOT_SCRIPT="${USER_TERRA_CONFIG_DIR}/instance-boot.sh"
 readonly TERRA_BOOT_SERVICE="/etc/systemd/system/terra-instance-boot.service"
 
@@ -357,11 +359,14 @@ rm -f "${USER_SSH_DIR}/id_rsa.tmp"
 # Set the github known_hosts
 sudo -u "${JUPYTER_USER}" sh -c "ssh-keyscan -H github.com >> ${USER_SSH_DIR}/known_hosts"
 
+# Create git repos directory
+sudo -u "${JUPYTER_USER}" sh -c "mkdir -p ${TERRA_GIT_REPOS_DIR}"
+
 # Attempt to clone all the git repo references in the workspace. If the user's ssh key does not exist or doesn't have access
 # to the git references, the corresponding git repo cloning will be skipped.
 # Keep this as last thing in script. There will be integration test for git cloning (PF-1660). If this is last thing, then
 # integration test will ensure that everything in script worked.
-sudo -u "${JUPYTER_USER}" sh -c 'cd "${HOME}" && terra git clone --all'
+sudo -u "${JUPYTER_USER}" sh -c 'cd "${TERRA_GIT_REPOS_DIR}" && terra git clone --all'
 
 #############################
 # Setup instance boot service
