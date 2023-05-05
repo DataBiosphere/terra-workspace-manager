@@ -1,9 +1,9 @@
-package bio.terra.workspace.service.resource.controlled.cloud.aws;
+package bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolder;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import bio.terra.workspace.common.BaseAwsUnitTest;
-import bio.terra.workspace.service.resource.controlled.cloud.aws.s3storageFolder.ControlledAwsS3StorageFolderHandler;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.AwsResourceConstants;
 import liquibase.util.StringUtil;
 import org.junit.jupiter.api.Test;
 
@@ -13,7 +13,7 @@ public class ControlledAwsS3StorageFolderHandlerTest extends BaseAwsUnitTest {
   public void generateFolderName() {
     String workspaceUserFacingId = "workspaceUserFacingId";
     String resourceName = "resource";
-    String generatedName = "resource-workspaceUserFacingId";
+    String generatedName = resourceName + '-' + workspaceUserFacingId;
 
     assertEquals(
         generatedName,
@@ -24,14 +24,13 @@ public class ControlledAwsS3StorageFolderHandlerTest extends BaseAwsUnitTest {
     assertEquals(
         generatedName,
         ControlledAwsS3StorageFolderHandler.getHandler()
-            .generateCloudName(workspaceUserFacingId, "reso{}^%`<>~#|@*+[]'\"\\urce"),
+            .generateCloudName(workspaceUserFacingId, resourceName + "{}^%`<>~#|@*+[]'\"\\"),
         "resource name expected with all invalid characters removed");
 
-    resourceName = "r.e-o!u_r(c)e";
     assertEquals(
-        resourceName + "-" + workspaceUserFacingId,
+        ".-!_()" + generatedName,
         ControlledAwsS3StorageFolderHandler.getHandler()
-            .generateCloudName(workspaceUserFacingId, resourceName),
+            .generateCloudName(workspaceUserFacingId, ".-!_()" + resourceName),
         "resource name expected without changes with allowed characters");
 
     resourceName =
@@ -41,6 +40,6 @@ public class ControlledAwsS3StorageFolderHandlerTest extends BaseAwsUnitTest {
         ControlledAwsS3StorageFolderHandler.getHandler()
             .generateCloudName(workspaceUserFacingId, resourceName)
             .length(),
-        "resource name trimmed");
+        "resource name expected to be trimmed to max length");
   }
 }

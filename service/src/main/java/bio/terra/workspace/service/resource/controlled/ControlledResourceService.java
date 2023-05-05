@@ -1,7 +1,5 @@
 package bio.terra.workspace.service.resource.controlled;
 
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE;
-
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.ServiceUnavailableException;
 import bio.terra.stairway.FlightState;
@@ -66,7 +64,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class ControlledResourceService {
   private static final Logger logger = LoggerFactory.getLogger(ControlledResourceService.class);
-  // These are chosen to retry a maximum wait time so we return under a 30 second
+  // These are chosen to retry a maximum wait time, so we return under a 30 second
   // network timeout.
   private static final int RESOURCE_ROW_WAIT_SECONDS = 1;
   private static final Duration RESOURCE_ROW_MAX_WAIT_TIME = Duration.ofSeconds(28);
@@ -102,22 +100,186 @@ public class ControlledResourceService {
     this.grantService = grantService;
   }
 
-  public String createAzureVm(
-      ControlledAzureVmResource resource,
-      ApiAzureVmCreationParameters creationParameters,
+  public <T> ControlledResource createControlledResourceSync(
+      ControlledResource resource,
       ControlledResourceIamRole privateResourceIamRole,
+      AuthenticatedUserRequest userRequest,
+      T creationParameters) {
+    JobBuilder jobBuilder =
+        commonCreationJobBuilder(resource, privateResourceIamRole, userRequest)
+            .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
+    return jobBuilder.submitAndWait(ControlledResource.class);
+  }
+
+  /** Simpler interface for synchronous controlled resource creation */
+  private JobBuilder commonCreationJobBuilder(
+      ControlledResource resource,
+      ControlledResourceIamRole privateResourceIamRole,
+      AuthenticatedUserRequest userRequest) {
+    return commonCreationJobBuilder(resource, privateResourceIamRole, null, null, userRequest);
+  }
+
+  /** Create a JobBuilder for creating controlled resources with the common parameters populated. */
+  private JobBuilder commonCreationJobBuilder(
+      ControlledResource resource,
+      @Nullable ControlledResourceIamRole privateResourceIamRole,
+      @Nullable ApiJobControl jobControl,
+      @Nullable String resultPath,
+      AuthenticatedUserRequest userRequest) {
+
+    final String jobDescription =
+        String.format(
+            "Create controlled resource %s; id %s; name %s",
+            resource.getResourceType(), resource.getResourceId(), resource.getName());
+
+    if (features.isTpsEnabled()) {
+      ResourceValidationUtils.validateRegionAgainstPolicy(
+          tpsApiDispatch,
+          resource.getWorkspaceId(),
+          resource.getRegion(),
+          resource.getResourceType().getCloudPlatform());
+    }
+
+    return jobService
+        .newJob()
+        .description(jobDescription)
+        .jobId(Optional.ofNullable(jobControl).map(ApiJobControl::getId).orElse(null))
+        .flightClass(CreateControlledResourceFlight.class)
+        .resource(resource)
+        .userRequest(userRequest)
+        .operationType(OperationType.CREATE)
+        .workspaceId(resource.getWorkspaceId().toString())
+        .resourceName(resource.getName())
+        .resourceType(resource.getResourceType())
+        .stewardshipType(resource.getStewardshipType())
+        .addParameter(ControlledResourceKeys.PRIVATE_RESOURCE_IAM_ROLE, privateResourceIamRole)
+        .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
+        .addParameter(ResourceKeys.RESOURCE_STATE_RULE, features.getStateRule());
+  }
+
+  /**
+   * When creating application-owned resources, we need to hold the UUID of the application in the
+   * ControlledResource object. On the one hand, maybe this should be done as part of the create
+   * flight. On the other hand, the pattern we have is to assemble the complete ControlledResource
+   * in the controller and have that class be immutable. So we do this lookup and error check early
+   * on. Throws ApplicationNotFound if there is no matching application record.
+   *
+   * @param managedBy the managed by type
+   * @param userRequest the user request
+   * @return null if not an application managed resource; application UUID otherwise
+   */
+  public @Nullable String getAssociatedApp(
+      ManagedByType managedBy, AuthenticatedUserRequest userRequest) {
+    if (managedBy != ManagedByType.MANAGED_BY_APPLICATION) {
+      return null;
+    }
+
+    WsmApplication application =
+        applicationDao.getApplicationByEmail(
+            samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest));
+    return application.getApplicationId();
+  }
+
+  public ControlledResource getControlledResource(UUID workspaceUuid, UUID resourceId) {
+    return resourceDao.getResource(workspaceUuid, resourceId).castToControlledResource();
+  }
+
+  /** Synchronously delete a controlled resource. */
+  public void deleteControlledResourceSync(
+      UUID workspaceUuid, UUID resourceId, AuthenticatedUserRequest userRequest) {
+    JobBuilder deleteJob =
+        commonDeletionJobBuilder(
+            UUID.randomUUID().toString(), workspaceUuid, resourceId, null, userRequest);
+    // Delete flight does not produce a result, so the resultClass parameter here is never used.
+    deleteJob.submitAndWait(Void.class);
+  }
+
+  /**
+   * Asynchronously delete a controlled resource. Returns the ID of the flight running the delete
+   * job.
+   */
+  public String deleteControlledResourceAsync(
       ApiJobControl jobControl,
+      UUID workspaceUuid,
+      UUID resourceId,
       String resultPath,
       AuthenticatedUserRequest userRequest) {
-    JobBuilder jobBuilder =
-        commonCreationJobBuilder(
-                resource, privateResourceIamRole, jobControl, resultPath, userRequest)
-            .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
 
-    String jobId = jobBuilder.submit();
-    waitForResourceOrJob(resource.getWorkspaceId(), resource.getResourceId(), jobId);
-    return jobId;
+    JobBuilder deleteJob =
+        commonDeletionJobBuilder(
+            jobControl.getId(), workspaceUuid, resourceId, resultPath, userRequest);
+    return deleteJob.submit();
   }
+
+  /**
+   * Creates and returns a JobBuilder object for deleting a controlled resource. Depending on the
+   * type of resource being deleted, this job may need to run asynchronously.
+   */
+  private JobBuilder commonDeletionJobBuilder(
+      String jobId,
+      UUID workspaceUuid,
+      UUID resourceId,
+      String resultPath,
+      AuthenticatedUserRequest userRequest) {
+    WsmResource resource = resourceDao.getResource(workspaceUuid, resourceId);
+    final String jobDescription = "Delete controlled resource; id: " + resourceId;
+
+    List<WsmResource> resourceToDelete = new ArrayList<>();
+    resourceToDelete.add(resource);
+    return jobService
+        .newJob()
+        .description(jobDescription)
+        .jobId(jobId)
+        .flightClass(DeleteControlledResourcesFlight.class)
+        .userRequest(userRequest)
+        .workspaceId(workspaceUuid.toString())
+        .operationType(OperationType.DELETE)
+        // resourceType, resourceName, stewardshipType are set for flight job filtering.
+        .resourceType(resource.getResourceType())
+        .resourceName(resource.getName())
+        .stewardshipType(resource.getStewardshipType())
+        .workspaceId(workspaceUuid.toString())
+        .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
+        .addParameter(ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE, resourceToDelete);
+  }
+
+  /**
+   * For async resource creation, we do not want to return to the caller until the resource row is
+   * in the database and, thus, visible to enumeration. This method waits for either the row to show
+   * up (the expected success case) or the job to complete (the expected error case). If one of
+   * those doesn't happen in the retry window, we throw SERVICE_UNAVAILABLE. The theory is for it
+   * not to complete, either WSM is so busy that it cannot schedule the flight or something bad has
+   * happened. Either way, SERVICE_UNAVAILABLE seems like a reasonable response.
+   *
+   * <p>There is no race condition between the two checks. For either termination test, we will make
+   * the async return to the client. That path returns the current job state. If the job is
+   * complete, the client calls the result endpoint and gets the full result.
+   *
+   * @param workspaceUuid workspace of the resource create
+   * @param resourceId id of resource being created
+   * @param jobId id of the create flight.
+   */
+  private void waitForResourceOrJob(UUID workspaceUuid, UUID resourceId, String jobId) {
+    Instant exitTime = Instant.now().plus(RESOURCE_ROW_MAX_WAIT_TIME);
+    try {
+      while (Instant.now().isBefore(exitTime)) {
+        if (resourceDao.resourceExists(workspaceUuid, resourceId)) {
+          return;
+        }
+        FlightState flightState = jobService.getStairway().getFlightState(jobId);
+        if (flightState.getCompleted().isPresent()) {
+          return;
+        }
+        TimeUnit.SECONDS.sleep(RESOURCE_ROW_WAIT_SECONDS);
+      }
+    } catch (InterruptedException e) {
+      // fall through to throw
+    }
+
+    throw new ServiceUnavailableException("Failed to make prompt progress on resource");
+  }
+
+  // GCP
 
   /**
    * Clone a GCS Bucket to another workspace.
@@ -188,115 +350,6 @@ public class ControlledResourceService {
                     .map(CloningInstructions::fromApiModel)
                     .orElse(sourceBucketResource.getCloningInstructions()));
     return jobBuilder.submit();
-  }
-
-  public String cloneAzureContainer(
-      UUID sourceWorkspaceId,
-      UUID sourceResourceId,
-      UUID destinationWorkspaceId,
-      UUID destinationResourceId,
-      ApiJobControl jobControl,
-      AuthenticatedUserRequest userRequest,
-      @Nullable String destinationResourceName,
-      @Nullable String destinationDescription,
-      @Nullable String destinationContainerName,
-      @Nullable ApiCloningInstructionsEnum cloningInstructionsOverride,
-      @Nullable List<String> prefixesToClone) {
-    final ControlledResource sourceContainer =
-        getControlledResource(sourceWorkspaceId, sourceResourceId);
-
-    // Write access to the target workspace will be established in the create flight
-    final String jobDescription =
-        String.format(
-            "Clone controlled resource %s; id %s; name %s",
-            sourceContainer.getResourceType(),
-            sourceContainer.getResourceId(),
-            sourceContainer.getName());
-
-    // If TPS is enabled, then we want to merge policies when cloning a container
-    boolean mergePolicies = features.isTpsEnabled();
-
-    final JobBuilder jobBuilder =
-        jobService
-            .newJob()
-            .description(jobDescription)
-            .jobId(jobControl.getId())
-            .flightClass(CloneControlledAzureStorageContainerResourceFlight.class)
-            .resource(sourceContainer)
-            .userRequest(userRequest)
-            .workspaceId(sourceWorkspaceId.toString())
-            .operationType(OperationType.CLONE)
-            .addParameter(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId)
-            .addParameter(ControlledResourceKeys.DESTINATION_RESOURCE_ID, destinationResourceId)
-            .addParameter(ResourceKeys.RESOURCE_NAME, destinationResourceName)
-            .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, destinationDescription)
-            .addParameter(
-                ControlledResourceKeys.DESTINATION_CONTAINER_NAME, destinationContainerName)
-            .addParameter(WorkspaceFlightMapKeys.MERGE_POLICIES, mergePolicies)
-            .addParameter(
-                ResourceKeys.CLONING_INSTRUCTIONS,
-                Optional.ofNullable(cloningInstructionsOverride)
-                    .map(CloningInstructions::fromApiModel)
-                    .orElse(sourceContainer.getCloningInstructions()))
-            .addParameter(ControlledResourceKeys.PREFIXES_TO_CLONE, prefixesToClone);
-    return jobBuilder.submit();
-  }
-
-  public <T> ControlledResource createControlledResourceSync(
-      ControlledResource resource,
-      ControlledResourceIamRole privateResourceIamRole,
-      AuthenticatedUserRequest userRequest,
-      T creationParameters) {
-    JobBuilder jobBuilder =
-        commonCreationJobBuilder(resource, privateResourceIamRole, userRequest)
-            .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
-    return jobBuilder.submitAndWait(ControlledResource.class);
-  }
-
-  public ControlledFlexibleResource cloneFlexResource(
-      UUID sourceWorkspaceId,
-      UUID sourceResourceId,
-      UUID destinationWorkspaceId,
-      UUID destinationResourceId,
-      AuthenticatedUserRequest userRequest,
-      @Nullable String destinationResourceName,
-      @Nullable String destinationDescription,
-      @Nullable ApiCloningInstructionsEnum cloningInstructionsOverride) {
-    final ControlledResource sourceFlexResource =
-        getControlledResource(sourceWorkspaceId, sourceResourceId);
-
-    final String jobDescription =
-        String.format(
-            "Clone controlled flex resource id %s; name %s",
-            sourceResourceId, sourceFlexResource.getName());
-
-    final CloningInstructions effectiveCloningInstructions =
-        Optional.ofNullable(cloningInstructionsOverride)
-            .map(CloningInstructions::fromApiModel)
-            .orElse(sourceFlexResource.getCloningInstructions());
-
-    // If TPS is enabled, then we want to merge policies when cloning a flex resource.
-    boolean mergePolicies = features.isTpsEnabled();
-
-    final JobBuilder jobBuilder =
-        jobService
-            .newJob()
-            .description(jobDescription)
-            .flightClass(CloneControlledFlexibleResourceFlight.class)
-            .resourceType(WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE)
-            .resource(sourceFlexResource)
-            .workspaceId(destinationWorkspaceId.toString())
-            .operationType(OperationType.CLONE)
-            .addParameter(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId)
-            .addParameter(ControlledResourceKeys.DESTINATION_RESOURCE_ID, destinationResourceId)
-            .addParameter(ResourceKeys.RESOURCE_NAME, destinationResourceName)
-            .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, destinationDescription)
-            .addParameter(ResourceKeys.CLONING_INSTRUCTIONS, effectiveCloningInstructions)
-            .addParameter(ResourceKeys.RESOURCE, sourceFlexResource)
-            .addParameter(WorkspaceFlightMapKeys.MERGE_POLICIES, mergePolicies)
-            .addParameter(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
-
-    return jobBuilder.submitAndWait(ControlledFlexibleResource.class);
   }
 
   /**
@@ -405,106 +458,6 @@ public class ControlledResourceService {
     return jobId;
   }
 
-  /** Simpler interface for synchronous controlled resource creation */
-  private JobBuilder commonCreationJobBuilder(
-      ControlledResource resource,
-      ControlledResourceIamRole privateResourceIamRole,
-      AuthenticatedUserRequest userRequest) {
-    return commonCreationJobBuilder(resource, privateResourceIamRole, null, null, userRequest);
-  }
-
-  /** Create a JobBuilder for creating controlled resources with the common parameters populated. */
-  private JobBuilder commonCreationJobBuilder(
-      ControlledResource resource,
-      @Nullable ControlledResourceIamRole privateResourceIamRole,
-      @Nullable ApiJobControl jobControl,
-      @Nullable String resultPath,
-      AuthenticatedUserRequest userRequest) {
-
-    final String jobDescription =
-        String.format(
-            "Create controlled resource %s; id %s; name %s",
-            resource.getResourceType(), resource.getResourceId(), resource.getName());
-
-    if (features.isTpsEnabled()) {
-      ResourceValidationUtils.validateRegionAgainstPolicy(
-          tpsApiDispatch,
-          resource.getWorkspaceId(),
-          resource.getRegion(),
-          resource.getResourceType().getCloudPlatform());
-    }
-
-    return jobService
-        .newJob()
-        .description(jobDescription)
-        .jobId(Optional.ofNullable(jobControl).map(ApiJobControl::getId).orElse(null))
-        .flightClass(CreateControlledResourceFlight.class)
-        .resource(resource)
-        .userRequest(userRequest)
-        .operationType(OperationType.CREATE)
-        .workspaceId(resource.getWorkspaceId().toString())
-        .resourceName(resource.getName())
-        .resourceType(resource.getResourceType())
-        .stewardshipType(resource.getStewardshipType())
-        .addParameter(ControlledResourceKeys.PRIVATE_RESOURCE_IAM_ROLE, privateResourceIamRole)
-        .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
-        .addParameter(ResourceKeys.RESOURCE_STATE_RULE, features.getStateRule());
-  }
-
-  /**
-   * When creating application-owned resources, we need to hold the UUID of the application in the
-   * ControlledResource object. On the one hand, maybe this should be done as part of the create
-   * flight. On the other hand, the pattern we have is to assemble the complete ControlledResource
-   * in the controller and have that class be immutable. So we do this lookup and error check early
-   * on. Throws ApplicationNotFound if there is no matching application record.
-   *
-   * @param managedBy the managed by type
-   * @param userRequest the user request
-   * @return null if not an application managed resource; application UUID otherwise
-   */
-  public @Nullable String getAssociatedApp(
-      ManagedByType managedBy, AuthenticatedUserRequest userRequest) {
-    if (managedBy != ManagedByType.MANAGED_BY_APPLICATION) {
-      return null;
-    }
-
-    WsmApplication application =
-        applicationDao.getApplicationByEmail(
-            samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest));
-    return application.getApplicationId();
-  }
-
-  public ControlledResource getControlledResource(UUID workspaceUuid, UUID resourceId) {
-    return resourceDao.getResource(workspaceUuid, resourceId).castToControlledResource();
-  }
-
-  /** Synchronously delete a controlled resource. */
-  public void deleteControlledResourceSync(
-      UUID workspaceUuid, UUID resourceId, AuthenticatedUserRequest userRequest) {
-    JobBuilder deleteJob =
-        commonDeletionJobBuilder(
-            UUID.randomUUID().toString(), workspaceUuid, resourceId, null, userRequest);
-    // Delete flight does not produce a result, so the resultClass parameter here is never used.
-    deleteJob.submitAndWait(Void.class);
-  }
-
-  /**
-   * Asynchronously delete a controlled resource. Returns the ID of the flight running the delete
-   * job.
-   */
-  public String deleteControlledResourceAsync(
-      ApiJobControl jobControl,
-      UUID workspaceUuid,
-      UUID resourceId,
-      String resultPath,
-      AuthenticatedUserRequest userRequest) {
-
-    JobBuilder deleteJob =
-        commonDeletionJobBuilder(
-            jobControl.getId(), workspaceUuid, resourceId, resultPath, userRequest);
-    return deleteJob.submit();
-  }
-
   public Policy configureGcpPolicyForResource(
       ControlledResource resource,
       GcpCloudContext cloudContext,
@@ -577,71 +530,122 @@ public class ControlledResourceService {
     return gcpPolicyBuilder.build();
   }
 
-  /**
-   * Creates and returns a JobBuilder object for deleting a controlled resource. Depending on the
-   * type of resource being deleted, this job may need to run asynchronously.
-   */
-  private JobBuilder commonDeletionJobBuilder(
-      String jobId,
-      UUID workspaceUuid,
-      UUID resourceId,
+  // Azure
+
+  public String createAzureVm(
+      ControlledAzureVmResource resource,
+      ApiAzureVmCreationParameters creationParameters,
+      ControlledResourceIamRole privateResourceIamRole,
+      ApiJobControl jobControl,
       String resultPath,
       AuthenticatedUserRequest userRequest) {
-    WsmResource resource = resourceDao.getResource(workspaceUuid, resourceId);
-    final String jobDescription = "Delete controlled resource; id: " + resourceId;
+    JobBuilder jobBuilder =
+        commonCreationJobBuilder(
+                resource, privateResourceIamRole, jobControl, resultPath, userRequest)
+            .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
 
-    List<WsmResource> resourceToDelete = new ArrayList<>();
-    resourceToDelete.add(resource);
-    return jobService
-        .newJob()
-        .description(jobDescription)
-        .jobId(jobId)
-        .flightClass(DeleteControlledResourcesFlight.class)
-        .userRequest(userRequest)
-        .workspaceId(workspaceUuid.toString())
-        .operationType(OperationType.DELETE)
-        // resourceType, resourceName, stewardshipType are set for flight job filtering.
-        .resourceType(resource.getResourceType())
-        .resourceName(resource.getName())
-        .stewardshipType(resource.getStewardshipType())
-        .workspaceId(workspaceUuid.toString())
-        .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
-        .addParameter(CONTROLLED_RESOURCES_TO_DELETE, resourceToDelete);
+    String jobId = jobBuilder.submit();
+    waitForResourceOrJob(resource.getWorkspaceId(), resource.getResourceId(), jobId);
+    return jobId;
   }
 
-  /**
-   * For async resource creation, we do not want to return to the caller until the resource row is
-   * in the database and, thus, visible to enumeration. This method waits for either the row to show
-   * up (the expected success case) or the job to complete (the expected error case). If one of
-   * those doesn't happen in the retry window, we throw SERVICE_UNAVAILABLE. The theory is for it
-   * not to complete, either WSM is so busy that it cannot schedule the flight or something bad has
-   * happened. Either way, SERVICE_UNAVAILABLE seems like a reasonable response.
-   *
-   * <p>There is no race condition between the two checks. For either termination test, we will make
-   * the async return to the client. That path returns the current job state. If the job is
-   * complete, the client calls the result endpoint and gets the full result.
-   *
-   * @param workspaceUuid workspace of the resource create
-   * @param resourceId id of resource being created
-   * @param jobId id of the create flight.
-   */
-  private void waitForResourceOrJob(UUID workspaceUuid, UUID resourceId, String jobId) {
-    Instant exitTime = Instant.now().plus(RESOURCE_ROW_MAX_WAIT_TIME);
-    try {
-      while (Instant.now().isBefore(exitTime)) {
-        if (resourceDao.resourceExists(workspaceUuid, resourceId)) {
-          return;
-        }
-        FlightState flightState = jobService.getStairway().getFlightState(jobId);
-        if (flightState.getCompleted().isPresent()) {
-          return;
-        }
-        TimeUnit.SECONDS.sleep(RESOURCE_ROW_WAIT_SECONDS);
-      }
-    } catch (InterruptedException e) {
-      // fall through to throw
-    }
+  public String cloneAzureContainer(
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId,
+      UUID destinationWorkspaceId,
+      UUID destinationResourceId,
+      ApiJobControl jobControl,
+      AuthenticatedUserRequest userRequest,
+      @Nullable String destinationResourceName,
+      @Nullable String destinationDescription,
+      @Nullable String destinationContainerName,
+      @Nullable ApiCloningInstructionsEnum cloningInstructionsOverride,
+      @Nullable List<String> prefixesToClone) {
+    final ControlledResource sourceContainer =
+        getControlledResource(sourceWorkspaceId, sourceResourceId);
 
-    throw new ServiceUnavailableException("Failed to make prompt progress on resource");
+    // Write access to the target workspace will be established in the create flight
+    final String jobDescription =
+        String.format(
+            "Clone controlled resource %s; id %s; name %s",
+            sourceContainer.getResourceType(),
+            sourceContainer.getResourceId(),
+            sourceContainer.getName());
+
+    // If TPS is enabled, then we want to merge policies when cloning a container
+    boolean mergePolicies = features.isTpsEnabled();
+
+    final JobBuilder jobBuilder =
+        jobService
+            .newJob()
+            .description(jobDescription)
+            .jobId(jobControl.getId())
+            .flightClass(CloneControlledAzureStorageContainerResourceFlight.class)
+            .resource(sourceContainer)
+            .userRequest(userRequest)
+            .workspaceId(sourceWorkspaceId.toString())
+            .operationType(OperationType.CLONE)
+            .addParameter(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId)
+            .addParameter(ControlledResourceKeys.DESTINATION_RESOURCE_ID, destinationResourceId)
+            .addParameter(ResourceKeys.RESOURCE_NAME, destinationResourceName)
+            .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, destinationDescription)
+            .addParameter(
+                ControlledResourceKeys.DESTINATION_CONTAINER_NAME, destinationContainerName)
+            .addParameter(WorkspaceFlightMapKeys.MERGE_POLICIES, mergePolicies)
+            .addParameter(
+                ResourceKeys.CLONING_INSTRUCTIONS,
+                Optional.ofNullable(cloningInstructionsOverride)
+                    .map(CloningInstructions::fromApiModel)
+                    .orElse(sourceContainer.getCloningInstructions()))
+            .addParameter(ControlledResourceKeys.PREFIXES_TO_CLONE, prefixesToClone);
+    return jobBuilder.submit();
+  }
+
+  // Flexible
+
+  public ControlledFlexibleResource cloneFlexResource(
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId,
+      UUID destinationWorkspaceId,
+      UUID destinationResourceId,
+      AuthenticatedUserRequest userRequest,
+      @Nullable String destinationResourceName,
+      @Nullable String destinationDescription,
+      @Nullable ApiCloningInstructionsEnum cloningInstructionsOverride) {
+    final ControlledResource sourceFlexResource =
+        getControlledResource(sourceWorkspaceId, sourceResourceId);
+
+    final String jobDescription =
+        String.format(
+            "Clone controlled flex resource id %s; name %s",
+            sourceResourceId, sourceFlexResource.getName());
+
+    final CloningInstructions effectiveCloningInstructions =
+        Optional.ofNullable(cloningInstructionsOverride)
+            .map(CloningInstructions::fromApiModel)
+            .orElse(sourceFlexResource.getCloningInstructions());
+
+    // If TPS is enabled, then we want to merge policies when cloning a flex resource.
+    boolean mergePolicies = features.isTpsEnabled();
+
+    final JobBuilder jobBuilder =
+        jobService
+            .newJob()
+            .description(jobDescription)
+            .flightClass(CloneControlledFlexibleResourceFlight.class)
+            .resourceType(WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE)
+            .resource(sourceFlexResource)
+            .workspaceId(destinationWorkspaceId.toString())
+            .operationType(OperationType.CLONE)
+            .addParameter(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId)
+            .addParameter(ControlledResourceKeys.DESTINATION_RESOURCE_ID, destinationResourceId)
+            .addParameter(ResourceKeys.RESOURCE_NAME, destinationResourceName)
+            .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, destinationDescription)
+            .addParameter(ResourceKeys.CLONING_INSTRUCTIONS, effectiveCloningInstructions)
+            .addParameter(ResourceKeys.RESOURCE, sourceFlexResource)
+            .addParameter(WorkspaceFlightMapKeys.MERGE_POLICIES, mergePolicies)
+            .addParameter(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
+
+    return jobBuilder.submitAndWait(ControlledFlexibleResource.class);
   }
 }

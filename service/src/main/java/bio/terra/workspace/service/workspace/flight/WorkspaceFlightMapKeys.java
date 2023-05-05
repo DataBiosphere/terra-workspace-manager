@@ -30,9 +30,6 @@ public final class WorkspaceFlightMapKeys {
 
     public static final String CREATION_PARAMETERS = "creationParameters";
     public static final String PRIVATE_RESOURCE_IAM_ROLE = "privateResourceIamRole";
-    public static final String GCP_CLOUD_CONTEXT = "gcpCloudContext";
-    public static final String AZURE_CLOUD_CONTEXT = "azureCloudContext";
-    public static final String AWS_CLOUD_CONTEXT = "awsCloudContext";
     public static final String PREVIOUS_UPDATE_PARAMETERS = "previousUpdateParameters";
     public static final String CREATE_RESOURCE_REGION = "createResourceRegion";
 
@@ -51,9 +48,6 @@ public final class WorkspaceFlightMapKeys {
     public static final String CLONE_DEFINITION_RESULT = "cloneDefinitionResult";
     public static final String CLONED_RESOURCE_DEFINITION = "clonedResourceDefinition";
     public static final String CONTROL_PLANE_PROJECT_ID = "controlPlaneProjectId";
-    public static final String CREATE_GCP_CLOUD_CONTEXT_FLIGHT_ID = "createGcpCloudContextFlightId";
-    public static final String CREATE_AZURE_CLOUD_CONTEXT_FLIGHT_ID =
-        "createAzureCloudContextFlightId";
     public static final String DESTINATION_BUCKET_NAME = "destinationBucketName";
     public static final String DESTINATION_CLONE_INPUTS = "destinationCloneInputs";
     public static final String DESTINATION_DATASET_NAME = "destinationDatasetName";
@@ -76,6 +70,19 @@ public final class WorkspaceFlightMapKeys {
     public static final String DESTINATION_RESOURCE_ID = "destinationResourceId";
     public static final String DESTINATION_FOLDER_ID = "destinationFolderId";
     public static final String DESTINATION_CONTAINER_NAME = "destinationContainerName";
+
+    // GCP
+    public static final String GCP_CLOUD_CONTEXT = "gcpCloudContext";
+    public static final String CREATE_GCP_CLOUD_CONTEXT_FLIGHT_ID = "createGcpCloudContextFlightId";
+
+    // Azure
+    public static final String AZURE_CLOUD_CONTEXT = "azureCloudContext";
+    public static final String CREATE_AZURE_CLOUD_CONTEXT_FLIGHT_ID =
+        "createAzureCloudContextFlightId";
+
+    // AWS
+    public static final String AWS_CLOUD_CONTEXT = "awsCloudContext";
+    public static final String AWS_ENVIRONMENT = "awsEnvironment";
   }
 
   public static class FolderKeys {
