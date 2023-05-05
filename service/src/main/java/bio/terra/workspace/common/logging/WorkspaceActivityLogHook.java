@@ -15,6 +15,7 @@ import bio.terra.stairway.StairwayHook;
 import bio.terra.workspace.common.exception.UnhandledActivityLogException;
 import bio.terra.workspace.common.exception.UnhandledDeletionFlightException;
 import bio.terra.workspace.common.logging.model.ActivityFlight;
+import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.FolderDao;
@@ -27,6 +28,7 @@ import bio.terra.workspace.service.admin.flights.cloudcontexts.gcp.SyncGcpIamRol
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneAllResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.WsmResource;
@@ -36,10 +38,13 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Resou
 import bio.terra.workspace.service.workspace.gcpcontextbackfill.GcpContextBackfillFlight;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
+import bio.terra.workspace.service.workspace.model.WsmResourceCloneDetails;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Preconditions;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -119,12 +124,17 @@ public class WorkspaceActivityLogHook implements StairwayHook {
             CloudPlatform.AZURE, workspaceUuid, userEmail, subjectId);
         case AWS_CLOUD_CONTEXT -> maybeLogCloudContextDeletionFlight(
             CloudPlatform.AWS, workspaceUuid, userEmail, subjectId);
-        case RESOURCE -> maybeLogControlledResourcesDeletionFlight(
-            context, workspaceUuid, userEmail, subjectId);
         case FOLDER -> maybeLogFolderDeletionFlight(context, workspaceUuid, userEmail, subjectId);
-        default -> throw new UnhandledDeletionFlightException(
-            String.format(
-                "Activity log should be updated for deletion flight %s failures", flightClassName));
+        default -> {
+          if (af.isResourceFlight()) {
+            maybeLogControlledResourcesDeletionFlight(context, workspaceUuid, userEmail, subjectId);
+          } else {
+            throw new UnhandledDeletionFlightException(
+                String.format(
+                    "Activity log should be updated for deletion flight %s failures",
+                    flightClassName));
+          }
+        }
       }
       return HookAction.CONTINUE;
     }
@@ -138,16 +148,6 @@ public class WorkspaceActivityLogHook implements StairwayHook {
                 subjectId,
                 operationType,
                 getClonedWorkspaceId(context, operationType, workspaceUuid).toString(),
-                af.getActivityLogChangedTarget()));
-        case RESOURCE -> activityLogDao.writeActivity(
-            getAffectedWorkspaceId(context, operationType, workspaceUuid),
-            new DbWorkspaceActivityLog(
-                userEmail,
-                subjectId,
-                operationType,
-                getRequired(context.getInputParameters(), ResourceKeys.RESOURCE, WsmResource.class)
-                    .getResourceId()
-                    .toString(),
                 af.getActivityLogChangedTarget()));
         case FOLDER -> activityLogDao.writeActivity(
             workspaceUuid,
@@ -167,9 +167,65 @@ public class WorkspaceActivityLogHook implements StairwayHook {
                 af.getActivityLogChangedTarget()));
         case APPLICATION -> logApplicationAbleFlight(
             workspaceUuid, context, userEmail, subjectId, operationType);
+        default -> {
+          if (af.isResourceFlight()) {
+            if (CloneAllResourcesFlight.class.getName().equals(flightClassName)) {
+              logSuccessfulResourcesCloneFlight(context, userEmail, subjectId, workspaceUuid);
+            } else {
+              logSuccessfulResourceFlight(
+                  context, operationType, userEmail, subjectId, workspaceUuid);
+            }
+            break;
+          }
+          throw new UnhandledActivityLogException(
+              String.format(
+                  "A successful Flight %s for %s is not logged.",
+                  flightClassName, af.getActivityLogChangedTarget()));
+        }
       }
     }
     return HookAction.CONTINUE;
+  }
+
+  private void logSuccessfulResourcesCloneFlight(
+      FlightContext context, String userEmail, String subjectId, UUID workspaceUuid) {
+    var resourceIdToCloneDetails =
+        Optional.ofNullable(
+                context
+                    .getWorkingMap()
+                    .get(
+                        ControlledResourceKeys.RESOURCE_ID_TO_CLONE_RESULT,
+                        new TypeReference<Map<UUID, WsmResourceCloneDetails>>() {}))
+            .orElseGet(HashMap::new);
+    resourceIdToCloneDetails.forEach(
+        (uuid, wsmResourceCloneDetails) ->
+            activityLogDao.writeActivity(
+                getAffectedWorkspaceId(context, OperationType.CLONE, workspaceUuid),
+                new DbWorkspaceActivityLog(
+                    userEmail,
+                    subjectId,
+                    OperationType.CLONE,
+                    wsmResourceCloneDetails.getSourceResourceId().toString(),
+                    wsmResourceCloneDetails.getResourceType().getActivityLogChangedTarget())));
+  }
+
+  private void logSuccessfulResourceFlight(
+      FlightContext context,
+      OperationType operationType,
+      String userEmail,
+      String subjectId,
+      UUID workspaceUuid) {
+
+    WsmResource resource =
+        getRequired(context.getInputParameters(), ResourceKeys.RESOURCE, WsmResource.class);
+    activityLogDao.writeActivity(
+        getAffectedWorkspaceId(context, operationType, workspaceUuid),
+        new DbWorkspaceActivityLog(
+            userEmail,
+            subjectId,
+            operationType,
+            resource.getResourceId().toString(),
+            resource.getResourceType().getActivityLogChangedTarget()));
   }
 
   /**
@@ -315,6 +371,13 @@ public class WorkspaceActivityLogHook implements StairwayHook {
             resourceId,
             workspaceUuid);
       } catch (ResourceNotFoundException e) {
+        // Cannot get the resource type from the resource since it's deleted. But we can still
+        // infer it from previous log entry.
+        var changeSubjectType =
+            activityLogDao
+                .getLastUpdatedDetails(workspaceUuid, resourceId.toString())
+                .map(ActivityLogChangeDetails::changeSubjectType)
+                .orElse(ActivityLogChangedTarget.RESOURCE);
         activityLogDao.writeActivity(
             workspaceUuid,
             new DbWorkspaceActivityLog(
@@ -322,7 +385,7 @@ public class WorkspaceActivityLogHook implements StairwayHook {
                 subjectId,
                 OperationType.DELETE,
                 resourceId.toString(),
-                ActivityLogChangedTarget.RESOURCE));
+                changeSubjectType));
       }
     }
   }
