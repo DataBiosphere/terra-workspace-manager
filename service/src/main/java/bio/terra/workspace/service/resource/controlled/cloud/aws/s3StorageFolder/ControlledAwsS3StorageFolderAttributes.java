@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.controlled.cloud.aws.s3storageFolder;
+package bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolder;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;

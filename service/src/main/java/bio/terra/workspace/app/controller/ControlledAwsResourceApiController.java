@@ -29,8 +29,8 @@ import bio.terra.workspace.service.resource.AwsResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.AwsResourceConstants;
-import bio.terra.workspace.service.resource.controlled.cloud.aws.s3storageFolder.ControlledAwsS3StorageFolderHandler;
-import bio.terra.workspace.service.resource.controlled.cloud.aws.s3storageFolder.ControlledAwsS3StorageFolderResource;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolder.ControlledAwsS3StorageFolderHandler;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolder.ControlledAwsS3StorageFolderResource;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakerNotebook.ControlledAwsSagemakerNotebookHandler;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
@@ -132,9 +132,10 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     ApiJobControl jobControl = body.getJobControl();
 
     logger.info(
-        "deleteAwsResource workspace: {}, resourceUuid: {}",
+        "deleteAwsResource workspaceUuid: {}, resourceUuid: {}",
         workspaceUuid.toString(),
         resourceUuid.toString());
+
     String jobId =
         controlledResourceService.deleteControlledResourceAsync(
             jobControl,
@@ -252,11 +253,12 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
                 });
 
     logger.info(
-        "createAwsS3StorageFolder workspace: {}, bucketName: {}, prefix {}, region: {}",
+        "createAwsS3StorageFolder workspace: {}, region: {}, bucketName: {}, folderName {}, cloudName {}",
         workspaceUuid.toString(),
+        region,
         landingZone.getStorageBucket().name(),
         commonFields.getName(),
-        region);
+        folderName);
 
     ControlledAwsS3StorageFolderResource resource =
         ControlledAwsS3StorageFolderResource.builder()

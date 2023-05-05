@@ -1,7 +1,5 @@
 package bio.terra.workspace.service.resource.controlled;
 
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE;
-
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.ServiceUnavailableException;
 import bio.terra.stairway.FlightState;
@@ -606,7 +604,7 @@ public class ControlledResourceService {
         .stewardshipType(resource.getStewardshipType())
         .workspaceId(workspaceUuid.toString())
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
-        .addParameter(CONTROLLED_RESOURCES_TO_DELETE, resourceToDelete);
+        .addParameter(ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE, resourceToDelete);
   }
 
   /**
