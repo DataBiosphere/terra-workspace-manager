@@ -52,7 +52,8 @@ public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
     ControlledGcsBucketResource bucketResource =
         ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
     createResourceInDbStartStep storeGoogleBucketMetadataStep =
-        new createResourceInDbStartStep(resourceDao, WsmResourceStateRule.DELETE_ON_FAILURE, bucketResource);
+        new createResourceInDbStartStep(
+            resourceDao, WsmResourceStateRule.DELETE_ON_FAILURE, bucketResource);
 
     final FlightMap inputFlightMap = new FlightMap();
     inputFlightMap.put(ResourceKeys.RESOURCE, bucketResource);

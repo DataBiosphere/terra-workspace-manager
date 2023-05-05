@@ -74,7 +74,8 @@ public class CloneReferencedResourceFlight extends Flight {
             inputParameters, ResourceKeys.RESOURCE_STATE_RULE, WsmResourceStateRule.class);
 
     addStep(
-        new createResourceInDbStartStep(appContext.getResourceDao(), resourceStateRule, destinationResource));
+        new createResourceInDbStartStep(
+            appContext.getResourceDao(), resourceStateRule, destinationResource));
     if (mergePolicies) {
       addStep(
           new MergePolicyAttributesDryRunStep(
