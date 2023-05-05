@@ -75,12 +75,12 @@ public class ControlledAiNotebookHandler implements WsmResourceHandler {
             .or(CharMatcher.inRange('a', 'z'))
             .or(CharMatcher.is('-'))
             .retainFrom(aiNotebookName.toLowerCase());
-    // The name cannot start with number.
-    generatedName = CharMatcher.inRange('0', '9').trimLeadingFrom(generatedName);
+    // The name must start with a letter.
+    generatedName = CharMatcher.inRange('0', '9').or(CharMatcher.is('-')).trimLeadingFrom(generatedName);
     // Truncate before trimming characters to ensure the name does not end with dash("-").
     generatedName = StringUtils.truncate(generatedName, MAX_INSTANCE_NAME_LENGTH);
-    // The name cannot start or end with dash("-").
-    generatedName = CharMatcher.is('-').trimFrom(generatedName);
+    // The name cannot end with dash("-").
+    generatedName = CharMatcher.is('-').trimTrailingFrom(generatedName);
 
     if (generatedName.length() == 0) {
       throw new BadRequestException(
