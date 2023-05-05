@@ -192,11 +192,11 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
   }
 
   @Test
-  void deleteNonExistentContextIsOk() throws Exception {
+  void deleteNonExistentContext() throws Exception {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     assertTrue(azureCloudContextService.getAzureCloudContext(workspaceUuid).isEmpty());
 
-    // Delete the azure context.
+    // Delete the non-existent azure context.
     FlightMap deleteParameters =
         WorkspaceFixtures.deleteCloudContextInputs(workspaceUuid, userRequest, CloudPlatform.AZURE);
     FlightState flightState =
@@ -206,7 +206,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
             deleteParameters,
             DELETION_FLIGHT_TIMEOUT,
             null);
-    assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
+    assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
     assertTrue(azureCloudContextService.getAzureCloudContext(workspaceUuid).isEmpty());
   }
 

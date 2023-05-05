@@ -6,6 +6,7 @@ import bio.terra.common.exception.ErrorReportException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
+import bio.terra.workspace.db.exception.CloudContextNotFoundException;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
@@ -615,6 +616,9 @@ public class WorkspaceDao {
   public void deleteCloudContextStart(
       UUID workspaceUuid, CloudPlatform cloudPlatform, String flightId) {
     DbCloudContext cloudContext = getDbCloudContext(workspaceUuid, cloudPlatform);
+    if (cloudContext == null) {
+      throw new CloudContextNotFoundException(cloudPlatform + " cloud context not found");
+    }
     stateDao.updateState(
         cloudContext,
         /*expectedFlightId=*/ null,

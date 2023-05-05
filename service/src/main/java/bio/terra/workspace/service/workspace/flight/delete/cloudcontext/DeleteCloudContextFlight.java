@@ -6,6 +6,7 @@ import bio.terra.stairway.RetryRule;
 import bio.terra.stairway.Step;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.FlightUtils;
+import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
@@ -44,12 +45,14 @@ public class DeleteCloudContextFlight extends Flight {
             inputParameters, WorkspaceFlightMapKeys.CLOUD_PLATFORM, CloudPlatform.class);
     WorkspaceDao workspaceDao = appContext.getWorkspaceDao();
 
-    addStep(new DeleteCloudContextStartStep(workspaceUuid, workspaceDao, cloudPlatform));
+    RetryRule dbRetry = RetryRules.shortDatabase();
+
+    addStep(new DeleteCloudContextStartStep(workspaceUuid, workspaceDao, cloudPlatform), dbRetry);
 
     // Add the delete steps for the appropriate cloud type
     CloudContextService cloudContextService = cloudPlatform.getCloudContextService();
     cloudContextService.addDeleteCloudContextSteps(this, appContext, workspaceUuid, userRequest);
 
-    addStep(new DeleteCloudContextFinishStep(workspaceUuid, workspaceDao, cloudPlatform));
+    addStep(new DeleteCloudContextFinishStep(workspaceUuid, workspaceDao, cloudPlatform), dbRetry);
   }
 }
