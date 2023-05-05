@@ -463,7 +463,7 @@ public class WorkspaceDao {
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceUuid.toString())
             .addValue("cloud_platform", platform)
-            .addValue("spendProfile", spendProfileId.getId())
+            .addValue("spend_profile", spendProfileId.getId())
             .addValue("creating_flight", flightId)
             .addValue("state", WsmResourceState.CREATING.toDb())
             .addValue("flight_id", flightId);
@@ -503,8 +503,8 @@ public class WorkspaceDao {
     if (context != null) {
       String sql =
           """
-        UPDATE cloud_context SET context = :context
-        WHERE workspace_id = :workspace_id AND cloud_platform = :cloud_platform"
+        UPDATE cloud_context SET context = :context::json
+        WHERE workspace_id = :workspace_id AND cloud_platform = :cloud_platform
         """;
 
       var params =
@@ -636,7 +636,11 @@ public class WorkspaceDao {
     DbCloudContext cloudContext = getDbCloudContext(workspaceUuid, cloudPlatform);
     if (!stateDao.isResourceInState(
         cloudContext, WsmResourceState.NOT_EXISTS, /*flightId=*/ null)) {
-      deleteCloudContextWorker(workspaceUuid, cloudPlatform, flightId);
+      // Validate the state transition to not exists - this clears the flight id, so we do not
+      // pass that in when deleting the context.
+      stateDao.updateState(
+          cloudContext, flightId, /*targetFlightId=*/ null, WsmResourceState.NOT_EXISTS, null);
+      deleteCloudContextWorker(workspaceUuid, cloudPlatform, null);
     }
   }
 
@@ -719,7 +723,7 @@ public class WorkspaceDao {
   public ImmutableMap<UUID, DbCloudContext> getWorkspaceIdToGcpCloudContextMap() {
     String sql =
         BASE_CLOUD_CONTEXT_SELECT_SQL
-            + "WHERE cloud_platform = :cloud_platform AND status != :broken AND status != :deleting";
+            + "WHERE cloud_platform = :cloud_platform AND state != :broken AND state != :deleting";
 
     MapSqlParameterSource params =
         new MapSqlParameterSource()

@@ -18,6 +18,7 @@ import bio.terra.workspace.service.workspace.flight.application.ApplicationAbleF
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.RemoveUserFromWorkspaceFlight;
 import bio.terra.workspace.service.workspace.flight.create.cloudcontext.CreateCloudContextFlight;
 import bio.terra.workspace.service.workspace.flight.create.workspace.WorkspaceCreateFlight;
+import bio.terra.workspace.service.workspace.flight.delete.cloudcontext.DeleteCloudContextFlight;
 import bio.terra.workspace.service.workspace.flight.delete.workspace.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.gcpcontextbackfill.GcpContextBackfillFlight;
 import java.util.Arrays;
@@ -36,6 +37,8 @@ public enum ActivityFlight {
   // Cloud context
   CLOUD_CONTEXT_CREATE_FLIGHT(
       CreateCloudContextFlight.class.getName(), ActivityLogChangedTarget.CLOUD_CONTEXT),
+  CLOUD_CONTEXT_DELETE_FLIGHT(
+      DeleteCloudContextFlight.class.getName(), ActivityLogChangedTarget.CLOUD_CONTEXT),
 
   // Resources
   ALL_RESOURCES_CLONE_FLIGHT(
@@ -67,7 +70,7 @@ public enum ActivityFlight {
   GCP_WORKSPACE_CLONE_FLIGHT(
       CloneWorkspaceFlight.class.getName(), ActivityLogChangedTarget.WORKSPACE),
   SYNC_GCP_IAM_ROLES_FLIGHT(
-      SyncGcpIamRolesFlight.class.getName(), ActivityLogChangedTarget.GCP_CLOUD_CONTEXT),
+      SyncGcpIamRolesFlight.class.getName(), ActivityLogChangedTarget.CLOUD_CONTEXT),
   CONTROLLED_GCS_BUCKET_CLONE_FLIGHT(
       CloneControlledGcsBucketResourceFlight.class.getName(),
       ActivityLogChangedTarget.CONTROLLED_GCP_GCS_BUCKET),

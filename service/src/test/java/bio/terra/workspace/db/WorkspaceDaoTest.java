@@ -358,9 +358,8 @@ class WorkspaceDaoTest extends BaseUnitTest {
       cloudContext = gcpCloudContextService.getGcpCloudContext(workspaceUuid);
       checkCloudContext(cloudContext);
 
-      // delete with no check - should delete
-      workspaceDao.deleteCloudContextSuccess(workspaceUuid, CloudPlatform.GCP, null);
-
+      // proper delete
+      workspaceDao.deleteCloudContextSuccess(workspaceUuid, CloudPlatform.GCP, flightId);
       cloudContext = gcpCloudContextService.getGcpCloudContext(workspaceUuid);
       assertTrue(cloudContext.isEmpty());
     }

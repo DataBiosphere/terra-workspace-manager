@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
+import bio.terra.common.exception.SerializationException;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
@@ -43,7 +44,10 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
   @Autowired private ResourceDao resourceDao;
 
   private DbCloudContext makeDbCloudContext(String json) {
-    return new DbCloudContext().cloudPlatform(CloudPlatform.GCP).contextJson(json);
+    return new DbCloudContext()
+        .cloudPlatform(CloudPlatform.GCP)
+        .spendProfile(WorkspaceUnitTestUtils.SPEND_PROFILE_ID)
+        .contextJson(json);
   }
 
   @Test
@@ -83,7 +87,7 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
 
     // Case 4: junk input
     assertThrows(
-        InvalidSerializedVersionException.class,
+        SerializationException.class,
         () -> GcpCloudContext.deserialize(makeDbCloudContext(junkJson)),
         "Junk JSON should throw");
   }

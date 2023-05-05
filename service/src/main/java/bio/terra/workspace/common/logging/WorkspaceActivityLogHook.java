@@ -115,12 +115,8 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     if (operationType == OperationType.DELETE) {
       switch (af.getActivityLogChangedTarget()) {
         case WORKSPACE -> maybeLogWorkspaceDeletionFlight(workspaceUuid, userEmail, subjectId);
-        case GCP_CLOUD_CONTEXT -> maybeLogCloudContextDeletionFlight(
+        case CLOUD_CONTEXT -> maybeLogCloudContextDeletionFlight(
             CloudPlatform.GCP, workspaceUuid, userEmail, subjectId);
-        case AZURE_CLOUD_CONTEXT -> maybeLogCloudContextDeletionFlight(
-            CloudPlatform.AZURE, workspaceUuid, userEmail, subjectId);
-        case AWS_CLOUD_CONTEXT -> maybeLogCloudContextDeletionFlight(
-            CloudPlatform.AWS, workspaceUuid, userEmail, subjectId);
         case FOLDER -> maybeLogFolderDeletionFlight(context, workspaceUuid, userEmail, subjectId);
         default -> {
           if (af.isResourceFlight()) {
@@ -138,7 +134,7 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     // Always log when the flight succeeded.
     if (context.getFlightStatus() == FlightStatus.SUCCESS) {
       switch (af.getActivityLogChangedTarget()) {
-        case WORKSPACE, AZURE_CLOUD_CONTEXT, GCP_CLOUD_CONTEXT -> activityLogDao.writeActivity(
+        case WORKSPACE, CLOUD_CONTEXT -> activityLogDao.writeActivity(
             workspaceUuid,
             new DbWorkspaceActivityLog(
                 userEmail,
@@ -401,7 +397,7 @@ public class WorkspaceActivityLogHook implements StairwayHook {
               subjectId,
               operationType,
               workspaceIdString,
-              ActivityLogChangedTarget.GCP_CLOUD_CONTEXT));
+              ActivityLogChangedTarget.CLOUD_CONTEXT));
     }
   }
 }

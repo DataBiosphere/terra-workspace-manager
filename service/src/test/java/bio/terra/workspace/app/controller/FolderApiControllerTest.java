@@ -76,6 +76,13 @@ public class FolderApiControllerTest extends BaseUnitTest {
                 .userSubjectId(USER_REQUEST.getSubjectId()));
     when(mockSamService().getUserEmailFromSamAndRethrowOnInterrupt(any()))
         .thenReturn(USER_REQUEST.getEmail());
+    when(mockSamService()
+            .isAuthorized(
+                any(),
+                eq(SamConstants.SamResource.SPEND_PROFILE),
+                any(),
+                eq(SamConstants.SamSpendProfileAction.LINK)))
+        .thenReturn(true);
 
     // Needed for assertion that requester has role on workspace.
     when(mockSamService().listRequesterRoles(any(), any(), any()))

@@ -35,12 +35,14 @@ public class AzureCloudContextService implements CloudContextService {
 
   private final WorkspaceDao workspaceDao;
   private final FeatureConfiguration featureConfiguration;
+  private final WorkspaceService workspaceService;
 
   @Autowired
   public AzureCloudContextService(
-      WorkspaceDao workspaceDao, FeatureConfiguration featureConfiguration) {
+      WorkspaceDao workspaceDao, FeatureConfiguration featureConfiguration, WorkspaceService workspaceService) {
     this.workspaceDao = workspaceDao;
     this.featureConfiguration = featureConfiguration;
+    this.workspaceService = workspaceService;
   }
 
   // Set up static accessor for use by CloudPlatform
@@ -65,7 +67,8 @@ public class AzureCloudContextService implements CloudContextService {
               appContext.getLandingZoneApiDispatch(),
               userRequest,
               appContext.getTpsApiDispatch(),
-              workspaceUuid));
+              workspaceUuid,
+              workspaceService));
     }
 
     // validate the MRG

@@ -11,6 +11,7 @@ import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties.FOLDER_ID_KEY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -26,6 +27,7 @@ import bio.terra.workspace.generated.model.ApiGcsBucketCloudName;
 import bio.terra.workspace.generated.model.ApiGenerateGcpAiNotebookCloudIdRequestBody;
 import bio.terra.workspace.generated.model.ApiGenerateGcpBigQueryDatasetCloudIDRequestBody;
 import bio.terra.workspace.generated.model.ApiGenerateGcpGcsBucketCloudNameRequestBody;
+import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
@@ -54,6 +56,14 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTestMockGcpC
     // Needed for assertion that requester has role on workspace.
     when(mockSamService().listRequesterRoles(any(), any(), any()))
         .thenReturn(List.of(WsmIamRole.OWNER));
+
+    when(mockSamService()
+            .isAuthorized(
+                any(),
+                eq(SamConstants.SamResource.SPEND_PROFILE),
+                any(),
+                eq(SamConstants.SamSpendProfileAction.LINK)))
+        .thenReturn(true);
 
     when(mockSamService().getUserStatusInfo(any()))
         .thenReturn(
