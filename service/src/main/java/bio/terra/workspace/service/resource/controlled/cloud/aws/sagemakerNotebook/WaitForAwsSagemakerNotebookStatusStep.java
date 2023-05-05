@@ -50,7 +50,7 @@ public class WaitForAwsSagemakerNotebookStatusStep implements Step {
     AwsUtils.appendUserTags(tags, samUser);
     AwsUtils.appendResourceTags(tags, cloudContext);
 
-    AwsUtils.createFolder(
+    AwsUtils.createStorageFolder(
         credentialsProvider,
         Region.of(resource.getRegion()),
         resource.getBucketName(),
@@ -67,7 +67,7 @@ public class WaitForAwsSagemakerNotebookStatusStep implements Step {
             awsCloudContextService.getRequiredAuthentication(),
             awsCloudContextService.discoverEnvironment());
 
-    AwsUtils.deleteFolder(
+    AwsUtils.deleteStorageFolder(
         credentialsProvider,
         Region.of(resource.getRegion()),
         resource.getBucketName(),

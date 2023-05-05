@@ -29,15 +29,8 @@ public class DeleteAwsSagemakerNotebookStep implements Step {
             awsCloudContextService.getRequiredAuthentication(),
             awsCloudContextService.discoverEnvironment());
 
-    // TODO-Dex
+    AwsUtils.deleteSageMakerNotebook(credentialsProvider, resource);
 
-    /*AwsUtils.createFolder(
-       credentialsProvider,
-       Region.of(resource.getRegion()),
-       resource.getBucketName(),
-       resource.getPrefix(),
-       tags);
-    */
     return StepResult.getStepResultSuccess();
   }
 

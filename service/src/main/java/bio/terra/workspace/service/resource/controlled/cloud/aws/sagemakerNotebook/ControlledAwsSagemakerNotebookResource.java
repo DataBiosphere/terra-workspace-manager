@@ -123,7 +123,7 @@ public class ControlledAwsSagemakerNotebookResource extends ControlledResource {
       String petSaEmail,
       AuthenticatedUserRequest userRequest,
       FlightBeanBag flightBeanBag) {
-    // TODO-Dex add validation
+    // TODO-Dex add validation step
     flight.addStep(
         new CreateAwsSagemakerNotebookStep(
             this,

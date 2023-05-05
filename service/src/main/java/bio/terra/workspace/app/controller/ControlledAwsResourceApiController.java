@@ -22,7 +22,6 @@ import bio.terra.workspace.generated.model.ApiDeleteControlledAwsResourceRequest
 import bio.terra.workspace.generated.model.ApiDeleteControlledAwsResourceResult;
 import bio.terra.workspace.generated.model.ApiGenerateAwsResourceCloudNameRequestBody;
 import bio.terra.workspace.generated.model.ApiJobControl;
-import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
@@ -354,20 +353,13 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
         new ApiAwsResourceCloudName().awsResourceCloudName(generatedCloudName), HttpStatus.OK);
   }
 
-  private ApiCreateControlledAwsSagemakerNotebookResult getCreateAwsSagemakerNotebookResult(
+  private ApiCreateControlledAwsSagemakerNotebookResult getAwsSagemakerNotebookCreateResult(
       String jobId) {
-    JobApiUtils.AsyncJobResult<ControlledAwsSagemakerNotebookResource> jobResult =
-        jobApiUtils.retrieveAsyncJobResult(jobId, ControlledAwsSagemakerNotebookResource.class);
-
-    ApiAwsSagemakerNotebookResource apiResource =
-        (jobResult.getJobReport().getStatus().equals(ApiJobReport.StatusEnum.SUCCEEDED))
-            ? jobResult.getResult().toApiResource()
-            : null;
-
+    JobApiUtils.AsyncJobResult<Void> jobResult =
+        jobApiUtils.retrieveAsyncJobResult(jobId, Void.class);
     return new ApiCreateControlledAwsSagemakerNotebookResult()
         .jobReport(jobResult.getJobReport())
-        .errorReport(jobResult.getApiErrorReport())
-        .awsSagemakerNotebook(apiResource);
+        .errorReport(jobResult.getApiErrorReport());
   }
 
   @Traced
@@ -436,10 +428,6 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
         instanceType,
         instanceName);
 
-    // TODO(TERRA-312) - which config from the list?
-    // NotebookLifecycleConfiguration lifecycleConfiguration =
-    // landingZone.getNotebookLifecycleConfigurations().stream().findFirst().orElse(null);
-
     String jobId =
         controlledResourceService.createAwsSagemakerNotebookInstance(
             resource,
@@ -451,8 +439,19 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
             userRequest);
 
     ApiCreateControlledAwsSagemakerNotebookResult result =
-        getCreateAwsSagemakerNotebookResult(jobId);
+        getAwsSagemakerNotebookCreateResult(jobId);
     return new ResponseEntity<>(result, getAsyncResponseCode((result.getJobReport())));
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiCreateControlledAwsSagemakerNotebookResult>
+      getCreateAwsSagemakerNotebookResult(UUID workspaceUuid, String jobId) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
+    ApiCreateControlledAwsSagemakerNotebookResult result =
+        getAwsSagemakerNotebookCreateResult(jobId);
+    return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
   }
 
   @Traced

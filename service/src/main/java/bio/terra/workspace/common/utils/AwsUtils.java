@@ -182,7 +182,7 @@ public class AwsUtils {
    * <p>Calls {@link #createAssumeRoleWithGcpCredentialsProvider} to get a long-lived {@link
    * AwsCredentialsProvider} instance to authenticate as the TerraDiscovery IAM Role.
    *
-   * @param awsConfiguration an {@link AwsConfiguration}
+   * @param awsConfiguration {@link AwsConfiguration}
    */
   private static AwsCredentialsProvider createDiscoveryCredentialsProvider(
       AwsConfiguration awsConfiguration) {
@@ -574,7 +574,7 @@ public class AwsUtils {
   /**
    * Create AWS sagemaker notebook
    *
-   * @param awsCredentialsProvider AWS CredentialsProvider
+   * @param awsCredentialsProvider {@link AwsCredentialsProvider}
    * @param notebookResource Sagemaker notebook resource
    * @param environment AWS environment
    * @param tags collection of {@link Tag} to be attached to the folder
@@ -637,6 +637,25 @@ public class AwsUtils {
       checkException(e);
       throw new ApiException("Error creating sagemaker notebook,", e);
     }
+  }
+
+  /**
+   * Delete AWS sagemaker notebooks
+   *
+   * @param awsCredentialsProvider {@link AwsCredentialsProvider}
+   * @param notebookResource {@link Region}
+   * @param bucketName bucket name
+   * @param folder folder name (key)
+   */
+  public static void deleteSageMakerNotebook(
+      AwsCredentialsProvider awsCredentialsProvider,
+      ControlledAwsSagemakerNotebookResource notebookResource) {
+    // TODO-Dex
+    String folderKey = folder.endsWith("/") ? folder : String.format("%s/", folder);
+    List<String> objectKeys =
+        getS3ObjectKeysByPrefix(
+            awsCredentialsProvider, region, bucketName, folderKey, Integer.MAX_VALUE);
+    deleteS3Objects(awsCredentialsProvider, region, bucketName, objectKeys);
   }
 
   private static void checkException(SdkException ex)
