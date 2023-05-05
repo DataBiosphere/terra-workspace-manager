@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 public class ControlledAwsSagemakerNotebookHandlerTest extends BaseAwsUnitTest {
 
   @Test
-  public void generateFolderName_allCases() {
+  public void generateCloudName() {
     String workspaceUserFacingId = "workspaceUserFacingId";
     String resourceName = "resource";
     String generatedName = resourceName + '-' + workspaceUserFacingId;
