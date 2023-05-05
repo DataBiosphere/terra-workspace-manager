@@ -88,6 +88,6 @@ public class ControlledAiNotebookHandlerTest extends BaseUnitTest {
         ControlledAiNotebookHandler.getHandler().generateCloudName((UUID) null, instanceName);
 
     assertEquals(ControlledAiNotebookHandler.MAX_INSTANCE_NAME_LENGTH - 1, instanceId.length());
-    assertNotEquals(instanceId.charAt(instanceId.length() - 1), '-');
+    assertNotEquals('-', instanceId.charAt(instanceId.length() - 1));
   }
 }

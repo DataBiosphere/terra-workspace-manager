@@ -107,7 +107,7 @@ public class ControlledGcsBucketHandlerTest extends BaseUnitTestMockGcpCloudCont
         ControlledAiNotebookHandler.getHandler().generateCloudName((UUID) null, instanceName);
 
     assertEquals(MAX_BUCKET_NAME_LENGTH - 1, bucketName.length());
-    assertNotEquals(bucketName.charAt(bucketName.length() - 1), '-');
+    assertNotEquals('-', bucketName.charAt(bucketName.length() - 1));
   }
 
   @Test
