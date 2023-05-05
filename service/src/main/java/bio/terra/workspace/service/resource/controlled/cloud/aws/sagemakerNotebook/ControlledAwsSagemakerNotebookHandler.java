@@ -5,7 +5,6 @@ import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.AwsResourceConstants;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
-import com.google.common.base.CharMatcher;
 import com.google.common.base.Preconditions;
 import javax.ws.rs.BadRequestException;
 import org.apache.commons.lang3.StringUtils;
@@ -45,13 +44,10 @@ public class ControlledAwsSagemakerNotebookHandler implements WsmResourceHandler
     Preconditions.checkArgument(StringUtils.isNotEmpty(workspaceUserFacingId));
     String generatedName = notebookName + "-" + workspaceUserFacingId;
 
+    generatedName = generatedName.replaceAll("(\\_)", "-");
     generatedName = StringUtils.stripStart(generatedName, "-");
     generatedName = StringUtils.stripEnd(generatedName, "-");
-    generatedName =
-        CharMatcher.inRange('0', '9')
-            .or(CharMatcher.inRange('A', 'z'))
-            .or(CharMatcher.is('-'))
-            .retainFrom(generatedName);
+    generatedName = generatedName.replaceAll("[^\\-a-zA-Z0-9]+", "");
 
     if (generatedName.length() == 0) {
       throw new BadRequestException(

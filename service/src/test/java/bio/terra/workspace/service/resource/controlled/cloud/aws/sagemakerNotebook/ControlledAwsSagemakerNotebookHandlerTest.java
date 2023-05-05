@@ -13,13 +13,19 @@ public class ControlledAwsSagemakerNotebookHandlerTest extends BaseAwsUnitTest {
   public void generateFolderName() {
     String workspaceUserFacingId = "workspaceUserFacingId";
     String resourceName = "resource";
-    String generatedName = "resource-workspaceUserFacingId";
+    String generatedName = resourceName + '-' + workspaceUserFacingId;
 
     assertEquals(
         generatedName,
         ControlledAwsSagemakerNotebookHandler.getHandler()
             .generateCloudName(workspaceUserFacingId, resourceName),
         "resource name expected without changes");
+
+    assertEquals(
+        resourceName + "-a-b-" + workspaceUserFacingId,
+        ControlledAwsSagemakerNotebookHandler.getHandler()
+            .generateCloudName("b_" + workspaceUserFacingId, resourceName + "_a"),
+        "resource name expected with underscores replaced by dashes");
 
     assertEquals(
         generatedName,
@@ -30,7 +36,7 @@ public class ControlledAwsSagemakerNotebookHandlerTest extends BaseAwsUnitTest {
     assertEquals(
         generatedName,
         ControlledAwsSagemakerNotebookHandler.getHandler()
-            .generateCloudName(workspaceUserFacingId, resourceName + ".!_(){}^%`<>~#|@*+[]'\"\\"),
+            .generateCloudName(workspaceUserFacingId, resourceName + ".!(){}^%`<>~#|@*+[]'\"\\"),
         "resource name expected with all non-alphanumeric characters & non-dashes removed");
 
     resourceName =
