@@ -200,11 +200,15 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     resourceIdToCloneDetails.forEach(
         (uuid, wsmResourceCloneDetails) ->
             activityLogDao.writeActivity(
+                // destination workspace id. Because the new resource row is written in the
+                // destination workspace.
                 getAffectedWorkspaceId(context, OperationType.CLONE, workspaceUuid),
                 new DbWorkspaceActivityLog(
                     userEmail,
                     subjectId,
                     OperationType.CLONE,
+                    // source resource id and type. Because the source resource is the one being
+                    // cloned, so we record the source resource id to record the cloning lineage.
                     wsmResourceCloneDetails.getSourceResourceId().toString(),
                     wsmResourceCloneDetails.getResourceType().getActivityLogChangedTarget())));
   }

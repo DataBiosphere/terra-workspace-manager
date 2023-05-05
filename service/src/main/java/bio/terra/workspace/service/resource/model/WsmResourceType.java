@@ -224,9 +224,11 @@ public enum WsmResourceType {
         "Deserialization failed: no matching resource type for " + dbString);
   }
 
-  public static WsmResourceType fromApiResourceType(ApiResourceType apiResourceType) {
+  public static WsmResourceType fromApiResourceType(
+      ApiResourceType apiResourceType, StewardshipType stewardshipType) {
     for (WsmResourceType value : values()) {
-      if (value.apiResourceType.equals(apiResourceType)) {
+      if (value.apiResourceType.equals(apiResourceType)
+          && value.stewardshipType.equals(stewardshipType)) {
         return value;
       }
     }

@@ -46,6 +46,7 @@ import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketHandler;
+import bio.terra.workspace.service.resource.model.StewardshipType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.storage.BucketInfo.LifecycleRule;
 import com.google.cloud.storage.BucketInfo.LifecycleRule.LifecycleAction;
@@ -796,6 +797,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
         sourceWorkspaceId,
         sourceResourceId,
         expectedCreatedBy,
+        StewardshipType.CONTROLLED,
         cloneUserRequest);
     assertResourceReady(actualBucket.getMetadata());
     assertEquals(expectedBucketName, actualBucket.getAttributes().getBucketName());

@@ -2472,6 +2472,7 @@ public class MockMvcUtils {
       UUID sourceWorkspaceId,
       UUID sourceResourceId,
       String expectedCreatedBy,
+      StewardshipType sourceResourceStewardshipType,
       AuthenticatedUserRequest userRequest)
       throws InterruptedException {
     ApiResourceLineage expectedResourceLineage = new ApiResourceLineage();
@@ -2507,7 +2508,8 @@ public class MockMvcUtils {
         expectedLastUpdatedBySubjectId,
         OperationType.CLONE,
         sourceResourceId.toString(),
-        WsmResourceType.fromApiResourceType(expectedResourceType).getActivityLogChangedTarget());
+        WsmResourceType.fromApiResourceType(expectedResourceType, sourceResourceStewardshipType)
+            .getActivityLogChangedTarget());
   }
 
   public void assertLatestActivityLogChangeDetails(

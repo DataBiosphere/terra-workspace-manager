@@ -787,6 +787,7 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
         sourceWorkspaceId,
         sourceResourceId,
         expectedCreatedBy,
+        StewardshipType.CONTROLLED,
         userRequest);
     assertResourceReady(actualDataset.getMetadata());
     assertEquals(expectedProjectId, actualDataset.getAttributes().getProjectId());
