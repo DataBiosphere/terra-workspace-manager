@@ -211,7 +211,7 @@ public class AwsUtils {
    * </ul>
    *
    * @param awsConfiguration Spring configuration object containing required parameters (as
-   *     described above)
+   *     described above) {@link AwsConfiguration}
    * @return EnvironmentDiscovery
    */
   public static EnvironmentDiscovery createEnvironmentDiscovery(AwsConfiguration awsConfiguration) {
@@ -575,8 +575,8 @@ public class AwsUtils {
    * Create AWS sagemaker notebook
    *
    * @param awsCredentialsProvider {@link AwsCredentialsProvider}
-   * @param notebookResource Sagemaker notebook resource
-   * @param environment AWS environment
+   * @param notebookResource {@link ControlledAwsSagemakerNotebookResource}
+   * @param environment {@link Environment}
    * @param tags collection of {@link Tag} to be attached to the folder
    */
   public static void createSageMakerNotebook(
@@ -643,7 +643,7 @@ public class AwsUtils {
    * Delete AWS sagemaker notebooks
    *
    * @param awsCredentialsProvider {@link AwsCredentialsProvider}
-   * @param notebookResource {@link Region}
+   * @param notebookResource {@link ControlledAwsSagemakerNotebookResource}
    * @param bucketName bucket name
    * @param folder folder name (key)
    */
