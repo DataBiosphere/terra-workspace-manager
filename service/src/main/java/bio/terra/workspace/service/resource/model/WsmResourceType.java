@@ -224,6 +224,16 @@ public enum WsmResourceType {
         "Deserialization failed: no matching resource type for " + dbString);
   }
 
+  public static WsmResourceType fromApiResourceType(ApiResourceType apiResourceType) {
+    for (WsmResourceType value : values()) {
+      if (value.apiResourceType.equals(apiResourceType)) {
+        return value;
+      }
+    }
+    throw new SerializationException(
+        "Deserialization failed: no matching resource type for " + apiResourceType);
+  }
+
   public CloudPlatform getCloudPlatform() {
     return cloudPlatform;
   }
