@@ -563,8 +563,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     // TODO: PF-2694 REST API part
     //  When we make the REST API changes, the spend profile will come with the create cloud context
     //  and we will take it from there. Only if missing, will we take it from the workspace. For
-    // this
-    //  part, we do the permission check using the workspace spend profile.
+    //  this part, we do the permission check using the workspace spend profile.
     SpendProfileId spendProfileId =
         workspace
             .getSpendProfileId()

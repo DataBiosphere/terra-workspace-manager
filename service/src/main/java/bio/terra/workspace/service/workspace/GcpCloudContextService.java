@@ -7,6 +7,7 @@ import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.CreateCustomGcpRolesStep;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.CreatePetSaStep;
@@ -67,6 +68,7 @@ public class GcpCloudContextService implements CloudContextService {
       CreateCloudContextFlight flight,
       FlightBeanBag appContext,
       UUID workspaceUuid,
+      SpendProfile spendProfile,
       AuthenticatedUserRequest userRequest) {
 
     GcpCloudSyncRoleMapping gcpCloudSyncRoleMapping = appContext.getCloudSyncRoleMapping();
@@ -83,7 +85,7 @@ public class GcpCloudContextService implements CloudContextService {
         bufferRetry);
 
     // Configure the project for WSM
-    flight.addStep(new SetProjectBillingStep(crl.getCloudBillingClientCow()), cloudRetry);
+    flight.addStep(new SetProjectBillingStep(crl.getCloudBillingClientCow(), spendProfile), cloudRetry);
     flight.addStep(new GrantWsmRoleAdminStep(crl), shortRetry);
     flight.addStep(
         new CreateCustomGcpRolesStep(gcpCloudSyncRoleMapping, crl.getIamCow()), shortRetry);

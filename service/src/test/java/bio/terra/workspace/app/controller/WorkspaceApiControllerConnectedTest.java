@@ -87,7 +87,6 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @Autowired private MockMvcUtils mockMvcUtils;
   @Autowired private ObjectMapper objectMapper;
   @Autowired private UserAccessUtils userAccessUtils;
-  @Autowired private NamedParameterJdbcTemplate jdbcTemplate;
   @Autowired private SamService samService;
 
   private ApiCreatedWorkspace workspace;
@@ -497,8 +496,12 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
       assertEquals(0, result.getConflicts().size());
       assertEquals(0, result.getResourcesWithConflict().size());
     } finally {
-      mockMvcUtils.deleteWorkspace(userRequest, targetWorkspaceId);
-      mockMvcUtils.deleteWorkspace(userRequest, sourceWorkspaceId);
+      if (targetWorkspaceId != null) {
+        mockMvcUtils.deleteWorkspace(userRequest, targetWorkspaceId);
+      }
+      if (sourceWorkspaceId != null) {
+        mockMvcUtils.deleteWorkspace(userRequest, sourceWorkspaceId);
+      }
     }
   }
 

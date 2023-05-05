@@ -16,6 +16,7 @@ import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
+import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.exceptions.InvalidApplicationConfigException;
 import bio.terra.workspace.service.workspace.flight.cloud.aws.DeleteControlledAwsResourcesStep;
@@ -83,6 +84,7 @@ public class AwsCloudContextService implements CloudContextService {
       CreateCloudContextFlight flight,
       FlightBeanBag appContext,
       UUID workspaceUuid,
+      SpendProfile spendProfile,
       AuthenticatedUserRequest userRequest) {
     flight.addStep(new MakeAwsCloudContextStep(appContext.getAwsCloudContextService()));
   }

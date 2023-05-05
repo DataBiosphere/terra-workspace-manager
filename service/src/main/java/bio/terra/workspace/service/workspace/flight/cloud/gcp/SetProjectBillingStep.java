@@ -13,17 +13,18 @@ import com.google.cloud.billing.v1.ProjectBillingInfo;
 /** A {@link Step} to set the billing account on the Google project. */
 public class SetProjectBillingStep implements Step {
   private final CloudBillingClientCow billingClient;
+  private final SpendProfile spendProfile;
 
-  public SetProjectBillingStep(CloudBillingClientCow billingClient) {
+  public SetProjectBillingStep(
+    CloudBillingClientCow billingClient,
+    SpendProfile spendProfile) {
     this.billingClient = billingClient;
+    this.spendProfile = spendProfile;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext) {
     FlightMap workingMap = flightContext.getWorkingMap();
-    var spendProfile =
-        FlightUtils.getRequired(
-            workingMap, WorkspaceFlightMapKeys.SPEND_PROFILE, SpendProfile.class);
     var projectId =
         FlightUtils.getRequired(workingMap, WorkspaceFlightMapKeys.GCP_PROJECT_ID, String.class);
 

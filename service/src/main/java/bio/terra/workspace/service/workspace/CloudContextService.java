@@ -3,6 +3,7 @@ package bio.terra.workspace.service.workspace;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.workspace.flight.create.cloudcontext.CreateCloudContextFlight;
 import bio.terra.workspace.service.workspace.flight.delete.cloudcontext.DeleteCloudContextFlight;
 import bio.terra.workspace.service.workspace.model.CloudContext;
@@ -16,6 +17,7 @@ public interface CloudContextService {
       CreateCloudContextFlight flight,
       FlightBeanBag appContext,
       UUID workspaceUuid,
+      SpendProfile spendProfile,
       AuthenticatedUserRequest userRequest);
 
   CloudContext makeCloudContextFromDb(DbCloudContext dbCloudContext);

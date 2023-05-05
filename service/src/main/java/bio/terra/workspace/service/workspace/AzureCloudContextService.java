@@ -5,6 +5,7 @@ import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.flight.cloud.azure.DeleteControlledAzureResourcesStep;
 import bio.terra.workspace.service.workspace.flight.cloud.azure.ValidateLandingZoneRegionAgainstPolicyStep;
@@ -60,6 +61,7 @@ public class AzureCloudContextService implements CloudContextService {
       CreateCloudContextFlight flight,
       FlightBeanBag appContext,
       UUID workspaceUuid,
+      SpendProfile spendProfile,
       AuthenticatedUserRequest userRequest) {
     if (featureConfiguration.isTpsEnabled()) {
       flight.addStep(
