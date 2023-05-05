@@ -12,7 +12,7 @@ import bio.terra.workspace.service.policy.flight.MergePolicyAttributesDryRunStep
 import bio.terra.workspace.service.policy.flight.MergePolicyAttributesStep;
 import bio.terra.workspace.service.policy.flight.ValidateGroupPolicyAttributesStep;
 import bio.terra.workspace.service.policy.flight.ValidateWorkspaceAgainstPolicyStep;
-import bio.terra.workspace.service.resource.controlled.flight.create.StoreMetadataStep;
+import bio.terra.workspace.service.resource.controlled.flight.create.createResourceInDbStartStep;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
 import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
@@ -74,7 +74,7 @@ public class CloneReferencedResourceFlight extends Flight {
             inputParameters, ResourceKeys.RESOURCE_STATE_RULE, WsmResourceStateRule.class);
 
     addStep(
-        new StoreMetadataStep(appContext.getResourceDao(), resourceStateRule, destinationResource));
+        new createResourceInDbStartStep(appContext.getResourceDao(), resourceStateRule, destinationResource));
     if (mergePolicies) {
       addStep(
           new MergePolicyAttributesDryRunStep(
@@ -105,7 +105,7 @@ public class CloneReferencedResourceFlight extends Flight {
     }
 
     addStep(
-        new CloneReferenceResourceStep(appContext.getResourceDao(), destinationResource),
+        new CreateResourceInDbFinishStep(appContext.getResourceDao(), destinationResource),
         shortDatabaseRetryRule);
   }
 }

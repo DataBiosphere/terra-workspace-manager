@@ -9,11 +9,11 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import org.springframework.http.HttpStatus;
 
-public class CloneReferenceResourceStep implements Step {
+public class CreateResourceInDbFinishStep implements Step {
   private final ResourceDao resourceDao;
   private final ReferencedResource destinationResource;
 
-  public CloneReferenceResourceStep(
+  public CreateResourceInDbFinishStep(
       ResourceDao resourceDao, ReferencedResource destinationResource) {
     this.resourceDao = resourceDao;
     this.destinationResource = destinationResource;
