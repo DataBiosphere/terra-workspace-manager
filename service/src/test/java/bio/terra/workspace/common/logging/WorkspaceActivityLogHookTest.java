@@ -4,8 +4,6 @@ import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.buildMcWorks
 import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.RESOURCE_ID_TO_CLONE_RESULT;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.FOLDER_ID;
 import static bio.terra.workspace.service.workspace.model.OperationType.DELETE;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -43,11 +41,9 @@ import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CloneControlledGcsBucketResourceFlight;
-import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneAllResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneWorkspaceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.model.WsmResource;
-import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
@@ -56,11 +52,8 @@ import bio.terra.workspace.service.workspace.flight.create.workspace.WorkspaceCr
 import bio.terra.workspace.service.workspace.flight.delete.workspace.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
-import bio.terra.workspace.service.workspace.model.WsmCloneResourceResult;
-import bio.terra.workspace.service.workspace.model.WsmResourceCloneDetails;
 import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -168,69 +161,6 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
             workspaceUuid.toString(),
             ActivityLogChangedTarget.WORKSPACE));
     assertTrue(activityLogDao.getLastUpdatedDetails(workspaceUuid).isEmpty());
-  }
-
-  @Test
-  void cloneAllResourcesFlight_logCloneDetails() throws InterruptedException {
-    var workspaceUuid = WorkspaceUnitTestUtils.createWorkspaceWithGcpContext(workspaceDao);
-    var destinationWorkspaceId = UUID.randomUUID();
-    Map<UUID, WsmResourceCloneDetails> resourceIdToCloneDetails = new HashMap<>();
-    var aiNotebook = createNotebookAndLog(workspaceUuid);
-    var clonedAiNotebookId = UUID.randomUUID();
-    resourceIdToCloneDetails.put(
-        aiNotebook.getResourceId(),
-        new WsmResourceCloneDetails()
-            .setSourceResourceId(aiNotebook.getResourceId())
-            .setResourceType(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE)
-            .setDestinationResourceId(clonedAiNotebookId)
-            .setResult(WsmCloneResourceResult.SUCCEEDED));
-    var aiNotebook2 = createNotebookAndLog(workspaceUuid);
-    var clonedAiNotebookId2 = UUID.randomUUID();
-    resourceIdToCloneDetails.put(
-        aiNotebook2.getResourceId(),
-        new WsmResourceCloneDetails()
-            .setSourceResourceId(aiNotebook2.getResourceId())
-            .setResourceType(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE)
-            .setDestinationResourceId(clonedAiNotebookId2)
-            .setResult(WsmCloneResourceResult.SUCCEEDED));
-    FlightMap inputParams = buildInputParams(workspaceUuid, OperationType.CLONE);
-    inputParams.put(DESTINATION_WORKSPACE_ID, destinationWorkspaceId);
-    FlightMap workingParams = new FlightMap();
-    workingParams.put(RESOURCE_ID_TO_CLONE_RESULT, resourceIdToCloneDetails);
-
-    hook.endFlight(
-        new FakeFlightContext(
-            CloneAllResourcesFlight.class.getName(),
-            inputParams,
-            workingParams,
-            FlightStatus.SUCCESS));
-
-    ActivityLogChangeDetails changeDetailsAiNotebook =
-        activityLogDao
-            .getLastUpdatedDetails(destinationWorkspaceId, aiNotebook.getResourceId().toString())
-            .get();
-    assertEquals(
-        new ActivityLogChangeDetails(
-            changeDetailsAiNotebook.changeDate(),
-            USER_REQUEST.getEmail(),
-            USER_REQUEST.getSubjectId(),
-            OperationType.CLONE,
-            aiNotebook.getResourceId().toString(),
-            ActivityLogChangedTarget.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE),
-        changeDetailsAiNotebook);
-    ActivityLogChangeDetails changeDetailsAiNotebook2 =
-        activityLogDao
-            .getLastUpdatedDetails(destinationWorkspaceId, aiNotebook2.getResourceId().toString())
-            .get();
-    assertEquals(
-        new ActivityLogChangeDetails(
-            changeDetailsAiNotebook2.changeDate(),
-            USER_REQUEST.getEmail(),
-            USER_REQUEST.getSubjectId(),
-            OperationType.CLONE,
-            aiNotebook2.getResourceId().toString(),
-            ActivityLogChangedTarget.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE),
-        changeDetailsAiNotebook2);
   }
 
   @Test

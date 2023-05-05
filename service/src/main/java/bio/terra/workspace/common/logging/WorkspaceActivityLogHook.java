@@ -28,7 +28,6 @@ import bio.terra.workspace.service.admin.flights.cloudcontexts.gcp.SyncGcpIamRol
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneAllResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.WsmResource;
@@ -38,13 +37,10 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Resou
 import bio.terra.workspace.service.workspace.gcpcontextbackfill.GcpContextBackfillFlight;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
-import bio.terra.workspace.service.workspace.model.WsmResourceCloneDetails;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Preconditions;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -169,12 +165,8 @@ public class WorkspaceActivityLogHook implements StairwayHook {
             workspaceUuid, context, userEmail, subjectId, operationType);
         default -> {
           if (af.isResourceFlight()) {
-            if (CloneAllResourcesFlight.class.getName().equals(flightClassName)) {
-              logSuccessfulResourcesCloneFlight(context, userEmail, subjectId, workspaceUuid);
-            } else {
-              logSuccessfulResourceFlight(
-                  context, operationType, userEmail, subjectId, workspaceUuid);
-            }
+            logSuccessfulResourceFlight(
+                context, operationType, userEmail, subjectId, workspaceUuid);
             break;
           }
           throw new UnhandledActivityLogException(
@@ -185,32 +177,6 @@ public class WorkspaceActivityLogHook implements StairwayHook {
       }
     }
     return HookAction.CONTINUE;
-  }
-
-  private void logSuccessfulResourcesCloneFlight(
-      FlightContext context, String userEmail, String subjectId, UUID workspaceUuid) {
-    var resourceIdToCloneDetails =
-        Optional.ofNullable(
-                context
-                    .getWorkingMap()
-                    .get(
-                        ControlledResourceKeys.RESOURCE_ID_TO_CLONE_RESULT,
-                        new TypeReference<Map<UUID, WsmResourceCloneDetails>>() {}))
-            .orElseGet(HashMap::new);
-    resourceIdToCloneDetails.forEach(
-        (uuid, wsmResourceCloneDetails) ->
-            activityLogDao.writeActivity(
-                // destination workspace id. Because the new resource row is written in the
-                // destination workspace.
-                getAffectedWorkspaceId(context, OperationType.CLONE, workspaceUuid),
-                new DbWorkspaceActivityLog(
-                    userEmail,
-                    subjectId,
-                    OperationType.CLONE,
-                    // source resource id and type. Because the source resource is the one being
-                    // cloned, so we record the source resource id to record the cloning lineage.
-                    wsmResourceCloneDetails.getSourceResourceId().toString(),
-                    wsmResourceCloneDetails.getResourceType().getActivityLogChangedTarget())));
   }
 
   private void logSuccessfulResourceFlight(
