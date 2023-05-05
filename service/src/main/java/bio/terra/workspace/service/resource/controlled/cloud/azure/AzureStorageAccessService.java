@@ -178,9 +178,12 @@ public class AzureStorageAccessService {
       SasTokenOptions sasTokenOptions) {
     features.azureEnabledCheck();
 
+    var userEmail =
+        SamRethrow.onInterrupted(
+            () -> samService.getUserEmailFromSam(userRequest), "getUserEmailFromSam");
     logger.info(
-        "user {} requesting SAS token for Azure storage container {} in workspace {}",
-        userRequest.getEmail(),
+        "User {} requesting SAS token for Azure storage container {} in workspace {}",
+        userEmail,
         storageContainerUuid.toString(),
         workspaceUuid.toString());
 
@@ -236,7 +239,7 @@ public class AzureStorageAccessService {
     logger.info(
         "SAS token with expiry time of {} generated for user {} on container {} in workspace {} [sha256 = {}]",
         sasTokenOptions.expiryTime(),
-        userRequest.getEmail(),
+        userEmail,
         storageContainerUuid,
         workspaceUuid,
         sha256hex);
