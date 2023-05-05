@@ -1,0 +1,23 @@
+components:
+  schemas:
+    AwsSagemakerNotebookAttributes:
+      description: AWS Sagemaker Notebook instance resource properties included in post-creation get.
+      type: object
+      properties:
+        instanceName:
+          description: The name of the Sagemaker Notebook instance
+          type: string
+        instanceType:
+          description: The type of the Sagemaker Notebook instance
+          type: string
+
+    AwsSagemakerNotebookResource:
+      type: object
+      description: Description of an AWS Sagemaker Notebook instance resource.
+      required: [ metadata, attributes ]
+      properties:
+        metadata:
+          description: the resource metadata common to all resources
+          $ref: '#/components/schemas/ResourceMetadata'
+        attributes:
+          $ref: '#/components/schemas/AwsSagemakerNotebookAttributes'

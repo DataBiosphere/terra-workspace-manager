@@ -1,0 +1,23 @@
+paths:
+  /api/workspaces/v1/{workspaceId}/resources/controlled/aws/notebook/generateName:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Generate a cloud native controlled AWS Sagemaker Notebook instance name.
+      operationId: generateAwsSagemakerNotebookCloudName
+      tags: [ ControlledAwsResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateAwsResourceCloudNameRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/GenerateAwsResourceCloudNameResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
