@@ -180,7 +180,8 @@ public class ReferencedResourceService {
             .addParameter(ResourceKeys.DESTINATION_RESOURCE, destinationResource)
             .addParameter(WorkspaceFlightMapKeys.MERGE_POLICIES, mergePolicies)
             .addParameter(ResourceKeys.CLONING_INSTRUCTIONS, cloningInstructions)
-            .addParameter(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
+            .addParameter(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest)
+            .addParameter(ResourceKeys.RESOURCE_STATE_RULE, features.getStateRule());
 
     return jobBuilder.submitAndWait(ReferencedResource.class);
   }
