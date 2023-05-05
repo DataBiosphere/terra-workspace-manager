@@ -15,9 +15,7 @@ public class SetProjectBillingStep implements Step {
   private final CloudBillingClientCow billingClient;
   private final SpendProfile spendProfile;
 
-  public SetProjectBillingStep(
-    CloudBillingClientCow billingClient,
-    SpendProfile spendProfile) {
+  public SetProjectBillingStep(CloudBillingClientCow billingClient, SpendProfile spendProfile) {
     this.billingClient = billingClient;
     this.spendProfile = spendProfile;
   }

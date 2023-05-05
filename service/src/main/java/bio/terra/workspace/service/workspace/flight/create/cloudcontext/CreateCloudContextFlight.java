@@ -56,7 +56,8 @@ public class CreateCloudContextFlight extends Flight {
 
     // Add the create steps for the appropriate cloud type
     CloudContextService cloudContextService = cloudPlatform.getCloudContextService();
-    cloudContextService.addCreateCloudContextSteps(this, appContext, workspaceUuid, spendProfile, userRequest);
+    cloudContextService.addCreateCloudContextSteps(
+        this, appContext, workspaceUuid, spendProfile, userRequest);
 
     addStep(new CreateCloudContextFinishStep(workspaceUuid, workspaceDao, cloudPlatform));
   }
