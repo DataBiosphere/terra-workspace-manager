@@ -68,6 +68,11 @@ public enum WsmResourceFamily {
       ApiResourceType.AWS_S3_STORAGE_FOLDER,
       null, // TODO(TERRA-195) add support for referenced buckets
       WsmResourceType.CONTROLLED_AWS_S3_STORAGE_FOLDER),
+  AWS_SAGEMAKER_NOTEBOOK(
+      "AWS_SAGEMAKER_NOTEBOOK",
+      ApiResourceType.AWS_SAGEMAKER_NOTEBOOK,
+      null, // no reference type for notebooks,
+      WsmResourceType.CONTROLLED_AWS_SAGEMAKER_NOTEBOOK),
 
   // FLEXIBLE
   FLEXIBLE_RESOURCE(
