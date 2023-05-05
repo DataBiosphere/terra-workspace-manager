@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import bio.terra.workspace.common.BaseAwsUnitTest;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.AwsResourceConstants;
-import bio.terra.workspace.service.resource.controlled.cloud.aws.s3storageFolder.ControlledAwsS3StorageFolderHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakerNotebook.ControlledAwsSagemakerNotebookHandler;
 import liquibase.util.StringUtil;
 import org.junit.jupiter.api.Test;
@@ -32,8 +31,7 @@ public class ControlledAwsSagemakerNotebookHandlerTest extends BaseAwsUnitTest {
     assertEquals(
         generatedName,
         ControlledAwsSagemakerNotebookHandler.getHandler()
-            .generateCloudName(workspaceUserFacingId, resourceName + "._(){}^%`<>~#|@*+[]'\"\\"),
-            //.generateCloudName(workspaceUserFacingId, resourceName + ".!_(){}^%`<>~#|@*+[]'\"\\"),
+            .generateCloudName(workspaceUserFacingId, resourceName + ".!_(){}^%`<>~#|@*+[]'\"\\"),
         "resource name expected with all non-alphanumeric characters & non-dashes removed");
 
     resourceName =

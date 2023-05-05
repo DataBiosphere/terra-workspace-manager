@@ -29,9 +29,9 @@ public class ControlledAwsS3StorageFolderHandlerTest extends BaseAwsUnitTest {
         "resource name expected with all invalid characters removed");
 
     assertEquals(
-        ".-!_()"+generatedName,
+        ".-!_()" + generatedName,
         ControlledAwsS3StorageFolderHandler.getHandler()
-            .generateCloudName(workspaceUserFacingId, ".-!_()"+ resourceName),
+            .generateCloudName(workspaceUserFacingId, ".-!_()" + resourceName),
         "resource name expected without changes with allowed characters");
 
     resourceName =

@@ -168,7 +168,7 @@ components:
       type: object
       properties:
         instanceName:
-          description: A valid instance name per https://docs.aws.amazon.com/sagemaker/latest/dg/feature-store-quotas.html.
+          description: A valid instance name per https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_CreateNotebookInstance.html#sagemaker-CreateNotebookInstance-request-NotebookInstanceName
           type: string
         instanceType:
           description: A valid instance type per https://docs.aws.amazon.com/general/latest/gr/sagemaker.html

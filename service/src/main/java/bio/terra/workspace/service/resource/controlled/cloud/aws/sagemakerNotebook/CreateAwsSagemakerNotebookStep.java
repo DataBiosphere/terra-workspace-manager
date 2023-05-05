@@ -1,14 +1,18 @@
 package bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakerNotebook;
 
+import bio.terra.aws.resource.discovery.Environment;
 import bio.terra.common.iam.SamUser;
 import bio.terra.stairway.FlightContext;
+import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.AwsUtils;
+import bio.terra.workspace.generated.model.ApiAwsSagemakerNotebookCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import java.util.Collection;
 import java.util.HashSet;
@@ -48,14 +52,18 @@ public class CreateAwsSagemakerNotebookStep implements Step {
     AwsUtils.appendUserTags(tags, samUser);
     AwsUtils.appendResourceTags(tags, cloudContext);
 
-    /* TODO-Dex
-    AwsUtils.createFolder(
-        credentialsProvider,
-        Region.of(resource.getRegion()),
-        resource.getBucketName(),
-        resource.getPrefix(),
-        tags);
-     */
+    FlightMap inputParameters = flightContext.getInputParameters();
+    // TODO(TERRA-550): creationParameters may be used later
+    ApiAwsSagemakerNotebookCreationParameters creationParameters =
+        inputParameters.get(
+            ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS,
+            ApiAwsSagemakerNotebookCreationParameters.class);
+    Environment environment =
+        inputParameters.get(ControlledResourceKeys.AWS_ENVIRONMENT, Environment.class);
+
+    AwsUtils.createSageMakerNotebook(
+        credentialsProvider, resource,
+        environment, tags);
     return StepResult.getStepResultSuccess();
   }
 

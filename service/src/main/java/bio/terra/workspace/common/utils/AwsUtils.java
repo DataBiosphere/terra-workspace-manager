@@ -3,6 +3,8 @@ package bio.terra.workspace.common.utils;
 import bio.terra.aws.resource.discovery.CachedEnvironmentDiscovery;
 import bio.terra.aws.resource.discovery.Environment;
 import bio.terra.aws.resource.discovery.EnvironmentDiscovery;
+import bio.terra.aws.resource.discovery.LandingZone;
+import bio.terra.aws.resource.discovery.NotebookLifecycleConfiguration;
 import bio.terra.aws.resource.discovery.S3EnvironmentDiscovery;
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.BadRequestException;
@@ -47,6 +49,8 @@ import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Object;
 import software.amazon.awssdk.services.s3.model.Tagging;
+import software.amazon.awssdk.services.sagemaker.SageMakerClient;
+import software.amazon.awssdk.services.sagemaker.model.CreateNotebookInstanceRequest;
 import software.amazon.awssdk.services.sts.StsClient;
 import software.amazon.awssdk.services.sts.auth.StsAssumeRoleWithWebIdentityCredentialsProvider;
 import software.amazon.awssdk.services.sts.model.AssumeRoleRequest;
@@ -320,12 +324,22 @@ public class AwsUtils {
         .credentials();
   }
 
-  // TODO(TERRA-498) Move all functions below this comment to CRL
   private static S3Client getS3Client(
       AwsCredentialsProvider awsCredentialsProvider, Region region) {
     return S3Client.builder().region(region).credentialsProvider(awsCredentialsProvider).build();
   }
 
+  private static SageMakerClient getSagemakerClient(
+      AwsCredentialsProvider awsCredentialsProvider, Region region) {
+    return SageMakerClient.builder()
+        .region(region)
+        .credentialsProvider(awsCredentialsProvider)
+        .build();
+  }
+
+  // AWS S3 Storage Folder
+
+  // TODO(TERRA-498) Move storage functions below to CRL
   /**
    * Check if AWS storage object exists with given prefix as a folder
    *
@@ -341,27 +355,30 @@ public class AwsUtils {
       String folder) {
     String folderKey = folder.endsWith("/") ? folder : String.format("%s/", folder);
     return CollectionUtils.isNotEmpty(
-        getObjectKeysByPrefix(awsCredentialsProvider, region, bucketName, folderKey, 1));
+        getS3ObjectKeysByPrefix(awsCredentialsProvider, region, bucketName, folderKey, 1));
   }
 
   /**
    * Create AWS storage object (as a folder)
    *
    * @param awsCredentialsProvider {@link AwsCredentialsProvider}
-   * @param region {@link Region}
-   * @param bucketName bucket name
-   * @param folder folder name (key)
+   * @param storageResource {@link ControlledAwsS3StorageFolderResource}
    * @param tags collection of {@link Tag} to be attached to the folder
    */
-  public static void createFolder(
+  public static void createStorageFolder(
       AwsCredentialsProvider awsCredentialsProvider,
-      Region region,
-      String bucketName,
-      String folder,
+      ControlledAwsS3StorageFolderResource storageResource,
       Collection<Tag> tags) {
     // Creating a "folder" requires writing an empty object ending with the delimiter ('/').
-    String folderKey = folder.endsWith("/") ? folder : String.format("%s/", folder);
-    putObject(awsCredentialsProvider, region, bucketName, folderKey, "", tags);
+    String prefix = storageResource.getPrefix();
+    String folderKey = prefix.endsWith("/") ? prefix : String.format("%s/", prefix);
+    putS3Object(
+        awsCredentialsProvider,
+        Region.of(storageResource.getRegion()),
+        storageResource.getBucketName(),
+        folderKey,
+        "",
+        tags);
   }
 
   /**
@@ -372,16 +389,16 @@ public class AwsUtils {
    * @param bucketName bucket name
    * @param folder folder name (key)
    */
-  public static void deleteFolder(
+  public static void deleteStorageFolder(
       AwsCredentialsProvider awsCredentialsProvider,
       Region region,
       String bucketName,
       String folder) {
     String folderKey = folder.endsWith("/") ? folder : String.format("%s/", folder);
     List<String> objectKeys =
-        getObjectKeysByPrefix(
+        getS3ObjectKeysByPrefix(
             awsCredentialsProvider, region, bucketName, folderKey, Integer.MAX_VALUE);
-    deleteObjects(awsCredentialsProvider, region, bucketName, objectKeys);
+    deleteS3Objects(awsCredentialsProvider, region, bucketName, objectKeys);
   }
 
   /**
@@ -393,7 +410,7 @@ public class AwsUtils {
    * @param key object (key)
    * @param tags collection of {@link Tag} to be attached to the folder
    */
-  public static void putObject(
+  public static void putS3Object(
       AwsCredentialsProvider awsCredentialsProvider,
       Region region,
       String bucketName,
@@ -450,7 +467,7 @@ public class AwsUtils {
    * @param prefix common prefix
    * @param limit max count of results
    */
-  public static List<String> getObjectKeysByPrefix(
+  public static List<String> getS3ObjectKeysByPrefix(
       AwsCredentialsProvider awsCredentialsProvider,
       Region region,
       String bucketName,
@@ -502,7 +519,7 @@ public class AwsUtils {
    * @param bucketName bucket name
    * @param keys list of objects (keys)
    */
-  public static void deleteObjects(
+  public static void deleteS3Objects(
       AwsCredentialsProvider awsCredentialsProvider,
       Region region,
       String bucketName,
@@ -547,6 +564,78 @@ public class AwsUtils {
       // Bulk delete operation would not fail with NotFound error, overall op is idempotent
       checkException(e);
       throw new ApiException("Error deleting storage objects", e);
+    }
+  }
+
+  // AWS Sagemaker Notebook
+
+  // TODO(TERRA-500) Move notebook functions below to CRL
+
+  /**
+   * Create AWS sagemaker notebook
+   *
+   * @param awsCredentialsProvider AWS CredentialsProvider
+   * @param notebookResource Sagemaker notebook resource
+   * @param environment AWS environment
+   * @param tags collection of {@link Tag} to be attached to the folder
+   */
+  public static void createSageMakerNotebook(
+      AwsCredentialsProvider awsCredentialsProvider,
+      ControlledAwsSagemakerNotebookResource notebookResource,
+      Environment environment,
+      Collection<Tag> tags) {
+    Region region = Region.of(notebookResource.getRegion());
+    SageMakerClient sageMakerClient = getSagemakerClient(awsCredentialsProvider, region);
+    logger.info(
+        "Creating notebook with name '{}', type '{}'.",
+        notebookResource.getInstanceName(),
+        notebookResource.getInstanceType());
+
+    Set<software.amazon.awssdk.services.sagemaker.model.Tag> sagemakerTags =
+        tags.stream()
+            .map(
+                stsTag ->
+                    software.amazon.awssdk.services.sagemaker.model.Tag.builder()
+                        .key(stsTag.key())
+                        .value(stsTag.value())
+                        .build())
+            .collect(Collectors.toSet());
+
+    LandingZone landingZone = environment.getLandingZone(region).orElseThrow(); // already validated
+
+    // TODO(TERRA-312) - which config from the list?
+    NotebookLifecycleConfiguration lifecycleConfiguration =
+        landingZone.getNotebookLifecycleConfigurations().stream().findFirst().orElse(null);
+
+    CreateNotebookInstanceRequest.Builder requestBuilder =
+        CreateNotebookInstanceRequest.builder()
+            .notebookInstanceName(notebookResource.getInstanceName())
+            .instanceType(notebookResource.getInstanceType())
+            .roleArn(environment.getUserRoleArn().toString())
+            .kmsKeyId(landingZone.getKmsKey().arn().resource().resource())
+            .tags(sagemakerTags);
+
+    if (lifecycleConfiguration != null) {
+      String policyName = lifecycleConfiguration.arn().resource().resource();
+      logger.info(
+          String.format(
+              "Attaching lifecycle policy '%s' to notebook '%s'.",
+              policyName, notebookResource.getInstanceName()));
+      requestBuilder.lifecycleConfigName(policyName);
+    }
+
+    try {
+      SdkHttpResponse httpResponse =
+          sageMakerClient.createNotebookInstance(requestBuilder.build()).sdkHttpResponse();
+      if (!httpResponse.isSuccessful()) {
+        throw new ApiException(
+            "Error creating sagemaker notebook, "
+                + httpResponse.statusText().orElse(String.valueOf(httpResponse.statusCode())));
+      }
+
+    } catch (SdkException e) {
+      checkException(e);
+      throw new ApiException("Error creating sagemaker notebook,", e);
     }
   }
 

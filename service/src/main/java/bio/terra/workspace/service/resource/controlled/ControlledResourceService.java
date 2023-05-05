@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.resource.controlled;
 
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE;
-
+import bio.terra.aws.resource.discovery.Environment;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.ServiceUnavailableException;
 import bio.terra.stairway.FlightState;
@@ -610,7 +609,7 @@ public class ControlledResourceService {
         .stewardshipType(resource.getStewardshipType())
         .workspaceId(workspaceUuid.toString())
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
-        .addParameter(CONTROLLED_RESOURCES_TO_DELETE, resourceToDelete);
+        .addParameter(ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE, resourceToDelete);
   }
 
   /**
@@ -657,6 +656,7 @@ public class ControlledResourceService {
   public String createAwsSagemakerNotebookInstance(
       ControlledAwsSagemakerNotebookResource resource,
       ApiAwsSagemakerNotebookCreationParameters creationParameters,
+      Environment environment,
       @Nullable ControlledResourceIamRole privateResourceIamRole,
       @Nullable ApiJobControl jobControl,
       String resultPath,
@@ -671,6 +671,7 @@ public class ControlledResourceService {
         commonCreationJobBuilder(
             resource, privateResourceIamRole, jobControl, resultPath, userRequest);
     jobBuilder.addParameter(ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS, creationParameters);
+    jobBuilder.addParameter(ControlledResourceKeys.AWS_ENVIRONMENT, environment);
 
     String jobId = jobBuilder.submit();
     waitForResourceOrJob(resource.getWorkspaceId(), resource.getResourceId(), jobId);

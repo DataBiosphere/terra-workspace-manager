@@ -49,12 +49,7 @@ public class CreateAwsS3StorageFolderStep implements Step {
     AwsUtils.appendUserTags(tags, samUser);
     AwsUtils.appendResourceTags(tags, cloudContext);
 
-    AwsUtils.createFolder(
-        credentialsProvider,
-        Region.of(resource.getRegion()),
-        resource.getBucketName(),
-        resource.getPrefix(),
-        tags);
+    AwsUtils.createStorageFolder(credentialsProvider, resource, tags);
     return StepResult.getStepResultSuccess();
   }
 
@@ -65,7 +60,7 @@ public class CreateAwsS3StorageFolderStep implements Step {
             awsCloudContextService.getRequiredAuthentication(),
             awsCloudContextService.discoverEnvironment());
 
-    AwsUtils.deleteFolder(
+    AwsUtils.deleteStorageFolder(
         credentialsProvider,
         Region.of(resource.getRegion()),
         resource.getBucketName(),

@@ -139,9 +139,9 @@ public class AwsCloudContextService {
    * Return a new AWS cloud context for discovered environment
    *
    * @param environment AWS environment
-   * @return AWS cloud context
+   * @return AWS cloud context {@link AwsCloudContext}
    */
-  public AwsCloudContext getCloudContext(Environment environment) {
+  public static AwsCloudContext getCloudContext(Environment environment) {
     Metadata metadata = environment.getMetadata();
     return new AwsCloudContext(
         metadata.getMajorVersion(),
@@ -179,8 +179,20 @@ public class AwsCloudContextService {
    * @throws StaleConfigurationException StaleConfigurationException
    */
   public Optional<LandingZone> getLandingZone(AwsCloudContext awsCloudContext, Region region) {
-    Environment environment = discoverEnvironment();
+    return getLandingZone(discoverEnvironment(), awsCloudContext, region);
+  }
 
+  /**
+   * Return the landing zone to for the given cloud context's region
+   *
+   * @param environment AWS environment
+   * @param awsCloudContext Aws Cloud context
+   * @param region AWS region
+   * @return AWS landing zone, if supported for the Cloud context region
+   * @throws StaleConfigurationException StaleConfigurationException
+   */
+  public static Optional<LandingZone> getLandingZone(
+      Environment environment, AwsCloudContext awsCloudContext, Region region) {
     AwsCloudContext awsCloudContextFromEnv = getCloudContext(environment);
     if (!awsCloudContext.equals(awsCloudContextFromEnv)) {
       throw new StaleConfigurationException(

@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.controller;
 
+import bio.terra.aws.resource.discovery.Environment;
 import bio.terra.aws.resource.discovery.LandingZone;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.common.iam.SamUser;
@@ -64,6 +65,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.sagemaker.model.InstanceType;
 import software.amazon.awssdk.services.sts.model.Credentials;
 import software.amazon.awssdk.services.sts.model.Tag;
 
@@ -140,6 +142,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
         "deleteAwsResource workspaceUuid: {}, resourceUuid: {}",
         workspaceUuid.toString(),
         resourceUuid.toString());
+
     String jobId =
         controlledResourceService.deleteControlledResourceAsync(
             jobControl,
@@ -257,11 +260,12 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
                 });
 
     logger.info(
-        "createAwsS3StorageFolder workspace: {}, bucketName: {}, prefix {}, region: {}",
+        "createAwsS3StorageFolder workspace: {}, region: {}, bucketName: {}, folderName {}, cloudName {}",
         workspaceUuid.toString(),
+        region,
         landingZone.getStorageBucket().name(),
         commonFields.getName(),
-        region);
+        folderName);
 
     ControlledAwsS3StorageFolderResource resource =
         ControlledAwsS3StorageFolderResource.builder()
@@ -381,6 +385,13 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
                 AccessScopeType.fromApi(body.getCommon().getAccessScope()),
                 ManagedByType.fromApi(body.getCommon().getManagedBy())));
 
+    InstanceType instanceType =
+        InstanceType.fromValue(body.getAwsSagemakerNotebook().getInstanceType());
+    if (instanceType == null || instanceType == InstanceType.UNKNOWN_TO_SDK_VERSION) {
+      throw new ValidationException(
+          String.format("Unsupported AWS Sagemaker Notebook InstanceType: '%s'.", instanceType));
+    }
+
     String instanceName = body.getAwsSagemakerNotebook().getInstanceName();
     if (StringUtils.isEmpty(instanceName)) {
       instanceName =
@@ -403,32 +414,37 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     AwsCloudContext awsCloudContext =
         awsCloudContextService.getRequiredAwsCloudContext(workspaceUuid);
 
-    LandingZone landingZone =
-        awsCloudContextService
-            .getLandingZone(awsCloudContext, Region.of(region))
-            .orElseThrow(
-                () -> {
-                  throw new ValidationException(
-                      String.format("Unsupported AWS region: '%s'.", region));
-                });
+    Environment environment = awsCloudContextService.discoverEnvironment();
+    AwsCloudContextService.getLandingZone(environment, awsCloudContext, Region.of(region))
+        .orElseThrow(
+            () -> {
+              throw new ValidationException(String.format("Unsupported AWS region: '%s'.", region));
+            });
 
     ControlledAwsSagemakerNotebookResource resource =
         ControlledAwsSagemakerNotebookResource.builder()
             .common(commonFields)
-            .instanceName(body.getAwsSagemakerNotebook().getInstanceName())
+            .instanceName(instanceName)
             .instanceType(body.getAwsSagemakerNotebook().getInstanceType())
             .build();
 
     logger.info(
-        "createAwsSagemakerNotebook workspace: {}, bucketName: {}, prefix {}, region: {}",
+        "createAwsSagemakerNotebook workspace: {}, region: {}, instanceName: {}, instanceType {}, cloudName {}",
         workspaceUuid.toString(),
-        landingZone.getStorageBucket().name(),
+        region,
         commonFields.getName(),
-        region);
+        instanceType,
+        instanceName);
+
+    // TODO(TERRA-312) - which config from the list?
+    // NotebookLifecycleConfiguration lifecycleConfiguration =
+    // landingZone.getNotebookLifecycleConfigurations().stream().findFirst().orElse(null);
+
     String jobId =
         controlledResourceService.createAwsSagemakerNotebookInstance(
             resource,
             body.getAwsSagemakerNotebook(),
+            environment,
             commonFields.getIamRole(),
             body.getJobControl(),
             getAsyncResultEndpoint(body.getJobControl().getId(), "create-result"),
