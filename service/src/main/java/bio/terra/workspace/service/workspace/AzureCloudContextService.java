@@ -74,7 +74,8 @@ public class AzureCloudContextService implements CloudContextService {
     }
 
     // validate the MRG
-    flight.addStep(new ValidateMRGStep(appContext.getCrlService(), appContext.getAzureConfig()));
+    flight.addStep(
+        new ValidateMRGStep(appContext.getCrlService(), appContext.getAzureConfig(), spendProfile));
   }
 
   @Override

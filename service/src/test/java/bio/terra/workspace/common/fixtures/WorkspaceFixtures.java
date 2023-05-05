@@ -50,12 +50,16 @@ public class WorkspaceFixtures {
   }
 
   public static Workspace createDefaultMcWorkspace() {
+    return createDefaultMcWorkspace(DEFAULT_SPEND_PROFILE_ID);
+  }
+
+  public static Workspace createDefaultMcWorkspace(SpendProfileId spendProfileId) {
     return new Workspace(
         UUID.randomUUID(),
         RandomStringUtils.randomAlphabetic(10).toLowerCase(Locale.ROOT),
         "default workspace",
         "this is an awesome workspace",
-        DEFAULT_SPEND_PROFILE_ID,
+        spendProfileId,
         Collections.emptyMap(),
         WorkspaceStage.MC_WORKSPACE,
         DEFAULT_USER_EMAIL,

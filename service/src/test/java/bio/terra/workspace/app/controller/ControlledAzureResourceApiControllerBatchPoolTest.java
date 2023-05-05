@@ -115,6 +115,7 @@ public class ControlledAzureResourceApiControllerBatchPoolTest extends BaseAzure
             .common(commonFields)
             .azureBatchPool(creationParameters);
 
+    setupMockLandingZoneRegion(Region.GERMANY_CENTRAL);
     UUID workspaceId = UUID.randomUUID();
     ControlledAzureBatchPoolResource resource =
         ControlledResourceBatchPoolFixtures.createAzureBatchPoolResource(
@@ -130,7 +131,6 @@ public class ControlledAzureResourceApiControllerBatchPoolTest extends BaseAzure
             .createControlledResourceSync(
                 any(ControlledAzureBatchPoolResource.class), any(), any(), any()))
         .thenReturn(resource);
-    setupMockLandingZoneRegion(Region.GERMANY_CENTRAL);
 
     mockMvc
         .perform(

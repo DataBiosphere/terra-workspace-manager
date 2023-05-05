@@ -10,6 +10,7 @@ import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureStorageAccessService;
+import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import com.azure.core.management.Region;
 import java.time.Instant;
@@ -56,7 +57,8 @@ public class BaseAzureUnitTest extends BaseUnitTestMocks {
   }
 
   public void setupMockLandingZoneRegion(Region region) {
-    when(mockWorkspaceService().getWorkspace(any())).thenReturn(createDefaultMcWorkspace());
+    when(mockWorkspaceService().getWorkspace(any()))
+        .thenReturn(createDefaultMcWorkspace(new SpendProfileId(UUID.randomUUID().toString())));
     when(mockLandingZoneService().getLandingZonesByBillingProfile(any(), any()))
         .thenReturn(
             List.of(
