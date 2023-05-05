@@ -47,10 +47,15 @@ set -o xtrace
 # user space, such as setting Terra CLI settings which are persisted in the user's $HOME.
 # This post startup script is not run by the same user.
 readonly JUPYTER_USER="jupyter"
+
 readonly STATUS_ATTRIBUTE="startup_script/status"
 readonly MESSAGE_ATTRIBUTE="startup_script/message"
-readonly USER_TERRA_CONFIG_DIR="/home/${JUPYTER_USER}/.terra"
-readonly OUTPUT_FILE="${USER_TERRA_CONFIG_DIR}/post-startup-output.txt"
+
+readonly USER_HOME_DIR="/home/${JUPYTER_USER}"
+readonly USER_SSH_DIR="${USER_HOME_DIR}/.ssh"
+readonly USER_BASH_PROFILE="${USER_HOME_DIR}/.bash_profile"
+readonly USER_TERRA_CONFIG_DIR="${USER_HOME_DIR}/.terra"
+readonly POST_STARTUP_OUTPUT_FILE="${USER_TERRA_CONFIG_DIR}/post-startup-output.txt"
 
 # Variables relevant for 3rd party software that gets installed
 readonly REQ_JAVA_VERSION=17
@@ -70,7 +75,7 @@ readonly TERRA_BOOT_SCRIPT="${USER_TERRA_CONFIG_DIR}/instance-boot.sh"
 readonly TERRA_BOOT_SERVICE="/etc/systemd/system/terra-instance-boot.service"
 
 # Location of gitignore configuration file for users
-readonly GIT_IGNORE="/home/${JUPYTER_USER}/gitignore_global"
+readonly GIT_IGNORE="${USER_HOME_DIR}/gitignore_global"
 
 # Move to the /tmp directory to let any artifacts left behind by this script can be removed.
 cd /tmp || exit
@@ -78,7 +83,7 @@ cd /tmp || exit
 # Send stdout and stderr from this script to a file for debugging.
 # Make the .terra directory as the user so that they own it and have correct linux permissions.
 sudo -u "${JUPYTER_USER}" sh -c "mkdir -p ${USER_TERRA_CONFIG_DIR}"
-exec >> "${OUTPUT_FILE}"
+exec >> "${POST_STARTUP_OUTPUT_FILE}"
 exec 2>&1
 
 #######################################
@@ -124,13 +129,24 @@ function exit_handler {
   fi
   # Write error status and message to guest attributes
   set_guest_attributes "${STATUS_ATTRIBUTE}" "ERROR"
-  set_guest_attributes "${MESSAGE_ATTRIBUTE}" "Error on line ${line_no}, command \"${command}\". See ${OUTPUT_FILE} for more information."
+  set_guest_attributes "${MESSAGE_ATTRIBUTE}" "Error on line ${line_no}, command \"${command}\". See ${POST_STARTUP_OUTPUT_FILE} for more information."
   exit "${exit_code}"
 }
 trap 'exit_handler $? $LINENO $BASH_COMMAND' EXIT
 
+#######################################
+### Begin environment setup 
+#######################################
+
 # Let the UI know the script has started
 set_guest_attributes "${STATUS_ATTRIBUTE}" "STARTED"
+
+echo "Resynchronizing apt package index..."
+
+# The apt package index may not be clean when we run; resynchronize
+apt-get update
+
+echo "Installing common packages via pip..."
 
 # Install common packages. Use pip instead of conda because conda is slow.
 /opt/conda/bin/pip install \
@@ -145,12 +161,11 @@ set_guest_attributes "${STATUS_ATTRIBUTE}" "STARTED"
 # Install nbstripout for the jupyter user in all git repositories.
 sudo -u "${JUPYTER_USER}" sh -c "/opt/conda/bin/nbstripout --install --global"
 
-# The apt package index may not be clean when we run; resynchronize
-apt-get update
-
 #########################################################
 # Install required JDK and set it as default (debian)
 #########################################################
+echo "Installing Java JDK ..."
+
 function install_java() {
   curl -Os https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.deb
   apt-get install -y ./jdk-17_linux-x64_bin.deb
@@ -158,8 +173,7 @@ function install_java() {
   update-alternatives --set java /usr/lib/jvm/jdk-17/bin/java
 }
 
-if [[ -n "$(which java)" ]];
-then
+if [[ -n "$(which java)" ]]; then
   # Get the current major version of Java: "11.0.12" => "11"
   readonly CUR_JAVA_VERSION="$(java -version 2>&1 | awk -F\" '{ split($2,a,"."); print a[1]}')"
   if [[ "${CUR_JAVA_VERSION}" -lt "${REQ_JAVA_VERSION}" ]];
@@ -175,33 +189,41 @@ else
 fi
 
 # Download Nextflow and install it
+echo "Installing Nextflow ..."
+
 sudo -u "${JUPYTER_USER}" sh -c "curl -s https://get.nextflow.io | bash"
 mv nextflow "${NEXTFLOW_INSTALL_PATH}"
 
 # Download Cromwell and install it
+echo "Installing Cromwell ..."
+
 curl -LO "https://github.com/broadinstitute/cromwell/releases/download/${CROMWELL_LATEST_VERSION}/cromwell-${CROMWELL_LATEST_VERSION}.jar"
 mv "cromwell-${CROMWELL_LATEST_VERSION}.jar" "${CROMWELL_INSTALL_PATH}"
 
 # Set a variable for the user in the bash_profile
-cat << EOF >> "/home/${JUPYTER_USER}/.bash_profile"
+cat << EOF >> "${USER_BASH_PROFILE}"
 
 # Set a convenience variable pointing to the version-specific Cromwell JAR file
 export CROMWELL_JAR='"${CROMWELL_INSTALL_PATH}"'
 EOF
 
 # Download cromshell and install it
+echo "Installing Cromshell ..."
+
 apt-get -y install mailutils
 curl -Os https://raw.githubusercontent.com/broadinstitute/cromshell/master/cromshell
 chmod +x cromshell
 mv cromshell "${CROMSHELL_INSTALL_PATH}"
 
 # Install & configure the Terra CLI
+echo "Installing the Terra CLI ..."
+
 sudo -u "${JUPYTER_USER}" sh -c "curl -L https://github.com/DataBiosphere/terra-cli/releases/latest/download/download-install.sh | bash"
 cp terra "${TERRA_INSTALL_PATH}"
+
 # Set browser manual login since that's the only login supported from an GCP Notebook VM.
 sudo -u "${JUPYTER_USER}" sh -c "terra config set browser MANUAL"
-# Set the CLI terra server based on the terra server that created the GCP notebook retrieved from
-# the VM metadata, if set.
+# Set the CLI terra server based on the terra server that created the VM.
 readonly TERRA_SERVER="$(get_metadata_value "instance/attributes/terra-cli-server")"
 if [[ -n "${TERRA_SERVER}" ]]; then
   sudo -u "${JUPYTER_USER}" sh -c "terra server set --name=${TERRA_SERVER}"
@@ -209,7 +231,7 @@ fi
 
 # Log in with app-default-credentials
 sudo -u "${JUPYTER_USER}" sh -c "terra auth login --mode=APP_DEFAULT_CREDENTIALS"
-# Generate the bash completion scripot
+# Generate the bash completion script
 sudo -u "${JUPYTER_USER}" sh -c "terra generate-completion" > /etc/bash_completion.d/terra
 
 ####################################
@@ -221,6 +243,8 @@ readonly TERRA_WORKSPACE="$(get_metadata_value "instance/attributes/terra-worksp
 if [[ -n "${TERRA_WORKSPACE}" ]]; then
   sudo -u "${JUPYTER_USER}" sh -c "terra workspace set --id=${TERRA_WORKSPACE}"
 fi
+
+echo "Adding Terra environment variables to .bash_profile ..."
 
 # Set variables into the .bash_profile such that they are available
 # to terminals, notebooks, and other tools
@@ -262,7 +286,7 @@ readonly PET_SA_EMAIL="$(
 # GOOGLE_SERVICE_ACCOUNT_EMAIL is the pet service account for the Terra user
 # and is specific to the GCP project backing the workspace.
 
-cat << EOF >> "/home/${JUPYTER_USER}/.bash_profile"
+cat << EOF >> "${USER_BASH_PROFILE}"
 
 # Set up a few legacy Terra-specific convenience variables
 export OWNER_EMAIL='${OWNER_EMAIL}'
@@ -284,7 +308,9 @@ EOF
 # If we need it system-wide, we can install it there, but otherwise, let's
 # keep changes localized to the JUPYTER_USER.
 #
-cat << 'EOF' >> "/home/${JUPYTER_USER}/.bash_profile"
+echo "Configuring bash completion for the VM..."
+
+cat << 'EOF' >> "${USER_BASH_PROFILE}"
 
 # Source available global bash tab completion scripts
 if [[ -d /etc/bash_completion.d ]]; then
@@ -305,29 +331,37 @@ EOF
 # git setup
 ###############
 
-sudo -u "${JUPYTER_USER}" sh -c "mkdir -p /home/${JUPYTER_USER}/.ssh"
-cd "/home/${JUPYTER_USER}"
-readonly TERRA_SSH_KEY="$(sudo -u "${JUPYTER_USER}" sh -c "terra user ssh-key get --include-private-key --format=JSON")"
+echo "Setting up git integration..."
 
 # Set ssh-agent launch command in .bash_profile so everytime
 # user starts a shell, we start the ssh-agent.
-cat << 'EOF' >> "/home/${JUPYTER_USER}/.bash_profile"
+cat << 'EOF' >> "${USER_BASH_PROFILE}"
 
-# Start the ssh-agent
+# Start the ssh-agent; "eval" it to set SSH_AUTH_SOCK and SSH_AGENT_PID
 eval "$(ssh-agent -s)"
 EOF
 
-if [[ -n "$TERRA_SSH_KEY" ]]; then
-  printf '%s' "$TERRA_SSH_KEY" | sudo -u "${JUPYTER_USER}" sh -c "jq -r '.privateSshKey' > .ssh/id_rsa"
-  sudo -u "${JUPYTER_USER}" sh -c 'chmod go-rwx .ssh/id_rsa'
-  sudo -u "${JUPYTER_USER}" sh -c 'ssh-add .ssh/id_rsa; ssh-keyscan -H github.com >> ~/.ssh/known_hosts'
+# Create the user SSH directory 
+sudo -u "${JUPYTER_USER}" sh -c "mkdir -p ${USER_SSH_DIR} --mode 0700"
+
+# Get the user's SSH key from Terra, and if set, write it to the user's .ssh directory
+sudo -u "${JUPYTER_USER}" sh -c "\
+  install --mode 0600 /dev/null ${USER_SSH_DIR}/id_rsa.tmp && \
+  terra user ssh-key get --include-private-key --format=JSON >> ${USER_SSH_DIR}/id_rsa.tmp || true"
+if [[ -s "${USER_SSH_DIR}/id_rsa.tmp" ]]; then
+  sudo -u "${JUPYTER_USER}" sh -c "install --mode 0600 /dev/null ${USER_SSH_DIR}/id_rsa"
+  sudo -u "${JUPYTER_USER}" sh -c "jq -r '.privateSshKey' ${USER_SSH_DIR}/id_rsa.tmp > ${USER_SSH_DIR}/id_rsa"
 fi
+rm -f "${USER_SSH_DIR}/id_rsa.tmp"
+
+# Set the github known_hosts
+sudo -u "${JUPYTER_USER}" sh -c "ssh-keyscan -H github.com >> ${USER_SSH_DIR}/known_hosts"
 
 # Attempt to clone all the git repo references in the workspace. If the user's ssh key does not exist or doesn't have access
 # to the git references, the corresponding git repo cloning will be skipped.
 # Keep this as last thing in script. There will be integration test for git cloning (PF-1660). If this is last thing, then
 # integration test will ensure that everything in script worked.
-sudo -u "${JUPYTER_USER}" sh -c 'terra git clone --all'
+sudo -u "${JUPYTER_USER}" sh -c 'cd "${HOME}" && terra git clone --all'
 
 #############################
 # Setup instance boot service
@@ -336,6 +370,8 @@ sudo -u "${JUPYTER_USER}" sh -c 'terra git clone --all'
 # 1. Mount terra workspace resources. This command requires system user home
 #    directories to be mounted. We run the startup service after
 #    jupyter.service to meet this requirement.
+
+echo "Setting up Terra boot script and service..."
 
 # Create the boot script
 cat <<EOF >"${TERRA_BOOT_SCRIPT}"
@@ -454,6 +490,30 @@ if [[ -z "${INSTALLED_TERRA_VERSION}" ]]; then
 fi
 
 echo "SUCCESS: Terra CLI installed and version detected as ${INSTALLED_TERRA_VERSION}"
+
+# SSH
+echo "--  Checking if .ssh directory is properly set up"
+
+if [[ ! -e "${USER_SSH_DIR}" ]]; then
+  >&2 echo "ERROR: user SSH directory does not exist"
+  exit 1
+fi
+readonly SSH_DIR_MODE="$(stat -c "%a %G %U" "${USER_SSH_DIR}")"
+if [[ "${SSH_DIR_MODE}" != "700 jupyter jupyter" ]]; then
+  >&2 echo "ERROR: user SSH directory permissions are incorrect: ${SSH_DIR_MODE}"
+  exit 1
+fi
+
+# If the user didn't have an SSH key configured, then the id_rsa file won't exist.
+# If they do have the file, check the permissions
+if [[ -e "${USER_SSH_DIR}/id_rsa" ]]; then
+  readonly SSH_KEY_FILE_MODE="$(stat -c "%a %G %U" "${USER_SSH_DIR}/id_rsa")"
+  if [[ "${SSH_KEY_FILE_MODE}" != "600 jupyter jupyter" ]]; then
+    >&2 echo "ERROR: user SSH key file permissions are incorrect: ${SSH_DIR_MODE}/id_rsa"
+    exit 1
+  fi
+fi
+
 
 # GIT_IGNORE
 echo "--  Checking if gitignore is properly installed"
