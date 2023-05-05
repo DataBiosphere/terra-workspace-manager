@@ -2,13 +2,16 @@ package bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket;
 
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketHandler.MAX_BUCKET_NAME_LENGTH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.annotation.DirtiesContext.ClassMode.BEFORE_CLASS;
 
 import bio.terra.workspace.common.BaseUnitTestMockGcpCloudContextService;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookHandler;
 import java.io.IOException;
 import java.util.UUID;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.annotation.DirtiesContext;
@@ -92,6 +95,19 @@ public class ControlledGcsBucketHandlerTest extends BaseUnitTestMockGcpCloudCont
 
     assertEquals(maxNameLength, generateCloudName.length());
     assertEquals(generateCloudName, generateCloudName.substring(0, maxNameLength));
+  }
+
+  @Test
+  public void generateBucketName_bucketNameTooLong_trimDashes() {
+    // Generate a name like "aaa-excessText" and ensure it is trimmed to "aaa", not "aaa-", as names
+    // may not end in dashes.
+    String instanceName =
+        StringUtils.repeat("a", MAX_BUCKET_NAME_LENGTH - 1) + "-" + "andSomeMoreText";
+    String bucketName =
+        ControlledAiNotebookHandler.getHandler().generateCloudName((UUID) null, instanceName);
+
+    assertEquals(MAX_BUCKET_NAME_LENGTH - 1, bucketName.length());
+    assertNotEquals(bucketName.charAt(bucketName.length() - 1), '-');
   }
 
   @Test
