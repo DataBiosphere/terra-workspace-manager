@@ -45,7 +45,9 @@ public class AwsResourceValidationUtils {
     int nameLength = instanceName.getBytes(StandardCharsets.UTF_8).length;
     if (nameLength < 1
         || nameLength > AwsResourceConstants.MAX_SAGEMAKER_NOTEBOOK_INSTANCE_NAME_LENGTH
-        || !sagemakerInstanceNamePattern.matcher(instanceName).matches()) {
+        || !sagemakerInstanceNamePattern.matcher(instanceName).matches()
+        || instanceName.startsWith("-")
+        || instanceName.endsWith("-")) {
       throw new InvalidNameException(
           "Sagemaker instance names must contain any sequence alphabets, numbers and dashes (dash may not be first or last character), of length 1-64");
     }

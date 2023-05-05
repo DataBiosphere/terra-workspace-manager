@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.controller;
 
+import bio.terra.aws.resource.discovery.Environment;
 import bio.terra.aws.resource.discovery.LandingZone;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.common.iam.SamUser;
@@ -13,6 +14,7 @@ import bio.terra.workspace.generated.model.ApiAwsCredentialAccessScope;
 import bio.terra.workspace.generated.model.ApiAwsResourceCloudName;
 import bio.terra.workspace.generated.model.ApiAwsS3StorageFolderResource;
 import bio.terra.workspace.generated.model.ApiCreateControlledAwsS3StorageFolderRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateControlledAwsSagemakerNotebookRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAwsSagemakerNotebookResult;
 import bio.terra.workspace.generated.model.ApiCreatedControlledAwsS3StorageFolder;
 import bio.terra.workspace.generated.model.ApiDeleteControlledAwsResourceRequestBody;
@@ -33,6 +35,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.aws.AwsResourceCons
 import bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolder.ControlledAwsS3StorageFolderHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolder.ControlledAwsS3StorageFolderResource;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakerNotebook.ControlledAwsSagemakerNotebookHandler;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakerNotebook.ControlledAwsSagemakerNotebookResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
@@ -60,6 +63,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.sagemaker.model.InstanceType;
 import software.amazon.awssdk.services.sts.model.Credentials;
 import software.amazon.awssdk.services.sts.model.Tag;
 
@@ -423,15 +427,17 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
         instanceType,
         instanceName);
 
-    String jobId =
-        controlledResourceService.createAwsSagemakerNotebookInstance(
-            resource,
-            body.getAwsSagemakerNotebook(),
-            environment,
-            commonFields.getIamRole(),
-            body.getJobControl(),
-            getAsyncResultEndpoint(body.getJobControl().getId(), "create-result"),
-            userRequest);
+    String jobId = "";
+    /*
+    controlledResourceService.createAwsSagemakerNotebookInstance(
+        resource,
+        body.getAwsSagemakerNotebook(),
+        environment,
+        commonFields.getIamRole(),
+        body.getJobControl(),
+        getAsyncResultEndpoint(body.getJobControl().getId(), "create-result"),
+        userRequest);
+     */
 
     ApiCreateControlledAwsSagemakerNotebookResult result =
         getAwsSagemakerNotebookCreateResult(jobId);
@@ -441,7 +447,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
   @Traced
   @Override
   public ResponseEntity<ApiCreateControlledAwsSagemakerNotebookResult>
-  getCreateAwsSagemakerNotebookResult(UUID workspaceUuid, String jobId) {
+      getCreateAwsSagemakerNotebookResult(UUID workspaceUuid, String jobId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
     ApiCreateControlledAwsSagemakerNotebookResult result =
