@@ -45,9 +45,14 @@ public class ControlledAwsSagemakerNotebookHandler implements WsmResourceHandler
     String generatedName = notebookName + "-" + workspaceUserFacingId;
 
     generatedName = generatedName.replaceAll("(\\_)", "-");
-    generatedName = StringUtils.stripStart(generatedName, "-");
-    generatedName = StringUtils.stripEnd(generatedName, "-");
     generatedName = generatedName.replaceAll("[^\\-a-zA-Z0-9]+", "");
+    generatedName = StringUtils.stripStart(generatedName, "-");
+
+    // truncate before stripEnd, ensuring final name does not end with '-'
+    generatedName =
+        StringUtils.truncate(
+            generatedName, AwsResourceConstants.MAX_SAGEMAKER_NOTEBOOK_INSTANCE_NAME_LENGTH);
+    generatedName = StringUtils.stripEnd(generatedName, "-");
 
     if (generatedName.length() == 0) {
       throw new BadRequestException(
@@ -56,7 +61,6 @@ public class ControlledAwsSagemakerNotebookHandler implements WsmResourceHandler
                   + " alphanumerical characters.",
               notebookName));
     }
-    return StringUtils.truncate(
-        generatedName, AwsResourceConstants.MAX_SAGEMAKER_NOTEBOOK_INSTANCE_NAME_LENGTH);
+    return generatedName;
   }
 }

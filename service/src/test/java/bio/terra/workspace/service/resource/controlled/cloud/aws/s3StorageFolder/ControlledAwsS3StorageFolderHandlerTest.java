@@ -33,12 +33,12 @@ public class ControlledAwsS3StorageFolderHandlerTest extends BaseAwsUnitTest {
             .generateCloudName(workspaceUserFacingId, ".-!_()" + resourceName),
         "resource name expected without changes with allowed characters");
 
-    resourceName =
-        StringUtil.repeat("a", AwsResourceConstants.MAX_S3_STORAGE_FOLDER_NAME_LENGTH + 1);
     assertEquals(
         AwsResourceConstants.MAX_S3_STORAGE_FOLDER_NAME_LENGTH,
         ControlledAwsS3StorageFolderHandler.getHandler()
-            .generateCloudName(workspaceUserFacingId, resourceName)
+            .generateCloudName(
+                workspaceUserFacingId,
+                StringUtil.repeat("a", AwsResourceConstants.MAX_S3_STORAGE_FOLDER_NAME_LENGTH + 1))
             .length(),
         "resource name expected to be trimmed to max length");
   }

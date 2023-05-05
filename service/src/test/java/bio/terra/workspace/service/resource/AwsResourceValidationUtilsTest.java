@@ -35,6 +35,39 @@ public class AwsResourceValidationUtilsTest extends BaseAwsUnitTest {
   }
 
   @Test
+  public void awsSagemakerNotebookName() {
+    AwsResourceValidationUtils.validateAwsSagemakerNotebookName("valid-s3-sagemaker-instance");
+
+    assertThrows(
+        InvalidNameException.class,
+        () -> AwsResourceValidationUtils.validateAwsSagemakerNotebookName("-starts-with-dash"),
+        "Strings starting with dash expected to be invalid");
+
+    assertThrows(
+        InvalidNameException.class,
+        () -> AwsResourceValidationUtils.validateAwsSagemakerNotebookName("ends-with-dash-"),
+        "Strings ending with dash expected be invalid");
+
+    assertThrows(
+        InvalidNameException.class,
+        () -> AwsResourceValidationUtils.validateAwsSagemakerNotebookName("with_underscore"),
+        "Strings outside pattern \"^[a-zA-Z0-9](-*[a-zA-Z0-9])*\" expected to be invalid");
+
+    assertThrows(
+        InvalidNameException.class,
+        () -> AwsResourceValidationUtils.validateAwsSagemakerNotebookName("-"),
+        "Empty string expected to be invalid");
+    assertThrows(
+        InvalidNameException.class,
+        () ->
+            AwsResourceValidationUtils.validateAwsSagemakerNotebookName(
+                "a".repeat(AwsResourceConstants.MAX_SAGEMAKER_NOTEBOOK_INSTANCE_NAME_LENGTH) + 1),
+        String.format(
+            "Strings longer than %d characters expected to be invalid",
+            AwsResourceConstants.MAX_SAGEMAKER_NOTEBOOK_INSTANCE_NAME_LENGTH));
+  }
+
+  @Test
   public void awsCredentialDurationSecond() {
     assertThrows(
         InvalidNameException.class,
