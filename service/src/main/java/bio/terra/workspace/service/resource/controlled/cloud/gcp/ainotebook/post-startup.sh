@@ -366,7 +366,7 @@ sudo -u "${JUPYTER_USER}" sh -c "mkdir -p ${TERRA_GIT_REPOS_DIR}"
 # to the git references, the corresponding git repo cloning will be skipped.
 # Keep this as last thing in script. There will be integration test for git cloning (PF-1660). If this is last thing, then
 # integration test will ensure that everything in script worked.
-sudo -u "${JUPYTER_USER}" sh -c 'cd "${TERRA_GIT_REPOS_DIR}" && terra git clone --all'
+sudo -u "${JUPYTER_USER}" sh -c "cd ${TERRA_GIT_REPOS_DIR} && terra git clone --all"
 
 #############################
 # Setup instance boot service
