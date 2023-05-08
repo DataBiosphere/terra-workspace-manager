@@ -427,17 +427,15 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
         instanceType,
         instanceName);
 
-    String jobId = "";
-    /*
-    controlledResourceService.createAwsSagemakerNotebookInstance(
-        resource,
-        body.getAwsSagemakerNotebook(),
-        environment,
-        commonFields.getIamRole(),
-        body.getJobControl(),
-        getAsyncResultEndpoint(body.getJobControl().getId(), "create-result"),
-        userRequest);
-     */
+    String jobId =
+        controlledResourceService.createAwsSagemakerNotebookInstance(
+            resource,
+            body.getAwsSagemakerNotebook(),
+            environment,
+            commonFields.getIamRole(),
+            body.getJobControl(),
+            getAsyncResultEndpoint(body.getJobControl().getId(), "create-result"),
+            userRequest);
 
     ApiCreateControlledAwsSagemakerNotebookResult result =
         getAwsSagemakerNotebookCreateResult(jobId);
