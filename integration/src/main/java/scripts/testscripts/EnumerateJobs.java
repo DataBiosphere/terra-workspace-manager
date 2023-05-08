@@ -1,7 +1,6 @@
 package scripts.testscripts;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -26,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
 import scripts.utils.MultiResourcesUtils;
+import scripts.utils.TestUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class EnumerateJobs extends WorkspaceAllocateTestScriptBase {
@@ -166,14 +166,14 @@ public class EnumerateJobs extends WorkspaceAllocateTestScriptBase {
         assertThrows(
             ApiException.class,
             () -> alpha1Api.enumerateJobs(getWorkspaceId(), -5, null, null, null, null, null));
-    assertThat(invalidPaginationException.getMessage(), containsString("Invalid pagination"));
+    TestUtils.assertContains(invalidPaginationException.getMessage(), "Invalid pagination");
 
     invalidPaginationException =
         assertThrows(
             ApiException.class,
             () ->
                 alpha1Api.enumerateJobs(getWorkspaceId(), 22, "junktoken", null, null, null, null));
-    assertThat(invalidPaginationException.getMessage(), containsString("Invalid page token"));
+    TestUtils.assertContains(invalidPaginationException.getMessage(), "Invalid page token");
   }
 
   private void logResult(String tag, EnumerateJobsResult result) {
