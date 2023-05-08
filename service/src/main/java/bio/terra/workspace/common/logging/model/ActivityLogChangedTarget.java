@@ -4,10 +4,13 @@ package bio.terra.workspace.common.logging.model;
 public enum ActivityLogChangedTarget {
   APPLICATION,
   FOLDER,
+  // Generic
   RESOURCE(/*isResource=*/ true),
+  // Any
   REFERENCED_ANY_GIT_REPO(/*isResource=*/ true),
   REFERENCED_ANY_TERRA_WORKSPACE(/*isResource=*/ true),
   REFERENCED_ANY_DATA_REPO_SNAPSHOT(/*isResource=*/ true),
+  // GCP
   CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE(/*isResource=*/ true),
   REFERENCED_GCP_GCS_BUCKET(/*isResource=*/ true),
   CONTROLLED_GCP_GCS_BUCKET(/*isResource=*/ true),
@@ -15,6 +18,7 @@ public enum ActivityLogChangedTarget {
   CONTROLLED_GCP_BIG_QUERY_DATASET(/*isResource=*/ true),
   REFERENCED_GCP_BIG_QUERY_DATASET(/*isResource=*/ true),
   REFERENCED_GCP_BIG_QUERY_DATA_TABLE(/*isResource=*/ true),
+  // Azure
   CONTROLLED_AZURE_DISK(/*isResource=*/ true),
   CONTROLLED_AZURE_VM(/*isResource=*/ true),
   CONTROLLED_AZURE_STORAGE_CONTAINER(/*isResource=*/ true),
@@ -22,6 +26,7 @@ public enum ActivityLogChangedTarget {
   // AWS
   CONTROLLED_AWS_S3_STORAGE_FOLDER(/*isResource=*/ true),
   CONTROLLED_FLEXIBLE_RESOURCE(/*isResource=*/ true),
+  CONTROLLED_AWS_SAGEMAKER_NOTEBOOK(/*isResource=*/true),
 
   USER,
   WORKSPACE,
