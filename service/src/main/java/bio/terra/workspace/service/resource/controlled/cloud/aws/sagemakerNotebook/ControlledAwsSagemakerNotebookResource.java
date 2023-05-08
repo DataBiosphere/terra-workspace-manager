@@ -136,7 +136,6 @@ public class ControlledAwsSagemakerNotebookResource extends ControlledResource {
             userRequest,
             flightBeanBag.getSamService()),
         cloudRetry);
-
     flight.addStep(
         new WaitForAwsSagemakerNotebookStatusStep(
             this, flightBeanBag.getAwsCloudContextService(), NotebookInstanceStatus.IN_SERVICE),
