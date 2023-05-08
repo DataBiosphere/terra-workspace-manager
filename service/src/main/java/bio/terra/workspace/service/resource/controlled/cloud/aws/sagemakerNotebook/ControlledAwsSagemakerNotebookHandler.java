@@ -24,8 +24,9 @@ public class ControlledAwsSagemakerNotebookHandler implements WsmResourceHandler
   /** {@inheritDoc} */
   @Override
   public WsmResource makeResourceFromDb(DbResource dbResource) {
-    ControlledAwsSagemakerNotebookResource attributes =
-        DbSerDes.fromJson(dbResource.getAttributes(), ControlledAwsSagemakerNotebookResource.class);
+    ControlledAwsSagemakerNotebookAttributes attributes =
+        DbSerDes.fromJson(
+            dbResource.getAttributes(), ControlledAwsSagemakerNotebookAttributes.class);
 
     return new ControlledAwsSagemakerNotebookResource(
         dbResource, attributes.getInstanceName(), attributes.getInstanceType());

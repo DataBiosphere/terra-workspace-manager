@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakerNotebook;
 
-import bio.terra.aws.resource.discovery.Environment;
 import bio.terra.common.iam.SamUser;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
@@ -17,6 +16,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import java.util.Collection;
 import java.util.HashSet;
+import software.amazon.awssdk.arns.Arn;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.services.sts.model.Tag;
 
@@ -60,12 +60,20 @@ public class CreateAwsSagemakerNotebookStep implements Step {
         inputParameters.get(
             ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS,
             ApiAwsSagemakerNotebookCreationParameters.class);
-    Environment environment =
-        inputParameters.get(ControlledResourceKeys.AWS_ENVIRONMENT, Environment.class);
 
     AwsUtils.createSageMakerNotebook(
-        credentialsProvider, resource,
-        environment, tags);
+        credentialsProvider,
+        resource,
+        Arn.fromString(
+            inputParameters.get(
+                ControlledResourceKeys.AWS_ENVIRONMENT_USER_ROLE_ARN, String.class)),
+        Arn.fromString(
+            inputParameters.get(ControlledResourceKeys.AWS_LANDING_ZONE_KMS_KEY_ARN, String.class)),
+        Arn.fromString(
+            inputParameters.get(
+                ControlledResourceKeys.AWS_LANDING_ZONE_NOTEBOOK_LIFECYCLE_CONFIG_ARN,
+                String.class)),
+        tags);
     return StepResult.getStepResultSuccess();
   }
 
