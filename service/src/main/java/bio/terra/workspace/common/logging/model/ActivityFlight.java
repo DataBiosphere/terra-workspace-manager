@@ -85,7 +85,7 @@ public enum ActivityFlight {
 
   // TODO: PF-2694 TEMPORARY BACKFILL
   GCP_CONTEXT_BACKFILL_FLIGHT(
-      GcpContextBackfillFlight.class.getName(), ActivityLogChangedTarget.GCP_CLOUD_CONTEXT);
+      GcpContextBackfillFlight.class.getName(), ActivityLogChangedTarget.CLOUD_CONTEXT);
 
   private final String flightClassName;
   private final ActivityLogChangedTarget changedTarget;

@@ -420,12 +420,13 @@ public class WorkspaceDao {
   public List<CloudPlatform> listCloudPlatforms(UUID workspaceUuid) {
     String sql = "SELECT cloud_platform FROM cloud_context" + " WHERE workspace_id = :workspace_id";
     MapSqlParameterSource params =
-      new MapSqlParameterSource().addValue("workspace_id", workspaceUuid.toString());
+        new MapSqlParameterSource().addValue("workspace_id", workspaceUuid.toString());
     return jdbcTemplate.query(
-      sql, params, (rs, rowNum) -> CloudPlatform.fromSql(rs.getString("cloud_platform")));
+        sql, params, (rs, rowNum) -> CloudPlatform.fromSql(rs.getString("cloud_platform")));
   }
 
-  private @Nullable DbCloudContext getDbCloudContext(UUID workspaceUuid, CloudPlatform cloudPlatform) {
+  private @Nullable DbCloudContext getDbCloudContext(
+      UUID workspaceUuid, CloudPlatform cloudPlatform) {
     try {
       var params =
           new MapSqlParameterSource()

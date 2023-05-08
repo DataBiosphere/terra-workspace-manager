@@ -84,15 +84,16 @@ public class GcpContextBackfillFlight extends Flight {
       // The context may have been back-filled before we got here
       if (context.getSamPolicyOwner().isEmpty()) {
         logger.info("Back-filling GCP cloud context for workspace {}", workspaceId);
-        context.setSamPolicyOwner(
-            samService.getWorkspacePolicy(workspaceId, WsmIamRole.OWNER, userRequest));
-        context.setSamPolicyWriter(
-            samService.getWorkspacePolicy(workspaceId, WsmIamRole.WRITER, userRequest));
-        context.setSamPolicyReader(
-            samService.getWorkspacePolicy(workspaceId, WsmIamRole.READER, userRequest));
-        context.setSamPolicyApplication(
-            samService.getWorkspacePolicy(workspaceId, WsmIamRole.APPLICATION, userRequest));
-        workspaceDao.updateCloudContext(workspaceId, CloudPlatform.GCP, context.serialize());
+
+        var filledContext =
+            new GcpCloudContext(
+                context.getGcpProjectId(),
+                samService.getWorkspacePolicy(workspaceId, WsmIamRole.OWNER, userRequest),
+                samService.getWorkspacePolicy(workspaceId, WsmIamRole.WRITER, userRequest),
+                samService.getWorkspacePolicy(workspaceId, WsmIamRole.READER, userRequest),
+                samService.getWorkspacePolicy(workspaceId, WsmIamRole.APPLICATION, userRequest),
+                context.getCommonFields());
+        workspaceDao.updateCloudContext(workspaceId, CloudPlatform.GCP, filledContext.serialize());
       } else {
         logger.info("Found GCP cloud context already back-filled for workspace {}", workspaceId);
       }

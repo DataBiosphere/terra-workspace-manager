@@ -106,10 +106,9 @@ public class GcpContextBackFillTest extends BaseConnectedTest {
             .getCloudContext(workspaceId, CloudPlatform.GCP)
             .map(GcpCloudContext::deserialize)
             .orElseThrow();
-    context.setSamPolicyApplication(null);
-    context.setSamPolicyOwner(null);
-    context.setSamPolicyReader(null);
-    context.setSamPolicyWriter(null);
-    workspaceDao.updateCloudContext(workspaceId, CloudPlatform.GCP, context.serialize());
+    var filledContext =
+        new GcpCloudContext(
+            context.getGcpProjectId(), null, null, null, null, context.getCommonFields());
+    workspaceDao.updateCloudContext(workspaceId, CloudPlatform.GCP, filledContext.serialize());
   }
 }

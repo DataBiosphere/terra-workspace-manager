@@ -40,7 +40,9 @@ public class AzureCloudContextService implements CloudContextService {
 
   @Autowired
   public AzureCloudContextService(
-      WorkspaceDao workspaceDao, FeatureConfiguration featureConfiguration, WorkspaceService workspaceService) {
+      WorkspaceDao workspaceDao,
+      FeatureConfiguration featureConfiguration,
+      WorkspaceService workspaceService) {
     this.workspaceDao = workspaceDao;
     this.featureConfiguration = featureConfiguration;
     this.workspaceService = workspaceService;

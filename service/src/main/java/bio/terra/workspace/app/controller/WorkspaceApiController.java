@@ -137,7 +137,14 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       TpsApiDispatch tpsApiDispatch,
       ResourceDao resourceDao,
       SpendProfileService spendProfileService) {
-    super(authenticatedUserRequestFactory, request, samService, features, featureService, jobService, jobApiUtils);
+    super(
+        authenticatedUserRequestFactory,
+        request,
+        samService,
+        features,
+        featureService,
+        jobService,
+        jobApiUtils);
     this.workspaceService = workspaceService;
     this.gcpCloudContextService = gcpCloudContextService;
     this.azureCloudContextService = azureCloudContextService;
