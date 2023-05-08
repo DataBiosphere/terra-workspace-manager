@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled;
 
+import bio.terra.aws.resource.discovery.Environment;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.ServiceUnavailableException;
 import bio.terra.stairway.FlightState;
@@ -8,6 +9,7 @@ import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
+import bio.terra.workspace.generated.model.ApiAwsSagemakerNotebookCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
@@ -24,6 +26,7 @@ import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceSyncMapping.SyncMapping;
 import bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresource.ControlledFlexibleResource;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakerNotebook.ControlledAwsSagemakerNotebookResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpPolicyBuilder;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
@@ -599,6 +602,39 @@ public class ControlledResourceService {
                     .orElse(sourceContainer.getCloningInstructions()))
             .addParameter(ControlledResourceKeys.PREFIXES_TO_CLONE, prefixesToClone);
     return jobBuilder.submit();
+  }
+
+  // AWS
+
+  /**
+   * Starts a create controlled AWS Sagemaker Notebook instance resource job, returning the job id.
+   *
+   * <p>Data fields are required from AWS Environment, as well as the landing zone specific to the
+   * resource's region. Hence, add the entire AWS environment to the job
+   */
+  public String createAwsSagemakerNotebookInstance(
+      ControlledAwsSagemakerNotebookResource resource,
+      ApiAwsSagemakerNotebookCreationParameters creationParameters,
+      Environment environment,
+      @Nullable ControlledResourceIamRole privateResourceIamRole,
+      @Nullable ApiJobControl jobControl,
+      String resultPath,
+      AuthenticatedUserRequest userRequest) {
+    // Special check for notebooks: READER is not a useful role
+    if (privateResourceIamRole == ControlledResourceIamRole.READER) {
+      throw new BadRequestException(
+          "A private, controlled Notebook instance must have the writer or editor role or else it is not useful.");
+    }
+
+    JobBuilder jobBuilder =
+        commonCreationJobBuilder(
+            resource, privateResourceIamRole, jobControl, resultPath, userRequest);
+    jobBuilder.addParameter(ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS, creationParameters);
+    jobBuilder.addParameter(ControlledResourceKeys.AWS_ENVIRONMENT, environment);
+
+    String jobId = jobBuilder.submit();
+    waitForResourceOrJob(resource.getWorkspaceId(), resource.getResourceId(), jobId);
+    return jobId;
   }
 
   // Flexible

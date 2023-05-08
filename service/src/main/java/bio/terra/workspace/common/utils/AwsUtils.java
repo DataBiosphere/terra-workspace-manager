@@ -3,6 +3,8 @@ package bio.terra.workspace.common.utils;
 import bio.terra.aws.resource.discovery.CachedEnvironmentDiscovery;
 import bio.terra.aws.resource.discovery.Environment;
 import bio.terra.aws.resource.discovery.EnvironmentDiscovery;
+import bio.terra.aws.resource.discovery.LandingZone;
+import bio.terra.aws.resource.discovery.NotebookLifecycleConfiguration;
 import bio.terra.aws.resource.discovery.S3EnvironmentDiscovery;
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.BadRequestException;
@@ -10,8 +12,11 @@ import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.exception.UnauthorizedException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.workspace.app.configuration.external.AwsConfiguration;
+import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.generated.model.ApiAwsCredentialAccessScope;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.AwsResourceConstants;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolder.ControlledAwsS3StorageFolderResource;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakerNotebook.ControlledAwsSagemakerNotebookResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import io.opencensus.contrib.spring.aop.Traced;
@@ -33,7 +38,10 @@ import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.exception.SdkException;
+import software.amazon.awssdk.core.internal.waiters.ResponseOrException;
 import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.core.waiters.WaiterOverrideConfiguration;
+import software.amazon.awssdk.core.waiters.WaiterResponse;
 import software.amazon.awssdk.http.SdkHttpResponse;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -46,6 +54,12 @@ import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Object;
 import software.amazon.awssdk.services.s3.model.Tagging;
+import software.amazon.awssdk.services.sagemaker.SageMakerClient;
+import software.amazon.awssdk.services.sagemaker.model.CreateNotebookInstanceRequest;
+import software.amazon.awssdk.services.sagemaker.model.DescribeNotebookInstanceRequest;
+import software.amazon.awssdk.services.sagemaker.model.DescribeNotebookInstanceResponse;
+import software.amazon.awssdk.services.sagemaker.model.NotebookInstanceStatus;
+import software.amazon.awssdk.services.sagemaker.waiters.SageMakerWaiter;
 import software.amazon.awssdk.services.sts.StsClient;
 import software.amazon.awssdk.services.sts.auth.StsAssumeRoleWithWebIdentityCredentialsProvider;
 import software.amazon.awssdk.services.sts.model.AssumeRoleRequest;
@@ -92,6 +106,10 @@ public class AwsUtils {
           (ControlledAwsS3StorageFolderResource) awsResource;
       tags.add(Tag.builder().key("S3BucketID").value(resource.getBucketName()).build());
       tags.add(Tag.builder().key("TerraBucketID").value(resource.getPrefix()).build());
+    } else if (awsResource instanceof ControlledAwsSagemakerNotebookResource) {
+      ControlledAwsSagemakerNotebookResource resource =
+          (ControlledAwsSagemakerNotebookResource) awsResource;
+      // TODO(TERRA-550) Add sagemaker tags
     }
   }
 
@@ -314,11 +332,22 @@ public class AwsUtils {
         .credentials();
   }
 
-  // TODO(TERRA-498) Move all functions below this comment to CRL
   private static S3Client getS3Client(
       AwsCredentialsProvider awsCredentialsProvider, Region region) {
     return S3Client.builder().region(region).credentialsProvider(awsCredentialsProvider).build();
   }
+
+  private static SageMakerClient getSagemakerClient(
+      AwsCredentialsProvider awsCredentialsProvider, Region region) {
+    return SageMakerClient.builder()
+        .region(region)
+        .credentialsProvider(awsCredentialsProvider)
+        .build();
+  }
+
+  // AWS S3 Storage Folder
+
+  // TODO(TERRA-498) Move storage functions below to CRL
 
   /**
    * Check if AWS storage object exists with given prefix as a folder
@@ -544,6 +573,148 @@ public class AwsUtils {
       // Bulk delete operation would not fail with NotFound error, overall op is idempotent
       checkException(e);
       throw new ApiException("Error deleting storage objects", e);
+    }
+  }
+
+  // AWS Sagemaker Notebook
+
+  // TODO(TERRA-500) Move notebook functions below to CRL
+
+  /**
+   * Create AWS sagemaker notebook
+   *
+   * @param awsCredentialsProvider {@link AwsCredentialsProvider}
+   * @param notebookResource {@link ControlledAwsSagemakerNotebookResource}
+   * @param environment {@link Environment}
+   * @param tags collection of {@link Tag} to be attached to the folder
+   */
+  public static void createSageMakerNotebook(
+      AwsCredentialsProvider awsCredentialsProvider,
+      ControlledAwsSagemakerNotebookResource notebookResource,
+      Environment environment,
+      Collection<Tag> tags) {
+    Region region = Region.of(notebookResource.getRegion());
+    SageMakerClient sageMakerClient = getSagemakerClient(awsCredentialsProvider, region);
+    logger.info(
+        "Creating notebook with name '{}', type '{}'.",
+        notebookResource.getInstanceName(),
+        notebookResource.getInstanceType());
+
+    Set<software.amazon.awssdk.services.sagemaker.model.Tag> sagemakerTags =
+        tags.stream()
+            .map(
+                stsTag ->
+                    software.amazon.awssdk.services.sagemaker.model.Tag.builder()
+                        .key(stsTag.key())
+                        .value(stsTag.value())
+                        .build())
+            .collect(Collectors.toSet());
+
+    LandingZone landingZone = environment.getLandingZone(region).orElseThrow();
+
+    CreateNotebookInstanceRequest.Builder requestBuilder =
+        CreateNotebookInstanceRequest.builder()
+            .notebookInstanceName(notebookResource.getInstanceName())
+            .instanceType(notebookResource.getInstanceType())
+            .roleArn(environment.getUserRoleArn().toString())
+            .kmsKeyId(landingZone.getKmsKey().arn().resource().resource())
+            .tags(sagemakerTags);
+
+    // TODO(TERRA-312) - which config from the list?
+    NotebookLifecycleConfiguration lifecycleConfiguration =
+        landingZone.getNotebookLifecycleConfigurations().stream().findFirst().orElse(null);
+
+    if (lifecycleConfiguration != null) {
+      String policyName = lifecycleConfiguration.arn().resource().resource();
+      logger.info(
+          String.format(
+              "Attaching lifecycle policy '%s' to notebook '%s'.",
+              policyName, notebookResource.getInstanceName()));
+      requestBuilder.lifecycleConfigName(policyName);
+    }
+
+    try {
+      SdkHttpResponse httpResponse =
+          sageMakerClient.createNotebookInstance(requestBuilder.build()).sdkHttpResponse();
+      if (!httpResponse.isSuccessful()) {
+        throw new ApiException(
+            "Error creating sagemaker notebook, "
+                + httpResponse.statusText().orElse(String.valueOf(httpResponse.statusCode())));
+      }
+
+    } catch (SdkException e) {
+      checkException(e);
+      throw new ApiException("Error creating sagemaker notebook,", e);
+    }
+  }
+
+  public static void waitForSageMakerNotebookStatus(
+      AwsCredentialsProvider awsCredentialsProvider,
+      ControlledAwsSagemakerNotebookResource notebookResource,
+      NotebookInstanceStatus desiredStatus) {
+    Region region = Region.of(notebookResource.getRegion());
+    SageMakerClient sageMakerClient = getSagemakerClient(awsCredentialsProvider, region);
+
+    SageMakerWaiter sageMakerWaiter =
+        SageMakerWaiter.builder()
+            .client(sageMakerClient)
+            .overrideConfiguration(
+                WaiterOverrideConfiguration.builder()
+                    .waitTimeout(AwsResourceConstants.SAGEMAKER_CLIENT_WAITER_TIMEOUT)
+                    .build())
+            .build();
+
+    logger.info(
+        "Waiting on notebook with name '{}', desired status '{}'.",
+        notebookResource.getInstanceName(),
+        desiredStatus);
+
+    DescribeNotebookInstanceRequest describeRequest =
+        DescribeNotebookInstanceRequest.builder()
+            .notebookInstanceName(notebookResource.getInstanceName())
+            .build();
+
+    try {
+      WaiterResponse<DescribeNotebookInstanceResponse> waiterResponse =
+          switch (desiredStatus) {
+            case IN_SERVICE -> sageMakerWaiter.waitUntilNotebookInstanceInService(describeRequest);
+            case STOPPED -> sageMakerWaiter.waitUntilNotebookInstanceStopped(describeRequest);
+            case DELETING -> sageMakerWaiter.waitUntilNotebookInstanceDeleted(describeRequest);
+            default -> throw new BadRequestException(
+                "Can only wait for notebook InService, Stopped or Deleting");
+          };
+
+      ResponseOrException<DescribeNotebookInstanceResponse> responseOrException =
+          waiterResponse.matched();
+      if (responseOrException.response().isPresent()) {
+        checkNotebookStatus(
+            Set.of(desiredStatus), responseOrException.response().get().notebookInstanceStatus());
+
+      } else if (responseOrException.exception().isPresent()) {
+        throw new ApiException(
+            "Error polling notebook instance status", responseOrException.exception().get());
+      }
+
+    } catch (NotFoundException e) {
+      // Not an error if waiting on deleted resource
+      if (desiredStatus != NotebookInstanceStatus.DELETING) {
+        throw e;
+      }
+
+    } catch (SdkException e) {
+      checkException(e);
+      throw new ApiException("Error waiting for desired sagemaker notebook status,", e);
+    }
+  }
+
+  private static void checkNotebookStatus(
+      Set<NotebookInstanceStatus> expectedStatusSet, NotebookInstanceStatus actualStatus)
+      throws InternalLogicException {
+    if (!expectedStatusSet.contains(actualStatus)) {
+      throw new InternalLogicException(
+          String.format(
+              "Expected notebook instance status in %s, but actual status is %s",
+              expectedStatusSet, actualStatus));
     }
   }
 
