@@ -9,7 +9,9 @@ import org.springframework.stereotype.Component;
 /** A collection of static validation functions specific to AWS */
 @Component
 public class AwsResourceValidationUtils {
-  static final Pattern s3ObjectDisallowedChars = Pattern.compile("[{}^%`<>~#|@*+\\[\\]\"\'\\\\/]");
+  // https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html
+  static final Pattern s3ObjectKeyDisallowedChars =
+      Pattern.compile("[{}^%`<>~#|@*+\\[\\]\"\'\\\\/]");
 
   /**
    * Validate AWS Storage Folder name.
@@ -21,11 +23,11 @@ public class AwsResourceValidationUtils {
     int nameLength = prefixName.getBytes(StandardCharsets.UTF_8).length;
     if (nameLength < 1
         || nameLength > AwsResourceConstants.MAX_S3_STORAGE_FOLDER_NAME_LENGTH
-        || s3ObjectDisallowedChars.matcher(prefixName).find()) {
+        || s3ObjectKeyDisallowedChars.matcher(prefixName).find()) {
       throw new InvalidNameException(
           String.format(
-              "storage folder names must contain any sequence of valid Unicode characters (excluding %s), of length 1-1024 bytes when UTF-8 encoded",
-              s3ObjectDisallowedChars.pattern()));
+              "Storage folder names must contain any sequence of valid Unicode characters (excluding %s), of length 1-1024 bytes when UTF-8 encoded",
+              s3ObjectKeyDisallowedChars.pattern()));
     }
   }
 
@@ -38,7 +40,11 @@ public class AwsResourceValidationUtils {
   public static void validateAwsCredentialDurationSecond(int duration) {
     if (duration < AwsResourceConstants.MIN_CREDENTIAL_DURATION_SECONDS
         || duration > AwsResourceConstants.MAX_CREDENTIAL_DURATION_SECONDS) {
-      throw new InvalidNameException("credential duration must be between 900 & 3600 seconds");
+      throw new InvalidNameException(
+          String.format(
+              "Credential duration must be between %d & %d seconds",
+              AwsResourceConstants.MIN_CREDENTIAL_DURATION_SECONDS,
+              AwsResourceConstants.MAX_CREDENTIAL_DURATION_SECONDS));
     }
   }
 }

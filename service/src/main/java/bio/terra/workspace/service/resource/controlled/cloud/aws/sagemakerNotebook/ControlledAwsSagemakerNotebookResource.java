@@ -1,23 +1,23 @@
-package bio.terra.workspace.service.resource.controlled.cloud.aws.s3storageFolder;
+package bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakerNotebook;
 
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
-import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
-import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
-import bio.terra.workspace.generated.model.ApiAwsS3StorageFolderAttributes;
-import bio.terra.workspace.generated.model.ApiAwsS3StorageFolderResource;
+import bio.terra.workspace.generated.model.ApiAwsSagemakerNotebookAttributes;
+import bio.terra.workspace.generated.model.ApiAwsSagemakerNotebookResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
-import bio.terra.workspace.service.resource.controlled.model.*;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
+import bio.terra.workspace.service.resource.controlled.model.WsmControlledResourceFields;
 import bio.terra.workspace.service.resource.flight.UpdateResourceFlight;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
@@ -28,41 +28,41 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Optional;
 
-public class ControlledAwsS3StorageFolderResource extends ControlledResource {
-  private final String bucketName;
-  private final String prefix;
+public class ControlledAwsSagemakerNotebookResource extends ControlledResource {
+  private final String instanceName;
+  private final String instanceType;
 
   @JsonCreator
-  public ControlledAwsS3StorageFolderResource(
+  public ControlledAwsSagemakerNotebookResource(
       @JsonProperty("wsmResourceFields") WsmResourceFields resourceFields,
       @JsonProperty("wsmControlledResourceFields")
           WsmControlledResourceFields controlledResourceFields,
-      @JsonProperty("bucketName") String bucketName,
-      @JsonProperty("prefix") String prefix) {
+      @JsonProperty("instanceName") String instanceName,
+      @JsonProperty("instanceType") String instanceType) {
     super(resourceFields, controlledResourceFields);
-    this.bucketName = bucketName;
-    this.prefix = prefix;
+    this.instanceName = instanceName;
+    this.instanceType = instanceType;
     validate();
   }
 
-  private ControlledAwsS3StorageFolderResource(
-      ControlledResourceFields common, String bucketName, String prefix) {
+  private ControlledAwsSagemakerNotebookResource(
+      ControlledResourceFields common, String instanceName, String instanceType) {
     super(common);
-    this.bucketName = bucketName;
-    this.prefix = prefix;
+    this.instanceName = instanceName;
+    this.instanceType = instanceType;
     validate();
   }
 
-  public ControlledAwsS3StorageFolderResource(
-      DbResource dbResource, String bucketName, String prefix) {
+  public ControlledAwsSagemakerNotebookResource(
+      DbResource dbResource, String instanceName, String instanceType) {
     super(dbResource);
-    this.bucketName = bucketName;
-    this.prefix = prefix;
+    this.instanceName = instanceName;
+    this.instanceType = instanceType;
     validate();
   }
 
-  public static ControlledAwsS3StorageFolderResource.Builder builder() {
-    return new ControlledAwsS3StorageFolderResource.Builder();
+  public static Builder builder() {
+    return new Builder();
   }
 
   /** {@inheritDoc} */
@@ -86,12 +86,12 @@ public class ControlledAwsS3StorageFolderResource extends ControlledResource {
     return super.getWsmControlledResourceFields();
   }
 
-  public String getBucketName() {
-    return bucketName;
+  public String getInstanceName() {
+    return instanceName;
   }
 
-  public String getPrefix() {
-    return prefix;
+  public String getInstanceType() {
+    return instanceType;
   }
 
   // -- getters not included in serialization --
@@ -99,13 +99,13 @@ public class ControlledAwsS3StorageFolderResource extends ControlledResource {
   @Override
   @JsonIgnore
   public WsmResourceType getResourceType() {
-    return WsmResourceType.CONTROLLED_AWS_S3_STORAGE_FOLDER;
+    return WsmResourceType.CONTROLLED_AWS_SAGEMAKER_NOTEBOOK;
   }
 
   @Override
   @JsonIgnore
   public WsmResourceFamily getResourceFamily() {
-    return WsmResourceFamily.AWS_S3_STORAGE_FOLDER;
+    return WsmResourceFamily.AWS_SAGEMAKER_NOTEBOOK;
   }
 
   /** {@inheritDoc} */
@@ -115,8 +115,7 @@ public class ControlledAwsS3StorageFolderResource extends ControlledResource {
     return Optional.of(
         new UniquenessCheckAttributes()
             .uniquenessScope(UniquenessScope.GLOBAL)
-            .addParameter("bucketName", bucketName)
-            .addParameter("prefix", prefix));
+            .addParameter("instanceName", instanceName));
   }
 
   /** {@inheritDoc} */
@@ -126,93 +125,85 @@ public class ControlledAwsS3StorageFolderResource extends ControlledResource {
       String petSaEmail,
       AuthenticatedUserRequest userRequest,
       FlightBeanBag flightBeanBag) {
-    RetryRule cloudRetry = RetryRules.cloud();
-
-    flight.addStep(
-        new ValidateAwsS3StorageFolderCreateStep(this, flightBeanBag.getAwsCloudContextService()),
-        cloudRetry);
-    flight.addStep(
-        new CreateAwsS3StorageFolderStep(
-            this,
-            flightBeanBag.getAwsCloudContextService(),
-            userRequest,
-            flightBeanBag.getSamService()),
-        cloudRetry);
+    // TODO(TERRA-312) add create steps
+    throw new ApiException("addCreateSteps NotImplemented");
   }
 
   /** {@inheritDoc} */
   @Override
   public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
-    flight.addStep(
-        new DeleteAwsS3StorageFolderStep(this, flightBeanBag.getAwsCloudContextService()),
-        RetryRules.cloud());
+    // TODO(TERRA-312) add create steps
+    throw new ApiException("addDeleteSteps NotImplemented");
   }
 
   /** {@inheritDoc} */
   @Override
   public void addUpdateSteps(UpdateResourceFlight flight, FlightBeanBag flightBeanBag) {
-    // TODO(TERRA-315) Add support for UpdateAwsS3StorageFolder
+    // TODO(TERRA-223) Add support for UpdateAwsSagemakerNotebook
     throw new ApiException("addUpdateSteps NotImplemented");
   }
 
-  public ApiAwsS3StorageFolderAttributes toApiAttributes() {
-    return new ApiAwsS3StorageFolderAttributes().bucketName(bucketName).prefix(prefix);
+  public ApiAwsSagemakerNotebookAttributes toApiAttributes() {
+    return new ApiAwsSagemakerNotebookAttributes()
+        .instanceName(instanceName)
+        .instanceType(instanceType);
   }
 
-  public ApiAwsS3StorageFolderResource toApiResource() {
-    return new ApiAwsS3StorageFolderResource()
+  public ApiAwsSagemakerNotebookResource toApiResource() {
+    return new ApiAwsSagemakerNotebookResource()
         .metadata(super.toApiMetadata())
         .attributes(toApiAttributes());
   }
 
   @Override
   public String attributesToJson() {
-    return DbSerDes.toJson(new ControlledAwsS3StorageFolderAttributes(bucketName, prefix));
+    return DbSerDes.toJson(
+        new ControlledAwsSagemakerNotebookAttributes(instanceName, instanceType));
   }
 
   @Override
   public ApiResourceAttributesUnion toApiAttributesUnion() {
     ApiResourceAttributesUnion union = new ApiResourceAttributesUnion();
-    union.awsS3StorageFolder(toApiAttributes());
+    union.awsSagemakerNotebook(toApiAttributes());
     return union;
   }
 
   @Override
   public void validate() {
     super.validate();
-    if (getResourceType() != WsmResourceType.CONTROLLED_AWS_S3_STORAGE_FOLDER
-        || getResourceFamily() != WsmResourceFamily.AWS_S3_STORAGE_FOLDER
+    if (getResourceType() != WsmResourceType.CONTROLLED_AWS_SAGEMAKER_NOTEBOOK
+        || getResourceFamily() != WsmResourceFamily.AWS_SAGEMAKER_NOTEBOOK
         || getStewardshipType() != StewardshipType.CONTROLLED) {
-      throw new InconsistentFieldsException("Expected CONTROLLED_AWS_S3_STORAGE_FOLDER");
+      throw new InconsistentFieldsException("Expected CONTROLLED_AWS_SAGEMAKER_NOTEBOOK");
     }
-    if ((bucketName == null) || (prefix == null) || (getRegion() == null)) {
+    if ((instanceName == null) || (instanceType == null) || (getRegion() == null)) {
       throw new MissingRequiredFieldException(
-          "Missing required field for ControlledAwsS3StorageFolderResource.");
+          "Missing required field for ControlledAwsSagemakerNotebookResource.");
     }
   }
 
   public static class Builder {
     private ControlledResourceFields common;
-    private String bucketName;
-    private String prefix;
+    private String instanceName;
+    private String instanceType;
 
     public Builder common(ControlledResourceFields common) {
       this.common = common;
       return this;
     }
 
-    public Builder bucketName(String bucketName) {
-      this.bucketName = bucketName;
+    public Builder instanceName(String instanceName) {
+      this.instanceName = instanceName;
       return this;
     }
 
-    public Builder prefix(String prefix) {
-      this.prefix = prefix;
+    public Builder instanceType(String instanceType) {
+      this.instanceType = instanceType;
       return this;
     }
 
-    public ControlledAwsS3StorageFolderResource build() {
-      return new ControlledAwsS3StorageFolderResource(common, bucketName, prefix);
+    public ControlledAwsSagemakerNotebookResource build() {
+      return new ControlledAwsSagemakerNotebookResource(common, instanceName, instanceType);
     }
   }
 }

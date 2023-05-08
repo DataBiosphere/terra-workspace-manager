@@ -16,6 +16,7 @@ components:
         - AZURE_STORAGE_CONTAINER
         - AZURE_BATCH_POOL
         - AWS_S3_STORAGE_FOLDER
+        - AWS_SAGEMAKER_NOTEBOOK
         - GIT_REPO
         - TERRA_WORKSPACE
         - FLEXIBLE_RESOURCE
@@ -49,6 +50,8 @@ components:
           $ref: '#/components/schemas/AzureBatchPoolAttributes'
         awsS3StorageFolder:
           $ref: '#/components/schemas/AwsS3StorageFolderAttributes'
+        awsSagemakerNotebook:
+          $ref: '#/components/schemas/AwsSagemakerNotebookAttributes'
         gitRepo:
           $ref: '#/components/schemas/GitRepoAttributes'
         terraWorkspace:
@@ -85,6 +88,8 @@ components:
           $ref: '#/components/schemas/AzureBatchPoolResource'
         awsS3StorageFolder:
           $ref: '#/components/schemas/AwsS3StorageFolderResource'
+        awsSagemakerNotebook:
+          $ref: '#/components/schemas/AwsSagemakerNotebookResource'
         gitRepo:
           $ref: '#/components/schemas/GitRepoResource'
         terraWorkspace:

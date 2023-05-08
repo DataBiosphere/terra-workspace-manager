@@ -61,7 +61,6 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
   public static final Set<String> RESERVED_METADATA_KEYS =
       Set.of(PROXY_MODE_METADATA_KEY, WORKSPACE_ID_METADATA_KEY, SERVER_ID_METADATA_KEY);
 
-  protected static final int MAX_INSTANCE_NAME_LENGTH = 63;
   private final String instanceId;
   private final String location;
   private final String projectId;

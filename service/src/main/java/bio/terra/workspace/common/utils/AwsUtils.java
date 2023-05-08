@@ -11,7 +11,7 @@ import bio.terra.common.exception.UnauthorizedException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.workspace.app.configuration.external.AwsConfiguration;
 import bio.terra.workspace.generated.model.ApiAwsCredentialAccessScope;
-import bio.terra.workspace.service.resource.controlled.cloud.aws.s3storageFolder.ControlledAwsS3StorageFolderResource;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolder.ControlledAwsS3StorageFolderResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import io.opencensus.contrib.spring.aop.Traced;
@@ -154,7 +154,7 @@ public class AwsUtils {
    *     stale and refreshed
    * @param jwtAudience target audience to pass when calling {@link GcpUtils#getWsmSaJwt} at token
    *     refresh time
-   * @return AwsCredentialsProvider
+   * @return {@link AwsCredentialsProvider}
    */
   public static AwsCredentialsProvider createAssumeRoleWithGcpCredentialsProvider(
       Arn roleArn, Duration duration, Duration staleTime, String jwtAudience) {
@@ -172,7 +172,7 @@ public class AwsUtils {
    * <p>Calls {@link #createAssumeRoleWithGcpCredentialsProvider} to get a long-lived {@link
    * AwsCredentialsProvider} instance to authenticate as the TerraDiscovery IAM Role.
    *
-   * @param awsConfiguration an {@link AwsConfiguration}
+   * @param awsConfiguration {@link AwsConfiguration}
    */
   private static AwsCredentialsProvider createDiscoveryCredentialsProvider(
       AwsConfiguration awsConfiguration) {
@@ -202,7 +202,7 @@ public class AwsUtils {
    *
    * @param awsConfiguration Spring configuration object containing required parameters (as
    *     described above)
-   * @return EnvironmentDiscovery
+   * @return {@link EnvironmentDiscovery}
    */
   public static EnvironmentDiscovery createEnvironmentDiscovery(AwsConfiguration awsConfiguration) {
     AwsConfiguration.Discovery discoveryConfig = awsConfiguration.getDiscovery();
@@ -242,7 +242,7 @@ public class AwsUtils {
    * @param authentication an {@link AwsConfiguration.Authentication} AwS authentication config
    * @param environment a discovered {@link Environment} object corresponding to the AWS Environment
    *     to obtain Terra Workspace Manager IAM Role credentials for
-   * @return AwsCredentialsProvider
+   * @return {@link AwsCredentialsProvider}
    */
   public static AwsCredentialsProvider createWsmCredentialProvider(
       AwsConfiguration.Authentication authentication, Environment environment) {
@@ -335,27 +335,30 @@ public class AwsUtils {
       String folder) {
     String folderKey = folder.endsWith("/") ? folder : String.format("%s/", folder);
     return CollectionUtils.isNotEmpty(
-        getObjectKeysByPrefix(awsCredentialsProvider, region, bucketName, folderKey, 1));
+        getS3ObjectKeysByPrefix(awsCredentialsProvider, region, bucketName, folderKey, 1));
   }
 
   /**
    * Create AWS storage object (as a folder)
    *
    * @param awsCredentialsProvider {@link AwsCredentialsProvider}
-   * @param region {@link Region}
-   * @param bucketName bucket name
-   * @param folder folder name (key)
+   * @param storageResource {@link ControlledAwsS3StorageFolderResource}
    * @param tags collection of {@link Tag} to be attached to the folder
    */
-  public static void createFolder(
+  public static void createStorageFolder(
       AwsCredentialsProvider awsCredentialsProvider,
-      Region region,
-      String bucketName,
-      String folder,
+      ControlledAwsS3StorageFolderResource storageResource,
       Collection<Tag> tags) {
     // Creating a "folder" requires writing an empty object ending with the delimiter ('/').
-    String folderKey = folder.endsWith("/") ? folder : String.format("%s/", folder);
-    putObject(awsCredentialsProvider, region, bucketName, folderKey, "", tags);
+    String prefix = storageResource.getPrefix();
+    String folderKey = prefix.endsWith("/") ? prefix : String.format("%s/", prefix);
+    putS3Object(
+        awsCredentialsProvider,
+        Region.of(storageResource.getRegion()),
+        storageResource.getBucketName(),
+        folderKey,
+        "",
+        tags);
   }
 
   /**
@@ -366,16 +369,16 @@ public class AwsUtils {
    * @param bucketName bucket name
    * @param folder folder name (key)
    */
-  public static void deleteFolder(
+  public static void deleteStorageFolder(
       AwsCredentialsProvider awsCredentialsProvider,
       Region region,
       String bucketName,
       String folder) {
     String folderKey = folder.endsWith("/") ? folder : String.format("%s/", folder);
     List<String> objectKeys =
-        getObjectKeysByPrefix(
+        getS3ObjectKeysByPrefix(
             awsCredentialsProvider, region, bucketName, folderKey, Integer.MAX_VALUE);
-    deleteObjects(awsCredentialsProvider, region, bucketName, objectKeys);
+    deleteS3Objects(awsCredentialsProvider, region, bucketName, objectKeys);
   }
 
   /**
@@ -387,7 +390,7 @@ public class AwsUtils {
    * @param key object (key)
    * @param tags collection of {@link Tag} to be attached to the folder
    */
-  public static void putObject(
+  public static void putS3Object(
       AwsCredentialsProvider awsCredentialsProvider,
       Region region,
       String bucketName,
@@ -444,7 +447,7 @@ public class AwsUtils {
    * @param prefix common prefix
    * @param limit max count of results
    */
-  public static List<String> getObjectKeysByPrefix(
+  public static List<String> getS3ObjectKeysByPrefix(
       AwsCredentialsProvider awsCredentialsProvider,
       Region region,
       String bucketName,
@@ -496,7 +499,7 @@ public class AwsUtils {
    * @param bucketName bucket name
    * @param keys list of objects (keys)
    */
-  public static void deleteObjects(
+  public static void deleteS3Objects(
       AwsCredentialsProvider awsCredentialsProvider,
       Region region,
       String bucketName,

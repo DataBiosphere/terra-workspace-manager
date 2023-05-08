@@ -4,8 +4,10 @@ import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresource.ControlledFlexibleResource;
 import bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresource.FlexibleResourceHandler;
-import bio.terra.workspace.service.resource.controlled.cloud.aws.s3storageFolder.ControlledAwsS3StorageFolderHandler;
-import bio.terra.workspace.service.resource.controlled.cloud.aws.s3storageFolder.ControlledAwsS3StorageFolderResource;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolder.ControlledAwsS3StorageFolderHandler;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolder.ControlledAwsS3StorageFolderResource;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakerNotebook.ControlledAwsSagemakerNotebookHandler;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakerNotebook.ControlledAwsSagemakerNotebookResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.ControlledAzureBatchPoolHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.ControlledAzureBatchPoolResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskHandler;
@@ -171,6 +173,14 @@ public enum WsmResourceType {
       ControlledAwsS3StorageFolderResource.class,
       ControlledAwsS3StorageFolderHandler::getHandler,
       ActivityLogChangedTarget.CONTROLLED_AWS_S3_STORAGE_FOLDER),
+  CONTROLLED_AWS_SAGEMAKER_NOTEBOOK(
+      CloudPlatform.AWS,
+      StewardshipType.CONTROLLED,
+      "CONTROLLED_AWS_SAGEMAKER_NOTEBOOK",
+      ApiResourceType.AWS_SAGEMAKER_NOTEBOOK,
+      ControlledAwsSagemakerNotebookResource.class,
+      ControlledAwsSagemakerNotebookHandler::getHandler,
+      ActivityLogChangedTarget.CONTROLLED_AWS_SAGEMAKER_NOTEBOOK),
 
   // FLEXIBLE
   CONTROLLED_FLEXIBLE_RESOURCE(
