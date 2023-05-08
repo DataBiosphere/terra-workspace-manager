@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure.vm;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
@@ -11,6 +12,7 @@ import bio.terra.landingzone.library.landingzones.deployment.SubnetResourcePurpo
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseAzureUnitTest;
+import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesList;
@@ -18,6 +20,7 @@ import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesPurposeGr
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.resourcemanager.network.NetworkManager;
 import com.azure.resourcemanager.network.models.Network;
@@ -42,6 +45,7 @@ public class CreateAzureNetworkInterfaceStepTest extends BaseAzureUnitTest {
   @Mock private CrlService crlService;
   @Mock private ControlledAzureVmResource resource;
   @Mock private SamService samService;
+  @Mock private WorkspaceService mockWorkspaceService;
 
   @Mock private ResourceDao resourceDao;
 
@@ -73,7 +77,8 @@ public class CreateAzureNetworkInterfaceStepTest extends BaseAzureUnitTest {
             resource,
             resourceDao,
             landingZoneApiDispatch,
-            samService);
+            samService,
+            mockWorkspaceService);
     when(networkManager.networks()).thenReturn(networks);
     var subnets = new HashMap<String, Subnet>();
     subnets.put(STUB_SUBNET, armSubnet);
@@ -108,7 +113,10 @@ public class CreateAzureNetworkInterfaceStepTest extends BaseAzureUnitTest {
                         .resourceParentId(networkId.toString()))));
 
     when(resource.getWorkspaceId()).thenReturn(workspaceId);
-    when(landingZoneApiDispatch.getLandingZoneId(eq(bearerToken), eq(workspaceId)))
+    when(mockWorkspaceService.getWorkspace(workspaceId))
+        .thenReturn(WorkspaceFixtures.buildMcWorkspace(workspaceId));
+    when(landingZoneApiDispatch.getLandingZoneId(
+            eq(bearerToken), argThat(a -> a.getWorkspaceId().equals(workspaceId))))
         .thenReturn(lzId);
     when(landingZoneApiDispatch.listAzureLandingZoneResourcesByPurpose(
             any(), eq(lzId), eq(SubnetResourcePurpose.WORKSPACE_COMPUTE_SUBNET)))

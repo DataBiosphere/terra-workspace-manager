@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -13,6 +14,7 @@ import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseAzureUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.SamConstants;
@@ -75,7 +77,8 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
             mockLandingZoneApiDispatch,
             mockAzureCloudContextService,
             mockFeatureConfiguration(),
-            mockAzureConfiguration);
+            mockAzureConfiguration,
+            mockWorkspaceService());
   }
 
   private ControlledAzureStorageContainerResource buildStorageContainerResource(
@@ -524,8 +527,11 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
                 eq(storageContainerResource.getResourceId()),
                 eq(SamConstants.SamControlledResourceActions.READ_ACTION)))
         .thenReturn(storageContainerResource);
+    when(mockWorkspaceService().getWorkspace(storageContainerResource.getWorkspaceId()))
+        .thenReturn(WorkspaceFixtures.buildMcWorkspace(storageContainerResource.getWorkspaceId()));
     when(mockLandingZoneApiDispatch.getLandingZoneId(
-            any(), eq(storageContainerResource.getWorkspaceId())))
+            any(),
+            argThat(a -> a.getWorkspaceId().equals(storageContainerResource.getWorkspaceId()))))
         .thenReturn(landingZoneId);
     Optional<ApiAzureLandingZoneDeployedResource> lzSharedStorageAccount =
         lzSharedStorageAccountExists ? Optional.of(sharedStorageAccount) : Optional.empty();

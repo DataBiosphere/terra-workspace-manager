@@ -376,6 +376,16 @@ public class WorkspaceDao {
     return jdbcTemplate.query(sql, params, WORKSPACE_ROW_MAPPER);
   }
 
+  /** List cloud platforms of all cloud contexts in a workspace. */
+  @ReadTransaction
+  public List<CloudPlatform> listCloudPlatforms(UUID workspaceUuid) {
+    String sql = "SELECT cloud_platform FROM cloud_context" + " WHERE workspace_id = :workspace_id";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource().addValue("workspace_id", workspaceUuid.toString());
+    return jdbcTemplate.query(
+        sql, params, (rs, rowNum) -> CloudPlatform.fromSql(rs.getString("cloud_platform")));
+  }
+
   /**
    * Create cloud context - this is used as part of CreateGcpContextFlightV2 to insert the context
    * row at the start of the create context operation.

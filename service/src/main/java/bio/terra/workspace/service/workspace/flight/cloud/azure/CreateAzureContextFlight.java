@@ -38,7 +38,8 @@ public class CreateAzureContextFlight extends Flight {
               appContext.getLandingZoneApiDispatch(),
               userRequest,
               appContext.getTpsApiDispatch(),
-              workspaceUuid));
+              workspaceUuid,
+              appContext.getWorkspaceService()));
     }
 
     // check that we are allowed to link to this spend profile

@@ -43,7 +43,7 @@ public class ReferenceResourceFixtures {
             .name(resourceName)
             .build(),
         "terra",
-        "polaroid");
+        UUID.randomUUID().toString());
   }
 
   public static ReferencedBigQueryDatasetResource makeReferencedBqDatasetResource(

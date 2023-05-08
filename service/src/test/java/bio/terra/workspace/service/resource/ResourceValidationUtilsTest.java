@@ -2,7 +2,10 @@ package bio.terra.workspace.service.resource;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.defaultNotebookCreationParameters;
 import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties.FOLDER_ID_KEY;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import bio.terra.common.exception.BadRequestException;
@@ -11,12 +14,14 @@ import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.policy.model.TpsPaoGetResult;
 import bio.terra.workspace.app.configuration.external.GitRepoReferencedResourceConfiguration;
 import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.exception.FieldSizeExceededException;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmImage;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceContainerImage;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.service.resource.controlled.exception.RegionNotAllowedException;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.exception.InvalidNameException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
@@ -33,8 +38,9 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
 
-public class ValidationUtilsTest extends BaseUnitTest {
+public class ResourceValidationUtilsTest extends BaseUnitTest {
 
   private static final String MAX_VALID_STRING =
       "012345678901234567890123456789012345678901234567890123456789012";
@@ -50,6 +56,7 @@ public class ValidationUtilsTest extends BaseUnitTest {
 
   ResourceValidationUtils validationUtils;
   @Autowired GitRepoReferencedResourceConfiguration gitRepoReferencedResourceConfiguration;
+  @MockBean private ResourceDao mockResourceDao;
 
   @BeforeEach
   public void setup() {
@@ -519,5 +526,43 @@ public class ValidationUtilsTest extends BaseUnitTest {
         () ->
             ResourceValidationUtils.validateRegionAgainstPolicy(
                 mockTpsApiDispatch(), workspaceId, "badregion", CloudPlatform.AZURE));
+  }
+
+  @Test
+  void validateExistingResourceRegions_valid() {
+    final String validRegion = "validRegion";
+    final UUID workspaceId = UUID.randomUUID();
+    final CloudPlatform cloudPlatform = CloudPlatform.AZURE;
+    final ControlledResource mockControlledResource = mock(ControlledResource.class);
+
+    when(mockControlledResource.getName()).thenReturn("res name");
+    when(mockControlledResource.getRegion()).thenReturn(validRegion);
+    when(mockResourceDao.listControlledResources(workspaceId, cloudPlatform))
+        .thenReturn(List.of(mockControlledResource));
+
+    var result =
+        ResourceValidationUtils.validateExistingResourceRegions(
+            workspaceId, List.of(validRegion), cloudPlatform, mockResourceDao);
+
+    assertTrue(result.isEmpty());
+  }
+
+  @Test
+  void validateExistingResourceRegions_invalid() {
+    final String validRegion = "validRegion";
+    final UUID workspaceId = UUID.randomUUID();
+    final CloudPlatform cloudPlatform = CloudPlatform.AZURE;
+    final ControlledResource mockControlledResource = mock(ControlledResource.class);
+
+    when(mockControlledResource.getName()).thenReturn("res name");
+    when(mockControlledResource.getRegion()).thenReturn("invalidRegion");
+    when(mockResourceDao.listControlledResources(workspaceId, cloudPlatform))
+        .thenReturn(List.of(mockControlledResource));
+
+    var result =
+        ResourceValidationUtils.validateExistingResourceRegions(
+            workspaceId, List.of(validRegion), cloudPlatform, mockResourceDao);
+
+    assertEquals(1, result.size());
   }
 }

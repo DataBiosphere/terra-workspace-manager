@@ -7,7 +7,6 @@ import static bio.terra.workspace.common.utils.MapperUtils.BatchPoolMapper.mapLi
 
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.ValidationException;
-import bio.terra.common.iam.BearerToken;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
@@ -109,12 +108,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     this.landingZoneApiDispatch = landingZoneApiDispatch;
   }
 
-  private String getLandingZoneRegion(AuthenticatedUserRequest userRequest, UUID workspaceUuid) {
-    final BearerToken token = new BearerToken(userRequest.getRequiredToken());
-    var lzId = landingZoneApiDispatch.getLandingZoneId(token, workspaceUuid);
-    return landingZoneApiDispatch.getAzureLandingZoneRegion(token, lzId);
-  }
-
   @Traced
   @Override
   public ResponseEntity<ApiCreatedControlledAzureDisk> createAzureDisk(
@@ -126,7 +119,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         toCommonFields(
             workspaceUuid,
             body.getCommon(),
-            getLandingZoneRegion(userRequest, workspaceUuid),
+            landingZoneApiDispatch.getLandingZoneRegion(
+                userRequest, workspaceService.getWorkspace(workspaceUuid)),
             userRequest,
             WsmResourceType.CONTROLLED_AZURE_DISK);
     workspaceService.validateMcWorkspaceAndAction(
@@ -204,7 +198,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         toCommonFields(
             workspaceUuid,
             body.getCommon(),
-            getLandingZoneRegion(userRequest, workspaceUuid),
+            landingZoneApiDispatch.getLandingZoneRegion(
+                userRequest, workspaceService.getWorkspace(workspaceUuid)),
             userRequest,
             WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
     workspaceService.validateMcWorkspaceAndAction(
@@ -240,7 +235,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         toCommonFields(
             workspaceUuid,
             body.getCommon(),
-            getLandingZoneRegion(userRequest, workspaceUuid),
+            landingZoneApiDispatch.getLandingZoneRegion(
+                userRequest, workspaceService.getWorkspace(workspaceUuid)),
             userRequest,
             WsmResourceType.CONTROLLED_AZURE_VM);
     workspaceService.validateMcWorkspaceAndAction(
@@ -299,7 +295,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         toCommonFields(
             workspaceUuid,
             body.getCommon(),
-            getLandingZoneRegion(userRequest, workspaceUuid),
+            landingZoneApiDispatch.getLandingZoneRegion(
+                userRequest, workspaceService.getWorkspace(workspaceUuid)),
             userRequest,
             WsmResourceType.CONTROLLED_AZURE_BATCH_POOL);
     workspaceService.validateMcWorkspaceAndAction(

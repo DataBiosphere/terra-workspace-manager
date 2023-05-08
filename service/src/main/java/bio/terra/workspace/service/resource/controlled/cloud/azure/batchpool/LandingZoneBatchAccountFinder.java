@@ -4,6 +4,7 @@ import bio.terra.common.iam.BearerToken;
 import bio.terra.landingzone.db.exception.LandingZoneNotFoundException;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
+import bio.terra.workspace.service.workspace.WorkspaceService;
 import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -15,9 +16,12 @@ public class LandingZoneBatchAccountFinder {
   private static final Logger logger = LoggerFactory.getLogger(LandingZoneBatchAccountFinder.class);
 
   private final LandingZoneApiDispatch landingZoneApiDispatch;
+  private final WorkspaceService workspaceService;
 
-  public LandingZoneBatchAccountFinder(LandingZoneApiDispatch landingZoneApiDispatch) {
+  public LandingZoneBatchAccountFinder(
+      LandingZoneApiDispatch landingZoneApiDispatch, WorkspaceService workspaceService) {
     this.landingZoneApiDispatch = landingZoneApiDispatch;
+    this.workspaceService = workspaceService;
   }
 
   public Optional<ApiAzureLandingZoneDeployedResource> find(
@@ -25,7 +29,8 @@ public class LandingZoneBatchAccountFinder {
     try {
       UUID landingZoneId =
           landingZoneApiDispatch.getLandingZoneId(
-              new BearerToken(userRequestToken), resource.getWorkspaceId());
+              new BearerToken(userRequestToken),
+              workspaceService.getWorkspace(resource.getWorkspaceId()));
       Optional<ApiAzureLandingZoneDeployedResource> existingSharedBatchAccount =
           landingZoneApiDispatch.getSharedBatchAccount(
               new BearerToken(userRequestToken), landingZoneId);
@@ -40,8 +45,7 @@ public class LandingZoneBatchAccountFinder {
                 landingZoneId));
       }
       return existingSharedBatchAccount;
-    } catch (IllegalStateException
-        | LandingZoneNotFoundException e) { // Thrown by landingZoneApiDispatch
+    } catch (LandingZoneNotFoundException e) { // Thrown by landingZoneApiDispatch
       logger.warn("Could not check existence of shared batch account. Error='{}'", e.getMessage());
       return Optional.empty();
     }

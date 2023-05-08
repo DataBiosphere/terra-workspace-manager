@@ -16,6 +16,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.Stora
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
+import bio.terra.workspace.service.workspace.WorkspaceService;
 import com.azure.core.http.HttpClient;
 import com.azure.resourcemanager.storage.models.StorageAccount;
 import com.azure.storage.blob.BlobContainerClient;
@@ -55,6 +56,7 @@ public class AzureStorageAccessService {
   private final LandingZoneApiDispatch landingZoneApiDispatch;
   private final AzureCloudContextService azureCloudContextService;
   private final AzureConfiguration azureConfiguration;
+  private final WorkspaceService workspaceService;
 
   @Autowired
   public AzureStorageAccessService(
@@ -65,7 +67,8 @@ public class AzureStorageAccessService {
       LandingZoneApiDispatch landingZoneApiDispatch,
       AzureCloudContextService azureCloudContextService,
       FeatureConfiguration features,
-      AzureConfiguration azureConfiguration) {
+      AzureConfiguration azureConfiguration,
+      WorkspaceService workspaceService) {
     this.samService = samService;
     this.crlService = crlService;
     this.controlledResourceMetadataManager = controlledResourceMetadataManager;
@@ -74,6 +77,7 @@ public class AzureStorageAccessService {
     this.features = features;
     this.storageAccountKeyProvider = storageAccountKeyProvider;
     this.azureConfiguration = azureConfiguration;
+    this.workspaceService = workspaceService;
   }
 
   private BlobContainerSasPermission getSasTokenPermissions(
@@ -322,7 +326,9 @@ public class AzureStorageAccessService {
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
     // get details from LZ shared storage account
     var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
-    UUID landingZoneId = landingZoneApiDispatch.getLandingZoneId(bearerToken, workspaceUuid);
+    UUID landingZoneId =
+        landingZoneApiDispatch.getLandingZoneId(
+            bearerToken, workspaceService.getWorkspace(workspaceUuid));
     Optional<ApiAzureLandingZoneDeployedResource> existingSharedStorageAccount =
         landingZoneApiDispatch.getSharedStorageAccount(bearerToken, landingZoneId);
     if (existingSharedStorageAccount.isEmpty()) {

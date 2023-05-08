@@ -131,6 +131,22 @@ public class TpsApiConversionUtils {
     return ApiWsmPolicyObjectType.fromValue(tpsObjectType.getValue());
   }
 
+  public static TpsPaoDescription tpsFromApiPaoDescription(
+      ApiWsmPolicyDescription apiWsmPolicyDescription) {
+    return new TpsPaoDescription()
+        .objectId(apiWsmPolicyDescription.getObjectId())
+        .component(tpsFromApiComponent(apiWsmPolicyDescription.getComponent()))
+        .objectType(tpsFromApiObjectType(apiWsmPolicyDescription.getObjectType()));
+  }
+
+  public static TpsComponent tpsFromApiComponent(ApiWsmPolicyComponent apiWsmPolicyComponent) {
+    return TpsComponent.fromValue(apiWsmPolicyComponent.toString());
+  }
+
+  public static TpsObjectType tpsFromApiObjectType(ApiWsmPolicyObjectType apiWsmPolicyObjectType) {
+    return TpsObjectType.fromValue(apiWsmPolicyObjectType.toString());
+  }
+
   public static TpsPolicyInput tpsFromApiPolicyInput(ApiWsmPolicyInput apiInput) {
     List<TpsPolicyPair> additionalData = new ArrayList<>();
     for (ApiWsmPolicyPair apiPair : apiInput.getAdditionalData()) {

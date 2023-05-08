@@ -32,7 +32,7 @@ components:
     WsmPolicyComponent:
       type: string
       description: Enum representing a policy-bearing Terra component.
-      enum: [ 'WSM' ]
+      enum: [ 'BPM', 'TDR', 'WSM' ]
 
     WsmPolicyObjectId:
       description: |
@@ -45,7 +45,7 @@ components:
     WsmPolicyObjectType:
       type: string
       description: Enum representing an object type of a policy-bearing Terra component.
-      enum: [ 'workspace' ]
+      enum: [ 'billing-profile', 'dataset', 'snapshot', 'workspace' ]
 
     WsmPolicy:
       type: object

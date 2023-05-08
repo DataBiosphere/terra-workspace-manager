@@ -2,7 +2,12 @@ package bio.terra.workspace.service.workspace;
 
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.SOURCE_WORKSPACE_ID;
 
+import bio.terra.policy.model.TpsComponent;
+import bio.terra.policy.model.TpsObjectType;
+import bio.terra.policy.model.TpsPaoDescription;
+import bio.terra.policy.model.TpsPaoUpdateResult;
 import bio.terra.policy.model.TpsPolicyInputs;
+import bio.terra.policy.model.TpsUpdateMode;
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
@@ -20,7 +25,10 @@ import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
+import bio.terra.workspace.service.policy.PolicyValidator;
+import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneWorkspaceFlight;
+import bio.terra.workspace.service.resource.exception.PolicyConflictException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.exceptions.BufferServiceDisabledException;
@@ -74,6 +82,8 @@ public class WorkspaceService {
   private final FeatureService featureService;
   private final ResourceDao resourceDao;
   private final WorkspaceActivityLogService workspaceActivityLogService;
+  private final TpsApiDispatch tpsApiDispatch;
+  private final PolicyValidator policyValidator;
 
   @Autowired
   public WorkspaceService(
@@ -86,7 +96,9 @@ public class WorkspaceService {
       FeatureConfiguration features,
       FeatureService featureService,
       ResourceDao resourceDao,
-      WorkspaceActivityLogService workspaceActivityLogService) {
+      WorkspaceActivityLogService workspaceActivityLogService,
+      TpsApiDispatch tpsApiDispatch,
+      PolicyValidator policyValidator) {
     this.jobService = jobService;
     this.applicationDao = applicationDao;
     this.workspaceDao = workspaceDao;
@@ -97,6 +109,8 @@ public class WorkspaceService {
     this.featureService = featureService;
     this.resourceDao = resourceDao;
     this.workspaceActivityLogService = workspaceActivityLogService;
+    this.tpsApiDispatch = tpsApiDispatch;
+    this.policyValidator = policyValidator;
   }
 
   /** Create a workspace with the specified parameters. Returns workspaceID of the new workspace. */
@@ -632,5 +646,44 @@ public class WorkspaceService {
         .addParameter(WorkspaceFlightMapKeys.USER_TO_REMOVE, targetUserEmail)
         .addParameter(WorkspaceFlightMapKeys.ROLE_TO_REMOVE, role.name())
         .submitAndWait();
+  }
+
+  @Traced
+  public TpsPaoUpdateResult linkPolicies(
+      UUID workspaceId,
+      TpsPaoDescription sourcePaoId,
+      TpsUpdateMode tpsUpdateMode,
+      AuthenticatedUserRequest userRequest) {
+
+    tpsApiDispatch.createPaoIfNotExist(
+        sourcePaoId.getObjectId(), sourcePaoId.getComponent(), sourcePaoId.getObjectType());
+    tpsApiDispatch.createPaoIfNotExist(workspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE);
+
+    TpsPaoUpdateResult dryRun =
+        tpsApiDispatch.linkPao(workspaceId, sourcePaoId.getObjectId(), TpsUpdateMode.DRY_RUN);
+
+    if (!dryRun.getConflicts().isEmpty() && tpsUpdateMode != TpsUpdateMode.DRY_RUN) {
+      throw new PolicyConflictException(
+          "Workspace policies conflict with source", dryRun.getConflicts());
+    }
+
+    policyValidator.validateWorkspaceConformsToPolicy(
+        getWorkspace(workspaceId), dryRun.getResultingPao(), userRequest);
+
+    if (tpsUpdateMode == TpsUpdateMode.DRY_RUN) {
+      return dryRun;
+    } else {
+      var updateResult =
+          tpsApiDispatch.linkPao(workspaceId, sourcePaoId.getObjectId(), tpsUpdateMode);
+      if (updateResult.isUpdateApplied()) {
+        workspaceActivityLogService.writeActivity(
+            userRequest,
+            workspaceId,
+            OperationType.UPDATE,
+            workspaceId.toString(),
+            ActivityLogChangedTarget.POLICIES);
+      }
+      return updateResult;
+    }
   }
 }

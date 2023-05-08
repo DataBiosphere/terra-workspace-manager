@@ -5,6 +5,8 @@ import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertM
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesDeleteRequestBody;
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesUpdateRequestBody;
 
+import bio.terra.policy.model.TpsComponent;
+import bio.terra.policy.model.TpsObjectType;
 import bio.terra.policy.model.TpsPaoConflict;
 import bio.terra.policy.model.TpsPaoDescription;
 import bio.terra.policy.model.TpsPaoGetResult;
@@ -280,7 +282,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
     List<ApiWsmPolicyInput> workspacePolicies = null;
     if (features.isTpsEnabled()) {
-      tpsApiDispatch.createPaoIfNotExist(workspaceUuid);
+      tpsApiDispatch.createPaoIfNotExist(workspaceUuid, TpsComponent.WSM, TpsObjectType.WORKSPACE);
       TpsPaoGetResult workspacePao = tpsApiDispatch.getPao(workspaceUuid);
       workspacePolicies = TpsApiConversionUtils.apiEffectivePolicyListFromTpsPao(workspacePao);
     }
@@ -402,7 +404,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     logger.info("Updating workspace policies {} for {}", workspaceUuid, userRequest.getEmail());
 
-    workspaceService.validateWorkspaceAndAction(
+    workspaceService.validateMcWorkspaceAndAction(
         userRequest, workspaceUuid, SamWorkspaceAction.WRITE);
 
     features.tpsEnabledCheck();
@@ -780,8 +782,10 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   public ResponseEntity<ApiWsmPolicyMergeCheckResult> mergeCheck(
       UUID targetWorkspaceId, ApiMergeCheckRequest requestBody) {
     UUID sourceWorkspaceId = requestBody.getWorkspaceId();
-    tpsApiDispatch.createPaoIfNotExist(sourceWorkspaceId);
-    tpsApiDispatch.createPaoIfNotExist(targetWorkspaceId);
+    tpsApiDispatch.createPaoIfNotExist(
+        sourceWorkspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE);
+    tpsApiDispatch.createPaoIfNotExist(
+        targetWorkspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE);
 
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(

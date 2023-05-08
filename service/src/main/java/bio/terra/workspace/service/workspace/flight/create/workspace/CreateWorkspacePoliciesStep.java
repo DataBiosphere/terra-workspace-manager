@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.workspace.flight.create.workspace;
 
+import bio.terra.policy.model.TpsComponent;
+import bio.terra.policy.model.TpsObjectType;
 import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
@@ -35,7 +37,8 @@ public class CreateWorkspacePoliciesStep implements Step {
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     try {
-      tpsApiDispatch.createPao(workspace.getWorkspaceId(), policyInputs);
+      tpsApiDispatch.createPao(
+          workspace.getWorkspaceId(), policyInputs, TpsComponent.WSM, TpsObjectType.WORKSPACE);
     } catch (PolicyServiceDuplicateException e) {
       // Before the flight we check that the workspace does not exist, so it's safe to assume that
       // any policy on this workspace object was created by this flight, and we can ignore
