@@ -26,7 +26,7 @@ public enum ActivityLogChangedTarget {
   // AWS
   CONTROLLED_AWS_S3_STORAGE_FOLDER(/*isResource=*/ true),
   CONTROLLED_FLEXIBLE_RESOURCE(/*isResource=*/ true),
-  CONTROLLED_AWS_SAGEMAKER_NOTEBOOK(/*isResource=*/true),
+  CONTROLLED_AWS_SAGEMAKER_NOTEBOOK(/*isResource=*/ true),
 
   USER,
   WORKSPACE,
