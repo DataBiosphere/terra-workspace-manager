@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.resource.controlled;
 
 import bio.terra.aws.resource.discovery.Environment;
+import bio.terra.aws.resource.discovery.LandingZone;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.ServiceUnavailableException;
 import bio.terra.stairway.FlightState;
@@ -62,6 +63,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import software.amazon.awssdk.regions.Region;
 
 /** CRUD methods for controlled objects. */
 @Component
@@ -626,11 +628,28 @@ public class ControlledResourceService {
           "A private, controlled Notebook instance must have the writer or editor role or else it is not useful.");
     }
 
+    LandingZone landingZone =
+        environment.getLandingZone(Region.of(resource.getRegion())).orElseThrow();
+
     JobBuilder jobBuilder =
         commonCreationJobBuilder(
             resource, privateResourceIamRole, jobControl, resultPath, userRequest);
     jobBuilder.addParameter(ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS, creationParameters);
-    jobBuilder.addParameter(ControlledResourceKeys.AWS_ENVIRONMENT, environment);
+    jobBuilder.addParameter(
+        ControlledResourceKeys.AWS_ENVIRONMENT_USER_ROLE_ARN,
+        environment.getUserRoleArn().toString());
+    jobBuilder.addParameter(
+        ControlledResourceKeys.AWS_LANDING_ZONE_KMS_KEY_ARN,
+        landingZone.getKmsKey().arn().toString());
+
+    // TODO(TERRA-312) - which config from the list?
+    landingZone.getNotebookLifecycleConfigurations().stream()
+        .findFirst()
+        .ifPresent(
+            lifecycleConfiguration ->
+                jobBuilder.addParameter(
+                    ControlledResourceKeys.AWS_LANDING_ZONE_NOTEBOOK_LIFECYCLE_CONFIG_ARN,
+                    lifecycleConfiguration.arn().toString()));
 
     String jobId = jobBuilder.submit();
     waitForResourceOrJob(resource.getWorkspaceId(), resource.getResourceId(), jobId);

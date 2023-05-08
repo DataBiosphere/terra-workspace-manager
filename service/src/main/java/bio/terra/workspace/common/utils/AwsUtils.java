@@ -3,8 +3,6 @@ package bio.terra.workspace.common.utils;
 import bio.terra.aws.resource.discovery.CachedEnvironmentDiscovery;
 import bio.terra.aws.resource.discovery.Environment;
 import bio.terra.aws.resource.discovery.EnvironmentDiscovery;
-import bio.terra.aws.resource.discovery.LandingZone;
-import bio.terra.aws.resource.discovery.NotebookLifecycleConfiguration;
 import bio.terra.aws.resource.discovery.S3EnvironmentDiscovery;
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.BadRequestException;
@@ -585,13 +583,18 @@ public class AwsUtils {
    *
    * @param awsCredentialsProvider {@link AwsCredentialsProvider}
    * @param notebookResource {@link ControlledAwsSagemakerNotebookResource}
-   * @param environment {@link Environment}
+   * @param userRoleArn User role {@link Arn}
+   * @param kmsKeyArn {@link Arn} for the KmsKey in the landing zone (region)
+   * @param notebookLifecycleConfigArn {@link Arn} for the notebookLifecycleConfig in the landing
+   *     zone (region)
    * @param tags collection of {@link Tag} to be attached to the folder
    */
   public static void createSageMakerNotebook(
       AwsCredentialsProvider awsCredentialsProvider,
       ControlledAwsSagemakerNotebookResource notebookResource,
-      Environment environment,
+      Arn userRoleArn,
+      Arn kmsKeyArn,
+      Arn notebookLifecycleConfigArn,
       Collection<Tag> tags) {
     Region region = Region.of(notebookResource.getRegion());
     SageMakerClient sageMakerClient = getSagemakerClient(awsCredentialsProvider, region);
@@ -610,22 +613,16 @@ public class AwsUtils {
                         .build())
             .collect(Collectors.toSet());
 
-    LandingZone landingZone = environment.getLandingZone(region).orElseThrow();
-
     CreateNotebookInstanceRequest.Builder requestBuilder =
         CreateNotebookInstanceRequest.builder()
             .notebookInstanceName(notebookResource.getInstanceName())
             .instanceType(notebookResource.getInstanceType())
-            .roleArn(environment.getUserRoleArn().toString())
-            .kmsKeyId(landingZone.getKmsKey().arn().resource().resource())
+            .roleArn(userRoleArn.toString())
+            .kmsKeyId(kmsKeyArn.resource().resource())
             .tags(sagemakerTags);
 
-    // TODO(TERRA-312) - which config from the list?
-    NotebookLifecycleConfiguration lifecycleConfiguration =
-        landingZone.getNotebookLifecycleConfigurations().stream().findFirst().orElse(null);
-
-    if (lifecycleConfiguration != null) {
-      String policyName = lifecycleConfiguration.arn().resource().resource();
+    if (notebookLifecycleConfigArn != null) {
+      String policyName = notebookLifecycleConfigArn.resource().resource();
       logger.info(
           String.format(
               "Attaching lifecycle policy '%s' to notebook '%s'.",
