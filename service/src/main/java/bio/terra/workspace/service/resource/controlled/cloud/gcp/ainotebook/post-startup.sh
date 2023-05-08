@@ -339,8 +339,33 @@ echo "Setting up git integration..."
 # user starts a shell, we start the ssh-agent.
 cat << 'EOF' >> "${USER_BASH_PROFILE}"
 
-# Start the ssh-agent; "eval" it to set SSH_AUTH_SOCK and SSH_AGENT_PID
-eval "$(ssh-agent -s)"
+# Start a new ssh-agent if one is not already running.
+# If the ssh-agent is already running, but we don't have the environment
+# variables (SSH_AUTH_SOCK and SSH_AGENT_PID), then we look for them in
+# a file ~/.ssh-agent.
+#
+# If we can't connect to the ssh-agent, it'll return ENOENT (no entity).
+ssh-add -l &>/dev/null
+if [[ "$?" == 2 ]]; then
+  # If a .ssh-agent file already exists, then it has the environment
+  # variables we need: SSH_AUTH_SOCK and SSH_AGENT_PID
+  if [[ -e ~/.ssh-agent ]]; then
+    eval "$(<~/.ssh-agent)" >/dev/null
+  fi
+
+  # Try again to connect to the agent to list keys
+  ssh-add -l &>/dev/null
+  if [[ "$?" == 2 ]]; then
+    # Start the ssh-agent, writing connection variables to ~/.ssh-agent
+    (umask 066; ssh-agent > ~/.ssh-agent)
+
+    # Set the variables in the environment
+    eval "$(<~/.ssh-agent)" >/dev/null
+  fi
+fi
+
+# Add ssh keys (if any)
+ssh-add -q
 EOF
 
 # Create the user SSH directory 
@@ -429,6 +454,17 @@ cat <<EOF | sudo --preserve-env -u "${JUPYTER_USER}" tee "${GIT_IGNORE}"
 EOF
 
 sudo -u "${JUPYTER_USER}" sh -c "git config --global core.excludesfile ${GIT_IGNORE}"
+
+####################################
+# Restart kernel so environment variables are picked up in Jupyter environment. See PF-2178.
+####################################
+readonly INSTANCE_CONTAINER="$(get_metadata_value instance/attributes/container)"
+if [[ -n "${INSTANCE_CONTAINER}" ]]; then
+  echo "Custom container detected: ${INSTANCE_CONTAINER}"
+else
+  echo "Non-containerized Jupyter experienced detected. Restarting Jupyter service..."
+  systemctl restart jupyter.service
+fi
 
 ####################################################################################
 # Run a set of tests that should be invariant to the workspace or user configuration
@@ -542,8 +578,3 @@ fi
 
 # Let the UI know the script completed
 set_guest_attributes "${STATUS_ATTRIBUTE}" "COMPLETE"
-
-####################################
-# Restart kernel so environment variables work in notebook. See PF-2178.
-####################################
-systemctl restart jupyter.service
