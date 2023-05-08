@@ -26,6 +26,7 @@ import bio.terra.workspace.generated.model.ApiWsmPolicyInputs;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
+import bio.terra.workspace.service.resource.model.StewardshipType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import java.util.UUID;
@@ -468,6 +469,7 @@ public class ReferencedGcpResourceControllerBqTableTest extends BaseConnectedTes
         /*sourceWorkspaceId=*/ workspaceId,
         /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
         expectedCreatedBy,
+        StewardshipType.REFERENCED,
         cloneUserRequest);
 
     assertEquals(expectedProjectId, actualResource.getAttributes().getProjectId());

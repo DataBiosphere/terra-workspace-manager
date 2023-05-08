@@ -166,7 +166,7 @@ public class ResourceDaoTest extends BaseUnitTest {
             DEFAULT_USER_SUBJECT_ID,
             OperationType.CREATE,
             resource.getResourceId().toString(),
-            ActivityLogChangedTarget.RESOURCE));
+            ActivityLogChangedTarget.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE));
 
     var getResource = resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId());
     assertTrue(resource.partialEqual(getResource));
@@ -195,7 +195,7 @@ public class ResourceDaoTest extends BaseUnitTest {
             UUID.randomUUID().toString(),
             OperationType.UPDATE,
             resource.getResourceId().toString(),
-            ActivityLogChangedTarget.RESOURCE));
+            ActivityLogChangedTarget.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE));
 
     ControlledResource controlledResource =
         resourceDao.getResource(workspaceUuid, resource.getResourceId()).castToControlledResource();
@@ -445,7 +445,7 @@ public class ResourceDaoTest extends BaseUnitTest {
             UUID.randomUUID().toString(),
             OperationType.UPDATE,
             resource.getResourceId().toString(),
-            ActivityLogChangedTarget.RESOURCE));
+            ActivityLogChangedTarget.CONTROLLED_GCP_BIG_QUERY_DATASET));
 
     var resourceAfterUpdate =
         resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId());
@@ -619,6 +619,6 @@ public class ResourceDaoTest extends BaseUnitTest {
             DEFAULT_USER_SUBJECT_ID,
             OperationType.CREATE,
             resource.getResourceId().toString(),
-            ActivityLogChangedTarget.RESOURCE));
+            resource.getResourceType().getActivityLogChangedTarget()));
   }
 }

@@ -466,6 +466,7 @@ public class ReferencedGcpResourceControllerBqDatasetTest extends BaseConnectedT
         /*sourceWorkspaceId=*/ workspaceId,
         /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
         expectedCreatedBy,
+        StewardshipType.REFERENCED,
         cloneUserRequest);
 
     assertEquals(expectedProjectId, actualResource.getAttributes().getProjectId());

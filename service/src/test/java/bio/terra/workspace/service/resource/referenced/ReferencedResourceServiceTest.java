@@ -138,7 +138,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
             USER_REQUEST.getSubjectId(),
             OperationType.UPDATE,
             resourceId.toString(),
-            ActivityLogChangedTarget.RESOURCE),
+            ActivityLogChangedTarget.REFERENCED_ANY_DATA_REPO_SNAPSHOT),
         lastUpdateDetailsAfterResourceUpdate.get());
     assertEquals(originalName, result.getName());
     assertEquals(originalDescription, result.getDescription());
@@ -228,7 +228,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
             USER_REQUEST.getSubjectId(),
             OperationType.UPDATE,
             referencedResource.getResourceId().toString(),
-            ActivityLogChangedTarget.RESOURCE),
+            ActivityLogChangedTarget.REFERENCED_ANY_DATA_REPO_SNAPSHOT),
         lastUpdateDetailsAfterResourceUpdate.get());
     assertEquals(updatedName, referencedResource.getName());
     assertEquals(updatedDescription, referencedResource.getDescription());
@@ -360,7 +360,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               USER_REQUEST.getSubjectId(),
               OperationType.CREATE,
               referencedResource.getResourceId().toString(),
-              ActivityLogChangedTarget.RESOURCE),
+              ActivityLogChangedTarget.REFERENCED_ANY_DATA_REPO_SNAPSHOT),
           lastUpdateDetailsAfterCreate.get());
 
       ReferencedDataRepoSnapshotResource resultResource =
@@ -400,7 +400,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               USER_REQUEST.getSubjectId(),
               OperationType.DELETE,
               referencedResource.getResourceId().toString(),
-              ActivityLogChangedTarget.RESOURCE),
+              ActivityLogChangedTarget.REFERENCED_ANY_DATA_REPO_SNAPSHOT),
           lastUpdateDetailsAfterDelete.get());
     }
 
@@ -488,7 +488,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               USER_REQUEST.getSubjectId(),
               OperationType.CREATE,
               referencedResource.getResourceId().toString(),
-              ActivityLogChangedTarget.RESOURCE),
+              ActivityLogChangedTarget.REFERENCED_GCP_GCS_OBJECT),
           lastUpdateDetailsAfterCreate.get());
 
       ReferencedGcsObjectResource resultResource =
@@ -529,7 +529,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               USER_REQUEST.getSubjectId(),
               OperationType.DELETE,
               referencedResource.getResourceId().toString(),
-              ActivityLogChangedTarget.RESOURCE),
+              ActivityLogChangedTarget.REFERENCED_GCP_GCS_OBJECT),
           lastUpdateDetailsAfterDelete.get());
     }
 
@@ -697,7 +697,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               USER_REQUEST.getSubjectId(),
               OperationType.CREATE,
               referencedResource.getResourceId().toString(),
-              ActivityLogChangedTarget.RESOURCE),
+              ActivityLogChangedTarget.REFERENCED_GCP_BIG_QUERY_DATASET),
           lastUpdateDetailsAfterCreate.get());
 
       ReferencedBigQueryDatasetResource resultResource =
@@ -739,7 +739,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               USER_REQUEST.getSubjectId(),
               OperationType.DELETE,
               referencedResource.getResourceId().toString(),
-              ActivityLogChangedTarget.RESOURCE),
+              ActivityLogChangedTarget.REFERENCED_GCP_BIG_QUERY_DATASET),
           lastUpdateDetailsAfterDelete.get());
     }
 
@@ -773,7 +773,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               USER_REQUEST.getSubjectId(),
               OperationType.CREATE,
               referencedResource.getResourceId().toString(),
-              ActivityLogChangedTarget.RESOURCE),
+              ActivityLogChangedTarget.REFERENCED_GCP_BIG_QUERY_DATA_TABLE),
           lastUpdateDetailsAfterCreate.get());
 
       ReferencedBigQueryDataTableResource resultResource =
@@ -812,7 +812,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               USER_REQUEST.getSubjectId(),
               OperationType.DELETE,
               referencedResource.getResourceId().toString(),
-              ActivityLogChangedTarget.RESOURCE),
+              ActivityLogChangedTarget.REFERENCED_GCP_BIG_QUERY_DATA_TABLE),
           lastUpdateDetailsAfterDelete.get());
     }
 
@@ -996,7 +996,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               USER_REQUEST.getSubjectId(),
               OperationType.CREATE,
               referencedResource.getResourceId().toString(),
-              ActivityLogChangedTarget.RESOURCE),
+              ActivityLogChangedTarget.REFERENCED_ANY_TERRA_WORKSPACE),
           lastUpdateDetailsAfterCreate.get());
       ReferencedTerraWorkspaceResource actual =
           actualReferencedResourceGeneric.castByEnum(
@@ -1037,7 +1037,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               USER_REQUEST.getSubjectId(),
               OperationType.DELETE,
               referencedResource.getResourceId().toString(),
-              ActivityLogChangedTarget.RESOURCE),
+              ActivityLogChangedTarget.REFERENCED_ANY_TERRA_WORKSPACE),
           lastUpdateDetailsAfterDelete.get());
     }
 

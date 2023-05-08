@@ -4,7 +4,6 @@ import static bio.terra.workspace.service.resource.model.WsmResourceState.BROKEN
 
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.exception.InternalLogicException;
-import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.exception.ResourceStateConflictException;
@@ -81,7 +80,7 @@ public class ReferencedResourceService {
         resource.getWorkspaceId(),
         OperationType.CREATE,
         resource.getResourceId().toString(),
-        ActivityLogChangedTarget.RESOURCE);
+        resource.getResourceType().getActivityLogChangedTarget());
     return getReferenceResource(resource.getWorkspaceId(), resource.getResourceId());
   }
 
@@ -112,7 +111,7 @@ public class ReferencedResourceService {
           workspaceUuid,
           OperationType.DELETE,
           resourceId.toString(),
-          ActivityLogChangedTarget.RESOURCE);
+          resourceType.getActivityLogChangedTarget());
     }
   }
 

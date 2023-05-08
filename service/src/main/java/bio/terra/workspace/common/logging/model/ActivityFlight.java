@@ -49,7 +49,8 @@ public enum ActivityFlight {
   CLONE_REFERENCED_RESOURCE_FLIGHT(
       CloneReferencedResourceFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
   CLONE_FLEX_RESOURCE_FLIGHT(
-      CloneControlledFlexibleResourceFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
+      CloneControlledFlexibleResourceFlight.class.getName(),
+      ActivityLogChangedTarget.CONTROLLED_FLEXIBLE_RESOURCE),
 
   FOLDER_DELETE_FLIGHT(DeleteFolderFlight.class.getName(), ActivityLogChangedTarget.FOLDER),
 
@@ -73,10 +74,11 @@ public enum ActivityFlight {
   SYNC_GCP_IAM_ROLES_FLIGHT(
       SyncGcpIamRolesFlight.class.getName(), ActivityLogChangedTarget.GCP_CLOUD_CONTEXT),
   CONTROLLED_GCS_BUCKET_CLONE_FLIGHT(
-      CloneControlledGcsBucketResourceFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
+      CloneControlledGcsBucketResourceFlight.class.getName(),
+      ActivityLogChangedTarget.CONTROLLED_GCP_GCS_BUCKET),
   CONTROLLED_BQ_DATASET_CLONE_FLIGHT(
       CloneControlledGcpBigQueryDatasetResourceFlight.class.getName(),
-      ActivityLogChangedTarget.RESOURCE),
+      ActivityLogChangedTarget.CONTROLLED_GCP_BIG_QUERY_DATASET),
 
   // AZURE
   AZURE_CLOUD_CONTEXT_CREATE_FLIGHT(
@@ -85,7 +87,7 @@ public enum ActivityFlight {
       DeleteAzureContextFlight.class.getName(), ActivityLogChangedTarget.AZURE_CLOUD_CONTEXT),
   CONTROLLED_AZURE_STORAGE_CONTAINER_CLONE_FLIGHT(
       CloneControlledAzureStorageContainerResourceFlight.class.getName(),
-      ActivityLogChangedTarget.RESOURCE),
+      ActivityLogChangedTarget.CONTROLLED_AZURE_STORAGE_CONTAINER),
 
   // AWS
   AWS_CLOUD_CONTEXT_CREATE_FLIGHT(
@@ -119,5 +121,9 @@ public enum ActivityFlight {
 
   public ActivityLogChangedTarget getActivityLogChangedTarget() {
     return changedTarget;
+  }
+
+  public boolean isResourceFlight() {
+    return changedTarget.isResource();
   }
 }

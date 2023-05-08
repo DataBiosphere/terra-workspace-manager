@@ -146,6 +146,7 @@ import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.SetR
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.model.StewardshipType;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.flight.create.CreateReferenceMetadataStep;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
@@ -2471,6 +2472,7 @@ public class MockMvcUtils {
       UUID sourceWorkspaceId,
       UUID sourceResourceId,
       String expectedCreatedBy,
+      StewardshipType sourceResourceStewardshipType,
       AuthenticatedUserRequest userRequest)
       throws InterruptedException {
     ApiResourceLineage expectedResourceLineage = new ApiResourceLineage();
@@ -2496,14 +2498,18 @@ public class MockMvcUtils {
         expectedResourceLineage,
         expectedCreatedBy,
         expectedLastUpdatedBy);
-    // The CLONE activity log entry is keyed to the DESTINATION workspace for some reason!?
+
+    // Log the clone entry in the destination workspace as that is where the cloned resource is
+    // created and to record the lineage of the cloned resource id (source) to the destination
+    // workspace.
     assertLatestActivityLogChangeDetails(
         expectedWorkspaceId,
         expectedLastUpdatedBy,
         expectedLastUpdatedBySubjectId,
         OperationType.CLONE,
         sourceResourceId.toString(),
-        ActivityLogChangedTarget.RESOURCE);
+        WsmResourceType.fromApiResourceType(expectedResourceType, sourceResourceStewardshipType)
+            .getActivityLogChangedTarget());
   }
 
   public void assertLatestActivityLogChangeDetails(

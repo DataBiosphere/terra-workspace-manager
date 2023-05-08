@@ -24,6 +24,7 @@ import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWsmPolicyInputs;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
+import bio.terra.workspace.service.resource.model.StewardshipType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import java.util.UUID;
@@ -458,6 +459,7 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotTest extends BaseCon
         /*sourceWorkspaceId=*/ workspaceId,
         /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
         expectedCreatedBy,
+        StewardshipType.REFERENCED,
         cloneUserRequest);
 
     assertEquals(expectedInstanceName, actualResource.getAttributes().getInstanceName());
